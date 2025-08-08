@@ -1,0 +1,77 @@
+[
+  {
+    "name": "Jacoby Transfer (Spades)",
+    "description": "North opens 1NT, South has a 5-card spade suit.",
+    "hands": {
+      "North": [
+        {"rank": "A", "suit": "♠"},
+        {"rank": "Q", "suit": "♠"},
+        {"rank": "2", "suit": "♠"},
+        {"rank": "K", "suit": "♥"},
+        {"rank": "J", "suit": "♥"},
+        {"rank": "3", "suit": "♥"},
+        {"rank": "A", "suit": "♦"},
+        {"rank": "4", "suit": "♦"},
+        {"rank": "3", "suit": "♦"},
+        {"rank": "2", "suit": "♦"},
+        {"rank": "K", "suit": "♣"},
+        {"rank": "5", "suit": "♣"},
+        {"rank": "4", "suit": "♣"}
+      ],
+      "South": [
+        {"rank": "K", "suit": "♠"},
+        {"rank": "Q", "suit": "♠"},
+        {"rank": "T", "suit": "♠"},
+        {"rank": "9", "suit": "♠"},
+        {"rank": "8", "suit": "♠"},
+        {"rank": "7", "suit": "♥"},
+        {"rank": "6", "suit": "♥"},
+        {"rank": "5", "suit": "♦"},
+        {"rank": "4", "suit": "♦"},
+        {"rank": "3", "suit": "♦"},
+        {"rank": "4", "suit": "♣"},
+        {"rank": "3", "suit": "♣"},
+        {"rank": "2", "suit": "♣"}
+      ]
+    }
+  },
+  {
+    "name": "Strong Opening",
+    "description": "A powerful 22-point opening hand for South.",
+    "hands": {
+      "South": [
+        {"rank": "A", "suit": "♠"},
+        {"rank": "K", "suit": "♠"},
+        {"rank": "Q", "suit": "♠"},
+        {"rank": "A", "suit": "♥"},
+        {"rank": "K", "suit": "♥"},
+        {"rank": "Q", "suit": "♥"},
+        {"rank": "A", "suit": "♦"},
+        {"rank": "K", "suit": "♦"},
+        {"rank": "Q", "suit": "♦"},
+        {"rank": "A", "suit": "♣"},
+        {"rank": "K", "suit": "♣"},
+        {"rank": "J", "suit": "♣"},
+        {"rank": "T", "suit": "♣"}
+      ]
+    }
+  },
+  {
+  "name": "Opener Rebid Test (Spades)",
+  "description": "North opens 1S, South responds 2S, North must rebid.",
+  "hands": {
+    "North": [
+      {"rank": "A", "suit": "♠"}, {"rank": "K", "suit": "♠"}, {"rank": "J", "suit": "♠"}, {"rank": "9", "suit": "♠"}, {"rank": "8", "suit": "♠"},
+      {"rank": "A", "suit": "♥"}, {"rank": "5", "suit": "♥"},
+      {"rank": "K", "suit": "♦"}, {"rank": "Q", "suit": "♦"}, {"rank": "4", "suit": "♦"},
+      {"rank": "J", "suit": "♣"}, {"rank": "3", "suit": "♣"}, {"rank": "2", "suit": "♣"}
+    ],
+    "South": [
+      {"rank": "Q", "suit": "♠"}, {"rank": "7", "suit": "♠"}, {"rank": "6", "suit": "♠"}, {"rank": "5", "suit": "♠"},
+      {"rank": "K", "suit": "♥"}, {"rank": "Q", "suit": "♥"}, {"rank": "6", "suit": "♥"},
+      {"rank": "5", "suit": "♦"}, {"rank": "3", "suit": "♦"},
+      {"rank": "A", "suit": "♣"}, {"rank": "5", "suit": "♣"}, {"rank": "4", "suit": "♣"}, {"rank": "2", "suit": "♣"}
+    ]
+  }
+}
+]

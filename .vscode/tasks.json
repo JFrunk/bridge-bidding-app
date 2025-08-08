@@ -1,0 +1,46 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Backend 🐍",
+      "type": "shell",
+      "command": "cd backend && source venv/bin/activate && flask --app server --debug run --port 5001",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "servers"
+      },
+      "runOptions": { "runOn": "folderOpen" }
+    },
+    {
+      "label": "Start Frontend 🖥️",
+      "type": "shell",
+      "command": "cd frontend && npm start",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "servers"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "ˆ$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Compiling...",
+          "endsPattern": "webpack compiled successfully"
+        }
+      }
+    },
+    {
+      "label": "Start Project (All)",
+      "dependsOn": [
+        "Start Backend 🐍",
+        "Start Frontend 🖥️"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
