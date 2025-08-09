@@ -10,7 +10,10 @@
         "panel": "dedicated",
         "group": "servers"
       },
-      "runOptions": { "runOn": "folderOpen" }
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "problemMatcher": []
     },
     {
       "label": "Start Frontend 🖥️",

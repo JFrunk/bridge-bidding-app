@@ -1,0 +1,28 @@
+from engine.hand import Hand
+
+def evaluate(hand: Hand, features: dict):
+    """
+    Master function for the Stayman convention after a 1NT opening.
+    """
+    auction_features = features['auction_features']
+    auction_history = features['auction_history']
+
+    # --- LOGIC FOR RESPONDER (Initiating Stayman) ---
+    if auction_features['opening_bid'] == '1NT' and auction_features['opener_relationship'] == 'Partner':
+        non_pass_bids = [bid for bid in auction_history if bid != 'Pass']
+        # Check if it's our turn to respond to 1NT
+        if len(non_pass_bids) == 1:
+            # Check for 8+ points and a 4-card major
+            if features['hand_features']['hcp'] >= 8 and (hand.suit_lengths['♥'] >= 4 or hand.suit_lengths['♠'] >= 4):
+                return ("2♣", "Stayman. Asking partner for a 4-card major suit.")
+
+    # --- LOGIC FOR OPENER (Responding to Stayman) ---
+    if auction_features['opener_relationship'] == 'Me' and auction_features['partner_last_bid'] == '2♣':
+        if hand.suit_lengths['♥'] >= 4:
+            return ("2♥", "Response to Stayman, showing a 4+ card Heart suit.")
+        if hand.suit_lengths['♠'] >= 4:
+            return ("2♠", "Response to Stayman, showing a 4+ card Spade suit.")
+        # If no 4-card major, bid 2 Diamonds
+        return ("2♦", "Response to Stayman, denying a 4-card major.")
+
+    return None # Convention is not applicable
