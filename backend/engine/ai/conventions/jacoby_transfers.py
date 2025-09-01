@@ -1,40 +1,50 @@
 from engine.hand import Hand
+from engine.ai.conventions.base_convention import ConventionModule
+from typing import Optional, Tuple, Dict
 
-def evaluate(hand: Hand, features: dict):
-    """
-    Master function for the Jacoby Transfer convention.
-    Handles both initiating and completing the transfer.
-    """
-    auction_features = features['auction_features']
-    auction_history = features['auction_history']
+class JacobyConvention(ConventionModule):
+    """Complete playbook for the Jacoby Transfer convention."""
+    
+    def get_constraints(self) -> Dict:
+        return {'suit_length_req': (['♥', '♠'], 5, 'any_of')}
 
-    # --- LOGIC FOR COMPLETING a transfer ---
-    if auction_features['opener_relationship'] == 'Me' and auction_features['opening_bid'] == '1NT':
-        partner_last_bid = auction_features['partner_last_bid']
-        
-        # Partner transferred to Hearts (bid 2 Diamonds)
+    def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+        if self._is_completion_applicable(features):
+            return self._get_completion_bid(hand, features)
+        if self._is_initiation_applicable(hand, features):
+            return self._get_transfer_bid(hand)
+        return None
+
+    def _is_completion_applicable(self, features: Dict) -> bool:
+        auction_features = features.get('auction_features', {})
+        partner_last_bid = auction_features.get('partner_last_bid')
+        return (auction_features.get('opener_relationship') == 'Me' and
+                auction_features.get('opening_bid') == '1NT' and
+                partner_last_bid in ['2♦', '2♥'])
+
+    def _get_completion_bid(self, hand: Hand, features: Dict) -> Tuple[str, str]:
+        partner_last_bid = features['auction_features']['partner_last_bid']
         if partner_last_bid == "2♦":
-            # With a maximum hand (17-18 pts) and only 2 hearts, bid 2NT
             if hand.hcp >= 17 and hand.suit_lengths['♥'] == 2:
                 return ("2NT", "Maximum 1NT opening (17-18 HCP) with no fit for Hearts.")
-            # Otherwise, complete the transfer normally
             return ("2♥", "Completing the transfer to Hearts.")
-
-        # Partner transferred to Spades (bid 2 Hearts)
         if partner_last_bid == "2♥":
-            # With a maximum hand (17-18 pts) and only 2 spades, bid 2NT
             if hand.hcp >= 17 and hand.suit_lengths['♠'] == 2:
                 return ("2NT", "Maximum 1NT opening (17-18 HCP) with no fit for Spades.")
-            # Otherwise, complete the transfer normally
             return ("2♠", "Completing the transfer to Spades.")
+        return ("Pass", "Error: Fall-through in transfer completion.")
 
-    # --- LOGIC FOR INITIATING a transfer ---
-    if auction_features['opening_bid'] == '1NT' and auction_features['opener_relationship'] == 'Partner':
-        non_pass_bids = [bid for bid in auction_history if bid != 'Pass']
-        if len(non_pass_bids) == 1:
-            if hand.suit_lengths['♥'] >= 5:
-                return ("2♦", "Jacoby Transfer showing 5+ Hearts.")
-            if hand.suit_lengths['♠'] >= 5:
-                return ("2♥", "Jacoby Transfer showing 5+ Spades.")
-
-    return None # Convention is not applicable
+    def _is_initiation_applicable(self, hand: Hand, features: Dict) -> bool:
+        auction_features = features.get('auction_features', {})
+        non_pass_bids = [bid for bid in features.get('auction_history', []) if bid != 'Pass']
+        return (auction_features.get('opening_bid') == '1NT' and
+                auction_features.get('opener_relationship') == 'Partner' and
+                len(non_pass_bids) == 1 and
+                (hand.suit_lengths['♥'] >= 5 or hand.suit_lengths['♠'] >= 5))
+    
+    def _get_transfer_bid(self, hand: Hand) -> Optional[Tuple[str, str]]:
+        if hand.suit_lengths['♥'] >= 5:
+            return ("2♦", "Jacoby Transfer showing 5+ Hearts.")
+        if hand.suit_lengths['♠'] >= 5:
+            return ("2♥", "Jacoby Transfer showing 5+ Spades.")
+        return None

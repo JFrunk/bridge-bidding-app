@@ -2,68 +2,74 @@ from engine.hand import Hand
 
 def get_openers_rebid(hand: Hand, auction_history: list):
     """
-    Determines the opener's rebid, now with logic for a 2 Club opening.
+    Determines the opener's rebid with corrected logic for strong hands.
     """
     partner_response = next((bid for bid in reversed(auction_history[1::2]) if bid != 'Pass'), None)
     my_opening_bid = next((bid for bid in auction_history[::2] if bid != 'Pass'), None)
 
     if not partner_response or not my_opening_bid:
         return ("Pass", "Cannot determine auction context for rebid.")
-
-    # --- NEW LOGIC FOR 2 CLUB REBID ---
-    if my_opening_bid == '2♣' and partner_response == '2♦':
-        # After the waiting response, describe the strong hand.
-        if 22 <= hand.hcp <= 24 and hand.is_balanced:
-            return ("2NT", "Shows a balanced hand with 22-24 HCP.")
         
-        # Find the best 5+ card suit to show.
-        best_suit = None
-        best_length = 4
-        for suit, length in hand.suit_lengths.items():
-            if length > best_length:
-                best_length = length
-                best_suit = suit
-        if best_suit:
-            # A simple rebid of the long suit.
-            return (f"2{best_suit}", f"Shows a strong hand with a long {best_suit} suit.")
+    # --- LOGIC FOR REBIDS AFTER A 2 CLUB OPENING ---
+    if my_opening_bid == '2♣':
+        if partner_response == '2♦':
+            if 22 <= hand.hcp <= 24 and hand.is_balanced:
+                return ("2NT", "Shows a balanced hand with 22-24 HCP.")
+            best_suit = max(hand.suit_lengths, key=hand.suit_lengths.get)
+            if hand.suit_lengths[best_suit] >= 5:
+                bid_level = '3' if best_suit in ['♣', '♦'] else '2'
+                return (f"{bid_level}{best_suit}", f"Shows a strong hand with a long {best_suit} suit.")
+        if partner_response == '2NT':
+            best_suit = max(hand.suit_lengths, key=hand.suit_lengths.get)
+            if hand.suit_lengths[best_suit] >= 5:
+                return (f"3{best_suit}", f"Showing my long {best_suit} suit.")
 
-    # --- EXISTING LOGIC FOR OTHER REBIDS ---
-    try:
-        response_level = int(partner_response[0])
-        response_suit = partner_response[1]
-    except (ValueError, IndexError):
-        return ("Pass", "Partner's response was not a standard suit bid.")
-    
-    my_opening_suit = my_opening_bid[1]
-    
-    if response_suit == my_opening_suit and my_opening_suit in ['♥', '♠']:
-        partner_points_min = 0
-        if response_level == 2: partner_points_min = 6
-        if response_level == 3: partner_points_min = 10
+    # --- LOGIC FOR REBIDS AFTER A 1-LEVEL OPENING ---
+    # Minimum Hand: 13-15 total points
+    if 13 <= hand.total_points <= 15:
+        if partner_response.endswith(my_opening_bid[1]):
+            return ("Pass", "Minimum hand (13-15 pts), passing partner's simple raise.")
+        if partner_response == "1NT":
+            second_suits = [s for s, l in hand.suit_lengths.items() if l >= 4 and s != my_opening_bid[1]]
+            if second_suits:
+                return (f"2{second_suits[0]}", f"Minimum hand (13-15 pts) showing a second suit.")
+            if hand.suit_lengths.get(my_opening_bid[1], 0) >= 6:
+                return (f"2{my_opening_bid[1]}", f"Minimum hand (13-15 pts) rebidding a 6+ card suit.")
+            return (f"2{my_opening_bid[1]}", f"Minimum hand (13-15 pts) rebidding a 5-card suit.")
+        if partner_response[0] == '1' and len(partner_response) == 2:
+            partner_suit = partner_response[1]
+            if hand.suit_lengths.get(partner_suit, 0) >= 4:
+                return (f"2{partner_suit}", f"Minimum hand (13-15 pts) showing 4+ card support.")
+            if hand.is_balanced:
+                return ("1NT", "Minimum hand (12-14 HCP), balanced, no fit for partner's suit.")
 
-        if hand.total_points + partner_points_min >= 25:
-            game_bid = f"4{my_opening_suit}"
-            return (game_bid, f"Accepting the invitation to game with {hand.total_points} points.")
+    # Medium Hand: 16-18 total points
+    elif 16 <= hand.total_points <= 18:
+        if partner_response.endswith(my_opening_bid[1]):
+            return (f"3{my_opening_bid[1]}", "Invitational (16-18 pts), raising partner's simple raise.")
+        if partner_response[0] == '1' and len(partner_response) == 2:
+            partner_suit = partner_response[1]
+            if hand.suit_lengths.get(partner_suit, 0) >= 4:
+                return (f"3{partner_suit}", f"Invitational (16-18 pts) jump raise showing 4+ card support.")
+        if hand.suit_lengths.get(my_opening_bid[1], 0) >= 6:
+            return (f"3{my_opening_bid[1]}", f"Invitational (16-18 pts) jump rebid of a 6+ card suit.")
+        return ("2NT", "Shows a strong hand (16-18 pts) with no obvious fit.")
+
+    # Strong Hand: 19+ total points
+    elif hand.total_points >= 19:
+        # CORRECTED LOGIC: First, check if partner has raised our suit
+        if partner_response.endswith(my_opening_bid[1]):
+            partner_suit = my_opening_bid[1]
+            if partner_suit in ['♥', '♠']:
+                return (f"4{partner_suit}", f"Strong hand ({hand.total_points} pts), bidding game after partner's raise.")
         
-        if hand.total_points + partner_points_min >= 23:
-            invitational_bid = f"3{my_opening_suit}"
-            return (invitational_bid, f"Inviting to game with a strong hand ({hand.total_points} points).")
+        # If partner bid a new suit and we have a fit
+        if len(partner_response) == 2:
+            partner_suit = partner_response[1]
+            if partner_suit in ['♥', '♠'] and hand.suit_lengths.get(partner_suit, 0) >= 4:
+                return (f"4{partner_suit}", f"Strong hand ({hand.total_points} pts), bidding game with a fit.")
         
-        return ("Pass", f"With a minimum hand ({hand.total_points} points), I will not bid further.")
+        # Default for strong hands is to bid game in NT
+        return ("3NT", f"Strong hand ({hand.total_points} pts), bidding game in No-Trump.")
 
-    if partner_response in ['1♥', '1♠']:
-        suit_of_response = partner_response[1]
-        if hand.suit_lengths[suit_of_response] >= 4:
-            if 12 <= hand.total_points <= 15:
-                return (f"2{suit_of_response}", f"Shows 12-15 points and 4+ card support for partner's major.")
-            if 16 <= hand.total_points <= 18:
-                return (f"3{suit_of_response}", f"Invitational. Shows 16-18 points and 4+ card support.")
-
-    for suit, length in hand.suit_lengths.items():
-        if length >= 6:
-            if 12 <= hand.total_points <= 15:
-                 return (f"2{suit}", f"Shows a minimum opening hand with a 6+ card suit.")
-            if 16 <= hand.total_points <= 18:
-                 return (f"3{suit}", f"Invitational. Shows 16-18 points with a 6+ card suit.")
-    
     return ("Pass", "No clear rebid available.")

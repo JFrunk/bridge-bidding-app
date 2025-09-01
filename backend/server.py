@@ -4,29 +4,79 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from engine.hand import Hand, Card
 from engine.bidding_engine import BiddingEngine
+from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
+from engine.ai.conventions.preempts import PreemptConvention
+from engine.ai.conventions.jacoby_transfers import JacobyConvention
+from engine.ai.conventions.stayman import StaymanConvention
+from engine.ai.conventions.blackwood import BlackwoodConvention
 
 app = Flask(__name__)
 CORS(app)
 engine = BiddingEngine()
-
 current_deal = { 'North': None, 'East': None, 'South': None, 'West': None }
 
-# --- NEW ENDPOINT TO GET SCENARIO LIST ---
+CONVENTION_MAP = {
+    "Preempt": PreemptConvention(),
+    "JacobyTransfer": JacobyConvention(),
+    "Stayman": StaymanConvention(),
+    "Blackwood": BlackwoodConvention()
+}
+
 @app.route('/api/scenarios', methods=['GET'])
 def get_scenarios():
-    """Reads the scenario file and returns a list of scenario names."""
     try:
-        with open('scenarios.json', 'r') as f:
-            scenarios = json.load(f)
+        with open('scenarios.json', 'r') as f: scenarios = json.load(f)
         scenario_names = [s['name'] for s in scenarios]
         return jsonify({'scenarios': scenario_names})
     except (IOError, json.JSONDecodeError) as e:
         return jsonify({'error': f'Could not load scenarios: {e}'}), 500
 
+@app.route('/api/load-scenario', methods=['POST'])
+def load_scenario():
+    data = request.get_json()
+    scenario_name = data.get('name')
+    try:
+        with open('scenarios.json', 'r') as f: scenarios = json.load(f)
+        target_scenario = next((s for s in scenarios if s['name'] == scenario_name), None)
+        if not target_scenario: return jsonify({'error': 'Scenario not found'}), 404
+            
+        ranks = '23456789TJQKA'
+        suits = ['♠', '♥', '♦', '♣']
+        full_deck_set = {Card(r, s) for r in ranks for s in suits}
+        
+        for pos in current_deal: current_deal[pos] = None
+        generated_hands = {}
+
+        for setup_rule in target_scenario.get('setup', []):
+            position = setup_rule['position']
+            hand = None
+            if setup_rule.get('generate_for_convention'):
+                specialist = CONVENTION_MAP.get(setup_rule['generate_for_convention'])
+                if specialist: hand = generate_hand_for_convention(specialist)
+            elif setup_rule.get('constraints'):
+                 hand = generate_hand_with_constraints(setup_rule['constraints'])
+            
+            if hand:
+                generated_hands[position] = hand
+                full_deck_set -= set(hand.cards)
+
+        remaining_cards = list(full_deck_set)
+        random.shuffle(remaining_cards)
+        
+        for position in ['North', 'East', 'South', 'West']:
+            if not current_deal.get(position):
+                current_deal[position] = Hand(remaining_cards[:13])
+                remaining_cards = remaining_cards[13:]
+
+        south_hand = current_deal['South']
+        hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
+        points_for_json = { 'hcp': south_hand.hcp, 'dist_points': south_hand.dist_points, 'total_points': south_hand.total_points, 'suit_hcp': south_hand.suit_hcp, 'suit_lengths': south_hand.suit_lengths }
+        return jsonify({'hand': hand_for_json, 'points': points_for_json})
+    except Exception as e:
+        return jsonify({'error': f'Could not load scenario: {e}'}), 500
+
 @app.route('/api/deal-hands', methods=['GET'])
 def deal_hands():
-    """Deals four random hands."""
-    # This function remains unchanged
     ranks = '23456789TJQKA'
     suits = ['♠', '♥', '♦', '♣']
     deck = [Card(rank, suit) for rank in ranks for suit in suits]
@@ -38,59 +88,10 @@ def deal_hands():
     current_deal['West'] = Hand(deck[39:52])
     
     south_hand = current_deal['South']
-    
     hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
-    points_for_json = {
-        'hcp': south_hand.hcp, 'dist_points': south_hand.dist_points,
-        'total_points': south_hand.total_points, 'suit_hcp': south_hand.suit_hcp,
-        'suit_lengths': south_hand.suit_lengths
-    }
+    points_for_json = { 'hcp': south_hand.hcp, 'dist_points': south_hand.dist_points, 'total_points': south_hand.total_points, 'suit_hcp': south_hand.suit_hcp, 'suit_lengths': south_hand.suit_lengths }
     return jsonify({'hand': hand_for_json, 'points': points_for_json})
 
-@app.route('/api/load-scenario', methods=['POST'])
-def load_scenario():
-    """Loads a specific hand scenario from a JSON file."""
-    # This function remains unchanged
-    data = request.get_json()
-    scenario_name = data.get('name')
-    try:
-        with open('scenarios.json', 'r') as f: scenarios = json.load(f)
-        target_scenario = next((s for s in scenarios if s['name'] == scenario_name), None)
-        if not target_scenario: return jsonify({'error': 'Scenario not found'}), 404
-            
-        ranks = '23456789TJQKA'
-        suits = ['♠', '♥', '♦', '♣']
-        deck = {Card(r, s) for r in ranks for s in suits}
-        
-        defined_hands = target_scenario.get('hands', {})
-        for position in ['North', 'East', 'South', 'West']:
-            if position in defined_hands:
-                card_data = defined_hands[position]
-                hand_cards = [Card(c['rank'], c['suit']) for c in card_data]
-                current_deal[position] = Hand(hand_cards)
-                deck -= set(hand_cards)
-        
-        remaining_cards = list(deck)
-        random.shuffle(remaining_cards)
-        
-        for position in ['North', 'East', 'South', 'West']:
-            if position not in defined_hands:
-                # This part is simplified, assuming full hands are defined or the rest are random
-                hand_cards = remaining_cards[:13]
-                current_deal[position] = Hand(hand_cards)
-                remaining_cards = remaining_cards[13:]
-
-        south_hand = current_deal['South']
-        hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
-        points_for_json = {
-            'hcp': south_hand.hcp, 'dist_points': south_hand.dist_points,
-            'total_points': south_hand.total_points, 'suit_hcp': south_hand.suit_hcp,
-            'suit_lengths': south_hand.suit_lengths
-        }
-        return jsonify({'hand': hand_for_json, 'points': points_for_json})
-    except (IOError, json.JSONDecodeError) as e: return jsonify({'error': f'Could not load scenarios: {e}'}), 500
-
-# The get_next_bid and get_feedback functions remain unchanged
 @app.route('/api/get-next-bid', methods=['POST'])
 def get_next_bid():
     data = request.get_json()
@@ -100,7 +101,7 @@ def get_next_bid():
         if not player_hand: return jsonify({'error': "Deal has not been made yet."}), 400
         bid, explanation = engine.get_next_bid(player_hand, auction_history, current_player)
         return jsonify({'bid': bid, 'explanation': explanation})
-    except (KeyError, TypeError) as e: return jsonify({'error': f"Invalid data format: {e}"}), 400
+    except Exception as e: return jsonify({'error': f"Server error in get_next_bid: {e}"}), 500
 
 @app.route('/api/get-feedback', methods=['POST'])
 def get_feedback():
@@ -115,4 +116,4 @@ def get_feedback():
         else:
             feedback = f"⚠️ Your bid was {user_bid}. The recommended bid is {optimal_bid}. {explanation}"
         return jsonify({'feedback': feedback})
-    except (KeyError, TypeError) as e: return jsonify({'error': f"Invalid data format for feedback: {e}"}), 400
+    except Exception as e: return jsonify({'error': f"Server error in get_feedback: {e}"}), 500
