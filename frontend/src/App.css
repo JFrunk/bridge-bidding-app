@@ -1,0 +1,296 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  background-color: #3d6b52;
+  color: white;
+  padding: 20px;
+}
+
+.app-container {
+  max-width: 900px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.my-hand {
+  width: 100%;
+}
+
+.bidding-area {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+/* --- UPDATED STYLES FOR HAND DISPLAY --- */
+.hand-display {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Align groups to the top */
+  gap: 20px; /* This creates the space BETWEEN suit groups */
+  margin-top: 10px;
+  padding: 10px;
+  min-height: 125px; /* Prevent layout shift */
+}
+
+.suit-group {
+  display: flex;
+  gap: -45px; /* This makes the cards WITHIN a suit overlap */
+}
+/* --- END UPDATED STYLES --- */
+
+
+.card {
+  width: 70px;
+  height: 100px;
+  border: 1px solid #999;
+  border-radius: 6px;
+  background-color: #f8f8f8;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+  position: relative;
+  font-weight: bold;
+}
+.card:hover {
+  transform: translateY(-15px);
+}
+
+.card .suit-red { color: #d90429; }
+.card .suit-black { color: #000; }
+
+.card-corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.card-corner .rank { font-size: 18px; }
+.card-corner .suit-symbol-small { font-size: 16px; }
+.top-left { top: 5px; left: 5px; }
+.bottom-right { bottom: 5px; right: 5px; transform: rotate(180deg); }
+.card-center { display: flex; justify-content: center; align-items: center; height: 100%; }
+.card-center .suit-symbol-large { font-size: 40px; }
+
+.card .suit-red { color: #d90429; }
+.card .suit-black { color: #000; }
+
+.card-corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.card-corner .rank {
+  font-size: 18px;
+}
+.card-corner .suit-symbol-small {
+  font-size: 16px;
+}
+
+.top-left {
+  top: 5px;
+  left: 5px;
+}
+
+.bottom-right {
+  bottom: 5px;
+  right: 5px;
+  transform: rotate(180deg); /* Flips the corner */
+}
+
+.card-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.card-center .suit-symbol-large {
+  font-size: 40px;
+}
+
+/* New styles for rank and suit */
+.card .rank {
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1;
+  align-self: flex-start;
+}
+.card .suit {
+  font-size: 36px;
+  line-height: 1;
+  align-self: center;
+  margin-bottom: 5px;
+}
+
+.card .suit-red { color: #d90429; }
+.card .suit-black { color: #000; }
+
+.hand-analysis {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+.hand-analysis h4 {
+  margin-top: 0;
+  text-align: center;
+}
+.suit-points {
+  display: flex;
+  justify-content: space-around;
+  font-size: 16px;
+  margin-top: 10px;
+}
+.suit-red { color: #ff5252; }
+.suit-black { color: #fff; }
+
+.bidding-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+.bidding-table th, .bidding-table td {
+  border: 1px solid #777;
+  padding: 8px;
+  min-width: 60px;
+  height: 24px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.bidding-table td:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+.bidding-table th {
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: background-color 0.3s ease;
+  cursor: default;
+}
+.bidding-table .current-player {
+  background-color: #f0e68c;
+  color: #333;
+  border: 2px solid white;
+}
+
+.action-area {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bidding-box-container {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+.bidding-box-levels, .bidding-box-suits, .bidding-box-calls {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.bidding-box-container button {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 8px;
+  width: 50px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #f0f0f0;
+  color: #333;
+}
+.bidding-box-calls button {
+  width: 60px;
+}
+.bidding-box-levels button.selected {
+  background-color: #007bff;
+  color: white;
+}
+.bidding-box-container button:disabled {
+  background-color: #555;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.game-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.replay-button {
+  font-family: inherit;
+  font-size: 16px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  background-color: #ffc107;
+  color: #212529;
+  cursor: pointer;
+}
+.replay-button:disabled {
+  background-color: #555;
+  color: #888;
+  cursor: not-allowed;
+}
+
+
+.deal-button {
+  font-family: inherit;
+  font-size: 16px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  background-color: #28a745;
+  color: white;
+  cursor: pointer;
+}
+
+.feedback-panel {
+  margin-top: 15px;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-left: 4px solid #17a2b8;
+  border-radius: 4px;
+}
+
+.error-message {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #721c24;
+  color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.scenario-loader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.scenario-loader select {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  font-size: 14px;
+}
+.scenario-loader button {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: none;
+  background-color: #6c757d;
+  color: white;
+  cursor: pointer;
+}
