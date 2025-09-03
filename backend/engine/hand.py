@@ -3,6 +3,7 @@ from collections import namedtuple
 Card = namedtuple('Card', ['rank', 'suit'])
 
 class Hand:
+    """Represents a 13-card bridge hand and evaluates its properties."""
     def __init__(self, cards):
         if len(cards) != 13:
             raise ValueError("A hand must contain exactly 13 cards.")
