@@ -1,12 +1,12 @@
 from engine.hand import Hand
-from typing import Optional, Tuple, Dict
+from typing import Optional, Tuple
 
 class TakeoutDoubleConvention:
     """
     Playbook for making a Takeout Double, based on the provided flowchart.
     """
 
-    def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+    def evaluate(self, hand: Hand, features: dict) -> Optional[Tuple[str, str]]:
         """
         Main evaluation function. Checks if a takeout double is the correct action.
         """
@@ -18,7 +18,7 @@ class TakeoutDoubleConvention:
             
         return None
 
-    def _is_applicable(self, features: Dict) -> bool:
+    def _is_applicable(self, features: dict) -> bool:
         """
         A takeout double is applicable if an opponent has opened (but not in NT)
         and our side has not yet bid.
@@ -32,11 +32,11 @@ class TakeoutDoubleConvention:
                                len(non_pass_bids) == 1)
         
         # Rule: Is the opening bid No-Trump? If so, double is not for takeout.
-        is_not_nt_opening = 'NT' not in opening_bid
+        is_not_nt_opening = opening_bid and 'NT' not in opening_bid
         
         return is_correct_position and is_not_nt_opening
 
-    def _hand_qualifies(self, hand: Hand, features: Dict) -> bool:
+    def _hand_qualifies(self, hand: Hand, features: dict) -> bool:
         """
         Checks for 13+ points, shortness in opponent's suit, and support for unbid suits.
         """
