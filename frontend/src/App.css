@@ -4,7 +4,6 @@ body {
   color: white;
   padding: 20px;
 }
-
 .app-container {
   max-width: 900px;
   margin: auto;
@@ -12,36 +11,28 @@ body {
   flex-direction: column;
   gap: 20px;
 }
-
 .my-hand {
   width: 100%;
 }
-
 .bidding-area {
   width: 100%;
   background-color: rgba(0, 0, 0, 0.2);
   padding: 10px;
   border-radius: 8px;
 }
-
-/* --- UPDATED STYLES FOR HAND DISPLAY --- */
 .hand-display {
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* Align groups to the top */
-  gap: 20px; /* This creates the space BETWEEN suit groups */
+  align-items: flex-start;
+  gap: 20px;
   margin-top: 10px;
   padding: 10px;
-  min-height: 125px; /* Prevent layout shift */
+  min-height: 125px;
 }
-
 .suit-group {
   display: flex;
-  gap: -45px; /* This makes the cards WITHIN a suit overlap */
+  gap: -45px;
 }
-/* --- END UPDATED STYLES --- */
-
-
 .card {
   width: 70px;
   height: 100px;
@@ -56,10 +47,8 @@ body {
 .card:hover {
   transform: translateY(-15px);
 }
-
 .card .suit-red { color: #d90429; }
 .card .suit-black { color: #000; }
-
 .card-corner {
   position: absolute;
   display: flex;
@@ -73,63 +62,6 @@ body {
 .bottom-right { bottom: 5px; right: 5px; transform: rotate(180deg); }
 .card-center { display: flex; justify-content: center; align-items: center; height: 100%; }
 .card-center .suit-symbol-large { font-size: 40px; }
-
-.card .suit-red { color: #d90429; }
-.card .suit-black { color: #000; }
-
-.card-corner {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1;
-}
-
-.card-corner .rank {
-  font-size: 18px;
-}
-.card-corner .suit-symbol-small {
-  font-size: 16px;
-}
-
-.top-left {
-  top: 5px;
-  left: 5px;
-}
-
-.bottom-right {
-  bottom: 5px;
-  right: 5px;
-  transform: rotate(180deg); /* Flips the corner */
-}
-
-.card-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-}
-
-.card-center .suit-symbol-large {
-  font-size: 40px;
-}
-
-/* New styles for rank and suit */
-.card .rank {
-  font-size: 24px;
-  font-weight: bold;
-  line-height: 1;
-  align-self: flex-start;
-}
-.card .suit {
-  font-size: 36px;
-  line-height: 1;
-  align-self: center;
-  margin-bottom: 5px;
-}
-
-.card .suit-red { color: #d90429; }
-.card .suit-black { color: #000; }
 
 .hand-analysis {
   margin-top: 20px;
@@ -149,7 +81,6 @@ body {
 }
 .suit-red { color: #ff5252; }
 .suit-black { color: #fff; }
-
 .bidding-table {
   width: 100%;
   border-collapse: collapse;
@@ -168,7 +99,6 @@ body {
 }
 .bidding-table th {
   background-color: rgba(255, 255, 255, 0.1);
-  transition: background-color 0.3s ease;
   cursor: default;
 }
 .bidding-table .current-player {
@@ -176,7 +106,6 @@ body {
   color: #333;
   border: 2px solid white;
 }
-
 .action-area {
   background-color: rgba(0, 0, 0, 0.2);
   padding: 15px;
@@ -185,7 +114,6 @@ body {
   justify-content: space-between;
   align-items: center;
 }
-
 .bidding-box-container {
   display: flex;
   gap: 15px;
@@ -220,12 +148,10 @@ body {
   color: #888;
   cursor: not-allowed;
 }
-
 .game-controls {
   display: flex;
   gap: 10px;
 }
-
 .replay-button {
   font-family: inherit;
   font-size: 16px;
@@ -241,8 +167,6 @@ body {
   color: #888;
   cursor: not-allowed;
 }
-
-
 .deal-button {
   font-family: inherit;
   font-size: 16px;
@@ -253,7 +177,6 @@ body {
   color: white;
   cursor: pointer;
 }
-
 .feedback-panel {
   margin-top: 15px;
   padding: 12px;
@@ -261,7 +184,6 @@ body {
   border-left: 4px solid #17a2b8;
   border-radius: 4px;
 }
-
 .error-message {
   margin-top: 15px;
   padding: 10px;
@@ -271,7 +193,6 @@ body {
   border-radius: 4px;
   text-align: center;
 }
-
 .scenario-loader {
   display: flex;
   align-items: center;

@@ -6,7 +6,6 @@ from flask_cors import CORS
 from engine.hand import Hand, Card
 from engine.bidding_engine import BiddingEngine
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
-# Correctly import all specialist classes that the CONVENTION_MAP needs
 from engine.ai.conventions.preempts import PreemptConvention
 from engine.ai.conventions.jacoby_transfers import JacobyConvention
 from engine.ai.conventions.stayman import StaymanConvention
@@ -29,8 +28,9 @@ CONVENTION_MAP = {
 def get_scenarios():
     try:
         with open('scenarios.json', 'r') as f: scenarios = json.load(f)
-        return jsonify({'scenarios': [s['name'] for s in scenarios]})
-    except Exception as e:
+        scenario_names = [s['name'] for s in scenarios]
+        return jsonify({'scenarios': scenario_names})
+    except (IOError, json.JSONDecodeError) as e:
         return jsonify({'error': f'Could not load scenarios: {e}'}), 500
 
 @app.route('/api/load-scenario', methods=['POST'])
@@ -80,7 +80,6 @@ def load_scenario():
 
 @app.route('/api/deal-hands', methods=['GET'])
 def deal_hands():
-    # ... (code for this function is correct and unchanged)
     global current_vulnerability
     vulnerabilities = ["None", "NS", "EW", "Both"]
     try:
@@ -88,14 +87,17 @@ def deal_hands():
         current_vulnerability = vulnerabilities[(current_idx + 1) % len(vulnerabilities)]
     except ValueError:
         current_vulnerability = "None"
+
     ranks = '23456789TJQKA'
     suits = ['♠', '♥', '♦', '♣']
     deck = [Card(rank, suit) for rank in ranks for suit in suits]
     random.shuffle(deck)
+    
     current_deal['North'] = Hand(deck[0:13])
     current_deal['East'] = Hand(deck[13:26])
     current_deal['South'] = Hand(deck[26:39])
     current_deal['West'] = Hand(deck[39:52])
+    
     south_hand = current_deal['South']
     hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
     points_for_json = { 'hcp': south_hand.hcp, 'dist_points': south_hand.dist_points, 'total_points': south_hand.total_points, 'suit_hcp': south_hand.suit_hcp, 'suit_lengths': south_hand.suit_lengths }
@@ -103,14 +105,16 @@ def deal_hands():
 
 @app.route('/api/get-next-bid', methods=['POST'])
 def get_next_bid():
-    # ... (code for this function is correct and unchanged)
     try:
         data = request.get_json()
         auction_history, current_player = data['auction_history'], data['current_player']
         player_hand = current_deal[current_player]
-        if not player_hand: return jsonify({'error': "Deal has not been made yet."}), 400
+        if not player_hand: 
+            return jsonify({'error': "Deal has not been made yet."}), 400
+        
         bid, explanation = engine.get_next_bid(player_hand, auction_history, current_player, current_vulnerability)
         return jsonify({'bid': bid, 'explanation': explanation})
+    
     except Exception as e:
         print("---!!! AN ERROR OCCURRED IN GET_NEXT_BID !!!---")
         traceback.print_exc()
@@ -118,7 +122,6 @@ def get_next_bid():
 
 @app.route('/api/get-feedback', methods=['POST'])
 def get_feedback():
-    # ... (code for this function is correct and unchanged)
     data = request.get_json()
     try:
         auction_history = data['auction_history']

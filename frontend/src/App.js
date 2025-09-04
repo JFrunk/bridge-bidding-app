@@ -4,6 +4,7 @@ import './App.css';
 // --- UI Components ---
 function Card({ rank, suit }) {
   const suitColor = suit === '♥' || suit === '♦' ? 'suit-red' : 'suit-black';
+  
   const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
   const displayRank = rankMap[rank] || rank;
 
@@ -166,7 +167,10 @@ function App() {
           const data = await response.json();
           setAuction(prevAuction => [...prevAuction, data]);
           setNextPlayerIndex(prevIndex => (prevIndex + 1) % 4);
-        } catch (err) { setError("AI bidding failed. Is the server running?"); setIsAiBidding(false); }
+        } catch (err) {
+          setError("AI bidding failed. Is the server running?");
+          setIsAiBidding(false);
+        }
       };
       runAiTurn();
     } else if (isAiBidding) {
