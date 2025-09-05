@@ -11,11 +11,10 @@ def test_initiate_transfer_to_spades():
     ] # 5 HCP, 5-card spade suit
     hand = Hand(cards)
     features = {
-        'hand': hand, 'hand_features': {'hcp': 5},
+        'hand': hand,
         'auction_features': {'opening_bid': '1NT', 'opener_relationship': 'Partner'},
         'auction_history': ['1NT', 'Pass']
     }
     specialist = JacobyConvention()
     result = specialist.evaluate(hand, features)
-    assert result is not None
-    assert result[0] == "2♥"
+    assert result is not None and result[0] == "2♥"

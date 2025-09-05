@@ -8,12 +8,11 @@ def test_1nt_opening():
         Card('A','♥'), Card('K','♥'), Card('3','♥'),
         Card('A','♦'), Card('K','♦'), Card('3','♦'),
         Card('J','♣'), Card('T','♣'), Card('2','♣'), Card('4','♣')
-    ] # 16 HCP, Balanced (3-3-3-4 shape)
+    ] # 16 HCP, Balanced
     hand = Hand(cards)
     specialist = OpeningBidsModule()
     result = specialist.evaluate(hand, {})
-    assert result is not None
-    assert result[0] == "1NT"
+    assert result is not None and result[0] == "1NT"
 
 def test_strong_2nt_opening():
     """Tests that a 21 HCP balanced hand correctly opens 2NT."""
@@ -22,15 +21,14 @@ def test_strong_2nt_opening():
         Card('A','♥'), Card('K','♥'), Card('Q','♥'),
         Card('A','♦'), Card('K','♦'), Card('2','♦'),
         Card('A','♣'), Card('K','♣'), Card('2','♣'), Card('3','♣')
-    ] # 21 HCP, Balanced (3-3-3-4 shape)
+    ] # 21 HCP, Balanced
     hand = Hand(cards)
     specialist = OpeningBidsModule()
     result = specialist.evaluate(hand, {})
-    assert result is not None
-    assert result[0] == "2NT"
+    assert result is not None and result[0] == "2NT"
 
 def test_strong_2c_opening():
-    """Tests that a 23 HCP hand correctly opens 2C."""
+    """Tests that a 23 total points hand correctly opens 2C."""
     cards = [
         Card('A','♠'), Card('K','♠'), Card('Q','♠'), Card('J','♠'),
         Card('A','♥'), Card('K','♥'), Card('Q','♥'),
@@ -40,5 +38,4 @@ def test_strong_2c_opening():
     hand = Hand(cards)
     specialist = OpeningBidsModule()
     result = specialist.evaluate(hand, {})
-    assert result is not None
-    assert result[0] == "2♣"
+    assert result is not None and result[0] == "2♣"

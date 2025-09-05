@@ -11,10 +11,10 @@ def test_should_initiate_stayman():
     ] # 9 HCP, 4 spades
     hand = Hand(cards)
     features = {
-        'hand': hand, 'hand_features': {'hcp': 9},
+        'hand': hand, 'hand_features': {'hcp': 9, 'suit_lengths': hand.suit_lengths},
         'auction_features': {'opening_bid': '1NT', 'opener_relationship': 'Partner'},
-        'auction_history': ['1NT']
+        'auction_history': ['1NT', 'Pass']
     }
     specialist = StaymanConvention()
     result = specialist.evaluate(hand, features)
-    assert result[0] == "2♣"
+    assert result is not None and result[0] == "2♣"

@@ -6,7 +6,6 @@ def test_negative_double_is_applicable():
     Tests that with 8 HCP and 4 hearts after a 1C - 1S auction,
     the correct bid is a Negative Double.
     """
-    # Setup: A hand suitable for a negative double
     cards = [
         Card('5','♠'), Card('4','♠'), Card('3','♠'),
         Card('A','♥'), Card('K','♥'), Card('Q','♥'), Card('2','♥'),
@@ -15,20 +14,13 @@ def test_negative_double_is_applicable():
     ] # 8 HCP, 4 hearts
     hand = Hand(cards)
     
-    # Context: Partner opened 1C, RHO overcalled 1S
     features = {
-        'hand': hand,
-        'auction_history': ['1♣', '1♠'],
-        'my_index': 2, # South's turn
+        'hand': hand, 'auction_history': ['1♣', '1♠'], 'my_index': 2,
         'positions': ['North', 'East', 'South', 'West'],
-        'auction_features': {
-            'opener': 'North',
-            'opener_relationship': 'Partner',
-        }
+        'auction_features': {'opening_bid': '1♣', 'opener_relationship': 'Partner'},
     }
     
     specialist = NegativeDoubleConvention()
     result = specialist.evaluate(hand, features)
     
-    assert result is not None
-    assert result[0] == "X"
+    assert result is not None and result[0] == "X"

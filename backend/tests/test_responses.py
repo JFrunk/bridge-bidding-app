@@ -10,11 +10,13 @@ def test_simple_raise_of_major():
         Card('J','♣'), Card('T','♣'), Card('2','♣'), Card('3','♣')
     ] # 8 HCP, 3-card spade support
     hand = Hand(cards)
-    features = {'auction_features': {'opening_bid': '1♠'}}
+    features = {
+        'auction_features': {'opening_bid': '1♠', 'opener_relationship': 'Partner'},
+        'positions': ['North', 'East', 'South', 'West'], 'my_index': 2, 'auction_history': ['1♠', 'Pass']
+    }
     specialist = ResponseModule()
     result = specialist.evaluate(hand, features)
-    assert result is not None
-    assert result[0] == "2♠"
+    assert result is not None and result[0] == "2♠"
 
 def test_respond_to_2c_negative():
     """Tests 2C -> 2D negative response."""
@@ -25,8 +27,10 @@ def test_respond_to_2c_negative():
         Card('T','♣'), Card('9','♣'), Card('8','♣'), Card('7','♣')
     ] # 0 HCP
     hand = Hand(cards)
-    features = {'auction_features': {'opening_bid': '2♣'}}
+    features = {
+        'auction_features': {'opening_bid': '2♣', 'opener_relationship': 'Partner'},
+        'positions': ['North', 'East', 'South', 'West'], 'my_index': 2, 'auction_history': ['2♣', 'Pass']
+    }
     specialist = ResponseModule()
     result = specialist.evaluate(hand, features)
-    assert result is not None
-    assert result[0] == "2♦"
+    assert result is not None and result[0] == "2♦"

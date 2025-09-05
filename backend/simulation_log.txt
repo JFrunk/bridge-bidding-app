@@ -1,0 +1,29 @@
+--- Hand 1 (Scenario: Opener Rebid Test, Vulnerability: None) ---
+
+[North] (HCP: 13, Total Pts: 14)
+♠ 3
+♥ K Q J 6
+♦ A K T 6 5
+♣ 9 7 2
+[East] (HCP: 7, Total Pts: 8)
+♠ T 7 4 2
+♥ A T 9 4 2
+♦ J 8
+♣ Q 8
+[South] (HCP: 13, Total Pts: 14)
+♠ A J 8 6
+♥ 8 5
+♦ 9 4
+♣ A K J 5 4
+[West] (HCP: 7, Total Pts: 7)
+♠ K Q 9 5
+♥ 7 3
+♦ Q 7 3 2
+♣ T 6 3
+
+Auction:
+
+N: 1♦     E: Pass   S: 1♠     W: Pass   
+N: Pass   E: Pass   
+
+----------------------------------------
