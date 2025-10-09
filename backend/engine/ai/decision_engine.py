@@ -28,11 +28,35 @@ def select_bidding_module(features):
         if len(my_bids) == 0:
             overcall_specialist = OvercallModule()
             if overcall_specialist.evaluate(features['hand'], features): return 'overcalls'
-            
+
             takeout_double_specialist = TakeoutDoubleConvention()
             if takeout_double_specialist.evaluate(features['hand'], features): return 'takeout_doubles'
-        else: # It's my second bid, I am the "advancer"
-            return 'advancer_bids'
+        else: # My second+ bid in a competitive auction
+            # Check if I'm the advancer (partner made an overcall or double)
+            partner_last_bid = auction['partner_last_bid']
+            if partner_last_bid and partner_last_bid not in ['Pass', 'XX']:
+                # Partner overcalled or doubled - I'm the advancer
+                return 'advancer_bids'
+
+            # Check if I'm in balancing seat (pass-out seat)
+            # Last 2 bids were Pass, and my Pass would end the auction
+            auction_history = features['auction_history']
+            if len(auction_history) >= 2 and auction_history[-1] == 'Pass' and auction_history[-2] == 'Pass':
+                # I'm in balancing/pass-out seat
+                # Try to balance with an overcall or takeout double
+                overcall_specialist = OvercallModule()
+                if overcall_specialist.evaluate(features['hand'], features): return 'overcalls'
+
+                takeout_double_specialist = TakeoutDoubleConvention()
+                if takeout_double_specialist.evaluate(features['hand'], features): return 'takeout_doubles'
+
+            # Otherwise, I passed initially and now competing
+            # Can still try to overcall or double
+            overcall_specialist = OvercallModule()
+            if overcall_specialist.evaluate(features['hand'], features): return 'overcalls'
+
+            takeout_double_specialist = TakeoutDoubleConvention()
+            if takeout_double_specialist.evaluate(features['hand'], features): return 'takeout_doubles'
 
     # --- STATE 3: This is an UNCONTESTED PARTNERSHIP auction ---
     if auction['opener_relationship'] == 'Partner': # My partner opened

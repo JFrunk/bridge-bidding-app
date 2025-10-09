@@ -8,9 +8,22 @@ class AdvancerBidsModule(ConventionModule):
         partner_overcall = features['auction_features']['partner_last_bid']
         opener_bid = features['auction_features']['opening_bid']
 
-        if not partner_overcall or len(partner_overcall) < 2:
-            return ("Pass", "Partner's overcall was not a suit.")
-            
+        # Validate that partner actually made an overcall (not Pass, not opening)
+        if not partner_overcall or partner_overcall == 'Pass':
+            return None  # Not an advancing situation
+
+        # Partner doubled for takeout - handle separately (could add logic later)
+        if partner_overcall in ['X', 'XX']:
+            return None  # Responding to doubles needs different logic
+
+        # Partner bid NT - different logic needed
+        if 'NT' in partner_overcall:
+            return None  # NT overcalls need different response logic
+
+        # Partner overcalled a suit - now we can advance
+        if len(partner_overcall) < 2:
+            return None  # Invalid bid format
+
         overcall_suit = partner_overcall[1]
 
         if hand.suit_lengths.get(overcall_suit, 0) >= 3 and hand.total_points >= 8:

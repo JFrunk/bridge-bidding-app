@@ -133,5 +133,35 @@ def get_feedback():
         else:
             feedback = f"⚠️ Your bid was {user_bid}. The recommended bid is {optimal_bid}. {explanation}"
         return jsonify({'feedback': feedback})
-    except Exception as e: 
+    except Exception as e:
         return jsonify({'error': f"Server error in get_feedback: {e}"}), 500
+
+@app.route('/api/get-all-hands', methods=['GET'])
+def get_all_hands():
+    try:
+        all_hands = {}
+        for position in ['North', 'East', 'South', 'West']:
+            hand = current_deal.get(position)
+            if not hand:
+                return jsonify({'error': f'Hand for {position} not available'}), 400
+
+            hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
+            points_for_json = {
+                'hcp': hand.hcp,
+                'dist_points': hand.dist_points,
+                'total_points': hand.total_points,
+                'suit_hcp': hand.suit_hcp,
+                'suit_lengths': hand.suit_lengths
+            }
+            all_hands[position] = {
+                'hand': hand_for_json,
+                'points': points_for_json
+            }
+
+        return jsonify({
+            'hands': all_hands,
+            'vulnerability': current_vulnerability
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': f'Server error in get_all_hands: {e}'}), 500

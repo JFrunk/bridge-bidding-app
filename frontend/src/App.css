@@ -112,7 +112,9 @@ body {
   border-radius: 8px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 .bidding-box-container {
   display: flex;
@@ -214,4 +216,102 @@ body {
   background-color: #6c757d;
   color: white;
   cursor: pointer;
+}
+
+/* Show Hands Controls */
+.show-hands-controls {
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
+}
+.show-hands-controls button {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: none;
+  background-color: #17a2b8;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.show-hands-controls button:hover {
+  background-color: #138496;
+}
+.show-hands-controls button.active {
+  background-color: #28a745;
+}
+.show-hands-controls button.active:hover {
+  background-color: #218838;
+}
+
+/* Table Layout - Bridge Table View */
+.table-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.table-center {
+  display: flex;
+  justify-content: center;
+}
+
+.table-middle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.table-west, .table-east {
+  flex: 0 0 300px;
+  max-width: 300px;
+}
+
+.table-center-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.table-bottom {
+  display: flex;
+  justify-content: center;
+}
+
+.player-hand {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.player-hand h3 {
+  margin: 0 0 10px 0;
+  text-align: center;
+  font-size: 18px;
+  color: #ffc107;
+}
+
+.player-north .hand-display {
+  flex-direction: row;
+}
+
+.player-south .hand-display {
+  flex-direction: row;
+}
+
+.player-east .hand-display,
+.player-west .hand-display {
+  flex-direction: column;
+  align-items: center;
+}
+
+.player-east .suit-group,
+.player-west .suit-group {
+  flex-direction: row;
 }

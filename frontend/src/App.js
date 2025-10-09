@@ -28,6 +28,25 @@ function HandAnalysis({ points, vulnerability }) {
   if (!points) return null;
   return ( <div className="hand-analysis"><h4>Hand Analysis (Vuln: {vulnerability})</h4><p><strong>HCP:</strong> {points.hcp} + <strong>Dist:</strong> {points.dist_points} = <strong>Total: {points.total_points}</strong></p><div className="suit-points"><div><span className="suit-black">♠</span> {points.suit_hcp['♠']} pts ({points.suit_lengths['♠']})</div><div><span className="suit-red">♥</span> {points.suit_hcp['♥']} pts ({points.suit_lengths['♥']})</div><div><span className="suit-red">♦</span> {points.suit_hcp['♦']} pts ({points.suit_lengths['♦']})</div><div><span className="suit-black">♣</span> {points.suit_hcp['♣']} pts ({points.suit_lengths['♣']})</div></div></div> );
 }
+
+function PlayerHand({ position, hand, points, vulnerability }) {
+  if (!hand || !points) return null;
+  return (
+    <div className={`player-hand player-${position.toLowerCase()}`}>
+      <h3>{position}</h3>
+      <div className="hand-display">
+        {['♠', '♥', '♦', '♣'].map(suit => (
+          <div key={suit} className="suit-group">
+            {hand.filter(card => card.suit === suit).map((card, index) => (
+              <Card key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />
+            ))}
+          </div>
+        ))}
+      </div>
+      <HandAnalysis points={points} vulnerability={vulnerability} />
+    </div>
+  );
+}
 function BiddingTable({ auction, players, nextPlayerIndex, onBidClick }) {
   const getBidsForPlayer = (playerIndex) => {
     let playerBids = [];
@@ -68,14 +87,17 @@ function App() {
   const [nextPlayerIndex, setNextPlayerIndex] = useState(0);
   const [isAiBidding, setIsAiBidding] = useState(false);
   const [error, setError] = useState('');
-  const [displayedMessage, setDisplayedMessage] = useState(''); 
+  const [displayedMessage, setDisplayedMessage] = useState('');
   const [scenarioList, setScenarioList] = useState([]);
   const [selectedScenario, setSelectedScenario] = useState('');
   const [initialDeal, setInitialDeal] = useState(null);
   const [vulnerability, setVulnerability] = useState('None');
+  const [allHands, setAllHands] = useState(null);
+  const [showHandsThisDeal, setShowHandsThisDeal] = useState(false);
+  const [alwaysShowHands, setAlwaysShowHands] = useState(false);
 
   const resetAuction = (dealData) => {
-    setInitialDeal(dealData); 
+    setInitialDeal(dealData);
     setHand(dealData.hand);
     setHandPoints(dealData.points);
     setVulnerability(dealData.vulnerability);
@@ -84,6 +106,42 @@ function App() {
     setDisplayedMessage('');
     setError('');
     setIsAiBidding(true);
+    setShowHandsThisDeal(false);
+    if (alwaysShowHands) {
+      fetchAllHands();
+    } else {
+      setAllHands(null);
+    }
+  };
+
+  const fetchAllHands = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/api/get-all-hands');
+      if (!response.ok) throw new Error("Failed to fetch all hands.");
+      const data = await response.json();
+      setAllHands(data.hands);
+    } catch (err) {
+      setError("Could not fetch all hands from server.");
+    }
+  };
+
+  const handleShowHandsThisDeal = () => {
+    if (!showHandsThisDeal) {
+      fetchAllHands();
+    }
+    setShowHandsThisDeal(!showHandsThisDeal);
+  };
+
+  const handleToggleAlwaysShowHands = () => {
+    const newValue = !alwaysShowHands;
+    setAlwaysShowHands(newValue);
+    if (newValue) {
+      fetchAllHands();
+      setShowHandsThisDeal(true);
+    } else {
+      setAllHands(null);
+      setShowHandsThisDeal(false);
+    }
   };
 
   const dealNewHand = async () => {
@@ -178,23 +236,56 @@ function App() {
     }
   }, [auction, nextPlayerIndex, isAiBidding, players]);
 
+  const shouldShowHands = showHandsThisDeal || alwaysShowHands;
+
   return (
     <div className="app-container">
-      <div className="top-panel">
-        <div className="my-hand">
-          <h2>Your Hand (South)</h2>
-          <div className="hand-display">
-            {['♠', '♥', '♦', '♣'].map(suit => ( <div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => ( <Card key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>))}
+      {shouldShowHands && allHands ? (
+        <div className="table-layout">
+          <div className="table-center">
+            <PlayerHand position="North" hand={allHands.North?.hand} points={allHands.North?.points} vulnerability={vulnerability} />
           </div>
-          <HandAnalysis points={handPoints} vulnerability={vulnerability} />
+          <div className="table-middle">
+            <div className="table-west">
+              <PlayerHand position="West" hand={allHands.West?.hand} points={allHands.West?.points} vulnerability={vulnerability} />
+            </div>
+            <div className="table-center-content">
+              <div className="bidding-area">
+                <h2>Bidding</h2>
+                <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} />
+                {displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
+                {error && <div className="error-message">{error}</div>}
+              </div>
+            </div>
+            <div className="table-east">
+              <PlayerHand position="East" hand={allHands.East?.hand} points={allHands.East?.points} vulnerability={vulnerability} />
+            </div>
+          </div>
+          <div className="table-bottom">
+            <PlayerHand position="South" hand={allHands.South?.hand} points={allHands.South?.points} vulnerability={vulnerability} />
+          </div>
         </div>
-      </div>
-      <div className="bidding-area">
+      ) : (
+        <div className="top-panel">
+          <div className="my-hand">
+            <h2>Your Hand (South)</h2>
+            <div className="hand-display">
+              {['♠', '♥', '♦', '♣'].map(suit => ( <div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => ( <Card key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>))}
+            </div>
+            <HandAnalysis points={handPoints} vulnerability={vulnerability} />
+          </div>
+        </div>
+      )}
+
+      {!shouldShowHands && (
+        <div className="bidding-area">
           <h2>Bidding</h2>
           <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} />
           {displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
           {error && <div className="error-message">{error}</div>}
-      </div>
+        </div>
+      )}
+
       <div className="action-area">
         <BiddingBox onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding} auction={auction} />
         <div className="scenario-loader">
@@ -204,6 +295,10 @@ function App() {
         <div className="game-controls">
           <button className="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Replay Hand</button>
           <button className="deal-button" onClick={dealNewHand}>Deal New Hand</button>
+        </div>
+        <div className="show-hands-controls">
+          <button onClick={handleShowHandsThisDeal}>{showHandsThisDeal ? 'Hide Hands (This Deal)' : 'Show Hands (This Deal)'}</button>
+          <button onClick={handleToggleAlwaysShowHands} className={alwaysShowHands ? 'active' : ''}>{alwaysShowHands ? 'Always Show: ON' : 'Always Show: OFF'}</button>
         </div>
       </div>
     </div>
