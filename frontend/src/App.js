@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+// API URL configuration - uses environment variable in production, localhost in development
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+
 // --- UI Components ---
 function Card({ rank, suit }) {
   const suitColor = suit === '♥' || suit === '♦' ? 'suit-red' : 'suit-black';
@@ -122,7 +125,7 @@ function App() {
 
   const fetchAllHands = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/get-all-hands');
+      const response = await fetch(`${API_URL}/api/get-all-hands`);
       if (!response.ok) throw new Error("Failed to fetch all hands.");
       const data = await response.json();
       setAllHands(data.hands);
@@ -152,7 +155,7 @@ function App() {
 
   const handleRequestReview = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/request-review', {
+      const response = await fetch(`${API_URL}/api/request-review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -192,7 +195,7 @@ function App() {
     const conventionName = selectedScenario.replace(' Test', '');
 
     try {
-      const response = await fetch(`http://localhost:5001/api/convention-info?name=${encodeURIComponent(conventionName)}`);
+      const response = await fetch(`${API_URL}/api/convention-info?name=${encodeURIComponent(conventionName)}`);
       if (!response.ok) {
         setError(`No help available for ${conventionName}`);
         return;
@@ -212,7 +215,7 @@ function App() {
 
   const dealNewHand = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/deal-hands');
+      const response = await fetch(`${API_URL}/api/deal-hands`);
       if (!response.ok) throw new Error("Failed to deal hands.");
       const data = await response.json();
       resetAuction(data);
@@ -222,7 +225,7 @@ function App() {
   const handleLoadScenario = async () => {
     if (!selectedScenario) return;
     try {
-      const response = await fetch('http://localhost:5001/api/load-scenario', {
+      const response = await fetch(`${API_URL}/api/load-scenario`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: selectedScenario })
       });
@@ -240,7 +243,7 @@ function App() {
   useEffect(() => {
     const fetchScenariosAndDeal = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/scenarios');
+        const response = await fetch(`${API_URL}/api/scenarios`);
         const data = await response.json();
         setScenarioList(data.scenarios);
         if (data.scenarios.length > 0) setSelectedScenario(data.scenarios[0]);
@@ -257,7 +260,7 @@ function App() {
     const newAuction = [...auction, { bid: bid, explanation: 'Your bid.' }];
     setAuction(newAuction);
     try {
-      const feedbackResponse = await fetch('http://localhost:5001/api/get-feedback', {
+      const feedbackResponse = await fetch(`${API_URL}/api/get-feedback`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ auction_history: newAuction.map(a => a.bid) })
       });
@@ -287,7 +290,7 @@ function App() {
           const currentAuction = auction;
           const currentPlayer = players[nextPlayerIndex];
 
-          const response = await fetch('http://localhost:5001/api/get-next-bid', {
+          const response = await fetch(`${API_URL}/api/get-next-bid`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ auction_history: currentAuction.map(a => a.bid), current_player: currentPlayer })
           });
