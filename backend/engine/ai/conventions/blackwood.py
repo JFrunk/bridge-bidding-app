@@ -116,8 +116,11 @@ class BlackwoodConvention(ConventionModule):
                 else:
                     return ("6NT", "Bidding small slam in NT.")
             else:
-                # All aces present, can ask for kings
-                return None  # Will be handled by king-asking logic
+                # All 4 aces present - bid grand slam!
+                if trump_suit:
+                    return (f"7{trump_suit}", f"Bidding grand slam with all 4 aces present!")
+                else:
+                    return ("7NT", "Bidding grand slam in NT with all 4 aces.")
         else:
             # Partner has definite count
             total_aces = my_aces + partner_aces[0]
@@ -135,8 +138,11 @@ class BlackwoodConvention(ConventionModule):
                 else:
                     return ("6NT", "Bidding small slam in NT with 3 aces.")
             else:
-                # All 4 aces present, can ask for kings or bid grand slam
-                return None  # Will be handled by king-asking logic
+                # All 4 aces present - bid grand slam!
+                if trump_suit:
+                    return (f"7{trump_suit}", f"Bidding grand slam with all 4 aces present!")
+                else:
+                    return ("7NT", "Bidding grand slam in NT with all 4 aces.")
 
     def _is_king_asking_applicable(self, hand: Hand, features: Dict) -> bool:
         """Check if we should ask for kings (all aces present)."""
