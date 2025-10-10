@@ -1,0 +1,40 @@
+﻿# Developer Onboarding Guide
+
+
+## 1. Prerequisites
+* Python 3.9+
+* Node.js 16+ and npm
+* Git for version control
+* An Anaconda distribution of Python is used by the current developer, which can cause environment conflicts (see TROUBLESHOOTING.md).
+
+
+## 2. Backend Setup
+1.  Navigate to the `backend` directory.
+2.  Create a virtual environment: `python -m venv venv`
+3.  Activate the environment: `source venv/bin/activate`
+4.  Install dependencies: `pip install -r requirements.txt` (Assuming a requirements file exists).
+
+
+## 3. Frontend Setup
+1.  Navigate to the `frontend` directory.
+2.  Install dependencies: `npm install`
+
+
+## 4. Running the Application
+The backend and frontend must be run in separate terminals.
+
+
+* **Start the Backend Server:**
+    * **IMPORTANT:** If you have Anaconda installed, you may have a conflicted environment. First, run `conda deactivate` until `(base)` is gone from your prompt.
+    * From the project's root directory, run the full command:
+    ```bash
+    cd backend && source venv/bin/activate && python -m flask --app server --debug run --port 5001
+    ```
+
+
+* **Start the Frontend Server:**
+    * From the project's root directory, run:
+    ```bash
+    cd frontend && npm start
+    ```
+    The application should now be accessible at `http://localhost:3000`.

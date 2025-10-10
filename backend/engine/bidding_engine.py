@@ -13,6 +13,7 @@ from engine.ai.conventions.jacoby_transfers import JacobyConvention
 from engine.ai.conventions.preempts import PreemptConvention
 from engine.ai.conventions.blackwood import BlackwoodConvention
 from engine.ai.conventions.takeout_doubles import TakeoutDoubleConvention
+from engine.ai.conventions.negative_doubles import NegativeDoubleConvention
 
 class BiddingEngine:
     def __init__(self):
@@ -26,9 +27,10 @@ class BiddingEngine:
             'overcalls': OvercallModule(),
             'stayman': StaymanConvention(),
             'jacoby': JacobyConvention(),
-            'preempts': PreemptConvention(), # CORRECTED: Added missing single quote
+            'preempts': PreemptConvention(),
             'blackwood': BlackwoodConvention(),
             'takeout_doubles': TakeoutDoubleConvention(),
+            'negative_doubles': NegativeDoubleConvention(),
         }
 
     def get_next_bid(self, hand: Hand, auction_history: list, my_position: str, vulnerability: str):

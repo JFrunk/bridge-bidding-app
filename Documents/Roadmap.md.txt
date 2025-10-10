@@ -1,0 +1,22 @@
+﻿# Development Roadmap
+
+
+## Phase 1: Foundation & Stability (Current Focus)
+*Goal: Eliminate technical debt and create a fully predictable, "by-the-book" AI.*
+* **1.1: Complete `pytest` Test Suite:** Create an automated safety net to prevent regressions.
+* **1.2: Implement All Remaining Core Conventions:** Use Test-Driven Development (TDD) to add Negative Doubles, Michaels Cuebid, Unusual 2NT, Splinter Bids, and Fourth Suit Forcing.
+* **1.3: Refine Bidding Engine "Safety Net":** Improve the logic that catches and overrides illegal AI bids.
+
+
+## Phase 2: Advanced AI & Intelligence
+*Goal: Move the AI beyond simple rules to make more nuanced, expert-level decisions.*
+* **2.1: Evolve `DecisionEngine` to a State Machine:** Explicitly track the auction's state (Opening, Competitive, Slam Explore) to improve decision-making in complex sequences.
+* **2.2: Implement Full Vulnerability Logic:** Modify specialist behavior based on vulnerability.
+* **2.3: Introduce "Best Action" Evaluator:** Add logic to score and choose between multiple valid bids.
+
+
+## Phase 3: User Experience & Learning Tools
+*Goal: Transform the application into a powerful learning platform.*
+* **3.1: Build the "Bid Interpreter":** A "reverse lookup" feature to explain the meaning of any user bid.
+* **3.2: Build "Show All Hands" Post-Mortem:** A button to reveal all four hands after an auction.
+* **3.3: Implement "Convention Profiles":** Allow users to enable/disable conventions to match their learning stage.

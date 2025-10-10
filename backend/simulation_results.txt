@@ -1,0 +1,1075 @@
+============================================================
+Bridge Bidding Simulation Results
+Generated: 2025-10-09 14:10:47
+============================================================
+
+
+============================================================
+Hand #1 - Scenario: Stayman Test - Vulnerability: None
+============================================================
+
+North (HCP: 3, Total: 5, Balanced: False)
+  ♠: Q J T 9 7 5
+  ♥: 9 5
+  ♦: 4 3
+  ♣: 6 5 2
+
+East (HCP: 11, Total: 11, Balanced: True)
+  ♠: K 2
+  ♥: A 6 3
+  ♦: 9 8 6 2
+  ♣: A T 9 8
+
+South (HCP: 11, Total: 11, Balanced: True)
+  ♠: A 6
+  ♥: Q T 7 2
+  ♦: T 7 5
+  ♣: K Q 7 4
+
+West (HCP: 15, Total: 15, Balanced: True)
+  ♠: 8 4 3
+  ♥: K J 8 4
+  ♦: A K Q J
+  ♣: J 3
+
+Auction:
+North      East       South      West
+------------------------------------------
+Pass       Pass       Pass       1NT       
+Pass       Pass       Pass                 
+
+Detailed Bidding Sequence:
+1. North: Pass
+   Explanation: Less than 13 total points.
+2. East: Pass
+   Explanation: Less than 13 total points.
+3. South: Pass
+   Explanation: Less than 13 total points.
+4. West: 1NT
+   Explanation: Shows 15-17 HCP and a balanced hand.
+5. North: Pass
+   Explanation: Partner's overcall was not a suit.
+6. East: Pass
+   Explanation: Logic error: DecisionEngine chose 'responses' but it was not found or returned no bid.
+7. South: Pass
+   Explanation: Partner's overcall was not a suit.
+
+
+============================================================
+Hand #2 - Scenario: Blackwood Test - Vulnerability: None
+============================================================
+
+North (HCP: 19, Total: 19, Balanced: True)
+  ♠: A K Q 8
+  ♥: A 3
+  ♦: Q T 6 3
+  ♣: A 7 6
+
+East (HCP: 10, Total: 10, Balanced: True)
+  ♠: J 7
+  ♥: J 4 2
+  ♦: A K J 9
+  ♣: T 8 5 2
+
+South (HCP: 7, Total: 8, Balanced: True)
+  ♠: T 9 5
+  ♥: Q 8 5
+  ♦: 7 2
+  ♣: K Q 9 4 3
+
+West (HCP: 4, Total: 5, Balanced: False)
+  ♠: 6 4 3 2
+  ♥: K T 9 7 6
+  ♦: 8 5 4
+  ♣: J
+
+Auction:
+North      East       South      West
+------------------------------------------
+1♦         Pass       1NT        Pass      
+3NT        Pass       Pass       Pass      
+
+Detailed Bidding Sequence:
+1. North: 1♦
+   Explanation: Shows 13+ points, no 5-card suit. Diamonds is the longer minor.
+2. East: Pass
+   Explanation: No bid found by any module.
+3. South: 1NT
+   Explanation: Shows 6-9 HCP, balanced, and no fit.
+4. West: Pass
+   Explanation: No bid found by any module.
+5. North: 3NT
+   Explanation: Strong hand (19 pts), bidding game in No-Trump.
+6. East: Pass
+   Explanation: Partner's overcall was not a suit.
+7. South: Pass
+   Explanation: AI bid overridden due to illegality.
+8. West: Pass
+   Explanation: Partner's overcall was not a suit.
+
+
+============================================================
+Hand #3 - Scenario: Jacoby Transfer Test - Vulnerability: None
+============================================================
+
+North (HCP: 6, Total: 8, Balanced: False)
+  ♠: 9 4
+  ♥: A 6 5 4 3 2
+  ♦: Q 7 3
+  ♣: 7 2
+
+East (HCP: 11, Total: 13, Balanced: False)
+  ♠: A T 8 6 5 2
+  ♥: K
+  ♦: A T 8 5
+  ♣: 8 5
+
+South (HCP: 6, Total: 8, Balanced: False)
+  ♠: J
+  ♥: J T 9 8 7
+  ♦: K J 9 6 2
+  ♣: T 9
+
+West (HCP: 17, Total: 20, Balanced: False)
+  ♠: K Q 7 3
+  ♥: Q
+  ♦: 4
+  ♣: A K Q J 6 4 3
+
+Auction:
+North      East       South      West
+------------------------------------------
+Pass       1♠         Pass       4♠        
+Pass       Pass       Pass                 
+
+Detailed Bidding Sequence:
+1. North: Pass
+   Explanation: Less than 13 total points.
+2. East: 1♠
+   Explanation: Shows 13+ total points and a 5+ card spade suit.
+3. South: Pass
+   Explanation: No bid found by any module.
+4. West: 4♠
+   Explanation: Game-forcing raise.
+5. North: Pass
+   Explanation: Partner's overcall was not a suit.
+6. East: Pass
+   Explanation: Minimum hand (13-15 pts), passing partner's simple raise.
+7. South: Pass
+   Explanation: Partner's overcall was not a suit.
+
+
+============================================================
+Hand #4 - Scenario: Opener Rebid Test - Vulnerability: None
+============================================================
+
+North (HCP: 14, Total: 15, Balanced: False)
+  ♠: K 2
+  ♥: T 7
+  ♦: K J T 7 2
+  ♣: A K T 9
+
+East (HCP: 8, Total: 8, Balanced: True)
+  ♠: T 6
+  ♥: K J 4 3
+  ♦: A 9 4
+  ♣: 8 7 6 2
+
+South (HCP: 5, Total: 6, Balanced: True)
+  ♠: 9 7 5
+  ♥: Q 8 6
+  ♦: 6 5
+  ♣: Q J 5 4 3
+
+West (HCP: 13, Total: 15, Balanced: False)
+  ♠: A Q J 8 4 3
+  ♥: A 9 5 2
+  ♦: Q 8 3
+  ♣: --
+
+Auction:
+North      East       South      West
+------------------------------------------
+1♦         Pass       Pass       Pass      
+
+Detailed Bidding Sequence:
+1. North: 1♦
+   Explanation: Shows 13+ total points and a 5+ card diamond suit.
+2. East: Pass
+   Explanation: No bid found by any module.
+3. South: Pass
+   Explanation: No clear natural response.
+4. West: Pass
+   Explanation: No bid found by any module.
+
+
+============================================================
+Hand #5 - Scenario: Blackwood Test - Vulnerability: None
+============================================================
+
+North (HCP: 18, Total: 20, Balanced: False)
+  ♠: A 8
+  ♥: A T
+  ♦: A K Q J 7 6
+  ♣: 9 5 3
+
+East (HCP: 2, Total: 2, Balanced: True)
+  ♠: 9 4 2
+  ♥: Q 5 4 3
+  ♦: 8 3 2
+  ♣: T 8 7
+
+South (HCP: 16, Total: 17, Balanced: False)
+  ♠: K Q J 7
+  ♥: K 7
+  ♦: T 5
+  ♣: A Q J 6 2
+
+West (HCP: 4, Total: 5, Balanced: False)
+  ♠: T 6 5 3
+  ♥: J 9 8 6 2
+  ♦: 9 4
+  ♣: K 4
+
+Auction:
+North      East       South      West
+------------------------------------------
+1♦         Pass       1♠         Pass      
+3NT        Pass       Pass       Pass      
+
+Detailed Bidding Sequence:
+1. North: 1♦
+   Explanation: Shows 13+ total points and a 5+ card diamond suit.
+2. East: Pass
+   Explanation: No bid found by any module.
+3. South: 1♠
+   Explanation: Showing a 4+ card spade suit.
+4. West: Pass
+   Explanation: No bid found by any module.
+5. North: 3NT
+   Explanation: Strong hand (20 pts), bidding game in No-Trump.
+6. East: Pass
+   Explanation: Partner's overcall was not a suit.
+7. South: Pass
+   Explanation: AI bid overridden due to illegality.
+8. West: Pass
+   Explanation: Partner's overcall was not a suit.
+
+
+============================================================
+Hand #6 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 9, Total: 12, Balanced: False)
+  ♠: 7
+  ♥: A J T 4
+  ♦: 7
+  ♣: K J 9 8 7 6 5
+
+East (HCP: 14, Total: 16, Balanced: False)
+  ♠: A Q J T 8 4
+  ♥: K 9
+  ♦: Q 8 6
+  ♣: Q 2
+
+South (HCP: 14, Total: 15, Balanced: False)
+  ♠: K 6 3 2
+  ♥: Q 5
+  ♦: A J T 9 2
+  ♣: A 4
+
+West (HCP: 3, Total: 4, Balanced: False)
+  ♠: 9 5
+  ♥: 8 7 6 3 2
+  ♦: K 5 4 3
+  ♣: T 3
+
+Auction:
+North      East       South      West
+------------------------------------------
+Pass       1♠         2♦         Pass      
+2♠         Pass       3♠         Pass      
+Pass       Pass                            
+
+Detailed Bidding Sequence:
+1. North: Pass
+   Explanation: Less than 13 total points.
+2. East: 1♠
+   Explanation: Shows 13+ total points and a 5+ card spade suit.
+3. South: 2♦
+   Explanation: Overcall showing 8-16 HCP and a 5+ card Diamond suit.
+4. West: Pass
+   Explanation: Less than 6 total points.
+5. North: 2♠
+   Explanation: Cuebid. Shows a very strong hand, likely game-forcing.
+6. East: Pass
+   Explanation: Cannot determine auction context for rebid.
+7. South: 3♠
+   Explanation: Raising partner's overcalled suit with support.
+8. West: Pass
+   Explanation: Less than 6 total points.
+9. North: Pass
+   Explanation: AI bid overridden due to illegality.
+10. East: Pass
+   Explanation: Cannot determine auction context for rebid.
+
+
+============================================================
+Hand #7 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 8, Total: 8, Balanced: True)
+  ♠: A T 2
+  ♥: J 8 2
+  ♦: J 9 3
+  ♣: Q 8 4 3
+
+East (HCP: 13, Total: 15, Balanced: False)
+  ♠: Q J 9 4 3
+  ♥: 6
+  ♦: A K 8 7 2
+  ♣: K 7
+
+South (HCP: 10, Total: 10, Balanced: True)
+  ♠: K 8 5
+  ♥: 9 7 5
+  ♦: Q T 6 4
+  ♣: A J 6
+
+West (HCP: 9, Total: 11, Balanced: False)
+  ♠: 7 6
+  ♥: A K Q T 4 3
+  ♦: 5
+  ♣: T 9 5 2
+
+Auction:
+North      East       South      West
+------------------------------------------
+Pass       1♠         Pass       Pass      
+Pass                                       
+
+Detailed Bidding Sequence:
+1. North: Pass
+   Explanation: Less than 13 total points.
+2. East: 1♠
+   Explanation: Shows 13+ total points and a 5+ card spade suit.
+3. South: Pass
+   Explanation: No bid found by any module.
+4. West: Pass
+   Explanation: No clear natural response.
+5. North: Pass
+   Explanation: Partner's overcall was not a suit.
+
+
+============================================================
+Hand #8 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 10, Total: 11, Balanced: True)
+  ♠: A 9 7 4 2
+  ♥: K 4 3
+  ♦: K 9 7
+  ♣: T 6
+
+East (HCP: 9, Total: 9, Balanced: True)
+  ♠: 8 5 3
+  ♥: A T 6
+  ♦: A J 5
+  ♣: 9 7 5 2
+
+South (HCP: 14, Total: 16, Balanced: False)
+  ♠: K 6
+  ♥: J 8 2
+  ♦: T 3
+  ♣: A K Q J 8 4
+
+West (HCP: 7, Total: 8, Balanced: False)
+  ♠: Q J T
+  ♥: Q 9 7 5
+  ♦: Q 8 6 4 2
+  ♣: 3
+
+Auction:
+North      East       South      West
+------------------------------------------
+Pass       Pass       1♣         Pass      
+1♠         Pass       3♣         Pass      
+Pass       Pass                            
+
+Detailed Bidding Sequence:
+1. North: Pass
+   Explanation: Less than 13 total points.
+2. East: Pass
+   Explanation: Less than 13 total points.
+3. South: 1♣
+   Explanation: Shows 13+ total points and a 5+ card club suit.
+4. West: Pass
+   Explanation: No bid found by any module.
+5. North: 1♠
+   Explanation: Showing a 4+ card spade suit.
+6. East: Pass
+   Explanation: Partner's overcall was not a suit.
+7. South: 3♣
+   Explanation: Invitational (16-18 pts) jump rebid of a 6+ card suit.
+8. West: Pass
+   Explanation: Partner's overcall was not a suit.
+9. North: Pass
+   Explanation: AI bid overridden due to illegality.
+10. East: Pass
+   Explanation: Partner's overcall was not a suit.
+
+
+============================================================
+Hand #9 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 10, Total: 10, Balanced: True)
+  ♠: A 6
+  ♥: A J T
+  ♦: J 6 5 4
+  ♣: 9 7 6 4
+
+East (HCP: 14, Total: 16, Balanced: False)
+  ♠: K T 9 4 3 2
+  ♥: 8 5
+  ♦: Q T
+  ♣: A K Q
+
+South (HCP: 11, Total: 12, Balanced: True)
+  ♠: Q 7 5
+  ♥: K Q 4 3 2
+  ♦: A 3
+  ♣: T 5 3
+
+West (HCP: 5, Total: 6, Balanced: True)
+  ♠: J 8
+  ♥: 9 7 6
+  ♦: K 9 8 7 2
+  ♣: J 8 2
+
+Auction:
+North      East       South      West
+------------------------------------------
+Pass       1♠         2♥         Pass      
+3♥         Pass       4♥         Pass      
+5♥         Pass       6♥         Pass      
+7♥         Pass       8♥         Pass      
+9♥         Pass       Pass       Pass      
+
+Detailed Bidding Sequence:
+1. North: Pass
+   Explanation: Less than 13 total points.
+2. East: 1♠
+   Explanation: Shows 13+ total points and a 5+ card spade suit.
+3. South: 2♥
+   Explanation: Overcall showing 8-16 HCP and a 5+ card Heart suit.
+4. West: Pass
+   Explanation: No clear natural response.
+5. North: 3♥
+   Explanation: Raising partner's overcalled suit with support.
+6. East: Pass
+   Explanation: Cannot determine auction context for rebid.
+7. South: 4♥
+   Explanation: Raising partner's overcalled suit with support.
+8. West: Pass
+   Explanation: No clear natural response.
+9. North: 5♥
+   Explanation: Raising partner's overcalled suit with support.
+10. East: Pass
+   Explanation: Cannot determine auction context for rebid.
+11. South: 6♥
+   Explanation: Raising partner's overcalled suit with support.
+12. West: Pass
+   Explanation: No clear natural response.
+13. North: 7♥
+   Explanation: Raising partner's overcalled suit with support.
+14. East: Pass
+   Explanation: Cannot determine auction context for rebid.
+15. South: 8♥
+   Explanation: Raising partner's overcalled suit with support.
+16. West: Pass
+   Explanation: No clear natural response.
+17. North: 9♥
+   Explanation: Raising partner's overcalled suit with support.
+18. East: Pass
+   Explanation: Cannot determine auction context for rebid.
+19. South: Pass
+   Explanation: AI bid overridden due to illegality.
+20. West: Pass
+   Explanation: No clear natural response.
+
+
+============================================================
+Hand #10 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 12, Total: 13, Balanced: True)
+  ♠: A K T 9 7
+  ♥: J 9 7
+  ♦: Q 3
+  ♣: Q 9 2
+
+East (HCP: 6, Total: 7, Balanced: True)
+  ♠: 8 6 4
+  ♥: Q 6 4
+  ♦: J 8
+  ♣: K T 6 5 4
+
+South (HCP: 14, Total: 16, Balanced: False)
+  ♠: Q
+  ♥: A K T 8 5
+  ♦: A T 9 7 2
+  ♣: J 7
+
+West (HCP: 8, Total: 8, Balanced: True)
+  ♠: J 5 3 2
+  ♥: 3 2
+  ♦: K 6 5 4
+  ♣: A 8 3
+
+Auction:
+North      East       South      West
+------------------------------------------
+1♠         Pass       Pass       Pass      
+
+Detailed Bidding Sequence:
+1. North: 1♠
+   Explanation: Shows 13+ total points and a 5+ card spade suit.
+2. East: Pass
+   Explanation: No bid found by any module.
+3. South: Pass
+   Explanation: No clear natural response.
+4. West: Pass
+   Explanation: No bid found by any module.
+
+
+============================================================
+Hand #11 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 8, Total: 8, Balanced: True)
+  ♠: A 3
+  ♥: 6 3 2
+  ♦: K T 5 2
+  ♣: J 9 6 5
+
+East (HCP: 8, Total: 9, Balanced: False)
+  ♠: J 9 5 4 2
+  ♥: J 8 4
+  ♦: J
+  ♣: K Q 3 2
+
+South (HCP: 15, Total: 15, Balanced: True)
+  ♠: Q T
+  ♥: K Q 9
+  ♦: A 7 6 4
+  ♣: A 8 7 4
+
+West (HCP: 9, Total: 9, Balanced: False)
+  ♠: K 8 7 6
+  ♥: A T 7 5
+  ♦: Q 9 8 3
+  ♣: T
+
+Auction:
+North      East       South      West
+------------------------------------------
+Pass       Pass       1NT        Pass      
+Pass       Pass                            
+
+Detailed Bidding Sequence:
+1. North: Pass
+   Explanation: Less than 13 total points.
+2. East: Pass
+   Explanation: Less than 13 total points.
+3. South: 1NT
+   Explanation: Shows 15-17 HCP and a balanced hand.
+4. West: Pass
+   Explanation: No bid found by any module.
+5. North: Pass
+   Explanation: Logic error: DecisionEngine chose 'responses' but it was not found or returned no bid.
+6. East: Pass
+   Explanation: Partner's overcall was not a suit.
+
+
+============================================================
+Hand #12 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 8, Total: 8, Balanced: True)
+  ♠: A 9 8
+  ♥: 7 2
+  ♦: Q 8 7 3
+  ♣: Q T 9 5
+
+East (HCP: 11, Total: 12, Balanced: True)
+  ♠: K T 3
+  ♥: 6 4 3
+  ♦: A K T 6 2
+  ♣: J 6
+
+South (HCP: 5, Total: 6, Balanced: False)
+  ♠: J 6 4 2
+  ♥: K J T 8 5
+  ♦: 9
+  ♣: 8 3 2
+
+West (HCP: 16, Total: 16, Balanced: True)
+  ♠: Q 7 5
+  ♥: A Q 9
+  ♦: J 5 4
+  ♣: A K 7 4
+
+Auction:
+North      East       South      West
+------------------------------------------
+Pass       Pass       Pass       1NT       
+Pass       Pass       Pass                 
+
+Detailed Bidding Sequence:
+1. North: Pass
+   Explanation: Less than 13 total points.
+2. East: Pass
+   Explanation: Less than 13 total points.
+3. South: Pass
+   Explanation: Less than 13 total points.
+4. West: 1NT
+   Explanation: Shows 15-17 HCP and a balanced hand.
+5. North: Pass
+   Explanation: Partner's overcall was not a suit.
+6. East: Pass
+   Explanation: Logic error: DecisionEngine chose 'responses' but it was not found or returned no bid.
+7. South: Pass
+   Explanation: Partner's overcall was not a suit.
+
+
+============================================================
+Hand #13 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 4, Total: 5, Balanced: True)
+  ♠: 8 6 2
+  ♥: J 5 4
+  ♦: 8 7 6 4 2
+  ♣: K 2
+
+East (HCP: 12, Total: 13, Balanced: True)
+  ♠: K 7 5
+  ♥: 6 2
+  ♦: A Q 9
+  ♣: Q J T 6 4
+
+South (HCP: 16, Total: 16, Balanced: True)
+  ♠: A 9 4
+  ♥: A K 8 7
+  ♦: J T 3
+  ♣: A 9 5
+
+West (HCP: 8, Total: 8, Balanced: True)
+  ♠: Q J T 3
+  ♥: Q T 9 3
+  ♦: K 5
+  ♣: 8 7 3
+
+Auction:
+North      East       South      West
+------------------------------------------
+Pass       1♣         Pass       2♣        
+Pass       Pass       Pass                 
+
+Detailed Bidding Sequence:
+1. North: Pass
+   Explanation: Less than 13 total points.
+2. East: 1♣
+   Explanation: Shows 13+ total points and a 5+ card club suit.
+3. South: Pass
+   Explanation: No bid found by any module.
+4. West: 2♣
+   Explanation: Simple raise showing 6-9 support points.
+5. North: Pass
+   Explanation: Partner's overcall was not a suit.
+6. East: Pass
+   Explanation: Minimum hand (13-15 pts), passing partner's simple raise.
+7. South: Pass
+   Explanation: Partner's overcall was not a suit.
+
+
+============================================================
+Hand #14 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 15, Total: 17, Balanced: False)
+  ♠: A Q J 9 8
+  ♥: A 7 3
+  ♦: A T 7 6 4
+  ♣: --
+
+East (HCP: 8, Total: 10, Balanced: False)
+  ♠: 5
+  ♥: J T 8 4
+  ♦: 9 2
+  ♣: A Q J 8 6 5
+
+South (HCP: 9, Total: 10, Balanced: False)
+  ♠: K 4 3
+  ♥: 5
+  ♦: K Q J 8 3
+  ♣: 9 7 3 2
+
+West (HCP: 8, Total: 9, Balanced: False)
+  ♠: T 7 6 2
+  ♥: K Q 9 6 2
+  ♦: 5
+  ♣: K T 4
+
+Auction:
+North      East       South      West
+------------------------------------------
+1♠         2♣         3♠         Pass      
+Pass       Pass                            
+
+Detailed Bidding Sequence:
+1. North: 1♠
+   Explanation: Shows 13+ total points and a 5+ card spade suit.
+2. East: 2♣
+   Explanation: Overcall showing 8-16 HCP and a 5+ card Club suit.
+3. South: 3♠
+   Explanation: Invitational raise showing 10-12 support points.
+4. West: Pass
+   Explanation: No bid found by any module.
+5. North: Pass
+   Explanation: AI bid overridden due to illegality.
+6. East: Pass
+   Explanation: Partner's overcall was not a suit.
+
+
+============================================================
+Hand #15 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 13, Total: 15, Balanced: False)
+  ♠: K J T 8 7 6
+  ♥: A 4
+  ♦: J T 8
+  ♣: A 2
+
+East (HCP: 8, Total: 9, Balanced: False)
+  ♠: 5
+  ♥: J T 8 6 5
+  ♦: A Q 7
+  ♣: J T 6 4
+
+South (HCP: 4, Total: 4, Balanced: True)
+  ♠: Q 4 3
+  ♥: 7 3 2
+  ♦: 9 4 3 2
+  ♣: Q 7 5
+
+West (HCP: 15, Total: 15, Balanced: True)
+  ♠: A 9 2
+  ♥: K Q 9
+  ♦: K 6 5
+  ♣: K 9 8 3
+
+Auction:
+North      East       South      West
+------------------------------------------
+1♠         2♥         Pass       Pass      
+Pass                                       
+
+Detailed Bidding Sequence:
+1. North: 1♠
+   Explanation: Shows 13+ total points and a 5+ card spade suit.
+2. East: 2♥
+   Explanation: Overcall showing 8-16 HCP and a 5+ card Heart suit.
+3. South: Pass
+   Explanation: Less than 6 total points.
+4. West: Pass
+   Explanation: No bid found by any module.
+5. North: Pass
+   Explanation: Cannot determine auction context for rebid.
+
+
+============================================================
+Hand #16 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 8, Total: 8, Balanced: True)
+  ♠: 9 6 4 2
+  ♥: J T 2
+  ♦: A 7
+  ♣: Q J 4 2
+
+East (HCP: 5, Total: 5, Balanced: False)
+  ♠: T 7 5 3
+  ♥: K Q 9 3
+  ♦: 8
+  ♣: T 8 6 5
+
+South (HCP: 10, Total: 10, Balanced: True)
+  ♠: A K Q J
+  ♥: 8 7 6 4
+  ♦: T 6 3
+  ♣: 9 7
+
+West (HCP: 17, Total: 20, Balanced: False)
+  ♠: 8
+  ♥: A 5
+  ♦: K Q J 9 5 4 2
+  ♣: A K 3
+
+Auction:
+North      East       South      West
+------------------------------------------
+Pass       Pass       Pass       1♦        
+Pass       Pass       Pass                 
+
+Detailed Bidding Sequence:
+1. North: Pass
+   Explanation: Less than 13 total points.
+2. East: Pass
+   Explanation: Less than 13 total points.
+3. South: Pass
+   Explanation: Less than 13 total points.
+4. West: 1♦
+   Explanation: Shows 13+ total points and a 5+ card diamond suit.
+5. North: Pass
+   Explanation: Partner's overcall was not a suit.
+6. East: Pass
+   Explanation: Less than 6 total points.
+7. South: Pass
+   Explanation: Partner's overcall was not a suit.
+
+
+============================================================
+Hand #17 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 5, Total: 6, Balanced: False)
+  ♠: 4
+  ♥: Q J 5 3 2
+  ♦: T 9 7 4
+  ♣: Q 7 4
+
+East (HCP: 10, Total: 10, Balanced: True)
+  ♠: T 9 2
+  ♥: A K 9 4
+  ♦: 8 6 5
+  ♣: K 5 3
+
+South (HCP: 17, Total: 18, Balanced: False)
+  ♠: A K 5 3
+  ♥: T
+  ♦: A K Q
+  ♣: J T 9 6 2
+
+West (HCP: 8, Total: 9, Balanced: True)
+  ♠: Q J 8 7 6
+  ♥: 8 7 6
+  ♦: J 3 2
+  ♣: A 8
+
+Auction:
+North      East       South      West
+------------------------------------------
+Pass       Pass       1♣         1♠        
+2♣         2♠         3♣         3♠        
+Pass       4♠         Pass       5♠        
+Pass       6♠         Pass       7♠        
+Pass       8♠         Pass       9♠        
+Pass       Pass       Pass                 
+
+Detailed Bidding Sequence:
+1. North: Pass
+   Explanation: Less than 13 total points.
+2. East: Pass
+   Explanation: Less than 13 total points.
+3. South: 1♣
+   Explanation: Shows 13+ total points and a 5+ card club suit.
+4. West: 1♠
+   Explanation: Overcall showing 8-16 HCP and a 5+ card Spade suit.
+5. North: 2♣
+   Explanation: Simple raise showing 6-9 support points.
+6. East: 2♠
+   Explanation: Raising partner's overcalled suit with support.
+7. South: 3♣
+   Explanation: Invitational (16-18 pts), raising partner's simple raise.
+8. West: 3♠
+   Explanation: Raising partner's overcalled suit with support.
+9. North: Pass
+   Explanation: AI bid overridden due to illegality.
+10. East: 4♠
+   Explanation: Raising partner's overcalled suit with support.
+11. South: Pass
+   Explanation: AI bid overridden due to illegality.
+12. West: 5♠
+   Explanation: Raising partner's overcalled suit with support.
+13. North: Pass
+   Explanation: AI bid overridden due to illegality.
+14. East: 6♠
+   Explanation: Raising partner's overcalled suit with support.
+15. South: Pass
+   Explanation: AI bid overridden due to illegality.
+16. West: 7♠
+   Explanation: Raising partner's overcalled suit with support.
+17. North: Pass
+   Explanation: AI bid overridden due to illegality.
+18. East: 8♠
+   Explanation: Raising partner's overcalled suit with support.
+19. South: Pass
+   Explanation: AI bid overridden due to illegality.
+20. West: 9♠
+   Explanation: Raising partner's overcalled suit with support.
+21. North: Pass
+   Explanation: AI bid overridden due to illegality.
+22. East: Pass
+   Explanation: AI bid overridden due to illegality.
+23. South: Pass
+   Explanation: AI bid overridden due to illegality.
+
+
+============================================================
+Hand #18 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 4, Total: 5, Balanced: True)
+  ♠: K 8 7 5 3
+  ♥: 5 4
+  ♦: J 8 5
+  ♣: 8 6 5
+
+East (HCP: 17, Total: 18, Balanced: True)
+  ♠: A T 2
+  ♥: K J 8 7 6
+  ♦: A 3
+  ♣: A J 2
+
+South (HCP: 12, Total: 14, Balanced: False)
+  ♠: 4
+  ♥: A T
+  ♦: K 9 6 4
+  ♣: K Q T 9 7 3
+
+West (HCP: 7, Total: 7, Balanced: False)
+  ♠: Q J 9 6
+  ♥: Q 9 3 2
+  ♦: Q T 7 2
+  ♣: 4
+
+Auction:
+North      East       South      West
+------------------------------------------
+Pass       1NT        2♣         Pass      
+Pass       Pass                            
+
+Detailed Bidding Sequence:
+1. North: Pass
+   Explanation: Less than 13 total points.
+2. East: 1NT
+   Explanation: Shows 15-17 HCP and a balanced hand.
+3. South: 2♣
+   Explanation: Overcall showing 8-16 HCP and a 5+ card Club suit.
+4. West: Pass
+   Explanation: Logic error: DecisionEngine chose 'responses' but it was not found or returned no bid.
+5. North: Pass
+   Explanation: Not enough strength or fit to advance the overcall.
+6. East: Pass
+   Explanation: Cannot determine auction context for rebid.
+
+
+============================================================
+Hand #19 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 14, Total: 15, Balanced: False)
+  ♠: K 5
+  ♥: Q 7
+  ♦: A Q 9 5 2
+  ♣: K T 9 4
+
+East (HCP: 6, Total: 7, Balanced: False)
+  ♠: Q 8 2
+  ♥: K J T 5 3
+  ♦: 8
+  ♣: 8 6 3 2
+
+South (HCP: 16, Total: 17, Balanced: False)
+  ♠: A 9 7
+  ♥: A 8 6 4 2
+  ♦: K J T 7
+  ♣: A
+
+West (HCP: 4, Total: 5, Balanced: False)
+  ♠: J T 6 4 3
+  ♥: 9
+  ♦: 6 4 3
+  ♣: Q J 7 5
+
+Auction:
+North      East       South      West
+------------------------------------------
+1♦         Pass       3NT        Pass      
+Pass       Pass                            
+
+Detailed Bidding Sequence:
+1. North: 1♦
+   Explanation: Shows 13+ total points and a 5+ card diamond suit.
+2. East: Pass
+   Explanation: No bid found by any module.
+3. South: 3NT
+   Explanation: Game-forcing raise.
+4. West: Pass
+   Explanation: No bid found by any module.
+5. North: Pass
+   Explanation: No clear rebid available.
+6. East: Pass
+   Explanation: Partner's overcall was not a suit.
+
+
+============================================================
+Hand #20 - Scenario: Random - Vulnerability: None
+============================================================
+
+North (HCP: 7, Total: 9, Balanced: False)
+  ♠: T
+  ♥: 8 6 5 3
+  ♦: A K T 6 5 2
+  ♣: 8 6
+
+East (HCP: 11, Total: 12, Balanced: False)
+  ♠: Q J 8 2
+  ♥: A T 7 4 2
+  ♦: 9
+  ♣: A 5 4
+
+South (HCP: 9, Total: 11, Balanced: False)
+  ♠: K 9
+  ♥: 9
+  ♦: 8 7 4 3
+  ♣: K Q J T 9 3
+
+West (HCP: 13, Total: 15, Balanced: False)
+  ♠: A 7 6 5 4 3
+  ♥: K Q J
+  ♦: Q J
+  ♣: 7 2
+
+Auction:
+North      East       South      West
+------------------------------------------
+2♦         2♥         3♦         Pass      
+Pass       Pass                            
+
+Detailed Bidding Sequence:
+1. North: 2♦
+   Explanation: Weak Two bid. Shows 6-10 HCP and a 6-card Diamond suit.
+2. East: 2♥
+   Explanation: Overcall showing 8-16 HCP and a 5+ card Heart suit.
+3. South: 3♦
+   Explanation: Invitational raise showing 10-12 support points.
+4. West: Pass
+   Explanation: No bid found by any module.
+5. North: Pass
+   Explanation: No clear rebid available.
+6. East: Pass
+   Explanation: Partner's overcall was not a suit.

@@ -1,0 +1,6760 @@
+{
+  "metadata": {
+    "timestamp": "2025-10-09T14:10:47.232675",
+    "total_hands": 20,
+    "scenario_hands": 5,
+    "random_hands": 15
+  },
+  "hands": [
+    {
+      "hand_number": 1,
+      "scenario": "Stayman Test",
+      "vulnerability": "None",
+      "hands": {
+        "South": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 11,
+          "dist_points": 0,
+          "total_points": 11,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 4,
+            "\u2666": 3,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 2,
+            "\u2666": 0,
+            "\u2663": 5
+          },
+          "is_balanced": true
+        },
+        "North": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 3,
+          "dist_points": 2,
+          "total_points": 5,
+          "suit_lengths": {
+            "\u2660": 6,
+            "\u2665": 2,
+            "\u2666": 2,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 0,
+            "\u2666": 0,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 11,
+          "dist_points": 0,
+          "total_points": 11,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 3,
+            "\u2666": 4,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 4,
+            "\u2666": 0,
+            "\u2663": 4
+          },
+          "is_balanced": true
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 15,
+          "dist_points": 0,
+          "total_points": 15,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 4,
+            "\u2666": 4,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 4,
+            "\u2666": 10,
+            "\u2663": 1
+          },
+          "is_balanced": true
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "West",
+          "bid": "1NT",
+          "explanation": "Shows 15-17 HCP and a balanced hand."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Logic error: DecisionEngine chose 'responses' but it was not found or returned no bid."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    },
+    {
+      "hand_number": 2,
+      "scenario": "Blackwood Test",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 19,
+          "dist_points": 0,
+          "total_points": 19,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 2,
+            "\u2666": 4,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 9,
+            "\u2665": 4,
+            "\u2666": 2,
+            "\u2663": 4
+          },
+          "is_balanced": true
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 10,
+          "dist_points": 0,
+          "total_points": 10,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 3,
+            "\u2666": 4,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 1,
+            "\u2665": 1,
+            "\u2666": 8,
+            "\u2663": 0
+          },
+          "is_balanced": true
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 7,
+          "dist_points": 1,
+          "total_points": 8,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 3,
+            "\u2666": 2,
+            "\u2663": 5
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 2,
+            "\u2666": 0,
+            "\u2663": 5
+          },
+          "is_balanced": true
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 4,
+          "dist_points": 1,
+          "total_points": 5,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 5,
+            "\u2666": 3,
+            "\u2663": 1
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 3,
+            "\u2666": 0,
+            "\u2663": 1
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "1\u2666",
+          "explanation": "Shows 13+ points, no 5-card suit. Diamonds is the longer minor."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "South",
+          "bid": "1NT",
+          "explanation": "Shows 6-9 HCP, balanced, and no fit."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "North",
+          "bid": "3NT",
+          "explanation": "Strong hand (19 pts), bidding game in No-Trump."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    },
+    {
+      "hand_number": 3,
+      "scenario": "Jacoby Transfer Test",
+      "vulnerability": "None",
+      "hands": {
+        "South": {
+          "cards": [
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 6,
+          "dist_points": 2,
+          "total_points": 8,
+          "suit_lengths": {
+            "\u2660": 1,
+            "\u2665": 5,
+            "\u2666": 5,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 1,
+            "\u2665": 1,
+            "\u2666": 4,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        },
+        "North": {
+          "cards": [
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 6,
+          "dist_points": 2,
+          "total_points": 8,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 6,
+            "\u2666": 3,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 4,
+            "\u2666": 2,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 11,
+          "dist_points": 2,
+          "total_points": 13,
+          "suit_lengths": {
+            "\u2660": 6,
+            "\u2665": 1,
+            "\u2666": 4,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 3,
+            "\u2666": 4,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 17,
+          "dist_points": 3,
+          "total_points": 20,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 1,
+            "\u2666": 1,
+            "\u2663": 7
+          },
+          "suit_hcp": {
+            "\u2660": 5,
+            "\u2665": 2,
+            "\u2666": 0,
+            "\u2663": 10
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "East",
+          "bid": "1\u2660",
+          "explanation": "Shows 13+ total points and a 5+ card spade suit."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "West",
+          "bid": "4\u2660",
+          "explanation": "Game-forcing raise."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Minimum hand (13-15 pts), passing partner's simple raise."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    },
+    {
+      "hand_number": 4,
+      "scenario": "Opener Rebid Test",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 14,
+          "dist_points": 1,
+          "total_points": 15,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 2,
+            "\u2666": 5,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 0,
+            "\u2666": 4,
+            "\u2663": 7
+          },
+          "is_balanced": false
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 8,
+          "dist_points": 0,
+          "total_points": 8,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 4,
+            "\u2666": 3,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 4,
+            "\u2666": 4,
+            "\u2663": 0
+          },
+          "is_balanced": true
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 5,
+          "dist_points": 1,
+          "total_points": 6,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 3,
+            "\u2666": 2,
+            "\u2663": 5
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 2,
+            "\u2666": 0,
+            "\u2663": 3
+          },
+          "is_balanced": true
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            }
+          ],
+          "hcp": 13,
+          "dist_points": 2,
+          "total_points": 15,
+          "suit_lengths": {
+            "\u2660": 6,
+            "\u2665": 4,
+            "\u2666": 3,
+            "\u2663": 0
+          },
+          "suit_hcp": {
+            "\u2660": 7,
+            "\u2665": 4,
+            "\u2666": 2,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "1\u2666",
+          "explanation": "Shows 13+ total points and a 5+ card diamond suit."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "No clear natural response."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        }
+      ]
+    },
+    {
+      "hand_number": 5,
+      "scenario": "Blackwood Test",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 18,
+          "dist_points": 2,
+          "total_points": 20,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 2,
+            "\u2666": 6,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 4,
+            "\u2666": 10,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 2,
+          "dist_points": 0,
+          "total_points": 2,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 4,
+            "\u2666": 3,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 2,
+            "\u2666": 0,
+            "\u2663": 0
+          },
+          "is_balanced": true
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 16,
+          "dist_points": 1,
+          "total_points": 17,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 2,
+            "\u2666": 2,
+            "\u2663": 5
+          },
+          "suit_hcp": {
+            "\u2660": 6,
+            "\u2665": 3,
+            "\u2666": 0,
+            "\u2663": 7
+          },
+          "is_balanced": false
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 4,
+          "dist_points": 1,
+          "total_points": 5,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 5,
+            "\u2666": 2,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 1,
+            "\u2666": 0,
+            "\u2663": 3
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "1\u2666",
+          "explanation": "Shows 13+ total points and a 5+ card diamond suit."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "South",
+          "bid": "1\u2660",
+          "explanation": "Showing a 4+ card spade suit."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "North",
+          "bid": "3NT",
+          "explanation": "Strong hand (20 pts), bidding game in No-Trump."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    },
+    {
+      "hand_number": 6,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 9,
+          "dist_points": 3,
+          "total_points": 12,
+          "suit_lengths": {
+            "\u2660": 1,
+            "\u2665": 4,
+            "\u2666": 1,
+            "\u2663": 7
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 5,
+            "\u2666": 0,
+            "\u2663": 4
+          },
+          "is_balanced": false
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 14,
+          "dist_points": 2,
+          "total_points": 16,
+          "suit_lengths": {
+            "\u2660": 6,
+            "\u2665": 2,
+            "\u2666": 3,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 7,
+            "\u2665": 3,
+            "\u2666": 2,
+            "\u2663": 2
+          },
+          "is_balanced": false
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 14,
+          "dist_points": 1,
+          "total_points": 15,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 2,
+            "\u2666": 5,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 2,
+            "\u2666": 5,
+            "\u2663": 4
+          },
+          "is_balanced": false
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 3,
+          "dist_points": 1,
+          "total_points": 4,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 5,
+            "\u2666": 4,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 0,
+            "\u2666": 3,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "East",
+          "bid": "1\u2660",
+          "explanation": "Shows 13+ total points and a 5+ card spade suit."
+        },
+        {
+          "player": "South",
+          "bid": "2\u2666",
+          "explanation": "Overcall showing 8-16 HCP and a 5+ card Diamond suit."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "Less than 6 total points."
+        },
+        {
+          "player": "North",
+          "bid": "2\u2660",
+          "explanation": "Cuebid. Shows a very strong hand, likely game-forcing."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Cannot determine auction context for rebid."
+        },
+        {
+          "player": "South",
+          "bid": "3\u2660",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "Less than 6 total points."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Cannot determine auction context for rebid."
+        }
+      ]
+    },
+    {
+      "hand_number": 7,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 8,
+          "dist_points": 0,
+          "total_points": 8,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 3,
+            "\u2666": 3,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 1,
+            "\u2666": 1,
+            "\u2663": 2
+          },
+          "is_balanced": true
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 13,
+          "dist_points": 2,
+          "total_points": 15,
+          "suit_lengths": {
+            "\u2660": 5,
+            "\u2665": 1,
+            "\u2666": 5,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 0,
+            "\u2666": 7,
+            "\u2663": 3
+          },
+          "is_balanced": false
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 10,
+          "dist_points": 0,
+          "total_points": 10,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 3,
+            "\u2666": 4,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 0,
+            "\u2666": 2,
+            "\u2663": 5
+          },
+          "is_balanced": true
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 9,
+          "dist_points": 2,
+          "total_points": 11,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 6,
+            "\u2666": 1,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 9,
+            "\u2666": 0,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "East",
+          "bid": "1\u2660",
+          "explanation": "Shows 13+ total points and a 5+ card spade suit."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No clear natural response."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    },
+    {
+      "hand_number": 8,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 10,
+          "dist_points": 1,
+          "total_points": 11,
+          "suit_lengths": {
+            "\u2660": 5,
+            "\u2665": 3,
+            "\u2666": 3,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 3,
+            "\u2666": 3,
+            "\u2663": 0
+          },
+          "is_balanced": true
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 9,
+          "dist_points": 0,
+          "total_points": 9,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 3,
+            "\u2666": 3,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 4,
+            "\u2666": 5,
+            "\u2663": 0
+          },
+          "is_balanced": true
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 14,
+          "dist_points": 2,
+          "total_points": 16,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 3,
+            "\u2666": 2,
+            "\u2663": 6
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 1,
+            "\u2666": 0,
+            "\u2663": 10
+          },
+          "is_balanced": false
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 7,
+          "dist_points": 1,
+          "total_points": 8,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 4,
+            "\u2666": 5,
+            "\u2663": 1
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 2,
+            "\u2666": 2,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "South",
+          "bid": "1\u2663",
+          "explanation": "Shows 13+ total points and a 5+ card club suit."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "North",
+          "bid": "1\u2660",
+          "explanation": "Showing a 4+ card spade suit."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        },
+        {
+          "player": "South",
+          "bid": "3\u2663",
+          "explanation": "Invitational (16-18 pts) jump rebid of a 6+ card suit."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    },
+    {
+      "hand_number": 9,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 10,
+          "dist_points": 0,
+          "total_points": 10,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 3,
+            "\u2666": 4,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 5,
+            "\u2666": 1,
+            "\u2663": 0
+          },
+          "is_balanced": true
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 14,
+          "dist_points": 2,
+          "total_points": 16,
+          "suit_lengths": {
+            "\u2660": 6,
+            "\u2665": 2,
+            "\u2666": 2,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 0,
+            "\u2666": 2,
+            "\u2663": 9
+          },
+          "is_balanced": false
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 11,
+          "dist_points": 1,
+          "total_points": 12,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 5,
+            "\u2666": 2,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 2,
+            "\u2665": 5,
+            "\u2666": 4,
+            "\u2663": 0
+          },
+          "is_balanced": true
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 5,
+          "dist_points": 1,
+          "total_points": 6,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 3,
+            "\u2666": 5,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 1,
+            "\u2665": 0,
+            "\u2666": 3,
+            "\u2663": 1
+          },
+          "is_balanced": true
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "East",
+          "bid": "1\u2660",
+          "explanation": "Shows 13+ total points and a 5+ card spade suit."
+        },
+        {
+          "player": "South",
+          "bid": "2\u2665",
+          "explanation": "Overcall showing 8-16 HCP and a 5+ card Heart suit."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No clear natural response."
+        },
+        {
+          "player": "North",
+          "bid": "3\u2665",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Cannot determine auction context for rebid."
+        },
+        {
+          "player": "South",
+          "bid": "4\u2665",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No clear natural response."
+        },
+        {
+          "player": "North",
+          "bid": "5\u2665",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Cannot determine auction context for rebid."
+        },
+        {
+          "player": "South",
+          "bid": "6\u2665",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No clear natural response."
+        },
+        {
+          "player": "North",
+          "bid": "7\u2665",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Cannot determine auction context for rebid."
+        },
+        {
+          "player": "South",
+          "bid": "8\u2665",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No clear natural response."
+        },
+        {
+          "player": "North",
+          "bid": "9\u2665",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Cannot determine auction context for rebid."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No clear natural response."
+        }
+      ]
+    },
+    {
+      "hand_number": 10,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 12,
+          "dist_points": 1,
+          "total_points": 13,
+          "suit_lengths": {
+            "\u2660": 5,
+            "\u2665": 3,
+            "\u2666": 2,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 7,
+            "\u2665": 1,
+            "\u2666": 2,
+            "\u2663": 2
+          },
+          "is_balanced": true
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 6,
+          "dist_points": 1,
+          "total_points": 7,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 3,
+            "\u2666": 2,
+            "\u2663": 5
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 2,
+            "\u2666": 1,
+            "\u2663": 3
+          },
+          "is_balanced": true
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 14,
+          "dist_points": 2,
+          "total_points": 16,
+          "suit_lengths": {
+            "\u2660": 1,
+            "\u2665": 5,
+            "\u2666": 5,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 2,
+            "\u2665": 7,
+            "\u2666": 4,
+            "\u2663": 1
+          },
+          "is_balanced": false
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 8,
+          "dist_points": 0,
+          "total_points": 8,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 2,
+            "\u2666": 4,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 1,
+            "\u2665": 0,
+            "\u2666": 3,
+            "\u2663": 4
+          },
+          "is_balanced": true
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "1\u2660",
+          "explanation": "Shows 13+ total points and a 5+ card spade suit."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "No clear natural response."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        }
+      ]
+    },
+    {
+      "hand_number": 11,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 8,
+          "dist_points": 0,
+          "total_points": 8,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 3,
+            "\u2666": 4,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 0,
+            "\u2666": 3,
+            "\u2663": 1
+          },
+          "is_balanced": true
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 8,
+          "dist_points": 1,
+          "total_points": 9,
+          "suit_lengths": {
+            "\u2660": 5,
+            "\u2665": 3,
+            "\u2666": 1,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 1,
+            "\u2665": 1,
+            "\u2666": 1,
+            "\u2663": 5
+          },
+          "is_balanced": false
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 15,
+          "dist_points": 0,
+          "total_points": 15,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 3,
+            "\u2666": 4,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 2,
+            "\u2665": 5,
+            "\u2666": 4,
+            "\u2663": 4
+          },
+          "is_balanced": true
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 9,
+          "dist_points": 0,
+          "total_points": 9,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 4,
+            "\u2666": 4,
+            "\u2663": 1
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 4,
+            "\u2666": 2,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "South",
+          "bid": "1NT",
+          "explanation": "Shows 15-17 HCP and a balanced hand."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Logic error: DecisionEngine chose 'responses' but it was not found or returned no bid."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    },
+    {
+      "hand_number": 12,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 8,
+          "dist_points": 0,
+          "total_points": 8,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 2,
+            "\u2666": 4,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 0,
+            "\u2666": 2,
+            "\u2663": 2
+          },
+          "is_balanced": true
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 11,
+          "dist_points": 1,
+          "total_points": 12,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 3,
+            "\u2666": 5,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 0,
+            "\u2666": 7,
+            "\u2663": 1
+          },
+          "is_balanced": true
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 5,
+          "dist_points": 1,
+          "total_points": 6,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 5,
+            "\u2666": 1,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 1,
+            "\u2665": 4,
+            "\u2666": 0,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 16,
+          "dist_points": 0,
+          "total_points": 16,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 3,
+            "\u2666": 3,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 2,
+            "\u2665": 6,
+            "\u2666": 1,
+            "\u2663": 7
+          },
+          "is_balanced": true
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "West",
+          "bid": "1NT",
+          "explanation": "Shows 15-17 HCP and a balanced hand."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Logic error: DecisionEngine chose 'responses' but it was not found or returned no bid."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    },
+    {
+      "hand_number": 13,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 4,
+          "dist_points": 1,
+          "total_points": 5,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 3,
+            "\u2666": 5,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 1,
+            "\u2666": 0,
+            "\u2663": 3
+          },
+          "is_balanced": true
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 12,
+          "dist_points": 1,
+          "total_points": 13,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 2,
+            "\u2666": 3,
+            "\u2663": 5
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 0,
+            "\u2666": 6,
+            "\u2663": 3
+          },
+          "is_balanced": true
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 16,
+          "dist_points": 0,
+          "total_points": 16,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 4,
+            "\u2666": 3,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 7,
+            "\u2666": 1,
+            "\u2663": 4
+          },
+          "is_balanced": true
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 8,
+          "dist_points": 0,
+          "total_points": 8,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 4,
+            "\u2666": 2,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 2,
+            "\u2666": 3,
+            "\u2663": 0
+          },
+          "is_balanced": true
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "East",
+          "bid": "1\u2663",
+          "explanation": "Shows 13+ total points and a 5+ card club suit."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "West",
+          "bid": "2\u2663",
+          "explanation": "Simple raise showing 6-9 support points."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Minimum hand (13-15 pts), passing partner's simple raise."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    },
+    {
+      "hand_number": 14,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            }
+          ],
+          "hcp": 15,
+          "dist_points": 2,
+          "total_points": 17,
+          "suit_lengths": {
+            "\u2660": 5,
+            "\u2665": 3,
+            "\u2666": 5,
+            "\u2663": 0
+          },
+          "suit_hcp": {
+            "\u2660": 7,
+            "\u2665": 4,
+            "\u2666": 4,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 8,
+          "dist_points": 2,
+          "total_points": 10,
+          "suit_lengths": {
+            "\u2660": 1,
+            "\u2665": 4,
+            "\u2666": 2,
+            "\u2663": 6
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 1,
+            "\u2666": 0,
+            "\u2663": 7
+          },
+          "is_balanced": false
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 9,
+          "dist_points": 1,
+          "total_points": 10,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 1,
+            "\u2666": 5,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 0,
+            "\u2666": 6,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 8,
+          "dist_points": 1,
+          "total_points": 9,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 5,
+            "\u2666": 1,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 5,
+            "\u2666": 0,
+            "\u2663": 3
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "1\u2660",
+          "explanation": "Shows 13+ total points and a 5+ card spade suit."
+        },
+        {
+          "player": "East",
+          "bid": "2\u2663",
+          "explanation": "Overcall showing 8-16 HCP and a 5+ card Club suit."
+        },
+        {
+          "player": "South",
+          "bid": "3\u2660",
+          "explanation": "Invitational raise showing 10-12 support points."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    },
+    {
+      "hand_number": 15,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 13,
+          "dist_points": 2,
+          "total_points": 15,
+          "suit_lengths": {
+            "\u2660": 6,
+            "\u2665": 2,
+            "\u2666": 3,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 4,
+            "\u2666": 1,
+            "\u2663": 4
+          },
+          "is_balanced": false
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 8,
+          "dist_points": 1,
+          "total_points": 9,
+          "suit_lengths": {
+            "\u2660": 1,
+            "\u2665": 5,
+            "\u2666": 3,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 1,
+            "\u2666": 6,
+            "\u2663": 1
+          },
+          "is_balanced": false
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 4,
+          "dist_points": 0,
+          "total_points": 4,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 3,
+            "\u2666": 4,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 2,
+            "\u2665": 0,
+            "\u2666": 0,
+            "\u2663": 2
+          },
+          "is_balanced": true
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 15,
+          "dist_points": 0,
+          "total_points": 15,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 3,
+            "\u2666": 3,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 5,
+            "\u2666": 3,
+            "\u2663": 3
+          },
+          "is_balanced": true
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "1\u2660",
+          "explanation": "Shows 13+ total points and a 5+ card spade suit."
+        },
+        {
+          "player": "East",
+          "bid": "2\u2665",
+          "explanation": "Overcall showing 8-16 HCP and a 5+ card Heart suit."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "Less than 6 total points."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Cannot determine auction context for rebid."
+        }
+      ]
+    },
+    {
+      "hand_number": 16,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 8,
+          "dist_points": 0,
+          "total_points": 8,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 3,
+            "\u2666": 2,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 1,
+            "\u2666": 4,
+            "\u2663": 3
+          },
+          "is_balanced": true
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 5,
+          "dist_points": 0,
+          "total_points": 5,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 4,
+            "\u2666": 1,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 5,
+            "\u2666": 0,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 10,
+          "dist_points": 0,
+          "total_points": 10,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 4,
+            "\u2666": 3,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 10,
+            "\u2665": 0,
+            "\u2666": 0,
+            "\u2663": 0
+          },
+          "is_balanced": true
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 17,
+          "dist_points": 3,
+          "total_points": 20,
+          "suit_lengths": {
+            "\u2660": 1,
+            "\u2665": 2,
+            "\u2666": 7,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 4,
+            "\u2666": 6,
+            "\u2663": 7
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "West",
+          "bid": "1\u2666",
+          "explanation": "Shows 13+ total points and a 5+ card diamond suit."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Less than 6 total points."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    },
+    {
+      "hand_number": 17,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 5,
+          "dist_points": 1,
+          "total_points": 6,
+          "suit_lengths": {
+            "\u2660": 1,
+            "\u2665": 5,
+            "\u2666": 4,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 3,
+            "\u2666": 0,
+            "\u2663": 2
+          },
+          "is_balanced": false
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 10,
+          "dist_points": 0,
+          "total_points": 10,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 4,
+            "\u2666": 3,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 7,
+            "\u2666": 0,
+            "\u2663": 3
+          },
+          "is_balanced": true
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 17,
+          "dist_points": 1,
+          "total_points": 18,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 1,
+            "\u2666": 3,
+            "\u2663": 5
+          },
+          "suit_hcp": {
+            "\u2660": 7,
+            "\u2665": 0,
+            "\u2666": 9,
+            "\u2663": 1
+          },
+          "is_balanced": false
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 8,
+          "dist_points": 1,
+          "total_points": 9,
+          "suit_lengths": {
+            "\u2660": 5,
+            "\u2665": 3,
+            "\u2666": 3,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 0,
+            "\u2666": 1,
+            "\u2663": 4
+          },
+          "is_balanced": true
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "South",
+          "bid": "1\u2663",
+          "explanation": "Shows 13+ total points and a 5+ card club suit."
+        },
+        {
+          "player": "West",
+          "bid": "1\u2660",
+          "explanation": "Overcall showing 8-16 HCP and a 5+ card Spade suit."
+        },
+        {
+          "player": "North",
+          "bid": "2\u2663",
+          "explanation": "Simple raise showing 6-9 support points."
+        },
+        {
+          "player": "East",
+          "bid": "2\u2660",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "South",
+          "bid": "3\u2663",
+          "explanation": "Invitational (16-18 pts), raising partner's simple raise."
+        },
+        {
+          "player": "West",
+          "bid": "3\u2660",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "East",
+          "bid": "4\u2660",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "West",
+          "bid": "5\u2660",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "East",
+          "bid": "6\u2660",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "West",
+          "bid": "7\u2660",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "East",
+          "bid": "8\u2660",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "West",
+          "bid": "9\u2660",
+          "explanation": "Raising partner's overcalled suit with support."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        },
+        {
+          "player": "South",
+          "bid": "Pass",
+          "explanation": "AI bid overridden due to illegality."
+        }
+      ]
+    },
+    {
+      "hand_number": 18,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 4,
+          "dist_points": 1,
+          "total_points": 5,
+          "suit_lengths": {
+            "\u2660": 5,
+            "\u2665": 2,
+            "\u2666": 3,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 0,
+            "\u2666": 1,
+            "\u2663": 0
+          },
+          "is_balanced": true
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 17,
+          "dist_points": 1,
+          "total_points": 18,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 5,
+            "\u2666": 2,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 4,
+            "\u2666": 4,
+            "\u2663": 5
+          },
+          "is_balanced": true
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 12,
+          "dist_points": 2,
+          "total_points": 14,
+          "suit_lengths": {
+            "\u2660": 1,
+            "\u2665": 2,
+            "\u2666": 4,
+            "\u2663": 6
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 4,
+            "\u2666": 3,
+            "\u2663": 5
+          },
+          "is_balanced": false
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 7,
+          "dist_points": 0,
+          "total_points": 7,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 4,
+            "\u2666": 4,
+            "\u2663": 1
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 2,
+            "\u2666": 2,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Less than 13 total points."
+        },
+        {
+          "player": "East",
+          "bid": "1NT",
+          "explanation": "Shows 15-17 HCP and a balanced hand."
+        },
+        {
+          "player": "South",
+          "bid": "2\u2663",
+          "explanation": "Overcall showing 8-16 HCP and a 5+ card Club suit."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "Logic error: DecisionEngine chose 'responses' but it was not found or returned no bid."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "Not enough strength or fit to advance the overcall."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Cannot determine auction context for rebid."
+        }
+      ]
+    },
+    {
+      "hand_number": 19,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 14,
+          "dist_points": 1,
+          "total_points": 15,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 2,
+            "\u2666": 5,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 2,
+            "\u2666": 6,
+            "\u2663": 3
+          },
+          "is_balanced": false
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 6,
+          "dist_points": 1,
+          "total_points": 7,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 5,
+            "\u2666": 1,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 2,
+            "\u2665": 4,
+            "\u2666": 0,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 16,
+          "dist_points": 1,
+          "total_points": 17,
+          "suit_lengths": {
+            "\u2660": 3,
+            "\u2665": 5,
+            "\u2666": 4,
+            "\u2663": 1
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 4,
+            "\u2666": 4,
+            "\u2663": 4
+          },
+          "is_balanced": false
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 4,
+          "dist_points": 1,
+          "total_points": 5,
+          "suit_lengths": {
+            "\u2660": 5,
+            "\u2665": 1,
+            "\u2666": 3,
+            "\u2663": 4
+          },
+          "suit_hcp": {
+            "\u2660": 1,
+            "\u2665": 0,
+            "\u2666": 0,
+            "\u2663": 3
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "1\u2666",
+          "explanation": "Shows 13+ total points and a 5+ card diamond suit."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "South",
+          "bid": "3NT",
+          "explanation": "Game-forcing raise."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "No clear rebid available."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    },
+    {
+      "hand_number": 20,
+      "scenario": "Random",
+      "vulnerability": "None",
+      "hands": {
+        "North": {
+          "cards": [
+            {
+              "rank": "T",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 7,
+          "dist_points": 2,
+          "total_points": 9,
+          "suit_lengths": {
+            "\u2660": 1,
+            "\u2665": 4,
+            "\u2666": 6,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 0,
+            "\u2665": 0,
+            "\u2666": 7,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        },
+        "East": {
+          "cards": [
+            {
+              "rank": "Q",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 11,
+          "dist_points": 1,
+          "total_points": 12,
+          "suit_lengths": {
+            "\u2660": 4,
+            "\u2665": 5,
+            "\u2666": 1,
+            "\u2663": 3
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 4,
+            "\u2666": 0,
+            "\u2663": 4
+          },
+          "is_balanced": false
+        },
+        "South": {
+          "cards": [
+            {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 9,
+          "dist_points": 2,
+          "total_points": 11,
+          "suit_lengths": {
+            "\u2660": 2,
+            "\u2665": 1,
+            "\u2666": 4,
+            "\u2663": 6
+          },
+          "suit_hcp": {
+            "\u2660": 3,
+            "\u2665": 0,
+            "\u2666": 0,
+            "\u2663": 6
+          },
+          "is_balanced": false
+        },
+        "West": {
+          "cards": [
+            {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "6",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "4",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "3",
+              "suit": "\u2660"
+            },
+            {
+              "rank": "K",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2665"
+            },
+            {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            {
+              "rank": "2",
+              "suit": "\u2663"
+            }
+          ],
+          "hcp": 13,
+          "dist_points": 2,
+          "total_points": 15,
+          "suit_lengths": {
+            "\u2660": 6,
+            "\u2665": 3,
+            "\u2666": 2,
+            "\u2663": 2
+          },
+          "suit_hcp": {
+            "\u2660": 4,
+            "\u2665": 6,
+            "\u2666": 3,
+            "\u2663": 0
+          },
+          "is_balanced": false
+        }
+      },
+      "auction": [
+        {
+          "player": "North",
+          "bid": "2\u2666",
+          "explanation": "Weak Two bid. Shows 6-10 HCP and a 6-card Diamond suit."
+        },
+        {
+          "player": "East",
+          "bid": "2\u2665",
+          "explanation": "Overcall showing 8-16 HCP and a 5+ card Heart suit."
+        },
+        {
+          "player": "South",
+          "bid": "3\u2666",
+          "explanation": "Invitational raise showing 10-12 support points."
+        },
+        {
+          "player": "West",
+          "bid": "Pass",
+          "explanation": "No bid found by any module."
+        },
+        {
+          "player": "North",
+          "bid": "Pass",
+          "explanation": "No clear rebid available."
+        },
+        {
+          "player": "East",
+          "bid": "Pass",
+          "explanation": "Partner's overcall was not a suit."
+        }
+      ]
+    }
+  ]
+}

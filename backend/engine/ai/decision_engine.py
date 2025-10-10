@@ -4,6 +4,7 @@ from engine.ai.conventions.preempts import PreemptConvention
 from engine.ai.conventions.blackwood import BlackwoodConvention
 from engine.overcalls import OvercallModule
 from engine.ai.conventions.takeout_doubles import TakeoutDoubleConvention
+from engine.ai.conventions.negative_doubles import NegativeDoubleConvention
 
 def select_bidding_module(features):
     """
@@ -60,7 +61,17 @@ def select_bidding_module(features):
 
     # --- STATE 3: This is an UNCONTESTED PARTNERSHIP auction ---
     if auction['opener_relationship'] == 'Partner': # My partner opened
-        # Check for conventions over 1NT first
+        # Check for slam conventions first
+        blackwood = BlackwoodConvention()
+        if blackwood.evaluate(features['hand'], features):
+            return 'blackwood'
+
+        # Check for negative doubles (partner opened, opponent interfered)
+        negative_double = NegativeDoubleConvention()
+        if negative_double.evaluate(features['hand'], features):
+            return 'negative_doubles'
+
+        # Check for conventions over 1NT
         if auction['opening_bid'] == '1NT':
             jacoby = JacobyConvention()
             if jacoby.evaluate(features['hand'], features): return 'jacoby'

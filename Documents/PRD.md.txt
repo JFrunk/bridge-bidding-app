@@ -1,0 +1,26 @@
+﻿# Product Requirements Document: Bridge Bidding Master
+
+
+## 1. Introduction & Problem Statement
+Learning contract bridge bidding is difficult. For advancing players, finding opportunities for focused, repeatable practice with instant feedback is a major challenge. Our solution is an interactive web application that serves as a dedicated training partner, allowing a player to practice bidding against a competent AI in a controlled environment.
+
+
+## 2. Goals & Objectives
+* **Primary Goal:** To accelerate a user's learning and memorization of Standard American (SAYC) bidding conventions.
+* **Secondary Goals:**
+    * Provide instant, accurate, and explainable feedback.
+    * Allow for repeatable practice of specific bidding scenarios.
+    * Build a robust, extensible, and transparent AI.
+
+
+## 3. User Persona: "The Advancing Player"
+A bridge player who understands the basic rules and wants to move to more systematic, partnership-oriented play. They are actively learning core conventions and competitive bidding.
+* **Needs:** Repetition, instant feedback, and a safe environment to make and learn from mistakes.
+
+
+## 4. Features & Scope
+* **Core Bidding Logic:** An expert system AI for openings, responses, rebids, and competitive bidding.
+* **Implemented Conventions:** Stayman, Jacoby Transfers, Blackwood, Preempts.
+* **User Interface:** A clean hand display, point analysis panel, and interactive bidding table.
+* **Learning Tools:** An instant feedback system, scenario loader, and hand replay button.
+* **Development & Testing:** The project is managed with Git and includes an automated `pytest` test suite and a simulation harness.

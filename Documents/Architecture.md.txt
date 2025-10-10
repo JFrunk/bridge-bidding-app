@@ -1,0 +1,29 @@
+﻿# Architecture Deep Dive
+
+
+## 1. Overall Architecture: Client-Server
+The application uses a standard client-server model to separate presentation from logic.
+* **Frontend (Client):** A **React** single-page application responsible for all UI rendering and user interaction.
+* **Backend (Server):** A **Python/Flask** application that manages game state and contains all AI bidding logic.
+* **Communication:** A RESTful API using JSON.
+
+
+## 2. Backend AI Engine: Manager/Specialist Model
+The AI is a modular expert system designed for explainability and extensibility.
+
+
+* **The `FeatureExtractor` (Analyst):** Takes the raw game state (hand, auction) and creates a structured dictionary of features (e.g., HCP, hand shape, is_competitive, partner_opened). This is the single source of truth for the AI's decision-making.
+
+
+* **The `DecisionEngine` (Manager):** Takes the features dictionary and uses a prioritized checklist to select the correct "specialist" module for the current bidding context (e.g., `OpeningBidsModule`, `StaymanConvention`).
+
+
+* **The "Specialists" (Experts):** A collection of self-contained Python classes, each an expert "playbook" for a single bidding situation. Each has a standard `.evaluate()` method.
+
+
+* **The `BiddingEngine` (Orchestrator):** The top-level class that manages the overall process: calls the `FeatureExtractor`, passes features to the `DecisionEngine`, invokes the chosen specialist, and performs a final legality check on the selected bid.
+
+
+## 3. Key Architectural Decisions
+* **Expert System over "Black Box" AI:** Prioritizes explainability, which is essential for a learning tool.
+* **Modular, Class-Based Specialists:** Ensures the architecture is consistent, maintainable, and easy to extend with new conventions.

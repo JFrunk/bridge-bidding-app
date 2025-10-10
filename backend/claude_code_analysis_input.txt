@@ -1,0 +1,983 @@
+======================================================================
+BRIDGE BIDDING ANALYSIS - 20 HANDS
+Generated: 2025-10-09 16:21:52
+======================================================================
+
+Please analyze the following bridge hands and bidding sequences.
+For each hand, evaluate:
+1. Is each bid correct according to SAYC?
+2. What errors or issues do you see?
+3. What would be the correct bidding sequence?
+4. Rate the overall quality (Excellent/Good/Fair/Poor)
+
+======================================================================
+
+HAND #1 - Jacoby Transfer Test (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: J T 8 4
+♥: T 8
+♦: A 5 3
+♣: K 8 6 4
+HCP: 8, Total: 8, Balanced: True
+
+**East:**
+♠: Q 9 7 6 2
+♥: J 3
+♦: 9 8
+♣: Q T 5 3
+HCP: 5, Total: 6, Balanced: False
+
+**South:**
+♠: K 5 3
+♥: A K Q
+♦: K J T 7
+♣: A J 2
+HCP: 21, Total: 21, Balanced: True
+
+**West:**
+♠: A
+♥: 9 7 6 5 4 2
+♦: Q 6 4 2
+♣: 9 7
+HCP: 6, Total: 8, Balanced: False
+
+Auction:
+N          E          S          W
+--------------------------------------------
+Pass       Pass       1♦         Pass      
+2♦         Pass       3NT        Pass      
+Pass       Pass                            
+
+Bid Explanations:
+1. North: Pass - Less than 13 total points.
+2. East: Pass - Less than 13 total points.
+3. South: 1♦ - Shows 13+ points, no 5-card suit. Diamonds is the longer minor.
+4. West: Pass - No bid found by any module.
+5. North: 2♦ - Simple raise showing 6-9 support points.
+6. East: Pass - No bid found by any module.
+7. South: 3NT - Strong hand (21 pts), bidding game in No-Trump.
+8. West: Pass - No bid found by any module.
+9. North: Pass - AI bid overridden due to illegality.
+10. East: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #2 - Stayman Test (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: 6 2
+♥: 9 7
+♦: 9 5 2
+♣: K Q T 9 3 2
+HCP: 5, Total: 7, Balanced: False
+
+**East:**
+♠: A 5 4
+♥: A 8 3 2
+♦: K J 7
+♣: A 8 5
+HCP: 16, Total: 16, Balanced: True
+
+**South:**
+♠: K Q 3
+♥: Q T 4
+♦: 8 6 4 3
+♣: J 7 4
+HCP: 8, Total: 8, Balanced: True
+
+**West:**
+♠: J T 9 8 7
+♥: K J 6 5
+♦: A Q T
+♣: 6
+HCP: 11, Total: 12, Balanced: False
+
+Auction:
+N          E          S          W
+--------------------------------------------
+Pass       1NT        Pass       2♥        
+Pass       2NT        Pass       Pass      
+Pass                                       
+
+Bid Explanations:
+1. North: Pass - Less than 13 total points.
+2. East: 1NT - Shows 15-17 HCP and a balanced hand.
+3. South: Pass - No bid found by any module.
+4. West: 2♥ - Jacoby Transfer showing 5+ Spades.
+5. North: Pass - No bid found by any module.
+6. East: 2NT - Shows a strong hand (16-18 pts) with no obvious fit.
+7. South: Pass - No bid found by any module.
+8. West: Pass - Logic error: DecisionEngine chose 'responses' but it was not found or returned no bid.
+9. North: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #3 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: 5 3
+♥: K J T 9 8 5
+♦: K J 3
+♣: Q 4
+HCP: 10, Total: 12, Balanced: False
+
+**East:**
+♠: 8 4 2
+♥: 7 6 2
+♦: A T 7 4
+♣: T 9 5
+HCP: 4, Total: 4, Balanced: True
+
+**South:**
+♠: K J 9 7
+♥: A
+♦: Q 8 2
+♣: A K J 8 2
+HCP: 18, Total: 19, Balanced: False
+
+**West:**
+♠: A Q T 6
+♥: Q 4 3
+♦: 9 6 5
+♣: 7 6 3
+HCP: 8, Total: 8, Balanced: True
+
+Auction:
+N          E          S          W
+--------------------------------------------
+2♥         Pass       Pass       Pass      
+
+Bid Explanations:
+1. North: 2♥ - Weak Two bid. Shows 6-10 HCP and a 6-card Heart suit.
+2. East: Pass - No bid found by any module.
+3. South: Pass - No clear response available.
+4. West: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #4 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: K 5 2
+♥: K T 4 3
+♦: T 8
+♣: Q 9 8 5
+HCP: 8, Total: 8, Balanced: True
+
+**East:**
+♠: J T 9 4
+♥: J 8 6
+♦: K J 5
+♣: T 6 4
+HCP: 6, Total: 6, Balanced: True
+
+**South:**
+♠: 8 7
+♥: A Q 9 7 5
+♦: A 3
+♣: A K 3 2
+HCP: 17, Total: 18, Balanced: False
+
+**West:**
+♠: A Q 6 3
+♥: 2
+♦: Q 9 7 6 4 2
+♣: J 7
+HCP: 9, Total: 11, Balanced: False
+
+Auction:
+N          E          S          W
+--------------------------------------------
+Pass       Pass       1♥         Pass      
+2♥         Pass       3♥         Pass      
+Pass       Pass                            
+
+Bid Explanations:
+1. North: Pass - Less than 13 total points.
+2. East: Pass - Less than 13 total points.
+3. South: 1♥ - Shows 13+ total points and a 5+ card heart suit.
+4. West: Pass - No bid found by any module.
+5. North: 2♥ - Simple raise showing 6-9 support points.
+6. East: Pass - No bid found by any module.
+7. South: 3♥ - Invitational (16-18 pts), raising partner's simple raise.
+8. West: Pass - No bid found by any module.
+9. North: Pass - AI bid overridden due to illegality.
+10. East: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #5 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: T 8 6 5
+♥: T
+♦: K Q 7
+♣: K J 6 5 2
+HCP: 9, Total: 10, Balanced: False
+
+**East:**
+♠: Q J
+♥: Q 9 4 3
+♦: J 9 4
+♣: Q T 9 7
+HCP: 8, Total: 8, Balanced: True
+
+**South:**
+♠: A
+♥: A 8 6 5 2
+♦: 8 5 3 2
+♣: A 8 4
+HCP: 12, Total: 13, Balanced: False
+
+**West:**
+♠: K 9 7 4 3 2
+♥: K J 7
+♦: A T 6
+♣: 3
+HCP: 11, Total: 13, Balanced: False
+
+Auction:
+N          E          S          W
+--------------------------------------------
+Pass       Pass       1♥         Pass      
+1♠         Pass       Pass       Pass      
+
+Bid Explanations:
+1. North: Pass - Less than 13 total points.
+2. East: Pass - Less than 13 total points.
+3. South: 1♥ - Shows 13+ total points and a 5+ card heart suit.
+4. West: Pass - No bid found by any module.
+5. North: 1♠ - Showing a 4+ card spade suit.
+6. East: Pass - No bid found by any module.
+7. South: Pass - No clear rebid available.
+8. West: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #6 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: A 4
+♥: Q J 9 7 6
+♦: A Q T
+♣: J 5 4
+HCP: 14, Total: 15, Balanced: True
+
+**East:**
+♠: Q J 8 5 2
+♥: K T
+♦: 9 3
+♣: Q 9 8 6
+HCP: 8, Total: 9, Balanced: False
+
+**South:**
+♠: K T 7
+♥: 2
+♦: K J 8 7 5 4 2
+♣: A T
+HCP: 11, Total: 14, Balanced: False
+
+**West:**
+♠: 9 6 3
+♥: A 8 5 4 3
+♦: 6
+♣: K 7 3 2
+HCP: 7, Total: 8, Balanced: False
+
+Auction:
+N          E          S          W
+--------------------------------------------
+1♥         Pass       Pass       Pass      
+
+Bid Explanations:
+1. North: 1♥ - Shows 13+ total points and a 5+ card heart suit.
+2. East: Pass - No bid found by any module.
+3. South: Pass - No clear response available.
+4. West: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #7 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: A K 8 5 3
+♥: 3
+♦: K Q 3 2
+♣: K Q 9
+HCP: 17, Total: 18, Balanced: False
+
+**East:**
+♠: T
+♥: A K Q J T 9 7 6 5
+♦: A
+♣: A 7
+HCP: 18, Total: 21, Balanced: False
+
+**South:**
+♠: Q J 7 6
+♥: 2
+♦: J T 7 6 4
+♣: T 5 4
+HCP: 4, Total: 5, Balanced: False
+
+**West:**
+♠: 9 4 2
+♥: 8 4
+♦: 9 8 5
+♣: J 8 6 3 2
+HCP: 1, Total: 2, Balanced: True
+
+Auction:
+N          E          S          W
+--------------------------------------------
+1♠         Pass       Pass       Pass      
+
+Bid Explanations:
+1. North: 1♠ - Shows 13+ total points and a 5+ card spade suit.
+2. East: Pass - No bid found by any module.
+3. South: Pass - Less than 6 total points.
+4. West: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #8 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: K T 6
+♥: A 9 8 3
+♦: 9 4
+♣: A K 9 8
+HCP: 14, Total: 14, Balanced: True
+
+**East:**
+♠: Q J 5
+♥: K 5
+♦: K Q 2
+♣: Q 7 6 4 3
+HCP: 13, Total: 14, Balanced: True
+
+**South:**
+♠: 8 7
+♥: J 7 4 2
+♦: A T 7 5
+♣: T 5 2
+HCP: 5, Total: 5, Balanced: True
+
+**West:**
+♠: A 9 4 3 2
+♥: Q T 6
+♦: J 8 6 3
+♣: J
+HCP: 8, Total: 9, Balanced: False
+
+Auction:
+N          E          S          W
+--------------------------------------------
+1♣         Pass       Pass       Pass      
+
+Bid Explanations:
+1. North: 1♣ - Shows 13+ points, no 5-card suit. Clubs is the longer or equal minor.
+2. East: Pass - No bid found by any module.
+3. South: Pass - Less than 6 total points.
+4. West: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #9 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: 3
+♥: K J 7 4 2
+♦: K J
+♣: A J 7 3 2
+HCP: 13, Total: 15, Balanced: False
+
+**East:**
+♠: A Q 9 7
+♥: A 9 6
+♦: A Q T
+♣: T 9 5
+HCP: 16, Total: 16, Balanced: True
+
+**South:**
+♠: --
+♥: T 8 5 3
+♦: 9 6 5 4 2
+♣: K 8 6 4
+HCP: 3, Total: 4, Balanced: False
+
+**West:**
+♠: K J T 8 6 5 4 2
+♥: Q
+♦: 8 7 3
+♣: Q
+HCP: 8, Total: 11, Balanced: False
+
+Auction:
+N          E          S          W
+--------------------------------------------
+1♥         1NT        Pass       Pass      
+Pass                                       
+
+Bid Explanations:
+1. North: 1♥ - Shows 13+ total points and a 5+ card heart suit.
+2. East: 1NT - 1NT overcall showing 15-18 HCP, balanced, with stopper.
+3. South: Pass - Less than 6 total points.
+4. West: Pass - AI bid overridden due to illegality.
+5. North: Pass - Cannot determine auction context for rebid.
+
+----------------------------------------------------------------------
+
+HAND #10 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: 6 3 2
+♥: A J 8 7 6 3 2
+♦: 9
+♣: J T
+HCP: 6, Total: 9, Balanced: False
+
+**East:**
+♠: J T 7 4
+♥: K T
+♦: A 7 6 3
+♣: A 9 7
+HCP: 12, Total: 12, Balanced: True
+
+**South:**
+♠: A K 9 5
+♥: Q
+♦: Q T 8 4 2
+♣: Q 4 3
+HCP: 13, Total: 14, Balanced: False
+
+**West:**
+♠: Q 8
+♥: 9 5 4
+♦: K J 5
+♣: K 8 6 5 2
+HCP: 9, Total: 10, Balanced: True
+
+Auction:
+N          E          S          W
+--------------------------------------------
+2♥         Pass       Pass       Pass      
+
+Bid Explanations:
+1. North: 2♥ - Weak Two bid. Shows 6-10 HCP and a 6-card Heart suit.
+2. East: Pass - No bid found by any module.
+3. South: Pass - No clear response available.
+4. West: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #11 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: K J
+♥: K J 4 3
+♦: K T 9 5 4
+♣: K 4
+HCP: 14, Total: 15, Balanced: False
+
+**East:**
+♠: A 8 6 4
+♥: 6
+♦: A J 8
+♣: J T 6 3 2
+HCP: 10, Total: 11, Balanced: False
+
+**South:**
+♠: Q T 9 5
+♥: A Q T 9 2
+♦: 7
+♣: A 8 7
+HCP: 12, Total: 13, Balanced: False
+
+**West:**
+♠: 7 3 2
+♥: 8 7 5
+♦: Q 6 3 2
+♣: Q 9 5
+HCP: 4, Total: 4, Balanced: True
+
+Auction:
+N          E          S          W
+--------------------------------------------
+1♦         Pass       1♥         Pass      
+2♥         Pass       Pass       Pass      
+
+Bid Explanations:
+1. North: 1♦ - Shows 13+ total points and a 5+ card diamond suit.
+2. East: Pass - No bid found by any module.
+3. South: 1♥ - Showing a 4+ card heart suit.
+4. West: Pass - No bid found by any module.
+5. North: 2♥ - Minimum hand (13-15 pts) showing 4+ card support.
+6. East: Pass - No bid found by any module.
+7. South: Pass - AI bid overridden due to illegality.
+8. West: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #12 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: Q 9 7 3
+♥: Q 8
+♦: 7
+♣: K J 8 7 6 4
+HCP: 8, Total: 10, Balanced: False
+
+**East:**
+♠: J 8 4
+♥: A 9 7 2
+♦: A K 4
+♣: T 9 2
+HCP: 12, Total: 12, Balanced: True
+
+**South:**
+♠: A T
+♥: J T 5 4 3
+♦: 9 8 6 5 2
+♣: 3
+HCP: 5, Total: 7, Balanced: False
+
+**West:**
+♠: K 6 5 2
+♥: K 6
+♦: Q J T 3
+♣: A Q 5
+HCP: 15, Total: 15, Balanced: True
+
+Auction:
+N          E          S          W
+--------------------------------------------
+Pass       Pass       Pass       1NT       
+Pass       2♣         Pass       Pass      
+Pass                                       
+
+Bid Explanations:
+1. North: Pass - Less than 13 total points.
+2. East: Pass - Less than 13 total points.
+3. South: Pass - Less than 13 total points.
+4. West: 1NT - Shows 15-17 HCP and a balanced hand.
+5. North: Pass - No bid found by any module.
+6. East: 2♣ - Stayman. Asks partner for a 4-card major. Shows 12 HCP.
+7. South: Pass - No bid found by any module.
+8. West: Pass - No clear rebid available.
+9. North: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #13 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: A K 8 5
+♥: Q 7
+♦: J 9 8
+♣: A J T 6
+HCP: 15, Total: 15, Balanced: True
+
+**East:**
+♠: J T
+♥: A 4 2
+♦: A T 7 4 2
+♣: K 7 2
+HCP: 12, Total: 13, Balanced: True
+
+**South:**
+♠: Q 6 4 3 2
+♥: K 9 3
+♦: Q 5 3
+♣: Q 4
+HCP: 9, Total: 10, Balanced: True
+
+**West:**
+♠: 9 7
+♥: J T 8 6 5
+♦: K 6
+♣: 9 8 5 3
+HCP: 4, Total: 5, Balanced: False
+
+Auction:
+N          E          S          W
+--------------------------------------------
+1NT        Pass       2♥         Pass      
+Pass       Pass                            
+
+Bid Explanations:
+1. North: 1NT - Shows 15-17 HCP and a balanced hand.
+2. East: Pass - No bid found by any module.
+3. South: 2♥ - Jacoby Transfer showing 5+ Spades.
+4. West: Pass - No bid found by any module.
+5. North: Pass - No clear rebid available.
+6. East: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #14 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: K T 5 2
+♥: 9 3
+♦: K J
+♣: K J T 5 3
+HCP: 11, Total: 12, Balanced: False
+
+**East:**
+♠: A Q 9 8 6
+♥: 8 6
+♦: 8 4 2
+♣: A Q 8
+HCP: 12, Total: 13, Balanced: True
+
+**South:**
+♠: 4 3
+♥: A K 2
+♦: A Q T 7 3
+♣: 7 6 2
+HCP: 13, Total: 14, Balanced: True
+
+**West:**
+♠: J 7
+♥: Q J T 7 5 4
+♦: 9 6 5
+♣: 9 4
+HCP: 4, Total: 6, Balanced: False
+
+Auction:
+N          E          S          W
+--------------------------------------------
+Pass       1♠         X          Pass      
+Pass       Pass                            
+
+Bid Explanations:
+1. North: Pass - Less than 13 total points.
+2. East: 1♠ - Shows 13+ total points and a 5+ card spade suit.
+3. South: X - Takeout Double. Shows 12+ points and support for unbid suits.
+4. West: Pass - No clear response available.
+5. North: Pass - Logic error: DecisionEngine chose 'advancer_bids' but it was not found or returned no bid.
+6. East: Pass - Cannot determine auction context for rebid.
+
+----------------------------------------------------------------------
+
+HAND #15 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: T 8 7 6 4 3 2
+♥: 9 7 6
+♦: 3
+♣: T 2
+HCP: 0, Total: 3, Balanced: False
+
+**East:**
+♠: J
+♥: Q T 4
+♦: K Q 5 2
+♣: 9 8 7 6 4
+HCP: 8, Total: 9, Balanced: False
+
+**South:**
+♠: A K Q 9
+♥: 5 2
+♦: A T 7 4
+♣: J 5 3
+HCP: 14, Total: 14, Balanced: True
+
+**West:**
+♠: 5
+♥: A K J 8 3
+♦: J 9 8 6
+♣: A K Q
+HCP: 18, Total: 19, Balanced: False
+
+Auction:
+N          E          S          W
+--------------------------------------------
+Pass       Pass       1♦         Pass      
+Pass       Pass                            
+
+Bid Explanations:
+1. North: Pass - Less than 13 total points.
+2. East: Pass - Less than 13 total points.
+3. South: 1♦ - Shows 13+ points, no 5-card suit. Diamonds is the longer minor.
+4. West: Pass - No bid found by any module.
+5. North: Pass - Less than 6 total points.
+6. East: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #16 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: 7 5
+♥: 6 3 2
+♦: A 8 5
+♣: K J T 5 4
+HCP: 8, Total: 9, Balanced: True
+
+**East:**
+♠: Q J 9 2
+♥: T 9 8 7
+♦: T 6 4
+♣: 8 3
+HCP: 3, Total: 3, Balanced: True
+
+**South:**
+♠: 8 4
+♥: A Q J 5 4
+♦: Q 9 3
+♣: Q 7 6
+HCP: 11, Total: 12, Balanced: True
+
+**West:**
+♠: A K T 6 3
+♥: K
+♦: K J 7 2
+♣: A 9 2
+HCP: 18, Total: 19, Balanced: False
+
+Auction:
+N          E          S          W
+--------------------------------------------
+Pass       Pass       Pass       1♠        
+Pass       Pass       2♥         Pass      
+3♥         Pass       4♥         Pass      
+5♥         Pass       6♥         Pass      
+7♥         Pass       8♥         Pass      
+9♥         Pass       Pass       Pass      
+
+Bid Explanations:
+1. North: Pass - Less than 13 total points.
+2. East: Pass - Less than 13 total points.
+3. South: Pass - Less than 13 total points.
+4. West: 1♠ - Shows 13+ total points and a 5+ card spade suit.
+5. North: Pass - No bid found by any module.
+6. East: Pass - Less than 6 total points.
+7. South: 2♥ - Balancing overcall showing 11 HCP and 5-card Heart suit.
+8. West: Pass - Cannot determine auction context for rebid.
+9. North: 3♥ - Raising partner's overcalled suit with support.
+10. East: Pass - Less than 6 total points.
+11. South: 4♥ - Raising partner's overcalled suit with support.
+12. West: Pass - Cannot determine auction context for rebid.
+13. North: 5♥ - Raising partner's overcalled suit with support.
+14. East: Pass - Less than 6 total points.
+15. South: 6♥ - Raising partner's overcalled suit with support.
+16. West: Pass - Cannot determine auction context for rebid.
+17. North: 7♥ - Raising partner's overcalled suit with support.
+18. East: Pass - Less than 6 total points.
+19. South: 8♥ - Raising partner's overcalled suit with support.
+20. West: Pass - Cannot determine auction context for rebid.
+21. North: 9♥ - Raising partner's overcalled suit with support.
+22. East: Pass - Less than 6 total points.
+23. South: Pass - AI bid overridden due to illegality.
+24. West: Pass - Cannot determine auction context for rebid.
+
+----------------------------------------------------------------------
+
+HAND #17 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: A J 6 4
+♥: J 3
+♦: A 8 3
+♣: K T 6 3
+HCP: 13, Total: 13, Balanced: True
+
+**East:**
+♠: K Q T 5
+♥: K T 9 8
+♦: Q J 6 4
+♣: 5
+HCP: 11, Total: 11, Balanced: False
+
+**South:**
+♠: 8 2
+♥: A Q 6 4 2
+♦: T
+♣: A Q J 9 7
+HCP: 13, Total: 15, Balanced: False
+
+**West:**
+♠: 9 7 3
+♥: 7 5
+♦: K 9 7 5 2
+♣: 8 4 2
+HCP: 3, Total: 4, Balanced: True
+
+Auction:
+N          E          S          W
+--------------------------------------------
+1♣         Pass       3NT        Pass      
+Pass       Pass                            
+
+Bid Explanations:
+1. North: 1♣ - Shows 13+ points, no 5-card suit. Clubs is the longer or equal minor.
+2. East: Pass - No bid found by any module.
+3. South: 3NT - Game-forcing raise.
+4. West: Pass - No bid found by any module.
+5. North: Pass - No clear rebid available.
+6. East: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #18 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: K J T 9 6
+♥: K
+♦: J 6
+♣: K Q J 8 2
+HCP: 14, Total: 16, Balanced: False
+
+**East:**
+♠: --
+♥: A Q 9 8 4 2
+♦: T 8 7 4
+♣: A T 4
+HCP: 10, Total: 12, Balanced: False
+
+**South:**
+♠: A Q 8 5 4
+♥: J 7 6 3
+♦: K 9
+♣: 5 3
+HCP: 10, Total: 11, Balanced: False
+
+**West:**
+♠: 7 3 2
+♥: T 5
+♦: A Q 5 3 2
+♣: 9 7 6
+HCP: 6, Total: 7, Balanced: True
+
+Auction:
+N          E          S          W
+--------------------------------------------
+1♠         Pass       3♠         Pass      
+Pass       Pass                            
+
+Bid Explanations:
+1. North: 1♠ - Shows 13+ total points and a 5+ card spade suit.
+2. East: Pass - No bid found by any module.
+3. South: 3♠ - Invitational raise showing 10-12 support points.
+4. West: Pass - No bid found by any module.
+5. North: Pass - AI bid overridden due to illegality.
+6. East: Pass - AI bid overridden due to illegality.
+
+----------------------------------------------------------------------
+
+HAND #19 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: 9 4
+♥: A 7 6
+♦: A Q 8 6 2
+♣: A 8 4
+HCP: 14, Total: 15, Balanced: True
+
+**East:**
+♠: A K Q 8 3 2
+♥: T 8 2
+♦: T 7
+♣: T 5
+HCP: 9, Total: 11, Balanced: False
+
+**South:**
+♠: J 6
+♥: K 4
+♦: 9 5 4
+♣: K Q J 7 6 2
+HCP: 10, Total: 12, Balanced: False
+
+**West:**
+♠: T 7 5
+♥: Q J 9 5 3
+♦: K J 3
+♣: 9 3
+HCP: 7, Total: 8, Balanced: True
+
+Auction:
+N          E          S          W
+--------------------------------------------
+1♦         1♠         3♦         Pass      
+Pass       Pass                            
+
+Bid Explanations:
+1. North: 1♦ - Shows 13+ total points and a 5+ card diamond suit.
+2. East: 1♠ - Overcall showing 9 HCP and 6-card Spade suit.
+3. South: 3♦ - Invitational raise showing 10-12 support points.
+4. West: Pass - No bid found by any module.
+5. North: Pass - Minimum hand (13-15 pts), passing partner's simple raise.
+6. East: Pass - No bid found by any module.
+
+----------------------------------------------------------------------
+
+HAND #20 - Random (Vulnerability: None)
+======================================================================
+
+**North:**
+♠: A K
+♥: 8 6 5 4
+♦: A J 9 5 2
+♣: A 3
+HCP: 16, Total: 17, Balanced: False
+
+**East:**
+♠: 9 4
+♥: K Q
+♦: Q T 8 6
+♣: Q J T 7 6
+HCP: 10, Total: 11, Balanced: False
+
+**South:**
+♠: Q J 8 7 6
+♥: J
+♦: K 7 4
+♣: 9 8 5 4
+HCP: 7, Total: 8, Balanced: False
+
+**West:**
+♠: T 5 3 2
+♥: A T 9 7 3 2
+♦: 3
+♣: K 2
+HCP: 7, Total: 9, Balanced: False
+
+Auction:
+N          E          S          W
+--------------------------------------------
+1♦         Pass       2♦         Pass      
+3♦         Pass       Pass       Pass      
+
+Bid Explanations:
+1. North: 1♦ - Shows 13+ total points and a 5+ card diamond suit.
+2. East: Pass - No bid found by any module.
+3. South: 2♦ - Simple raise showing 6-9 support points.
+4. West: Pass - No bid found by any module.
+5. North: 3♦ - Invitational (16-18 pts), raising partner's simple raise.
+6. East: Pass - No bid found by any module.
+7. South: Pass - AI bid overridden due to illegality.
+8. West: Pass - AI bid overridden due to illegality.
+
+----------------------------------------------------------------------
