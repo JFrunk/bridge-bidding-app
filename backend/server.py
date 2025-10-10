@@ -12,12 +12,18 @@ from engine.ai.conventions.preempts import PreemptConvention
 from engine.ai.conventions.jacoby_transfers import JacobyConvention
 from engine.ai.conventions.stayman import StaymanConvention
 from engine.ai.conventions.blackwood import BlackwoodConvention
+from engine.play_engine import PlayEngine, PlayState, Contract
+from engine.simple_play_ai import SimplePlayAI
 
 app = Flask(__name__)
 CORS(app)
 engine = BiddingEngine()
+play_engine = PlayEngine()
+play_ai = SimplePlayAI()
+
 current_deal = { 'North': None, 'East': None, 'South': None, 'West': None }
 current_vulnerability = "None"
+current_play_state = None  # Will hold PlayState during card play
 
 CONVENTION_MAP = {
     "Preempt": PreemptConvention(),
@@ -231,16 +237,26 @@ def request_review():
         timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         filename = f'hand_{timestamp_str}.json'
 
-        # Try to save to file (works locally, fails silently on Render)
-        try:
-            filepath = os.path.join('review_requests', filename)
-            os.makedirs('review_requests', exist_ok=True)
-            with open(filepath, 'w') as f:
-                json.dump(review_request, indent=2, fp=f)
-            saved_to_file = True
-        except Exception as file_error:
-            print(f"Could not save to file (expected on Render): {file_error}")
+        # Check if we're on Render (ephemeral storage - files won't persist for user access)
+        # Render sets RENDER or RENDER_SERVICE_NAME environment variables
+        is_render = os.getenv('RENDER') or os.getenv('RENDER_SERVICE_NAME') or os.getenv('FLASK_ENV') == 'production'
+
+        if is_render:
+            # On Render: don't save to file, embed data in prompt instead
+            print("Running on Render - will embed full data in prompt (files not accessible to users)")
             saved_to_file = False
+        else:
+            # Local development: save to file for reference
+            try:
+                filepath = os.path.join('review_requests', filename)
+                os.makedirs('review_requests', exist_ok=True)
+                with open(filepath, 'w') as f:
+                    json.dump(review_request, indent=2, fp=f)
+                saved_to_file = True
+                print(f"Saved review request to {filepath}")
+            except Exception as file_error:
+                print(f"Could not save to file: {file_error}")
+                saved_to_file = False
 
         # Return the full review data so frontend can display it
         return jsonify({
@@ -253,3 +269,327 @@ def request_review():
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': f'Server error in request_review: {e}'}), 500
+# ============================================================================
+# CARD PLAY ENDPOINTS
+# ============================================================================
+
+@app.route("/api/start-play", methods=["POST"])
+def start_play():
+    """
+    Called when bidding completes (3 consecutive passes)
+    Determines contract and sets up play state
+    """
+    global current_play_state
+    
+    try:
+        data = request.get_json()
+        auction = data.get("auction_history", [])
+        vulnerability_str = data.get("vulnerability", "None")
+        
+        # Determine contract from auction
+        contract = play_engine.determine_contract(auction, dealer_index=0)
+        
+        if not contract:
+            return jsonify({"error": "No contract found (all passed)"}), 400
+        
+        # Set up vulnerability dict
+        vuln_dict = {
+            "ns": vulnerability_str in ["NS", "Both"],
+            "ew": vulnerability_str in ["EW", "Both"]
+        }
+
+        # Get hands (from request or global current_deal)
+        hands_data = data.get("hands")
+        if hands_data:
+            # Convert JSON hand data to Hand objects
+            from engine.hand import Hand, Card
+            hands = {}
+            for pos in ["N", "E", "S", "W"]:
+                if pos in hands_data:
+                    cards = [Card(c['rank'], c['suit']) for c in hands_data[pos]]
+                    hands[pos] = Hand(cards)
+        else:
+            # Use current deal from bidding phase
+            hands = {}
+            for pos in ["N", "E", "S", "W"]:
+                hands[pos] = current_deal[pos]
+        
+        # Create play state
+        current_play_state = PlayState(
+            contract=contract,
+            hands=hands,
+            current_trick=[],
+            tricks_won={"N": 0, "E": 0, "S": 0, "W": 0},
+            trick_history=[],
+            next_to_play=play_engine.next_player(contract.declarer),  # LHO of declarer leads
+            dummy_revealed=False
+        )
+        
+        # Opening leader (LHO of declarer)
+        opening_leader = current_play_state.next_to_play
+        dummy_position = current_play_state.dummy
+        
+        return jsonify({
+            "success": True,
+            "contract": str(contract),
+            "contract_details": {
+                "level": contract.level,
+                "strain": contract.strain,
+                "declarer": contract.declarer,
+                "doubled": contract.doubled
+            },
+            "opening_leader": opening_leader,
+            "dummy": dummy_position,
+            "next_to_play": opening_leader
+        })
+        
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Error starting play: {e}"}), 500
+
+@app.route("/api/play-card", methods=["POST"])
+def play_card():
+    """
+    User plays a card
+    """
+    global current_play_state
+    
+    if not current_play_state:
+        return jsonify({"error": "No play in progress"}), 400
+    
+    try:
+        data = request.get_json()
+        card_data = data.get("card")
+        position = data.get("position", "South")
+        
+        # Create card object
+        card = Card(rank=card_data["rank"], suit=card_data["suit"])
+        hand = current_play_state.hands[position]
+        
+        # Validate legal play
+        is_legal = play_engine.is_legal_play(
+            card, hand, current_play_state.current_trick, 
+            current_play_state.contract.trump_suit
+        )
+        
+        if not is_legal:
+            return jsonify({
+                "legal": False,
+                "error": "Must follow suit if able"
+            }), 400
+        
+        # Play the card
+        current_play_state.current_trick.append((card, position))
+        
+        # Remove card from hand
+        hand.cards.remove(card)
+        
+        # Reveal dummy after opening lead
+        if len(current_play_state.current_trick) == 1 and not current_play_state.dummy_revealed:
+            current_play_state.dummy_revealed = True
+        
+        # Check if trick is complete
+        trick_complete = len(current_play_state.current_trick) == 4
+        trick_winner = None
+        
+        if trick_complete:
+            # Determine winner
+            trick_winner = play_engine.determine_trick_winner(
+                current_play_state.current_trick,
+                current_play_state.contract.trump_suit
+            )
+            
+            # Update tricks won
+            current_play_state.tricks_won[trick_winner] += 1
+            
+            # Save to history
+            from engine.play_engine import Trick
+            current_play_state.trick_history.append(
+                Trick(
+                    cards=list(current_play_state.current_trick),
+                    leader=current_play_state.next_to_play,
+                    winner=trick_winner
+                )
+            )
+            
+            # Clear current trick
+            current_play_state.current_trick = []
+            
+            # Next player is the winner
+            current_play_state.next_to_play = trick_winner
+        else:
+            # Next player clockwise
+            current_play_state.next_to_play = play_engine.next_player(position)
+        
+        return jsonify({
+            "legal": True,
+            "trick_complete": trick_complete,
+            "trick_winner": trick_winner,
+            "next_to_play": current_play_state.next_to_play,
+            "tricks_won": current_play_state.tricks_won,
+            "dummy_revealed": current_play_state.dummy_revealed
+        })
+        
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Error playing card: {e}"}), 500
+
+@app.route("/api/get-ai-play", methods=["POST"])
+def get_ai_play():
+    """
+    AI plays a card
+    """
+    global current_play_state
+    
+    if not current_play_state:
+        return jsonify({"error": "No play in progress"}), 400
+    
+    try:
+        position = current_play_state.next_to_play
+        
+        # AI chooses card
+        card = play_ai.choose_card(current_play_state, position)
+        hand = current_play_state.hands[position]
+        
+        # Play the card
+        current_play_state.current_trick.append((card, position))
+        hand.cards.remove(card)
+        
+        # Reveal dummy after opening lead
+        if len(current_play_state.current_trick) == 1 and not current_play_state.dummy_revealed:
+            current_play_state.dummy_revealed = True
+        
+        # Check if trick is complete
+        trick_complete = len(current_play_state.current_trick) == 4
+        trick_winner = None
+        
+        if trick_complete:
+            # Determine winner
+            trick_winner = play_engine.determine_trick_winner(
+                current_play_state.current_trick,
+                current_play_state.contract.trump_suit
+            )
+            
+            # Update tricks won
+            current_play_state.tricks_won[trick_winner] += 1
+            
+            # Save to history
+            from engine.play_engine import Trick
+            current_play_state.trick_history.append(
+                Trick(
+                    cards=list(current_play_state.current_trick),
+                    leader=current_play_state.next_to_play,
+                    winner=trick_winner
+                )
+            )
+            
+            # Clear current trick
+            current_play_state.current_trick = []
+            
+            # Next player is the winner
+            current_play_state.next_to_play = trick_winner
+        else:
+            # Next player clockwise
+            current_play_state.next_to_play = play_engine.next_player(position)
+        
+        return jsonify({
+            "card": {"rank": card.rank, "suit": card.suit},
+            "position": position,
+            "trick_complete": trick_complete,
+            "trick_winner": trick_winner,
+            "next_to_play": current_play_state.next_to_play,
+            "tricks_won": current_play_state.tricks_won,
+            "explanation": f"{position} played {card.rank}{card.suit}"
+        })
+        
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Error with AI play: {e}"}), 500
+
+@app.route("/api/get-play-state", methods=["GET"])
+def get_play_state():
+    """
+    Get current play state
+    """
+    if not current_play_state:
+        return jsonify({"error": "No play in progress"}), 400
+    
+    try:
+        # Convert current trick to JSON
+        current_trick_json = [
+            {"card": {"rank": c.rank, "suit": c.suit}, "position": p}
+            for c, p in current_play_state.current_trick
+        ]
+        
+        # Get dummy hand if revealed
+        dummy_hand = None
+        if current_play_state.dummy_revealed:
+            dummy_pos = current_play_state.dummy
+            dummy_hand = {
+                "cards": [{"rank": c.rank, "suit": c.suit} for c in current_play_state.hands[dummy_pos].cards],
+                "position": dummy_pos
+            }
+        
+        return jsonify({
+            "contract": {
+                "level": current_play_state.contract.level,
+                "strain": current_play_state.contract.strain,
+                "declarer": current_play_state.contract.declarer,
+                "doubled": current_play_state.contract.doubled
+            },
+            "current_trick": current_trick_json,
+            "tricks_won": current_play_state.tricks_won,
+            "next_to_play": current_play_state.next_to_play,
+            "dummy_revealed": current_play_state.dummy_revealed,
+            "dummy_hand": dummy_hand,
+            "is_complete": current_play_state.is_complete
+        })
+        
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Error getting play state: {e}"}), 500
+
+@app.route("/api/complete-play", methods=["GET"])
+def complete_play():
+    """
+    Get final results after play completes
+    """
+    if not current_play_state:
+        return jsonify({"error": "No play in progress"}), 400
+    
+    try:
+        # Determine declarer side
+        declarer = current_play_state.contract.declarer
+        if declarer in ["N", "S"]:
+            tricks_taken = current_play_state.tricks_taken_ns
+        else:
+            tricks_taken = current_play_state.tricks_taken_ew
+        
+        # Calculate vulnerability
+        vuln_dict = {
+            "ns": current_vulnerability in ["NS", "Both"],
+            "ew": current_vulnerability in ["EW", "Both"]
+        }
+        
+        # Calculate score
+        score_result = play_engine.calculate_score(
+            current_play_state.contract,
+            tricks_taken,
+            vuln_dict
+        )
+        
+        return jsonify({
+            "contract": str(current_play_state.contract),
+            "tricks_taken": tricks_taken,
+            "tricks_needed": current_play_state.contract.tricks_needed,
+            "score": score_result["score"],
+            "made": score_result["made"],
+            "overtricks": score_result.get("overtricks", 0),
+            "undertricks": score_result.get("undertricks", 0),
+            "breakdown": score_result.get("breakdown", {})
+        })
+        
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Error calculating final score: {e}"}), 500
+
