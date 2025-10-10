@@ -23,8 +23,18 @@ def generate_hand_with_constraints(constraints: dict, deck: List[Card]):
         suit_ok = True
 
         if suit_length_req:
-            # Logic to check suit length requirements
-            pass # Placeholder for the full logic
+            # suit_length_req format: (suits_list, min_length, mode)
+            # mode can be 'any_of' (at least one suit meets req) or 'all_of' (all suits meet req)
+            suits_list, min_length, mode = suit_length_req
+
+            if mode == 'any_of':
+                # At least ONE of the suits must have min_length or more
+                suit_ok = any(temp_hand.suit_lengths[suit] >= min_length for suit in suits_list)
+            elif mode == 'all_of':
+                # ALL of the suits must have min_length or more
+                suit_ok = all(temp_hand.suit_lengths[suit] >= min_length for suit in suits_list)
+            else:
+                suit_ok = True
 
         if hcp_ok and balance_ok and suit_ok:
             remaining_deck = deck[13:]

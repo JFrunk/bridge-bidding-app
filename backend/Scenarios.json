@@ -19,7 +19,7 @@
     "name": "Opener Rebid Test",
     "description": "North gets a strong opening hand, South responds to set up the rebid.",
     "setup": [
-      { "position": "North", "constraints": { "hcp_range": [16, 18], "suit_length_req": ["♠", 5] } },
+      { "position": "North", "constraints": { "hcp_range": [16, 18], "suit_length_req": [["♠"], 5, "any_of"] } },
       { "position": "South", "constraints": { "hcp_range": [6, 9] } }
     ]
   },
