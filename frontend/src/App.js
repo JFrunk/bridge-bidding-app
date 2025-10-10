@@ -78,7 +78,26 @@ function BiddingBox({ onBid, disabled, auction }) {
   };
   const handleBid = (suit) => { if (level) { onBid(suit === 'NT' ? `${level}NT` : `${level}${suit}`); setLevel(null); } };
   const handleCall = (call) => { onBid(call); setLevel(null); };
-  return ( <div className="bidding-box-container"><div className="bidding-box-levels">{[1, 2, 3, 4, 5, 6, 7].map(l => ( <button key={l} onClick={() => setLevel(l)} className={level === l ? 'selected' : ''} disabled={disabled}>{l}</button>))}</div><div className="bidding-box-suits">{suits.map(s => ( <button key={s} onClick={() => handleBid(s)} disabled={!level || disabled || !isBidLegal(level, s)}>{s === 'NT' ? 'NT' : <span className={s === '♥' || s === '♦' ? 'suit-red' : 'suit-black'}>{s}</span>}</button>))}</div><div className="bidding-box-calls">{calls.map(c => <button key={c} onClick={() => handleCall(c)} disabled={disabled}>{c}</button>)}</div></div> );
+  return (
+    <div className="bidding-box-container">
+      <h3>Bidding</h3>
+      <div className="bidding-box-levels">
+        {[1, 2, 3, 4, 5, 6, 7].map(l => (
+          <button key={l} onClick={() => setLevel(l)} className={level === l ? 'selected' : ''} disabled={disabled}>{l}</button>
+        ))}
+      </div>
+      <div className="bidding-box-suits">
+        {suits.map(s => (
+          <button key={s} onClick={() => handleBid(s)} disabled={!level || disabled || !isBidLegal(level, s)}>
+            {s === 'NT' ? 'NT' : <span className={s === '♥' || s === '♦' ? 'suit-red' : 'suit-black'}>{s}</span>}
+          </button>
+        ))}
+      </div>
+      <div className="bidding-box-calls">
+        {calls.map(c => <button key={c} onClick={() => handleCall(c)} disabled={disabled}>{c}</button>)}
+      </div>
+    </div>
+  );
 }
 
 function App() {
@@ -381,14 +400,16 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       <div className="action-area">
         <BiddingBox onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding} auction={auction} />
-        <div className="scenario-loader">
-          <select value={selectedScenario} onChange={(e) => setSelectedScenario(e.target.value)}>{scenarioList.map(name => <option key={name} value={name}>{name}</option>)}</select>
-          <button onClick={handleLoadScenario}>Load Scenario</button>
-          <button onClick={handleShowConventionHelp} className="help-button">ℹ️ Convention Help</button>
-        </div>
-        <div className="game-controls">
-          <button className="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Replay Hand</button>
-          <button className="deal-button" onClick={dealNewHand}>Deal New Hand</button>
+        <div className="controls-section">
+          <div className="game-controls">
+            <button className="deal-button" onClick={dealNewHand}>Deal New Hand</button>
+            <button className="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Replay Hand</button>
+          </div>
+          <div className="scenario-loader">
+            <select value={selectedScenario} onChange={(e) => setSelectedScenario(e.target.value)}>{scenarioList.map(name => <option key={name} value={name}>{name}</option>)}</select>
+            <button onClick={handleLoadScenario}>Load Scenario</button>
+            <button onClick={handleShowConventionHelp} className="help-button">ℹ️ Convention Help</button>
+          </div>
         </div>
         <div className="show-hands-controls">
           <button onClick={handleShowHandsThisDeal}>{showHandsThisDeal ? 'Hide Hands (This Deal)' : 'Show Hands (This Deal)'}</button>

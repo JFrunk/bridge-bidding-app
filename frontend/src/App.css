@@ -118,13 +118,22 @@ body {
 }
 .bidding-box-container {
   display: flex;
-  gap: 15px;
-  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+}
+.bidding-box-container h3 {
+  margin: 0 0 10px 0;
+  color: #fff;
+  font-size: 16px;
 }
 .bidding-box-levels, .bidding-box-suits, .bidding-box-calls {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
+  flex-direction: row;
+  gap: 8px;
+  justify-content: center;
 }
 .bidding-box-container button {
   font-family: inherit;
@@ -149,6 +158,11 @@ body {
   background-color: #555;
   color: #888;
   cursor: not-allowed;
+}
+.controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 .game-controls {
   display: flex;
