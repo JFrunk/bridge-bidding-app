@@ -31,8 +31,33 @@ class RebidModule(ConventionModule):
 
         # Logic for rebids after a 1-level opening
         if 13 <= hand.total_points <= 15: # Minimum Hand
-            if partner_response.endswith(my_opening_bid[1]):
-                return ("Pass", "Minimum hand (13-15 pts), passing partner's simple raise.")
+            # Check if partner raised our suit
+            if partner_response.endswith(my_opening_bid[1:]):
+                # Distinguish between simple raise (2-level) and invitational raise (3-level)
+                partner_level = int(partner_response[0])
+                my_opening_level = int(my_opening_bid[0])
+
+                if partner_level == my_opening_level + 1:  # Simple raise (e.g., 1♠-2♠)
+                    return ("Pass", "Minimum hand (13-15 pts), passing partner's simple raise.")
+
+                elif partner_level == my_opening_level + 2:  # Invitational raise (e.g., 1♠-3♠)
+                    # Partner is inviting game (10-12 points). Accept with maximum or good shape
+                    my_suit = my_opening_bid[1:]
+
+                    # Accept invitation if:
+                    # 1. Maximum minimum (15 points), OR
+                    # 2. Good 6+ card suit, OR
+                    # 3. 14+ points with quality suit (2+ honors)
+                    has_long_suit = hand.suit_lengths.get(my_suit, 0) >= 6
+                    has_quality_suit = hand.suit_hcp.get(my_suit, 0) >= 6  # 2+ honors
+
+                    if hand.total_points >= 15 or has_long_suit or (hand.total_points >= 14 and has_quality_suit):
+                        if my_suit in ['♥', '♠']:
+                            return (f"4{my_suit}", f"Accepting invitation to game with {hand.total_points} points and good shape/suit quality.")
+                        else:
+                            return ("3NT", f"Accepting invitation to game with {hand.total_points} points.")
+                    else:
+                        return ("Pass", "Declining invitation with minimum (13 points) and no extra shape.")
             if partner_response == "1NT":
                 second_suits = [s for s, l in hand.suit_lengths.items() if l >= 4 and s != my_opening_bid[1]]
                 if second_suits:

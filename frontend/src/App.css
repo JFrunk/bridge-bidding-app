@@ -315,3 +315,217 @@ body {
 .player-west .suit-group {
   flex-direction: row;
 }
+
+/* AI Review Controls */
+.ai-review-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.ai-review-button {
+  font-family: inherit;
+  font-size: 16px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  background-color: #7c3aed;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-weight: 600;
+}
+
+.ai-review-button:hover {
+  background-color: #6d28d9;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #1e1e2e;
+  padding: 30px;
+  border-radius: 10px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  color: #ffc107;
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+.modal-content p {
+  color: #ccc;
+  margin-bottom: 20px;
+}
+
+.modal-content code {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #ffc107;
+  font-family: 'Courier New', monospace;
+}
+
+.user-concern-section {
+  margin-bottom: 20px;
+}
+
+.user-concern-section label {
+  display: block;
+  color: #ccc;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.user-concern-section textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #444;
+  background-color: #2a2a3a;
+  color: white;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.user-concern-section textarea:focus {
+  outline: none;
+  border-color: #7c3aed;
+}
+
+.review-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.primary-button {
+  flex: 1;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  background-color: #7c3aed;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.primary-button:hover {
+  background-color: #6d28d9;
+}
+
+.secondary-button {
+  flex: 1;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: 1px solid #666;
+  background-color: transparent;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondary-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: #888;
+}
+
+.prompt-section {
+  border-top: 1px solid #444;
+  padding-top: 20px;
+  margin-top: 20px;
+}
+
+.prompt-section h3 {
+  color: #ffc107;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.prompt-box {
+  background-color: #2a2a3a;
+  border: 1px solid #444;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 15px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.prompt-box pre {
+  margin: 0;
+  color: #ccc;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.prompt-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.copy-button {
+  flex: 1;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: none;
+  background-color: #28a745;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.copy-button:hover {
+  background-color: #218838;
+}
+
+.close-button {
+  flex: 1;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid #666;
+  background-color: transparent;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: #888;
+}

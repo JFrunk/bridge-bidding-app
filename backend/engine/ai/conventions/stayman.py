@@ -26,12 +26,16 @@ class StaymanConvention(ConventionModule):
         
         non_pass_bids = [bid for bid in features.get('auction_history', []) if bid != 'Pass']
         if len(non_pass_bids) != 1: return False
-        
+
         # Condition: Hand must meet Stayman point and suit requirements
-        if hand.hcp < 8: return False
+        # Allow 7 HCP if hand has both 4-card majors (4-4 shape is ideal for Stayman)
+        has_both_majors = hand.suit_lengths['♥'] >= 4 and hand.suit_lengths['♠'] >= 4
+        if hand.hcp < 7: return False  # Never Stayman with 6 or fewer
+        if hand.hcp == 7 and not has_both_majors: return False  # 7 HCP requires 4-4 in majors
+
         if hand.suit_lengths['♥'] >= 5 or hand.suit_lengths['♠'] >= 5: return False # Use Jacoby for 5-card majors
         if hand.suit_lengths['♥'] < 4 and hand.suit_lengths['♠'] < 4: return False
-        
+
         return True
 
     def _initiate_stayman(self, hand: Hand, features: Dict) -> Tuple[str, str]:

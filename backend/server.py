@@ -1,6 +1,8 @@
 import random
 import json
-import traceback 
+import traceback
+import os
+from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from engine.hand import Hand, Card
@@ -165,3 +167,63 @@ def get_all_hands():
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': f'Server error in get_all_hands: {e}'}), 500
+
+@app.route('/api/request-review', methods=['POST'])
+def request_review():
+    try:
+        data = request.get_json()
+        auction_history = data.get('auction_history', [])
+        user_concern = data.get('user_concern', '')
+
+        # Prepare all hands data
+        all_hands = {}
+        for position in ['North', 'East', 'South', 'West']:
+            hand = current_deal.get(position)
+            if not hand:
+                return jsonify({'error': f'Hand for {position} not available'}), 400
+
+            hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
+            points_for_json = {
+                'hcp': hand.hcp,
+                'dist_points': hand.dist_points,
+                'total_points': hand.total_points,
+                'suit_hcp': hand.suit_hcp,
+                'suit_lengths': hand.suit_lengths
+            }
+            all_hands[position] = {
+                'cards': hand_for_json,
+                'points': points_for_json
+            }
+
+        # Create review request object
+        review_request = {
+            'timestamp': datetime.now().isoformat(),
+            'all_hands': all_hands,
+            'auction': auction_history,
+            'vulnerability': current_vulnerability,
+            'dealer': 'North',
+            'user_position': 'South',
+            'user_concern': user_concern
+        }
+
+        # Create filename with timestamp
+        timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        filename = f'hand_{timestamp_str}.json'
+        filepath = os.path.join('review_requests', filename)
+
+        # Ensure directory exists
+        os.makedirs('review_requests', exist_ok=True)
+
+        # Save to file
+        with open(filepath, 'w') as f:
+            json.dump(review_request, indent=2, fp=f)
+
+        return jsonify({
+            'success': True,
+            'filename': filename,
+            'filepath': filepath
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': f'Server error in request_review: {e}'}), 500

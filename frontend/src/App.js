@@ -95,6 +95,10 @@ function App() {
   const [allHands, setAllHands] = useState(null);
   const [showHandsThisDeal, setShowHandsThisDeal] = useState(false);
   const [alwaysShowHands, setAlwaysShowHands] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [userConcern, setUserConcern] = useState('');
+  const [reviewPrompt, setReviewPrompt] = useState('');
+  const [reviewFilename, setReviewFilename] = useState('');
 
   const resetAuction = (dealData) => {
     setInitialDeal(dealData);
@@ -142,6 +146,41 @@ function App() {
       setAllHands(null);
       setShowHandsThisDeal(false);
     }
+  };
+
+  const handleRequestReview = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/api/request-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auction_history: auction,
+          user_concern: userConcern
+        })
+      });
+
+      if (!response.ok) throw new Error("Failed to request review.");
+      const data = await response.json();
+
+      setReviewFilename(data.filename);
+      const prompt = `Please analyze the bidding in backend/review_requests/${data.filename} and identify any errors or questionable bids according to SAYC.${userConcern ? `\n\nI'm particularly concerned about: ${userConcern}` : ''}`;
+      setReviewPrompt(prompt);
+      setShowReviewModal(true);
+    } catch (err) {
+      setError("Could not save review request.");
+    }
+  };
+
+  const handleCopyPrompt = () => {
+    navigator.clipboard.writeText(reviewPrompt);
+    setDisplayedMessage('✅ Prompt copied to clipboard! Paste it to Claude Code for analysis.');
+  };
+
+  const handleCloseReviewModal = () => {
+    setShowReviewModal(false);
+    setUserConcern('');
+    setReviewPrompt('');
+    setReviewFilename('');
   };
 
   const dealNewHand = async () => {
@@ -217,12 +256,18 @@ function App() {
       const runAiTurn = async () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         try {
+          // Capture current values to prevent race conditions
+          const currentAuction = auction;
+          const currentPlayer = players[nextPlayerIndex];
+
           const response = await fetch('http://localhost:5001/api/get-next-bid', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ auction_history: auction.map(a => a.bid), current_player: players[nextPlayerIndex] })
+            body: JSON.stringify({ auction_history: currentAuction.map(a => a.bid), current_player: currentPlayer })
           });
           if (!response.ok) throw new Error("AI failed to get bid.");
           const data = await response.json();
+
+          // Use updater functions to ensure we have the latest state
           setAuction(prevAuction => [...prevAuction, data]);
           setNextPlayerIndex(prevIndex => (prevIndex + 1) % 4);
         } catch (err) {
@@ -300,7 +345,48 @@ function App() {
           <button onClick={handleShowHandsThisDeal}>{showHandsThisDeal ? 'Hide Hands (This Deal)' : 'Show Hands (This Deal)'}</button>
           <button onClick={handleToggleAlwaysShowHands} className={alwaysShowHands ? 'active' : ''}>{alwaysShowHands ? 'Always Show: ON' : 'Always Show: OFF'}</button>
         </div>
+        <div className="ai-review-controls">
+          <button onClick={() => setShowReviewModal(true)} className="ai-review-button">🤖 Request AI Review</button>
+        </div>
       </div>
+
+      {showReviewModal && (
+        <div className="modal-overlay" onClick={handleCloseReviewModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Request AI Review</h2>
+            <p>Hand data will be saved to: <code>backend/review_requests/{reviewFilename || 'hand_[timestamp].json'}</code></p>
+
+            <div className="user-concern-section">
+              <label htmlFor="user-concern">What concerns you about this hand? (Optional)</label>
+              <textarea
+                id="user-concern"
+                value={userConcern}
+                onChange={(e) => setUserConcern(e.target.value)}
+                placeholder="e.g., 'Why did North bid 3NT here?' or 'Is South's 2♥ bid correct?'"
+                rows="3"
+              />
+            </div>
+
+            <div className="review-actions">
+              <button onClick={handleRequestReview} className="primary-button">Save & Generate Prompt</button>
+              <button onClick={handleCloseReviewModal} className="secondary-button">Cancel</button>
+            </div>
+
+            {reviewPrompt && (
+              <div className="prompt-section">
+                <h3>Copy this prompt to Claude Code:</h3>
+                <div className="prompt-box">
+                  <pre>{reviewPrompt}</pre>
+                </div>
+                <div className="prompt-actions">
+                  <button onClick={handleCopyPrompt} className="copy-button">📋 Copy to Clipboard</button>
+                  <button onClick={handleCloseReviewModal} className="close-button">Close</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

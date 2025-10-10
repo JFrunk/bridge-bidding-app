@@ -70,6 +70,13 @@ def select_bidding_module(features):
         return 'responses'
 
     if auction['opener_relationship'] == 'Me': # I opened
+        # Check for 1NT convention completions FIRST (before natural rebids)
+        if auction['opening_bid'] == '1NT':
+            jacoby = JacobyConvention()
+            if jacoby.evaluate(features['hand'], features): return 'jacoby'
+            stayman = StaymanConvention()
+            if stayman.evaluate(features['hand'], features): return 'stayman'
+
         # Check for slam conventions
         blackwood = BlackwoodConvention()
         if blackwood.evaluate(features['hand'], features):
