@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import Login from './Login';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -83,11 +82,6 @@ function BiddingBox({ onBid, disabled, auction }) {
 }
 
 function App() {
-  // Authentication state
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    localStorage.getItem('bridgeAuth') === 'true'
-  );
-
   const [hand, setHand] = useState([]);
   const [handPoints, setHandPoints] = useState(null);
   const [auction, setAuction] = useState([]);
@@ -318,11 +312,6 @@ function App() {
   }, [auction, nextPlayerIndex, isAiBidding, players]);
 
   const shouldShowHands = showHandsThisDeal || alwaysShowHands;
-
-  // Show login page if not authenticated (after all hooks)
-  if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
-  }
 
   return (
     <div className="app-container">
