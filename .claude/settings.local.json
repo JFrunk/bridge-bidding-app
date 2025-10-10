@@ -5,7 +5,8 @@
       "Bash(python:*)",
       "Bash(pip install:*)",
       "Bash(lsof:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

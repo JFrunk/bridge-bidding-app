@@ -112,6 +112,45 @@ class ResponseModule(ConventionModule):
 
         # Without fit, bid new suits up-the-line (if no interference or low interference)
         if not interference['present'] or interference['level'] <= 1:
+            # JUMP SHIFT responses (17+ HCP, game-forcing)
+            # Jump shift shows a strong hand with a good suit and slam interest
+            if hand.hcp >= 17:
+                # After 1♣ opening, can jump to 2♥/2♠ (or 3♦)
+                if opening_bid == '1♣':
+                    if hand.suit_lengths.get('♥', 0) >= 5:
+                        return ("2♥", "Jump shift showing 17+ HCP and 5+ hearts (game-forcing).")
+                    if hand.suit_lengths.get('♠', 0) >= 5:
+                        return ("2♠", "Jump shift showing 17+ HCP and 5+ spades (game-forcing).")
+                    if hand.suit_lengths.get('♦', 0) >= 5:
+                        return ("3♦", "Jump shift showing 17+ HCP and 5+ diamonds (game-forcing).")
+
+                # After 1♦ opening, can jump to 2♥/2♠ (or 3♣)
+                if opening_bid == '1♦':
+                    if hand.suit_lengths.get('♥', 0) >= 5:
+                        return ("2♥", "Jump shift showing 17+ HCP and 5+ hearts (game-forcing).")
+                    if hand.suit_lengths.get('♠', 0) >= 5:
+                        return ("2♠", "Jump shift showing 17+ HCP and 5+ spades (game-forcing).")
+                    if hand.suit_lengths.get('♣', 0) >= 5:
+                        return ("3♣", "Jump shift showing 17+ HCP and 5+ clubs (game-forcing).")
+
+                # After 1♥ opening, can jump to 2♠ (or 3♣/3♦)
+                if opening_bid == '1♥':
+                    if hand.suit_lengths.get('♠', 0) >= 5:
+                        return ("2♠", "Jump shift showing 17+ HCP and 5+ spades (game-forcing).")
+                    if hand.suit_lengths.get('♣', 0) >= 5:
+                        return ("3♣", "Jump shift showing 17+ HCP and 5+ clubs (game-forcing).")
+                    if hand.suit_lengths.get('♦', 0) >= 5:
+                        return ("3♦", "Jump shift showing 17+ HCP and 5+ diamonds (game-forcing).")
+
+                # After 1♠ opening, can jump to 3♣/3♦/3♥
+                if opening_bid == '1♠':
+                    if hand.suit_lengths.get('♥', 0) >= 5:
+                        return ("3♥", "Jump shift showing 17+ HCP and 5+ hearts (game-forcing).")
+                    if hand.suit_lengths.get('♣', 0) >= 5:
+                        return ("3♣", "Jump shift showing 17+ HCP and 5+ clubs (game-forcing).")
+                    if hand.suit_lengths.get('♦', 0) >= 5:
+                        return ("3♦", "Jump shift showing 17+ HCP and 5+ diamonds (game-forcing).")
+
             # Can still bid new suits at 1-level
             if opening_bid in ['1♣', '1♦'] and hand.suit_lengths.get('♥', 0) >= 4:
                 return ("1♥", "Showing a 4+ card heart suit.")
@@ -140,9 +179,14 @@ class ResponseModule(ConventionModule):
                 if opening_bid == '1♥' and hand.suit_lengths.get('♠', 0) >= 5:
                     return ("2♠", "New suit showing 10+ HCP and 5+ spades (forcing).")
 
-            # 1NT response (6-9 HCP, balanced, no fit)
-            if hand.is_balanced and 6 <= hand.hcp <= 9:
-                return ("1NT", "Shows 6-9 HCP, balanced, and no fit.")
+            # 2NT invitational response (11-12 HCP, balanced, no fit)
+            if hand.is_balanced and 11 <= hand.hcp <= 12:
+                return ("2NT", "Invitational showing 11-12 HCP, balanced, and no fit.")
+
+            # 1NT response (6-10 HCP, balanced, no fit)
+            # Note: Upper range adjusted from 9 to 10 since 11-12 now bids 2NT
+            if hand.is_balanced and 6 <= hand.hcp <= 10:
+                return ("1NT", "Shows 6-10 HCP, balanced, and no fit.")
 
         # With interference at 2-level or higher, need more to bid a new suit
         # Pass without a clear action

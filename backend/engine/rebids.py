@@ -6,6 +6,35 @@ class RebidModule(ConventionModule):
     """
     Playbook for the opener's second bid (rebid).
     """
+
+    # Suit ranking for reverse bid detection (higher number = higher ranking)
+    SUIT_RANK = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+
+    def _is_reverse_bid(self, opening_bid: str, rebid_suit: str) -> bool:
+        """
+        Check if rebidding a new suit would be a reverse (forcing, showing 17+ HCP).
+
+        A reverse occurs when:
+        1. Opener bids a new suit at the 2-level
+        2. The new suit ranks HIGHER than the opening suit
+
+        Examples:
+        - 1♦ - 1♠ - 2♥: REVERSE (hearts > diamonds)
+        - 1♥ - 1♠ - 2♦: NOT reverse (diamonds < hearts)
+        - 1♣ - 1♥ - 2♦: NOT reverse (diamonds > clubs but not forcing in standard)
+        """
+        if not opening_bid or len(opening_bid) < 2:
+            return False
+
+        opening_suit = opening_bid[1]
+
+        # Only applies to 1-level openings
+        if opening_bid[0] != '1':
+            return False
+
+        # Rebid suit must rank higher than opening suit
+        return self.SUIT_RANK.get(rebid_suit, 0) > self.SUIT_RANK.get(opening_suit, 0)
+
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
         """Main entry point for all opener rebid actions."""
         auction_history = features['auction_history']
@@ -79,6 +108,15 @@ class RebidModule(ConventionModule):
                 partner_suit = partner_response[1]
                 if hand.suit_lengths.get(partner_suit, 0) >= 4:
                     return (f"3{partner_suit}", f"Invitational (16-18 pts) jump raise showing 4+ card support.")
+
+                # Check for reverse bid with 17+ HCP and 4+ card second suit
+                # Reverse shows a strong hand (17+ HCP) and is forcing
+                if hand.hcp >= 17:
+                    for suit in ['♠', '♥', '♦', '♣']:  # Check in rank order
+                        if suit != my_opening_bid[1] and hand.suit_lengths.get(suit, 0) >= 4:
+                            if self._is_reverse_bid(my_opening_bid, suit):
+                                return (f"2{suit}", f"Reverse bid showing 17+ HCP and 4+ {suit} (forcing).")
+
             if hand.suit_lengths.get(my_opening_bid[1], 0) >= 6:
                 return (f"3{my_opening_bid[1]}", f"Invitational (16-18 pts) jump rebid of a 6+ card suit.")
             return ("2NT", "Shows a strong hand (16-18 pts) with no obvious fit.")
@@ -92,6 +130,13 @@ class RebidModule(ConventionModule):
                 partner_suit = partner_response[1]
                 if partner_suit in ['♥', '♠'] and hand.suit_lengths.get(partner_suit, 0) >= 4:
                      return (f"4{partner_suit}", f"Strong hand ({hand.total_points} pts), bidding game with a fit.")
+
+                # Check for reverse bid with 4+ card second suit
+                # With 19+ HCP, reverse shows slam interest
+                for suit in ['♠', '♥', '♦', '♣']:  # Check in rank order
+                    if suit != my_opening_bid[1] and hand.suit_lengths.get(suit, 0) >= 4:
+                        if self._is_reverse_bid(my_opening_bid, suit):
+                            return (f"2{suit}", f"Reverse bid showing 19+ HCP and 4+ {suit} (forcing, slam interest).")
 
             # Before jumping to 3NT, check if we have a 6-card suit to show
             my_suit = my_opening_bid[1]

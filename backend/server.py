@@ -230,19 +230,24 @@ def request_review():
         # Create filename with timestamp
         timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         filename = f'hand_{timestamp_str}.json'
-        filepath = os.path.join('review_requests', filename)
 
-        # Ensure directory exists
-        os.makedirs('review_requests', exist_ok=True)
+        # Try to save to file (works locally, fails silently on Render)
+        try:
+            filepath = os.path.join('review_requests', filename)
+            os.makedirs('review_requests', exist_ok=True)
+            with open(filepath, 'w') as f:
+                json.dump(review_request, indent=2, fp=f)
+            saved_to_file = True
+        except Exception as file_error:
+            print(f"Could not save to file (expected on Render): {file_error}")
+            saved_to_file = False
 
-        # Save to file
-        with open(filepath, 'w') as f:
-            json.dump(review_request, indent=2, fp=f)
-
+        # Return the full review data so frontend can display it
         return jsonify({
             'success': True,
             'filename': filename,
-            'filepath': filepath
+            'saved_to_file': saved_to_file,
+            'review_data': review_request  # Include full data in response
         })
 
     except Exception as e:

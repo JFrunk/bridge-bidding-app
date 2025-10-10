@@ -168,7 +168,25 @@ function App() {
       const data = await response.json();
 
       setReviewFilename(data.filename);
-      const prompt = `Please analyze the bidding in backend/review_requests/${data.filename} and identify any errors or questionable bids according to SAYC.${userConcern ? `\n\nI'm particularly concerned about: ${userConcern}` : ''}`;
+
+      // Create prompt based on whether file was saved or not
+      let prompt;
+      if (data.saved_to_file) {
+        // Local: file was saved, reference it
+        prompt = `Please analyze the bidding in backend/review_requests/${data.filename} and identify any errors or questionable bids according to SAYC.${userConcern ? `\n\nI'm particularly concerned about: ${userConcern}` : ''}`;
+      } else {
+        // Render: file not saved, include full data in prompt
+        const reviewData = data.review_data;
+        prompt = `Please analyze this bridge hand and identify any errors or questionable bids according to SAYC.
+
+**Hand Data:**
+${JSON.stringify(reviewData, null, 2)}
+
+${userConcern ? `\n**User's Concern:** ${userConcern}` : ''}
+
+Please provide a detailed analysis of the auction and identify any bidding errors.`;
+      }
+
       setReviewPrompt(prompt);
       setShowReviewModal(true);
     } catch (err) {
