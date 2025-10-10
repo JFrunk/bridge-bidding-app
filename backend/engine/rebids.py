@@ -43,7 +43,42 @@ class RebidModule(ConventionModule):
 
         if not partner_response or not my_opening_bid:
             return ("Pass", "Cannot determine auction context for rebid.")
-        
+
+        # Special handling for Negative Double (X) - FORCING, opener must rebid
+        if partner_response == 'X':
+            # Partner's negative double shows unbid major(s) and competitive values
+            # Opener must bid, prioritizing support for partner's suit(s)
+
+            # Prefer spades at 1-level if we have 3+ cards (economical)
+            # Check spades first since it can be bid at 1-level
+            if hand.suit_lengths.get('♠', 0) >= 3:
+                if hand.total_points <= 15:
+                    return ("1♠", "Supporting partner's negative double with 3+ spades.")
+                elif hand.total_points <= 18:
+                    return ("2♠", "Jump supporting partner's negative double with 16-18 pts and 3+ spades.")
+                else:
+                    return ("3♠", "Strong jump supporting partner's negative double with 19+ pts and 3+ spades.")
+
+            # Then check hearts (requires 2-level bid)
+            if hand.suit_lengths.get('♥', 0) >= 4:
+                if hand.total_points <= 15:
+                    return ("2♥", "Supporting partner's negative double with 4+ hearts.")
+                elif hand.total_points <= 18:
+                    return ("3♥", "Jump supporting partner's negative double with 16-18 pts and 4+ hearts.")
+                else:
+                    return ("4♥", "Strong jump supporting partner's negative double with 19+ pts and 4+ hearts.")
+
+            # No major fit - rebid our suit or bid notrump
+            my_suit = my_opening_bid[1:]
+            if hand.suit_lengths.get(my_suit, 0) >= 6:
+                return (f"2{my_suit}", f"Rebidding 6+ card {my_suit} suit after partner's negative double.")
+
+            if hand.is_balanced and hand.hcp >= 15:
+                return ("1NT", "Balanced hand with 15+ HCP after partner's negative double.")
+
+            # Default: rebid our suit at minimum level
+            return (f"2{my_suit}", f"Minimum rebid of {my_suit} after partner's negative double.")
+
         # Logic for rebids after a 2 Club opening
         if my_opening_bid == '2♣':
             if partner_response == '2♦':
