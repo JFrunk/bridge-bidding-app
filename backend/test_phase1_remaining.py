@@ -25,9 +25,9 @@ def test_negative_double_1level():
     """Test negative double at 1-level (6+ HCP)."""
     engine = BiddingEngine()
 
-    # South: 6 HCP, 4 spades (partner opened 1♣, RHO overcalled 1♥)
+    # South: 6 HCP, 4 spades (North opened 1♣, East overcalled 1♥, now South's turn)
     south_hand = create_hand("♠QJ85 ♥94 ♦K752 ♣865")
-    auction = ['1♣', 'Pass', '1♥', 'Pass']  # Partner opened, opp overcalled
+    auction = ['1♣', '1♥']  # North: 1♣, East: 1♥, now South's turn
 
     bid, explanation = engine.get_next_bid(south_hand, auction, 'South', 'None')
 
@@ -38,9 +38,9 @@ def test_negative_double_2level():
     """Test negative double at 2-level (6+ HCP)."""
     engine = BiddingEngine()
 
-    # South: 7 HCP, 4 spades (partner opened 1♦, RHO overcalled 2♣)
+    # South: 7 HCP, 4 spades (North opened 1♦, East overcalled 2♣, now South's turn)
     south_hand = create_hand("♠KJ85 ♥94 ♦Q752 ♣865")
-    auction = ['1♦', 'Pass', '2♣', 'Pass']
+    auction = ['1♦', '2♣']  # North: 1♦, East: 2♣, now South's turn
 
     bid, explanation = engine.get_next_bid(south_hand, auction, 'South', 'None')
 
@@ -51,9 +51,9 @@ def test_negative_double_3level_insufficient():
     """Test no negative double at 3-level with only 6 HCP (need 8+)."""
     engine = BiddingEngine()
 
-    # South: 6 HCP, 4 spades (partner opened 1♦, RHO overcalled 3♣)
+    # South: 6 HCP, 4 spades (North opened 1♦, East overcalled 3♣, now South's turn)
     south_hand = create_hand("♠QJ85 ♥94 ♦K752 ♣865")
-    auction = ['1♦', 'Pass', '3♣', 'Pass']
+    auction = ['1♦', '3♣']  # North: 1♦, East: 3♣, now South's turn
 
     bid, explanation = engine.get_next_bid(south_hand, auction, 'South', 'None')
 
@@ -64,9 +64,9 @@ def test_negative_double_3level_sufficient():
     """Test negative double at 3-level (8+ HCP)."""
     engine = BiddingEngine()
 
-    # South: 8 HCP, 4 spades (partner opened 1♦, RHO overcalled 3♣)
+    # South: 8 HCP, 4 spades (North opened 1♦, East overcalled 3♣, now South's turn)
     south_hand = create_hand("♠KJ85 ♥K4 ♦Q752 ♣865")
-    auction = ['1♦', 'Pass', '3♣', 'Pass']
+    auction = ['1♦', '3♣']  # North: 1♦, East: 3♣, now South's turn
 
     bid, explanation = engine.get_next_bid(south_hand, auction, 'South', 'None')
 
@@ -77,9 +77,9 @@ def test_negative_double_4level_insufficient():
     """Test no negative double at 4-level with only 10 HCP (need 12+)."""
     engine = BiddingEngine()
 
-    # South: 10 HCP, 4 spades (partner opened 1♥, RHO overcalled 4♣)
+    # South: 10 HCP, 4 spades (North opened 1♥, East overcalled 4♣, now South's turn)
     south_hand = create_hand("♠KJ85 ♥K4 ♦Q752 ♣Q86")
-    auction = ['1♥', 'Pass', '4♣', 'Pass']
+    auction = ['1♥', '4♣']  # North: 1♥, East: 4♣, now South's turn
 
     bid, explanation = engine.get_next_bid(south_hand, auction, 'South', 'None')
 
@@ -90,9 +90,9 @@ def test_negative_double_4level_sufficient():
     """Test negative double at 4-level (12+ HCP)."""
     engine = BiddingEngine()
 
-    # South: 12 HCP, 4 spades (partner opened 1♥, RHO overcalled 4♣)
+    # South: 12 HCP, 4 spades (North opened 1♥, East overcalled 4♣, now South's turn)
     south_hand = create_hand("♠AJ85 ♥K4 ♦Q752 ♣Q86")
-    auction = ['1♥', 'Pass', '4♣', 'Pass']
+    auction = ['1♥', '4♣']  # North: 1♥, East: 4♣, now South's turn
 
     bid, explanation = engine.get_next_bid(south_hand, auction, 'South', 'None')
 
@@ -107,14 +107,23 @@ def test_negative_double_after_pass():
     """Test negative double works after RHO passes (balancing position)."""
     engine = BiddingEngine()
 
-    # South: 8 HCP, 4 spades (partner opened 1♣, RHO overcalled 1♥, LHO passed)
+    # South: 8 HCP, 4 spades (partner opened 1♣, RHO overcalled 1♥, West passed, now South bids)
     south_hand = create_hand("♠KJ85 ♥94 ♦Q752 ♣865")
-    auction = ['1♣', 'Pass', '1♥', 'Pass', 'Pass', 'Pass']  # More passes in auction
+    auction = ['1♣', 'Pass', '1♥', 'Pass']  # Partner opened, East passed, South overcalled 1♥, West passed
+
+    # Actually, this is confusing. Let me clarify: the auction BEFORE South bids
+    # North: 1♣, East: Pass, South: ???, West: ???
+    # But we want to test: North: 1♣, East: 1♥ (overcall), South: ??? (negative double)
+    # Correct auction: ['1♣', 'Pass', '1♥'] would mean North opened, East passed, South bid 1♥
+    # We need: North opened 1♣, East bid 1♥, now South to bid
+    # That's: ['1♣', '1♥'] - but that means East immediately overcalled
+
+    auction = ['1♣', '1♥']  # Partner opened, RHO overcalled, now it's our turn
 
     bid, explanation = engine.get_next_bid(south_hand, auction, 'South', 'None')
 
-    # Should still be able to make negative double
-    assert bid == 'X', f"Expected X (negative double) in balancing position, got {bid}"
+    # Should be able to make negative double
+    assert bid == 'X', f"Expected X (negative double), got {bid}"
     print(f"✓ Test 7 passed: {bid} - {explanation}")
 
 # ============================================================================

@@ -45,45 +45,64 @@ def _detect_interference(auction_history, positions, my_index, opener_relationsh
     Detect if there was interference (opponent's bid) between partner's opening and my first response.
 
     Returns dict with:
-        - present: bool (True if RHO made a bid)
+        - present: bool (True if opponent made a bid)
         - bid: str (the interference bid, e.g., '2♦')
         - level: int (bid level, e.g., 2)
         - type: str ('double', 'suit_overcall', 'nt_overcall', 'none')
+        - position: int (auction index where interference occurred)
     """
     interference = {
         'present': False,
         'bid': None,
         'level': None,
-        'type': 'none'
+        'type': 'none',
+        'position': None
     }
 
     # Only check for interference if partner opened (not opponent, not me)
     if opener_relationship != 'Partner':
         return interference
 
-    # My RHO (right-hand opponent) is the player immediately after the opener
-    rho_index = (opener_index + 1) % 4
+    # Determine partner's position (opener)
+    partner_index = opener_index
 
-    # Check if RHO made a bid (not Pass) after the opening
-    if len(auction_history) > opener_index + 1:
-        rho_bid = auction_history[opener_index + 1]
+    # Determine opponent positions (LHO and RHO)
+    lho_index = (partner_index + 1) % 4  # Left-hand opponent
+    rho_index = (partner_index + 3) % 4  # Right-hand opponent (or my_index - 1)
 
-        if rho_bid != 'Pass':
-            interference['present'] = True
-            interference['bid'] = rho_bid
+    # Search through auction after opening for any opponent bid (not Pass)
+    # We check all bids after the opening until we reach our position in the auction
+    for auction_idx in range(opener_index + 1, len(auction_history)):
+        bidder_position = auction_idx % 4
+        bid = auction_history[auction_idx]
 
-            # Classify the interference
-            if rho_bid == 'X':
-                interference['type'] = 'double'
-                interference['level'] = 0  # Special case for double
-            elif rho_bid == 'XX':
-                interference['type'] = 'redouble'
-                interference['level'] = 0
-            elif 'NT' in rho_bid:
-                interference['type'] = 'nt_overcall'
-                interference['level'] = int(rho_bid[0])
-            elif len(rho_bid) >= 2 and rho_bid[0].isdigit():
-                interference['type'] = 'suit_overcall'
-                interference['level'] = int(rho_bid[0])
+        # Check if this bidder is an opponent (LHO or RHO)
+        if bidder_position == lho_index or bidder_position == rho_index:
+            if bid != 'Pass':
+                # Found interference!
+                interference['present'] = True
+                interference['bid'] = bid
+                interference['position'] = auction_idx
+
+                # Classify the interference
+                if bid == 'X':
+                    interference['type'] = 'double'
+                    interference['level'] = 0  # Special case for double
+                elif bid == 'XX':
+                    interference['type'] = 'redouble'
+                    interference['level'] = 0
+                elif 'NT' in bid:
+                    interference['type'] = 'nt_overcall'
+                    interference['level'] = int(bid[0])
+                elif len(bid) >= 2 and bid[0].isdigit():
+                    interference['type'] = 'suit_overcall'
+                    interference['level'] = int(bid[0])
+
+                # Return on first interference found
+                return interference
+
+        # Stop if we've reached our position in the auction
+        if bidder_position == my_index:
+            break
 
     return interference
