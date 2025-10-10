@@ -118,6 +118,28 @@ class ResponseModule(ConventionModule):
             if opening_bid in ['1♣', '1♦', '1♥'] and hand.suit_lengths.get('♠', 0) >= 4:
                 return ("1♠", "Showing a 4+ card spade suit.")
 
+            # 2-level new suit responses (require 10+ HCP in SAYC)
+            # Bid a new suit at the 2-level with 10+ HCP and 5+ card suit
+            if hand.hcp >= 10:
+                # After 1♣ or 1♦ opening, can bid 2♦ or 2♣ or a major
+                if opening_bid == '1♣':
+                    if hand.suit_lengths.get('♦', 0) >= 5:
+                        return ("2♦", "New suit at 2-level showing 10+ HCP and 5+ diamonds.")
+                if opening_bid == '1♦':
+                    if hand.suit_lengths.get('♣', 0) >= 5:
+                        return ("2♣", "New suit at 2-level showing 10+ HCP and 5+ clubs.")
+
+                # After 1♥ or 1♠ opening, can bid a lower-ranking suit at 2-level
+                if opening_bid in ['1♥', '1♠']:
+                    # Bid longest unbid suit (5+ cards) at 2-level
+                    for suit in ['♦', '♣']:  # Check minors
+                        if hand.suit_lengths.get(suit, 0) >= 5:
+                            return (f"2{suit}", f"New suit at 2-level showing 10+ HCP and 5+ {suit}.")
+
+                # After 1♥ opening, can bid 2♠ with 5+ spades and 10+ HCP
+                if opening_bid == '1♥' and hand.suit_lengths.get('♠', 0) >= 5:
+                    return ("2♠", "New suit showing 10+ HCP and 5+ spades (forcing).")
+
             # 1NT response (6-9 HCP, balanced, no fit)
             if hand.is_balanced and 6 <= hand.hcp <= 9:
                 return ("1NT", "Shows 6-9 HCP, balanced, and no fit.")

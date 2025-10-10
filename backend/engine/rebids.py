@@ -92,6 +92,13 @@ class RebidModule(ConventionModule):
                 partner_suit = partner_response[1]
                 if partner_suit in ['♥', '♠'] and hand.suit_lengths.get(partner_suit, 0) >= 4:
                      return (f"4{partner_suit}", f"Strong hand ({hand.total_points} pts), bidding game with a fit.")
+
+            # Before jumping to 3NT, check if we have a 6-card suit to show
+            my_suit = my_opening_bid[1]
+            if hand.suit_lengths.get(my_suit, 0) >= 6:
+                # Rebid the 6-card suit at the 3-level to show extras and length
+                return (f"3{my_suit}", f"Strong hand ({hand.total_points} pts) with a 6+ card {my_suit} suit.")
+
             return ("3NT", f"Strong hand ({hand.total_points} pts), bidding game in No-Trump.")
 
         return ("Pass", "No clear rebid available.")
