@@ -29,11 +29,15 @@ CONVENTION_MAP = {
 @app.route('/api/scenarios', methods=['GET'])
 def get_scenarios():
     try:
+        print(f"Current working directory: {os.getcwd()}")
+        print(f"Files in directory: {os.listdir('.')}")
         with open('scenarios.json', 'r') as f: scenarios = json.load(f)
         scenario_names = [s['name'] for s in scenarios]
         return jsonify({'scenarios': scenario_names})
-    except (IOError, json.JSONDecodeError) as e:
-        return jsonify({'error': f'Could not load scenarios: {e}'}), 500
+    except Exception as e:
+        print(f"ERROR in /api/scenarios: {e}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': f'Could not load scenarios: {str(e)}'}), 500
 
 @app.route('/api/convention-info', methods=['GET'])
 def get_convention_info():
