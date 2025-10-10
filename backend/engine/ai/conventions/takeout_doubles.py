@@ -1,12 +1,13 @@
 from engine.hand import Hand
-from typing import Optional, Tuple
+from engine.ai.conventions.base_convention import ConventionModule
+from typing import Optional, Tuple, Dict
 
-class TakeoutDoubleConvention:
+class TakeoutDoubleConvention(ConventionModule):
     """
     Playbook for making a Takeout Double, based on the provided flowchart.
     """
 
-    def evaluate(self, hand: Hand, features: dict) -> Optional[Tuple[str, str]]:
+    def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
         """
         Main evaluation function. Checks if a takeout double is the correct action.
         """
@@ -18,7 +19,7 @@ class TakeoutDoubleConvention:
             
         return None
 
-    def _is_applicable(self, features: dict) -> bool:
+    def _is_applicable(self, features: Dict) -> bool:
         """
         A takeout double is applicable if an opponent has opened (but not in NT)
         and our side has not yet bid.
@@ -36,12 +37,12 @@ class TakeoutDoubleConvention:
         
         return is_correct_position and is_not_nt_opening
 
-    def _hand_qualifies(self, hand: Hand, features: dict) -> bool:
+    def _hand_qualifies(self, hand: Hand, features: Dict) -> bool:
         """
-        Checks for 13+ points, shortness in opponent's suit, and support for unbid suits.
+        Checks for 12+ points (SAYC standard), shortness in opponent's suit, and support for unbid suits.
         """
-        # Rule 1: Must have opening strength (flowchart says 13+).
-        if hand.hcp < 13:
+        # Rule 1: Must have opening strength (SAYC standard is 12+ HCP).
+        if hand.hcp < 12:
             return False
 
         # Rule 2: Must be short in the opponent's suit (0, 1, or 2 cards).
