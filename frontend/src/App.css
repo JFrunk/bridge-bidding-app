@@ -529,3 +529,58 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
   border-color: #888;
 }
+
+/* Convention Help Modal */
+.convention-help-modal {
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.convention-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.convention-section h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #ffd700;
+  font-size: 16px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+  padding-bottom: 5px;
+}
+
+.convention-section p {
+  margin: 0;
+  line-height: 1.6;
+  color: #e0e0e0;
+}
+
+.convention-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+
+.help-button {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid #17a2b8;
+  background-color: #17a2b8;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  margin-left: 10px;
+}
+
+.help-button:hover {
+  background-color: #138496;
+  border-color: #138496;
+}

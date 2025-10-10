@@ -99,6 +99,8 @@ function App() {
   const [userConcern, setUserConcern] = useState('');
   const [reviewPrompt, setReviewPrompt] = useState('');
   const [reviewFilename, setReviewFilename] = useState('');
+  const [showConventionHelp, setShowConventionHelp] = useState(false);
+  const [conventionInfo, setConventionInfo] = useState(null);
 
   const resetAuction = (dealData) => {
     setInitialDeal(dealData);
@@ -181,6 +183,31 @@ function App() {
     setUserConcern('');
     setReviewPrompt('');
     setReviewFilename('');
+  };
+
+  const handleShowConventionHelp = async () => {
+    if (!selectedScenario) return;
+
+    // Extract convention name from scenario (e.g., "Jacoby Transfer Test" -> "Jacoby Transfer")
+    const conventionName = selectedScenario.replace(' Test', '');
+
+    try {
+      const response = await fetch(`http://localhost:5001/api/convention-info?name=${encodeURIComponent(conventionName)}`);
+      if (!response.ok) {
+        setError(`No help available for ${conventionName}`);
+        return;
+      }
+      const data = await response.json();
+      setConventionInfo(data);
+      setShowConventionHelp(true);
+    } catch (err) {
+      setError("Could not fetch convention information.");
+    }
+  };
+
+  const handleCloseConventionHelp = () => {
+    setShowConventionHelp(false);
+    setConventionInfo(null);
   };
 
   const dealNewHand = async () => {
@@ -336,6 +363,7 @@ function App() {
         <div className="scenario-loader">
           <select value={selectedScenario} onChange={(e) => setSelectedScenario(e.target.value)}>{scenarioList.map(name => <option key={name} value={name}>{name}</option>)}</select>
           <button onClick={handleLoadScenario}>Load Scenario</button>
+          <button onClick={handleShowConventionHelp} className="help-button">ℹ️ Convention Help</button>
         </div>
         <div className="game-controls">
           <button className="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Replay Hand</button>
@@ -384,6 +412,43 @@ function App() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showConventionHelp && conventionInfo && (
+        <div className="modal-overlay" onClick={handleCloseConventionHelp}>
+          <div className="modal-content convention-help-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>{conventionInfo.name}</h2>
+
+            <div className="convention-section">
+              <h3>Background</h3>
+              <p>{conventionInfo.background}</p>
+            </div>
+
+            <div className="convention-section">
+              <h3>When to Use</h3>
+              <p>{conventionInfo.when_used}</p>
+            </div>
+
+            <div className="convention-section">
+              <h3>How It Works</h3>
+              <p style={{whiteSpace: 'pre-line'}}>{conventionInfo.how_it_works}</p>
+            </div>
+
+            <div className="convention-section">
+              <h3>As Responder</h3>
+              <p style={{whiteSpace: 'pre-line'}}>{conventionInfo.responder_actions}</p>
+            </div>
+
+            <div className="convention-section">
+              <h3>As Opener</h3>
+              <p style={{whiteSpace: 'pre-line'}}>{conventionInfo.opener_actions}</p>
+            </div>
+
+            <div className="convention-actions">
+              <button onClick={handleCloseConventionHelp} className="close-button">Close</button>
+            </div>
           </div>
         </div>
       )}

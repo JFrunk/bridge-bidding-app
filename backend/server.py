@@ -35,6 +35,23 @@ def get_scenarios():
     except (IOError, json.JSONDecodeError) as e:
         return jsonify({'error': f'Could not load scenarios: {e}'}), 500
 
+@app.route('/api/convention-info', methods=['GET'])
+def get_convention_info():
+    try:
+        convention_name = request.args.get('name')
+        with open('convention_descriptions.json', 'r') as f:
+            descriptions = json.load(f)
+
+        if convention_name and convention_name in descriptions:
+            return jsonify(descriptions[convention_name])
+        elif convention_name:
+            return jsonify({'error': f'Convention "{convention_name}" not found'}), 404
+        else:
+            # Return all conventions if no name specified
+            return jsonify(descriptions)
+    except (IOError, json.JSONDecodeError) as e:
+        return jsonify({'error': f'Could not load convention descriptions: {e}'}), 500
+
 @app.route('/api/load-scenario', methods=['POST'])
 def load_scenario():
     global current_vulnerability
