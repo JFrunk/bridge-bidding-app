@@ -1,0 +1,240 @@
+{
+  "deals": [
+    {
+      "id": "simple_notrump_1",
+      "name": "Simple 3NT - Declarer has all winners",
+      "description": "Declarer has 9 top tricks. AI should take them without giving up the lead.",
+      "contract": "3NT by N",
+      "vulnerability": "None",
+      "hands": {
+        "N": "♠AK32 ♥AK32 ♦AK3 ♣A2",
+        "E": "♠QJ54 ♥QJ54 ♦QJ5 ♣KQ",
+        "S": "♠876 ♥876 ♦8762 ♣876",
+        "W": "♠T9 ♥T9 ♦T94 ♣JT9543"
+      },
+      "expected_result": {
+        "declarer_tricks": 10,
+        "optimal_line": "Cash all winners starting with shortest suits",
+        "difficulty": "beginner"
+      }
+    },
+    {
+      "id": "finesse_decision_1",
+      "name": "Simple Finesse - 3NT",
+      "description": "Declarer needs to take spade finesse for 9th trick.",
+      "contract": "3NT by S",
+      "vulnerability": "None",
+      "hands": {
+        "N": "♠AQJ2 ♥K32 ♦K32 ♣K32",
+        "E": "♠K543 ♥QJ54 ♦QJ5 ♣QJ",
+        "S": "♠876 ♥A876 ♦A876 ♣A8",
+        "W": "♠T9 ♥T9 ♦T94 ♣T97654"
+      },
+      "expected_result": {
+        "declarer_tricks": 9,
+        "optimal_line": "Win opening lead, finesse spade through E",
+        "difficulty": "intermediate"
+      }
+    },
+    {
+      "id": "holdop_play_1",
+      "name": "Hold-up Play - 3NT",
+      "description": "Declarer should hold up ace to break communication.",
+      "contract": "3NT by S",
+      "vulnerability": "None",
+      "hands": {
+        "N": "♠K32 ♥K32 ♦AKQ32 ♣K2",
+        "E": "♠AJ54 ♥Q654 ♦J5 ♣654",
+        "S": "♠Q76 ♥A87 ♦876 ♣AQJ3",
+        "W": "♠T98 ♥JT9 ♦T94 ♣T987"
+      },
+      "expected_result": {
+        "declarer_tricks": 9,
+        "optimal_line": "Hold up spade ace until third round",
+        "difficulty": "intermediate"
+      }
+    },
+    {
+      "id": "suit_contract_1",
+      "name": "4 Spades - Trump Management",
+      "description": "Declarer needs to draw trumps and cash winners.",
+      "contract": "4♠ by S",
+      "vulnerability": "None",
+      "hands": {
+        "N": "♠AK32 ♥K32 ♦AK32 ♣32",
+        "E": "♠J54 ♥QJ54 ♦QJ5 ♣QJ5",
+        "S": "♠QT987 ♥A87 ♦876 ♣A4",
+        "W": "♠6 ♥T96 ♦T94 ♣KT9876"
+      },
+      "expected_result": {
+        "declarer_tricks": 11,
+        "optimal_line": "Draw trumps, cash side suit winners",
+        "difficulty": "beginner"
+      }
+    },
+    {
+      "id": "ruffing_losers_1",
+      "name": "4 Hearts - Ruff Losers in Dummy",
+      "description": "Declarer should ruff club losers in dummy before drawing trumps.",
+      "contract": "4♥ by S",
+      "vulnerability": "None",
+      "hands": {
+        "N": "♠A432 ♥K32 ♦AK32 ♣32",
+        "E": "♠KQJ5 ♥54 ♦QJ5 ♣QJ54",
+        "S": "♠876 ♥AQJ987 ♦876 ♣A",
+        "W": "♠T9 ♥T6 ♦T94 ♣KT9876"
+      },
+      "expected_result": {
+        "declarer_tricks": 10,
+        "optimal_line": "Ruff club losers in dummy before drawing trumps",
+        "difficulty": "intermediate"
+      }
+    },
+    {
+      "id": "defensive_1",
+      "name": "3NT Defense - Lead Through Strength",
+      "description": "Defenders should lead through dummy's strength to set up tricks.",
+      "contract": "3NT by S",
+      "vulnerability": "None",
+      "hands": {
+        "N": "♠AQJ2 ♥K32 ♦K32 ♣K32",
+        "E": "♠K543 ♥AJ54 ♦AJ5 ♣AJ",
+        "S": "♠876 ♥Q876 ♦Q876 ♣Q8",
+        "W": "♠T9 ♥T9 ♦T94 ♣T97654"
+      },
+      "expected_result": {
+        "declarer_tricks": 7,
+        "optimal_line": "Defenders take their aces and lead through weakness",
+        "difficulty": "intermediate"
+      }
+    },
+    {
+      "id": "endplay_simple_1",
+      "name": "Simple Squeeze - 3NT",
+      "description": "Declarer can execute a simple squeeze against East.",
+      "contract": "3NT by S",
+      "vulnerability": "None",
+      "hands": {
+        "N": "♠A2 ♥AK2 ♦AK2 ♣AK432",
+        "E": "♠KQJ ♥QJ54 ♦QJ5 ♣QJ5",
+        "S": "♠876543 ♥876 ♦876 ♣8",
+        "W": "♠T9 ♥T93 ♦T943 ♣T976"
+      },
+      "expected_result": {
+        "declarer_tricks": 9,
+        "optimal_line": "Run clubs to squeeze East in majors",
+        "difficulty": "advanced"
+      }
+    },
+    {
+      "id": "timing_1",
+      "name": "Timing Play - 3NT",
+      "description": "Declarer must establish suit before entries are exhausted.",
+      "contract": "3NT by N",
+      "vulnerability": "None",
+      "hands": {
+        "N": "♠A32 ♥A32 ♦AKQJ32 ♣2",
+        "E": "♠KQJ5 ♥KQJ5 ♦5 ♣KQJ5",
+        "S": "♠876 ♥876 ♦8764 ♣A87",
+        "W": "♠T94 ♥T94 ♦T9 ♣T9643"
+      },
+      "expected_result": {
+        "declarer_tricks": 10,
+        "optimal_line": "Establish diamonds while entries remain",
+        "difficulty": "intermediate"
+      }
+    },
+    {
+      "id": "avoidance_1",
+      "name": "Avoidance Play - 3NT",
+      "description": "Declarer should keep dangerous opponent off lead.",
+      "contract": "3NT by S",
+      "vulnerability": "None",
+      "hands": {
+        "N": "♠K32 ♥K32 ♦AKQ32 ♣K2",
+        "E": "♠AJ54 ♥AJ54 ♦J5 ♣J54",
+        "S": "♠Q76 ♥Q76 ♦876 ♣AQ32",
+        "W": "♠T98 ♥T98 ♦T94 ♣T987"
+      },
+      "expected_result": {
+        "declarer_tricks": 9,
+        "optimal_line": "Finesse clubs into safe hand (West)",
+        "difficulty": "advanced"
+      }
+    },
+    {
+      "id": "trump_coup_1",
+      "name": "4 Spades - Trump Promotion",
+      "description": "Defenders can promote trump trick through forcing play.",
+      "contract": "4♠ by S",
+      "vulnerability": "None",
+      "hands": {
+        "N": "♠A432 ♥A32 ♦A32 ♣432",
+        "E": "♠KQJ ♥KQJ5 ♦KQJ ♣KQJ",
+        "S": "♠T9876 ♥876 ♦876 ♣A5",
+        "W": "♠5 ♥T94 ♦T954 ♣T9876"
+      },
+      "expected_result": {
+        "declarer_tricks": 8,
+        "optimal_line": "Defenders force declarer to ruff and promote trump",
+        "difficulty": "advanced"
+      }
+    },
+    {
+      "id": "overtrick_1",
+      "name": "3NT - Safety Play vs Overtrick",
+      "description": "Declarer should ensure contract rather than risk for overtrick.",
+      "contract": "3NT by S",
+      "vulnerability": "None",
+      "hands": {
+        "N": "♠AK2 ♥AK2 ♦K32 ♣KQJ2",
+        "E": "♠QJ54 ♥QJ54 ♦QJ5 ♣54",
+        "S": "♠876 ♥876 ♦A876 ♣A87",
+        "W": "♠T93 ♥T93 ♦T94 ♣T963"
+      },
+      "expected_result": {
+        "declarer_tricks": 10,
+        "optimal_line": "Cash sure winners, don't risk finesse",
+        "difficulty": "intermediate"
+      }
+    },
+    {
+      "id": "communication_1",
+      "name": "3NT - Maintain Communication",
+      "description": "Declarer must carefully preserve entries between hands.",
+      "contract": "3NT by S",
+      "vulnerability": "None",
+      "hands": {
+        "N": "♠A2 ♥A2 ♦AKQJ432 ♣32",
+        "E": "♠KQJ5 ♥KQJ5 ♦5 ♣KQJ5",
+        "S": "♠876 ♥876 ♦876 ♣A874",
+        "W": "♠T943 ♥T943 ♦T9 ♣T96"
+      },
+      "expected_result": {
+        "declarer_tricks": 10,
+        "optimal_line": "Unblock diamonds to maintain communication",
+        "difficulty": "intermediate"
+      }
+    }
+  ],
+  "deal_sets": {
+    "beginner": ["simple_notrump_1", "suit_contract_1"],
+    "intermediate": ["finesse_decision_1", "holdop_play_1", "ruffing_losers_1", "defensive_1", "timing_1", "overtrick_1", "communication_1"],
+    "advanced": ["endplay_simple_1", "avoidance_1", "trump_coup_1"],
+    "notrump_only": ["simple_notrump_1", "finesse_decision_1", "holdop_play_1", "defensive_1", "endplay_simple_1", "timing_1", "avoidance_1", "overtrick_1", "communication_1"],
+    "suit_contracts": ["suit_contract_1", "ruffing_losers_1", "trump_coup_1"],
+    "declarer_play": ["simple_notrump_1", "finesse_decision_1", "holdop_play_1", "suit_contract_1", "ruffing_losers_1", "endplay_simple_1", "timing_1", "avoidance_1", "overtrick_1", "communication_1"],
+    "defensive_play": ["defensive_1", "trump_coup_1"]
+  },
+  "metadata": {
+    "version": "1.0",
+    "created": "2025-10-11",
+    "total_deals": 12,
+    "description": "Curated test deals for benchmarking Bridge AI play engines. Each deal tests specific aspects of declarer or defensive play.",
+    "difficulty_distribution": {
+      "beginner": 2,
+      "intermediate": 7,
+      "advanced": 3
+    }
+  }
+}

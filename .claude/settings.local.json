@@ -6,7 +6,18 @@
       "Bash(pip install:*)",
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(pytest:*)",
+      "Bash(python3:*)",
+      "Bash(python3 -m pytest tests/test_rebids.py -v)",
+      "Bash(PYTHONPATH=. python3:*)",
+      "Bash(export PYTHONPATH=.)",
+      "Bash(curl:*)",
+      "Bash(mv:*)",
+      "Bash(git mv:*)",
+      "Read(//private/tmp/**)",
+      "Bash(awk:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

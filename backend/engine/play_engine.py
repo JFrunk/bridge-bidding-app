@@ -97,6 +97,43 @@ class PlayEngine:
     }
 
     @staticmethod
+    def create_play_session(contract: Contract, hands: Dict[str, Hand],
+                           vulnerability: Optional[Dict[str, bool]] = None) -> PlayState:
+        """
+        Factory method for creating standalone play session
+
+        This enables testing and standalone play without going through bidding phase.
+
+        Args:
+            contract: The contract to play
+            hands: Dictionary mapping position ('N', 'E', 'S', 'W') to Hand objects
+            vulnerability: Optional vulnerability dict {'ns': bool, 'ew': bool}
+
+        Returns:
+            PlayState ready to begin play
+
+        Example:
+            contract = Contract(level=3, strain='NT', declarer='S')
+            hands = {'N': hand_n, 'E': hand_e, 'S': hand_s, 'W': hand_w}
+            play_state = PlayEngine.create_play_session(contract, hands)
+        """
+        if vulnerability is None:
+            vulnerability = {'ns': False, 'ew': False}
+
+        # Opening leader is LHO of declarer
+        opening_leader = PlayEngine.next_player(contract.declarer)
+
+        return PlayState(
+            contract=contract,
+            hands=hands,
+            current_trick=[],
+            tricks_won={'N': 0, 'E': 0, 'S': 0, 'W': 0},
+            trick_history=[],
+            next_to_play=opening_leader,
+            dummy_revealed=False
+        )
+
+    @staticmethod
     def determine_contract(auction: List[str], dealer_index: int = 0) -> Optional[Contract]:
         """
         Determine final contract from auction
@@ -230,6 +267,13 @@ class PlayEngine:
         positions = PlayEngine.POSITIONS
         idx = positions.index(current)
         return positions[(idx + 1) % 4]
+
+    @staticmethod
+    def partner(position: str) -> str:
+        """Get partner of given position"""
+        positions = PlayEngine.POSITIONS
+        idx = positions.index(position)
+        return positions[(idx + 2) % 4]
 
     @staticmethod
     def calculate_score(contract: Contract, tricks_taken: int,

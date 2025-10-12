@@ -28,6 +28,11 @@ class PreemptConvention(ConventionModule):
         - 2-level: 6-card suit, 6-10 HCP, 2+ honors
         - 3-level: 7-card suit, 6-10 HCP, 2+ honors
         - 4-level: 8-card suit, 6-10 HCP (or 7-card with favorable vulnerability)
+
+        IMPORTANT SAYC RESTRICTIONS for Weak Twos (2-level):
+        - NO void or singleton ace (hand too shapely/strong)
+        - NO 4-card side major (may belong in that suit)
+        - Typically 2 of top 3 honors (A/K/Q) or 3 of top 5
         """
         constraints = self.get_constraints()
         hcp_range = constraints['hcp_range']
@@ -40,12 +45,23 @@ class PreemptConvention(ConventionModule):
         for suit_length in [8, 7, 6]:
             for suit in suits:
                 if hand.suit_lengths[suit] == suit_length:
-                    # Check for sufficient honors (2+ honors)
-                    honors = {'A', 'K', 'Q', 'J', 'T'}
+                    # Check for sufficient suit quality
                     suit_cards = [card.rank for card in hand.cards if card.suit == suit]
-                    honor_count = sum(1 for rank in suit_cards if rank in honors)
 
-                    if honor_count >= 2:
+                    # For Weak Twos (6-card): STRICT requirement of 2 of top 3 honors (A/K/Q)
+                    # For 3-level+ preempts (7-8 card): More lenient - 2+ honors including J/T
+                    if suit_length == 6:
+                        # SAYC: Weak Two requires 2 of top 3 honors (A, K, Q)
+                        top_three_honors = {'A', 'K', 'Q'}
+                        top_honor_count = sum(1 for rank in suit_cards if rank in top_three_honors)
+                        has_quality_suit = top_honor_count >= 2
+                    else:
+                        # 7-8 card preempts: 2+ honors (can include J, T)
+                        honors = {'A', 'K', 'Q', 'J', 'T'}
+                        honor_count = sum(1 for rank in suit_cards if rank in honors)
+                        has_quality_suit = honor_count >= 2
+
+                    if has_quality_suit:
                         suit_name = {'♠': 'Spade', '♥': 'Heart', '♦': 'Diamond'}[suit]
 
                         # Determine level based on suit length
@@ -56,10 +72,43 @@ class PreemptConvention(ConventionModule):
                             # 3-level preempt (7-card suit)
                             return (f"3{suit}", f"3-level preempt showing 7-card {suit_name} suit with 6-10 HCP.")
                         elif suit_length == 6:
-                            # 2-level preempt (weak two)
+                            # 2-level preempt (weak two) - apply SAYC restrictions
+                            if not self._is_valid_weak_two(hand, suit):
+                                continue  # Skip this suit, try next one
                             return (f"2{suit}", f"Weak Two bid showing 6-card {suit_name} suit with 6-10 HCP.")
 
         return None
+
+    def _is_valid_weak_two(self, hand: Hand, preempt_suit: str) -> bool:
+        """
+        Check if hand meets SAYC requirements for a weak two bid.
+
+        SAYC Restrictions:
+        - NO void (0-card suit)
+        - NO singleton ace (too strong/shapely)
+        - NO 4-card side MAJOR (might belong in that major)
+
+        Returns: True if hand is valid for weak two, False otherwise
+        """
+        # Check for voids
+        for suit in ['♠', '♥', '♦', '♣']:
+            if hand.suit_lengths[suit] == 0:
+                return False  # Void - reject weak two
+
+        # Check for singleton aces
+        for suit in ['♠', '♥', '♦', '♣']:
+            if hand.suit_lengths[suit] == 1:
+                # Check if it's an ace
+                suit_cards = [card for card in hand.cards if card.suit == suit]
+                if suit_cards and suit_cards[0].rank == 'A':
+                    return False  # Singleton ace - reject weak two
+
+        # Check for 4-card side major
+        for major in ['♠', '♥']:
+            if major != preempt_suit and hand.suit_lengths[major] >= 4:
+                return False  # 4-card side major - reject weak two
+
+        return True
         
     def _is_response_applicable(self, features: Dict) -> bool:
         """Check if we're responding to partner's preempt."""

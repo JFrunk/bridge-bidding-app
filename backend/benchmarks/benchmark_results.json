@@ -1,0 +1,86 @@
+{
+  "timestamp": "2025-10-11 13:39:51",
+  "deals_file": "benchmarks/curated_deals.json",
+  "results": {
+    "Simple Rule-Based AI": [
+      {
+        "deal_id": "simple_notrump_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 7,
+          "E": 3,
+          "S": 2,
+          "W": 1
+        },
+        "declarer_tricks": 9,
+        "defender_tricks": 4,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      },
+      {
+        "deal_id": "suit_contract_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 5,
+          "E": 4,
+          "S": 4,
+          "W": 0
+        },
+        "declarer_tricks": 9,
+        "defender_tricks": 4,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      }
+    ],
+    "Minimax AI (depth 2)": [
+      {
+        "deal_id": "simple_notrump_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 7,
+          "E": 5,
+          "S": 1,
+          "W": 0
+        },
+        "declarer_tricks": 8,
+        "defender_tricks": 5,
+        "moves_played": 52,
+        "total_time": 0.122,
+        "total_nodes": 1031,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0023,
+        "avg_nodes_per_move": 19.8,
+        "max_time_per_move": 0.01
+      },
+      {
+        "deal_id": "suit_contract_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 5,
+          "E": 0,
+          "S": 7,
+          "W": 1
+        },
+        "declarer_tricks": 12,
+        "defender_tricks": 1,
+        "moves_played": 52,
+        "total_time": 0.137,
+        "total_nodes": 1177,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0026,
+        "avg_nodes_per_move": 22.6,
+        "max_time_per_move": 0.01
+      }
+    ]
+  }
+}

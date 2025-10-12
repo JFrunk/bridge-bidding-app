@@ -1,0 +1,696 @@
+{
+  "timestamp": "2025-10-11 13:40:24",
+  "deals_file": "benchmarks/curated_deals.json",
+  "results": {
+    "Simple Rule-Based AI": [
+      {
+        "deal_id": "simple_notrump_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 7,
+          "E": 3,
+          "S": 2,
+          "W": 1
+        },
+        "declarer_tricks": 9,
+        "defender_tricks": 4,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      },
+      {
+        "deal_id": "finesse_decision_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 5,
+          "E": 4,
+          "S": 2,
+          "W": 2
+        },
+        "declarer_tricks": 7,
+        "defender_tricks": 6,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      },
+      {
+        "deal_id": "holdop_play_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 4,
+          "E": 2,
+          "S": 5,
+          "W": 2
+        },
+        "declarer_tricks": 9,
+        "defender_tricks": 4,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      },
+      {
+        "deal_id": "suit_contract_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 5,
+          "E": 4,
+          "S": 4,
+          "W": 0
+        },
+        "declarer_tricks": 9,
+        "defender_tricks": 4,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      },
+      {
+        "deal_id": "ruffing_losers_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 4,
+          "E": 3,
+          "S": 6,
+          "W": 0
+        },
+        "declarer_tricks": 10,
+        "defender_tricks": 3,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      },
+      {
+        "deal_id": "defensive_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 5,
+          "E": 4,
+          "S": 2,
+          "W": 2
+        },
+        "declarer_tricks": 7,
+        "defender_tricks": 6,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      },
+      {
+        "deal_id": "endplay_simple_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 7,
+          "E": 2,
+          "S": 0,
+          "W": 4
+        },
+        "declarer_tricks": 7,
+        "defender_tricks": 6,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      },
+      {
+        "deal_id": "timing_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 5,
+          "E": 5,
+          "S": 2,
+          "W": 1
+        },
+        "declarer_tricks": 7,
+        "defender_tricks": 6,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      },
+      {
+        "deal_id": "avoidance_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 4,
+          "E": 2,
+          "S": 4,
+          "W": 3
+        },
+        "declarer_tricks": 8,
+        "defender_tricks": 5,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      },
+      {
+        "deal_id": "trump_coup_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 3,
+          "E": 6,
+          "S": 3,
+          "W": 1
+        },
+        "declarer_tricks": 6,
+        "defender_tricks": 7,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      },
+      {
+        "deal_id": "overtrick_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 8,
+          "E": 1,
+          "S": 2,
+          "W": 2
+        },
+        "declarer_tricks": 10,
+        "defender_tricks": 3,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      },
+      {
+        "deal_id": "communication_1",
+        "ai_name": "Simple Rule-Based AI",
+        "tricks_won": {
+          "N": 7,
+          "E": 3,
+          "S": 1,
+          "W": 2
+        },
+        "declarer_tricks": 8,
+        "defender_tricks": 5,
+        "moves_played": 52,
+        "total_time": 0.0,
+        "total_nodes": 0,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0,
+        "avg_nodes_per_move": 0.0,
+        "max_time_per_move": 0.0
+      }
+    ],
+    "Minimax AI (depth 2)": [
+      {
+        "deal_id": "simple_notrump_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 7,
+          "E": 5,
+          "S": 1,
+          "W": 0
+        },
+        "declarer_tricks": 8,
+        "defender_tricks": 5,
+        "moves_played": 52,
+        "total_time": 0.152,
+        "total_nodes": 1031,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0029,
+        "avg_nodes_per_move": 19.8,
+        "max_time_per_move": 0.031
+      },
+      {
+        "deal_id": "finesse_decision_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 4,
+          "E": 3,
+          "S": 6,
+          "W": 0
+        },
+        "declarer_tricks": 10,
+        "defender_tricks": 3,
+        "moves_played": 52,
+        "total_time": 0.111,
+        "total_nodes": 937,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0021,
+        "avg_nodes_per_move": 18.0,
+        "max_time_per_move": 0.01
+      },
+      {
+        "deal_id": "holdop_play_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 5,
+          "E": 4,
+          "S": 2,
+          "W": 2
+        },
+        "declarer_tricks": 7,
+        "defender_tricks": 6,
+        "moves_played": 52,
+        "total_time": 0.112,
+        "total_nodes": 933,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0022,
+        "avg_nodes_per_move": 17.9,
+        "max_time_per_move": 0.006
+      },
+      {
+        "deal_id": "suit_contract_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 5,
+          "E": 0,
+          "S": 7,
+          "W": 1
+        },
+        "declarer_tricks": 12,
+        "defender_tricks": 1,
+        "moves_played": 52,
+        "total_time": 0.143,
+        "total_nodes": 1177,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0028,
+        "avg_nodes_per_move": 22.6,
+        "max_time_per_move": 0.01
+      },
+      {
+        "deal_id": "ruffing_losers_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 4,
+          "E": 1,
+          "S": 7,
+          "W": 1
+        },
+        "declarer_tricks": 11,
+        "defender_tricks": 2,
+        "moves_played": 52,
+        "total_time": 0.149,
+        "total_nodes": 1239,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0029,
+        "avg_nodes_per_move": 23.8,
+        "max_time_per_move": 0.014
+      },
+      {
+        "deal_id": "defensive_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 2,
+          "E": 7,
+          "S": 4,
+          "W": 0
+        },
+        "declarer_tricks": 6,
+        "defender_tricks": 7,
+        "moves_played": 52,
+        "total_time": 0.099,
+        "total_nodes": 840,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0019,
+        "avg_nodes_per_move": 16.2,
+        "max_time_per_move": 0.006
+      },
+      {
+        "deal_id": "endplay_simple_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 7,
+          "E": 6,
+          "S": 0,
+          "W": 0
+        },
+        "declarer_tricks": 7,
+        "defender_tricks": 6,
+        "moves_played": 52,
+        "total_time": 0.122,
+        "total_nodes": 1035,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0024,
+        "avg_nodes_per_move": 19.9,
+        "max_time_per_move": 0.013
+      },
+      {
+        "deal_id": "timing_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 6,
+          "E": 6,
+          "S": 1,
+          "W": 0
+        },
+        "declarer_tricks": 7,
+        "defender_tricks": 6,
+        "moves_played": 52,
+        "total_time": 0.155,
+        "total_nodes": 1249,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.003,
+        "avg_nodes_per_move": 24.0,
+        "max_time_per_move": 0.013
+      },
+      {
+        "deal_id": "avoidance_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 5,
+          "E": 6,
+          "S": 1,
+          "W": 1
+        },
+        "declarer_tricks": 6,
+        "defender_tricks": 7,
+        "moves_played": 52,
+        "total_time": 0.142,
+        "total_nodes": 1143,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0027,
+        "avg_nodes_per_move": 22.0,
+        "max_time_per_move": 0.009
+      },
+      {
+        "deal_id": "trump_coup_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 3,
+          "E": 4,
+          "S": 6,
+          "W": 0
+        },
+        "declarer_tricks": 9,
+        "defender_tricks": 4,
+        "moves_played": 52,
+        "total_time": 0.164,
+        "total_nodes": 1386,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0032,
+        "avg_nodes_per_move": 26.7,
+        "max_time_per_move": 0.014
+      },
+      {
+        "deal_id": "overtrick_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 6,
+          "E": 2,
+          "S": 5,
+          "W": 0
+        },
+        "declarer_tricks": 11,
+        "defender_tricks": 2,
+        "moves_played": 52,
+        "total_time": 0.087,
+        "total_nodes": 725,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0017,
+        "avg_nodes_per_move": 13.9,
+        "max_time_per_move": 0.006
+      },
+      {
+        "deal_id": "communication_1",
+        "ai_name": "Minimax AI (depth 2)",
+        "tricks_won": {
+          "N": 2,
+          "E": 9,
+          "S": 1,
+          "W": 1
+        },
+        "declarer_tricks": 3,
+        "defender_tricks": 10,
+        "moves_played": 52,
+        "total_time": 0.115,
+        "total_nodes": 942,
+        "total_pruned": 0,
+        "avg_time_per_move": 0.0022,
+        "avg_nodes_per_move": 18.1,
+        "max_time_per_move": 0.012
+      }
+    ],
+    "Minimax AI (depth 3)": [
+      {
+        "deal_id": "simple_notrump_1",
+        "ai_name": "Minimax AI (depth 3)",
+        "tricks_won": {
+          "N": 7,
+          "E": 3,
+          "S": 3,
+          "W": 0
+        },
+        "declarer_tricks": 10,
+        "defender_tricks": 3,
+        "moves_played": 52,
+        "total_time": 0.245,
+        "total_nodes": 2051,
+        "total_pruned": 455,
+        "avg_time_per_move": 0.0047,
+        "avg_nodes_per_move": 39.4,
+        "max_time_per_move": 0.018
+      },
+      {
+        "deal_id": "finesse_decision_1",
+        "ai_name": "Minimax AI (depth 3)",
+        "tricks_won": {
+          "N": 5,
+          "E": 1,
+          "S": 7,
+          "W": 0
+        },
+        "declarer_tricks": 12,
+        "defender_tricks": 1,
+        "moves_played": 52,
+        "total_time": 0.29,
+        "total_nodes": 2424,
+        "total_pruned": 611,
+        "avg_time_per_move": 0.0056,
+        "avg_nodes_per_move": 46.6,
+        "max_time_per_move": 0.028
+      },
+      {
+        "deal_id": "holdop_play_1",
+        "ai_name": "Minimax AI (depth 3)",
+        "tricks_won": {
+          "N": 6,
+          "E": 3,
+          "S": 3,
+          "W": 1
+        },
+        "declarer_tricks": 9,
+        "defender_tricks": 4,
+        "moves_played": 52,
+        "total_time": 0.263,
+        "total_nodes": 2195,
+        "total_pruned": 510,
+        "avg_time_per_move": 0.0051,
+        "avg_nodes_per_move": 42.2,
+        "max_time_per_move": 0.037
+      },
+      {
+        "deal_id": "suit_contract_1",
+        "ai_name": "Minimax AI (depth 3)",
+        "tricks_won": {
+          "N": 4,
+          "E": 1,
+          "S": 7,
+          "W": 1
+        },
+        "declarer_tricks": 11,
+        "defender_tricks": 2,
+        "moves_played": 52,
+        "total_time": 0.301,
+        "total_nodes": 2538,
+        "total_pruned": 611,
+        "avg_time_per_move": 0.0058,
+        "avg_nodes_per_move": 48.8,
+        "max_time_per_move": 0.033
+      },
+      {
+        "deal_id": "ruffing_losers_1",
+        "ai_name": "Minimax AI (depth 3)",
+        "tricks_won": {
+          "N": 4,
+          "E": 2,
+          "S": 6,
+          "W": 1
+        },
+        "declarer_tricks": 10,
+        "defender_tricks": 3,
+        "moves_played": 52,
+        "total_time": 0.291,
+        "total_nodes": 2404,
+        "total_pruned": 534,
+        "avg_time_per_move": 0.0056,
+        "avg_nodes_per_move": 46.2,
+        "max_time_per_move": 0.018
+      },
+      {
+        "deal_id": "defensive_1",
+        "ai_name": "Minimax AI (depth 3)",
+        "tricks_won": {
+          "N": 5,
+          "E": 4,
+          "S": 4,
+          "W": 0
+        },
+        "declarer_tricks": 9,
+        "defender_tricks": 4,
+        "moves_played": 52,
+        "total_time": 0.264,
+        "total_nodes": 2212,
+        "total_pruned": 516,
+        "avg_time_per_move": 0.0051,
+        "avg_nodes_per_move": 42.5,
+        "max_time_per_move": 0.028
+      },
+      {
+        "deal_id": "endplay_simple_1",
+        "ai_name": "Minimax AI (depth 3)",
+        "tricks_won": {
+          "N": 6,
+          "E": 4,
+          "S": 3,
+          "W": 0
+        },
+        "declarer_tricks": 9,
+        "defender_tricks": 4,
+        "moves_played": 52,
+        "total_time": 0.323,
+        "total_nodes": 2721,
+        "total_pruned": 734,
+        "avg_time_per_move": 0.0062,
+        "avg_nodes_per_move": 52.3,
+        "max_time_per_move": 0.04
+      },
+      {
+        "deal_id": "timing_1",
+        "ai_name": "Minimax AI (depth 3)",
+        "tricks_won": {
+          "N": 6,
+          "E": 6,
+          "S": 1,
+          "W": 0
+        },
+        "declarer_tricks": 7,
+        "defender_tricks": 6,
+        "moves_played": 52,
+        "total_time": 0.362,
+        "total_nodes": 3011,
+        "total_pruned": 692,
+        "avg_time_per_move": 0.007,
+        "avg_nodes_per_move": 57.9,
+        "max_time_per_move": 0.067
+      },
+      {
+        "deal_id": "avoidance_1",
+        "ai_name": "Minimax AI (depth 3)",
+        "tricks_won": {
+          "N": 2,
+          "E": 6,
+          "S": 2,
+          "W": 3
+        },
+        "declarer_tricks": 4,
+        "defender_tricks": 9,
+        "moves_played": 52,
+        "total_time": 0.355,
+        "total_nodes": 2896,
+        "total_pruned": 704,
+        "avg_time_per_move": 0.0068,
+        "avg_nodes_per_move": 55.7,
+        "max_time_per_move": 0.03
+      },
+      {
+        "deal_id": "trump_coup_1",
+        "ai_name": "Minimax AI (depth 3)",
+        "tricks_won": {
+          "N": 3,
+          "E": 6,
+          "S": 4,
+          "W": 0
+        },
+        "declarer_tricks": 7,
+        "defender_tricks": 6,
+        "moves_played": 52,
+        "total_time": 0.326,
+        "total_nodes": 2815,
+        "total_pruned": 684,
+        "avg_time_per_move": 0.0063,
+        "avg_nodes_per_move": 54.1,
+        "max_time_per_move": 0.034
+      },
+      {
+        "deal_id": "overtrick_1",
+        "ai_name": "Minimax AI (depth 3)",
+        "tricks_won": {
+          "N": 5,
+          "E": 3,
+          "S": 5,
+          "W": 0
+        },
+        "declarer_tricks": 10,
+        "defender_tricks": 3,
+        "moves_played": 52,
+        "total_time": 0.308,
+        "total_nodes": 2600,
+        "total_pruned": 566,
+        "avg_time_per_move": 0.0059,
+        "avg_nodes_per_move": 50.0,
+        "max_time_per_move": 0.067
+      },
+      {
+        "deal_id": "communication_1",
+        "ai_name": "Minimax AI (depth 3)",
+        "tricks_won": {
+          "N": 2,
+          "E": 9,
+          "S": 1,
+          "W": 1
+        },
+        "declarer_tricks": 3,
+        "defender_tricks": 10,
+        "moves_played": 52,
+        "total_time": 0.299,
+        "total_nodes": 2551,
+        "total_pruned": 594,
+        "avg_time_per_move": 0.0058,
+        "avg_nodes_per_move": 49.1,
+        "max_time_per_move": 0.04
+      }
+    ]
+  }
+}

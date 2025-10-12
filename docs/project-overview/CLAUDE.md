@@ -190,3 +190,54 @@ def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
 - **Module naming**: Decision engine returns module name as string (e.g., 'stayman'), not the class
 - **Hand generation**: Scenarios consume cards from deck, so order matters
 - **Auction indexing**: Position in auction determined by `index % 4` mapping to player positions
+
+## Documentation Organization
+
+**IMPORTANT**: All project documentation is organized in the `docs/` directory with a structured hierarchy. When creating or updating documentation, you MUST follow this organization.
+
+### Directory Structure
+
+```
+docs/
+├── README.md                 # Main documentation index
+├── project-overview/         # Core project docs, setup, strategy
+├── development-phases/       # Phase 1, Phase 2, milestone docs
+├── features/                 # Feature-specific documentation
+├── guides/                   # Testing guides, usage guides
+└── bug-fixes/                # Bug reports, fixes, known issues
+```
+
+### Documentation Rules
+
+**When Creating New Documentation:**
+
+1. **NEVER create markdown files in the project root** - Always use `docs/` subdirectories
+2. **Choose the appropriate category**:
+   - **project-overview/** - Project-wide documentation, deployment, setup, strategy, tooling
+   - **development-phases/** - Milestone completions, phase summaries, session notes (use `PHASE#_DESCRIPTION.md` format)
+   - **features/** - Feature implementations, architecture, specifications (use `FEATURE_NAME.md` format)
+   - **guides/** - Testing procedures, usage guides, how-tos (use `SUBJECT_GUIDE.md` format)
+   - **bug-fixes/** - Bug tracking, fixes, known issues (use `BUG_FIX_AREA.md` or `AREA_FIXES_DATE.md` format)
+
+3. **Update docs/README.md** when adding new documents to maintain the index
+
+4. **Use descriptive, consistent filenames**:
+   - ALL_CAPS with underscores (e.g., `CONVENTION_SYSTEM.md`)
+   - Include dates for time-specific docs (e.g., `BIDDING_FIXES_2025-10-10.md`)
+   - Use category prefixes when helpful (e.g., `PHASE2_API_INTEGRATION.md`)
+
+**When Updating Existing Documentation:**
+
+1. Find the existing document in `docs/` using the category system
+2. Update in place - don't create duplicates
+3. If a doc spans multiple categories, choose the primary category and reference it from others
+
+**Quick Reference:**
+
+- Need to document a new feature? → `docs/features/FEATURE_NAME.md`
+- Completed a development phase? → `docs/development-phases/PHASE#_DESCRIPTION.md`
+- Writing a testing guide? → `docs/guides/TESTING_SUBJECT.md`
+- Tracking a bug fix? → `docs/bug-fixes/BUG_FIX_AREA.md`
+- General project info? → `docs/project-overview/TOPIC.md`
+
+**See [docs/README.md](../README.md) for complete documentation index and navigation.**

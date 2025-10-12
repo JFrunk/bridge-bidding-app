@@ -1,6 +1,7 @@
 from engine.hand import Hand
 from engine.ai.conventions.base_convention import ConventionModule
-from typing import Optional, Tuple, Dict
+from engine.ai.bid_explanation import BidExplanation
+from typing import Optional, Tuple, Dict, Union
 
 class ResponseModule(ConventionModule):
     """
@@ -9,15 +10,18 @@ class ResponseModule(ConventionModule):
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
         auction = features['auction_features']
         opening_bid = auction.get('opening_bid')
-        if not opening_bid or auction.get('opener_relationship') != 'Partner':
+        opener_index = auction.get('opener_index', -1)
+        if not opening_bid or auction.get('opener_relationship') != 'Partner' or opener_index == -1:
             return None # Not a response situation
 
-        my_bids = [bid for i, bid in enumerate(features['auction_history']) if features['positions'][i % 4] == features['my_index']]
+        # Count my bids AFTER partner's opening
+        my_bids_after_opening = [bid for i, bid in enumerate(features['auction_history'])
+                                if (i % 4) == features['my_index'] and i > opener_index]
 
-        if len(my_bids) == 0:
+        if len(my_bids_after_opening) == 0:
             return self._get_first_response(hand, opening_bid, features)
         else:
-            return self._get_responder_rebid(hand, features)
+            return self._get_responder_rebid(hand, features, my_bids_after_opening)
 
     def _calculate_support_points(self, hand: Hand, trump_suit: str) -> int:
         points = hand.hcp
@@ -55,11 +59,55 @@ class ResponseModule(ConventionModule):
         SAYC Rules:
         - After (X): Systems ON (Stayman/Jacoby still work)
         - After suit overcall: Systems OFF (all bids natural)
+
+        Natural responses (no interference):
+        - 0-7 HCP: Pass
+        - 8-9 HCP: 2NT (invitational)
+        - 10-14 HCP: 3NT (game)
+        - 15-17 HCP: 4NT (quantitative, slam invite)
+        - 18+ HCP: 6NT or explore slam
         """
         if not interference['present'] or interference['type'] == 'double':
             # No interference OR double (systems ON)
-            # Let Stayman/Jacoby conventions handle this
-            return None
+            # Check if Stayman/Jacoby conventions will handle this
+            # If not, provide natural response based on HCP
+
+            # Conventions will handle if:
+            # - 4+ card major(s) AND 8+ HCP (Stayman)
+            # - 5+ card major AND 8+ HCP (Jacoby Transfer)
+            # Otherwise, we need to provide natural response here
+
+            # Natural responses when no special convention applies:
+            if hand.hcp < 8:
+                return ("Pass", "Partner opened 1NT (15-17 HCP), we have insufficient strength for game (< 8 HCP).")
+
+            # Note: 8-9 HCP hands with 4-card majors will be handled by Stayman
+            # Note: 8+ HCP hands with 5-card majors will be handled by Jacoby
+            # So these natural bids are mainly for balanced hands without major interest
+
+            if hand.hcp >= 18:
+                # Slam interest - quantitative 4NT or direct 6NT
+                if hand.hcp >= 20:
+                    return ("6NT", "Slam bid with 20+ HCP opposite partner's 15-17 HCP (combined 35+).")
+                else:
+                    return ("4NT", "Quantitative slam invitation with 18-19 HCP (non-Blackwood).")
+
+            if hand.hcp >= 15:
+                # Quantitative slam invitation
+                return ("4NT", "Quantitative slam invitation with 15-17 HCP (non-Blackwood).")
+
+            if hand.hcp >= 10:
+                # Game values - bid 3NT directly
+                # Note: Stayman/Jacoby will intercept if there's a major suit fit
+                return ("3NT", "Game bid with 10-14 HCP opposite partner's 15-17 HCP (combined 25+).")
+
+            if hand.hcp >= 8:
+                # Invitational range
+                # Note: Stayman will intercept if we have 4-card major
+                return ("2NT", "Invitational with 8-9 HCP, asking partner to bid 3NT with maximum (17).")
+
+            # Below 8 HCP - pass
+            return ("Pass", "Insufficient strength to invite game (< 8 HCP).")
 
         # Interference present - systems are OFF
         # Use natural competitive bidding
@@ -104,11 +152,50 @@ class ResponseModule(ConventionModule):
             support_points = self._calculate_support_points(hand, opening_suit)
 
             if support_points >= 13:
-                return (f"4{opening_suit}" if opening_suit in '♥♠' else "3NT", "Game-forcing raise.")
+                bid = f"4{opening_suit}" if opening_suit in '♥♠' else "3NT"
+                explanation = BidExplanation(bid)
+                explanation.set_primary_reason(f"Game-forcing raise with excellent fit for partner's {opening_suit}")
+                explanation.add_requirement("Support Points", "13+")
+                explanation.add_requirement(f"{opening_suit} Support", "3+")
+                explanation.add_actual_value("Support Points", str(support_points))
+                explanation.add_actual_value("HCP", str(hand.hcp))
+                explanation.add_actual_value(f"{opening_suit} Length", f"{hand.suit_lengths[opening_suit]} cards")
+                explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
+                explanation.set_forcing_status("Game-forcing")
+
+                # Show shortness bonuses if applicable
+                for suit, length in hand.suit_lengths.items():
+                    if suit != opening_suit:
+                        if length == 0:
+                            explanation.add_actual_value(f"Void in {suit}", "+3 support points")
+                        elif length == 1:
+                            explanation.add_actual_value(f"Singleton {suit}", "+2 support points")
+
+                return (bid, explanation)
+
             if 10 <= support_points <= 12:
-                return (f"3{opening_suit}", f"Invitational raise showing 10-12 support points.")
+                explanation = BidExplanation(f"3{opening_suit}")
+                explanation.set_primary_reason(f"Invitational raise with good fit for partner's {opening_suit}")
+                explanation.add_requirement("Support Points", "10-12")
+                explanation.add_requirement(f"{opening_suit} Support", "3+")
+                explanation.add_actual_value("Support Points", str(support_points))
+                explanation.add_actual_value("HCP", str(hand.hcp))
+                explanation.add_actual_value(f"{opening_suit} Length", f"{hand.suit_lengths[opening_suit]} cards")
+                explanation.set_forcing_status("Invitational")
+                explanation.add_alternative(f"2{opening_suit}", f"Too strong (have {support_points} support points, need 10+)")
+                explanation.add_alternative(f"4{opening_suit}", f"Not quite enough (have {support_points} support points, need 13+)")
+                return (f"3{opening_suit}", explanation)
+
             if 6 <= support_points <= 9:
-                return (f"2{opening_suit}", f"Simple raise showing 6-9 support points.")
+                explanation = BidExplanation(f"2{opening_suit}")
+                explanation.set_primary_reason(f"Simple raise showing minimum support for partner's {opening_suit}")
+                explanation.add_requirement("Support Points", "6-9")
+                explanation.add_requirement(f"{opening_suit} Support", "3+")
+                explanation.add_actual_value("Support Points", str(support_points))
+                explanation.add_actual_value("HCP", str(hand.hcp))
+                explanation.add_actual_value(f"{opening_suit} Length", f"{hand.suit_lengths[opening_suit]} cards")
+                explanation.set_forcing_status("Sign-off (partner may pass)")
+                return (f"2{opening_suit}", explanation)
 
         # Without fit, bid new suits up-the-line (if no interference or low interference)
         if not interference['present'] or interference['level'] <= 1:
@@ -192,9 +279,55 @@ class ResponseModule(ConventionModule):
         # Pass without a clear action
         return ("Pass", "No clear response available.")
 
-    def _get_responder_rebid(self, hand: Hand, features: Dict):
+    def _get_responder_rebid(self, hand: Hand, features: Dict, my_bids_after_opening: list):
         auction_features = features['auction_features']
         opening_bid = auction_features.get('opening_bid', '')
+
+        # Special case: After 2♣ opening and 2♦ waiting response, auction is FORCING TO GAME
+        # Responder cannot pass until game is reached
+        if opening_bid == "2♣" and len(my_bids_after_opening) >= 1 and my_bids_after_opening[0] == "2♦":
+            # We must bid until game is reached
+            # Get partner's most recent bid to determine what they showed
+            partner_last_bid = auction_features.get('partner_last_bid')
+
+            if partner_last_bid and partner_last_bid != "Pass":
+                # If partner showed a suit, we need to respond appropriately
+                if len(partner_last_bid) >= 2 and partner_last_bid[1] in ['♣', '♦', '♥', '♠']:
+                    partner_suit = partner_last_bid[1]
+
+                    # With 2+ card support for a major, raise to game
+                    if partner_suit in ['♥', '♠'] and hand.suit_lengths.get(partner_suit, 0) >= 2:
+                        return (f"4{partner_suit}", f"Game bid showing support for partner's {partner_suit} in 2♣ auction.")
+
+                    # With 3+ card support for any suit, raise
+                    if hand.suit_lengths.get(partner_suit, 0) >= 3:
+                        # Raise to game level
+                        if partner_suit in ['♥', '♠']:
+                            return (f"4{partner_suit}", f"Game bid showing support for partner's {partner_suit} in 2♣ auction.")
+                        else:
+                            # Minor suit - prefer 3NT if balanced, else 5-level
+                            if hand.is_balanced or hand.hcp >= 8:
+                                return ("3NT", "Game in NT with minor suit fit (2♣ auction).")
+                            else:
+                                return (f"5{partner_suit}", f"Game in {partner_suit} (2♣ auction).")
+
+                    # Without support for partner's suit, bid 3NT with any balanced hand
+                    # or show own 5+ card suit
+                    for suit in ['♠', '♥', '♦', '♣']:
+                        if hand.suit_lengths.get(suit, 0) >= 5:
+                            return (f"3{suit}", f"Natural bid showing 5+ {suit} in game-forcing 2♣ auction.")
+
+                    # No 5-card suit - bid 3NT (must reach game)
+                    return ("3NT", "Game in NT (2♣ auction, no fit found).")
+
+                # Partner bid 2NT - respond based on hand
+                if 'NT' in partner_last_bid:
+                    # With a 5+ card major, show it
+                    for suit in ['♠', '♥']:
+                        if hand.suit_lengths.get(suit, 0) >= 5:
+                            return (f"3{suit}", f"Showing 5+ {suit} after partner's NT rebid.")
+                    # Otherwise bid 3NT
+                    return ("3NT", "Game in NT (2♣ auction).")
 
         if 6 <= hand.total_points <= 9:
             return ("Pass", "Minimum hand (6-9 pts), no reason to bid further.")

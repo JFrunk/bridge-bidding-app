@@ -1,41 +1,151 @@
 from engine.hand import Hand
 from engine.ai.conventions.base_convention import ConventionModule
-from typing import Optional, Tuple, Dict
+from engine.ai.bid_explanation import BidExplanation
+from typing import Optional, Tuple, Dict, Union
 
 class OpeningBidsModule(ConventionModule):
-    def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+    def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, Union[str, BidExplanation]]]:
         # This module does not need features, but conforms to the interface
-        
-        # Rule for very strong balanced hands (22+ HCP)
-        if hand.is_balanced:
-            if 25 <= hand.hcp <= 27: return ("3NT", "Shows a balanced hand with 25-27 HCP.")
-            if 22 <= hand.hcp <= 24: return ("2NT", "Shows a balanced hand with 22-24 HCP.")
-        
-        # Rule for very strong hands (22+ total points)
-        if hand.total_points >= 22:
-            return ("2♣", "Strong and artificial. Shows 22+ total points.")
 
-        # Rule for standard balanced 1NT opening
+        # IMPORTANT: Check balanced NT openings FIRST before 2♣
+        # This ensures proper priority: specific balanced ranges take precedence over general strength
+
+        # Rule for very strong balanced hands (25-27 HCP)
+        if hand.is_balanced and 25 <= hand.hcp <= 27:
+            explanation = BidExplanation("3NT")
+            explanation.set_primary_reason("Very strong balanced hand opens 3NT")
+            explanation.add_requirement("HCP", "25-27")
+            explanation.add_requirement("Shape", "Balanced")
+            explanation.add_actual_value("HCP", str(hand.hcp))
+            explanation.add_actual_value("Shape", "Balanced")
+            explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
+            explanation.set_forcing_status("Sign-off")
+            explanation.add_alternative("2NT", f"Too strong (have {hand.hcp} HCP, 2NT shows 22-24)")
+            explanation.add_alternative("2♣", f"Balanced hands use NT openings, not 2♣")
+            return ("3NT", explanation)
+
+        # Rule for strong balanced hands (22-24 HCP) - Opens 2NT
+        if hand.is_balanced and 22 <= hand.hcp <= 24:
+            explanation = BidExplanation("2NT")
+            explanation.set_primary_reason("Strong balanced hand opens 2NT")
+            explanation.add_requirement("HCP", "22-24")
+            explanation.add_requirement("Shape", "Balanced")
+            explanation.add_actual_value("HCP", str(hand.hcp))
+            explanation.add_actual_value("Shape", "Balanced")
+            explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
+            explanation.set_forcing_status("Forcing to game")
+            explanation.add_alternative("1NT", f"Too strong (have {hand.hcp} HCP, 1NT shows 15-17)")
+            explanation.add_alternative("2♣", f"Balanced hands use NT openings, not 2♣")
+            return ("2NT", explanation)
+
+        # Rule for standard balanced 1NT opening (15-17 HCP)
         if 15 <= hand.hcp <= 17 and hand.is_balanced:
-            return ("1NT", "Shows 15-17 HCP and a balanced hand.")
-        
+            explanation = BidExplanation("1NT")
+            explanation.set_primary_reason("Balanced hand with 15-17 HCP opens 1NT")
+            explanation.add_requirement("HCP", "15-17")
+            explanation.add_requirement("Shape", "Balanced (no singleton/void, at most 1 doubleton)")
+            explanation.add_actual_value("HCP", str(hand.hcp))
+            explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
+            explanation.set_forcing_status("Sign-off (partner may pass)")
+            explanation.set_sayc_rule("1nt_opening")
+            explanation.add_alternative("1-level suit", f"Hand is balanced, 1NT more descriptive")
+            return ("1NT", explanation)
+
+        # Rule for very strong hands (22+ total points) - Only for non-balanced or extreme hands
+        # Note: Balanced hands are handled above with specific NT bids
+        if hand.total_points >= 22:
+            explanation = BidExplanation("2♣")
+            explanation.set_primary_reason("Very strong hand opens 2♣ (artificial, game-forcing)")
+            explanation.add_requirement("Total Points", "22+")
+            explanation.add_actual_value("Total Points", str(hand.total_points))
+            explanation.add_actual_value("HCP", str(hand.hcp))
+            explanation.add_actual_value("Distribution Points", str(hand.dist_points))
+            explanation.set_forcing_status("Game-forcing")
+            explanation.set_convention("Strong 2♣ - SAYC")
+
+            # Show longest suit as context
+            longest_suit = max(hand.suit_lengths, key=hand.suit_lengths.get)
+            explanation.add_actual_value("Longest suit", f"{longest_suit} ({hand.suit_lengths[longest_suit]} cards)")
+            return ("2♣", explanation)
+
         # Rule for standard 1-level openings (13-21 points)
         if hand.total_points >= 13:
             if max(hand.suit_lengths.values()) >= 5: # Has a 5+ card suit
                 # Prioritize majors
                 if hand.suit_lengths['♥'] >= 5 and hand.suit_lengths['♥'] >= hand.suit_lengths['♠']:
-                    return ("1♥", "Shows 13+ total points and a 5+ card heart suit.")
+                    explanation = BidExplanation("1♥")
+                    explanation.set_primary_reason("Open longest suit - hearts (5+ cards)")
+                    explanation.add_requirement("Opening Points", "13+")
+                    explanation.add_requirement("Heart Length", "5+")
+                    explanation.add_actual_value("Total Points", str(hand.total_points))
+                    explanation.add_actual_value("Hearts", f"{hand.suit_lengths['♥']} cards, {hand.suit_hcp['♥']} HCP")
+                    if hand.suit_lengths['♠'] >= 5:
+                        explanation.add_alternative("1♠", f"Hearts are longer or equal ({hand.suit_lengths['♥']} vs {hand.suit_lengths['♠']})")
+                    explanation.set_forcing_status("Forcing for 1 round")
+                    return ("1♥", explanation)
+
                 if hand.suit_lengths['♠'] >= 5:
-                    return ("1♠", "Shows 13+ total points and a 5+ card spade suit.")
+                    explanation = BidExplanation("1♠")
+                    explanation.set_primary_reason("Open longest suit - spades (5+ cards)")
+                    explanation.add_requirement("Opening Points", "13+")
+                    explanation.add_requirement("Spade Length", "5+")
+                    explanation.add_actual_value("Total Points", str(hand.total_points))
+                    explanation.add_actual_value("Spades", f"{hand.suit_lengths['♠']} cards, {hand.suit_hcp['♠']} HCP")
+                    explanation.set_forcing_status("Forcing for 1 round")
+                    return ("1♠", explanation)
+
                 # Then minors
                 if hand.suit_lengths['♦'] >= 5 and hand.suit_lengths['♦'] >= hand.suit_lengths['♣']:
-                     return ("1♦", "Shows 13+ total points and a 5+ card diamond suit.")
+                    explanation = BidExplanation("1♦")
+                    explanation.set_primary_reason("Open longest minor - diamonds (5+ cards)")
+                    explanation.add_requirement("Opening Points", "13+")
+                    explanation.add_requirement("Diamond Length", "5+")
+                    explanation.add_actual_value("Total Points", str(hand.total_points))
+                    explanation.add_actual_value("Diamonds", f"{hand.suit_lengths['♦']} cards, {hand.suit_hcp['♦']} HCP")
+                    if hand.suit_lengths['♣'] >= 5:
+                        explanation.add_alternative("1♣", f"Diamonds are longer or equal ({hand.suit_lengths['♦']} vs {hand.suit_lengths['♣']})")
+                    explanation.set_forcing_status("Forcing for 1 round")
+                    return ("1♦", explanation)
+
                 if hand.suit_lengths['♣'] >= 5:
-                     return ("1♣", "Shows 13+ total points and a 5+ card club suit.")
+                    explanation = BidExplanation("1♣")
+                    explanation.set_primary_reason("Open longest minor - clubs (5+ cards)")
+                    explanation.add_requirement("Opening Points", "13+")
+                    explanation.add_requirement("Club Length", "5+")
+                    explanation.add_actual_value("Total Points", str(hand.total_points))
+                    explanation.add_actual_value("Clubs", f"{hand.suit_lengths['♣']} cards, {hand.suit_hcp['♣']} HCP")
+                    explanation.set_forcing_status("Forcing for 1 round")
+                    return ("1♣", explanation)
+
             # No 5-card suit, open longer minor
             if hand.suit_lengths['♦'] > hand.suit_lengths['♣']:
-                return ("1♦", "Shows 13+ points, no 5-card suit. Diamonds is the longer minor.")
+                explanation = BidExplanation("1♦")
+                explanation.set_primary_reason("No 5-card suit - open longer minor (diamonds)")
+                explanation.add_requirement("Opening Points", "13+")
+                explanation.add_actual_value("Total Points", str(hand.total_points))
+                explanation.add_actual_value("Diamonds", f"{hand.suit_lengths['♦']} cards")
+                explanation.add_actual_value("Clubs", f"{hand.suit_lengths['♣']} cards")
+                explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
+                explanation.add_alternative("1♣", f"Diamonds longer ({hand.suit_lengths['♦']} vs {hand.suit_lengths['♣']})")
+                explanation.set_forcing_status("Forcing for 1 round")
+                return ("1♦", explanation)
             else:
-                return ("1♣", "Shows 13+ points, no 5-card suit. Clubs is the longer or equal minor.")
+                explanation = BidExplanation("1♣")
+                explanation.set_primary_reason("No 5-card suit - open longer or equal minor (clubs)")
+                explanation.add_requirement("Opening Points", "13+")
+                explanation.add_actual_value("Total Points", str(hand.total_points))
+                explanation.add_actual_value("Clubs", f"{hand.suit_lengths['♣']} cards")
+                explanation.add_actual_value("Diamonds", f"{hand.suit_lengths['♦']} cards")
+                explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
+                if hand.suit_lengths['♦'] == hand.suit_lengths['♣']:
+                    explanation.add_alternative("1♦", f"Equal length ({hand.suit_lengths['♣']} each) - prefer clubs")
+                explanation.set_forcing_status("Forcing for 1 round")
+                return ("1♣", explanation)
 
-        return ("Pass", "Less than 13 total points.")
+        # Not enough to open
+        explanation = BidExplanation("Pass")
+        explanation.set_primary_reason("Not enough strength to open")
+        explanation.add_requirement("Opening Points", "13+")
+        explanation.add_actual_value("Total Points", str(hand.total_points))
+        explanation.add_actual_value("HCP", str(hand.hcp))
+        return ("Pass", explanation)

@@ -25,6 +25,15 @@ def select_bidding_module(features):
 
     # --- STATE 2: Is this a COMPETITIVE situation? ---
     if auction['opener_relationship'] == 'Opponent':
+        # Check if I'm the advancer (partner made an overcall or double)
+        # This can be my first OR subsequent bid
+        # Only advance if partner is NOT the opener (i.e., partner overcalled/doubled)
+        partner_last_bid = auction['partner_last_bid']
+        if (partner_last_bid and partner_last_bid not in ['Pass', 'XX'] and
+            auction['opener_relationship'] != 'Partner'):
+            # Partner overcalled or doubled - I'm the advancer
+            return 'advancer_bids'
+
         # If it's my first bid after an opponent opened, I can overcall or double.
         if len(my_bids) == 0:
             overcall_specialist = OvercallModule()
@@ -33,11 +42,6 @@ def select_bidding_module(features):
             takeout_double_specialist = TakeoutDoubleConvention()
             if takeout_double_specialist.evaluate(features['hand'], features): return 'takeout_doubles'
         else: # My second+ bid in a competitive auction
-            # Check if I'm the advancer (partner made an overcall or double)
-            partner_last_bid = auction['partner_last_bid']
-            if partner_last_bid and partner_last_bid not in ['Pass', 'XX']:
-                # Partner overcalled or doubled - I'm the advancer
-                return 'advancer_bids'
 
             # Check if I'm in balancing seat (pass-out seat)
             # Last 2 bids were Pass, and my Pass would end the auction

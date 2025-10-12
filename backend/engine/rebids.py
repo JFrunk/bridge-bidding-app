@@ -133,8 +133,25 @@ class RebidModule(ConventionModule):
                 partner_suit = partner_response[1]
                 if hand.suit_lengths.get(partner_suit, 0) >= 4:
                     return (f"2{partner_suit}", f"Minimum hand (13-15 pts) showing 4+ card support.")
+
+                # Check for a second 4+ card suit to bid (non-reverse)
+                # Bid lower-ranking suits first to avoid reverses with minimum hands
+                my_suit = my_opening_bid[1]
+                for suit in ['♣', '♦', '♥', '♠']:
+                    if suit != my_suit and suit != partner_suit and hand.suit_lengths.get(suit, 0) >= 4:
+                        # Avoid reverse bids (higher-ranking suit at 2-level) with minimum
+                        if not self._is_reverse_bid(my_opening_bid, suit):
+                            return (f"2{suit}", f"Minimum hand (13-15 pts) showing a second 4+ card {suit} suit.")
+
                 if hand.is_balanced:
                     return ("1NT", "Minimum hand (12-14 HCP), balanced, no fit for partner's suit.")
+
+                # No second suit available without reversing - rebid original suit
+                if hand.suit_lengths.get(my_suit, 0) >= 6:
+                    return (f"2{my_suit}", f"Minimum hand (13-15 pts) rebidding a 6+ card {my_suit} suit.")
+
+                # With only a 5-card suit and no second suit, rebid it anyway
+                return (f"2{my_suit}", f"Minimum hand (13-15 pts) rebidding a 5-card {my_suit} suit.")
 
         elif 16 <= hand.total_points <= 18: # Medium Hand
             if partner_response.endswith(my_opening_bid[1]):

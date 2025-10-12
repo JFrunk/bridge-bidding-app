@@ -61,48 +61,91 @@ class OvercallModule(ConventionModule):
         Determine the best overcall bid (suit or NT).
         Priority: 1NT overcall, then suit overcalls (majors before minors).
         """
-        opponent_bid = features['auction_features']['opening_bid']
+        # Need to beat the LAST bid in the auction, not just the opening bid
+        auction_history = features.get('auction_history', [])
+        last_bid = None
+        for bid in reversed(auction_history):
+            if bid != 'Pass' and bid not in ['X', 'XX']:
+                last_bid = bid
+                break
 
-        # Try 1NT overcall first
-        nt_overcall = self._try_nt_overcall(hand, opponent_bid, is_balancing)
+        # If no non-pass bid found, use opening bid as fallback
+        if not last_bid:
+            last_bid = features['auction_features']['opening_bid']
+
+        # Also track the opening bid for context (e.g., to check if it's a preempt)
+        opening_bid = features['auction_features']['opening_bid']
+
+        # Try NT overcall first (passing both last_bid and opening_bid for context)
+        nt_overcall = self._try_nt_overcall(hand, last_bid, opening_bid, is_balancing)
         if nt_overcall:
             return nt_overcall
 
         # Try suit overcalls (check majors first, then minors)
         for suit in ['♠', '♥', '♦', '♣']:
-            suit_overcall = self._try_suit_overcall(hand, suit, opponent_bid, is_balancing)
+            suit_overcall = self._try_suit_overcall(hand, suit, last_bid, is_balancing)
             if suit_overcall:
                 return suit_overcall
 
         return None
 
-    def _try_nt_overcall(self, hand: Hand, opponent_bid: str, is_balancing: bool) -> Optional[Tuple[str, str]]:
+    def _try_nt_overcall(self, hand: Hand, last_bid: str, opening_bid: str, is_balancing: bool) -> Optional[Tuple[str, str]]:
         """
-        Try 1NT overcall.
-        Direct: 15-18 HCP, balanced, stopper
-        Balancing: 12-15 HCP, balanced, stopper
+        Try NT overcall at appropriate level.
+        1NT - Direct: 15-18 HCP, balanced, stopper
+        1NT - Balancing: 12-15 HCP, balanced, stopper
+        2NT - 19-20 HCP, balanced, stopper (over 1-level openings)
+        3NT - 21-24 HCP, balanced, stopper OR 18-21 HCP over preempt/competitive auction
+
+        Args:
+            last_bid: The most recent non-pass bid we need to beat
+            opening_bid: The original opening bid (for context on preempts)
         """
         if not hand.is_balanced:
             return None
 
-        # Check HCP requirements
+        # Check for stopper in opponent's suit (use opening bid to identify their suit)
+        if 'NT' in last_bid:
+            return None  # Can't overcall NT over NT
+
+        opponent_suit = opening_bid[1] if len(opening_bid) >= 2 else None
+        if not opponent_suit or not self._has_stopper(hand, opponent_suit):
+            return None
+
+        # Determine if opponent made a preemptive opening (2-level or higher)
+        try:
+            opening_level = int(opening_bid[0])
+            is_opponent_preempt = opening_level >= 2
+        except (ValueError, IndexError):
+            is_opponent_preempt = False
+
+        # Try 3NT first (for very strong hands or over preempts/competitive auctions)
+        if is_opponent_preempt or last_bid != opening_bid:
+            # Over preempts OR competitive auctions: 3NT shows 18-21 HCP with stopper
+            if 18 <= hand.hcp <= 21:
+                if self._is_bid_higher('3NT', last_bid):
+                    context = "preempt" if is_opponent_preempt else "competitive auction"
+                    return ('3NT', f"3NT overcall over {context} showing {hand.hcp} HCP, balanced, with stopper in {opponent_suit}.")
+
+        # Over 1-level openings with very strong hands
+        if not is_opponent_preempt and 22 <= hand.hcp <= 24:
+            if self._is_bid_higher('3NT', last_bid):
+                return ('3NT', f"3NT overcall showing {hand.hcp} HCP, balanced, with stopper.")
+
+        # Try 2NT (19-20 HCP over 1-level openings, must be direct - not after raise)
+        if not is_opponent_preempt and last_bid == opening_bid and 19 <= hand.hcp <= 20:
+            if self._is_bid_higher('2NT', last_bid):
+                return ('2NT', f"2NT overcall showing {hand.hcp} HCP, balanced, with stopper.")
+
+        # Try 1NT
         if is_balancing:
-            if not (12 <= hand.hcp <= 15):
-                return None
-            description = "Balancing 1NT showing 12-15 HCP, balanced, with stopper."
+            if 12 <= hand.hcp <= 15:
+                if self._is_bid_higher('1NT', last_bid):
+                    return ('1NT', f"Balancing 1NT showing {hand.hcp} HCP, balanced, with stopper.")
         else:
-            if not (15 <= hand.hcp <= 18):
-                return None
-            description = "1NT overcall showing 15-18 HCP, balanced, with stopper."
-
-        # Check for stopper in opponent's suit
-        if 'NT' in opponent_bid:
-            return None  # Can't overcall 1NT over 1NT
-
-        opponent_suit = opponent_bid[1] if len(opponent_bid) >= 2 else None
-        if opponent_suit and self._has_stopper(hand, opponent_suit):
-            if self._is_bid_higher('1NT', opponent_bid):
-                return ('1NT', description)
+            if 15 <= hand.hcp <= 18:
+                if self._is_bid_higher('1NT', last_bid):
+                    return ('1NT', f"1NT overcall showing {hand.hcp} HCP, balanced, with stopper.")
 
         return None
 

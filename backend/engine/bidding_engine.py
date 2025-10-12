@@ -1,6 +1,7 @@
 from engine.hand import Hand
 from engine.ai.feature_extractor import extract_features
 from engine.ai.decision_engine import select_bidding_module
+from engine.ai.bid_explanation import BidExplanation, ExplanationLevel
 
 # Import all specialist CLASSES
 from engine.opening_bids import OpeningBidsModule
@@ -33,8 +34,21 @@ class BiddingEngine:
             'negative_doubles': NegativeDoubleConvention(),
         }
 
-    def get_next_bid(self, hand: Hand, auction_history: list, my_position: str, vulnerability: str):
-        
+    def get_next_bid(self, hand: Hand, auction_history: list, my_position: str, vulnerability: str,
+                     explanation_level: str = "detailed"):
+        """
+        Get the next bid from the AI.
+
+        Args:
+            hand: The hand to bid with
+            auction_history: List of previous bids
+            my_position: Position of this player (North/East/South/West)
+            vulnerability: Vulnerability status
+            explanation_level: Level of detail ("simple", "detailed", or "expert")
+
+        Returns:
+            Tuple of (bid, explanation_string)
+        """
         features = extract_features(hand, auction_history, my_position, vulnerability)
         module_name = select_bidding_module(features)
 
@@ -47,13 +61,63 @@ class BiddingEngine:
             if result:
                 # Universal Legality Check (Safety Net)
                 bid_to_check = result[0]
+                explanation = result[1]
+
                 if self._is_bid_legal(bid_to_check, auction_history):
-                    return result
+                    # Convert BidExplanation to string if needed
+                    if isinstance(explanation, BidExplanation):
+                        # Format at requested level
+                        try:
+                            level_enum = ExplanationLevel(explanation_level)
+                        except ValueError:
+                            level_enum = ExplanationLevel.DETAILED
+                        return (bid_to_check, explanation.format(level_enum))
+                    else:
+                        # Legacy string explanation
+                        return result
                 else:
                     print(f"WARNING: AI module '{module_name}' suggested illegal bid '{bid_to_check}'. Overriding to Pass.")
                     return ("Pass", "AI bid overridden due to illegality.")
 
         return ("Pass", f"Logic error: DecisionEngine chose '{module_name}' but it was not found or returned no bid.")
+
+    def get_next_bid_structured(self, hand: Hand, auction_history: list, my_position: str, vulnerability: str):
+        """
+        Get the next bid with structured explanation data (for JSON API).
+
+        Returns:
+            Tuple of (bid, explanation_dict)
+        """
+        features = extract_features(hand, auction_history, my_position, vulnerability)
+        module_name = select_bidding_module(features)
+
+        if module_name == 'pass_by_default':
+            return ("Pass", {"bid": "Pass", "primary_reason": "No bid found by any module."})
+
+        specialist = self.modules.get(module_name)
+        if specialist:
+            result = specialist.evaluate(hand, features)
+            if result:
+                bid_to_check = result[0]
+                explanation = result[1]
+
+                if self._is_bid_legal(bid_to_check, auction_history):
+                    if isinstance(explanation, BidExplanation):
+                        return (bid_to_check, explanation.to_dict())
+                    else:
+                        # Legacy string - wrap in simple dict
+                        return (bid_to_check, {
+                            "bid": bid_to_check,
+                            "primary_reason": explanation
+                        })
+                else:
+                    print(f"WARNING: AI module '{module_name}' suggested illegal bid '{bid_to_check}'. Overriding to Pass.")
+                    return ("Pass", {"bid": "Pass", "primary_reason": "AI bid overridden due to illegality."})
+
+        return ("Pass", {
+            "bid": "Pass",
+            "primary_reason": f"Logic error: DecisionEngine chose '{module_name}' but it was not found or returned no bid."
+        })
 
     def _is_bid_legal(self, bid: str, auction_history: list) -> bool:
         """Universal check to ensure an AI bid is legal."""

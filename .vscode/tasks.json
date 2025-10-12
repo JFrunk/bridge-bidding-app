@@ -2,13 +2,13 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Start Backend 🐍",
+      "label": "Start Backend Bidding 🐍",
       "type": "shell",
       "command": "cd backend && source venv/bin/activate && flask --app server --debug run --port 5001",
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
-        "group": "servers"
+        "group": "bidding"
       },
       "runOptions": {
         "runOn": "folderOpen"
@@ -16,13 +16,13 @@
       "problemMatcher": []
     },
     {
-      "label": "Start Frontend 🖥️",
+      "label": "Start Frontend Bidding 🖥️",
       "type": "shell",
       "command": "cd frontend && npm start",
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
-        "group": "servers"
+        "group": "bidding"
       },
       "isBackground": true,
       "problemMatcher": {
@@ -38,11 +38,89 @@
       }
     },
     {
-      "label": "Start Project (All)",
+      "label": "Start Bidding Project (All) 🎴",
       "dependsOn": [
-        "Start Backend 🐍",
-        "Start Frontend 🖥️"
+        "Start Backend Bidding 🐍",
+        "Start Frontend Bidding 🖥️"
       ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Gameplay Backend 🎮",
+      "type": "shell",
+      "command": "cd backend && source venv/bin/activate && python3 server.py",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "gameplay"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Gameplay Frontend 🎯",
+      "type": "shell",
+      "command": "cd frontend && npm start",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "gameplay"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "ˆ$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Compiling...",
+          "endsPattern": "webpack compiled|Compiled successfully"
+        }
+      }
+    },
+    {
+      "label": "Start Gameplay Testing 🎲",
+      "dependsOn": [
+        "Start Gameplay Backend 🎮",
+        "Start Gameplay Frontend 🎯"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Test Standalone Play 🧪",
+      "type": "shell",
+      "command": "cd backend && PYTHONPATH=. python3 tests/test_standalone_play.py",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "testing"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test Contract Parser 📋",
+      "type": "shell",
+      "command": "cd backend && PYTHONPATH=. python3 engine/contract_utils.py",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "testing"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test Play Helpers 🛠️",
+      "type": "shell",
+      "command": "cd backend && PYTHONPATH=. python3 tests/play_test_helpers.py",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "testing"
+      },
       "problemMatcher": []
     }
   ]

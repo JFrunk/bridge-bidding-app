@@ -14,12 +14,23 @@ from engine.ai.conventions.stayman import StaymanConvention
 from engine.ai.conventions.blackwood import BlackwoodConvention
 from engine.play_engine import PlayEngine, PlayState, Contract
 from engine.simple_play_ai import SimplePlayAI
+from engine.play.ai.simple_ai import SimplePlayAI as SimplePlayAINew
+from engine.play.ai.minimax_ai import MinimaxPlayAI
 
 app = Flask(__name__)
 CORS(app)
 engine = BiddingEngine()
 play_engine = PlayEngine()
-play_ai = SimplePlayAI()
+play_ai = SimplePlayAI()  # Default AI (backward compatibility)
+
+# Phase 2: AI difficulty settings
+current_ai_difficulty = "beginner"  # Options: beginner, intermediate, advanced, expert
+ai_instances = {
+    "beginner": SimplePlayAINew(),
+    "intermediate": MinimaxPlayAI(max_depth=2),
+    "advanced": MinimaxPlayAI(max_depth=3),
+    "expert": MinimaxPlayAI(max_depth=4)
+}
 
 current_deal = { 'North': None, 'East': None, 'South': None, 'West': None }
 current_vulnerability = "None"
@@ -61,6 +72,84 @@ def get_convention_info():
             return jsonify(descriptions)
     except (IOError, json.JSONDecodeError) as e:
         return jsonify({'error': f'Could not load convention descriptions: {e}'}), 500
+
+@app.route('/api/ai-difficulties', methods=['GET'])
+def get_ai_difficulties():
+    """
+    Get available AI difficulty levels
+    Phase 2 Integration
+    """
+    try:
+        difficulties = []
+        for difficulty, ai in ai_instances.items():
+            difficulties.append({
+                "id": difficulty,
+                "name": difficulty.capitalize(),
+                "description": ai.get_name(),
+                "level": ai.get_difficulty()
+            })
+
+        return jsonify({
+            "difficulties": difficulties,
+            "current": current_ai_difficulty
+        })
+    except Exception as e:
+        return jsonify({'error': f'Could not get AI difficulties: {str(e)}'}), 500
+
+@app.route('/api/set-ai-difficulty', methods=['POST'])
+def set_ai_difficulty():
+    """
+    Set AI difficulty level
+    Phase 2 Integration
+    """
+    global current_ai_difficulty, play_ai
+
+    try:
+        data = request.get_json()
+        difficulty = data.get('difficulty')
+
+        if difficulty not in ai_instances:
+            return jsonify({
+                'error': f'Invalid difficulty. Must be one of: {list(ai_instances.keys())}'
+            }), 400
+
+        current_ai_difficulty = difficulty
+        play_ai = ai_instances[difficulty]
+
+        return jsonify({
+            'success': True,
+            'difficulty': difficulty,
+            'ai_name': play_ai.get_name(),
+            'ai_level': play_ai.get_difficulty()
+        })
+    except Exception as e:
+        return jsonify({'error': f'Could not set AI difficulty: {str(e)}'}), 500
+
+@app.route('/api/ai-statistics', methods=['GET'])
+def get_ai_statistics():
+    """
+    Get statistics from last AI move (for minimax AIs)
+    Phase 2 Integration
+    """
+    try:
+        ai = ai_instances[current_ai_difficulty]
+
+        if hasattr(ai, 'get_statistics'):
+            stats = ai.get_statistics()
+            return jsonify({
+                'has_statistics': True,
+                'statistics': stats,
+                'ai_name': ai.get_name(),
+                'difficulty': current_ai_difficulty
+            })
+        else:
+            return jsonify({
+                'has_statistics': False,
+                'ai_name': ai.get_name(),
+                'difficulty': current_ai_difficulty
+            })
+    except Exception as e:
+        return jsonify({'error': f'Could not get AI statistics: {str(e)}'}), 500
 
 @app.route('/api/load-scenario', methods=['POST'])
 def load_scenario():
@@ -137,15 +226,44 @@ def get_next_bid():
     try:
         data = request.get_json()
         auction_history, current_player = data['auction_history'], data['current_player']
+        explanation_level = data.get('explanation_level', 'detailed')  # simple, detailed, or expert
+
         player_hand = current_deal[current_player]
-        if not player_hand: 
+        if not player_hand:
             return jsonify({'error': "Deal has not been made yet."}), 400
-        
-        bid, explanation = engine.get_next_bid(player_hand, auction_history, current_player, current_vulnerability)
+
+        bid, explanation = engine.get_next_bid(player_hand, auction_history, current_player,
+                                                current_vulnerability, explanation_level)
         return jsonify({'bid': bid, 'explanation': explanation})
-    
+
     except Exception as e:
         print("---!!! AN ERROR OCCURRED IN GET_NEXT_BID !!!---")
+        traceback.print_exc()
+        return jsonify({'error': f"A critical server error occurred: {e}"}), 500
+
+@app.route('/api/get-next-bid-structured', methods=['POST'])
+def get_next_bid_structured():
+    """
+    Returns structured explanation data (JSON) instead of formatted string.
+    Useful for frontend to render explanations with custom UI.
+    """
+    try:
+        data = request.get_json()
+        auction_history, current_player = data['auction_history'], data['current_player']
+
+        player_hand = current_deal[current_player]
+        if not player_hand:
+            return jsonify({'error': "Deal has not been made yet."}), 400
+
+        bid, explanation_dict = engine.get_next_bid_structured(player_hand, auction_history,
+                                                                current_player, current_vulnerability)
+        return jsonify({
+            'bid': bid,
+            'explanation': explanation_dict
+        })
+
+    except Exception as e:
+        print("---!!! AN ERROR OCCURRED IN GET_NEXT_BID_STRUCTURED !!!---")
         traceback.print_exc()
         return jsonify({'error': f"A critical server error occurred: {e}"}), 500
 
@@ -154,15 +272,37 @@ def get_feedback():
     data = request.get_json()
     try:
         auction_history = data['auction_history']
+        explanation_level = data.get('explanation_level', 'detailed')  # simple, detailed, or expert
         user_bid, auction_before_user_bid = auction_history[-1], auction_history[:-1]
         user_hand = current_deal['South']
-        optimal_bid, explanation = engine.get_next_bid(user_hand, auction_before_user_bid, 'South', current_vulnerability)
+        optimal_bid, explanation = engine.get_next_bid(user_hand, auction_before_user_bid, 'South',
+                                                        current_vulnerability, explanation_level)
+
         if user_bid == optimal_bid:
-            feedback = f"✅ Correct! Your bid of {user_bid} is optimal. {explanation}"
+            feedback = f"✅ Correct! Your bid of {user_bid} is optimal.\n\n{explanation}"
         else:
-            feedback = f"⚠️ Your bid was {user_bid}. The recommended bid is {optimal_bid}. {explanation}"
+            # Provide detailed comparison
+            feedback_lines = []
+            feedback_lines.append(f"⚠️ Your bid: {user_bid}")
+            feedback_lines.append(f"✅ Recommended: {optimal_bid}")
+            feedback_lines.append("")
+            feedback_lines.append("Why this bid is recommended:")
+            feedback_lines.append(explanation)
+
+            # Add hand summary context (only for detailed/expert levels)
+            if explanation_level in ['detailed', 'expert']:
+                feedback_lines.append("")
+                feedback_lines.append("📊 Your hand summary:")
+                feedback_lines.append(f"  • Total Points: {user_hand.total_points} ({user_hand.hcp} HCP + {user_hand.dist_points} dist)")
+                feedback_lines.append(f"  • Shape: {user_hand.suit_lengths['♠']}-{user_hand.suit_lengths['♥']}-{user_hand.suit_lengths['♦']}-{user_hand.suit_lengths['♣']}")
+                feedback_lines.append(f"  • Suits: ♠{user_hand.suit_lengths['♠']}({user_hand.suit_hcp['♠']}), ♥{user_hand.suit_lengths['♥']}({user_hand.suit_hcp['♥']}), ♦{user_hand.suit_lengths['♦']}({user_hand.suit_hcp['♦']}), ♣{user_hand.suit_lengths['♣']}({user_hand.suit_hcp['♣']})")
+
+            feedback = "\n".join(feedback_lines)
+
         return jsonify({'feedback': feedback})
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': f"Server error in get_feedback: {e}"}), 500
 
 @app.route('/api/get-all-hands', methods=['GET'])
@@ -201,30 +341,52 @@ def request_review():
         data = request.get_json()
         auction_history = data.get('auction_history', [])
         user_concern = data.get('user_concern', '')
+        game_phase = data.get('game_phase', 'bidding')  # 'bidding' or 'playing'
 
-        # Prepare all hands data
+        # Prepare all hands data (current state of hands)
         all_hands = {}
-        for position in ['North', 'East', 'South', 'West']:
-            hand = current_deal.get(position)
-            if not hand:
-                return jsonify({'error': f'Hand for {position} not available'}), 400
 
-            hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
-            points_for_json = {
-                'hcp': hand.hcp,
-                'dist_points': hand.dist_points,
-                'total_points': hand.total_points,
-                'suit_hcp': hand.suit_hcp,
-                'suit_lengths': hand.suit_lengths
-            }
-            all_hands[position] = {
-                'cards': hand_for_json,
-                'points': points_for_json
-            }
+        if game_phase == 'playing' and current_play_state:
+            # During play phase, use hands from play state
+            pos_map = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
+            for short_pos, hand in current_play_state.hands.items():
+                position = pos_map[short_pos]
+                hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
+                points_for_json = {
+                    'hcp': hand.hcp,
+                    'dist_points': hand.dist_points,
+                    'total_points': hand.total_points,
+                    'suit_hcp': hand.suit_hcp,
+                    'suit_lengths': hand.suit_lengths
+                }
+                all_hands[position] = {
+                    'cards': hand_for_json,
+                    'points': points_for_json
+                }
+        else:
+            # During bidding phase, use initial deal
+            for position in ['North', 'East', 'South', 'West']:
+                hand = current_deal.get(position)
+                if not hand:
+                    return jsonify({'error': f'Hand for {position} not available'}), 400
+
+                hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
+                points_for_json = {
+                    'hcp': hand.hcp,
+                    'dist_points': hand.dist_points,
+                    'total_points': hand.total_points,
+                    'suit_hcp': hand.suit_hcp,
+                    'suit_lengths': hand.suit_lengths
+                }
+                all_hands[position] = {
+                    'cards': hand_for_json,
+                    'points': points_for_json
+                }
 
         # Create review request object
         review_request = {
             'timestamp': datetime.now().isoformat(),
+            'game_phase': game_phase,
             'all_hands': all_hands,
             'auction': auction_history,
             'vulnerability': current_vulnerability,
@@ -232,6 +394,55 @@ def request_review():
             'user_position': 'South',
             'user_concern': user_concern
         }
+
+        # Add play phase data if in gameplay
+        if game_phase == 'playing' and current_play_state:
+            contract = current_play_state.contract
+
+            # Serialize trick history
+            trick_history = []
+            for trick in current_play_state.trick_history:
+                trick_cards = [
+                    {
+                        'card': {'rank': card.rank, 'suit': card.suit},
+                        'player': player
+                    }
+                    for card, player in trick.cards
+                ]
+                trick_history.append({
+                    'cards': trick_cards,
+                    'leader': trick.leader,
+                    'winner': trick.winner
+                })
+
+            # Serialize current trick (if any)
+            current_trick = [
+                {
+                    'card': {'rank': card.rank, 'suit': card.suit},
+                    'player': player
+                }
+                for card, player in current_play_state.current_trick
+            ]
+
+            review_request['play_data'] = {
+                'contract': {
+                    'level': contract.level,
+                    'strain': contract.strain,
+                    'declarer': contract.declarer,
+                    'doubled': contract.doubled,
+                    'string': str(contract)
+                },
+                'dummy': current_play_state.dummy,
+                'opening_leader': play_engine.next_player(contract.declarer),
+                'trick_history': trick_history,
+                'current_trick': current_trick,
+                'tricks_won': current_play_state.tricks_won,
+                'tricks_taken_ns': current_play_state.tricks_taken_ns,
+                'tricks_taken_ew': current_play_state.tricks_taken_ew,
+                'next_to_play': current_play_state.next_to_play,
+                'dummy_revealed': current_play_state.dummy_revealed,
+                'is_complete': current_play_state.is_complete
+            }
 
         # Create filename with timestamp
         timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
@@ -310,9 +521,15 @@ def start_play():
                     hands[pos] = Hand(cards)
         else:
             # Use current deal from bidding phase
+            # Map single letters to full names
+            pos_map = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
             hands = {}
             for pos in ["N", "E", "S", "W"]:
-                hands[pos] = current_deal[pos]
+                full_name = pos_map[pos]
+                if current_deal.get(full_name):
+                    hands[pos] = current_deal[full_name]
+                else:
+                    return jsonify({"error": f"Hand data not found for {full_name}. Please deal a new hand."}), 400
         
         # Create play state
         current_play_state = PlayState(
@@ -398,10 +615,10 @@ def play_card():
                 current_play_state.current_trick,
                 current_play_state.contract.trump_suit
             )
-            
+
             # Update tricks won
             current_play_state.tricks_won[trick_winner] += 1
-            
+
             # Save to history
             from engine.play_engine import Trick
             current_play_state.trick_history.append(
@@ -411,16 +628,16 @@ def play_card():
                     winner=trick_winner
                 )
             )
-            
-            # Clear current trick
-            current_play_state.current_trick = []
-            
+
+            # DON'T clear trick yet - let frontend display it with winner
+            # Frontend will call /api/clear-trick after showing winner
+
             # Next player is the winner
             current_play_state.next_to_play = trick_winner
         else:
             # Next player clockwise
             current_play_state.next_to_play = play_engine.next_player(position)
-        
+
         return jsonify({
             "legal": True,
             "trick_complete": trick_complete,
@@ -462,17 +679,17 @@ def get_ai_play():
         # Check if trick is complete
         trick_complete = len(current_play_state.current_trick) == 4
         trick_winner = None
-        
+
         if trick_complete:
             # Determine winner
             trick_winner = play_engine.determine_trick_winner(
                 current_play_state.current_trick,
                 current_play_state.contract.trump_suit
             )
-            
+
             # Update tricks won
             current_play_state.tricks_won[trick_winner] += 1
-            
+
             # Save to history
             from engine.play_engine import Trick
             current_play_state.trick_history.append(
@@ -482,16 +699,16 @@ def get_ai_play():
                     winner=trick_winner
                 )
             )
-            
-            # Clear current trick
-            current_play_state.current_trick = []
-            
+
+            # DON'T clear trick yet - let frontend display it with winner
+            # Frontend will call /api/clear-trick after showing winner
+
             # Next player is the winner
             current_play_state.next_to_play = trick_winner
         else:
             # Next player clockwise
             current_play_state.next_to_play = play_engine.next_player(position)
-        
+
         return jsonify({
             "card": {"rank": card.rank, "suit": card.suit},
             "position": position,
@@ -513,14 +730,22 @@ def get_play_state():
     """
     if not current_play_state:
         return jsonify({"error": "No play in progress"}), 400
-    
+
     try:
         # Convert current trick to JSON
         current_trick_json = [
             {"card": {"rank": c.rank, "suit": c.suit}, "position": p}
             for c, p in current_play_state.current_trick
         ]
-        
+
+        # Check if trick is complete (4 cards played)
+        trick_complete = len(current_play_state.current_trick) == 4
+        trick_winner = None
+        if trick_complete:
+            # Get winner from most recent trick in history
+            if current_play_state.trick_history:
+                trick_winner = current_play_state.trick_history[-1].winner
+
         # Get dummy hand if revealed
         dummy_hand = None
         if current_play_state.dummy_revealed:
@@ -529,7 +754,7 @@ def get_play_state():
                 "cards": [{"rank": c.rank, "suit": c.suit} for c in current_play_state.hands[dummy_pos].cards],
                 "position": dummy_pos
             }
-        
+
         return jsonify({
             "contract": {
                 "level": current_play_state.contract.level,
@@ -538,37 +763,70 @@ def get_play_state():
                 "doubled": current_play_state.contract.doubled
             },
             "current_trick": current_trick_json,
+            "trick_complete": trick_complete,
+            "trick_winner": trick_winner,
             "tricks_won": current_play_state.tricks_won,
             "next_to_play": current_play_state.next_to_play,
+            "dummy": current_play_state.dummy,
             "dummy_revealed": current_play_state.dummy_revealed,
             "dummy_hand": dummy_hand,
             "is_complete": current_play_state.is_complete
         })
-        
+
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": f"Error getting play state: {e}"}), 500
 
-@app.route("/api/complete-play", methods=["GET"])
+@app.route("/api/clear-trick", methods=["POST"])
+def clear_trick():
+    """
+    Clear the current trick after frontend has displayed it
+    Called by frontend after showing trick winner for 5 seconds
+    """
+    global current_play_state
+
+    if not current_play_state:
+        return jsonify({"error": "No play in progress"}), 400
+
+    try:
+        # Clear the current trick
+        current_play_state.current_trick = []
+
+        return jsonify({
+            "success": True,
+            "message": "Trick cleared"
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Error clearing trick: {e}"}), 500
+
+@app.route("/api/complete-play", methods=["GET", "POST"])
 def complete_play():
     """
     Get final results after play completes
     """
     if not current_play_state:
         return jsonify({"error": "No play in progress"}), 400
-    
+
     try:
-        # Determine declarer side
+        # Accept vulnerability from request (POST) or use global (GET)
+        vulnerability = current_vulnerability
+        if request.method == "POST":
+            data = request.get_json() or {}
+            vulnerability = data.get('vulnerability', current_vulnerability)
+
+        # Determine declarer side and calculate tricks taken
         declarer = current_play_state.contract.declarer
         if declarer in ["N", "S"]:
-            tricks_taken = current_play_state.tricks_taken_ns
+            tricks_taken = current_play_state.tricks_won['N'] + current_play_state.tricks_won['S']
         else:
-            tricks_taken = current_play_state.tricks_taken_ew
-        
+            tricks_taken = current_play_state.tricks_won['E'] + current_play_state.tricks_won['W']
+
         # Calculate vulnerability
         vuln_dict = {
-            "ns": current_vulnerability in ["NS", "Both"],
-            "ew": current_vulnerability in ["EW", "Both"]
+            "ns": vulnerability in ["NS", "Both"],
+            "ew": vulnerability in ["EW", "Both"]
         }
         
         # Calculate score

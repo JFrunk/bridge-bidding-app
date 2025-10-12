@@ -24,14 +24,25 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 20px;
+  gap: 0;
   margin-top: 10px;
   padding: 10px;
   min-height: 125px;
 }
 .suit-group {
   display: flex;
-  gap: -45px;
+  gap: 0;
+  flex-direction: row;
+}
+.suit-group .card {
+  margin-left: -45px; /* Overlap cards horizontally, showing ~25px (15% more visible) */
+}
+.suit-group .card:first-child {
+  margin-left: 0; /* First card in each suit has no left margin */
+}
+/* First suit group has no left margin, subsequent suits continue the overlap */
+.hand-display .suit-group:not(:first-child) .card:first-child {
+  margin-left: -45px; /* Continue overlap from previous suit */
 }
 .card {
   width: 70px;
@@ -46,6 +57,8 @@ body {
 }
 .card:hover {
   transform: translateY(-15px);
+  z-index: 100; /* Ensure hovered card appears on top of others */
+  position: relative;
 }
 .card .suit-red { color: #d90429; }
 .card .suit-black { color: #000; }
@@ -597,4 +610,208 @@ body {
 .help-button:hover {
   background-color: #138496;
   border-color: #138496;
+}
+
+/* ========================================
+   RESPONSIVE SAFETY NET
+   Minimal responsive styles for mobile usability
+   without heavy maintenance during UI changes
+   ======================================== */
+
+/* Ensure body and root containers don't overflow */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Base responsive container adjustments */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  .app-container {
+    max-width: 100%;
+    gap: 15px;
+  }
+
+  /* Make cards slightly smaller on mobile */
+  .card {
+    width: 50px;
+    height: 72px;
+  }
+
+  .card-corner .rank {
+    font-size: 14px;
+  }
+
+  .card-corner .suit-symbol-small {
+    font-size: 12px;
+  }
+
+  .card-center .suit-symbol-large {
+    font-size: 28px;
+  }
+
+  /* Bidding table - allow horizontal scroll if needed */
+  .bidding-table {
+    font-size: 0.85em;
+  }
+
+  .bidding-table th, .bidding-table td {
+    min-width: 50px;
+    padding: 6px 4px;
+  }
+
+  /* Stack action area vertically on mobile */
+  .action-area {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .bidding-box-container {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .controls-section {
+    width: 100%;
+  }
+
+  .game-controls {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .deal-button, .replay-button {
+    width: 100%;
+  }
+
+  .scenario-loader {
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .scenario-loader select,
+  .scenario-loader button {
+    width: 100%;
+  }
+
+  .show-hands-controls {
+    width: 100%;
+  }
+
+  .show-hands-controls button {
+    width: 100%;
+  }
+
+  .ai-review-controls {
+    width: 100%;
+  }
+
+  .ai-review-button {
+    width: 100%;
+  }
+
+  /* Table layout adjustments for mobile */
+  .table-layout {
+    max-width: 100%;
+  }
+
+  .table-middle {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .table-west, .table-east {
+    flex: 1;
+    max-width: 100%;
+  }
+
+  /* Modal adjustments */
+  .modal-content {
+    width: 95%;
+    padding: 20px;
+    max-height: 90vh;
+  }
+
+  .modal-content h2 {
+    font-size: 20px;
+  }
+
+  /* Hand display adjustments */
+  .hand-display {
+    gap: 0;
+    flex-wrap: wrap;
+  }
+
+  .suit-group .card {
+    margin-left: -33px; /* Smaller overlap for mobile, maintaining visibility ratio */
+  }
+
+  .suit-group .card:first-child {
+    margin-left: 0;
+  }
+
+  .hand-display .suit-group:not(:first-child) .card:first-child {
+    margin-left: -33px;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  .card {
+    width: 42px;
+    height: 60px;
+  }
+
+  .suit-group .card {
+    margin-left: -25px; /* Even smaller overlap for extra small screens, maintaining visibility ratio */
+  }
+
+  .suit-group .card:first-child {
+    margin-left: 0;
+  }
+
+  .hand-display .suit-group:not(:first-child) .card:first-child {
+    margin-left: -25px;
+  }
+
+  .card-corner .rank {
+    font-size: 12px;
+  }
+
+  .card-corner .suit-symbol-small {
+    font-size: 10px;
+  }
+
+  .card-center .suit-symbol-large {
+    font-size: 22px;
+  }
+
+  .bidding-table {
+    font-size: 0.75em;
+  }
+
+  .bidding-table th, .bidding-table td {
+    min-width: 40px;
+    padding: 4px 2px;
+  }
+
+  .modal-content {
+    padding: 15px;
+  }
+
+  .review-actions,
+  .prompt-actions {
+    flex-direction: column;
+  }
+
+  .primary-button,
+  .secondary-button,
+  .copy-button,
+  .close-button {
+    width: 100%;
+  }
 }
