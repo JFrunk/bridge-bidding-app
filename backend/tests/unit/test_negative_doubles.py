@@ -15,9 +15,21 @@ def test_negative_double_is_applicable():
     hand = Hand(cards)
     
     features = {
-        'hand': hand, 'auction_history': ['1♣', '1♠'], 'my_index': 2,
+        'hand': hand,
+        'auction_history': ['1♣', '1♠'],
+        'my_index': 2,
         'positions': ['North', 'East', 'South', 'West'],
-        'auction_features': {'opening_bid': '1♣', 'opener_relationship': 'Partner'},
+        'auction_features': {
+            'opening_bid': '1♣',
+            'opener_relationship': 'Partner',
+            'opener_index': 0,
+            'interference': {
+                'present': True,
+                'type': 'suit_overcall',
+                'bid': '1♠',
+                'level': 1
+            }
+        },
     }
     
     specialist = NegativeDoubleConvention()

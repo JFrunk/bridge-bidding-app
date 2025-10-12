@@ -5,6 +5,10 @@ from engine.ai.conventions.blackwood import BlackwoodConvention
 from engine.overcalls import OvercallModule
 from engine.ai.conventions.takeout_doubles import TakeoutDoubleConvention
 from engine.ai.conventions.negative_doubles import NegativeDoubleConvention
+from engine.ai.conventions.michaels_cuebid import MichaelsCuebidConvention
+from engine.ai.conventions.unusual_2nt import Unusual2NTConvention
+from engine.ai.conventions.splinter_bids import SplinterBidsConvention
+from engine.ai.conventions.fourth_suit_forcing import FourthSuitForcingConvention
 
 def select_bidding_module(features):
     """
@@ -36,6 +40,14 @@ def select_bidding_module(features):
 
         # If it's my first bid after an opponent opened, I can overcall or double.
         if len(my_bids) == 0:
+            # Check for Michaels Cuebid (5-5 two suits)
+            michaels = MichaelsCuebidConvention()
+            if michaels.evaluate(features['hand'], features): return 'michaels_cuebid'
+
+            # Check for Unusual 2NT (5-5 both minors)
+            unusual_2nt = Unusual2NTConvention()
+            if unusual_2nt.evaluate(features['hand'], features): return 'unusual_2nt'
+
             overcall_specialist = OvercallModule()
             if overcall_specialist.evaluate(features['hand'], features): return 'overcalls'
 
@@ -69,6 +81,16 @@ def select_bidding_module(features):
         blackwood = BlackwoodConvention()
         if blackwood.evaluate(features['hand'], features):
             return 'blackwood'
+
+        # Check for Splinter bids (slam interest with shortness)
+        splinter = SplinterBidsConvention()
+        if splinter.evaluate(features['hand'], features):
+            return 'splinter_bids'
+
+        # Check for Fourth Suit Forcing
+        fsf = FourthSuitForcingConvention()
+        if fsf.evaluate(features['hand'], features):
+            return 'fourth_suit_forcing'
 
         # Check for negative doubles (partner opened, opponent interfered)
         negative_double = NegativeDoubleConvention()

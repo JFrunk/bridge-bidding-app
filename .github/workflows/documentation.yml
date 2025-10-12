@@ -1,0 +1,49 @@
+name: Documentation Compliance
+
+on:
+  push:
+    branches: [ development, main ]
+  pull_request:
+    branches: [ development, main ]
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Fetch all history for all branches and tags
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.13
+
+    - name: Check documentation compliance
+      run: |
+        python3 .claude/scripts/check_documentation_compliance.py --verbose
+
+    - name: Validate documentation structure
+      run: |
+        ./.claude/scripts/validate_documentation.sh
+
+    - name: Generate documentation coverage report
+      run: |
+        python3 .claude/scripts/documentation_coverage_report.py --html
+
+    - name: Upload documentation coverage report
+      uses: actions/upload-artifact@v3
+      with:
+        name: doc-coverage-report
+        path: documentation_coverage_report.html
+        retention-days: 30
+
+    - name: Check for broken links in documentation
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        use-quiet-mode: 'yes'
+        use-verbose-mode: 'no'
+        config-file: '.github/markdown-link-check-config.json'
+        folder-path: 'docs/'
+        file-path: './README.md, ./CONTRIBUTING.md'

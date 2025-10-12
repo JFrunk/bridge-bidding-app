@@ -1,0 +1,207 @@
+/**
+ * TurnIndicator.css - Styling for turn indicator components
+ * Following UI/UX Design Standards
+ */
+
+/* ========================================
+   TURN INDICATOR (MAIN)
+   ======================================== */
+
+.turn-indicator {
+  background: var(--bg-secondary);
+  border: 2px solid var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  text-align: center;
+  margin: var(--space-4) 0;
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.turn-indicator.user-turn {
+  background: rgba(97, 218, 251, 0.1);
+  border-color: var(--highlight-current-player);
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+.turn-indicator-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.turn-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.turn-message {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+}
+
+.turn-indicator.user-turn .turn-message {
+  color: var(--highlight-current-player);
+  font-size: var(--text-2xl);
+}
+
+.turn-hint {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.turn-indicator.user-turn .turn-hint {
+  color: var(--color-info);
+}
+
+.turn-icon {
+  font-size: var(--text-2xl);
+  animation: icon-pulse 2s ease-in-out infinite;
+}
+
+/* Pulsing border animation for user's turn */
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: var(--highlight-current-player);
+    box-shadow: 0 0 0 0 rgba(97, 218, 251, 0.7);
+  }
+  50% {
+    border-color: #4fa8c5;
+    box-shadow: 0 0 0 10px rgba(97, 218, 251, 0);
+  }
+}
+
+/* Icon pulse animation */
+@keyframes icon-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+/* ========================================
+   COMPACT TURN INDICATOR (POSITION LABELS)
+   ======================================== */
+
+.compact-turn-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: var(--space-2);
+  color: var(--highlight-current-player);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  animation: arrow-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes arrow-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateX(-3px);
+  }
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 768px) {
+  .turn-indicator {
+    padding: var(--space-3);
+    margin: var(--space-3) 0;
+  }
+
+  .turn-message {
+    font-size: var(--text-lg);
+  }
+
+  .turn-indicator.user-turn .turn-message {
+    font-size: var(--text-xl);
+  }
+
+  .turn-hint {
+    font-size: var(--text-xs);
+  }
+
+  .turn-icon {
+    font-size: var(--text-xl);
+  }
+
+  .turn-indicator-content {
+    gap: var(--space-2);
+  }
+}
+
+@media (max-width: 480px) {
+  .turn-indicator {
+    padding: var(--space-2);
+    margin: var(--space-2) 0;
+  }
+
+  .turn-message {
+    font-size: var(--text-base);
+  }
+
+  .turn-indicator.user-turn .turn-message {
+    font-size: var(--text-lg);
+  }
+
+  .turn-hint {
+    font-size: 0.7rem;
+  }
+
+  .turn-icon {
+    font-size: var(--text-lg);
+    display: none; /* Hide icons on very small screens */
+  }
+
+  .compact-turn-indicator {
+    font-size: var(--text-base);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .turn-indicator.user-turn,
+  .turn-icon,
+  .compact-turn-indicator {
+    animation: none;
+  }
+
+  .turn-indicator.user-turn {
+    border-color: var(--highlight-current-player);
+    box-shadow: 0 0 0 3px rgba(97, 218, 251, 0.3);
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .turn-indicator {
+    border-width: 3px;
+  }
+
+  .turn-indicator.user-turn {
+    background: var(--bg-primary);
+    border-color: var(--highlight-current-player);
+  }
+
+  .turn-message {
+    font-weight: 900;
+  }
+}

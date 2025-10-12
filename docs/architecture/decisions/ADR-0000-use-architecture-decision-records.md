@@ -146,7 +146,29 @@ If this process proves too burdensome:
 ### Success Criteria
 - [ ] At least 3 ADRs created in first month
 - [ ] Zero major refactoring due to poor architectural decisions in next 3 months
-- [ ] Overhead remains under 30 minutes per ADR
+- [ ] Overhead remains under realistic time estimates (15-30 min simple, 45-60 min moderate, 2-4 hours complex)
+- [ ] User satisfaction ≥ 4/5 on average
+- [ ] Demonstrable velocity improvement vs. baseline
+
+## Process Feedback (Meta-feedback for ADR-0000)
+
+**Time Spent:** 7 hours (initial implementation)
+**Process Followed:** Yes - created comprehensive framework, templates, scripts
+**User Satisfaction:** TBD (awaiting user review)
+**What Worked:**
+- Comprehensive documentation
+- Automated tooling (trigger detection, compliance report)
+- Integration into existing workflow
+
+**What Didn't:**
+- No baseline captured initially (fixed)
+- No worked examples initially (fixed in management review)
+- Decision authority was ambiguous (fixed in management review)
+
+**Improvements Made:**
+- Added TL;DR and decision authority matrix (2025-10-12)
+- Added worked examples (2025-10-12)
+- Captured baseline metrics (2025-10-12)
 - [ ] User satisfaction with architectural decision quality
 
 ## References

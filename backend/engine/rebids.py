@@ -161,6 +161,11 @@ class RebidModule(ConventionModule):
                 if hand.suit_lengths.get(partner_suit, 0) >= 4:
                     return (f"3{partner_suit}", f"Invitational (16-18 pts) jump raise showing 4+ card support.")
 
+                # Check for 2NT rebid with 18-19 HCP balanced hand (SAYC standard)
+                # This shows too strong for 1NT opening but balanced
+                if hand.is_balanced and 18 <= hand.hcp <= 19:
+                    return ("2NT", f"Balanced rebid showing 18-19 HCP (too strong for 1NT opening).")
+
                 # Check for reverse bid with 17+ HCP and 4+ card second suit
                 # Reverse shows a strong hand (17+ HCP) and is forcing
                 if hand.hcp >= 17:
@@ -171,6 +176,10 @@ class RebidModule(ConventionModule):
 
             if hand.suit_lengths.get(my_opening_bid[1], 0) >= 6:
                 return (f"3{my_opening_bid[1]}", f"Invitational (16-18 pts) jump rebid of a 6+ card suit.")
+
+            # Fallback 2NT rebid for medium hands without fit
+            if hand.is_balanced:
+                return ("2NT", "Shows a balanced medium hand (16-17 HCP) with no obvious fit.")
             return ("2NT", "Shows a strong hand (16-18 pts) with no obvious fit.")
 
         elif hand.total_points >= 19: # Strong Hand
@@ -182,6 +191,11 @@ class RebidModule(ConventionModule):
                 partner_suit = partner_response[1]
                 if partner_suit in ['♥', '♠'] and hand.suit_lengths.get(partner_suit, 0) >= 4:
                      return (f"4{partner_suit}", f"Strong hand ({hand.total_points} pts), bidding game with a fit.")
+
+                # Check for 3NT rebid with 19-20 HCP balanced hand (SAYC standard)
+                # This shows a very strong balanced hand that's too strong for 2NT rebid
+                if hand.is_balanced and 19 <= hand.hcp <= 20:
+                    return ("3NT", f"Balanced rebid showing 19-20 HCP, bidding game in No-Trump.")
 
                 # Check for reverse bid with 4+ card second suit
                 # With 19+ HCP, reverse shows slam interest
@@ -196,6 +210,11 @@ class RebidModule(ConventionModule):
                 # Rebid the 6-card suit at the 3-level to show extras and length
                 return (f"3{my_suit}", f"Strong hand ({hand.total_points} pts) with a 6+ card {my_suit} suit.")
 
-            return ("3NT", f"Strong hand ({hand.total_points} pts), bidding game in No-Trump.")
+            # 3NT rebid only if balanced (otherwise prefer showing suits)
+            if hand.is_balanced:
+                return ("3NT", f"Strong balanced hand ({hand.hcp} HCP), bidding game in No-Trump.")
+
+            # Unbalanced strong hand - prefer showing suit distribution
+            return (f"3{my_opening_bid[1]}", f"Strong hand ({hand.total_points} pts) with unbalanced distribution.")
 
         return ("Pass", "No clear rebid available.")

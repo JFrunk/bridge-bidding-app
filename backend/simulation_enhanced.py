@@ -18,8 +18,8 @@ from engine.ai.conventions.stayman import StaymanConvention
 from engine.ai.conventions.blackwood import BlackwoodConvention
 
 # Configuration
-DEAL_COUNT = 20  # Number of hands to simulate
-SCENARIO_COUNT = 5  # Number of scenario-based hands
+DEAL_COUNT = 100  # Number of hands to simulate
+SCENARIO_COUNT = 10  # Number of scenario-based hands
 OUTPUT_JSON = "simulation_results.json"
 OUTPUT_TEXT = "simulation_results.txt"
 

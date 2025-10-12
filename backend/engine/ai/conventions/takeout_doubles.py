@@ -10,7 +10,13 @@ class TakeoutDoubleConvention(ConventionModule):
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
         """
         Main evaluation function. Checks if a takeout double is the correct action.
+        Also handles support doubles.
         """
+        # Check for support double first (opener showing 3-card support)
+        support_double = self._check_support_double(hand, features)
+        if support_double:
+            return support_double
+
         if not self._is_applicable(features):
             return None
 
@@ -141,3 +147,60 @@ class TakeoutDoubleConvention(ConventionModule):
         """Returns partner's position given my position."""
         partners = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
         return partners.get(my_pos, '')
+
+    def _check_support_double(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+        """
+        Check for support double: Opener doubles after partner responds and RHO overcalls.
+        Shows exactly 3-card support for partner's suit.
+
+        Example: 1♣ - (P) - 1♥ - (1♠) - X
+        Opener doubles to show 3-card heart support (with 4+, would raise).
+        """
+        auction_features = features.get('auction_features', {})
+
+        # Must be opener (I opened the bidding)
+        if auction_features.get('opener_relationship') != 'Me':
+            return None
+
+        # Get auction history
+        auction_history = features.get('auction_history', [])
+        positions = features.get('positions', [])
+        my_index = features.get('my_index', 0)
+        my_pos_str = positions[my_index]
+        partner_pos_str = self._get_partner_position(my_pos_str)
+
+        # Need at least 4 bids: 1) I open, 2) opponent passes/bids, 3) partner responds, 4) RHO overcalls
+        if len(auction_history) < 4:
+            return None
+
+        # Find partner's last bid (should be a suit response)
+        partner_suit = None
+        for i, bid in enumerate(auction_history):
+            if positions[i % 4] == partner_pos_str and bid != 'Pass':
+                # Check if it's a suit bid
+                if len(bid) >= 2 and bid[1] in {'♠', '♥', '♦', '♣'} and 'NT' not in bid:
+                    partner_suit = bid[1]
+
+        if not partner_suit:
+            return None  # Partner didn't bid a suit
+
+        # Check last bid was an opponent's overcall
+        last_bid = auction_history[-1]
+        last_bidder_pos = positions[(len(auction_history) - 1) % 4]
+
+        # Last bidder must be an opponent
+        if last_bidder_pos in [my_pos_str, partner_pos_str]:
+            return None
+
+        # Last bid must be a suit overcall (not Pass, X, NT)
+        if last_bid == 'Pass' or 'X' in last_bid or 'NT' in last_bid:
+            return None
+
+        # Check support: exactly 3 cards in partner's suit
+        partner_support = hand.suit_lengths.get(partner_suit, 0)
+
+        if partner_support == 3:
+            suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}[partner_suit]
+            return ("X", f"Support double showing exactly 3-card {suit_name} support (would raise with 4+).")
+
+        return None

@@ -4,6 +4,21 @@ from engine.ai.bid_explanation import BidExplanation
 from typing import Optional, Tuple, Dict, Union
 
 class OpeningBidsModule(ConventionModule):
+    """
+    Opening bids module for natural 1-level and NT openings.
+
+    NOTE: Preemptive openings (2♦, 2♥, 2♠, 3-level, 4-level) are handled by
+    the PreemptConvention module (engine/ai/conventions/preempts.py).
+    The PreemptConvention module is checked BEFORE this module in the decision
+    engine, so preemptive hands are intercepted before reaching here.
+
+    This module handles:
+    - 1NT openings (15-17 HCP, balanced)
+    - 2NT openings (22-24 HCP, balanced)
+    - 3NT openings (25-27 HCP, balanced)
+    - 2♣ strong artificial openings (22+ total points, non-balanced or extreme hands)
+    - 1-level suit openings (13-21 points, 5+ card suit or longer minor)
+    """
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, Union[str, BidExplanation]]]:
         # This module does not need features, but conforms to the interface
 
@@ -130,6 +145,34 @@ class OpeningBidsModule(ConventionModule):
                 explanation.set_forcing_status("Forcing for 1 round")
                 return ("1♦", explanation)
             else:
+                # Equal length minors - use better tie-breaking logic
+                club_len = hand.suit_lengths['♣']
+                diamond_len = hand.suit_lengths['♦']
+
+                if club_len == diamond_len and club_len == 4:
+                    # 4-4 minors: Consider strength and quality
+                    # SAYC guideline: With 4-4 minors, prefer 1♦ with:
+                    # - Stronger diamonds (better honors)
+                    # - Weak clubs (poor quality)
+                    # - 4-4-3-2 shape (rebid issues with 1♣)
+
+                    club_hcp = hand.suit_hcp['♣']
+                    diamond_hcp = hand.suit_hcp['♦']
+
+                    # If diamonds significantly stronger (2+ HCP difference), open 1♦
+                    if diamond_hcp >= club_hcp + 2:
+                        explanation = BidExplanation("1♦")
+                        explanation.set_primary_reason("4-4 minors - open stronger minor (diamonds)")
+                        explanation.add_requirement("Opening Points", "13+")
+                        explanation.add_actual_value("Total Points", str(hand.total_points))
+                        explanation.add_actual_value("Diamonds", f"4 cards, {diamond_hcp} HCP")
+                        explanation.add_actual_value("Clubs", f"4 cards, {club_hcp} HCP")
+                        explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
+                        explanation.add_alternative("1♣", f"Diamonds stronger ({diamond_hcp} vs {club_hcp} HCP)")
+                        explanation.set_forcing_status("Forcing for 1 round")
+                        return ("1♦", explanation)
+
+                # Default: open 1♣ with equal or clubs longer
                 explanation = BidExplanation("1♣")
                 explanation.set_primary_reason("No 5-card suit - open longer or equal minor (clubs)")
                 explanation.add_requirement("Opening Points", "13+")
@@ -138,7 +181,7 @@ class OpeningBidsModule(ConventionModule):
                 explanation.add_actual_value("Diamonds", f"{hand.suit_lengths['♦']} cards")
                 explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
                 if hand.suit_lengths['♦'] == hand.suit_lengths['♣']:
-                    explanation.add_alternative("1♦", f"Equal length ({hand.suit_lengths['♣']} each) - prefer clubs")
+                    explanation.add_alternative("1♦", f"Equal length ({hand.suit_lengths['♣']} each) - default to clubs")
                 explanation.set_forcing_status("Forcing for 1 round")
                 return ("1♣", explanation)
 

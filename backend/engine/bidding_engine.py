@@ -15,6 +15,10 @@ from engine.ai.conventions.preempts import PreemptConvention
 from engine.ai.conventions.blackwood import BlackwoodConvention
 from engine.ai.conventions.takeout_doubles import TakeoutDoubleConvention
 from engine.ai.conventions.negative_doubles import NegativeDoubleConvention
+from engine.ai.conventions.michaels_cuebid import MichaelsCuebidConvention
+from engine.ai.conventions.unusual_2nt import Unusual2NTConvention
+from engine.ai.conventions.splinter_bids import SplinterBidsConvention
+from engine.ai.conventions.fourth_suit_forcing import FourthSuitForcingConvention
 
 class BiddingEngine:
     def __init__(self):
@@ -32,6 +36,10 @@ class BiddingEngine:
             'blackwood': BlackwoodConvention(),
             'takeout_doubles': TakeoutDoubleConvention(),
             'negative_doubles': NegativeDoubleConvention(),
+            'michaels_cuebid': MichaelsCuebidConvention(),
+            'unusual_2nt': Unusual2NTConvention(),
+            'splinter_bids': SplinterBidsConvention(),
+            'fourth_suit_forcing': FourthSuitForcingConvention(),
         }
 
     def get_next_bid(self, hand: Hand, auction_history: list, my_position: str, vulnerability: str,

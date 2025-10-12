@@ -18,14 +18,15 @@ Core project documentation, setup guides, and strategic planning documents.
 ### 🚀 [development-phases/](development-phases/)
 Chronological documentation of development phases and milestone completions.
 
-#### Phase 1 - Bidding MVP
+#### Phase 1 - Bidding MVP & Card Play
 - **[PHASE1_MVP_STATUS.md](development-phases/PHASE1_MVP_STATUS.md)** - Phase 1 status overview
 - **[PHASE1_COMPLETE.md](development-phases/PHASE1_COMPLETE.md)** - Phase 1 completion summary
 - **[PHASE1_FIXES_SUMMARY.md](development-phases/PHASE1_FIXES_SUMMARY.md)** - Bug fixes during Phase 1
 - **[PHASE1_TEST_RESULTS.md](development-phases/PHASE1_TEST_RESULTS.md)** - Phase 1 test results
-- **[PHASE1_PLAY_MVP.md](development-phases/PHASE1_PLAY_MVP.md)** - Card play MVP planning
+- **[PHASE1_TEST_RESULTS_FINAL.md](development-phases/PHASE1_TEST_RESULTS_FINAL.md)** - Final phase 1 test validation
+- **[PHASE1_PLAY_MVP.md](development-phases/PHASE1_PLAY_MVP.md)** - Card play MVP completion
 
-#### Phase 2 - Card Play Implementation
+#### Phase 2 - Card Play Implementation & Bidding Enhancements
 - **[PHASE2_MINIMAX_PLAN.md](development-phases/PHASE2_MINIMAX_PLAN.md)** - Minimax AI planning for card play
 - **[PHASE2_QUICK_REFERENCE.md](development-phases/PHASE2_QUICK_REFERENCE.md)** - Quick reference for Phase 2 work
 - **[PHASE2_PROGRESS.md](development-phases/PHASE2_PROGRESS.md)** - Phase 2 progress tracking
@@ -34,12 +35,19 @@ Chronological documentation of development phases and milestone completions.
 - **[PHASE2_API_INTEGRATION.md](development-phases/PHASE2_API_INTEGRATION.md)** - API integration details
 - **[PHASE2_COMPLETE.md](development-phases/PHASE2_COMPLETE.md)** - Phase 2 completion summary
 
+#### Recent Completions
+- **[OPTION1_COMPLETE.md](development-phases/OPTION1_COMPLETE.md)** - Complete Option 1 validation report
+- **[OPTION_C_POLISH_COMPLETE.md](development-phases/OPTION_C_POLISH_COMPLETE.md)** - Polish & enhancement completion
+- **[GAMEPLAY_REVIEW_SUMMARY.md](development-phases/GAMEPLAY_REVIEW_SUMMARY.md)** - Gameplay review implementation
+
 ### ✨ [features/](features/)
 Documentation for specific features and systems within the application.
 
 #### AI Review System
 - **[AI_REVIEW_FEATURE.md](features/AI_REVIEW_FEATURE.md)** - AI Review feature overview
 - **[AI_REVIEW_FIX_SUMMARY.md](features/AI_REVIEW_FIX_SUMMARY.md)** - AI Review bug fixes
+- **[AI_REVIEW_GAMEPLAY_ENHANCEMENT.md](features/AI_REVIEW_GAMEPLAY_ENHANCEMENT.md)** - Gameplay review enhancements
+- **[AI_REVIEW_QUICK_REFERENCE.md](features/AI_REVIEW_QUICK_REFERENCE.md)** - Quick reference guide
 
 #### Convention System
 - **[CONVENTION_LEVELS_QUICKSTART.md](features/CONVENTION_LEVELS_QUICKSTART.md)** - Quick start guide
@@ -53,6 +61,9 @@ Documentation for specific features and systems within the application.
 - **[EXPLANATION_SYSTEM.md](features/EXPLANATION_SYSTEM.md)** - Explanation system architecture
 - **[ENHANCED_EXPLANATIONS.md](features/ENHANCED_EXPLANATIONS.md)** - Enhanced explanation features
 
+#### UI/UX Features
+- **[RESPONSIVE_DESIGN.md](features/RESPONSIVE_DESIGN.md)** - Responsive design implementation (NEW)
+
 ### 📚 [guides/](guides/)
 User guides, testing procedures, and how-to documentation.
 
@@ -61,6 +72,9 @@ User guides, testing procedures, and how-to documentation.
 - **[GAMEPLAY_TESTING_GUIDE.md](guides/GAMEPLAY_TESTING_GUIDE.md)** - Gameplay testing procedures
 - **[GAMEPLAY_LOCAL_TESTING_GUIDE.md](guides/GAMEPLAY_LOCAL_TESTING_GUIDE.md)** - Local gameplay testing
 - **[STANDALONE_PLAY_GUIDE.md](guides/STANDALONE_PLAY_GUIDE.md)** - Standalone play mode guide
+- **[TEST_VALIDATION_REPORT.md](guides/TEST_VALIDATION_REPORT.md)** - Phase 1 & 2 test validation results
+- **[SIMULATION_GUIDE.md](guides/SIMULATION_GUIDE.md)** - Automated bidding analysis system
+- **[SIMULATION_TEST_REPORT.md](guides/SIMULATION_TEST_REPORT.md)** - 100-hand simulation test results
 - **[QUICK_WINS_COMPLETE.md](guides/QUICK_WINS_COMPLETE.md)** - Quick wins and improvements
 
 ### 🐛 [bug-fixes/](bug-fixes/)
@@ -69,6 +83,9 @@ Bug reports, fixes, and known issues tracking.
 - **[BIDDING_FIXES_2025-10-10.md](bug-fixes/BIDDING_FIXES_2025-10-10.md)** - Bidding system bug fixes
 - **[BUG_FIX_CARD_PLAY.md](bug-fixes/BUG_FIX_CARD_PLAY.md)** - Card play bug fixes
 - **[BUG_FIX_CARD_PLAY_RESPONSE.md](bug-fixes/BUG_FIX_CARD_PLAY_RESPONSE.md)** - Card play response fixes
+- **[TAKEOUT_DOUBLE_FIX.md](bug-fixes/TAKEOUT_DOUBLE_FIX.md)** - Takeout double suit detection fix
+- **[FIX_2CLUB_FORCING_TO_GAME.md](bug-fixes/FIX_2CLUB_FORCING_TO_GAME.md)** - 2♣ forcing-to-game auction fix
+- **[HAND_ANALYSIS_SUMMARY.md](bug-fixes/HAND_ANALYSIS_SUMMARY.md)** - Analysis of 8 gameplay review hands
 - **[RESIDUAL_ISSUES.md](bug-fixes/RESIDUAL_ISSUES.md)** - Known issues and technical debt
 
 ## Quick Navigation by Use Case
@@ -100,15 +117,62 @@ Bug reports, fixes, and known issues tracking.
 
 ## Documentation Maintenance
 
-When adding new documentation:
+### CRITICAL: Documentation Is Mandatory
+
+**All code changes require documentation updates.** This is not optional.
+
+### Essential Documentation Resources
+
+Before making ANY code changes, read these:
+
+1. **[.claude/DOCUMENTATION_PRACTICES.md](../.claude/DOCUMENTATION_PRACTICES.md)** ⭐ MUST READ
+   - Complete guidelines for maintaining documentation
+   - Required for all contributors and Claude Code
+   - Templates, workflows, and best practices
+
+2. **[DOCUMENTATION_CHECKLIST.md](DOCUMENTATION_CHECKLIST.md)** ⭐ USE ALWAYS
+   - Systematic checklist for every feature/bug fix
+   - Use before marking any task complete
+
+3. **[CONTRIBUTING.md](../CONTRIBUTING.md)** ⭐ CONTRIBUTING GUIDE
+   - Development workflow with documentation requirements
+   - Code standards, testing, and PR process
+
+4. **[DOCUMENTATION_INDEX.md](project-overview/DOCUMENTATION_INDEX.md)**
+   - Complete index of all documentation
+   - Includes documentation standards section
+
+### Documentation Update Workflow
+
+For EVERY code change:
+1. **Before**: Identify affected documentation files
+2. **During**: Update docs inline with code changes
+3. **After**: Use checklist to verify all docs updated
+4. **Commit**: Include documentation in same commit as code
+
+### When Adding New Documentation
+
+Place documentation in the correct directory:
+- **Architecture/design docs** → `architecture/`
 - **Project-wide docs** → `project-overview/`
 - **Phase milestones** → `development-phases/`
-- **Feature implementations** → `features/`
+- **Feature implementations** → `features/` (update when features change!)
 - **Testing/usage guides** → `guides/`
-- **Bug tracking** → `bug-fixes/`
+- **Bug tracking** → `bug-fixes/` (required for every bug fix!)
 
-Keep filenames descriptive and use consistent naming conventions:
+### File Naming Conventions
+
+Keep filenames descriptive and use consistent naming:
 - `FEATURE_NAME.md` for features
 - `PHASE#_DESCRIPTION.md` for phases
-- `BUG_FIX_AREA.md` for bug fixes
+- `FIX_BUG_NAME.md` or `BUG_FIX_AREA.md` for bug fixes
 - `SUBJECT_GUIDE.md` for guides
+- `ARCHITECTURE_COMPONENT.md` for architecture docs
+
+### Pre-Commit Hook
+
+The project includes a pre-commit hook that reminds you to update documentation. If you see the warning, please update relevant docs!
+
+### Documentation Quality Standard
+
+Documentation is complete when a new developer can understand, use, and modify the feature based solely on the documentation.

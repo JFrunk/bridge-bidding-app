@@ -31,7 +31,7 @@ class TestStandalonePlayCreation:
             north="♠AKQ ♥432 ♦KQJ2 ♣432",
             east="♠765 ♥765 ♦7654 ♣765",
             south="♠432 ♥AKQ ♦A32 ♣AKQ8",
-            west="♠JT98 ♥JT98 ♦T98 ♣JT9"
+            west="♠JT98 ♥JT98 ♦T98 ♣J9"  # Fixed: removed T from clubs (was 14 cards)
         )
 
         # Create play session directly (no bidding!)
@@ -50,7 +50,7 @@ class TestStandalonePlayCreation:
             north="♠KQ32 ♥432 ♦432 ♣432",
             east="♠765 ♥765 ♦765 ♣7654",
             south="♠AJT98 ♥AKQ ♦AK ♣AK5",
-            west="♠4 ♥JT98 ♦QJT98 ♣QJT9"
+            west="♠4 ♥JT98 ♦QJT98 ♣QJ9"  # Fixed: removed T from clubs (was 14 cards)
         )
 
         play_state = create_play_scenario("4♠X by S", deal, "Both")
@@ -88,7 +88,7 @@ class TestSimplePlayScenarios:
             north="♠AKQ ♥432 ♦AKQ2 ♣432",     # Strong spades and diamonds
             east="♠765 ♥765 ♦765 ♣7654",      # Weak hand
             south="♠432 ♥AKQ ♦432 ♣AKQ8",    # Strong hearts and clubs
-            west="♠JT98 ♥JT98 ♦JT98 ♣JT"     # All jacks and tens
+            west="♠JT98 ♥JT98 ♦JT9 ♣JT"      # Fixed: removed 8 from diamonds (was 14 cards)
         )
 
         play_state = create_play_scenario("3NT by S", deal, "None")
@@ -108,7 +108,7 @@ class TestSimplePlayScenarios:
             north="♠AKQ ♥432 ♦AKQ2 ♣432",
             east="♠765 ♥765 ♦765 ♣7654",
             south="♠432 ♥AKQ ♦432 ♣AKQ8",
-            west="♠JT98 ♥JT98 ♦JT98 ♣JT"
+            west="♠JT98 ♥JT98 ♦JT9 ♣JT"  # Fixed: removed 8 from diamonds (was 14 cards)
         )
 
         play_state = create_play_scenario("3NT by S", deal, "None")
@@ -173,7 +173,7 @@ class TestLegalPlayValidation:
             north="♠AKQ ♥432 ♦AKQ2 ♣432",
             east="♠765 ♥765 ♦765 ♣7654",
             south="♠432 ♥AKQ ♦432 ♣AKQ8",
-            west="♠JT98 ♥JT98 ♦JT98 ♣JT"
+            west="♠JT98 ♥JT98 ♦JT9 ♣JT"  # Fixed: removed 8 from diamonds (was 14 cards)
         )
 
         play_state = create_play_scenario("3NT by S", deal, "None")

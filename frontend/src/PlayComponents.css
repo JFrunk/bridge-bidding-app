@@ -1,18 +1,106 @@
 /**
  * PlayComponents.css - Styling for card play UI
+ * Following UI/UX Design Standards - see .claude/UI_UX_DESIGN_STANDARDS.md
  */
 
-/* Bidding Summary */
+/* ========================================
+   CSS VARIABLES - UI/UX DESIGN SYSTEM
+   ======================================== */
+
+:root {
+  /* Feedback Colors */
+  --color-success: #4caf50;        /* Legal plays, correct actions, making contract */
+  --color-danger: #f44336;         /* Illegal plays, errors, going down */
+  --color-warning: #ff9800;        /* Warnings, suboptimal plays */
+  --color-info: #61dafb;           /* Highlights, informational */
+
+  /* Backgrounds */
+  --bg-primary: #1a1a1a;           /* Main dark background */
+  --bg-secondary: #2a2a2a;         /* Card backgrounds, panels */
+  --bg-tertiary: #3a3a3a;          /* Hover states */
+
+  /* Text */
+  --text-primary: #ffffff;          /* Main text */
+  --text-secondary: #aaaaaa;        /* Secondary text, labels */
+  --text-disabled: #666666;         /* Disabled text */
+
+  /* Card Suits (Bridge Standard) */
+  --suit-red: #d32f2f;             /* Hearts & Diamonds */
+  --suit-black: #000000;            /* Spades & Clubs */
+
+  /* Partnerships (Consistent Throughout) */
+  --partnership-ns: #4caf50;        /* North-South = Green */
+  --partnership-ew: #ff9800;        /* East-West = Orange */
+
+  /* Special States */
+  --highlight-current-player: #61dafb; /* Whose turn indicator */
+  --highlight-winner: #ffd700;         /* Winning card/trick (gold) */
+  --highlight-vulnerable: #d32f2f;     /* Vulnerability indicator */
+
+  /* Spacing (8px grid) */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+
+  /* Typography */
+  --text-xs: 0.75rem;    /* 12px - Fine print */
+  --text-sm: 0.875rem;   /* 14px - Secondary text */
+  --text-base: 1rem;     /* 16px - Body text */
+  --text-lg: 1.125rem;   /* 18px - Subheadings */
+  --text-xl: 1.25rem;    /* 20px - Headings */
+  --text-2xl: 1.5rem;    /* 24px - Major headings */
+  --text-3xl: 2rem;      /* 32px - Hero text */
+
+  /* Border Radius */
+  --radius-sm: 4px;      /* Small elements */
+  --radius-md: 8px;      /* Buttons, cards */
+  --radius-lg: 12px;     /* Panels, modals */
+  --radius-xl: 16px;     /* Large containers */
+
+  /* Shadows (Depth) */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.2);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.3);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.4);
+
+  /* Glows for emphasis */
+  --glow-success: 0 0 20px rgba(76, 175, 80, 0.5);
+  --glow-danger: 0 0 20px rgba(244, 67, 54, 0.5);
+  --glow-info: 0 0 20px rgba(97, 218, 251, 0.5);
+
+  /* Animation Durations */
+  --duration-instant: 100ms;
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 1000ms;
+
+  /* Easing Functions */
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-in: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  --ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+/* ========================================
+   BIDDING SUMMARY
+   ======================================== */
+
 .bidding-summary {
-  background-color: #2a2a2a;
-  padding: 15px;
-  border-radius: 8px;
+  background-color: var(--bg-secondary);
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
   max-width: 300px;
 }
 
 .bidding-summary h4 {
   margin: 0 0 10px 0;
-  color: #61dafb;
+  color: var(--color-info);
   text-align: center;
 }
 
@@ -26,9 +114,9 @@
   gap: 5px;
   margin-bottom: 5px;
   font-weight: bold;
-  color: #61dafb;
+  color: var(--color-info);
   text-align: center;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid var(--bg-tertiary);
   padding-bottom: 5px;
 }
 
@@ -42,7 +130,7 @@
 .bidding-summary-cell {
   text-align: center;
   padding: 3px;
-  background-color: #1a1a1a;
+  background-color: var(--bg-primary);
   border-radius: 3px;
   min-height: 20px;
   display: flex;
@@ -52,7 +140,7 @@
 
 /* Contract Display */
 .contract-display {
-  background-color: #2a2a2a;
+  background-color: var(--bg-secondary);
   padding: 15px;
   border-radius: 8px;
   text-align: center;
@@ -60,7 +148,7 @@
 
 .contract-display h3 {
   margin: 0 0 10px 0;
-  color: #61dafb;
+  color: var(--color-info);
 }
 
 .contract-details {
@@ -78,12 +166,12 @@
 }
 
 .contract-declarer {
-  color: #aaa;
+  color: var(--text-secondary);
 }
 
 /* Tricks Display */
 .tricks-display {
-  background-color: #2a2a2a;
+  background-color: var(--bg-secondary);
   padding: 15px;
   border-radius: 8px;
   text-align: center;
@@ -91,7 +179,7 @@
 
 .tricks-display h4 {
   margin: 0 0 10px 0;
-  color: #61dafb;
+  color: var(--color-info);
 }
 
 .tricks-count {
@@ -128,7 +216,7 @@
   grid-template-rows: auto 300px auto;
   gap: 20px;
   padding: 20px;
-  background-color: #1a1a1a;
+  background-color: var(--bg-primary);
   border-radius: 12px;
 }
 
@@ -173,10 +261,10 @@
 
 .position-label {
   font-weight: bold;
-  color: #61dafb;
+  color: var(--color-info);
   text-align: center;
   padding: 5px 10px;
-  background-color: #2a2a2a;
+  background-color: var(--bg-secondary);
   border-radius: 5px;
   margin-bottom: 10px;
   width: 100%;
@@ -197,8 +285,8 @@
 }
 
 .current-trick.empty {
-  background-color: #2a2a2a;
-  border: 2px dashed #444;
+  background-color: var(--bg-secondary);
+  border: 2px dashed var(--bg-tertiary);
   color: #888;
 }
 
@@ -211,7 +299,7 @@
 }
 
 .trick-card-wrapper.winner .trick-card {
-  border: 3px solid #ffd700;
+  border: 3px solid var(--highlight-winner);
   box-shadow: 0 0 20px rgba(255, 215, 0, 0.9);
   animation: pulse 1s ease-in-out infinite;
 }
@@ -228,7 +316,7 @@
 .winner-badge {
   position: absolute;
   top: -10px;
-  background-color: #ffd700;
+  background-color: var(--highlight-winner);
   color: #000;
   padding: 3px 10px;
   border-radius: 12px;
@@ -243,7 +331,7 @@
   bottom: -40px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #ffd700;
+  background-color: var(--highlight-winner);
   color: #000;
   padding: 10px 20px;
   border-radius: 8px;
@@ -267,7 +355,7 @@
 
 .trick-position-label {
   font-size: 0.9em;
-  color: #aaa;
+  color: var(--text-secondary);
   font-weight: bold;
 }
 
@@ -312,7 +400,7 @@
 .playable-card.clickable:hover {
   transform: translateY(-10px);
   box-shadow: 0 8px 15px rgba(97, 218, 251, 0.4);
-  border-color: #61dafb;
+  border-color: var(--color-info);
   z-index: 100; /* Ensure hovered card appears on top of others */
   position: relative;
 }
@@ -430,7 +518,7 @@
 
 /* Suit Colors */
 .suit-red {
-  color: #d32f2f;
+  color: var(--suit-red);
 }
 
 .suit-black {
@@ -463,7 +551,7 @@
 
 .score-modal h2 {
   margin-top: 0;
-  color: #61dafb;
+  color: var(--color-info);
   text-align: center;
 }
 
@@ -475,14 +563,14 @@
   display: flex;
   justify-content: space-between;
   padding: 10px 0;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid var(--bg-tertiary);
 }
 
 .score-row.total {
   font-size: 1.3em;
   font-weight: bold;
   margin-top: 15px;
-  border-top: 2px solid #61dafb;
+  border-top: 2px solid var(--color-info);
   border-bottom: none;
   padding-top: 15px;
 }
@@ -510,7 +598,7 @@
 .close-button {
   width: 100%;
   padding: 12px;
-  background-color: #61dafb;
+  background-color: var(--color-info);
   border: none;
   border-radius: 6px;
   color: #282c34;

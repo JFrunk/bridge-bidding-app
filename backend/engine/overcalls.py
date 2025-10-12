@@ -174,23 +174,61 @@ class OvercallModule(ConventionModule):
 
     def _try_suit_overcall(self, hand: Hand, suit: str, opponent_bid: str, is_balancing: bool) -> Optional[Tuple[str, str]]:
         """
-        Try suit overcall at the cheapest legal level.
+        Try suit overcall at the cheapest legal level (simple or jump).
 
         Requirements:
         - Direct 1-level: 8-16 HCP, 5+ card suit, good quality
         - Direct 2-level: 11-16 HCP, 5+ card suit, very good quality
+        - Direct 3-level (over preempt): 13-16 HCP, 5+ card suit, excellent quality
+        - Weak Jump: 6-10 HCP, 6-card suit, preemptive (SAYC standard)
         - Balancing: 7-16 HCP, slightly relaxed suit quality
         """
         suit_length = hand.suit_lengths.get(suit, 0)
 
-        # Need at least 5-card suit
+        # Need at least 5-card suit (6 for weak jump)
         if suit_length < 5:
             return None
+
+        # Detect if opponent made a preempt (2-level or 3-level opening)
+        try:
+            opponent_level = int(opponent_bid[0])
+            is_preempt = opponent_level >= 2
+        except (ValueError, IndexError):
+            is_preempt = False
 
         # Evaluate suit quality
         suit_quality = self._evaluate_suit_quality(hand, suit)
 
-        # Find cheapest legal level
+        # Check for weak jump overcall first (SAYC standard)
+        # Example: After opponent opens 1♥, we can jump to 2♠ with 6 spades and 6-10 HCP
+        if not is_balancing and 6 <= hand.hcp <= 10 and suit_length >= 6:
+            # Find the jump level (one level higher than necessary)
+            try:
+                opponent_level = int(opponent_bid[0])
+                opponent_suit = opponent_bid[1:]
+                suit_rank = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+
+                # Calculate minimum level needed to overcall
+                if suit_rank.get(suit, 0) > suit_rank.get(opponent_suit, 0):
+                    min_level = opponent_level
+                else:
+                    min_level = opponent_level + 1
+
+                # Jump level is one higher
+                jump_level = min_level + 1
+
+                # Only make weak jumps at 2 or 3 level (not 4+)
+                if jump_level in [2, 3]:
+                    jump_bid = f"{jump_level}{suit}"
+
+                    # Need decent suit quality for weak jump
+                    if suit_quality >= self._quality_to_score('fair'):
+                        suit_name = {'♠': 'Spade', '♥': 'Heart', '♦': 'Diamond', '♣': 'Club'}[suit]
+                        return (jump_bid, f"Weak jump overcall showing {hand.hcp} HCP and 6-card {suit_name} suit (preemptive).")
+            except (ValueError, IndexError):
+                pass
+
+        # Find cheapest legal level for simple overcalls
         for bid_level in [1, 2, 3]:
             potential_bid = f"{bid_level}{suit}"
 
@@ -220,9 +258,23 @@ class OvercallModule(ConventionModule):
                 if suit_quality < self._quality_to_score(required_quality):
                     continue
             else:
-                # 3-level overcall (weak jump or very strong)
-                # For now, skip 3-level overcalls (can add weak jump logic later)
-                continue
+                # 3-level overcall (usually over preempts)
+                # Stricter requirements when overcalling at 3-level
+
+                if is_preempt:
+                    # Over opponent's preempt: need 13-17 HCP and excellent suit
+                    if hand.hcp < 13 or hand.hcp > 17:
+                        continue
+                    # Need excellent suit quality to compete at 3-level over preempt
+                    if suit_quality < self._quality_to_score('excellent'):
+                        continue
+                else:
+                    # 3-level simple overcall in competitive auction (not over preempt)
+                    if hand.hcp < 13 or hand.hcp > 16:
+                        continue
+                    # Need very good suit
+                    if suit_quality < self._quality_to_score('very_good'):
+                        continue
 
             # We have a valid overcall!
             seat_desc = "Balancing overcall" if is_balancing else "Overcall"

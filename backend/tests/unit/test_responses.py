@@ -11,8 +11,15 @@ def test_simple_raise_of_major():
     ] # 8 HCP, 3-card spade support
     hand = Hand(cards)
     features = {
-        'auction_features': {'opening_bid': '1♠', 'opener_relationship': 'Partner'},
-        'positions': ['North', 'East', 'South', 'West'], 'my_index': 2, 'auction_history': ['1♠', 'Pass']
+        'auction_features': {
+            'opening_bid': '1♠',
+            'opener_relationship': 'Partner',
+            'opener_index': 0,
+            'interference': {'present': False}
+        },
+        'positions': ['North', 'East', 'South', 'West'],
+        'my_index': 2,
+        'auction_history': ['1♠', 'Pass']
     }
     specialist = ResponseModule()
     result = specialist.evaluate(hand, features)
@@ -28,8 +35,15 @@ def test_respond_to_2c_negative():
     ] # 0 HCP
     hand = Hand(cards)
     features = {
-        'auction_features': {'opening_bid': '2♣', 'opener_relationship': 'Partner'},
-        'positions': ['North', 'East', 'South', 'West'], 'my_index': 2, 'auction_history': ['2♣', 'Pass']
+        'auction_features': {
+            'opening_bid': '2♣',
+            'opener_relationship': 'Partner',
+            'opener_index': 0,
+            'interference': {'present': False}
+        },
+        'positions': ['North', 'East', 'South', 'West'],
+        'my_index': 2,
+        'auction_history': ['2♣', 'Pass']
     }
     specialist = ResponseModule()
     result = specialist.evaluate(hand, features)
