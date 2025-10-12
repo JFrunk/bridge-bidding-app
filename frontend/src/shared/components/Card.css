@@ -1,0 +1,83 @@
+/* Card Component Styles */
+
+.card {
+  width: 60px;
+  height: 85px;
+  background: white;
+  border: 1px solid #333;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  margin: 2px;
+  transition: all 0.2s ease;
+}
+
+.card-selectable {
+  cursor: pointer;
+}
+
+.card-selectable:hover {
+  transform: translateY(-5px);
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card-selected {
+  border: 3px solid #4CAF50;
+  transform: translateY(-10px);
+  box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4);
+}
+
+.card-corner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.card-corner.top-left {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+}
+
+.card-corner.bottom-right {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  transform: rotate(180deg);
+}
+
+.card-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.suit-symbol-large {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.suit-symbol-small {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.rank {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.suit-red {
+  color: #d32f2f;
+}
+
+.suit-black {
+  color: #000;
+}

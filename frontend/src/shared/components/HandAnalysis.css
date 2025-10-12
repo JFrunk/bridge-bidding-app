@@ -1,0 +1,58 @@
+/* HandAnalysis Component Styles */
+
+.hand-analysis {
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.hand-analysis h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.hand-analysis p {
+  margin: 0 0 10px 0;
+}
+
+.suit-points {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.suit-points div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.suit-red {
+  color: #d32f2f;
+  font-weight: bold;
+}
+
+.suit-black {
+  color: #000;
+  font-weight: bold;
+}
+
+/* Compact view for play mode */
+.hand-analysis-compact {
+  padding: 5px 10px;
+  background: #e8f5e9;
+  border-left: 3px solid #4CAF50;
+}
+
+.hcp-display {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.hcp-display strong {
+  font-size: 18px;
+  color: #2e7d32;
+}
