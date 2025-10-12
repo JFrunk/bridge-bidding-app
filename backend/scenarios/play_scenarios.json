@@ -1,0 +1,139 @@
+{
+  "scenarios": [
+    {
+      "id": "3nt_finesse",
+      "name": "3NT - Simple Finesse",
+      "description": "Declarer must take a simple finesse in hearts to make 3NT",
+      "contract": {
+        "level": 3,
+        "strain": "NT",
+        "declarer": "S",
+        "doubled": 0
+      },
+      "hands": {
+        "N": ["AK3", "Q54", "AK3", "9876"],
+        "E": ["J987", "J98", "Q876", "43"],
+        "S": ["Q64", "AK3", "543", "AKQJ"],
+        "W": ["T52", "T762", "JT92", "T52"]
+      },
+      "opening_lead": "5H",
+      "par_result": {
+        "tricks": 9,
+        "made": true
+      },
+      "teaching_points": [
+        "Count your tricks before playing from dummy",
+        "Hearts provide the 9th trick with a simple finesse",
+        "Win in hand to take the finesse"
+      ]
+    },
+    {
+      "id": "4h_trump_control",
+      "name": "4♥ - Trump Control",
+      "description": "Managing trump suit to prevent ruffs",
+      "contract": {
+        "level": 4,
+        "strain": "♥",
+        "declarer": "S",
+        "doubled": 0
+      },
+      "hands": {
+        "N": ["A76", "K543", "AK3", "987"],
+        "E": ["KJ98", "2", "Q876", "J543"],
+        "S": ["Q54", "AQJ876", "54", "AK"],
+        "W": ["T32", "T9", "JT92", "QT62"]
+      },
+      "opening_lead": "KS",
+      "par_result": {
+        "tricks": 10,
+        "made": true
+      },
+      "teaching_points": [
+        "Draw trumps immediately to prevent ruffs",
+        "Count losers: 2 spades, 1 diamond",
+        "Can discard diamond loser on club winner"
+      ]
+    },
+    {
+      "id": "6nt_squeeze",
+      "name": "6NT - Simple Squeeze",
+      "description": "Execute a simple squeeze against West",
+      "contract": {
+        "level": 6,
+        "strain": "NT",
+        "declarer": "S",
+        "doubled": 0
+      },
+      "hands": {
+        "N": ["AK", "AK3", "AKQ3", "9876"],
+        "E": ["J987", "J98", "876", "432"],
+        "S": ["Q6", "Q54", "543", "AKQJT"],
+        "W": ["T543", "T762", "JT92", "5"]
+      },
+      "opening_lead": "TH",
+      "par_result": {
+        "tricks": 12,
+        "made": true
+      },
+      "teaching_points": [
+        "Count winners: 11 immediate tricks",
+        "12th trick comes from squeeze",
+        "Run clubs to pressure West in majors"
+      ]
+    },
+    {
+      "id": "3nt_holdup",
+      "name": "3NT - Holdup Play",
+      "description": "Use holdup play to break communication",
+      "contract": {
+        "level": 3,
+        "strain": "NT",
+        "declarer": "S",
+        "doubled": 0
+      },
+      "hands": {
+        "N": ["A76", "K54", "AK32", "987"],
+        "E": ["K32", "Q98", "876", "QJ65"],
+        "S": ["QJ4", "A32", "QJ54", "AK3"],
+        "W": ["T985", "JT76", "T9", "T42"]
+      },
+      "opening_lead": "TS",
+      "par_result": {
+        "tricks": 9,
+        "made": true
+      },
+      "teaching_points": [
+        "Hold up ace of spades until 3rd round",
+        "Breaks communication between defenders",
+        "Take 9 tricks in diamonds and clubs"
+      ]
+    },
+    {
+      "id": "4s_crossruff",
+      "name": "4♠ - Crossruff",
+      "description": "Make contract by crossruffing",
+      "contract": {
+        "level": 4,
+        "strain": "♠",
+        "declarer": "S",
+        "doubled": 0
+      },
+      "hands": {
+        "N": ["KJ32", "A765", "3", "A987"],
+        "E": ["65", "KQ98", "KQJ76", "54"],
+        "S": ["AQ987", "4", "A984", "KQ3"],
+        "W": ["T4", "JT32", "T52", "JT62"]
+      },
+      "opening_lead": "KH",
+      "par_result": {
+        "tricks": 10,
+        "made": true
+      },
+      "teaching_points": [
+        "Cash side suit winners before crossruffing",
+        "Ruff diamonds in dummy, hearts in hand",
+        "Don't draw trumps - you need them for ruffing"
+      ]
+    }
+  ]
+}
