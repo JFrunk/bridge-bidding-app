@@ -34,16 +34,17 @@ function HandAnalysis({ points, vulnerability }) {
 }
 
 function PlayerHand({ position, hand, points, vulnerability }) {
-  if (!hand || !points) return null;
+  if (!hand || !points || !Array.isArray(hand)) return null;
   // During bidding, no trump is set, so use no-trump order
   const suitOrder = getSuitOrder(null);
+  if (!suitOrder || !Array.isArray(suitOrder)) return null;
   return (
     <div className={`player-hand player-${position.toLowerCase()}`}>
       <h3>{position}</h3>
       <div className="hand-display">
         {suitOrder.map(suit => (
           <div key={suit} className="suit-group">
-            {hand.filter(card => card.suit === suit).map((card, index) => (
+            {hand.filter(card => card && card.suit === suit).map((card, index) => (
               <Card key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />
             ))}
           </div>
@@ -857,7 +858,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
           <div className="my-hand">
             <h2>Your Hand (South)</h2>
             <div className="hand-display">
-              {getSuitOrder(null).map(suit => ( <div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => ( <Card key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>))}
+              {hand && hand.length > 0 ? getSuitOrder(null).map(suit => ( <div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => ( <Card key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p>Dealing...</p>}
             </div>
             <HandAnalysis points={handPoints} vulnerability={vulnerability} />
           </div>
@@ -939,7 +940,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
                 <button className="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Replay Hand</button>
               </div>
               <div className="scenario-loader">
-                <select value={selectedScenario} onChange={(e) => setSelectedScenario(e.target.value)}>{scenarioList.map(name => <option key={name} value={name}>{name}</option>)}</select>
+                <select value={selectedScenario} onChange={(e) => setSelectedScenario(e.target.value)}>{scenarioList && scenarioList.length > 0 ? scenarioList.map(name => <option key={name} value={name}>{name}</option>) : <option>Loading...</option>}</select>
                 <button onClick={handleLoadScenario}>Load Scenario</button>
                 <button onClick={handleShowConventionHelp} className="help-button">ℹ️ Convention Help</button>
               </div>

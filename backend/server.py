@@ -16,6 +16,7 @@ from engine.play_engine import PlayEngine, PlayState, Contract
 from engine.simple_play_ai import SimplePlayAI
 from engine.play.ai.simple_ai import SimplePlayAI as SimplePlayAINew
 from engine.play.ai.minimax_ai import MinimaxPlayAI
+from engine.learning.learning_path_api import register_learning_endpoints
 
 app = Flask(__name__)
 CORS(app)
@@ -43,12 +44,19 @@ CONVENTION_MAP = {
     "Blackwood": BlackwoodConvention()
 }
 
+# Register learning path endpoints (convention levels system)
+register_learning_endpoints(app)
+
 @app.route('/api/scenarios', methods=['GET'])
 def get_scenarios():
     try:
         print(f"Current working directory: {os.getcwd()}")
         print(f"Files in directory: {os.listdir('.')}")
-        with open('scenarios.json', 'r') as f: scenarios = json.load(f)
+        # Try new location first, fall back to old location
+        try:
+            with open('scenarios/bidding_scenarios.json', 'r') as f: scenarios = json.load(f)
+        except FileNotFoundError:
+            with open('scenarios.json', 'r') as f: scenarios = json.load(f)
         scenario_names = [s['name'] for s in scenarios]
         return jsonify({'scenarios': scenario_names})
     except Exception as e:
@@ -158,7 +166,11 @@ def load_scenario():
     data = request.get_json()
     scenario_name = data.get('name')
     try:
-        with open('scenarios.json', 'r') as f: scenarios = json.load(f)
+        # Try new location first, fall back to old location
+        try:
+            with open('scenarios/bidding_scenarios.json', 'r') as f: scenarios = json.load(f)
+        except FileNotFoundError:
+            with open('scenarios.json', 'r') as f: scenarios = json.load(f)
         target_scenario = next((s for s in scenarios if s['name'] == scenario_name), None)
         if not target_scenario: return jsonify({'error': 'Scenario not found'}), 404
             

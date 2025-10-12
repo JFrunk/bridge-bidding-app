@@ -2,6 +2,7 @@
  * PlayComponents.js - UI components for card play phase
  *
  * Components:
+ * - TurnIndicator: Shows whose turn it is with animation
  * - ContractDisplay: Shows the final contract
  * - PlayTable: Shows current trick and 4 positions
  * - PlayableCard: Clickable card for user play
@@ -10,6 +11,7 @@
 
 import React from 'react';
 import './PlayComponents.css';
+import { TurnIndicator, CompactTurnIndicator } from './components/play/TurnIndicator';
 
 /**
  * Get suit display order based on trump suit
@@ -247,6 +249,13 @@ export function PlayTable({
 
   return (
     <div className="play-table">
+      {/* Turn Indicator - Prominent display of whose turn it is */}
+      <TurnIndicator
+        currentPlayer={next_to_play}
+        isUserTurn={isUserTurn}
+        phase="playing"
+      />
+
       <div className="play-header">
         <BiddingSummary auction={auction} />
         <ContractDisplay contract={contract} />
@@ -263,7 +272,8 @@ export function PlayTable({
         {/* North position */}
         <div className="position position-north">
           <div className="position-label">
-            North {next_to_play === 'N' && '⬅️'}
+            North
+            <CompactTurnIndicator position="N" isActive={next_to_play === 'N'} />
             {dummyPosition === 'N' && ' (Dummy)'}
             {declarerPosition === 'N' && userIsDummy && ' (You control as dummy)'}
           </div>
@@ -313,7 +323,8 @@ export function PlayTable({
         {/* East and West positions */}
         <div className="position position-east">
           <div className="position-label">
-            East {next_to_play === 'E' && '⬅️'}
+            East
+            <CompactTurnIndicator position="E" isActive={next_to_play === 'E'} />
             {dummyPosition === 'E' && ' (Dummy)'}
           </div>
           {/* Show East's hand if it's dummy */}
@@ -337,7 +348,8 @@ export function PlayTable({
 
         <div className="position position-west">
           <div className="position-label">
-            West {next_to_play === 'W' && '⬅️'}
+            West
+            <CompactTurnIndicator position="W" isActive={next_to_play === 'W'} />
             {dummyPosition === 'W' && ' (Dummy)'}
           </div>
           {/* Show West's hand if it's dummy */}
@@ -362,7 +374,9 @@ export function PlayTable({
         {/* South position (user) */}
         <div className="position position-south">
           <div className="position-label">
-            South (You) {userIsDummy && '- Dummy'} {next_to_play === 'S' && !userIsDummy && '⬅️ Your turn!'}
+            South (You)
+            <CompactTurnIndicator position="S" isActive={next_to_play === 'S' && !userIsDummy} />
+            {userIsDummy && ' - Dummy'}
           </div>
           {userHand && userHand.length > 0 && (
             <div className="user-play-hand">
@@ -436,3 +450,6 @@ export function ScoreDisplay({ scoreData, onClose }) {
     </div>
   );
 }
+
+// Export TurnIndicator components for use in other files
+export { TurnIndicator, CompactTurnIndicator };
