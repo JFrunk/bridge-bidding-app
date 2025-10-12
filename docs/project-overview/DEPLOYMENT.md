@@ -108,9 +108,45 @@ git push origin main
 
 ## Update Workflow
 
-### Standard Update Process
+### Development Branch Workflow (Recommended)
 
-**Every time you make changes:**
+**To commit changes WITHOUT triggering Render deployment:**
+
+Use the `development` branch for all development work. Only merge to `main` when ready to deploy.
+
+```bash
+# 1. Make changes locally
+# ... edit files ...
+
+# 2. Test locally
+cd backend && python server.py  # Test backend
+cd frontend && npm start         # Test frontend
+
+# 3. Ensure you're on development branch
+git checkout development
+
+# 4. Commit changes
+git add .
+git commit -m "Descriptive commit message"
+
+# 5. Push to GitHub (does NOT trigger Render deployment)
+git push origin development
+
+# 6. When ready to deploy to production
+git checkout main
+git merge development
+git push origin main           # NOW Render deploys
+```
+
+**Benefits of this workflow:**
+- Changes backed up to GitHub without deploying
+- Can accumulate multiple commits before deploying
+- Easy to test staging features
+- Production (main) stays stable
+
+### Direct to Main Workflow (Immediate Deployment)
+
+**For immediate production deployment:**
 
 ```bash
 # 1. Make changes locally
@@ -124,7 +160,7 @@ cd frontend && npm start         # Test frontend
 git add .
 git commit -m "Descriptive commit message"
 
-# 4. Push to GitHub
+# 4. Push to GitHub (triggers Render deployment)
 git push origin main
 
 # 5. Watch auto-deploy
@@ -134,7 +170,7 @@ git push origin main
 ```
 
 **That's it!** Render automatically:
-- Detects your push
+- Detects your push to main
 - Pulls latest code
 - Runs tests (if configured)
 - Builds new version
@@ -432,8 +468,17 @@ git push origin main
 
 ### Quick Commands
 ```bash
-# Deploy update
-git add . && git commit -m "Update" && git push origin main
+# Commit to development (NO deployment)
+git checkout development
+git add . && git commit -m "Update" && git push origin development
+
+# Deploy to production (triggers Render deployment)
+git checkout main
+git merge development
+git push origin main
+
+# Check current branch
+git branch
 
 # Check status
 git log --oneline -5

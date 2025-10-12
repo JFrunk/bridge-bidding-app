@@ -43,6 +43,72 @@ npm run build                     # Production build
 2. Start frontend: `cd frontend && npm start`
 3. Access at http://localhost:3000
 
+## Git Workflow
+
+### Branch Strategy
+
+This project uses a **two-branch workflow**:
+- **`development`** - Active development branch (default for commits)
+- **`main`** - Production branch (triggers Render deployment)
+
+### Standard Workflow (Development Branch)
+
+**Use this for regular development work:**
+
+```bash
+# Ensure you're on development branch
+git checkout development
+
+# Make changes, test locally, then commit
+git add .
+git commit -m "Descriptive commit message"
+
+# Push to GitHub (does NOT deploy to Render)
+git push origin development
+```
+
+### Deploying to Production
+
+**When ready to deploy to the live site:**
+
+```bash
+# Switch to main branch
+git checkout main
+
+# Merge development changes
+git merge development
+
+# Push to trigger Render deployment
+git push origin main
+
+# Switch back to development for continued work
+git checkout development
+```
+
+### Quick Reference
+
+```bash
+# Check which branch you're on
+git branch
+
+# Switch branches
+git checkout development  # For dev work
+git checkout main        # For deployment
+
+# View recent commits
+git log --oneline -5
+
+# View status
+git status
+```
+
+### Important Notes
+
+- **Always commit to `development`** unless deploying
+- **Only push to `main`** when ready for public deployment
+- Render auto-deploys only from `main` branch
+- Keep `development` as your default working branch
+
 ## Architecture
 
 ### Backend Structure
