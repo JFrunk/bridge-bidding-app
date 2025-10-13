@@ -3,6 +3,8 @@ import './App.css';
 import { PlayTable, ScoreDisplay, getSuitOrder } from './PlayComponents';
 import { BridgeCard } from './components/bridge/BridgeCard';
 import { BiddingBox as BiddingBoxComponent } from './components/bridge/BiddingBox';
+import { ReviewModal } from './components/bridge/ReviewModal';
+import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -1060,89 +1062,23 @@ Please provide a detailed analysis of the auction and identify any bidding error
         </div>
       </div>
 
-      {showReviewModal && (
-        <div className="modal-overlay" onClick={handleCloseReviewModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Request AI Review</h2>
-            <p>
-              {gamePhase === 'playing'
-                ? 'Hand data including auction and card play will be saved to: '
-                : 'Hand data will be saved to: '}
-              <code>backend/review_requests/{reviewFilename || 'hand_[timestamp].json'}</code>
-            </p>
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={handleCloseReviewModal}
+        onSubmit={handleRequestReview}
+        userConcern={userConcern}
+        setUserConcern={setUserConcern}
+        reviewPrompt={reviewPrompt}
+        reviewFilename={reviewFilename}
+        gamePhase={gamePhase}
+        onCopyPrompt={handleCopyPrompt}
+      />
 
-            <div className="user-concern-section">
-              <label htmlFor="user-concern">What concerns you about this hand? (Optional)</label>
-              <textarea
-                id="user-concern"
-                value={userConcern}
-                onChange={(e) => setUserConcern(e.target.value)}
-                placeholder={
-                  gamePhase === 'playing'
-                    ? "e.g., 'Should declarer have led a different suit?' or 'Was that the right card to play?'"
-                    : "e.g., 'Why did North bid 3NT here?' or 'Is South's 2♥ bid correct?'"
-                }
-                rows="3"
-              />
-            </div>
-
-            <div className="review-actions">
-              <button onClick={handleRequestReview} className="primary-button">Save & Generate Prompt</button>
-              <button onClick={handleCloseReviewModal} className="secondary-button">Cancel</button>
-            </div>
-
-            {reviewPrompt && (
-              <div className="prompt-section">
-                <h3>Copy this prompt to Claude Code:</h3>
-                <div className="prompt-box">
-                  <pre>{reviewPrompt}</pre>
-                </div>
-                <div className="prompt-actions">
-                  <button onClick={handleCopyPrompt} className="copy-button">📋 Copy to Clipboard</button>
-                  <button onClick={handleCloseReviewModal} className="close-button">Close</button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {showConventionHelp && conventionInfo && (
-        <div className="modal-overlay" onClick={handleCloseConventionHelp}>
-          <div className="modal-content convention-help-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{conventionInfo.name}</h2>
-
-            <div className="convention-section">
-              <h3>Background</h3>
-              <p>{conventionInfo.background}</p>
-            </div>
-
-            <div className="convention-section">
-              <h3>When to Use</h3>
-              <p>{conventionInfo.when_used}</p>
-            </div>
-
-            <div className="convention-section">
-              <h3>How It Works</h3>
-              <p style={{whiteSpace: 'pre-line'}}>{conventionInfo.how_it_works}</p>
-            </div>
-
-            <div className="convention-section">
-              <h3>As Responder</h3>
-              <p style={{whiteSpace: 'pre-line'}}>{conventionInfo.responder_actions}</p>
-            </div>
-
-            <div className="convention-section">
-              <h3>As Opener</h3>
-              <p style={{whiteSpace: 'pre-line'}}>{conventionInfo.opener_actions}</p>
-            </div>
-
-            <div className="convention-actions">
-              <button onClick={handleCloseConventionHelp} className="close-button">Close</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConventionHelpModal
+        isOpen={showConventionHelp}
+        onClose={handleCloseConventionHelp}
+        conventionInfo={conventionInfo}
+      />
 
       {scoreData && (
         <ScoreDisplay scoreData={scoreData} onClose={handleCloseScore} />
