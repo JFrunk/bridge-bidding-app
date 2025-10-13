@@ -244,13 +244,15 @@ export function PlayTable({
           )}
         </div>
 
-        {/* Current trick in center */}
-        <CurrentTrick
-          trick={current_trick}
-          positions={positions}
-          trickWinner={trick_winner}
-          trickComplete={trick_complete}
-        />
+        {/* Current trick in center - CRITICAL: Positioned in center grid area */}
+        <div className="current-trick-container">
+          <CurrentTrick
+            trick={current_trick}
+            positions={positions}
+            trickWinner={trick_winner}
+            trickComplete={trick_complete}
+          />
+        </div>
 
         {/* West position - Left side (standard bridge layout) */}
         <div className="position position-west">

@@ -424,6 +424,17 @@
   width: 100%;
 }
 
+/* CRITICAL: Container for current trick - centers it in grid */
+.current-trick-container {
+  grid-area: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 350px;
+}
+
 /* Current Trick in Center - Compass Layout */
 .current-trick {
   grid-area: center;
