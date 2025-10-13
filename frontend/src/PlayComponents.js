@@ -12,6 +12,10 @@
 import React from 'react';
 import './PlayComponents.css';
 import { TurnIndicator, CompactTurnIndicator } from './components/play/TurnIndicator';
+import { ContractHeader } from './components/play/ContractHeader';
+import { CurrentTrickDisplay } from './components/play/CurrentTrickDisplay';
+import { ScoreModal } from './components/play/ScoreModal';
+import { PlayableCard as PlayableCardComponent } from './components/play/PlayableCard';
 
 /**
  * Get suit display order based on trump suit
@@ -108,94 +112,18 @@ export function ContractDisplay({ contract }) {
 
 /**
  * Display a card that can be clicked to play
+ * MIGRATED: Now uses PlayableCard component from components/play/
  */
 export function PlayableCard({ card, onClick, disabled }) {
-  const suitColor = card.suit === '♥' || card.suit === '♦' ? 'suit-red' : 'suit-black';
-  const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
-  const displayRank = rankMap[card.rank] || card.rank;
-
-  return (
-    <div
-      className={`playable-card ${disabled ? 'disabled' : 'clickable'}`}
-      onClick={() => !disabled && onClick(card)}
-    >
-      <div className={`card-corner top-left ${suitColor}`}>
-        <span className="rank">{displayRank}</span>
-        <span className="suit-symbol-small">{card.suit}</span>
-      </div>
-      <div className={`card-center ${suitColor}`}>
-        <span className="suit-symbol-large">{card.suit}</span>
-      </div>
-      <div className={`card-corner bottom-right ${suitColor}`}>
-        <span className="rank">{displayRank}</span>
-        <span className="suit-symbol-small">{card.suit}</span>
-      </div>
-    </div>
-  );
+  return <PlayableCardComponent card={card} onClick={() => onClick(card)} disabled={disabled} />;
 }
 
 /**
  * Display current trick in progress
+ * MIGRATED: Now uses CurrentTrickDisplay component from components/play/
  */
 export function CurrentTrick({ trick, positions, trickWinner, trickComplete }) {
-  console.log('🃏 CurrentTrick received:', { trick, trick_length: trick?.length, trickWinner, trickComplete });
-
-  if (!trick || trick.length === 0) {
-    return (
-      <div className="current-trick empty">
-        <p>Waiting for cards...</p>
-      </div>
-    );
-  }
-
-  // DEFENSIVE: Only show the first 4 cards (a complete trick)
-  // This prevents display issues if backend has more than 4 cards
-  const displayTrick = trick.slice(0, 4);
-  if (trick.length > 4) {
-    console.error('⚠️ WARNING: Trick has more than 4 cards!', {
-      trick_length: trick.length,
-      trick_data: trick
-    });
-  }
-
-  const suitColor = (suit) => suit === '♥' || suit === '♦' ? 'suit-red' : 'suit-black';
-  const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
-
-  // Position name mapping
-  const positionNames = {
-    'N': 'North',
-    'E': 'East',
-    'S': 'South',
-    'W': 'West'
-  };
-
-  return (
-    <div className="current-trick">
-      {displayTrick.map(({ card, position }, index) => {
-        const displayRank = rankMap[card.rank] || card.rank;
-        const isWinner = trickComplete && position === trickWinner;
-        return (
-          <div key={index} className={`trick-card-wrapper ${isWinner ? 'winner' : ''}`}>
-            <div className="trick-position-label">{position}</div>
-            <div className="trick-card">
-              <span className={`trick-rank ${suitColor(card.suit)}`}>
-                {displayRank}
-              </span>
-              <span className={`trick-suit ${suitColor(card.suit)}`}>
-                {card.suit}
-              </span>
-            </div>
-            {isWinner && <div className="winner-badge">Winner!</div>}
-          </div>
-        );
-      })}
-      {trickComplete && trickWinner && (
-        <div className="trick-winner-announcement">
-          {positionNames[trickWinner]} wins the trick!
-        </div>
-      )}
-    </div>
-  );
+  return <CurrentTrickDisplay trick={trick} trickWinner={trickWinner} trickComplete={trickComplete} />;
 }
 
 /**
@@ -269,62 +197,8 @@ export function PlayTable({
 
   return (
     <div className="play-table">
-      {/* Consolidated Contract Header - All contract info in one horizontal row */}
-      <div className="contract-header-consolidated">
-        {/* Unified Tricks Bar - Won (green left) | Remaining (dark center) | Lost (red right) */}
-        <div className="unified-tricks-bar">
-          <div className="tricks-won-section" style={{width: `${(tricksWonBySide / 13) * 100}%`}}>
-            {tricksWonBySide > 0 && <span className="tricks-count">{tricksWonBySide}</span>}
-          </div>
-          <div className="tricks-remaining-section" style={{width: `${(tricksRemaining / 13) * 100}%`}}>
-            {tricksRemaining > 0 && <span className="tricks-count">{tricksRemaining}</span>}
-          </div>
-          <div className="tricks-lost-section" style={{width: `${(tricksLost / 13) * 100}%`}}>
-            {tricksLost > 0 && <span className="tricks-count">{tricksLost}</span>}
-          </div>
-        </div>
-
-        {/* Contract Display - Large font */}
-        <div className="contract-display-large">
-          <div className="contract-text">
-            {contract.level}{contract.strain === 'N' ? 'NT' : contract.strain}
-          </div>
-          <div className="declarer-text">by {declarerPosition}</div>
-        </div>
-
-        {/* Tricks Summary - Vertical stack */}
-        <div className="tricks-summary">
-          <div className="trick-stat">
-            <span className="stat-label">Won:</span>
-            <span className="stat-value">{tricksWonBySide}</span>
-          </div>
-          <div className="trick-stat">
-            <span className="stat-label">Lost:</span>
-            <span className="stat-value">{tricksLost}</span>
-          </div>
-          <div className="trick-stat">
-            <span className="stat-label">Remaining:</span>
-            <span className="stat-value">{tricksRemaining}</span>
-          </div>
-        </div>
-
-        {/* Bidding Summary - Full height, scrollable */}
-        <div className="bidding-summary-compact">
-          <div className="bidding-header">Bidding</div>
-          <div className="bidding-auction-scroll">
-            {auction && auction.map((bidObject, index) => {
-              const playerIndex = index % 4;
-              const playerLabel = ['N', 'E', 'S', 'W'][playerIndex];
-              return (
-                <div key={index} className="bid-row">
-                  <span className="bid-player">{playerLabel}</span>
-                  <span className="bid-value">{bidObject.bid}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      {/* Consolidated Contract Header - MIGRATED to ContractHeader component */}
+      <ContractHeader contract={contract} tricksWon={tricks_won} auction={auction} />
 
       <div className="play-area">
         {/* North position */}
@@ -462,53 +336,10 @@ export function PlayTable({
 
 /**
  * Display final score after 13 tricks
+ * MIGRATED: Now uses ScoreModal component from components/play/
  */
 export function ScoreDisplay({ scoreData, onClose }) {
-  if (!scoreData) return null;
-
-  const { contract, tricks_taken, result, score, made } = scoreData;
-
-  return (
-    <div className="score-modal-overlay" onClick={onClose}>
-      <div className="score-modal" onClick={e => e.stopPropagation()}>
-        <h2>Hand Complete!</h2>
-
-        <div className="score-details">
-          <div className="score-row">
-            <span>Contract:</span>
-            <span className="score-value">
-              {contract.level}{contract.strain}
-              {contract.doubled === 2 ? 'XX' : contract.doubled === 1 ? 'X' : ''}
-              {' by '}{contract.declarer}
-            </span>
-          </div>
-
-          <div className="score-row">
-            <span>Tricks Taken:</span>
-            <span className="score-value">{tricks_taken}</span>
-          </div>
-
-          <div className="score-row">
-            <span>Result:</span>
-            <span className={`score-value ${made ? 'made' : 'down'}`}>
-              {result}
-            </span>
-          </div>
-
-          <div className="score-row total">
-            <span>Score:</span>
-            <span className={`score-value ${score >= 0 ? 'positive' : 'negative'}`}>
-              {score >= 0 ? '+' : ''}{score}
-            </span>
-          </div>
-        </div>
-
-        <button className="close-button" onClick={onClose}>
-          Close
-        </button>
-      </div>
-    </div>
-  );
+  return <ScoreModal isOpen={!!scoreData} onClose={onClose} scoreData={scoreData} />;
 }
 
 // Export TurnIndicator components for use in other files
