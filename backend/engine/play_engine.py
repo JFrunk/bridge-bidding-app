@@ -60,6 +60,7 @@ class PlayState:
     trick_history: List[Trick] = field(default_factory=list)
     next_to_play: str = 'N'
     dummy_revealed: bool = False
+    current_trick_leader: Optional[str] = None  # Who led the current trick
 
     @property
     def dummy(self) -> str:

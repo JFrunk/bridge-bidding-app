@@ -148,6 +148,16 @@ export function CurrentTrick({ trick, positions, trickWinner, trickComplete }) {
     );
   }
 
+  // DEFENSIVE: Only show the first 4 cards (a complete trick)
+  // This prevents display issues if backend has more than 4 cards
+  const displayTrick = trick.slice(0, 4);
+  if (trick.length > 4) {
+    console.error('⚠️ WARNING: Trick has more than 4 cards!', {
+      trick_length: trick.length,
+      trick_data: trick
+    });
+  }
+
   const suitColor = (suit) => suit === '♥' || suit === '♦' ? 'suit-red' : 'suit-black';
   const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
 
@@ -161,7 +171,7 @@ export function CurrentTrick({ trick, positions, trickWinner, trickComplete }) {
 
   return (
     <div className="current-trick">
-      {trick.map(({ card, position }, index) => {
+      {displayTrick.map(({ card, position }, index) => {
         const displayRank = rankMap[card.rank] || card.rank;
         const isWinner = trickComplete && position === trickWinner;
         return (
@@ -247,23 +257,71 @@ export function PlayTable({
     'South WILL render': true
   });
 
+  // Calculate tricks for consolidated header
+  const tricksNeeded = contract.level + 6;
+  const declarerSide = (declarerPosition === 'N' || declarerPosition === 'S') ? 'NS' : 'EW';
+  const tricksWonBySide = declarerSide === 'NS'
+    ? (tricks_won.N || 0) + (tricks_won.S || 0)
+    : (tricks_won.E || 0) + (tricks_won.W || 0);
+  const totalTricksPlayed = Object.values(tricks_won).reduce((sum, tricks) => sum + tricks, 0);
+  const tricksRemaining = 13 - totalTricksPlayed;
+  const tricksLost = 13 - tricksWonBySide - tricksRemaining;
+
   return (
     <div className="play-table">
-      {/* Turn Indicator - Prominent display of whose turn it is */}
-      <TurnIndicator
-        currentPlayer={next_to_play}
-        isUserTurn={isUserTurn}
-        phase="playing"
-      />
+      {/* Consolidated Contract Header - All contract info in one horizontal row */}
+      <div className="contract-header-consolidated">
+        {/* Unified Tricks Bar - Won (green left) | Remaining (dark center) | Lost (red right) */}
+        <div className="unified-tricks-bar">
+          <div className="tricks-won-section" style={{width: `${(tricksWonBySide / 13) * 100}%`}}>
+            {tricksWonBySide > 0 && <span className="tricks-count">{tricksWonBySide}</span>}
+          </div>
+          <div className="tricks-remaining-section" style={{width: `${(tricksRemaining / 13) * 100}%`}}>
+            {tricksRemaining > 0 && <span className="tricks-count">{tricksRemaining}</span>}
+          </div>
+          <div className="tricks-lost-section" style={{width: `${(tricksLost / 13) * 100}%`}}>
+            {tricksLost > 0 && <span className="tricks-count">{tricksLost}</span>}
+          </div>
+        </div>
 
-      <div className="play-header">
-        <BiddingSummary auction={auction} />
-        <ContractDisplay contract={contract} />
-        <div className="tricks-display">
-          <h4>Tricks Won</h4>
-          <div className="tricks-count">
-            <div>NS: {(tricks_won.N || 0) + (tricks_won.S || 0)}</div>
-            <div>EW: {(tricks_won.E || 0) + (tricks_won.W || 0)}</div>
+        {/* Contract Display - Large font */}
+        <div className="contract-display-large">
+          <div className="contract-text">
+            {contract.level}{contract.strain === 'N' ? 'NT' : contract.strain}
+          </div>
+          <div className="declarer-text">by {declarerPosition}</div>
+        </div>
+
+        {/* Tricks Summary - Vertical stack */}
+        <div className="tricks-summary">
+          <div className="trick-stat">
+            <span className="stat-label">Won:</span>
+            <span className="stat-value">{tricksWonBySide}</span>
+          </div>
+          <div className="trick-stat">
+            <span className="stat-label">Lost:</span>
+            <span className="stat-value">{tricksLost}</span>
+          </div>
+          <div className="trick-stat">
+            <span className="stat-label">Remaining:</span>
+            <span className="stat-value">{tricksRemaining}</span>
+          </div>
+        </div>
+
+        {/* Bidding Summary - Full height, scrollable */}
+        <div className="bidding-summary-compact">
+          <div className="bidding-header">Bidding</div>
+          <div className="bidding-auction-scroll">
+            {auction && auction.map((bidObject, index) => {
+              const playerIndex = index % 4;
+              const playerLabel = ['N', 'E', 'S', 'W'][playerIndex];
+              return (
+                <div key={index} className="bid-row">
+                  <span className="bid-player">{playerLabel}</span>
+                  <span className="bid-value">{bidObject.bid}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -320,7 +378,8 @@ export function PlayTable({
           trickComplete={trick_complete}
         />
 
-        {/* East and West positions */}
+        {/* East and West positions container */}
+        <div className="east-west-container">
         <div className="position position-east">
           <div className="position-label">
             East
@@ -369,6 +428,7 @@ export function PlayTable({
               ))}
             </div>
           )}
+        </div>
         </div>
 
         {/* South position (user) */}

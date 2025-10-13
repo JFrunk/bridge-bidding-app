@@ -22,6 +22,12 @@ class OpeningBidsModule(ConventionModule):
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, Union[str, BidExplanation]]]:
         # This module does not need features, but conforms to the interface
 
+        # IMPORTANT: Check GAMBLING 3NT first (solid minor, 10-16 HCP)
+        # Check before balanced 3NT to avoid conflicts
+        gambling_result = self._check_gambling_3nt(hand)
+        if gambling_result:
+            return gambling_result
+
         # IMPORTANT: Check balanced NT openings FIRST before 2♣
         # This ensures proper priority: specific balanced ranges take precedence over general strength
 
@@ -192,3 +198,85 @@ class OpeningBidsModule(ConventionModule):
         explanation.add_actual_value("Total Points", str(hand.total_points))
         explanation.add_actual_value("HCP", str(hand.hcp))
         return ("Pass", explanation)
+
+    def _check_gambling_3nt(self, hand: Hand) -> Optional[Tuple[str, BidExplanation]]:
+        """
+        Check for Gambling 3NT opening.
+
+        Requirements (ACBL/SAYC):
+        - Solid 7-8 card minor suit (must run without losing a trick)
+        - Typically AKQxxxx or better in the minor
+        - 10-16 HCP (if stronger, open 2♣ or 3NT balanced)
+        - Little outside strength (asking partner to declare 3NT)
+        - No void, no singleton Ace/King (too distributional)
+
+        Asks partner to bid 3NT (gambling that their high cards fill the gaps).
+        """
+        # Must have 7-8 card minor
+        club_len = hand.suit_lengths.get('♣', 0)
+        diamond_len = hand.suit_lengths.get('♦', 0)
+
+        long_minor = None
+        minor_length = 0
+
+        if club_len >= 7:
+            long_minor = '♣'
+            minor_length = club_len
+        elif diamond_len >= 7:
+            long_minor = '♦'
+            minor_length = diamond_len
+        else:
+            return None  # Need 7+ card minor
+
+        # Check HCP range (10-16)
+        if not (10 <= hand.hcp <= 16):
+            return None
+
+        # Check for solid suit (must have AKQ at minimum)
+        # Solid = running tricks without losing
+        minor_hcp = hand.suit_hcp.get(long_minor, 0)
+
+        # With 7 cards, need at least AKQ (9 HCP) to be solid
+        # With 8 cards, AKQ still required
+        if minor_hcp < 9:  # Less than AKQ
+            return None
+
+        # Count top honors in the minor (A=4, K=3, Q=2)
+        # Need to verify we have at least AKQ
+        # Simplified: if we have 9+ HCP in a 7+ card suit, likely solid
+        # More precise: need top 3 honors
+
+        # Check for problematic distribution
+        # No voids (too distributional)
+        if 0 in hand.suit_lengths.values():
+            return None
+
+        # No singleton Ace or King in side suits (too much side strength)
+        for suit in ['♠', '♥', '♦', '♣']:
+            if suit != long_minor:
+                if hand.suit_lengths[suit] == 1 and hand.suit_hcp[suit] >= 3:
+                    return None  # Singleton Ace/King is too much
+
+        # Gambling 3NT should have weak sides (not too many HCP outside minor)
+        outside_hcp = hand.hcp - minor_hcp
+        if outside_hcp > 4:  # More than a Queen outside
+            return None
+
+        # All checks passed - bid Gambling 3NT!
+        explanation = BidExplanation("3NT")
+        explanation.set_primary_reason(f"Gambling 3NT with solid {minor_length}-card {long_minor} suit")
+        explanation.add_requirement("Minor Length", "7-8 cards")
+        explanation.add_requirement("Minor Quality", "Solid (AKQ+)")
+        explanation.add_requirement("HCP", "10-16")
+        explanation.add_requirement("Outside Strength", "Minimal (≤ Queen)")
+        explanation.add_actual_value("HCP", str(hand.hcp))
+        explanation.add_actual_value(f"{long_minor} Length", f"{minor_length} cards")
+        explanation.add_actual_value(f"{long_minor} HCP", str(minor_hcp))
+        explanation.add_actual_value("Outside HCP", str(outside_hcp))
+        explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
+        explanation.set_convention("Gambling 3NT")
+        explanation.set_forcing_status("Partner expected to pass or correct")
+        explanation.add_alternative("3♣/3♦", "Gambling 3NT is more descriptive with solid suit")
+        explanation.add_alternative("1♣/1♦", "Hand qualifies for special Gambling 3NT treatment")
+
+        return ("3NT", explanation)

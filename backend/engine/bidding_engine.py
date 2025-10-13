@@ -6,6 +6,7 @@ from engine.ai.bid_explanation import BidExplanation, ExplanationLevel
 # Import all specialist CLASSES
 from engine.opening_bids import OpeningBidsModule
 from engine.responses import ResponseModule
+from engine.responder_rebids import ResponderRebidModule
 from engine.rebids import RebidModule
 from engine.advancer_bids import AdvancerBidsModule
 from engine.overcalls import OvercallModule
@@ -27,7 +28,7 @@ class BiddingEngine:
             'opening_bids': OpeningBidsModule(),
             'responses': ResponseModule(),
             'openers_rebid': RebidModule(),
-            'responder_rebid': ResponseModule(),
+            'responder_rebid': ResponderRebidModule(),  # NEW: Comprehensive responder rebid logic
             'advancer_bids': AdvancerBidsModule(),
             'overcalls': OvercallModule(),
             'stayman': StaymanConvention(),

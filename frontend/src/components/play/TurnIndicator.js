@@ -10,7 +10,7 @@ import './TurnIndicator.css';
  * TurnIndicator Component
  *
  * Displays whose turn it is to play with a prominent, animated indicator.
- * When it's the user's turn, displays large "YOUR TURN!" banner.
+ * When it's the user's turn, displays large "YOUR TURN!" banner with position.
  *
  * @param {Object} props
  * @param {string} props.currentPlayer - Position code ('N', 'E', 'S', 'W')
@@ -28,14 +28,14 @@ export function TurnIndicator({ currentPlayer, isUserTurn, message, phase = 'pla
 
   // Generate default message if not provided
   const defaultMessage = isUserTurn
-    ? 'YOUR TURN!'
+    ? `YOUR TURN - ${playerNames[currentPlayer]}`
     : `${playerNames[currentPlayer]}'s Turn`;
 
   const displayMessage = message || defaultMessage;
 
   // Add action hint based on phase
   const actionHint = isUserTurn
-    ? (phase === 'playing' ? 'Select a card to play' : 'Select a bid')
+    ? (phase === 'playing' ? `Play a card from ${playerNames[currentPlayer]}'s hand` : 'Select a bid')
     : `Waiting for ${playerNames[currentPlayer]}...`;
 
   return (

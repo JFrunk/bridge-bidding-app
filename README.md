@@ -216,6 +216,10 @@ See [PROJECT_STATUS.md](PROJECT_STATUS.md) for current known issues and [docs/bu
 - Project overview: [docs/project-overview/DOCUMENTATION_INDEX.md](docs/project-overview/DOCUMENTATION_INDEX.md)
 
 ### Bridge Resources
+- **[Complete Bridge Rules](docs/COMPLETE_BRIDGE_RULES.md)** - Comprehensive reference covering all aspects (bidding, play, scoring, transitions)
+- **[Bridge Rules Summary](docs/BRIDGE_RULES_SUMMARY.md)** - Quick reference for common rules
+- **[Play Implementation Audit](docs/BRIDGE_PLAY_AUDIT_SUMMARY.md)** - Status of play implementation vs official rules
+- **[Play Fixes Completed](docs/BRIDGE_PLAY_FIXES_COMPLETED.md)** - ✅ Priority 1 fixes complete (Jan 2025)
 - [SAYC Rules](https://www.acbl.org/learn_page/how-to-play-bridge/standard-american-yellow-card/)
 - [Bridge Laws](http://www.worldbridge.org/laws-and-regulations/)
 

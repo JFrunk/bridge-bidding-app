@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { PlayTable, ScoreDisplay, getSuitOrder } from './PlayComponents';
 
@@ -136,7 +136,10 @@ function App() {
   const [isPlayingCard, setIsPlayingCard] = useState(false);
   const [scoreData, setScoreData] = useState(null);
 
-  const resetAuction = (dealData) => {
+  // Ref to store AI play loop timeout ID so we can cancel it
+  const aiPlayTimeoutRef = useRef(null);
+
+  const resetAuction = (dealData, skipInitialAiBidding = false) => {
     setInitialDeal(dealData);
     setHand(dealData.hand);
     setHandPoints(dealData.points);
@@ -145,7 +148,8 @@ function App() {
     setNextPlayerIndex(players.indexOf(dealer));
     setDisplayedMessage('');
     setError('');
-    setIsAiBidding(true);
+    // Don't start AI bidding immediately on initial mount to prevent race condition
+    setIsAiBidding(!skipInitialAiBidding);
     setShowHandsThisDeal(false);
     // Reset play state
     setGamePhase('bidding');
@@ -317,6 +321,22 @@ Please provide a detailed analysis of the auction and identify any bidding error
           next_to_play: state.next_to_play,
           dummy_revealed: state.dummy_revealed
         });
+
+        // If South is dummy, fetch declarer's hand immediately for user control
+        if (state.dummy === 'S') {
+          console.log('🃏 South is dummy - fetching declarer hand for user control');
+          const handsResponse = await fetch(`${API_URL}/api/get-all-hands`);
+          if (handsResponse.ok) {
+            const handsData = await handsResponse.json();
+            const declarerPos = state.contract.declarer;
+            const declarerCards = handsData.hands[declarerPos]?.hand || [];
+            console.log('🃏 Declarer hand fetched:', {
+              declarerPos,
+              cardCount: declarerCards.length
+            });
+            setDeclarerHand(declarerCards);
+          }
+        }
       }
 
       // Transition to play phase
@@ -333,10 +353,6 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
   const handleCardPlay = async (card) => {
     console.log('🃏 handleCardPlay called:', { card, isPlayingCard });
-    if (isPlayingCard) {
-      console.log('⚠️ Blocked: isPlayingCard is true');
-      return; // Prevent double-click
-    }
 
     try {
       console.log('✅ Playing card:', card);
@@ -383,17 +399,43 @@ Please provide a detailed analysis of the auction and identify any bidding error
         // Wait 5 seconds to display the winner
         await new Promise(resolve => setTimeout(resolve, 5000));
 
-        // Clear the trick
+        // Clear the trick and get updated state
         await fetch(`${API_URL}/api/clear-trick`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
 
-        // Continue AI play loop after small delay
-        setTimeout(() => setIsPlayingCard(true), 500);
+        // Fetch state after trick clear to see who's next
+        const nextStateResponse = await fetch(`${API_URL}/api/get-play-state`);
+        if (nextStateResponse.ok) {
+          const nextState = await nextStateResponse.json();
+          setPlayState(nextState);
+
+          // Start AI loop only if it's not the user's turn
+          const nextIsUserTurn = nextState.next_to_play === 'S' ||
+                                (nextState.next_to_play === nextState.dummy && nextState.contract.declarer === 'S');
+          if (!nextIsUserTurn) {
+            // Reset flag first to ensure useEffect triggers, then set it back to true
+            setIsPlayingCard(false);
+            setTimeout(() => setIsPlayingCard(true), 100);
+          } else {
+            setIsPlayingCard(false);
+          }
+        }
       } else {
-        // Trick not complete - continue AI play loop
-        setTimeout(() => setIsPlayingCard(true), 500);
+        // Trick not complete - check whose turn is next
+        const updatedState = await fetch(`${API_URL}/api/get-play-state`).then(r => r.json());
+        setPlayState(updatedState);
+
+        const nextIsUserTurn = updatedState.next_to_play === 'S' ||
+                              (updatedState.next_to_play === updatedState.dummy && updatedState.contract.declarer === 'S');
+        if (!nextIsUserTurn) {
+          // Reset flag first to ensure useEffect triggers, then set it back to true
+          setIsPlayingCard(false);
+          setTimeout(() => setIsPlayingCard(true), 100);
+        } else {
+          setIsPlayingCard(false);
+        }
       }
 
     } catch (err) {
@@ -404,7 +446,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
   };
 
   const handleDeclarerCardPlay = async (card) => {
-    if (isPlayingCard || !playState) return;
+    if (!playState) return;
 
     try {
       setIsPlayingCard(true);
@@ -430,9 +472,9 @@ Please provide a detailed analysis of the auction and identify any bidding error
       console.log('Declarer card played:', data);
 
       // Update declarer hand (remove played card)
-      setDeclarerHand(prevHand => prevHand.filter(c =>
+      setDeclarerHand(prevHand => prevHand ? prevHand.filter(c =>
         !(c.rank === card.rank && c.suit === card.suit)
-      ));
+      ) : prevHand);
 
       // Fetch updated play state to show the card that was just played
       const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`);
@@ -453,17 +495,43 @@ Please provide a detailed analysis of the auction and identify any bidding error
         // Wait 5 seconds to display the winner
         await new Promise(resolve => setTimeout(resolve, 5000));
 
-        // Clear the trick
+        // Clear the trick and get updated state
         await fetch(`${API_URL}/api/clear-trick`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
 
-        // Continue AI play loop after small delay
-        setTimeout(() => setIsPlayingCard(true), 500);
+        // Fetch state after trick clear to see who's next
+        const nextStateResponse = await fetch(`${API_URL}/api/get-play-state`);
+        if (nextStateResponse.ok) {
+          const nextState = await nextStateResponse.json();
+          setPlayState(nextState);
+
+          // Start AI loop only if it's not the user's turn
+          const nextIsUserTurn = nextState.next_to_play === 'S' ||
+                                (nextState.next_to_play === nextState.dummy && nextState.contract.declarer === 'S');
+          if (!nextIsUserTurn) {
+            // Reset flag first to ensure useEffect triggers, then set it back to true
+            setIsPlayingCard(false);
+            setTimeout(() => setIsPlayingCard(true), 100);
+          } else {
+            setIsPlayingCard(false);
+          }
+        }
       } else {
-        // Trick not complete - continue AI play loop
-        setTimeout(() => setIsPlayingCard(true), 500);
+        // Trick not complete - check whose turn is next
+        const updatedState = await fetch(`${API_URL}/api/get-play-state`).then(r => r.json());
+        setPlayState(updatedState);
+
+        const nextIsUserTurn = updatedState.next_to_play === 'S' ||
+                              (updatedState.next_to_play === updatedState.dummy && updatedState.contract.declarer === 'S');
+        if (!nextIsUserTurn) {
+          // Reset flag first to ensure useEffect triggers, then set it back to true
+          setIsPlayingCard(false);
+          setTimeout(() => setIsPlayingCard(true), 100);
+        } else {
+          setIsPlayingCard(false);
+        }
       }
 
     } catch (err) {
@@ -474,9 +542,15 @@ Please provide a detailed analysis of the auction and identify any bidding error
   };
 
   const handleDummyCardPlay = async (card) => {
-    if (isPlayingCard || !playState) return;
+    console.log('🃏 handleDummyCardPlay called:', { card, isPlayingCard, playState: !!playState });
+
+    if (!playState) {
+      console.log('⚠️ Blocked: playState is null');
+      return;
+    }
 
     try {
+      console.log('✅ Playing dummy card:', card);
       setIsPlayingCard(true);
 
       // Dummy position (partner of declarer when South is declarer)
@@ -500,9 +574,9 @@ Please provide a detailed analysis of the auction and identify any bidding error
       console.log('Dummy card played:', data);
 
       // Update dummy hand (remove played card)
-      setDummyHand(prevHand => prevHand.filter(c =>
+      setDummyHand(prevHand => prevHand ? prevHand.filter(c =>
         !(c.rank === card.rank && c.suit === card.suit)
-      ));
+      ) : prevHand);
 
       // Fetch updated play state to show the card that was just played
       const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`);
@@ -523,17 +597,43 @@ Please provide a detailed analysis of the auction and identify any bidding error
         // Wait 5 seconds to display the winner
         await new Promise(resolve => setTimeout(resolve, 5000));
 
-        // Clear the trick
+        // Clear the trick and get updated state
         await fetch(`${API_URL}/api/clear-trick`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
 
-        // Continue AI play loop after small delay
-        setTimeout(() => setIsPlayingCard(true), 500);
+        // Fetch state after trick clear to see who's next
+        const nextStateResponse = await fetch(`${API_URL}/api/get-play-state`);
+        if (nextStateResponse.ok) {
+          const nextState = await nextStateResponse.json();
+          setPlayState(nextState);
+
+          // Start AI loop only if it's not the user's turn
+          const nextIsUserTurn = nextState.next_to_play === 'S' ||
+                                (nextState.next_to_play === nextState.dummy && nextState.contract.declarer === 'S');
+          if (!nextIsUserTurn) {
+            // Reset flag first to ensure useEffect triggers, then set it back to true
+            setIsPlayingCard(false);
+            setTimeout(() => setIsPlayingCard(true), 100);
+          } else {
+            setIsPlayingCard(false);
+          }
+        }
       } else {
-        // Trick not complete - continue AI play loop
-        setTimeout(() => setIsPlayingCard(true), 500);
+        // Trick not complete - check whose turn is next
+        const updatedState = await fetch(`${API_URL}/api/get-play-state`).then(r => r.json());
+        setPlayState(updatedState);
+
+        const nextIsUserTurn = updatedState.next_to_play === 'S' ||
+                              (updatedState.next_to_play === updatedState.dummy && updatedState.contract.declarer === 'S');
+        if (!nextIsUserTurn) {
+          // Reset flag first to ensure useEffect triggers, then set it back to true
+          setIsPlayingCard(false);
+          setTimeout(() => setIsPlayingCard(true), 100);
+        } else {
+          setIsPlayingCard(false);
+        }
       }
 
     } catch (err) {
@@ -584,7 +684,24 @@ Please provide a detailed analysis of the auction and identify any bidding error
         setScenarioList(data.scenarios);
         if (data.scenarios.length > 0) setSelectedScenario(data.scenarios[0]);
       } catch (err) { console.error("Could not fetch scenarios", err); }
-      await dealNewHand();
+
+      // Deal initial hand
+      try {
+        const response = await fetch(`${API_URL}/api/deal-hands`);
+        if (!response.ok) throw new Error("Failed to deal hands.");
+        const data = await response.json();
+        // Skip AI bidding on initial mount to prevent race condition
+        resetAuction(data, true);
+
+        // After state has settled, enable AI bidding if North starts
+        setTimeout(() => {
+          if (players.indexOf(dealer) !== 2) { // If dealer is not South (index 2)
+            setIsAiBidding(true);
+          }
+        }, 100);
+      } catch (err) {
+        setError("Could not connect to server to deal.");
+      }
     };
     fetchScenariosAndDeal();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -736,17 +853,39 @@ Please provide a detailed analysis of the auction and identify any bidding error
           declarerPos
         });
 
-        // If it's South's turn (and South is NOT dummy), stop and wait for user
-        if (nextPlayer === 'S' && !userIsDummy) {
-          console.log('⏸️ Stopping - South\'s turn to play');
+        // If it's South's turn, NEVER let AI play South's cards
+        // If South is NOT dummy: User plays their own hand
+        // If South IS dummy: User (as declarer) plays from dummy's hand (South's cards)
+        if (nextPlayer === 'S') {
+          console.log('⏸️ Stopping - South\'s turn (User controls South\'s cards)');
+          // Clear any pending timeout to prevent it from restarting the loop
+          if (aiPlayTimeoutRef.current) {
+            clearTimeout(aiPlayTimeoutRef.current);
+            aiPlayTimeoutRef.current = null;
+          }
           setIsPlayingCard(false);
-          setDisplayedMessage("Your turn to play!");
+          if (!userIsDummy) {
+            setDisplayedMessage("Your turn to play!");
+          } else {
+            setDisplayedMessage("Your turn to play from dummy (South's cards)");
+          }
           return;
         }
 
         // If it's dummy's turn and user is declarer, stop and wait for user to play dummy's card
+        console.log('🔍 Checking if should stop for dummy:', {
+          nextPlayer,
+          dummy: state.dummy,
+          userIsDeclarer,
+          shouldStop: nextPlayer === state.dummy && userIsDeclarer
+        });
         if (nextPlayer === state.dummy && userIsDeclarer) {
-          console.log('⏸️ Stopping - User is declarer, dummy\'s turn');
+          console.log('⏸️ ⏸️ ⏸️ STOPPING - User is declarer, dummy\'s turn ⏸️ ⏸️ ⏸️');
+          // Clear any pending timeout to prevent it from restarting the loop
+          if (aiPlayTimeoutRef.current) {
+            clearTimeout(aiPlayTimeoutRef.current);
+            aiPlayTimeoutRef.current = null;
+          }
           setIsPlayingCard(false);
           setDisplayedMessage("Your turn to play from dummy's hand!");
           return;
@@ -755,6 +894,11 @@ Please provide a detailed analysis of the auction and identify any bidding error
         // If it's declarer's turn and user is dummy, stop and wait for user to play declarer's card
         if (nextPlayer === declarerPos && userIsDummy) {
           console.log('⏸️ Stopping - User is dummy, declarer\'s turn');
+          // Clear any pending timeout to prevent it from restarting the loop
+          if (aiPlayTimeoutRef.current) {
+            clearTimeout(aiPlayTimeoutRef.current);
+            aiPlayTimeoutRef.current = null;
+          }
           setIsPlayingCard(false);
           setDisplayedMessage("Your turn to play from declarer's hand!");
           return;
@@ -805,13 +949,28 @@ Please provide a detailed analysis of the auction and identify any bidding error
             headers: { 'Content-Type': 'application/json' }
           });
 
+          // Fetch updated play state to show empty trick
+          const clearedStateResponse = await fetch(`${API_URL}/api/get-play-state`);
+          if (clearedStateResponse.ok) {
+            const clearedState = await clearedStateResponse.json();
+            setPlayState(clearedState);
+            console.log('🧹 Trick cleared, updated state:', {
+              trick_size: clearedState.current_trick.length,
+              next_to_play: clearedState.next_to_play
+            });
+          }
+
           console.log('🔁 Continuing to next trick...');
           // Continue to next trick after small delay
-          setTimeout(() => setIsPlayingCard(true), 500);
+          // Reset flag first to ensure useEffect triggers
+          setIsPlayingCard(false);
+          aiPlayTimeoutRef.current = setTimeout(() => setIsPlayingCard(true), 100);
         } else {
           console.log('🔁 Continuing AI play loop (trick not complete)...');
           // Trick not complete - continue playing quickly
-          setTimeout(() => setIsPlayingCard(true), 500);
+          // Reset flag first to ensure useEffect triggers
+          setIsPlayingCard(false);
+          aiPlayTimeoutRef.current = setTimeout(() => setIsPlayingCard(true), 100);
         }
 
       } catch (err) {
@@ -822,7 +981,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
     };
 
     runAiPlay();
-  }, [gamePhase, isPlayingCard, dummyHand, declarerHand, vulnerability]);
+  }, [gamePhase, isPlayingCard, vulnerability]);
 
   const shouldShowHands = showHandsThisDeal || alwaysShowHands;
 
@@ -900,15 +1059,10 @@ Please provide a detailed analysis of the auction and identify any bidding error
             userIsDeclarer: playState.contract.declarer === 'S',
             dummy_hand_in_state: playState.dummy_hand?.cards?.length || playState.dummy_hand?.length || 0,
             dummy_revealed: playState.dummy_revealed,
-            isUserTurn: playState.next_to_play === 'S' && !isPlayingCard && playState.dummy !== 'S',
-            isDeclarerTurn: playState.next_to_play === playState.contract.declarer && !isPlayingCard && playState.dummy === 'S',
-            isDummyTurn: playState.next_to_play === playState.dummy && !isPlayingCard && playState.contract.declarer === 'S',
-            isDummyTurn_calculation: {
-              next_is_dummy: playState.next_to_play === playState.dummy,
-              not_playing: !isPlayingCard,
-              user_is_declarer: playState.contract.declarer === 'S',
-              result: playState.next_to_play === playState.dummy && !isPlayingCard && playState.contract.declarer === 'S'
-            }
+            isUserTurn_OLD: playState.next_to_play === 'S' && playState.dummy !== 'S',
+            isUserTurn_NEW: (playState.next_to_play === 'S' && playState.dummy !== 'S') || (playState.next_to_play === playState.dummy && playState.contract.declarer === 'S') || (playState.next_to_play === playState.contract.declarer && playState.dummy === 'S'),
+            isDeclarerTurn: playState.next_to_play === playState.contract.declarer && playState.dummy === 'S',
+            isDummyTurn: playState.next_to_play === playState.dummy && playState.contract.declarer === 'S'
           })}
           <PlayTable
             playState={playState}
@@ -918,9 +1072,9 @@ Please provide a detailed analysis of the auction and identify any bidding error
             onCardPlay={handleCardPlay}
             onDeclarerCardPlay={handleDeclarerCardPlay}
             onDummyCardPlay={handleDummyCardPlay}
-            isUserTurn={playState.next_to_play === 'S' && !isPlayingCard && playState.dummy !== 'S'}
-            isDeclarerTurn={playState.next_to_play === playState.contract.declarer && !isPlayingCard && playState.dummy === 'S'}
-            isDummyTurn={playState.next_to_play === playState.dummy && !isPlayingCard && playState.contract.declarer === 'S'}
+            isUserTurn={playState.next_to_play === 'S'}
+            isDeclarerTurn={playState.next_to_play === playState.contract.declarer && playState.dummy === 'S'}
+            isDummyTurn={playState.next_to_play === playState.dummy && playState.contract.declarer === 'S'}
             auction={auction}
           />
           {displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}

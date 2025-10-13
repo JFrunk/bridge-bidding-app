@@ -1,0 +1,327 @@
+{
+  "timestamp": "2025-10-10T15:36:50.245561",
+  "all_hands": {
+    "North": {
+      "cards": [
+        {
+          "rank": "A",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 10,
+        "dist_points": 1,
+        "total_points": 11,
+        "suit_hcp": {
+          "\u2660": 4,
+          "\u2665": 0,
+          "\u2666": 3,
+          "\u2663": 3
+        },
+        "suit_lengths": {
+          "\u2660": 3,
+          "\u2665": 2,
+          "\u2666": 3,
+          "\u2663": 5
+        }
+      }
+    },
+    "East": {
+      "cards": [
+        {
+          "rank": "7",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 6,
+        "dist_points": 0,
+        "total_points": 6,
+        "suit_hcp": {
+          "\u2660": 0,
+          "\u2665": 1,
+          "\u2666": 5,
+          "\u2663": 0
+        },
+        "suit_lengths": {
+          "\u2660": 2,
+          "\u2665": 3,
+          "\u2666": 4,
+          "\u2663": 4
+        }
+      }
+    },
+    "South": {
+      "cards": [
+        {
+          "rank": "J",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 17,
+        "dist_points": 0,
+        "total_points": 17,
+        "suit_hcp": {
+          "\u2660": 1,
+          "\u2665": 7,
+          "\u2666": 2,
+          "\u2663": 7
+        },
+        "suit_lengths": {
+          "\u2660": 2,
+          "\u2665": 4,
+          "\u2666": 4,
+          "\u2663": 3
+        }
+      }
+    },
+    "West": {
+      "cards": [
+        {
+          "rank": "K",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 7,
+        "dist_points": 2,
+        "total_points": 9,
+        "suit_hcp": {
+          "\u2660": 5,
+          "\u2665": 2,
+          "\u2666": 0,
+          "\u2663": 0
+        },
+        "suit_lengths": {
+          "\u2660": 6,
+          "\u2665": 4,
+          "\u2666": 2,
+          "\u2663": 1
+        }
+      }
+    }
+  },
+  "auction": [
+    {
+      "bid": "Pass",
+      "explanation": "Less than 13 total points."
+    },
+    {
+      "bid": "Pass",
+      "explanation": "Less than 13 total points."
+    },
+    {
+      "bid": "1NT",
+      "explanation": "Your bid."
+    },
+    {
+      "bid": "Pass",
+      "explanation": "No bid found by any module."
+    },
+    {
+      "bid": "Pass",
+      "explanation": "Logic error: DecisionEngine chose 'responses' but it was not found or returned no bid."
+    },
+    {
+      "bid": "Pass",
+      "explanation": "No bid found by any module."
+    }
+  ],
+  "vulnerability": "None",
+  "dealer": "North",
+  "user_position": "South",
+  "user_concern": "Failed to start card play phase - Please check why card play phase did not start?\n\n"
+}

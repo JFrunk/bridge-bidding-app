@@ -590,14 +590,20 @@ def play_card():
         data = request.get_json()
         card_data = data.get("card")
         position = data.get("position", "South")
-        
+
+        # Check if trick is already complete (4 cards) - prevent overplay
+        if len(current_play_state.current_trick) >= 4:
+            return jsonify({
+                "error": "Trick is complete. Please wait for it to be cleared."
+            }), 400
+
         # Create card object
         card = Card(rank=card_data["rank"], suit=card_data["suit"])
         hand = current_play_state.hands[position]
-        
+
         # Validate legal play
         is_legal = play_engine.is_legal_play(
-            card, hand, current_play_state.current_trick, 
+            card, hand, current_play_state.current_trick,
             current_play_state.contract.trump_suit
         )
         
@@ -609,10 +615,14 @@ def play_card():
         
         # Play the card
         current_play_state.current_trick.append((card, position))
-        
+
+        # Track who led this trick (first card played)
+        if len(current_play_state.current_trick) == 1:
+            current_play_state.current_trick_leader = position
+
         # Remove card from hand
         hand.cards.remove(card)
-        
+
         # Reveal dummy after opening lead
         if len(current_play_state.current_trick) == 1 and not current_play_state.dummy_revealed:
             current_play_state.dummy_revealed = True
@@ -636,7 +646,7 @@ def play_card():
             current_play_state.trick_history.append(
                 Trick(
                     cards=list(current_play_state.current_trick),
-                    leader=current_play_state.next_to_play,
+                    leader=current_play_state.current_trick_leader,  # FIXED: Use tracked leader
                     winner=trick_winner
                 )
             )
@@ -675,15 +685,26 @@ def get_ai_play():
     
     try:
         position = current_play_state.next_to_play
-        
+
+        # Check if trick is already complete (4 cards) - prevent overplay
+        if len(current_play_state.current_trick) >= 4:
+            return jsonify({
+                "error": "Trick is complete. Please wait for it to be cleared."
+            }), 400
+
         # AI chooses card
         card = play_ai.choose_card(current_play_state, position)
         hand = current_play_state.hands[position]
-        
+
         # Play the card
         current_play_state.current_trick.append((card, position))
+
+        # Track who led this trick (first card played)
+        if len(current_play_state.current_trick) == 1:
+            current_play_state.current_trick_leader = position
+
         hand.cards.remove(card)
-        
+
         # Reveal dummy after opening lead
         if len(current_play_state.current_trick) == 1 and not current_play_state.dummy_revealed:
             current_play_state.dummy_revealed = True
@@ -707,7 +728,7 @@ def get_ai_play():
             current_play_state.trick_history.append(
                 Trick(
                     cards=list(current_play_state.current_trick),
-                    leader=current_play_state.next_to_play,
+                    leader=current_play_state.current_trick_leader,  # FIXED: Use tracked leader
                     winner=trick_winner
                 )
             )
@@ -801,8 +822,9 @@ def clear_trick():
         return jsonify({"error": "No play in progress"}), 400
 
     try:
-        # Clear the current trick
+        # Clear the current trick and reset leader
         current_play_state.current_trick = []
+        current_play_state.current_trick_leader = None
 
         return jsonify({
             "success": True,
@@ -863,3 +885,5 @@ def complete_play():
         traceback.print_exc()
         return jsonify({"error": f"Error calculating final score: {e}"}), 500
 
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=5001, debug=True)

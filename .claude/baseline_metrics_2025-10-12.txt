@@ -1,0 +1,120 @@
+[INFO] Checking for god classes...
+[INFO] Checking for global state...
+[INFO] Analyzing dependencies...
+[INFO] Checking for circular dependencies...
+[INFO] Checking for excessive dependencies...
+[INFO] Checking ADR usage...
+[INFO] Checking documentation coverage...
+[INFO] Checking test organization...
+[INFO] Calculating metrics...
+================================================================================
+ARCHITECTURAL COMPLIANCE REPORT
+Generated: 2025-10-12 14:12:24
+================================================================================
+
+SUMMARY
+--------------------------------------------------------------------------------
+Total Python Files: 112
+Total Lines of Code: 15,388
+Average LOC per File: 137.4
+Test Files: 51
+Test/Code Ratio: 0.84
+
+Critical Issues: 0
+Warnings: 17
+Info: 0
+
+🟡 WARNING ISSUES (17)
+--------------------------------------------------------------------------------
+
+[GOD_CLASS]
+  File: backend/server.py
+  Issue: Large file: 677 lines (> 500)
+  Fix: Consider breaking into smaller, focused modules
+
+[GLOBAL_STATE]
+  File: backend/simulation.py:16
+  Issue: Potential global state: CONSTANT-style mutable variable
+  Fix: Consider session-based state management (see ARCHITECTURE_RISK_ANALYSIS.md Risk #1)
+
+[GLOBAL_STATE]
+  File: backend/simulation.py:46
+  Issue: Potential global state: CONSTANT-style mutable variable
+  Fix: Consider session-based state management (see ARCHITECTURE_RISK_ANALYSIS.md Risk #1)
+
+[GLOBAL_STATE]
+  File: backend/server.py:28
+  Issue: Potential global state: current_* variable
+  Fix: Consider session-based state management (see ARCHITECTURE_RISK_ANALYSIS.md Risk #1)
+
+[GLOBAL_STATE]
+  File: backend/server.py:36
+  Issue: Potential global state: current_* variable
+  Fix: Consider session-based state management (see ARCHITECTURE_RISK_ANALYSIS.md Risk #1)
+
+[GLOBAL_STATE]
+  File: backend/server.py:37
+  Issue: Potential global state: current_* variable
+  Fix: Consider session-based state management (see ARCHITECTURE_RISK_ANALYSIS.md Risk #1)
+
+[GLOBAL_STATE]
+  File: backend/server.py:38
+  Issue: Potential global state: current_* variable
+  Fix: Consider session-based state management (see ARCHITECTURE_RISK_ANALYSIS.md Risk #1)
+
+[GLOBAL_STATE]
+  File: backend/server.py:40
+  Issue: Potential global state: CONSTANT-style mutable variable
+  Fix: Consider session-based state management (see ARCHITECTURE_RISK_ANALYSIS.md Risk #1)
+
+[GLOBAL_STATE]
+  File: backend/simulation_enhanced.py:26
+  Issue: Potential global state: CONSTANT-style mutable variable
+  Fix: Consider session-based state management (see ARCHITECTURE_RISK_ANALYSIS.md Risk #1)
+
+[GLOBAL_STATE]
+  File: backend/llm_analyzer.py:17
+  Issue: Potential global state: CONSTANT-style mutable variable
+  Fix: Consider session-based state management (see ARCHITECTURE_RISK_ANALYSIS.md Risk #1)
+
+[GLOBAL_STATE]
+  File: backend/engine/learning/skill_tree.py:43
+  Issue: Potential global state: CONSTANT-style mutable variable
+  Fix: Consider session-based state management (see ARCHITECTURE_RISK_ANALYSIS.md Risk #1)
+
+[GLOBAL_STATE]
+  File: backend/engine/ai/sayc_rules.py:26
+  Issue: Potential global state: CONSTANT-style mutable variable
+  Fix: Consider session-based state management (see ARCHITECTURE_RISK_ANALYSIS.md Risk #1)
+
+[GLOBAL_STATE]
+  File: backend/engine/ai/conventions/convention_registry.py:73
+  Issue: Potential global state: CONSTANT-style mutable variable
+  Fix: Consider session-based state management (see ARCHITECTURE_RISK_ANALYSIS.md Risk #1)
+
+[EXCESSIVE_DEPENDENCIES]
+  Issue: backend.server has 19 dependencies (> 15)
+  Fix: High coupling. Consider reducing dependencies or splitting module.
+
+[EXCESSIVE_DEPENDENCIES]
+  Issue: backend.engine.bidding_engine has 19 dependencies (> 15)
+  Fix: High coupling. Consider reducing dependencies or splitting module.
+
+[MISSING_DOCSTRING]
+  Issue: No module docstring in server.py
+  Fix: Add module-level docstring explaining purpose and architecture
+
+[MISSING_DOCSTRING]
+  Issue: No module docstring in engine/bidding_engine.py
+  Fix: Add module-level docstring explaining purpose and architecture
+
+ARCHITECTURAL HEALTH SCORE
+--------------------------------------------------------------------------------
+Score: 70/100 (Grade: C)
+
+RECOMMENDATIONS:
+- Review and address critical issues first
+- Consult ARCHITECTURAL_DECISION_FRAMEWORK.md for guidance
+- Create ADRs for any architectural decisions
+
+================================================================================

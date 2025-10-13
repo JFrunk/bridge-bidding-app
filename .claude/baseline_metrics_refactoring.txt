@@ -1,0 +1,68 @@
+# UI/UX Refactoring Baseline Metrics
+Date: 2025-10-13
+Branch: refactor/shadcn-tailwind-migration
+Before: Shadcn/ui + Tailwind CSS Migration
+
+## Build Metrics
+- Build Status: ✅ SUCCESS (with warnings)
+- Build Time: ~15 seconds
+- Bundle Size (gzipped):
+  - JS: 67.19 kB (main bundle)
+  - CSS: 5.85 kB
+  - Total: ~73 kB
+
+## Build Warnings
+- ESLint warnings: 5 total
+  - 2 in App.js (useEffect dependencies)
+  - 3 in PlayComponents.js (unused variables)
+
+## Test Metrics
+- Test Suites: 4 total (3 passed, 1 failed)
+- Tests: 29 total (28 passed, 1 failed)
+- Failed Test: App.test.js "renders learn react link" (outdated test, not critical)
+- Test Time: 4.125 seconds
+
+## Test Coverage
+- Statements: 7.46%
+- Branches: 4.7%
+- Functions: 3.92%
+- Lines: 7.49%
+
+### Coverage by File:
+- App.js: 0% (needs testing)
+- PlayComponents.js: 0% (needs testing)
+- Card.js: 100% ✅
+- HandAnalysis.js: 100% ✅
+- cardUtils.js: 97.14% ✅
+
+## File Count
+- CSS Files: 8 files
+  - index.css
+  - App.css
+  - PlayComponents.css
+  - Card.css
+  - HandAnalysis.css
+  - PlayerHand.css
+  - TurnIndicator.css
+  - ContractGoalTracker.css
+
+- JS Component Files: ~20 files
+
+## Current State Summary
+- ✅ Build works
+- ✅ Core tests pass
+- ⚠️ Low overall test coverage (7.46%)
+- ⚠️ 1 outdated test (not blocking)
+- ⚠️ 5 linting warnings (non-critical)
+
+## Target Metrics (After Refactoring)
+- Bundle Size: <500 KB gzipped (currently 73 KB - good!)
+- Test Coverage: >80%
+- Build Warnings: 0
+- CSS Files: 2 (index.css + Tailwind output)
+- Lighthouse Score: >90 all categories
+
+## Notes
+- Starting point is healthy - build works, tests mostly pass
+- Main improvements needed: consistency, test coverage
+- Bundle size already excellent, don't bloat it!

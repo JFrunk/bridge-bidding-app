@@ -137,6 +137,7 @@ pytest backend/tests/integration/ -v   # Integration tests only
 
 **Must Read:**
 - `.claude/PROJECT_CONTEXT.md` - Full project context
+- `docs/COMPLETE_BRIDGE_RULES.md` - **Complete bridge rules reference (bidding, play, scoring, all phases)**
 - `.claude/DOCUMENTATION_PRACTICES.md` - Documentation guidelines
 - `backend/tests/README.md` - Complete testing guide
 

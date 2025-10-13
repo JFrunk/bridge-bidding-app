@@ -1,0 +1,3 @@
+/Users/simonroy/Desktop/bridge_bidding_app/backend/server.py:16: DeprecationWarning: Importing from engine.simple_play_ai is deprecated. Use 'from engine.play.ai.simple_ai import SimplePlayAI' instead.
+  from engine.simple_play_ai import SimplePlayAI
+✓ Learning path API endpoints registered

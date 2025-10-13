@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convention Levels - Test Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .level-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .level-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            border-bottom: 3px solid;
+            padding-bottom: 15px;
+        }
+
+        .level-icon {
+            font-size: 2em;
+        }
+
+        .level-title {
+            flex: 1;
+        }
+
+        .level-title h2 {
+            margin-bottom: 5px;
+        }
+
+        .level-subtitle {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .essential { border-color: #4CAF50; }
+        .essential .level-header { border-color: #4CAF50; }
+        .essential .level-icon { color: #4CAF50; }
+
+        .intermediate { border-color: #2196F3; }
+        .intermediate .level-header { border-color: #2196F3; }
+        .intermediate .level-icon { color: #2196F3; }
+
+        .advanced { border-color: #9C27B0; }
+        .advanced .level-header { border-color: #9C27B0; }
+        .advanced .level-icon { color: #9C27B0; }
+
+        .conventions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .convention-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .convention-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .convention-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .convention-badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-frequency {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-complexity {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+        .badge-category {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .convention-description {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .convention-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85em;
+            color: #888;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            padding: 40px;
+        }
+
+        .error {
+            background: #f44336;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .stats {
+            background: rgba(255,255,255,0.95);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .stats h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Bridge Convention Levels</h1>
+
+        <div id="stats" class="stats" style="display:none;">
+            <h3>📊 Convention Summary</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="total-conventions">-</div>
+                    <div class="stat-label">Total Conventions</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="essential-count">-</div>
+                    <div class="stat-label">Essential</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="intermediate-count">-</div>
+                    <div class="stat-label">Intermediate</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="advanced-count">-</div>
+                    <div class="stat-label">Advanced</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">Loading conventions...</div>
+        <div id="error" class="error" style="display:none;"></div>
+        <div id="content"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5001/api';
+
+        async function loadConventions() {
+            try {
+                const response = await fetch(`${API_URL}/conventions/by-level`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+
+                // Update stats
+                document.getElementById('stats').style.display = 'block';
+                document.getElementById('total-conventions').textContent =
+                    data.essential.length + data.intermediate.length + data.advanced.length;
+                document.getElementById('essential-count').textContent = data.essential.length;
+                document.getElementById('intermediate-count').textContent = data.intermediate.length;
+                document.getElementById('advanced-count').textContent = data.advanced.length;
+
+                // Render conventions
+                const content = document.getElementById('content');
+                content.innerHTML = '';
+
+                // Essential
+                content.innerHTML += renderLevel('essential', '⭐', 'Essential Conventions',
+                    'Must-learn conventions for every bridge player', data.essential);
+
+                // Intermediate
+                content.innerHTML += renderLevel('intermediate', '🎯', 'Intermediate Conventions',
+                    'Important tools for competitive play', data.intermediate);
+
+                // Advanced
+                content.innerHTML += renderLevel('advanced', '👑', 'Advanced Conventions',
+                    'Expert techniques for sophisticated bidding', data.advanced);
+
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                const errorDiv = document.getElementById('error');
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = `
+                    <strong>Error loading conventions:</strong><br>
+                    ${error.message}<br><br>
+                    <small>Make sure the Flask server is running on http://localhost:5001</small>
+                `;
+                console.error('Error:', error);
+            }
+        }
+
+        function renderLevel(levelClass, icon, title, subtitle, conventions) {
+            const cards = conventions.map(conv => renderConventionCard(conv)).join('');
+
+            return `
+                <div class="level-section ${levelClass}">
+                    <div class="level-header">
+                        <div class="level-icon">${icon}</div>
+                        <div class="level-title">
+                            <h2>${title}</h2>
+                            <div class="level-subtitle">${subtitle}</div>
+                        </div>
+                    </div>
+                    <div class="conventions-grid">
+                        ${cards}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderConventionCard(convention) {
+            return `
+                <div class="convention-card">
+                    <div class="convention-name">${convention.name}</div>
+                    <div class="convention-badges">
+                        <span class="badge badge-frequency">📊 ${convention.frequency}</span>
+                        <span class="badge badge-complexity">🎯 ${convention.complexity}</span>
+                        <span class="badge badge-category">📁 ${convention.category}</span>
+                    </div>
+                    <div class="convention-description">
+                        ${convention.short_description}
+                    </div>
+                    <div class="convention-meta">
+                        <div class="meta-item">
+                            <span>🃏</span>
+                            <span>${convention.practice_hands_required} hands</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>✅</span>
+                            <span>${Math.round(convention.passing_accuracy * 100)}% to pass</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>⏱️</span>
+                            <span>${convention.learning_time_minutes} min</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load on page load
+        loadConventions();
+    </script>
+</body>
+</html>
