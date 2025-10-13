@@ -59,11 +59,34 @@ export function ContractHeader({ contract, tricksWon, auction }) {
 
         {/* 13-Block Tricks Progress Bar */}
         <div className="flex flex-col gap-2 min-w-[500px]">
-          {/* Labels above blocks */}
+          {/* Labels with counts */}
           <div className="flex flex-row justify-between text-sm text-gray-300">
-            <span>Won</span>
-            <span>Remaining</span>
-            <span>Lost</span>
+            <div className="flex flex-col items-start">
+              <span className="font-bold">Won</span>
+              <span className="text-lg text-white">{tricksWonBySide}</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="font-bold">Remaining</span>
+              <span className="text-lg text-white">{tricksRemaining}</span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="font-bold">Lost</span>
+              <span className="text-lg text-white">{tricksLost}</span>
+            </div>
+          </div>
+
+          {/* Goal indicator above bar */}
+          <div className="flex flex-row h-8 relative">
+            {blocks.map((state, index) => (
+              <div
+                key={index}
+                className="flex-1 flex items-start justify-center"
+              >
+                {index === tricksNeeded - 1 && (
+                  <div className="text-xl font-bold text-white">↓ {tricksNeeded}</div>
+                )}
+              </div>
+            ))}
           </div>
 
           {/* 13 Blocks with vertical dividers */}
@@ -75,7 +98,7 @@ export function ContractHeader({ contract, tricksWon, auction }) {
                   "flex-1 flex items-center justify-center transition-colors duration-300",
                   "border-r border-gray-600 last:border-r-0",
                   // Bold border at trick needed line
-                  index === tricksNeeded - 1 && "border-r-2 border-r-white",
+                  index === tricksNeeded - 1 && "border-r-4 border-r-white",
                   // Colors based on state
                   state === 'won' && "bg-success",
                   state === 'remaining' && "bg-bg-tertiary",
@@ -92,20 +115,20 @@ export function ContractHeader({ contract, tricksWon, auction }) {
       <div className="flex flex-col flex-1 min-w-[200px] max-w-[300px]">
         <div className="text-base font-bold text-gray-300 mb-2">Bidding</div>
         <div className="flex-1 overflow-y-auto max-h-32">
-          <table className="w-full text-base">
+          <table className="w-full text-base border-collapse">
             <thead>
-              <tr className="text-gray-400">
-                <th className="text-left px-2 py-1">N</th>
-                <th className="text-left px-2 py-1">E</th>
-                <th className="text-left px-2 py-1">S</th>
+              <tr className="text-gray-400 border-b border-gray-600">
+                <th className="text-left px-2 py-1 border-r border-gray-600">N</th>
+                <th className="text-left px-2 py-1 border-r border-gray-600">E</th>
+                <th className="text-left px-2 py-1 border-r border-gray-600">S</th>
                 <th className="text-left px-2 py-1">W</th>
               </tr>
             </thead>
             <tbody>
               {rounds.map((round, roundIndex) => (
-                <tr key={roundIndex} className="text-white">
+                <tr key={roundIndex} className="text-white border-b border-gray-700">
                   {[0, 1, 2, 3].map(col => (
-                    <td key={col} className="px-2 py-1">
+                    <td key={col} className={cn("px-2 py-1", col < 3 && "border-r border-gray-700")}>
                       {round[col]?.bid || '-'}
                     </td>
                   ))}

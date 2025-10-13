@@ -363,9 +363,9 @@
   display: grid;
   grid-template-areas:
     ". north ."
-    ". center east-west"
+    "west center east"
     ". south .";
-  grid-template-columns: 1fr minmax(400px, 2fr) minmax(200px, 1fr);
+  grid-template-columns: minmax(150px, 1fr) minmax(400px, 2fr) minmax(150px, 1fr);
   grid-template-rows: auto 300px auto;
   gap: 15px;
   padding: 15px;
@@ -389,16 +389,8 @@
   justify-content: center;
 }
 
-.east-west-container {
-  grid-area: east-west;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: stretch;
-  justify-content: flex-start;
-}
-
 .position-east {
+  grid-area: east;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -414,6 +406,7 @@
 }
 
 .position-west {
+  grid-area: west;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -721,9 +714,9 @@
   position: relative;
 }
 
-/* Overlap playable cards horizontally */
+/* Overlap playable cards horizontally - show 35% of each card (65% hidden) */
 .suit-group .playable-card {
-  margin-left: -35px; /* Reduced overlap to prevent overflow */
+  margin-left: -45px; /* Card width 70px, show 35% = 24.5px, hide 65% = 45.5px */
   margin-top: 0;
   margin-right: 0;
   margin-bottom: 0;
@@ -737,7 +730,7 @@
 .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
 .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
 .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-  margin-left: -35px; /* Reduced overlap to prevent overflow */
+  margin-left: -45px; /* Same overlap between suits */
 }
 
 /* Suit Colors */

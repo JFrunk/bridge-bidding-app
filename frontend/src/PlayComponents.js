@@ -252,8 +252,7 @@ export function PlayTable({
           trickComplete={trick_complete}
         />
 
-        {/* West and East positions container - Standard bridge layout */}
-        <div className="east-west-container">
+        {/* West position - Left side (standard bridge layout) */}
         <div className="position position-west">
           <div className="position-label">
             West
@@ -279,6 +278,7 @@ export function PlayTable({
           )}
         </div>
 
+        {/* East position - Right side (standard bridge layout) */}
         <div className="position position-east">
           <div className="position-label">
             East
@@ -302,7 +302,6 @@ export function PlayTable({
               ))}
             </div>
           )}
-        </div>
         </div>
 
         {/* South position (user) */}
