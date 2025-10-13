@@ -3,8 +3,8 @@ import { cn } from "../../lib/utils";
 
 /**
  * ContractHeader - Consolidated header showing contract, tricks progress, and bidding summary
+ * NEW LAYOUT: Contract on left, 13-block trick progress below it, bidding table on right
  * Follows "Rule of Three" and senior-friendly UX principles
- * Designed as SECONDARY visual hierarchy (non-distracting)
  */
 export function ContractHeader({ contract, tricksWon, auction }) {
   if (!contract) return null;
@@ -13,7 +13,15 @@ export function ContractHeader({ contract, tricksWon, auction }) {
   const doubledText = doubled === 2 ? 'XX' : doubled === 1 ? 'X' : '';
   const displayStrain = strain === 'N' ? 'NT' : strain;
 
-  // Calculate tricks for progress bar
+  // Map declarer to full name
+  const declarerName = {
+    'N': 'North',
+    'E': 'East',
+    'S': 'South',
+    'W': 'West'
+  }[declarer] || declarer;
+
+  // Calculate tricks for 13-block progress bar
   const tricksNeeded = level + 6;
   const declarerSide = (declarer === 'N' || declarer === 'S') ? 'NS' : 'EW';
   const tricksWonBySide = declarerSide === 'NS'
@@ -23,78 +31,88 @@ export function ContractHeader({ contract, tricksWon, auction }) {
   const tricksRemaining = 13 - totalTricksPlayed;
   const tricksLost = 13 - tricksWonBySide - tricksRemaining;
 
+  // Create 13 blocks array with state (won/remaining/lost)
+  const blocks = Array.from({ length: 13 }, (_, i) => {
+    if (i < tricksWonBySide) return 'won';
+    if (i >= 13 - tricksLost) return 'lost';
+    return 'remaining';
+  });
+
+  // Group auction into rounds (4 bids per round: N, E, S, W)
+  const rounds = [];
+  if (auction) {
+    for (let i = 0; i < auction.length; i += 4) {
+      rounds.push(auction.slice(i, i + 4));
+    }
+  }
+
   return (
-    <div className="flex flex-row items-stretch gap-6 p-4 bg-bg-secondary rounded-lg">
-      {/* Unified Tricks Progress Bar - Visual indicator of contract progress */}
-      <div className="flex flex-col justify-center min-w-[200px]">
-        <div className="flex flex-row h-12 rounded-md overflow-hidden border border-gray-600">
-          {/* Won (green left) */}
-          <div
-            className="bg-success flex items-center justify-center text-white font-bold"
-            style={{ width: `${(tricksWonBySide / 13) * 100}%` }}
-            aria-label={`${tricksWonBySide} tricks won`}
-          >
-            {tricksWonBySide > 0 && <span className="text-sm">{tricksWonBySide}</span>}
+    <div className="flex flex-row gap-6 p-4 bg-bg-secondary rounded-lg">
+      {/* LEFT SECTION: Contract + 13-Block Progress Bar */}
+      <div className="flex flex-col gap-4">
+        {/* Contract Display */}
+        <div className="flex flex-col">
+          <div className="text-3xl font-bold text-white">
+            {level}{displayStrain}{doubledText} by {declarerName}
           </div>
-          {/* Remaining (dark center) */}
-          <div
-            className="bg-bg-tertiary flex items-center justify-center text-gray-400"
-            style={{ width: `${(tricksRemaining / 13) * 100}%` }}
-            aria-label={`${tricksRemaining} tricks remaining`}
-          >
-            {tricksRemaining > 0 && <span className="text-sm">{tricksRemaining}</span>}
+        </div>
+
+        {/* 13-Block Tricks Progress Bar */}
+        <div className="flex flex-col gap-2 min-w-[500px]">
+          {/* Labels above blocks */}
+          <div className="flex flex-row justify-between text-sm text-gray-300">
+            <span>Won</span>
+            <span>Remaining</span>
+            <span>Lost</span>
           </div>
-          {/* Lost (red right) */}
-          <div
-            className="bg-danger flex items-center justify-center text-white font-bold"
-            style={{ width: `${(tricksLost / 13) * 100}%` }}
-            aria-label={`${tricksLost} tricks lost`}
-          >
-            {tricksLost > 0 && <span className="text-sm">{tricksLost}</span>}
+
+          {/* 13 Blocks with vertical dividers */}
+          <div className="flex flex-row h-12 border-2 border-gray-600 rounded-md overflow-hidden">
+            {blocks.map((state, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "flex-1 flex items-center justify-center transition-colors duration-300",
+                  "border-r border-gray-600 last:border-r-0",
+                  // Bold border at trick needed line
+                  index === tricksNeeded - 1 && "border-r-2 border-r-white",
+                  // Colors based on state
+                  state === 'won' && "bg-success",
+                  state === 'remaining' && "bg-bg-tertiary",
+                  state === 'lost' && "bg-danger"
+                )}
+                aria-label={`Trick ${index + 1}: ${state}`}
+              />
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Contract Display - Large, prominent */}
-      <div className="flex flex-col justify-center items-center min-w-[120px]">
-        <div className="text-3xl font-bold text-white">
-          {level}{displayStrain}{doubledText}
-        </div>
-        <div className="text-base text-gray-300">
-          by {declarer}
-        </div>
-      </div>
-
-      {/* Tricks Summary - Vertical stack */}
-      <div className="flex flex-col justify-center gap-1">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400 w-20">Won:</span>
-          <span className="text-base text-white font-bold">{tricksWonBySide}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400 w-20">Lost:</span>
-          <span className="text-base text-white font-bold">{tricksLost}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400 w-20">Remaining:</span>
-          <span className="text-base text-white font-bold">{tricksRemaining}</span>
-        </div>
-      </div>
-
-      {/* Bidding Summary - Compact, scrollable */}
-      <div className="flex flex-col flex-1 min-w-[150px] max-w-[200px]">
-        <div className="text-sm font-bold text-gray-300 mb-2">Bidding</div>
-        <div className="flex-1 overflow-y-auto max-h-24 space-y-0.5">
-          {auction && auction.map((bidObject, index) => {
-            const playerIndex = index % 4;
-            const playerLabel = ['N', 'E', 'S', 'W'][playerIndex];
-            return (
-              <div key={index} className="flex items-center gap-2 text-xs">
-                <span className="text-gray-400 w-4">{playerLabel}</span>
-                <span className="text-white">{bidObject.bid}</span>
-              </div>
-            );
-          })}
+      {/* RIGHT SECTION: Bidding Table */}
+      <div className="flex flex-col flex-1 min-w-[200px] max-w-[300px]">
+        <div className="text-base font-bold text-gray-300 mb-2">Bidding</div>
+        <div className="flex-1 overflow-y-auto max-h-32">
+          <table className="w-full text-base">
+            <thead>
+              <tr className="text-gray-400">
+                <th className="text-left px-2 py-1">N</th>
+                <th className="text-left px-2 py-1">E</th>
+                <th className="text-left px-2 py-1">S</th>
+                <th className="text-left px-2 py-1">W</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rounds.map((round, roundIndex) => (
+                <tr key={roundIndex} className="text-white">
+                  {[0, 1, 2, 3].map(col => (
+                    <td key={col} className="px-2 py-1">
+                      {round[col]?.bid || '-'}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

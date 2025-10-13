@@ -252,16 +252,16 @@ export function PlayTable({
           trickComplete={trick_complete}
         />
 
-        {/* East and West positions container */}
+        {/* West and East positions container - Standard bridge layout */}
         <div className="east-west-container">
-        <div className="position position-east">
+        <div className="position position-west">
           <div className="position-label">
-            East
-            <CompactTurnIndicator position="E" isActive={next_to_play === 'E'} />
-            {dummyPosition === 'E' && ' (Dummy)'}
+            West
+            <CompactTurnIndicator position="W" isActive={next_to_play === 'W'} />
+            {dummyPosition === 'W' && ' (Dummy)'}
           </div>
-          {/* Show East's hand if it's dummy */}
-          {dummyPosition === 'E' && dummyHand && (
+          {/* Show West's hand if it's dummy */}
+          {dummyPosition === 'W' && dummyHand && (
             <div className="dummy-hand">
               {suitOrder.map(suit => (
                 <div key={suit} className="suit-group">
@@ -279,14 +279,14 @@ export function PlayTable({
           )}
         </div>
 
-        <div className="position position-west">
+        <div className="position position-east">
           <div className="position-label">
-            West
-            <CompactTurnIndicator position="W" isActive={next_to_play === 'W'} />
-            {dummyPosition === 'W' && ' (Dummy)'}
+            East
+            <CompactTurnIndicator position="E" isActive={next_to_play === 'E'} />
+            {dummyPosition === 'E' && ' (Dummy)'}
           </div>
-          {/* Show West's hand if it's dummy */}
-          {dummyPosition === 'W' && dummyHand && (
+          {/* Show East's hand if it's dummy */}
+          {dummyPosition === 'E' && dummyHand && (
             <div className="dummy-hand">
               {suitOrder.map(suit => (
                 <div key={suit} className="suit-group">
