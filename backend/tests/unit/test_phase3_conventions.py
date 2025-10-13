@@ -193,7 +193,7 @@ def test_splinter_after_major_opening():
 
 def test_no_splinter_without_support():
     """Test that splinter requires 4+ card support"""
-    hand = create_hand("K87", "AQ42", "2", "KJ6543")
+    hand = create_hand("K87", "AQ42", "2", "KJ654")  # 13 cards: 3+4+1+5
 
     features = {
         'hand': hand,
@@ -243,7 +243,7 @@ def test_no_splinter_without_shortness():
 
 def test_fourth_suit_forcing_applicable():
     """Test FSF when 3 suits bid and no fit found"""
-    hand = create_hand("AT65", "KJ87", "AQ4", "32")
+    hand = create_hand("AT6", "KJ87", "AQ42", "32")  # 3-4-4-2, no 4-card fit with partner's spades
 
     # Auction: 1♦ (partner) - 1♥ (me) - 1♠ (partner) - ?
     # Three suits bid: ♦, ♥, ♠. Fourth suit is ♣

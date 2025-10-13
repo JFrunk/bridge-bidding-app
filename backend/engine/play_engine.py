@@ -13,6 +13,48 @@ This is the stable foundation that won't change when AI improves.
 from engine.hand import Hand, Card
 from typing import List, Tuple, Dict, Optional
 from dataclasses import dataclass, field
+from enum import Enum
+
+
+class GamePhase(Enum):
+    """
+    Explicit game phase enumeration for state machine.
+
+    Flow: SETUP → DEALING → BIDDING → PLAY_STARTING → PLAY_IN_PROGRESS →
+          PLAY_COMPLETE → SCORING → ROUND_COMPLETE
+    """
+    SETUP = "setup"                      # Initial state, no deal yet
+    DEALING = "dealing"                  # Cards being dealt
+    BIDDING = "bidding"                  # Auction in progress
+    BIDDING_COMPLETE = "bidding_complete"  # Auction ended, contract determined
+    PLAY_STARTING = "play_starting"      # Opening lead about to be made
+    PLAY_IN_PROGRESS = "play_in_progress"  # Cards being played
+    PLAY_COMPLETE = "play_complete"      # All 13 tricks played
+    SCORING = "scoring"                  # Calculating final score
+    ROUND_COMPLETE = "round_complete"    # Hand complete, ready for next
+
+    def __str__(self):
+        return self.value
+
+    @property
+    def is_play_phase(self) -> bool:
+        """Check if currently in play phase (any play state)"""
+        return self in [GamePhase.PLAY_STARTING, GamePhase.PLAY_IN_PROGRESS, GamePhase.PLAY_COMPLETE]
+
+    @property
+    def is_bidding_phase(self) -> bool:
+        """Check if currently in bidding phase"""
+        return self in [GamePhase.BIDDING, GamePhase.BIDDING_COMPLETE]
+
+    @property
+    def allows_card_play(self) -> bool:
+        """Check if card play is allowed in this phase"""
+        return self in [GamePhase.PLAY_STARTING, GamePhase.PLAY_IN_PROGRESS]
+
+    @property
+    def allows_bidding(self) -> bool:
+        """Check if bidding is allowed in this phase"""
+        return self == GamePhase.BIDDING
 
 @dataclass
 class Contract:
@@ -61,6 +103,7 @@ class PlayState:
     next_to_play: str = 'N'
     dummy_revealed: bool = False
     current_trick_leader: Optional[str] = None  # Who led the current trick
+    phase: GamePhase = GamePhase.PLAY_STARTING  # Current game phase
 
     @property
     def dummy(self) -> str:
@@ -83,6 +126,50 @@ class PlayState:
         """Check if all 13 tricks have been played"""
         total_tricks = self.tricks_taken_ns + self.tricks_taken_ew
         return total_tricks == 13
+
+    def transition_to(self, new_phase: GamePhase) -> None:
+        """
+        Transition to a new game phase with validation.
+
+        Raises ValueError if transition is invalid.
+        """
+        valid_transitions = {
+            GamePhase.SETUP: [GamePhase.DEALING],
+            GamePhase.DEALING: [GamePhase.BIDDING],
+            GamePhase.BIDDING: [GamePhase.BIDDING_COMPLETE],
+            GamePhase.BIDDING_COMPLETE: [GamePhase.PLAY_STARTING],
+            GamePhase.PLAY_STARTING: [GamePhase.PLAY_IN_PROGRESS],
+            GamePhase.PLAY_IN_PROGRESS: [GamePhase.PLAY_IN_PROGRESS, GamePhase.PLAY_COMPLETE],
+            GamePhase.PLAY_COMPLETE: [GamePhase.SCORING],
+            GamePhase.SCORING: [GamePhase.ROUND_COMPLETE],
+            GamePhase.ROUND_COMPLETE: [GamePhase.SETUP, GamePhase.DEALING],
+        }
+
+        if new_phase not in valid_transitions.get(self.phase, []):
+            raise ValueError(
+                f"Invalid phase transition: {self.phase} → {new_phase}. "
+                f"Valid transitions from {self.phase}: {valid_transitions.get(self.phase, [])}"
+            )
+
+        self.phase = new_phase
+
+    def can_play_card(self) -> bool:
+        """Check if card play is allowed in current phase"""
+        return self.phase.allows_card_play
+
+    def update_phase_after_card(self) -> None:
+        """
+        Auto-update phase based on game state after a card is played.
+
+        Call this after each card play to keep phase in sync.
+        """
+        if self.phase == GamePhase.PLAY_STARTING and len(self.current_trick) > 0:
+            # First card played, transition to in progress
+            self.phase = GamePhase.PLAY_IN_PROGRESS
+
+        elif self.phase == GamePhase.PLAY_IN_PROGRESS and self.is_complete:
+            # All tricks complete
+            self.phase = GamePhase.PLAY_COMPLETE
 
 
 class PlayEngine:
@@ -278,7 +365,7 @@ class PlayEngine:
 
     @staticmethod
     def calculate_score(contract: Contract, tricks_taken: int,
-                       vulnerability: Dict[str, bool]) -> Dict:
+                       vulnerability: Dict[str, bool], hands: Optional[Dict[str, Hand]] = None) -> Dict:
         """
         Calculate score for a completed contract (SAYC scoring)
 
@@ -286,6 +373,7 @@ class PlayEngine:
         - score: int (positive for declarer, negative for defenders)
         - made: bool
         - overtricks/undertricks: int
+        - honors_bonus: int (if hands provided)
         """
         tricks_needed = contract.tricks_needed
         declarer_side = 'ns' if contract.declarer in ['N', 'S'] else 'ew'
@@ -293,10 +381,60 @@ class PlayEngine:
 
         if tricks_taken >= tricks_needed:
             # Contract made
-            return PlayEngine._score_made_contract(contract, tricks_taken, is_vulnerable)
+            result = PlayEngine._score_made_contract(contract, tricks_taken, is_vulnerable)
         else:
             # Contract defeated
-            return PlayEngine._score_down_contract(contract, tricks_taken, is_vulnerable)
+            result = PlayEngine._score_down_contract(contract, tricks_taken, is_vulnerable)
+
+        # Add honors bonus if hands are provided
+        if hands:
+            honors_bonus = PlayEngine.calculate_honors(contract, hands)
+            if honors_bonus > 0:
+                result['score'] += honors_bonus
+                result['breakdown']['honors_bonus'] = honors_bonus
+
+        return result
+
+    @staticmethod
+    def calculate_honors(contract: Contract, hands: Dict[str, Hand]) -> int:
+        """
+        Calculate honors bonus (rubber bridge rule, also used in some duplicate)
+
+        Honors Rules:
+        - Trump contracts:
+          * 4 of 5 trump honors (A, K, Q, J, 10) in one hand = 100
+          * All 5 trump honors in one hand = 150
+        - Notrump contracts:
+          * All 4 aces in one hand = 150
+
+        Returns:
+            int: Honors bonus (0 if no honors, 100 or 150 if honors held)
+        """
+        if contract.strain == 'NT':
+            # Check for all 4 aces in one hand
+            for position, hand in hands.items():
+                aces_count = sum(1 for card in hand.cards if card.rank == 'A')
+                if aces_count == 4:
+                    return 150
+            return 0
+        else:
+            # Trump contract - check for trump honors
+            trump_suit = contract.trump_suit
+            honor_ranks = {'A', 'K', 'Q', 'J', 'T'}  # T = 10
+
+            # Check each hand for trump honors
+            for position, hand in hands.items():
+                trump_honors = [card for card in hand.cards
+                               if card.suit == trump_suit and card.rank in honor_ranks]
+
+                honor_count = len(trump_honors)
+
+                if honor_count == 5:
+                    return 150  # All 5 honors
+                elif honor_count == 4:
+                    return 100  # 4 of 5 honors
+
+            return 0  # No honors bonus
 
     @staticmethod
     def _score_made_contract(contract: Contract, tricks_taken: int, vulnerable: bool) -> Dict:

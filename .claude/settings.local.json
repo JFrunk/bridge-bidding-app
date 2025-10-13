@@ -35,7 +35,11 @@
       "Bash(npx tailwindcss init:*)",
       "Bash(pkill:*)",
       "Bash(npm uninstall:*)",
-      "Bash(npx shadcn@latest init:*)"
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(./test_quick.sh:*)",
+      "Bash(cat:*)",
+      "Bash(npm start)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []

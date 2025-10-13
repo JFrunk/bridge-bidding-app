@@ -89,7 +89,7 @@ class FourthSuitForcingConvention(ConventionModule):
             bidder_pos = positions[i % 4]
 
             # Extract suit from bid (if applicable)
-            if len(bid) >= 2 and bid[1] in ['e', '`', 'f', 'c']:
+            if len(bid) >= 2 and bid[1] in ['♥', '♠', '♦', '♣']:
                 suit = bid[1]
 
                 # Track suits bid by partnership
@@ -114,7 +114,7 @@ class FourthSuitForcingConvention(ConventionModule):
             return None
 
         # Find the fourth suit (not yet bid)
-        all_suits = {'e', '`', 'f', 'c'}
+        all_suits = {'♥', '♠', '♦', '♣'}
         fourth_suit_set = all_suits - suits_bid
 
         if len(fourth_suit_set) != 1:
@@ -130,7 +130,7 @@ class FourthSuitForcingConvention(ConventionModule):
         # Get partner's last suit bid
         partner_suits = []
         for i, bid in enumerate(auction_history):
-            if positions[i % 4] == partner_pos and len(bid) >= 2 and bid[1] in ['e', '`', 'f', 'c']:
+            if positions[i % 4] == partner_pos and len(bid) >= 2 and bid[1] in ['♥', '♠', '♦', '♣']:
                 partner_suits.append(bid[1])
 
         # If we have 4+ cards in partner's suit, we'd raise instead
@@ -145,7 +145,7 @@ class FourthSuitForcingConvention(ConventionModule):
 
         # Get my first bid suit
         my_first_suit = None
-        if my_bids and len(my_bids[0]) >= 2 and my_bids[0][1] in ['e', '`', 'f', 'c']:
+        if my_bids and len(my_bids[0]) >= 2 and my_bids[0][1] in ['♥', '♠', '♦', '♣']:
             my_first_suit = my_bids[0][1]
 
         # If we have 6+ cards in our suit, we'd rebid it
@@ -154,14 +154,23 @@ class FourthSuitForcingConvention(ConventionModule):
 
         # Determine FSF bid level
         # Must be higher than partner's last bid
-        partner_last_bid = auction_history[-1] if auction_history else ''
+        # Get partner's actual last bid (not just last item in auction)
+        partner_last_bid = partner_suits[-1] if partner_suits else None
+        partner_last_bid_str = None
 
-        if partner_last_bid and len(partner_last_bid) >= 2:
-            last_level = int(partner_last_bid[0]) if partner_last_bid[0].isdigit() else 1
-            last_suit = partner_last_bid[1] if len(partner_last_bid) > 1 else ''
+        # Find the actual bid string for partner's last suit
+        for i in range(len(auction_history) - 1, -1, -1):
+            bid = auction_history[i]
+            if positions[i % 4] == partner_pos and len(bid) >= 2 and bid[1] in ['♥', '♠', '♦', '♣']:
+                partner_last_bid_str = bid
+                break
+
+        if partner_last_bid_str and len(partner_last_bid_str) >= 2:
+            last_level = int(partner_last_bid_str[0]) if partner_last_bid_str[0].isdigit() else 1
+            last_suit = partner_last_bid_str[1] if len(partner_last_bid_str) > 1 else ''
 
             # FSF is at minimum level possible in 4th suit
-            suit_rank = {'c': 1, 'f': 2, 'e': 3, '`': 4}
+            suit_rank = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
             fourth_rank = suit_rank.get(fourth_suit, 0)
             last_rank = suit_rank.get(last_suit, 0)
 
@@ -215,18 +224,20 @@ class FourthSuitForcingConvention(ConventionModule):
 
     def _has_stopper(self, hand: Hand, suit: str) -> bool:
         """Check if hand has stopper in suit (A, K, Qx, Jxx)"""
-        cards = hand.cards.get(suit, [])
-        if not cards:
+        # Get cards in this suit from the hand
+        cards_in_suit = [c for c in hand.cards if c.suit == suit]
+        if not cards_in_suit:
             return False
 
-        # Count honor cards
-        honors = [c for c in cards if c in ['A', 'K', 'Q', 'J']]
+        # Get ranks of cards in suit
+        ranks = [c.rank for c in cards_in_suit]
 
-        if 'A' in cards or 'K' in cards:
+        # Check for stoppers
+        if 'A' in ranks or 'K' in ranks:
             return True
-        if 'Q' in cards and len(cards) >= 2:
+        if 'Q' in ranks and len(ranks) >= 2:
             return True
-        if 'J' in cards and len(cards) >= 3:
+        if 'J' in ranks and len(ranks) >= 3:
             return True
 
         return False

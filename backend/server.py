@@ -12,7 +12,7 @@ from engine.ai.conventions.preempts import PreemptConvention
 from engine.ai.conventions.jacoby_transfers import JacobyConvention
 from engine.ai.conventions.stayman import StaymanConvention
 from engine.ai.conventions.blackwood import BlackwoodConvention
-from engine.play_engine import PlayEngine, PlayState, Contract
+from engine.play_engine import PlayEngine, PlayState, Contract, GamePhase
 from engine.simple_play_ai import SimplePlayAI
 from engine.play.ai.simple_ai import SimplePlayAI as SimplePlayAINew
 from engine.play.ai.minimax_ai import MinimaxPlayAI
@@ -551,7 +551,8 @@ def start_play():
             tricks_won={"N": 0, "E": 0, "S": 0, "W": 0},
             trick_history=[],
             next_to_play=play_engine.next_player(contract.declarer),  # LHO of declarer leads
-            dummy_revealed=False
+            dummy_revealed=False,
+            phase=GamePhase.PLAY_STARTING  # Set initial phase
         )
         
         # Opening leader (LHO of declarer)
@@ -597,6 +598,12 @@ def play_card():
                 "error": "Trick is complete. Please wait for it to be cleared."
             }), 400
 
+        # Validate phase allows card play
+        if not current_play_state.can_play_card():
+            return jsonify({
+                "error": f"Cannot play cards in current phase: {current_play_state.phase}"
+            }), 400
+
         # Create card object
         card = Card(rank=card_data["rank"], suit=card_data["suit"])
         hand = current_play_state.hands[position]
@@ -622,6 +629,9 @@ def play_card():
 
         # Remove card from hand
         hand.cards.remove(card)
+
+        # Update phase after card played (auto-transition)
+        current_play_state.update_phase_after_card()
 
         # Reveal dummy after opening lead
         if len(current_play_state.current_trick) == 1 and not current_play_state.dummy_revealed:
@@ -692,6 +702,12 @@ def get_ai_play():
                 "error": "Trick is complete. Please wait for it to be cleared."
             }), 400
 
+        # Validate phase allows card play
+        if not current_play_state.can_play_card():
+            return jsonify({
+                "error": f"Cannot play cards in current phase: {current_play_state.phase}"
+            }), 400
+
         # AI chooses card
         card = play_ai.choose_card(current_play_state, position)
         hand = current_play_state.hands[position]
@@ -704,6 +720,9 @@ def get_ai_play():
             current_play_state.current_trick_leader = position
 
         hand.cards.remove(card)
+
+        # Update phase after card played (auto-transition)
+        current_play_state.update_phase_after_card()
 
         # Reveal dummy after opening lead
         if len(current_play_state.current_trick) == 1 and not current_play_state.dummy_revealed:
@@ -803,7 +822,8 @@ def get_play_state():
             "dummy": current_play_state.dummy,
             "dummy_revealed": current_play_state.dummy_revealed,
             "dummy_hand": dummy_hand,
-            "is_complete": current_play_state.is_complete
+            "is_complete": current_play_state.is_complete,
+            "phase": str(current_play_state.phase)  # Include current phase
         })
 
     except Exception as e:
@@ -826,9 +846,13 @@ def clear_trick():
         current_play_state.current_trick = []
         current_play_state.current_trick_leader = None
 
+        # If play is complete after clearing, phase will already be PLAY_COMPLETE
+        # (updated by update_phase_after_card when last card was played)
+
         return jsonify({
             "success": True,
-            "message": "Trick cleared"
+            "message": "Trick cleared",
+            "phase": str(current_play_state.phase)
         })
 
     except Exception as e:
@@ -863,11 +887,12 @@ def complete_play():
             "ew": vulnerability in ["EW", "Both"]
         }
         
-        # Calculate score
+        # Calculate score (including honors)
         score_result = play_engine.calculate_score(
             current_play_state.contract,
             tricks_taken,
-            vuln_dict
+            vuln_dict,
+            current_play_state.hands  # Pass hands for honors calculation
         )
         
         return jsonify({

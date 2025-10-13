@@ -44,7 +44,7 @@ class SplinterBidsConvention(ConventionModule):
             return None
 
         opening_suit = opening_bid[1]
-        if opening_suit not in ['e', '`', 'f', 'c']:
+        if opening_suit not in ['♥', '♠', '♦', '♣']:
             return None
 
         # Must be our first bid (no interference or direct splinter)
@@ -70,7 +70,7 @@ class SplinterBidsConvention(ConventionModule):
 
         # Calculate support points (HCP + distribution)
         support_points = hand.hcp
-        for suit in ['e', '`', 'f', 'c']:
+        for suit in ['♥', '♠', '♦', '♣']:
             if suit != opening_suit:
                 length = hand.suit_lengths[suit]
                 if length <= 1:
@@ -90,7 +90,7 @@ class SplinterBidsConvention(ConventionModule):
 
         # Find singleton or void suits
         shortness_suits = []
-        for suit in ['e', '`', 'f', 'c']:
+        for suit in ['♥', '♠', '♦', '♣']:
             if suit != opening_suit and hand.suit_lengths[suit] <= 1:
                 shortness_suits.append((suit, hand.suit_lengths[suit]))
 
@@ -98,8 +98,8 @@ class SplinterBidsConvention(ConventionModule):
             return None
 
         # Prefer splinter in the highest-ranking short suit (more descriptive)
-        # Rank order: ` > e > f > c
-        suit_rank = {'`': 4, 'e': 3, 'f': 2, 'c': 1}
+        # Rank order: ♠ > ♥ > ♦ > ♣
+        suit_rank = {'♠': 4, '♥': 3, '♦': 2, '♣': 1}
         shortness_suits.sort(key=lambda x: suit_rank[x[0]], reverse=True)
 
         splinter_suit, short_length = shortness_suits[0]
@@ -108,19 +108,19 @@ class SplinterBidsConvention(ConventionModule):
         # Splinters are unusual jumps (usually to 4-level, or 3-level if partner opened minor)
         opening_level = int(opening_bid[0])
 
-        # Over major opening (1e or 1`), splinter at 4-level
-        if opening_suit in ['e', '`']:
+        # Over major opening (1♥ or 1♠), splinter at 4-level
+        if opening_suit in ['♥', '♠']:
             splinter_bid = f"4{splinter_suit}"
-        # Over minor opening (1c or 1f), splinter at 3-level or 4-level
+        # Over minor opening (1♣ or 1♦), splinter at 3-level or 4-level
         else:
             # Use 3-level for lower shortage suits, 4-level for spades
-            if splinter_suit == '`':
+            if splinter_suit == '♠':
                 splinter_bid = f"3{splinter_suit}"
             else:
                 # Determine if this is a jump
                 # Normal bid would be 1-level or 2-level
                 # 3-level or 4-level is a jump splinter
-                if splinter_suit in ['e']:
+                if splinter_suit in ['♥']:
                     splinter_bid = f"3{splinter_suit}"
                 else:
                     splinter_bid = f"4{splinter_suit}"
@@ -130,9 +130,9 @@ class SplinterBidsConvention(ConventionModule):
         splinter_level = int(splinter_bid[0])
 
         # Must be at least 3-level (for minors) or 4-level (for majors over majors)
-        if opening_suit in ['e', '`'] and splinter_level < 4:
+        if opening_suit in ['♥', '♠'] and splinter_level < 4:
             return None
-        if opening_suit in ['f', 'c'] and splinter_level < 3:
+        if opening_suit in ['♦', '♣'] and splinter_level < 3:
             return None
 
         shortness_desc = "singleton" if short_length == 1 else "void"
@@ -144,7 +144,7 @@ class SplinterBidsConvention(ConventionModule):
 
     def _suit_name(self, suit: str) -> str:
         """Convert suit symbol to name"""
-        names = {'e': 'hearts', '`': 'spades', 'f': 'diamonds', 'c': 'clubs'}
+        names = {'♥': 'hearts', '♠': 'spades', '♦': 'diamonds', '♣': 'clubs'}
         return names.get(suit, suit)
 
     def get_constraints(self) -> Dict:
