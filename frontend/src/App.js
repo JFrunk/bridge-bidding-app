@@ -1,33 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { PlayTable, ScoreDisplay, getSuitOrder } from './PlayComponents';
+import { BridgeCard } from './components/bridge/BridgeCard';
+import { BiddingBox as BiddingBoxComponent } from './components/bridge/BiddingBox';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 // --- UI Components ---
-function Card({ rank, suit }) {
-  const suitColor = suit === '♥' || suit === '♦' ? 'suit-red' : 'suit-black';
-  
-  const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
-  const displayRank = rankMap[rank] || rank;
-
-  return (
-    <div className="card">
-      <div className={`card-corner top-left ${suitColor}`}>
-        <span className="rank">{displayRank}</span>
-        <span className="suit-symbol-small">{suit}</span>
-      </div>
-      <div className={`card-center ${suitColor}`}>
-        <span className="suit-symbol-large">{suit}</span>
-      </div>
-      <div className={`card-corner bottom-right ${suitColor}`}>
-        <span className="rank">{displayRank}</span>
-        <span className="suit-symbol-small">{suit}</span>
-      </div>
-    </div>
-  );
-}
+// Note: Card component migrated to BridgeCard (components/bridge/BridgeCard.jsx)
 function HandAnalysis({ points, vulnerability }) {
   if (!points) return null;
   return ( <div className="hand-analysis"><h4>Hand Analysis (Vuln: {vulnerability})</h4><p><strong>HCP:</strong> {points.hcp} + <strong>Dist:</strong> {points.dist_points} = <strong>Total: {points.total_points}</strong></p><div className="suit-points"><div><span className="suit-black">♠</span> {points.suit_hcp['♠']} pts ({points.suit_lengths['♠']})</div><div><span className="suit-red">♥</span> {points.suit_hcp['♥']} pts ({points.suit_lengths['♥']})</div><div><span className="suit-red">♦</span> {points.suit_hcp['♦']} pts ({points.suit_lengths['♦']})</div><div><span className="suit-black">♣</span> {points.suit_hcp['♣']} pts ({points.suit_lengths['♣']})</div></div></div> );
@@ -45,7 +26,7 @@ function PlayerHand({ position, hand, points, vulnerability }) {
         {suitOrder.map(suit => (
           <div key={suit} className="suit-group">
             {hand.filter(card => card && card.suit === suit).map((card, index) => (
-              <Card key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />
+              <BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />
             ))}
           </div>
         ))}
@@ -66,43 +47,7 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick }) {
   for (let i = 0; i < maxRows; i++) { rows.push( <tr key={i}><td onClick={() => northBids[i] && onBidClick(northBids[i])}>{northBids[i]?.bid || ''}</td><td onClick={() => eastBids[i] && onBidClick(eastBids[i])}>{eastBids[i]?.bid || ''}</td><td onClick={() => southBids[i] && onBidClick(southBids[i])}>{southBids[i]?.bid || ''}</td><td onClick={() => westBids[i] && onBidClick(westBids[i])}>{westBids[i]?.bid || ''}</td></tr> ); }
   return ( <table className="bidding-table"><thead><tr><th className={players[nextPlayerIndex] === 'North' ? 'current-player' : ''}>North</th><th className={players[nextPlayerIndex] === 'East' ? 'current-player' : ''}>East</th><th className={players[nextPlayerIndex] === 'South' ? 'current-player' : ''}>South</th><th className={players[nextPlayerIndex] === 'West' ? 'current-player' : ''}>West</th></tr></thead><tbody>{rows}</tbody></table> );
 }
-function BiddingBox({ onBid, disabled, auction }) {
-  const [level, setLevel] = useState(null);
-  const suits = ['♣', '♦', '♥', '♠', 'NT'];
-  const calls = ['Pass', 'X', 'XX'];
-  const lastRealBid = [...auction].reverse().find(b => !['Pass', 'X', 'XX'].includes(b.bid));
-  const suitOrder = { '♣': 1, '♦': 2, '♥': 3, '♠': 4, 'NT': 5 };
-  const isBidLegal = (level, suit) => {
-    if (!lastRealBid) return true;
-    const lastLevel = parseInt(lastRealBid.bid[0], 10);
-    const lastSuit = lastRealBid.bid.slice(1);
-    if (level > lastLevel) return true;
-    if (level === lastLevel && suitOrder[suit] > suitOrder[lastSuit]) return true;
-    return false;
-  };
-  const handleBid = (suit) => { if (level) { onBid(suit === 'NT' ? `${level}NT` : `${level}${suit}`); setLevel(null); } };
-  const handleCall = (call) => { onBid(call); setLevel(null); };
-  return (
-    <div className="bidding-box-container">
-      <h3>Bidding</h3>
-      <div className="bidding-box-levels">
-        {[1, 2, 3, 4, 5, 6, 7].map(l => (
-          <button key={l} onClick={() => setLevel(l)} className={level === l ? 'selected' : ''} disabled={disabled}>{l}</button>
-        ))}
-      </div>
-      <div className="bidding-box-suits">
-        {suits.map(s => (
-          <button key={s} onClick={() => handleBid(s)} disabled={!level || disabled || !isBidLegal(level, s)}>
-            {s === 'NT' ? 'NT' : <span className={s === '♥' || s === '♦' ? 'suit-red' : 'suit-black'}>{s}</span>}
-          </button>
-        ))}
-      </div>
-      <div className="bidding-box-calls">
-        {calls.map(c => <button key={c} onClick={() => handleCall(c)} disabled={disabled}>{c}</button>)}
-      </div>
-    </div>
-  );
-}
+// Note: BiddingBox component migrated to components/bridge/BiddingBox.jsx
 
 function App() {
   const [hand, setHand] = useState([]);
@@ -1017,7 +962,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
           <div className="my-hand">
             <h2>Your Hand (South)</h2>
             <div className="hand-display">
-              {hand && hand.length > 0 ? getSuitOrder(null).map(suit => ( <div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => ( <Card key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p>Dealing...</p>}
+              {hand && hand.length > 0 ? getSuitOrder(null).map(suit => ( <div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => ( <BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p>Dealing...</p>}
             </div>
             <HandAnalysis points={handPoints} vulnerability={vulnerability} />
           </div>
@@ -1084,7 +1029,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       <div className="action-area">
         {gamePhase === 'bidding' && (
-          <BiddingBox onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding} auction={auction} />
+          <BiddingBoxComponent onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding} auction={auction} />
         )}
         <div className="controls-section">
           {gamePhase === 'bidding' && (
