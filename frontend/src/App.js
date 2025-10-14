@@ -1037,6 +1037,15 @@ Please provide a detailed analysis of the auction and identify any bidding error
           />
           {displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
           {error && <div className="error-message">{error}</div>}
+
+          {/* Show All Hands button for play phase - available after hand is complete */}
+          {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) === 13 && (
+            <div className="show-hands-controls" style={{ marginTop: '20px' }}>
+              <button onClick={handleShowHandsThisDeal}>
+                {showHandsThisDeal ? 'Hide All Hands' : 'Show All Hands'}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
