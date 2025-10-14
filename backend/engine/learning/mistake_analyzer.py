@@ -468,12 +468,19 @@ class MistakeAnalyzer:
 
             counts = cursor.fetchone()
 
+            # Handle None values from SUM() when no data exists
+            total = counts['total'] or 0
+            active = counts['active'] or 0
+            improving = counts['improving'] or 0
+            resolved = counts['resolved'] or 0
+            needs_attention = counts['needs_attention'] or 0
+
             # Determine overall trend
-            if counts['improving'] > counts['active'] + counts['needs_attention']:
+            if improving > active + needs_attention:
                 overall_trend = 'improving'
-            elif counts['needs_attention'] > counts['improving']:
+            elif needs_attention > improving:
                 overall_trend = 'needs_attention'
-            elif counts['resolved'] > counts['total'] * 0.6:
+            elif total > 0 and resolved > total * 0.6:
                 overall_trend = 'mastering'
             else:
                 overall_trend = 'learning'
@@ -541,11 +548,11 @@ class MistakeAnalyzer:
 
             return InsightSummary(
                 user_id=user_id,
-                total_patterns=counts['total'],
-                active_patterns=counts['active'],
-                improving_patterns=counts['improving'],
-                resolved_patterns=counts['resolved'],
-                needs_attention_patterns=counts['needs_attention'],
+                total_patterns=total,
+                active_patterns=active,
+                improving_patterns=improving,
+                resolved_patterns=resolved,
+                needs_attention_patterns=needs_attention,
                 overall_trend=overall_trend,
                 top_growth_areas=top_growth_areas,
                 recent_wins=recent_wins,

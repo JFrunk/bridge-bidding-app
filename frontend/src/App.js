@@ -5,6 +5,7 @@ import { BridgeCard } from './components/bridge/BridgeCard';
 import { BiddingBox as BiddingBoxComponent } from './components/bridge/BiddingBox';
 import { ReviewModal } from './components/bridge/ReviewModal';
 import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
+import LearningDashboard from './components/learning/LearningDashboard';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -74,6 +75,7 @@ function App() {
   const [reviewFilename, setReviewFilename] = useState('');
   const [showConventionHelp, setShowConventionHelp] = useState(false);
   const [conventionInfo, setConventionInfo] = useState(null);
+  const [showLearningDashboard, setShowLearningDashboard] = useState(false);
 
   // Card play state
   const [gamePhase, setGamePhase] = useState('bidding'); // 'bidding' or 'playing'
@@ -1079,6 +1081,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
         </div>
         <div className="ai-review-controls">
           <button onClick={() => setShowReviewModal(true)} className="ai-review-button">🤖 Request AI Review</button>
+          <button onClick={() => setShowLearningDashboard(true)} className="learning-dashboard-button">📊 My Progress</button>
         </div>
       </div>
 
@@ -1102,6 +1105,23 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       {scoreData && (
         <ScoreDisplay scoreData={scoreData} onClose={handleCloseScore} onDealNewHand={dealNewHand} />
+      )}
+
+      {/* Learning Dashboard Modal */}
+      {showLearningDashboard && (
+        <div className="learning-dashboard-overlay" onClick={() => setShowLearningDashboard(false)}>
+          <div className="learning-dashboard-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="close-dashboard" onClick={() => setShowLearningDashboard(false)}>×</button>
+            <LearningDashboard
+              userId={1}
+              onPracticeClick={(rec) => {
+                console.log('Practice recommendation:', rec);
+                setShowLearningDashboard(false);
+                // Could navigate to specific practice mode here
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
