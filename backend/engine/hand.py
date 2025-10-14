@@ -7,11 +7,13 @@ class Hand:
     def __init__(self, cards):
         if len(cards) != 13:
             raise ValueError("A hand must contain exactly 13 cards.")
-        
+
         suit_order = {'♠': 0, '♥': 1, '♦': 2, '♣': 3}
         rank_order_map = {rank: i for i, rank in enumerate('23456789TJQKA')}
         self.cards = sorted(cards, key=lambda card: (suit_order[card.suit], -rank_order_map[card.rank]))
-        
+
+        # Store original suit lengths and points (immutable after initialization)
+        # These represent the ORIGINAL 13-card hand, not the current playing state
         self.suit_lengths = self._get_suit_lengths()
         self.hcp = self._calculate_hcp()
         self.suit_hcp = self._calculate_suit_hcp()

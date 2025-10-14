@@ -6,6 +6,9 @@ import { BiddingBox as BiddingBoxComponent } from './components/bridge/BiddingBo
 import { ReviewModal } from './components/bridge/ReviewModal';
 import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
 import LearningDashboard from './components/learning/LearningDashboard';
+import { SessionScorePanel } from './components/session/SessionScorePanel';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { SimpleLogin } from './components/auth/SimpleLogin';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -53,6 +56,10 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick }) {
 // Note: BiddingBox component migrated to components/bridge/BiddingBox.jsx
 
 function App() {
+  // Auth state
+  const { user, logout, isAuthenticated, loading: authLoading } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
+
   const [hand, setHand] = useState([]);
   const [handPoints, setHandPoints] = useState(null);
   const [auction, setAuction] = useState([]);
@@ -76,6 +83,16 @@ function App() {
   const [showConventionHelp, setShowConventionHelp] = useState(false);
   const [conventionInfo, setConventionInfo] = useState(null);
   const [showLearningDashboard, setShowLearningDashboard] = useState(false);
+
+  // Session scoring state
+  const [sessionData, setSessionData] = useState(null);
+
+  // Show login on first visit if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      setShowLogin(true);
+    }
+  }, [authLoading, isAuthenticated]);
 
   // Card play state
   const [gamePhase, setGamePhase] = useState('bidding'); // 'bidding' or 'playing'
@@ -152,7 +169,9 @@ function App() {
         body: JSON.stringify({
           auction_history: auction,
           user_concern: userConcern,
-          game_phase: gamePhase  // Include current game phase
+          game_phase: gamePhase,  // Include current game phase
+          user_hand: hand,  // Send actual hand data shown to user
+          user_hand_points: handPoints  // Send actual point data shown to user
         })
       });
 
@@ -592,7 +611,35 @@ Please provide a detailed analysis of the auction and identify any bidding error
     }
   };
 
-  const handleCloseScore = () => {
+  const handleCloseScore = async () => {
+    // Complete hand in session if we have session data
+    if (sessionData && sessionData.active && scoreData) {
+      try {
+        const response = await fetch(`${API_URL}/api/session/complete-hand`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            score_data: scoreData,
+            auction_history: auction.map(a => a.bid)
+          })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setSessionData({ active: true, session: result.session });
+
+          if (result.session_complete) {
+            setDisplayedMessage(`Session complete! Winner: ${result.winner}`);
+          } else {
+            // Update dealer and vulnerability for next hand
+            setVulnerability(result.session.vulnerability);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to update session:', err);
+      }
+    }
+
     setScoreData(null);
   };
 
@@ -633,6 +680,26 @@ Please provide a detailed analysis of the auction and identify any bidding error
         setScenarioList(data.scenarios);
         if (data.scenarios.length > 0) setSelectedScenario(data.scenarios[0]);
       } catch (err) { console.error("Could not fetch scenarios", err); }
+
+      // Start or resume session
+      try {
+        const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: 1, session_type: 'chicago' })
+        });
+        const sessionData = await sessionResponse.json();
+        setSessionData(sessionData);
+
+        // Use dealer and vulnerability from session
+        const sessionDealer = sessionData.session.dealer;
+        const sessionVuln = sessionData.session.vulnerability;
+        setVulnerability(sessionVuln);
+
+        console.log(`Session ${sessionData.resumed ? 'resumed' : 'started'}: ${sessionData.message}`);
+      } catch (err) {
+        console.error("Could not start session", err);
+      }
 
       // Deal initial hand
       try {
@@ -802,54 +869,65 @@ Please provide a detailed analysis of the auction and identify any bidding error
           declarerPos
         });
 
-        // If it's South's turn, NEVER let AI play South's cards
-        // If South is NOT dummy: User plays their own hand
-        // If South IS dummy: User (as declarer) plays from dummy's hand (South's cards)
-        if (nextPlayer === 'S') {
-          console.log('⏸️ Stopping - South\'s turn (User controls South\'s cards)');
-          // Clear any pending timeout to prevent it from restarting the loop
-          if (aiPlayTimeoutRef.current) {
-            clearTimeout(aiPlayTimeoutRef.current);
-            aiPlayTimeoutRef.current = null;
+        // ============================================================
+        // CRITICAL: Determine who controls the next play
+        // According to bridge rules:
+        // - Declarer controls BOTH their own hand AND dummy's hand
+        // - Dummy makes NO decisions
+        // - Defenders control only their own hands
+        // ============================================================
+
+        // Check if user should control the next play
+        let userShouldControl = false;
+        let userControlMessage = "";
+
+        // Case 1: User (South) is declarer
+        if (userIsDeclarer) {
+          // User controls BOTH South (declarer) and dummy positions
+          if (nextPlayer === 'S') {
+            userShouldControl = true;
+            userControlMessage = "Your turn to play from your hand!";
+          } else if (nextPlayer === state.dummy) {
+            // User is declarer and it's dummy's turn
+            userShouldControl = true;
+            userControlMessage = `Your turn to play from dummy's hand (${state.dummy})!`;
           }
-          setIsPlayingCard(false);
-          if (!userIsDummy) {
-            setDisplayedMessage("Your turn to play!");
-          } else {
-            setDisplayedMessage("Your turn to play from dummy (South's cards)");
+          // If nextPlayer is a defender (E or W), AI plays
+        }
+        // Case 2: User (South) is dummy
+        else if (userIsDummy) {
+          // When user is dummy, AI declarer controls BOTH declarer and dummy (South)
+          // User makes NO plays at all
+          // Exception: This should never happen in our implementation
+          // because if South is dummy, declarer is N/E/W (AI), so AI controls everything
+          userShouldControl = false;
+        }
+        // Case 3: User (South) is a defender (neither declarer nor dummy)
+        else {
+          // User only controls South (their own defender hand)
+          if (nextPlayer === 'S') {
+            userShouldControl = true;
+            userControlMessage = "Your turn to play!";
           }
-          return;
+          // If nextPlayer is declarer or dummy, AI plays
         }
 
-        // If it's dummy's turn and user is declarer, stop and wait for user to play dummy's card
-        console.log('🔍 Checking if should stop for dummy:', {
-          nextPlayer,
-          dummy: state.dummy,
-          userIsDeclarer,
-          shouldStop: nextPlayer === state.dummy && userIsDeclarer
-        });
-        if (nextPlayer === state.dummy && userIsDeclarer) {
-          console.log('⏸️ ⏸️ ⏸️ STOPPING - User is declarer, dummy\'s turn ⏸️ ⏸️ ⏸️');
+        // If user should control this play, stop AI loop
+        if (userShouldControl) {
+          console.log('⏸️ STOPPING - User controls this play:', {
+            nextPlayer,
+            userIsDeclarer,
+            userIsDummy,
+            dummy: state.dummy,
+            message: userControlMessage
+          });
           // Clear any pending timeout to prevent it from restarting the loop
           if (aiPlayTimeoutRef.current) {
             clearTimeout(aiPlayTimeoutRef.current);
             aiPlayTimeoutRef.current = null;
           }
           setIsPlayingCard(false);
-          setDisplayedMessage("Your turn to play from dummy's hand!");
-          return;
-        }
-
-        // If it's declarer's turn and user is dummy, stop and wait for user to play declarer's card
-        if (nextPlayer === declarerPos && userIsDummy) {
-          console.log('⏸️ Stopping - User is dummy, declarer\'s turn');
-          // Clear any pending timeout to prevent it from restarting the loop
-          if (aiPlayTimeoutRef.current) {
-            clearTimeout(aiPlayTimeoutRef.current);
-            aiPlayTimeoutRef.current = null;
-          }
-          setIsPlayingCard(false);
-          setDisplayedMessage("Your turn to play from declarer's hand!");
+          setDisplayedMessage(userControlMessage);
           return;
         }
 
@@ -944,8 +1022,38 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
   const shouldShowHands = showHandsThisDeal || alwaysShowHands;
 
+  // User menu component
+  const UserMenu = () => {
+    if (!isAuthenticated) {
+      return (
+        <button onClick={() => setShowLogin(true)} className="auth-button">
+          Sign In
+        </button>
+      );
+    }
+
+    return (
+      <div className="user-menu">
+        <span className="user-display">👤 {user.display_name}</span>
+        <button onClick={logout} className="logout-button">Logout</button>
+      </div>
+    );
+  };
+
   return (
     <div className="app-container">
+      {/* User Menu in top right */}
+      <div className="top-bar">
+        <h1 className="app-title">Bridge Bidding Practice</h1>
+        <UserMenu />
+      </div>
+
+      {/* Login Modal */}
+      {showLogin && <SimpleLogin onClose={() => setShowLogin(false)} />}
+
+      {/* Session Score Panel */}
+      <SessionScorePanel sessionData={sessionData} />
+
       {shouldShowHands && allHands ? (
         <div className="table-layout">
           <div className="table-center">
@@ -1031,9 +1139,25 @@ Please provide a detailed analysis of the auction and identify any bidding error
             onCardPlay={handleCardPlay}
             onDeclarerCardPlay={handleDeclarerCardPlay}
             onDummyCardPlay={handleDummyCardPlay}
-            isUserTurn={playState.next_to_play === 'S'}
-            isDeclarerTurn={playState.next_to_play === playState.contract.declarer && playState.dummy === 'S'}
-            isDummyTurn={playState.next_to_play === playState.dummy && playState.contract.declarer === 'S'}
+            isUserTurn={
+              // User plays South's cards when:
+              // 1. It's South's turn AND South is not dummy (user is declarer or defender)
+              // 2. It's South's turn AND user is dummy being controlled by AI (actually, AI controls this - so this shouldn't enable user)
+              playState.next_to_play === 'S' && playState.dummy !== 'S'
+            }
+            isDeclarerTurn={
+              // User plays declarer's cards (North) when:
+              // - User is dummy (South is dummy)
+              // - It's declarer's turn
+              // NOTE: This scenario doesn't apply in our game - if South is dummy, AI is declarer
+              playState.next_to_play === playState.contract.declarer && playState.dummy === 'S'
+            }
+            isDummyTurn={
+              // User plays dummy's cards when:
+              // - User is declarer (South is declarer)
+              // - It's dummy's turn
+              playState.next_to_play === playState.dummy && playState.contract.declarer === 'S'
+            }
             auction={auction}
             scoreData={scoreData}
           />
@@ -1104,7 +1228,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       />
 
       {scoreData && (
-        <ScoreDisplay scoreData={scoreData} onClose={handleCloseScore} onDealNewHand={dealNewHand} />
+        <ScoreDisplay scoreData={scoreData} onClose={handleCloseScore} onDealNewHand={dealNewHand} sessionData={sessionData} />
       )}
 
       {/* Learning Dashboard Modal */}
@@ -1125,4 +1249,13 @@ Please provide a detailed analysis of the auction and identify any bidding error
     </div>
   );
 }
-export default App;
+// Wrap App with AuthProvider
+function AppWithAuth() {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+}
+
+export default AppWithAuth;

@@ -17,12 +17,14 @@ from engine.simple_play_ai import SimplePlayAI
 from engine.play.ai.simple_ai import SimplePlayAI as SimplePlayAINew
 from engine.play.ai.minimax_ai import MinimaxPlayAI
 from engine.learning.learning_path_api import register_learning_endpoints
+from engine.session_manager import SessionManager, GameSession
 
 app = Flask(__name__)
 CORS(app)
 engine = BiddingEngine()
 play_engine = PlayEngine()
 play_ai = SimplePlayAI()  # Default AI (backward compatibility)
+session_manager = SessionManager()  # Session management
 
 # Phase 2: AI difficulty settings
 current_ai_difficulty = "beginner"  # Options: beginner, intermediate, advanced, expert
@@ -36,6 +38,8 @@ ai_instances = {
 current_deal = { 'North': None, 'East': None, 'South': None, 'West': None }
 current_vulnerability = "None"
 current_play_state = None  # Will hold PlayState during card play
+current_session = None  # Active game session
+current_hand_start_time = None  # Track hand duration
 
 CONVENTION_MAP = {
     "Preempt": PreemptConvention(),
@@ -50,6 +54,252 @@ register_learning_endpoints(app)
 # Register analytics API endpoints (mistake detection & learning insights)
 from engine.learning.analytics_api import register_analytics_endpoints
 register_analytics_endpoints(app)
+
+# Register authentication endpoints (MVP - email/phone only, no passwords)
+from engine.auth.simple_auth_api import register_simple_auth_endpoints
+register_simple_auth_endpoints(app)
+
+# ============================================================================
+# SESSION MANAGEMENT ENDPOINTS
+# ============================================================================
+
+@app.route('/api/session/start', methods=['POST'])
+def start_session():
+    """
+    Start a new game session or resume existing active session
+
+    Request body:
+        - user_id: int (default 1)
+        - session_type: str (default 'chicago')
+        - player_position: str (default 'S')
+        - ai_difficulty: str (default 'intermediate')
+
+    Returns:
+        Session data and whether it was resumed
+    """
+    global current_session, current_hand_start_time
+
+    data = request.get_json() or {}
+    user_id = data.get('user_id', 1)
+    session_type = data.get('session_type', 'chicago')
+    player_position = data.get('player_position', 'S')
+    ai_difficulty = data.get('ai_difficulty', 'intermediate')
+
+    try:
+        # Check for existing active session
+        existing = session_manager.get_active_session(user_id)
+        if existing:
+            current_session = existing
+            current_hand_start_time = datetime.now()
+            return jsonify({
+                'session': existing.to_dict(),
+                'resumed': True,
+                'message': f'Resumed session #{existing.id}'
+            })
+
+        # Create new session
+        current_session = session_manager.create_session(
+            user_id=user_id,
+            session_type=session_type,
+            player_position=player_position,
+            ai_difficulty=ai_difficulty
+        )
+        current_hand_start_time = datetime.now()
+
+        return jsonify({
+            'session': current_session.to_dict(),
+            'resumed': False,
+            'message': f'Started new {session_type} session'
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to start session: {str(e)}'}), 500
+
+
+@app.route('/api/session/status', methods=['GET'])
+def get_session_status():
+    """
+    Get current session status
+
+    Returns:
+        Session data if active, otherwise active=False
+    """
+    if not current_session:
+        return jsonify({'active': False})
+
+    return jsonify({
+        'active': True,
+        'session': current_session.to_dict()
+    })
+
+
+@app.route('/api/session/complete-hand', methods=['POST'])
+def complete_session_hand():
+    """
+    Complete current hand and update session scores
+
+    Request body:
+        - score_data: dict with hand results
+
+    Returns:
+        Updated session data
+    """
+    global current_session, current_play_state, current_hand_start_time
+
+    if not current_session:
+        return jsonify({'error': 'No active session'}), 400
+
+    if not current_play_state:
+        return jsonify({'error': 'No play state available'}), 400
+
+    try:
+        data = request.get_json() or {}
+        score_data = data.get('score_data', {})
+
+        # Calculate hand duration
+        hand_duration = 0
+        if current_hand_start_time:
+            hand_duration = int((datetime.now() - current_hand_start_time).total_seconds())
+
+        # Determine if user was declarer or dummy
+        declarer = current_play_state.contract.declarer
+        dummy = current_play_state.dummy
+        user_position = current_session.player_position
+
+        user_was_declarer = (declarer == user_position)
+        user_was_dummy = (dummy == user_position)
+
+        # Add score to session
+        hand_score = score_data['score']
+        current_session.add_hand_score(declarer, hand_score)
+
+        # Prepare hand data for database
+        hand_data = {
+            'hand_number': current_session.hands_completed,  # Already incremented by add_hand_score
+            'dealer': session_manager.CHICAGO_DEALERS[(current_session.hands_completed - 1) % 4],
+            'vulnerability': current_vulnerability,
+            'contract': current_play_state.contract,
+            'tricks_taken': score_data['tricks_taken'],
+            'hand_score': hand_score,
+            'made': score_data['made'],
+            'breakdown': score_data['breakdown'],
+            'deal_data': {
+                pos: {
+                    'hand': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
+                    'points': None  # Could add point count here
+                }
+                for pos, hand in current_play_state.hands.items()
+            },
+            'auction_history': data.get('auction_history', []),
+            'play_history': data.get('play_history', []),
+            'user_was_declarer': user_was_declarer,
+            'user_was_dummy': user_was_dummy,
+            'hand_duration_seconds': hand_duration
+        }
+
+        # Save to database
+        session_manager.save_hand_result(current_session, hand_data)
+
+        # Check if session is complete
+        session_complete = current_session.is_complete()
+        winner = current_session.get_winner() if session_complete else None
+        user_won = current_session.get_user_won() if session_complete else None
+
+        # Reset hand timer for next hand
+        current_hand_start_time = datetime.now()
+
+        return jsonify({
+            'success': True,
+            'session': current_session.to_dict(),
+            'hand_completed': current_session.hands_completed,
+            'session_complete': session_complete,
+            'winner': winner,
+            'user_won': user_won,
+            'message': f'Hand {current_session.hands_completed} completed'
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to complete hand: {str(e)}'}), 500
+
+
+@app.route('/api/session/history', methods=['GET'])
+def get_session_history():
+    """
+    Get completed hands in current session
+
+    Returns:
+        List of hands with scores
+    """
+    if not current_session:
+        return jsonify({'error': 'No active session'}), 400
+
+    try:
+        hands = session_manager.get_session_hands(current_session.id)
+        return jsonify({
+            'session_id': current_session.id,
+            'hands': hands,
+            'total_hands': len(hands)
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to get session history: {str(e)}'}), 500
+
+
+@app.route('/api/session/abandon', methods=['POST'])
+def abandon_session():
+    """
+    Abandon current session
+
+    Returns:
+        Success message
+    """
+    global current_session
+
+    if not current_session:
+        return jsonify({'error': 'No active session'}), 400
+
+    try:
+        session_manager.abandon_session(current_session.id)
+        session_id = current_session.id
+        current_session = None
+
+        return jsonify({
+            'success': True,
+            'message': f'Session {session_id} abandoned'
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to abandon session: {str(e)}'}), 500
+
+
+@app.route('/api/session/stats', methods=['GET'])
+def get_session_stats():
+    """
+    Get user's overall session statistics
+
+    Query params:
+        - user_id: int (default 1)
+
+    Returns:
+        User statistics across all sessions
+    """
+    user_id = request.args.get('user_id', 1, type=int)
+
+    try:
+        stats = session_manager.get_user_session_stats(user_id)
+        return jsonify(stats)
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to get stats: {str(e)}'}), 500
+
+# ============================================================================
+# END SESSION MANAGEMENT ENDPOINTS
+# ============================================================================
 
 @app.route('/api/scenarios', methods=['GET'])
 def get_scenarios():
@@ -412,6 +662,8 @@ def request_review():
         auction_history = data.get('auction_history', [])
         user_concern = data.get('user_concern', '')
         game_phase = data.get('game_phase', 'bidding')  # 'bidding' or 'playing'
+        user_hand_data = data.get('user_hand')  # Actual hand shown to user
+        user_hand_points = data.get('user_hand_points')  # Actual points shown to user
 
         # Prepare all hands data (current state of hands)
         all_hands = {}
@@ -436,22 +688,31 @@ def request_review():
         else:
             # During bidding phase, use initial deal
             for position in ['North', 'East', 'South', 'West']:
-                hand = current_deal.get(position)
-                if not hand:
-                    return jsonify({'error': f'Hand for {position} not available'}), 400
+                # Use user's actual hand data if provided (for South position)
+                if position == 'South' and user_hand_data and user_hand_points:
+                    # Use the hand data that was actually shown to the user
+                    all_hands[position] = {
+                        'cards': user_hand_data,
+                        'points': user_hand_points
+                    }
+                else:
+                    # Use backend's stored hand for other positions
+                    hand = current_deal.get(position)
+                    if not hand:
+                        return jsonify({'error': f'Hand for {position} not available'}), 400
 
-                hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
-                points_for_json = {
-                    'hcp': hand.hcp,
-                    'dist_points': hand.dist_points,
-                    'total_points': hand.total_points,
-                    'suit_hcp': hand.suit_hcp,
-                    'suit_lengths': hand.suit_lengths
-                }
-                all_hands[position] = {
-                    'cards': hand_for_json,
-                    'points': points_for_json
-                }
+                    hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
+                    points_for_json = {
+                        'hcp': hand.hcp,
+                        'dist_points': hand.dist_points,
+                        'total_points': hand.total_points,
+                        'suit_hcp': hand.suit_hcp,
+                        'suit_lengths': hand.suit_lengths
+                    }
+                    all_hands[position] = {
+                        'cards': hand_for_json,
+                        'points': points_for_json
+                    }
 
         # Create review request object
         review_request = {

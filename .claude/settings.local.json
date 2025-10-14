@@ -39,7 +39,12 @@
       "Bash(./test_quick.sh:*)",
       "Bash(cat:*)",
       "Bash(npm start)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(sqlite3:*)",
+      "Bash(mkdir:*)",
+      "Bash(timeout 90 npm run build)",
+      "Bash(dos2unix:*)",
+      "Bash(timeout 5 python3 server.py)"
     ],
     "deny": [],
     "ask": []

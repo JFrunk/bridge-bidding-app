@@ -340,8 +340,8 @@ export function PlayTable({
  * Display final score after 13 tricks
  * MIGRATED: Now uses ScoreModal component from components/play/
  */
-export function ScoreDisplay({ scoreData, onClose, onDealNewHand }) {
-  return <ScoreModal isOpen={!!scoreData} onClose={onClose} scoreData={scoreData} onDealNewHand={onDealNewHand} />;
+export function ScoreDisplay({ scoreData, onClose, onDealNewHand, sessionData }) {
+  return <ScoreModal isOpen={!!scoreData} onClose={onClose} scoreData={scoreData} onDealNewHand={onDealNewHand} sessionData={sessionData} />;
 }
 
 // Export TurnIndicator components for use in other files

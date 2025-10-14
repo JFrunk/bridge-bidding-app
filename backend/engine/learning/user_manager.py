@@ -24,6 +24,7 @@ class User:
     last_activity: Optional[datetime]
     timezone: str = 'UTC'
     preferences: Optional[Dict] = None
+    phone: Optional[str] = None
 
 
 @dataclass
@@ -59,7 +60,7 @@ class UserManager:
     # ========================================================================
 
     def create_user(self, username: str, email: Optional[str] = None,
-                   display_name: Optional[str] = None) -> int:
+                   display_name: Optional[str] = None, phone: Optional[str] = None) -> int:
         """
         Create a new user with default settings
 
@@ -67,6 +68,7 @@ class UserManager:
             username: Unique username (min 3 chars)
             email: Optional email
             display_name: Optional display name
+            phone: Optional phone number
 
         Returns:
             user_id: ID of newly created user
@@ -81,11 +83,18 @@ class UserManager:
         cursor = conn.cursor()
 
         try:
+            # Check if phone column exists, if not create it
+            cursor.execute("PRAGMA table_info(users)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if 'phone' not in columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN phone TEXT")
+                conn.commit()
+
             # Create user
             cursor.execute("""
-                INSERT INTO users (username, email, display_name, last_login, last_activity)
-                VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            """, (username, email, display_name))
+                INSERT INTO users (username, email, display_name, phone, last_login, last_activity)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """, (username, email, display_name, phone))
 
             user_id = cursor.lastrowid
 
@@ -142,7 +151,8 @@ class UserManager:
             last_login=datetime.fromisoformat(row['last_login']) if row['last_login'] else None,
             last_activity=datetime.fromisoformat(row['last_activity']) if row['last_activity'] else None,
             timezone=row['timezone'],
-            preferences=json.loads(row['preferences']) if row['preferences'] else None
+            preferences=json.loads(row['preferences']) if row['preferences'] else None,
+            phone=row.get('phone')
         )
 
     def get_user_by_username(self, username: str) -> Optional[User]:
@@ -169,7 +179,70 @@ class UserManager:
             last_login=datetime.fromisoformat(row['last_login']) if row['last_login'] else None,
             last_activity=datetime.fromisoformat(row['last_activity']) if row['last_activity'] else None,
             timezone=row['timezone'],
-            preferences=json.loads(row['preferences']) if row['preferences'] else None
+            preferences=json.loads(row['preferences']) if row['preferences'] else None,
+            phone=row.get('phone')
+        )
+
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        """Get user by email address"""
+        if not email:
+            return None
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT * FROM users WHERE email = ?
+        """, (email,))
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return None
+
+        return User(
+            id=row['id'],
+            username=row['username'],
+            email=row['email'],
+            display_name=row['display_name'],
+            created_at=datetime.fromisoformat(row['created_at']),
+            last_login=datetime.fromisoformat(row['last_login']) if row['last_login'] else None,
+            last_activity=datetime.fromisoformat(row['last_activity']) if row['last_activity'] else None,
+            timezone=row['timezone'],
+            preferences=json.loads(row['preferences']) if row['preferences'] else None,
+            phone=row.get('phone')
+        )
+
+    def get_user_by_phone(self, phone: str) -> Optional[User]:
+        """Get user by phone number"""
+        if not phone:
+            return None
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT * FROM users WHERE phone = ?
+        """, (phone,))
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return None
+
+        return User(
+            id=row['id'],
+            username=row['username'],
+            email=row['email'],
+            display_name=row['display_name'],
+            created_at=datetime.fromisoformat(row['created_at']),
+            last_login=datetime.fromisoformat(row['last_login']) if row['last_login'] else None,
+            last_activity=datetime.fromisoformat(row['last_activity']) if row['last_activity'] else None,
+            timezone=row['timezone'],
+            preferences=json.loads(row['preferences']) if row['preferences'] else None,
+            phone=row.get('phone')
         )
 
     def update_user_activity(self, user_id: int):
@@ -180,6 +253,20 @@ class UserManager:
         cursor.execute("""
             UPDATE users
             SET last_activity = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (user_id,))
+
+        conn.commit()
+        conn.close()
+
+    def update_last_login(self, user_id: int):
+        """Update user's last login timestamp"""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE users
+            SET last_login = CURRENT_TIMESTAMP, last_activity = CURRENT_TIMESTAMP
             WHERE id = ?
         """, (user_id,))
 

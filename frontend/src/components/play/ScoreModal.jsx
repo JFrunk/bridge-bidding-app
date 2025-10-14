@@ -13,12 +13,17 @@ import { cn } from "../../lib/utils";
  * ScoreModal - Display final score after 13 tricks
  * Follows "Rule of Three" and senior-friendly UX principles
  * Designed as SECONDARY visual hierarchy (celebratory but not overwhelming)
+ * Enhanced with session scoring context
  */
-export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand }) {
+export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionData }) {
   if (!scoreData) return null;
 
   const { contract, tricks_taken, result, score, made } = scoreData;
   const doubledText = contract.doubled === 2 ? 'XX' : contract.doubled === 1 ? 'X' : '';
+
+  // Session context
+  const hasSession = sessionData && sessionData.active;
+  const session = sessionData?.session;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -70,6 +75,55 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand }) {
               {score >= 0 ? '+' : ''}{score}
             </span>
           </div>
+
+          {/* Session Summary (if in session) */}
+          {hasSession && (
+            <div className="mt-4 p-4 rounded-lg bg-blue-50 border-2 border-blue-200">
+              <div className="text-center mb-3">
+                <h3 className="text-lg font-bold text-blue-900">
+                  Session Standings
+                </h3>
+                <p className="text-sm text-blue-700">
+                  Hand {session.hands_completed} of {session.max_hands} complete
+                </p>
+              </div>
+
+              <div className="flex justify-around items-center gap-4">
+                <div className="text-center">
+                  <div className="text-sm font-medium text-gray-700">North-South</div>
+                  <div className={cn(
+                    "text-2xl font-bold",
+                    session.ns_score > session.ew_score ? "text-success" : "text-gray-900"
+                  )}>
+                    {session.ns_score}
+                  </div>
+                </div>
+
+                <div className="text-gray-400 font-bold text-xl">vs</div>
+
+                <div className="text-center">
+                  <div className="text-sm font-medium text-gray-700">East-West</div>
+                  <div className={cn(
+                    "text-2xl font-bold",
+                    session.ew_score > session.ns_score ? "text-success" : "text-gray-900"
+                  )}>
+                    {session.ew_score}
+                  </div>
+                </div>
+              </div>
+
+              {session.is_complete && (
+                <div className="mt-3 text-center p-3 bg-yellow-100 rounded-md">
+                  <p className="text-lg font-bold text-yellow-900">
+                    🎉 Session Complete!
+                  </p>
+                  <p className="text-base text-yellow-800">
+                    Winner: {session.winner === 'Tied' ? 'Tied Game' : session.winner}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter className="flex flex-col gap-3 sm:flex-col">
@@ -82,7 +136,7 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand }) {
             size="lg"
             variant="default"
           >
-            Deal New Hand
+            {hasSession && session.is_complete ? 'Start New Session' : 'Next Hand'}
           </Button>
           <Button
             onClick={onClose}
