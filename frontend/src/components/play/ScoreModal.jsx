@@ -15,7 +15,7 @@ import { cn } from "../../lib/utils";
  * Designed as SECONDARY visual hierarchy (celebratory but not overwhelming)
  * Enhanced with session scoring context
  */
-export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionData }) {
+export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionData, onShowLearningDashboard }) {
   if (!scoreData) return null;
 
   const { contract, tricks_taken, result, score, made } = scoreData;
@@ -127,17 +127,34 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
         </div>
 
         <DialogFooter className="flex flex-col gap-3 sm:flex-col">
-          <Button
-            onClick={() => {
-              onDealNewHand();
-              onClose();
-            }}
-            className="w-full"
-            size="lg"
-            variant="default"
-          >
-            {hasSession && session.is_complete ? 'Start New Session' : 'Next Hand'}
-          </Button>
+          {/* Primary actions row */}
+          <div className="flex gap-3 w-full">
+            <Button
+              onClick={() => {
+                onDealNewHand();
+                onClose();
+              }}
+              className="flex-1"
+              size="lg"
+              variant="default"
+            >
+              New Hand to Bid
+            </Button>
+            {onShowLearningDashboard && (
+              <Button
+                onClick={() => {
+                  onShowLearningDashboard();
+                  onClose();
+                }}
+                className="flex-1"
+                size="lg"
+                variant="default"
+              >
+                📊 My Progress
+              </Button>
+            )}
+          </div>
+          {/* Close button */}
           <Button
             onClick={onClose}
             className="w-full"

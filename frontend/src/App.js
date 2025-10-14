@@ -1103,22 +1103,25 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       {!shouldShowHands && gamePhase === 'playing' && playState && (
         <div className="play-phase">
-          {/* DEBUG INDICATOR: Shows AI loop state */}
-          <div style={{
-            position: 'fixed',
-            top: '10px',
-            right: '10px',
-            background: isPlayingCard ? '#4CAF50' : '#f44336',
-            color: 'white',
-            padding: '10px 20px',
-            borderRadius: '5px',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            zIndex: 9999,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-          }}>
-            AI Loop: {isPlayingCard ? 'RUNNING ▶️' : 'STOPPED ⏸️'}
-          </div>
+          {/* DEBUG INDICATOR: Shows AI loop state - Only show during active play, not after completion - Less prominent for testing only */}
+          {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && (
+            <div style={{
+              position: 'fixed',
+              top: '10px',
+              right: '10px',
+              background: isPlayingCard ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.3)',
+              color: '#666',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              fontSize: '11px',
+              fontWeight: 'normal',
+              zIndex: 9999,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              border: '1px solid rgba(0,0,0,0.1)'
+            }}>
+              AI: {isPlayingCard ? '▶' : '⏸'}
+            </div>
+          )}
           {console.log('🎯 PlayTable render:', {
             next_to_play: playState.next_to_play,
             isPlayingCard: isPlayingCard,
@@ -1162,8 +1165,8 @@ Please provide a detailed analysis of the auction and identify any bidding error
             auction={auction}
             scoreData={scoreData}
           />
-          {displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
-          {error && <div className="error-message">{error}</div>}
+          {/* Don't show AI bidding status messages during play - only show errors if they occur */}
+          {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && error && <div className="error-message">{error}</div>}
 
           {/* Show All Hands button for play phase - available after hand is complete */}
           {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) === 13 && (
@@ -1190,24 +1193,24 @@ Please provide a detailed analysis of the auction and identify any bidding error
               <div className="scenario-loader">
                 <select value={selectedScenario} onChange={(e) => setSelectedScenario(e.target.value)}>{scenarioList && scenarioList.length > 0 ? scenarioList.map(name => <option key={name} value={name}>{name}</option>) : <option>Loading...</option>}</select>
                 <button onClick={handleLoadScenario}>Load Scenario</button>
-                <button onClick={handleShowConventionHelp} className="help-button">ℹ️ Convention Help</button>
               </div>
             </>
           )}
-          {gamePhase === 'playing' && (
-            <div className="scenario-loader">
-              <button onClick={handleShowConventionHelp} className="help-button">ℹ️ Convention Help</button>
+        </div>
+        {/* Only show bidding-specific controls during bidding phase */}
+        {gamePhase === 'bidding' && (
+          <>
+            <div className="show-hands-controls">
+              <button onClick={handleShowHandsThisDeal}>{showHandsThisDeal ? 'Hide Hands (This Deal)' : 'Show Hands (This Deal)'}</button>
+              <button onClick={handleToggleAlwaysShowHands} className={alwaysShowHands ? 'active' : ''}>{alwaysShowHands ? 'Always Show: ON' : 'Always Show: OFF'}</button>
             </div>
-          )}
-        </div>
-        <div className="show-hands-controls">
-          <button onClick={handleShowHandsThisDeal}>{showHandsThisDeal ? 'Hide Hands (This Deal)' : 'Show Hands (This Deal)'}</button>
-          <button onClick={handleToggleAlwaysShowHands} className={alwaysShowHands ? 'active' : ''}>{alwaysShowHands ? 'Always Show: ON' : 'Always Show: OFF'}</button>
-        </div>
-        <div className="ai-review-controls">
-          <button onClick={() => setShowReviewModal(true)} className="ai-review-button">🤖 Request AI Review</button>
-          <button onClick={() => setShowLearningDashboard(true)} className="learning-dashboard-button">📊 My Progress</button>
-        </div>
+            <div className="ai-review-controls">
+              <button onClick={handleShowConventionHelp} className="help-button">ℹ️ Convention Help</button>
+              <button onClick={() => setShowReviewModal(true)} className="ai-review-button">🤖 Request AI Review</button>
+              <button onClick={() => setShowLearningDashboard(true)} className="learning-dashboard-button">📊 My Progress</button>
+            </div>
+          </>
+        )}
       </div>
 
       <ReviewModal
@@ -1229,7 +1232,13 @@ Please provide a detailed analysis of the auction and identify any bidding error
       />
 
       {scoreData && (
-        <ScoreDisplay scoreData={scoreData} onClose={handleCloseScore} onDealNewHand={dealNewHand} sessionData={sessionData} />
+        <ScoreDisplay
+          scoreData={scoreData}
+          onClose={handleCloseScore}
+          onDealNewHand={dealNewHand}
+          sessionData={sessionData}
+          onShowLearningDashboard={() => setShowLearningDashboard(true)}
+        />
       )}
 
       {/* Learning Dashboard Modal */}

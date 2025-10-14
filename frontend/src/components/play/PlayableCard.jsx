@@ -25,11 +25,16 @@ export function PlayableCard({ card, onClick, disabled = false, className }) {
         "playable-card", // CRITICAL: This class enables -45px overlap in CSS
         "relative w-[70px] h-[100px] bg-white border border-gray-400 rounded-card shadow-md",
         "transition-all duration-200",
-        isClickable && "cursor-pointer hover:-translate-y-4 hover:shadow-xl hover:z-50",
+        isClickable && "cursor-pointer hover:-translate-y-4 hover:shadow-xl hover:z-50 clickable",
         disabled && "opacity-60 cursor-not-allowed",
         className
       )}
       onClick={!disabled ? onClick : undefined}
+      onTouchEnd={!disabled ? (e) => {
+        // Prevent ghost clicks on mobile
+        e.preventDefault();
+        onClick?.();
+      } : undefined}
       role={isClickable ? "button" : undefined}
       aria-label={`${displayRank} of ${suitName}`}
       tabIndex={isClickable ? 0 : undefined}

@@ -610,7 +610,8 @@
   box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); /* Green glow */
 }
 
-.playable-card.clickable:hover {
+.playable-card.clickable:hover,
+.playable-card.clickable:active {
   transform: translateY(-15px) scale(1.05);
   box-shadow: 0 12px 20px rgba(97, 218, 251, 0.8);
   border-color: #61dafb;
@@ -618,6 +619,20 @@
   z-index: 40; /* High enough to appear above other cards in hand, but below trick display (z-index: 50) */
   position: relative;
   animation: pulse-clickable 1s infinite;
+}
+
+/* Mobile touch support - show clickable state immediately on touch */
+@media (hover: none) and (pointer: coarse) {
+  .playable-card.clickable {
+    /* Make clickable cards more obvious on touch devices */
+    border-width: 3px;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+  }
+
+  .playable-card.clickable:active {
+    transform: translateY(-10px) scale(1.03);
+    box-shadow: 0 8px 15px rgba(97, 218, 251, 0.8);
+  }
 }
 
 @keyframes pulse-clickable {
@@ -720,7 +735,8 @@
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap; /* Allow wrapping on mobile */
   gap: 0;
   padding: 5px;
   background-color: rgba(255, 255, 255, 0.05);
@@ -935,8 +951,15 @@
     margin: 2px;
   }
 
+  /* Mobile: Reduce overlap and allow wrapping to show all cards */
+  .suit-group {
+    flex-wrap: wrap;
+    min-height: auto;
+    max-width: 100%;
+  }
+
   .suit-group .playable-card {
-    margin-left: -28px; /* Smaller overlap for mobile, maintaining visibility ratio */
+    margin-left: -22px; /* Less overlap for mobile to fit more cards */
     margin-top: 0;
     margin-right: 0;
   }
@@ -945,10 +968,15 @@
     margin-left: 0;
   }
 
+  /* When cards wrap to second row, reset left margin */
+  .suit-group .playable-card:nth-child(n+9) {
+    margin-top: 5px;
+  }
+
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -28px;
+    margin-left: -22px;
   }
 
   .playable-card .rank {
@@ -963,6 +991,8 @@
   .dummy-hand,
   .declarer-hand {
     max-width: 100%;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    flex-wrap: wrap; /* Allow suits to wrap if needed */
   }
 
   .position-label {
@@ -1019,8 +1049,15 @@
     margin: 1px;
   }
 
+  /* Extra small mobile: Very small overlap, allow multi-row layout */
+  .suit-group {
+    flex-wrap: wrap;
+    min-height: auto;
+    max-width: 100%;
+  }
+
   .suit-group .playable-card {
-    margin-left: -22px; /* Even smaller overlap for extra small screens, maintaining visibility ratio */
+    margin-left: -15px; /* Minimal overlap for very small screens */
     margin-top: 0;
     margin-right: 0;
   }
@@ -1029,10 +1066,15 @@
     margin-left: 0;
   }
 
+  /* Cards that wrap get spacing */
+  .suit-group .playable-card:nth-child(n+7) {
+    margin-top: 3px;
+  }
+
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -22px;
+    margin-left: -15px;
   }
 
   .playable-card .rank {
@@ -1041,6 +1083,14 @@
 
   .playable-card .suit-symbol-large {
     font-size: 1.3em;
+  }
+
+  .user-play-hand,
+  .dummy-hand,
+  .declarer-hand {
+    max-width: 100%;
+    overflow-x: hidden;
+    flex-wrap: wrap;
   }
 
   .position-label {

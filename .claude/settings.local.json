@@ -44,7 +44,10 @@
       "Bash(mkdir:*)",
       "Bash(timeout 90 npm run build)",
       "Bash(dos2unix:*)",
-      "Bash(timeout 5 python3 server.py)"
+      "Bash(timeout 5 python3 server.py)",
+      "Bash(pip3 install:*)",
+      "Bash(venv/bin/python3:*)",
+      "Bash(timeout 5 venv/bin/python3 server.py)"
     ],
     "deny": [],
     "ask": []

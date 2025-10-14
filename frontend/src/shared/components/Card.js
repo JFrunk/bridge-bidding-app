@@ -20,8 +20,15 @@ function Card({ rank, suit, onClick, selectable = false, selected = false }) {
   const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
   const displayRank = rankMap[rank] || rank;
 
-  const handleClick = () => {
+  const handleClick = (e) => {
     if (selectable && onClick) {
+      onClick({ rank, suit });
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (selectable && onClick) {
+      e.preventDefault(); // Prevent ghost clicks on mobile
       onClick({ rank, suit });
     }
   };
@@ -29,7 +36,11 @@ function Card({ rank, suit, onClick, selectable = false, selected = false }) {
   const className = `card ${selectable ? 'card-selectable' : ''} ${selected ? 'card-selected' : ''}`;
 
   return (
-    <div className={className} onClick={handleClick}>
+    <div
+      className={className}
+      onClick={handleClick}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className={`card-corner top-left ${suitColor}`}>
         <span className="rank">{displayRank}</span>
         <span className="suit-symbol-small">{suit}</span>

@@ -27,11 +27,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  align-items: center;
+  align-items: flex-start;
   min-height: 90px;
   padding: 5px;
   background: #f9f9f9;
   border-radius: 4px;
+  max-width: 100%;
+  overflow: visible;
 }
 
 /* Position-specific layouts */
@@ -58,4 +60,36 @@
 
 .player-hand.compact .suit-group {
   min-height: 70px;
+}
+
+/* Mobile responsive layout */
+@media (max-width: 768px) {
+  .player-hand {
+    max-width: 100%;
+  }
+
+  .suit-group {
+    min-height: auto;
+    gap: 2px;
+  }
+
+  .player-south,
+  .player-north {
+    max-width: 100%;
+  }
+
+  .hand-display {
+    overflow-x: hidden;
+  }
+}
+
+@media (max-width: 480px) {
+  .suit-group {
+    gap: 1px;
+    padding: 3px;
+  }
+
+  .player-hand {
+    padding: 10px 5px;
+  }
 }

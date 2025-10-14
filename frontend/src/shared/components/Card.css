@@ -17,11 +17,27 @@
 
 .card-selectable {
   cursor: pointer;
+  /* Touch device improvements */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
-.card-selectable:hover {
+.card-selectable:hover,
+.card-selectable:active {
   transform: translateY(-5px);
   box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile touch support */
+@media (hover: none) and (pointer: coarse) {
+  .card-selectable {
+    border-width: 2px;
+  }
+
+  .card-selectable:active {
+    transform: translateY(-3px);
+    box-shadow: 2px 4px 8px rgba(76, 175, 80, 0.5);
+  }
 }
 
 .card-selected {

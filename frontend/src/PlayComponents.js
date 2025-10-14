@@ -196,6 +196,9 @@ export function PlayTable({
   const tricksRemaining = 13 - totalTricksPlayed;
   const tricksLost = 13 - tricksWonBySide - tricksRemaining;
 
+  // Check if hand is complete
+  const isHandComplete = totalTricksPlayed === 13;
+
   return (
     <div className="play-table">
       {/* Consolidated Contract Header - MIGRATED to ContractHeader component */}
@@ -204,8 +207,8 @@ export function PlayTable({
       <div className="play-area">
         {/* North position */}
         <div className="position position-north">
-          {/* Show North's hand if it's dummy - ABOVE label */}
-          {dummyPosition === 'N' && dummyHand && (
+          {/* Show North's hand if it's dummy - ABOVE label - Hide when hand is complete */}
+          {dummyPosition === 'N' && dummyHand && dummyHand.length > 0 && !isHandComplete && (
             <div className="dummy-hand">
               {suitOrder.map(suit => (
                 <div key={suit} className="suit-group">
@@ -221,7 +224,7 @@ export function PlayTable({
               ))}
             </div>
           )}
-          {declarerPosition === 'N' && userIsDummy && declarerHand && (
+          {declarerPosition === 'N' && userIsDummy && declarerHand && declarerHand.length > 0 && !isHandComplete && (
             <div className="declarer-hand">
               {suitOrder.map(suit => (
                 <div key={suit} className="suit-group">
@@ -262,8 +265,8 @@ export function PlayTable({
             <CompactTurnIndicator position="W" isActive={next_to_play === 'W'} />
             {dummyPosition === 'W' && ' (Dummy)'}
           </div>
-          {/* Show West's hand if it's dummy */}
-          {dummyPosition === 'W' && dummyHand && (
+          {/* Show West's hand if it's dummy - Hide when hand is complete */}
+          {dummyPosition === 'W' && dummyHand && dummyHand.length > 0 && !isHandComplete && (
             <div className="dummy-hand">
               {suitOrder.map(suit => (
                 <div key={suit} className="suit-group">
@@ -288,8 +291,8 @@ export function PlayTable({
             <CompactTurnIndicator position="E" isActive={next_to_play === 'E'} />
             {dummyPosition === 'E' && ' (Dummy)'}
           </div>
-          {/* Show East's hand if it's dummy */}
-          {dummyPosition === 'E' && dummyHand && (
+          {/* Show East's hand if it's dummy - Hide when hand is complete */}
+          {dummyPosition === 'E' && dummyHand && dummyHand.length > 0 && !isHandComplete && (
             <div className="dummy-hand">
               {suitOrder.map(suit => (
                 <div key={suit} className="suit-group">
@@ -340,8 +343,8 @@ export function PlayTable({
  * Display final score after 13 tricks
  * MIGRATED: Now uses ScoreModal component from components/play/
  */
-export function ScoreDisplay({ scoreData, onClose, onDealNewHand, sessionData }) {
-  return <ScoreModal isOpen={!!scoreData} onClose={onClose} scoreData={scoreData} onDealNewHand={onDealNewHand} sessionData={sessionData} />;
+export function ScoreDisplay({ scoreData, onClose, onDealNewHand, sessionData, onShowLearningDashboard }) {
+  return <ScoreModal isOpen={!!scoreData} onClose={onClose} scoreData={scoreData} onDealNewHand={onDealNewHand} sessionData={sessionData} onShowLearningDashboard={onShowLearningDashboard} />;
 }
 
 // Export TurnIndicator components for use in other files
