@@ -294,7 +294,9 @@ def get_feedback():
         optimal_bid, explanation = engine.get_next_bid(user_hand, auction_before_user_bid, 'South',
                                                         current_vulnerability, explanation_level)
 
-        if user_bid == optimal_bid:
+        was_correct = (user_bid == optimal_bid)
+
+        if was_correct:
             feedback = f"✅ Correct! Your bid of {user_bid} is optimal.\n\n{explanation}"
         else:
             # Provide detailed comparison
@@ -315,7 +317,59 @@ def get_feedback():
 
             feedback = "\n".join(feedback_lines)
 
-        return jsonify({'feedback': feedback})
+        # Record practice for learning analytics (async, don't block feedback response)
+        try:
+            from engine.learning.user_manager import get_user_manager
+            from engine.learning.mistake_analyzer import get_mistake_analyzer
+            import sqlite3
+
+            user_id = 1  # Default user for now
+
+            # Record in practice_history
+            conn = sqlite3.connect('bridge.db')
+            cursor = conn.cursor()
+
+            # Insert practice record
+            cursor.execute("""
+                INSERT INTO practice_history (
+                    user_id, convention_id, user_bid, correct_bid, was_correct,
+                    hints_used, time_taken_seconds, xp_earned
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                user_id,
+                None,  # We don't have convention_id in this context yet
+                user_bid,
+                optimal_bid,
+                was_correct,
+                0,  # hints_used
+                None,  # time_taken_seconds
+                10 if was_correct else 5
+            ))
+
+            practice_id = cursor.lastrowid
+            conn.commit()
+            conn.close()
+
+            # Update user stats
+            user_manager = get_user_manager()
+            user_manager.update_streak(user_id)
+            user_manager.add_xp(user_id, 10 if was_correct else 5)
+
+            # Analyze pattern if error (don't wait for this)
+            if not was_correct:
+                try:
+                    mistake_analyzer = get_mistake_analyzer()
+                    mistake_analyzer.analyze_practice_hand(user_id, practice_id)
+                except:
+                    pass  # Don't fail feedback if analysis fails
+
+        except Exception as analytics_error:
+            # Don't fail the feedback response if analytics fails
+            print(f"Analytics recording failed: {analytics_error}")
+            import traceback
+            traceback.print_exc()
+
+        return jsonify({'feedback': feedback, 'was_correct': was_correct, 'xp_earned': 10 if was_correct else 5})
     except Exception as e:
         import traceback
         traceback.print_exc()

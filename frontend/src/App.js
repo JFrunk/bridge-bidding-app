@@ -742,8 +742,8 @@ Please provide a detailed analysis of the auction and identify any bidding error
         });
         setPlayState(state);
 
-        // Update dummy hand if revealed
-        if (state.dummy_hand && !dummyHand) {
+        // Update dummy hand if revealed (always update to reflect cards played)
+        if (state.dummy_hand) {
           // Backend returns dummy_hand as { cards: [...], position: "N" }
           // Extract just the cards array
           const dummyCards = state.dummy_hand.cards || state.dummy_hand;
