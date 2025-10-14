@@ -30,13 +30,16 @@ class PositionEvaluator:
 
     def __init__(self):
         """Initialize evaluator with default weights"""
-        # Component weights (can be tuned)
+        # Component weights (tuned for optimal balance)
+        # Higher = more influence on position evaluation
         self.weights = {
             'tricks_won': 1.0,      # Definitive (already decided)
-            'sure_winners': 0.6,    # High cards that must win
-            'trump_control': 0.0,   # Disabled for now
-            'communication': 0.0,   # Disabled for now
-            'defensive': 0.0        # Disabled for now
+            'sure_winners': 0.5,    # High cards that must win (reduced to avoid overvaluing)
+            'trump_control': 0.35,  # Trump length and strength (slightly reduced)
+            'communication': 0.25,  # Entries between hands (reduced - was too influential)
+            'finesse': 0.3,         # Finessing opportunities (increased - valuable)
+            'long_suits': 0.15,     # Long suit potential (reduced - too speculative)
+            'defensive': 0.0        # Disabled for now (future)
         }
 
     def evaluate(self, state: PlayState, perspective: str) -> float:
@@ -68,16 +71,24 @@ class PositionEvaluator:
         # Component 2: Sure winners (high cards that must win)
         score += self.weights['sure_winners'] * self._sure_winners_component(state, perspective)
 
-        # Component 3: Trump control (disabled for MVP)
+        # Component 3: Trump control
         if self.weights['trump_control'] > 0:
             score += self.weights['trump_control'] * self._trump_control_component(state, perspective)
 
-        # Component 4: Communication (disabled for MVP)
+        # Component 4: Communication/entries
         if self.weights['communication'] > 0:
             score += self.weights['communication'] * self._communication_component(state, perspective)
 
-        # Component 5: Defensive potential (disabled for MVP)
-        if self.weights['defensive'] > 0:
+        # Component 5: Finesse opportunities
+        if self.weights.get('finesse', 0) > 0:
+            score += self.weights['finesse'] * self._finesse_component(state, perspective)
+
+        # Component 6: Long suit establishment
+        if self.weights.get('long_suits', 0) > 0:
+            score += self.weights['long_suits'] * self._long_suit_component(state, perspective)
+
+        # Component 7: Defensive potential (disabled for now)
+        if self.weights.get('defensive', 0) > 0:
             score += self.weights['defensive'] * self._defensive_component(state, perspective)
 
         return score
@@ -169,25 +180,296 @@ class PositionEvaluator:
         """
         Evaluate trump suit control
 
-        Not implemented in MVP - always returns 0.
-        Future: Consider trump length, high trumps, ability to draw trumps.
+        Considers:
+        - Trump length in partnership hands
+        - High trump honors (A, K, Q)
+        - Outstanding trumps in opponents' hands
+        - Ability to draw trumps
+
+        Returns score representing trump advantage (typically 0-3)
         """
-        return 0.0
+        trump_suit = state.contract.trump_suit
+
+        # No trump contract - return 0
+        if not trump_suit:
+            return 0.0
+
+        # Get partnership and opponent positions
+        if perspective in ['N', 'S']:
+            our_positions = ['N', 'S']
+            opp_positions = ['E', 'W']
+        else:
+            our_positions = ['E', 'W']
+            opp_positions = ['N', 'S']
+
+        # Count our trumps
+        our_trump_count = 0
+        our_high_trumps = 0  # Count A, K, Q of trumps
+        our_trump_cards = []
+
+        for pos in our_positions:
+            hand = state.hands[pos]
+            for card in hand.cards:
+                if card.suit == trump_suit:
+                    our_trump_count += 1
+                    our_trump_cards.append(card)
+                    if card.rank in ['A', 'K', 'Q']:
+                        our_high_trumps += 1
+
+        # Count opponent trumps
+        opp_trump_count = 0
+        opp_high_trumps = 0
+
+        for pos in opp_positions:
+            hand = state.hands[pos]
+            for card in hand.cards:
+                if card.suit == trump_suit:
+                    opp_trump_count += 1
+                    if card.rank in ['A', 'K', 'Q']:
+                        opp_high_trumps += 1
+
+        score = 0.0
+
+        # Component 1: Trump length advantage (0-2 points)
+        # Having more trumps is good
+        trump_length_advantage = our_trump_count - opp_trump_count
+        score += trump_length_advantage * 0.15
+
+        # Component 2: High trump honors (0-1.5 points)
+        # A, K, Q of trumps are valuable
+        trump_honor_advantage = our_high_trumps - opp_high_trumps
+        score += trump_honor_advantage * 0.5
+
+        # Component 3: Trump control bonus
+        # Bonus if we have enough trumps to control the suit
+        if our_trump_count >= 8:
+            score += 0.3  # Good trump fit
+
+        if our_trump_count >= opp_trump_count + 3:
+            score += 0.4  # Significant trump advantage
+
+        # Component 4: Master trumps
+        # Check if we have the top trumps
+        if our_trump_cards:
+            our_highest = max(our_trump_cards, key=lambda c: self.RANK_VALUES[c.rank])
+            if our_highest.rank == 'A':
+                score += 0.3  # Trump ace is powerful
+
+        return score
 
     def _communication_component(self, state: PlayState, perspective: str) -> float:
         """
         Evaluate entries between declarer and dummy
 
-        Not implemented in MVP - always returns 0.
-        Future: Count high cards that can be used as entries.
+        Considers:
+        - High cards (A, K) that can be used as entries
+        - Distribution of entries between hands
+        - Whether key hand has entries to winners
+
+        This is crucial for:
+        - Getting to dummy to cash winners
+        - Finessing toward the right hand
+        - Setting up long suits
+
+        Returns score representing communication quality (typically 0-2)
         """
-        return 0.0
+        # Get partnership positions
+        if perspective in ['N', 'S']:
+            positions = ['N', 'S']
+        else:
+            positions = ['E', 'W']
+
+        # For declarer play, consider which hand is dummy
+        # For this evaluation, we count entries in both hands
+        trump_suit = state.contract.trump_suit
+
+        total_entries = 0.0
+        entries_by_position = {}
+
+        for pos in positions:
+            hand = state.hands[pos]
+            position_entries = 0
+
+            # Group cards by suit
+            by_suit = {}
+            for card in hand.cards:
+                if card.suit not in by_suit:
+                    by_suit[card.suit] = []
+                by_suit[card.suit].append(card)
+
+            # Count entries (A or K) in each suit
+            for suit, cards in by_suit.items():
+                sorted_cards = sorted(cards, key=lambda c: self.RANK_VALUES[c.rank], reverse=True)
+
+                if sorted_cards:
+                    highest = sorted_cards[0]
+                    # Ace is a definite entry
+                    if highest.rank == 'A':
+                        position_entries += 1.0
+                    # King is likely an entry if we have length
+                    elif highest.rank == 'K':
+                        position_entries += 0.6
+                    # Queen might be an entry with length
+                    elif highest.rank == 'Q' and len(sorted_cards) >= 3:
+                        position_entries += 0.3
+
+            entries_by_position[pos] = position_entries
+            total_entries += position_entries
+
+        # Score based on total entries
+        score = 0.0
+
+        # Having entries is good
+        score += min(total_entries * 0.3, 2.0)
+
+        # Bonus if entries are well-distributed (both hands have access)
+        if len(positions) == 2:
+            pos1, pos2 = positions
+            if entries_by_position.get(pos1, 0) > 0 and entries_by_position.get(pos2, 0) > 0:
+                score += 0.5  # Both hands have entries - good for flexibility
+
+        # Penalty if one hand is completely blocked (no entries)
+        if any(entries_by_position.get(pos, 0) == 0 for pos in positions):
+            score -= 0.3
+
+        return score
+
+    def _finesse_component(self, state: PlayState, perspective: str) -> float:
+        """
+        Evaluate finessing opportunities
+
+        Detects positions where finessing can gain tricks:
+        - AQ combination (finesse for K)
+        - KJ combination (finesse for Q)
+        - AJ combination (finesse for K or Q)
+        - Two-way finesses
+
+        Returns score representing finesse potential (typically 0-2)
+        """
+        # Get partnership positions
+        if perspective in ['N', 'S']:
+            positions = ['N', 'S']
+        else:
+            positions = ['E', 'W']
+
+        finesse_value = 0.0
+
+        # Analyze each suit for finesse opportunities
+        for suit in ['♠', '♥', '♦', '♣']:
+            # Get all cards in this suit from partnership
+            our_cards = []
+            for pos in positions:
+                hand = state.hands[pos]
+                our_cards.extend([c for c in hand.cards if c.suit == suit])
+
+            if len(our_cards) < 2:
+                continue  # Need at least 2 cards to finesse
+
+            # Get ranks we hold
+            our_ranks = set(card.rank for card in our_cards)
+            our_rank_values = set(self.RANK_VALUES[rank] for rank in our_ranks)
+
+            # Check for specific finesse combinations
+
+            # AQ combination (missing K)
+            if 'A' in our_ranks and 'Q' in our_ranks and 'K' not in our_ranks:
+                finesse_value += 0.5  # 50% to win an extra trick
+
+            # KJ combination (missing Q)
+            if 'K' in our_ranks and 'J' in our_ranks and 'Q' not in our_ranks:
+                finesse_value += 0.4  # Good finesse opportunity
+
+            # AJ combination (missing K and Q)
+            if 'A' in our_ranks and 'J' in our_ranks and 'K' not in our_ranks and 'Q' not in our_ranks:
+                finesse_value += 0.4  # Can finesse twice
+
+            # KT combination (missing Q and J)
+            if 'K' in our_ranks and 'T' in our_ranks and 'Q' not in our_ranks and 'J' not in our_ranks:
+                finesse_value += 0.3
+
+            # QT combination (missing K and J)
+            if 'Q' in our_ranks and 'T' in our_ranks and 'K' not in our_ranks and 'J' not in our_ranks:
+                finesse_value += 0.25
+
+            # Two-way finesse detection (e.g., AQJ missing K)
+            if 'A' in our_ranks and 'Q' in our_ranks and 'J' in our_ranks and 'K' not in our_ranks:
+                finesse_value += 0.4  # Flexibility bonus
+
+        return finesse_value
+
+    def _long_suit_component(self, state: PlayState, perspective: str) -> float:
+        """
+        Evaluate long suit establishment potential
+
+        Considers:
+        - Suits with 5+ cards that can be set up
+        - High cards in long suits
+        - Whether suit is likely to run
+
+        Returns score representing long suit potential (typically 0-2)
+        """
+        # Get partnership positions
+        if perspective in ['N', 'S']:
+            positions = ['N', 'S']
+        else:
+            positions = ['E', 'W']
+
+        trump_suit = state.contract.trump_suit
+        long_suit_value = 0.0
+
+        # Analyze each non-trump suit
+        for suit in ['♠', '♥', '♦', '♣']:
+            if suit == trump_suit:
+                continue  # Don't count trump as long suit
+
+            # Count combined length in partnership
+            total_length = 0
+            high_cards = 0
+            all_cards = []
+
+            for pos in positions:
+                hand = state.hands[pos]
+                suit_cards = [c for c in hand.cards if c.suit == suit]
+                total_length += len(suit_cards)
+                all_cards.extend(suit_cards)
+
+                # Count high cards (A, K, Q)
+                for card in suit_cards:
+                    if card.rank in ['A', 'K', 'Q']:
+                        high_cards += 1
+
+            # Long suits (5+) have potential
+            if total_length >= 5:
+                # Base value for having a long suit
+                long_suit_value += 0.3
+
+                # Bonus for extra length
+                if total_length >= 6:
+                    long_suit_value += 0.2
+                if total_length >= 7:
+                    long_suit_value += 0.2
+
+                # Bonus for high cards in long suit
+                long_suit_value += high_cards * 0.15
+
+                # Check if suit is likely to run (have top cards)
+                if all_cards:
+                    sorted_cards = sorted(all_cards, key=lambda c: self.RANK_VALUES[c.rank], reverse=True)
+                    top_card = sorted_cards[0]
+
+                    # If we have A or K in long suit, it's more likely to run
+                    if top_card.rank == 'A':
+                        long_suit_value += 0.3
+                    elif top_card.rank == 'K':
+                        long_suit_value += 0.2
+
+        return long_suit_value
 
     def _defensive_component(self, state: PlayState, perspective: str) -> float:
         """
         Evaluate defensive potential
 
-        Not implemented in MVP - always returns 0.
+        Not implemented yet - always returns 0.
         Future: Consider setting up defensive tricks, promoting honors.
         """
         return 0.0
@@ -209,6 +491,8 @@ class PositionEvaluator:
             'sure_winners': self._sure_winners_component(state, perspective),
             'trump_control': self._trump_control_component(state, perspective),
             'communication': self._communication_component(state, perspective),
+            'finesse': self._finesse_component(state, perspective),
+            'long_suits': self._long_suit_component(state, perspective),
             'defensive': self._defensive_component(state, perspective),
         }
 

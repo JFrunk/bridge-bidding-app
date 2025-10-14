@@ -24,7 +24,7 @@ from engine.hand import Hand, Card
 from engine.play_engine import PlayEngine, PlayState, Contract
 from engine.play.ai.simple_ai import SimplePlayAI
 from engine.play.ai.minimax_ai import MinimaxPlayAI
-from tests.play_test_helpers import create_hand_from_string, create_play_scenario
+from tests.integration.play_test_helpers import create_hand_from_string, create_play_scenario
 
 
 class BenchmarkResult:
