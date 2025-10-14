@@ -203,13 +203,7 @@ export function PlayTable({
       <div className="play-area">
         {/* North position */}
         <div className="position position-north">
-          <div className="position-label">
-            North
-            <CompactTurnIndicator position="N" isActive={next_to_play === 'N'} />
-            {dummyPosition === 'N' && ' (Dummy)'}
-            {declarerPosition === 'N' && userIsDummy && ' (You control as dummy)'}
-          </div>
-          {/* Show North's hand if it's dummy */}
+          {/* Show North's hand if it's dummy - ABOVE label */}
           {dummyPosition === 'N' && dummyHand && (
             <div className="dummy-hand">
               {suitOrder.map(suit => (
@@ -242,6 +236,12 @@ export function PlayTable({
               ))}
             </div>
           )}
+          <div className="position-label">
+            North
+            <CompactTurnIndicator position="N" isActive={next_to_play === 'N'} />
+            {dummyPosition === 'N' && ' (Dummy)'}
+            {declarerPosition === 'N' && userIsDummy && ' (You control as dummy)'}
+          </div>
         </div>
 
         {/* Current trick in center - CRITICAL: Positioned in center grid area */}
