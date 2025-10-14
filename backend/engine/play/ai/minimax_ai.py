@@ -116,11 +116,14 @@ class MinimaxPlayAI(BasePlayAI):
         # Declarer's side maximizes, defender's side minimizes
         is_declarer_side = self._is_declarer_side(position, state.contract.declarer)
 
+        # Order moves for better alpha-beta pruning
+        ordered_cards = self._order_moves(legal_cards, state, position, is_declarer_side)
+
         # Run minimax search for each legal card
         best_card = None
         best_score = float('-inf') if is_declarer_side else float('inf')
 
-        for card in legal_cards:
+        for card in ordered_cards:
             # Simulate playing this card
             test_state = self._simulate_play(state, card, position)
 
@@ -186,9 +189,13 @@ class MinimaxPlayAI(BasePlayAI):
         current_player = state.next_to_play
         legal_cards = self._get_legal_cards(state, current_player)
 
+        # Order moves for better pruning
+        is_decl = self._is_declarer_side(current_player, state.contract.declarer)
+        ordered_cards = self._order_moves(legal_cards, state, current_player, is_decl)
+
         if maximizing:
             max_eval = float('-inf')
-            for card in legal_cards:
+            for card in ordered_cards:
                 test_state = self._simulate_play(state, card, current_player)
                 eval_score = self._minimax(
                     test_state, depth - 1, alpha, beta, False, perspective
@@ -204,7 +211,7 @@ class MinimaxPlayAI(BasePlayAI):
             return max_eval
         else:
             min_eval = float('inf')
-            for card in legal_cards:
+            for card in ordered_cards:
                 test_state = self._simulate_play(state, card, current_player)
                 eval_score = self._minimax(
                     test_state, depth - 1, alpha, beta, True, perspective
@@ -321,6 +328,77 @@ class MinimaxPlayAI(BasePlayAI):
             return position in ['N', 'S']
         else:
             return position in ['E', 'W']
+
+    def _order_moves(self, cards: List[Card], state: PlayState,
+                     position: str, is_declarer_side: bool) -> List[Card]:
+        """
+        Order moves to improve alpha-beta pruning efficiency
+
+        Better move ordering = more cutoffs = faster search
+
+        Heuristics:
+        1. Winning cards (highest in suit)
+        2. High cards (A, K)
+        3. Cards that complete tricks
+        4. Trump cards (in trump contracts)
+        5. Other cards by rank
+
+        Args:
+            cards: Legal cards to order
+            state: Current state
+            position: Position playing
+            is_declarer_side: True if declarer/dummy
+
+        Returns:
+            Ordered list of cards (best first)
+        """
+        if len(cards) <= 1:
+            return cards
+
+        # Rank values for sorting
+        RANK_VALUES = {
+            '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+            'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
+        }
+
+        def card_priority(card: Card) -> tuple:
+            """Calculate priority score for card (higher = better)"""
+            priority_score = 0
+
+            # Priority 1: High cards (A, K) are usually good
+            if card.rank == 'A':
+                priority_score += 100
+            elif card.rank == 'K':
+                priority_score += 80
+            elif card.rank == 'Q':
+                priority_score += 60
+
+            # Priority 2: Trump cards (if following suit)
+            if state.contract.trump_suit and card.suit == state.contract.trump_suit:
+                if not state.current_trick or state.current_trick[0][0].suit != state.contract.trump_suit:
+                    priority_score += 50  # Ruffing
+
+            # Priority 3: Winning current trick
+            if state.current_trick:
+                led_suit = state.current_trick[0][0].suit
+                if card.suit == led_suit:
+                    # Following suit - check if this wins
+                    current_highest = max(
+                        (c for c, p in state.current_trick if c.suit == led_suit),
+                        key=lambda c: RANK_VALUES[c.rank],
+                        default=None
+                    )
+                    if current_highest and RANK_VALUES[card.rank] > RANK_VALUES[current_highest.rank]:
+                        priority_score += 70  # Wins the trick
+
+            # Priority 4: Base rank value
+            priority_score += RANK_VALUES[card.rank]
+
+            # Return as tuple for sorting (higher first)
+            return (-priority_score, card.rank, card.suit)  # Negative for descending sort
+
+        # Sort cards by priority
+        return sorted(cards, key=card_priority)
 
     def get_statistics(self) -> dict:
         """

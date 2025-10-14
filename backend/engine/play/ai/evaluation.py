@@ -34,12 +34,14 @@ class PositionEvaluator:
         # Higher = more influence on position evaluation
         self.weights = {
             'tricks_won': 1.0,      # Definitive (already decided)
-            'sure_winners': 0.5,    # High cards that must win (reduced to avoid overvaluing)
-            'trump_control': 0.35,  # Trump length and strength (slightly reduced)
-            'communication': 0.25,  # Entries between hands (reduced - was too influential)
-            'finesse': 0.3,         # Finessing opportunities (increased - valuable)
-            'long_suits': 0.15,     # Long suit potential (reduced - too speculative)
-            'defensive': 0.0        # Disabled for now (future)
+            'sure_winners': 0.45,   # High cards that must win
+            'trump_control': 0.35,  # Trump length and strength
+            'communication': 0.28,  # Entries between hands
+            'finesse': 0.3,         # Finessing opportunities
+            'long_suits': 0.18,     # Long suit potential
+            'danger_hand': 0.25,    # Avoidance/hold-up play (reduced - was too strong)
+            'tempo': 0.15,          # Timing and tempo (reduced)
+            'defensive': 0.2        # Defensive strategy (reduced)
         }
 
     def evaluate(self, state: PlayState, perspective: str) -> float:
@@ -87,7 +89,15 @@ class PositionEvaluator:
         if self.weights.get('long_suits', 0) > 0:
             score += self.weights['long_suits'] * self._long_suit_component(state, perspective)
 
-        # Component 7: Defensive potential (disabled for now)
+        # Component 7: Danger hand avoidance (hold-up play)
+        if self.weights.get('danger_hand', 0) > 0:
+            score += self.weights['danger_hand'] * self._danger_hand_component(state, perspective)
+
+        # Component 8: Tempo and timing
+        if self.weights.get('tempo', 0) > 0:
+            score += self.weights['tempo'] * self._tempo_component(state, perspective)
+
+        # Component 9: Defensive strategy
         if self.weights.get('defensive', 0) > 0:
             score += self.weights['defensive'] * self._defensive_component(state, perspective)
 
@@ -465,14 +475,251 @@ class PositionEvaluator:
 
         return long_suit_value
 
+    def _danger_hand_component(self, state: PlayState, perspective: str) -> float:
+        """
+        Evaluate danger hand avoidance and hold-up play
+
+        Considers:
+        - Which opponent is "dangerous" (has long suit to run)
+        - Whether we should hold up stoppers
+        - Keeping dangerous opponent off lead
+
+        Returns score representing avoidance quality (typically -1 to +1)
+        """
+        # Only relevant for NoTrump contracts
+        if state.contract.trump_suit:
+            return 0.0
+
+        # Get partnership and opponent positions
+        if perspective in ['N', 'S']:
+            our_positions = ['N', 'S']
+            opp_positions = ['E', 'W']
+        else:
+            our_positions = ['E', 'W']
+            opp_positions = ['N', 'S']
+
+        score = 0.0
+
+        # Analyze each suit for danger
+        for suit in ['♠', '♥', '♦', '♣']:
+            # Count cards remaining in suit for opponents
+            opp_suit_lengths = {}
+            for pos in opp_positions:
+                hand = state.hands[pos]
+                length = len([c for c in hand.cards if c.suit == suit])
+                opp_suit_lengths[pos] = length
+
+            # Identify danger hand (opponent with long suit)
+            if opp_suit_lengths:
+                max_length = max(opp_suit_lengths.values())
+
+                if max_length >= 4:
+                    # One opponent has 4+ cards - potential danger
+                    danger_pos = max(opp_suit_lengths, key=opp_suit_lengths.get)
+
+                    # Count our stoppers in this suit
+                    our_cards = []
+                    for pos in our_positions:
+                        hand = state.hands[pos]
+                        our_cards.extend([c for c in hand.cards if c.suit == suit])
+
+                    # Check for stopper (A, K, or Q with length)
+                    has_stopper = False
+                    stopper_quality = 0
+
+                    if our_cards:
+                        sorted_cards = sorted(our_cards, key=lambda c: self.RANK_VALUES[c.rank], reverse=True)
+                        top_card = sorted_cards[0]
+
+                        if top_card.rank == 'A':
+                            has_stopper = True
+                            stopper_quality = 2
+                        elif top_card.rank == 'K' and len(our_cards) >= 2:
+                            has_stopper = True
+                            stopper_quality = 1
+                        elif top_card.rank == 'Q' and len(our_cards) >= 3:
+                            has_stopper = True
+                            stopper_quality = 0.5
+
+                    # Bonus for keeping danger hand off lead
+                    # Check if danger hand is on lead next
+                    if state.next_to_play == danger_pos:
+                        score -= 0.4  # Penalty - danger hand on lead
+                    elif state.next_to_play in our_positions:
+                        score += 0.2  # Bonus - we have lead
+
+                    # Hold-up evaluation: if we have stopper but opponent has length,
+                    # holding up (not winning immediately) can break communication
+                    if has_stopper and max_length >= 5:
+                        # Consider hold-up play valuable
+                        score += stopper_quality * 0.3
+
+        return score
+
+    def _tempo_component(self, state: PlayState, perspective: str) -> float:
+        """
+        Evaluate tempo and timing considerations
+
+        Considers:
+        - Race situations (who establishes suit first)
+        - Urgency to draw trumps
+        - Rush to cash winners before they're ruffed
+
+        Returns score representing tempo advantage (typically -1 to +1)
+        """
+        score = 0.0
+
+        # Get partnership positions
+        if perspective in ['N', 'S']:
+            our_positions = ['N', 'S']
+            opp_positions = ['E', 'W']
+        else:
+            our_positions = ['E', 'W']
+            opp_positions = ['N', 'S']
+
+        trump_suit = state.contract.trump_suit
+
+        # Count winners we can cash immediately
+        immediate_winners = 0
+        for suit in ['♠', '♥', '♦', '♣']:
+            our_cards = []
+            for pos in our_positions:
+                hand = state.hands[pos]
+                our_cards.extend([c for c in hand.cards if c.suit == suit])
+
+            if our_cards:
+                sorted_cards = sorted(our_cards, key=lambda c: self.RANK_VALUES[c.rank], reverse=True)
+                # Count top sequential cards as immediate winners
+                top_val = 14  # Ace
+                for card in sorted_cards:
+                    if self.RANK_VALUES[card.rank] == top_val:
+                        immediate_winners += 1
+                        top_val -= 1
+                    else:
+                        break
+
+        # Tempo bonus for having cashing winners
+        score += min(immediate_winners * 0.15, 0.8)
+
+        # In trump contracts, urgency to draw trumps
+        if trump_suit:
+            # Count opponent trumps
+            opp_trumps = 0
+            for pos in opp_positions:
+                hand = state.hands[pos]
+                opp_trumps += len([c for c in hand.cards if c.suit == trump_suit])
+
+            # If opponents have few trumps left, less urgent
+            if opp_trumps == 0:
+                score += 0.5  # Bonus - trumps drawn
+            elif opp_trumps <= 2:
+                score += 0.3  # Nearly drawn
+
+        # In NT, check for race situations (who establishes long suit first)
+        if not trump_suit:
+            # Count near-established long suits
+            for suit in ['♠', '♥', '♦', '♣']:
+                our_cards = []
+                for pos in our_positions:
+                    hand = state.hands[pos]
+                    our_cards.extend([c for c in hand.cards if c.suit == suit])
+
+                if len(our_cards) >= 4:
+                    # We have length - check if close to running
+                    sorted_cards = sorted(our_cards, key=lambda c: self.RANK_VALUES[c.rank], reverse=True)
+                    if sorted_cards and sorted_cards[0].rank in ['A', 'K']:
+                        # Long suit with top card - good tempo
+                        score += 0.25
+
+        return score
+
     def _defensive_component(self, state: PlayState, perspective: str) -> float:
         """
-        Evaluate defensive potential
+        Evaluate defensive potential and strategy
 
-        Not implemented yet - always returns 0.
-        Future: Consider setting up defensive tricks, promoting honors.
+        Considers:
+        - Promoting trump honors
+        - Setting up defensive ruffs
+        - Breaking up declarer's communication
+        - Leading through strength
+
+        Returns score representing defensive prospects (typically -1 to +1)
         """
-        return 0.0
+        # Determine if we're defending or declaring
+        contract = state.contract
+        declarer = contract.declarer
+
+        is_defender = perspective not in self._get_declarer_partnership(declarer)
+
+        if not is_defender:
+            return 0.0  # Not defending, component not relevant
+
+        score = 0.0
+        trump_suit = contract.trump_suit
+
+        # Get our partnership and declarer partnership
+        if perspective in ['N', 'S']:
+            our_positions = ['N', 'S']
+            decl_positions = ['E', 'W']
+        else:
+            our_positions = ['E', 'W']
+            decl_positions = ['N', 'S']
+
+        # Defensive Trump Promotion
+        if trump_suit:
+            our_trumps = []
+            for pos in our_positions:
+                hand = state.hands[pos]
+                our_trumps.extend([c for c in hand.cards if c.suit == trump_suit])
+
+            # Count high trumps (Q, K, A)
+            high_trumps = len([c for c in our_trumps if c.rank in ['Q', 'K', 'A']])
+            if high_trumps > 0:
+                score += high_trumps * 0.3  # Value defensive trump honors
+
+            # Check for defensive ruff potential (shortness in side suit with trumps)
+            for pos in our_positions:
+                hand = state.hands[pos]
+                has_trumps = any(c.suit == trump_suit for c in hand.cards)
+
+                if has_trumps:
+                    # Check for voids or singletons in side suits
+                    for suit in ['♠', '♥', '♦', '♣']:
+                        if suit == trump_suit:
+                            continue
+
+                        suit_count = len([c for c in hand.cards if c.suit == suit])
+                        if suit_count == 0:
+                            score += 0.5  # Void - excellent for ruffing
+                        elif suit_count == 1:
+                            score += 0.25  # Singleton - potential ruff
+
+        # Communication disruption
+        # Check if we're breaking up declarer's entries
+        decl_entries = 0
+        for pos in decl_positions:
+            hand = state.hands[pos]
+            for suit in ['♠', '♥', '♦', '♣']:
+                suit_cards = [c for c in hand.cards if c.suit == suit]
+                if suit_cards:
+                    highest = max(suit_cards, key=lambda c: self.RANK_VALUES[c.rank])
+                    if highest.rank in ['A', 'K']:
+                        decl_entries += 1
+
+        # Fewer entries for declarer is good for defense
+        if decl_entries <= 2:
+            score += 0.4
+        elif decl_entries <= 4:
+            score += 0.2
+
+        return score
+
+    def _get_declarer_partnership(self, declarer: str) -> list:
+        """Helper to get declarer's partnership positions"""
+        if declarer in ['N', 'S']:
+            return ['N', 'S']
+        else:
+            return ['E', 'W']
 
     def get_component_scores(self, state: PlayState, perspective: str) -> Dict[str, float]:
         """
@@ -493,6 +740,8 @@ class PositionEvaluator:
             'communication': self._communication_component(state, perspective),
             'finesse': self._finesse_component(state, perspective),
             'long_suits': self._long_suit_component(state, perspective),
+            'danger_hand': self._danger_hand_component(state, perspective),
+            'tempo': self._tempo_component(state, perspective),
             'defensive': self._defensive_component(state, perspective),
         }
 
