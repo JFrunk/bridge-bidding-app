@@ -2,12 +2,12 @@
 # This file tells Render how to deploy your app
 
 services:
-  # Backend API (Flask)
+  # Backend API (Flask with DDS AI)
   - type: web
     name: bridge-bidding-api
     runtime: python
     buildCommand: "pip install -r backend/requirements.txt"
-    startCommand: "cd backend && gunicorn --bind 0.0.0.0:$PORT server:app"
+    startCommand: "cd backend && gunicorn --bind 0.0.0.0:$PORT server:app --workers 2 --timeout 120"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
