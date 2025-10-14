@@ -905,6 +905,16 @@ Please provide a detailed analysis of the auction and identify any bidding error
               trick_size: clearedState.current_trick.length,
               next_to_play: clearedState.next_to_play
             });
+
+            // CRITICAL FIX: Check if next player is user-controlled before restarting AI loop
+            const nextIsUserControlled = clearedState.next_to_play === 'S' ||
+              (clearedState.next_to_play === clearedState.dummy && clearedState.contract.declarer === 'S');
+
+            if (nextIsUserControlled) {
+              console.log('⏸️ STOPPING - Next player after trick clear is user-controlled');
+              setIsPlayingCard(false);
+              return;
+            }
           }
 
           console.log('🔁 Continuing to next trick...');
