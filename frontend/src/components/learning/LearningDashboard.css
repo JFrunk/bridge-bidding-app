@@ -517,20 +517,125 @@
     padding: 15px;
   }
 
+  .learning-dashboard-header h2 {
+    font-size: 24px;
+  }
+
+  .learning-dashboard-subtitle {
+    font-size: 14px;
+  }
+
   .dashboard-grid {
     grid-template-columns: 1fr;
+    gap: 15px;
   }
 
   .user-stats-bar {
     flex-direction: column;
     gap: 15px;
+    padding: 15px;
   }
 
   .stat-item {
     min-width: auto;
   }
 
+  .stat-value {
+    font-size: 28px;
+  }
+
   .dashboard-card {
     padding: 20px;
+  }
+
+  .dashboard-card-title {
+    font-size: 18px;
+  }
+
+  .celebration-emoji {
+    font-size: 28px;
+  }
+
+  .growth-area-header,
+  .recommendation-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .learning-dashboard {
+    padding: 10px;
+  }
+
+  .learning-dashboard-header {
+    margin-bottom: 20px;
+  }
+
+  .learning-dashboard-header h2 {
+    font-size: 20px;
+  }
+
+  .user-stats-bar {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .dashboard-grid {
+    gap: 12px;
+  }
+
+  .dashboard-card {
+    padding: 16px;
+  }
+
+  .dashboard-card-title {
+    font-size: 16px;
+  }
+
+  .dashboard-card-icon {
+    font-size: 20px;
+  }
+
+  .celebration-item,
+  .growth-area-item,
+  .recommendation-item {
+    padding: 12px;
+  }
+
+  .celebration-emoji {
+    font-size: 24px;
+  }
+
+  .practice-button {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .recommendation-action {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .trend-icon {
+    font-size: 36px;
+  }
+
+  .trend-text {
+    font-size: 20px;
+  }
+
+  .trend-description {
+    font-size: 14px;
   }
 }

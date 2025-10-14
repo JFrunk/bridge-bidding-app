@@ -49,18 +49,18 @@ export function BiddingBox({ onBid, disabled, auction }) {
   };
 
   return (
-    <div className="flex flex-col gap-2.5 p-4 bg-bg-secondary rounded-lg">
-      <h3 className="m-0 mb-2.5 text-white text-base">Bidding</h3>
+    <div className="flex flex-col gap-2.5 p-3 sm:p-4 bg-bg-secondary rounded-lg">
+      <h3 className="m-0 mb-2.5 text-white text-sm sm:text-base">Bidding</h3>
 
-      {/* Level buttons (1-7) */}
-      <div className="flex flex-row gap-2 justify-center">
+      {/* Level buttons (1-7) - Responsive sizing */}
+      <div className="flex flex-row gap-1 sm:gap-2 justify-center">
         {[1, 2, 3, 4, 5, 6, 7].map(l => (
           <Button
             key={l}
             onClick={() => setLevel(l)}
             variant={level === l ? "default" : "outline"}
             disabled={disabled}
-            className="w-12 h-10"
+            className="w-9 h-9 sm:w-12 sm:h-10 text-sm sm:text-base"
             aria-label={`Select level ${l}`}
           >
             {l}
@@ -68,8 +68,8 @@ export function BiddingBox({ onBid, disabled, auction }) {
         ))}
       </div>
 
-      {/* Suit buttons */}
-      <div className="flex flex-row gap-2 justify-center">
+      {/* Suit buttons - Responsive sizing */}
+      <div className="flex flex-row gap-1 sm:gap-2 justify-center">
         {suits.map(s => {
           const isLegal = !level || isBidLegal(level, s);
           return (
@@ -78,13 +78,13 @@ export function BiddingBox({ onBid, disabled, auction }) {
               onClick={() => handleBid(s)}
               disabled={!level || disabled || !isLegal}
               variant="outline"
-              className="w-12 h-10"
+              className="w-9 h-9 sm:w-12 sm:h-10 text-sm sm:text-base"
               aria-label={`Bid ${level || ''} ${s === 'NT' ? 'No Trump' : s}`}
             >
               {s === 'NT' ? 'NT' : (
                 <span className={cn(
                   s === '♥' || s === '♦' ? 'text-suit-red' : 'text-suit-black',
-                  "text-lg"
+                  "text-base sm:text-lg"
                 )}>
                   {s}
                 </span>
@@ -94,15 +94,15 @@ export function BiddingBox({ onBid, disabled, auction }) {
         })}
       </div>
 
-      {/* Call buttons (Pass, X, XX) */}
-      <div className="flex flex-row gap-2 justify-center">
+      {/* Call buttons (Pass, X, XX) - Responsive sizing */}
+      <div className="flex flex-row gap-1 sm:gap-2 justify-center">
         {calls.map(c => (
           <Button
             key={c}
             onClick={() => handleCall(c)}
             disabled={disabled}
             variant="outline"
-            className="w-16 h-10"
+            className="w-12 h-9 sm:w-16 sm:h-10 text-sm sm:text-base"
             aria-label={c === 'X' ? 'Double' : c === 'XX' ? 'Redouble' : 'Pass'}
           >
             {c}

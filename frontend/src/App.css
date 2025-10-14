@@ -4,12 +4,41 @@ body {
   color: white;
   padding: 20px;
 }
+
+/* Responsive: Reduce body padding on small screens */
+@media (max-width: 768px) {
+  body {
+    padding: 15px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 10px 5px;
+  }
+}
 .app-container {
   max-width: 900px;
   margin: auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding: 0 10px; /* Add horizontal padding for mobile */
+}
+
+/* Responsive: Adjust container on small screens */
+@media (max-width: 768px) {
+  .app-container {
+    gap: 15px;
+    padding: 0 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-container {
+    gap: 10px;
+    padding: 0 5px;
+  }
 }
 .my-hand {
   width: 100%;
@@ -931,4 +960,68 @@ html, body {
   .learning-dashboard-overlay {
     padding: 0;
   }
+}
+
+/* ============================================================================
+   TOP BAR & USER MENU
+   ============================================================================ */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  margin-bottom: 20px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.app-title {
+  margin: 0;
+  font-size: 28px;
+  color: white;
+  font-weight: 600;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-display {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.auth-button,
+.logout-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-button {
+  background: #4CAF50;
+  color: white;
+}
+
+.auth-button:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.logout-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.logout-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
 }
