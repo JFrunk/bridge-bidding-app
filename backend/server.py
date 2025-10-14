@@ -292,6 +292,63 @@ def abandon_session():
         return jsonify({'error': f'Failed to abandon session: {str(e)}'}), 500
 
 
+# ============================================================================
+# AI STATUS ENDPOINT
+# ============================================================================
+
+@app.route('/api/ai/status', methods=['GET'])
+def get_ai_status():
+    """
+    Get AI system status including DDS availability
+
+    Returns:
+        AI configuration and DDS status
+    """
+    try:
+        ai_status = {
+            'dds_available': DDS_AVAILABLE,
+            'difficulties': {
+                'beginner': {
+                    'name': ai_instances['beginner'].get_name(),
+                    'rating': '6/10',
+                    'description': 'Basic rule-based play'
+                },
+                'intermediate': {
+                    'name': ai_instances['intermediate'].get_name(),
+                    'rating': '7.5/10',
+                    'description': 'Enhanced evaluation with 2-ply search'
+                },
+                'advanced': {
+                    'name': ai_instances['advanced'].get_name(),
+                    'rating': '8/10',
+                    'description': 'Advanced components with 3-ply search'
+                },
+                'expert': {
+                    'name': ai_instances['expert'].get_name(),
+                    'rating': '9/10' if DDS_AVAILABLE else '8+/10',
+                    'description': 'Double Dummy Solver (perfect play)' if DDS_AVAILABLE else 'Deep minimax search (4-ply)',
+                    'using_dds': DDS_AVAILABLE
+                }
+            },
+            'current_difficulty': current_ai_difficulty
+        }
+
+        # Add DDS statistics if available
+        if DDS_AVAILABLE and current_ai_difficulty == 'expert':
+            try:
+                expert_ai = ai_instances['expert']
+                if hasattr(expert_ai, 'get_statistics'):
+                    ai_status['dds_statistics'] = expert_ai.get_statistics()
+            except:
+                pass
+
+        return jsonify(ai_status)
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to get AI status: {str(e)}'}), 500
+
+
 @app.route('/api/session/stats', methods=['GET'])
 def get_session_stats():
     """

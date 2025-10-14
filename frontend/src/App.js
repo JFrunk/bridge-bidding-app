@@ -9,6 +9,7 @@ import LearningDashboard from './components/learning/LearningDashboard';
 import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SimpleLogin } from './components/auth/SimpleLogin';
+import DDSStatusIndicator from './components/DDSStatusIndicator';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -1246,6 +1247,9 @@ Please provide a detailed analysis of the auction and identify any bidding error
           </div>
         </div>
       )}
+
+      {/* DDS Status Indicator - Shows if expert AI is using DDS */}
+      <DDSStatusIndicator />
     </div>
   );
 }
