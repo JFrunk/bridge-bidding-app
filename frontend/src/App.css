@@ -40,9 +40,19 @@ body {
 .suit-group .card:first-child {
   margin-left: 0; /* First card in each suit has no left margin */
 }
+/* BridgeCard component overlap (renders as div) */
+.suit-group > div {
+  margin-left: -45px; /* 35% visible, 65% hidden */
+}
+.suit-group > div:first-child {
+  margin-left: 0; /* First card has no left margin */
+}
 /* First suit group has no left margin, subsequent suits continue the overlap */
 .hand-display .suit-group:not(:first-child) .card:first-child {
   margin-left: -45px; /* Continue overlap from previous suit */
+}
+.hand-display .suit-group:not(:first-child) > div:first-child {
+  margin-left: -45px; /* Continue overlap from previous suit - BridgeCard */
 }
 .card {
   width: 70px;
@@ -754,7 +764,20 @@ html, body {
     margin-left: 0;
   }
 
+  /* BridgeCard component overlap for mobile */
+  .suit-group > div {
+    margin-left: -33px;
+  }
+
+  .suit-group > div:first-child {
+    margin-left: 0;
+  }
+
   .hand-display .suit-group:not(:first-child) .card:first-child {
+    margin-left: -33px;
+  }
+
+  .hand-display .suit-group:not(:first-child) > div:first-child {
     margin-left: -33px;
   }
 }
@@ -774,7 +797,20 @@ html, body {
     margin-left: 0;
   }
 
+  /* BridgeCard component overlap for extra small screens */
+  .suit-group > div {
+    margin-left: -25px;
+  }
+
+  .suit-group > div:first-child {
+    margin-left: 0;
+  }
+
   .hand-display .suit-group:not(:first-child) .card:first-child {
+    margin-left: -25px;
+  }
+
+  .hand-display .suit-group:not(:first-child) > div:first-child {
     margin-left: -25px;
   }
 
