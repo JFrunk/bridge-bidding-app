@@ -494,6 +494,18 @@ This document is the **authoritative source** for all UI/UX decisions in the Bri
 - [ ] Implementing accessibility features
 - [ ] Creating educational UI (hints, analysis, etc.)
 
+**🚨 NEW (October 2025): RESPONSIVE DESIGN MANDATORY**
+
+**BEFORE creating ANY new component, read:**
+- `.claude/RESPONSIVE_DESIGN_RULES.md` - Quick reference for responsive patterns
+- `.claude/HOW_TO_ENSURE_CLAUDE_FOLLOWS_STANDARDS.md` - Section on responsive requirements
+
+**All new components MUST:**
+- Use responsive Tailwind classes (w-9 sm:w-12, not w-12)
+- Work on mobile (375px), tablet (768px), desktop (1280px)
+- Follow mobile-first approach
+- Use breakpoint prefixes: base, sm:, md:, lg:
+
 ### Key Standards to Follow
 
 1. **Design Philosophy**: Learner-first, progressive disclosure

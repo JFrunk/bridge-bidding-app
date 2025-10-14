@@ -157,6 +157,7 @@ When you (Claude Code) start a new session and see UI/UX work:
 - Use spacing variables: `var(--space-4)`, not `16px`
 - Use typography variables: `var(--text-lg)`, not `1.125rem`
 - Follow the educational UI patterns (hints, errors, feedback)
+- **ALWAYS use responsive Tailwind classes** (see Responsive Requirements below)
 
 #### When User Asks for UI Changes Without Mentioning Standards:
 **Proactively reference standards:**
@@ -374,6 +375,117 @@ When planning features → Reference INTERFACE_IMPROVEMENTS_PLAN.md
 | `docs/features/INTERFACE_IMPROVEMENTS_PLAN.md` | Roadmap for UI improvements | No | When planning phases |
 | `frontend/src/PlayComponents.js` | Existing UI components | No | During implementation |
 | `frontend/src/PlayComponents.css` | Existing UI styles | No | During implementation |
+
+---
+
+## CRITICAL: Responsive Design Requirements
+
+**MANDATORY for ALL new components created after October 2025**
+
+### The Rule: Mobile-First Responsive by Default
+
+When creating **any** new React component or modifying existing ones, you MUST apply responsive Tailwind classes. Desktop-only designs are NOT acceptable.
+
+### Required Breakpoints
+
+Use Tailwind's responsive prefixes for all sizing, spacing, and layout:
+
+```jsx
+// ❌ WRONG - Fixed sizing, not responsive
+<div className="p-4 gap-4 text-base">
+  <button className="w-12 h-10">Click</button>
+</div>
+
+// ✅ CORRECT - Responsive sizing with mobile-first approach
+<div className="p-3 sm:p-4 gap-2 sm:gap-4 text-sm sm:text-base">
+  <button className="w-9 h-9 sm:w-12 sm:h-10">Click</button>
+</div>
+```
+
+### Tailwind Breakpoints to Use
+
+- **Base (0-639px):** Mobile - smallest sizes, minimal spacing
+- **`sm:` (640px+):** Large mobile/tablet - moderate sizing
+- **`md:` (768px+):** Tablet - standard sizing
+- **`lg:` (1024px+):** Desktop - full sizing
+- **`xl:` (1280px+):** Large desktop - optional enhancements
+
+### Common Responsive Patterns
+
+#### 1. Button Sizing
+```jsx
+// Mobile: 36×36px, Desktop: 48×40px
+className="w-9 h-9 sm:w-12 sm:h-10"
+```
+
+#### 2. Spacing/Gaps
+```jsx
+// Mobile: 4px gap, Desktop: 8px gap
+className="gap-1 sm:gap-2"
+
+// Mobile: 12px padding, Desktop: 16px padding
+className="p-3 sm:p-4"
+```
+
+#### 3. Typography
+```jsx
+// Mobile: 14px, Desktop: 16px
+className="text-sm sm:text-base"
+
+// Mobile: 20px, Desktop: 24px
+className="text-xl sm:text-2xl"
+```
+
+#### 4. Grid Layouts
+```jsx
+// Mobile: 1 column, Tablet: 2 columns, Desktop: 3 columns
+className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+```
+
+#### 5. Flex Direction
+```jsx
+// Mobile: vertical stack, Desktop: horizontal
+className="flex flex-col sm:flex-row"
+```
+
+### Component Creation Checklist
+
+Before submitting ANY new component, verify:
+
+- [ ] All fixed widths use responsive classes (w-9 sm:w-12, not w-12)
+- [ ] All fixed heights use responsive classes (h-9 sm:h-10, not h-10)
+- [ ] All padding/margin use responsive classes (p-3 sm:p-4, not p-4)
+- [ ] All gaps use responsive classes (gap-2 sm:gap-4, not gap-4)
+- [ ] All text sizes use responsive classes (text-sm sm:text-base, not text-base)
+- [ ] Grid layouts specify columns per breakpoint
+- [ ] Flex layouts handle mobile stacking (flex-col sm:flex-row)
+- [ ] Component tested mentally at 375px, 768px, 1024px widths
+
+### Examples from Codebase
+
+**Reference these responsive components:**
+- `frontend/src/components/bridge/BiddingBox.jsx` - Button grid responsive
+- `frontend/src/components/learning/LearningDashboard.css` - CSS media queries
+- `frontend/src/App.css` - Container responsive padding
+
+### Why This Matters
+
+As of October 2025, **all critical components are now responsive**:
+- ✅ BiddingBox (Tailwind responsive classes)
+- ✅ PlayTable (CSS media queries)
+- ✅ Learning Dashboard (CSS media queries)
+- ✅ Auth modal (CSS media queries)
+
+**New components MUST maintain this standard.** Users expect the app to work on phones and tablets.
+
+### Testing Requirement
+
+Mentally test your component at these viewports:
+1. **iPhone SE (375px)** - Smallest common phone
+2. **iPad (768px)** - Tablet breakpoint
+3. **Desktop (1280px)** - Full experience
+
+Ask yourself: "Would this work on my phone?" If not, add responsive classes.
 
 ---
 
