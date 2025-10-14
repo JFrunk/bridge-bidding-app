@@ -1087,6 +1087,47 @@ def get_ai_play():
     
     try:
         position = current_play_state.next_to_play
+        declarer = current_play_state.contract.declarer
+        dummy = current_play_state.dummy
+
+        # ============================================================================
+        # CRITICAL VALIDATION: Prevent AI from playing for human player
+        # ============================================================================
+        # Assume user is always South ('S')
+        # User controls:
+        # - South when South is declarer (user controls declarer + dummy)
+        # - South when South is a defender (user controls their own hand)
+        # User does NOT control:
+        # - South when South is dummy (declarer controls dummy)
+
+        user_position = 'S'
+        user_is_declarer = (declarer == user_position)
+        user_is_dummy = (dummy == user_position)
+
+        # Determine if user should control the current position
+        user_should_control = False
+
+        if user_is_declarer:
+            # User is declarer - controls both declarer and dummy
+            if position == user_position or position == dummy:
+                user_should_control = True
+        elif not user_is_dummy:
+            # User is a defender (not declarer, not dummy) - controls only their position
+            if position == user_position:
+                user_should_control = True
+        # If user is dummy, user_should_control stays False (declarer controls dummy)
+
+        if user_should_control:
+            return jsonify({
+                "error": f"AI cannot play for position {position} - user controls this position",
+                "position": position,
+                "user_is_declarer": user_is_declarer,
+                "user_is_dummy": user_is_dummy,
+                "dummy": dummy,
+                "declarer": declarer
+            }), 403  # 403 Forbidden
+
+        # ============================================================================
 
         # Check if trick is already complete (4 cards) - prevent overplay
         if len(current_play_state.current_trick) >= 4:
@@ -1100,8 +1141,9 @@ def get_ai_play():
                 "error": f"Cannot play cards in current phase: {current_play_state.phase}"
             }), 400
 
-        # AI chooses card
-        card = play_ai.choose_card(current_play_state, position)
+        # AI chooses card (using current difficulty AI)
+        current_ai = ai_instances.get(current_ai_difficulty, ai_instances["intermediate"])
+        card = current_ai.choose_card(current_play_state, position)
         hand = current_play_state.hands[position]
 
         # Play the card
