@@ -5,8 +5,9 @@ import { cn } from "../../lib/utils";
  * ContractHeader - Consolidated header showing contract, tricks progress, and bidding summary
  * NEW LAYOUT: Contract on left, 13-block trick progress below it, bidding table on right
  * Follows "Rule of Three" and senior-friendly UX principles
+ * Shows score when hand is complete (totalTricksPlayed === 13)
  */
-export function ContractHeader({ contract, tricksWon, auction }) {
+export function ContractHeader({ contract, tricksWon, auction, scoreData }) {
   if (!contract) return null;
 
   const { level, strain, declarer, doubled } = contract;
@@ -51,10 +52,31 @@ export function ContractHeader({ contract, tricksWon, auction }) {
       {/* LEFT SECTION: Contract + 13-Block Progress Bar */}
       <div className="flex flex-col gap-4">
         {/* Contract Display */}
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
           <div className="text-3xl font-bold text-white">
             {level}{displayStrain}{doubledText} by {declarerName}
           </div>
+          {/* Score Display - Only shown when hand is complete */}
+          {scoreData && totalTricksPlayed === 13 && (
+            <div className={cn(
+              "flex items-center gap-3 px-4 py-2 rounded-md border-2 w-fit",
+              scoreData.score >= 0 ? "bg-green-900/30 border-success" : "bg-red-900/30 border-danger"
+            )}>
+              <span className="text-lg font-medium text-gray-300">Score:</span>
+              <span className={cn(
+                "text-2xl font-bold",
+                scoreData.score >= 0 ? "text-success" : "text-danger"
+              )}>
+                {scoreData.score >= 0 ? '+' : ''}{scoreData.score}
+              </span>
+              <span className={cn(
+                "text-base font-medium",
+                scoreData.made ? "text-success" : "text-danger"
+              )}>
+                ({scoreData.result})
+              </span>
+            </div>
+          )}
         </div>
 
         {/* 13-Block Tricks Progress Bar */}

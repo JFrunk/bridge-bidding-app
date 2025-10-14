@@ -84,9 +84,45 @@ pytest backend/tests/integration/ -v   # Integration tests only
 - ✅ Update consolidated docs in `docs/features/`
 - ✅ Run compliance checker: `python3 .claude/scripts/check_documentation_compliance.py --verbose`
 
+## 🧹 File System Hygiene (Check Before Commits)
+
+**Quick Decision: Where Does This Document Belong?**
+
+| Question | Answer | Location |
+|----------|--------|----------|
+| Claude context/process? | YES | `.claude/` |
+| Essential daily reference? | YES | Root (update existing if possible) |
+| Completed milestone? | YES | `docs/project-status/YYYY-MM-DD_title.md` |
+| Architecture decision? | YES | `docs/architecture/decisions/` |
+| Feature/bug doc? | YES | `docs/features/` or `docs/bug-fixes/` |
+
+**Red Flags 🚩**
+- Creating `*_COMPLETE.md` at root → Move to `docs/project-status/`
+- \>15 MD files at root → Consolidate or archive
+- Temp files (`.log`, `.patch`) → Delete
+- New orphaned directory → Organize into existing structure
+
+**Before Commit - File System Check:**
+```bash
+# 1. Count root docs (should be <15)
+ls -1 *.md 2>/dev/null | wc -l
+
+# 2. Check for temp files (should be empty)
+git status | grep -E "\.log|\.patch|DS_Store"
+
+# 3. Check for Python cache (should be empty)
+git status | grep __pycache__
+
+# 4. Run health check (recommended)
+python3 .claude/scripts/check_filesystem_health.py
+```
+
+**📖 Full guide:** `.claude/FILESYSTEM_GUIDELINES.md`
+
 ## ✅ Before Every Commit
 
 **MANDATORY CHECKLIST:**
+- [ ] **File system check**: Root MD count <15, no temp files, no cache
 - [ ] Tests pass: `./backend/test_medium.sh`
 - [ ] Documentation updated (if needed)
 - [ ] Run: `python3 .claude/scripts/check_documentation_compliance.py --verbose`
@@ -104,6 +140,8 @@ pytest backend/tests/integration/ -v   # Integration tests only
 ❌ Running full test suite during development (too slow - use quick tests!)
 ❌ Creating new documentation when you should update existing
 ❌ Putting tests in wrong directory
+❌ Creating `*_COMPLETE.md` files at root (use `docs/project-status/`)
+❌ Letting root directory accumulate >15 MD files
 
 ## ✅ Good Habits
 
@@ -139,6 +177,7 @@ pytest backend/tests/integration/ -v   # Integration tests only
 - `.claude/PROJECT_CONTEXT.md` - Full project context
 - `docs/COMPLETE_BRIDGE_RULES.md` - **Complete bridge rules reference (bidding, play, scoring, all phases)**
 - `.claude/DOCUMENTATION_PRACTICES.md` - Documentation guidelines
+- `.claude/FILESYSTEM_GUIDELINES.md` - **File organization rules (NEW)**
 - `backend/tests/README.md` - Complete testing guide
 
 **Templates:**

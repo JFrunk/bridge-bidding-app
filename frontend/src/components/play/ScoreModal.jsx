@@ -14,7 +14,7 @@ import { cn } from "../../lib/utils";
  * Follows "Rule of Three" and senior-friendly UX principles
  * Designed as SECONDARY visual hierarchy (celebratory but not overwhelming)
  */
-export function ScoreModal({ isOpen, onClose, scoreData }) {
+export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand }) {
   if (!scoreData) return null;
 
   const { contract, tricks_taken, result, score, made } = scoreData;
@@ -72,8 +72,24 @@ export function ScoreModal({ isOpen, onClose, scoreData }) {
           </div>
         </div>
 
-        <DialogFooter>
-          <Button onClick={onClose} className="w-full" size="lg">
+        <DialogFooter className="flex flex-col gap-3 sm:flex-col">
+          <Button
+            onClick={() => {
+              onDealNewHand();
+              onClose();
+            }}
+            className="w-full"
+            size="lg"
+            variant="default"
+          >
+            Deal New Hand
+          </Button>
+          <Button
+            onClick={onClose}
+            className="w-full"
+            size="lg"
+            variant="outline"
+          >
             Close
           </Button>
         </DialogFooter>

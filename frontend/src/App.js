@@ -1033,6 +1033,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
             isDeclarerTurn={playState.next_to_play === playState.contract.declarer && playState.dummy === 'S'}
             isDummyTurn={playState.next_to_play === playState.dummy && playState.contract.declarer === 'S'}
             auction={auction}
+            scoreData={scoreData}
           />
           {displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
           {error && <div className="error-message">{error}</div>}
@@ -1091,7 +1092,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       />
 
       {scoreData && (
-        <ScoreDisplay scoreData={scoreData} onClose={handleCloseScore} />
+        <ScoreDisplay scoreData={scoreData} onClose={handleCloseScore} onDealNewHand={dealNewHand} />
       )}
     </div>
   );

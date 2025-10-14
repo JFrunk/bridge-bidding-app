@@ -47,6 +47,10 @@ CONVENTION_MAP = {
 # Register learning path endpoints (convention levels system)
 register_learning_endpoints(app)
 
+# Register analytics API endpoints (mistake detection & learning insights)
+from engine.learning.analytics_api import register_analytics_endpoints
+register_analytics_endpoints(app)
+
 @app.route('/api/scenarios', methods=['GET'])
 def get_scenarios():
     try:

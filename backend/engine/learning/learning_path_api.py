@@ -247,6 +247,10 @@ def record_convention_practice():
     POST /api/conventions/record-practice
     Record a practice attempt for a convention
 
+    DEPRECATED: This endpoint is maintained for backward compatibility.
+    New code should use /api/practice/record from analytics_api.py which includes
+    error categorization and mistake pattern analysis.
+
     Body:
         {
             "user_id": 1,
@@ -270,7 +274,7 @@ def record_convention_practice():
     cursor = conn.cursor()
 
     try:
-        # Record practice history
+        # Record practice history (old table for backward compatibility)
         cursor.execute("""
             INSERT INTO convention_practice_history (
                 user_id, convention_id, was_correct, hints_used, time_taken_seconds

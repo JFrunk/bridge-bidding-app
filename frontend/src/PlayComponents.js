@@ -140,7 +140,8 @@ export function PlayTable({
   onDeclarerCardPlay,
   isDeclarerTurn,
   onDummyCardPlay,
-  isDummyTurn
+  isDummyTurn,
+  scoreData
 }) {
   if (!playState) return null;
 
@@ -198,7 +199,7 @@ export function PlayTable({
   return (
     <div className="play-table">
       {/* Consolidated Contract Header - MIGRATED to ContractHeader component */}
-      <ContractHeader contract={contract} tricksWon={tricks_won} auction={auction} />
+      <ContractHeader contract={contract} tricksWon={tricks_won} auction={auction} scoreData={scoreData} />
 
       <div className="play-area">
         {/* North position */}
@@ -339,8 +340,8 @@ export function PlayTable({
  * Display final score after 13 tricks
  * MIGRATED: Now uses ScoreModal component from components/play/
  */
-export function ScoreDisplay({ scoreData, onClose }) {
-  return <ScoreModal isOpen={!!scoreData} onClose={onClose} scoreData={scoreData} />;
+export function ScoreDisplay({ scoreData, onClose, onDealNewHand }) {
+  return <ScoreModal isOpen={!!scoreData} onClose={onClose} scoreData={scoreData} onDealNewHand={onDealNewHand} />;
 }
 
 // Export TurnIndicator components for use in other files
