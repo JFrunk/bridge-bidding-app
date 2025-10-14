@@ -10,6 +10,7 @@ import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SimpleLogin } from './components/auth/SimpleLogin';
 import DDSStatusIndicator from './components/DDSStatusIndicator';
+import AIDifficultySelector from './components/AIDifficultySelector';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -71,6 +72,7 @@ function App() {
   const [error, setError] = useState('');
   const [displayedMessage, setDisplayedMessage] = useState('');
   const [scenarioList, setScenarioList] = useState([]);
+  const [scenariosByLevel, setScenariosByLevel] = useState(null);
   const [selectedScenario, setSelectedScenario] = useState('');
   const [initialDeal, setInitialDeal] = useState(null);
   const [vulnerability, setVulnerability] = useState('None');
@@ -87,6 +89,9 @@ function App() {
 
   // Session scoring state
   const [sessionData, setSessionData] = useState(null);
+
+  // Loading state for initial system startup
+  const [isInitializing, setIsInitializing] = useState(true);
 
   // Show login on first visit if not authenticated
   useEffect(() => {
@@ -652,6 +657,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       if (!response.ok) throw new Error("Failed to deal hands.");
       const data = await response.json();
       resetAuction(data);
+      setIsInitializing(false); // Ensure we're not in initializing state for manual deals
     } catch (err) { setError("Could not connect to server to deal."); }
   };
   
@@ -665,6 +671,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       if (!response.ok) throw new Error("Failed to load scenario.");
       const data = await response.json();
       resetAuction(data);
+      setIsInitializing(false); // Ensure we're not in initializing state for scenario loads
     } catch (err) { setError("Could not load scenario from server."); }
   };
 
@@ -679,6 +686,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
         const response = await fetch(`${API_URL}/api/scenarios`);
         const data = await response.json();
         setScenarioList(data.scenarios);
+        setScenariosByLevel(data.scenarios_by_level);
         if (data.scenarios.length > 0) setSelectedScenario(data.scenarios[0]);
       } catch (err) { console.error("Could not fetch scenarios", err); }
 
@@ -715,9 +723,12 @@ Please provide a detailed analysis of the auction and identify any bidding error
           if (players.indexOf(dealer) !== 2) { // If dealer is not South (index 2)
             setIsAiBidding(true);
           }
+          // System is now ready
+          setIsInitializing(false);
         }, 100);
       } catch (err) {
         setError("Could not connect to server to deal.");
+        setIsInitializing(false);
       }
     };
     fetchScenariosAndDeal();
@@ -1085,7 +1096,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
           <div className="my-hand">
             <h2>Your Hand (South)</h2>
             <div className="hand-display">
-              {hand && hand.length > 0 ? getSuitOrder(null).map(suit => ( <div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => ( <BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p>Dealing...</p>}
+              {hand && hand.length > 0 ? getSuitOrder(null).map(suit => ( <div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => ( <BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p>{isInitializing ? 'System Initiating...' : 'Dealing...'}</p>}
             </div>
             <HandAnalysis points={handPoints} vulnerability={vulnerability} />
           </div>
@@ -1184,6 +1195,13 @@ Please provide a detailed analysis of the auction and identify any bidding error
           <BiddingBoxComponent onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding} auction={auction} />
         )}
         <div className="controls-section">
+          {/* AI Difficulty Selector - Always visible */}
+          <AIDifficultySelector
+            onDifficultyChange={(difficulty, data) => {
+              console.log('AI difficulty changed to:', difficulty, data);
+            }}
+          />
+
           {gamePhase === 'bidding' && (
             <>
               <div className="game-controls">
@@ -1191,8 +1209,24 @@ Please provide a detailed analysis of the auction and identify any bidding error
                 <button className="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Replay Hand</button>
               </div>
               <div className="scenario-loader">
-                <select value={selectedScenario} onChange={(e) => setSelectedScenario(e.target.value)}>{scenarioList && scenarioList.length > 0 ? scenarioList.map(name => <option key={name} value={name}>{name}</option>) : <option>Loading...</option>}</select>
-                <button onClick={handleLoadScenario}>Load Scenario</button>
+                <select value={selectedScenario} onChange={(e) => setSelectedScenario(e.target.value)}>
+                  {scenariosByLevel ? (
+                    <>
+                      <optgroup label="Essential Conventions">
+                        {scenariosByLevel.Essential?.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                      </optgroup>
+                      <optgroup label="Intermediate Conventions">
+                        {scenariosByLevel.Intermediate?.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                      </optgroup>
+                      <optgroup label="Advanced Conventions">
+                        {scenariosByLevel.Advanced?.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                      </optgroup>
+                    </>
+                  ) : (
+                    <option>Loading...</option>
+                  )}
+                </select>
+                <button onClick={handleLoadScenario}>Practice Convention</button>
               </div>
             </>
           )}

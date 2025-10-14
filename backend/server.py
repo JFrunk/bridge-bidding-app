@@ -384,8 +384,27 @@ def get_scenarios():
             with open('scenarios/bidding_scenarios.json', 'r') as f: scenarios = json.load(f)
         except FileNotFoundError:
             with open('scenarios.json', 'r') as f: scenarios = json.load(f)
-        scenario_names = [s['name'] for s in scenarios]
-        return jsonify({'scenarios': scenario_names})
+
+        # Group scenarios by level for organized display
+        scenarios_by_level = {
+            'Essential': [],
+            'Intermediate': [],
+            'Advanced': []
+        }
+
+        for s in scenarios:
+            level = s.get('level', 'Essential')  # Default to Essential if not specified
+            scenario_info = {
+                'name': s['name'],
+                'level': level,
+                'description': s.get('description', '')
+            }
+            scenarios_by_level[level].append(scenario_info)
+
+        return jsonify({
+            'scenarios_by_level': scenarios_by_level,
+            'scenarios': [s['name'] for s in scenarios]  # Keep for backward compatibility
+        })
     except Exception as e:
         print(f"ERROR in /api/scenarios: {e}")
         print(f"Traceback: {traceback.format_exc()}")
