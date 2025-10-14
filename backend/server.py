@@ -34,7 +34,7 @@ play_ai = SimplePlayAI()  # Default AI (backward compatibility)
 session_manager = SessionManager()  # Session management
 
 # Phase 2: AI difficulty settings
-current_ai_difficulty = "beginner"  # Options: beginner, intermediate, advanced, expert
+current_ai_difficulty = "expert"  # Default to expert - Options: beginner, intermediate, advanced, expert
 
 # Initialize AI instances with DDS for expert level if available
 ai_instances = {

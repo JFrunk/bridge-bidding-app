@@ -35,7 +35,7 @@ const DIFFICULTY_INFO = {
 };
 
 const AIDifficultySelector = ({ onDifficultyChange }) => {
-  const [currentDifficulty, setCurrentDifficulty] = useState('intermediate');
+  const [currentDifficulty, setCurrentDifficulty] = useState('expert'); // Default to expert
   const [isChanging, setIsChanging] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
@@ -70,6 +70,9 @@ const AIDifficultySelector = ({ onDifficultyChange }) => {
       if (response.ok) {
         const data = await response.json();
         setCurrentDifficulty(newDifficulty);
+
+        // Auto-close dropdown after selection
+        setShowInfo(false);
 
         if (onDifficultyChange) {
           onDifficultyChange(newDifficulty, data);

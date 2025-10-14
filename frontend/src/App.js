@@ -1195,12 +1195,14 @@ Please provide a detailed analysis of the auction and identify any bidding error
           <BiddingBoxComponent onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding} auction={auction} />
         )}
         <div className="controls-section">
-          {/* AI Difficulty Selector - Always visible */}
-          <AIDifficultySelector
-            onDifficultyChange={(difficulty, data) => {
-              console.log('AI difficulty changed to:', difficulty, data);
-            }}
-          />
+          {/* AI Difficulty Selector - Only visible during gameplay */}
+          {gamePhase === 'playing' && (
+            <AIDifficultySelector
+              onDifficultyChange={(difficulty, data) => {
+                console.log('AI difficulty changed to:', difficulty, data);
+              }}
+            />
+          )}
 
           {gamePhase === 'bidding' && (
             <>
