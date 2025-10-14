@@ -19,6 +19,13 @@ from engine.play.ai.minimax_ai import MinimaxPlayAI
 from engine.learning.learning_path_api import register_learning_endpoints
 from engine.session_manager import SessionManager, GameSession
 
+# DDS AI for expert level play (9/10 rating)
+try:
+    from engine.play.ai.dds_ai import DDSPlayAI, DDS_AVAILABLE
+except ImportError:
+    DDS_AVAILABLE = False
+    print("⚠️  DDS AI not available - install endplay for expert play")
+
 app = Flask(__name__)
 CORS(app)
 engine = BiddingEngine()
@@ -28,12 +35,21 @@ session_manager = SessionManager()  # Session management
 
 # Phase 2: AI difficulty settings
 current_ai_difficulty = "beginner"  # Options: beginner, intermediate, advanced, expert
+
+# Initialize AI instances with DDS for expert level if available
 ai_instances = {
-    "beginner": SimplePlayAINew(),
-    "intermediate": MinimaxPlayAI(max_depth=2),
-    "advanced": MinimaxPlayAI(max_depth=3),
-    "expert": MinimaxPlayAI(max_depth=4)
+    "beginner": SimplePlayAINew(),      # 6/10 rating
+    "intermediate": MinimaxPlayAI(max_depth=2),  # 7.5/10 rating
+    "advanced": MinimaxPlayAI(max_depth=3),      # 8/10 rating
 }
+
+# Use DDS for expert level if available, otherwise fallback to Minimax D4
+if DDS_AVAILABLE:
+    ai_instances["expert"] = DDSPlayAI()  # 9/10 rating - Expert level
+    print("✅ DDS AI loaded for expert difficulty (9/10 rating)")
+else:
+    ai_instances["expert"] = MinimaxPlayAI(max_depth=4)  # 8+/10 rating - Fallback
+    print("⚠️  Using Minimax D4 for expert (DDS not available)")
 
 current_deal = { 'North': None, 'East': None, 'South': None, 'West': None }
 current_vulnerability = "None"
