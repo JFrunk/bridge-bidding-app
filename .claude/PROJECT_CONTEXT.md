@@ -40,8 +40,8 @@ When trigger detected:
 6. Only then implement
 
 **Past Architectural Issues to Avoid:**
-- ❌ Tight coupling (required MODULAR_ARCHITECTURE_PLAN.md refactor)
-- ❌ Global state conflicts (see ARCHITECTURE_RISK_ANALYSIS.md)
+- ❌ Tight coupling (required docs/architecture/MODULAR_ARCHITECTURE_PLAN.md refactor)
+- ❌ Global state conflicts (see docs/project-status/archive/2025-10/ARCHITECTURE_RISK_ANALYSIS.md)
 - ❌ Documentation proliferation (79 files → 50% overhead)
 
 **Run Trigger Detection:**
@@ -85,7 +85,7 @@ python3 .claude/scripts/check_architectural_triggers.py --verbose
 ✅ CI/CD automatically validates everything
 ✅ Consolidated documentation (less overhead)
 
-📖 **Full details**: `docs/project-overview/EFFICIENCY_IMPROVEMENTS_COMPLETE.md`
+📖 **Full details**: See archived efficiency improvements documentation
 
 ## ⚠️ IMPORTANT: Development Model
 

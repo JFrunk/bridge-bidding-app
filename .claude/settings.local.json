@@ -47,7 +47,14 @@
       "Bash(timeout 5 python3 server.py)",
       "Bash(pip3 install:*)",
       "Bash(venv/bin/python3:*)",
-      "Bash(timeout 5 venv/bin/python3 server.py)"
+      "Bash(timeout 5 venv/bin/python3 server.py)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)",
+      "Bash(./venv/bin/python3:*)",
+      "Read(//Users/simonroy/Downloads/**)",
+      "Bash(./update_app_session.sh:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(sw_vers)"
     ],
     "deny": [],
     "ask": []

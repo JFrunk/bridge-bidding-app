@@ -263,16 +263,25 @@ class PlayEngine:
         strain = final_bid[1:]
         positions = PlayEngine.POSITIONS
 
+        # Find the index of the last actual suit/NT bid (not Pass, X, or XX)
+        final_bidder_index = -1
+        for i, bid in enumerate(auction):
+            if bid not in ['Pass', 'X', 'XX']:
+                final_bidder_index = i
+
+        # Position of the final bidder
+        final_bidder_pos = positions[(dealer_index + final_bidder_index) % 4]
+
+        # Find first player on winning side to bid this strain
         for i, bid in enumerate(auction):
             if bid.endswith(strain) and bid not in ['Pass', 'X', 'XX']:
                 position = positions[(dealer_index + i) % 4]
                 # Check if this is the winning partnership
-                final_bidder_pos = positions[(dealer_index + len(auction) - 4) % 4]
                 if PlayEngine._same_partnership(position, final_bidder_pos):
                     return position
 
-        # Fallback: final bidder
-        return positions[(dealer_index + len(auction) - 4) % 4]
+        # Fallback: final bidder (should never reach here if auction is valid)
+        return final_bidder_pos
 
     @staticmethod
     def _same_partnership(pos1: str, pos2: str) -> bool:

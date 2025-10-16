@@ -29,6 +29,7 @@ See [ARCHITECTURAL_DECISION_FRAMEWORK.md](../../.claude/ARCHITECTURAL_DECISION_F
 |---|-------|--------|------|---------|
 | [0000](ADR-0000-use-architecture-decision-records.md) | Use Architecture Decision Records | Accepted | 2025-10-12 | Adopt ADR process for documenting significant architectural decisions |
 | [0001](ADR-0001-shared-infrastructure-architecture.md) | Shared Infrastructure Architecture | Proposed | 2025-10-12 | Extract shared components (Hand, Card, display) while creating independent operational modules for bidding and play testing |
+| [001](001-session-state-management.md) | Session-Based State Management | ✅ Implemented | 2025-10-14 | **CRITICAL** - Replace global variables with thread-safe session-based state to eliminate race conditions and enable multi-user support |
 
 ## ADR Statuses
 

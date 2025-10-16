@@ -175,6 +175,75 @@ Before submitting a PR, verify:
 
 ## Code Standards
 
+### Session State Architecture (CRITICAL - Oct 2025)
+
+**⚠️ MANDATORY FOR ALL BACKEND CODE**
+
+This application uses **session-based state management**. Global variables for user-specific state are strictly prohibited.
+
+#### Backend Rules
+
+🚫 **NEVER DO THIS:**
+```python
+# ❌ WRONG - Global state causes race conditions
+current_deal = {}
+current_vulnerability = "None"
+
+@app.route('/api/endpoint')
+def my_endpoint():
+    global current_deal  # ❌ PROHIBITED!
+    current_deal['South'] = Hand(...)
+```
+
+✅ **ALWAYS DO THIS:**
+```python
+# ✅ CORRECT - Use session state
+from core.session_state import get_state
+
+@app.route('/api/endpoint')
+def my_endpoint():
+    state = get_state()  # Get isolated session state
+    state.deal['South'] = Hand(...)
+    state.vulnerability = "NS"
+    return jsonify({'success': True})
+```
+
+**Required pattern for every endpoint:**
+1. Import: `from core.session_state import get_state`
+2. First line: `state = get_state()`
+3. Access via: `state.deal`, `state.vulnerability`, `state.play_state`, etc.
+4. Never use `global` keyword for game state
+
+**See:** [ADR-001 Session State Management](docs/architecture/decisions/001-session-state-management.md)
+
+#### Frontend Rules
+
+🚫 **NEVER DO THIS:**
+```javascript
+// ❌ WRONG - Missing session headers
+fetch(`${API_URL}/api/deal-hands`)
+```
+
+✅ **ALWAYS DO THIS:**
+```javascript
+// ✅ CORRECT - Include session headers
+import { getSessionHeaders } from './utils/sessionHelper';
+
+fetch(`${API_URL}/api/deal-hands`, {
+  headers: {
+    'Content-Type': 'application/json',
+    ...getSessionHeaders()  // ✅ REQUIRED!
+  }
+})
+```
+
+**Required pattern for all API calls:**
+1. Import: `import { getSessionHeaders } from './utils/sessionHelper';`
+2. Include in headers: `...getSessionHeaders()`
+3. Never hardcode session IDs
+
+**See:** [Frontend Session Migration](frontend/FRONTEND_SESSION_MIGRATION.md)
+
 ### Python (Backend)
 
 - Follow PEP 8 style guide

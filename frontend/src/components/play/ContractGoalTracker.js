@@ -34,21 +34,35 @@ export function ContractGoalTracker({
   let status = 'on-track';
   let statusMessage = 'On track to make contract';
   let statusIcon = '✓';
+  let progressLabel = `${tricksWon} / ${tricksNeeded}`;
+  let outcomeCertain = false;
 
   if (tricksWon >= tricksNeeded) {
     // Contract already made
     status = 'safe';
+    outcomeCertain = true;
     const overtricks = tricksWon - tricksNeeded;
     statusMessage = overtricks > 0
       ? `Contract made with ${overtricks} overtrick${overtricks > 1 ? 's' : ''}`
       : 'Contract made exactly';
     statusIcon = '✓';
+
+    // Update progress label to show outcome
+    if (overtricks === 0) {
+      progressLabel = 'Contract Made';
+    } else {
+      progressLabel = `Made +${overtricks}`;
+    }
   } else if (tricksShort > tricksRemaining) {
     // Cannot make contract anymore
     status = 'danger';
+    outcomeCertain = true;
     const down = tricksShort - tricksRemaining;
     statusMessage = `Down ${down} - cannot make contract`;
     statusIcon = '✗';
+
+    // Update progress label to show outcome
+    progressLabel = `Down ${down}`;
   } else if (tricksShort === tricksRemaining) {
     // Must win all remaining tricks
     status = 'danger';
@@ -72,7 +86,7 @@ export function ContractGoalTracker({
       <div className="progress-section">
         <div className="progress-bar-container">
           <div
-            className={`progress-bar-fill ${status}`}
+            className={`progress-bar-fill ${status} ${outcomeCertain ? 'outcome-certain' : ''}`}
             style={{ width: `${Math.min(progress, 100)}%` }}
             role="progressbar"
             aria-valuenow={tricksWon}
@@ -81,7 +95,7 @@ export function ContractGoalTracker({
             aria-label={`${tricksWon} of ${tricksNeeded} tricks won`}
           >
             <span className="progress-bar-label">
-              {tricksWon} / {tricksNeeded}
+              {progressLabel}
             </span>
           </div>
         </div>

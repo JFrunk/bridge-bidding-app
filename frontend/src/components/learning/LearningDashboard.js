@@ -82,7 +82,7 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
     return null;
   }
 
-  const { user_stats, insights, pending_celebrations, practice_recommendations } = dashboardData;
+  const { user_stats, gameplay_stats, insights, pending_celebrations, practice_recommendations } = dashboardData;
 
   return (
     <div className="learning-dashboard">
@@ -94,9 +94,20 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
         </p>
       </div>
 
-      {/* User Stats Bar */}
+      {/* Bidding Stats Bar */}
       {user_stats && (
-        <UserStatsBar stats={user_stats} />
+        <div className="stats-section">
+          <h3 className="stats-section-title">Bidding</h3>
+          <BiddingStatsBar stats={user_stats} />
+        </div>
+      )}
+
+      {/* Gameplay Stats Bar */}
+      {gameplay_stats && (
+        <div className="stats-section">
+          <h3 className="stats-section-title">Gameplay</h3>
+          <GameplayStatsBar stats={gameplay_stats} />
+        </div>
       )}
 
       {/* Dashboard Grid */}
@@ -143,8 +154,8 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
   );
 };
 
-// User Stats Bar Component
-const UserStatsBar = ({ stats }) => {
+// Bidding Stats Bar Component
+const BiddingStatsBar = ({ stats }) => {
   const xpProgress = stats.xp_to_next_level > 0
     ? ((stats.xp_to_next_level - (stats.xp_to_next_level - (stats.total_xp % stats.xp_to_next_level))) / stats.xp_to_next_level) * 100
     : 0;
@@ -181,6 +192,38 @@ const UserStatsBar = ({ stats }) => {
       <div className="stat-item">
         <div className="stat-value">{Math.round(stats.recent_accuracy * 100)}%</div>
         <div className="stat-label">Recent Accuracy</div>
+      </div>
+    </div>
+  );
+};
+
+// Gameplay Stats Bar Component
+const GameplayStatsBar = ({ stats }) => {
+  return (
+    <div className="user-stats-bar gameplay-stats-bar">
+      <div className="stat-item">
+        <div className="stat-value">{stats.total_hands_played}</div>
+        <div className="stat-label">Hands Played</div>
+      </div>
+
+      <div className="stat-item">
+        <div className="stat-value">{stats.hands_as_declarer}</div>
+        <div className="stat-label">As Declarer</div>
+      </div>
+
+      <div className="stat-item">
+        <div className="stat-value">{stats.contracts_made}</div>
+        <div className="stat-label">Contracts Made</div>
+      </div>
+
+      <div className="stat-item">
+        <div className="stat-value">{Math.round(stats.declarer_success_rate * 100)}%</div>
+        <div className="stat-label">Overall Success</div>
+      </div>
+
+      <div className="stat-item">
+        <div className="stat-value">{Math.round(stats.recent_declarer_success_rate * 100)}%</div>
+        <div className="stat-label">Recent Success</div>
       </div>
     </div>
   );

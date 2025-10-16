@@ -91,20 +91,30 @@ pytest backend/tests/integration/ -v   # Integration tests only
 | Question | Answer | Location |
 |----------|--------|----------|
 | Claude context/process? | YES | `.claude/` |
-| Essential daily reference? | YES | Root (update existing if possible) |
+| Essential daily reference? | YES | Root (only 7 kept) |
 | Completed milestone? | YES | `docs/project-status/YYYY-MM-DD_title.md` |
 | Architecture decision? | YES | `docs/architecture/decisions/` |
 | Feature/bug doc? | YES | `docs/features/` or `docs/bug-fixes/` |
+| Guide/how-to? | YES | `docs/guides/` |
 
 **Red Flags 🚩**
 - Creating `*_COMPLETE.md` at root → Move to `docs/project-status/`
-- \>15 MD files at root → Consolidate or archive
+- \>7 MD files at root → Consolidate or archive
 - Temp files (`.log`, `.patch`) → Delete
 - New orphaned directory → Organize into existing structure
 
+**Root Directory MD Files (KEEP ONLY 7):**
+- `README.md` - Main entry point
+- `CONTRIBUTING.md` - Contributing guidelines
+- `PROJECT_STATUS.md` - Current status
+- `CHANGELOG.md` - Version history
+- `ARCHITECTURE_SUMMARY.md` - Architecture overview
+- `SHARED_INFRASTRUCTURE_ARCHITECTURE.md` - Infrastructure patterns
+- `VIEW_CONVENTIONS.md` - View conventions
+
 **Before Commit - File System Check:**
 ```bash
-# 1. Count root docs (should be <15)
+# 1. Count root docs (should be exactly 7)
 ls -1 *.md 2>/dev/null | wc -l
 
 # 2. Check for temp files (should be empty)
@@ -122,7 +132,7 @@ python3 .claude/scripts/check_filesystem_health.py
 ## ✅ Before Every Commit
 
 **MANDATORY CHECKLIST:**
-- [ ] **File system check**: Root MD count <15, no temp files, no cache
+- [ ] **File system check**: Root MD count = 7, no temp files, no cache
 - [ ] Tests pass: `./backend/test_medium.sh`
 - [ ] Documentation updated (if needed)
 - [ ] Run: `python3 .claude/scripts/check_documentation_compliance.py --verbose`
@@ -141,7 +151,8 @@ python3 .claude/scripts/check_filesystem_health.py
 ❌ Creating new documentation when you should update existing
 ❌ Putting tests in wrong directory
 ❌ Creating `*_COMPLETE.md` files at root (use `docs/project-status/`)
-❌ Letting root directory accumulate >15 MD files
+❌ Letting root directory accumulate >7 MD files
+❌ Creating new docs at root instead of in docs/ subdirectories
 
 ## ✅ Good Habits
 
@@ -185,8 +196,8 @@ python3 .claude/scripts/check_filesystem_health.py
 - `.claude/templates/BUG_FIX_CHECKLIST.md` - Bug fix workflow
 
 **Summaries:**
-- `docs/project-overview/EFFICIENCY_IMPROVEMENTS_COMPLETE.md` - What changed
 - `docs/project-overview/FEATURES_SUMMARY.md` - What's implemented
+- `docs/project-status/` - Completed milestones and status reports
 
 ## 💡 Pro Tips
 

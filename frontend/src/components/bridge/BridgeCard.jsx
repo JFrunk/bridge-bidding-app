@@ -34,7 +34,7 @@ export function BridgeCard({ rank, suit, onClick, disabled = false, className })
         "transition-transform duration-200",
         isClickable && "cursor-pointer hover:-translate-y-4 hover:z-50",
         // Disabled state
-        disabled && "opacity-60 cursor-not-allowed",
+        disabled && "cursor-not-allowed",
         // Allow custom classes
         className
       )}

@@ -26,6 +26,10 @@ try:
     DDS_AVAILABLE = True
 except ImportError as e:
     DDS_AVAILABLE = False
+    # Stub types for when DDS is not available
+    Deal = None
+    EndplayPlayer = None
+    Denom = None
     # Only print warning if running as main
     if __name__ == '__main__':
         print(f"⚠️  Warning: endplay not installed. DDS AI will not work.")
@@ -77,52 +81,67 @@ class DDSPlayAI(BasePlayAI):
         """
         start_time = time.time()
 
-        # Convert our state to endplay Deal format
-        deal = self._convert_to_endplay_deal(state)
-
-        # Determine trump suit
-        trump = self._convert_trump(state.contract.trump_suit)
-
-        # Get declarer
-        declarer = self._convert_position(state.contract.declarer)
-
-        # Calculate double dummy table
-        dd_table = calc_dd_table(deal)
-
-        # Get list of legal cards
+        # Get legal cards first - if only one choice, return immediately
         legal_cards = self._get_legal_cards(state, position)
 
+        if len(legal_cards) == 0:
+            raise ValueError(f"No legal cards available for {position}")
+
         if len(legal_cards) == 1:
-            # Only one legal card
             self.solve_time = time.time() - start_time
             return legal_cards[0]
 
-        # Evaluate each legal card by simulating it
-        best_card = None
-        best_score = float('-inf') if self._is_declarer_side(position, state.contract.declarer) else float('inf')
-        is_declarer = self._is_declarer_side(position, state.contract.declarer)
+        # Validate that the position has cards in their hand
+        hand_size = len(state.hands[position].cards)
+        if hand_size == 0:
+            raise ValueError(f"Position {position} has no cards in hand")
 
-        for card in legal_cards:
-            # Simulate playing this card
-            test_state = self._simulate_play(state, card, position)
+        try:
+            # Convert our state to endplay Deal format
+            deal = self._convert_to_endplay_deal(state)
 
-            # Evaluate resulting position with DDS
-            score = self._evaluate_position_with_dds(test_state, trump, declarer)
+            # Determine trump suit
+            trump = self._convert_trump(state.contract.trump_suit)
 
-            # Update best move
-            if is_declarer:
-                if score > best_score:
-                    best_score = score
-                    best_card = card
-            else:
-                if score < best_score:
-                    best_score = score
-                    best_card = card
+            # Get declarer
+            declarer = self._convert_position(state.contract.declarer)
 
-        self.solve_time = time.time() - start_time
-        self.solves_count += 1
+            # Calculate double dummy table - this can crash on macOS
+            dd_table = calc_dd_table(deal)
 
-        return best_card or legal_cards[0]
+            # Evaluate each legal card by simulating it
+            best_card = None
+            best_score = float('-inf') if self._is_declarer_side(position, state.contract.declarer) else float('inf')
+            is_declarer = self._is_declarer_side(position, state.contract.declarer)
+
+            for card in legal_cards:
+                # Simulate playing this card
+                test_state = self._simulate_play(state, card, position)
+
+                # Evaluate resulting position with DDS
+                score = self._evaluate_position_with_dds(test_state, trump, declarer)
+
+                # Update best move
+                if is_declarer:
+                    if score > best_score:
+                        best_score = score
+                        best_card = card
+                else:
+                    if score < best_score:
+                        best_score = score
+                        best_card = card
+
+            self.solve_time = time.time() - start_time
+            self.solves_count += 1
+
+            return best_card or legal_cards[0]
+
+        except Exception as e:
+            # DDS can crash or fail on some positions (especially on macOS)
+            # Fall back to simple heuristic play
+            print(f"⚠️  DDS failed for {position}: {e}")
+            print(f"   Falling back to simple heuristic play")
+            return self._fallback_choose_card(state, position, legal_cards)
 
     def _convert_to_endplay_deal(self, state: PlayState) -> Deal:
         """Convert PlayState to endplay Deal format"""
@@ -151,7 +170,18 @@ class DDSPlayAI(BasePlayAI):
             hands.append(hand_str)
 
         pbn = f"N:{' '.join(hands)}"
-        return Deal(pbn)
+
+        # Debug logging to help diagnose issues
+        try:
+            return Deal(pbn)
+        except (ValueError, KeyError) as e:
+            # Log the problematic PBN string for debugging
+            print(f"ERROR: Failed to create Deal from PBN: {pbn}")
+            print(f"Error details: {e}")
+            print(f"Hand counts: {[(pos, len(state.hands[pos].cards)) for pos in ['N', 'E', 'S', 'W']]}")
+            print(f"Current trick: {state.current_trick}")
+            print(f"Tricks played: {len(state.trick_history)}")
+            raise ValueError(f"Invalid PBN string '{pbn}': {e}") from e
 
     def _convert_trump(self, trump_suit: Optional[str]) -> Denom:
         """Convert trump suit to endplay Denom"""
@@ -187,9 +217,14 @@ class DDSPlayAI(BasePlayAI):
             # Convert to endplay format
             deal = self._convert_to_endplay_deal(state)
 
-            # Calculate DD table
-            dd_table = calc_dd_table(deal)
-            data = dd_table.to_list()
+            # Calculate DD table - wrapped in additional error handling
+            try:
+                dd_table = calc_dd_table(deal)
+                data = dd_table.to_list()
+            except (RuntimeError, OSError, SystemError) as dds_error:
+                # DDS library crashed or failed
+                print(f"⚠️  DDS calc_dd_table failed: {dds_error}")
+                raise  # Re-raise to trigger outer fallback
 
             # Get tricks for declarer in trump suit
             # data[denom_idx][player_idx]
@@ -229,6 +264,7 @@ class DDSPlayAI(BasePlayAI):
 
         except Exception as e:
             # Fallback to trick count if DDS fails
+            # This prevents crashes from propagating up
             if declarer in [EndplayPlayer.north, EndplayPlayer.south]:
                 return float(state.tricks_taken_ns - state.tricks_taken_ew)
             else:
@@ -307,6 +343,49 @@ class DDSPlayAI(BasePlayAI):
         self.solve_time = 0.0
         self.solves_count = 0
         self.cache_hits = 0
+
+    def _fallback_choose_card(self, state: PlayState, position: str, legal_cards: List[Card]) -> Card:
+        """
+        Fallback card selection when DDS fails
+        Uses simple heuristics similar to SimplePlayAI
+
+        Args:
+            state: Current play state
+            position: Position making the play
+            legal_cards: List of legal cards to choose from
+
+        Returns:
+            Card chosen by heuristic
+        """
+        # Heuristic 1: If only one legal card, play it
+        if len(legal_cards) == 1:
+            return legal_cards[0]
+
+        # Heuristic 2: If leading, prefer high cards from long suits
+        if not state.current_trick:
+            # Find longest suit
+            suits = {'♠': [], '♥': [], '♦': [], '♣': []}
+            for card in legal_cards:
+                suits[card.suit].append(card)
+
+            longest_suit = max(suits.items(), key=lambda x: len(x[1]))[1]
+            if longest_suit:
+                # Play highest card from longest suit
+                return max(longest_suit, key=lambda c: self._rank_value(c.rank))
+
+        # Heuristic 3: If following suit, play low if partner winning, high if not
+        if state.current_trick:
+            # Check if partner is currently winning
+            if len(state.current_trick) >= 2:
+                # Simplified: play low card (third hand low)
+                return min(legal_cards, key=lambda c: self._rank_value(c.rank))
+            else:
+                # Second to play: play high
+                return max(legal_cards, key=lambda c: self._rank_value(c.rank))
+
+        # Default: play a middle card
+        sorted_cards = sorted(legal_cards, key=lambda c: self._rank_value(c.rank))
+        return sorted_cards[len(sorted_cards) // 2]
 
 
 if __name__ == '__main__':

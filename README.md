@@ -123,7 +123,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed standards.
 ### Backend (Python/Flask)
 ```
 backend/
-├── server.py              # Flask server
+├── server.py              # Flask server (session-based state)
+├── core/
+│   └── session_state.py   # Session state manager (thread-safe)
 ├── engine/                # Bidding logic
 │   ├── opening_bids.py
 │   ├── rebids.py
@@ -131,18 +133,34 @@ backend/
 │   ├── overcalls.py
 │   └── advancer_bids.py
 ├── tests/                 # Test suite
+│   ├── test_simple.py     # Session state verification
+│   └── test_session_state.py  # Full integration tests
 └── simulation_enhanced.py # Bidding simulation tool
 ```
+
+**Key Architecture:**
+- ✅ **Session-based state** - No global variables, thread-safe
+- ✅ **Multi-user support** - Each session isolated via `SessionStateManager`
+- ✅ **Scalable** - Ready for horizontal scaling with Redis
 
 ### Frontend (React)
 ```
 frontend/
 ├── src/
 │   ├── components/        # React components
+│   ├── services/
+│   │   └── api.js        # API service with session management
+│   ├── utils/
+│   │   └── sessionHelper.js  # Session ID utilities
 │   ├── App.js            # Main application
 │   └── ...
 └── package.json
 ```
+
+**Key Architecture:**
+- ✅ **Session headers** - All API calls include `X-Session-ID`
+- ✅ **Centralized API** - Consistent session management
+- ✅ **LocalStorage persistence** - Session IDs persist across reloads
 
 ### Documentation
 ```
@@ -156,6 +174,46 @@ docs/
 ```
 
 See [docs/project-overview/CLAUDE.md](docs/project-overview/CLAUDE.md) for detailed architecture.
+
+### Session State Architecture (Critical - Oct 2025)
+
+**⚠️ IMPORTANT:** This application uses session-based state management. **Never use global variables** for user-specific state.
+
+**How It Works:**
+```python
+# Backend: Every endpoint must use session state
+from core.session_state import get_session_id_from_request
+
+@app.route('/api/endpoint')
+def my_endpoint():
+    state = get_state()  # Get isolated session state
+    state.deal = {...}    # Use state, not globals!
+    return jsonify({'success': True})
+```
+
+```javascript
+// Frontend: All API calls must include session headers
+import { getSessionHeaders } from './utils/sessionHelper';
+
+fetch(`${API_URL}/api/endpoint`, {
+  headers: {
+    'Content-Type': 'application/json',
+    ...getSessionHeaders()  // Always include this!
+  }
+});
+```
+
+**Why This Matters:**
+- 🚫 **DO NOT** use global variables like `current_deal`, `current_state`
+- ✅ **DO** use `state = get_state()` and `state.deal`, `state.play_state`
+- ✅ **DO** include `X-Session-ID` header in all frontend API calls
+- 📖 **READ:** `CRITICAL_BUG_FIX_COMPLETE.md` before making changes
+
+**See Also:**
+- [CRITICAL_BUG_FIX_COMPLETE.md](CRITICAL_BUG_FIX_COMPLETE.md) - Complete fix overview
+- [backend/core/session_state.py](backend/core/session_state.py) - Session manager implementation
+- [backend/GLOBAL_STATE_FIX_GUIDE.md](backend/GLOBAL_STATE_FIX_GUIDE.md) - Development guide
+- [frontend/src/utils/sessionHelper.js](frontend/src/utils/sessionHelper.js) - Frontend session utilities
 
 ## Contributing
 

@@ -26,7 +26,7 @@ export function PlayableCard({ card, onClick, disabled = false, className }) {
         "relative w-[70px] h-[100px] bg-white border border-gray-400 rounded-card shadow-md",
         "transition-all duration-200",
         isClickable && "cursor-pointer hover:-translate-y-4 hover:shadow-xl hover:z-50 clickable",
-        disabled && "opacity-60 cursor-not-allowed",
+        disabled && "cursor-not-allowed",
         className
       )}
       onClick={!disabled ? onClick : undefined}

@@ -262,7 +262,7 @@ def get_dashboard():
         - Insight summary (patterns, trends, growth areas)
         - Recent wins
         - Pending celebrations
-        - User stats
+        - User stats (both bidding and gameplay)
         - Practice recommendations
     """
     user_id = request.args.get('user_id', type=int)
@@ -275,10 +275,13 @@ def get_dashboard():
         analyzer = get_mistake_analyzer()
         celebration_manager = get_celebration_manager()
 
-        # Get user stats
+        # Get user stats (bidding)
         user_stats = user_manager.get_user_stats(user_id)
 
-        # Get insight summary
+        # Get gameplay stats
+        gameplay_stats = get_gameplay_stats_for_user(user_id)
+
+        # Get insight summary (bidding)
         insights = analyzer.get_insight_summary(user_id)
 
         # Get pending celebrations
@@ -299,6 +302,7 @@ def get_dashboard():
                 'overall_accuracy': user_stats.overall_accuracy,
                 'recent_accuracy': user_stats.recent_accuracy
             } if user_stats else None,
+            'gameplay_stats': gameplay_stats,
             'insights': {
                 'total_patterns': insights.total_patterns,
                 'active_patterns': insights.active_patterns,
@@ -327,6 +331,100 @@ def get_dashboard():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+def get_gameplay_stats_for_user(user_id: int) -> Dict:
+    """
+    Calculate gameplay statistics from session_hands table
+
+    Returns:
+        - total_hands_played: Total hands as declarer or defender
+        - hands_as_declarer: Count of hands where user was declarer
+        - hands_as_defender: Count of hands where user was defender
+        - contracts_made: Count of contracts made (as declarer)
+        - contracts_failed: Count of contracts failed (as declarer)
+        - declarer_success_rate: Percentage of contracts made
+        - avg_tricks_as_declarer: Average tricks taken when declaring
+        - recent_declarer_success_rate: Success rate in last 20 hands
+    """
+    import sqlite3
+
+    conn = sqlite3.connect('bridge.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    try:
+        # Get declarer statistics
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total_declarer_hands,
+                SUM(CASE WHEN made = 1 THEN 1 ELSE 0 END) as contracts_made,
+                SUM(CASE WHEN made = 0 THEN 1 ELSE 0 END) as contracts_failed,
+                AVG(tricks_taken) as avg_tricks,
+                AVG(CASE WHEN made = 1 THEN 1.0 ELSE 0.0 END) as success_rate
+            FROM session_hands sh
+            JOIN game_sessions gs ON sh.session_id = gs.id
+            WHERE gs.user_id = ?
+              AND sh.user_was_declarer = 1
+              AND sh.contract_level IS NOT NULL
+        """, (user_id,))
+
+        declarer_row = cursor.fetchone()
+
+        # Get recent declarer performance (last 20 hands)
+        cursor.execute("""
+            SELECT AVG(CASE WHEN made = 1 THEN 1.0 ELSE 0.0 END) as recent_success_rate
+            FROM (
+                SELECT made
+                FROM session_hands sh
+                JOIN game_sessions gs ON sh.session_id = gs.id
+                WHERE gs.user_id = ?
+                  AND sh.user_was_declarer = 1
+                  AND sh.contract_level IS NOT NULL
+                ORDER BY sh.played_at DESC
+                LIMIT 20
+            )
+        """, (user_id,))
+
+        recent_row = cursor.fetchone()
+
+        # Get defender statistics (user played but wasn't declarer or dummy)
+        cursor.execute("""
+            SELECT COUNT(*) as defender_hands
+            FROM session_hands sh
+            JOIN game_sessions gs ON sh.session_id = gs.id
+            WHERE gs.user_id = ?
+              AND sh.user_was_declarer = 0
+              AND sh.user_was_dummy = 0
+              AND sh.contract_level IS NOT NULL
+        """, (user_id,))
+
+        defender_row = cursor.fetchone()
+
+        # Build stats object
+        total_declarer = declarer_row['total_declarer_hands'] or 0
+        contracts_made = declarer_row['contracts_made'] or 0
+        contracts_failed = declarer_row['contracts_failed'] or 0
+        avg_tricks = declarer_row['avg_tricks'] or 0.0
+        success_rate = declarer_row['success_rate'] or 0.0
+        recent_success = recent_row['recent_success_rate'] or 0.0
+        defender_hands = defender_row['defender_hands'] or 0
+
+        total_hands = total_declarer + defender_hands
+
+        return {
+            'total_hands_played': total_hands,
+            'hands_as_declarer': total_declarer,
+            'hands_as_defender': defender_hands,
+            'contracts_made': contracts_made,
+            'contracts_failed': contracts_failed,
+            'declarer_success_rate': success_rate,
+            'avg_tricks_as_declarer': round(avg_tricks, 1),
+            'recent_declarer_success_rate': recent_success
+        }
+
+    finally:
+        conn.close()
 
 
 def get_celebrations():

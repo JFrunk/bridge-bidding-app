@@ -22,16 +22,34 @@
   color: #666;
 }
 
+/* Stats Section */
+.stats-section {
+  margin-bottom: 30px;
+}
+
+.stats-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* User Stats Bar */
 .user-stats-bar {
   display: flex;
   gap: 20px;
-  margin-bottom: 30px;
   padding: 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 12px;
   color: white;
   flex-wrap: wrap;
+}
+
+/* Gameplay Stats Bar - different gradient */
+.gameplay-stats-bar {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
 .stat-item {

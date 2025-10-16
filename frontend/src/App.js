@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SimpleLogin } from './components/auth/SimpleLogin';
 import DDSStatusIndicator from './components/DDSStatusIndicator';
 import AIDifficultySelector from './components/AIDifficultySelector';
+import { getSessionHeaders } from './utils/sessionHelper';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -139,7 +140,7 @@ function App() {
 
   const fetchAllHands = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/get-all-hands`);
+      const response = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
       if (!response.ok) throw new Error("Failed to fetch all hands.");
       const data = await response.json();
       setAllHands(data.hands);
@@ -171,7 +172,7 @@ function App() {
     try {
       const response = await fetch(`${API_URL}/api/request-review`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({
           auction_history: auction,
           user_concern: userConcern,
@@ -245,7 +246,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
     const conventionName = selectedScenario.replace(' Test', '');
 
     try {
-      const response = await fetch(`${API_URL}/api/convention-info?name=${encodeURIComponent(conventionName)}`);
+      const response = await fetch(`${API_URL}/api/convention-info?name=${encodeURIComponent(conventionName)}`, { headers: { ...getSessionHeaders() } });
       if (!response.ok) {
         setError(`No help available for ${conventionName}`);
         return;
@@ -271,7 +272,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       const response = await fetch(`${API_URL}/api/start-play`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({
           auction_history: auctionBids,
           vulnerability: vulnerability
@@ -284,7 +285,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       console.log('Play started:', data);
 
       // Fetch initial play state before transitioning
-      const stateResponse = await fetch(`${API_URL}/api/get-play-state`);
+      const stateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
       if (stateResponse.ok) {
         const state = await stateResponse.json();
         setPlayState(state);
@@ -299,7 +300,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
         // If South is dummy, fetch declarer's hand immediately for user control
         if (state.dummy === 'S') {
           console.log('🃏 South is dummy - fetching declarer hand for user control');
-          const handsResponse = await fetch(`${API_URL}/api/get-all-hands`);
+          const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
           if (handsResponse.ok) {
             const handsData = await handsResponse.json();
             const declarerPos = state.contract.declarer;
@@ -334,7 +335,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       const response = await fetch(`${API_URL}/api/play-card`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({
           position: 'S',
           card: { rank: card.rank, suit: card.suit }
@@ -355,7 +356,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       ));
 
       // Fetch updated play state to show the card that was just played
-      const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`);
+      const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
       if (updatedStateResponse.ok) {
         const updatedState = await updatedStateResponse.json();
         setPlayState(updatedState);
@@ -376,11 +377,11 @@ Please provide a detailed analysis of the auction and identify any bidding error
         // Clear the trick and get updated state
         await fetch(`${API_URL}/api/clear-trick`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() }
         });
 
         // Fetch state after trick clear to see who's next
-        const nextStateResponse = await fetch(`${API_URL}/api/get-play-state`);
+        const nextStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
         if (nextStateResponse.ok) {
           const nextState = await nextStateResponse.json();
           setPlayState(nextState);
@@ -398,7 +399,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
         }
       } else {
         // Trick not complete - check whose turn is next
-        const updatedState = await fetch(`${API_URL}/api/get-play-state`).then(r => r.json());
+        const updatedState = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } }).then(r => r.json());
         setPlayState(updatedState);
 
         const nextIsUserTurn = updatedState.next_to_play === 'S' ||
@@ -430,7 +431,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       const response = await fetch(`${API_URL}/api/play-card`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({
           position: declarerPosition,
           card: { rank: card.rank, suit: card.suit }
@@ -451,7 +452,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       ) : prevHand);
 
       // Fetch updated play state to show the card that was just played
-      const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`);
+      const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
       if (updatedStateResponse.ok) {
         const updatedState = await updatedStateResponse.json();
         setPlayState(updatedState);
@@ -472,11 +473,11 @@ Please provide a detailed analysis of the auction and identify any bidding error
         // Clear the trick and get updated state
         await fetch(`${API_URL}/api/clear-trick`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() }
         });
 
         // Fetch state after trick clear to see who's next
-        const nextStateResponse = await fetch(`${API_URL}/api/get-play-state`);
+        const nextStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
         if (nextStateResponse.ok) {
           const nextState = await nextStateResponse.json();
           setPlayState(nextState);
@@ -494,7 +495,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
         }
       } else {
         // Trick not complete - check whose turn is next
-        const updatedState = await fetch(`${API_URL}/api/get-play-state`).then(r => r.json());
+        const updatedState = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } }).then(r => r.json());
         setPlayState(updatedState);
 
         const nextIsUserTurn = updatedState.next_to_play === 'S' ||
@@ -532,7 +533,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       const response = await fetch(`${API_URL}/api/play-card`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({
           position: dummyPosition,
           card: { rank: card.rank, suit: card.suit }
@@ -553,7 +554,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       ) : prevHand);
 
       // Fetch updated play state to show the card that was just played
-      const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`);
+      const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
       if (updatedStateResponse.ok) {
         const updatedState = await updatedStateResponse.json();
         setPlayState(updatedState);
@@ -574,11 +575,11 @@ Please provide a detailed analysis of the auction and identify any bidding error
         // Clear the trick and get updated state
         await fetch(`${API_URL}/api/clear-trick`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() }
         });
 
         // Fetch state after trick clear to see who's next
-        const nextStateResponse = await fetch(`${API_URL}/api/get-play-state`);
+        const nextStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
         if (nextStateResponse.ok) {
           const nextState = await nextStateResponse.json();
           setPlayState(nextState);
@@ -596,7 +597,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
         }
       } else {
         // Trick not complete - check whose turn is next
-        const updatedState = await fetch(`${API_URL}/api/get-play-state`).then(r => r.json());
+        const updatedState = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } }).then(r => r.json());
         setPlayState(updatedState);
 
         const nextIsUserTurn = updatedState.next_to_play === 'S' ||
@@ -623,7 +624,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       try {
         const response = await fetch(`${API_URL}/api/session/complete-hand`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
           body: JSON.stringify({
             score_data: scoreData,
             auction_history: auction.map(a => a.bid)
@@ -653,7 +654,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
   const dealNewHand = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/deal-hands`);
+      const response = await fetch(`${API_URL}/api/deal-hands`, { headers: { ...getSessionHeaders() } });
       if (!response.ok) throw new Error("Failed to deal hands.");
       const data = await response.json();
       resetAuction(data);
@@ -665,7 +666,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
     if (!selectedScenario) return;
     try {
       const response = await fetch(`${API_URL}/api/load-scenario`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({ name: selectedScenario })
       });
       if (!response.ok) throw new Error("Failed to load scenario.");
@@ -683,7 +684,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
   useEffect(() => {
     const fetchScenariosAndDeal = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/scenarios`);
+        const response = await fetch(`${API_URL}/api/scenarios`, { headers: { ...getSessionHeaders() } });
         const data = await response.json();
         setScenarioList(data.scenarios);
         setScenariosByLevel(data.scenarios_by_level);
@@ -694,7 +695,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       try {
         const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
           body: JSON.stringify({ user_id: 1, session_type: 'chicago' })
         });
         const sessionData = await sessionResponse.json();
@@ -712,7 +713,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       // Deal initial hand
       try {
-        const response = await fetch(`${API_URL}/api/deal-hands`);
+        const response = await fetch(`${API_URL}/api/deal-hands`, { headers: { ...getSessionHeaders() } });
         if (!response.ok) throw new Error("Failed to deal hands.");
         const data = await response.json();
         // Skip AI bidding on initial mount to prevent race condition
@@ -742,7 +743,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
     setAuction(newAuction);
     try {
       const feedbackResponse = await fetch(`${API_URL}/api/get-feedback`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({ auction_history: newAuction.map(a => a.bid) })
       });
       const feedbackData = await feedbackResponse.json();
@@ -772,7 +773,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
           const currentPlayer = players[nextPlayerIndex];
 
           const response = await fetch(`${API_URL}/api/get-next-bid`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
             body: JSON.stringify({ auction_history: currentAuction.map(a => a.bid), current_player: currentPlayer })
           });
           if (!response.ok) throw new Error("AI failed to get bid.");
@@ -808,7 +809,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       try {
         console.log('🎬 AI play loop RUNNING...');
         // Get current play state
-        const stateResponse = await fetch(`${API_URL}/api/get-play-state`);
+        const stateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
         if (!stateResponse.ok) throw new Error("Failed to get play state");
 
         const state = await stateResponse.json();
@@ -844,7 +845,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
         if (userIsDummy && state.dummy_hand && !declarerHand) {
           // South is dummy, so we need to get declarer's (North's) hand
           // The backend should provide this via get-all-hands
-          const handsResponse = await fetch(`${API_URL}/api/get-all-hands`);
+          const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
           if (handsResponse.ok) {
             const handsData = await handsResponse.json();
             setDeclarerHand(handsData.hands[declarerPos]?.hand || []);
@@ -857,7 +858,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
           // Play complete - calculate score
           const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
             body: JSON.stringify({ vulnerability: vulnerability })
           });
 
@@ -954,7 +955,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
         const playResponse = await fetch(`${API_URL}/api/get-ai-play`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
           body: JSON.stringify({ position: nextPlayer })
         });
 
@@ -964,7 +965,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
         console.log('AI played:', playData);
 
         // Fetch updated play state to show the card that was just played
-        const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`);
+        const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
         if (updatedStateResponse.ok) {
           const updatedState = await updatedStateResponse.json();
           setPlayState(updatedState);
@@ -985,11 +986,11 @@ Please provide a detailed analysis of the auction and identify any bidding error
           // Clear the trick
           await fetch(`${API_URL}/api/clear-trick`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', ...getSessionHeaders() }
           });
 
           // Fetch updated play state to show empty trick
-          const clearedStateResponse = await fetch(`${API_URL}/api/get-play-state`);
+          const clearedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
           if (clearedStateResponse.ok) {
             const clearedState = await clearedStateResponse.json();
             setPlayState(clearedState);
@@ -1195,6 +1196,12 @@ Please provide a detailed analysis of the auction and identify any bidding error
           <BiddingBoxComponent onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding} auction={auction} />
         )}
         <div className="controls-section">
+          {/* Game controls - Always visible */}
+          <div className="game-controls">
+            <button className="deal-button" onClick={dealNewHand}>Deal New Hand</button>
+            <button className="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Replay Hand</button>
+          </div>
+
           {/* AI Difficulty Selector - Only visible during gameplay */}
           {gamePhase === 'playing' && (
             <AIDifficultySelector
@@ -1204,33 +1211,28 @@ Please provide a detailed analysis of the auction and identify any bidding error
             />
           )}
 
+          {/* Scenario loader - Only visible during bidding */}
           {gamePhase === 'bidding' && (
-            <>
-              <div className="game-controls">
-                <button className="deal-button" onClick={dealNewHand}>Deal New Hand</button>
-                <button className="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Replay Hand</button>
-              </div>
-              <div className="scenario-loader">
-                <select value={selectedScenario} onChange={(e) => setSelectedScenario(e.target.value)}>
-                  {scenariosByLevel ? (
-                    <>
-                      <optgroup label="Essential Conventions">
-                        {scenariosByLevel.Essential?.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-                      </optgroup>
-                      <optgroup label="Intermediate Conventions">
-                        {scenariosByLevel.Intermediate?.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-                      </optgroup>
-                      <optgroup label="Advanced Conventions">
-                        {scenariosByLevel.Advanced?.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-                      </optgroup>
-                    </>
-                  ) : (
-                    <option>Loading...</option>
-                  )}
-                </select>
-                <button onClick={handleLoadScenario}>Practice Convention</button>
-              </div>
-            </>
+            <div className="scenario-loader">
+              <select value={selectedScenario} onChange={(e) => setSelectedScenario(e.target.value)}>
+                {scenariosByLevel ? (
+                  <>
+                    <optgroup label="Essential Conventions">
+                      {scenariosByLevel.Essential?.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                    </optgroup>
+                    <optgroup label="Intermediate Conventions">
+                      {scenariosByLevel.Intermediate?.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                    </optgroup>
+                    <optgroup label="Advanced Conventions">
+                      {scenariosByLevel.Advanced?.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                    </optgroup>
+                  </>
+                ) : (
+                  <option>Loading...</option>
+                )}
+              </select>
+              <button onClick={handleLoadScenario}>Practice Convention</button>
+            </div>
           )}
         </div>
         {/* Only show bidding-specific controls during bidding phase */}

@@ -224,7 +224,7 @@ export function PlayTable({
               ))}
             </div>
           )}
-          {declarerPosition === 'N' && userIsDummy && declarerHand && declarerHand.length > 0 && !isHandComplete && (
+          {declarerPosition === 'N' && declarerHand && declarerHand.length > 0 && !isHandComplete && (
             <div className="declarer-hand">
               {suitOrder.map(suit => (
                 <div key={suit} className="suit-group">
@@ -244,7 +244,7 @@ export function PlayTable({
             North
             <CompactTurnIndicator position="N" isActive={next_to_play === 'N'} />
             {dummyPosition === 'N' && ' (Dummy)'}
-            {declarerPosition === 'N' && userIsDummy && ' (You control as dummy)'}
+            {declarerPosition === 'N' && userIsDummy && ' (Declarer - You control)'}
           </div>
         </div>
 
@@ -264,6 +264,7 @@ export function PlayTable({
             West
             <CompactTurnIndicator position="W" isActive={next_to_play === 'W'} />
             {dummyPosition === 'W' && ' (Dummy)'}
+            {declarerPosition === 'W' && userIsDummy && ' (Declarer - You control)'}
           </div>
           {/* Show West's hand if it's dummy - Hide when hand is complete */}
           {dummyPosition === 'W' && dummyHand && dummyHand.length > 0 && !isHandComplete && (
@@ -282,6 +283,23 @@ export function PlayTable({
               ))}
             </div>
           )}
+          {/* Show West's hand if it's declarer and user is dummy - Hide when hand is complete */}
+          {declarerPosition === 'W' && declarerHand && declarerHand.length > 0 && !isHandComplete && (
+            <div className="declarer-hand">
+              {suitOrder.map(suit => (
+                <div key={suit} className="suit-group">
+                  {declarerHand.filter(card => card.suit === suit).map((card, index) => (
+                    <PlayableCard
+                      key={`${suit}-${index}`}
+                      card={card}
+                      onClick={onDeclarerCardPlay}
+                      disabled={!isDeclarerTurn}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* East position - Right side (standard bridge layout) */}
@@ -290,6 +308,7 @@ export function PlayTable({
             East
             <CompactTurnIndicator position="E" isActive={next_to_play === 'E'} />
             {dummyPosition === 'E' && ' (Dummy)'}
+            {declarerPosition === 'E' && userIsDummy && ' (Declarer - You control)'}
           </div>
           {/* Show East's hand if it's dummy - Hide when hand is complete */}
           {dummyPosition === 'E' && dummyHand && dummyHand.length > 0 && !isHandComplete && (
@@ -302,6 +321,23 @@ export function PlayTable({
                       card={card}
                       onClick={userIsDeclarer ? onDummyCardPlay : () => {}}
                       disabled={userIsDeclarer ? !isDummyTurn : true}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Show East's hand if it's declarer and user is dummy - Hide when hand is complete */}
+          {declarerPosition === 'E' && declarerHand && declarerHand.length > 0 && !isHandComplete && (
+            <div className="declarer-hand">
+              {suitOrder.map(suit => (
+                <div key={suit} className="suit-group">
+                  {declarerHand.filter(card => card.suit === suit).map((card, index) => (
+                    <PlayableCard
+                      key={`${suit}-${index}`}
+                      card={card}
+                      onClick={onDeclarerCardPlay}
+                      disabled={!isDeclarerTurn}
                     />
                   ))}
                 </div>

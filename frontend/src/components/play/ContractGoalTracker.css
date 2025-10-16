@@ -75,6 +75,19 @@
   background: linear-gradient(90deg, var(--color-info), #4fc3f7);
 }
 
+/* Fade effect when outcome is certain - fade the loser's color by 30% */
+
+/* When declarer goes down, fade the green (success color) to show they failed to reach target */
+.contract-goal-tracker:has(.progress-bar-fill.danger.outcome-certain) .progress-bar-fill.on-track,
+.contract-goal-tracker:has(.progress-bar-fill.danger.outcome-certain) .progress-bar-container {
+  background: rgba(76, 175, 80, 0.3); /* Fade green by 70% (30% opacity) */
+}
+
+/* When contract is made, fade the red (danger color) to show they avoided failure */
+.contract-goal-tracker:has(.progress-bar-fill.safe.outcome-certain) .progress-bar-container {
+  background: rgba(244, 67, 54, 0.3); /* Fade red by 70% (30% opacity) */
+}
+
 .progress-bar-label {
   color: white;
   font-weight: 700;

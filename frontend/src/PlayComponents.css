@@ -718,6 +718,74 @@
   justify-content: center;
 }
 
+/* Dummy Hand for East/West - Vertical two-column layout organized by suit */
+.position-east .dummy-hand,
+.position-west .dummy-hand {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  grid-template-rows: repeat(2, auto);
+  gap: 8px;
+  width: auto;
+  max-width: 160px;
+  padding: 8px;
+}
+
+/* Arrange suits in 2x2 grid: Spades, Hearts on top row; Diamonds, Clubs on bottom row */
+.position-east .dummy-hand .suit-group:nth-child(1), /* Spades */
+.position-west .dummy-hand .suit-group:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.position-east .dummy-hand .suit-group:nth-child(2), /* Hearts */
+.position-west .dummy-hand .suit-group:nth-child(2) {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.position-east .dummy-hand .suit-group:nth-child(3), /* Diamonds */
+.position-west .dummy-hand .suit-group:nth-child(3) {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.position-east .dummy-hand .suit-group:nth-child(4), /* Clubs */
+.position-west .dummy-hand .suit-group:nth-child(4) {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* Make suit groups vertical for East/West */
+.position-east .dummy-hand .suit-group,
+.position-west .dummy-hand .suit-group {
+  flex-direction: column;
+  align-items: center;
+  padding: 4px;
+  background-color: transparent;
+  min-height: auto;
+}
+
+/* Cards within East/West suit groups stack vertically with small overlap */
+.position-east .dummy-hand .suit-group .playable-card,
+.position-west .dummy-hand .suit-group .playable-card {
+  margin-left: 0;
+  margin-top: -70px; /* Overlap cards vertically - show about 30px of each card */
+  margin-right: 0;
+  margin-bottom: 0;
+}
+
+.position-east .dummy-hand .suit-group .playable-card:first-child,
+.position-west .dummy-hand .suit-group .playable-card:first-child {
+  margin-top: 0; /* First card in each suit has no top margin */
+}
+
+/* Remove horizontal overlap between suits for East/West */
+.position-east .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
+.position-west .dummy-hand .suit-group:not(:first-child) .playable-card:first-child {
+  margin-left: 0;
+  margin-top: 0;
+}
+
 /* Declarer Hand (when user is dummy) */
 .declarer-hand {
   display: flex;
