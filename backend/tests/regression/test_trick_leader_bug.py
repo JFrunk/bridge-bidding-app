@@ -12,7 +12,7 @@ Reference: docs/BRIDGE_PLAY_AUDIT_2025-01-12.md Section 1.7
 import pytest
 from engine.play_engine import PlayEngine, Contract, PlayState
 from engine.hand import Hand, Card
-from tests.play_test_helpers import create_test_deal, create_play_scenario
+from tests.integration.play_test_helpers import create_test_deal, create_play_scenario
 
 
 class TestTrickLeaderTracking:
