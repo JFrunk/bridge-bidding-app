@@ -15,6 +15,8 @@ import {
   getDashboardData,
   acknowledgeCelebration,
 } from '../../services/analyticsService';
+import BiddingQualityBar from './BiddingQualityBar';
+import RecentDecisionsCard from './RecentDecisionsCard';
 
 const LearningDashboard = ({ userId, onPracticeClick }) => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -82,7 +84,7 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
     return null;
   }
 
-  const { user_stats, gameplay_stats, insights, pending_celebrations, practice_recommendations } = dashboardData;
+  const { user_stats, gameplay_stats, bidding_feedback_stats, recent_decisions, insights, pending_celebrations, practice_recommendations } = dashboardData;
 
   return (
     <div className="learning-dashboard">
@@ -110,6 +112,14 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
         </div>
       )}
 
+      {/* Bidding Quality Bar (Phase 1: NEW) */}
+      {bidding_feedback_stats && (
+        <div className="stats-section">
+          <h3 className="stats-section-title">Bidding Quality</h3>
+          <BiddingQualityBar stats={bidding_feedback_stats} />
+        </div>
+      )}
+
       {/* Dashboard Grid */}
       <div className="dashboard-grid">
         {/* Pending Celebrations */}
@@ -118,6 +128,11 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
             celebrations={pending_celebrations}
             onAcknowledge={handleAcknowledgeCelebration}
           />
+        )}
+
+        {/* Recent Bidding Decisions (Phase 1: NEW) */}
+        {recent_decisions && recent_decisions.length > 0 && (
+          <RecentDecisionsCard decisions={recent_decisions} />
         )}
 
         {/* Growth Opportunities */}

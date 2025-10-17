@@ -341,9 +341,9 @@ Please provide a detailed analysis of the auction and identify any bidding error
           dummy_revealed: state.dummy_revealed
         });
 
-        // If South is dummy, fetch declarer's hand after opening lead for user control
-        // CRITICAL: Only fetch after dummy is revealed (opening lead played)
-        if (state.dummy === 'S' && state.dummy_revealed) {
+        // If South is dummy, fetch declarer's hand for user control
+        // User needs to see and control declarer's hand when they are dummy
+        if (state.dummy === 'S') {
           console.log('🃏 South is dummy - fetching declarer hand for user control');
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
           if (handsResponse.ok) {
@@ -352,7 +352,8 @@ Please provide a detailed analysis of the auction and identify any bidding error
             const declarerCards = handsData.hands[declarerPos]?.hand || [];
             console.log('🃏 Declarer hand fetched:', {
               declarerPos,
-              cardCount: declarerCards.length
+              cardCount: declarerCards.length,
+              dummy_revealed: state.dummy_revealed
             });
             setDeclarerHand(declarerCards);
           }
@@ -816,9 +817,9 @@ Please provide a detailed analysis of the auction and identify any bidding error
         const state = await stateResponse.json();
         setPlayState(state);
 
-        // If South is dummy, fetch declarer's hand after opening lead for user control
-        // CRITICAL: Only fetch after dummy is revealed (opening lead played)
-        if (state.dummy === 'S' && state.dummy_revealed) {
+        // If South is dummy, fetch declarer's hand for user control
+        // User needs to see and control declarer's hand when they are dummy
+        if (state.dummy === 'S') {
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
           if (handsResponse.ok) {
             const handsData = await handsResponse.json();
@@ -864,9 +865,9 @@ Please provide a detailed analysis of the auction and identify any bidding error
         const state = await stateResponse.json();
         setPlayState(state);
 
-        // If South is dummy, fetch declarer's hand after opening lead for user control
-        // CRITICAL: Only fetch after dummy is revealed (opening lead played)
-        if (state.dummy === 'S' && state.dummy_revealed) {
+        // If South is dummy, fetch declarer's hand for user control
+        // User needs to see and control declarer's hand when they are dummy
+        if (state.dummy === 'S') {
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
           if (handsResponse.ok) {
             const handsData = await handsResponse.json();
@@ -999,13 +1000,27 @@ Please provide a detailed analysis of the auction and identify any bidding error
       return bids.slice(-3).map(b => b.bid).join(',') === 'Pass,Pass,Pass';
     };
 
-    if (isAiBidding && players[nextPlayerIndex] !== 'South' && !isAuctionOver(auction)) {
+    // CRITICAL FIX: Stop AI bidding immediately when it's South's turn
+    // This prevents the race condition where AI bids for the user
+    const currentPlayer = players[nextPlayerIndex];
+    if (currentPlayer === 'South' && isAiBidding) {
+      setIsAiBidding(false);
+      return; // Exit early - don't make AI bid for South
+    }
+
+    if (isAiBidding && !isAuctionOver(auction)) {
       const runAiTurn = async () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         try {
           // Capture current values to prevent race conditions
           const currentAuction = auction;
           const currentPlayer = players[nextPlayerIndex];
+
+          // Double-check it's not South's turn (defense in depth)
+          if (currentPlayer === 'South') {
+            setIsAiBidding(false);
+            return;
+          }
 
           const response = await fetch(`${API_URL}/api/get-next-bid`, {
             method: 'POST', headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
@@ -1023,12 +1038,11 @@ Please provide a detailed analysis of the auction and identify any bidding error
         }
       };
       runAiTurn();
-    } else if (isAiBidding) {
+    } else if (isAiBidding && isAuctionOver(auction)) {
       setIsAiBidding(false);
-      // Check if bidding just completed - start play phase after 3 second delay
-      if (isAuctionOver(auction)) {
-        setTimeout(() => startPlayPhase(), 3000);
-      }
+      // REMOVED: Automatic transition to play phase
+      // User must explicitly click "Play This Hand" button to start playing
+      // This gives users time to review the final contract before playing
     }
   }, [auction, nextPlayerIndex, isAiBidding, players, startPlayPhase]);
 
@@ -1076,12 +1090,11 @@ Please provide a detailed analysis of the auction and identify any bidding error
         const declarerPos = state.contract.declarer;
         const nextPlayer = state.next_to_play;
 
-        // If user (South) is dummy, fetch and store declarer's hand for user control
-        // CRITICAL: Check dummy_revealed (set after opening lead) not dummy_hand
-        if (userIsDummy && state.dummy_revealed && !declarerHand) {
-          // South is dummy, so we need to get declarer's (North's) hand
-          // The backend should provide this via get-all-hands
-          console.log('🎯 Fetching declarer hand - dummy revealed:', {
+        // If user (South) is dummy, ensure declarer's hand is available for user control
+        // Refresh if not yet set (handles edge cases where initial fetch failed)
+        if (userIsDummy && !declarerHand) {
+          // South is dummy, so we need to get declarer's hand for user control
+          console.log('🎯 Fetching declarer hand in AI loop:', {
             declarerPos,
             dummy_revealed: state.dummy_revealed
           });
@@ -1089,7 +1102,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
           if (handsResponse.ok) {
             const handsData = await handsResponse.json();
             const fetchedDeclarerHand = handsData.hands[declarerPos]?.hand || [];
-            console.log('✅ Declarer hand fetched:', {
+            console.log('✅ Declarer hand fetched in AI loop:', {
               position: declarerPos,
               cardCount: fetchedDeclarerHand.length
             });

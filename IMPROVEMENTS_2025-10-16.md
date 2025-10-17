@@ -199,6 +199,8 @@ def test_west_hand_from_actual_game_15hcp_jxx_stopper(self):
 2. ✅ **DONE**: Improve 1NT overcall logic (moderate)
 
 ### Future Enhancements
+
+#### Code Quality
 1. **Refactor `resetAuction()` parameter naming**
    - Current: `skipInitialAiBidding` (double negative, confusing)
    - Better: `startAiBiddingImmediately` (direct, clear)
@@ -209,14 +211,88 @@ def test_west_hand_from_actual_game_15hcp_jxx_stopper(self):
    setIsAiBidding(!dealerIsSouth);  // Only start AI if dealer isn't user
    ```
 
-3. **Improve West's competitive bidding AI**
-   - Current fix handles 1NT overcalls well
-   - Consider: Balancing bids, takeout doubles, etc.
-
-4. **Add browser-based integration tests**
+3. **Add browser-based integration tests**
    - Automated tests for "Deal New Hand" flow
    - Test all dealer positions (N/E/S/W)
    - Test transition from play → bidding phase
+
+#### AI Improvements
+4. **Improve West's competitive bidding AI**
+   - Current fix handles 1NT overcalls well
+   - Consider: Balancing bids, takeout doubles, etc.
+
+#### Major Feature: Gameplay Feedback & Dashboard Integration
+5. **Add comprehensive gameplay evaluation and feedback system** 🎯
+   - **Status**: Design Complete, Ready for Implementation
+   - **Timeline**: 8-12 weeks (3 phases)
+   - **Priority**: Medium-High (User Learning & Engagement)
+
+   **Overview**:
+   Integrate real-time feedback system with existing Learning Dashboard to provide structured analysis of bidding and card play decisions.
+
+   **Key Components**:
+   - Real-time bidding feedback (quality scores 0-10, error categorization)
+   - Card play evaluation (technique analysis, position evaluation)
+   - Post-hand comprehensive analysis with lessons
+   - Enhanced dashboard with quality metrics and hand history
+
+   **New Dashboard Features**:
+   - 📊 Bidding Quality Bar (7.2/10 Good, 85% Optimal, Trending)
+   - 📝 Recent Decisions Card (Last 10 bids with scores & feedback)
+   - 🎴 Technique Breakdown Card (Finessing 60%, Hold-up 87%, etc.)
+   - 📜 Hand History Card (Review any past hand with full analysis)
+
+   **Data Flow**:
+   ```
+   User bids → Feedback evaluates → Stores in DB → Analytics aggregates → Dashboard displays
+   ```
+
+   **Implementation Phases**:
+   - **Phase 1 (Weeks 1-3)**: Bidding Feedback Integration
+     - Create `bidding_decisions` table
+     - `BiddingFeedbackGenerator` class
+     - `/api/evaluate-bid` endpoint
+     - Bidding Quality Bar + Recent Decisions Card
+
+   - **Phase 2 (Weeks 4-7)**: Card Play Feedback Integration
+     - Create `play_decisions` table
+     - `CardPlayEvaluator` class (using minimax analysis)
+     - Technique breakdown and quality metrics
+
+   - **Phase 3 (Weeks 8-10)**: Hand History & Analysis
+     - Create `hand_analyses` table
+     - `/api/analytics/hand-history` endpoint
+     - Hand review UI with detailed breakdowns
+
+   **Benefits**:
+   - Users see quality scores, not just accuracy percentages
+   - Understand WHY bids/plays are wrong (key concepts)
+   - Track technique mastery (finessing, hold-up, etc.)
+   - Review past hands with complete analysis
+   - Get targeted practice based on impact severity
+
+   **Technical Details**:
+   - Leverages existing `BidExplanation` system
+   - Extends `ErrorCategorizer` with impact levels
+   - Uses `PositionEvaluator` for card play scoring
+   - Integrates with existing `MistakeAnalyzer`
+
+   **Documentation**:
+   - Full Roadmap: [`GAMEPLAY_FEEDBACK_ENHANCEMENT_ROADMAP.md`](GAMEPLAY_FEEDBACK_ENHANCEMENT_ROADMAP.md)
+   - Integration Plan: [`DASHBOARD_FEEDBACK_INTEGRATION.md`](DASHBOARD_FEEDBACK_INTEGRATION.md)
+   - Visual Summary: [`DASHBOARD_INTEGRATION_SUMMARY.md`](DASHBOARD_INTEGRATION_SUMMARY.md)
+   - Data Flow: [`FEEDBACK_TO_DASHBOARD_FLOW.md`](FEEDBACK_TO_DASHBOARD_FLOW.md)
+
+   **Dependencies**:
+   - Existing Learning Dashboard (✅ Complete)
+   - Bid explanation system (✅ Complete)
+   - Error categorization (✅ Complete)
+   - Card play AI (✅ Complete)
+
+   **Estimated ROI**:
+   - User retention: +20% (better learning → more engagement)
+   - Premium conversion: +15% (learning features drive upgrades)
+   - User satisfaction: Higher reviews from educational value
 
 ---
 

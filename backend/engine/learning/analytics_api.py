@@ -253,6 +253,160 @@ def get_mistakes():
         return jsonify({'error': str(e)}), 500
 
 
+def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
+    """
+    Calculate bidding feedback statistics from bidding_decisions table (Phase 1)
+
+    Returns:
+        - avg_score: Average quality score (0-10)
+        - total_decisions: Total bidding decisions recorded
+        - optimal_rate: Percentage of optimal bids
+        - error_rate: Percentage of error bids
+        - critical_errors: Count of critical errors
+        - recent_trend: 'improving', 'stable', or 'declining'
+    """
+    import sqlite3
+
+    conn = sqlite3.connect('bridge.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    try:
+        # Overall stats (last 30 days)
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total_decisions,
+                AVG(score) as avg_score,
+                SUM(CASE WHEN correctness = 'optimal' THEN 1 ELSE 0 END) as optimal_count,
+                SUM(CASE WHEN correctness = 'acceptable' THEN 1 ELSE 0 END) as acceptable_count,
+                SUM(CASE WHEN correctness = 'suboptimal' THEN 1 ELSE 0 END) as suboptimal_count,
+                SUM(CASE WHEN correctness = 'error' THEN 1 ELSE 0 END) as error_count,
+                SUM(CASE WHEN impact = 'critical' THEN 1 ELSE 0 END) as critical_errors
+            FROM bidding_decisions
+            WHERE user_id = ?
+              AND timestamp >= datetime('now', '-30 days')
+        """, (user_id,))
+
+        overall_row = cursor.fetchone()
+
+        if not overall_row or overall_row['total_decisions'] == 0:
+            return {
+                'avg_score': 0,
+                'total_decisions': 0,
+                'optimal_rate': 0,
+                'acceptable_rate': 0,
+                'error_rate': 0,
+                'critical_errors': 0,
+                'recent_trend': 'stable'
+            }
+
+        total = overall_row['total_decisions']
+        avg_score = overall_row['avg_score'] or 0
+        optimal_count = overall_row['optimal_count'] or 0
+        acceptable_count = overall_row['acceptable_count'] or 0
+        error_count = overall_row['error_count'] or 0
+        critical_errors = overall_row['critical_errors'] or 0
+
+        # Calculate trend (compare last 7 days vs previous 7 days)
+        cursor.execute("""
+            SELECT AVG(score) as avg_score
+            FROM bidding_decisions
+            WHERE user_id = ?
+              AND timestamp >= datetime('now', '-7 days')
+        """, (user_id,))
+        recent_row = cursor.fetchone()
+        recent_avg = recent_row['avg_score'] or 0
+
+        cursor.execute("""
+            SELECT AVG(score) as avg_score
+            FROM bidding_decisions
+            WHERE user_id = ?
+              AND timestamp >= datetime('now', '-14 days')
+              AND timestamp < datetime('now', '-7 days')
+        """, (user_id,))
+        previous_row = cursor.fetchone()
+        previous_avg = previous_row['avg_score'] or 0
+
+        # Determine trend
+        if previous_avg == 0:
+            trend = 'stable'
+        elif recent_avg > previous_avg + 0.3:
+            trend = 'improving'
+        elif recent_avg < previous_avg - 0.3:
+            trend = 'declining'
+        else:
+            trend = 'stable'
+
+        return {
+            'avg_score': round(avg_score, 1),
+            'total_decisions': total,
+            'optimal_rate': round(optimal_count / total, 3) if total > 0 else 0,
+            'acceptable_rate': round(acceptable_count / total, 3) if total > 0 else 0,
+            'error_rate': round(error_count / total, 3) if total > 0 else 0,
+            'critical_errors': critical_errors,
+            'recent_trend': trend
+        }
+
+    finally:
+        conn.close()
+
+
+def get_recent_bidding_decisions_for_user(user_id: int, limit: int = 10) -> List[Dict]:
+    """
+    Get recent bidding decisions for dashboard display (Phase 1)
+
+    Returns list of recent decisions with display-friendly format
+    """
+    import sqlite3
+
+    conn = sqlite3.connect('bridge.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT
+                id,
+                bid_number,
+                position,
+                user_bid,
+                optimal_bid,
+                correctness,
+                score,
+                impact,
+                key_concept,
+                error_category,
+                helpful_hint,
+                timestamp
+            FROM bidding_decisions
+            WHERE user_id = ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        """, (user_id, limit))
+
+        decisions = []
+        for row in cursor.fetchall():
+            decisions.append({
+                'id': row['id'],
+                'bid_number': row['bid_number'],
+                'position': row['position'],
+                'user_bid': row['user_bid'],
+                'optimal_bid': row['optimal_bid'],
+                'correctness': row['correctness'],
+                'score': row['score'],
+                'impact': row['impact'],
+                'key_concept': row['key_concept'],
+                'error_category': row['error_category'],
+                'helpful_hint': row['helpful_hint'],
+                'timestamp': row['timestamp']
+            })
+
+        return decisions
+
+    finally:
+        conn.close()
+
+
 def get_dashboard():
     """
     GET /api/analytics/dashboard?user_id=<id>
@@ -263,6 +417,8 @@ def get_dashboard():
         - Recent wins
         - Pending celebrations
         - User stats (both bidding and gameplay)
+        - Bidding feedback stats (Phase 1)
+        - Recent bidding decisions (Phase 1)
         - Practice recommendations
     """
     user_id = request.args.get('user_id', type=int)
@@ -280,6 +436,12 @@ def get_dashboard():
 
         # Get gameplay stats
         gameplay_stats = get_gameplay_stats_for_user(user_id)
+
+        # Get bidding feedback stats (Phase 1)
+        bidding_feedback_stats = get_bidding_feedback_stats_for_user(user_id)
+
+        # Get recent bidding decisions (Phase 1)
+        recent_decisions = get_recent_bidding_decisions_for_user(user_id, limit=10)
 
         # Get insight summary (bidding)
         insights = analyzer.get_insight_summary(user_id)
@@ -303,6 +465,8 @@ def get_dashboard():
                 'recent_accuracy': user_stats.recent_accuracy
             } if user_stats else None,
             'gameplay_stats': gameplay_stats,
+            'bidding_feedback_stats': bidding_feedback_stats,  # Phase 1: NEW
+            'recent_decisions': recent_decisions,  # Phase 1: NEW
             'insights': {
                 'total_patterns': insights.total_patterns,
                 'active_patterns': insights.active_patterns,

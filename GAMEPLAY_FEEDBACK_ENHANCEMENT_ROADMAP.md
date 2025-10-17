@@ -2235,6 +2235,39 @@ class FeedbackMetrics:
 - Voice feedback option
 - Offline analysis caching
 
+### Code Architecture Modernization (Optional)
+**Related Document:** [MODULARIZATION_EXECUTIVE_SUMMARY.md](MODULARIZATION_EXECUTIVE_SUMMARY.md)
+
+**Status:** Under consideration - comprehensive analysis completed
+
+**Overview:**
+- Evaluated modularizing [server.py](backend/server.py) (1,705 lines) into domain-specific modules
+- Analyzed 6 large files totaling 4,966 lines of code
+- Three documents created with pro/con perspectives
+
+**Key Findings:**
+- ✅ **Potential Benefits**: Better code organization, easier navigation, clearer responsibilities
+- ⚠️ **Critical Blockers**: No test coverage, solo developer context, opportunity cost
+- ✅ **Discovery**: Already using effective `register_endpoints()` pattern for learning/analytics/auth APIs
+
+**Recommendation:**
+- **Path C (Incremental)**: Continue using existing `register_endpoints()` pattern
+- Write tests first (2 weeks), then extract play endpoints if needed (1 week)
+- Do NOT pursue full Flask Blueprint refactoring (wrong context for solo dev)
+
+**Investment vs. Return:**
+- Full modularization: 2-3 months realistic timeline (not 3-4 weeks)
+- 90% of benefits don't apply to solo developer
+- Better ROI: Focus on user-facing features in this roadmap
+
+**Decision:** Deferred pending team growth or emergence of actual pain points
+
+**Documents:**
+1. [MODULARIZATION_ASSESSMENT_PRIORITIZED.md](MODULARIZATION_ASSESSMENT_PRIORITIZED.md) - Detailed pro analysis
+2. [CASE_AGAINST_SERVER_MODULARIZATION.md](CASE_AGAINST_SERVER_MODULARIZATION.md) - Strong contra analysis
+3. [MODULARIZATION_EXECUTIVE_SUMMARY.md](MODULARIZATION_EXECUTIVE_SUMMARY.md) - Balanced recommendation
+4. [MODULARIZATION_DECISION_MATRIX.md](MODULARIZATION_DECISION_MATRIX.md) - Quick visual reference
+
 ---
 
 ## References & Resources
