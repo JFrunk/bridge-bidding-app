@@ -35,7 +35,7 @@ const DIFFICULTY_INFO = {
 };
 
 const AIDifficultySelector = ({ onDifficultyChange }) => {
-  const [currentDifficulty, setCurrentDifficulty] = useState('expert'); // Default to expert
+  const [currentDifficulty, setCurrentDifficulty] = useState('intermediate'); // Default to stable level
   const [isChanging, setIsChanging] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
@@ -132,7 +132,8 @@ const AIDifficultySelector = ({ onDifficultyChange }) => {
           })}
 
           <div className="difficulty-note">
-            <strong>Note:</strong> Expert difficulty uses DDS (Double Dummy Solver) for perfect play.
+            <strong>Note:</strong> Expert difficulty uses DDS (Double Dummy Solver) for near-perfect play when available.
+            This provides the best AI performance but may be unstable on some systems.
             Change difficulty before starting a new hand.
           </div>
         </div>

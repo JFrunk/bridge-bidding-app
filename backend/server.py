@@ -18,19 +18,19 @@ from engine.play.ai.simple_ai import SimplePlayAI as SimplePlayAINew
 from engine.play.ai.minimax_ai import MinimaxPlayAI
 from engine.learning.learning_path_api import register_learning_endpoints
 from engine.session_manager import SessionManager, GameSession
+from engine.bridge_rules_engine import BridgeRulesEngine, GameState as BridgeGameState
 
 
 # Session state management (fixes global state race conditions)
 from core.session_state import SessionStateManager, get_session_id_from_request
 
-# DDS AI for expert level play (9/10 rating) - DISABLED due to macOS crashes
-# Uncomment to re-enable if stability improves
-# try:
-#     from engine.play.ai.dds_ai import DDSPlayAI, DDS_AVAILABLE
-# except ImportError:
-#     DDS_AVAILABLE = False
-#     print("⚠️  DDS AI not available - install endplay for expert play")
-DDS_AVAILABLE = False  # Disabled to prevent segmentation faults
+# DDS AI for expert level play (9/10 rating)
+# Enabled for production use - may be unstable on some development environments (macOS M1/M2)
+try:
+    from engine.play.ai.dds_ai import DDSPlayAI, DDS_AVAILABLE
+except ImportError:
+    DDS_AVAILABLE = False
+    print("⚠️  DDS AI not available - install endplay for expert play")
 
 app = Flask(__name__)
 CORS(app)
@@ -60,13 +60,12 @@ CONVENTION_MAP = {
 }
 
 # AI instances for different difficulty levels
-# NOTE: DDS disabled due to segmentation faults on macOS
-# Using stable Minimax AI instead (still very strong at 8+/10 rating)
+# Expert level uses DDS when available (9/10 rating), falls back to deep Minimax (8+/10)
 ai_instances = {
     'beginner': SimplePlayAINew(),
     'intermediate': MinimaxPlayAI(max_depth=2),
     'advanced': MinimaxPlayAI(max_depth=3),
-    'expert': MinimaxPlayAI(max_depth=4)  # Was: DDSPlayAI() - disabled due to crashes
+    'expert': DDSPlayAI() if DDS_AVAILABLE else MinimaxPlayAI(max_depth=4)
 }
 
 
@@ -642,13 +641,17 @@ def get_next_bid():
         auction_history, current_player = data['auction_history'], data['current_player']
         explanation_level = data.get('explanation_level', 'detailed')  # simple, detailed, or expert
 
+        # For non-South players (hidden hands), use convention_only to avoid revealing hand specifics
+        if current_player != 'South':
+            explanation_level = 'convention_only'
+
         player_hand = state.deal[current_player]
         if not player_hand:
             return jsonify({'error': "Deal has not been made yet."}), 400
 
         bid, explanation = engine.get_next_bid(player_hand, auction_history, current_player,
                                                 state.vulnerability, explanation_level)
-        return jsonify({'bid': bid, 'explanation': explanation})
+        return jsonify({'bid': bid, 'explanation': explanation, 'player': current_player})
 
     except Exception as e:
         print("---!!! AN ERROR OCCURRED IN GET_NEXT_BID !!!---")
@@ -704,7 +707,7 @@ def get_feedback():
             # Provide detailed comparison
             feedback_lines = []
             feedback_lines.append(f"⚠️ Your bid: {user_bid}")
-            feedback_lines.append(f"✅ Recommended: {optimal_bid}")
+            feedback_lines.append(f"Recommended: {optimal_bid}")
             feedback_lines.append("")
             feedback_lines.append("Why this bid is recommended:")
             feedback_lines.append(explanation)
@@ -1008,16 +1011,41 @@ def start_play():
                     cards = [Card(c['rank'], c['suit']) for c in hands_data[pos]]
                     hands[pos] = Hand(cards)
         else:
-            # Use current deal from bidding phase
+            # Check if we should use preserved original_deal (for replays)
+            # or current deal (for first-time play)
+            use_original = data.get("replay", False)
+
             # Map single letters to full names
             pos_map = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
             hands = {}
-            for pos in ["N", "E", "S", "W"]:
-                full_name = pos_map[pos]
-                if state.deal.get(full_name):
-                    hands[pos] = state.deal[full_name]
-                else:
-                    return jsonify({"error": f"Hand data not found for {full_name}. Please deal a new hand."}), 400
+
+            if use_original and state.original_deal:
+                # Replay: use preserved original deal
+                print(f"🔄 Using preserved original_deal for replay")
+                for pos in ["N", "E", "S", "W"]:
+                    full_name = pos_map[pos]
+                    if state.original_deal.get(full_name):
+                        hands[pos] = state.original_deal[full_name]
+                    else:
+                        return jsonify({"error": f"Original hand data not found for {full_name}. Cannot replay."}), 400
+            else:
+                # First play: use current deal from bidding phase
+                for pos in ["N", "E", "S", "W"]:
+                    full_name = pos_map[pos]
+                    if state.deal.get(full_name):
+                        hands[pos] = state.deal[full_name]
+                    else:
+                        return jsonify({"error": f"Hand data not found for {full_name}. Please deal a new hand."}), 400
+
+                # CRITICAL: Preserve original deal before play begins
+                # Make deep copies of Hand objects to preserve original 13-card state
+                import copy
+                state.original_deal = {}
+                for pos in ["N", "E", "S", "W"]:
+                    full_name = pos_map[pos]
+                    # Deep copy the Hand object including all cards
+                    state.original_deal[full_name] = copy.deepcopy(state.deal[full_name])
+                print(f"✅ Preserved original_deal with {sum(len(h.cards) for h in state.original_deal.values())} total cards")
 
         # Create play state
         state.play_state = PlayState(
@@ -1030,7 +1058,7 @@ def start_play():
             dummy_revealed=False,
             phase=GamePhase.PLAY_STARTING  # Set initial phase
         )
-        
+
         # Opening leader (LHO of declarer)
         opening_leader = state.play_state.next_to_play
         dummy_position = state.play_state.dummy
@@ -1053,6 +1081,159 @@ def start_play():
         traceback.print_exc()
         return jsonify({"error": f"Error starting play: {e}"}), 500
 
+@app.route("/api/play-random-hand", methods=["POST"])
+def play_random_hand():
+    """
+    Deal a new random hand and start play with an appropriate contract
+    Uses the bidding engine to generate a realistic auction for the dealt hands
+    Skips bidding phase from user perspective - goes straight to card play
+    """
+    # Get session state for this request
+    state = get_state()
+
+    try:
+        # Deal a new random hand
+        ranks = '23456789TJQKA'
+        suits = ['♠', '♥', '♦', '♣']
+        deck = [Card(rank, suit) for rank in ranks for suit in suits]
+        random.shuffle(deck)
+
+        state.deal['North'] = Hand(deck[0:13])
+        state.deal['East'] = Hand(deck[13:26])
+        state.deal['South'] = Hand(deck[26:39])
+        state.deal['West'] = Hand(deck[39:52])
+
+        # Rotate vulnerability
+        vulnerabilities = ["None", "NS", "EW", "Both"]
+        try:
+            current_idx = vulnerabilities.index(state.vulnerability)
+            state.vulnerability = vulnerabilities[(current_idx + 1) % len(vulnerabilities)]
+        except ValueError:
+            state.vulnerability = "None"
+
+        # Generate realistic auction using the bidding engine
+        # Simulate all 4 players bidding with AI
+        auction_history = []
+        players = ['North', 'East', 'South', 'West']
+        dealer_index = 0  # North deals
+        current_player_index = dealer_index
+
+        # Maximum 50 bids to prevent infinite loops (typical auction is 4-15 bids)
+        max_bids = 50
+        bid_count = 0
+
+        # Helper function to check if auction is over
+        def is_auction_over(bids):
+            if len(bids) < 4:
+                return False
+            # All passed out
+            non_pass_bids = [b for b in bids if b != 'Pass']
+            if len(bids) >= 4 and len(non_pass_bids) == 0:
+                return True
+            # 3 consecutive passes after a non-pass bid
+            if len(non_pass_bids) > 0 and len(bids) >= 3:
+                return bids[-1] == 'Pass' and bids[-2] == 'Pass' and bids[-3] == 'Pass'
+            return False
+
+        # Run AI bidding for all 4 players
+        while not is_auction_over(auction_history) and bid_count < max_bids:
+            current_player = players[current_player_index]
+            player_hand = state.deal[current_player]
+
+            try:
+                # Get AI bid for this player
+                bid, explanation = engine.get_next_bid(
+                    player_hand,
+                    auction_history,
+                    current_player,
+                    state.vulnerability,
+                    explanation_level='simple'
+                )
+                auction_history.append(bid)
+                bid_count += 1
+            except Exception as e:
+                print(f"Error getting bid for {current_player}: {e}")
+                # Fallback to Pass on error
+                auction_history.append('Pass')
+                bid_count += 1
+
+            # Move to next player
+            current_player_index = (current_player_index + 1) % 4
+
+        # Determine contract from the auction
+        contract = play_engine.determine_contract(auction_history, dealer_index=dealer_index)
+
+        if not contract:
+            # All passed - retry with a new deal
+            print("All players passed - dealing new hand")
+            return play_random_hand()  # Recursive retry
+
+        # Convert hands for play state
+        pos_map = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
+        hands = {}
+        for pos in ["N", "E", "S", "W"]:
+            full_name = pos_map[pos]
+            hands[pos] = state.deal[full_name]
+
+        # CRITICAL: Preserve original deal before play begins (for replay functionality)
+        import copy
+        state.original_deal = {}
+        for pos in ["N", "E", "S", "W"]:
+            full_name = pos_map[pos]
+            state.original_deal[full_name] = copy.deepcopy(state.deal[full_name])
+        print(f"✅ Preserved original_deal with {sum(len(h.cards) for h in state.original_deal.values())} total cards")
+
+        # Create play state
+        state.play_state = PlayState(
+            contract=contract,
+            hands=hands,
+            current_trick=[],
+            tricks_won={"N": 0, "E": 0, "S": 0, "W": 0},
+            trick_history=[],
+            next_to_play=play_engine.next_player(contract.declarer),  # LHO of declarer leads
+            dummy_revealed=False,
+            phase=GamePhase.PLAY_STARTING
+        )
+
+        opening_leader = state.play_state.next_to_play
+        dummy_position = state.play_state.dummy
+
+        # Return South's hand for display
+        south_hand = state.deal['South']
+        hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
+        points_for_json = {
+            'hcp': south_hand.hcp,
+            'dist_points': south_hand.dist_points,
+            'total_points': south_hand.total_points,
+            'suit_hcp': south_hand.suit_hcp,
+            'suit_lengths': south_hand.suit_lengths
+        }
+
+        # Return the generated auction for reference (optional - can be displayed or hidden)
+        auction_for_display = [{"bid": bid, "explanation": ""} for bid in auction_history]
+
+        return jsonify({
+            "success": True,
+            "hand": hand_for_json,
+            "points": points_for_json,
+            "vulnerability": state.vulnerability,
+            "contract": str(contract),
+            "contract_details": {
+                "level": contract.level,
+                "strain": contract.strain,
+                "declarer": contract.declarer,
+                "doubled": contract.doubled
+            },
+            "opening_leader": opening_leader,
+            "dummy": dummy_position,
+            "next_to_play": opening_leader,
+            "auction": auction_for_display  # Include generated auction
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Error creating random play hand: {e}"}), 500
+
 @app.route("/api/play-card", methods=["POST"])
 def play_card():
     """
@@ -1068,6 +1249,30 @@ def play_card():
         data = request.get_json()
         card_data = data.get("card")
         position = data.get("position", "South")
+
+        # === BRIDGE RULES ENGINE VALIDATION ===
+        bridge_state = BridgeGameState(
+            declarer=state.play_state.contract.declarer,
+            dummy=state.play_state.dummy,
+            user_position='S',
+            next_to_play=state.play_state.next_to_play,
+            dummy_revealed=state.play_state.dummy_revealed,
+            opening_lead_made=len(state.play_state.current_trick) >= 1 or len(state.play_state.trick_history) >= 1
+        )
+
+        # Validate user can play from this position
+        if not BridgeRulesEngine.can_user_play_from_position(bridge_state, position):
+            user_role = BridgeRulesEngine.get_player_role('S', state.play_state.contract.declarer, state.play_state.dummy)
+            return jsonify({
+                "error": f"Cannot play from {position} - user does not control this position",
+                "user_role": user_role.value,
+                "controllable_positions": list(BridgeRulesEngine.get_controllable_positions(bridge_state))
+            }), 403
+
+        # Validate it's this position's turn
+        is_valid, error_msg = BridgeRulesEngine.validate_play_request(bridge_state, position)
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
 
         # Check if trick is already complete (4 cards) - prevent overplay
         if len(state.play_state.current_trick) >= 4:
@@ -1177,41 +1382,35 @@ def get_ai_play():
         dummy = state.play_state.dummy
 
         # ============================================================================
-        # CRITICAL VALIDATION: Prevent AI from playing for human player
+        # CRITICAL VALIDATION: Use BridgeRulesEngine to prevent AI from playing for user
         # ============================================================================
-        # Assume user is always South ('S')
-        # User controls:
-        # - South when South is declarer (user controls declarer + dummy)
-        # - South when South is a defender (user controls their own hand)
-        # User does NOT control:
-        # - South when South is dummy (declarer controls dummy)
+        bridge_state = BridgeGameState(
+            declarer=declarer,
+            dummy=dummy,
+            user_position='S',
+            next_to_play=position,
+            dummy_revealed=state.play_state.dummy_revealed,
+            opening_lead_made=len(state.play_state.current_trick) >= 1 or len(state.play_state.trick_history) >= 1
+        )
 
-        user_position = 'S'
-        user_is_declarer = (declarer == user_position)
-        user_is_dummy = (dummy == user_position)
-
-        # Determine if user should control the current position
-        user_should_control = False
-
-        if user_is_declarer:
-            # User is declarer - controls both declarer and dummy
-            if position == user_position or position == dummy:
-                user_should_control = True
-        elif not user_is_dummy:
-            # User is a defender (not declarer, not dummy) - controls only their position
-            if position == user_position:
-                user_should_control = True
-        # If user is dummy, user_should_control stays False (declarer controls dummy)
-
-        if user_should_control:
+        # Check if this is a position the user should control
+        controllable = BridgeRulesEngine.get_controllable_positions(bridge_state)
+        if position in controllable:
+            # This is a user-controlled position - AI should not play
+            user_role = BridgeRulesEngine.get_player_role('S', declarer, dummy)
             return jsonify({
                 "error": f"AI cannot play for position {position} - user controls this position",
                 "position": position,
-                "user_is_declarer": user_is_declarer,
-                "user_is_dummy": user_is_dummy,
+                "user_role": user_role.value,
+                "controllable_positions": list(controllable),
                 "dummy": dummy,
                 "declarer": declarer
             }), 403  # 403 Forbidden
+
+        # Validate using rules engine
+        is_valid, error_msg = BridgeRulesEngine.validate_play_request(bridge_state, position)
+        if not is_valid:
+            return jsonify({"error": error_msg}), 400
 
         # ============================================================================
 
@@ -1227,10 +1426,40 @@ def get_ai_play():
                 "error": f"Cannot play cards in current phase: {state.play_state.phase}"
             }), 400
 
+        # ============================================================================
+        # CRITICAL FIX: When playing from dummy, declarer AI makes the decision
+        # Bridge Rule: Declarer controls BOTH declarer's hand AND dummy's hand
+        # ============================================================================
+        is_dummy_play = (position == dummy)
+        ai_controlling_position = declarer if is_dummy_play else position
+
+        if is_dummy_play:
+            print(f"🎭 DUMMY PLAY: Declarer ({declarer}) controlling dummy ({dummy})")
+
         # AI chooses card (using current difficulty AI)
         current_ai = ai_instances.get(state.ai_difficulty, ai_instances["intermediate"])
-        card = current_ai.choose_card(state.play_state, position)
+
+        # DIAGNOSTIC: Log hand state before AI chooses
         hand = state.play_state.hands[position]
+        print(f"🎴 AI Play Diagnostic for {position}:")
+        print(f"   - Hand size: {len(hand.cards)}")
+        print(f"   - Cards: {[f'{c.rank}{c.suit}' for c in hand.cards]}")
+        print(f"   - Current trick size: {len(state.play_state.current_trick)}")
+        print(f"   - Dummy: {dummy}, Declarer: {declarer}")
+        print(f"   - Is dummy play: {is_dummy_play}")
+        print(f"   - AI controlling position: {ai_controlling_position}")
+        print(f"   - AI difficulty: {state.ai_difficulty}")
+
+        # Validate hand is not empty
+        if len(hand.cards) == 0:
+            error_msg = f"Position {position} has no cards in hand - possible state corruption"
+            print(f"❌ {error_msg}")
+            return jsonify({"error": error_msg}), 500
+
+        # IMPORTANT: AI always chooses from the perspective of the position being played
+        # but for dummy, the AI is declarer making strategic decisions across both hands
+        card = current_ai.choose_card(state.play_state, position)
+        print(f"   ✅ AI chose: {card.rank}{card.suit}")
 
         # Play the card
         state.play_state.current_trick.append((card, position))
@@ -1298,7 +1527,13 @@ def get_ai_play():
 @app.route("/api/get-play-state", methods=["GET"])
 def get_play_state():
     """
-    Get current play state
+    Get current play state with BridgeRulesEngine integration
+
+    Returns comprehensive state including:
+    - Hand visibility (what hands should be shown)
+    - Controllable positions (what positions user can play from)
+    - Turn information (whose turn it is)
+    - All hands that should be visible to user
     """
     # Get session state for this request
     state = get_state()
@@ -1321,9 +1556,32 @@ def get_play_state():
             if state.play_state.trick_history:
                 trick_winner = state.play_state.trick_history[-1].winner
 
-        # Get dummy hand if revealed
+        # === BRIDGE RULES ENGINE INTEGRATION ===
+        # Create BridgeGameState for rules engine
+        bridge_state = BridgeGameState(
+            declarer=state.play_state.contract.declarer,
+            dummy=state.play_state.dummy,
+            user_position='S',  # User always plays South
+            next_to_play=state.play_state.next_to_play,
+            dummy_revealed=state.play_state.dummy_revealed,
+            opening_lead_made=len(state.play_state.current_trick) >= 1 or len(state.play_state.trick_history) >= 1
+        )
+
+        # Get rules-based UI display information
+        ui_info = BridgeRulesEngine.get_ui_display_info(bridge_state)
+
+        # Get visible hands (all hands user should see)
+        visible_hands = {}
+        for position in ui_info['visible_hands']:
+            if position in state.play_state.hands:
+                visible_hands[position] = {
+                    "cards": [{"rank": c.rank, "suit": c.suit} for c in state.play_state.hands[position].cards],
+                    "position": position
+                }
+
+        # Legacy dummy_hand for backward compatibility
         dummy_hand = None
-        if state.play_state.dummy_revealed:
+        if state.play_state.dummy_revealed or bridge_state.opening_lead_made:
             dummy_pos = state.play_state.dummy
             dummy_hand = {
                 "cards": [{"rank": c.rank, "suit": c.suit} for c in state.play_state.hands[dummy_pos].cards],
@@ -1344,9 +1602,15 @@ def get_play_state():
             "next_to_play": state.play_state.next_to_play,
             "dummy": state.play_state.dummy,
             "dummy_revealed": state.play_state.dummy_revealed,
-            "dummy_hand": dummy_hand,
+            "dummy_hand": dummy_hand,  # Legacy support
             "is_complete": state.play_state.is_complete,
-            "phase": str(state.play_state.phase)  # Include current phase
+            "phase": str(state.play_state.phase),
+            # NEW: BridgeRulesEngine data
+            "visible_hands": visible_hands,  # All hands user should see
+            "controllable_positions": ui_info['controllable_positions'],
+            "is_user_turn": ui_info['is_user_turn'],
+            "user_role": ui_info['user_role'],
+            "turn_message": ui_info['display_message']
         })
 
     except Exception as e:

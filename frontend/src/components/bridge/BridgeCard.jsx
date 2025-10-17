@@ -12,9 +12,10 @@ import { cn } from "../../lib/utils";
  * @param {string} props.suit - Card suit: '♠', '♥', '♦', '♣'
  * @param {function} props.onClick - Optional click handler
  * @param {boolean} props.disabled - If true, card is not clickable
+ * @param {boolean} props.compact - If true, shows rank and suit side-by-side (for vertical overlapping displays)
  * @param {string} props.className - Additional Tailwind classes
  */
-export function BridgeCard({ rank, suit, onClick, disabled = false, className }) {
+export function BridgeCard({ rank, suit, onClick, disabled = false, compact = false, className }) {
   // Determine suit color (red for hearts/diamonds, black for spades/clubs)
   const suitColor = suit === '♥' || suit === '♦' ? 'text-suit-red' : 'text-suit-black';
 
@@ -49,22 +50,30 @@ export function BridgeCard({ rank, suit, onClick, disabled = false, className })
         }
       } : undefined}
     >
-      {/* Top-left corner */}
-      <div className={cn("absolute top-1 left-1.5 flex flex-col items-center leading-none", suitColor)}>
-        <span className="text-lg font-bold">{displayRank}</span>
-        <span className="text-base">{suit}</span>
+      {/* Top-left corner - compact mode shows rank+suit horizontally */}
+      <div className={cn(
+        "absolute top-1 left-1.5 leading-none",
+        compact ? "flex flex-row items-center gap-0.5" : "flex flex-col items-center",
+        suitColor
+      )}>
+        <span className={cn("font-bold", compact ? "text-xl" : "text-lg")}>{displayRank}</span>
+        <span className={cn(compact ? "text-xl" : "text-base")}>{suit}</span>
       </div>
 
-      {/* Center suit symbol */}
-      <div className={cn("absolute inset-0 flex items-center justify-center", suitColor)}>
-        <span className="text-4xl">{suit}</span>
-      </div>
+      {/* Center suit symbol - hidden in compact mode (saves space for overlapping) */}
+      {!compact && (
+        <div className={cn("absolute inset-0 flex items-center justify-center", suitColor)}>
+          <span className="text-4xl">{suit}</span>
+        </div>
+      )}
 
-      {/* Bottom-right corner (rotated) */}
-      <div className={cn("absolute bottom-1 right-1.5 flex flex-col items-center rotate-180 leading-none", suitColor)}>
-        <span className="text-lg font-bold">{displayRank}</span>
-        <span className="text-base">{suit}</span>
-      </div>
+      {/* Bottom-right corner (rotated) - hidden in compact mode */}
+      {!compact && (
+        <div className={cn("absolute bottom-1 right-1.5 flex flex-col items-center rotate-180 leading-none", suitColor)}>
+          <span className="text-lg font-bold">{displayRank}</span>
+          <span className="text-base">{suit}</span>
+        </div>
+      )}
     </div>
   );
 }

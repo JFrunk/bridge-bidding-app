@@ -718,75 +718,94 @@
   justify-content: center;
 }
 
-/* Dummy Hand for East/West - Vertical two-column layout organized by suit */
+/* Dummy Hand for North/South - Horizontal single-line layout (like user's hand) */
+/* IMPORTANT: Override any grid layouts - North/South should ALWAYS be horizontal */
+.position-north .dummy-hand,
+.position-south .dummy-hand {
+  display: flex !important;
+  flex-direction: row !important;
+  grid-template-columns: unset !important;
+  grid-template-rows: unset !important;
+  gap: 0;
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px;
+  background-color: rgba(97, 218, 251, 0.1);
+  border-radius: 8px;
+  border: 2px solid rgba(97, 218, 251, 0.3);
+  overflow: visible;
+  justify-content: center;
+}
+
+/* Dummy Hand for East/West - Single vertical column (continuous, no gaps) */
 .position-east .dummy-hand,
 .position-west .dummy-hand {
-  display: grid;
-  grid-template-columns: repeat(2, auto);
-  grid-template-rows: repeat(2, auto);
-  gap: 8px;
-  width: auto;
-  max-width: 160px;
-  padding: 8px;
-}
-
-/* Arrange suits in 2x2 grid: Spades, Hearts on top row; Diamonds, Clubs on bottom row */
-.position-east .dummy-hand .suit-group:nth-child(1), /* Spades */
-.position-west .dummy-hand .suit-group:nth-child(1) {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.position-east .dummy-hand .suit-group:nth-child(2), /* Hearts */
-.position-west .dummy-hand .suit-group:nth-child(2) {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.position-east .dummy-hand .suit-group:nth-child(3), /* Diamonds */
-.position-west .dummy-hand .suit-group:nth-child(3) {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.position-east .dummy-hand .suit-group:nth-child(4), /* Clubs */
-.position-west .dummy-hand .suit-group:nth-child(4) {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-/* Make suit groups vertical for East/West */
-.position-east .dummy-hand .suit-group,
-.position-west .dummy-hand .suit-group {
+  display: flex;
   flex-direction: column;
+  gap: 0;
+  width: auto;
+  max-width: 100px; /* Accommodate full-width cards (~70px) */
+  padding: 10px;
+  background-color: rgba(97, 218, 251, 0.1);
+  border-radius: 8px;
+  border: 2px solid rgba(97, 218, 251, 0.3);
+  overflow: visible;
   align-items: center;
-  padding: 4px;
+}
+
+/* Keep suit groups horizontal for North/South (default behavior maintained) */
+.position-north .dummy-hand .suit-group,
+.position-south .dummy-hand .suit-group {
+  flex-direction: row !important;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-wrap: nowrap !important; /* CRITICAL: Prevent wrapping to multiple rows */
+  /* Prevent grid positioning rules from applying */
+  grid-column: unset !important;
+  grid-row: unset !important;
+  /* Remove visual styling that might cause appearance of wrapping */
+  padding: 0;
   background-color: transparent;
   min-height: auto;
 }
 
-/* Cards within East/West suit groups stack vertically with small overlap */
+/* Make suit groups vertical column for East/West - continuous flow */
+.position-east .dummy-hand .suit-group,
+.position-west .dummy-hand .suit-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  gap: 0;
+  background-color: transparent;
+  min-height: auto;
+}
+
+/* Cards within East/West suit groups stack vertically with overlap
+   Show ~35-40px of each card (full top corner: rank + suit + white space) */
 .position-east .dummy-hand .suit-group .playable-card,
 .position-west .dummy-hand .suit-group .playable-card {
-  margin-left: 0;
-  margin-top: -70px; /* Overlap cards vertically - show about 30px of each card */
+  margin-left: 0 !important; /* Force no horizontal margin */
+  margin-top: -60px; /* Overlap to show ~40px of card (full top corner clearly visible) */
   margin-right: 0;
   margin-bottom: 0;
 }
 
-.position-east .dummy-hand .suit-group .playable-card:first-child,
-.position-west .dummy-hand .suit-group .playable-card:first-child {
-  margin-top: 0; /* First card in each suit has no top margin */
-}
-
-/* Remove horizontal overlap between suits for East/West */
-.position-east .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
-.position-west .dummy-hand .suit-group:not(:first-child) .playable-card:first-child {
-  margin-left: 0;
+/* First card in FIRST suit group has no top margin */
+.position-east .dummy-hand .suit-group:first-child .playable-card:first-child,
+.position-west .dummy-hand .suit-group:first-child .playable-card:first-child {
   margin-top: 0;
 }
 
-/* Declarer Hand (when user is dummy) */
+/* First card of subsequent suits - CONTINUOUS (no gap between suits) */
+.position-east .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
+.position-west .dummy-hand .suit-group:not(:first-child) .playable-card:first-child {
+  margin-left: 0 !important; /* Force no horizontal margin */
+  margin-top: -60px; /* Same overlap as within suits - continuous flow */
+}
+
+/* Declarer Hand (when user is dummy) - Default horizontal for North/South */
 .declarer-hand {
   display: flex;
   flex-direction: row;
@@ -798,13 +817,97 @@
   justify-content: center;
 }
 
+/* Declarer Hand for North/South - Horizontal single-line layout (like user's hand) */
+/* IMPORTANT: Override any grid layouts - North/South should ALWAYS be horizontal */
+.position-north .declarer-hand,
+.position-south .declarer-hand {
+  display: flex !important;
+  flex-direction: row !important;
+  grid-template-columns: unset !important;
+  grid-template-rows: unset !important;
+  gap: 0;
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px;
+  background-color: rgba(97, 218, 251, 0.1);
+  border-radius: 8px;
+  border: 2px solid rgba(97, 218, 251, 0.3);
+  overflow: visible;
+  justify-content: center;
+}
+
+/* Keep suit groups horizontal for North/South declarer hands */
+.position-north .declarer-hand .suit-group,
+.position-south .declarer-hand .suit-group {
+  flex-direction: row !important;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-wrap: nowrap !important; /* CRITICAL: Prevent wrapping to multiple rows */
+  /* Prevent grid positioning rules from applying */
+  grid-column: unset !important;
+  grid-row: unset !important;
+  /* Remove visual styling that might cause appearance of wrapping */
+  padding: 0;
+  background-color: transparent;
+  min-height: auto;
+}
+
+/* Declarer Hand for East/West - Single vertical column (same as dummy hand) */
+.position-east .declarer-hand,
+.position-west .declarer-hand {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: auto;
+  max-width: 100px;
+  padding: 10px;
+  background-color: rgba(97, 218, 251, 0.1);
+  border-radius: 8px;
+  border: 2px solid rgba(97, 218, 251, 0.3);
+  overflow: visible;
+  align-items: center;
+}
+
+/* East/West declarer hand suit groups - vertical column */
+.position-east .declarer-hand .suit-group,
+.position-west .declarer-hand .suit-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  gap: 0;
+  background-color: transparent;
+  min-height: auto;
+}
+
+/* East/West declarer hand cards - vertical overlap */
+.position-east .declarer-hand .suit-group .playable-card,
+.position-west .declarer-hand .suit-group .playable-card {
+  margin-left: 0 !important; /* Force no horizontal margin */
+  margin-top: -60px;
+  margin-right: 0;
+  margin-bottom: 0;
+}
+
+.position-east .declarer-hand .suit-group:first-child .playable-card:first-child,
+.position-west .declarer-hand .suit-group:first-child .playable-card:first-child {
+  margin-top: 0;
+}
+
+.position-east .declarer-hand .suit-group:not(:first-child) .playable-card:first-child,
+.position-west .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
+  margin-left: 0 !important; /* Force no horizontal margin */
+  margin-top: -60px;
+}
+
 /* Suit Group - organizes cards by suit in a horizontal overlapping row */
 .suit-group {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
   align-items: flex-start;
-  flex-wrap: wrap; /* Allow wrapping on mobile */
+  flex-wrap: nowrap; /* Keep cards in single line - no wrapping */
   gap: 0;
   padding: 5px;
   background-color: rgba(255, 255, 255, 0.05);

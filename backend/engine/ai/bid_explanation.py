@@ -13,9 +13,10 @@ from enum import Enum
 
 class ExplanationLevel(Enum):
     """Different levels of explanation detail."""
-    SIMPLE = "simple"      # Minimal, one-line explanation
-    DETAILED = "detailed"  # Rich explanation with hand values and alternatives
-    EXPERT = "expert"      # Includes SAYC rules, detailed reasoning, all checks
+    SIMPLE = "simple"              # Minimal, one-line explanation
+    CONVENTION_ONLY = "convention_only"  # Convention parameters only, no actual hand values (for partner/opponent bids)
+    DETAILED = "detailed"          # Rich explanation with hand values and alternatives
+    EXPERT = "expert"              # Includes SAYC rules, detailed reasoning, all checks
 
 
 @dataclass
@@ -106,6 +107,33 @@ class BidExplanation:
             parts.append(f"({self.forcing_status})")
 
         return " ".join(parts)
+
+    def to_convention_only_string(self) -> str:
+        """
+        Generate explanation showing only convention parameters/requirements,
+        without revealing actual hand values. Used for partner/opponent bids
+        to avoid giving unfair information advantage.
+        """
+        lines = []
+
+        # Primary reason
+        lines.append(f"📋 {self.primary_reason}")
+
+        # Show hand requirements (convention parameters) only
+        if self.hand_requirements:
+            lines.append("\n📐 Requirements for this bid:")
+            for key, value in self.hand_requirements.items():
+                lines.append(f"  • {key}: {value}")
+
+        # Forcing status
+        if self.forcing_status:
+            lines.append(f"\n⚡ Status: {self.forcing_status}")
+
+        # Convention reference
+        if self.convention_reference:
+            lines.append(f"\n📖 Convention: {self.convention_reference}")
+
+        return "\n".join(lines)
 
     def to_detailed_string(self) -> str:
         """
@@ -209,13 +237,15 @@ class BidExplanation:
         Format explanation at specified level.
 
         Args:
-            level: ExplanationLevel (SIMPLE, DETAILED, or EXPERT)
+            level: ExplanationLevel (SIMPLE, CONVENTION_ONLY, DETAILED, or EXPERT)
 
         Returns:
             Formatted explanation string
         """
         if level == ExplanationLevel.SIMPLE:
             return self.to_simple_string()
+        elif level == ExplanationLevel.CONVENTION_ONLY:
+            return self.to_convention_only_string()
         elif level == ExplanationLevel.EXPERT:
             return self.to_expert_string()
         else:  # DETAILED
@@ -283,7 +313,7 @@ def compare_bids(user_bid: str, optimal_bid: str,
     lines = []
 
     lines.append(f"⚠️ Your bid: {user_bid}")
-    lines.append(f"✅ Recommended: {optimal_bid}")
+    lines.append(f"Recommended: {optimal_bid}")
     lines.append("")
     lines.append(f"Why {optimal_bid}?")
     lines.append(f"{optimal_explanation.primary_reason}")

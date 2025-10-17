@@ -80,25 +80,9 @@ export function ContractHeader({ contract, tricksWon, auction, scoreData }) {
         </div>
 
         {/* 13-Block Tricks Progress Bar */}
-        <div className="flex flex-col gap-2 min-w-[500px]">
-          {/* Labels with counts */}
-          <div className="flex flex-row justify-between text-sm text-gray-300">
-            <div className="flex flex-col items-start">
-              <span className="font-bold">Won</span>
-              <span className="text-lg text-white">{tricksWonBySide}</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="font-bold">Remaining</span>
-              <span className="text-lg text-white">{tricksRemaining}</span>
-            </div>
-            <div className="flex flex-col items-end">
-              <span className="font-bold">Lost</span>
-              <span className="text-lg text-white">{tricksLost}</span>
-            </div>
-          </div>
-
+        <div className="flex flex-col gap-1 min-w-[500px]">
           {/* Goal indicator above bar */}
-          <div className="flex flex-row h-8 relative">
+          <div className="flex flex-row h-6 relative">
             {blocks.map((state, index) => (
               <div
                 key={index}
@@ -129,6 +113,22 @@ export function ContractHeader({ contract, tricksWon, auction, scoreData }) {
                 aria-label={`Trick ${index + 1}: ${state}`}
               />
             ))}
+          </div>
+
+          {/* Labels with counts - positioned closer to bar */}
+          <div className="flex flex-row justify-between text-sm text-gray-300 mt-1">
+            <div className="flex flex-row items-center gap-2">
+              <span className="font-bold">Won</span>
+              <span className="text-base text-white">{tricksWonBySide}</span>
+            </div>
+            <div className="flex flex-row items-center gap-2">
+              <span className="font-bold">Remaining</span>
+              <span className="text-base text-white">{tricksRemaining}</span>
+            </div>
+            <div className="flex flex-row items-center gap-2">
+              <span className="font-bold">Lost</span>
+              <span className="text-base text-white">{tricksLost}</span>
+            </div>
           </div>
         </div>
       </div>

@@ -152,7 +152,12 @@ class OvercallModule(ConventionModule):
     def _has_stopper(self, hand: Hand, suit: str) -> bool:
         """
         Check if hand has a stopper in the given suit.
-        Stopper: A, Kx+, Qxx+, or Jxxx+
+
+        Full stopper: A, Kx+, Qxx+, Jxxx+
+        Partial stopper (acceptable with 15+ HCP): Jxx, Qx, Txx+
+
+        With 15+ HCP, we accept marginal stoppers (Jxx, Qx) as sufficient
+        for 1NT overcall, as the hand strength compensates for the weak stopper.
         """
         suit_cards = [card for card in hand.cards if card.suit == suit]
         if not suit_cards:
@@ -161,6 +166,7 @@ class OvercallModule(ConventionModule):
         ranks = [card.rank for card in suit_cards]
         length = len(ranks)
 
+        # Full stoppers (any HCP)
         if 'A' in ranks:
             return True
         if 'K' in ranks and length >= 2:
@@ -169,6 +175,18 @@ class OvercallModule(ConventionModule):
             return True
         if 'J' in ranks and length >= 4:
             return True
+
+        # Marginal stoppers (acceptable with 15+ HCP for competitive bidding)
+        if hand.hcp >= 15:
+            # Jxx is acceptable with strong hand (e.g., West's J-7-6 with 15 HCP)
+            if 'J' in ranks and length >= 3:
+                return True
+            # Qx is acceptable with strong hand
+            if 'Q' in ranks and length >= 2:
+                return True
+            # Txx+ is acceptable with very strong hand (16+ HCP)
+            if hand.hcp >= 16 and 'T' in ranks and length >= 3:
+                return True
 
         return False
 

@@ -16,6 +16,7 @@ import { ContractHeader } from './components/play/ContractHeader';
 import { CurrentTrickDisplay } from './components/play/CurrentTrickDisplay';
 import { ScoreModal } from './components/play/ScoreModal';
 import { PlayableCard as PlayableCardComponent } from './components/play/PlayableCard';
+import { VerticalPlayableCard } from './components/play/VerticalPlayableCard';
 
 /**
  * Get suit display order based on trump suit
@@ -272,7 +273,7 @@ export function PlayTable({
               {suitOrder.map(suit => (
                 <div key={suit} className="suit-group">
                   {dummyHand.filter(card => card.suit === suit).map((card, index) => (
-                    <PlayableCard
+                    <VerticalPlayableCard
                       key={`${suit}-${index}`}
                       card={card}
                       onClick={userIsDeclarer ? onDummyCardPlay : () => {}}
@@ -289,7 +290,7 @@ export function PlayTable({
               {suitOrder.map(suit => (
                 <div key={suit} className="suit-group">
                   {declarerHand.filter(card => card.suit === suit).map((card, index) => (
-                    <PlayableCard
+                    <VerticalPlayableCard
                       key={`${suit}-${index}`}
                       card={card}
                       onClick={onDeclarerCardPlay}
@@ -316,7 +317,7 @@ export function PlayTable({
               {suitOrder.map(suit => (
                 <div key={suit} className="suit-group">
                   {dummyHand.filter(card => card.suit === suit).map((card, index) => (
-                    <PlayableCard
+                    <VerticalPlayableCard
                       key={`${suit}-${index}`}
                       card={card}
                       onClick={userIsDeclarer ? onDummyCardPlay : () => {}}
@@ -333,7 +334,7 @@ export function PlayTable({
               {suitOrder.map(suit => (
                 <div key={suit} className="suit-group">
                   {declarerHand.filter(card => card.suit === suit).map((card, index) => (
-                    <PlayableCard
+                    <VerticalPlayableCard
                       key={`${suit}-${index}`}
                       card={card}
                       onClick={onDeclarerCardPlay}
@@ -379,8 +380,8 @@ export function PlayTable({
  * Display final score after 13 tricks
  * MIGRATED: Now uses ScoreModal component from components/play/
  */
-export function ScoreDisplay({ scoreData, onClose, onDealNewHand, sessionData, onShowLearningDashboard }) {
-  return <ScoreModal isOpen={!!scoreData} onClose={onClose} scoreData={scoreData} onDealNewHand={onDealNewHand} sessionData={sessionData} onShowLearningDashboard={onShowLearningDashboard} />;
+export function ScoreDisplay({ scoreData, onClose, onDealNewHand, sessionData, onShowLearningDashboard, onPlayAnotherHand, onReplayHand }) {
+  return <ScoreModal isOpen={!!scoreData} onClose={onClose} scoreData={scoreData} onDealNewHand={onDealNewHand} sessionData={sessionData} onShowLearningDashboard={onShowLearningDashboard} onPlayAnotherHand={onPlayAnotherHand} onReplayHand={onReplayHand} />;
 }
 
 // Export TurnIndicator components for use in other files

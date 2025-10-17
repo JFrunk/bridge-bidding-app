@@ -16,14 +16,26 @@ Usage:
     state.deal = {'North': hand_n, ...}
     state.vulnerability = "Both"
     state.play_state = play_state_obj
+
+Environment Variables:
+    DEFAULT_AI_DIFFICULTY: Set default AI difficulty level
+        - Options: beginner, intermediate, advanced, expert
+        - Default (dev): intermediate
+        - Recommended (production): expert
 """
 
+import os
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, Dict, Any
 from engine.play_engine import PlayState
 from engine.session_manager import GameSession
+
+# Get default AI difficulty from environment variable
+# Production: set DEFAULT_AI_DIFFICULTY=expert
+# Development: defaults to intermediate (more stable)
+DEFAULT_AI_DIFFICULTY = os.environ.get('DEFAULT_AI_DIFFICULTY', 'intermediate')
 
 
 @dataclass
@@ -47,10 +59,11 @@ class SessionState:
     deal: Dict[str, Any] = field(default_factory=lambda: {
         'North': None, 'East': None, 'South': None, 'West': None
     })
+    original_deal: Optional[Dict[str, Any]] = None  # Preserved copy before play begins
     vulnerability: str = "None"
     play_state: Optional[PlayState] = None
     game_session: Optional[GameSession] = None
-    ai_difficulty: str = "advanced"  # Changed from "expert" - DDS crashes on macOS
+    ai_difficulty: str = field(default_factory=lambda: DEFAULT_AI_DIFFICULTY)
     hand_start_time: Optional[datetime] = None
 
     def touch(self):
@@ -60,6 +73,7 @@ class SessionState:
     def reset_hand(self):
         """Reset hand-specific state"""
         self.deal = {'North': None, 'East': None, 'South': None, 'West': None}
+        self.original_deal = None
         self.play_state = None
         self.hand_start_time = None
 

@@ -235,6 +235,22 @@ body {
   color: #888;
   cursor: not-allowed;
 }
+.play-button {
+  font-family: inherit;
+  font-size: 16px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: 2px solid #007bff;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+.play-button:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+  transform: translateY(-1px);
+}
 .deal-button {
   font-family: inherit;
   font-size: 16px;
@@ -364,6 +380,40 @@ body {
   color: #ffc107;
 }
 
+/* Vertical hand container for East/West - arrange analysis beside cards */
+.vertical-hand-container {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 15px;
+  justify-content: center;
+}
+
+/* Hand analysis styling for East/West vertical layout */
+.player-east .hand-analysis,
+.player-west .hand-analysis {
+  flex-shrink: 0;
+  max-width: 180px;
+  font-size: 0.9em;
+}
+
+.player-east .hand-analysis h4,
+.player-west .hand-analysis h4 {
+  font-size: 0.95em;
+  margin-bottom: 8px;
+}
+
+.player-east .hand-analysis p,
+.player-west .hand-analysis p {
+  margin: 5px 0;
+  font-size: 0.85em;
+}
+
+.player-east .suit-points,
+.player-west .suit-points {
+  font-size: 0.9em;
+}
+
 .player-north .hand-display {
   flex-direction: row;
 }
@@ -372,15 +422,57 @@ body {
   flex-direction: row;
 }
 
+/* East/West hand display - Single vertical column (continuous, no gaps) */
 .player-east .hand-display,
 .player-west .hand-display {
+  display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 0;
+  max-width: 100px;
+  padding: 10px;
+  background-color: rgba(97, 218, 251, 0.1);
+  border-radius: 8px;
+  border: 2px solid rgba(97, 218, 251, 0.3);
 }
 
+/* East/West suit groups - vertical column (continuous flow) */
 .player-east .suit-group,
 .player-west .suit-group {
-  flex-direction: row;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  gap: 0;
+  background-color: transparent;
+}
+
+/* East/West cards - vertical overlap showing full top corner */
+.player-east .suit-group .bridge-card,
+.player-west .suit-group .bridge-card,
+.player-east .suit-group > div,
+.player-west .suit-group > div {
+  margin-left: 0 !important; /* Force no horizontal margin */
+  margin-top: -60px; /* Overlap to show ~40px of card (full top corner: rank + suit + white space) */
+  margin-right: 0;
+  margin-bottom: 0;
+}
+
+/* First card in first suit - no top margin */
+.player-east .hand-display .suit-group:first-child .bridge-card:first-child,
+.player-west .hand-display .suit-group:first-child .bridge-card:first-child,
+.player-east .hand-display .suit-group:first-child > div:first-child,
+.player-west .hand-display .suit-group:first-child > div:first-child {
+  margin-top: 0;
+}
+
+/* First card of subsequent suits - continuous (no gap) */
+.player-east .hand-display .suit-group:not(:first-child) .bridge-card:first-child,
+.player-west .hand-display .suit-group:not(:first-child) .bridge-card:first-child,
+.player-east .hand-display .suit-group:not(:first-child) > div:first-child,
+.player-west .hand-display .suit-group:not(:first-child) > div:first-child {
+  margin-left: 0 !important; /* Force no horizontal margin */
+  margin-top: -60px;
 }
 
 /* AI Review Controls */

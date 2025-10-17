@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { PlayTable, ScoreDisplay, getSuitOrder } from './PlayComponents';
 import { BridgeCard } from './components/bridge/BridgeCard';
+import { VerticalCard } from './components/bridge/VerticalCard';
 import { BiddingBox as BiddingBoxComponent } from './components/bridge/BiddingBox';
 import { ReviewModal } from './components/bridge/ReviewModal';
 import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
@@ -28,6 +29,42 @@ function PlayerHand({ position, hand, points, vulnerability }) {
   // During bidding, no trump is set, so use no-trump order
   const suitOrder = getSuitOrder(null);
   if (!suitOrder || !Array.isArray(suitOrder)) return null;
+
+  // Use VerticalCard component for East/West positions (optimized for heavy overlapping)
+  const isVertical = position === 'East' || position === 'West';
+  const CardComponent = isVertical ? VerticalCard : BridgeCard;
+
+  // For East/West: arrange hand analysis beside cards (West: left, East: right)
+  if (isVertical) {
+    return (
+      <div className={`player-hand player-${position.toLowerCase()}`}>
+        <h3>{position}</h3>
+        <div className="vertical-hand-container">
+          {/* West: analysis on left, cards on right */}
+          {position === 'West' && <HandAnalysis points={points} vulnerability={vulnerability} />}
+
+          <div className="hand-display">
+            {suitOrder.map(suit => (
+              <div key={suit} className="suit-group">
+                {hand.filter(card => card && card.suit === suit).map((card, index) => (
+                  <CardComponent
+                    key={`${suit}-${index}`}
+                    rank={card.rank}
+                    suit={card.suit}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* East: cards on left, analysis on right */}
+          {position === 'East' && <HandAnalysis points={points} vulnerability={vulnerability} />}
+        </div>
+      </div>
+    );
+  }
+
+  // North/South: keep analysis below cards
   return (
     <div className={`player-hand player-${position.toLowerCase()}`}>
       <h3>{position}</h3>
@@ -35,7 +72,11 @@ function PlayerHand({ position, hand, points, vulnerability }) {
         {suitOrder.map(suit => (
           <div key={suit} className="suit-group">
             {hand.filter(card => card && card.suit === suit).map((card, index) => (
-              <BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />
+              <CardComponent
+                key={`${suit}-${index}`}
+                rank={card.rank}
+                suit={card.suit}
+              />
             ))}
           </div>
         ))}
@@ -111,6 +152,9 @@ function App() {
 
   // Ref to store AI play loop timeout ID so we can cancel it
   const aiPlayTimeoutRef = useRef(null);
+
+  // Ref to store pending trick clear timeout so we can cancel it when user plays
+  const trickClearTimeoutRef = useRef(null);
 
   const resetAuction = (dealData, skipInitialAiBidding = false) => {
     setInitialDeal(dealData);
@@ -297,8 +341,9 @@ Please provide a detailed analysis of the auction and identify any bidding error
           dummy_revealed: state.dummy_revealed
         });
 
-        // If South is dummy, fetch declarer's hand immediately for user control
-        if (state.dummy === 'S') {
+        // If South is dummy, fetch declarer's hand after opening lead for user control
+        // CRITICAL: Only fetch after dummy is revealed (opening lead played)
+        if (state.dummy === 'S' && state.dummy_revealed) {
           console.log('🃏 South is dummy - fetching declarer hand for user control');
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
           if (handsResponse.ok) {
@@ -328,6 +373,26 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
   const handleCardPlay = async (card) => {
     console.log('🃏 handleCardPlay called:', { card, isPlayingCard });
+
+    // If there's a pending trick clear, execute it immediately before user plays
+    if (trickClearTimeoutRef.current) {
+      console.log('⚡ User played - clearing pending trick immediately');
+      clearTimeout(trickClearTimeoutRef.current);
+      trickClearTimeoutRef.current = null;
+
+      // Clear the trick immediately
+      await fetch(`${API_URL}/api/clear-trick`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() }
+      });
+
+      // Fetch and update state after clearing
+      const clearedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
+      if (clearedStateResponse.ok) {
+        const clearedState = await clearedStateResponse.json();
+        setPlayState(clearedState);
+      }
+    }
 
     try {
       console.log('✅ Playing card:', card);
@@ -368,11 +433,16 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       // Check if trick just completed
       if (data.trick_complete && data.trick_winner) {
-        // Trick is complete - show winner for 5 seconds before clearing
+        // Trick is complete - show winner for 2.5 seconds before clearing
         console.log(`Trick complete! Winner: ${data.trick_winner}`);
 
-        // Wait 5 seconds to display the winner
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Wait 2.5 seconds to display the winner (50% faster than before)
+        await new Promise(resolve => {
+          trickClearTimeoutRef.current = setTimeout(resolve, 2500);
+        });
+
+        // Clear timeout ref since we're about to clear
+        trickClearTimeoutRef.current = null;
 
         // Clear the trick and get updated state
         await fetch(`${API_URL}/api/clear-trick`, {
@@ -423,6 +493,26 @@ Please provide a detailed analysis of the auction and identify any bidding error
   const handleDeclarerCardPlay = async (card) => {
     if (!playState) return;
 
+    // If there's a pending trick clear, execute it immediately before user plays
+    if (trickClearTimeoutRef.current) {
+      console.log('⚡ User played (declarer) - clearing pending trick immediately');
+      clearTimeout(trickClearTimeoutRef.current);
+      trickClearTimeoutRef.current = null;
+
+      // Clear the trick immediately
+      await fetch(`${API_URL}/api/clear-trick`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() }
+      });
+
+      // Fetch and update state after clearing
+      const clearedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
+      if (clearedStateResponse.ok) {
+        const clearedState = await clearedStateResponse.json();
+        setPlayState(clearedState);
+      }
+    }
+
     try {
       setIsPlayingCard(true);
 
@@ -464,11 +554,16 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       // Check if trick just completed
       if (data.trick_complete && data.trick_winner) {
-        // Trick is complete - show winner for 5 seconds before clearing
+        // Trick is complete - show winner for 2.5 seconds before clearing
         console.log(`Trick complete! Winner: ${data.trick_winner}`);
 
-        // Wait 5 seconds to display the winner
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Wait 2.5 seconds to display the winner (50% faster than before)
+        await new Promise(resolve => {
+          trickClearTimeoutRef.current = setTimeout(resolve, 2500);
+        });
+
+        // Clear timeout ref since we're about to clear
+        trickClearTimeoutRef.current = null;
 
         // Clear the trick and get updated state
         await fetch(`${API_URL}/api/clear-trick`, {
@@ -524,6 +619,26 @@ Please provide a detailed analysis of the auction and identify any bidding error
       return;
     }
 
+    // If there's a pending trick clear, execute it immediately before user plays
+    if (trickClearTimeoutRef.current) {
+      console.log('⚡ User played (dummy) - clearing pending trick immediately');
+      clearTimeout(trickClearTimeoutRef.current);
+      trickClearTimeoutRef.current = null;
+
+      // Clear the trick immediately
+      await fetch(`${API_URL}/api/clear-trick`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() }
+      });
+
+      // Fetch and update state after clearing
+      const clearedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
+      if (clearedStateResponse.ok) {
+        const clearedState = await clearedStateResponse.json();
+        setPlayState(clearedState);
+      }
+    }
+
     try {
       console.log('✅ Playing dummy card:', card);
       setIsPlayingCard(true);
@@ -566,11 +681,16 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       // Check if trick just completed
       if (data.trick_complete && data.trick_winner) {
-        // Trick is complete - show winner for 5 seconds before clearing
+        // Trick is complete - show winner for 2.5 seconds before clearing
         console.log(`Trick complete! Winner: ${data.trick_winner}`);
 
-        // Wait 5 seconds to display the winner
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Wait 2.5 seconds to display the winner (50% faster than before)
+        await new Promise(resolve => {
+          trickClearTimeoutRef.current = setTimeout(resolve, 2500);
+        });
+
+        // Clear timeout ref since we're about to clear
+        trickClearTimeoutRef.current = null;
 
         // Clear the trick and get updated state
         await fetch(`${API_URL}/api/clear-trick`, {
@@ -657,9 +777,124 @@ Please provide a detailed analysis of the auction and identify any bidding error
       const response = await fetch(`${API_URL}/api/deal-hands`, { headers: { ...getSessionHeaders() } });
       if (!response.ok) throw new Error("Failed to deal hands.");
       const data = await response.json();
-      resetAuction(data);
+      resetAuction(data, true); // Skip initial AI bidding initially
       setIsInitializing(false); // Ensure we're not in initializing state for manual deals
+
+      // After state settles, trigger AI bidding if dealer is not South
+      setTimeout(() => {
+        if (players.indexOf(dealer) !== 2) { // If dealer is not South (index 2)
+          setIsAiBidding(true);
+        }
+      }, 100);
     } catch (err) { setError("Could not connect to server to deal."); }
+  };
+
+  const playRandomHand = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/play-random-hand`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() }
+      });
+      if (!response.ok) throw new Error("Failed to create random play hand.");
+      const data = await response.json();
+
+      // Set hand and vulnerability
+      setHand(data.hand);
+      setHandPoints(data.points);
+      setVulnerability(data.vulnerability);
+
+      // Set the auction that was generated by AI (for reference)
+      setAuction(data.auction || []);
+
+      // Transition directly to play phase
+      setGamePhase('playing');
+      setDisplayedMessage(`Contract: ${data.contract}. The AI bid all 4 hands. Opening leader: ${data.opening_leader}`);
+
+      // Fetch initial play state
+      const stateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
+      if (stateResponse.ok) {
+        const state = await stateResponse.json();
+        setPlayState(state);
+
+        // If South is dummy, fetch declarer's hand after opening lead for user control
+        // CRITICAL: Only fetch after dummy is revealed (opening lead played)
+        if (state.dummy === 'S' && state.dummy_revealed) {
+          const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
+          if (handsResponse.ok) {
+            const handsData = await handsResponse.json();
+            const declarerPos = state.contract.declarer;
+            const declarerCards = handsData.hands[declarerPos]?.hand || [];
+            setDeclarerHand(declarerCards);
+          }
+        }
+      }
+
+      // Start AI play loop
+      setIsPlayingCard(true);
+      setIsInitializing(false);
+    } catch (err) {
+      setError("Could not create random play hand.");
+      console.error(err);
+    }
+  };
+
+  const replayCurrentHand = async () => {
+    // Replay the same hand - used after play completes
+    if (!playState) return;
+
+    try {
+      // Restart play with the same contract
+      const response = await fetch(`${API_URL}/api/start-play`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+        body: JSON.stringify({
+          auction_history: auction.map(a => a.bid),
+          vulnerability: vulnerability,
+          replay: true  // Signal backend to use preserved original_deal
+        })
+      });
+
+      if (!response.ok) throw new Error("Failed to restart play phase");
+
+      const data = await response.json();
+
+      // Fetch initial play state before transitioning
+      const stateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
+      if (stateResponse.ok) {
+        const state = await stateResponse.json();
+        setPlayState(state);
+
+        // If South is dummy, fetch declarer's hand after opening lead for user control
+        // CRITICAL: Only fetch after dummy is revealed (opening lead played)
+        if (state.dummy === 'S' && state.dummy_revealed) {
+          const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
+          if (handsResponse.ok) {
+            const handsData = await handsResponse.json();
+            const declarerPos = state.contract.declarer;
+            const declarerCards = handsData.hands[declarerPos]?.hand || [];
+            setDeclarerHand(declarerCards);
+          }
+        }
+      }
+
+      // Reset to play phase start
+      setGamePhase('playing');
+      setScoreData(null);
+      setDisplayedMessage(`Contract: ${data.contract}. Opening leader: ${data.opening_leader}`);
+
+      // Restart hand (fetch from backend to get fresh hands)
+      const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
+      if (handsResponse.ok) {
+        const handsData = await handsResponse.json();
+        setHand(handsData.hands.S?.hand || []);
+      }
+
+      // Start AI play loop
+      setIsPlayingCard(true);
+    } catch (err) {
+      setError('Failed to replay hand');
+      console.error(err);
+    }
   };
   
   const handleLoadScenario = async () => {
@@ -671,14 +906,14 @@ Please provide a detailed analysis of the auction and identify any bidding error
       });
       if (!response.ok) throw new Error("Failed to load scenario.");
       const data = await response.json();
-      resetAuction(data);
+      resetAuction(data, true); // Skip initial AI bidding - wait for proper turn
       setIsInitializing(false); // Ensure we're not in initializing state for scenario loads
     } catch (err) { setError("Could not load scenario from server."); }
   };
 
   const handleReplayHand = () => {
     if (!initialDeal) return;
-    resetAuction(initialDeal);
+    resetAuction(initialDeal, true); // Skip initial AI bidding - wait for proper turn
   };
   
   useEffect(() => {
@@ -738,8 +973,8 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
   const handleUserBid = async (bid) => {
     if (players[nextPlayerIndex] !== 'South' || isAiBidding) return;
-    setDisplayedMessage('...'); 
-    const newAuction = [...auction, { bid: bid, explanation: 'Your bid.' }];
+    setDisplayedMessage('...');
+    const newAuction = [...auction, { bid: bid, explanation: 'Your bid.', player: 'South' }];
     setAuction(newAuction);
     try {
       const feedbackResponse = await fetch(`${API_URL}/api/get-feedback`, {
@@ -842,13 +1077,23 @@ Please provide a detailed analysis of the auction and identify any bidding error
         const nextPlayer = state.next_to_play;
 
         // If user (South) is dummy, fetch and store declarer's hand for user control
-        if (userIsDummy && state.dummy_hand && !declarerHand) {
+        // CRITICAL: Check dummy_revealed (set after opening lead) not dummy_hand
+        if (userIsDummy && state.dummy_revealed && !declarerHand) {
           // South is dummy, so we need to get declarer's (North's) hand
           // The backend should provide this via get-all-hands
+          console.log('🎯 Fetching declarer hand - dummy revealed:', {
+            declarerPos,
+            dummy_revealed: state.dummy_revealed
+          });
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
           if (handsResponse.ok) {
             const handsData = await handsResponse.json();
-            setDeclarerHand(handsData.hands[declarerPos]?.hand || []);
+            const fetchedDeclarerHand = handsData.hands[declarerPos]?.hand || [];
+            console.log('✅ Declarer hand fetched:', {
+              position: declarerPos,
+              cardCount: fetchedDeclarerHand.length
+            });
+            setDeclarerHand(fetchedDeclarerHand);
           }
         }
 
@@ -883,46 +1128,38 @@ Please provide a detailed analysis of the auction and identify any bidding error
         });
 
         // ============================================================
-        // CRITICAL: Determine who controls the next play
-        // According to bridge rules:
-        // - Declarer controls BOTH their own hand AND dummy's hand
-        // - Dummy makes NO decisions
-        // - Defenders control only their own hands
+        // CRITICAL: Determine who controls the next play (SINGLE-PLAYER MODE)
+        // Single-Player Rules:
+        // - User controls South ALWAYS
+        // - User controls North when NS is declaring (N or S is declarer)
+        // - AI controls East + West ALWAYS
+        // - AI controls North when EW is declaring (E or W is declarer)
         // ============================================================
 
         // Check if user should control the next play
         let userShouldControl = false;
         let userControlMessage = "";
 
-        // Case 1: User (South) is declarer
-        if (userIsDeclarer) {
-          // User controls BOTH South (declarer) and dummy positions
+        const nsIsDeclaring = (declarerPos === 'N' || declarerPos === 'S');
+
+        // SINGLE-PLAYER LOGIC: User controls NS when NS is declaring
+        if (nsIsDeclaring) {
+          // User controls BOTH North and South when NS is declaring
           if (nextPlayer === 'S') {
             userShouldControl = true;
-            userControlMessage = "Your turn to play from your hand!";
-          } else if (nextPlayer === state.dummy) {
-            // User is declarer and it's dummy's turn
+            userControlMessage = "Your turn to play from South!";
+          } else if (nextPlayer === 'N') {
             userShouldControl = true;
-            userControlMessage = `Your turn to play from dummy's hand (${state.dummy})!`;
+            userControlMessage = "Your turn to play from North (partner)!";
           }
-          // If nextPlayer is a defender (E or W), AI plays
-        }
-        // Case 2: User (South) is dummy
-        else if (userIsDummy) {
-          // When user is dummy, AI declarer controls BOTH declarer and dummy (South)
-          // User makes NO plays at all
-          // Exception: This should never happen in our implementation
-          // because if South is dummy, declarer is N/E/W (AI), so AI controls everything
-          userShouldControl = false;
-        }
-        // Case 3: User (South) is a defender (neither declarer nor dummy)
-        else {
-          // User only controls South (their own defender hand)
+          // If nextPlayer is E or W, AI plays
+        } else {
+          // EW is declaring - user controls only South (defense)
           if (nextPlayer === 'S') {
             userShouldControl = true;
-            userControlMessage = "Your turn to play!";
+            userControlMessage = "Your turn to play (defending)!";
           }
-          // If nextPlayer is declarer or dummy, AI plays
+          // If nextPlayer is N, E, or W, AI plays
         }
 
         // If user should control this play, stop AI loop
@@ -944,12 +1181,8 @@ Please provide a detailed analysis of the auction and identify any bidding error
           return;
         }
 
-        // If it's dummy's turn and AI is declarer, AI plays from dummy
-        if (nextPlayer === state.dummy && !userIsDeclarer) {
-          console.log('▶️ AI declarer playing from dummy\'s hand:', nextPlayer);
-        } else {
-          console.log('▶️ AI player\'s turn:', nextPlayer);
-        }
+        // Log what AI is doing
+        console.log(`▶️ AI playing for position ${nextPlayer}`);
         // AI player's turn
         await new Promise(resolve => setTimeout(resolve, 1000)); // Delay for visibility
 
@@ -959,7 +1192,17 @@ Please provide a detailed analysis of the auction and identify any bidding error
           body: JSON.stringify({ position: nextPlayer })
         });
 
-        if (!playResponse.ok) throw new Error("AI play failed");
+        if (!playResponse.ok) {
+          const errorData = await playResponse.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('❌ AI play failed:', {
+            status: playResponse.status,
+            statusText: playResponse.statusText,
+            errorData,
+            position: nextPlayer,
+            playState: state
+          });
+          throw new Error(`AI play failed for ${nextPlayer}: ${errorData.error || playResponse.statusText}`);
+        }
 
         const playData = await playResponse.json();
         console.log('AI played:', playData);
@@ -977,11 +1220,16 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
         // Check if trick just completed
         if (playData.trick_complete && playData.trick_winner) {
-          // Trick is complete - show winner for 5 seconds before clearing
+          // Trick is complete - show winner for 2.5 seconds before clearing
           console.log(`Trick complete! Winner: ${playData.trick_winner}`);
 
-          // Wait 5 seconds to display the winner
-          await new Promise(resolve => setTimeout(resolve, 5000));
+          // Wait 2.5 seconds to display the winner (50% faster than before)
+          await new Promise(resolve => {
+            trickClearTimeoutRef.current = setTimeout(resolve, 2500);
+          });
+
+          // Clear timeout ref since we're about to clear
+          trickClearTimeoutRef.current = null;
 
           // Clear the trick
           await fetch(`${API_URL}/api/clear-trick`, {
@@ -1025,7 +1273,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       } catch (err) {
         console.error('Error in AI play loop:', err);
-        setError('AI play failed');
+        setError(`AI play failed: ${err.message || 'Unknown error'}`);
         setIsPlayingCard(false);
       }
     };
@@ -1155,24 +1403,16 @@ Please provide a detailed analysis of the auction and identify any bidding error
             onCardPlay={handleCardPlay}
             onDeclarerCardPlay={handleDeclarerCardPlay}
             onDummyCardPlay={handleDummyCardPlay}
-            isUserTurn={
-              // User plays South's cards when:
-              // 1. It's South's turn AND South is not dummy (user is declarer or defender)
-              // 2. It's South's turn AND user is dummy being controlled by AI (actually, AI controls this - so this shouldn't enable user)
-              playState.next_to_play === 'S' && playState.dummy !== 'S'
-            }
+            // === BRIDGE RULES ENGINE INTEGRATION ===
+            // Use rules engine data from backend for correct hand visibility and control
+            isUserTurn={playState.is_user_turn ?? (playState.next_to_play === 'S' && playState.dummy !== 'S')}
             isDeclarerTurn={
-              // User plays declarer's cards (North) when:
-              // - User is dummy (South is dummy)
-              // - It's declarer's turn
-              // NOTE: This scenario doesn't apply in our game - if South is dummy, AI is declarer
-              playState.next_to_play === playState.contract.declarer && playState.dummy === 'S'
+              (playState.controllable_positions?.includes(playState.contract.declarer) && playState.next_to_play === playState.contract.declarer)
+              ?? (playState.next_to_play === playState.contract.declarer && playState.dummy === 'S')
             }
             isDummyTurn={
-              // User plays dummy's cards when:
-              // - User is declarer (South is declarer)
-              // - It's dummy's turn
-              playState.next_to_play === playState.dummy && playState.contract.declarer === 'S'
+              (playState.controllable_positions?.includes(playState.dummy) && playState.next_to_play === playState.dummy)
+              ?? (playState.next_to_play === playState.dummy && playState.contract.declarer === 'S')
             }
             auction={auction}
             scoreData={scoreData}
@@ -1196,19 +1436,46 @@ Please provide a detailed analysis of the auction and identify any bidding error
           <BiddingBoxComponent onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding} auction={auction} />
         )}
         <div className="controls-section">
-          {/* Game controls - Always visible */}
+          {/* Game controls - Context-aware based on game phase */}
           <div className="game-controls">
-            <button className="deal-button" onClick={dealNewHand}>Deal New Hand</button>
-            <button className="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Replay Hand</button>
+            {gamePhase === 'bidding' ? (
+              <>
+                <button className="deal-button" onClick={dealNewHand}>Deal Hand to Bid</button>
+                <button className="play-button" onClick={playRandomHand}>Play Random Hand</button>
+                <button className="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Rebid Hand</button>
+                {/* Show "Play This Hand" button when bidding is complete */}
+                {auction.length >= 4 && auction.slice(-3).every(bid => bid.bid === 'Pass') && (
+                  <button className="play-this-hand-button" onClick={startPlayPhase} style={{ backgroundColor: '#4CAF50', color: 'white', fontWeight: 'bold' }}>
+                    ▶ Play This Hand
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <button className="play-button" onClick={playRandomHand}>Play Another Hand</button>
+                <button className="replay-button" onClick={replayCurrentHand}>Replay Hand</button>
+                <button className="deal-button" onClick={dealNewHand}>Bid New Hand</button>
+                <button className="learning-dashboard-button" onClick={() => setShowLearningDashboard(true)}>📊 My Progress</button>
+              </>
+            )}
           </div>
 
           {/* AI Difficulty Selector - Only visible during gameplay */}
           {gamePhase === 'playing' && (
-            <AIDifficultySelector
-              onDifficultyChange={(difficulty, data) => {
-                console.log('AI difficulty changed to:', difficulty, data);
-              }}
-            />
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <AIDifficultySelector
+                onDifficultyChange={(difficulty, data) => {
+                  console.log('AI difficulty changed to:', difficulty, data);
+                }}
+              />
+              <button
+                onClick={() => setShowReviewModal(true)}
+                className="ai-review-button"
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                🤖 Request AI Review
+              </button>
+            </div>
           )}
 
           {/* Scenario loader - Only visible during bidding */}
@@ -1276,6 +1543,8 @@ Please provide a detailed analysis of the auction and identify any bidding error
           onDealNewHand={dealNewHand}
           sessionData={sessionData}
           onShowLearningDashboard={() => setShowLearningDashboard(true)}
+          onPlayAnotherHand={playRandomHand}
+          onReplayHand={replayCurrentHand}
         />
       )}
 

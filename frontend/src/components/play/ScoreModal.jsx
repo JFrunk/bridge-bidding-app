@@ -22,7 +22,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
  * Designed as SECONDARY visual hierarchy (celebratory but not overwhelming)
  * Enhanced with session scoring context
  */
-export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionData, onShowLearningDashboard }) {
+export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionData, onShowLearningDashboard, onPlayAnotherHand, onReplayHand }) {
   // State for collapsible breakdown (must be before any early returns)
   const [isBreakdownOpen, setIsBreakdownOpen] = React.useState(false);
 
@@ -30,6 +30,21 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
 
   const { contract, tricks_taken, tricks_needed, result, score, made, breakdown, overtricks, undertricks } = scoreData;
   const doubledText = contract.doubled === 2 ? 'XX' : contract.doubled === 1 ? 'X' : '';
+
+  // Determine user's perspective (South is always the user)
+  // User's team is North-South (NS)
+  const declarerIsNS = contract.declarer === 'N' || contract.declarer === 'S';
+
+  // Score from backend is from declarer's perspective
+  // If declarer is on user's team (NS), keep score as is
+  // If declarer is opponents (EW), flip the score
+  const userScore = declarerIsNS ? score : -score;
+
+  // Update breakdown to reflect user's perspective
+  const userBreakdown = declarerIsNS ? breakdown : {
+    ...breakdown,
+    // Flip the sign of all breakdown components for display
+  };
 
   // Session context
   const hasSession = sessionData && sessionData.active;
@@ -72,17 +87,17 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
             </span>
           </div>
 
-          {/* Score row (larger, highlighted) */}
+          {/* Score row (larger, highlighted) - Shows score from user's (NS) perspective */}
           <div className={cn(
             "flex items-center justify-between px-6 py-4 rounded-lg border-2",
-            score >= 0 ? "bg-green-50 border-success" : "bg-red-50 border-danger"
+            userScore >= 0 ? "bg-green-50 border-success" : "bg-red-50 border-danger"
           )}>
-            <span className="text-xl font-bold text-gray-900">Score:</span>
+            <span className="text-xl font-bold text-gray-900">Your Score:</span>
             <span className={cn(
               "text-3xl font-bold",
-              score >= 0 ? "text-success" : "text-danger"
+              userScore >= 0 ? "text-success" : "text-danger"
             )}>
-              {score >= 0 ? '+' : ''}{score}
+              {userScore >= 0 ? '+' : ''}{userScore}
             </span>
           </div>
 
@@ -108,12 +123,13 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-3">
                 <ScoreBreakdown
-                  breakdown={breakdown}
+                  breakdown={userBreakdown}
                   contract={contract}
                   made={made}
                   overtricks={overtricks || 0}
                   undertricks={undertricks || 0}
                   tricksNeeded={tricks_needed}
+                  userPerspective={!declarerIsNS}
                 />
               </CollapsibleContent>
             </Collapsible>
@@ -170,8 +186,36 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
         </div>
 
         <DialogFooter className="flex flex-col gap-3 sm:flex-col">
-          {/* Primary actions row */}
+          {/* Primary action: Play Another Hand */}
+          {onPlayAnotherHand && (
+            <Button
+              onClick={() => {
+                onPlayAnotherHand();
+                onClose();
+              }}
+              className="w-full"
+              size="lg"
+              variant="default"
+            >
+              Play Another Hand
+            </Button>
+          )}
+
+          {/* Secondary actions row */}
           <div className="flex gap-3 w-full">
+            {onReplayHand && (
+              <Button
+                onClick={() => {
+                  onReplayHand();
+                  onClose();
+                }}
+                className="flex-1"
+                size="lg"
+                variant="outline"
+              >
+                Replay Hand
+              </Button>
+            )}
             <Button
               onClick={() => {
                 onDealNewHand();
@@ -179,30 +223,33 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
               }}
               className="flex-1"
               size="lg"
-              variant="default"
+              variant="outline"
             >
-              New Hand to Bid
+              Bid New Hand
             </Button>
-            {onShowLearningDashboard && (
-              <Button
-                onClick={() => {
-                  onShowLearningDashboard();
-                  onClose();
-                }}
-                className="flex-1"
-                size="lg"
-                variant="default"
-              >
-                📊 My Progress
-              </Button>
-            )}
           </div>
+
+          {/* Learning Dashboard button (if available) */}
+          {onShowLearningDashboard && (
+            <Button
+              onClick={() => {
+                onShowLearningDashboard();
+                onClose();
+              }}
+              className="w-full"
+              size="lg"
+              variant="outline"
+            >
+              📊 My Progress
+            </Button>
+          )}
+
           {/* Close button */}
           <Button
             onClick={onClose}
             className="w-full"
             size="lg"
-            variant="outline"
+            variant="ghost"
           >
             Close
           </Button>

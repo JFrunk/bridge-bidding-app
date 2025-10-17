@@ -23,12 +23,17 @@ export function ScoreBreakdown({
   overtricks = 0,
   undertricks = 0,
   tricksNeeded,
-  vulnerable = false
+  vulnerable = false,
+  userPerspective = false  // NEW: true if showing opponent's score (need to flip)
 }) {
   if (!breakdown) return null;
 
   const doubledText = contract.doubled === 2 ? 'redoubled' : contract.doubled === 1 ? 'doubled' : '';
   const contractStr = `${contract.level}${contract.strain}`;
+
+  // If userPerspective is true, we need to flip the sign of all values
+  // because the backend returns from declarer's perspective
+  const flipSign = userPerspective ? -1 : 1;
 
   // Helper to format score items
   const ScoreItem = ({ label, value, explanation, isTotal = false }) => (
@@ -59,15 +64,15 @@ export function ScoreBreakdown({
     </div>
   );
 
-  // Calculate total
-  const total = made
+  // Calculate total with perspective flip
+  const total = (made
     ? (breakdown.trick_score || 0) +
       (breakdown.game_bonus || 0) +
       (breakdown.slam_bonus || 0) +
       (breakdown.overtrick_score || 0) +
       (breakdown.double_bonus || 0) +
       (breakdown.honors_bonus || 0)
-    : -(breakdown.penalty || 0);
+    : -(breakdown.penalty || 0)) * flipSign;
 
   if (made) {
     // Contract made - show positive scoring
@@ -82,7 +87,7 @@ export function ScoreBreakdown({
           {breakdown.trick_score > 0 && (
             <ScoreItem
               label="Contract Tricks"
-              value={breakdown.trick_score}
+              value={breakdown.trick_score * flipSign}
               explanation={doubledText
                 ? `${contractStr} ${doubledText}: ${contract.level} tricks × ${contract.strain === 'NT' || contract.strain === '♥' || contract.strain === '♠' ? '30' : '20'} × ${contract.doubled === 2 ? '4' : '2'}`
                 : `${contractStr}: ${contract.level} tricks × ${contract.strain === 'NT' || contract.strain === '♥' || contract.strain === '♠' ? '30' : '20'}${contract.strain === 'NT' ? ' +10 for NT' : ''}`
@@ -94,7 +99,7 @@ export function ScoreBreakdown({
           {breakdown.double_bonus > 0 && (
             <ScoreItem
               label={contract.doubled === 2 ? "Redouble Bonus" : "Double Bonus"}
-              value={breakdown.double_bonus}
+              value={breakdown.double_bonus * flipSign}
               explanation={`For making ${doubledText} contract`}
             />
           )}
@@ -103,7 +108,7 @@ export function ScoreBreakdown({
           {breakdown.game_bonus > 0 && (
             <ScoreItem
               label={breakdown.game_bonus >= 300 ? "Game Bonus" : "Part-Score Bonus"}
-              value={breakdown.game_bonus}
+              value={breakdown.game_bonus * flipSign}
               explanation={
                 breakdown.game_bonus >= 300
                   ? `Made game (trick score ≥ 100)${vulnerable ? ', vulnerable' : ', not vulnerable'}`
@@ -116,7 +121,7 @@ export function ScoreBreakdown({
           {breakdown.slam_bonus > 0 && (
             <ScoreItem
               label={contract.level === 7 ? "Grand Slam Bonus" : "Small Slam Bonus"}
-              value={breakdown.slam_bonus}
+              value={breakdown.slam_bonus * flipSign}
               explanation={`${contract.level === 7 ? '7-level' : '6-level'} contract${vulnerable ? ', vulnerable' : ', not vulnerable'}`}
             />
           )}
@@ -125,7 +130,7 @@ export function ScoreBreakdown({
           {overtricks > 0 && (
             <ScoreItem
               label={`Overtricks (${overtricks})`}
-              value={breakdown.overtrick_score || 0}
+              value={(breakdown.overtrick_score || 0) * flipSign}
               explanation={
                 doubledText
                   ? `${overtricks} extra trick${overtricks > 1 ? 's' : ''} × ${vulnerable ? (contract.doubled === 2 ? '400' : '200') : (contract.doubled === 2 ? '200' : '100')}`
@@ -138,7 +143,7 @@ export function ScoreBreakdown({
           {breakdown.honors_bonus > 0 && (
             <ScoreItem
               label="Honors Bonus"
-              value={breakdown.honors_bonus}
+              value={breakdown.honors_bonus * flipSign}
               explanation={
                 breakdown.honors_bonus === 150 && contract.strain === 'NT'
                   ? "All 4 aces in one hand"
@@ -170,7 +175,7 @@ export function ScoreBreakdown({
           {/* Contract failed */}
           <ScoreItem
             label={`Contract Failed (Down ${undertricks})`}
-            value={-breakdown.penalty}
+            value={-breakdown.penalty * flipSign}
             explanation={
               doubledText
                 ? `${undertricks} undertrick${undertricks > 1 ? 's' : ''} ${doubledText}${vulnerable ? ', vulnerable' : ', not vulnerable'}`
@@ -199,7 +204,7 @@ export function ScoreBreakdown({
           {/* Total */}
           <ScoreItem
             label="Total Penalty"
-            value={-breakdown.penalty}
+            value={-breakdown.penalty * flipSign}
             isTotal={true}
           />
         </div>

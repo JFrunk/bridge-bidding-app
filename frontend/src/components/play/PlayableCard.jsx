@@ -5,8 +5,10 @@ import { cn } from "../../lib/utils";
  * PlayableCard - Clickable card component for the play phase
  * Similar to BridgeCard but optimized for play interactions
  * Follows "Rule of Three" and senior-friendly UX principles
+ *
+ * @param {boolean} compact - If true, shows rank and suit side-by-side (for vertical overlapping displays)
  */
-export function PlayableCard({ card, onClick, disabled = false, className }) {
+export function PlayableCard({ card, onClick, disabled = false, compact = false, className }) {
   const suitColor = card.suit === '♥' || card.suit === '♦' ? 'text-suit-red' : 'text-suit-black';
   const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
   const displayRank = rankMap[card.rank] || card.rank;
@@ -45,22 +47,30 @@ export function PlayableCard({ card, onClick, disabled = false, className }) {
         }
       } : undefined}
     >
-      {/* Top-left corner */}
-      <div className={cn("absolute top-1 left-1.5 flex flex-col items-center leading-none", suitColor)}>
-        <span className="text-lg font-bold">{displayRank}</span>
-        <span className="text-base">{card.suit}</span>
+      {/* Top-left corner - compact mode shows rank+suit horizontally */}
+      <div className={cn(
+        "absolute top-1 left-1.5 leading-none",
+        compact ? "flex flex-row items-center gap-0.5" : "flex flex-col items-center",
+        suitColor
+      )}>
+        <span className={cn("font-bold", compact ? "text-xl" : "text-lg")}>{displayRank}</span>
+        <span className={cn(compact ? "text-xl" : "text-base")}>{card.suit}</span>
       </div>
 
-      {/* Center suit symbol */}
-      <div className={cn("absolute inset-0 flex items-center justify-center", suitColor)}>
-        <span className="text-4xl">{card.suit}</span>
-      </div>
+      {/* Center suit symbol - hidden in compact mode (saves space for overlapping) */}
+      {!compact && (
+        <div className={cn("absolute inset-0 flex items-center justify-center", suitColor)}>
+          <span className="text-4xl">{card.suit}</span>
+        </div>
+      )}
 
-      {/* Bottom-right corner (rotated) */}
-      <div className={cn("absolute bottom-1 right-1.5 flex flex-col items-center rotate-180 leading-none", suitColor)}>
-        <span className="text-lg font-bold">{displayRank}</span>
-        <span className="text-base">{card.suit}</span>
-      </div>
+      {/* Bottom-right corner (rotated) - hidden in compact mode */}
+      {!compact && (
+        <div className={cn("absolute bottom-1 right-1.5 flex flex-col items-center rotate-180 leading-none", suitColor)}>
+          <span className="text-lg font-bold">{displayRank}</span>
+          <span className="text-base">{card.suit}</span>
+        </div>
+      )}
     </div>
   );
 }
