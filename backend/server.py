@@ -28,6 +28,10 @@ from core.session_state import SessionStateManager, get_session_id_from_request
 # Enabled for production use - may be unstable on some development environments (macOS M1/M2)
 try:
     from engine.play.ai.dds_ai import DDSPlayAI, DDS_AVAILABLE
+    if not DDS_AVAILABLE:
+        print("⚠️  DEVELOPMENT MODE: DDS not available (expected on macOS M1/M2)")
+        print("   Expert AI will use Minimax depth 4 (~8/10)")
+        print("   For production 9/10 play, deploy to Linux with 'pip install endplay'")
 except ImportError:
     DDS_AVAILABLE = False
     print("⚠️  DDS AI not available - install endplay for expert play")
@@ -67,6 +71,12 @@ ai_instances = {
     'advanced': MinimaxPlayAI(max_depth=3),
     'expert': DDSPlayAI() if DDS_AVAILABLE else MinimaxPlayAI(max_depth=4)
 }
+
+# Import DEFAULT_AI_DIFFICULTY to show startup configuration
+from core.session_state import DEFAULT_AI_DIFFICULTY
+print(f"🎯 Default AI Difficulty: {DEFAULT_AI_DIFFICULTY}")
+print(f"   Engine: {ai_instances[DEFAULT_AI_DIFFICULTY].get_name()}")
+print(f"   Rating: ~{ai_instances[DEFAULT_AI_DIFFICULTY].get_difficulty()}")
 
 
 # ============================================================================
@@ -779,6 +789,115 @@ def get_feedback():
         import traceback
         traceback.print_exc()
         return jsonify({'error': f"Server error in get_feedback: {e}"}), 500
+
+@app.route('/api/evaluate-bid', methods=['POST'])
+def evaluate_bid():
+    """
+    Evaluate a user's bid and provide structured feedback (Phase 1: Bidding Feedback)
+
+    This endpoint:
+    1. Takes user's bid and current game state
+    2. Gets AI's optimal bid
+    3. Generates detailed feedback using BiddingFeedbackGenerator
+    4. Stores feedback in database for analytics
+    5. Returns structured feedback for UI display
+
+    IMPORTANT: This endpoint does NOT modify bidding state or sequences.
+    It only evaluates decisions that have already been made.
+    """
+    state = get_state()
+
+    try:
+        data = request.get_json()
+
+        # Required parameters
+        user_bid = data.get('user_bid')
+        auction_history = data.get('auction_history', [])
+        current_player = data.get('current_player', 'South')
+
+        # Optional parameters
+        user_id = data.get('user_id', 1)  # Default user
+        session_id = data.get('session_id')
+        feedback_level = data.get('feedback_level', 'intermediate')  # beginner, intermediate, expert
+
+        if not user_bid:
+            return jsonify({'error': 'user_bid is required'}), 400
+
+        # Get user's hand from session state (does NOT modify state)
+        user_hand = state.deal.get(current_player)
+        if not user_hand:
+            return jsonify({'error': f'Hand for {current_player} not available'}), 400
+
+        # Get AI's optimal bid and explanation (does NOT modify state)
+        # We pass auction_history BEFORE the user's bid to get what AI would have bid
+        optimal_bid, optimal_explanation_str = engine.get_next_bid(
+            user_hand,
+            auction_history,
+            current_player,
+            state.vulnerability,
+            'detailed'
+        )
+
+        # Get structured explanation for better feedback
+        _, optimal_explanation_dict = engine.get_next_bid_structured(
+            user_hand,
+            auction_history,
+            current_player,
+            state.vulnerability
+        )
+
+        # Create BidExplanation object from structured data
+        from engine.ai.bid_explanation import BidExplanation
+        optimal_explanation_obj = BidExplanation(optimal_bid)
+        optimal_explanation_obj.primary_reason = optimal_explanation_dict.get('primary_reason', '')
+        optimal_explanation_obj.convention_reference = optimal_explanation_dict.get('convention', {}).get('id')
+        optimal_explanation_obj.forcing_status = optimal_explanation_dict.get('forcing_status')
+
+        # Build auction context
+        auction_context = {
+            'history': auction_history,
+            'current_player': current_player,
+            'dealer': state.deal.get('dealer', 'North'),
+            'vulnerability': state.vulnerability
+        }
+
+        # Generate structured feedback using BiddingFeedbackGenerator
+        from engine.feedback.bidding_feedback import get_feedback_generator
+        feedback_generator = get_feedback_generator()
+
+        feedback = feedback_generator.evaluate_and_store(
+            user_id=user_id,
+            hand=user_hand,
+            user_bid=user_bid,
+            auction_context=auction_context,
+            optimal_bid=optimal_bid,
+            optimal_explanation=optimal_explanation_obj,
+            session_id=session_id
+        )
+
+        # Format explanation based on user level
+        verbosity_map = {
+            'beginner': 'minimal',
+            'intermediate': 'normal',
+            'expert': 'detailed'
+        }
+        verbosity = verbosity_map.get(feedback_level, 'normal')
+
+        # Build response
+        response = {
+            'feedback': feedback.to_dict(),
+            'user_message': feedback.to_user_message(verbosity=verbosity),
+            'explanation': optimal_explanation_str,
+            'was_correct': (user_bid == optimal_bid),
+            'show_alternative': feedback.correctness.value != 'optimal'
+        }
+
+        return jsonify(response)
+
+    except Exception as e:
+        print(f"Error in evaluate-bid: {e}")
+        traceback.print_exc()
+        return jsonify({'error': f'Server error in evaluate_bid: {str(e)}'}), 500
 
 @app.route('/api/get-all-hands', methods=['GET'])
 def get_all_hands():

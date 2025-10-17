@@ -33,9 +33,16 @@ from engine.play_engine import PlayState
 from engine.session_manager import GameSession
 
 # Get default AI difficulty from environment variable
-# Production: set DEFAULT_AI_DIFFICULTY=expert
-# Development: defaults to intermediate (more stable)
-DEFAULT_AI_DIFFICULTY = os.environ.get('DEFAULT_AI_DIFFICULTY', 'intermediate')
+#
+# AI Difficulty Strategy:
+# - DEVELOPMENT (macOS M1/M2 - DDS crashes): Default to 'advanced' (Minimax depth 3, ~7/10)
+# - PRODUCTION (Linux - DDS stable): Set DEFAULT_AI_DIFFICULTY=expert (DDS, 9/10)
+#
+# Why 'advanced' instead of 'intermediate'?
+# - Minimax depth 2 (intermediate) makes basic tactical errors like discarding winners
+# - Minimax depth 3 (advanced) provides competent 7/10 gameplay without DDS crashes
+# - Not suitable for production claims of 9/10 gameplay at lower settings
+DEFAULT_AI_DIFFICULTY = os.environ.get('DEFAULT_AI_DIFFICULTY', 'advanced')
 
 
 @dataclass
