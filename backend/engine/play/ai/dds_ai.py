@@ -347,7 +347,7 @@ class DDSPlayAI(BasePlayAI):
     def _fallback_choose_card(self, state: PlayState, position: str, legal_cards: List[Card]) -> Card:
         """
         Fallback card selection when DDS fails
-        Uses simple heuristics similar to SimplePlayAI
+        Uses defensive bridge heuristics
 
         Args:
             state: Current play state
@@ -373,9 +373,34 @@ class DDSPlayAI(BasePlayAI):
                 # Play highest card from longest suit
                 return max(longest_suit, key=lambda c: self._rank_value(c.rank))
 
-        # Heuristic 3: If following suit, play low if partner winning, high if not
+        # Heuristic 3: If following suit, play appropriately
         if state.current_trick:
-            # Check if partner is currently winning
+            led_suit = state.current_trick[0][0].suit
+
+            # CRITICAL: Detect if this is a discard (void in led suit)
+            following_suit = any(c.suit == led_suit for c in legal_cards)
+
+            if not following_suit:
+                # DISCARDING - ALWAYS play lowest card available
+                # Group by suit to find weakest suit
+                by_suit = {}
+                for card in legal_cards:
+                    if card.suit not in by_suit:
+                        by_suit[card.suit] = []
+                    by_suit[card.suit].append(card)
+
+                # Find weakest suit (fewest high cards)
+                def suit_weakness(suit_cards):
+                    # Count high cards (lower = weaker suit = better to discard from)
+                    high_card_count = sum(1 for c in suit_cards if c.rank in ['A', 'K', 'Q', 'J'])
+                    return high_card_count  # Lower is better for discarding
+
+                weakest_suit = min(by_suit.values(), key=suit_weakness)
+
+                # From weakest suit, play LOWEST card
+                return min(weakest_suit, key=lambda c: self._rank_value(c.rank))
+
+            # Following suit - play low if partner winning, high if not
             if len(state.current_trick) >= 2:
                 # Simplified: play low card (third hand low)
                 return min(legal_cards, key=lambda c: self._rank_value(c.rank))
@@ -383,9 +408,8 @@ class DDSPlayAI(BasePlayAI):
                 # Second to play: play high
                 return max(legal_cards, key=lambda c: self._rank_value(c.rank))
 
-        # Default: play a middle card
-        sorted_cards = sorted(legal_cards, key=lambda c: self._rank_value(c.rank))
-        return sorted_cards[len(sorted_cards) // 2]
+        # Default: play lowest card (conservative)
+        return min(legal_cards, key=lambda c: self._rank_value(c.rank))
 
 
 if __name__ == '__main__':

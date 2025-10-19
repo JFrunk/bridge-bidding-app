@@ -35,14 +35,52 @@ from engine.session_manager import GameSession
 # Get default AI difficulty from environment variable
 #
 # AI Difficulty Strategy:
-# - DEVELOPMENT (macOS M1/M2 - DDS crashes): Default to 'advanced' (Minimax depth 3, ~7/10)
-# - PRODUCTION (Linux - DDS stable): Set DEFAULT_AI_DIFFICULTY=expert (DDS, 9/10)
+# - PRODUCTION (Linux - DDS available): Auto-default to 'expert' (DDS, 9/10)
+# - DEVELOPMENT (macOS M1/M2 - DDS crashes): Default to 'advanced' (Minimax depth 3, 8/10)
+# - Can be overridden with DEFAULT_AI_DIFFICULTY environment variable
 #
-# Why 'advanced' instead of 'intermediate'?
-# - Minimax depth 2 (intermediate) makes basic tactical errors like discarding winners
-# - Minimax depth 3 (advanced) provides competent 7/10 gameplay without DDS crashes
-# - Not suitable for production claims of 9/10 gameplay at lower settings
-DEFAULT_AI_DIFFICULTY = os.environ.get('DEFAULT_AI_DIFFICULTY', 'advanced')
+# Why 'advanced' instead of 'intermediate' for development?
+# - Minimax depth 3 (advanced) provides competent 8/10 gameplay without DDS crashes
+# - Still strong enough for good user experience
+#
+# Smart Default: Check if DDS is available, use expert if it is
+def _get_smart_default_ai():
+    """
+    Smart default AI selection with platform-based safety:
+    - macOS/Windows: ALWAYS use 'advanced' (DDS unstable, crashes with Error -14)
+    - Linux with DDS: use 'expert' for 9/10 play
+    - Linux without DDS: use 'advanced' for 8/10 play
+    - Can be overridden with DEFAULT_AI_DIFFICULTY env var
+
+    See: BUG_DDS_CRASH_2025-10-18.md for macOS DDS crash details
+    """
+    import platform
+
+    # Check for explicit environment variable first
+    env_setting = os.environ.get('DEFAULT_AI_DIFFICULTY')
+    if env_setting:
+        return env_setting
+
+    # CRITICAL: Force 'advanced' on macOS regardless of DDS availability
+    # DDS crashes on macOS M1/M2 with Error Code -14, segmentation faults
+    # See: DDS_MACOS_INSTABILITY_REPORT.md, BUG_DDS_CRASH_2025-10-18.md
+    if platform.system() == 'Darwin':  # macOS
+        return 'advanced'
+
+    # Linux/Windows: Auto-detect based on DDS availability
+    try:
+        from engine.play.ai.dds_ai import DDS_AVAILABLE
+        if DDS_AVAILABLE and platform.system() == 'Linux':
+            # Production Linux with DDS - use expert (9/10)
+            return 'expert'
+        else:
+            # DDS not available or non-Linux platform - use advanced (8/10)
+            return 'advanced'
+    except ImportError:
+        # DDS library not installed - use advanced (8/10)
+        return 'advanced'
+
+DEFAULT_AI_DIFFICULTY = _get_smart_default_ai()
 
 
 @dataclass

@@ -35,9 +35,10 @@ const DIFFICULTY_INFO = {
 };
 
 const AIDifficultySelector = ({ onDifficultyChange }) => {
-  const [currentDifficulty, setCurrentDifficulty] = useState('intermediate'); // Default to stable level
+  const [currentDifficulty, setCurrentDifficulty] = useState(null); // Start as null until fetched from backend
   const [isChanging, setIsChanging] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Fetch current difficulty on mount
@@ -46,13 +47,22 @@ const AIDifficultySelector = ({ onDifficultyChange }) => {
 
   const fetchCurrentDifficulty = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch(`${API_URL}/api/ai/status`);
       if (response.ok) {
         const data = await response.json();
-        setCurrentDifficulty(data.current_difficulty || 'intermediate');
+        const backendDifficulty = data.current_difficulty;
+        console.log('✅ Fetched current AI difficulty from backend:', backendDifficulty);
+        setCurrentDifficulty(backendDifficulty || 'intermediate');
+      } else {
+        console.error('Failed to fetch AI difficulty, defaulting to intermediate');
+        setCurrentDifficulty('intermediate');
       }
     } catch (error) {
       console.error('Failed to fetch current difficulty:', error);
+      setCurrentDifficulty('intermediate'); // Fallback to intermediate on error
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -86,6 +96,21 @@ const AIDifficultySelector = ({ onDifficultyChange }) => {
       setIsChanging(false);
     }
   };
+
+  // Show loading state until we fetch actual difficulty from backend
+  if (isLoading || !currentDifficulty) {
+    return (
+      <div className="ai-difficulty-selector">
+        <div className="difficulty-header">
+          <span className="difficulty-label">AI Difficulty:</span>
+          <button className="difficulty-current" disabled>
+            <span className="difficulty-emoji">⋯</span>
+            <span className="difficulty-name">Loading...</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const currentInfo = DIFFICULTY_INFO[currentDifficulty];
 

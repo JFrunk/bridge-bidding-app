@@ -3,6 +3,9 @@ import './DDSStatusIndicator.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
+// Standard difficulty order: Beginner -> Intermediate -> Advanced -> Expert
+const DIFFICULTY_ORDER = ['beginner', 'intermediate', 'advanced', 'expert'];
+
 const DDSStatusIndicator = () => {
   const [aiStatus, setAiStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -108,12 +111,23 @@ const DDSStatusIndicator = () => {
 
           <div className="status-detail-section all-difficulties">
             <h4>All Difficulty Levels</h4>
-            {Object.entries(aiStatus.difficulties || {}).map(([level, info]) => (
-              <div key={level} className="difficulty-row">
-                <span className="difficulty-name">{level}:</span>
-                <span className="difficulty-rating">{info.rating}</span>
-              </div>
-            ))}
+            {DIFFICULTY_ORDER
+              .filter(level => aiStatus.difficulties?.[level])
+              .map(level => {
+                const info = aiStatus.difficulties[level];
+                const isActive = level === aiStatus.current_difficulty;
+                return (
+                  <div key={level} className="difficulty-row" style={{
+                    fontWeight: isActive ? 'bold' : 'normal',
+                    backgroundColor: isActive ? 'rgba(76, 175, 80, 0.1)' : 'transparent'
+                  }}>
+                    <span className="difficulty-name">
+                      {isActive && '▶ '}{info.name}:
+                    </span>
+                    <span className="difficulty-rating">{info.rating}</span>
+                  </div>
+                );
+              })}
           </div>
         </div>
       )}

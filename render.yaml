@@ -13,6 +13,11 @@ services:
         value: 3.11
       - key: FLASK_ENV
         value: production
+      - key: DEFAULT_AI_DIFFICULTY
+        value: expert
+        # Production default: Use Expert AI with DDS (9/10 rating)
+        # This ensures best AI quality for production users
+        # Local development auto-defaults to 'advanced' (no DDS crashes on macOS)
     healthCheckPath: /api/scenarios
 
   # Frontend (React)

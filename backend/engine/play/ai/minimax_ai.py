@@ -112,40 +112,96 @@ class MinimaxPlayAI(BasePlayAI):
             self.search_time = time.time() - start_time
             return legal_cards[0]
 
-        # Determine if we're maximizing or minimizing
-        # Declarer's side maximizes, defender's side minimizes
+        # Determine if this position is making a declarer-side or defender-side move
+        # (used for move ordering heuristics)
         is_declarer_side = self._is_declarer_side(position, state.contract.declarer)
+
+        # CRITICAL: Detect if this is a discard situation
+        is_discarding = False
+        if state.current_trick:
+            led_suit = state.current_trick[0][0].suit
+            # If all our cards are different suit than led, we're discarding
+            if all(card.suit != led_suit for card in legal_cards):
+                is_discarding = True
 
         # Order moves for better alpha-beta pruning
         ordered_cards = self._order_moves(legal_cards, state, position, is_declarer_side)
 
         # Run minimax search for each legal card
         best_card = None
-        best_score = float('-inf') if is_declarer_side else float('inf')
+        best_score = float('-inf')  # ALWAYS maximize from perspective player's viewpoint
+
+        # Track all cards with best score for tiebreaking
+        best_cards = []
 
         for card in ordered_cards:
             # Simulate playing this card
             test_state = self._simulate_play(state, card, position)
 
             # Evaluate resulting position
+            # CRITICAL FIX: Root player ALWAYS maximizes (evaluation is perspective-aware)
+            # Next player will minimize from root's perspective (i.e., maximize from their own)
             score = self._minimax(
                 test_state,
                 depth=self.max_depth - 1,
                 alpha=float('-inf'),
                 beta=float('inf'),
-                maximizing=is_declarer_side,
-                perspective=position
+                maximizing=False,  # Next player minimizes root's score
+                perspective=position  # But evaluation stays from root's perspective
             )
 
-            # Update best move
-            if is_declarer_side:
-                if score > best_score:
-                    best_score = score
-                    best_card = card
-            else:
-                if score < best_score:
-                    best_score = score
-                    best_card = card
+            # DISCARD PENALTY: If discarding an honor card, apply strong penalty
+            # This prevents AI from discarding Kings when low cards are available
+            if is_discarding:
+                discard_penalty = self._calculate_discard_penalty(card)
+                score += discard_penalty  # Penalty is negative, so this reduces score
+
+            # Update best move - ALWAYS maximize from root player's perspective
+            if score > best_score:
+                best_score = score
+                best_card = card
+                best_cards = [card]
+            elif score == best_score:
+                best_cards.append(card)
+
+        # CRITICAL TIEBREAKER: If discarding, ALWAYS choose the LOWEST rank card
+        # This prevents wasting high cards when positions are evaluated similarly
+        if is_discarding:
+            RANK_VALUES = {
+                '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+                'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
+            }
+
+            # If we have multiple best cards, pick lowest
+            if len(best_cards) > 1:
+                best_card = min(best_cards, key=lambda c: RANK_VALUES[c.rank])
+
+            # ADDITIONAL: Even if only one "best" card, check if any LOW card
+            # has a similar score (within 0.3 tricks). If so, prefer the low card.
+            # This prevents the AI from discarding K when 2 is nearly as good.
+            elif best_card:
+                tolerance = 0.3  # Allow 0.3 trick difference
+                similar_cards = []
+
+                for c in legal_cards:
+                    # Simulate this card
+                    test_state = self._simulate_play(state, c, position)
+                    c_score = self._minimax(
+                        test_state,
+                        depth=0,  # Just evaluate, don't search deep again
+                        alpha=float('-inf'),
+                        beta=float('inf'),
+                        maximizing=True,  # FIXED: Consistent with main logic (root maximizes)
+                        perspective=position
+                    )
+
+                    # Check if score is similar to best (unified logic - no declarer check needed)
+                    if abs(c_score - best_score) <= tolerance:
+                        similar_cards.append(c)
+
+                # If we found cards with similar scores, pick the lowest rank
+                if len(similar_cards) > 1:
+                    best_card = min(similar_cards, key=lambda c: RANK_VALUES[c.rank])
 
         self.search_time = time.time() - start_time
         self.best_score = best_score
@@ -265,10 +321,12 @@ class MinimaxPlayAI(BasePlayAI):
 
             # Save to history
             from engine.play_engine import Trick
+            # FIXED: Leader is the FIRST player in the trick, not next_to_play
+            trick_leader = new_state.current_trick[0][1]  # (card, player) tuple
             new_state.trick_history.append(
                 Trick(
                     cards=list(new_state.current_trick),
-                    leader=new_state.next_to_play,
+                    leader=trick_leader,  # Correct: first player in trick
                     winner=winner
                 )
             )
@@ -337,9 +395,9 @@ class MinimaxPlayAI(BasePlayAI):
         Better move ordering = more cutoffs = faster search
 
         Heuristics:
-        1. Winning cards (highest in suit)
-        2. High cards (A, K)
-        3. Cards that complete tricks
+        1. DISCARD SITUATION: Prioritize LOW cards (don't waste high cards)
+        2. FOLLOWING SUIT: Prioritize cards that can win the trick
+        3. High cards (A, K) when trying to win
         4. Trump cards (in trump contracts)
         5. Other cards by rank
 
@@ -350,7 +408,7 @@ class MinimaxPlayAI(BasePlayAI):
             is_declarer_side: True if declarer/dummy
 
         Returns:
-            Ordered list of cards (best first)
+            Ordered list of cards (best first for pruning efficiency)
         """
         if len(cards) <= 1:
             return cards
@@ -361,11 +419,40 @@ class MinimaxPlayAI(BasePlayAI):
             'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
         }
 
+        # CRITICAL: Detect if this is a discard situation
+        is_discarding = False
+        if state.current_trick:
+            led_suit = state.current_trick[0][0].suit
+            # If all our cards are different suit than led, we're discarding
+            if all(card.suit != led_suit for card in cards):
+                is_discarding = True
+
         def card_priority(card: Card) -> tuple:
-            """Calculate priority score for card (higher = better)"""
+            """Calculate priority score for card (higher = better for search)"""
             priority_score = 0
 
-            # Priority 1: High cards (A, K) are usually good
+            # CRITICAL FIX: If discarding, REVERSE priority (examine low cards first)
+            if is_discarding:
+                # When discarding, LOW cards are best (don't waste high cards)
+                # Examine low cards first in search
+                priority_score -= RANK_VALUES[card.rank] * 10  # Reverse: lower rank = higher priority
+
+                # Strong penalty for discarding honors when discarding
+                if card.rank == 'A':
+                    priority_score -= 200  # Examine last
+                elif card.rank == 'K':
+                    priority_score -= 150  # Examine last
+                elif card.rank == 'Q':
+                    priority_score -= 100  # Examine last
+                elif card.rank == 'J':
+                    priority_score -= 50
+
+                # Return early for discard situation
+                return (-priority_score, card.rank, card.suit)
+
+            # NOT DISCARDING: Normal priority for winning/following suit
+
+            # Priority 1: High cards (A, K) are usually good when following suit
             if card.rank == 'A':
                 priority_score += 100
             elif card.rank == 'K':
@@ -373,7 +460,7 @@ class MinimaxPlayAI(BasePlayAI):
             elif card.rank == 'Q':
                 priority_score += 60
 
-            # Priority 2: Trump cards (if following suit)
+            # Priority 2: Trump cards (if ruffing)
             if state.contract.trump_suit and card.suit == state.contract.trump_suit:
                 if not state.current_trick or state.current_trick[0][0].suit != state.contract.trump_suit:
                     priority_score += 50  # Ruffing
@@ -399,6 +486,44 @@ class MinimaxPlayAI(BasePlayAI):
 
         # Sort cards by priority
         return sorted(cards, key=card_priority)
+
+    def _calculate_discard_penalty(self, card: Card) -> float:
+        """
+        Calculate penalty for discarding a specific card
+
+        When void in the led suit, we're discarding. High cards (honors)
+        should receive strong penalties to discourage wasting them.
+
+        Args:
+            card: Card being considered for discard
+
+        Returns:
+            Penalty value (negative float, larger magnitude = worse discard)
+
+        Penalty values:
+            - Ace: -2.0 (devastating to discard)
+            - King: -1.5 (very bad to discard)
+            - Queen: -1.0 (bad to discard)
+            - Jack: -0.5 (poor to discard)
+            - 10: -0.2 (slightly bad)
+            - 2-9: 0.0 (no penalty, fine to discard)
+
+        Example:
+            >>> penalty = ai._calculate_discard_penalty(Card('K', '♣'))
+            >>> # Returns -1.5 (strong penalty for discarding King)
+        """
+        if card.rank == 'A':
+            return -2.0  # Devastating to discard an Ace
+        elif card.rank == 'K':
+            return -1.5  # Very bad to discard a King
+        elif card.rank == 'Q':
+            return -1.0  # Bad to discard a Queen
+        elif card.rank == 'J':
+            return -0.5  # Poor to discard a Jack
+        elif card.rank == 'T':
+            return -0.2  # Slightly bad to discard a Ten
+        else:
+            return 0.0  # Low cards (2-9) have no penalty - fine to discard
 
     def get_statistics(self) -> dict:
         """

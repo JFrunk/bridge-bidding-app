@@ -36,14 +36,19 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
   const declarerIsNS = contract.declarer === 'N' || contract.declarer === 'S';
 
   // Score from backend is from declarer's perspective
-  // If declarer is on user's team (NS), keep score as is
-  // If declarer is opponents (EW), flip the score
+  // But session scoring now correctly assigns points to the winning side:
+  // - If contract made: declarer gets positive points
+  // - If contract defeated: defenders get positive points (as penalty)
+  // For display, we show from NS perspective:
+  // - NS makes/sets: show positive score
+  // - NS goes down/lets opponents make: show negative score (their loss)
   const userScore = declarerIsNS ? score : -score;
 
   // Update breakdown to reflect user's perspective
   const userBreakdown = declarerIsNS ? breakdown : {
     ...breakdown,
-    // Flip the sign of all breakdown components for display
+    // Note: breakdown is from declarer's perspective, so no change needed
+    // The display will show "EW made their contract" with negative score for NS
   };
 
   // Session context

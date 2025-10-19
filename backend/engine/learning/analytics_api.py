@@ -16,12 +16,17 @@ To add to server.py:
 from flask import request, jsonify
 from typing import Dict, List, Optional
 import json
+import os
 
 from engine.learning.user_manager import get_user_manager
 from engine.learning.error_categorizer import get_error_categorizer
 from engine.learning.mistake_analyzer import get_mistake_analyzer
 from engine.learning.celebration_manager import get_celebration_manager
 from engine.hand import Hand
+
+# Database path configuration
+# Server runs from backend directory, so database is at bridge.db
+DB_PATH = 'bridge.db'
 
 
 # ============================================================================
@@ -104,7 +109,7 @@ def record_practice():
 
         # Record in practice_history
         import sqlite3
-        conn = sqlite3.connect('bridge.db')
+        conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
 
         try:
@@ -267,7 +272,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
     """
     import sqlite3
 
-    conn = sqlite3.connect('bridge.db')
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
@@ -359,7 +364,7 @@ def get_recent_bidding_decisions_for_user(user_id: int, limit: int = 10) -> List
     """
     import sqlite3
 
-    conn = sqlite3.connect('bridge.db')
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
@@ -513,7 +518,7 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
     """
     import sqlite3
 
-    conn = sqlite3.connect('bridge.db')
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 

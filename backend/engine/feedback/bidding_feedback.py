@@ -132,7 +132,7 @@ class BiddingFeedbackGenerator:
     It only writes to the bidding_decisions table for analytics.
     """
 
-    def __init__(self, db_path: str = 'bridge.db'):
+    def __init__(self, db_path: str = 'backend/bridge.db'):
         self.db_path = db_path
         self.error_categorizer = get_error_categorizer()
 
@@ -461,7 +461,7 @@ class BiddingFeedbackGenerator:
 # Singleton instance
 _feedback_generator = None
 
-def get_feedback_generator(db_path: str = 'bridge.db') -> BiddingFeedbackGenerator:
+def get_feedback_generator(db_path: str = 'backend/bridge.db') -> BiddingFeedbackGenerator:
     """Get singleton feedback generator instance"""
     global _feedback_generator
     if _feedback_generator is None:

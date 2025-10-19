@@ -60,7 +60,7 @@ class InsightSummary:
 class MistakeAnalyzer:
     """Analyzes mistake patterns and provides learning insights"""
 
-    def __init__(self, db_path: str = 'bridge.db'):
+    def __init__(self, db_path: str = 'backend/bridge.db'):
         self.db_path = db_path
         self._ensure_tables_exist()
 

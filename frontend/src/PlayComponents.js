@@ -128,6 +128,41 @@ export function CurrentTrick({ trick, positions, trickWinner, trickComplete }) {
 }
 
 /**
+ * CRITICAL: Determine if a hand should be visible based on bridge rules
+ *
+ * Bridge Visibility Rules:
+ * 1. User (South) ALWAYS sees their own hand
+ * 2. EVERYONE sees the dummy hand (after opening lead)
+ * 3. Declarer's hand is ONLY visible if user IS the dummy (controls declarer)
+ * 4. Defenders NEVER see each other's hands
+ *
+ * @param {string} position - The position to check ('N', 'E', 'S', 'W')
+ * @param {string} dummyPosition - Which position is dummy
+ * @param {string} declarerPosition - Which position is declarer
+ * @param {boolean} userIsDummy - Is the user (South) the dummy?
+ * @returns {boolean} - Should this hand be visible?
+ */
+function shouldShowHand(position, dummyPosition, declarerPosition, userIsDummy) {
+  // Rule 1: Always show South (user's own hand)
+  if (position === 'S') {
+    return true;
+  }
+
+  // Rule 2: Always show dummy
+  if (position === dummyPosition) {
+    return true;
+  }
+
+  // Rule 3: Show declarer ONLY if user is dummy (user controls declarer)
+  if (position === declarerPosition) {
+    return userIsDummy;
+  }
+
+  // Rule 4: Never show other defenders
+  return false;
+}
+
+/**
  * Main play table showing 4 positions and current trick
  */
 export function PlayTable({
@@ -165,26 +200,30 @@ export function PlayTable({
   // Get suit order based on trump
   const suitOrder = getSuitOrder(contract.strain);
 
-  // DEBUG: Log what should be displayed
-  console.log('👁️ Hand Display Logic:', {
+  // CRITICAL: Centralized visibility rules - USE THESE for all hand rendering
+  const showNorthHand = shouldShowHand('N', dummyPosition, declarerPosition, userIsDummy);
+  const showEastHand = shouldShowHand('E', dummyPosition, declarerPosition, userIsDummy);
+  const showSouthHand = shouldShowHand('S', dummyPosition, declarerPosition, userIsDummy);
+  const showWestHand = shouldShowHand('W', dummyPosition, declarerPosition, userIsDummy);
+
+  // DEBUG: Log visibility decisions
+  console.log('👁️ Hand Visibility Rules Applied:', {
     dummyPosition,
     declarerPosition,
-    userIsDeclarer,
     userIsDummy,
-    'North should show': dummyPosition === 'N',
-    'East should show': dummyPosition === 'E',
-    'South should show': true,
-    'West should show': dummyPosition === 'W',
-    'dummyHand exists': !!dummyHand,
-    'dummyHand card count': dummyHand?.length || 0
-  });
-
-  // DEBUG: Log actual rendering decisions
-  console.log('🎴 Actual Rendering:', {
-    'North WILL render': dummyPosition === 'N' && !!dummyHand,
-    'East WILL render': dummyPosition === 'E' && !!dummyHand,
-    'West WILL render': dummyPosition === 'W' && !!dummyHand,
-    'South WILL render': true
+    userIsDeclarer,
+    visibility: {
+      'North': showNorthHand,
+      'East': showEastHand,
+      'South': showSouthHand,
+      'West': showWestHand
+    },
+    reason: {
+      'North': showNorthHand ? (dummyPosition === 'N' ? 'DUMMY' : userIsDummy && declarerPosition === 'N' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN',
+      'East': showEastHand ? (dummyPosition === 'E' ? 'DUMMY' : userIsDummy && declarerPosition === 'E' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN',
+      'South': 'USER (always visible)',
+      'West': showWestHand ? (dummyPosition === 'W' ? 'DUMMY' : userIsDummy && declarerPosition === 'W' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN'
+    }
   });
 
   // Calculate tricks for consolidated header
@@ -208,37 +247,25 @@ export function PlayTable({
       <div className="play-area">
         {/* North position */}
         <div className="position position-north">
-          {/* Show North's hand if it's dummy - ABOVE label - Hide when hand is complete */}
-          {dummyPosition === 'N' && dummyHand && dummyHand.length > 0 && !isHandComplete && (
-            <div className="dummy-hand">
-              {suitOrder.map(suit => (
-                <div key={suit} className="suit-group">
-                  {dummyHand.filter(card => card.suit === suit).map((card, index) => (
-                    <PlayableCard
-                      key={`${suit}-${index}`}
-                      card={card}
-                      onClick={userIsDeclarer ? onDummyCardPlay : () => {}}
-                      disabled={userIsDeclarer ? !isDummyTurn : true}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-          {declarerPosition === 'N' && declarerHand && declarerHand.length > 0 && !isHandComplete && (
-            <div className="declarer-hand">
-              {suitOrder.map(suit => (
-                <div key={suit} className="suit-group">
-                  {declarerHand.filter(card => card.suit === suit).map((card, index) => (
-                    <PlayableCard
-                      key={`${suit}-${index}`}
-                      card={card}
-                      onClick={onDeclarerCardPlay}
-                      disabled={!isDeclarerTurn}
-                    />
-                  ))}
-                </div>
-              ))}
+          {/* CRITICAL: Use centralized visibility rule - prevents regression bugs */}
+          {showNorthHand && !isHandComplete && (
+            <div className={dummyPosition === 'N' ? "dummy-hand" : "declarer-hand"}>
+              {suitOrder.map(suit => {
+                const hand = dummyPosition === 'N' ? dummyHand : declarerHand;
+                if (!hand || hand.length === 0) return null;
+                return (
+                  <div key={suit} className="suit-group">
+                    {hand.filter(card => card.suit === suit).map((card, index) => (
+                      <PlayableCard
+                        key={`${suit}-${index}`}
+                        card={card}
+                        onClick={dummyPosition === 'N' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
+                        disabled={dummyPosition === 'N' ? (userIsDeclarer ? !isDummyTurn : true) : !isDeclarerTurn}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           )}
           <div className="position-label">
@@ -267,38 +294,25 @@ export function PlayTable({
             {dummyPosition === 'W' && ' (Dummy)'}
             {declarerPosition === 'W' && userIsDummy && ' (Declarer - You control)'}
           </div>
-          {/* Show West's hand if it's dummy - Hide when hand is complete */}
-          {dummyPosition === 'W' && dummyHand && dummyHand.length > 0 && !isHandComplete && (
-            <div className="dummy-hand">
-              {suitOrder.map(suit => (
-                <div key={suit} className="suit-group">
-                  {dummyHand.filter(card => card.suit === suit).map((card, index) => (
-                    <VerticalPlayableCard
-                      key={`${suit}-${index}`}
-                      card={card}
-                      onClick={userIsDeclarer ? onDummyCardPlay : () => {}}
-                      disabled={userIsDeclarer ? !isDummyTurn : true}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Show West's hand if it's declarer and user is dummy - Hide when hand is complete */}
-          {declarerPosition === 'W' && declarerHand && declarerHand.length > 0 && !isHandComplete && (
-            <div className="declarer-hand">
-              {suitOrder.map(suit => (
-                <div key={suit} className="suit-group">
-                  {declarerHand.filter(card => card.suit === suit).map((card, index) => (
-                    <VerticalPlayableCard
-                      key={`${suit}-${index}`}
-                      card={card}
-                      onClick={onDeclarerCardPlay}
-                      disabled={!isDeclarerTurn}
-                    />
-                  ))}
-                </div>
-              ))}
+          {/* CRITICAL: Use centralized visibility rule - prevents regression bugs */}
+          {showWestHand && !isHandComplete && (
+            <div className={dummyPosition === 'W' ? "dummy-hand" : "declarer-hand"}>
+              {suitOrder.map(suit => {
+                const hand = dummyPosition === 'W' ? dummyHand : declarerHand;
+                if (!hand || hand.length === 0) return null;
+                return (
+                  <div key={suit} className="suit-group">
+                    {hand.filter(card => card.suit === suit).map((card, index) => (
+                      <VerticalPlayableCard
+                        key={`${suit}-${index}`}
+                        card={card}
+                        onClick={dummyPosition === 'W' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
+                        disabled={dummyPosition === 'W' ? (userIsDeclarer ? !isDummyTurn : true) : !isDeclarerTurn}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -311,38 +325,25 @@ export function PlayTable({
             {dummyPosition === 'E' && ' (Dummy)'}
             {declarerPosition === 'E' && userIsDummy && ' (Declarer - You control)'}
           </div>
-          {/* Show East's hand if it's dummy - Hide when hand is complete */}
-          {dummyPosition === 'E' && dummyHand && dummyHand.length > 0 && !isHandComplete && (
-            <div className="dummy-hand">
-              {suitOrder.map(suit => (
-                <div key={suit} className="suit-group">
-                  {dummyHand.filter(card => card.suit === suit).map((card, index) => (
-                    <VerticalPlayableCard
-                      key={`${suit}-${index}`}
-                      card={card}
-                      onClick={userIsDeclarer ? onDummyCardPlay : () => {}}
-                      disabled={userIsDeclarer ? !isDummyTurn : true}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Show East's hand if it's declarer and user is dummy - Hide when hand is complete */}
-          {declarerPosition === 'E' && declarerHand && declarerHand.length > 0 && !isHandComplete && (
-            <div className="declarer-hand">
-              {suitOrder.map(suit => (
-                <div key={suit} className="suit-group">
-                  {declarerHand.filter(card => card.suit === suit).map((card, index) => (
-                    <VerticalPlayableCard
-                      key={`${suit}-${index}`}
-                      card={card}
-                      onClick={onDeclarerCardPlay}
-                      disabled={!isDeclarerTurn}
-                    />
-                  ))}
-                </div>
-              ))}
+          {/* CRITICAL: Use centralized visibility rule - prevents regression bugs */}
+          {showEastHand && !isHandComplete && (
+            <div className={dummyPosition === 'E' ? "dummy-hand" : "declarer-hand"}>
+              {suitOrder.map(suit => {
+                const hand = dummyPosition === 'E' ? dummyHand : declarerHand;
+                if (!hand || hand.length === 0) return null;
+                return (
+                  <div key={suit} className="suit-group">
+                    {hand.filter(card => card.suit === suit).map((card, index) => (
+                      <VerticalPlayableCard
+                        key={`${suit}-${index}`}
+                        card={card}
+                        onClick={dummyPosition === 'E' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
+                        disabled={dummyPosition === 'E' ? (userIsDeclarer ? !isDummyTurn : true) : !isDeclarerTurn}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

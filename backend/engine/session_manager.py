@@ -55,12 +55,36 @@ class GameSession:
 
         Args:
             declarer: Position who declared ('N', 'E', 'S', 'W')
-            score: Points scored (positive for making, negative for going down)
+            score: Points scored from declarer's perspective
+                   (positive for making, negative for going down)
+
+        Bridge Scoring Logic:
+        - If score > 0: Declarer made contract, add to declarer's side
+        - If score < 0: Defenders set the contract, add absolute value to defending side
+
+        Examples:
+        - NS declares 3NT, makes (+400): NS gets +400
+        - NS declares 3NT, down 1 (-50): EW gets +50 (defenders' reward)
+        - EW declares 4♠, makes (+420): EW gets +420
+        - EW declares 4♠, down 2 (-100): NS gets +100 (defenders' reward)
         """
-        if declarer in ['N', 'S']:
-            self.ns_score += score
+        declarer_is_ns = declarer in ['N', 'S']
+
+        if score >= 0:
+            # Contract made - points go to declaring side
+            if declarer_is_ns:
+                self.ns_score += score
+            else:
+                self.ew_score += score
         else:
-            self.ew_score += score
+            # Contract defeated - penalty points go to defending side
+            penalty_points = abs(score)
+            if declarer_is_ns:
+                # NS declared and went down, EW gets the penalty points
+                self.ew_score += penalty_points
+            else:
+                # EW declared and went down, NS gets the penalty points
+                self.ns_score += penalty_points
 
         self.hands_completed += 1
         self.current_hand_number += 1

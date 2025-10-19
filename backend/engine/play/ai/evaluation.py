@@ -143,15 +143,21 @@ class PositionEvaluator:
         Example: If you hold AK and opponents hold QJ, both A and K are
         sure winners (worth ~2.0 points total across both hands in partnership)
 
+        CRITICAL FIX: Also detects MASTER TRUMPS - trumps that must win because
+        opponents are void or our trumps are all higher than theirs.
+
         Weight: 0.6 (somewhat reliable but not definitive)
         """
         # Get both hands in partnership
         if perspective in ['N', 'S']:
             positions = ['N', 'S']
+            opp_positions = ['E', 'W']
         else:
             positions = ['E', 'W']
+            opp_positions = ['N', 'S']
 
         total_sure_winners = 0.0
+        trump_suit = state.contract.trump_suit
 
         # Evaluate each suit
         for suit in ['♠', '♥', '♦', '♣']:
@@ -171,6 +177,40 @@ class PositionEvaluator:
                 reverse=True
             )
 
+            # CRITICAL FIX: Master Trump Detection
+            # In trump contracts, check if this is the trump suit
+            if trump_suit and suit == trump_suit:
+                # Get opponent's trumps
+                opp_trump_cards = []
+                for pos in opp_positions:
+                    hand = state.hands[pos]
+                    opp_trump_cards.extend([c for c in hand.cards if c.suit == trump_suit])
+
+                if len(opp_trump_cards) == 0:
+                    # OPPONENTS ARE VOID IN TRUMPS!
+                    # ALL our trumps are guaranteed winners
+                    total_sure_winners += len(sorted_cards) * 1.0  # Full value for master trumps
+                    continue  # Skip sequential counting - already counted all
+
+                else:
+                    # Opponents have trumps - count how many of ours are masters
+                    opp_highest = max(opp_trump_cards, key=lambda c: self.RANK_VALUES[c.rank])
+                    opp_highest_val = self.RANK_VALUES[opp_highest.rank]
+
+                    master_trump_count = 0
+                    for card in sorted_cards:
+                        if self.RANK_VALUES[card.rank] > opp_highest_val:
+                            master_trump_count += 1
+                        else:
+                            break  # Our remaining trumps are not masters
+
+                    # Add master trumps as sure winners
+                    total_sure_winners += master_trump_count * 1.0  # Full value
+
+                    # Continue to sequential counting for remaining trumps
+                    # (they might still be winners if opponent's high trump gets forced out)
+
+            # Standard sequential high card counting (for non-trumps or after master trump check)
             # Count top sequential cards as sure winners
             # This is conservative - only counts obvious winners
             top = 14  # Ace

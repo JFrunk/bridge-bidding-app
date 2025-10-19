@@ -152,7 +152,7 @@ class UserManager:
             last_activity=datetime.fromisoformat(row['last_activity']) if row['last_activity'] else None,
             timezone=row['timezone'],
             preferences=json.loads(row['preferences']) if row['preferences'] else None,
-            phone=row.get('phone')
+            phone=row['phone'] if 'phone' in row.keys() else None
         )
 
     def get_user_by_username(self, username: str) -> Optional[User]:
@@ -180,7 +180,7 @@ class UserManager:
             last_activity=datetime.fromisoformat(row['last_activity']) if row['last_activity'] else None,
             timezone=row['timezone'],
             preferences=json.loads(row['preferences']) if row['preferences'] else None,
-            phone=row.get('phone')
+            phone=row['phone'] if 'phone' in row.keys() else None
         )
 
     def get_user_by_email(self, email: str) -> Optional[User]:
@@ -211,7 +211,7 @@ class UserManager:
             last_activity=datetime.fromisoformat(row['last_activity']) if row['last_activity'] else None,
             timezone=row['timezone'],
             preferences=json.loads(row['preferences']) if row['preferences'] else None,
-            phone=row.get('phone')
+            phone=row['phone'] if 'phone' in row.keys() else None
         )
 
     def get_user_by_phone(self, phone: str) -> Optional[User]:
@@ -242,7 +242,7 @@ class UserManager:
             last_activity=datetime.fromisoformat(row['last_activity']) if row['last_activity'] else None,
             timezone=row['timezone'],
             preferences=json.loads(row['preferences']) if row['preferences'] else None,
-            phone=row.get('phone')
+            phone=row['phone'] if 'phone' in row.keys() else None
         )
 
     def update_user_activity(self, user_id: int):

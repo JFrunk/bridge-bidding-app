@@ -25,15 +25,32 @@ from engine.bridge_rules_engine import BridgeRulesEngine, GameState as BridgeGam
 from core.session_state import SessionStateManager, get_session_id_from_request
 
 # DDS AI for expert level play (9/10 rating)
-# Enabled for production use - may be unstable on some development environments (macOS M1/M2)
+# CRITICAL: DDS is ONLY enabled on Linux (production)
+# macOS M1/M2 has known DDS crashes (Error Code -14, segmentation faults)
+# See: BUG_DDS_CRASH_2025-10-18.md, DDS_MACOS_INSTABILITY_REPORT.md
+import platform
+
+PLATFORM_ALLOWS_DDS = platform.system() == 'Linux'
+
 try:
     from engine.play.ai.dds_ai import DDSPlayAI, DDS_AVAILABLE
-    if not DDS_AVAILABLE:
-        print("⚠️  DEVELOPMENT MODE: DDS not available (expected on macOS M1/M2)")
+
+    if DDS_AVAILABLE and PLATFORM_ALLOWS_DDS:
+        print("✅ DDS available for Expert AI (9/10)")
+        print("   Platform: Linux - DDS enabled")
+    elif DDS_AVAILABLE and not PLATFORM_ALLOWS_DDS:
+        print(f"⚠️  DDS detected but DISABLED on {platform.system()} (unstable)")
+        print("   Expert AI will use Minimax depth 4 (~8/10)")
+        print("   Reason: Known DDS crashes on macOS M1/M2 (Error Code -14)")
+        print("   See: BUG_DDS_CRASH_2025-10-18.md")
+        DDS_AVAILABLE = False  # Force disable on non-Linux platforms
+    else:
+        print("⚠️  DDS not available")
         print("   Expert AI will use Minimax depth 4 (~8/10)")
         print("   For production 9/10 play, deploy to Linux with 'pip install endplay'")
 except ImportError:
     DDS_AVAILABLE = False
+    PLATFORM_ALLOWS_DDS = False
     print("⚠️  DDS AI not available - install endplay for expert play")
 
 app = Flask(__name__)
@@ -64,12 +81,14 @@ CONVENTION_MAP = {
 }
 
 # AI instances for different difficulty levels
-# Expert level uses DDS when available (9/10 rating), falls back to deep Minimax (8+/10)
+# Expert level uses DDS ONLY on Linux (production)
+# macOS/Windows use Minimax depth 4 fallback to prevent crashes
+# See: BUG_DDS_CRASH_2025-10-18.md for details on macOS DDS instability
 ai_instances = {
     'beginner': SimplePlayAINew(),
     'intermediate': MinimaxPlayAI(max_depth=2),
     'advanced': MinimaxPlayAI(max_depth=3),
-    'expert': DDSPlayAI() if DDS_AVAILABLE else MinimaxPlayAI(max_depth=4)
+    'expert': DDSPlayAI() if (DDS_AVAILABLE and PLATFORM_ALLOWS_DDS) else MinimaxPlayAI(max_depth=4)
 }
 
 # Import DEFAULT_AI_DIFFICULTY to show startup configuration
@@ -905,23 +924,53 @@ def get_all_hands():
     state = get_state()
     try:
         all_hands = {}
-        for position in ['North', 'East', 'South', 'West']:
-            hand = state.deal.get(position)
-            if not hand:
-                return jsonify({'error': f'Hand for {position} not available'}), 400
 
-            hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
-            points_for_json = {
-                'hcp': hand.hcp,
-                'dist_points': hand.dist_points,
-                'total_points': hand.total_points,
-                'suit_hcp': hand.suit_hcp,
-                'suit_lengths': hand.suit_lengths
-            }
-            all_hands[position] = {
-                'hand': hand_for_json,
-                'points': points_for_json
-            }
+        # CRITICAL FIX: During play phase, use play_state.hands (which contains current cards)
+        # During bidding phase, use state.deal
+        # This ensures replay works correctly and user always sees their current hand
+        source_hands = None
+        pos_map = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
+
+        if state.play_state and state.play_state.hands:
+            # Play phase: use current hands from play state
+            print("📋 get_all_hands: Using play_state.hands (play phase)")
+            source_hands = state.play_state.hands
+            # Map single-letter positions to full names for response
+            for short_pos, full_pos in pos_map.items():
+                if short_pos in source_hands:
+                    hand = source_hands[short_pos]
+                    hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
+                    points_for_json = {
+                        'hcp': hand.hcp,
+                        'dist_points': hand.dist_points,
+                        'total_points': hand.total_points,
+                        'suit_hcp': hand.suit_hcp,
+                        'suit_lengths': hand.suit_lengths
+                    }
+                    all_hands[full_pos] = {
+                        'hand': hand_for_json,
+                        'points': points_for_json
+                    }
+        else:
+            # Bidding phase: use original deal
+            print("📋 get_all_hands: Using state.deal (bidding phase)")
+            for position in ['North', 'East', 'South', 'West']:
+                hand = state.deal.get(position)
+                if not hand:
+                    return jsonify({'error': f'Hand for {position} not available'}), 400
+
+                hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
+                points_for_json = {
+                    'hcp': hand.hcp,
+                    'dist_points': hand.dist_points,
+                    'total_points': hand.total_points,
+                    'suit_hcp': hand.suit_hcp,
+                    'suit_lengths': hand.suit_lengths
+                }
+                all_hands[position] = {
+                    'hand': hand_for_json,
+                    'points': points_for_json
+                }
 
         return jsonify({
             'hands': all_hands,
@@ -1318,7 +1367,9 @@ def play_random_hand():
         dummy_position = state.play_state.dummy
 
         # Return South's hand for display
-        south_hand = state.deal['South']
+        # CONSISTENCY FIX: Use play_state.hands instead of state.deal
+        # This ensures consistency with get-all-hands endpoint
+        south_hand = state.play_state.hands['S']
         hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
         points_for_json = {
             'hcp': south_hand.hcp,
@@ -1579,6 +1630,40 @@ def get_ai_play():
         # but for dummy, the AI is declarer making strategic decisions across both hands
         card = current_ai.choose_card(state.play_state, position)
         print(f"   ✅ AI chose: {card.rank}{card.suit}")
+
+        # CRITICAL VALIDATION: Verify card is actually in hand before playing
+        # This prevents state corruption if AI has a bug
+        if card not in hand.cards:
+            error_msg = (
+                f"❌ AI VALIDATION FAILURE: {position} AI tried to play {card.rank}{card.suit} "
+                f"which is not in hand!\n"
+                f"   Hand contains: {[f'{c.rank}{c.suit}' for c in hand.cards]}\n"
+                f"   AI: {current_ai.get_name()}\n"
+                f"   Difficulty: {state.ai_difficulty}"
+            )
+            print(error_msg)
+            traceback.print_exc()
+            return jsonify({
+                "error": f"AI validation failure - attempted to play card not in hand",
+                "details": error_msg
+            }), 500
+
+        # Validate card is legal according to bridge rules
+        is_legal = play_engine.is_legal_play(
+            card, hand, state.play_state.current_trick,
+            state.play_state.contract.trump_suit
+        )
+        if not is_legal:
+            error_msg = (
+                f"❌ AI LEGALITY FAILURE: {position} AI chose illegal card {card.rank}{card.suit}\n"
+                f"   Must follow suit if able\n"
+                f"   Current trick: {[(c.rank + c.suit, p) for c, p in state.play_state.current_trick]}"
+            )
+            print(error_msg)
+            return jsonify({
+                "error": f"AI chose illegal card",
+                "details": error_msg
+            }), 500
 
         # Play the card
         state.play_state.current_trick.append((card, position))

@@ -236,7 +236,9 @@ function App() {
       if (data.saved_to_file) {
         // Local: file was saved, reference it
         if (gamePhase === 'playing') {
-          prompt = `Please analyze the gameplay in backend/review_requests/${data.filename}. This includes both the auction and card play progress according to SAYC.${userConcern ? `\n\nI'm particularly concerned about: ${userConcern}` : ''}`;
+          prompt = `Please analyze the gameplay in backend/review_requests/${data.filename}. This includes both the auction and card play progress according to SAYC.${userConcern ? `\n\nI'm particularly concerned about: ${userConcern}` : ''}
+
+Please also identify and resolve any system errors (e.g., impossible card plays, invalid game states, or inconsistencies in the hand data).`;
         } else {
           prompt = `Please analyze the bidding in backend/review_requests/${data.filename} and identify any errors or questionable bids according to SAYC.${userConcern ? `\n\nI'm particularly concerned about: ${userConcern}` : ''}`;
         }
@@ -251,7 +253,7 @@ ${JSON.stringify(reviewData, null, 2)}
 
 ${userConcern ? `\n**User's Concern:** ${userConcern}` : ''}
 
-Please provide a detailed analysis of the auction and card play, identifying any bidding or play errors.`;
+Please provide a detailed analysis of the auction and card play, identifying any bidding or play errors. Also, please identify and resolve any system errors (e.g., impossible card plays, invalid game states, or inconsistencies in the hand data).`;
         } else {
           prompt = `Please analyze this bridge hand and identify any errors or questionable bids according to SAYC.
 
@@ -338,25 +340,46 @@ Please provide a detailed analysis of the auction and identify any bidding error
           declarer: state.contract.declarer,
           dummy: state.dummy,
           next_to_play: state.next_to_play,
-          dummy_revealed: state.dummy_revealed
+          dummy_revealed: state.dummy_revealed,
+          visible_hands: state.visible_hands ? Object.keys(state.visible_hands) : 'N/A'
         });
 
-        // If South is dummy, fetch declarer's hand for user control
-        // User needs to see and control declarer's hand when they are dummy
-        if (state.dummy === 'S') {
-          console.log('🃏 South is dummy - fetching declarer hand for user control');
+        // === BUG FIX: Use visible_hands from backend to populate declarer hand ===
+        // Backend's BridgeRulesEngine determines which hands should be visible
+        const declarerPos = state.contract.declarer;
+        if (state.visible_hands && state.visible_hands[declarerPos]) {
+          const declarerCards = state.visible_hands[declarerPos].cards || [];
+          console.log('👁️ Setting declarer hand from visible_hands (startPlayPhase):', {
+            declarerPos,
+            cardCount: declarerCards.length,
+            visible_hands_keys: Object.keys(state.visible_hands)
+          });
+          setDeclarerHand(declarerCards);
+        } else if (state.dummy === 'S') {
+          // FALLBACK: If visible_hands not available, use old method
+          console.log('⚠️ visible_hands not available, falling back to /api/get-all-hands');
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
           if (handsResponse.ok) {
             const handsData = await handsResponse.json();
-            const declarerPos = state.contract.declarer;
             const declarerCards = handsData.hands[declarerPos]?.hand || [];
-            console.log('🃏 Declarer hand fetched:', {
+            console.log('🃏 Declarer hand fetched (fallback):', {
               declarerPos,
               cardCount: declarerCards.length,
               dummy_revealed: state.dummy_revealed
             });
             setDeclarerHand(declarerCards);
           }
+        }
+
+        // === NEW FIX: Update South's hand from visible_hands ===
+        // Critical for when South is declarer - ensures user's own hand is visible
+        if (state.visible_hands && state.visible_hands['S']) {
+          const southCards = state.visible_hands['S'].cards || [];
+          console.log('👁️ Updating South hand from visible_hands (startPlayPhase):', {
+            cardCount: southCards.length,
+            visible_hands_keys: Object.keys(state.visible_hands)
+          });
+          setHand(southCards);
         }
       }
 
@@ -817,16 +840,34 @@ Please provide a detailed analysis of the auction and identify any bidding error
         const state = await stateResponse.json();
         setPlayState(state);
 
-        // If South is dummy, fetch declarer's hand for user control
-        // User needs to see and control declarer's hand when they are dummy
-        if (state.dummy === 'S') {
+        // === BUG FIX: Use visible_hands from backend ===
+        const declarerPos = state.contract.declarer;
+        if (state.visible_hands && state.visible_hands[declarerPos]) {
+          const declarerCards = state.visible_hands[declarerPos].cards || [];
+          console.log('👁️ Setting declarer hand from visible_hands (playRandomHand):', {
+            declarerPos,
+            cardCount: declarerCards.length
+          });
+          setDeclarerHand(declarerCards);
+        } else if (state.dummy === 'S') {
+          // FALLBACK: Old method
+          console.log('⚠️ visible_hands not available, falling back to /api/get-all-hands');
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
           if (handsResponse.ok) {
             const handsData = await handsResponse.json();
-            const declarerPos = state.contract.declarer;
             const declarerCards = handsData.hands[declarerPos]?.hand || [];
             setDeclarerHand(declarerCards);
           }
+        }
+
+        // === NEW FIX: Update South's hand from visible_hands ===
+        if (state.visible_hands && state.visible_hands['S']) {
+          const southCards = state.visible_hands['S'].cards || [];
+          console.log('👁️ Updating South hand from visible_hands (playRandomHand):', {
+            cardCount: southCards.length,
+            visible_hands_keys: Object.keys(state.visible_hands)
+          });
+          setHand(southCards);
         }
       }
 
@@ -865,16 +906,34 @@ Please provide a detailed analysis of the auction and identify any bidding error
         const state = await stateResponse.json();
         setPlayState(state);
 
-        // If South is dummy, fetch declarer's hand for user control
-        // User needs to see and control declarer's hand when they are dummy
-        if (state.dummy === 'S') {
+        // === BUG FIX: Use visible_hands from backend ===
+        const declarerPos = state.contract.declarer;
+        if (state.visible_hands && state.visible_hands[declarerPos]) {
+          const declarerCards = state.visible_hands[declarerPos].cards || [];
+          console.log('👁️ Setting declarer hand from visible_hands (replayCurrentHand):', {
+            declarerPos,
+            cardCount: declarerCards.length
+          });
+          setDeclarerHand(declarerCards);
+        } else if (state.dummy === 'S') {
+          // FALLBACK: Old method
+          console.log('⚠️ visible_hands not available, falling back to /api/get-all-hands');
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
           if (handsResponse.ok) {
             const handsData = await handsResponse.json();
-            const declarerPos = state.contract.declarer;
             const declarerCards = handsData.hands[declarerPos]?.hand || [];
             setDeclarerHand(declarerCards);
           }
+        }
+
+        // === NEW FIX: Update South's hand from visible_hands ===
+        if (state.visible_hands && state.visible_hands['S']) {
+          const southCards = state.visible_hands['S'].cards || [];
+          console.log('👁️ Updating South hand from visible_hands (replayCurrentHand):', {
+            cardCount: southCards.length,
+            visible_hands_keys: Object.keys(state.visible_hands)
+          });
+          setHand(southCards);
         }
       }
 
@@ -1090,24 +1149,42 @@ Please provide a detailed analysis of the auction and identify any bidding error
         const declarerPos = state.contract.declarer;
         const nextPlayer = state.next_to_play;
 
-        // If user (South) is dummy, ensure declarer's hand is available for user control
-        // Refresh if not yet set (handles edge cases where initial fetch failed)
-        if (userIsDummy && !declarerHand) {
-          // South is dummy, so we need to get declarer's hand for user control
-          console.log('🎯 Fetching declarer hand in AI loop:', {
+        // === BUG FIX: Use visible_hands from backend to populate declarer hand ===
+        // Backend's BridgeRulesEngine already determines which hands should be visible
+        // Use this data instead of making a separate API call
+        if (state.visible_hands && state.visible_hands[declarerPos]) {
+          const visibleDeclarerCards = state.visible_hands[declarerPos].cards || [];
+          console.log('👁️ Setting declarer hand from visible_hands:', {
             declarerPos,
-            dummy_revealed: state.dummy_revealed
+            cardCount: visibleDeclarerCards.length,
+            userIsDummy,
+            visible_hands_keys: Object.keys(state.visible_hands)
           });
+          setDeclarerHand(visibleDeclarerCards);
+        } else if (userIsDummy && !declarerHand) {
+          // FALLBACK: If visible_hands is not available (old API), fetch separately
+          // This maintains backward compatibility but should not be needed
+          console.log('⚠️ visible_hands not available, falling back to /api/get-all-hands');
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
           if (handsResponse.ok) {
             const handsData = await handsResponse.json();
             const fetchedDeclarerHand = handsData.hands[declarerPos]?.hand || [];
-            console.log('✅ Declarer hand fetched in AI loop:', {
+            console.log('✅ Declarer hand fetched in AI loop (fallback):', {
               position: declarerPos,
               cardCount: fetchedDeclarerHand.length
             });
             setDeclarerHand(fetchedDeclarerHand);
           }
+        }
+
+        // === NEW FIX: Update South's hand from visible_hands ===
+        if (state.visible_hands && state.visible_hands['S']) {
+          const southCards = state.visible_hands['S'].cards || [];
+          console.log('👁️ Updating South hand from visible_hands (AI loop):', {
+            cardCount: southCards.length,
+            visible_hands_keys: Object.keys(state.visible_hands)
+          });
+          setHand(southCards);
         }
 
         // Check if play is complete (13 tricks)
