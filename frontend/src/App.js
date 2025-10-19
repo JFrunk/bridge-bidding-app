@@ -815,8 +815,10 @@ Please provide a detailed analysis of the auction and identify any bidding error
       setIsInitializing(false); // Ensure we're not in initializing state for manual deals
 
       // After state settles, trigger AI bidding if dealer is not South
+      // FIX: Use data.dealer instead of state variable dealer to avoid stale closure
+      const currentDealer = data.dealer || 'North';
       setTimeout(() => {
-        if (players.indexOf(dealer) !== 2) { // If dealer is not South (index 2)
+        if (players.indexOf(currentDealer) !== 2) { // If dealer is not South (index 2)
           setIsAiBidding(true);
         }
       }, 100);
