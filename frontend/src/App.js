@@ -1032,9 +1032,11 @@ Please provide a detailed analysis of the auction and identify any bidding error
         // Skip AI bidding on initial mount to prevent race condition
         resetAuction(data, true);
 
-        // After state has settled, enable AI bidding if North starts
+        // After state has settled, enable AI bidding if dealer is not South
+        // FIX: Use data.dealer instead of state variable dealer to avoid stale closure
+        const currentDealer = data.dealer || 'North';
         setTimeout(() => {
-          if (players.indexOf(dealer) !== 2) { // If dealer is not South (index 2)
+          if (players.indexOf(currentDealer) !== 2) { // If dealer is not South (index 2)
             setIsAiBidding(true);
           }
           // System is now ready
