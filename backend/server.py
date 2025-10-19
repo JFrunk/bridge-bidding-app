@@ -639,27 +639,42 @@ def load_scenario():
 def deal_hands():
     # Get session state for this request
     state = get_state()
-    vulnerabilities = ["None", "NS", "EW", "Both"]
-    try:
-        current_idx = vulnerabilities.index(state.vulnerability)
-        state.vulnerability = vulnerabilities[(current_idx + 1) % len(vulnerabilities)]
-    except ValueError:
-        state.vulnerability = "None"
+
+    # Use Chicago rotation for dealer and vulnerability
+    dealer = 'North'  # Default for non-session mode
+    if state.game_session:
+        dealer = state.game_session.get_current_dealer()
+        state.vulnerability = state.game_session.get_current_vulnerability()
+    else:
+        # Non-session mode: rotate vulnerability manually
+        vulnerabilities = ["None", "NS", "EW", "Both"]
+        try:
+            current_idx = vulnerabilities.index(state.vulnerability)
+            state.vulnerability = vulnerabilities[(current_idx + 1) % len(vulnerabilities)]
+        except ValueError:
+            state.vulnerability = "None"
 
     ranks = '23456789TJQKA'
     suits = ['♠', '♥', '♦', '♣']
     deck = [Card(rank, suit) for rank in ranks for suit in suits]
     random.shuffle(deck)
-    
+
     state.deal['North'] = Hand(deck[0:13])
     state.deal['East'] = Hand(deck[13:26])
     state.deal['South'] = Hand(deck[26:39])
     state.deal['West'] = Hand(deck[39:52])
-    
+
     south_hand = state.deal['South']
     hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
     points_for_json = { 'hcp': south_hand.hcp, 'dist_points': south_hand.dist_points, 'total_points': south_hand.total_points, 'suit_hcp': south_hand.suit_hcp, 'suit_lengths': south_hand.suit_lengths }
-    return jsonify({'hand': hand_for_json, 'points': points_for_json, 'vulnerability': state.vulnerability})
+
+    # Include dealer in response for frontend
+    return jsonify({
+        'hand': hand_for_json,
+        'points': points_for_json,
+        'vulnerability': state.vulnerability,
+        'dealer': dealer  # NEW: Send dealer to frontend
+    })
 
 @app.route('/api/get-next-bid', methods=['POST'])
 def get_next_bid():
@@ -1156,8 +1171,16 @@ def start_play():
         auction = data.get("auction_history", [])
         vulnerability_str = data.get("vulnerability", "None")
 
-        # Determine contract from auction
-        contract = play_engine.determine_contract(auction, dealer_index=0)
+        # Get dealer from request (frontend now sends it) or from session
+        dealer_str = data.get("dealer", "North")
+        if state.game_session:
+            dealer_str = state.game_session.get_current_dealer()
+
+        # Convert dealer to index for contract determination
+        dealer_index = ['N', 'E', 'S', 'W'].index(dealer_str[0].upper())
+
+        # Determine contract from auction using correct dealer
+        contract = play_engine.determine_contract(auction, dealer_index=dealer_index)
 
         if not contract:
             return jsonify({"error": "No contract found (all passed)"}), 400
@@ -1271,19 +1294,25 @@ def play_random_hand():
         state.deal['South'] = Hand(deck[26:39])
         state.deal['West'] = Hand(deck[39:52])
 
-        # Rotate vulnerability
-        vulnerabilities = ["None", "NS", "EW", "Both"]
-        try:
-            current_idx = vulnerabilities.index(state.vulnerability)
-            state.vulnerability = vulnerabilities[(current_idx + 1) % len(vulnerabilities)]
-        except ValueError:
-            state.vulnerability = "None"
+        # Use Chicago rotation for dealer and vulnerability if in session
+        dealer = 'North'  # Default
+        if state.game_session:
+            dealer = state.game_session.get_current_dealer()
+            state.vulnerability = state.game_session.get_current_vulnerability()
+        else:
+            # Non-session mode: rotate vulnerability manually
+            vulnerabilities = ["None", "NS", "EW", "Both"]
+            try:
+                current_idx = vulnerabilities.index(state.vulnerability)
+                state.vulnerability = vulnerabilities[(current_idx + 1) % len(vulnerabilities)]
+            except ValueError:
+                state.vulnerability = "None"
 
         # Generate realistic auction using the bidding engine
         # Simulate all 4 players bidding with AI
         auction_history = []
         players = ['North', 'East', 'South', 'West']
-        dealer_index = 0  # North deals
+        dealer_index = ['N', 'E', 'S', 'W'].index(dealer[0].upper())  # Use Chicago dealer
         current_player_index = dealer_index
 
         # Maximum 50 bids to prevent infinite loops (typical auction is 4-15 bids)
@@ -1387,6 +1416,7 @@ def play_random_hand():
             "hand": hand_for_json,
             "points": points_for_json,
             "vulnerability": state.vulnerability,
+            "dealer": dealer,  # NEW: Include dealer
             "contract": str(contract),
             "contract_details": {
                 "level": contract.level,

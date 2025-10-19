@@ -1,443 +1,239 @@
-# Production Deployment Checklist - AI Gameplay Fix
+# Production Deployment Checklist
+**Date:** 2025-10-19
+**Issue:** BUG-V008 - Dashboard Database Error
+**Deployments:** Database Migration + Code Update
 
-## Pre-Deployment Verification
+---
 
-### Code Changes Review
+## Quick Reference
 
-- [x] **Default AI changed to 'advanced'**
-  - File: `backend/core/session_state.py` line 45
-  - Value: `DEFAULT_AI_DIFFICULTY = os.environ.get('DEFAULT_AI_DIFFICULTY', 'advanced')`
-  - Status: ✅ Implemented
+**What's Being Fixed:**
+- Missing `bidding_decisions` table in production
+- Dashboard "no such table" error
+- Deploying latest bug fixes and dealer rotation
 
-- [x] **Enhanced DDS logging added**
-  - File: `backend/server.py` lines 31-37
-  - Shows DDS availability status at startup
-  - Status: ✅ Implemented
+**Estimated Time:** 30-40 minutes
+**Risk Level:** LOW
 
-- [x] **Startup AI configuration display**
-  - File: `backend/server.py` lines 75-79
-  - Shows default AI and rating at startup
-  - Status: ✅ Implemented
+---
 
-- [x] **Documentation created**
-  - AI_GAMEPLAY_QUALITY_DOCUMENTATION.md: ✅ Created
-  - DDS_MACOS_INSTABILITY_REPORT.md: ✅ Created
-  - AI_DIFFICULTY_FIX_2025-10-17.md: ✅ Created
-  - Status: ✅ Complete
+## Checklist
 
-### Dependencies Check
+### Phase 1: Database Migration ⚙️
 
-- [x] **endplay in requirements.txt**
-  - File: `backend/requirements.txt` line 5
-  - Version: `endplay>=0.5.0`
-  - Status: ✅ Present
+- [ ] **Access Production Environment**
+  - [ ] Open Render.com dashboard OR SSH to production server
+  - [ ] Navigate to backend directory
 
-- [ ] **requirements.txt complete**
-  - Run: `pip freeze > requirements-frozen.txt` to capture exact versions
-  - Review for any missing dependencies
-  - Status: ⏳ Verify before deployment
+- [ ] **Backup Database (Optional but Recommended)**
+  ```bash
+  cp bridge.db bridge.db.backup-$(date +%Y%m%d-%H%M%S)
+  ```
 
-### Testing
+- [ ] **Run Migration Script**
+  ```bash
+  python3 database/init_all_tables.py
+  ```
 
-- [x] **Default AI verified**
-  - Confirmed default is 'advanced'
-  - Minimax depth 3 loaded correctly
-  - Status: ✅ Tested
+- [ ] **Verify Success Output**
+  - [ ] See "✅ Applied: 001_add_bidding_feedback_tables.sql"
+  - [ ] See "✅ bidding_decisions" in critical tables list
+  - [ ] See "✅ Database initialization complete!"
 
-- [x] **DDS availability tested**
-  - Works in venv with endplay installed
-  - Crashes on macOS M1/M2 (expected)
-  - Status: ✅ Confirmed unstable on macOS
+- [ ] **Verify Table Exists**
+  ```bash
+  sqlite3 bridge.db "SELECT name FROM sqlite_master WHERE name='bidding_decisions';"
+  ```
+  Expected output: `bidding_decisions`
 
-- [ ] **Sample gameplay test**
-  - Test with 3-5 complete hands
-  - Verify AI makes reasonable decisions
-  - No crashes or errors during play
-  - Status: ⏳ Run before deployment
+- [ ] **Test Backend API**
+  ```bash
+  curl https://your-production-url/api/analytics/dashboard
+  ```
+  Expected: JSON response (no "table not found" error)
 
-- [ ] **The ♥K discard scenario**
-  - Verify advanced AI handles this correctly
-  - Confirm it doesn't discard winner cards inappropriately
-  - Status: ⏳ Test (optional but recommended)
+- [ ] **Test Frontend Dashboard**
+  - [ ] Open production app
+  - [ ] Play a hand
+  - [ ] Click "My Progress" button
+  - [ ] Dashboard loads without error ✅
 
-## Deployment Steps
+---
 
-### 1. Code Deployment
+### Phase 2: Code Deployment 🚀
 
-```bash
-# On production server
+- [ ] **Merge Development to Main**
+  ```bash
+  git checkout main
+  git pull origin main
+  git merge development
+  ```
 
-# Pull latest code
-git pull origin main  # or your production branch
+- [ ] **Review Merge**
+  ```bash
+  git log --oneline -5
+  ```
+  - [ ] Should show commit `55fd0e8` (Critical bug fixes)
+  - [ ] Should show commit `41aca99` (Phase 1 bidding feedback)
 
-# Activate virtual environment
-source venv/bin/activate  # or your venv path
+- [ ] **Push to Production**
+  ```bash
+  git push origin main
+  ```
 
-# Install/update dependencies
-pip install -r backend/requirements.txt
+- [ ] **Monitor Deployment**
+  - [ ] Watch Render deployment logs (if using Render)
+  - [ ] Wait for successful build
+  - [ ] Wait for service restart
+  - [ ] Service shows "Live" status
 
-# Verify endplay installed
-pip list | grep endplay
-# Expected: endplay 0.5.12 (or >=0.5.0)
-```
+---
 
-**Checkpoint:** ✅ Dependencies installed
+### Phase 3: Verification ✅
 
-### 2. Configuration
+- [ ] **Basic Functionality**
+  - [ ] Homepage loads
+  - [ ] Can login/play as guest
+  - [ ] Can deal new hand
+  - [ ] Bidding works
+  - [ ] Play phase works
+  - [ ] Game completes successfully
 
-```bash
-# OPTIONAL: Enable expert mode if DDS is stable on Linux
-# Test DDS first before setting this!
+- [ ] **Database Fix Verification**
+  - [ ] "My Progress" button appears
+  - [ ] Dashboard loads without errors
+  - [ ] No "no such table" errors in logs
+  - [ ] Analytics data structure present (may be empty)
 
-# To enable expert mode (9/10):
-export DEFAULT_AI_DIFFICULTY=expert
+- [ ] **Dealer Rotation Feature**
+  - [ ] Start new session
+  - [ ] Bidding table shows dealer indicator "(D)"
+  - [ ] Play hand #1 (North dealer)
+  - [ ] Play hand #2 (East dealer) - verify rotation
+  - [ ] Dealer rotates: N → E → S → W
 
-# To keep advanced mode (7/10) - recommended:
-# No action needed, uses default
-```
+- [ ] **Check Error Logs**
+  - [ ] No SQL errors
+  - [ ] No "table not found" errors
+  - [ ] No 500 errors
+  - [ ] No new unexpected errors
 
-**Checkpoint:** ✅ Configuration set
+---
 
-### 3. Verification Tests
+### Phase 4: Monitoring 👀
 
-#### Test 1: Check Default AI
-```bash
-PYTHONPATH=backend python3 -c "
-from core.session_state import DEFAULT_AI_DIFFICULTY
-print(f'Default AI: {DEFAULT_AI_DIFFICULTY}')
-"
-```
+**First Hour:**
+- [ ] Check error logs every 15 minutes
+- [ ] Monitor for user reports
+- [ ] Watch for database errors
 
-**Expected Output:** `Default AI: advanced` (or `expert` if you set environment variable)
+**First 24 Hours:**
+- [ ] Review error logs once more
+- [ ] Verify bidding decisions being recorded
+- [ ] Check dashboard stats populate
+- [ ] Confirm no regression reports
 
-**Checkpoint:** ✅ Default AI correct
+---
 
-#### Test 2: Test DDS Availability
-```bash
-PYTHONPATH=backend python3 -c "
-from engine.play.ai.dds_ai import DDS_AVAILABLE
-print(f'DDS Available: {DDS_AVAILABLE}')
+## Rollback Plan 🔄
 
-if DDS_AVAILABLE:
-    print('✅ DDS loaded successfully')
-    # Optional: Quick test
-    from endplay.types import Deal
-    from endplay.dds import calc_dd_table
-    try:
-        deal = Deal('N:AKQ2.AKQ2.AKQ2.AK 432.432.432.432 876.876.876.876 JT5.JT5.JT5.JT5')
-        table = calc_dd_table(deal)
-        print('✅ DDS calculation successful')
-    except Exception as e:
-        print(f'❌ DDS calculation failed: {e}')
-else:
-    print('⚠️  DDS not available - will use Minimax fallback')
-"
-```
-
-**Expected Output (Linux):** Likely `DDS Available: True` with successful calculation
-
-**Expected Output (macOS):** `DDS Available: True` but calculation may fail
-
-**Checkpoint:** ✅ DDS status known
-
-#### Test 3: Server Startup
-```bash
-# Start server (development mode)
-PYTHONPATH=backend python3 backend/server.py
-```
-
-**Watch for startup messages:**
-```
-⚠️  DEVELOPMENT MODE: DDS not available (expected on macOS M1/M2)
-   OR
-✅ DDS IS AVAILABLE - Expert AI will use Double Dummy Solver (9/10)
-
-🎯 Default AI Difficulty: advanced
-   Engine: Minimax AI (depth 3)
-   Rating: ~advanced
-```
-
-**Checkpoint:** ✅ Server starts correctly
-
-### 4. Production Server Start
+### If Database Migration Fails
 
 ```bash
-# Stop old server
-sudo systemctl stop bridge-app  # or your service name
+# Restore backup
+cp bridge.db.backup-YYYYMMDD-HHMMSS bridge.db
 
-# Start new server
-sudo systemctl start bridge-app
-
-# Check status
-sudo systemctl status bridge-app
-
-# Monitor logs
-tail -f /var/log/bridge-app/app.log  # or your log location
+# Restart service (use your restart command)
 ```
 
-**Checkpoint:** ✅ Server running
-
-### 5. Smoke Tests
-
-#### Test 5.1: Health Check
-```bash
-curl http://localhost:5000/api/health
-```
-
-**Expected:** `{"status": "ok"}` or similar
-
-#### Test 5.2: Deal a Hand
-```bash
-curl -X POST http://localhost:5000/api/new-hand \
-  -H "Content-Type: application/json" \
-  -d '{"user_position": "South"}'
-```
-
-**Expected:** JSON response with hand data
-
-#### Test 5.3: AI Play
-```bash
-# Use session_id from previous response
-curl -X POST http://localhost:5000/api/ai-play \
-  -H "Content-Type: application/json" \
-  -d '{"session_id": "...", "position": "West"}'
-```
-
-**Expected:** JSON response with card played, no errors
-
-**Checkpoint:** ✅ API working
-
-## Post-Deployment Verification
-
-### Monitoring (First 24 Hours)
-
-- [ ] **Error Rate**
-  - Monitor application logs for exceptions
-  - Watch for DDS-related crashes
-  - Alert threshold: >1% error rate
-  - Status: ⏳ Monitor
-
-- [ ] **Response Times**
-  - AI play endpoint should be <5 seconds
-  - Average should be 1-3 seconds for advanced AI
-  - Status: ⏳ Monitor
-
-- [ ] **Crash Reports**
-  - No segmentation faults
-  - No Python crashes
-  - Status: ⏳ Monitor
-
-- [ ] **User Feedback**
-  - No complaints about AI quality
-  - No reports of hanging/slow gameplay
-  - Status: ⏳ Collect
-
-### Performance Metrics
-
-Track these metrics:
-
-```
-AI Decision Time:
-  - P50 (median): ~1.5s (advanced)
-  - P95: ~3s
-  - P99: ~5s
-  - Max: <10s
-
-Error Rate:
-  - Target: <0.1%
-  - Alert: >1%
-
-DDS Usage (if expert mode enabled):
-  - Success rate: >95%
-  - Fallback rate: <5%
-```
-
-## Rollback Plan
-
-If issues occur:
-
-### Quick Rollback (Emergency)
+### If Code Deployment Breaks
 
 ```bash
-# Revert to previous version
-git checkout <previous-commit>
-pip install -r backend/requirements.txt
-sudo systemctl restart bridge-app
-```
+# Revert to previous commit
+git checkout main
+git reset --hard 41aca99
+git push origin main --force
 
-### Partial Rollback (Change Default)
-
-If advanced AI has issues but app is stable:
-
-```bash
-# Change default back to intermediate temporarily
-export DEFAULT_AI_DIFFICULTY=intermediate
-sudo systemctl restart bridge-app
-```
-
-**Note:** This is not ideal (5-6/10 gameplay) but better than crashes
-
-### Configuration-Only Rollback
-
-If DDS causes issues:
-
-```bash
-# Disable expert mode
-unset DEFAULT_AI_DIFFICULTY  # Uses 'advanced' default
-sudo systemctl restart bridge-app
-```
-
-## Success Criteria
-
-### Must Have (Required for Success)
-
-- [x] ✅ Code deployed without errors
-- [ ] ⏳ Server starts successfully
-- [ ] ⏳ Default AI is 'advanced' (verified in logs)
-- [ ] ⏳ API endpoints respond correctly
-- [ ] ⏳ AI makes gameplay decisions (no crashes)
-- [ ] ⏳ Response times acceptable (<5s)
-
-### Should Have (Quality Indicators)
-
-- [ ] ⏳ DDS available in production (if Linux)
-- [ ] ⏳ No error spikes in first 24 hours
-- [ ] ⏳ Average response time 1-3 seconds
-- [ ] ⏳ Users report improved AI quality
-
-### Nice to Have (Bonus)
-
-- [ ] ⏳ Expert mode works with DDS (9/10)
-- [ ] ⏳ Response times <1 second average
-- [ ] ⏳ Zero errors in first week
-
-## Environment-Specific Notes
-
-### Linux Production Server
-
-**Expected Behavior:**
-- ✅ DDS likely available and stable
-- ✅ Can optionally enable expert mode
-- ✅ Fast response times with DDS (10-200ms)
-
-**Commands:**
-```bash
-# Test DDS before enabling expert mode
-PYTHONPATH=backend python3 -c "
-from endplay.dds import calc_dd_table
-from endplay.types import Deal
-for i in range(10):
-    d = Deal('N:AKQ2.AKQ2.AKQ2.AK 432.432.432.432 876.876.876.876 JT5.JT5.JT5.JT5')
-    calc_dd_table(d)
-    print(f'Test {i+1}: OK')
-print('✅ DDS is stable on Linux')
-"
-
-# If all tests pass, enable expert mode
-export DEFAULT_AI_DIFFICULTY=expert
-sudo systemctl restart bridge-app
-```
-
-### macOS Development Server
-
-**Expected Behavior:**
-- ⚠️ DDS crashes (known issue)
-- ✅ Advanced mode works perfectly
-- ✅ Slower than DDS but stable (1-3s)
-
-**Commands:**
-```bash
-# Keep default (advanced)
-# No special configuration needed
-PYTHONPATH=backend python3 backend/server.py
-```
-
-### Docker Deployment
-
-**Dockerfile changes:**
-```dockerfile
-# Add to Dockerfile
-ENV DEFAULT_AI_DIFFICULTY=advanced
-
-# Or for expert mode (after testing):
-# ENV DEFAULT_AI_DIFFICULTY=expert
-```
-
-## Documentation Updates
-
-### User-Facing
-
-- [ ] ⏳ Update FAQ about AI difficulty levels
-- [ ] ⏳ Document 7/10 gameplay quality (if marketing materials exist)
-- [ ] ⏳ Add info about expert mode availability
-
-### Internal
-
-- [x] ✅ Technical documentation created
-  - AI_GAMEPLAY_QUALITY_DOCUMENTATION.md
-  - DDS_MACOS_INSTABILITY_REPORT.md
-  - AI_DIFFICULTY_FIX_2025-10-17.md
-
-- [ ] ⏳ Update deployment runbook
-- [ ] ⏳ Add monitoring alerts for AI errors
-
-## Contact/Escalation
-
-If issues occur during deployment:
-
-1. **Check logs first:**
-   - Server startup messages
-   - API error logs
-   - DDS availability status
-
-2. **Common Issues:**
-   - DDS crashes → Keep advanced mode, don't force expert
-   - Slow responses → Check if DDS is causing delays
-   - Import errors → Verify requirements.txt installed
-
-3. **Emergency Contact:**
-   - Rollback to previous version if critical
-   - Set DEFAULT_AI_DIFFICULTY=intermediate as last resort
-
-## Final Checklist
-
-Before declaring deployment successful:
-
-- [ ] ⏳ All pre-deployment tests passed
-- [ ] ⏳ Server running without errors for 1 hour
-- [ ] ⏳ At least 10 successful AI gameplay decisions
-- [ ] ⏳ Monitoring alerts configured
-- [ ] ⏳ Team notified of deployment
-
-**Sign-off:**
-
-```
-Deployed by: _______________
-Date: _______________
-Default AI: _______________  (should be 'advanced')
-DDS Status: _______________  (available / unavailable)
-Production URL: _______________
+# Trigger redeploy in Render dashboard
 ```
 
 ---
 
-## Summary
+## Success Criteria 🎯
 
-**Goal:** Deploy AI gameplay fix with advanced (7/10) default
-**Risk Level:** 🟢 Low (stable Minimax fallback)
-**Rollback:** 🟢 Easy (change environment variable or git revert)
-**Impact:** ✅ Fixes ♥K discard bug, improves gameplay quality
-
-**Ready to Deploy:** ✅ Yes, with monitoring
-
-**Expected Outcome:**
-- ✅ Stable gameplay AI (no crashes)
-- ✅ Better quality (7/10 vs previous 5-6/10)
-- ✅ Fixed tactical errors (no more winner discards)
-- ✅ Production-ready with clear documentation
+All must be true:
+- ✅ `bidding_decisions` table exists in production
+- ✅ Dashboard loads without "no such table" error
+- ✅ Latest code (commit 55fd0e8) deployed
+- ✅ Dealer rotation working (shows "(D)" indicator)
+- ✅ Users can play hands successfully
+- ✅ No new errors in production logs
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** October 17, 2025
-**Status:** Ready for Production Deployment ✅
+## Quick Commands Reference
+
+### Check Table Exists
+```bash
+sqlite3 bridge.db "SELECT name FROM sqlite_master WHERE name='bidding_decisions';"
+```
+
+### Test Dashboard API
+```bash
+curl https://your-production-url/api/analytics/dashboard
+```
+
+### Check Database Tables
+```bash
+sqlite3 bridge.db ".tables"
+```
+
+### View Recent Logs (if using systemd)
+```bash
+journalctl -u bridge-bidding-app -n 50 --no-pager
+```
+
+### Restart Service
+```bash
+# Render: Use dashboard "Manual Deploy"
+# OR systemd:
+sudo systemctl restart bridge-bidding-app
+# OR pm2:
+pm2 restart bridge-bidding-app
+```
+
+---
+
+## Notes Section
+
+**Deployment Start Time:** _______________
+
+**Database Migration Result:** _______________
+
+**Code Deployment Result:** _______________
+
+**Issues Encountered:** _______________
+
+**Resolution:** _______________
+
+**Deployment Complete Time:** _______________
+
+---
+
+## Sign-Off
+
+- [ ] Database migration completed successfully
+- [ ] Code deployed successfully
+- [ ] All tests passed
+- [ ] No critical errors
+- [ ] Ready for production use
+
+**Deployed By:** _______________
+
+**Date:** _______________
+
+**Time:** _______________
+
+---
+
+**For detailed instructions, see:** [DEPLOY_TO_PRODUCTION.md](DEPLOY_TO_PRODUCTION.md)

@@ -406,17 +406,29 @@ python3 test_session_scoring.py
 
 ---
 
-### ☐ BUG-V008: Dashboard Does Not Show Up (Verified Fixed 2025-10-18)
-**Quick Test:**
-1. ☐ Start app and login
-2. ☐ Navigate to dashboard page
-3. ☐ Check: Does dashboard render properly? YES / NO
-4. ☐ Check: Are statistics visible? YES / NO
+### ☐ BUG-V008: Dashboard "no such table: bidding_decisions" Error (PRODUCTION ONLY)
+**What happened:** Production error when clicking "My Progress" button:
+```
+Failed to load dashboard: no such table: bidding_decisions
+```
 
-**PASS:** ✅ Dashboard renders correctly with statistics
-**FAIL:** ❌ Dashboard is blank or doesn't appear
+**Root Cause:** Production database missing Phase 1 migration tables
 
-**Status:** ✅ RESOLVED (PASS / FAIL - should PASS)
+**Fix Required:** ⚠️ **NEEDS PRODUCTION DEPLOYMENT**
+- Run: `python3 backend/database/init_all_tables.py` on production server
+- See: [PRODUCTION_DATABASE_FIX.md](PRODUCTION_DATABASE_FIX.md) for detailed instructions
+
+**Quick Test (After Deployment):**
+1. ☐ SSH to production and run migration script
+2. ☐ Verify `bidding_decisions` table exists
+3. ☐ Restart backend service
+4. ☐ Test "My Progress" button in production
+5. ☐ Check: Does dashboard load without errors? YES / NO
+
+**PASS:** ✅ Dashboard loads without "no such table" error
+**FAIL:** ❌ Still getting database errors
+
+**Status:** 🔧 FIX AVAILABLE - AWAITING DEPLOYMENT (PASS / FAIL)
 
 ---
 
@@ -444,7 +456,7 @@ python3 test_session_scoring.py
 - BUG-L001 Test Failures: __________ (PASS / FAIL)
 - BUG-L002 Display Order: __________ (PASS / FAIL)
 
-**✅ VERIFIED (8 bugs - should all PASS):**
+**✅ VERIFIED (7 bugs - should all PASS):**
 - BUG-V001 Login Error: __________ (PASS / FAIL)
 - BUG-V002 Auto-Bidding: __________ (PASS / FAIL)
 - BUG-V003 Auto-Transition: __________ (PASS / FAIL)
@@ -452,7 +464,9 @@ python3 test_session_scoring.py
 - BUG-V005 Minimax Logic: __________ (PASS / FAIL)
 - BUG-V006 Master Trump: __________ (PASS / FAIL)
 - BUG-V007 Scoring Penalties: __________ (PASS / FAIL)
-- BUG-V008 Dashboard Display: ✅ RESOLVED (PASS / FAIL)
+
+**🔧 PRODUCTION DEPLOYMENT NEEDED (1 bug):**
+- BUG-V008 Dashboard Database Error: 🔧 FIX AVAILABLE (PASS / FAIL)
 
 ### Overall Assessment
 

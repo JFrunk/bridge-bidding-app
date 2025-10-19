@@ -17,6 +17,7 @@ import { CurrentTrickDisplay } from './components/play/CurrentTrickDisplay';
 import { ScoreModal } from './components/play/ScoreModal';
 import { PlayableCard as PlayableCardComponent } from './components/play/PlayableCard';
 import { VerticalPlayableCard } from './components/play/VerticalPlayableCard';
+import { sortCards } from './shared/utils/cardUtils';
 
 /**
  * Get suit display order based on trump suit
@@ -253,9 +254,10 @@ export function PlayTable({
               {suitOrder.map(suit => {
                 const hand = dummyPosition === 'N' ? dummyHand : declarerHand;
                 if (!hand || hand.length === 0) return null;
+                const suitCards = sortCards(hand.filter(card => card.suit === suit));
                 return (
                   <div key={suit} className="suit-group">
-                    {hand.filter(card => card.suit === suit).map((card, index) => (
+                    {suitCards.map((card, index) => (
                       <PlayableCard
                         key={`${suit}-${index}`}
                         card={card}
@@ -300,9 +302,10 @@ export function PlayTable({
               {suitOrder.map(suit => {
                 const hand = dummyPosition === 'W' ? dummyHand : declarerHand;
                 if (!hand || hand.length === 0) return null;
+                const suitCards = sortCards(hand.filter(card => card.suit === suit));
                 return (
                   <div key={suit} className="suit-group">
-                    {hand.filter(card => card.suit === suit).map((card, index) => (
+                    {suitCards.map((card, index) => (
                       <VerticalPlayableCard
                         key={`${suit}-${index}`}
                         card={card}
@@ -331,9 +334,10 @@ export function PlayTable({
               {suitOrder.map(suit => {
                 const hand = dummyPosition === 'E' ? dummyHand : declarerHand;
                 if (!hand || hand.length === 0) return null;
+                const suitCards = sortCards(hand.filter(card => card.suit === suit));
                 return (
                   <div key={suit} className="suit-group">
-                    {hand.filter(card => card.suit === suit).map((card, index) => (
+                    {suitCards.map((card, index) => (
                       <VerticalPlayableCard
                         key={`${suit}-${index}`}
                         card={card}
@@ -357,18 +361,21 @@ export function PlayTable({
           </div>
           {userHand && userHand.length > 0 && (
             <div className="user-play-hand">
-              {suitOrder.map(suit => (
-                <div key={suit} className="suit-group">
-                  {userHand.filter(card => card.suit === suit).map((card, index) => (
-                    <PlayableCard
-                      key={`${suit}-${index}`}
-                      card={card}
-                      onClick={onCardPlay}
-                      disabled={!isUserTurn}
-                    />
-                  ))}
-                </div>
-              ))}
+              {suitOrder.map(suit => {
+                const suitCards = sortCards(userHand.filter(card => card.suit === suit));
+                return (
+                  <div key={suit} className="suit-group">
+                    {suitCards.map((card, index) => (
+                      <PlayableCard
+                        key={`${suit}-${index}`}
+                        card={card}
+                        onClick={onCardPlay}
+                        disabled={!isUserTurn}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
