@@ -811,17 +811,13 @@ Please provide a detailed analysis of the auction and identify any bidding error
       const response = await fetch(`${API_URL}/api/deal-hands`, { headers: { ...getSessionHeaders() } });
       if (!response.ok) throw new Error("Failed to deal hands.");
       const data = await response.json();
-      resetAuction(data, true); // Skip initial AI bidding initially
-      setIsInitializing(false); // Ensure we're not in initializing state for manual deals
 
-      // After state settles, trigger AI bidding if dealer is not South
-      // FIX: Use data.dealer instead of state variable dealer to avoid stale closure
+      // FIX: Don't skip AI bidding in resetAuction - let it set based on dealer
       const currentDealer = data.dealer || 'North';
-      setTimeout(() => {
-        if (players.indexOf(currentDealer) !== 2) { // If dealer is not South (index 2)
-          setIsAiBidding(true);
-        }
-      }, 100);
+      const shouldAiBid = players.indexOf(currentDealer) !== 2; // Dealer is not South
+
+      resetAuction(data, !shouldAiBid); // Pass correct skipInitialAiBidding value
+      setIsInitializing(false); // Ensure we're not in initializing state for manual deals
     } catch (err) { setError("Could not connect to server to deal."); }
   };
 
@@ -1029,19 +1025,18 @@ Please provide a detailed analysis of the auction and identify any bidding error
         const response = await fetch(`${API_URL}/api/deal-hands`, { headers: { ...getSessionHeaders() } });
         if (!response.ok) throw new Error("Failed to deal hands.");
         const data = await response.json();
-        // Skip AI bidding on initial mount to prevent race condition
-        resetAuction(data, true);
 
-        // After state has settled, enable AI bidding if dealer is not South
-        // FIX: Use data.dealer instead of state variable dealer to avoid stale closure
+        // FIX: Calculate if AI should bid before resetting auction
         const currentDealer = data.dealer || 'North';
+        const shouldAiBid = players.indexOf(currentDealer) !== 2; // Dealer is not South
+
+        // Reset auction with correct skipInitialAiBidding value
+        resetAuction(data, !shouldAiBid);
+
+        // System is now ready - wait a bit for state to settle
         setTimeout(() => {
-          if (players.indexOf(currentDealer) !== 2) { // If dealer is not South (index 2)
-            setIsAiBidding(true);
-          }
-          // System is now ready
           setIsInitializing(false);
-        }, 100);
+        }, 200);
       } catch (err) {
         setError("Could not connect to server to deal.");
         setIsInitializing(false);
