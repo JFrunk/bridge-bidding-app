@@ -167,11 +167,32 @@ function App() {
     setVulnerability(dealData.vulnerability);
 
     // NEW: Get dealer from backend (Chicago rotation)
-    const currentDealer = dealData.dealer || 'North';
+    // Backend may return abbreviated (N, E, S, W) or full names (North, East, South, West)
+    const dealerFromBackend = dealData.dealer || 'North';
+
+    // Map abbreviated to full names
+    const dealerMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
+    const currentDealer = dealerMap[dealerFromBackend] || dealerFromBackend;
+
+    console.log('🎲 resetAuction:', {
+      dealerFromBackend,
+      currentDealer,
+      players
+    });
+
     setDealer(currentDealer);
 
     setAuction([]);
-    setNextPlayerIndex(players.indexOf(currentDealer));
+    // CRITICAL FIX: Calculate index BEFORE any state updates that depend on it
+    const dealerIndex = players.indexOf(currentDealer);
+
+    if (dealerIndex === -1) {
+      console.error('❌ Invalid dealer:', currentDealer, 'not in', players);
+      setNextPlayerIndex(0); // Fallback to North
+    } else {
+      setNextPlayerIndex(dealerIndex);
+    }
+
     setDisplayedMessage('');
     setError('');
     // Don't start AI bidding immediately on initial mount to prevent race condition
@@ -812,8 +833,11 @@ Please provide a detailed analysis of the auction and identify any bidding error
       if (!response.ok) throw new Error("Failed to deal hands.");
       const data = await response.json();
 
-      // FIX: Don't skip AI bidding in resetAuction - let it set based on dealer
-      const currentDealer = data.dealer || 'North';
+      // FIX: Map abbreviated dealer names to full names
+      const dealerMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
+      const dealerFromBackend = data.dealer || 'North';
+      const currentDealer = dealerMap[dealerFromBackend] || dealerFromBackend;
+
       const shouldAiBid = players.indexOf(currentDealer) !== 2; // Dealer is not South
 
       resetAuction(data, !shouldAiBid); // Pass correct skipInitialAiBidding value
@@ -1026,8 +1050,10 @@ Please provide a detailed analysis of the auction and identify any bidding error
         if (!response.ok) throw new Error("Failed to deal hands.");
         const data = await response.json();
 
-        // FIX: Calculate if AI should bid before resetting auction
-        const currentDealer = data.dealer || 'North';
+        // FIX: Map abbreviated dealer names and calculate if AI should bid
+        const dealerMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
+        const dealerFromBackend = data.dealer || 'North';
+        const currentDealer = dealerMap[dealerFromBackend] || dealerFromBackend;
         const shouldAiBid = players.indexOf(currentDealer) !== 2; // Dealer is not South
 
         // Reset auction with correct skipInitialAiBidding value
@@ -1090,15 +1116,29 @@ Please provide a detailed analysis of the auction and identify any bidding error
           const currentAuction = auction;
           const currentPlayer = players[nextPlayerIndex];
 
+          // DEBUG: Log what we're sending
+          console.log('🎯 AI Bidding Debug:', {
+            nextPlayerIndex,
+            currentPlayer,
+            players,
+            auction: currentAuction
+          });
+
           // Double-check it's not South's turn (defense in depth)
           if (currentPlayer === 'South') {
             setIsAiBidding(false);
             return;
           }
 
+          const requestBody = {
+            auction_history: currentAuction.map(a => a.bid),
+            current_player: currentPlayer
+          };
+          console.log('📤 Sending to /api/get-next-bid:', requestBody);
+
           const response = await fetch(`${API_URL}/api/get-next-bid`, {
             method: 'POST', headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-            body: JSON.stringify({ auction_history: currentAuction.map(a => a.bid), current_player: currentPlayer })
+            body: JSON.stringify(requestBody)
           });
           if (!response.ok) throw new Error("AI failed to get bid.");
           const data = await response.json();

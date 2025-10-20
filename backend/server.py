@@ -682,6 +682,8 @@ def get_next_bid():
     state = get_state()
     try:
         data = request.get_json()
+        print(f"🔍 DEBUG: Received data: {data}")
+        print(f"🔍 DEBUG: Keys in data: {list(data.keys()) if data else 'None'}")
         auction_history, current_player = data['auction_history'], data['current_player']
         explanation_level = data.get('explanation_level', 'detailed')  # simple, detailed, or expert
 
