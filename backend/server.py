@@ -1921,13 +1921,30 @@ def complete_play():
             vuln_dict,
             state.play_state.hands  # Pass hands for honors calculation
         )
-        
+
+        # Generate human-readable result text
+        if score_result["made"]:
+            overtricks = score_result.get("overtricks", 0)
+            if overtricks == 0:
+                result_text = "Made exactly"
+            else:
+                result_text = f"Made +{overtricks}"
+        else:
+            undertricks = score_result.get("undertricks", 0)
+            result_text = f"Down {undertricks}"
+
         return jsonify({
-            "contract": str(state.play_state.contract),
+            "contract": {
+                "level": state.play_state.contract.level,
+                "strain": state.play_state.contract.strain,
+                "declarer": state.play_state.contract.declarer,
+                "doubled": state.play_state.contract.doubled
+            },
             "tricks_taken": tricks_taken,
             "tricks_needed": state.play_state.contract.tricks_needed,
             "score": score_result["score"],
             "made": score_result["made"],
+            "result": result_text,
             "overtricks": score_result.get("overtricks", 0),
             "undertricks": score_result.get("undertricks", 0),
             "breakdown": score_result.get("breakdown", {})

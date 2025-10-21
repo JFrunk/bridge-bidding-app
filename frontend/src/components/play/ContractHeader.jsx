@@ -6,6 +6,16 @@ import { cn } from "../../lib/utils";
  * NEW LAYOUT: Contract on left, 13-block trick progress below it, bidding table on right
  * Follows "Rule of Three" and senior-friendly UX principles
  * Shows score when hand is complete (totalTricksPlayed === 13)
+ *
+ * CRITICAL SCORING PERSPECTIVE LOGIC:
+ * - Backend returns scores from DECLARER's perspective (positive = made, negative = went down)
+ * - User always plays South (NS team)
+ * - MUST convert to user's NS perspective for display:
+ *   * If NS declares and makes: show positive (correct)
+ *   * If NS declares and goes down: show negative (correct)
+ *   * If EW declares and makes: show NEGATIVE (we lost, so flip sign)
+ *   * If EW declares and goes down: show POSITIVE (we set them, so flip sign)
+ * - This logic MUST match ScoreModal.jsx to prevent regression bugs
  */
 export function ContractHeader({ contract, tricksWon, auction, scoreData }) {
   if (!contract) return null;
@@ -21,6 +31,13 @@ export function ContractHeader({ contract, tricksWon, auction, scoreData }) {
     'S': 'South',
     'W': 'West'
   }[declarer] || declarer;
+
+  // Calculate score from user's (NS) perspective
+  // User always plays South, so user's team is North-South (NS)
+  const declarerIsNS = declarer === 'N' || declarer === 'S';
+  // Backend score is from declarer's perspective
+  // Convert to NS perspective: if declarer is EW, flip the sign
+  const userScore = scoreData ? (declarerIsNS ? scoreData.score : -scoreData.score) : null;
 
   // Calculate tricks for 13-block progress bar
   const tricksNeeded = level + 6;
@@ -60,14 +77,14 @@ export function ContractHeader({ contract, tricksWon, auction, scoreData }) {
           {scoreData && totalTricksPlayed === 13 && (
             <div className={cn(
               "flex items-center gap-3 px-4 py-2 rounded-md border-2 w-fit",
-              scoreData.score >= 0 ? "bg-green-900/30 border-success" : "bg-red-900/30 border-danger"
+              userScore >= 0 ? "bg-green-900/30 border-success" : "bg-red-900/30 border-danger"
             )}>
-              <span className="text-lg font-medium text-gray-300">Score:</span>
+              <span className="text-lg font-medium text-gray-300">Your Score:</span>
               <span className={cn(
                 "text-2xl font-bold",
-                scoreData.score >= 0 ? "text-success" : "text-danger"
+                userScore >= 0 ? "text-success" : "text-danger"
               )}>
-                {scoreData.score >= 0 ? '+' : ''}{scoreData.score}
+                {userScore >= 0 ? '+' : ''}{userScore}
               </span>
               <span className={cn(
                 "text-base font-medium",

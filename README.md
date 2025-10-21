@@ -61,6 +61,16 @@ Before making any code changes, read:
 2. **[docs/DOCUMENTATION_CHECKLIST.md](docs/DOCUMENTATION_CHECKLIST.md)** - Checklist for every change
 3. **[CONTRIBUTING.md](CONTRIBUTING.md)** - Full contributing guide
 
+### Working with Claude Code
+
+When using Claude to debug or develop:
+
+- **[.claude/QUICK_START.md](.claude/QUICK_START.md)** - Quick reference for systematic debugging
+- **[.claude/CODING_GUIDELINES.md](.claude/CODING_GUIDELINES.md)** - Complete systematic analysis framework
+- **[SYSTEMATIC_ANALYSIS_SUMMARY.md](SYSTEMATIC_ANALYSIS_SUMMARY.md)** - Overview and usage guide
+
+**Key Practice**: When debugging, always check if an issue exists broadly across the codebase, not just in the reported location.
+
 ### For Developers
 
 - **Getting Started**: [docs/project-overview/CLAUDE.md](docs/project-overview/CLAUDE.md)
@@ -207,10 +217,10 @@ fetch(`${API_URL}/api/endpoint`, {
 - 🚫 **DO NOT** use global variables like `current_deal`, `current_state`
 - ✅ **DO** use `state = get_state()` and `state.deal`, `state.play_state`
 - ✅ **DO** include `X-Session-ID` header in all frontend API calls
-- 📖 **READ:** `CRITICAL_BUG_FIX_COMPLETE.md` before making changes
+- 📖 **READ:** [backend/GLOBAL_STATE_FIX_COMPLETED.md](backend/GLOBAL_STATE_FIX_COMPLETED.md) before making changes
 
 **See Also:**
-- [CRITICAL_BUG_FIX_COMPLETE.md](CRITICAL_BUG_FIX_COMPLETE.md) - Complete fix overview
+- [backend/GLOBAL_STATE_FIX_COMPLETED.md](backend/GLOBAL_STATE_FIX_COMPLETED.md) - Complete fix overview
 - [backend/core/session_state.py](backend/core/session_state.py) - Session manager implementation
 - [backend/GLOBAL_STATE_FIX_GUIDE.md](backend/GLOBAL_STATE_FIX_GUIDE.md) - Development guide
 - [frontend/src/utils/sessionHelper.js](frontend/src/utils/sessionHelper.js) - Frontend session utilities

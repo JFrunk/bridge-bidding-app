@@ -195,7 +195,8 @@ function App() {
 
     setDisplayedMessage('');
     setError('');
-    // Don't start AI bidding immediately on initial mount to prevent race condition
+    // Set AI bidding state - but it won't actually run until isInitializing = false
+    // The new useEffect (post-initialization check) will ensure AI starts at the right time
     setIsAiBidding(!skipInitialAiBidding);
     setShowHandsThisDeal(false);
     // Reset play state
@@ -511,6 +512,31 @@ Please provide a detailed analysis of the auction and identify any bidding error
           const nextState = await nextStateResponse.json();
           setPlayState(nextState);
 
+          // Check if all 13 tricks are complete
+          const totalTricks = Object.values(nextState.tricks_won).reduce((a, b) => a + b, 0);
+          if (totalTricks === 13) {
+            console.log('🏁 All 13 tricks complete after user card! Fetching final score...');
+            // Play complete - calculate score
+            const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+              body: JSON.stringify({ vulnerability: vulnerability })
+            });
+
+            if (scoreResponse.ok) {
+              const scoreData = await scoreResponse.json();
+              console.log('✅ Score calculated:', scoreData);
+              setScoreData(scoreData);
+            } else {
+              const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
+              console.error('❌ Failed to get score:', errorData);
+              setError(`Failed to calculate score: ${errorData.error || 'Unknown error'}`);
+            }
+
+            setIsPlayingCard(false);
+            return;
+          }
+
           // Start AI loop only if it's not the user's turn
           const nextIsUserTurn = nextState.next_to_play === 'S' ||
                                 (nextState.next_to_play === nextState.dummy && nextState.contract.declarer === 'S');
@@ -631,6 +657,31 @@ Please provide a detailed analysis of the auction and identify any bidding error
         if (nextStateResponse.ok) {
           const nextState = await nextStateResponse.json();
           setPlayState(nextState);
+
+          // Check if all 13 tricks are complete
+          const totalTricks = Object.values(nextState.tricks_won).reduce((a, b) => a + b, 0);
+          if (totalTricks === 13) {
+            console.log('🏁 All 13 tricks complete after user card! Fetching final score...');
+            // Play complete - calculate score
+            const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+              body: JSON.stringify({ vulnerability: vulnerability })
+            });
+
+            if (scoreResponse.ok) {
+              const scoreData = await scoreResponse.json();
+              console.log('✅ Score calculated:', scoreData);
+              setScoreData(scoreData);
+            } else {
+              const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
+              console.error('❌ Failed to get score:', errorData);
+              setError(`Failed to calculate score: ${errorData.error || 'Unknown error'}`);
+            }
+
+            setIsPlayingCard(false);
+            return;
+          }
 
           // Start AI loop only if it's not the user's turn
           const nextIsUserTurn = nextState.next_to_play === 'S' ||
@@ -758,6 +809,31 @@ Please provide a detailed analysis of the auction and identify any bidding error
         if (nextStateResponse.ok) {
           const nextState = await nextStateResponse.json();
           setPlayState(nextState);
+
+          // Check if all 13 tricks are complete
+          const totalTricks = Object.values(nextState.tricks_won).reduce((a, b) => a + b, 0);
+          if (totalTricks === 13) {
+            console.log('🏁 All 13 tricks complete after user card! Fetching final score...');
+            // Play complete - calculate score
+            const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+              body: JSON.stringify({ vulnerability: vulnerability })
+            });
+
+            if (scoreResponse.ok) {
+              const scoreData = await scoreResponse.json();
+              console.log('✅ Score calculated:', scoreData);
+              setScoreData(scoreData);
+            } else {
+              const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
+              console.error('❌ Failed to get score:', errorData);
+              setError(`Failed to calculate score: ${errorData.error || 'Unknown error'}`);
+            }
+
+            setIsPlayingCard(false);
+            return;
+          }
 
           // Start AI loop only if it's not the user's turn
           const nextIsUserTurn = nextState.next_to_play === 'S' ||
@@ -1078,15 +1154,27 @@ Please provide a detailed analysis of the auction and identify any bidding error
     const newAuction = [...auction, { bid: bid, explanation: 'Your bid.', player: 'South' }];
     setAuction(newAuction);
     try {
-      const feedbackResponse = await fetch(`${API_URL}/api/get-feedback`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-        body: JSON.stringify({ auction_history: newAuction.map(a => a.bid) })
+      // Call evaluate-bid endpoint which stores decision in database for dashboard analytics
+      const feedbackResponse = await fetch(`${API_URL}/api/evaluate-bid`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+        body: JSON.stringify({
+          user_bid: bid,
+          auction_history: auction.map(a => a.bid), // Auction BEFORE user's bid
+          current_player: 'South',
+          user_id: 1,
+          session_id: sessionData?.session?.session_id,
+          feedback_level: 'intermediate'
+        })
       });
       const feedbackData = await feedbackResponse.json();
-      setDisplayedMessage(feedbackData.feedback); 
-    } catch (err) { setDisplayedMessage('Could not get feedback from the server.'); }
+      setDisplayedMessage(feedbackData.user_message || feedbackData.explanation || 'Bid recorded.');
+    } catch (err) {
+      console.error('Error evaluating bid:', err);
+      setDisplayedMessage('Could not get feedback from the server.');
+    }
     setNextPlayerIndex((nextPlayerIndex + 1) % 4);
-    setIsAiBidding(true); 
+    setIsAiBidding(true);
   };
   
   const handleBidClick = (bidObject) => { setDisplayedMessage(`[${bidObject.bid}] ${bidObject.explanation}`); };
@@ -1104,8 +1192,16 @@ Please provide a detailed analysis of the auction and identify any bidding error
     // This prevents the race condition where AI bids for the user
     const currentPlayer = players[nextPlayerIndex];
     if (currentPlayer === 'South' && isAiBidding) {
+      console.log('🛑 Stopping AI - South\'s turn detected');
       setIsAiBidding(false);
       return; // Exit early - don't make AI bid for South
+    }
+
+    // CRITICAL FIX: Don't start AI bidding during initialization
+    // Wait until system is fully initialized to prevent race conditions
+    if (isInitializing) {
+      console.log('⏳ Skipping AI bidding - system initializing');
+      return;
     }
 
     if (isAiBidding && !isAuctionOver(auction)) {
@@ -1158,7 +1254,26 @@ Please provide a detailed analysis of the auction and identify any bidding error
       // User must explicitly click "Play This Hand" button to start playing
       // This gives users time to review the final contract before playing
     }
-  }, [auction, nextPlayerIndex, isAiBidding, players, startPlayPhase]);
+  }, [auction, nextPlayerIndex, isAiBidding, players, startPlayPhase, isInitializing]);
+
+  // Trigger AI bidding after initialization completes (if dealer is not South)
+  useEffect(() => {
+    if (!isInitializing && gamePhase === 'bidding' && auction.length === 0) {
+      const currentPlayer = players[nextPlayerIndex];
+      console.log('🎬 Post-initialization check:', {
+        isInitializing,
+        currentPlayer,
+        nextPlayerIndex,
+        shouldStartAI: currentPlayer !== 'South'
+      });
+
+      // Only start AI if it's not South's turn
+      if (currentPlayer !== 'South') {
+        console.log('▶️ Starting AI bidding after initialization');
+        setIsAiBidding(true);
+      }
+    }
+  }, [isInitializing, gamePhase, auction.length, players, nextPlayerIndex]);
 
   // AI play loop - runs during play phase
   useEffect(() => {
@@ -1245,6 +1360,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
         // Check if play is complete (13 tricks)
         const totalTricks = Object.values(state.tricks_won).reduce((a, b) => a + b, 0);
         if (totalTricks === 13) {
+          console.log('🏁 All 13 tricks complete! Fetching final score...');
           // Play complete - calculate score
           const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
             method: 'POST',
@@ -1254,7 +1370,13 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
           if (scoreResponse.ok) {
             const scoreData = await scoreResponse.json();
+            console.log('✅ Score calculated:', scoreData);
             setScoreData(scoreData);
+          } else {
+            // Handle error response
+            const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('❌ Failed to get score:', errorData);
+            setError(`Failed to calculate score: ${errorData.error || 'Unknown error'}`);
           }
 
           setIsPlayingCard(false);
@@ -1391,6 +1513,31 @@ Please provide a detailed analysis of the auction and identify any bidding error
               trick_size: clearedState.current_trick.length,
               next_to_play: clearedState.next_to_play
             });
+
+            // CRITICAL CHECK: See if all 13 tricks are complete (MUST check AFTER trick clear)
+            const totalTricksAfterClear = Object.values(clearedState.tricks_won).reduce((a, b) => a + b, 0);
+            if (totalTricksAfterClear === 13) {
+              console.log('🏁 All 13 tricks complete after AI play! Fetching final score...');
+              // Play complete - calculate score
+              const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+                body: JSON.stringify({ vulnerability: vulnerability })
+              });
+
+              if (scoreResponse.ok) {
+                const scoreData = await scoreResponse.json();
+                console.log('✅ Score calculated after AI play:', scoreData);
+                setScoreData(scoreData);
+              } else {
+                const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
+                console.error('❌ Failed to get score after AI play:', errorData);
+                setError(`Failed to calculate score: ${errorData.error || 'Unknown error'}`);
+              }
+
+              setIsPlayingCard(false);
+              return;
+            }
 
             // CRITICAL FIX: Check if next player is user-controlled before restarting AI loop
             const nextIsUserControlled = clearedState.next_to_play === 'S' ||

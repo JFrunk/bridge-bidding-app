@@ -31,17 +31,15 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
   const { contract, tricks_taken, tricks_needed, result, score, made, breakdown, overtricks, undertricks } = scoreData;
   const doubledText = contract.doubled === 2 ? 'XX' : contract.doubled === 1 ? 'X' : '';
 
-  // Determine user's perspective (South is always the user)
-  // User's team is North-South (NS)
+  // CRITICAL SCORING PERSPECTIVE LOGIC (MUST match ContractHeader.jsx):
+  // - Backend returns scores from DECLARER's perspective (positive = made, negative = went down)
+  // - User always plays South (NS team)
+  // - MUST convert to user's NS perspective for display:
+  //   * If NS declares and makes: show positive (correct)
+  //   * If NS declares and goes down: show negative (correct)
+  //   * If EW declares and makes: show NEGATIVE (we lost, so flip sign)
+  //   * If EW declares and goes down: show POSITIVE (we set them, so flip sign)
   const declarerIsNS = contract.declarer === 'N' || contract.declarer === 'S';
-
-  // Score from backend is from declarer's perspective
-  // But session scoring now correctly assigns points to the winning side:
-  // - If contract made: declarer gets positive points
-  // - If contract defeated: defenders get positive points (as penalty)
-  // For display, we show from NS perspective:
-  // - NS makes/sets: show positive score
-  // - NS goes down/lets opponents make: show negative score (their loss)
   const userScore = declarerIsNS ? score : -score;
 
   // Update breakdown to reflect user's perspective
