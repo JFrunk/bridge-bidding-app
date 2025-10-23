@@ -1,6 +1,6 @@
 # Documentation Index
 
-**Last Updated:** 2025-10-12
+**Last Updated:** 2025-10-23
 
 This document provides a quick reference to all major documentation in the project.
 
@@ -84,10 +84,12 @@ This document provides a quick reference to all major documentation in the proje
 ### Technical Documentation
 - **[PLAY_STATE_ARCHITECTURE.md](PLAY_STATE_ARCHITECTURE.md)** - State management design
 - **[PLAY_SEQUENCE_REVIEW.md](PLAY_SEQUENCE_REVIEW.md)** - Complete code review (400+ lines)
+- **[AI_PLAY_LOGGING.md](../features/AI_PLAY_LOGGING.md)** - AI performance monitoring system (2025-10-23)
 
 ### Bug Fix Documentation
 - **[FIX_CARD_DISPLAY_ISSUE.md](FIX_CARD_DISPLAY_ISSUE.md)** - Initial card display fix
 - **[FIX_AI_CARDS_NOT_SHOWING.md](FIX_AI_CARDS_NOT_SHOWING.md)** - AI card display fix
+- **[SESSION_PERSISTENCE_FIX_2025-10-23.md](../bug-fixes/SESSION_PERSISTENCE_FIX_2025-10-23.md)** - Session hand saving improvements (2025-10-23)
 
 ---
 
@@ -103,6 +105,12 @@ This document provides a quick reference to all major documentation in the proje
 ### Code Documentation
 - **[backend/README.md](backend/README.md)** - Backend architecture (if exists)
 - **[frontend/README.md](frontend/README.md)** - Frontend structure (if exists)
+
+### Recent Improvements (October 2025)
+- **[BIDDING_ENGINE_IMPROVEMENTS_2025-10-23.md](../bug-fixes/BIDDING_ENGINE_IMPROVEMENTS_2025-10-23.md)** - Bidding accuracy enhancements
+  - Advancer bids, rebids, responses improvements
+  - Blackwood, Jacoby Transfers, Michaels Cuebid refinements
+  - +204 lines across 8 files
 
 ---
 
@@ -401,5 +409,30 @@ Documentation is complete when:
 ---
 
 **Maintained by:** Claude Code (with human oversight)
-**Last Review:** 2025-10-12
-**Next Review:** After hand display verification
+**Last Review:** 2025-10-23
+**Next Review:** As needed
+
+---
+
+## 📦 Recent Deployments (October 2025)
+
+### October 23, 2025 - AI Logging & Bidding Improvements
+
+**Commit:** a0c1629
+
+**Features Added:**
+- **AI Play Logging** - Performance monitoring for DDS quality assurance
+  - See: [AI_PLAY_LOGGING.md](../features/AI_PLAY_LOGGING.md)
+
+**Bug Fixes:**
+- **Bidding Engine Improvements** - Enhanced accuracy across conventions
+  - See: [BIDDING_ENGINE_IMPROVEMENTS_2025-10-23.md](../bug-fixes/BIDDING_ENGINE_IMPROVEMENTS_2025-10-23.md)
+
+- **Session Persistence Fix** - Reliable hand saving to database
+  - See: [SESSION_PERSISTENCE_FIX_2025-10-23.md](../bug-fixes/SESSION_PERSISTENCE_FIX_2025-10-23.md)
+
+**UI/UX Improvements:**
+- **Learning Dashboard Empty State** - Better onboarding for new players
+  - See: [learning_enhancements.md](../features/learning_enhancements.md)
+
+**Files Changed:** 12 files, +665 insertions, -39 deletions
