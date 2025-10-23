@@ -22,6 +22,81 @@
   color: #666;
 }
 
+/* Empty Dashboard State for New Players */
+.empty-dashboard-state {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 16px;
+  padding: 60px 40px;
+  text-align: center;
+  margin: 20px 0 40px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.empty-dashboard-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.empty-dashboard-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 16px 0;
+}
+
+.empty-dashboard-message {
+  font-size: 18px;
+  color: #555;
+  max-width: 600px;
+  margin: 0 auto 30px auto;
+  line-height: 1.6;
+}
+
+.empty-dashboard-tips {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.tip-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 12px 0;
+}
+
+.tip-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tip-list li {
+  padding: 8px 0 8px 24px;
+  position: relative;
+  color: #555;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.tip-list li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #27ae60;
+  font-weight: bold;
+  font-size: 18px;
+}
+
 /* Stats Section */
 .stats-section {
   margin-bottom: 30px;

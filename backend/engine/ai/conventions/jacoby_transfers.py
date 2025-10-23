@@ -1,14 +1,45 @@
 from engine.hand import Hand
 from engine.ai.conventions.base_convention import ConventionModule
+from engine.bidding_validation import BidValidator, get_next_legal_bid
 from typing import Optional, Tuple, Dict
 
 class JacobyConvention(ConventionModule):
     """Complete playbook for the Jacoby Transfer convention."""
-    
+
     def get_constraints(self) -> Dict:
         return {'suit_length_req': (['♥', '♠'], 5, 'any_of')}
 
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+        """Main evaluation function with bid validation."""
+        auction_history = features.get('auction_history', [])
+
+        # Get the raw jacoby bid
+        result = self._evaluate_jacoby(hand, features)
+
+        if not result:
+            return None
+
+        bid, explanation = result
+
+        # Always pass Pass bids through
+        if bid == "Pass":
+            return result
+
+        # Validate the bid is legal
+        if BidValidator.is_legal_bid(bid, auction_history):
+            return result
+
+        # Bid is illegal - try to find next legal bid of same strain
+        next_legal = get_next_legal_bid(bid, auction_history)
+        if next_legal:
+            adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
+            return (next_legal, adjusted_explanation)
+
+        # No legal bid possible - pass
+        return None
+
+    def _evaluate_jacoby(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+        """Internal method that calculates jacoby bid without validation."""
         # Check for responder's continuation after transfer completion
         if self._is_responder_continuation_applicable(features):
             return self._get_responder_continuation(hand, features)

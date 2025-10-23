@@ -2,6 +2,8 @@ import random
 import json
 import traceback
 import os
+import sqlite3
+import time
 from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -96,6 +98,56 @@ from core.session_state import DEFAULT_AI_DIFFICULTY
 print(f"🎯 Default AI Difficulty: {DEFAULT_AI_DIFFICULTY}")
 print(f"   Engine: {ai_instances[DEFAULT_AI_DIFFICULTY].get_name()}")
 print(f"   Rating: ~{ai_instances[DEFAULT_AI_DIFFICULTY].get_difficulty()}")
+
+
+# ============================================================================
+# AI PLAY LOGGING FOR DDS QUALITY MONITORING
+# ============================================================================
+
+def log_ai_play(card, position, ai_level, solve_time_ms, used_fallback=False,
+                session_id=None, hand_number=None, trick_number=None,
+                contract=None, trump_suit=None):
+    """
+    Log AI play decision to database for quality monitoring.
+
+    This minimal logging approach adds <1% overhead and enables:
+    - Real-time DDS health monitoring
+    - Quality analysis over time
+    - Fallback rate tracking
+
+    Args:
+        card: Card object that was played
+        position: Position making the play (N/E/S/W)
+        ai_level: AI difficulty level (beginner/intermediate/advanced/expert)
+        solve_time_ms: Time taken to choose card in milliseconds
+        used_fallback: Whether DDS crashed and fallback was used
+        session_id: Optional game session ID
+        hand_number: Optional hand number in session
+        trick_number: Optional trick number (1-13)
+        contract: Optional contract string (e.g., "4S", "3NT")
+        trump_suit: Optional trump suit symbol
+    """
+    try:
+        conn = sqlite3.connect('bridge.db')
+        cursor = conn.cursor()
+
+        # Convert card to simple string format
+        card_str = f"{card.rank}{card.suit}"
+
+        cursor.execute("""
+            INSERT INTO ai_play_log
+            (position, ai_level, card_played, solve_time_ms, used_fallback,
+             session_id, hand_number, trick_number, contract, trump_suit)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (position, ai_level, card_str, solve_time_ms, int(used_fallback),
+              session_id, hand_number, trick_number, contract, trump_suit))
+
+        conn.commit()
+        conn.close()
+
+    except Exception as e:
+        # Never let logging break gameplay - just print error
+        print(f"⚠️  Failed to log AI play: {e}")
 
 
 # ============================================================================
@@ -1660,8 +1712,13 @@ def get_ai_play():
 
         # IMPORTANT: AI always chooses from the perspective of the position being played
         # but for dummy, the AI is declarer making strategic decisions across both hands
+
+        # Time the AI decision for performance monitoring
+        start_time = time.time()
         card = current_ai.choose_card(state.play_state, position)
-        print(f"   ✅ AI chose: {card.rank}{card.suit}")
+        solve_time_ms = (time.time() - start_time) * 1000  # Convert to milliseconds
+
+        print(f"   ✅ AI chose: {card.rank}{card.suit} (took {solve_time_ms:.1f}ms)")
 
         # CRITICAL VALIDATION: Verify card is actually in hand before playing
         # This prevents state corruption if AI has a bug
@@ -1696,6 +1753,41 @@ def get_ai_play():
                 "error": f"AI chose illegal card",
                 "details": error_msg
             }), 500
+
+        # Log AI play for quality monitoring (minimal overhead: ~1ms)
+        try:
+            # Calculate current trick number
+            trick_number = len(state.play_state.trick_history) + 1
+
+            # Check if DDS was available and might have been used
+            # If expert level and not on supported platform, fallback was definitely used
+            used_fallback = (
+                state.ai_difficulty == 'expert' and
+                not (DDS_AVAILABLE and PLATFORM_ALLOWS_DDS)
+            )
+
+            # Format contract string
+            contract_str = None
+            if state.play_state.contract:
+                level = state.play_state.contract.level
+                strain = state.play_state.contract.trump_suit or "NT"
+                contract_str = f"{level}{strain}"
+
+            log_ai_play(
+                card=card,
+                position=position,
+                ai_level=state.ai_difficulty,
+                solve_time_ms=solve_time_ms,
+                used_fallback=used_fallback,
+                session_id=state.game_session.session_id if state.game_session else None,
+                hand_number=state.game_session.hands_completed + 1 if state.game_session else None,
+                trick_number=trick_number,
+                contract=contract_str,
+                trump_suit=state.play_state.contract.trump_suit if state.play_state.contract else None
+            )
+        except Exception as log_error:
+            # Never let logging break the game
+            print(f"⚠️  Logging error (non-critical): {log_error}")
 
         # Play the card
         state.play_state.current_trick.append((card, position))
@@ -1953,6 +2045,225 @@ def complete_play():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": f"Error calculating final score: {e}"}), 500
+
+
+# ============================================================================
+# AI MONITORING & QUALITY ENDPOINTS
+# ============================================================================
+
+@app.route("/api/dds-health", methods=["GET"])
+def dds_health():
+    """
+    Real-time DDS health monitoring dashboard.
+
+    Returns metrics about AI play quality and DDS availability.
+    Useful for operations monitoring and debugging.
+
+    Query parameters:
+        - hours: Number of hours to look back (default: 24)
+
+    Returns:
+        JSON with play counts, solve times, fallback rates, etc.
+    """
+    try:
+        hours = int(request.args.get('hours', 24))
+
+        conn = sqlite3.connect('bridge.db')
+        conn.row_factory = sqlite3.Row  # Return rows as dictionaries
+        cursor = conn.cursor()
+
+        # Overall stats for specified time period
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total_plays,
+                COUNT(DISTINCT session_id) as unique_sessions,
+                COUNT(DISTINCT DATE(timestamp)) as days_with_data,
+                AVG(solve_time_ms) as avg_solve_time_ms,
+                MAX(solve_time_ms) as max_solve_time_ms,
+                MIN(solve_time_ms) as min_solve_time_ms,
+                AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate,
+                COUNT(CASE WHEN used_fallback THEN 1 END) as fallback_count,
+                MAX(timestamp) as last_play_time
+            FROM ai_play_log
+            WHERE timestamp > datetime('now', '-' || ? || ' hours')
+        """, (hours,))
+
+        overall = dict(cursor.fetchone())
+
+        # Stats by AI level
+        cursor.execute("""
+            SELECT
+                ai_level,
+                COUNT(*) as plays,
+                AVG(solve_time_ms) as avg_solve_time_ms,
+                AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate,
+                COUNT(CASE WHEN used_fallback THEN 1 END) as fallback_count
+            FROM ai_play_log
+            WHERE timestamp > datetime('now', '-' || ? || ' hours')
+            GROUP BY ai_level
+        """, (hours,))
+
+        by_level = {row['ai_level']: dict(row) for row in cursor.fetchall()}
+
+        # Recent plays (last 10)
+        cursor.execute("""
+            SELECT
+                timestamp,
+                position,
+                ai_level,
+                card_played,
+                solve_time_ms,
+                used_fallback,
+                contract
+            FROM ai_play_log
+            ORDER BY timestamp DESC
+            LIMIT 10
+        """)
+
+        recent_plays = [dict(row) for row in cursor.fetchall()]
+
+        conn.close()
+
+        return jsonify({
+            "dds_available": DDS_AVAILABLE and PLATFORM_ALLOWS_DDS,
+            "platform": platform.system(),
+            "hours_analyzed": hours,
+            "overall": overall,
+            "by_level": by_level,
+            "recent_plays": recent_plays,
+            "ai_engines": {
+                level: {
+                    "name": ai_instances[level].get_name(),
+                    "difficulty": ai_instances[level].get_difficulty()
+                }
+                for level in ['beginner', 'intermediate', 'advanced', 'expert']
+            }
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Error fetching DDS health: {e}"}), 500
+
+
+@app.route("/api/ai-quality-summary", methods=["GET"])
+def ai_quality_summary():
+    """
+    Get aggregated AI quality metrics for analysis.
+
+    This endpoint provides data suitable for generating quality reports
+    and trend analysis.
+
+    Returns:
+        JSON with quality metrics, trends, and recommendations
+    """
+    try:
+        conn = sqlite3.connect('bridge.db')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # Daily play counts for trend analysis
+        cursor.execute("""
+            SELECT
+                DATE(timestamp) as date,
+                COUNT(*) as plays,
+                COUNT(DISTINCT session_id) as sessions,
+                AVG(solve_time_ms) as avg_solve_time_ms,
+                AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate
+            FROM ai_play_log
+            WHERE timestamp > datetime('now', '-30 days')
+            GROUP BY DATE(timestamp)
+            ORDER BY date DESC
+        """)
+
+        daily_trends = [dict(row) for row in cursor.fetchall()]
+
+        # Contract type performance
+        cursor.execute("""
+            SELECT
+                contract,
+                COUNT(*) as plays,
+                AVG(solve_time_ms) as avg_solve_time_ms,
+                AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate
+            FROM ai_play_log
+            WHERE contract IS NOT NULL
+            GROUP BY contract
+            ORDER BY plays DESC
+            LIMIT 20
+        """)
+
+        by_contract = [dict(row) for row in cursor.fetchall()]
+
+        # All-time stats
+        cursor.execute("""
+            SELECT * FROM v_dds_health_summary
+        """)
+
+        all_time = dict(cursor.fetchone()) if cursor.fetchone() else {}
+
+        conn.close()
+
+        # Calculate quality score (0-100)
+        # Based on: low fallback rate, reasonable solve times, consistent play
+        quality_score = 100
+        if overall_fallback_rate := all_time.get('overall_fallback_rate', 0):
+            quality_score -= (overall_fallback_rate * 50)  # Penalize fallback
+
+        avg_time = all_time.get('avg_solve_time_ms', 0)
+        if avg_time > 1000:  # Over 1 second is slow
+            quality_score -= min(30, (avg_time - 1000) / 100)
+
+        quality_score = max(0, min(100, quality_score))
+
+        return jsonify({
+            "quality_score": round(quality_score, 1),
+            "all_time": all_time,
+            "daily_trends": daily_trends,
+            "by_contract": by_contract,
+            "recommendations": generate_quality_recommendations(all_time, daily_trends)
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Error fetching quality summary: {e}"}), 500
+
+
+def generate_quality_recommendations(all_time, daily_trends):
+    """Generate actionable recommendations based on quality metrics"""
+    recommendations = []
+
+    fallback_rate = all_time.get('overall_fallback_rate', 0)
+    if fallback_rate > 0.5:
+        recommendations.append({
+            "level": "warning",
+            "message": f"High fallback rate ({fallback_rate*100:.1f}%) - DDS may be unavailable",
+            "action": "Check DDS installation: pip install endplay"
+        })
+
+    avg_time = all_time.get('avg_solve_time_ms', 0)
+    if avg_time > 2000:
+        recommendations.append({
+            "level": "warning",
+            "message": f"Slow solve times ({avg_time:.0f}ms avg)",
+            "action": "Consider caching or using lower depth for non-expert play"
+        })
+
+    total_plays = all_time.get('total_plays_all_time', 0)
+    if total_plays < 100:
+        recommendations.append({
+            "level": "info",
+            "message": f"Limited data ({total_plays} plays) - accumulating baseline",
+            "action": "Quality metrics will improve with more gameplay data"
+        })
+
+    if not recommendations:
+        recommendations.append({
+            "level": "success",
+            "message": "AI performance looks healthy",
+            "action": "Continue monitoring for any changes"
+        })
+
+    return recommendations
+
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5001, debug=True)

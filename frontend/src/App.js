@@ -870,32 +870,74 @@ Please provide a detailed analysis of the auction and identify any bidding error
   };
 
   const handleCloseScore = async () => {
-    // Complete hand in session if we have session data
-    if (sessionData && sessionData.active && scoreData) {
+    // Always try to save the hand if we have score data
+    if (scoreData) {
       try {
-        const response = await fetch(`${API_URL}/api/session/complete-hand`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-          body: JSON.stringify({
-            score_data: scoreData,
-            auction_history: auction.map(a => a.bid)
-          })
+        console.log('💾 Attempting to save hand to session...');
+        console.log('Current state:', {
+          hasSessionData: !!sessionData,
+          sessionActive: sessionData?.active,
+          hasScoreData: !!scoreData
         });
 
-        if (response.ok) {
-          const result = await response.json();
-          setSessionData({ active: true, session: result.session });
+        // Check current session status to ensure we have an active session
+        const sessionStatusResponse = await fetch(`${API_URL}/api/session/status`, {
+          headers: { ...getSessionHeaders() }
+        });
 
-          if (result.session_complete) {
-            setDisplayedMessage(`Session complete! Winner: ${result.winner}`);
+        if (sessionStatusResponse.ok) {
+          const currentSession = await sessionStatusResponse.json();
+          console.log('Session status:', currentSession);
+
+          if (currentSession.active) {
+            // Save the hand to session_hands table
+            const response = await fetch(`${API_URL}/api/session/complete-hand`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+              body: JSON.stringify({
+                score_data: scoreData,
+                auction_history: auction.map(a => a.bid)
+              })
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+              console.log('✅ Hand saved successfully to database');
+              console.log('Session updated:', result.session);
+              setSessionData({ active: true, session: result.session });
+
+              if (result.session_complete) {
+                setDisplayedMessage(`Session complete! Winner: ${result.winner}`);
+              } else {
+                // Update dealer and vulnerability for next hand
+                setVulnerability(result.session.vulnerability);
+              }
+            } else {
+              const errorText = await response.text();
+              console.error('❌ Failed to save hand:', errorText);
+            }
           } else {
-            // Update dealer and vulnerability for next hand
-            setVulnerability(result.session.vulnerability);
+            console.warn('⚠️ No active session - hand not saved. Starting new session...');
+            // Try to start a new session
+            const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+              body: JSON.stringify({ user_id: 1, session_type: 'chicago' })
+            });
+            if (sessionResponse.ok) {
+              const newSession = await sessionResponse.json();
+              setSessionData(newSession);
+              console.log('✅ New session started');
+            }
           }
+        } else {
+          console.error('❌ Failed to check session status');
         }
       } catch (err) {
-        console.error('Failed to update session:', err);
+        console.error('❌ Error saving hand to session:', err);
       }
+    } else {
+      console.warn('⚠️ No score data available - cannot save hand');
     }
 
     setScoreData(null);

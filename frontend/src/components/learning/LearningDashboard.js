@@ -86,6 +86,11 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
 
   const { user_stats, gameplay_stats, bidding_feedback_stats, recent_decisions, insights, pending_celebrations, practice_recommendations } = dashboardData;
 
+  // Check if user has any meaningful data
+  const hasGameplayData = gameplay_stats && gameplay_stats.total_hands_played > 0;
+  const hasBiddingData = bidding_feedback_stats && bidding_feedback_stats.total_decisions > 0;
+  const hasAnyData = hasGameplayData || hasBiddingData || (recent_decisions && recent_decisions.length > 0);
+
   return (
     <div className="learning-dashboard">
       {/* Header */}
@@ -96,24 +101,43 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
         </p>
       </div>
 
-      {/* Bidding Stats Bar */}
-      {user_stats && (
+      {/* Show welcome message for new players */}
+      {!hasAnyData && (
+        <div className="empty-dashboard-state">
+          <div className="empty-dashboard-icon">🎯</div>
+          <h3 className="empty-dashboard-title">Welcome to Bridge Learning!</h3>
+          <p className="empty-dashboard-message">
+            Start playing hands to see your progress here. Your stats, achievements, and personalized recommendations will appear as you practice.
+          </p>
+          <div className="empty-dashboard-tips">
+            <p className="tip-title">💡 Tips to get started:</p>
+            <ul className="tip-list">
+              <li>Complete the bidding phase to track your bidding decisions</li>
+              <li>Play through hands as declarer to build your gameplay stats</li>
+              <li>Your dashboard will update automatically after each hand</li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Bidding Stats Bar - only show if has data */}
+      {user_stats && hasBiddingData && (
         <div className="stats-section">
           <h3 className="stats-section-title">Bidding</h3>
           <BiddingStatsBar stats={user_stats} />
         </div>
       )}
 
-      {/* Gameplay Stats Bar */}
-      {gameplay_stats && (
+      {/* Gameplay Stats Bar - only show if has data */}
+      {gameplay_stats && hasGameplayData && (
         <div className="stats-section">
           <h3 className="stats-section-title">Gameplay</h3>
           <GameplayStatsBar stats={gameplay_stats} />
         </div>
       )}
 
-      {/* Bidding Quality Bar (Phase 1: NEW) */}
-      {bidding_feedback_stats && (
+      {/* Bidding Quality Bar (Phase 1: NEW) - only show if has data */}
+      {bidding_feedback_stats && hasBiddingData && (
         <div className="stats-section">
           <h3 className="stats-section-title">Bidding Quality</h3>
           <BiddingQualityBar stats={bidding_feedback_stats} />

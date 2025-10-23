@@ -20,8 +20,8 @@ from engine.ai.conventions.blackwood import BlackwoodConvention
 # Configuration
 DEAL_COUNT = 100  # Number of hands to simulate
 SCENARIO_COUNT = 10  # Number of scenario-based hands
-OUTPUT_JSON = "simulation_results.json"
-OUTPUT_TEXT = "simulation_results.txt"
+OUTPUT_JSON = "simulation_results_final.json"
+OUTPUT_TEXT = "simulation_results_final.txt"
 
 CONVENTION_MAP = {
     "Preempt": PreemptConvention(),

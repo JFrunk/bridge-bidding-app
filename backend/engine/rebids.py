@@ -1,5 +1,6 @@
 from engine.hand import Hand
 from engine.ai.conventions.base_convention import ConventionModule
+from engine.bidding_validation import BidValidator, get_next_legal_bid
 from typing import Optional, Tuple, Dict
 
 class RebidModule(ConventionModule):
@@ -36,7 +37,36 @@ class RebidModule(ConventionModule):
         return self.SUIT_RANK.get(rebid_suit, 0) > self.SUIT_RANK.get(opening_suit, 0)
 
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
-        """Main entry point for all opener rebid actions."""
+        """Main entry point for all opener rebid actions with bid validation."""
+        auction_history = features['auction_history']
+
+        # Get the raw rebid suggestion
+        result = self._evaluate_rebid(hand, features)
+
+        if not result:
+            return ("Pass", "No rebid found.")
+
+        bid, explanation = result
+
+        # Always pass Pass bids through
+        if bid == "Pass":
+            return result
+
+        # Validate the bid is legal
+        if BidValidator.is_legal_bid(bid, auction_history):
+            return result
+
+        # Bid is illegal - try to find next legal bid of same strain
+        next_legal = get_next_legal_bid(bid, auction_history)
+        if next_legal:
+            adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
+            return (next_legal, adjusted_explanation)
+
+        # No legal bid possible - pass
+        return None
+
+    def _evaluate_rebid(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+        """Internal method that calculates rebid without validation."""
         auction_history = features['auction_history']
         partner_response = features['auction_features']['partner_last_bid']
         my_opening_bid = features['auction_features']['opening_bid']

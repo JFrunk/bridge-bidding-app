@@ -1,6 +1,7 @@
 from engine.hand import Hand
 from engine.ai.conventions.base_convention import ConventionModule
 from engine.ai.bid_explanation import BidExplanation
+from engine.bidding_validation import BidValidator, get_next_legal_bid
 from typing import Optional, Tuple, Dict, Union
 
 class ResponseModule(ConventionModule):
@@ -8,6 +9,36 @@ class ResponseModule(ConventionModule):
     Playbook for all of the responder's natural bids, based on the user's flowcharts.
     """
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+        """Main entry point for response actions with bid validation."""
+        auction_history = features['auction_history']
+
+        # Get the raw response suggestion
+        result = self._evaluate_response(hand, features)
+
+        if not result:
+            return None
+
+        bid, explanation = result
+
+        # Always pass Pass bids through
+        if bid == "Pass":
+            return result
+
+        # Validate the bid is legal
+        if BidValidator.is_legal_bid(bid, auction_history):
+            return result
+
+        # Bid is illegal - try to find next legal bid of same strain
+        next_legal = get_next_legal_bid(bid, auction_history)
+        if next_legal:
+            adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
+            return (next_legal, adjusted_explanation)
+
+        # No legal bid possible - pass
+        return None
+
+    def _evaluate_response(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+        """Internal method that calculates response without validation."""
         auction = features['auction_features']
         opening_bid = auction.get('opening_bid')
         opener_index = auction.get('opener_index', -1)

@@ -1,5 +1,6 @@
 from engine.hand import Hand
 from engine.ai.conventions.base_convention import ConventionModule
+from engine.bidding_validation import BidValidator, get_next_legal_bid
 from typing import Optional, Tuple, Dict
 
 class MichaelsCuebidConvention(ConventionModule):
@@ -15,16 +16,36 @@ class MichaelsCuebidConvention(ConventionModule):
     """
 
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
-        """
-        Evaluate if Michaels Cuebid applies.
+        """Main evaluation function with bid validation."""
+        auction_history = features.get('auction_history', [])
 
-        Args:
-            hand: The hand to evaluate
-            features: Auction features including opponent's opening
+        # Get the raw michaels bid
+        result = self._evaluate_michaels(hand, features)
 
-        Returns:
-            (bid, explanation) or None
-        """
+        if not result:
+            return None
+
+        bid, explanation = result
+
+        # Always pass Pass bids through
+        if bid == "Pass":
+            return result
+
+        # Validate the bid is legal
+        if BidValidator.is_legal_bid(bid, auction_history):
+            return result
+
+        # Bid is illegal - try to find next legal bid of same strain
+        next_legal = get_next_legal_bid(bid, auction_history)
+        if next_legal:
+            adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
+            return (next_legal, adjusted_explanation)
+
+        # No legal bid possible - pass
+        return None
+
+    def _evaluate_michaels(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+        """Internal method that calculates michaels bid without validation."""
         auction = features['auction_features']
 
         # Must be competitive auction (opponent opened)

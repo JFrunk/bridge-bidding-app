@@ -105,13 +105,13 @@ class BiddingFeedback:
             return msg
 
         elif self.correctness == CorrectnessLevel.SUBOPTIMAL:
-            msg = f"⚠️ {self.optimal_bid} would be better than {self.user_bid}."
+            msg = f"✗ {self.optimal_bid} would be better than {self.user_bid}."
             if verbosity != "minimal":
                 msg += f"\n\n{self.helpful_hint}"
             return msg
 
         else:  # ERROR
-            msg = f"❌ {self.user_bid} is not recommended here."
+            msg = f"✗ {self.user_bid} is not recommended here."
             msg += f"\n\nBetter bid: {self.optimal_bid}"
             if verbosity != "minimal":
                 msg += f"\n\n{self.helpful_hint}"
