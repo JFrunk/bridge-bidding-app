@@ -1033,6 +1033,7 @@ def get_all_hands():
                 if not hand:
                     return jsonify({'error': f'Hand for {position} not available'}), 400
 
+                print(f"🔍 {position}: {len(hand.cards)} cards - {hand.cards}")
                 hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
                 points_for_json = {
                     'hcp': hand.hcp,

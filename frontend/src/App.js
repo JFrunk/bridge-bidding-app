@@ -36,6 +36,10 @@ function PlayerHand({ position, hand, points, vulnerability }) {
 
   // For East/West: arrange hand analysis beside cards (West: left, East: right)
   if (isVertical) {
+    // Debug logging
+    console.log(`${position} hand:`, hand);
+    console.log(`${position} total cards:`, hand?.length);
+
     return (
       <div className={`player-hand player-${position.toLowerCase()}`}>
         <h3>{position}</h3>
@@ -46,6 +50,7 @@ function PlayerHand({ position, hand, points, vulnerability }) {
           <div className="hand-display">
             {suitOrder.map((suit, suitIndex) => {
               const suitCards = hand?.filter(card => card && card.suit === suit) || [];
+              console.log(`${position} ${suit}:`, suitCards.length, 'cards', suitCards.map(c => c.rank).join(' '));
               return (
                 <div key={suit} className="suit-group">
                   {suitCards.map((card, cardIndex) => {
