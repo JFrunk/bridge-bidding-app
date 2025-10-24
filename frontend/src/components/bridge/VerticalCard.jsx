@@ -65,20 +65,20 @@ export function VerticalCard({ rank, suit, onClick, disabled = false, className,
       {/* Top-left corner - ONLY visible indicator when overlapped
           Rank on left, suit on right - horizontally aligned */}
       <div className={cn(
-        "absolute top-0.5 left-1 leading-none flex flex-row items-start gap-0.5",
+        "absolute top-1 left-1.5 leading-none flex flex-row items-start gap-0.5",
         suitColor
       )}>
-        <span className="text-2xl font-bold leading-none">{displayRank}</span>
-        <span className="text-lg leading-none mt-0.5">{suit}</span>
+        <span className="text-lg font-bold leading-none">{displayRank}</span>
+        <span className="text-base leading-none mt-0.5">{suit}</span>
       </div>
 
       {/* Bottom-right corner - mirror of top-left, rotated 180° */}
       <div className={cn(
-        "absolute bottom-0.5 right-1 leading-none flex flex-row items-start gap-0.5 rotate-180",
+        "absolute bottom-1 right-1.5 leading-none flex flex-row items-start gap-0.5 rotate-180",
         suitColor
       )}>
-        <span className="text-2xl font-bold leading-none">{displayRank}</span>
-        <span className="text-lg leading-none mt-0.5">{suit}</span>
+        <span className="text-lg font-bold leading-none">{displayRank}</span>
+        <span className="text-base leading-none mt-0.5">{suit}</span>
       </div>
 
       {/* Center suit symbol - large and prominent, visible when card is hovered/selected */}
