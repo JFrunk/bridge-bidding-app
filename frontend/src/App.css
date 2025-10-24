@@ -423,6 +423,44 @@ body {
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
+/* ========================================
+   ADJUSTABLE VARIABLES FOR EAST/WEST POSITIONING
+   Edit these values to control positioning:
+   ======================================== */
+.player-east {
+  /* East hand analysis positioning */
+  --east-analysis-margin-left: -205px;  /* Negative = move LEFT (inward) */
+  --east-analysis-margin-right: 5px;    /* Space from cards */
+
+  /* East card display positioning - use translateX for movement */
+  --east-cards-translateX: -50px;       /* Negative = move left, Positive = move right */
+  --east-cards-margin-left: -75px;      /* Keep at 0 */
+  --east-cards-margin-right: 20px;      /* Keep at 0 */
+}
+
+.player-west {
+  /* West hand analysis positioning */
+  --west-analysis-margin-left: 5px;     /* Space from cards */
+  --west-analysis-margin-right: -205px; /* Negative = move RIGHT (inward) */
+
+  /* West card display positioning - use translateX for movement */
+  --west-cards-translateX: 50px;        /* Negative = move left, Positive = move right */
+  --west-cards-margin-left: 20px;       /* Keep at 0 */
+  --west-cards-margin-right: -75px;     /* Keep at 0 */
+}
+
+/* Extra padding for East/West to accommodate rotated content */
+.player-east,
+.player-west {
+  padding: 20px 15px; /* Reduced horizontal padding */
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: visible; /* Allow content to be visible */
+}
+
 .player-hand h3 {
   margin: 0 0 10px 0;
   text-align: center;
@@ -434,34 +472,69 @@ body {
 .vertical-hand-container {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
-  gap: 15px;
+  align-items: center;
+  gap: 12px;
   justify-content: center;
+  min-height: 450px; /* Ensure enough height for rotated cards */
+  padding: 30px 10px; /* Padding for spacing within border */
+  position: relative;
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
 }
 
-/* Hand analysis styling for East/West vertical layout */
+/* Hand analysis styling for East/West vertical layout - match N/S styling */
 .player-east .hand-analysis,
 .player-west .hand-analysis {
   flex-shrink: 0;
-  max-width: 180px;
-  font-size: 0.9em;
+  width: 140px; /* Wider to accommodate readable text */
+  padding: 15px; /* Same as N/S */
+  background-color: rgba(0, 0, 0, 0.2); /* Same transparency as N/S */
+  border-radius: 8px;
+  font-size: 1em; /* Same base font size as N/S */
+  line-height: 1.5;
+}
+
+/* East: move hand analysis to the left (inside the frame) - USES VARIABLES */
+.player-east .hand-analysis {
+  margin-right: var(--east-analysis-margin-right);
+  margin-left: var(--east-analysis-margin-left);
+}
+
+/* West: move hand analysis to the right (inside the frame) - USES VARIABLES */
+.player-west .hand-analysis {
+  margin-left: var(--west-analysis-margin-left);
+  margin-right: var(--west-analysis-margin-right);
 }
 
 .player-east .hand-analysis h4,
 .player-west .hand-analysis h4 {
-  font-size: 0.95em;
+  margin-top: 0;
   margin-bottom: 8px;
+  text-align: center;
+  font-size: 1em; /* Match N/S */
 }
 
 .player-east .hand-analysis p,
 .player-west .hand-analysis p {
   margin: 5px 0;
-  font-size: 0.85em;
+  font-size: 1em; /* Match N/S */
+  text-align: center;
 }
 
+/* Stack suit points vertically for E/W to save horizontal space */
 .player-east .suit-points,
 .player-west .suit-points {
-  font-size: 0.9em;
+  display: flex;
+  flex-direction: column; /* Stack vertically */
+  font-size: 14px; /* Slightly smaller to fit */
+  margin-top: 10px;
+  gap: 4px;
+}
+
+.player-east .suit-points > div,
+.player-west .suit-points > div {
+  text-align: left;
+  padding: 2px 0;
 }
 
 .player-north .hand-display {
@@ -472,58 +545,68 @@ body {
   flex-direction: row;
 }
 
-/* East/West hand display - Single vertical column (continuous, no gaps) */
-.player-east .hand-display,
-.player-west .hand-display {
+/* East/West vertical hands - rotate entire display box 90 degrees clockwise - USES VARIABLES */
+.player-east .hand-display {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 0;
-  max-width: 100px;
+  justify-content: center;
   padding: 10px;
   background-color: rgba(97, 218, 251, 0.1);
   border-radius: 8px;
   border: 2px solid rgba(97, 218, 251, 0.3);
+  width: 410px;
+  height: 100px;
+  transform: translateX(var(--east-cards-translateX)) rotate(90deg);
+  transform-origin: center center;
+  flex-shrink: 0;
+  margin-left: var(--east-cards-margin-left);
+  margin-right: var(--east-cards-margin-right);
 }
 
-/* East/West suit groups - vertical column (continuous flow) */
+.player-west .hand-display {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background-color: rgba(97, 218, 251, 0.1);
+  border-radius: 8px;
+  border: 2px solid rgba(97, 218, 251, 0.3);
+  width: 410px;
+  height: 100px;
+  transform: translateX(var(--west-cards-translateX)) rotate(90deg);
+  transform-origin: center center;
+  flex-shrink: 0;
+  margin-left: var(--west-cards-margin-left);
+  margin-right: var(--west-cards-margin-right);
+}
+
+/* Suit groups stack cards horizontally (cards are rotated 90deg) */
 .player-east .suit-group,
 .player-west .suit-group {
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* Horizontal stacking of rotated cards */
   align-items: center;
-  padding: 0;
-  gap: 0;
-  background-color: transparent;
+  justify-content: flex-start;
+  margin: 0; /* Remove any margin between suit groups */
+  padding: 0; /* Remove any padding between suit groups */
+  gap: 0; /* Remove any gap between cards in different suits */
 }
 
-/* East/West cards - vertical overlap showing full top corner */
-.player-east .suit-group .bridge-card,
-.player-west .suit-group .bridge-card,
+/* Override default card overlap rules for East/West - inline styles control overlap */
 .player-east .suit-group > div,
 .player-west .suit-group > div {
-  margin-left: 0 !important; /* Force no horizontal margin */
-  margin-top: -60px; /* Overlap to show ~40px of card (full top corner: rank + suit + white space) */
-  margin-right: 0;
-  margin-bottom: 0;
+  margin-left: 0; /* Reset - inline styles will apply the correct overlap */
 }
 
-/* First card in first suit - no top margin */
-.player-east .hand-display .suit-group:first-child .bridge-card:first-child,
-.player-west .hand-display .suit-group:first-child .bridge-card:first-child,
-.player-east .hand-display .suit-group:first-child > div:first-child,
-.player-west .hand-display .suit-group:first-child > div:first-child {
-  margin-top: 0;
-}
-
-/* First card of subsequent suits - continuous (no gap) */
-.player-east .hand-display .suit-group:not(:first-child) .bridge-card:first-child,
-.player-west .hand-display .suit-group:not(:first-child) .bridge-card:first-child,
 .player-east .hand-display .suit-group:not(:first-child) > div:first-child,
 .player-west .hand-display .suit-group:not(:first-child) > div:first-child {
-  margin-left: 0 !important; /* Force no horizontal margin */
-  margin-top: -60px;
+  margin-left: 0; /* Reset - inline styles will apply the correct overlap */
 }
+
+/* Vertical cards overlap handled by inline styles in React */
+/* Note: Cards are rotated 90deg, so horizontal negative margin creates vertical overlap effect */
 
 /* AI Review Controls */
 .ai-review-controls {

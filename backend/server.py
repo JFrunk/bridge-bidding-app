@@ -992,6 +992,11 @@ def get_all_hands():
     # Get session state for this request
     state = get_state()
     try:
+        # Check if a deal exists
+        if not state.deal or not isinstance(state.deal, dict):
+            print("⚠️ get_all_hands: No deal available yet")
+            return jsonify({'error': 'No deal available. Please deal a new hand first.'}), 400
+
         all_hands = {}
 
         # CRITICAL FIX: During play phase, use play_state.hands (which contains current cards)
@@ -1041,6 +1046,7 @@ def get_all_hands():
                     'points': points_for_json
                 }
 
+        print(f"✅ get_all_hands: Successfully returning {len(all_hands)} hands")
         return jsonify({
             'hands': all_hands,
             'vulnerability': state.vulnerability

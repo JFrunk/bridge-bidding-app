@@ -20,8 +20,9 @@ import { cn } from "../../lib/utils";
  * @param {function} props.onClick - Optional click handler
  * @param {boolean} props.disabled - If true, card is not clickable
  * @param {string} props.className - Additional Tailwind classes
+ * @param {Object} props.style - Inline styles (e.g., for margin/overlap)
  */
-export function VerticalCard({ rank, suit, onClick, disabled = false, className }) {
+export function VerticalCard({ rank, suit, onClick, disabled = false, className, style }) {
   // Determine suit color (red for hearts/diamonds, black for spades/clubs)
   const suitColor = suit === '♥' || suit === '♦' ? 'text-suit-red' : 'text-suit-black';
 
@@ -35,18 +36,21 @@ export function VerticalCard({ rank, suit, onClick, disabled = false, className 
   return (
     <div
       className={cn(
-        // Base styles - minimal border/shadow for smooth vertical stacking
+        // Base styles - same size as BridgeCard for consistency
         "relative w-[70px] h-[100px] bg-white rounded-card",
-        "border-t border-l border-r border-gray-400", // Top, left, right borders only
-        "shadow-sm", // Lighter shadow
+        "border border-gray-400", // Full border like BridgeCard
+        "shadow-md", // Same shadow as BridgeCard
+        // Rotate each card 90 degrees counter-clockwise for vertical display
+        "-rotate-90",
         // Hover effect (only if clickable) - lift card up to show it fully
         "transition-transform duration-200",
-        isClickable && "cursor-pointer hover:-translate-y-4 hover:z-50 hover:shadow-md hover:border",
+        isClickable && "cursor-pointer hover:-translate-y-4 hover:z-50 hover:shadow-md",
         // Disabled state
         disabled && "cursor-not-allowed",
         // Allow custom classes
         className
       )}
+      style={style}
       onClick={!disabled ? onClick : undefined}
       role={isClickable ? "button" : undefined}
       aria-label={`${displayRank} of ${suit === '♠' ? 'Spades' : suit === '♥' ? 'Hearts' : suit === '♦' ? 'Diamonds' : 'Clubs'}`}

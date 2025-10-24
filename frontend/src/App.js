@@ -30,7 +30,7 @@ function PlayerHand({ position, hand, points, vulnerability }) {
   const suitOrder = getSuitOrder(null);
   if (!suitOrder || !Array.isArray(suitOrder)) return null;
 
-  // Use VerticalCard component for East/West positions (optimized for heavy overlapping)
+  // Use VerticalCard component for East/West positions
   const isVertical = position === 'East' || position === 'West';
   const CardComponent = isVertical ? VerticalCard : BridgeCard;
 
@@ -44,17 +44,34 @@ function PlayerHand({ position, hand, points, vulnerability }) {
           {position === 'West' && <HandAnalysis points={points} vulnerability={vulnerability} />}
 
           <div className="hand-display">
-            {suitOrder.map(suit => (
-              <div key={suit} className="suit-group">
-                {hand.filter(card => card && card.suit === suit).map((card, index) => (
-                  <CardComponent
-                    key={`${suit}-${index}`}
-                    rank={card.rank}
-                    suit={card.suit}
-                  />
-                ))}
-              </div>
-            ))}
+            {suitOrder.map((suit, suitIndex) => {
+              const suitCards = hand?.filter(card => card && card.suit === suit) || [];
+              return (
+                <div key={suit} className="suit-group">
+                  {suitCards.map((card, cardIndex) => {
+                    // Calculate absolute card index across all suits
+                    const cardsBeforeThisSuit = suitOrder.slice(0, suitIndex).reduce((total, s) => {
+                      return total + (hand?.filter(c => c && c.suit === s).length || 0);
+                    }, 0);
+                    const absoluteIndex = cardsBeforeThisSuit + cardIndex;
+
+                    // Apply 65% overlap for rotated cards: use marginLeft for horizontal stacking
+                    // Since cards are rotated 90deg, horizontal negative margin creates vertical appearance
+                    // 65% of 70px = 46px overlap, leaving 24px visible per card
+                    const inlineStyle = absoluteIndex === 0 ? {} : { marginLeft: '-46px' };
+
+                    return (
+                      <CardComponent
+                        key={`${suit}-${cardIndex}`}
+                        rank={card.rank}
+                        suit={card.suit}
+                        style={inlineStyle}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
 
           {/* East: cards on left, analysis on right */}
@@ -215,20 +232,38 @@ function App() {
 
   const fetchAllHands = async () => {
     try {
+      console.log('📡 Fetching from:', `${API_URL}/api/get-all-hands`);
       const response = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
-      if (!response.ok) throw new Error("Failed to fetch all hands.");
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ Fetch failed with status:', response.status, 'Error:', errorData);
+
+        // Show user-friendly error message
+        if (response.status === 400 && errorData.error) {
+          setError(errorData.error);
+        } else {
+          setError("Failed to fetch all hands.");
+        }
+        return;
+      }
       const data = await response.json();
+      console.log('✅ Received all hands data:', data);
       setAllHands(data.hands);
+      console.log('✅ allHands state updated with:', data.hands);
     } catch (err) {
+      console.error('❌ Error fetching all hands:', err);
       setError("Could not fetch all hands from server.");
     }
   };
 
   const handleShowHandsThisDeal = async () => {
+    console.log('🔵 handleShowHandsThisDeal clicked, current state:', showHandsThisDeal);
     if (!showHandsThisDeal) {
+      console.log('📡 Fetching all hands...');
       await fetchAllHands();
     }
     setShowHandsThisDeal(!showHandsThisDeal);
+    console.log('🔵 showHandsThisDeal toggled to:', !showHandsThisDeal);
   };
 
   const handleToggleAlwaysShowHands = async () => {
@@ -1645,6 +1680,17 @@ Please provide a detailed analysis of the auction and identify any bidding error
   }, [gamePhase, isPlayingCard, vulnerability]);
 
   const shouldShowHands = showHandsThisDeal || alwaysShowHands;
+
+  // Debug logging for card display
+  useEffect(() => {
+    console.log('🎨 Render state:', {
+      shouldShowHands,
+      showHandsThisDeal,
+      alwaysShowHands,
+      allHandsExists: !!allHands,
+      allHandsKeys: allHands ? Object.keys(allHands) : null
+    });
+  }, [shouldShowHands, showHandsThisDeal, alwaysShowHands, allHands]);
 
   // User menu component
   const UserMenu = () => {
