@@ -164,11 +164,16 @@ class TestCompetitiveAuctions:
 
         # Initial balance should be reasonable
         if bid != 'Pass':
-            level = int(bid[0])
-            assert level <= 2, (
-                f"Balancing with 11 HCP bid {bid}! "
-                f"Should balance at 1 or 2 level."
-            )
+            # Handle doubles (X, XX) and regular bids
+            if bid in ['X', 'XX']:
+                # Doubles are acceptable in balancing seat
+                pass
+            else:
+                level = int(bid[0])
+                assert level <= 2, (
+                    f"Balancing with 11 HCP bid {bid}! "
+                    f"Should balance at 1 or 2 level."
+                )
 
     # Helper methods
 
