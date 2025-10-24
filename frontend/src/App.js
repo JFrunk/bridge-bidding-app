@@ -452,6 +452,8 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       // Transition to play phase
       setGamePhase('playing');
+      setShowHandsThisDeal(false);  // Hide all hands when transitioning to play
+      setAllHands(null);  // Clear all hands data
       setDisplayedMessage(`Contract: ${data.contract}. Opening leader: ${data.opening_leader}`);
 
       // Start AI play loop
@@ -1023,6 +1025,8 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       // Transition directly to play phase
       setGamePhase('playing');
+      setShowHandsThisDeal(false);  // Hide all hands when transitioning to play
+      setAllHands(null);  // Clear all hands data
       setDisplayedMessage(`Contract: ${data.contract}. The AI bid all 4 hands. Opening leader: ${data.opening_leader}`);
 
       // Fetch initial play state
@@ -1130,6 +1134,8 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       // Reset to play phase start
       setGamePhase('playing');
+      setShowHandsThisDeal(false);  // Hide all hands when replaying
+      setAllHands(null);  // Clear all hands data
       setScoreData(null);
       setDisplayedMessage(`Contract: ${data.contract}. Opening leader: ${data.opening_leader}`);
 
