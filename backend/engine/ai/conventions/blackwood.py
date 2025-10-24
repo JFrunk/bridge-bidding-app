@@ -91,8 +91,52 @@ class BlackwoodConvention(ConventionModule):
         return ("4NT", "Blackwood convention, asking for aces.")
 
     def _is_ace_answering_applicable(self, features: Dict) -> bool:
-        """Determines if we are responding to a 4NT bid."""
-        return features['auction_features'].get('partner_last_bid') == '4NT'
+        """
+        Determines if we are responding to a 4NT Blackwood bid.
+
+        4NT is Blackwood (not quantitative) if:
+        1. There's a clear suit agreement (same suit raised/rebid), AND
+        2. The auction suggests slam interest (strong hand shown)
+
+        4NT is quantitative (NOT Blackwood) if:
+        - Partner bid NT before (e.g., partner: suit-NT-4NT)
+        - No clear suit agreement
+        """
+        partner_last_bid = features['auction_features'].get('partner_last_bid')
+        if partner_last_bid != '4NT':
+            return False
+
+        auction_history = features.get('auction_history', [])
+        if not auction_history:
+            return False
+
+        # Find partner's bids in the auction
+        my_index = features.get('my_index', 0)
+        partner_index = (my_index + 2) % 4
+
+        partner_bids = [
+            bid for i, bid in enumerate(auction_history)
+            if (i % 4) == partner_index and bid not in ['Pass', 'X', 'XX']
+        ]
+
+        # If partner bid NT before 4NT, it's quantitative (not Blackwood)
+        # Pattern: partner bids 1♠, then 3NT, then 4NT → quantitative
+        if any('NT' in bid for bid in partner_bids[:-1]):  # Check all partner's bids except the 4NT
+            return False
+
+        # Check for suit agreement: same suit bid/raised by both partners
+        my_suits = [bid[1] for bid in auction_history if (auction_history.index(bid) % 4) == my_index
+                    and len(bid) >= 2 and bid[1] in '♣♦♥♠']
+        partner_suits = [bid[1] for bid in partner_bids if len(bid) >= 2 and bid[1] in '♣♦♥♠']
+
+        # Check for suit agreement (same suit mentioned by both)
+        common_suits = set(my_suits) & set(partner_suits)
+        if not common_suits:
+            # No suit agreement - likely quantitative
+            return False
+
+        # There's a suit agreement - this is likely Blackwood
+        return True
 
     def _get_ace_answer_bid(self, hand: Hand) -> Tuple[str, str]:
         """Counts aces and returns the correct conventional response."""

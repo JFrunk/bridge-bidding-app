@@ -1,5 +1,6 @@
 from engine.hand import Hand
 from engine.ai.conventions.base_convention import ConventionModule
+from engine.bidding_validation import BidValidator, get_next_legal_bid
 from typing import Optional, Tuple, Dict, List
 
 class ResponderRebidModule(ConventionModule):
@@ -22,7 +23,7 @@ class ResponderRebidModule(ConventionModule):
 
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
         """
-        Main entry point for responder rebid logic.
+        Main entry point for responder rebid logic with bid validation.
 
         Only applies when:
         1. Partner opened
@@ -30,8 +31,65 @@ class ResponderRebidModule(ConventionModule):
         3. Partner rebid
         4. It's our turn again
         """
+        auction_history = features['auction_history']
+
+        # Get the raw rebid suggestion
+        result = self._evaluate_rebid(hand, features)
+
+        if not result:
+            return None
+
+        bid, explanation = result
+
+        # Always pass Pass bids through
+        if bid == "Pass":
+            return result
+
+        # Validate the bid is legal
+        if BidValidator.is_legal_bid(bid, auction_history):
+            return result
+
+        # Bid is illegal - try to find next legal bid of same strain
+        next_legal = get_next_legal_bid(bid, auction_history)
+        if next_legal:
+            # SANITY CHECK: If adjustment is more than 2 levels, something is wrong
+            # This prevents runaway bid escalation (e.g., 2NT→7NT)
+            try:
+                original_level = int(bid[0])
+                adjusted_level = int(next_legal[0])
+
+                if adjusted_level - original_level > 2:
+                    # The suggested bid is way off - pass instead of making unreasonable bid
+                    return ("Pass", f"Cannot make reasonable rebid at current auction level (suggested {bid}, would need {next_legal}).")
+            except (ValueError, IndexError):
+                # Not a level bid (e.g., Pass, X, XX) - allow adjustment
+                pass
+
+            adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
+            return (next_legal, adjusted_explanation)
+
+        # No legal bid possible - pass
+        return None
+
+    def _evaluate_rebid(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+        """Internal method that calculates rebid without validation."""
         auction_features = features['auction_features']
         auction_history = features['auction_history']
+
+        # SAFETY CHECK: If auction is already at slam level and we don't have slam values, pass
+        # This prevents responders with 10-12 HCP from bidding slam
+        if auction_history:
+            # Find highest bid level in auction
+            max_level = 0
+            for bid in auction_history:
+                if bid not in ['Pass', 'X', 'XX'] and len(bid) >= 1 and bid[0].isdigit():
+                    level = int(bid[0])
+                    max_level = max(max_level, level)
+
+            # If auction is at 5-level or higher and we have < 18 HCP, pass
+            # (Need ~33+ combined for slam, so if partner has 15-20 and we have < 18, not enough)
+            if max_level >= 5 and hand.hcp < 18:
+                return ("Pass", f"Auction already at {max_level}-level, insufficient values for slam (have {hand.hcp} HCP).")
 
         # Check if partner is the opener
         if auction_features.get('opener_relationship') != 'Partner':
