@@ -77,6 +77,20 @@ def select_bidding_module(features):
 
     # --- STATE 3: This is an UNCONTESTED PARTNERSHIP auction ---
     if auction['opener_relationship'] == 'Partner': # My partner opened
+        # Check if this is responder's SECOND+ bid
+        my_index = features['my_index']
+        opener_index = auction.get('opener_index', -1)
+
+        if opener_index != -1:
+            my_bids_after_opening = [
+                bid for i, bid in enumerate(features['auction_history'])
+                if (i % 4) == my_index and i > opener_index and bid not in ['Pass', 'X', 'XX']
+            ]
+
+            # If I've already responded, use responder rebid module
+            if len(my_bids_after_opening) >= 1:
+                return 'responder_rebid'
+
         # Check for slam conventions first
         blackwood = BlackwoodConvention()
         if blackwood.evaluate(features['hand'], features):
@@ -103,7 +117,7 @@ def select_bidding_module(features):
             if jacoby.evaluate(features['hand'], features): return 'jacoby'
             stayman = StaymanConvention()
             if stayman.evaluate(features['hand'], features): return 'stayman'
-        # Fallback to natural responses
+        # Fallback to natural responses (first response only)
         return 'responses'
 
     if auction['opener_relationship'] == 'Me': # I opened

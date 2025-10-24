@@ -31,6 +31,19 @@ class ResponseModule(ConventionModule):
         # Bid is illegal - try to find next legal bid of same strain
         next_legal = get_next_legal_bid(bid, auction_history)
         if next_legal:
+            # SANITY CHECK: If adjustment is more than 2 levels, something is wrong
+            # This prevents runaway bid escalation (e.g., 2NT→7NT)
+            try:
+                original_level = int(bid[0])
+                adjusted_level = int(next_legal[0])
+
+                if adjusted_level - original_level > 2:
+                    # The suggested bid is way off - pass instead of making unreasonable bid
+                    return ("Pass", f"Cannot make reasonable bid at current auction level (suggested {bid}, would need {next_legal}).")
+            except (ValueError, IndexError):
+                # Not a level bid (e.g., Pass, X, XX) - allow adjustment
+                pass
+
             adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
             return (next_legal, adjusted_explanation)
 
@@ -360,24 +373,7 @@ class ResponseModule(ConventionModule):
                     # Otherwise bid 3NT
                     return ("3NT", "Game in NT (2♣ auction).")
 
-        if 6 <= hand.total_points <= 9:
-            return ("Pass", "Minimum hand (6-9 pts), no reason to bid further.")
-        elif 10 <= hand.total_points <= 12:
-            # Check if opening was NT
-            if 'NT' in opening_bid:
-                return ("2NT", "Invitational (10-12 pts), suggesting a 3NT contract.")
-
-            opener_first_suit = opening_bid[1]
-            if opener_first_suit in hand.suit_lengths and hand.suit_lengths[opener_first_suit] >= 3:
-                return (f"3{opener_first_suit}", "Invitational raise (10-12 pts) with trump support.")
-            return ("2NT", "Invitational (10-12 pts), suggesting a 3NT contract.")
-        elif hand.total_points >= 13:
-            # Check if opening was NT
-            if 'NT' in opening_bid:
-                return ("3NT", "Game-forcing (13+ pts), bidding game in No-Trump.")
-
-            opener_first_suit = opening_bid[1]
-            if opener_first_suit in hand.suit_lengths and hand.suit_lengths[opener_first_suit] >= 3:
-                return (f"4{opener_first_suit}", "Game-forcing (13+ pts) with a fit.")
-            return ("3NT", "Game-forcing (13+ pts), bidding game in No-Trump.")
-        return ("Pass", "No clear rebid for responder.")
+        # All other responder rebids should be handled by ResponderRebidModule
+        # which has comprehensive logic for responder's 2nd, 3rd, 4th+ bids
+        # This module (ResponseModule) should ONLY handle first responses and 2♣ forcing auctions
+        return None
