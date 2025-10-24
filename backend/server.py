@@ -1110,6 +1110,18 @@ def request_review():
                         'points': points_for_json
                     }
 
+        # Get dealer from session (Chicago rotation) or default to North
+        dealer = 'North'  # Default for non-session mode
+        if state.game_session:
+            dealer = state.game_session.get_current_dealer()
+
+        # Get user position from session or default to South
+        user_position = 'South'  # Default for non-session mode
+        if state.game_session:
+            # Convert abbreviated position to full name
+            pos_map = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
+            user_position = pos_map.get(state.game_session.player_position, 'South')
+
         # Create review request object
         review_request = {
             'timestamp': datetime.now().isoformat(),
@@ -1117,8 +1129,8 @@ def request_review():
             'all_hands': all_hands,
             'auction': auction_history,
             'vulnerability': state.vulnerability,
-            'dealer': 'North',
-            'user_position': 'South',
+            'dealer': dealer,  # ✅ Use session dealer
+            'user_position': user_position,  # ✅ Use session position
             'user_concern': user_concern
         }
 

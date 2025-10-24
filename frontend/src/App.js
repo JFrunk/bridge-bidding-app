@@ -96,8 +96,8 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer })
   let rows = [];
   for (let i = 0; i < maxRows; i++) { rows.push( <tr key={i}><td onClick={() => northBids[i] && onBidClick(northBids[i])}>{northBids[i]?.bid || ''}</td><td onClick={() => eastBids[i] && onBidClick(eastBids[i])}>{eastBids[i]?.bid || ''}</td><td onClick={() => southBids[i] && onBidClick(southBids[i])}>{southBids[i]?.bid || ''}</td><td onClick={() => westBids[i] && onBidClick(westBids[i])}>{westBids[i]?.bid || ''}</td></tr> ); }
 
-  // Helper to show dealer indicator
-  const dealerIndicator = (pos) => dealer === pos ? ' (D)' : '';
+  // Helper to show dealer indicator - Use prominent emoji
+  const dealerIndicator = (pos) => dealer === pos ? ' 🔵' : '';
 
   return ( <table className="bidding-table"><thead><tr><th className={players[nextPlayerIndex] === 'North' ? 'current-player' : ''}>North{dealerIndicator('North')}</th><th className={players[nextPlayerIndex] === 'East' ? 'current-player' : ''}>East{dealerIndicator('East')}</th><th className={players[nextPlayerIndex] === 'South' ? 'current-player' : ''}>South{dealerIndicator('South')}</th><th className={players[nextPlayerIndex] === 'West' ? 'current-player' : ''}>West{dealerIndicator('West')}</th></tr></thead><tbody>{rows}</tbody></table> );
 }
@@ -224,18 +224,18 @@ function App() {
     }
   };
 
-  const handleShowHandsThisDeal = () => {
+  const handleShowHandsThisDeal = async () => {
     if (!showHandsThisDeal) {
-      fetchAllHands();
+      await fetchAllHands();
     }
     setShowHandsThisDeal(!showHandsThisDeal);
   };
 
-  const handleToggleAlwaysShowHands = () => {
+  const handleToggleAlwaysShowHands = async () => {
     const newValue = !alwaysShowHands;
     setAlwaysShowHands(newValue);
     if (newValue) {
-      fetchAllHands();
+      await fetchAllHands();
       setShowHandsThisDeal(true);
     } else {
       setAllHands(null);
@@ -1190,7 +1190,36 @@ Please provide a detailed analysis of the auction and identify any bidding error
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Helper function to calculate whose turn it is based on dealer and auction length
+  const calculateExpectedBidder = (currentDealer, auctionLength) => {
+    const dealerIndex = players.indexOf(currentDealer);
+    if (dealerIndex === -1) {
+      console.error('❌ Invalid dealer for turn calculation:', currentDealer);
+      return 'North'; // Fallback
+    }
+    return players[(dealerIndex + auctionLength) % 4];
+  };
+
   const handleUserBid = async (bid) => {
+    // CRITICAL VALIDATION: Check if it's actually South's turn based on dealer rotation
+    const expectedBidder = calculateExpectedBidder(dealer, auction.length);
+    if (expectedBidder !== 'South') {
+      const errorMsg = `⚠️ Not your turn! Waiting for ${expectedBidder} to bid.`;
+      setError(errorMsg);
+      setDisplayedMessage(errorMsg);
+      console.warn('🚫 User tried to bid out of turn:', {
+        dealer,
+        auctionLength: auction.length,
+        expectedBidder,
+        nextPlayerIndex,
+        players
+      });
+      return;
+    }
+
+    // Clear any previous errors
+    setError('');
+
     if (players[nextPlayerIndex] !== 'South' || isAiBidding) return;
     setDisplayedMessage('...');
     const newAuction = [...auction, { bid: bid, explanation: 'Your bid.', player: 'South' }];
@@ -1661,6 +1690,17 @@ Please provide a detailed analysis of the auction and identify any bidding error
             <div className="table-center-content">
               <div className="bidding-area">
                 <h2>Bidding</h2>
+                {/* Turn indicator - Shows whose turn it is */}
+                {isAiBidding && players[nextPlayerIndex] !== 'South' && (
+                  <div className="turn-message">
+                    ⏳ Waiting for {players[nextPlayerIndex]} to bid...
+                  </div>
+                )}
+                {!isAiBidding && players[nextPlayerIndex] === 'South' && (
+                  <div className="turn-message your-turn">
+                    ✅ Your turn to bid!
+                  </div>
+                )}
                 <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} />
                 {displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
                 {error && <div className="error-message">{error}</div>}
@@ -1689,6 +1729,17 @@ Please provide a detailed analysis of the auction and identify any bidding error
       {!shouldShowHands && gamePhase === 'bidding' && (
         <div className="bidding-area">
           <h2>Bidding</h2>
+          {/* Turn indicator - Shows whose turn it is */}
+          {isAiBidding && players[nextPlayerIndex] !== 'South' && (
+            <div className="turn-message">
+              ⏳ Waiting for {players[nextPlayerIndex]} to bid...
+            </div>
+          )}
+          {!isAiBidding && players[nextPlayerIndex] === 'South' && (
+            <div className="turn-message your-turn">
+              ✅ Your turn to bid!
+            </div>
+          )}
           <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} />
           {displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
           {error && <div className="error-message">{error}</div>}

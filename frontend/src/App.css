@@ -153,10 +153,44 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
   cursor: default;
 }
+/* Enhanced current player highlight with animation */
 .bidding-table .current-player {
-  background-color: #f0e68c;
+  background-color: #fff3cd !important;
   color: #333;
-  border: 2px solid white;
+  border: 3px solid #ffc107 !important;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+  animation: pulse-highlight 2s ease-in-out infinite;
+}
+
+@keyframes pulse-highlight {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 193, 7, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(255, 193, 7, 0.8); }
+}
+
+/* Turn indicator messages */
+.turn-message {
+  padding: 12px 20px;
+  background: rgba(240, 244, 248, 0.9);
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 16px;
+  margin: 10px 0;
+  color: #555;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.turn-message.your-turn {
+  background: rgba(76, 175, 80, 0.2);
+  color: #fff;
+  border: 2px solid #4caf50;
+  animation: pulse-turn 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-turn {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
 }
 .action-area {
   background-color: rgba(0, 0, 0, 0.2);
