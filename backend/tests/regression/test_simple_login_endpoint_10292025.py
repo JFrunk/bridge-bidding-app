@@ -23,39 +23,52 @@ from server import app
 
 
 @pytest.fixture
-def client():
+def client(tmp_path):
     """Create test client with isolated test database"""
     app.config['TESTING'] = True
 
-    # Use in-memory database for tests
-    test_db_path = ':memory:'
+    # Create temporary database file for this test
+    test_db_path = str(tmp_path / "test_bridge.db")
 
     # Initialize test database
-    with app.app_context():
-        conn = sqlite3.connect(test_db_path)
-        cursor = conn.cursor()
+    conn = sqlite3.connect(test_db_path)
+    cursor = conn.cursor()
 
-        # Create users table
-        cursor.execute('''
-            CREATE TABLE users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                email TEXT UNIQUE,
-                phone TEXT UNIQUE,
-                display_name TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_login TIMESTAMP,
-                last_activity TIMESTAMP,
-                timezone TEXT DEFAULT 'UTC',
-                preferences TEXT,
-                CONSTRAINT valid_username CHECK(length(username) >= 3)
-            )
-        ''')
-        conn.commit()
-        conn.close()
+    # Create users table
+    cursor.execute('''
+        CREATE TABLE users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE,
+            phone TEXT UNIQUE,
+            display_name TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_login TIMESTAMP,
+            last_activity TIMESTAMP,
+            timezone TEXT DEFAULT 'UTC',
+            preferences TEXT,
+            CONSTRAINT valid_username CHECK(length(username) >= 3)
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
-    with app.test_client() as client:
-        yield client
+    # Monkey-patch sqlite3.connect for this test
+    original_connect = sqlite3.connect
+    def mock_connect(db_name, *args, **kwargs):
+        if db_name == 'bridge.db':
+            return original_connect(test_db_path, *args, **kwargs)
+        return original_connect(db_name, *args, **kwargs)
+
+    # Apply monkey patch
+    sqlite3.connect = mock_connect
+
+    try:
+        with app.test_client() as test_client:
+            yield test_client
+    finally:
+        # Restore original connect
+        sqlite3.connect = original_connect
 
 
 class TestSimpleLoginEndpoint:

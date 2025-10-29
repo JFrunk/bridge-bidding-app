@@ -167,6 +167,9 @@ def get_state():
       3. session_id query parameter
       4. Fallback: user_{user_id}_default for backward compatibility
 
+    IMPORTANT: Also loads active GameSession from database if one exists
+    for this user. This ensures session persistence across requests.
+
     Returns:
         SessionState object with .deal, .vulnerability, .play_state, etc.
     """
@@ -178,7 +181,27 @@ def get_state():
         user_id = data.get('user_id', request.args.get('user_id', 1))
         session_id = f"user_{user_id}_default"
 
-    return state_manager.get_or_create(session_id)
+    # Get or create session state
+    state = state_manager.get_or_create(session_id)
+
+    # CRITICAL FIX: Load active game session from database if not already loaded
+    # This ensures gameplay tracking persists across requests
+    if not state.game_session:
+        # Extract user_id from request
+        data = request.get_json(silent=True) or {}
+        user_id = data.get('user_id', request.args.get('user_id', 1))
+
+        # Check for active session in database
+        try:
+            existing_session = session_manager.get_active_session(user_id)
+            if existing_session:
+                state.game_session = existing_session
+                print(f"✅ Loaded active session {existing_session.id} for user {user_id} (hands: {existing_session.hands_completed})")
+        except Exception as e:
+            # Don't fail the request if session loading fails
+            print(f"⚠️  Could not load active session for user {user_id}: {e}")
+
+    return state
 
 
 # Register learning path endpoints (convention levels system)
@@ -711,10 +734,17 @@ def deal_hands():
     deck = [Card(rank, suit) for rank in ranks for suit in suits]
     random.shuffle(deck)
 
+    print(f"🃏 Deck size: {len(deck)} cards (should be 52)")
+
     state.deal['North'] = Hand(deck[0:13])
     state.deal['East'] = Hand(deck[13:26])
     state.deal['South'] = Hand(deck[26:39])
     state.deal['West'] = Hand(deck[39:52])
+
+    print(f"🃏 North: {len(state.deal['North'].cards)} cards")
+    print(f"🃏 East: {len(state.deal['East'].cards)} cards")
+    print(f"🃏 South: {len(state.deal['South'].cards)} cards")
+    print(f"🃏 West: {len(state.deal['West'].cards)} cards")
 
     south_hand = state.deal['South']
     hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
@@ -908,12 +938,16 @@ def evaluate_bid():
         session_id = data.get('session_id')
         feedback_level = data.get('feedback_level', 'intermediate')  # beginner, intermediate, expert
 
+        print(f"📊 /api/evaluate-bid called: user_bid={user_bid}, auction_len={len(auction_history)}, player={current_player}, user_id={user_id}")
+
         if not user_bid:
+            print("❌ evaluate-bid: Missing user_bid")
             return jsonify({'error': 'user_bid is required'}), 400
 
         # Get user's hand from session state (does NOT modify state)
         user_hand = state.deal.get(current_player)
         if not user_hand:
+            print(f"❌ evaluate-bid: Hand for {current_player} not available. state.deal keys: {list(state.deal.keys()) if state.deal else 'None'}")
             return jsonify({'error': f'Hand for {current_player} not available'}), 400
 
         # Get AI's optimal bid and explanation (does NOT modify state)
@@ -942,16 +976,22 @@ def evaluate_bid():
         optimal_explanation_obj.forcing_status = optimal_explanation_dict.get('forcing_status')
 
         # Build auction context
+        # Determine dealer from session or use default
+        dealer = 'North'  # Default
+        if state.game_session:
+            dealer = state.game_session.get_current_dealer()
+
         auction_context = {
             'history': auction_history,
             'current_player': current_player,
-            'dealer': state.deal.get('dealer', 'North'),
+            'dealer': dealer,
             'vulnerability': state.vulnerability
         }
 
         # Generate structured feedback using BiddingFeedbackGenerator
         from engine.feedback.bidding_feedback import get_feedback_generator
-        feedback_generator = get_feedback_generator()
+        # Use 'bridge.db' (works from root via symlink to backend/bridge.db)
+        feedback_generator = get_feedback_generator('bridge.db')
 
         feedback = feedback_generator.evaluate_and_store(
             user_id=user_id,
@@ -962,6 +1002,8 @@ def evaluate_bid():
             optimal_explanation=optimal_explanation_obj,
             session_id=session_id
         )
+
+        print(f"✅ evaluate-bid: Stored feedback for user {user_id}: {user_bid} ({feedback.correctness.value}, score: {feedback.score})")
 
         # Format explanation based on user level
         verbosity_map = {
@@ -983,7 +1025,7 @@ def evaluate_bid():
         return jsonify(response)
 
     except Exception as e:
-        print(f"Error in evaluate-bid: {e}")
+        print(f"❌ Error in evaluate-bid: {e}")
         traceback.print_exc()
         return jsonify({'error': f'Server error in evaluate_bid: {str(e)}'}), 500
 
@@ -2282,6 +2324,133 @@ def generate_quality_recommendations(all_time, daily_trends):
         })
 
     return recommendations
+
+
+@app.route('/api/auth/simple-login', methods=['POST'])
+def simple_login():
+    """
+    Simple login endpoint - authenticate user by email or phone
+    No password required - creates account if doesn't exist
+
+    Expected JSON:
+        {
+            "email": "user@example.com",  // OR
+            "phone": "+15551234567",
+            "create_if_not_exists": true
+        }
+
+    Returns:
+        {
+            "user_id": 123,
+            "email": "user@example.com",
+            "phone": null,
+            "created": true  // true if new user, false if existing
+        }
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        email = data.get('email')
+        phone = data.get('phone')
+        create_if_not_exists = data.get('create_if_not_exists', True)
+
+        # Must provide either email or phone
+        if not email and not phone:
+            return jsonify({"error": "Either email or phone is required"}), 400
+
+        # Validate email format if provided
+        if email:
+            import re
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, email):
+                return jsonify({"error": "Invalid email format"}), 400
+
+        # Validate phone format if provided (basic check)
+        if phone:
+            # Remove spaces and check for international format
+            phone_cleaned = phone.replace(' ', '').replace('-', '')
+            if not phone_cleaned.startswith('+') or len(phone_cleaned) < 10:
+                return jsonify({"error": "Invalid phone format (use international format: +1234567890)"}), 400
+
+        conn = sqlite3.connect('bridge.db')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # Try to find existing user
+        if email:
+            cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
+        else:
+            cursor.execute('SELECT * FROM users WHERE phone = ?', (phone,))
+
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            # User exists - return their info
+            user_dict = dict(existing_user)
+            conn.close()
+
+            return jsonify({
+                "user_id": user_dict['id'],
+                "email": user_dict.get('email'),
+                "phone": user_dict.get('phone'),
+                "display_name": user_dict.get('display_name'),
+                "created": False
+            })
+
+        # User doesn't exist
+        if not create_if_not_exists:
+            conn.close()
+            return jsonify({"error": "User not found"}), 404
+
+        # Create new user
+        # Generate username from email or phone
+        if email:
+            username = email.split('@')[0]
+        else:
+            username = f"user_{phone[-4:]}"
+
+        # Ensure username is unique
+        cursor.execute('SELECT id FROM users WHERE username = ?', (username,))
+        if cursor.fetchone():
+            # Append random suffix to make unique
+            import random
+            username = f"{username}_{random.randint(1000, 9999)}"
+
+        # Ensure username meets minimum length requirement (3 chars)
+        if len(username) < 3:
+            username = f"user_{random.randint(100, 999)}"
+
+        # Insert new user
+        cursor.execute('''
+            INSERT INTO users (username, email, phone, display_name, created_at, last_login)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            username,
+            email,
+            phone,
+            email or phone,  # Use email/phone as display name initially
+            datetime.now().isoformat(),
+            datetime.now().isoformat()
+        ))
+
+        conn.commit()
+        new_user_id = cursor.lastrowid
+        conn.close()
+
+        return jsonify({
+            "user_id": new_user_id,
+            "email": email,
+            "phone": phone,
+            "display_name": email or phone,
+            "created": True
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Login failed: {str(e)}"}), 500
 
 
 if __name__ == '__main__':
