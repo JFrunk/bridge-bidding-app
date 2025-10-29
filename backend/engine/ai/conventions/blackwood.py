@@ -95,12 +95,12 @@ class BlackwoodConvention(ConventionModule):
         Determines if we are responding to a 4NT Blackwood bid.
 
         4NT is Blackwood (not quantitative) if:
-        1. There's a clear suit agreement (same suit raised/rebid), AND
+        1. There's a clear suit agreement (opener showed a suit), OR
         2. The auction suggests slam interest (strong hand shown)
 
         4NT is quantitative (NOT Blackwood) if:
-        - Partner bid NT before (e.g., partner: suit-NT-4NT)
-        - No clear suit agreement
+        - Partner opened NT and later bid 4NT with no suit shown
+        - No clear suit agreement anywhere in the auction
         """
         partner_last_bid = features['auction_features'].get('partner_last_bid')
         if partner_last_bid != '4NT':
@@ -119,24 +119,42 @@ class BlackwoodConvention(ConventionModule):
             if (i % 4) == partner_index and bid not in ['Pass', 'X', 'XX']
         ]
 
-        # If partner bid NT before 4NT, it's quantitative (not Blackwood)
-        # Pattern: partner bids 1♠, then 3NT, then 4NT → quantitative
-        if any('NT' in bid for bid in partner_bids[:-1]):  # Check all partner's bids except the 4NT
+        # Check if partner actually opened the bidding (was the first non-Pass bid)
+        # Find the first non-Pass bid in the auction
+        first_bid_index = next((i for i, bid in enumerate(auction_history) if bid != 'Pass'), None)
+        partner_actually_opened = first_bid_index is not None and (first_bid_index % 4) == partner_index
+
+        # If partner OPENED with NT, then 4NT is quantitative
+        # Pattern: 1NT - ... - 4NT → quantitative (inviting 6NT)
+        if partner_actually_opened and partner_bids and partner_bids[0] in ['1NT', '2NT', '3NT']:
             return False
 
-        # Check for suit agreement: same suit bid/raised by both partners
+        # Check for suit agreement: ANY suit bid by me (opener) can be trump
+        # This handles cases like: 1♠-2NT-3NT-4NT where spades could be trump
         my_suits = [bid[1] for bid in auction_history if (auction_history.index(bid) % 4) == my_index
                     and len(bid) >= 2 and bid[1] in '♣♦♥♠']
         partner_suits = [bid[1] for bid in partner_bids if len(bid) >= 2 and bid[1] in '♣♦♥♠']
 
-        # Check for suit agreement (same suit mentioned by both)
-        common_suits = set(my_suits) & set(partner_suits)
-        if not common_suits:
-            # No suit agreement - likely quantitative
-            return False
+        # If I (opener) showed a suit, that could be trump for Blackwood
+        # Even if partner bid NT later, they could be asking for aces in my suit
+        if my_suits:
+            # I showed a suit - partner's 4NT is likely Blackwood
+            return True
 
-        # There's a suit agreement - this is likely Blackwood
-        return True
+        # Check for explicit suit agreement (both partners bid same suit)
+        common_suits = set(my_suits) & set(partner_suits)
+        if common_suits:
+            # Explicit suit agreement - definitely Blackwood
+            return True
+
+        # Partner bid a suit but I didn't - check if I raised their suit
+        if partner_suits:
+            # Partner showed a suit - check if I supported it
+            # This is likely Blackwood if we have fit
+            return True
+
+        # No suits shown by anyone - this is quantitative NT auction
+        return False
 
     def _get_ace_answer_bid(self, hand: Hand) -> Tuple[str, str]:
         """Counts aces and returns the correct conventional response."""

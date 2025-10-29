@@ -304,20 +304,10 @@ class MinimaxPlayAI(BasePlayAI):
         # Deep copy the state (expensive but necessary)
         new_state = copy.deepcopy(state)
 
-        # Convert position forms: short for trick (N/S/E/W), full for hands dict (North/South/East/West)
-        position_map = {'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West'}
-        if len(position) == 1:
-            # Short form - convert to full
-            short_position = position
-            full_position = position_map[position]
-        else:
-            # Full form - convert to short
-            short_position = position[0]
-            full_position = position
-
+        # Position is already in correct format (N/S/E/W for both trick and hands dict)
         # Play the card
-        new_state.current_trick.append((card, short_position))
-        new_state.hands[full_position].cards.remove(card)
+        new_state.current_trick.append((card, position))
+        new_state.hands[position].cards.remove(card)
 
         # Check if trick is complete
         if len(new_state.current_trick) == 4:
@@ -346,8 +336,8 @@ class MinimaxPlayAI(BasePlayAI):
             new_state.current_trick = []
             new_state.next_to_play = winner
         else:
-            # Next player clockwise (use short_position already computed above)
-            new_state.next_to_play = PlayEngine.next_player(short_position)
+            # Next player clockwise (position is already in short format: N/S/E/W)
+            new_state.next_to_play = PlayEngine.next_player(position)
 
         return new_state
 
@@ -366,10 +356,8 @@ class MinimaxPlayAI(BasePlayAI):
         Returns:
             List of legal cards
         """
-        # Convert short position to full name if needed
-        position_map = {'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West'}
-        full_position = position_map.get(position, position)
-        hand = state.hands[full_position]
+        # Position is already in correct format (N/S/E/W)
+        hand = state.hands[position]
 
         if not state.current_trick:
             # Leading - any card is legal

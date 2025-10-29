@@ -1,0 +1,385 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.5, pytest-8.4.1, pluggy-1.6.0 -- /Users/simonroy/Desktop/bridge_bidding_app/backend/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/simonroy/Desktop/bridge_bidding_app/backend
+configfile: pytest.ini
+testpaths: tests
+collecting ... collected 260 items / 7 errors
+
+==================================== ERRORS ====================================
+___________ ERROR collecting tests/integration/test_phase2_fixes.py ____________
+ImportError while importing test module '/Users/simonroy/Desktop/bridge_bidding_app/backend/tests/integration/test_phase2_fixes.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_phase2_fixes.py:22: in <module>
+    from engine.ai.feature_extractor import FeatureExtractor
+E   ImportError: cannot import name 'FeatureExtractor' from 'engine.ai.feature_extractor' (/Users/simonroy/Desktop/bridge_bidding_app/backend/engine/ai/feature_extractor.py)
+_______ ERROR collecting tests/integration/test_response_rebid_fixes.py ________
+tests/integration/test_response_rebid_fixes.py:40: in <module>
+    south_hand = create_hand("♠Q65 ♥K82 ♦Q32 ♣AKJ85")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        BiddingEngine = <class 'engine.bidding_engine.BiddingEngine'>
+        Card       = <class 'engine.hand.Card'>
+        Hand       = <class 'engine.hand.Hand'>
+        __builtins__ = <builtins>
+        __cached__ = '/Users/simonroy/Desktop/bridge_bidding_app/backend/tests/integration/__pycache__/test_response_rebid_fixes.cpython-313.pyc'
+        __doc__    = '\nTest script to verify the fixes for:\n1. 2-level new suit responses (10+ HCP)\n2. Rebidding 6-card suits before jumping to 3NT\n'
+        __file__   = '/Users/simonroy/Desktop/bridge_bidding_app/backend/tests/integration/test_response_rebid_fixes.py'
+        __loader__ = <_pytest.assertion.rewrite.AssertionRewritingHook object at 0x10146e900>
+        __name__   = 'tests.integration.test_response_rebid_fixes'
+        __package__ = 'tests.integration'
+        __spec__   = ModuleSpec(name='tests.integration.test_response_rebid_fixes', loader=<_pytest.assertion.rewrite.AssertionRewritingHoo...10146e900>, origin='/Users/simonroy/Desktop/bridge_bidding_app/backend/tests/integration/test_response_rebid_fixes.py')
+        auction    = ['1♥', 'Pass']
+        bid        = '2♦'
+        create_hand = <function create_hand at 0x1050bc360>
+        engine     = <engine.bidding_engine.BiddingEngine object at 0x1050b4590>
+        explanation = 'New suit at 2-level showing 10+ HCP and 5+ ♦.'
+        south_hand = <engine.hand.Hand object at 0x1050b5be0>
+tests/integration/test_response_rebid_fixes.py:22: in create_hand
+    return Hand(cards)
+           ^^^^^^^^^^^
+        cards      = [Card(rank='Q', suit='♠'), Card(rank='6', suit='♠'), Card(rank='5', suit='♠'), Card(rank='K', suit='♥'), Card(rank='8', suit='♥'), Card(rank='2', suit='♥'), ...]
+        cards_str  = '♠Q65 ♥K82 ♦Q32 ♣AKJ85'
+        part       = '♣AKJ85'
+        parts      = ['♠Q65', '♥K82', '♦Q32', '♣AKJ85']
+        rank       = '5'
+        ranks      = 'AKJ85'
+        suit       = '♣'
+engine/hand.py:9: in __init__
+    raise ValueError("A hand must contain exactly 13 cards.")
+E   ValueError: A hand must contain exactly 13 cards.
+        cards      = [Card(rank='Q', suit='♠'), Card(rank='6', suit='♠'), Card(rank='5', suit='♠'), Card(rank='K', suit='♥'), Card(rank='8', suit='♥'), Card(rank='2', suit='♥'), ...]
+        self       = <engine.hand.Hand object at 0x1027ee0d0>
+------------------------------- Captured stdout --------------------------------
+======================================================================
+TEST 1: 2-level New Suit Responses
+======================================================================
+
+Test 1a: After 1♥, respond 2♦ with 13 HCP and 5 diamonds
+✅ PASS: South bids 2♦ - New suit at 2-level showing 10+ HCP and 5+ ♦.
+
+Test 1b: After 1♠, respond 2♣ with 10 HCP and 5 clubs
+___________ ERROR collecting tests/integration/test_server_state.py ____________
+venv/lib/python3.13/site-packages/urllib3/connection.py:198: in _new_conn
+    sock = connection.create_connection(
+        self       = <urllib3.connection.HTTPConnection object at 0x1050b6270>
+venv/lib/python3.13/site-packages/urllib3/util/connection.py:85: in create_connection
+    raise err
+        address    = ('localhost', 5001)
+        af         = <AddressFamily.AF_INET6: 30>
+        canonname  = ''
+        err        = None
+        family     = <AddressFamily.AF_UNSPEC: 0>
+        host       = 'localhost'
+        port       = 5001
+        proto      = 6
+        res        = (<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5001, 0, 0))
+        sa         = ('::1', 5001, 0, 0)
+        sock       = <socket.socket [closed] fd=-1, family=30, type=1, proto=6>
+        socket_options = [(6, 1, 1)]
+        socktype   = <SocketKind.SOCK_STREAM: 1>
+        source_address = None
+        timeout    = None
+venv/lib/python3.13/site-packages/urllib3/util/connection.py:73: in create_connection
+    sock.connect(sa)
+E   ConnectionRefusedError: [Errno 61] Connection refused
+        address    = ('localhost', 5001)
+        af         = <AddressFamily.AF_INET6: 30>
+        canonname  = ''
+        err        = None
+        family     = <AddressFamily.AF_UNSPEC: 0>
+        host       = 'localhost'
+        port       = 5001
+        proto      = 6
+        res        = (<AddressFamily.AF_INET6: 30>, <SocketKind.SOCK_STREAM: 1>, 6, '', ('::1', 5001, 0, 0))
+        sa         = ('::1', 5001, 0, 0)
+        sock       = <socket.socket [closed] fd=-1, family=30, type=1, proto=6>
+        socket_options = [(6, 1, 1)]
+        socktype   = <SocketKind.SOCK_STREAM: 1>
+        source_address = None
+        timeout    = None
+
+The above exception was the direct cause of the following exception:
+venv/lib/python3.13/site-packages/urllib3/connectionpool.py:787: in urlopen
+    response = self._make_request(
+        assert_same_host = False
+        body       = None
+        body_pos   = None
+        chunked    = False
+        clean_exit = False
+        conn       = None
+        decode_content = False
+        destination_scheme = None
+        err        = None
+        headers    = {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive'}
+        http_tunnel_required = False
+        method     = 'GET'
+        new_e      = NewConnectionError('<urllib3.connection.HTTPConnection object at 0x1050b6270>: Failed to establish a new connection: [Errno 61] Connection refused')
+        parsed_url = Url(scheme=None, auth=None, host=None, port=None, path='/api/deal-hands', query=None, fragment=None)
+        pool_timeout = None
+        preload_content = False
+        redirect   = False
+        release_conn = False
+        release_this_conn = True
+        response_conn = <urllib3.connection.HTTPConnection object at 0x1050b6270>
+        response_kw = {}
+        retries    = Retry(total=0, connect=None, read=False, redirect=None, status=None)
+        self       = <urllib3.connectionpool.HTTPConnectionPool object at 0x1050b5e80>
+        timeout    = Timeout(connect=None, read=None, total=None)
+        timeout_obj = Timeout(connect=None, read=None, total=None)
+        url        = '/api/deal-hands'
+venv/lib/python3.13/site-packages/urllib3/connectionpool.py:493: in _make_request
+    conn.request(
+        body       = None
+        chunked    = False
+        conn       = <urllib3.connection.HTTPConnection object at 0x1050b6270>
+        decode_content = False
+        enforce_content_length = True
+        headers    = {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive'}
+        method     = 'GET'
+        preload_content = False
+        response_conn = <urllib3.connection.HTTPConnection object at 0x1050b6270>
+        retries    = Retry(total=0, connect=None, read=False, redirect=None, status=None)
+        self       = <urllib3.connectionpool.HTTPConnectionPool object at 0x1050b5e80>
+        timeout    = Timeout(connect=None, read=None, total=None)
+        timeout_obj = Timeout(connect=None, read=None, total=None)
+        url        = '/api/deal-hands'
+venv/lib/python3.13/site-packages/urllib3/connection.py:494: in request
+    self.endheaders()
+        body       = None
+        chunked    = False
+        chunks     = None
+        chunks_and_cl = ChunksAndContentLength(chunks=None, content_length=None)
+        content_length = None
+        decode_content = False
+        enforce_content_length = True
+        header     = 'Connection'
+        header_keys = frozenset({'accept', 'accept-encoding', 'connection', 'user-agent'})
+        headers    = {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive'}
+        method     = 'GET'
+        preload_content = False
+        self       = <urllib3.connection.HTTPConnection object at 0x1050b6270>
+        skip_accept_encoding = True
+        skip_host  = False
+        url        = '/api/deal-hands'
+        value      = 'keep-alive'
+/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/http/client.py:1333: in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+        encode_chunked = False
+        message_body = None
+        self       = <urllib3.connection.HTTPConnection object at 0x1050b6270>
+/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/http/client.py:1093: in _send_output
+    self.send(msg)
+        encode_chunked = False
+        message_body = None
+        msg        = b'GET /api/deal-hands HTTP/1.1\r\nHost: localhost:5001\r\nUser-Agent: python-requests/2.32.5\r\nAccept-Encoding: gzip, deflate\r\nAccept: */*\r\nConnection: keep-alive\r\n\r\n'
+        self       = <urllib3.connection.HTTPConnection object at 0x1050b6270>
+/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/http/client.py:1037: in send
+    self.connect()
+        data       = b'GET /api/deal-hands HTTP/1.1\r\nHost: localhost:5001\r\nUser-Agent: python-requests/2.32.5\r\nAccept-Encoding: gzip, deflate\r\nAccept: */*\r\nConnection: keep-alive\r\n\r\n'
+        self       = <urllib3.connection.HTTPConnection object at 0x1050b6270>
+venv/lib/python3.13/site-packages/urllib3/connection.py:325: in connect
+    self.sock = self._new_conn()
+                ^^^^^^^^^^^^^^^^
+        self       = <urllib3.connection.HTTPConnection object at 0x1050b6270>
+venv/lib/python3.13/site-packages/urllib3/connection.py:213: in _new_conn
+    raise NewConnectionError(
+E   urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x1050b6270>: Failed to establish a new connection: [Errno 61] Connection refused
+        self       = <urllib3.connection.HTTPConnection object at 0x1050b6270>
+
+The above exception was the direct cause of the following exception:
+venv/lib/python3.13/site-packages/requests/adapters.py:644: in send
+    resp = conn.urlopen(
+        cert       = None
+        chunked    = False
+        conn       = <urllib3.connectionpool.HTTPConnectionPool object at 0x1050b5e80>
+        proxies    = OrderedDict()
+        request    = <PreparedRequest [GET]>
+        self       = <requests.adapters.HTTPAdapter object at 0x1027ee5d0>
+        stream     = False
+        timeout    = Timeout(connect=None, read=None, total=None)
+        url        = '/api/deal-hands'
+        verify     = True
+venv/lib/python3.13/site-packages/urllib3/connectionpool.py:841: in urlopen
+    retries = retries.increment(
+        assert_same_host = False
+        body       = None
+        body_pos   = None
+        chunked    = False
+        clean_exit = False
+        conn       = None
+        decode_content = False
+        destination_scheme = None
+        err        = None
+        headers    = {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive'}
+        http_tunnel_required = False
+        method     = 'GET'
+        new_e      = NewConnectionError('<urllib3.connection.HTTPConnection object at 0x1050b6270>: Failed to establish a new connection: [Errno 61] Connection refused')
+        parsed_url = Url(scheme=None, auth=None, host=None, port=None, path='/api/deal-hands', query=None, fragment=None)
+        pool_timeout = None
+        preload_content = False
+        redirect   = False
+        release_conn = False
+        release_this_conn = True
+        response_conn = <urllib3.connection.HTTPConnection object at 0x1050b6270>
+        response_kw = {}
+        retries    = Retry(total=0, connect=None, read=False, redirect=None, status=None)
+        self       = <urllib3.connectionpool.HTTPConnectionPool object at 0x1050b5e80>
+        timeout    = Timeout(connect=None, read=None, total=None)
+        timeout_obj = Timeout(connect=None, read=None, total=None)
+        url        = '/api/deal-hands'
+venv/lib/python3.13/site-packages/urllib3/util/retry.py:519: in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=5001): Max retries exceeded with url: /api/deal-hands (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x1050b6270>: Failed to establish a new connection: [Errno 61] Connection refused'))
+        _pool      = <urllib3.connectionpool.HTTPConnectionPool object at 0x1050b5e80>
+        _stacktrace = <traceback object at 0x10510e3c0>
+        cause      = 'unknown'
+        connect    = None
+        error      = NewConnectionError('<urllib3.connection.HTTPConnection object at 0x1050b6270>: Failed to establish a new connection: [Errno 61] Connection refused')
+        history    = (RequestHistory(method='GET', url='/api/deal-hands', error=NewConnectionError('<urllib3.connection.HTTPConnection obje...50b6270>: Failed to establish a new connection: [Errno 61] Connection refused'), status=None, redirect_location=None),)
+        method     = 'GET'
+        new_retry  = Retry(total=-1, connect=None, read=False, redirect=None, status=None)
+        other      = None
+        read       = False
+        reason     = NewConnectionError('<urllib3.connection.HTTPConnection object at 0x1050b6270>: Failed to establish a new connection: [Errno 61] Connection refused')
+        redirect   = None
+        redirect_location = None
+        response   = None
+        self       = Retry(total=0, connect=None, read=False, redirect=None, status=None)
+        status     = None
+        status_count = None
+        total      = -1
+        url        = '/api/deal-hands'
+
+During handling of the above exception, another exception occurred:
+tests/integration/test_server_state.py:10: in <module>
+    response = requests.get(f"{API_URL}/api/deal-hands")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        API_URL    = 'http://localhost:5001'
+        __builtins__ = <builtins>
+        __cached__ = '/Users/simonroy/Desktop/bridge_bidding_app/backend/tests/integration/__pycache__/test_server_state.cpython-313.pyc'
+        __doc__    = '\nTest server state after dealing hands\n'
+        __file__   = '/Users/simonroy/Desktop/bridge_bidding_app/backend/tests/integration/test_server_state.py'
+        __loader__ = <_pytest.assertion.rewrite.AssertionRewritingHook object at 0x10146e900>
+        __name__   = 'tests.integration.test_server_state'
+        __package__ = 'tests.integration'
+        __spec__   = ModuleSpec(name='tests.integration.test_server_state', loader=<_pytest.assertion.rewrite.AssertionRewritingHook object at 0x10146e900>, origin='/Users/simonroy/Desktop/bridge_bidding_app/backend/tests/integration/test_server_state.py')
+        json       = <module 'json' from '/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py'>
+        requests   = <module 'requests' from '/Users/simonroy/Desktop/bridge_bidding_app/backend/venv/lib/python3.13/site-packages/requests/__init__.py'>
+venv/lib/python3.13/site-packages/requests/api.py:73: in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        kwargs     = {}
+        params     = None
+        url        = 'http://localhost:5001/api/deal-hands'
+venv/lib/python3.13/site-packages/requests/api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        kwargs     = {'params': None}
+        method     = 'get'
+        session    = <requests.sessions.Session object at 0x1025dbcb0>
+        url        = 'http://localhost:5001/api/deal-hands'
+venv/lib/python3.13/site-packages/requests/sessions.py:589: in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        allow_redirects = True
+        auth       = None
+        cert       = None
+        cookies    = None
+        data       = None
+        files      = None
+        headers    = None
+        hooks      = None
+        json       = None
+        method     = 'get'
+        params     = None
+        prep       = <PreparedRequest [GET]>
+        proxies    = {}
+        req        = <Request [GET]>
+        self       = <requests.sessions.Session object at 0x1025dbcb0>
+        send_kwargs = {'allow_redirects': True, 'cert': None, 'proxies': OrderedDict(), 'stream': False, ...}
+        settings   = {'cert': None, 'proxies': OrderedDict(), 'stream': False, 'verify': True}
+        stream     = None
+        timeout    = None
+        url        = 'http://localhost:5001/api/deal-hands'
+        verify     = None
+venv/lib/python3.13/site-packages/requests/sessions.py:703: in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        adapter    = <requests.adapters.HTTPAdapter object at 0x1027ee5d0>
+        allow_redirects = True
+        hooks      = {'response': []}
+        kwargs     = {'cert': None, 'proxies': OrderedDict(), 'stream': False, 'timeout': None, ...}
+        request    = <PreparedRequest [GET]>
+        self       = <requests.sessions.Session object at 0x1025dbcb0>
+        start      = 1760641844.675731
+        stream     = False
+venv/lib/python3.13/site-packages/requests/adapters.py:677: in send
+    raise ConnectionError(e, request=request)
+E   requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=5001): Max retries exceeded with url: /api/deal-hands (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x1050b6270>: Failed to establish a new connection: [Errno 61] Connection refused'))
+        cert       = None
+        chunked    = False
+        conn       = <urllib3.connectionpool.HTTPConnectionPool object at 0x1050b5e80>
+        proxies    = OrderedDict()
+        request    = <PreparedRequest [GET]>
+        self       = <requests.adapters.HTTPAdapter object at 0x1027ee5d0>
+        stream     = False
+        timeout    = Timeout(connect=None, read=None, total=None)
+        url        = '/api/deal-hands'
+        verify     = True
+------------------------------- Captured stdout --------------------------------
+=== Testing /api/deal-hands endpoint ===
+__________ ERROR collecting tests/integration/test_standalone_play.py __________
+ImportError while importing test module '/Users/simonroy/Desktop/bridge_bidding_app/backend/tests/integration/test_standalone_play.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/test_standalone_play.py:15: in <module>
+    from tests.play_test_helpers import (
+E   ModuleNotFoundError: No module named 'tests.play_test_helpers'
+________________ ERROR collecting tests/play/test_evaluation.py ________________
+ImportError while importing test module '/Users/simonroy/Desktop/bridge_bidding_app/backend/tests/play/test_evaluation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/play/test_evaluation.py:15: in <module>
+    from tests.play_test_helpers import create_test_deal, create_play_scenario
+E   ModuleNotFoundError: No module named 'tests.play_test_helpers'
+________________ ERROR collecting tests/play/test_minimax_ai.py ________________
+ImportError while importing test module '/Users/simonroy/Desktop/bridge_bidding_app/backend/tests/play/test_minimax_ai.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/play/test_minimax_ai.py:16: in <module>
+    from tests.play_test_helpers import create_test_deal, create_play_scenario
+E   ModuleNotFoundError: No module named 'tests.play_test_helpers'
+__________ ERROR collecting tests/regression/test_trick_leader_bug.py __________
+ImportError while importing test module '/Users/simonroy/Desktop/bridge_bidding_app/backend/tests/regression/test_trick_leader_bug.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/regression/test_trick_leader_bug.py:15: in <module>
+    from tests.play_test_helpers import create_test_deal, create_play_scenario
+E   ModuleNotFoundError: No module named 'tests.play_test_helpers'
+=========================== short test summary info ============================
+ERROR tests/integration/test_phase2_fixes.py
+ERROR tests/integration/test_response_rebid_fixes.py - ValueError: A hand mus...
+ERROR tests/integration/test_server_state.py - requests.exceptions.Connection...
+ERROR tests/integration/test_standalone_play.py
+ERROR tests/play/test_evaluation.py
+ERROR tests/play/test_minimax_ai.py
+ERROR tests/regression/test_trick_leader_bug.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 7 errors during collection !!!!!!!!!!!!!!!!!!!!
+========================= 1 warning, 7 errors in 1.33s =========================

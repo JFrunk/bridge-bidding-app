@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Connection Test</title>
+</head>
+<body>
+    <h1>Bridge API Connection Test</h1>
+    <button onclick="testDeal()">Test Deal Hands</button>
+    <button onclick="testBid()">Test AI Bid</button>
+    <button onclick="testStatus()">Test AI Status</button>
+    <pre id="output"></pre>
+
+    <script>
+        const API_URL = 'http://localhost:5001';
+
+        function log(msg) {
+            document.getElementById('output').textContent += msg + '\n';
+        }
+
+        async function testDeal() {
+            log('\n=== Testing /api/deal-hands ===');
+            try {
+                const response = await fetch(`${API_URL}/api/deal-hands`);
+                log(`Status: ${response.status}`);
+                const data = await response.json();
+                log(`Success! Got ${data.hand.length} cards`);
+                log(`Dealer: ${data.dealer}`);
+            } catch (err) {
+                log(`ERROR: ${err.message}`);
+            }
+        }
+
+        async function testBid() {
+            log('\n=== Testing /api/get-next-bid ===');
+            try {
+                const response = await fetch(`${API_URL}/api/get-next-bid`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        auction_history: [],
+                        current_player: 'North'
+                    })
+                });
+                log(`Status: ${response.status}`);
+                const data = await response.json();
+                log(`Success! AI bids: ${data.bid}`);
+            } catch (err) {
+                log(`ERROR: ${err.message}`);
+            }
+        }
+
+        async function testStatus() {
+            log('\n=== Testing /api/ai/status ===');
+            try {
+                const response = await fetch(`${API_URL}/api/ai/status`);
+                log(`Status: ${response.status}`);
+                const data = await response.json();
+                log(`Success! AI difficulty: ${data.current_difficulty}`);
+            } catch (err) {
+                log(`ERROR: ${err.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

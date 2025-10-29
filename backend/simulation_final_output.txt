@@ -1,0 +1,124 @@
+============================================================
+Enhanced Bridge Bidding Simulation
+============================================================
+Configuration:
+  - Total hands: 100
+  - Scenario hands: 10
+  - Random hands: 90
+  - Output JSON: simulation_results_final.json
+  - Output Text: simulation_results_final.txt
+============================================================
+
+Warning: scenarios.json not found. Running random hands only.
+Simulating hand 1/100 (Scenario: Random)... ✓
+Simulating hand 2/100 (Scenario: Random)... ✓
+Simulating hand 3/100 (Scenario: Random)... ✓
+Simulating hand 4/100 (Scenario: Random)... ✓
+Simulating hand 5/100 (Scenario: Random)... ✓
+Simulating hand 6/100 (Scenario: Random)... ✓
+Simulating hand 7/100 (Scenario: Random)... ✓
+Simulating hand 8/100 (Scenario: Random)... ✓
+Simulating hand 9/100 (Scenario: Random)... ✓
+Simulating hand 10/100 (Scenario: Random)... ✓
+Simulating hand 11/100 (Scenario: Random)... ✓
+Simulating hand 12/100 (Scenario: Random)... ✓
+Simulating hand 13/100 (Scenario: Random)... ✓
+Simulating hand 14/100 (Scenario: Random)... ✓
+Simulating hand 15/100 (Scenario: Random)... ✓
+Simulating hand 16/100 (Scenario: Random)... ✓
+Simulating hand 17/100 (Scenario: Random)... ✓
+Simulating hand 18/100 (Scenario: Random)... ✓
+Simulating hand 19/100 (Scenario: Random)... ✓
+Simulating hand 20/100 (Scenario: Random)... ✓
+Simulating hand 21/100 (Scenario: Random)... ✓
+Simulating hand 22/100 (Scenario: Random)... ✓
+Simulating hand 23/100 (Scenario: Random)... ✓
+Simulating hand 24/100 (Scenario: Random)... ✓
+Simulating hand 25/100 (Scenario: Random)... ✓
+Simulating hand 26/100 (Scenario: Random)... ✓
+Simulating hand 27/100 (Scenario: Random)... ✓
+Simulating hand 28/100 (Scenario: Random)... ✓
+Simulating hand 29/100 (Scenario: Random)... ✓
+Simulating hand 30/100 (Scenario: Random)... ✓
+Simulating hand 31/100 (Scenario: Random)... ✓
+Simulating hand 32/100 (Scenario: Random)... ✓
+Simulating hand 33/100 (Scenario: Random)... ✓
+Simulating hand 34/100 (Scenario: Random)... ✓
+Simulating hand 35/100 (Scenario: Random)... ✓
+Simulating hand 36/100 (Scenario: Random)... ✓
+Simulating hand 37/100 (Scenario: Random)... ✓
+Simulating hand 38/100 (Scenario: Random)... ✓
+Simulating hand 39/100 (Scenario: Random)... ✓
+Simulating hand 40/100 (Scenario: Random)... ✓
+Simulating hand 41/100 (Scenario: Random)... ✓
+Simulating hand 42/100 (Scenario: Random)... ✓
+Simulating hand 43/100 (Scenario: Random)... ✓
+Simulating hand 44/100 (Scenario: Random)... ✓
+Simulating hand 45/100 (Scenario: Random)... ✓
+Simulating hand 46/100 (Scenario: Random)... ✓
+Simulating hand 47/100 (Scenario: Random)... ✓
+Simulating hand 48/100 (Scenario: Random)... ✓
+Simulating hand 49/100 (Scenario: Random)... ✓
+Simulating hand 50/100 (Scenario: Random)... ✓
+Simulating hand 51/100 (Scenario: Random)... ✓
+Simulating hand 52/100 (Scenario: Random)... ✓
+Simulating hand 53/100 (Scenario: Random)... ✓
+Simulating hand 54/100 (Scenario: Random)... ✓
+Simulating hand 55/100 (Scenario: Random)... ✓
+Simulating hand 56/100 (Scenario: Random)... ✓
+Simulating hand 57/100 (Scenario: Random)... ✓
+Simulating hand 58/100 (Scenario: Random)... ✓
+Simulating hand 59/100 (Scenario: Random)... ✓
+Simulating hand 60/100 (Scenario: Random)... ✓
+Simulating hand 61/100 (Scenario: Random)... ✓
+Simulating hand 62/100 (Scenario: Random)... ✓
+Simulating hand 63/100 (Scenario: Random)... ✓
+Simulating hand 64/100 (Scenario: Random)... ✓
+Simulating hand 65/100 (Scenario: Random)... ✓
+Simulating hand 66/100 (Scenario: Random)... ✓
+Simulating hand 67/100 (Scenario: Random)... ✓
+Simulating hand 68/100 (Scenario: Random)... ✓
+Simulating hand 69/100 (Scenario: Random)... ✓
+Simulating hand 70/100 (Scenario: Random)... ✓
+Simulating hand 71/100 (Scenario: Random)... ✓
+Simulating hand 72/100 (Scenario: Random)... ✓
+Simulating hand 73/100 (Scenario: Random)... ✓
+Simulating hand 74/100 (Scenario: Random)... ✓
+Simulating hand 75/100 (Scenario: Random)... ✓
+Simulating hand 76/100 (Scenario: Random)... ✓
+Simulating hand 77/100 (Scenario: Random)... ✓
+Simulating hand 78/100 (Scenario: Random)... ✓
+Simulating hand 79/100 (Scenario: Random)... ✓
+Simulating hand 80/100 (Scenario: Random)... ✓
+Simulating hand 81/100 (Scenario: Random)... ✓
+Simulating hand 82/100 (Scenario: Random)... ✓
+Simulating hand 83/100 (Scenario: Random)... ✓
+Simulating hand 84/100 (Scenario: Random)... ✓
+Simulating hand 85/100 (Scenario: Random)... ✓
+Simulating hand 86/100 (Scenario: Random)... ✓
+Simulating hand 87/100 (Scenario: Random)... ✓
+Simulating hand 88/100 (Scenario: Random)... ✓
+Simulating hand 89/100 (Scenario: Random)... ✓
+Simulating hand 90/100 (Scenario: Random)... ✓
+Simulating hand 91/100 (Scenario: Random)... ✓
+Simulating hand 92/100 (Scenario: Random)... ✓
+Simulating hand 93/100 (Scenario: Random)... ✓
+Simulating hand 94/100 (Scenario: Random)... ✓
+Simulating hand 95/100 (Scenario: Random)... ✓
+Simulating hand 96/100 (Scenario: Random)... ✓
+Simulating hand 97/100 (Scenario: Random)... ✓
+Simulating hand 98/100 (Scenario: Random)... ✓
+Simulating hand 99/100 (Scenario: Random)... ✓
+Simulating hand 100/100 (Scenario: Random)... ✓
+
+✓ JSON results saved to simulation_results_final.json
+✓ Text results saved to simulation_results_final.txt
+
+============================================================
+Simulation Complete!
+============================================================
+
+Next steps:
+1. Review text output: simulation_results_final.txt
+2. Run LLM analysis: python llm_analyzer.py
+

@@ -1,0 +1,354 @@
+{
+  "timestamp": "2025-10-28T21:46:15.370350",
+  "game_phase": "bidding",
+  "all_hands": {
+    "North": {
+      "cards": [
+        {
+          "rank": "9",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2666"
+        }
+      ],
+      "points": {
+        "hcp": 12,
+        "dist_points": 2,
+        "total_points": 14,
+        "suit_hcp": {
+          "\u2660": 0,
+          "\u2665": 6,
+          "\u2666": 6,
+          "\u2663": 0
+        },
+        "suit_lengths": {
+          "\u2660": 3,
+          "\u2665": 6,
+          "\u2666": 4,
+          "\u2663": 0
+        }
+      }
+    },
+    "East": {
+      "cards": [
+        {
+          "rank": "K",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 10,
+        "dist_points": 1,
+        "total_points": 11,
+        "suit_hcp": {
+          "\u2660": 6,
+          "\u2665": 1,
+          "\u2666": 3,
+          "\u2663": 0
+        },
+        "suit_lengths": {
+          "\u2660": 5,
+          "\u2665": 2,
+          "\u2666": 4,
+          "\u2663": 2
+        }
+      }
+    },
+    "South": {
+      "cards": [
+        {
+          "rank": "A",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "dist_points": 2,
+        "hcp": 11,
+        "suit_hcp": {
+          "\u2660": 4,
+          "\u2663": 7,
+          "\u2665": 0,
+          "\u2666": 0
+        },
+        "suit_lengths": {
+          "\u2660": 2,
+          "\u2663": 6,
+          "\u2665": 2,
+          "\u2666": 3
+        },
+        "total_points": 13
+      }
+    },
+    "West": {
+      "cards": [
+        {
+          "rank": "6",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 7,
+        "dist_points": 1,
+        "total_points": 8,
+        "suit_hcp": {
+          "\u2660": 0,
+          "\u2665": 3,
+          "\u2666": 1,
+          "\u2663": 3
+        },
+        "suit_lengths": {
+          "\u2660": 3,
+          "\u2665": 3,
+          "\u2666": 2,
+          "\u2663": 5
+        }
+      }
+    }
+  },
+  "auction": [
+    {
+      "bid": "1\u2665",
+      "explanation": "\ud83d\udccb Open longest suit - hearts (5+ cards)\n\n\ud83d\udcd0 Requirements for this bid:\n  \u2022 Opening Points: 13+\n  \u2022 Heart Length: 5+\n\n\u26a1 Status: Forcing for 1 round",
+      "player": "North"
+    },
+    {
+      "bid": "1\u2660",
+      "explanation": "Overcall showing 10 HCP and 5-card Spade suit.",
+      "player": "East"
+    },
+    {
+      "bid": "2\u2663",
+      "explanation": "Your bid.",
+      "player": "South"
+    },
+    {
+      "bid": "3\u2663",
+      "explanation": "New suit showing 8 points and 5+ Club suit (constructive). [Adjusted from 2\u2663 to 3\u2663 for legality]",
+      "player": "West"
+    },
+    {
+      "bid": "Pass",
+      "explanation": "No clear rebid available.",
+      "player": "North"
+    },
+    {
+      "bid": "Pass",
+      "explanation": "Already described hand, nothing more to say.",
+      "player": "East"
+    },
+    {
+      "bid": "X",
+      "explanation": "Your bid.",
+      "player": "South"
+    },
+    {
+      "bid": "Pass",
+      "explanation": "Already described hand, nothing more to say.",
+      "player": "West"
+    },
+    {
+      "bid": "3\u2660",
+      "explanation": "Supporting partner's negative double with 3+ spades. [Adjusted from 1\u2660 to 3\u2660 for legality]",
+      "player": "North"
+    },
+    {
+      "bid": "Pass",
+      "explanation": "Already described hand, nothing more to say.",
+      "player": "East"
+    }
+  ],
+  "vulnerability": "None",
+  "dealer": "N",
+  "user_position": "South",
+  "user_concern": "Wow. This bidding is a complete mess. Please review the rules for raising bids for illegality reasons to ensure that the bid is still appropriate at the raised level. "
+}

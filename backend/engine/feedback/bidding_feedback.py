@@ -181,7 +181,7 @@ class BiddingFeedbackGenerator:
                     user_bid=user_bid,
                     correct_bid=optimal_bid,
                     convention_id=auction_context.get('convention_id'),
-                    auction_context=auction_context.get('history', [])
+                    auction_context=auction_context  # Pass full context dict, not just history
                 )
 
                 # Determine severity
@@ -311,9 +311,13 @@ class BiddingFeedbackGenerator:
             ))
 
             conn.commit()
+            print(f"✅ Stored bidding decision: {feedback.user_bid} (correctness: {feedback.correctness.value}, score: {feedback.score})")
         except Exception as e:
-            print(f"Error storing bidding feedback: {e}")
+            print(f"❌ Error storing bidding feedback: {e}")
+            import traceback
+            traceback.print_exc()
             conn.rollback()
+            raise  # Re-raise so the API endpoint can catch it
         finally:
             conn.close()
 

@@ -1,0 +1,563 @@
+{
+  "timestamp": "2025-10-16T21:10:23.057231",
+  "game_phase": "playing",
+  "all_hands": {
+    "North": {
+      "cards": [
+        {
+          "rank": "2",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2666"
+        }
+      ],
+      "points": {
+        "hcp": 11,
+        "dist_points": 0,
+        "total_points": 11,
+        "suit_hcp": {
+          "\u2660": 4,
+          "\u2665": 4,
+          "\u2666": 0,
+          "\u2663": 3
+        },
+        "suit_lengths": {
+          "\u2660": 3,
+          "\u2665": 3,
+          "\u2666": 3,
+          "\u2663": 4
+        }
+      }
+    },
+    "East": {
+      "cards": [
+        {
+          "rank": "3",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2666"
+        }
+      ],
+      "points": {
+        "hcp": 8,
+        "dist_points": 1,
+        "total_points": 9,
+        "suit_hcp": {
+          "\u2660": 1,
+          "\u2665": 0,
+          "\u2666": 6,
+          "\u2663": 1
+        },
+        "suit_lengths": {
+          "\u2660": 5,
+          "\u2665": 4,
+          "\u2666": 3,
+          "\u2663": 1
+        }
+      }
+    },
+    "South": {
+      "cards": [
+        {
+          "rank": "K",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2665"
+        }
+      ],
+      "points": {
+        "hcp": 10,
+        "dist_points": 2,
+        "total_points": 12,
+        "suit_hcp": {
+          "\u2660": 3,
+          "\u2665": 4,
+          "\u2666": 3,
+          "\u2663": 0
+        },
+        "suit_lengths": {
+          "\u2660": 1,
+          "\u2665": 5,
+          "\u2666": 5,
+          "\u2663": 2
+        }
+      }
+    },
+    "West": {
+      "cards": [
+        {
+          "rank": "Q",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2660"
+        }
+      ],
+      "points": {
+        "hcp": 11,
+        "dist_points": 2,
+        "total_points": 13,
+        "suit_hcp": {
+          "\u2660": 2,
+          "\u2665": 2,
+          "\u2666": 1,
+          "\u2663": 6
+        },
+        "suit_lengths": {
+          "\u2660": 4,
+          "\u2665": 1,
+          "\u2666": 2,
+          "\u2663": 6
+        }
+      }
+    }
+  },
+  "auction": [
+    {
+      "bid": "Pass",
+      "explanation": ""
+    },
+    {
+      "bid": "Pass",
+      "explanation": ""
+    },
+    {
+      "bid": "Pass",
+      "explanation": ""
+    },
+    {
+      "bid": "1\u2663",
+      "explanation": ""
+    },
+    {
+      "bid": "Pass",
+      "explanation": ""
+    },
+    {
+      "bid": "1\u2665",
+      "explanation": ""
+    },
+    {
+      "bid": "Pass",
+      "explanation": ""
+    },
+    {
+      "bid": "2\u2663",
+      "explanation": ""
+    },
+    {
+      "bid": "Pass",
+      "explanation": ""
+    },
+    {
+      "bid": "Pass",
+      "explanation": ""
+    },
+    {
+      "bid": "Pass",
+      "explanation": ""
+    }
+  ],
+  "vulnerability": "NS",
+  "dealer": "North",
+  "user_position": "South",
+  "user_concern": "Please check the scoring module as it appears as if West is winning a number of tricks but the score is provided to North South. \n\nThe North hand is not explosed and the AI is playing north. Please confirm that the state machine is operating correctly for gameplay. \n",
+  "play_data": {
+    "contract": {
+      "level": 2,
+      "strain": "\u2663",
+      "declarer": "W",
+      "doubled": 0,
+      "string": "2\u2663 by W"
+    },
+    "dummy": "E",
+    "opening_leader": "N",
+    "trick_history": [
+      {
+        "cards": [
+          {
+            "card": {
+              "rank": "A",
+              "suit": "\u2665"
+            },
+            "player": "N"
+          },
+          {
+            "card": {
+              "rank": "8",
+              "suit": "\u2665"
+            },
+            "player": "E"
+          },
+          {
+            "card": {
+              "rank": "3",
+              "suit": "\u2665"
+            },
+            "player": "S"
+          },
+          {
+            "card": {
+              "rank": "Q",
+              "suit": "\u2665"
+            },
+            "player": "W"
+          }
+        ],
+        "leader": "N",
+        "winner": "N"
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "rank": "A",
+              "suit": "\u2660"
+            },
+            "player": "N"
+          },
+          {
+            "card": {
+              "rank": "J",
+              "suit": "\u2660"
+            },
+            "player": "E"
+          },
+          {
+            "card": {
+              "rank": "K",
+              "suit": "\u2660"
+            },
+            "player": "S"
+          },
+          {
+            "card": {
+              "rank": "7",
+              "suit": "\u2660"
+            },
+            "player": "W"
+          }
+        ],
+        "leader": "N",
+        "winner": "N"
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "rank": "K",
+              "suit": "\u2663"
+            },
+            "player": "N"
+          },
+          {
+            "card": {
+              "rank": "J",
+              "suit": "\u2663"
+            },
+            "player": "E"
+          },
+          {
+            "card": {
+              "rank": "6",
+              "suit": "\u2663"
+            },
+            "player": "S"
+          },
+          {
+            "card": {
+              "rank": "A",
+              "suit": "\u2663"
+            },
+            "player": "W"
+          }
+        ],
+        "leader": "N",
+        "winner": "W"
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "rank": "8",
+              "suit": "\u2663"
+            },
+            "player": "W"
+          },
+          {
+            "card": {
+              "rank": "T",
+              "suit": "\u2663"
+            },
+            "player": "N"
+          },
+          {
+            "card": {
+              "rank": "T",
+              "suit": "\u2665"
+            },
+            "player": "E"
+          },
+          {
+            "card": {
+              "rank": "9",
+              "suit": "\u2663"
+            },
+            "player": "S"
+          }
+        ],
+        "leader": "W",
+        "winner": "N"
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "rank": "T",
+              "suit": "\u2666"
+            },
+            "player": "N"
+          },
+          {
+            "card": {
+              "rank": "2",
+              "suit": "\u2666"
+            },
+            "player": "E"
+          },
+          {
+            "card": {
+              "rank": "K",
+              "suit": "\u2666"
+            },
+            "player": "S"
+          },
+          {
+            "card": {
+              "rank": "4",
+              "suit": "\u2666"
+            },
+            "player": "W"
+          }
+        ],
+        "leader": "N",
+        "winner": "S"
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "rank": "9",
+              "suit": "\u2666"
+            },
+            "player": "S"
+          },
+          {
+            "card": {
+              "rank": "J",
+              "suit": "\u2666"
+            },
+            "player": "W"
+          },
+          {
+            "card": {
+              "rank": "7",
+              "suit": "\u2666"
+            },
+            "player": "N"
+          },
+          {
+            "card": {
+              "rank": "Q",
+              "suit": "\u2666"
+            },
+            "player": "E"
+          }
+        ],
+        "leader": "S",
+        "winner": "E"
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "rank": "6",
+              "suit": "\u2665"
+            },
+            "player": "E"
+          },
+          {
+            "card": {
+              "rank": "9",
+              "suit": "\u2665"
+            },
+            "player": "S"
+          },
+          {
+            "card": {
+              "rank": "4",
+              "suit": "\u2663"
+            },
+            "player": "W"
+          },
+          {
+            "card": {
+              "rank": "7",
+              "suit": "\u2665"
+            },
+            "player": "N"
+          }
+        ],
+        "leader": "E",
+        "winner": "W"
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "rank": "3",
+              "suit": "\u2663"
+            },
+            "player": "W"
+          },
+          {
+            "card": {
+              "rank": "7",
+              "suit": "\u2663"
+            },
+            "player": "N"
+          },
+          {
+            "card": {
+              "rank": "5",
+              "suit": "\u2665"
+            },
+            "player": "E"
+          },
+          {
+            "card": {
+              "rank": "3",
+              "suit": "\u2666"
+            },
+            "player": "S"
+          }
+        ],
+        "leader": "W",
+        "winner": "N"
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "rank": "5",
+              "suit": "\u2663"
+            },
+            "player": "N"
+          },
+          {
+            "card": {
+              "rank": "8",
+              "suit": "\u2660"
+            },
+            "player": "E"
+          },
+          {
+            "card": {
+              "rank": "5",
+              "suit": "\u2666"
+            },
+            "player": "S"
+          },
+          {
+            "card": {
+              "rank": "Q",
+              "suit": "\u2663"
+            },
+            "player": "W"
+          }
+        ],
+        "leader": "N",
+        "winner": "W"
+      },
+      {
+        "cards": [
+          {
+            "card": {
+              "rank": "2",
+              "suit": "\u2663"
+            },
+            "player": "W"
+          },
+          {
+            "card": {
+              "rank": "9",
+              "suit": "\u2660"
+            },
+            "player": "N"
+          },
+          {
+            "card": {
+              "rank": "5",
+              "suit": "\u2660"
+            },
+            "player": "E"
+          },
+          {
+            "card": {
+              "rank": "8",
+              "suit": "\u2666"
+            },
+            "player": "S"
+          }
+        ],
+        "leader": "W",
+        "winner": "W"
+      }
+    ],
+    "current_trick": [
+      {
+        "card": {
+          "rank": "4",
+          "suit": "\u2660"
+        },
+        "player": "W"
+      },
+      {
+        "card": {
+          "rank": "6",
+          "suit": "\u2660"
+        },
+        "player": "N"
+      },
+      {
+        "card": {
+          "rank": "T",
+          "suit": "\u2660"
+        },
+        "player": "E"
+      }
+    ],
+    "tricks_won": {
+      "N": 4,
+      "E": 1,
+      "S": 1,
+      "W": 4
+    },
+    "tricks_taken_ns": 5,
+    "tricks_taken_ew": 5,
+    "next_to_play": "S",
+    "dummy_revealed": true,
+    "is_complete": false
+  }
+}

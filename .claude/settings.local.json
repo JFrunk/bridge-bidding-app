@@ -54,7 +54,20 @@
       "Read(//Users/simonroy/Downloads/**)",
       "Bash(./update_app_session.sh:*)",
       "Bash(npx shadcn@latest add:*)",
-      "Bash(sw_vers)"
+      "Bash(sw_vers)",
+      "Bash(node:*)",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)",
+      "Bash(PYTHONPATH=backend python3:*)",
+      "Bash(docker:*)",
+      "Bash(code --list-extensions)",
+      "Bash(/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code --list-extensions)",
+      "Read(//Users/simonroy/Library/**)",
+      "Bash(alpine:latest )",
+      "Bash(sh:*)",
+      "Bash(./.claude/docker-safe-yolo.sh:*)",
+      "Bash(./.claude/scripts/restart_servers.sh:*)",
+      "Bash(npx playwright test:*)"
     ],
     "deny": [],
     "ask": []

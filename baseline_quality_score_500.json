@@ -1,0 +1,2659 @@
+{
+  "timestamp": "2025-10-28T22:20:05.799902",
+  "scores": {
+    "total_hands": 500,
+    "total_bids": 3013,
+    "total_non_pass_bids": 919,
+    "scores": {
+      "legality": 100.0,
+      "appropriateness": 78.7,
+      "conventions": 99.7,
+      "consistency": 100,
+      "reasonableness": 92.1,
+      "game_slam": 24.7,
+      "composite": 89.7
+    },
+    "error_counts": {
+      "legality": 0,
+      "appropriateness": 196,
+      "conventions": 1,
+      "game_slam": 113
+    },
+    "errors": {
+      "legality": [],
+      "appropriateness": [
+        {
+          "hand_number": 0,
+          "position": "North",
+          "bid": "2\u2665",
+          "hand_hcp": 12,
+          "hand_total_points": 13,
+          "hand_shape": "5242",
+          "reason": "Bid \u2665 with only 2 cards"
+        },
+        {
+          "hand_number": 8,
+          "position": "North",
+          "bid": "2\u2666",
+          "hand_hcp": 10,
+          "hand_total_points": 12,
+          "hand_shape": "5512",
+          "reason": "Bid \u2666 with only 1 cards"
+        },
+        {
+          "hand_number": 10,
+          "position": "North",
+          "bid": "6\u2665",
+          "hand_hcp": 15,
+          "hand_total_points": 16,
+          "hand_shape": "5341",
+          "reason": "Bid \u2665 with only 3 cards"
+        },
+        {
+          "hand_number": 14,
+          "position": "West",
+          "bid": "3\u2665",
+          "hand_hcp": 11,
+          "hand_total_points": 12,
+          "hand_shape": "5323",
+          "reason": "Bid \u2665 with only 3 cards"
+        },
+        {
+          "hand_number": 14,
+          "position": "West",
+          "bid": "5\u2665",
+          "hand_hcp": 11,
+          "hand_total_points": 12,
+          "hand_shape": "5323",
+          "reason": "Bid \u2665 with only 3 cards"
+        },
+        {
+          "hand_number": 15,
+          "position": "West",
+          "bid": "1\u2663",
+          "hand_hcp": 13,
+          "hand_total_points": 13,
+          "hand_shape": "3433",
+          "reason": "Bid \u2663 with only 3 cards"
+        },
+        {
+          "hand_number": 17,
+          "position": "West",
+          "bid": "2\u2660",
+          "hand_hcp": 7,
+          "hand_total_points": 7,
+          "hand_shape": "3442",
+          "reason": "Bid \u2660 with only 3 cards"
+        },
+        {
+          "hand_number": 27,
+          "position": "South",
+          "bid": "2\u2665",
+          "hand_hcp": 6,
+          "hand_total_points": 8,
+          "hand_shape": "6322",
+          "reason": "Bid \u2665 with only 3 cards"
+        },
+        {
+          "hand_number": 28,
+          "position": "East",
+          "bid": "1\u2666",
+          "hand_hcp": 13,
+          "hand_total_points": 13,
+          "hand_shape": "4432",
+          "reason": "Bid \u2666 with only 3 cards"
+        },
+        {
+          "hand_number": 28,
+          "position": "North",
+          "bid": "4\u2663",
+          "hand_hcp": 5,
+          "hand_total_points": 7,
+          "hand_shape": "0535",
+          "reason": "4-level bid with only 7 points and 5 cards"
+        }
+      ],
+      "conventions": [
+        {
+          "hand_number": 22,
+          "position": "North",
+          "convention": "Stayman",
+          "error": "Used Stayman without 4-card major",
+          "hand_hcp": 11,
+          "spades": 3,
+          "hearts": 0
+        }
+      ],
+      "game_slam": [
+        {
+          "hand_number": 0,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 27,
+          "final_contract": "2\u2660"
+        },
+        {
+          "hand_number": 3,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 27,
+          "final_contract": "1\u2660"
+        },
+        {
+          "hand_number": 5,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 27,
+          "final_contract": "1\u2660"
+        },
+        {
+          "hand_number": 7,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 25,
+          "final_contract": "1\u2660"
+        },
+        {
+          "hand_number": 16,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 34,
+          "final_contract": "1\u2660"
+        },
+        {
+          "hand_number": 17,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 26,
+          "final_contract": "3\u2660"
+        },
+        {
+          "hand_number": 24,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 25,
+          "final_contract": "1\u2663"
+        },
+        {
+          "hand_number": 25,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 27,
+          "final_contract": "1\u2666"
+        },
+        {
+          "hand_number": 27,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 26,
+          "final_contract": "3\u2665"
+        },
+        {
+          "hand_number": 29,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 27,
+          "final_contract": "2\u2666"
+        }
+      ]
+    },
+    "reasonableness_breakdown": {
+      "excellent": 277,
+      "good": 551,
+      "questionable": 18,
+      "poor": 60,
+      "terrible": 13
+    },
+    "grade": "C (Acceptable, needs work)"
+  },
+  "all_errors": {
+    "legality": [],
+    "appropriateness": [
+      {
+        "hand_number": 0,
+        "position": "North",
+        "bid": "2\u2665",
+        "hand_hcp": 12,
+        "hand_total_points": 13,
+        "hand_shape": "5242",
+        "reason": "Bid \u2665 with only 2 cards"
+      },
+      {
+        "hand_number": 8,
+        "position": "North",
+        "bid": "2\u2666",
+        "hand_hcp": 10,
+        "hand_total_points": 12,
+        "hand_shape": "5512",
+        "reason": "Bid \u2666 with only 1 cards"
+      },
+      {
+        "hand_number": 10,
+        "position": "North",
+        "bid": "6\u2665",
+        "hand_hcp": 15,
+        "hand_total_points": 16,
+        "hand_shape": "5341",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 14,
+        "position": "West",
+        "bid": "3\u2665",
+        "hand_hcp": 11,
+        "hand_total_points": 12,
+        "hand_shape": "5323",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 14,
+        "position": "West",
+        "bid": "5\u2665",
+        "hand_hcp": 11,
+        "hand_total_points": 12,
+        "hand_shape": "5323",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 15,
+        "position": "West",
+        "bid": "1\u2663",
+        "hand_hcp": 13,
+        "hand_total_points": 13,
+        "hand_shape": "3433",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 17,
+        "position": "West",
+        "bid": "2\u2660",
+        "hand_hcp": 7,
+        "hand_total_points": 7,
+        "hand_shape": "3442",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 27,
+        "position": "South",
+        "bid": "2\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 8,
+        "hand_shape": "6322",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 28,
+        "position": "East",
+        "bid": "1\u2666",
+        "hand_hcp": 13,
+        "hand_total_points": 13,
+        "hand_shape": "4432",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 28,
+        "position": "North",
+        "bid": "4\u2663",
+        "hand_hcp": 5,
+        "hand_total_points": 7,
+        "hand_shape": "0535",
+        "reason": "4-level bid with only 7 points and 5 cards"
+      },
+      {
+        "hand_number": 28,
+        "position": "North",
+        "bid": "4\u2663",
+        "hand_hcp": 5,
+        "hand_total_points": 7,
+        "hand_shape": "0535",
+        "reason": "4-level bid with 7 points and 5 cards"
+      },
+      {
+        "hand_number": 30,
+        "position": "West",
+        "bid": "4\u2665",
+        "hand_hcp": 14,
+        "hand_total_points": 14,
+        "hand_shape": "4324",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 35,
+        "position": "South",
+        "bid": "3\u2660",
+        "hand_hcp": 10,
+        "hand_total_points": 10,
+        "hand_shape": "1444",
+        "reason": "Bid \u2660 with only 1 cards"
+      },
+      {
+        "hand_number": 39,
+        "position": "East",
+        "bid": "2\u2663",
+        "hand_hcp": 21,
+        "hand_total_points": 22,
+        "hand_shape": "5431",
+        "reason": "Bid \u2663 with only 1 cards"
+      },
+      {
+        "hand_number": 42,
+        "position": "South",
+        "bid": "4\u2665",
+        "hand_hcp": 17,
+        "hand_total_points": 17,
+        "hand_shape": "3334",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 44,
+        "position": "South",
+        "bid": "3\u2663",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "4333",
+        "reason": "3-level bid with 8 points and only 3 cards"
+      },
+      {
+        "hand_number": 44,
+        "position": "South",
+        "bid": "3\u2663",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "4333",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 48,
+        "position": "North",
+        "bid": "1\u2663",
+        "hand_hcp": 13,
+        "hand_total_points": 13,
+        "hand_shape": "4333",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 50,
+        "position": "North",
+        "bid": "1\u2663",
+        "hand_hcp": 14,
+        "hand_total_points": 14,
+        "hand_shape": "4333",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 51,
+        "position": "South",
+        "bid": "3\u2663",
+        "hand_hcp": 12,
+        "hand_total_points": 14,
+        "hand_shape": "2263",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 54,
+        "position": "West",
+        "bid": "3\u2666",
+        "hand_hcp": 11,
+        "hand_total_points": 11,
+        "hand_shape": "2434",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 62,
+        "position": "West",
+        "bid": "3\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 9,
+        "hand_shape": "7411",
+        "reason": "3-level bid with 9 points and only 4 cards"
+      },
+      {
+        "hand_number": 62,
+        "position": "North",
+        "bid": "3\u2660",
+        "hand_hcp": 19,
+        "hand_total_points": 19,
+        "hand_shape": "3343",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 62,
+        "position": "West",
+        "bid": "4\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 9,
+        "hand_shape": "7411",
+        "reason": "3-level bid with 9 points and only 4 cards"
+      },
+      {
+        "hand_number": 62,
+        "position": "West",
+        "bid": "4\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 9,
+        "hand_shape": "7411",
+        "reason": "4-level bid with 9 points and 4 cards"
+      },
+      {
+        "hand_number": 62,
+        "position": "North",
+        "bid": "4\u2660",
+        "hand_hcp": 19,
+        "hand_total_points": 19,
+        "hand_shape": "3343",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 62,
+        "position": "West",
+        "bid": "5\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 9,
+        "hand_shape": "7411",
+        "reason": "3-level bid with 9 points and only 4 cards"
+      },
+      {
+        "hand_number": 62,
+        "position": "West",
+        "bid": "5\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 9,
+        "hand_shape": "7411",
+        "reason": "4-level bid with 9 points and 4 cards"
+      },
+      {
+        "hand_number": 62,
+        "position": "North",
+        "bid": "5\u2660",
+        "hand_hcp": 19,
+        "hand_total_points": 19,
+        "hand_shape": "3343",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 62,
+        "position": "West",
+        "bid": "6\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 9,
+        "hand_shape": "7411",
+        "reason": "3-level bid with 9 points and only 4 cards"
+      },
+      {
+        "hand_number": 62,
+        "position": "West",
+        "bid": "6\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 9,
+        "hand_shape": "7411",
+        "reason": "4-level bid with 9 points and 4 cards"
+      },
+      {
+        "hand_number": 64,
+        "position": "East",
+        "bid": "1\u2666",
+        "hand_hcp": 13,
+        "hand_total_points": 13,
+        "hand_shape": "4432",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 67,
+        "position": "West",
+        "bid": "3\u2666",
+        "hand_hcp": 10,
+        "hand_total_points": 11,
+        "hand_shape": "3532",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 68,
+        "position": "West",
+        "bid": "5\u2665",
+        "hand_hcp": 10,
+        "hand_total_points": 10,
+        "hand_shape": "3343",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 70,
+        "position": "North",
+        "bid": "2\u2663",
+        "hand_hcp": 6,
+        "hand_total_points": 6,
+        "hand_shape": "3343",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 70,
+        "position": "East",
+        "bid": "3\u2666",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "4243",
+        "reason": "3-level bid with 8 points and only 4 cards"
+      },
+      {
+        "hand_number": 70,
+        "position": "North",
+        "bid": "5\u2663",
+        "hand_hcp": 6,
+        "hand_total_points": 6,
+        "hand_shape": "3343",
+        "reason": "5-level bid with only 6 points and 3 cards"
+      },
+      {
+        "hand_number": 70,
+        "position": "North",
+        "bid": "5\u2663",
+        "hand_hcp": 6,
+        "hand_total_points": 6,
+        "hand_shape": "3343",
+        "reason": "4-level bid with 6 points and 3 cards"
+      },
+      {
+        "hand_number": 70,
+        "position": "North",
+        "bid": "5\u2663",
+        "hand_hcp": 6,
+        "hand_total_points": 6,
+        "hand_shape": "3343",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 74,
+        "position": "South",
+        "bid": "2\u2663",
+        "hand_hcp": 14,
+        "hand_total_points": 14,
+        "hand_shape": "4432",
+        "reason": "Bid \u2663 with only 2 cards"
+      },
+      {
+        "hand_number": 77,
+        "position": "East",
+        "bid": "2\u2660",
+        "hand_hcp": 9,
+        "hand_total_points": 11,
+        "hand_shape": "3226",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 87,
+        "position": "South",
+        "bid": "3\u2660",
+        "hand_hcp": 11,
+        "hand_total_points": 11,
+        "hand_shape": "3343",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 91,
+        "position": "North",
+        "bid": "1\u2663",
+        "hand_hcp": 14,
+        "hand_total_points": 14,
+        "hand_shape": "3433",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 95,
+        "position": "West",
+        "bid": "4\u2663",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "5323",
+        "reason": "3-level bid with 9 points and only 3 cards"
+      },
+      {
+        "hand_number": 95,
+        "position": "West",
+        "bid": "4\u2663",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "5323",
+        "reason": "4-level bid with 9 points and 3 cards"
+      },
+      {
+        "hand_number": 95,
+        "position": "West",
+        "bid": "4\u2663",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "5323",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 97,
+        "position": "West",
+        "bid": "1\u2666",
+        "hand_hcp": 14,
+        "hand_total_points": 14,
+        "hand_shape": "4432",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 99,
+        "position": "South",
+        "bid": "2\u2660",
+        "hand_hcp": 9,
+        "hand_total_points": 10,
+        "hand_shape": "3253",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 101,
+        "position": "West",
+        "bid": "3\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 6,
+        "hand_shape": "4333",
+        "reason": "3-level bid with only 6 points and 3 cards"
+      },
+      {
+        "hand_number": 101,
+        "position": "West",
+        "bid": "3\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 6,
+        "hand_shape": "4333",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 101,
+        "position": "North",
+        "bid": "4\u2665",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "5413",
+        "reason": "3-level bid with 8 points and only 4 cards"
+      },
+      {
+        "hand_number": 101,
+        "position": "North",
+        "bid": "4\u2665",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "5413",
+        "reason": "4-level bid with 8 points and 4 cards"
+      },
+      {
+        "hand_number": 102,
+        "position": "South",
+        "bid": "1\u2666",
+        "hand_hcp": 14,
+        "hand_total_points": 14,
+        "hand_shape": "4432",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 105,
+        "position": "West",
+        "bid": "4\u2666",
+        "hand_hcp": 7,
+        "hand_total_points": 7,
+        "hand_shape": "4144",
+        "reason": "4-level bid with only 7 points and 4 cards"
+      },
+      {
+        "hand_number": 105,
+        "position": "West",
+        "bid": "4\u2666",
+        "hand_hcp": 7,
+        "hand_total_points": 7,
+        "hand_shape": "4144",
+        "reason": "4-level bid with 7 points and 4 cards"
+      },
+      {
+        "hand_number": 105,
+        "position": "North",
+        "bid": "5\u2666",
+        "hand_hcp": 9,
+        "hand_total_points": 9,
+        "hand_shape": "3442",
+        "reason": "3-level bid with 9 points and only 4 cards"
+      },
+      {
+        "hand_number": 105,
+        "position": "North",
+        "bid": "5\u2666",
+        "hand_hcp": 9,
+        "hand_total_points": 9,
+        "hand_shape": "3442",
+        "reason": "4-level bid with 9 points and 4 cards"
+      },
+      {
+        "hand_number": 107,
+        "position": "West",
+        "bid": "2\u2666",
+        "hand_hcp": 14,
+        "hand_total_points": 15,
+        "hand_shape": "3532",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 108,
+        "position": "East",
+        "bid": "4\u2660",
+        "hand_hcp": 6,
+        "hand_total_points": 7,
+        "hand_shape": "5314",
+        "reason": "4-level bid with only 7 points and 5 cards"
+      },
+      {
+        "hand_number": 108,
+        "position": "East",
+        "bid": "4\u2660",
+        "hand_hcp": 6,
+        "hand_total_points": 7,
+        "hand_shape": "5314",
+        "reason": "4-level bid with 7 points and 5 cards"
+      },
+      {
+        "hand_number": 109,
+        "position": "West",
+        "bid": "1\u2663",
+        "hand_hcp": 13,
+        "hand_total_points": 13,
+        "hand_shape": "3433",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 112,
+        "position": "North",
+        "bid": "2\u2665",
+        "hand_hcp": 16,
+        "hand_total_points": 17,
+        "hand_shape": "5341",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 122,
+        "position": "West",
+        "bid": "4\u2663",
+        "hand_hcp": 7,
+        "hand_total_points": 7,
+        "hand_shape": "3334",
+        "reason": "4-level bid with only 7 points and 4 cards"
+      },
+      {
+        "hand_number": 122,
+        "position": "West",
+        "bid": "4\u2663",
+        "hand_hcp": 7,
+        "hand_total_points": 7,
+        "hand_shape": "3334",
+        "reason": "4-level bid with 7 points and 4 cards"
+      },
+      {
+        "hand_number": 122,
+        "position": "West",
+        "bid": "5\u2663",
+        "hand_hcp": 7,
+        "hand_total_points": 7,
+        "hand_shape": "3334",
+        "reason": "5-level bid with only 7 points and 4 cards"
+      },
+      {
+        "hand_number": 122,
+        "position": "West",
+        "bid": "5\u2663",
+        "hand_hcp": 7,
+        "hand_total_points": 7,
+        "hand_shape": "3334",
+        "reason": "4-level bid with 7 points and 4 cards"
+      },
+      {
+        "hand_number": 124,
+        "position": "West",
+        "bid": "4\u2663",
+        "hand_hcp": 10,
+        "hand_total_points": 12,
+        "hand_shape": "5521",
+        "reason": "Bid \u2663 with only 1 cards"
+      },
+      {
+        "hand_number": 125,
+        "position": "West",
+        "bid": "5\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "2434",
+        "reason": "3-level bid with 8 points and only 4 cards"
+      },
+      {
+        "hand_number": 125,
+        "position": "West",
+        "bid": "5\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "2434",
+        "reason": "4-level bid with 8 points and 4 cards"
+      },
+      {
+        "hand_number": 130,
+        "position": "South",
+        "bid": "4\u2666",
+        "hand_hcp": 10,
+        "hand_total_points": 12,
+        "hand_shape": "6412",
+        "reason": "Bid \u2666 with only 1 cards"
+      },
+      {
+        "hand_number": 132,
+        "position": "South",
+        "bid": "2\u2663",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "3433",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 134,
+        "position": "North",
+        "bid": "3NT",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "3235",
+        "reason": "3-level bid with 8 points and only 0 cards"
+      },
+      {
+        "hand_number": 134,
+        "position": "North",
+        "bid": "4NT",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "3235",
+        "reason": "3-level bid with 8 points and only 0 cards"
+      },
+      {
+        "hand_number": 134,
+        "position": "North",
+        "bid": "4NT",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "3235",
+        "reason": "4-level bid with 8 points and 0 cards"
+      },
+      {
+        "hand_number": 142,
+        "position": "North",
+        "bid": "1\u2663",
+        "hand_hcp": 19,
+        "hand_total_points": 19,
+        "hand_shape": "3433",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 145,
+        "position": "South",
+        "bid": "2\u2665",
+        "hand_hcp": 4,
+        "hand_total_points": 6,
+        "hand_shape": "6331",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 146,
+        "position": "North",
+        "bid": "2\u2665",
+        "hand_hcp": 15,
+        "hand_total_points": 16,
+        "hand_shape": "5233",
+        "reason": "Bid \u2665 with only 2 cards"
+      },
+      {
+        "hand_number": 148,
+        "position": "North",
+        "bid": "1\u2663",
+        "hand_hcp": 20,
+        "hand_total_points": 20,
+        "hand_shape": "4333",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 152,
+        "position": "West",
+        "bid": "2\u2660",
+        "hand_hcp": 7,
+        "hand_total_points": 9,
+        "hand_shape": "3226",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 152,
+        "position": "North",
+        "bid": "3\u2660",
+        "hand_hcp": 10,
+        "hand_total_points": 10,
+        "hand_shape": "3334",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 155,
+        "position": "West",
+        "bid": "2\u2666",
+        "hand_hcp": 14,
+        "hand_total_points": 15,
+        "hand_shape": "2524",
+        "reason": "Bid \u2666 with only 2 cards"
+      },
+      {
+        "hand_number": 157,
+        "position": "East",
+        "bid": "1\u2663",
+        "hand_hcp": 14,
+        "hand_total_points": 14,
+        "hand_shape": "3433",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 157,
+        "position": "West",
+        "bid": "3\u2663",
+        "hand_hcp": 9,
+        "hand_total_points": 10,
+        "hand_shape": "2533",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 158,
+        "position": "West",
+        "bid": "3\u2660",
+        "hand_hcp": 6,
+        "hand_total_points": 7,
+        "hand_shape": "5242",
+        "reason": "3-level bid with only 7 points and 5 cards"
+      },
+      {
+        "hand_number": 161,
+        "position": "South",
+        "bid": "4\u2665",
+        "hand_hcp": 13,
+        "hand_total_points": 14,
+        "hand_shape": "5332",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 161,
+        "position": "West",
+        "bid": "5\u2665",
+        "hand_hcp": 11,
+        "hand_total_points": 13,
+        "hand_shape": "2326",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 162,
+        "position": "West",
+        "bid": "2\u2666",
+        "hand_hcp": 10,
+        "hand_total_points": 11,
+        "hand_shape": "4522",
+        "reason": "Bid \u2666 with only 2 cards"
+      },
+      {
+        "hand_number": 162,
+        "position": "South",
+        "bid": "4\u2666",
+        "hand_hcp": 11,
+        "hand_total_points": 12,
+        "hand_shape": "3235",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 164,
+        "position": "South",
+        "bid": "4\u2666",
+        "hand_hcp": 13,
+        "hand_total_points": 15,
+        "hand_shape": "3505",
+        "reason": "Bid \u2666 with only 0 cards"
+      },
+      {
+        "hand_number": 171,
+        "position": "West",
+        "bid": "5\u2663",
+        "hand_hcp": 18,
+        "hand_total_points": 20,
+        "hand_shape": "1633",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 176,
+        "position": "North",
+        "bid": "6\u2666",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "3532",
+        "reason": "3-level bid with 9 points and only 3 cards"
+      },
+      {
+        "hand_number": 176,
+        "position": "North",
+        "bid": "6\u2666",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "3532",
+        "reason": "4-level bid with 9 points and 3 cards"
+      },
+      {
+        "hand_number": 176,
+        "position": "North",
+        "bid": "6\u2666",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "3532",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 178,
+        "position": "South",
+        "bid": "4\u2660",
+        "hand_hcp": 6,
+        "hand_total_points": 8,
+        "hand_shape": "6223",
+        "reason": "4-level bid with 8 points and 6 cards"
+      },
+      {
+        "hand_number": 184,
+        "position": "West",
+        "bid": "2\u2663",
+        "hand_hcp": 6,
+        "hand_total_points": 6,
+        "hand_shape": "4423",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 192,
+        "position": "South",
+        "bid": "2\u2665",
+        "hand_hcp": 16,
+        "hand_total_points": 18,
+        "hand_shape": "5152",
+        "reason": "Bid \u2665 with only 1 cards"
+      },
+      {
+        "hand_number": 192,
+        "position": "North",
+        "bid": "4\u2665",
+        "hand_hcp": 11,
+        "hand_total_points": 12,
+        "hand_shape": "5323",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 192,
+        "position": "South",
+        "bid": "6\u2665",
+        "hand_hcp": 16,
+        "hand_total_points": 18,
+        "hand_shape": "5152",
+        "reason": "Bid \u2665 with only 1 cards"
+      },
+      {
+        "hand_number": 198,
+        "position": "South",
+        "bid": "2\u2663",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "4423",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 199,
+        "position": "South",
+        "bid": "4\u2663",
+        "hand_hcp": 11,
+        "hand_total_points": 13,
+        "hand_shape": "6331",
+        "reason": "Bid \u2663 with only 1 cards"
+      },
+      {
+        "hand_number": 199,
+        "position": "West",
+        "bid": "5\u2663",
+        "hand_hcp": 17,
+        "hand_total_points": 17,
+        "hand_shape": "3433",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 202,
+        "position": "South",
+        "bid": "2\u2663",
+        "hand_hcp": 9,
+        "hand_total_points": 10,
+        "hand_shape": "4351",
+        "reason": "Bid \u2663 with only 1 cards"
+      },
+      {
+        "hand_number": 207,
+        "position": "South",
+        "bid": "2\u2663",
+        "hand_hcp": 7,
+        "hand_total_points": 7,
+        "hand_shape": "4243",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 213,
+        "position": "West",
+        "bid": "2\u2663",
+        "hand_hcp": 16,
+        "hand_total_points": 16,
+        "hand_shape": "2443",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 220,
+        "position": "East",
+        "bid": "1\u2663",
+        "hand_hcp": 13,
+        "hand_total_points": 13,
+        "hand_shape": "4423",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 231,
+        "position": "West",
+        "bid": "4\u2660",
+        "hand_hcp": 17,
+        "hand_total_points": 18,
+        "hand_shape": "3325",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 237,
+        "position": "South",
+        "bid": "2\u2665",
+        "hand_hcp": 17,
+        "hand_total_points": 18,
+        "hand_shape": "5233",
+        "reason": "Bid \u2665 with only 2 cards"
+      },
+      {
+        "hand_number": 238,
+        "position": "South",
+        "bid": "3\u2665",
+        "hand_hcp": 10,
+        "hand_total_points": 11,
+        "hand_shape": "5134",
+        "reason": "Bid \u2665 with only 1 cards"
+      },
+      {
+        "hand_number": 241,
+        "position": "West",
+        "bid": "2\u2666",
+        "hand_hcp": 9,
+        "hand_total_points": 11,
+        "hand_shape": "3622",
+        "reason": "Bid \u2666 with only 2 cards"
+      },
+      {
+        "hand_number": 241,
+        "position": "South",
+        "bid": "4\u2666",
+        "hand_hcp": 11,
+        "hand_total_points": 11,
+        "hand_shape": "2434",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 244,
+        "position": "South",
+        "bid": "1\u2663",
+        "hand_hcp": 13,
+        "hand_total_points": 13,
+        "hand_shape": "4423",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 245,
+        "position": "West",
+        "bid": "3\u2660",
+        "hand_hcp": 10,
+        "hand_total_points": 11,
+        "hand_shape": "3253",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 252,
+        "position": "West",
+        "bid": "4\u2666",
+        "hand_hcp": 11,
+        "hand_total_points": 12,
+        "hand_shape": "5332",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 257,
+        "position": "South",
+        "bid": "2\u2663",
+        "hand_hcp": 25,
+        "hand_total_points": 26,
+        "hand_shape": "2452",
+        "reason": "Bid \u2663 with only 2 cards"
+      },
+      {
+        "hand_number": 266,
+        "position": "West",
+        "bid": "3\u2663",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "4423",
+        "reason": "3-level bid with 8 points and only 3 cards"
+      },
+      {
+        "hand_number": 266,
+        "position": "West",
+        "bid": "3\u2663",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "4423",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 270,
+        "position": "West",
+        "bid": "2\u2665",
+        "hand_hcp": 14,
+        "hand_total_points": 15,
+        "hand_shape": "5332",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 277,
+        "position": "South",
+        "bid": "3NT",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "3451",
+        "reason": "3-level bid with 8 points and only 0 cards"
+      },
+      {
+        "hand_number": 277,
+        "position": "South",
+        "bid": "4NT",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "3451",
+        "reason": "3-level bid with 8 points and only 0 cards"
+      },
+      {
+        "hand_number": 277,
+        "position": "South",
+        "bid": "4NT",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "3451",
+        "reason": "4-level bid with 8 points and 0 cards"
+      },
+      {
+        "hand_number": 280,
+        "position": "West",
+        "bid": "4\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "2524",
+        "reason": "4-level bid with 9 points and 5 cards"
+      },
+      {
+        "hand_number": 280,
+        "position": "West",
+        "bid": "5\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "2524",
+        "reason": "4-level bid with 9 points and 5 cards"
+      },
+      {
+        "hand_number": 282,
+        "position": "North",
+        "bid": "3\u2660",
+        "hand_hcp": 9,
+        "hand_total_points": 9,
+        "hand_shape": "4144",
+        "reason": "3-level bid with 9 points and only 4 cards"
+      },
+      {
+        "hand_number": 288,
+        "position": "South",
+        "bid": "2\u2660",
+        "hand_hcp": 6,
+        "hand_total_points": 8,
+        "hand_shape": "3361",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 290,
+        "position": "South",
+        "bid": "2\u2666",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "4432",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 290,
+        "position": "West",
+        "bid": "5\u2666",
+        "hand_hcp": 18,
+        "hand_total_points": 19,
+        "hand_shape": "5431",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 292,
+        "position": "West",
+        "bid": "2\u2663",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "4243",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 299,
+        "position": "East",
+        "bid": "2\u2663",
+        "hand_hcp": 20,
+        "hand_total_points": 22,
+        "hand_shape": "4621",
+        "reason": "Bid \u2663 with only 1 cards"
+      },
+      {
+        "hand_number": 304,
+        "position": "East",
+        "bid": "1\u2663",
+        "hand_hcp": 18,
+        "hand_total_points": 18,
+        "hand_shape": "4333",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 305,
+        "position": "South",
+        "bid": "3\u2666",
+        "hand_hcp": 12,
+        "hand_total_points": 12,
+        "hand_shape": "4333",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 310,
+        "position": "West",
+        "bid": "3\u2665",
+        "hand_hcp": 5,
+        "hand_total_points": 7,
+        "hand_shape": "1462",
+        "reason": "3-level bid with only 7 points and 4 cards"
+      },
+      {
+        "hand_number": 322,
+        "position": "South",
+        "bid": "2\u2663",
+        "hand_hcp": 9,
+        "hand_total_points": 9,
+        "hand_shape": "3433",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 327,
+        "position": "North",
+        "bid": "4\u2660",
+        "hand_hcp": 15,
+        "hand_total_points": 16,
+        "hand_shape": "3352",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 330,
+        "position": "South",
+        "bid": "3\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "5314",
+        "reason": "3-level bid with 9 points and only 3 cards"
+      },
+      {
+        "hand_number": 330,
+        "position": "South",
+        "bid": "3\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "5314",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 330,
+        "position": "South",
+        "bid": "5\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "5314",
+        "reason": "3-level bid with 9 points and only 3 cards"
+      },
+      {
+        "hand_number": 330,
+        "position": "South",
+        "bid": "5\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "5314",
+        "reason": "4-level bid with 9 points and 3 cards"
+      },
+      {
+        "hand_number": 330,
+        "position": "South",
+        "bid": "5\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "5314",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 336,
+        "position": "West",
+        "bid": "3\u2660",
+        "hand_hcp": 6,
+        "hand_total_points": 6,
+        "hand_shape": "4333",
+        "reason": "3-level bid with only 6 points and 4 cards"
+      },
+      {
+        "hand_number": 344,
+        "position": "North",
+        "bid": "5\u2666",
+        "hand_hcp": 9,
+        "hand_total_points": 12,
+        "hand_shape": "2722",
+        "reason": "Bid \u2666 with only 2 cards"
+      },
+      {
+        "hand_number": 345,
+        "position": "North",
+        "bid": "2\u2660",
+        "hand_hcp": 15,
+        "hand_total_points": 16,
+        "hand_shape": "3145",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 352,
+        "position": "West",
+        "bid": "2\u2666",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "4432",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 353,
+        "position": "South",
+        "bid": "4\u2665",
+        "hand_hcp": 12,
+        "hand_total_points": 14,
+        "hand_shape": "6331",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 354,
+        "position": "West",
+        "bid": "2\u2663",
+        "hand_hcp": 9,
+        "hand_total_points": 9,
+        "hand_shape": "4342",
+        "reason": "Bid \u2663 with only 2 cards"
+      },
+      {
+        "hand_number": 354,
+        "position": "East",
+        "bid": "2\u2666",
+        "hand_hcp": 16,
+        "hand_total_points": 17,
+        "hand_shape": "2335",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 354,
+        "position": "West",
+        "bid": "4NT",
+        "hand_hcp": 9,
+        "hand_total_points": 9,
+        "hand_shape": "4342",
+        "reason": "3-level bid with 9 points and only 0 cards"
+      },
+      {
+        "hand_number": 354,
+        "position": "West",
+        "bid": "4NT",
+        "hand_hcp": 9,
+        "hand_total_points": 9,
+        "hand_shape": "4342",
+        "reason": "4-level bid with 9 points and 0 cards"
+      },
+      {
+        "hand_number": 354,
+        "position": "East",
+        "bid": "5\u2665",
+        "hand_hcp": 16,
+        "hand_total_points": 17,
+        "hand_shape": "2335",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 362,
+        "position": "South",
+        "bid": "4\u2663",
+        "hand_hcp": 11,
+        "hand_total_points": 13,
+        "hand_shape": "3631",
+        "reason": "Bid \u2663 with only 1 cards"
+      },
+      {
+        "hand_number": 363,
+        "position": "North",
+        "bid": "2\u2666",
+        "hand_hcp": 14,
+        "hand_total_points": 16,
+        "hand_shape": "2632",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 374,
+        "position": "East",
+        "bid": "5\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 9,
+        "hand_shape": "1561",
+        "reason": "4-level bid with 9 points and 5 cards"
+      },
+      {
+        "hand_number": 375,
+        "position": "West",
+        "bid": "4\u2666",
+        "hand_hcp": 6,
+        "hand_total_points": 7,
+        "hand_shape": "2353",
+        "reason": "4-level bid with only 7 points and 5 cards"
+      },
+      {
+        "hand_number": 375,
+        "position": "West",
+        "bid": "4\u2666",
+        "hand_hcp": 6,
+        "hand_total_points": 7,
+        "hand_shape": "2353",
+        "reason": "4-level bid with 7 points and 5 cards"
+      },
+      {
+        "hand_number": 375,
+        "position": "West",
+        "bid": "5\u2666",
+        "hand_hcp": 6,
+        "hand_total_points": 7,
+        "hand_shape": "2353",
+        "reason": "5-level bid with only 7 points and 5 cards"
+      },
+      {
+        "hand_number": 375,
+        "position": "West",
+        "bid": "5\u2666",
+        "hand_hcp": 6,
+        "hand_total_points": 7,
+        "hand_shape": "2353",
+        "reason": "4-level bid with 7 points and 5 cards"
+      },
+      {
+        "hand_number": 377,
+        "position": "North",
+        "bid": "2\u2665",
+        "hand_hcp": 13,
+        "hand_total_points": 14,
+        "hand_shape": "4315",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 378,
+        "position": "North",
+        "bid": "1\u2660",
+        "hand_hcp": 11,
+        "hand_total_points": 11,
+        "hand_shape": "3244",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 381,
+        "position": "East",
+        "bid": "4\u2660",
+        "hand_hcp": 4,
+        "hand_total_points": 5,
+        "hand_shape": "5332",
+        "reason": "4-level bid with only 5 points and 5 cards"
+      },
+      {
+        "hand_number": 381,
+        "position": "East",
+        "bid": "4\u2660",
+        "hand_hcp": 4,
+        "hand_total_points": 5,
+        "hand_shape": "5332",
+        "reason": "4-level bid with 5 points and 5 cards"
+      },
+      {
+        "hand_number": 386,
+        "position": "North",
+        "bid": "2\u2666",
+        "hand_hcp": 9,
+        "hand_total_points": 10,
+        "hand_shape": "5332",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 391,
+        "position": "North",
+        "bid": "3\u2666",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "4432",
+        "reason": "3-level bid with 8 points and only 3 cards"
+      },
+      {
+        "hand_number": 391,
+        "position": "North",
+        "bid": "3\u2666",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "4432",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 391,
+        "position": "East",
+        "bid": "5\u2666",
+        "hand_hcp": 12,
+        "hand_total_points": 12,
+        "hand_shape": "4432",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 400,
+        "position": "East",
+        "bid": "4\u2665",
+        "hand_hcp": 4,
+        "hand_total_points": 5,
+        "hand_shape": "3451",
+        "reason": "4-level bid with only 5 points and 4 cards"
+      },
+      {
+        "hand_number": 400,
+        "position": "East",
+        "bid": "4\u2665",
+        "hand_hcp": 4,
+        "hand_total_points": 5,
+        "hand_shape": "3451",
+        "reason": "4-level bid with 5 points and 4 cards"
+      },
+      {
+        "hand_number": 401,
+        "position": "North",
+        "bid": "5\u2665",
+        "hand_hcp": 11,
+        "hand_total_points": 13,
+        "hand_shape": "1363",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 409,
+        "position": "South",
+        "bid": "2\u2666",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "3235",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 409,
+        "position": "West",
+        "bid": "4\u2666",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "3343",
+        "reason": "3-level bid with 8 points and only 4 cards"
+      },
+      {
+        "hand_number": 409,
+        "position": "West",
+        "bid": "4\u2666",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "3343",
+        "reason": "4-level bid with 8 points and 4 cards"
+      },
+      {
+        "hand_number": 412,
+        "position": "East",
+        "bid": "1\u2660",
+        "hand_hcp": 11,
+        "hand_total_points": 12,
+        "hand_shape": "3532",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 412,
+        "position": "North",
+        "bid": "4\u2660",
+        "hand_hcp": 13,
+        "hand_total_points": 13,
+        "hand_shape": "3343",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 421,
+        "position": "East",
+        "bid": "1\u2663",
+        "hand_hcp": 13,
+        "hand_total_points": 13,
+        "hand_shape": "3433",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 426,
+        "position": "East",
+        "bid": "2\u2663",
+        "hand_hcp": 21,
+        "hand_total_points": 23,
+        "hand_shape": "5350",
+        "reason": "Bid \u2663 with only 0 cards"
+      },
+      {
+        "hand_number": 426,
+        "position": "South",
+        "bid": "2\u2666",
+        "hand_hcp": 4,
+        "hand_total_points": 6,
+        "hand_shape": "1525",
+        "reason": "Bid \u2666 with only 2 cards"
+      },
+      {
+        "hand_number": 429,
+        "position": "West",
+        "bid": "4\u2666",
+        "hand_hcp": 14,
+        "hand_total_points": 16,
+        "hand_shape": "4612",
+        "reason": "Bid \u2666 with only 1 cards"
+      },
+      {
+        "hand_number": 432,
+        "position": "North",
+        "bid": "3\u2663",
+        "hand_hcp": 10,
+        "hand_total_points": 10,
+        "hand_shape": "3343",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 433,
+        "position": "West",
+        "bid": "4\u2665",
+        "hand_hcp": 12,
+        "hand_total_points": 15,
+        "hand_shape": "1327",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 437,
+        "position": "South",
+        "bid": "3\u2666",
+        "hand_hcp": 10,
+        "hand_total_points": 10,
+        "hand_shape": "2434",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 451,
+        "position": "South",
+        "bid": "3\u2660",
+        "hand_hcp": 10,
+        "hand_total_points": 10,
+        "hand_shape": "3334",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 454,
+        "position": "South",
+        "bid": "2\u2666",
+        "hand_hcp": 3,
+        "hand_total_points": 4,
+        "hand_shape": "3523",
+        "reason": "Bid \u2666 with only 2 cards"
+      },
+      {
+        "hand_number": 454,
+        "position": "West",
+        "bid": "4\u2666",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "3154",
+        "reason": "4-level bid with 8 points and 5 cards"
+      },
+      {
+        "hand_number": 456,
+        "position": "West",
+        "bid": "3\u2666",
+        "hand_hcp": 7,
+        "hand_total_points": 9,
+        "hand_shape": "1246",
+        "reason": "3-level bid with 9 points and only 4 cards"
+      },
+      {
+        "hand_number": 475,
+        "position": "North",
+        "bid": "4\u2665",
+        "hand_hcp": 14,
+        "hand_total_points": 15,
+        "hand_shape": "3325",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 476,
+        "position": "West",
+        "bid": "2\u2665",
+        "hand_hcp": 5,
+        "hand_total_points": 7,
+        "hand_shape": "6142",
+        "reason": "Bid \u2665 with only 1 cards"
+      },
+      {
+        "hand_number": 476,
+        "position": "South",
+        "bid": "4\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "2434",
+        "reason": "3-level bid with 8 points and only 4 cards"
+      },
+      {
+        "hand_number": 476,
+        "position": "South",
+        "bid": "4\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "2434",
+        "reason": "4-level bid with 8 points and 4 cards"
+      },
+      {
+        "hand_number": 477,
+        "position": "North",
+        "bid": "1\u2663",
+        "hand_hcp": 14,
+        "hand_total_points": 14,
+        "hand_shape": "3433",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 483,
+        "position": "South",
+        "bid": "3\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "3334",
+        "reason": "3-level bid with 8 points and only 3 cards"
+      },
+      {
+        "hand_number": 483,
+        "position": "South",
+        "bid": "3\u2665",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "3334",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 484,
+        "position": "North",
+        "bid": "5\u2665",
+        "hand_hcp": 15,
+        "hand_total_points": 17,
+        "hand_shape": "3046",
+        "reason": "Bid \u2665 with only 0 cards"
+      },
+      {
+        "hand_number": 486,
+        "position": "North",
+        "bid": "3NT",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "4504",
+        "reason": "3-level bid with 8 points and only 0 cards"
+      },
+      {
+        "hand_number": 486,
+        "position": "North",
+        "bid": "4NT",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "4504",
+        "reason": "3-level bid with 8 points and only 0 cards"
+      },
+      {
+        "hand_number": 486,
+        "position": "North",
+        "bid": "4NT",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "4504",
+        "reason": "4-level bid with 8 points and 0 cards"
+      },
+      {
+        "hand_number": 491,
+        "position": "South",
+        "bid": "4\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 7,
+        "hand_shape": "5422",
+        "reason": "4-level bid with only 7 points and 4 cards"
+      },
+      {
+        "hand_number": 491,
+        "position": "South",
+        "bid": "4\u2665",
+        "hand_hcp": 6,
+        "hand_total_points": 7,
+        "hand_shape": "5422",
+        "reason": "4-level bid with 7 points and 4 cards"
+      },
+      {
+        "hand_number": 496,
+        "position": "East",
+        "bid": "4\u2660",
+        "hand_hcp": 11,
+        "hand_total_points": 11,
+        "hand_shape": "3343",
+        "reason": "Bid \u2660 with only 3 cards"
+      }
+    ],
+    "conventions": [
+      {
+        "hand_number": 22,
+        "position": "North",
+        "convention": "Stayman",
+        "error": "Used Stayman without 4-card major",
+        "hand_hcp": 11,
+        "spades": 3,
+        "hearts": 0
+      }
+    ],
+    "game_slam": [
+      {
+        "hand_number": 0,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "2\u2660"
+      },
+      {
+        "hand_number": 3,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 5,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 7,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 16,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 34,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 17,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "3\u2660"
+      },
+      {
+        "hand_number": 24,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 25,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 27,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "3\u2665"
+      },
+      {
+        "hand_number": 29,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "2\u2666"
+      },
+      {
+        "hand_number": 32,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 34,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 38,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "2\u2665"
+      },
+      {
+        "hand_number": 39,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 32,
+        "final_contract": "2\u2663"
+      },
+      {
+        "hand_number": 48,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 51,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "3\u2660"
+      },
+      {
+        "hand_number": 57,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 59,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 63,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 65,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 69,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 72,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 83,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 88,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 36,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 89,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 94,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 33,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 100,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 33,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 109,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 115,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 116,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 117,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 120,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 41,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 129,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 135,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 136,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 143,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 144,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "2\u2663"
+      },
+      {
+        "hand_number": 148,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 153,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 156,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 31,
+        "final_contract": "2\u2663"
+      },
+      {
+        "hand_number": 159,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "2\u2660"
+      },
+      {
+        "hand_number": 168,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 37,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 179,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 33,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 180,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 182,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 209,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 213,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "2\u2660"
+      },
+      {
+        "hand_number": 214,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 222,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "3\u2665"
+      },
+      {
+        "hand_number": 225,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 226,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 228,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 32,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 230,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "2\u2665"
+      },
+      {
+        "hand_number": 233,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "2\u2663"
+      },
+      {
+        "hand_number": 237,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 35,
+        "final_contract": "2\u2665"
+      },
+      {
+        "hand_number": 242,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 253,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 255,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 38,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 257,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 35,
+        "final_contract": "2\u2663"
+      },
+      {
+        "hand_number": 258,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 265,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 268,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 270,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "3\u2665"
+      },
+      {
+        "hand_number": 279,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 287,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 298,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 302,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 306,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 313,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "3\u2665"
+      },
+      {
+        "hand_number": 316,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 317,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 321,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 323,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "2\u2665"
+      },
+      {
+        "hand_number": 325,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 32,
+        "final_contract": "2\u2660"
+      },
+      {
+        "hand_number": 326,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 329,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 338,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 339,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 35,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 341,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 343,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 346,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 30,
+        "final_contract": "2\u2663"
+      },
+      {
+        "hand_number": 348,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 35,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 350,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 357,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 359,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 364,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 35,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 365,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 372,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 380,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 383,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 395,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 397,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 402,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 408,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 411,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 31,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 414,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 416,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 418,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 420,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "2\u2666"
+      },
+      {
+        "hand_number": 423,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "3\u2660"
+      },
+      {
+        "hand_number": 426,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 40,
+        "final_contract": "2\u2660"
+      },
+      {
+        "hand_number": 430,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 435,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 446,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 36,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 447,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 31,
+        "final_contract": "2\u2660"
+      },
+      {
+        "hand_number": 458,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 28,
+        "final_contract": "2\u2665"
+      },
+      {
+        "hand_number": 461,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 464,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 469,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 470,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 28,
+        "final_contract": "3\u2660"
+      },
+      {
+        "hand_number": 490,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 494,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 32,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 498,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2663"
+      }
+    ]
+  }
+}

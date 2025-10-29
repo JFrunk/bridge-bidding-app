@@ -1280,6 +1280,15 @@ Please provide a detailed analysis of the auction and identify any bidding error
     setError('');
 
     if (players[nextPlayerIndex] !== 'South' || isAiBidding) return;
+
+    // DEBUG: Log bid submission
+    console.log('🎯 SUBMITTING USER BID:', {
+      bid: bid,
+      userId: userId,
+      auctionLength: auction.length,
+      timestamp: new Date().toISOString()
+    });
+
     setDisplayedMessage('...');
     const newAuction = [...auction, { bid: bid, explanation: 'Your bid.', player: 'South' }];
     setAuction(newAuction);
@@ -1298,9 +1307,17 @@ Please provide a detailed analysis of the auction and identify any bidding error
         })
       });
       const feedbackData = await feedbackResponse.json();
+
+      // DEBUG: Log response from evaluate-bid
+      console.log('✅ EVALUATE-BID RESPONSE:', {
+        user_bid: bid,
+        feedback: feedbackData,
+        stored: feedbackData.decision_id ? 'YES' : 'UNKNOWN'
+      });
+
       setDisplayedMessage(feedbackData.user_message || feedbackData.explanation || 'Bid recorded.');
     } catch (err) {
-      console.error('Error evaluating bid:', err);
+      console.error('❌ Error evaluating bid:', err);
       setDisplayedMessage('Could not get feedback from the server.');
     }
     setNextPlayerIndex((nextPlayerIndex + 1) % 4);

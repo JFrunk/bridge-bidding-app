@@ -1,0 +1,205 @@
+{
+  "level": 8,
+  "timestamp": "2025-10-29T08:58:12.334012",
+  "num_hands": 100,
+  "ai_config": {
+    "bidding": {
+      "description": "Standard SAYC with all conventions",
+      "complexity": "full"
+    },
+    "play": {
+      "type": "minimax",
+      "description": "Minimax depth 2-3",
+      "depth": 2
+    }
+  },
+  "bidding": {
+    "total_hands": 100,
+    "total_bids": 597,
+    "total_non_pass_bids": 170,
+    "scores": {
+      "legality": 100.0,
+      "appropriateness": 82.4,
+      "conventions": 100.0,
+      "consistency": 100,
+      "reasonableness": 92.4,
+      "game_slam": 36.7,
+      "composite": 91.3
+    },
+    "error_counts": {
+      "legality": 0,
+      "appropriateness": 30,
+      "conventions": 0,
+      "game_slam": 19
+    },
+    "errors": {
+      "legality": [],
+      "appropriateness": [
+        {
+          "hand_number": 5,
+          "position": "West",
+          "bid": "2\u2665",
+          "hand_hcp": 11,
+          "hand_total_points": 12,
+          "hand_shape": "5242",
+          "reason": "Bid \u2665 with only 2 cards"
+        },
+        {
+          "hand_number": 9,
+          "position": "South",
+          "bid": "4\u2666",
+          "hand_hcp": 10,
+          "hand_total_points": 13,
+          "hand_shape": "3811",
+          "reason": "Bid \u2666 with only 1 cards"
+        },
+        {
+          "hand_number": 10,
+          "position": "West",
+          "bid": "2\u2660",
+          "hand_hcp": 10,
+          "hand_total_points": 10,
+          "hand_shape": "3433",
+          "reason": "Bid \u2660 with only 3 cards"
+        },
+        {
+          "hand_number": 10,
+          "position": "West",
+          "bid": "5\u2660",
+          "hand_hcp": 10,
+          "hand_total_points": 10,
+          "hand_shape": "3433",
+          "reason": "Bid \u2660 with only 3 cards"
+        },
+        {
+          "hand_number": 15,
+          "position": "South",
+          "bid": "3\u2660",
+          "hand_hcp": 10,
+          "hand_total_points": 11,
+          "hand_shape": "3523",
+          "reason": "Bid \u2660 with only 3 cards"
+        },
+        {
+          "hand_number": 15,
+          "position": "South",
+          "bid": "5\u2660",
+          "hand_hcp": 10,
+          "hand_total_points": 11,
+          "hand_shape": "3523",
+          "reason": "Bid \u2660 with only 3 cards"
+        },
+        {
+          "hand_number": 16,
+          "position": "South",
+          "bid": "2\u2663",
+          "hand_hcp": 14,
+          "hand_total_points": 14,
+          "hand_shape": "4441",
+          "reason": "Bid \u2663 with only 1 cards"
+        },
+        {
+          "hand_number": 16,
+          "position": "East",
+          "bid": "4\u2663",
+          "hand_hcp": 3,
+          "hand_total_points": 5,
+          "hand_shape": "1525",
+          "reason": "4-level bid with only 5 points and 5 cards"
+        },
+        {
+          "hand_number": 16,
+          "position": "East",
+          "bid": "4\u2663",
+          "hand_hcp": 3,
+          "hand_total_points": 5,
+          "hand_shape": "1525",
+          "reason": "4-level bid with 5 points and 5 cards"
+        },
+        {
+          "hand_number": 20,
+          "position": "North",
+          "bid": "2\u2663",
+          "hand_hcp": 6,
+          "hand_total_points": 6,
+          "hand_shape": "2443",
+          "reason": "Bid \u2663 with only 3 cards"
+        }
+      ],
+      "conventions": [],
+      "game_slam": [
+        {
+          "hand_number": 5,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 28,
+          "final_contract": "2\u2660"
+        },
+        {
+          "hand_number": 7,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 39,
+          "final_contract": "1\u2660"
+        },
+        {
+          "hand_number": 12,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 27,
+          "final_contract": "2\u2660"
+        },
+        {
+          "hand_number": 14,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 26,
+          "final_contract": "1\u2665"
+        },
+        {
+          "hand_number": 21,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 26,
+          "final_contract": "1NT"
+        },
+        {
+          "hand_number": 29,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 27,
+          "final_contract": "1\u2660"
+        },
+        {
+          "hand_number": 31,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 26,
+          "final_contract": "1\u2665"
+        },
+        {
+          "hand_number": 40,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 32,
+          "final_contract": "1\u2663"
+        },
+        {
+          "hand_number": 50,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 28,
+          "final_contract": "1NT"
+        },
+        {
+          "hand_number": 65,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 29,
+          "final_contract": "1\u2666"
+        }
+      ]
+    },
+    "reasonableness_breakdown": {
+      "excellent": 42,
+      "good": 114,
+      "questionable": 1,
+      "poor": 10,
+      "terrible": 3
+    },
+    "grade": "B (Good, minor issues)"
+  },
+  "play": null,
+  "combined_score": null,
+  "grade": "Incomplete"
+}

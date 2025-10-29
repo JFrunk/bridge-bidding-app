@@ -44,13 +44,9 @@ class PositionEvaluator:
             'defensive': 0.2        # Defensive strategy (reduced)
         }
 
-        # Position name mapping for hand access
-        self.position_map = {'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West'}
-
     def _get_hand(self, state: PlayState, position: str):
-        """Get hand for position, handling both short (N/S/E/W) and full names"""
-        full_position = self.position_map.get(position, position)
-        return state.hands[full_position]
+        """Get hand for position (always short form: N/S/E/W)"""
+        return state.hands[position]
 
     def evaluate(self, state: PlayState, perspective: str) -> float:
         """
