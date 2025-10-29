@@ -3,6 +3,7 @@ from engine.ai.feature_extractor import extract_features
 from engine.ai.decision_engine import select_bidding_module
 from engine.ai.bid_explanation import BidExplanation, ExplanationLevel
 from engine.ai.module_registry import ModuleRegistry
+from engine.ai.validation_pipeline import ValidationPipeline
 
 # Import all specialist modules (triggers auto-registration)
 # ADR-0002 Phase 1: Modules now register themselves on import
@@ -28,6 +29,9 @@ class BiddingEngine:
         # ADR-0002 Phase 1: Use ModuleRegistry instead of manual registration
         # All modules auto-register on import, so we just get the registry
         self.modules = ModuleRegistry.get_all()
+
+        # ADR-0002 Phase 2: Initialize validation pipeline
+        self.validation_pipeline = ValidationPipeline()
 
         # Verify all expected modules are registered
         expected_modules = [
@@ -79,10 +83,25 @@ class BiddingEngine:
 
         result = specialist.evaluate(hand, features)
         if result:
-            # Universal Legality Check (Safety Net)
             bid_to_check = result[0]
             explanation = result[1]
 
+            # ADR-0002 Phase 2: MANDATORY validation pipeline
+            # This CANNOT be bypassed - all bids must pass validation
+            is_valid, validation_error = self.validation_pipeline.validate(
+                bid_to_check, hand, features, auction_history
+            )
+
+            if not is_valid:
+                # Validation failed - graceful fallback to Pass
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    f"Validation failed for {module_name} bid '{bid_to_check}': {validation_error}"
+                )
+                return ("Pass", "No appropriate bid found.")
+
+            # Legacy legality check (kept for backward compatibility)
             if self._is_bid_legal(bid_to_check, auction_history):
                 # Convert BidExplanation to string if needed
                 if isinstance(explanation, BidExplanation):
