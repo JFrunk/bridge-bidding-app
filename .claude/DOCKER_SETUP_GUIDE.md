@@ -5,6 +5,32 @@
 
 ---
 
+## ⚠️ RECOMMENDED USAGE APPROACH
+
+**After testing and evaluation, here's what we recommend:**
+
+### ✅ Use Normal Claude Code For:
+- **Interactive development** (your primary workflow)
+- **All bidding/play logic changes** (needs file modification)
+- **Git operations** (commits, branches, PRs)
+- **Installing dependencies** (needs network and write access)
+- **Daily coding tasks** (highest productivity)
+
+### 🐳 Use Docker For:
+- **Running automated tests** in CI/CD pipelines
+- **Linting in isolation** (if you want extra safety)
+- **Specific tools** that benefit from containerization
+- **Future needs** as they arise
+
+### 🚫 Do NOT Use Docker Safe YOLO For:
+- **General Claude Code usage** - Anthropic hasn't published a `claude-code` Docker image
+- **File modifications** - Read-only filesystem prevents actual coding
+- **Network operations** - Network isolation blocks API calls
+
+**Bottom Line:** Keep Docker installed for future flexibility, but use normal Claude Code for your daily development work. The security Docker provides isn't necessary for trusted code development.
+
+---
+
 ## What is Safe YOLO Mode?
 
 **Safe YOLO Mode** = Claude Code runs commands **without asking permission** but in a **secure isolated container**
@@ -100,20 +126,26 @@ docker info
 
 ### Step 2: Pull Claude Code Image (First Time)
 
+⚠️ **IMPORTANT DISCOVERY:** The `anthropics/claude-code:latest` Docker image does not exist publicly.
+
+**What this means:**
+- Anthropic has not published an official Claude Code Docker image
+- You would need to build a custom image (not recommended - adds complexity)
+- Docker is still useful for other tools (pytest, linting, etc.)
+
+**Alternatives:**
+1. **Use normal Claude Code** (recommended for development)
+2. **Use Docker for specific tools** (pytest, ruff, etc. in containers)
+3. **Build custom image** (only if you have specific isolation requirements)
+
+**For testing purposes, we use Alpine Linux:**
 ```bash
-# Pull the official image
-docker pull anthropics/claude-code:latest
+# Pull a lightweight Linux image for tests
+docker pull alpine:latest
 
 # Verify it downloaded
-docker images | grep claude-code
+docker images | grep alpine
 ```
-
-**Expected:**
-```
-anthropics/claude-code   latest   abc123def456   2 days ago   1.2GB
-```
-
-**Note:** This may take 5-10 minutes on first run (large image)
 
 ---
 
@@ -514,3 +546,38 @@ while True:
 ---
 
 **Remember:** Safe YOLO mode is for **read-only** tasks in an **isolated environment**. It's secure but limited. For tasks requiring file modifications, use normal Claude Code mode with supervision.
+
+---
+
+## 🎯 Practical Recommendations After Testing
+
+### What We Learned:
+1. ✅ **Docker security features work perfectly** (network isolation, read-only FS, resource limits)
+2. ✅ **VS Code Docker extension is installed and working**
+3. ❌ **No official Claude Code Docker image exists**
+4. ✅ **Docker is still useful for other purposes**
+
+### Recommended Setup:
+1. **Keep Docker installed** - Useful for tests, CI/CD, future needs (no harm in keeping it)
+2. **Keep VS Code Docker extension** - Provides useful container management UI (zero overhead)
+3. **Use normal Claude Code** for daily development (highest productivity)
+4. **Use Docker containers** for specific tools when isolation is valuable:
+   ```bash
+   # Example: Run pytest in container
+   docker run --rm -v "$(pwd):/app:ro" python:3.9 pytest /app/backend/tests/
+
+   # Example: Run linting in container
+   docker run --rm -v "$(pwd):/app:ro" python:3.9 ruff check /app/backend/
+   ```
+
+### Cleaning Up Docker (Optional):
+If you want to reclaim disk space from unused images:
+```bash
+# Remove all unused images (safe - won't affect running containers)
+docker system prune -a
+
+# Remove specific image
+docker rmi alpine:latest
+```
+
+**Our Recommendation:** Keep Docker and the extension installed. They provide flexibility for future needs and the disk space cost is minimal compared to the potential benefits.
