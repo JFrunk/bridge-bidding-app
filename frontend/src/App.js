@@ -1338,26 +1338,31 @@ Please provide a detailed analysis of the auction and identify any bidding error
       const runAiTurn = async () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         try {
-          // Capture current values to prevent race conditions
-          const currentAuction = auction;
-          const currentPlayer = players[nextPlayerIndex];
+          // CRITICAL FIX: Calculate current player from auction length and dealer
+          // DO NOT use nextPlayerIndex state variable - it can be stale!
+          // Bug: useEffect runs immediately after setAuction() before nextPlayerIndex updates
+          const currentPlayer = calculateExpectedBidder(dealer, auction.length);
 
           // DEBUG: Log what we're sending
           console.log('🎯 AI Bidding Debug:', {
-            nextPlayerIndex,
-            currentPlayer,
+            dealer,
+            auctionLength: auction.length,
+            calculatedPlayer: currentPlayer,
+            oldNextPlayerIndex: nextPlayerIndex,
+            oldPlayerFromIndex: players[nextPlayerIndex],
             players,
-            auction: currentAuction
+            auction
           });
 
           // Double-check it's not South's turn (defense in depth)
           if (currentPlayer === 'South') {
+            console.log('🛑 Stopping AI bidding - it is South\'s turn');
             setIsAiBidding(false);
             return;
           }
 
           const requestBody = {
-            auction_history: currentAuction.map(a => a.bid),
+            auction_history: auction.map(a => a.bid),
             current_player: currentPlayer
           };
           console.log('📤 Sending to /api/get-next-bid:', requestBody);
@@ -1369,7 +1374,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
           if (!response.ok) throw new Error("AI failed to get bid.");
           const data = await response.json();
 
-          // Use updater functions to ensure we have the latest state
+          // Update auction and nextPlayerIndex together
           setAuction(prevAuction => [...prevAuction, data]);
           setNextPlayerIndex(prevIndex => (prevIndex + 1) % 4);
         } catch (err) {
@@ -1384,7 +1389,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       // User must explicitly click "Play This Hand" button to start playing
       // This gives users time to review the final contract before playing
     }
-  }, [auction, nextPlayerIndex, isAiBidding, players, startPlayPhase, isInitializing]);
+  }, [auction, nextPlayerIndex, isAiBidding, players, startPlayPhase, isInitializing, dealer, calculateExpectedBidder]);
 
   // Trigger AI bidding after initialization completes (if dealer is not South)
   useEffect(() => {
