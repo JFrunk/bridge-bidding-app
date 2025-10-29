@@ -44,6 +44,14 @@ class PositionEvaluator:
             'defensive': 0.2        # Defensive strategy (reduced)
         }
 
+        # Position name mapping for hand access
+        self.position_map = {'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West'}
+
+    def _get_hand(self, state: PlayState, position: str):
+        """Get hand for position, handling both short (N/S/E/W) and full names"""
+        full_position = self.position_map.get(position, position)
+        return state.hands[full_position]
+
     def evaluate(self, state: PlayState, perspective: str) -> float:
         """
         Evaluate position from given player's perspective
@@ -164,7 +172,7 @@ class PositionEvaluator:
             # Collect all cards in this suit from both hands
             partnership_cards = []
             for pos in positions:
-                hand = state.hands[pos]
+                hand = self._get_hand(state, pos)
                 partnership_cards.extend([c for c in hand.cards if c.suit == suit])
 
             if not partnership_cards:
@@ -183,7 +191,7 @@ class PositionEvaluator:
                 # Get opponent's trumps
                 opp_trump_cards = []
                 for pos in opp_positions:
-                    hand = state.hands[pos]
+                    hand = self._get_hand(state, pos)
                     opp_trump_cards.extend([c for c in hand.cards if c.suit == trump_suit])
 
                 if len(opp_trump_cards) == 0:
@@ -258,7 +266,7 @@ class PositionEvaluator:
         our_trump_cards = []
 
         for pos in our_positions:
-            hand = state.hands[pos]
+            hand = self._get_hand(state, pos)
             for card in hand.cards:
                 if card.suit == trump_suit:
                     our_trump_count += 1
@@ -271,7 +279,7 @@ class PositionEvaluator:
         opp_high_trumps = 0
 
         for pos in opp_positions:
-            hand = state.hands[pos]
+            hand = self._get_hand(state, pos)
             for card in hand.cards:
                 if card.suit == trump_suit:
                     opp_trump_count += 1
@@ -337,7 +345,7 @@ class PositionEvaluator:
         entries_by_position = {}
 
         for pos in positions:
-            hand = state.hands[pos]
+            hand = self._get_hand(state, pos)
             position_entries = 0
 
             # Group cards by suit
@@ -409,7 +417,7 @@ class PositionEvaluator:
             # Get all cards in this suit from partnership
             our_cards = []
             for pos in positions:
-                hand = state.hands[pos]
+                hand = self._get_hand(state, pos)
                 our_cards.extend([c for c in hand.cards if c.suit == suit])
 
             if len(our_cards) < 2:
@@ -478,7 +486,7 @@ class PositionEvaluator:
             all_cards = []
 
             for pos in positions:
-                hand = state.hands[pos]
+                hand = self._get_hand(state, pos)
                 suit_cards = [c for c in hand.cards if c.suit == suit]
                 total_length += len(suit_cards)
                 all_cards.extend(suit_cards)
@@ -545,7 +553,7 @@ class PositionEvaluator:
             # Count cards remaining in suit for opponents
             opp_suit_lengths = {}
             for pos in opp_positions:
-                hand = state.hands[pos]
+                hand = self._get_hand(state, pos)
                 length = len([c for c in hand.cards if c.suit == suit])
                 opp_suit_lengths[pos] = length
 
@@ -560,7 +568,7 @@ class PositionEvaluator:
                     # Count our stoppers in this suit
                     our_cards = []
                     for pos in our_positions:
-                        hand = state.hands[pos]
+                        hand = self._get_hand(state, pos)
                         our_cards.extend([c for c in hand.cards if c.suit == suit])
 
                     # Check for stopper (A, K, or Q with length)
@@ -624,7 +632,7 @@ class PositionEvaluator:
         for suit in ['♠', '♥', '♦', '♣']:
             our_cards = []
             for pos in our_positions:
-                hand = state.hands[pos]
+                hand = self._get_hand(state, pos)
                 our_cards.extend([c for c in hand.cards if c.suit == suit])
 
             if our_cards:
@@ -646,7 +654,7 @@ class PositionEvaluator:
             # Count opponent trumps
             opp_trumps = 0
             for pos in opp_positions:
-                hand = state.hands[pos]
+                hand = self._get_hand(state, pos)
                 opp_trumps += len([c for c in hand.cards if c.suit == trump_suit])
 
             # If opponents have few trumps left, less urgent
@@ -661,7 +669,7 @@ class PositionEvaluator:
             for suit in ['♠', '♥', '♦', '♣']:
                 our_cards = []
                 for pos in our_positions:
-                    hand = state.hands[pos]
+                    hand = self._get_hand(state, pos)
                     our_cards.extend([c for c in hand.cards if c.suit == suit])
 
                 if len(our_cards) >= 4:
@@ -709,7 +717,7 @@ class PositionEvaluator:
         if trump_suit:
             our_trumps = []
             for pos in our_positions:
-                hand = state.hands[pos]
+                hand = self._get_hand(state, pos)
                 our_trumps.extend([c for c in hand.cards if c.suit == trump_suit])
 
             # Count high trumps (Q, K, A)
@@ -719,7 +727,7 @@ class PositionEvaluator:
 
             # Check for defensive ruff potential (shortness in side suit with trumps)
             for pos in our_positions:
-                hand = state.hands[pos]
+                hand = self._get_hand(state, pos)
                 has_trumps = any(c.suit == trump_suit for c in hand.cards)
 
                 if has_trumps:
@@ -738,7 +746,7 @@ class PositionEvaluator:
         # Check if we're breaking up declarer's entries
         decl_entries = 0
         for pos in decl_positions:
-            hand = state.hands[pos]
+            hand = self._get_hand(state, pos)
             for suit in ['♠', '♥', '♦', '♣']:
                 suit_cards = [c for c in hand.cards if c.suit == suit]
                 if suit_cards:
