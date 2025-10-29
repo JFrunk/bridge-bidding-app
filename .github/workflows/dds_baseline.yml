@@ -1,0 +1,46 @@
+name: DDS Play Quality Baseline
+
+on:
+  workflow_dispatch:  # Manual trigger only
+    inputs:
+      hands:
+        description: 'Number of hands to test'
+        required: false
+        default: '500'
+
+jobs:
+  dds_baseline:
+    runs-on: ubuntu-latest  # Linux environment for DDS
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+
+      - name: Run DDS Baseline Test
+        run: |
+          python3 backend/test_play_quality_integrated.py \
+            --hands ${{ github.event.inputs.hands }} \
+            --ai dds \
+            --output play_baseline_level10_dds.json
+
+      - name: Display Results
+        run: |
+          echo "=== DDS Baseline Results ==="
+          cat play_baseline_level10_dds.json | python3 -m json.tool
+
+      - name: Upload Baseline as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dds-baseline
+          path: play_baseline_level10_dds.json
+          retention-days: 90
