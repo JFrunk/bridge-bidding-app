@@ -110,10 +110,10 @@ class TestSimpleLoginEndpoint:
         assert data['user_id'] > 0, "user_id should be positive"
 
     def test_simple_login_with_phone_new_user(self, client):
-        """Test simple login creates new user with phone"""
+        """Test simple login creates new user with phone (10-digit US format)"""
         response = client.post('/api/auth/simple-login',
                               json={
-                                  'phone': '+15551234567',
+                                  'phone': '5551234567',  # 10-digit US number without +1
                                   'create_if_not_exists': True
                               },
                               content_type='application/json')
@@ -128,8 +128,38 @@ class TestSimpleLoginEndpoint:
         assert 'phone' in data, "Response missing 'phone'"
         assert 'created' in data, "Response missing 'created' flag"
 
-        # Verify new user was created
-        assert data['phone'] == '+15551234567'
+        # Verify new user was created and +1 was auto-added
+        assert data['phone'] == '+15551234567', "Should auto-add +1 to US numbers"
+        assert data['created'] is True
+
+    def test_simple_login_with_phone_formatted(self, client):
+        """Test simple login accepts formatted phone numbers"""
+        response = client.post('/api/auth/simple-login',
+                              json={
+                                  'phone': '(555) 123-4568',  # Formatted US number
+                                  'create_if_not_exists': True
+                              },
+                              content_type='application/json')
+
+        assert response.status_code == 200, \
+            f"Expected 200 OK, got {response.status_code}"
+
+        data = response.get_json()
+        assert data['phone'] == '+15551234568', "Should strip formatting and add +1"
+        assert data['created'] is True
+
+    def test_simple_login_with_phone_international_format(self, client):
+        """Test simple login still accepts international format"""
+        response = client.post('/api/auth/simple-login',
+                              json={
+                                  'phone': '+15551234569',  # Already has +1
+                                  'create_if_not_exists': True
+                              },
+                              content_type='application/json')
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['phone'] == '+15551234569'
         assert data['created'] is True
 
     def test_simple_login_existing_user_returns_same_id(self, client):
@@ -189,6 +219,22 @@ class TestSimpleLoginEndpoint:
         # Should reject invalid email
         assert response.status_code == 400, \
             "Should return 400 Bad Request for invalid email format"
+
+        data = response.get_json()
+        assert 'error' in data
+
+    def test_simple_login_invalid_phone_format(self, client):
+        """Test simple login validates phone format (too short)"""
+        response = client.post('/api/auth/simple-login',
+                              json={
+                                  'phone': '12345',  # Too short
+                                  'create_if_not_exists': True
+                              },
+                              content_type='application/json')
+
+        # Should reject invalid phone
+        assert response.status_code == 400, \
+            "Should return 400 Bad Request for invalid phone format"
 
         data = response.get_json()
         assert 'error' in data

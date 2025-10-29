@@ -1,6 +1,7 @@
 # Simple Login Endpoint Missing Bug Fix
 
 **Date:** 2025-10-29
+**Last Updated:** 2025-10-29
 **Status:** Fixed
 **Severity:** Critical (blocks user authentication)
 
@@ -38,10 +39,15 @@ Implemented the missing `/api/auth/simple-login` endpoint in [server.py](../../b
 ```json
 {
   "email": "user@example.com",  // OR
-  "phone": "+15551234567",
+  "phone": "5551234567",         // US 10-digit (auto-adds +1)
   "create_if_not_exists": true
 }
 ```
+
+**Supported Phone Formats:**
+- `"5551234567"` - 10-digit US number (auto-adds +1)
+- `"(555) 123-4567"` - Formatted US number (strips formatting, adds +1)
+- `"+15551234567"` - International format (preserves as-is)
 
 **Response (Success):**
 ```json
@@ -64,12 +70,15 @@ Implemented the missing `/api/auth/simple-login` endpoint in [server.py](../../b
 ### Implementation Features
 
 1. **Email Validation:** Regex pattern validates email format (RFC-compliant)
-2. **Phone Validation:** Requires international format (+1234567890), minimum 10 digits
-3. **User Lookup:** Searches existing users by email or phone
-4. **Automatic Creation:** Creates new user if doesn't exist (when `create_if_not_exists: true`)
-5. **Username Generation:** Auto-generates unique username from email/phone
-6. **Duplicate Prevention:** Returns existing user instead of creating duplicates
-7. **Error Handling:** Returns appropriate HTTP status codes (400, 404, 500)
+2. **Phone Validation:** Accepts US 10-digit format, auto-adds +1 country code
+3. **Phone Auto-Formatting:** Strips spaces, dashes, parentheses from phone input
+4. **User Lookup:** Searches existing users by email or phone
+5. **Automatic Creation:** Creates new user if doesn't exist (when `create_if_not_exists: true`)
+6. **Username Generation:** Auto-generates unique username from email/phone
+7. **Duplicate Prevention:** Returns existing user instead of creating duplicates
+8. **Error Handling:** Returns appropriate HTTP status codes (400, 404, 500)
+
+**UX Improvement (2025-10-29):** Users can now enter just `2345678900` instead of `+12345678900` for US numbers. The system automatically adds the +1 country code.
 
 ### Database Schema
 
@@ -97,24 +106,29 @@ Created comprehensive regression test: [test_simple_login_endpoint_10292025.py](
 **Test Coverage:**
 - ✅ Endpoint exists (not 404)
 - ✅ Create new user with email
-- ✅ Create new user with phone
+- ✅ Create new user with 10-digit phone (auto-adds +1)
+- ✅ Create new user with formatted phone: (555) 123-4567
+- ✅ Create new user with international phone: +15551234567
 - ✅ Return existing user without duplicates
 - ✅ Validate email format
-- ✅ Validate phone format
+- ✅ Validate phone format (too short)
 - ✅ Error handling for missing identifier
 - ✅ CORS headers enabled
 
-**Test Results:**
+**Test Results (Updated 2025-10-29):**
 ```
 tests/regression/test_simple_login_endpoint_10292025.py::TestSimpleLoginEndpoint::test_endpoint_exists PASSED
 tests/regression/test_simple_login_endpoint_10292025.py::TestSimpleLoginEndpoint::test_simple_login_with_email_new_user PASSED
 tests/regression/test_simple_login_endpoint_10292025.py::TestSimpleLoginEndpoint::test_simple_login_with_phone_new_user PASSED
+tests/regression/test_simple_login_endpoint_10292025.py::TestSimpleLoginEndpoint::test_simple_login_with_phone_formatted PASSED
+tests/regression/test_simple_login_endpoint_10292025.py::TestSimpleLoginEndpoint::test_simple_login_with_phone_international_format PASSED
 tests/regression/test_simple_login_endpoint_10292025.py::TestSimpleLoginEndpoint::test_simple_login_existing_user_returns_same_id PASSED
 tests/regression/test_simple_login_endpoint_10292025.py::TestSimpleLoginEndpoint::test_simple_login_missing_identifier PASSED
 tests/regression/test_simple_login_endpoint_10292025.py::TestSimpleLoginEndpoint::test_simple_login_invalid_email_format PASSED
+tests/regression/test_simple_login_endpoint_10292025.py::TestSimpleLoginEndpoint::test_simple_login_invalid_phone_format PASSED
 tests/regression/test_simple_login_endpoint_10292025.py::TestSimpleLoginEndpoint::test_simple_login_cors_enabled PASSED
 
-7 passed in 0.34s
+10 passed in 0.37s
 ```
 
 ### Manual Testing
@@ -131,7 +145,15 @@ tests/regression/test_simple_login_endpoint_10292025.py::TestSimpleLoginEndpoint
 3. Click "Continue"
 4. ✅ Expected: Existing user returned, logged in successfully
 
-**Test Case 3: New user with phone**
+**Test Case 3: New user with phone (simplified US format)**
+1. Navigate to login screen
+2. Switch to "Phone" tab
+3. Enter phone: `2345678900` (10 digits, no country code)
+4. Phone auto-formats to: `(234) 567-8900`
+5. Click "Continue"
+6. ✅ Expected: User created with +12345678900, logged in successfully
+
+**Test Case 4: New user with phone (international format)**
 1. Navigate to login screen
 2. Switch to "Phone" tab
 3. Enter phone: `+15551234567`

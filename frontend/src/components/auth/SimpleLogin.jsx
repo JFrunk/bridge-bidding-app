@@ -9,38 +9,28 @@ export function SimpleLogin({ onClose }) {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, continueAsGuest } = useAuth();
+  const { simpleLogin, continueAsGuest } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const credentials = {
-      display_name: displayName || undefined
-    };
+    const identifier = loginMethod === 'email' ? email : phone;
 
-    if (loginMethod === 'email') {
-      if (!email) {
-        setError('Email is required');
-        setLoading(false);
-        return;
-      }
-      credentials.email = email;
-    } else {
-      if (!phone) {
-        setError('Phone number is required');
-        setLoading(false);
-        return;
-      }
-      credentials.phone = phone;
+    if (!identifier) {
+      setError(`${loginMethod === 'email' ? 'Email' : 'Phone number'} is required`);
+      setLoading(false);
+      return;
     }
 
-    const result = await login(credentials);
+    const result = await simpleLogin(identifier, loginMethod);
 
     if (result.success) {
-      if (result.isNewUser) {
-        console.log('Welcome! Account created.');
+      if (result.created) {
+        console.log('Welcome! New account created.');
+      } else {
+        console.log('Welcome back!');
       }
       onClose?.();
     } else {
@@ -59,17 +49,23 @@ export function SimpleLogin({ onClose }) {
     // Remove all non-digit characters
     const cleaned = value.replace(/\D/g, '');
 
-    // If it starts without +, add +1 for US (adjust for your region)
-    if (cleaned.length > 0 && !value.startsWith('+')) {
-      return `+1${cleaned}`;
+    // Format as (XXX) XXX-XXXX for US numbers
+    if (cleaned.length <= 3) {
+      return cleaned;
+    } else if (cleaned.length <= 6) {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+    } else if (cleaned.length <= 10) {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
     }
 
-    return value;
+    // Limit to 10 digits
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
   };
 
   const handlePhoneChange = (e) => {
     const value = e.target.value;
-    setPhone(value);
+    const formatted = formatPhoneNumber(value);
+    setPhone(formatted);
   };
 
   return (
@@ -129,12 +125,12 @@ export function SimpleLogin({ onClose }) {
                 type="tel"
                 value={phone}
                 onChange={handlePhoneChange}
-                placeholder="+1 234 567 8900"
+                placeholder="(234) 567-8900"
                 required
                 autoFocus
                 autoComplete="tel"
               />
-              <small className="input-hint">Include country code (e.g., +1 for US)</small>
+              <small className="input-hint">US number (10 digits)</small>
             </div>
           )}
 

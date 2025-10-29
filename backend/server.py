@@ -2370,10 +2370,26 @@ def simple_login():
 
         # Validate phone format if provided (basic check)
         if phone:
-            # Remove spaces and check for international format
-            phone_cleaned = phone.replace(' ', '').replace('-', '')
-            if not phone_cleaned.startswith('+') or len(phone_cleaned) < 10:
-                return jsonify({"error": "Invalid phone format (use international format: +1234567890)"}), 400
+            # Remove spaces, dashes, parentheses for validation
+            phone_cleaned = phone.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+
+            # Auto-add +1 for US numbers if not present
+            if not phone_cleaned.startswith('+'):
+                # Check if it looks like a US number (10 digits)
+                digits_only = ''.join(c for c in phone_cleaned if c.isdigit())
+                if len(digits_only) == 10:
+                    phone = f"+1{digits_only}"
+                    phone_cleaned = phone
+                elif len(digits_only) == 11 and digits_only.startswith('1'):
+                    # Already has 1 prefix, just add +
+                    phone = f"+{digits_only}"
+                    phone_cleaned = phone
+                else:
+                    return jsonify({"error": "Invalid phone format. US numbers should be 10 digits (e.g., 234-567-8900)"}), 400
+
+            # Validate final format
+            if len(phone_cleaned) < 12:  # +1 + 10 digits minimum
+                return jsonify({"error": "Invalid phone format. US numbers should be 10 digits"}), 400
 
         conn = sqlite3.connect('bridge.db')
         conn.row_factory = sqlite3.Row
