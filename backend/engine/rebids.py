@@ -261,3 +261,6 @@ class RebidModule(ConventionModule):
             return (f"3{my_opening_bid[1]}", f"Strong hand ({hand.total_points} pts) with unbalanced distribution.")
 
         return ("Pass", "No clear rebid available.")
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("openers_rebid", RebidModule())

@@ -144,3 +144,6 @@ class StaymanConvention(ConventionModule):
                     return ("2NT", f"Invitational ({hand.hcp} HCP), no fit for partner's {partner_last_bid[1]}.")
                 else:
                     return ("3NT", f"Game-forcing ({hand.hcp} HCP), bidding 3NT with no major fit.")
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("stayman", StaymanConvention())

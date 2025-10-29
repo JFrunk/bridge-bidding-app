@@ -2,8 +2,10 @@ from engine.hand import Hand
 from engine.ai.feature_extractor import extract_features
 from engine.ai.decision_engine import select_bidding_module
 from engine.ai.bid_explanation import BidExplanation, ExplanationLevel
+from engine.ai.module_registry import ModuleRegistry
 
-# Import all specialist CLASSES
+# Import all specialist modules (triggers auto-registration)
+# ADR-0002 Phase 1: Modules now register themselves on import
 from engine.opening_bids import OpeningBidsModule
 from engine.responses import ResponseModule
 from engine.responder_rebids import ResponderRebidModule
@@ -23,25 +25,24 @@ from engine.ai.conventions.fourth_suit_forcing import FourthSuitForcingConventio
 
 class BiddingEngine:
     def __init__(self):
-        # Create an instance of every specialist and store it in a dictionary
-        self.modules = {
-            'opening_bids': OpeningBidsModule(),
-            'responses': ResponseModule(),
-            'openers_rebid': RebidModule(),
-            'responder_rebid': ResponderRebidModule(),  # NEW: Comprehensive responder rebid logic
-            'advancer_bids': AdvancerBidsModule(),
-            'overcalls': OvercallModule(),
-            'stayman': StaymanConvention(),
-            'jacoby': JacobyConvention(),
-            'preempts': PreemptConvention(),
-            'blackwood': BlackwoodConvention(),
-            'takeout_doubles': TakeoutDoubleConvention(),
-            'negative_doubles': NegativeDoubleConvention(),
-            'michaels_cuebid': MichaelsCuebidConvention(),
-            'unusual_2nt': Unusual2NTConvention(),
-            'splinter_bids': SplinterBidsConvention(),
-            'fourth_suit_forcing': FourthSuitForcingConvention(),
-        }
+        # ADR-0002 Phase 1: Use ModuleRegistry instead of manual registration
+        # All modules auto-register on import, so we just get the registry
+        self.modules = ModuleRegistry.get_all()
+
+        # Verify all expected modules are registered
+        expected_modules = [
+            'opening_bids', 'responses', 'openers_rebid', 'responder_rebid',
+            'advancer_bids', 'overcalls', 'stayman', 'jacoby', 'preempts',
+            'blackwood', 'takeout_doubles', 'negative_doubles',
+            'michaels_cuebid', 'unusual_2nt', 'splinter_bids', 'fourth_suit_forcing'
+        ]
+
+        missing = [name for name in expected_modules if not ModuleRegistry.exists(name)]
+        if missing:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Missing bidding modules: {missing}")
+            logger.warning(f"Registered modules: {ModuleRegistry.list_modules()}")
 
     def get_next_bid(self, hand: Hand, auction_history: list, my_position: str, vulnerability: str,
                      explanation_level: str = "detailed"):
@@ -64,31 +65,41 @@ class BiddingEngine:
         if module_name == 'pass_by_default':
             return ("Pass", "No bid found by any module.")
 
-        specialist = self.modules.get(module_name)
-        if specialist:
-            result = specialist.evaluate(hand, features)
-            if result:
-                # Universal Legality Check (Safety Net)
-                bid_to_check = result[0]
-                explanation = result[1]
+        # ADR-0002 Phase 1: Use ModuleRegistry for safe module lookup
+        specialist = ModuleRegistry.get(module_name)
+        if specialist is None:
+            # Graceful fallback when module not found
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(
+                f"Module '{module_name}' not found in registry. "
+                f"Available: {ModuleRegistry.list_modules()}"
+            )
+            return ("Pass", "No appropriate bid found.")
 
-                if self._is_bid_legal(bid_to_check, auction_history):
-                    # Convert BidExplanation to string if needed
-                    if isinstance(explanation, BidExplanation):
-                        # Format at requested level
-                        try:
-                            level_enum = ExplanationLevel(explanation_level)
-                        except ValueError:
-                            level_enum = ExplanationLevel.DETAILED
-                        return (bid_to_check, explanation.format(level_enum))
-                    else:
-                        # Legacy string explanation
-                        return result
+        result = specialist.evaluate(hand, features)
+        if result:
+            # Universal Legality Check (Safety Net)
+            bid_to_check = result[0]
+            explanation = result[1]
+
+            if self._is_bid_legal(bid_to_check, auction_history):
+                # Convert BidExplanation to string if needed
+                if isinstance(explanation, BidExplanation):
+                    # Format at requested level
+                    try:
+                        level_enum = ExplanationLevel(explanation_level)
+                    except ValueError:
+                        level_enum = ExplanationLevel.DETAILED
+                    return (bid_to_check, explanation.format(level_enum))
                 else:
-                    print(f"WARNING: AI module '{module_name}' suggested illegal bid '{bid_to_check}'. Overriding to Pass.")
-                    return ("Pass", "AI bid overridden due to illegality.")
+                    # Legacy string explanation
+                    return result
+            else:
+                print(f"WARNING: AI module '{module_name}' suggested illegal bid '{bid_to_check}'. Overriding to Pass.")
+                return ("Pass", "AI bid overridden due to illegality.")
 
-        return ("Pass", f"Logic error: DecisionEngine chose '{module_name}' but it was not found or returned no bid.")
+        return ("Pass", "No appropriate bid found.")
 
     def get_next_bid_structured(self, hand: Hand, auction_history: list, my_position: str, vulnerability: str):
         """

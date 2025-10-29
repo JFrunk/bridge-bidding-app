@@ -163,3 +163,6 @@ class PreemptConvention(ConventionModule):
             return ("3NT", f"Bidding 3NT with {hand.hcp} HCP, no fit for preempt.")
 
         return ("Pass", f"Passing partner's preempt with {hand.total_points} points.")
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("preempts", PreemptConvention())

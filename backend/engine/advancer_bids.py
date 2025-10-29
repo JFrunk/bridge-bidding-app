@@ -386,3 +386,7 @@ class AdvancerBidsModule(ConventionModule):
                 return bid
 
         return None
+
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("advancer_bids", AdvancerBidsModule())

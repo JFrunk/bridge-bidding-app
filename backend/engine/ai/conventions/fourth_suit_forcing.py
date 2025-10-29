@@ -250,3 +250,7 @@ class FourthSuitForcingConvention(ConventionModule):
             'max_hcp': 20,
             'required_distribution': 'No 8-card fit found, 12+ HCP'
         }
+
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("fourth_suit_forcing", FourthSuitForcingConvention())

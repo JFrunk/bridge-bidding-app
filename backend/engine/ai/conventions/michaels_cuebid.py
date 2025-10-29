@@ -224,3 +224,7 @@ class MichaelsCuebidConvention(ConventionModule):
             'max_hcp': 16,
             'required_distribution': '5-5+ in two specific suits'
         }
+
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("michaels_cuebid", MichaelsCuebidConvention())

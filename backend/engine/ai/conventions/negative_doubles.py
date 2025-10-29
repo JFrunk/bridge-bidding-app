@@ -158,3 +158,6 @@ class NegativeDoubleConvention(ConventionModule):
         partners = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E',
                    'North': 'South', 'South': 'North', 'East': 'West', 'West': 'East'}
         return partners.get(my_pos, '')
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("negative_doubles", NegativeDoubleConvention())

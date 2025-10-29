@@ -158,3 +158,7 @@ class Unusual2NTConvention(ConventionModule):
             'max_hcp': 11,  # or 17+ for strong variant
             'required_distribution': '5-5+ in both minors'
         }
+
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("unusual_2nt", Unusual2NTConvention())

@@ -367,3 +367,6 @@ class OvercallModule(ConventionModule):
         except (ValueError, IndexError):
             return False
         return False
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("overcalls", OvercallModule())

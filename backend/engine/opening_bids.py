@@ -280,3 +280,8 @@ class OpeningBidsModule(ConventionModule):
         explanation.add_alternative("1♣/1♦", "Hand qualifies for special Gambling 3NT treatment")
 
         return ("3NT", explanation)
+
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("opening_bids", OpeningBidsModule())
+

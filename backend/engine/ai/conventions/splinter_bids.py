@@ -155,3 +155,7 @@ class SplinterBidsConvention(ConventionModule):
             'max_hcp': 15,
             'required_distribution': '4+ support, singleton or void in side suit'
         }
+
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("splinter_bids", SplinterBidsConvention())

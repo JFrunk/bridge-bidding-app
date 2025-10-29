@@ -302,3 +302,6 @@ class BlackwoodConvention(ConventionModule):
             return ("6♠", "Response to 5NT: 3 kings.")
 
         return ("Pass", "Error: Could not count kings.")
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("blackwood", BlackwoodConvention())

@@ -186,3 +186,7 @@ class JacobyConvention(ConventionModule):
             else:
                 # With 7+ cards, always bid game in the major
                 return (f"4{my_suit}", f"Game-forcing ({hand.hcp} HCP) with {hand.suit_lengths[my_suit]}-card {my_suit}.")
+
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("jacoby", JacobyConvention())

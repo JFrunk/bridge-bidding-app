@@ -204,3 +204,6 @@ class TakeoutDoubleConvention(ConventionModule):
             return ("X", f"Support double showing exactly 3-card {suit_name} support (would raise with 4+).")
 
         return None
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("takeout_doubles", TakeoutDoubleConvention())

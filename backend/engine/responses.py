@@ -377,3 +377,6 @@ class ResponseModule(ConventionModule):
         # which has comprehensive logic for responder's 2nd, 3rd, 4th+ bids
         # This module (ResponseModule) should ONLY handle first responses and 2♣ forcing auctions
         return None
+# ADR-0002 Phase 1: Auto-register this module on import
+from engine.ai.module_registry import ModuleRegistry
+ModuleRegistry.register("responses", ResponseModule())
