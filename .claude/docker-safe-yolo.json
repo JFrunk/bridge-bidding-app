@@ -1,0 +1,83 @@
+{
+  "name": "claude-code-safe-yolo",
+  "description": "Secure Docker configuration for Claude Code Safe YOLO mode with maximum security restrictions",
+  "version": "1.0.0",
+  "security": {
+    "network_isolation": true,
+    "read_only_filesystem": true,
+    "no_internet_access": true,
+    "no_privilege_escalation": true,
+    "resource_limits": true
+  },
+  "docker": {
+    "image": "anthropics/claude-code:latest",
+    "container_name": "claude-code-safe-yolo",
+    "network": "none",
+    "read_only": true,
+    "security_opt": ["no-new-privileges"],
+    "tmpfs": {
+      "/tmp": "rw,noexec,nosuid,size=1g"
+    },
+    "volumes": [
+      {
+        "host": "${PROJECT_ROOT}",
+        "container": "/workspace",
+        "mode": "ro",
+        "description": "Project directory (read-only)"
+      }
+    ],
+    "resources": {
+      "cpus": "2.0",
+      "memory": "4g",
+      "description": "Limited to 2 CPU cores and 4GB RAM"
+    },
+    "environment": {
+      "CLAUDE_API_KEY": "${CLAUDE_API_KEY}",
+      "CLAUDE_MODEL": "claude-sonnet-4"
+    }
+  },
+  "usage": {
+    "command": "./.claude/docker-safe-yolo.sh [task description]",
+    "examples": [
+      "./.claude/docker-safe-yolo.sh 'Fix all lint errors'",
+      "./.claude/docker-safe-yolo.sh 'Generate boilerplate for new API endpoint'",
+      "./.claude/docker-safe-yolo.sh 'Refactor authentication module'"
+    ]
+  },
+  "security_features": {
+    "network_isolation": "Container cannot access internet (--network none)",
+    "read_only_mount": "Project files mounted read-only, cannot be modified",
+    "resource_limits": "CPU and memory limited to prevent resource exhaustion",
+    "no_privileged": "Container cannot escalate privileges or access host",
+    "tmpfs": "Temporary filesystem for /tmp, cleared on exit",
+    "no_capabilities": "No additional Linux capabilities granted"
+  },
+  "risk_assessment": {
+    "data_exfiltration": "PREVENTED - No internet access",
+    "file_modification": "PREVENTED - Read-only filesystem",
+    "resource_exhaustion": "MITIGATED - CPU and memory limits",
+    "privilege_escalation": "PREVENTED - no-new-privileges flag",
+    "container_escape": "MITIGATED - Standard Docker isolation",
+    "overall_risk": "LOW"
+  },
+  "limitations": {
+    "cannot_modify_files": "Cannot write to project files (read-only mount)",
+    "cannot_install_packages": "Cannot install npm/pip packages",
+    "cannot_access_network": "Cannot fetch URLs or make API calls",
+    "cannot_access_secrets": "Cannot read ~/.ssh, ~/.aws, or other home directory secrets"
+  },
+  "when_to_use": [
+    "Fixing lint errors (read-only analysis)",
+    "Generating code templates (output to stdout)",
+    "Analyzing code patterns",
+    "Running tests and viewing results",
+    "Code review and suggestions"
+  ],
+  "when_not_to_use": [
+    "Installing dependencies",
+    "Modifying multiple files",
+    "Making git commits",
+    "Deploying to production",
+    "Anything requiring network access"
+  ]
+}
