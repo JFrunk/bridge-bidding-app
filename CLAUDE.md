@@ -42,14 +42,29 @@ pytest -v            # Verbose output
 # From frontend/ directory
 npm install                       # Install dependencies
 npm start                         # Start dev server on http://localhost:3000
-npm test                          # Run tests
+npm test                          # Run unit tests (Jest)
 npm run build                     # Production build
+
+# E2E tests (Playwright)
+npm run test:e2e                  # Run all E2E tests (headless)
+npm run test:e2e:ui               # Interactive debugging (recommended for development)
+npm run test:e2e:headed           # Watch tests run in browser
+npm run test:e2e:report           # View last test report (HTML)
+npm run test:e2e:codegen          # Record actions → auto-generate test code
 ```
 
 ### Running the Full App
 1. Start backend: `cd backend && source venv/bin/activate && python server.py`
 2. Start frontend: `cd frontend && npm start`
 3. Access at http://localhost:3000
+
+### Running All Tests (Comprehensive)
+```bash
+# From project root
+./test_all.sh                     # Runs backend + frontend + E2E (2-3 minutes)
+./test_all.sh --quick             # Runs unit tests only (30 seconds)
+./test_all.sh --skip-e2e          # Skips E2E tests (1 minute)
+```
 
 ---
 
@@ -576,12 +591,31 @@ Deal hands → Bidding → Contract established →
 cd backend
 ./test_quick.sh      # 30 seconds - unit tests only
 ./test_medium.sh     # 2 minutes - unit + integration
+
+# E2E tests during development
+cd frontend
+npm run test:e2e:ui  # Interactive E2E debugging (recommended)
 ```
 
 **Before Committing:**
 ```bash
-./test_full.sh       # 5+ minutes - all tests
+# Comprehensive - all tests (RECOMMENDED)
+./test_all.sh        # Backend + Frontend + E2E (2-3 minutes)
+
+# Quick - unit tests only
+./test_all.sh --quick --skip-e2e  # 30 seconds
+
+# Backend only
+cd backend && ./test_full.sh      # 5+ minutes - all backend tests
 ```
+
+**Pre-commit Hook:**
+When you run `git commit`, you'll be prompted to choose:
+1. Quick tests (30 seconds) - Unit tests only
+2. Full tests (2-3 minutes) - All tests including E2E
+3. Skip tests (not recommended)
+
+The pre-commit hook automatically runs tests based on your choice.
 
 ### Test Organization
 
@@ -593,6 +627,15 @@ backend/tests/
 ├── features/      # Feature tests - end-to-end validation
 ├── scenarios/     # Specific bidding situations
 └── play/          # Card play engine tests
+
+frontend/
+├── src/
+│   └── **/*.test.js   # Jest unit tests for React components
+└── e2e/
+    └── tests/
+        ├── verification.spec.js      # Environment verification
+        ├── app-smoke-test.spec.js    # Basic app functionality
+        └── *.spec.js                 # E2E test files (Playwright)
 ```
 
 ### Quality Score Testing
@@ -627,14 +670,24 @@ python3 compare_play_scores.py play_before.json play_after.json
 - ✅ Add tests for new features
 - ✅ Add regression tests for bug fixes
 - ✅ Run quick tests during development
-- ✅ Run full tests before committing
+- ✅ Run `./test_all.sh` before committing
 - ✅ Run quality scores before bidding/play changes
+- ✅ Add E2E tests for user-facing features
+- ✅ Use data-testid attributes in React components for E2E testing
 
 **NEVER:**
-- ❌ Commit without running tests
+- ❌ Commit without running tests (pre-commit hook enforces this)
 - ❌ Skip regression tests for bugs
 - ❌ Modify bidding logic without baseline quality score
 - ❌ Modify play logic without baseline quality score
+- ❌ Use `git commit --no-verify` unless absolutely necessary
+
+**E2E Testing Best Practices:**
+- ✅ Use `data-testid` attributes for stable selectors
+- ✅ Test user behavior, not implementation details
+- ✅ Keep tests independent (no shared state)
+- ✅ Use `npm run test:e2e:ui` for debugging failed tests
+- ✅ Add E2E test when fixing a regression bug
 
 **See:** `.claude/CODING_GUIDELINES.md` for complete quality assurance protocols
 

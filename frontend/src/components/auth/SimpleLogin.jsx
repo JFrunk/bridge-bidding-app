@@ -69,21 +69,22 @@ export function SimpleLogin({ onClose }) {
   };
 
   return (
-    <div className="simple-login-overlay" onClick={(e) => {
+    <div className="simple-login-overlay" data-testid="login-overlay" onClick={(e) => {
       if (e.target.className === 'simple-login-overlay') onClose?.();
     }}>
-      <div className="simple-login-modal">
-        <button className="close-button" onClick={onClose} aria-label="Close">
+      <div className="simple-login-modal" data-testid="login-modal">
+        <button className="close-button" data-testid="login-close-button" onClick={onClose} aria-label="Close">
           ×
         </button>
 
         <h2>Welcome to Bridge Bidding Practice</h2>
 
-        <div className="login-method-toggle">
+        <div className="login-method-toggle" data-testid="login-method-toggle">
           <button
             type="button"
             className={`toggle-btn ${loginMethod === 'email' ? 'active' : ''}`}
             onClick={() => setLoginMethod('email')}
+            data-testid="login-toggle-email"
           >
             📧 Email
           </button>
@@ -91,12 +92,13 @@ export function SimpleLogin({ onClose }) {
             type="button"
             className={`toggle-btn ${loginMethod === 'phone' ? 'active' : ''}`}
             onClick={() => setLoginMethod('phone')}
+            data-testid="login-toggle-phone"
           >
             📱 Phone
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit} className="login-form" data-testid="login-form">
           <p className="login-subtitle">
             {loginMethod === 'email'
               ? 'Enter your email to continue'
@@ -115,6 +117,7 @@ export function SimpleLogin({ onClose }) {
                 required
                 autoFocus
                 autoComplete="email"
+                data-testid="login-email-input"
               />
             </div>
           ) : (
@@ -129,6 +132,7 @@ export function SimpleLogin({ onClose }) {
                 required
                 autoFocus
                 autoComplete="tel"
+                data-testid="login-phone-input"
               />
               <small className="input-hint">US number (10 digits)</small>
             </div>
@@ -145,15 +149,17 @@ export function SimpleLogin({ onClose }) {
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="How should we call you?"
               autoComplete="name"
+              data-testid="login-displayname-input"
             />
           </div>
 
-          {error && <div className="error-message">{error}</div>}
+          {error && <div className="error-message" data-testid="login-error">{error}</div>}
 
           <button
             type="submit"
             className="btn-primary"
             disabled={loading}
+            data-testid="login-submit-button"
           >
             {loading ? 'Please wait...' : 'Continue'}
           </button>
@@ -166,6 +172,7 @@ export function SimpleLogin({ onClose }) {
             type="button"
             onClick={handleGuestMode}
             className="btn-secondary"
+            data-testid="login-guest-button"
           >
             Continue as Guest
           </button>

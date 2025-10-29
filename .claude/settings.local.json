@@ -67,7 +67,8 @@
       "Bash(sh:*)",
       "Bash(./.claude/docker-safe-yolo.sh:*)",
       "Bash(./.claude/scripts/restart_servers.sh:*)",
-      "Bash(npx playwright test:*)"
+      "Bash(npx playwright test:*)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []

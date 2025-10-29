@@ -1,0 +1,396 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║              BRIDGE BIDDING ARCHITECTURE - QUICK REFERENCE                    ║
+║                                                                                ║
+║  Two companion documents are available:                                       ║
+║  • BIDDING_ARCHITECTURE_SUMMARY.md - Executive summary (key concepts)         ║
+║  • BIDDING_ARCHITECTURE_MAP.md - Complete detailed map (968 lines)            ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+════════════════════════════════════════════════════════════════════════════════
+REQUEST FLOW DIAGRAM
+════════════════════════════════════════════════════════════════════════════════
+
+         Frontend (React)
+              ↓
+    [POST /api/get-next-bid]
+              ↓
+    ┌─────────────────────────────────┐
+    │       server.py (Flask)         │
+    │  BiddingEngine.get_next_bid()   │
+    └─────────────────────────────────┘
+              ↓
+    ┌─────────────────────────────────┐
+    │   1. extract_features()         │ ← Hand + auction → features dict
+    │   ↓                             │
+    │   2. select_bidding_module()    │ ← State-based routing
+    │   ↓                             │
+    │   3. specialist.evaluate()      │ ← Get bid from module
+    │   ↓                             │
+    │   4. _is_bid_legal()            │ ← Final validation
+    │   ↓                             │
+    │   5. return (bid, explanation)  │
+    └─────────────────────────────────┘
+              ↓
+    [Response: {bid, explanation, score}]
+              ↓
+         Frontend displays
+
+
+════════════════════════════════════════════════════════════════════════════════
+MODULE SELECTION DECISION TREE (decision_engine.py)
+════════════════════════════════════════════════════════════════════════════════
+
+    START: select_bidding_module(features)
+       ↓
+    [No opener yet?]
+       ├─ YES → Check PreemptConvention
+       │         ├─ YES → return 'preempts'
+       │         └─ NO → return 'opening_bids'
+       │
+       └─ NO (opener exists)
+          ↓
+          [Opener relationship?]
+          │
+          ├─ OPPONENT (opponent opened)
+          │   ├─ [Partner made overcall & I haven't bid?]
+          │   │   ├─ YES → return 'advancer_bids'
+          │   │   └─ NO → Continue...
+          │   │
+          │   ├─ [My first bid after opponent?]
+          │   │   ├─ YES → Check Michaels, Unusual2NT, Overcalls, Doubles
+          │   │   └─ NO → [In balancing seat? Yes/No] → Check Overcalls/Doubles
+          │   │
+          │   └─ return first match or pass
+          │
+          ├─ PARTNER (partner opened)
+          │   ├─ [My 2nd+ bid?] → return 'responder_rebid'
+          │   ├─ Check Blackwood, Splinter, FSF, NegativeDouble
+          │   ├─ [Opening bid = 1NT?] → Check Jacoby, Stayman
+          │   └─ return 'responses' (default)
+          │
+          ├─ ME (I opened)
+          │   ├─ [Opening bid = 1NT?] → Check Jacoby, Stayman
+          │   ├─ Check Blackwood
+          │   └─ return 'openers_rebid'
+          │
+          └─ NONE (shouldn't happen)
+             └─ return 'pass_by_default'
+
+
+════════════════════════════════════════════════════════════════════════════════
+FEATURE DICTIONARY STRUCTURE
+════════════════════════════════════════════════════════════════════════════════
+
+extract_features() returns:
+{
+    'hand_features': {
+        'hcp': 14,                          # High-card points (A=4, K=3, Q=2, J=1)
+        'dist_points': 1,                   # Distribution (5=1, 6=2, 7+=3)
+        'total_points': 15,                 # HCP + dist
+        'suit_lengths': {'♠': 4, '♥': 3, '♦': 3, '♣': 3},
+        'is_balanced': True                 # No singleton/void, ≤1 doubleton
+    },
+    'auction_features': {
+        'opening_bid': '1♣',
+        'opener': 'North',
+        'opener_relationship': 'Partner',   # 'Me'/'Partner'/'Opponent'/None
+        'partner_last_bid': '1♥',
+        'opener_last_bid': '1NT',
+        'opener_index': 0,
+        'is_contested': False,              # Both NS and EW bid?
+        'vulnerability': 'None',            # 'None'/'NS'/'EW'/'Both'
+        'interference': {
+            'present': False,
+            'bid': None,
+            'level': None,
+            'type': 'none',                 # 'double'/'suit_overcall'/'nt_overcall'/'none'
+            'position': None
+        }
+    },
+    'auction_history': ['1♣', 'Pass', '1♥', ...],  # All bids so far
+    'hand': <Hand object>,
+    'my_index': 2,                          # 0=N, 1=E, 2=S, 3=W
+    'positions': ['North', 'East', 'South', 'West']
+}
+
+KEY OPENER RELATIONSHIP VALUES:
+• 'Me'       - I opened
+• 'Partner'  - Partner opened (I'm responder/rebidder)
+• 'Opponent' - Opponent opened (I'm overcaller/advancer)
+• None       - No one opened yet (I'm opening)
+
+
+════════════════════════════════════════════════════════════════════════════════
+15 SPECIALIST MODULES - QUICK LOOKUP
+════════════════════════════════════════════════════════════════════════════════
+
+NATURAL BIDDING (6 modules)
+┌─────────────────────────────────────────────────────────────────────┐
+│ OpeningBidsModule          │ opening_bids.py         │ 1-level opens
+│ ResponseModule             │ responses.py            │ Respond to partner
+│ RebidModule                │ rebids.py               │ I opened, rebid
+│ ResponderRebidModule       │ responder_rebids.py     │ Responder's 2nd+ bid
+│ AdvancerBidsModule         │ advancer_bids.py        │ Partner overcalled
+│ OvercallModule             │ overcalls.py            │ Overcall after opponent
+└─────────────────────────────────────────────────────────────────────┘
+
+CONVENTIONS (9 modules)
+┌─────────────────────────────────────────────────────────────────────┐
+│ PreemptConvention          │ conventions/preempts.py              │ 2♦/2♥/2♠/3♣/3♦/3♥/3♠
+│ StaymanConvention          │ conventions/stayman.py               │ 1NT → 2♣
+│ JacobyConvention           │ conventions/jacoby_transfers.py      │ 1NT → 2♦/2♥ (transfer)
+│ BlackwoodConvention        │ conventions/blackwood.py             │ 4NT (ace asking)
+│ SplinterBidsConvention     │ conventions/splinter_bids.py         │ Jump + shortness
+│ FourthSuitForcingConvention│ conventions/fourth_suit_forcing.py   │ 4th suit forcing
+│ TakeoutDoubleConvention    │ conventions/takeout_doubles.py       │ X (takeout)
+│ NegativeDoubleConvention   │ conventions/negative_doubles.py      │ X (responding to interference)
+│ MichaelsCuebidConvention   │ conventions/michaels_cuebid.py       │ Cuebid (5-5 two suits)
+│ Unusual2NTConvention       │ conventions/unusual_2nt.py           │ 2NT (5-5 minors)
+└─────────────────────────────────────────────────────────────────────┘
+
+
+════════════════════════════════════════════════════════════════════════════════
+POINT REQUIREMENTS QUICK TABLE
+════════════════════════════════════════════════════════════════════════════════
+
+Module                          | Min | Max | Special Notes
+─────────────────────────────────────────────────────────────────────────────
+Opening Bid                     | 13  | ∞   | Total points (with distribution)
+Response (1st bid)              | 6   | ∞   | Total points minimum
+─────────────────────────────────────────────────────────────────────────────
+Suit Overcall (Direct, 1-level) | 8   | 16  | HCP, suit quality
+Suit Overcall (Direct, 2-level) | 11  | 16  | HCP, stronger suit
+Suit Overcall (Balancing)       | 7   | 16  | Lighter than direct
+─────────────────────────────────────────────────────────────────────────────
+1NT Overcall (Direct)           | 15  | 18  | HCP, stopper in opponent's suit
+1NT Overcall (Balancing)        | 12  | 15  | HCP, lighter than direct
+─────────────────────────────────────────────────────────────────────────────
+Takeout Double                  | 12  | ∞   | HCP, 0-2 in doubled suit, 3+ others
+Takeout Double (Strong, 19+ HCP)| 19  | ∞   | Balanced (plan 1NT rebid next)
+─────────────────────────────────────────────────────────────────────────────
+Negative Double (1-2 level)     | 6   | ∞   | Responding values
+Negative Double (3-level)       | 8   | ∞   | Invitational values
+Negative Double (4+ level)      | 12  | ∞   | Game-forcing values
+─────────────────────────────────────────────────────────────────────────────
+Preempt (Weak 2, 6 cards)       | 6   | 10  | + 2 of top 3 honors (A/K/Q)
+Preempt (3-level, 7 cards)      | 6   | 10  | + 2+ honors
+Preempt (4-level, 8 cards)      | 6   | 10  | + 2+ honors
+─────────────────────────────────────────────────────────────────────────────
+Stayman (response to 1NT)       | 7   | ∞   | 4+ cards in major (or both 4-4)
+Jacoby (transfer to major)      | any | ∞   | 5+ card major
+─────────────────────────────────────────────────────────────────────────────
+Raise (simple 3+ cards)         | 8   | 10  | Support points
+Raise (jump, 3+ cards)          | 11  | 12  | Support points, invitational
+
+
+════════════════════════════════════════════════════════════════════════════════
+FILE STRUCTURE - WHERE THINGS LIVE
+════════════════════════════════════════════════════════════════════════════════
+
+CORE ORCHESTRATION
+  └─ backend/engine/bidding_engine.py ........... Master (instantiates 15 modules)
+  └─ backend/engine/ai/decision_engine.py ...... Module selection logic
+
+FEATURE SYSTEM
+  └─ backend/engine/hand.py ..................... Hand object (HCP, dist, balanced)
+  └─ backend/engine/ai/feature_extractor.py ... Extract features, detect interference
+
+VALIDATION
+  └─ backend/engine/bidding_validation.py ...... BidValidator (legality checks)
+  └─ backend/engine/bid_safety.py .............. BidSafety (appropriateness checks)
+
+SPECIALIST MODULES
+  └─ backend/engine/[module_name].py
+     ├─ opening_bids.py ........................ OpeningBidsModule
+     ├─ responses.py ........................... ResponseModule
+     ├─ rebids.py .............................. RebidModule
+     ├─ responder_rebids.py .................... ResponderRebidModule
+     ├─ advancer_bids.py ....................... AdvancerBidsModule
+     └─ overcalls.py ........................... OvercallModule
+
+CONVENTION MODULES
+  └─ backend/engine/ai/conventions/
+     ├─ base_convention.py ..................... ConventionModule (ABC base class)
+     ├─ preempts.py ............................ PreemptConvention
+     ├─ stayman.py ............................. StaymanConvention
+     ├─ jacoby_transfers.py .................... JacobyConvention
+     ├─ blackwood.py ........................... BlackwoodConvention
+     ├─ splinter_bids.py ....................... SplinterBidsConvention
+     ├─ fourth_suit_forcing.py ................. FourthSuitForcingConvention
+     ├─ takeout_doubles.py ..................... TakeoutDoubleConvention
+     ├─ negative_doubles.py .................... NegativeDoubleConvention
+     ├─ michaels_cuebid.py ..................... MichaelsCuebidConvention
+     └─ unusual_2nt.py ......................... Unusual2NTConvention
+
+EXPLANATION SYSTEM
+  └─ backend/engine/ai/bid_explanation.py ...... BidExplanation class
+
+API ENDPOINTS
+  └─ backend/server.py
+     ├─ /api/get-next-bid ...................... Get bid (string explanation)
+     ├─ /api/get-next-bid-structured .......... Get bid (JSON explanation)
+     └─ /api/evaluate-bid ...................... Evaluate user's bid
+
+FRONTEND
+  └─ frontend/src/services/api.js .............. API client
+  └─ frontend/src/App.js ....................... React app using engine
+
+
+════════════════════════════════════════════════════════════════════════════════
+VALIDATION LAYERS (4-Layer Safety System)
+════════════════════════════════════════════════════════════════════════════════
+
+LAYER 1: BidValidator (Auction Rules)
+   Location: bidding_validation.py
+   Checks:   Pass/X/XX always legal
+             Level must be higher OR same level with higher suit
+             Suit ranking: ♣(1) < ♦(2) < ♥(3) < ♠(4) < NT(5)
+   When:     Used throughout modules
+
+LAYER 2: Module Internal Validation
+   Location: Within each module's evaluate() method
+   Checks:   HCP ranges (e.g., overcalls 8-16)
+             Suit requirements (e.g., 5+ for opening)
+             Special requirements (e.g., suit quality for preempts)
+   When:     Before/during bid generation
+
+LAYER 3: BiddingEngine._is_bid_legal()
+   Location: bidding_engine.py
+   Checks:   Final legality check after specialist returns bid
+             Prevents modules from suggesting illegal bids
+   When:     After specialist.evaluate() returns
+
+LAYER 4: BidSafety
+   Location: bid_safety.py
+   Checks:   Bid appropriateness (not just legality)
+             Slam point requirements
+             Trump support validation
+   When:     Optional - used in bid adjustment
+
+
+════════════════════════════════════════════════════════════════════════════════
+DEBUGGING CHECKLIST
+════════════════════════════════════════════════════════════════════════════════
+
+Issue: "AI never suggests certain bid"
+├─ [ ] Check BiddingEngine.__init__() - is module registered? (lines 27-44)
+├─ [ ] Check decision_engine.py - does it route to module?
+├─ [ ] Check module.evaluate() - internal conditions met?
+└─ [ ] Debug extract_features() - are required features present?
+
+Issue: "AI suggests illegal bid"
+├─ [ ] Check module's internal validation (HCP/suit checks)
+├─ [ ] Check is_legal_bid() in BidValidator
+├─ [ ] Check BiddingEngine._is_bid_legal() enforcement
+└─ [ ] Adjust module's bid generation logic
+
+Issue: "Bid gets adjusted incorrectly"
+├─ [ ] Check 2-level max escalation check in module
+├─ [ ] Check get_next_legal_bid() function
+├─ [ ] Check module's sanity check (usually line 40-55)
+└─ [ ] May need BidSafety check after adjustment
+
+Issue: "Wrong module gets selected"
+├─ [ ] Add print: features['auction_features']['opener_relationship']
+├─ [ ] Trace decision_engine.py logic path
+├─ [ ] Check if preempts/conventions checked before natural modules
+└─ [ ] Add debug prints to decision_engine.py
+
+
+════════════════════════════════════════════════════════════════════════════════
+ADDING A NEW CONVENTION - 5 STEPS
+════════════════════════════════════════════════════════════════════════════════
+
+1. CREATE MODULE FILE
+   Location: backend/engine/ai/conventions/my_convention.py
+   Template:
+   ────────
+   from engine.hand import Hand
+   from engine.ai.conventions.base_convention import ConventionModule
+   from typing import Optional, Tuple, Dict
+   
+   class MyConvention(ConventionModule):
+       def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+           if <conditions_match>:
+               return (bid, explanation)
+           return None
+
+2. REGISTER IN BiddingEngine
+   Location: backend/engine/bidding_engine.py, __init__() method
+   Add line:
+   ────────
+   'my_convention': MyConvention(),
+
+3. ADD DECISION LOGIC
+   Location: backend/engine/ai/decision_engine.py
+   Add check in appropriate state:
+   ────────
+   if <appropriate_situation>:
+       if MyConvention().evaluate(...):
+           return 'my_convention'
+
+4. TEST
+   Run: python3 backend/test_bidding_quality_score.py --hands 100
+   Verify: Legality 100%, composite score doesn't regress
+
+5. DOCUMENT
+   Update: BIDDING_ARCHITECTURE_MAP.md with new convention
+   Run quality score: 500 hands baseline before commit
+
+
+════════════════════════════════════════════════════════════════════════════════
+KEY FILES FOR DIFFERENT TASKS
+════════════════════════════════════════════════════════════════════════════════
+
+Task: Fix illegal bid being suggested
+→ Check: bidding_validation.py (is_legal_bid), bidding_engine.py (_is_bid_legal)
+
+Task: Add new convention
+→ Files: Create conventions/new.py, update bidding_engine.py, decision_engine.py
+
+Task: Change point requirement for module
+→ Check: Module file itself (e.g., opening_bids.py, overcalls.py)
+
+Task: Debug module selection
+→ Check: decision_engine.py, feature_extractor.py (opener_relationship)
+
+Task: Add new module type (not convention)
+→ Create: New file in backend/engine/, update bidding_engine.py, decision_engine.py
+
+Task: Understand user's bid evaluation
+→ Check: server.py /api/evaluate-bid endpoint, bidding_feedback.py
+
+Task: Trace request from frontend
+→ Check: frontend/src/services/api.js, frontend/src/App.js, server.py
+
+Task: Validate auction rules
+→ Check: bidding_validation.py, bidding_engine.py._is_bid_legal()
+
+
+════════════════════════════════════════════════════════════════════════════════
+FULL DOCUMENTATION REFERENCES
+════════════════════════════════════════════════════════════════════════════════
+
+This file (QUICK REFERENCE):
+  • Visual diagrams and quick lookups
+  • Decision trees and data structures
+  • File locations and debugging checklist
+
+SUMMARY DOCUMENT (BIDDING_ARCHITECTURE_SUMMARY.md):
+  • Executive overview
+  • Key concepts and architecture layers
+  • Point requirements in table format
+  • Known issues with status
+
+COMPLETE MAP (BIDDING_ARCHITECTURE_MAP.md):
+  • Comprehensive 968-line detailed documentation
+  • Every module described with code examples
+  • Complete data flows and decision logic
+  • Known issues with code locations and fixes
+
+
+════════════════════════════════════════════════════════════════════════════════
+Prepared: 2025-10-29
+Project: Bridge Bidding Training Application
+Architecture: 15 Specialist Modules + Decision Engine + Feature Extraction System
+════════════════════════════════════════════════════════════════════════════════

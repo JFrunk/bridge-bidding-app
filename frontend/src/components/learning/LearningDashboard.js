@@ -62,7 +62,7 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
 
   if (loading) {
     return (
-      <div className="loading-dashboard">
+      <div className="loading-dashboard" data-testid="dashboard-loading">
         <div className="loading-spinner"></div>
       </div>
     );
@@ -70,7 +70,7 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
 
   if (error) {
     return (
-      <div className="error-dashboard">
+      <div className="error-dashboard" data-testid="dashboard-error">
         <div className="error-icon">⚠️</div>
         <h3 className="error-message">Failed to load dashboard: {error}</h3>
         <button className="retry-button" onClick={loadDashboardData}>
@@ -92,9 +92,9 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
   const hasAnyData = hasGameplayData || hasBiddingData || (recent_decisions && recent_decisions.length > 0);
 
   return (
-    <div className="learning-dashboard">
+    <div className="learning-dashboard" data-testid="dashboard-content">
       {/* Header */}
-      <div className="learning-dashboard-header">
+      <div className="learning-dashboard-header" data-testid="dashboard-header">
         <h2>Your Learning Journey</h2>
         <p className="learning-dashboard-subtitle">
           Track your progress and discover growth opportunities
@@ -103,7 +103,7 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
 
       {/* Show welcome message for new players */}
       {!hasAnyData && (
-        <div className="empty-dashboard-state">
+        <div className="empty-dashboard-state" data-testid="dashboard-empty-state">
           <div className="empty-dashboard-icon">🎯</div>
           <h3 className="empty-dashboard-title">Welcome to Bridge Learning!</h3>
           <p className="empty-dashboard-message">

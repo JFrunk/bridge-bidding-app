@@ -121,7 +121,7 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer })
   // Helper to show dealer indicator - Use prominent emoji
   const dealerIndicator = (pos) => dealer === pos ? ' 🔵' : '';
 
-  return ( <table className="bidding-table"><thead><tr><th className={players[nextPlayerIndex] === 'North' ? 'current-player' : ''}>North{dealerIndicator('North')}</th><th className={players[nextPlayerIndex] === 'East' ? 'current-player' : ''}>East{dealerIndicator('East')}</th><th className={players[nextPlayerIndex] === 'South' ? 'current-player' : ''}>South{dealerIndicator('South')}</th><th className={players[nextPlayerIndex] === 'West' ? 'current-player' : ''}>West{dealerIndicator('West')}</th></tr></thead><tbody>{rows}</tbody></table> );
+  return ( <table className="bidding-table" data-testid="bidding-table"><thead><tr><th className={players[nextPlayerIndex] === 'North' ? 'current-player' : ''} data-testid="bidding-header-north">North{dealerIndicator('North')}</th><th className={players[nextPlayerIndex] === 'East' ? 'current-player' : ''} data-testid="bidding-header-east">East{dealerIndicator('East')}</th><th className={players[nextPlayerIndex] === 'South' ? 'current-player' : ''} data-testid="bidding-header-south">South{dealerIndicator('South')}</th><th className={players[nextPlayerIndex] === 'West' ? 'current-player' : ''} data-testid="bidding-header-west">West{dealerIndicator('West')}</th></tr></thead><tbody data-testid="bidding-table-body">{rows}</tbody></table> );
 }
 // Note: BiddingBox component migrated to components/bridge/BiddingBox.jsx
 
@@ -1753,16 +1753,16 @@ Please provide a detailed analysis of the auction and identify any bidding error
   const UserMenu = () => {
     if (!isAuthenticated) {
       return (
-        <button onClick={() => setShowLogin(true)} className="auth-button">
+        <button onClick={() => setShowLogin(true)} className="auth-button" data-testid="sign-in-button">
           Sign In
         </button>
       );
     }
 
     return (
-      <div className="user-menu">
-        <span className="user-display">👤 {user.display_name}</span>
-        <button onClick={logout} className="logout-button">Logout</button>
+      <div className="user-menu" data-testid="user-menu">
+        <span className="user-display" data-testid="user-display-name">👤 {user.display_name}</span>
+        <button onClick={logout} className="logout-button" data-testid="logout-button">Logout</button>
       </div>
     );
   };
@@ -1928,22 +1928,22 @@ Please provide a detailed analysis of the auction and identify any bidding error
           <div className="game-controls">
             {gamePhase === 'bidding' ? (
               <>
-                <button className="deal-button" onClick={dealNewHand}>Deal Hand to Bid</button>
-                <button className="play-button" onClick={playRandomHand}>Play Random Hand</button>
-                <button className="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Rebid Hand</button>
+                <button className="deal-button" data-testid="deal-button" onClick={dealNewHand}>Deal Hand to Bid</button>
+                <button className="play-button" data-testid="play-random-button" onClick={playRandomHand}>Play Random Hand</button>
+                <button className="replay-button" data-testid="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Rebid Hand</button>
                 {/* Show "Play This Hand" button when bidding is complete */}
                 {auction.length >= 4 && auction.slice(-3).every(bid => bid.bid === 'Pass') && (
-                  <button className="play-this-hand-button" onClick={startPlayPhase}>
+                  <button className="play-this-hand-button" data-testid="play-this-hand-button" onClick={startPlayPhase}>
                     ▶ Play This Hand
                   </button>
                 )}
               </>
             ) : (
               <>
-                <button className="play-button" onClick={playRandomHand}>Play Another Hand</button>
-                <button className="replay-button" onClick={replayCurrentHand}>Replay Hand</button>
-                <button className="deal-button" onClick={dealNewHand}>Bid New Hand</button>
-                <button className="learning-dashboard-button" onClick={() => setShowLearningDashboard(true)}>📊 My Progress</button>
+                <button className="play-button" data-testid="play-another-hand-button" onClick={playRandomHand}>Play Another Hand</button>
+                <button className="replay-button" data-testid="replay-hand-button" onClick={replayCurrentHand}>Replay Hand</button>
+                <button className="deal-button" data-testid="bid-new-hand-button" onClick={dealNewHand}>Bid New Hand</button>
+                <button className="learning-dashboard-button" data-testid="dashboard-button" onClick={() => setShowLearningDashboard(true)}>📊 My Progress</button>
               </>
             )}
           </div>
@@ -1998,9 +1998,9 @@ Please provide a detailed analysis of the auction and identify any bidding error
               <button onClick={handleToggleAlwaysShowHands} className={alwaysShowHands ? 'active' : ''}>{alwaysShowHands ? 'Always Show: ON' : 'Always Show: OFF'}</button>
             </div>
             <div className="ai-review-controls">
-              <button onClick={handleShowConventionHelp} className="help-button">ℹ️ Convention Help</button>
-              <button onClick={() => setShowReviewModal(true)} className="ai-review-button">🤖 Request AI Review</button>
-              <button onClick={() => setShowLearningDashboard(true)} className="learning-dashboard-button">📊 My Progress</button>
+              <button onClick={handleShowConventionHelp} className="help-button" data-testid="convention-help-button">ℹ️ Convention Help</button>
+              <button onClick={() => setShowReviewModal(true)} className="ai-review-button" data-testid="ai-review-button">🤖 Request AI Review</button>
+              <button onClick={() => setShowLearningDashboard(true)} className="learning-dashboard-button" data-testid="progress-button">📊 My Progress</button>
             </div>
           </>
         )}
@@ -2038,9 +2038,9 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
       {/* Learning Dashboard Modal */}
       {showLearningDashboard && (
-        <div className="learning-dashboard-overlay" onClick={() => setShowLearningDashboard(false)}>
-          <div className="learning-dashboard-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="close-dashboard" onClick={() => setShowLearningDashboard(false)}>×</button>
+        <div className="learning-dashboard-overlay" data-testid="dashboard-overlay" onClick={() => setShowLearningDashboard(false)}>
+          <div className="learning-dashboard-modal" data-testid="dashboard-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="close-dashboard" data-testid="dashboard-close-button" onClick={() => setShowLearningDashboard(false)}>×</button>
             {/* Force remount on each open to refresh data */}
             <LearningDashboard
               key={Date.now()}

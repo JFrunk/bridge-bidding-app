@@ -49,11 +49,11 @@ export function BiddingBox({ onBid, disabled, auction }) {
   };
 
   return (
-    <div className="flex flex-col gap-2.5 p-3 sm:p-4 bg-bg-secondary rounded-lg">
+    <div className="flex flex-col gap-2.5 p-3 sm:p-4 bg-bg-secondary rounded-lg" data-testid="bidding-box">
       <h3 className="m-0 mb-2.5 text-white text-sm sm:text-base">Bidding</h3>
 
       {/* Level buttons (1-7) - Responsive sizing */}
-      <div className="flex flex-row gap-1 sm:gap-2 justify-center">
+      <div className="flex flex-row gap-1 sm:gap-2 justify-center" data-testid="bid-levels">
         {[1, 2, 3, 4, 5, 6, 7].map(l => (
           <Button
             key={l}
@@ -62,6 +62,7 @@ export function BiddingBox({ onBid, disabled, auction }) {
             disabled={disabled}
             className="w-9 h-9 sm:w-12 sm:h-10 text-sm sm:text-base"
             aria-label={`Select level ${l}`}
+            data-testid={`bid-level-${l}`}
           >
             {l}
           </Button>
@@ -69,7 +70,7 @@ export function BiddingBox({ onBid, disabled, auction }) {
       </div>
 
       {/* Suit buttons - Responsive sizing */}
-      <div className="flex flex-row gap-1 sm:gap-2 justify-center">
+      <div className="flex flex-row gap-1 sm:gap-2 justify-center" data-testid="bid-suits">
         {suits.map(s => {
           const isLegal = !level || isBidLegal(level, s);
           return (
@@ -80,6 +81,7 @@ export function BiddingBox({ onBid, disabled, auction }) {
               variant="outline"
               className="w-9 h-9 sm:w-12 sm:h-10 text-sm sm:text-base"
               aria-label={`Bid ${level || ''} ${s === 'NT' ? 'No Trump' : s}`}
+              data-testid={`bid-suit-${s === 'NT' ? 'NT' : s}`}
             >
               {s === 'NT' ? 'NT' : (
                 <span className={cn(
@@ -95,7 +97,7 @@ export function BiddingBox({ onBid, disabled, auction }) {
       </div>
 
       {/* Call buttons (Pass, X, XX) - Responsive sizing */}
-      <div className="flex flex-row gap-1 sm:gap-2 justify-center">
+      <div className="flex flex-row gap-1 sm:gap-2 justify-center" data-testid="bid-calls">
         {calls.map(c => (
           <Button
             key={c}
@@ -104,6 +106,7 @@ export function BiddingBox({ onBid, disabled, auction }) {
             variant="outline"
             className="w-12 h-9 sm:w-16 sm:h-10 text-sm sm:text-base"
             aria-label={c === 'X' ? 'Double' : c === 'XX' ? 'Redouble' : 'Pass'}
+            data-testid={`bid-call-${c}`}
           >
             {c}
           </Button>
