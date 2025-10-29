@@ -127,7 +127,7 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer })
 
 function App() {
   // Auth state
-  const { user, logout, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, logout, isAuthenticated, loading: authLoading, userId } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
 
   const [hand, setHand] = useState([]);
@@ -461,8 +461,13 @@ Please provide a detailed analysis of the auction and identify any bidding error
       setAllHands(null);  // Clear all hands data
       setDisplayedMessage(`Contract: ${data.contract}. Opening leader: ${data.opening_leader}`);
 
-      // Start AI play loop
-      setIsPlayingCard(true);
+      // CRITICAL FIX: Use setTimeout to ensure gamePhase updates BEFORE triggering AI loop
+      // This prevents race condition where useEffect checks gamePhase before it updates to 'playing'
+      // Bug: AI play loop was not triggering because gamePhase was still 'bidding' when useEffect ran
+      setTimeout(() => {
+        console.log('🎬 Triggering AI play loop after game phase transition');
+        setIsPlayingCard(true);
+      }, 50);
     } catch (err) {
       console.error('Error starting play:', err);
       setError('Failed to start card play phase');
@@ -964,7 +969,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
             const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-              body: JSON.stringify({ user_id: 1, session_type: 'chicago' })
+              body: JSON.stringify({ user_id: userId || 1, session_type: 'chicago' })
             });
             if (sessionResponse.ok) {
               const newSession = await sessionResponse.json();
@@ -1071,8 +1076,12 @@ Please provide a detailed analysis of the auction and identify any bidding error
         }
       }
 
-      // Start AI play loop
-      setIsPlayingCard(true);
+      // CRITICAL FIX: Use setTimeout to ensure gamePhase updates BEFORE triggering AI loop
+      // Same fix as in startPlay() - prevents race condition
+      setTimeout(() => {
+        console.log('🎬 Triggering AI play loop after game phase transition (random hand)');
+        setIsPlayingCard(true);
+      }, 50);
       setIsInitializing(false);
     } catch (err) {
       setError("Could not create random play hand.");
@@ -1151,8 +1160,12 @@ Please provide a detailed analysis of the auction and identify any bidding error
         setHand(handsData.hands.S?.hand || []);
       }
 
-      // Start AI play loop
-      setIsPlayingCard(true);
+      // CRITICAL FIX: Use setTimeout to ensure gamePhase updates BEFORE triggering AI loop
+      // Same fix as in startPlay() and playRandomHand() - prevents race condition
+      setTimeout(() => {
+        console.log('🎬 Triggering AI play loop after game phase transition (replay)');
+        setIsPlayingCard(true);
+      }, 50);
     } catch (err) {
       setError('Failed to replay hand');
       console.error(err);
@@ -1279,7 +1292,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
           user_bid: bid,
           auction_history: auction.map(a => a.bid), // Auction BEFORE user's bid
           current_player: 'South',
-          user_id: 1,
+          user_id: userId || 1,
           session_id: sessionData?.session?.session_id,
           feedback_level: 'intermediate'
         })
@@ -1394,9 +1407,20 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
   // AI play loop - runs during play phase
   useEffect(() => {
-    console.log('🔄 AI play loop triggered:', { gamePhase, isPlayingCard });
+    console.log('🔄 AI play loop useEffect triggered:', {
+      gamePhase,
+      isPlayingCard,
+      timestamp: new Date().toISOString()
+    });
+
     if (gamePhase !== 'playing' || !isPlayingCard) {
-      console.log('⏭️ AI play loop skipped:', { gamePhase, isPlayingCard });
+      console.log('⏭️ AI play loop skipped - conditions not met:', {
+        gamePhase,
+        expectedGamePhase: 'playing',
+        gamePhaseMismatch: gamePhase !== 'playing',
+        isPlayingCard,
+        reason: gamePhase !== 'playing' ? 'gamePhase not "playing"' : 'isPlayingCard is false'
+      });
       return;
     }
 
@@ -1998,7 +2022,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
             {/* Force remount on each open to refresh data */}
             <LearningDashboard
               key={Date.now()}
-              userId={1}
+              userId={userId || 1}
               onPracticeClick={(rec) => {
                 console.log('Practice recommendation:', rec);
                 setShowLearningDashboard(false);
