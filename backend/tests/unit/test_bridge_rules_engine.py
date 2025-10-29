@@ -53,7 +53,7 @@ class TestVisibleHandsUserIsDeclarer:
     """Test hand visibility when user (South) is declarer"""
 
     def test_before_opening_lead_user_declarer(self):
-        """Before opening lead, declarer sees only their own hand"""
+        """Before opening lead, declarer sees only their own hand (standard bridge protocol)"""
         state = GameState(
             declarer='S',
             dummy='N',
@@ -62,8 +62,8 @@ class TestVisibleHandsUserIsDeclarer:
             dummy_revealed=False
         )
         visible = BridgeRulesEngine.get_visible_hands(state)
-        # Should see own hand + dummy (declarer always controls dummy)
-        assert visible == {'S', 'N'}
+        # Standard bridge: dummy is revealed AFTER opening lead, not before
+        assert visible == {'S'}
 
     def test_after_opening_lead_user_declarer(self):
         """After opening lead, declarer sees own hand + dummy"""
@@ -82,7 +82,7 @@ class TestVisibleHandsUserIsDummy:
     """Test hand visibility when user (South) is dummy"""
 
     def test_before_opening_lead_user_dummy(self):
-        """When user is dummy, they see declarer's hand"""
+        """When user is dummy before opening lead, they see only their own hand (standard bridge protocol)"""
         state = GameState(
             declarer='N',
             dummy='S',
@@ -91,8 +91,9 @@ class TestVisibleHandsUserIsDummy:
             dummy_revealed=False
         )
         visible = BridgeRulesEngine.get_visible_hands(state)
-        # User is dummy - sees own hand + declarer's hand
-        assert visible == {'S', 'N'}
+        # Standard bridge: dummy is laid down AFTER opening lead
+        # Before lead, dummy (user at South) sees only their own hand
+        assert visible == {'S'}
 
     def test_after_opening_lead_user_dummy(self):
         """After opening lead, dummy sees declarer's hand"""
@@ -140,24 +141,27 @@ class TestControllablePositionsUserIsDeclarer:
     """Test position control when user (South) is declarer"""
 
     def test_user_declarer_controls_both(self):
-        """Declarer controls both declarer and dummy positions"""
+        """Declarer controls both declarer and dummy positions AFTER opening lead (standard bridge protocol)"""
         state = GameState(
             declarer='S',
             dummy='N',
-            user_position='S'
+            user_position='S',
+            opening_lead_made=True  # Must be after opening lead
         )
         controllable = BridgeRulesEngine.get_controllable_positions(state)
         assert controllable == {'S', 'N'}
 
     def test_user_declarer_different_dummy(self):
-        """Test with East-West partnership"""
+        """Test with East-West partnership (but user is South, not West - testing defensive case)"""
         state = GameState(
             declarer='W',
             dummy='E',
-            user_position='W'
+            user_position='S',  # User is South (defender), not declarer
+            opening_lead_made=True
         )
         controllable = BridgeRulesEngine.get_controllable_positions(state)
-        assert controllable == {'W', 'E'}
+        # User (South) is defender, only controls own position
+        assert controllable == {'S'}
 
 
 class TestControllablePositionsUserIsDummy:
@@ -202,22 +206,24 @@ class TestIsUserTurn:
     """Test turn determination"""
 
     def test_user_turn_as_declarer(self):
-        """It's user's turn when next_to_play is user's position"""
+        """It's user's turn when next_to_play is user's position (after opening lead)"""
         state = GameState(
             declarer='S',
             dummy='N',
             user_position='S',
-            next_to_play='S'
+            next_to_play='S',
+            opening_lead_made=True  # After opening lead, user controls S
         )
         assert BridgeRulesEngine.is_user_turn(state) is True
 
     def test_user_turn_as_declarer_playing_dummy(self):
-        """It's user's turn when declarer plays from dummy"""
+        """It's user's turn when declarer plays from dummy (after opening lead)"""
         state = GameState(
             declarer='S',
             dummy='N',
             user_position='S',
-            next_to_play='N'  # Dummy's turn, but user is declarer
+            next_to_play='N',  # Dummy's turn, but user is declarer
+            opening_lead_made=True  # After opening lead, user controls both S and N
         )
         assert BridgeRulesEngine.is_user_turn(state) is True
 
@@ -279,7 +285,8 @@ class TestShouldAIPlay:
             declarer='S',
             dummy='N',
             user_position='S',
-            next_to_play='S'
+            next_to_play='S',
+            opening_lead_made=True  # After opening lead, user controls S
         )
         assert BridgeRulesEngine.should_ai_play(state) is False
 
@@ -298,11 +305,21 @@ class TestCanUserPlayFromPosition:
     """Test position-specific play permission"""
 
     def test_declarer_can_play_from_declarer_position(self):
-        state = GameState(declarer='S', dummy='N', user_position='S')
+        state = GameState(
+            declarer='S',
+            dummy='N',
+            user_position='S',
+            opening_lead_made=True  # After opening lead, user controls S
+        )
         assert BridgeRulesEngine.can_user_play_from_position(state, 'S') is True
 
     def test_declarer_can_play_from_dummy_position(self):
-        state = GameState(declarer='S', dummy='N', user_position='S')
+        state = GameState(
+            declarer='S',
+            dummy='N',
+            user_position='S',
+            opening_lead_made=True  # After opening lead, user controls N (dummy)
+        )
         assert BridgeRulesEngine.can_user_play_from_position(state, 'N') is True
 
     def test_declarer_cannot_play_from_defender_position(self):
@@ -468,9 +485,10 @@ class TestRealWorldScenarios:
             dummy_revealed=False
         )
 
-        # West's turn (AI plays)
+        # West's turn (AI plays opening lead)
         assert BridgeRulesEngine.should_ai_play(state) is True
-        assert BridgeRulesEngine.get_visible_hands(state) == {'S', 'N'}  # Declarer sees dummy
+        # Standard bridge: declarer sees ONLY own hand before opening lead
+        assert BridgeRulesEngine.get_visible_hands(state) == {'S'}
 
         # After opening lead, dummy revealed
         state.opening_lead_made = True
