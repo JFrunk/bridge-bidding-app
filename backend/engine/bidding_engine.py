@@ -4,6 +4,7 @@ from engine.ai.decision_engine import select_bidding_module
 from engine.ai.bid_explanation import BidExplanation, ExplanationLevel
 from engine.ai.module_registry import ModuleRegistry
 from engine.ai.validation_pipeline import ValidationPipeline
+from engine.ai.sanity_checker import SanityChecker
 
 # Import all specialist modules (triggers auto-registration)
 # ADR-0002 Phase 1: Modules now register themselves on import
@@ -32,6 +33,9 @@ class BiddingEngine:
 
         # ADR-0002 Phase 2: Initialize validation pipeline
         self.validation_pipeline = ValidationPipeline()
+
+        # ADR-0002 Phase 3: Initialize sanity checker
+        self.sanity_checker = SanityChecker()
 
         # Verify all expected modules are registered
         expected_modules = [
@@ -100,6 +104,21 @@ class BiddingEngine:
                     f"Validation failed for {module_name} bid '{bid_to_check}': {validation_error}"
                 )
                 return ("Pass", "No appropriate bid found.")
+
+            # ADR-0002 Phase 3: Sanity check layer
+            # Final safety net to prevent impossible contracts
+            should_bid, final_bid, sanity_reason = self.sanity_checker.check(
+                bid_to_check, hand, features, auction_history
+            )
+
+            if not should_bid:
+                # Sanity check prevented bid - use fallback
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.info(
+                    f"Sanity check prevented {module_name} bid '{bid_to_check}': {sanity_reason}"
+                )
+                return (final_bid, "No appropriate bid found.")
 
             # Legacy legality check (kept for backward compatibility)
             if self._is_bid_legal(bid_to_check, auction_history):
