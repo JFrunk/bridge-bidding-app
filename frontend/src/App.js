@@ -1302,6 +1302,12 @@ Please provide a detailed analysis of the auction and identify any bidding error
     setDisplayedMessage('...');
     const newAuction = [...auction, { bid: bid, explanation: 'Your bid.', player: 'South' }];
     setAuction(newAuction);
+
+    // CRITICAL FIX: Enable AI bidding BEFORE async fetch
+    // This ensures React batches both state updates together
+    // If we set it AFTER the fetch, useEffect runs with old isAiBidding=false
+    setIsAiBidding(true);
+
     try {
       // Call evaluate-bid endpoint which stores decision in database for dashboard analytics
       const feedbackResponse = await fetch(`${API_URL}/api/evaluate-bid`, {
@@ -1331,8 +1337,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
       setDisplayedMessage('Could not get feedback from the server.');
     }
     // NOTE: nextPlayerIndex is now derived - no need to manually increment
-    // Resume AI bidding for next player
-    setIsAiBidding(true);
+    // NOTE: setIsAiBidding(true) is called BEFORE the fetch (see above) to ensure proper state batching
   };
   
   const handleBidClick = (bidObject) => { setDisplayedMessage(`[${bidObject.bid}] ${bidObject.explanation}`); };
