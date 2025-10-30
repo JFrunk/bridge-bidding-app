@@ -77,6 +77,13 @@ User guides, testing procedures, and how-to documentation.
 - **[SIMULATION_TEST_REPORT.md](guides/SIMULATION_TEST_REPORT.md)** - 100-hand simulation test results
 - **[QUICK_WINS_COMPLETE.md](guides/QUICK_WINS_COMPLETE.md)** - Quick wins and improvements
 
+### 🏗️ [architecture/decisions/](architecture/decisions/)
+Architecture Decision Records (ADRs) documenting significant architectural decisions.
+
+#### Recent ADRs (2025-10-29)
+- **[ADR-0002](architecture/decisions/ADR-0002-bidding-system-robustness-improvements.md)** - ✅ Bidding System Robustness Improvements (DEPLOYED - Grade A, 95.0%)
+- **[ADR_0002_RESULTS.md](../ADR_0002_RESULTS.md)** - Complete before/after validation results and quality score comparison
+
 ### 🐛 [bug-fixes/](bug-fixes/)
 Bug reports, fixes, and known issues tracking.
 
