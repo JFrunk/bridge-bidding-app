@@ -451,7 +451,7 @@ class IntegratedPlayQualityScorer:
         print("INTEGRATED PLAY QUALITY SCORE REPORT")
         print("=" * 80)
         print()
-        print(f"AI Type:           {scores['ai_type'].upper()}{f' (depth {scores['depth']})' if scores['depth'] else ''}")
+        print(f"AI Type:           {scores['ai_type'].upper()}{f' (depth {scores[\"depth\"]})' if scores['depth'] else ''}")
         print(f"Hands Tested:      {scores['total_hands']}")
         print(f"Contracts Played:  {scores['contracts_played']}")
         print(f"Passed Out:        {scores['passed_out']}")
