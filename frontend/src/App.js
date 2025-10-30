@@ -1343,16 +1343,6 @@ Please provide a detailed analysis of the auction and identify any bidding error
   const handleBidClick = (bidObject) => { setDisplayedMessage(`[${bidObject.bid}] ${bidObject.explanation}`); };
   
   useEffect(() => {
-    console.log('🔄 AI Bidding useEffect TRIGGERED:', {
-      auction: auction.map(a => a.bid),
-      auctionLength: auction.length,
-      dealer,
-      nextPlayerIndex,
-      isAiBidding,
-      isInitializing,
-      gamePhase
-    });
-
     const isAuctionOver = (bids) => {
       if (bids.length < 3) return false;
       const nonPassBids = bids.filter(b => b.bid !== 'Pass');
@@ -1361,16 +1351,13 @@ Please provide a detailed analysis of the auction and identify any bidding error
       return bids.slice(-3).map(b => b.bid).join(',') === 'Pass,Pass,Pass';
     };
 
-    // CRITICAL FIX: Don't start AI bidding during initialization
-    // Wait until system is fully initialized to prevent race conditions
+    // Don't start AI bidding during initialization
     if (isInitializing) {
-      console.log('⏳ EXIT: System initializing');
       return;
     }
 
     // Check if auction is over
     if (isAuctionOver(auction)) {
-      console.log('🏁 EXIT: Auction complete');
       if (isAiBidding) {
         setIsAiBidding(false);
       }
@@ -1379,69 +1366,45 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
     // Determine whose turn it is
     const currentPlayer = calculateExpectedBidder(dealer, auction.length);
-    console.log('👤 Current player calculated:', currentPlayer);
 
     // If it's South's turn, stop AI bidding
     if (currentPlayer === 'South') {
-      console.log('🛑 EXIT: South\'s turn');
       if (isAiBidding) {
         setIsAiBidding(false);
       }
       return; // Don't make AI bid for South
     }
 
-    console.log('🤖 AI player turn detected:', currentPlayer, 'isAiBidding:', isAiBidding);
-
     // It's an AI player's turn (North/East/West)
     // If AI bidding is enabled, make the bid
     if (isAiBidding) {
-      // CRITICAL FIX: Prevent concurrent AI bids using a ref guard
-      // Without this, the useEffect can trigger multiple times before the first bid completes,
-      // causing duplicate/corrupted auction entries
+      // Prevent concurrent AI bids using a ref guard
       if (isAiBiddingInProgress.current) {
-        console.log('⏸️  AI bid already in progress, skipping duplicate call');
         return;
       }
 
       const runAiTurn = async () => {
-        // Mark AI bidding as in progress
         isAiBiddingInProgress.current = true;
 
         await new Promise(resolve => setTimeout(resolve, 500));
         try {
-          // CRITICAL FIX: Calculate current player from auction length and dealer
-          // DO NOT use nextPlayerIndex state variable - it can be stale!
-          // Bug: useEffect runs immediately after setAuction() before nextPlayerIndex updates
+          // Calculate current player from auction length and dealer
           const currentPlayer = calculateExpectedBidder(dealer, auction.length);
 
-          // DEBUG: Log what we're sending
-          console.log('🎯 AI Bidding Debug:', {
-            dealer,
-            auctionLength: auction.length,
-            calculatedPlayer: currentPlayer,
-            oldNextPlayerIndex: nextPlayerIndex,
-            oldPlayerFromIndex: players[nextPlayerIndex],
-            players,
-            auction
-          });
-
-          // Double-check it's not South's turn (defense in depth)
+          // Double-check it's not South's turn
           if (currentPlayer === 'South') {
-            console.log('🛑 Stopping AI bidding - it is South\'s turn');
             setIsAiBidding(false);
-            isAiBiddingInProgress.current = false; // Reset the guard
+            isAiBiddingInProgress.current = false;
             return;
           }
 
-          const requestBody = {
-            auction_history: auction.map(a => a.bid),
-            current_player: currentPlayer
-          };
-          console.log('📤 Sending to /api/get-next-bid:', requestBody);
-
           const response = await fetch(`${API_URL}/api/get-next-bid`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-            body: JSON.stringify(requestBody)
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+            body: JSON.stringify({
+              auction_history: auction.map(a => a.bid),
+              current_player: currentPlayer
+            })
           });
           if (!response.ok) throw new Error("AI failed to get bid.");
           const data = await response.json();
