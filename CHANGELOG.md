@@ -5,6 +5,19 @@ All notable changes to the Bridge Bidding Application will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2025-10-29] - DEPLOYED TO PRODUCTION
+
+### Fixed
+- **AI Bidding Race Condition**: Fixed critical bug where AI players would not bid after user makes a bid
+  - **Root Cause**: React state update timing issue - `setIsAiBidding(true)` was called AFTER async fetch to `/api/evaluate-bid`
+  - **Solution**: Moved `setIsAiBidding(true)` to line 1309 (BEFORE fetch) so React batches both state updates together
+  - **Impact**: Auctions now progress smoothly without freezing after user bids
+  - **Files Changed**: `frontend/src/App.js:1309`, `frontend/src/App.js:1335` (removed duplicate call)
+  - **Documentation**: `docs/bug-fixes/AI_BIDDING_RACE_CONDITION_FIX.md`
+  - **Commits**: 66896bb (fix), a22af7c (debug logging), 03ab0dd (cleanup)
+  - **Testing**: Manual browser testing with console logs verified fix works
+  - **Deployment**: Merged to main and deployed via Render auto-deployment
+
 ## [Unreleased] - refactor/shadcn-tailwind-migration branch
 
 ### Added

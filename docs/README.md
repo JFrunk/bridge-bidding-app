@@ -80,6 +80,11 @@ User guides, testing procedures, and how-to documentation.
 ### 🐛 [bug-fixes/](bug-fixes/)
 Bug reports, fixes, and known issues tracking.
 
+#### Recent Fixes (2025-10-29)
+- **[AI_BIDDING_RACE_CONDITION_FIX.md](bug-fixes/AI_BIDDING_RACE_CONDITION_FIX.md)** - ✅ AI bidding race condition fix (DEPLOYED)
+- **[AI_BIDDING_DEPLOYMENT_COMPLETE.md](bug-fixes/AI_BIDDING_DEPLOYMENT_COMPLETE.md)** - Deployment summary and verification
+
+#### Previous Fixes
 - **[BIDDING_FIXES_2025-10-10.md](bug-fixes/BIDDING_FIXES_2025-10-10.md)** - Bidding system bug fixes
 - **[BUG_FIX_CARD_PLAY.md](bug-fixes/BUG_FIX_CARD_PLAY.md)** - Card play bug fixes
 - **[BUG_FIX_CARD_PLAY_RESPONSE.md](bug-fixes/BUG_FIX_CARD_PLAY_RESPONSE.md)** - Card play response fixes
