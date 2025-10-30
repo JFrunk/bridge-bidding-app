@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import './App.css';
 import { PlayTable, ScoreDisplay, getSuitOrder } from './PlayComponents';
 import { BridgeCard } from './components/bridge/BridgeCard';
@@ -135,7 +135,18 @@ function App() {
   const [auction, setAuction] = useState([]);
   const [players] = useState(['North', 'East', 'South', 'West']);
   const [dealer, setDealer] = useState('North');
-  const [nextPlayerIndex, setNextPlayerIndex] = useState(0);
+
+  // DERIVED STATE: Calculate nextPlayerIndex from auction length and dealer
+  // This prevents state synchronization bugs between auction and nextPlayerIndex
+  const nextPlayerIndex = useMemo(() => {
+    const dealerIndex = players.indexOf(dealer);
+    if (dealerIndex === -1) {
+      console.error('❌ Invalid dealer:', dealer);
+      return 0; // Fallback to North
+    }
+    return (dealerIndex + auction.length) % 4;
+  }, [auction.length, dealer, players]);
+
   const [isAiBidding, setIsAiBidding] = useState(false);
   const [error, setError] = useState('');
   const [displayedMessage, setDisplayedMessage] = useState('');
@@ -182,6 +193,9 @@ function App() {
   // Ref to store pending trick clear timeout so we can cancel it when user plays
   const trickClearTimeoutRef = useRef(null);
 
+  // Ref to prevent concurrent AI bids from racing
+  const isAiBiddingInProgress = useRef(false);
+
   const resetAuction = (dealData, skipInitialAiBidding = false) => {
     setInitialDeal(dealData);
     setHand(dealData.hand);
@@ -205,15 +219,11 @@ function App() {
     setDealer(currentDealer);
 
     setAuction([]);
-    // CRITICAL FIX: Calculate index BEFORE any state updates that depend on it
-    const dealerIndex = players.indexOf(currentDealer);
 
-    if (dealerIndex === -1) {
-      console.error('❌ Invalid dealer:', currentDealer, 'not in', players);
-      setNextPlayerIndex(0); // Fallback to North
-    } else {
-      setNextPlayerIndex(dealerIndex);
-    }
+    // Reset the AI bidding guard when auction is reset
+    isAiBiddingInProgress.current = false;
+    // NOTE: nextPlayerIndex is now derived from dealer + auction.length
+    // No need to manually set it - it will auto-calculate on next render
 
     setDisplayedMessage('');
     setError('');
@@ -1320,13 +1330,24 @@ Please provide a detailed analysis of the auction and identify any bidding error
       console.error('❌ Error evaluating bid:', err);
       setDisplayedMessage('Could not get feedback from the server.');
     }
-    setNextPlayerIndex((nextPlayerIndex + 1) % 4);
+    // NOTE: nextPlayerIndex is now derived - no need to manually increment
+    // Resume AI bidding for next player
     setIsAiBidding(true);
   };
   
   const handleBidClick = (bidObject) => { setDisplayedMessage(`[${bidObject.bid}] ${bidObject.explanation}`); };
   
   useEffect(() => {
+    console.log('🔄 AI Bidding useEffect TRIGGERED:', {
+      auction: auction.map(a => a.bid),
+      auctionLength: auction.length,
+      dealer,
+      nextPlayerIndex,
+      isAiBidding,
+      isInitializing,
+      gamePhase
+    });
+
     const isAuctionOver = (bids) => {
       if (bids.length < 3) return false;
       const nonPassBids = bids.filter(b => b.bid !== 'Pass');
@@ -1335,24 +1356,52 @@ Please provide a detailed analysis of the auction and identify any bidding error
       return bids.slice(-3).map(b => b.bid).join(',') === 'Pass,Pass,Pass';
     };
 
-    // CRITICAL FIX: Stop AI bidding immediately when it's South's turn
-    // This prevents the race condition where AI bids for the user
-    const currentPlayer = players[nextPlayerIndex];
-    if (currentPlayer === 'South' && isAiBidding) {
-      console.log('🛑 Stopping AI - South\'s turn detected');
-      setIsAiBidding(false);
-      return; // Exit early - don't make AI bid for South
-    }
-
     // CRITICAL FIX: Don't start AI bidding during initialization
     // Wait until system is fully initialized to prevent race conditions
     if (isInitializing) {
-      console.log('⏳ Skipping AI bidding - system initializing');
+      console.log('⏳ EXIT: System initializing');
       return;
     }
 
-    if (isAiBidding && !isAuctionOver(auction)) {
+    // Check if auction is over
+    if (isAuctionOver(auction)) {
+      console.log('🏁 EXIT: Auction complete');
+      if (isAiBidding) {
+        setIsAiBidding(false);
+      }
+      return;
+    }
+
+    // Determine whose turn it is
+    const currentPlayer = calculateExpectedBidder(dealer, auction.length);
+    console.log('👤 Current player calculated:', currentPlayer);
+
+    // If it's South's turn, stop AI bidding
+    if (currentPlayer === 'South') {
+      console.log('🛑 EXIT: South\'s turn');
+      if (isAiBidding) {
+        setIsAiBidding(false);
+      }
+      return; // Don't make AI bid for South
+    }
+
+    console.log('🤖 AI player turn detected:', currentPlayer, 'isAiBidding:', isAiBidding);
+
+    // It's an AI player's turn (North/East/West)
+    // If AI bidding is enabled, make the bid
+    if (isAiBidding) {
+      // CRITICAL FIX: Prevent concurrent AI bids using a ref guard
+      // Without this, the useEffect can trigger multiple times before the first bid completes,
+      // causing duplicate/corrupted auction entries
+      if (isAiBiddingInProgress.current) {
+        console.log('⏸️  AI bid already in progress, skipping duplicate call');
+        return;
+      }
+
       const runAiTurn = async () => {
+        // Mark AI bidding as in progress
+        isAiBiddingInProgress.current = true;
+
         await new Promise(resolve => setTimeout(resolve, 500));
         try {
           // CRITICAL FIX: Calculate current player from auction length and dealer
@@ -1375,6 +1424,7 @@ Please provide a detailed analysis of the auction and identify any bidding error
           if (currentPlayer === 'South') {
             console.log('🛑 Stopping AI bidding - it is South\'s turn');
             setIsAiBidding(false);
+            isAiBiddingInProgress.current = false; // Reset the guard
             return;
           }
 
@@ -1391,22 +1441,21 @@ Please provide a detailed analysis of the auction and identify any bidding error
           if (!response.ok) throw new Error("AI failed to get bid.");
           const data = await response.json();
 
-          // Update auction and nextPlayerIndex together
+          // Update auction (nextPlayerIndex will auto-calculate from new length)
           setAuction(prevAuction => [...prevAuction, data]);
-          setNextPlayerIndex(prevIndex => (prevIndex + 1) % 4);
         } catch (err) {
           setError("AI bidding failed. Is the server running?");
           setIsAiBidding(false);
+        } finally {
+          // Always reset the guard when bid completes (success or failure)
+          isAiBiddingInProgress.current = false;
         }
       };
       runAiTurn();
-    } else if (isAiBidding && isAuctionOver(auction)) {
-      setIsAiBidding(false);
-      // REMOVED: Automatic transition to play phase
-      // User must explicitly click "Play This Hand" button to start playing
-      // This gives users time to review the final contract before playing
     }
-  }, [auction, nextPlayerIndex, isAiBidding, players, startPlayPhase, isInitializing, dealer, calculateExpectedBidder]);
+    // Note: If isAiBidding is false but it's an AI player's turn, we do nothing
+    // This allows the user or other code to manually trigger AI bidding by calling setIsAiBidding(true)
+  }, [auction, nextPlayerIndex, isAiBidding, players, isInitializing, dealer, calculateExpectedBidder]);
 
   // Trigger AI bidding after initialization completes (if dealer is not South)
   useEffect(() => {
