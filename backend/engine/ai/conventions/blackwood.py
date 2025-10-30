@@ -76,14 +76,41 @@ class BlackwoodConvention(ConventionModule):
         """Determines if this hand should ask for aces."""
         partner_last_bid = features['auction_features'].get('partner_last_bid')
         if not partner_last_bid: return False
-        
-        # A simplified trigger: if partner has made an invitational or game-forcing raise.
-        is_strong_raise = len(partner_last_bid) == 2 and partner_last_bid[0] in ['3', '4']
-        
-        # Condition: Do I have a very strong hand (18+ pts) after partner showed a good hand?
-        if is_strong_raise and hand.total_points >= 18:
-            return True
-            
+
+        auction_history = features.get('auction_history', [])
+        my_position = features['positions'][features['my_index']]
+
+        # Get my previous bids to understand auction context
+        my_previous_bids = [bid for i, bid in enumerate(auction_history)
+                           if features['positions'][i % 4] == my_position
+                           and bid not in ['Pass', 'X', 'XX']]
+
+        # Don't trigger Blackwood after 2NT rebid + partner's 3-level preference
+        # Example: 1♥-1♠-2NT-3♥ is just preference, not a slam try
+        if '2NT' in my_previous_bids and partner_last_bid[0] == '3':
+            return False
+
+        # Don't trigger after 1NT rebid + partner's invitational bid
+        # Example: 1♥-1♠-1NT-2♦ is invitational, not slam interest
+        if '1NT' in my_previous_bids and partner_last_bid[0] in ['2', '3']:
+            return False
+
+        # Strong direct jump raises (e.g., 1♥ - 4♥) indicate slam interest
+        # This is a jump to 4-level showing strong support
+        if len(my_previous_bids) == 1 and partner_last_bid[0] == '4' and len(partner_last_bid) == 2:
+            # Partner jumped to 4-level (e.g., 1♥ - 4♥)
+            if hand.total_points >= 18:
+                return True
+
+        # After game-forcing sequence, 3-level bid might show slam interest
+        # But we need to be conservative - only if combined strength is very high
+        partner_total_points = features['auction_features'].get('partner_total_points', 0)
+        if hand.total_points + partner_total_points >= 30:
+            # Clear slam zone - but still only if partner raised our suit
+            is_raise = len(my_previous_bids) >= 1 and partner_last_bid.endswith(my_previous_bids[0][1:])
+            if is_raise and partner_last_bid[0] in ['3', '4']:
+                return True
+
         return False
 
     def _get_ace_ask_bid(self) -> Tuple[str, str]:

@@ -87,6 +87,132 @@ class RebidModule(ConventionModule):
         if not partner_response or not my_opening_bid:
             return ("Pass", "Cannot determine auction context for rebid.")
 
+        # Check if I previously bid 1NT and partner is now inviting
+        # Extract my previous bids (excluding Pass, X, XX)
+        my_position = features['positions'][features['my_index']]
+        my_previous_bids = [bid for i, bid in enumerate(auction_history)
+                            if features['positions'][i % 4] == my_position
+                            and bid not in ['Pass', 'X', 'XX']]
+
+        # If I already rebid 1NT, handle partner's follow-up bid
+        if '1NT' in my_previous_bids and len(my_previous_bids) >= 2:
+            # I already rebid 1NT (showing 12-14 HCP), now partner has bid again
+            # Partner's new bid is likely invitational or forcing
+
+            # If partner bid 2NT, they're inviting game with 11-12 HCP
+            if partner_response == '2NT':
+                if hand.hcp >= 13:  # Maximum of 12-14 range
+                    return ("3NT", f"Accepting invitation with maximum ({hand.hcp} HCP) after 1NT rebid.")
+                else:
+                    return ("Pass", f"Declining invitation with minimum ({hand.hcp} HCP).")
+
+            # If partner bid a new suit at the 2-level, it's invitational
+            # In SAYC after 1NT rebid, 2-level suit bids show 5+ card suit and invitational values
+            if partner_response and partner_response[0] == '2' and len(partner_response) == 2:
+                partner_suit = partner_response[1]
+
+                # Accept invitation with maximum (13-14 HCP)
+                if hand.hcp >= 13:
+                    # After 1NT rebid, prefer 3NT over raising partner's suit
+                    # Only raise if we have 4-card support (very strong fit)
+                    if hand.suit_lengths.get(partner_suit, 0) >= 4 and partner_suit in ['♥', '♠']:
+                        return (f"4{partner_suit}", f"Accepting invitation with {hand.hcp} HCP and 4-card major support.")
+                    else:
+                        return ("3NT", f"Accepting invitation with maximum ({hand.hcp} HCP).")
+                else:
+                    # Decline with minimum (12 HCP) - pass (accepting sign-off)
+                    return ("Pass", f"Accepting sign-off with minimum ({hand.hcp} HCP).")
+
+            # If partner bid 3NT, pass (partner took control)
+            if partner_response == '3NT':
+                return ("Pass", "Partner bid game.")
+
+            # If partner raised to 3-level in my original suit or their suit, accept or decline
+            if partner_response and partner_response[0] == '3' and len(partner_response) == 2:
+                partner_suit = partner_response[1]
+
+                # Partner is inviting game at 3-level
+                if hand.hcp >= 13:
+                    # Bid game with maximum
+                    if partner_suit in ['♥', '♠']:
+                        return (f"4{partner_suit}", f"Accepting 3-level invitation with maximum ({hand.hcp} HCP).")
+                    else:
+                        return ("3NT", f"Accepting 3-level invitation with maximum ({hand.hcp} HCP).")
+                else:
+                    return ("Pass", f"Declining 3-level invitation with minimum ({hand.hcp} HCP).")
+
+        # Check if I previously bid 2NT and partner is now inviting
+        # 2NT rebid shows 18-19 HCP (after 1-level opening)
+        if '2NT' in my_previous_bids and len(my_previous_bids) >= 2:
+            # I already rebid 2NT (showing 18-19 HCP), now partner has bid again
+            # Partner's new bid is likely invitational or forcing
+
+            # If partner bid 3NT, pass (partner accepted)
+            if partner_response == '3NT':
+                return ("Pass", "Partner bid game.")
+
+            # If partner bid a suit at 3-level, they're showing preference or mild slam interest
+            if partner_response and partner_response[0] == '3' and len(partner_response) == 2:
+                partner_suit = partner_response[1]
+
+                # With maximum 2NT rebid (19 HCP) and fit, accept invitation
+                if hand.hcp >= 19:
+                    # Bid game with maximum and 3+ card support
+                    if hand.suit_lengths.get(partner_suit, 0) >= 3:
+                        if partner_suit in ['♥', '♠']:
+                            return (f"4{partner_suit}", f"Accepting invitation with maximum ({hand.hcp} HCP) and 3-card support.")
+                        else:
+                            # Minor suit - prefer 3NT over 5-level
+                            return ("3NT", f"Accepting invitation with maximum ({hand.hcp} HCP), preferring 3NT.")
+                    else:
+                        return ("3NT", f"Accepting invitation with maximum ({hand.hcp} HCP).")
+                else:
+                    # With minimum 2NT rebid (18 HCP), pass (already showed strength)
+                    return ("Pass", f"Partner's preference bid - staying in 3{partner_suit} with minimum ({hand.hcp} HCP).")
+
+            # If partner bid 4NT (quantitative), they're inviting slam
+            if partner_response == '4NT':
+                if hand.hcp >= 19:
+                    return ("6NT", f"Accepting slam invitation with maximum ({hand.hcp} HCP).")
+                else:
+                    return ("Pass", f"Declining slam invitation with minimum ({hand.hcp} HCP).")
+
+            # If partner bid at 4-level (major suit game or cuebid)
+            if partner_response and partner_response[0] == '4' and len(partner_response) == 2:
+                partner_suit = partner_response[1]
+                if partner_suit in ['♥', '♠']:
+                    # Partner bid game in major, pass
+                    return ("Pass", "Partner bid game in major.")
+                else:
+                    # 4♣/4♦ might be cuebid or natural - pass for now
+                    return ("Pass", "Accepting partner's 4-level bid.")
+
+        # Check if partner raised our suit at 3-level (invitational)
+        # Example: 1♥ - 1♠ - 2♥ - 3♥ (partner invites with 3-card support)
+        if len(my_previous_bids) >= 2 and partner_response and partner_response[0] == '3':
+            # Check if partner raised our original suit
+            my_first_bid = my_previous_bids[0]
+            if len(my_first_bid) >= 2 and len(partner_response) >= 2:
+                my_suit = my_first_bid[1]
+                partner_suit = partner_response[1]
+
+                # Partner raised our suit at 3-level
+                if my_suit == partner_suit and my_suit in '♣♦♥♠':
+                    # This is invitational (10-12 pts from responder)
+                    # Accept with 15+ total points (good shape/extras)
+                    if hand.total_points >= 15:
+                        if my_suit in ['♥', '♠']:
+                            return (f"4{my_suit}", f"Accepting 3-level invitation with extras ({hand.total_points} pts).")
+                        else:
+                            # Minor suit - consider 3NT
+                            if hand.is_balanced and hand.hcp >= 15:
+                                return ("3NT", f"Accepting invitation with {hand.hcp} HCP, preferring 3NT.")
+                            else:
+                                return (f"5{my_suit}", f"Accepting invitation in minor with {hand.total_points} pts.")
+                    else:
+                        # Decline with minimum (13-14 pts)
+                        return ("Pass", f"Declining invitation with minimum ({hand.total_points} pts).")
+
         # Special handling for Negative Double (X) - FORCING, opener must rebid
         if partner_response == 'X':
             # Partner's negative double shows unbid major(s) and competitive values

@@ -145,10 +145,12 @@ class SanityChecker:
 
         Conservative estimates to avoid overbidding.
         """
-        opener = features.get('opener')
+        auction_features = features.get('auction_features', {})
+        opener_relationship = auction_features.get('opener_relationship')
+        partner_bids = auction_features.get('partner_bids', [])
 
         # If partner opened
-        if opener == 'partner':
+        if opener_relationship == 'Partner':
             # Find partner's opening bid
             for bid in auction:
                 if bid == "Pass":
@@ -163,13 +165,54 @@ class SanityChecker:
                     return 22  # Strong 2♣
             return 13  # Default opening strength
 
-        # If partner responded
-        if len(auction) >= 3:
-            # Check for response bids
+        # If I opened and partner responded
+        if opener_relationship == 'Me' and len(partner_bids) > 0:
+            # Get partner's non-pass bids
+            partner_nonpass_bids = [b for b in partner_bids if b != 'Pass']
+
+            if len(partner_nonpass_bids) == 0:
+                return 0  # Partner only passed
+
+            # If partner bid at 2-level after I rebid 1NT, that's invitational (10-11 HCP)
+            # Example: 1♥-1♠-1NT-2♦ shows 10-11 HCP
+            if len(partner_nonpass_bids) >= 2:
+                # Check if I bid 1NT and partner then bid at 2-level
+                my_bids = [bid for i, bid in enumerate(auction)
+                          if features['positions'][i % 4] == features['positions'][features['my_index']]
+                          and bid not in ['Pass', 'X', 'XX']]
+
+                if '1NT' in my_bids and any(b.startswith('2') for b in partner_nonpass_bids[1:]):
+                    return 10  # Invitational values (10-11 HCP)
+
+                # If I bid 2NT and partner bid at 3-level, that's game-forcing or preference (12+ HCP)
+                # Example: 1♦-1♥-2NT-3♦ shows 12+ HCP
+                if '2NT' in my_bids and any(b.startswith('3') for b in partner_nonpass_bids[1:]):
+                    return 12  # Game-forcing values (12+ HCP)
+
+                # If I rebid my suit and partner raised to 3-level, that's invitational (10-12 HCP)
+                # Example: 1♥-1♠-2♥-3♥ shows 10-12 HCP
+                if len(my_bids) >= 2 and len(partner_nonpass_bids) >= 2:
+                    # Check if I rebid my opening suit and partner raised it
+                    if len(my_bids[0]) >= 2 and len(my_bids[1]) >= 2:
+                        if my_bids[0][1] == my_bids[1][1]:  # Same suit
+                            # Check if partner raised to 3-level
+                            if any(b.startswith('3') and len(b) >= 2 and b[1] == my_bids[0][1]
+                                  for b in partner_nonpass_bids[1:]):
+                                return 10  # Invitational values (10-12 HCP)
+
+                # If partner bid 2NT, that's invitational (11-12 HCP)
+                if '2NT' in partner_nonpass_bids:
+                    return 11  # Invitational 2NT
+
+                # If partner bid 3NT, that's game values (13+ HCP)
+                if '3NT' in partner_nonpass_bids:
+                    return 13  # Game values
+
+            # Standard 1-level response
             return 6  # Minimum response
 
         # If partner overcalled
-        if opener == 'opponent' and len(auction) >= 2:
+        if opener_relationship == 'Opponent' and len(auction) >= 2:
             return 8  # Overcall minimum
 
         # Partner hasn't bid yet or passed
