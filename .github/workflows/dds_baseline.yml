@@ -7,6 +7,10 @@ on:
         description: 'Number of hands to test'
         required: false
         default: '500'
+      ai_level:
+        description: 'AI level (simple, minimax, dds)'
+        required: false
+        default: 'dds'
 
 jobs:
   dds_baseline:
@@ -26,21 +30,78 @@ jobs:
           cd backend
           pip install -r requirements.txt
 
-      - name: Run DDS Baseline Test
+      - name: Verify DDS Installation
+        id: verify
         run: |
-          python3 backend/test_play_quality_integrated.py \
+          echo "=== Testing endplay installation ==="
+          python3 -c "from endplay.types import Deal; print('✅ endplay installed successfully')" || { echo "❌ endplay not found"; exit 1; }
+
+          echo ""
+          echo "=== Testing DDS availability in our code ==="
+          cd backend
+          python3 -c "import sys; sys.path.insert(0, '.'); from engine.play.ai.dds_ai import DDS_AVAILABLE; print(f'DDS_AVAILABLE: {DDS_AVAILABLE}'); exit(0 if DDS_AVAILABLE else 1)"
+
+          if [ $? -eq 0 ]; then
+            echo "✅ DDS is available and ready to use"
+          else
+            echo "❌ DDS_AVAILABLE is False - check imports"
+            exit 1
+          fi
+
+      - name: Run DDS Baseline Test
+        id: test
+        run: |
+          cd backend
+          python3 test_play_quality_integrated.py \
             --hands ${{ github.event.inputs.hands }} \
-            --ai dds \
-            --output play_baseline_level10_dds.json
+            --ai ${{ github.event.inputs.ai_level }} \
+            --output ../play_baseline_level10_dds.json
 
       - name: Display Results
+        if: success() || failure()
         run: |
-          echo "=== DDS Baseline Results ==="
-          cat play_baseline_level10_dds.json | python3 -m json.tool
+          if [ -f play_baseline_level10_dds.json ]; then
+            echo "=== DDS Baseline Results ==="
+            cat play_baseline_level10_dds.json | python3 -m json.tool
+          else
+            echo "❌ No results file generated - test may have failed"
+            echo "Check logs above for errors"
+          fi
 
       - name: Upload Baseline as Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: dds-baseline
-          path: play_baseline_level10_dds.json
+          name: dds-baseline-${{ github.event.inputs.hands }}hands
+          path: |
+            play_baseline_level10_dds.json
+            backend/play_quality_integrated_*.json
           retention-days: 90
+          if-no-files-found: warn
+
+      - name: Upload Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failure-logs
+          path: |
+            backend/*.log
+            backend/test_*.txt
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Comment on Success
+        if: success()
+        run: |
+          echo "✅ DDS baseline test completed successfully!"
+          echo "Download the artifact 'dds-baseline-${{ github.event.inputs.hands }}hands' to view results"
+
+      - name: Comment on Failure
+        if: failure()
+        run: |
+          echo "❌ DDS baseline test failed"
+          echo "Common issues:"
+          echo "  1. DDS (endplay) not installed - check 'Verify DDS Installation' step"
+          echo "  2. Import errors - check Python path"
+          echo "  3. Test timeout - try fewer hands (100 instead of 500)"
+          echo "Check the 'Run DDS Baseline Test' step for detailed error messages"
