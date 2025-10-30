@@ -54,18 +54,18 @@ jobs:
         run: |
           echo "=== Attempting to create DDSPlayAI instance ==="
           cd backend
-          python3 -c "
-from engine.play.ai.dds_ai import DDSPlayAI, DDS_AVAILABLE
-print(f'DDS_AVAILABLE: {DDS_AVAILABLE}')
-if DDS_AVAILABLE:
-    try:
-        ai = DDSPlayAI()
-        print(f'✅ Created DDSPlayAI: {ai.get_name()}')
-    except Exception as e:
-        print(f'❌ Failed to create DDSPlayAI: {e}')
-else:
-    print('❌ DDS not available - cannot create instance')
-" || echo "❌ Script failed"
+          python3 << 'EOF'
+          from engine.play.ai.dds_ai import DDSPlayAI, DDS_AVAILABLE
+          print(f'DDS_AVAILABLE: {DDS_AVAILABLE}')
+          if DDS_AVAILABLE:
+              try:
+                  ai = DDSPlayAI()
+                  print(f'✅ Created DDSPlayAI: {ai.get_name()}')
+              except Exception as e:
+                  print(f'❌ Failed to create DDSPlayAI: {e}')
+          else:
+              print('❌ DDS not available - cannot create instance')
+          EOF
 
       - name: Step 6 - Check platform info
         run: |
