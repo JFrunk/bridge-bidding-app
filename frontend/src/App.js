@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import './App.css';
 import { PlayTable, ScoreDisplay, getSuitOrder } from './PlayComponents';
 import { BridgeCard } from './components/bridge/BridgeCard';
@@ -1301,11 +1302,14 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
     setDisplayedMessage('...');
     const newAuction = [...auction, { bid: bid, explanation: 'Your bid.', player: 'South' }];
-    setAuction(newAuction);
 
-    // CRITICAL FIX: Enable AI bidding BEFORE async fetch
-    // This ensures React batches both state updates together
-    // If we set it AFTER the fetch, useEffect runs with old isAiBidding=false
+    // CRITICAL FIX: Use flushSync to force immediate render before AI bidding starts
+    // This ensures user's bid appears in the table before subsequent AI bids
+    flushSync(() => {
+      setAuction(newAuction);
+    });
+
+    // Enable AI bidding after user's bid is rendered
     setIsAiBidding(true);
 
     try {
@@ -1409,8 +1413,11 @@ Please provide a detailed analysis of the auction and identify any bidding error
           if (!response.ok) throw new Error("AI failed to get bid.");
           const data = await response.json();
 
-          // Update auction (nextPlayerIndex will auto-calculate from new length)
-          setAuction(prevAuction => [...prevAuction, data]);
+          // Update auction with flushSync to force immediate render
+          // This ensures each AI bid appears before the next one starts
+          flushSync(() => {
+            setAuction(prevAuction => [...prevAuction, data]);
+          });
         } catch (err) {
           setError("AI bidding failed. Is the server running?");
           setIsAiBidding(false);
