@@ -168,14 +168,16 @@ class TestControllablePositionsUserIsDummy:
     """Test position control when user (South) is dummy"""
 
     def test_user_dummy_controls_nothing(self):
-        """Dummy controls NOTHING - declarer controls dummy"""
+        """SINGLE-PLAYER MODE: User controls both N and S even when S is dummy"""
         state = GameState(
             declarer='N',
             dummy='S',
-            user_position='S'
+            user_position='S',
+            opening_lead_made=True  # After opening lead, user controls both
         )
         controllable = BridgeRulesEngine.get_controllable_positions(state)
-        assert controllable == set()  # Empty set - dummy controls nothing
+        # SINGLE-PLAYER MODE: User controls both N and S when NS is declaring
+        assert controllable == {'N', 'S'}
 
 
 class TestControllablePositionsUserIsDefender:
@@ -258,14 +260,16 @@ class TestIsUserTurn:
         assert BridgeRulesEngine.is_user_turn(state) is False
 
     def test_never_user_turn_when_dummy(self):
-        """Never user's turn when user is dummy"""
+        """SINGLE-PLAYER MODE: User plays even when dummy in NS declaring"""
         state = GameState(
             declarer='N',
             dummy='S',
             user_position='S',
-            next_to_play='S'  # Even when it's dummy's position
+            next_to_play='S',  # Dummy's position
+            opening_lead_made=True  # After opening lead
         )
-        assert BridgeRulesEngine.is_user_turn(state) is False
+        # SINGLE-PLAYER MODE: User controls both N and S
+        assert BridgeRulesEngine.is_user_turn(state) is True
 
 
 class TestShouldAIPlay:
@@ -291,14 +295,16 @@ class TestShouldAIPlay:
         assert BridgeRulesEngine.should_ai_play(state) is False
 
     def test_ai_plays_all_positions_when_user_is_dummy(self):
-        """When user is dummy, AI plays for ALL positions (including dummy)"""
+        """SINGLE-PLAYER MODE: User plays when dummy in NS declaring"""
         state = GameState(
             declarer='N',
             dummy='S',
             user_position='S',
-            next_to_play='S'  # Dummy's turn
+            next_to_play='S',  # Dummy's turn
+            opening_lead_made=True
         )
-        assert BridgeRulesEngine.should_ai_play(state) is True
+        # SINGLE-PLAYER MODE: User controls both N and S
+        assert BridgeRulesEngine.should_ai_play(state) is False
 
 
 class TestCanUserPlayFromPosition:
@@ -335,9 +341,16 @@ class TestCanUserPlayFromPosition:
         assert BridgeRulesEngine.can_user_play_from_position(state, 'N') is False
 
     def test_dummy_cannot_play_from_any_position(self):
-        state = GameState(declarer='N', dummy='S', user_position='S')
-        assert BridgeRulesEngine.can_user_play_from_position(state, 'S') is False
-        assert BridgeRulesEngine.can_user_play_from_position(state, 'N') is False
+        """SINGLE-PLAYER MODE: User can play from both N and S when NS declares"""
+        state = GameState(
+            declarer='N',
+            dummy='S',
+            user_position='S',
+            opening_lead_made=True
+        )
+        # SINGLE-PLAYER MODE: User controls both N and S
+        assert BridgeRulesEngine.can_user_play_from_position(state, 'S') is True
+        assert BridgeRulesEngine.can_user_play_from_position(state, 'N') is True
 
 
 class TestNextPlayer:
@@ -446,9 +459,10 @@ class TestUIDisplayInfo:
         info = BridgeRulesEngine.get_ui_display_info(state)
 
         assert set(info['visible_hands']) == {'S', 'N'}
-        assert info['controllable_positions'] == []  # Dummy controls nothing
-        assert info['is_user_turn'] is False
-        assert info['user_role'] == 'dummy'
+        # SINGLE-PLAYER MODE: User controls both N and S when NS is declaring
+        assert set(info['controllable_positions']) == {'N', 'S'}
+        assert info['is_user_turn'] is True  # User plays from North's hand
+        assert info['user_role'] == 'dummy'  # Role is dummy, but user still controls both
 
     def test_ui_info_user_defender(self):
         state = GameState(
@@ -510,7 +524,7 @@ class TestRealWorldScenarios:
     def test_scenario_south_is_dummy(self):
         """
         Scenario: North is declarer, South is dummy
-        User should control NOTHING
+        SINGLE-PLAYER MODE: User controls both N and S (even when S is dummy)
         """
         state = GameState(
             declarer='N',
@@ -521,17 +535,19 @@ class TestRealWorldScenarios:
             dummy_revealed=False
         )
 
-        # Opening lead
+        # Opening lead - East leads, so AI plays
         assert BridgeRulesEngine.should_ai_play(state) is True
 
-        # After opening lead, it's dummy's turn (AI plays)
+        # After opening lead, it's South's turn (dummy position)
+        # In SINGLE-PLAYER mode, user plays from dummy when NS is declaring
         state.opening_lead_made = True
         state.dummy_revealed = True
         state.next_to_play = 'S'
 
-        assert BridgeRulesEngine.is_user_turn(state) is False  # User is dummy
-        assert BridgeRulesEngine.should_ai_play(state) is True  # AI controls dummy
-        assert BridgeRulesEngine.get_controllable_positions(state) == set()
+        # SINGLE-PLAYER MODE: User controls both N and S
+        assert BridgeRulesEngine.is_user_turn(state) is True  # User plays from dummy
+        assert BridgeRulesEngine.should_ai_play(state) is False  # User controls
+        assert BridgeRulesEngine.get_controllable_positions(state) == {'N', 'S'}
 
     def test_scenario_south_defender_opening_lead(self):
         """

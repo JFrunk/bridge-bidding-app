@@ -180,11 +180,12 @@ class BridgeRulesEngine:
         """
         Determine which positions the user can play cards from (SINGLE-PLAYER MODE).
 
-        Single-Player Control Rules:
-        1. User controls South ALWAYS (unless user is dummy)
-        2. User controls North ONLY when NS is declaring (N or S is declarer) AND user is not dummy
+        Single-Player Control Rules (DIGITAL BRIDGE - NOT 4-PLAYER RULES):
+        1. User controls South ALWAYS
+        2. User controls North ONLY when NS is declaring (N or S is declarer)
         3. Before opening lead, only the opening leader can act
-        4. CRITICAL: If user is dummy, user controls NOTHING (standard bridge rule)
+        4. IMPORTANT: In single-player mode, user controls BOTH declarer AND dummy
+           when NS is declaring (unlike 4-player bridge where dummy is passive)
 
         Args:
             state: Current game state
@@ -192,11 +193,6 @@ class BridgeRulesEngine:
         Returns:
             Set of positions user can play from (e.g., {'S', 'N'})
         """
-        # CRITICAL: If user is dummy, they control NOTHING
-        # This is standard bridge rule: dummy is passive, declarer controls dummy
-        if state.user_position == state.dummy:
-            return set()
-
         declarer = state.declarer
 
         # NS is declaring side (North or South is declarer)
