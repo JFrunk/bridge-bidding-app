@@ -183,20 +183,22 @@ class BlackwoodConvention(ConventionModule):
         # No suits shown by anyone - this is quantitative NT auction
         return False
 
-    def _get_ace_answer_bid(self, hand: Hand) -> Tuple[str, str]:
+    def _get_ace_answer_bid(self, hand: Hand) -> Tuple[str, str, dict]:
         """Counts aces and returns the correct conventional response."""
         num_aces = sum(1 for card in hand.cards if card.rank == 'A')
+        # Metadata to bypass suit length validation for artificial Blackwood responses
+        metadata = {'bypass_suit_length': True}
 
         if num_aces == 0 or num_aces == 4:
-            return ("5♣", "Response to Blackwood: 0 or 4 aces.")
+            return ("5♣", "Response to Blackwood: 0 or 4 aces.", metadata)
         if num_aces == 1:
-            return ("5♦", "Response to Blackwood: 1 ace.")
+            return ("5♦", "Response to Blackwood: 1 ace.", metadata)
         if num_aces == 2:
-            return ("5♥", "Response to Blackwood: 2 aces.")
+            return ("5♥", "Response to Blackwood: 2 aces.", metadata)
         if num_aces == 3:
-            return ("5♠", "Response to Blackwood: 3 aces.")
+            return ("5♠", "Response to Blackwood: 3 aces.", metadata)
 
-        return ("Pass", "Error: Could not count aces.") # Should not be reached
+        return ("Pass", "Error: Could not count aces.", {}) # Should not be reached
 
     def _is_signoff_applicable(self, features: Dict) -> bool:
         """Check if we asked Blackwood and partner responded."""
@@ -315,20 +317,22 @@ class BlackwoodConvention(ConventionModule):
         """Determines if we are responding to a 5NT king ask."""
         return features['auction_features'].get('partner_last_bid') == '5NT'
 
-    def _get_king_answer_bid(self, hand: Hand) -> Tuple[str, str]:
+    def _get_king_answer_bid(self, hand: Hand) -> Tuple[str, str, dict]:
         """Counts kings and returns the correct conventional response (same as aces)."""
         num_kings = sum(1 for card in hand.cards if card.rank == 'K')
+        # Metadata to bypass suit length validation for artificial Blackwood responses
+        metadata = {'bypass_suit_length': True}
 
         if num_kings == 0 or num_kings == 4:
-            return ("6♣", "Response to 5NT: 0 or 4 kings.")
+            return ("6♣", "Response to 5NT: 0 or 4 kings.", metadata)
         if num_kings == 1:
-            return ("6♦", "Response to 5NT: 1 king.")
+            return ("6♦", "Response to 5NT: 1 king.", metadata)
         if num_kings == 2:
-            return ("6♥", "Response to 5NT: 2 kings.")
+            return ("6♥", "Response to 5NT: 2 kings.", metadata)
         if num_kings == 3:
-            return ("6♠", "Response to 5NT: 3 kings.")
+            return ("6♠", "Response to 5NT: 3 kings.", metadata)
 
-        return ("Pass", "Error: Could not count kings.")
+        return ("Pass", "Error: Could not count kings.", {})
 # ADR-0002 Phase 1: Auto-register this module on import
 from engine.ai.module_registry import ModuleRegistry
 ModuleRegistry.register("blackwood", BlackwoodConvention())

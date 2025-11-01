@@ -19,7 +19,10 @@ class JacobyConvention(ConventionModule):
         if not result:
             return None
 
-        bid, explanation = result
+        # Unpack result - may have 2 or 3 elements (bid, explanation, [metadata])
+        bid = result[0]
+        explanation = result[1]
+        metadata = result[2] if len(result) > 2 else None
 
         # Always pass Pass bids through
         if bid == "Pass":
@@ -40,13 +43,19 @@ class JacobyConvention(ConventionModule):
 
                 if adjusted_level - original_level > 2:
                     # The suggested bid is way off - pass instead of making unreasonable bid
-                    return ("Pass", f"Cannot make reasonable bid at current auction level (suggested {bid}, would need {next_legal}).")
+                    if metadata:
+                        return ("Pass", f"Cannot make reasonable bid at current auction level (suggested {bid}, would need {next_legal}).", metadata)
+                    else:
+                        return ("Pass", f"Cannot make reasonable bid at current auction level (suggested {bid}, would need {next_legal}).")
             except (ValueError, IndexError):
                 # Not a level bid (e.g., Pass, X, XX) - allow adjustment
                 pass
 
             adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
-            return (next_legal, adjusted_explanation)
+            if metadata:
+                return (next_legal, adjusted_explanation, metadata)
+            else:
+                return (next_legal, adjusted_explanation)
 
         # No legal bid possible - pass
         return None
@@ -71,19 +80,22 @@ class JacobyConvention(ConventionModule):
                 auction_features.get('opening_bid') == '1NT' and
                 partner_last_bid in ['2♦', '2♥'])
 
-    def _get_completion_bid(self, hand: Hand, features: Dict) -> Tuple[str, str]:
+    def _get_completion_bid(self, hand: Hand, features: Dict) -> Tuple[str, str, dict]:
         partner_last_bid = features['auction_features']['partner_last_bid']
+        # Metadata to bypass suit length validation for artificial transfer completions
+        metadata = {'bypass_suit_length': True}
+
         if partner_last_bid == "2♦":
             # Super-accept with maximum (17 HCP) and 4-card support
             if hand.hcp == 17 and hand.suit_lengths['♥'] >= 4:
-                return ("3♥", "Super-accept showing maximum 1NT (17 HCP) with 4-card heart support.")
-            return ("2♥", "Completing the transfer to Hearts.")
+                return ("3♥", "Super-accept showing maximum 1NT (17 HCP) with 4-card heart support.", metadata)
+            return ("2♥", "Completing the transfer to Hearts.", metadata)
         if partner_last_bid == "2♥":
             # Super-accept with maximum (17 HCP) and 4-card support
             if hand.hcp == 17 and hand.suit_lengths['♠'] >= 4:
-                return ("3♠", "Super-accept showing maximum 1NT (17 HCP) with 4-card spade support.")
-            return ("2♠", "Completing the transfer to Spades.")
-        return ("Pass", "Error: Fall-through in transfer completion.")
+                return ("3♠", "Super-accept showing maximum 1NT (17 HCP) with 4-card spade support.", metadata)
+            return ("2♠", "Completing the transfer to Spades.", metadata)
+        return ("Pass", "Error: Fall-through in transfer completion.", {})
 
     def _is_initiation_applicable(self, hand: Hand, features: Dict) -> bool:
         auction_features = features.get('auction_features', {})

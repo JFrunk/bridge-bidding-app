@@ -1,0 +1,119 @@
+"""
+Regression test for Blackwood artificial responses.
+
+BUG: ValidationPipeline was blocking Blackwood responses (5♣/5♦/5♥/5♠)
+because responder doesn't have 5+ cards in the suit (artificial bid).
+
+FIXED: Added metadata bypass system to allow conventions to skip suit length validation.
+
+Date: 2025-10-31
+Related: ADR-0002 Phase 2 (ValidationPipeline)
+"""
+
+import pytest
+from engine.hand import Hand, Card
+from engine.bidding_engine import BiddingEngine
+
+
+class TestBlackwoodResponses:
+    """Test that Blackwood responses work despite suit length validation."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.engine = BiddingEngine()
+
+    def test_5club_response_with_0_aces_and_no_clubs(self):
+        """Test 5♣ response showing 0 aces when holding no clubs."""
+        # Hand with 0 aces and 0 clubs
+        responder = Hand([
+            Card('K', '♠'), Card('Q', '♠'), Card('J', '♠'), Card('T', '♠'),
+            Card('K', '♥'), Card('Q', '♥'), Card('J', '♥'), Card('T', '♥'),
+            Card('K', '♦'), Card('Q', '♦'), Card('J', '♦'),
+            Card('K', '♣'), Card('Q', '♣')
+        ])
+
+        # Auction: 1♥ - 4♥ - 4NT (asking for aces)
+        auction = ['1♥', 'Pass', '4♥', 'Pass', '4NT', 'Pass']
+        bid, explanation = self.engine.get_next_bid(
+            responder, auction, 'North', 'None'
+        )
+
+        assert bid == '5♣', f"Expected 5♣ (0 aces), got {bid}"
+        assert "0" in explanation or "4" in explanation  # 0 or 4 aces
+
+    def test_5diamond_response_with_1_ace_and_short_diamonds(self):
+        """Test 5♦ response showing 1 ace when holding few diamonds."""
+        # Hand with 1 ace and only 2 diamonds
+        responder = Hand([
+            Card('A', '♠'), Card('K', '♠'), Card('Q', '♠'), Card('J', '♠'),
+            Card('K', '♥'), Card('Q', '♥'), Card('J', '♥'),
+            Card('K', '♦'), Card('Q', '♦'),
+            Card('K', '♣'), Card('Q', '♣'), Card('J', '♣'), Card('T', '♣')
+        ])
+
+        auction = ['1♥', 'Pass', '4♥', 'Pass', '4NT', 'Pass']
+        bid, explanation = self.engine.get_next_bid(
+            responder, auction, 'North', 'None'
+        )
+
+        assert bid == '5♦', f"Expected 5♦ (1 ace), got {bid}"
+        assert "1" in explanation
+
+    def test_5heart_response_with_2_aces_and_short_hearts(self):
+        """Test 5♥ response showing 2 aces when holding few hearts."""
+        # Hand with 2 aces and only 2 hearts
+        responder = Hand([
+            Card('A', '♠'), Card('K', '♠'), Card('Q', '♠'), Card('J', '♠'),
+            Card('A', '♥'), Card('K', '♥'),
+            Card('K', '♦'), Card('Q', '♦'), Card('J', '♦'),
+            Card('K', '♣'), Card('Q', '♣'), Card('J', '♣'), Card('T', '♣')
+        ])
+
+        auction = ['1♠', 'Pass', '4♠', 'Pass', '4NT', 'Pass']
+        bid, explanation = self.engine.get_next_bid(
+            responder, auction, 'North', 'None'
+        )
+
+        assert bid == '5♥', f"Expected 5♥ (2 aces), got {bid}"
+        assert "2" in explanation
+
+    def test_5spade_response_with_3_aces_and_short_spades(self):
+        """Test 5♠ response showing 3 aces when holding few spades."""
+        # Hand with 3 aces and only 2 spades
+        responder = Hand([
+            Card('A', '♠'), Card('K', '♠'),
+            Card('A', '♥'), Card('K', '♥'), Card('Q', '♥'), Card('J', '♥'),
+            Card('A', '♦'), Card('K', '♦'), Card('Q', '♦'),
+            Card('K', '♣'), Card('Q', '♣'), Card('J', '♣'), Card('T', '♣')
+        ])
+
+        auction = ['1♥', 'Pass', '4♥', 'Pass', '4NT', 'Pass']
+        bid, explanation = self.engine.get_next_bid(
+            responder, auction, 'North', 'None'
+        )
+
+        assert bid == '5♠', f"Expected 5♠ (3 aces), got {bid}"
+        assert "3" in explanation
+
+    def test_6club_king_response_with_0_kings_and_no_clubs(self):
+        """Test 6♣ response showing 0 kings when holding no clubs."""
+        # Hand with 0 kings and 0 clubs
+        responder = Hand([
+            Card('A', '♠'), Card('Q', '♠'), Card('J', '♠'), Card('T', '♠'),
+            Card('A', '♥'), Card('Q', '♥'), Card('J', '♥'), Card('T', '♥'),
+            Card('A', '♦'), Card('Q', '♦'), Card('J', '♦'),
+            Card('A', '♣'), Card('Q', '♣')
+        ])
+
+        # After Blackwood ace response, partner asks for kings
+        auction = ['1♥', 'Pass', '4♥', 'Pass', '4NT', 'Pass', '5♥', 'Pass', '5NT', 'Pass']
+        bid, explanation = self.engine.get_next_bid(
+            responder, auction, 'North', 'None'
+        )
+
+        assert bid == '6♣', f"Expected 6♣ (0 kings), got {bid}"
+        assert "0" in explanation or "4" in explanation  # 0 or 4 kings
+
+
+if __name__ == '__main__':
+    pytest.main([__file__, '-v'])

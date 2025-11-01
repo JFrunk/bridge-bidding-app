@@ -38,7 +38,7 @@ class ValidationPipeline:
         ]
         self._enabled = True
 
-    def validate(self, bid: str, hand: Hand, features: Dict, auction: List) -> Tuple[bool, Optional[str]]:
+    def validate(self, bid: str, hand: Hand, features: Dict, auction: List, metadata: Optional[Dict] = None) -> Tuple[bool, Optional[str]]:
         """
         Run all validators on a bid.
 
@@ -47,6 +47,9 @@ class ValidationPipeline:
             hand: The hand making the bid
             features: Extracted features from auction
             auction: List of previous bids
+            metadata: Optional metadata dict with bypass flags:
+                - bypass_suit_length: Skip suit length validation (for artificial bids)
+                - bypass_hcp: Skip HCP validation (for conventional responses)
 
         Returns:
             (is_valid, error_message)
@@ -60,7 +63,17 @@ class ValidationPipeline:
         if bid == "Pass":
             return True, None
 
+        metadata = metadata or {}
+
         for validator in self.validators:
+            # Check if this validator should be bypassed
+            if isinstance(validator, SuitLengthValidator) and metadata.get('bypass_suit_length'):
+                logger.debug(f"Bypassing SuitLengthValidator for artificial bid: {bid}")
+                continue
+            if isinstance(validator, HCPRequirementValidator) and metadata.get('bypass_hcp'):
+                logger.debug(f"Bypassing HCPRequirementValidator for conventional response: {bid}")
+                continue
+
             is_valid, error = validator.validate(bid, hand, features, auction)
             if not is_valid:
                 logger.warning(f"Validation failed for {bid}: {error}")
@@ -221,28 +234,80 @@ class SuitLengthValidator:
 
         # Determine minimum length required
         level = int(bid[0])
-        min_length = self._get_min_length(level, features, auction)
+        min_length = self._get_min_length(bid, level, features, auction)
 
         if suit_length < min_length:
             return False, f"Bid {suit} with only {suit_length} cards (need {min_length}+)"
 
         return True, None
 
-    def _get_min_length(self, level: int, features: Dict, auction: List) -> int:
+    def _get_min_length(self, bid: str, level: int, features: Dict, auction: List) -> int:
         """Get minimum suit length for bid level."""
+        # Check for raises first (applies at all levels)
+        # Raises (showing support): 3+ cards normally, 4+ for jump raises
+        if self._is_raise(bid, auction, features):
+            if level >= 3:
+                return 4  # Jump raise needs 4+ (e.g., Jacoby super-accept)
+            return 3  # Simple raise needs 3+
+
+        # Check for Jacoby transfer completions (2-level)
+        # Pattern: 1NT - Pass - 2♦ - Pass - 2♥ (can be doubleton)
+        if self._is_jacoby_completion(bid, auction):
+            return 2  # Jacoby completion can be doubleton
+
         # 1-level bids: 4+ cards (3 for minors in some cases)
         if level == 1:
             return 4
 
-        # 2-level and higher: 5+ cards for new suits
+        # 2-level and higher new suits: 5+ cards
         if level >= 2:
             return 5
 
-        # Raises: 3+ cards
-        if features.get('is_raise'):
-            return 3
-
         return 4  # Default
+
+    def _is_jacoby_completion(self, bid: str, auction: List) -> bool:
+        """
+        Check if bid is a normal Jacoby transfer completion (2-level).
+
+        Pattern: 1NT - Pass - 2♦ - Pass - 2♥ (completing transfer with 2-3 hearts)
+        Pattern: 1NT - Pass - 2♥ - Pass - 2♠ (completing transfer with 2-3 spades)
+        """
+        if len(auction) < 4:
+            return False
+
+        if auction[0] == '1NT':
+            # 2♦ transfer, completing with 2♥
+            if auction[2] == '2♦' and bid == '2♥':
+                return True
+            # 2♥ transfer, completing with 2♠
+            if auction[2] == '2♥' and bid == '2♠':
+                return True
+
+        return False
+
+    def _is_raise(self, bid: str, auction: List, features: Dict) -> bool:
+        """
+        Check if this bid is a raise of partner's suit.
+
+        Handles both direct raises and Jacoby super-accepts (jump raises after transfer).
+        Normal Jacoby completions (2-level) are NOT raises.
+        """
+        # Check feature flag first
+        if features.get('is_raise'):
+            return True
+
+        # Detect Jacoby super-accept sequences (3-level jump = raise)
+        # Pattern: 1NT - Pass - 2♦ - Pass - 3♥ (super-accept showing 4+ hearts)
+        # Pattern: 1NT - Pass - 2♥ - Pass - 3♠ (super-accept showing 4+ spades)
+        if len(auction) >= 4 and auction[0] == '1NT':
+            # 2♦ transfer followed by 3♥ super-accept
+            if auction[2] == '2♦' and bid == '3♥':
+                return True
+            # 2♥ transfer followed by 3♠ super-accept
+            if auction[2] == '2♥' and bid == '3♠':
+                return True
+
+        return False
 
 
 class BidLevelAppropriatenessValidator:

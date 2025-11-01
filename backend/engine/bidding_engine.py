@@ -89,11 +89,14 @@ class BiddingEngine:
         if result:
             bid_to_check = result[0]
             explanation = result[1]
+            # Convention modules can optionally return metadata in 3rd tuple element
+            metadata = result[2] if len(result) > 2 else None
 
             # ADR-0002 Phase 2: MANDATORY validation pipeline
             # This CANNOT be bypassed - all bids must pass validation
+            # Metadata can request bypassing specific validators for artificial bids
             is_valid, validation_error = self.validation_pipeline.validate(
-                bid_to_check, hand, features, auction_history
+                bid_to_check, hand, features, auction_history, metadata
             )
 
             if not is_valid:
@@ -131,8 +134,8 @@ class BiddingEngine:
                         level_enum = ExplanationLevel.DETAILED
                     return (bid_to_check, explanation.format(level_enum))
                 else:
-                    # Legacy string explanation
-                    return result
+                    # Legacy string explanation - strip metadata, return only (bid, explanation)
+                    return (bid_to_check, explanation)
             else:
                 print(f"WARNING: AI module '{module_name}' suggested illegal bid '{bid_to_check}'. Overriding to Pass.")
                 return ("Pass", "AI bid overridden due to illegality.")

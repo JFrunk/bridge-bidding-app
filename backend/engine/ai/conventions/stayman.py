@@ -54,11 +54,17 @@ class StaymanConvention(ConventionModule):
                 auction_features.get('opener_relationship') == 'Me' and
                 auction_features.get('partner_last_bid') == '2♣')
 
-    def _respond_to_stayman(self, hand: Hand, features: Dict) -> Tuple[str, str]:
+    def _respond_to_stayman(self, hand: Hand, features: Dict) -> Tuple[str, str, dict]:
         """Opener's response to 2♣ Stayman."""
-        if hand.suit_lengths['♥'] >= 4: return ("2♥", "Stayman response showing 4+ hearts.")
-        if hand.suit_lengths['♠'] >= 4: return ("2♠", "Stayman response showing 4+ spades.")
-        return ("2♦", "Stayman response denying 4-card majors.")
+        # Metadata to bypass suit length validation for artificial Stayman responses
+        metadata = {'bypass_suit_length': True}
+
+        if hand.suit_lengths['♥'] >= 4:
+            return ("2♥", "Stayman response showing 4+ hearts.", metadata)
+        if hand.suit_lengths['♠'] >= 4:
+            return ("2♠", "Stayman response showing 4+ spades.", metadata)
+        # 2♦ is artificial denial bid - may only have 2-3 diamonds
+        return ("2♦", "Stayman response denying 4-card majors.", metadata)
 
     def _is_responder_rebid_position(self, features: Dict) -> bool:
         """Check if responder should rebid after opener's Stayman response."""
