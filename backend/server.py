@@ -26,6 +26,9 @@ from engine.bridge_rules_engine import BridgeRulesEngine, GameState as BridgeGam
 # Session state management (fixes global state race conditions)
 from core.session_state import SessionStateManager, get_session_id_from_request
 
+# Error logging for bidding/play diagnostics
+from utils.error_logger import log_error
+
 # DDS AI for expert level play (9/10 rating)
 # CRITICAL: DDS is ONLY enabled on Linux (production)
 # macOS M1/M2 has known DDS crashes (Error Code -14, segmentation faults)
@@ -784,6 +787,21 @@ def get_next_bid():
     except Exception as e:
         print("---!!! AN ERROR OCCURRED IN GET_NEXT_BID !!!---")
         traceback.print_exc()
+
+        # Log error with context for analysis
+        log_error(
+            error=e,
+            endpoint='/api/get-next-bid',
+            user_id=data.get('user_id') if data else None,
+            context={
+                'current_player': data.get('current_player') if data else None,
+                'auction_length': len(data.get('auction_history', [])) if data else 0,
+                'vulnerability': state.vulnerability,
+                'has_hand': bool(player_hand) if 'player_hand' in locals() else False
+            },
+            request_data=data if data else {}
+        )
+
         return jsonify({'error': f"A critical server error occurred: {e}"}), 500
 
 @app.route('/api/get-next-bid-structured', methods=['POST'])
@@ -1027,6 +1045,22 @@ def evaluate_bid():
     except Exception as e:
         print(f"❌ Error in evaluate-bid: {e}")
         traceback.print_exc()
+
+        # Log error with bidding context
+        log_error(
+            error=e,
+            endpoint='/api/evaluate-bid',
+            user_id=data.get('user_id') if 'data' in locals() else None,
+            context={
+                'user_bid': data.get('user_bid') if 'data' in locals() else None,
+                'current_player': data.get('current_player') if 'data' in locals() else None,
+                'auction_length': len(data.get('auction_history', [])) if 'data' in locals() else 0,
+                'vulnerability': state.vulnerability if state else None,
+                'has_hand': 'user_hand' in locals()
+            },
+            request_data=data if 'data' in locals() else {}
+        )
+
         return jsonify({'error': f'Server error in evaluate_bid: {str(e)}'}), 500
 
 @app.route('/api/get-all-hands', methods=['GET'])
@@ -1034,6 +1068,17 @@ def get_all_hands():
     # Get session state for this request
     state = get_state()
     try:
+        print(f"🔍 get_all_hands DEBUG:")
+        print(f"   - state.deal exists: {state.deal is not None}")
+        print(f"   - state.deal type: {type(state.deal)}")
+        print(f"   - state.play_state exists: {state.play_state is not None}")
+        if state.deal:
+            print(f"   - state.deal keys: {list(state.deal.keys())}")
+            for pos in ['North', 'East', 'South', 'West']:
+                hand = state.deal.get(pos)
+                if hand:
+                    print(f"   - {pos}: {len(hand.cards)} cards")
+
         # Check if a deal exists
         if not state.deal or not isinstance(state.deal, dict):
             print("⚠️ get_all_hands: No deal available yet")
@@ -1678,6 +1723,22 @@ def play_card():
         
     except Exception as e:
         traceback.print_exc()
+
+        # Log play error with context
+        log_error(
+            error=e,
+            endpoint='/api/play-card',
+            user_id=data.get('user_id') if 'data' in locals() else None,
+            context={
+                'position': data.get('position') if 'data' in locals() else None,
+                'card': data.get('card') if 'data' in locals() else None,
+                'trick_length': len(state.play_state.current_trick) if state and state.play_state else 0,
+                'contract': str(state.play_state.contract) if state and state.play_state else None,
+                'next_to_play': state.play_state.next_to_play if state and state.play_state else None
+            },
+            request_data=data if 'data' in locals() else {}
+        )
+
         return jsonify({"error": f"Error playing card: {e}"}), 500
 
 @app.route("/api/get-ai-play", methods=["POST"])
@@ -1911,6 +1972,22 @@ def get_ai_play():
         
     except Exception as e:
         traceback.print_exc()
+
+        # Log AI play error with context
+        log_error(
+            error=e,
+            endpoint='/api/get-ai-play',
+            user_id=data.get('user_id') if 'data' in locals() else None,
+            context={
+                'position': position if 'position' in locals() else None,
+                'ai_level': data.get('ai_level') if 'data' in locals() else None,
+                'trick_length': len(state.play_state.current_trick) if state and state.play_state else 0,
+                'contract': str(state.play_state.contract) if state and state.play_state else None,
+                'next_to_play': state.play_state.next_to_play if state and state.play_state else None
+            },
+            request_data=data if 'data' in locals() else {}
+        )
+
         return jsonify({"error": f"Error with AI play: {e}"}), 500
 
 @app.route("/api/get-play-state", methods=["GET"])
@@ -1969,8 +2046,12 @@ def get_play_state():
                 }
 
         # Legacy dummy_hand for backward compatibility
+        # CRITICAL FIX: Use AND logic - dummy should only be revealed if BOTH conditions are true:
+        # 1. Opening lead has been made (at least 1 card played)
+        # 2. Dummy revealed flag is set (set after first card)
+        # OR if dummy_revealed is explicitly true (handles edge cases)
         dummy_hand = None
-        if state.play_state.dummy_revealed or bridge_state.opening_lead_made:
+        if state.play_state.dummy_revealed and bridge_state.opening_lead_made:
             dummy_pos = state.play_state.dummy
             dummy_hand = {
                 "cards": [{"rank": c.rank, "suit": c.suit} for c in state.play_state.hands[dummy_pos].cards],
@@ -2075,16 +2156,33 @@ def complete_play():
             state.play_state.hands  # Pass hands for honors calculation
         )
 
-        # Generate human-readable result text
+        # Generate human-readable result text from player's (NS) perspective
+        # Player always plays South, so player's team is North-South (NS)
+        declarer = state.play_state.contract.declarer
+        player_is_declarer = declarer in ['N', 'S']
+
         if score_result["made"]:
             overtricks = score_result.get("overtricks", 0)
-            if overtricks == 0:
-                result_text = "Made exactly"
+            if player_is_declarer:
+                # Player is declarer and made contract
+                if overtricks == 0:
+                    result_text = "Made exactly"
+                else:
+                    result_text = f"Made +{overtricks}"
             else:
-                result_text = f"Made +{overtricks}"
+                # Opponents are declarer and made contract
+                if overtricks == 0:
+                    result_text = "Opponents made contract"
+                else:
+                    result_text = f"Opponents made +{overtricks}"
         else:
             undertricks = score_result.get("undertricks", 0)
-            result_text = f"Down {undertricks}"
+            if player_is_declarer:
+                # Player is declarer and went down
+                result_text = f"Down {undertricks}"
+            else:
+                # Opponents are declarer and went down (defense successful!)
+                result_text = f"Defense successful! Down {undertricks}"
 
         return jsonify({
             "contract": {

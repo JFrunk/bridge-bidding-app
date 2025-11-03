@@ -2,30 +2,51 @@
 
 This directory contains historical bidding quality scores for tracking improvements and detecting regressions.
 
-## Current Baseline
+## Current Baseline (2025-10-30)
 
-**File:** `2025-10-28_baseline.json`
-**Date:** October 28, 2025
-**Composite Score:** 89.7% (Grade C - Acceptable, needs work)
+### Bidding Quality Score
 
-### Breakdown:
+**File:** `baseline_20251030_145945.json`
+**Date:** October 30, 2025
+**Composite Score:** 94.8% (Grade B - Good, minor issues)
+
+**Breakdown:**
 - **Legality:** 100.0% ✅ (0 errors)
-- **Appropriateness:** 78.7% ❌ (196 errors)
-- **Conventions:** 99.7% ✅ (1 error)
-- **Reasonableness:** 92.1% ✅
-- **Game/Slam:** 24.7% ❌ (113 errors)
+- **Appropriateness:** 100.0% ✅ (0 errors) - **MAJOR IMPROVEMENT**
+- **Conventions:** 98.8% ✅ (3 errors)
+- **Reasonableness:** 100.0% ✅
+- **Game/Slam:** 0.0% ❌ (168 errors) - **Not yet implemented**
 
-### Key Issues:
-- 48% of errors: Bidding 3-card suits (94 errors)
-- 15.8% of errors: Weak hands at 4-level (31 errors)
-- 13.8% of errors: Weak hands at 3-level (27 errors)
+**Test Details:** 500 hands, 2,480 bids, 577 non-pass bids
+
+### Play Quality Score
+
+**File:** `play_baseline_20251030_151213.json`
+**Date:** October 30, 2025
+**AI Type:** MINIMAX (depth 2)
+**Composite Score:** 80.3% (Grade D - Poor)
+
+**Breakdown:**
+- **Legality:** 100.0% ✅ (0 errors)
+- **Success Rate:** 60.4% ⚠️ (206/341 contracts made)
+- **Efficiency:** 50.9% ⚠️ (297 overtricks, 265 undertricks)
+- **Tactical:** 100.0% ✅ (0 errors)
+- **Timing:** 100.0% ✅
+
+**Test Details:** 500 hands, 341 contracts played, 149 passed out
 
 ---
 
 ## History
 
+### 2025-10-30: Updated Comprehensive Baseline
+- **Bidding Score:** 94.8% (Grade B) - Up from 89.7%
+- **Play Score:** 80.3% (Grade D)
+- **Test:** 500 hands each
+- **Notes:** Major improvement in bidding appropriateness (78.7% → 100%). Convention errors down to 3. Game/Slam scoring not yet implemented. Play engine shows 60.4% contract success rate with Minimax AI (depth 2).
+
 ### 2025-10-28: Initial Baseline
-- **Score:** 89.7% (Grade C)
+- **Bidding Score:** 89.7% (Grade C)
 - **Test:** 500 hands, 3,013 bids
 - **Notes:** First comprehensive baseline established. Identified systemic appropriateness issue with weak hands bidding at high levels after auto-adjustments.
 
@@ -63,19 +84,39 @@ When adding a new quality score:
 
 ## Target Goals
 
-### Short Term (Next Fix)
-- **Appropriateness:** 78.7% → 90%+ (fix weak bids at high levels)
-- **Composite:** 89.7% → 92%+ (Grade B)
+### Bidding System
 
-### Medium Term (After Convention Fixes)
-- **Appropriateness:** 90%+ → 95%+ (fix short suit bidding)
-- **Composite:** 92%+ → 95%+ (Grade A)
+**Short Term (Next Fix):**
+- **Conventions:** 98.8% → 99.5%+ (fix Stayman 4-card major requirement)
+- **Game/Slam:** 0.0% → Implement scoring system
+- **Composite:** 94.8% → 96%+ (Grade A-)
 
-### Long Term (Production Ready)
+**Medium Term:**
+- **Game/Slam:** Implement → 80%+ (basic game/slam detection)
+- **Composite:** 96% → 97%+ (Grade A)
+
+**Long Term (Production Ready):**
 - **Legality:** 100% (maintain)
-- **Appropriateness:** 95%+
-- **Conventions:** 90%+
-- **Composite:** 95%+ (Grade A)
+- **Appropriateness:** 100% (maintain)
+- **Conventions:** 99%+
+- **Game/Slam:** 90%+
+- **Composite:** 98%+ (Grade A+)
+
+### Play System
+
+**Short Term:**
+- **Success Rate:** 60.4% → 70%+ (improve Minimax depth 2 → 3)
+- **Efficiency:** 50.9% → 60%+ (better overtrick/undertrick balance)
+- **Composite:** 80.3% → 85%+ (Grade B-)
+
+**Medium Term:**
+- **Success Rate:** 70% → 80%+ (optimize Minimax heuristics)
+- **Composite:** 85% → 90%+ (Grade A-)
+
+**Long Term (Production Ready):**
+- **Success Rate:** 85%+ (Minimax depth 3, DDS integration)
+- **Efficiency:** 75%+
+- **Composite:** 92%+ (Grade A)
 
 ---
 

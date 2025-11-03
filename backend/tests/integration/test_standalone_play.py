@@ -12,7 +12,7 @@ except ImportError:
     HAS_PYTEST = False
 from engine.play_engine import PlayEngine, Contract, PlayState
 from engine.simple_play_ai import SimplePlayAI
-from tests.play_test_helpers import (
+from tests.integration.play_test_helpers import (
     create_hand_from_string,
     create_test_deal,
     create_play_scenario,

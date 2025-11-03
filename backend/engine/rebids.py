@@ -292,12 +292,24 @@ class RebidModule(ConventionModule):
                     else:
                         return ("Pass", "Declining invitation with minimum (13 points) and no extra shape.")
             if partner_response == "1NT":
-                second_suits = [s for s, l in hand.suit_lengths.items() if l >= 4 and s != my_opening_bid[1]]
-                if second_suits:
-                    return (f"2{second_suits[0]}", f"Minimum hand (13-15 pts) showing a second suit.")
-                if hand.suit_lengths.get(my_opening_bid[1], 0) >= 6:
-                    return (f"2{my_opening_bid[1]}", f"Minimum hand (13-15 pts) rebidding a 6+ card suit.")
-                return (f"2{my_opening_bid[1]}", f"Minimum hand (13-15 pts) rebidding a 5-card suit.")
+                # CRITICAL FIX: 1NT is a SEMI-FORCING response showing 6-10 HCP
+                # With minimum opening (12-14 HCP), opener should PASS unless:
+                # 1. Hand has 15+ HCP (extras), OR
+                # 2. Hand has a strong 6+ card suit worth rebidding
+                #
+                # SAYC Standard: After 1M - 1NT, opener passes with 12-14 balanced or semi-balanced
+                # Only bid with extras or a very strong suit
+
+                # Check if we have a 6+ card suit worth rebidding
+                my_suit = my_opening_bid[1:]
+                if hand.suit_lengths.get(my_suit, 0) >= 6:
+                    # With 6+ card suit, rebid it to show extras or escape 1NT
+                    return (f"2{my_suit}", f"Minimum hand (13-15 pts) rebidding a 6+ card suit.")
+
+                # With only 5-card suit and minimum (12-14 HCP), we should PASS
+                # 1NT is likely the best contract
+                # DO NOT bid a second suit with minimum - this overstates our strength
+                return ("Pass", f"Minimum hand ({hand.total_points} pts), accepting 1NT as final contract.")
             if partner_response[0] == '1' and len(partner_response) == 2:
                 partner_suit = partner_response[1]
                 if hand.suit_lengths.get(partner_suit, 0) >= 4:

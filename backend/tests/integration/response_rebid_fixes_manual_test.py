@@ -37,7 +37,7 @@ print(f"✅ PASS: South bids {bid} - {explanation}")
 
 # Test 1b: After 1♠ opening, respond 2♣ with 10 HCP and 5 clubs
 print("\nTest 1b: After 1♠, respond 2♣ with 10 HCP and 5 clubs")
-south_hand = create_hand("♠Q65 ♥K82 ♦Q32 ♣AKJ85")
+south_hand = create_hand("♠Q65 ♥K82 ♦Q32 ♣AKJ8")
 auction = ['1♠', 'Pass']
 bid, explanation = engine.get_next_bid(south_hand, auction, 'South', 'None')
 assert bid == '2♣', f"Expected 2♣, got {bid}"
@@ -45,7 +45,7 @@ print(f"✅ PASS: South bids {bid} - {explanation}")
 
 # Test 1c: After 1♦ opening, respond 2♣ with 11 HCP and 5 clubs
 print("\nTest 1c: After 1♦, respond 2♣ with 11 HCP and 5 clubs")
-south_hand = create_hand("♠Q65 ♥K82 ♦Q32 ♣AKJ85")
+south_hand = create_hand("♠Q65 ♥K82 ♦Q32 ♣AKJ8")
 auction = ['1♦', 'Pass']
 bid, explanation = engine.get_next_bid(south_hand, auction, 'South', 'None')
 assert bid == '2♣', f"Expected 2♣, got {bid}"

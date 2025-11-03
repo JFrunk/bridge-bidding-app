@@ -133,7 +133,7 @@ export function CurrentTrick({ trick, positions, trickWinner, trickComplete }) {
  *
  * Bridge Visibility Rules:
  * 1. User (South) ALWAYS sees their own hand
- * 2. EVERYONE sees the dummy hand (after opening lead)
+ * 2. EVERYONE sees the dummy hand (ONLY after opening lead is made)
  * 3. Declarer's hand is ONLY visible if user IS the dummy (controls declarer)
  * 4. Defenders NEVER see each other's hands
  *
@@ -141,17 +141,18 @@ export function CurrentTrick({ trick, positions, trickWinner, trickComplete }) {
  * @param {string} dummyPosition - Which position is dummy
  * @param {string} declarerPosition - Which position is declarer
  * @param {boolean} userIsDummy - Is the user (South) the dummy?
+ * @param {boolean} dummyRevealed - Has dummy been revealed? (after opening lead)
  * @returns {boolean} - Should this hand be visible?
  */
-function shouldShowHand(position, dummyPosition, declarerPosition, userIsDummy) {
+function shouldShowHand(position, dummyPosition, declarerPosition, userIsDummy, dummyRevealed) {
   // Rule 1: Always show South (user's own hand)
   if (position === 'S') {
     return true;
   }
 
-  // Rule 2: Always show dummy
+  // Rule 2: Show dummy ONLY after opening lead (when dummy_revealed is true)
   if (position === dummyPosition) {
-    return true;
+    return dummyRevealed === true;
   }
 
   // Rule 3: Show declarer ONLY if user is dummy (user controls declarer)
@@ -202,10 +203,12 @@ export function PlayTable({
   const suitOrder = getSuitOrder(contract.strain);
 
   // CRITICAL: Centralized visibility rules - USE THESE for all hand rendering
-  const showNorthHand = shouldShowHand('N', dummyPosition, declarerPosition, userIsDummy);
-  const showEastHand = shouldShowHand('E', dummyPosition, declarerPosition, userIsDummy);
-  const showSouthHand = shouldShowHand('S', dummyPosition, declarerPosition, userIsDummy);
-  const showWestHand = shouldShowHand('W', dummyPosition, declarerPosition, userIsDummy);
+  // Pass dummy_revealed from playState to ensure dummy is only shown AFTER opening lead
+  const dummyRevealed = playState.dummy_revealed || false;
+  const showNorthHand = shouldShowHand('N', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
+  const showEastHand = shouldShowHand('E', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
+  const showSouthHand = shouldShowHand('S', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
+  const showWestHand = shouldShowHand('W', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
 
   // DEBUG: Log visibility decisions
   console.log('👁️ Hand Visibility Rules Applied:', {
@@ -213,6 +216,7 @@ export function PlayTable({
     declarerPosition,
     userIsDummy,
     userIsDeclarer,
+    dummyRevealed,  // CRITICAL: Track if dummy should be visible
     visibility: {
       'North': showNorthHand,
       'East': showEastHand,
@@ -220,10 +224,10 @@ export function PlayTable({
       'West': showWestHand
     },
     reason: {
-      'North': showNorthHand ? (dummyPosition === 'N' ? 'DUMMY' : userIsDummy && declarerPosition === 'N' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN',
-      'East': showEastHand ? (dummyPosition === 'E' ? 'DUMMY' : userIsDummy && declarerPosition === 'E' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN',
+      'North': showNorthHand ? (dummyPosition === 'N' ? `DUMMY (revealed: ${dummyRevealed})` : userIsDummy && declarerPosition === 'N' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN',
+      'East': showEastHand ? (dummyPosition === 'E' ? `DUMMY (revealed: ${dummyRevealed})` : userIsDummy && declarerPosition === 'E' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN',
       'South': 'USER (always visible)',
-      'West': showWestHand ? (dummyPosition === 'W' ? 'DUMMY' : userIsDummy && declarerPosition === 'W' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN'
+      'West': showWestHand ? (dummyPosition === 'W' ? `DUMMY (revealed: ${dummyRevealed})` : userIsDummy && declarerPosition === 'W' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN'
     }
   });
 

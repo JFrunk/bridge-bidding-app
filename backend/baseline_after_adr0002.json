@@ -1,0 +1,1131 @@
+{
+  "timestamp": "2025-10-29T17:43:05.614950",
+  "scores": {
+    "total_hands": 500,
+    "total_bids": 2531,
+    "total_non_pass_bids": 584,
+    "scores": {
+      "legality": 100.0,
+      "appropriateness": 100.0,
+      "conventions": 100.0,
+      "consistency": 100,
+      "reasonableness": 100.0,
+      "game_slam": 0.0,
+      "composite": 95.0
+    },
+    "error_counts": {
+      "legality": 0,
+      "appropriateness": 0,
+      "conventions": 0,
+      "game_slam": 171
+    },
+    "errors": {
+      "legality": [],
+      "appropriateness": [],
+      "conventions": [],
+      "game_slam": [
+        {
+          "hand_number": 3,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 31,
+          "final_contract": "1\u2660"
+        },
+        {
+          "hand_number": 5,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 31,
+          "final_contract": "1NT"
+        },
+        {
+          "hand_number": 22,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 34,
+          "final_contract": "1\u2665"
+        },
+        {
+          "hand_number": 26,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 27,
+          "final_contract": "1\u2666"
+        },
+        {
+          "hand_number": 27,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 31,
+          "final_contract": "1\u2663"
+        },
+        {
+          "hand_number": 28,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 25,
+          "final_contract": "1\u2663"
+        },
+        {
+          "hand_number": 30,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 33,
+          "final_contract": "1NT"
+        },
+        {
+          "hand_number": 31,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 26,
+          "final_contract": "1\u2663"
+        },
+        {
+          "hand_number": 41,
+          "error": "Stopped below game with 25+ points",
+          "combined_points": 32,
+          "final_contract": "1NT"
+        },
+        {
+          "hand_number": 45,
+          "error": "Stopped below game in major with 25+ points",
+          "combined_points": 35,
+          "final_contract": "1\u2665"
+        }
+      ]
+    },
+    "reasonableness_breakdown": {
+      "excellent": 213,
+      "good": 371,
+      "questionable": 0,
+      "poor": 0,
+      "terrible": 0
+    },
+    "grade": "A (Production Ready)"
+  },
+  "all_errors": {
+    "legality": [],
+    "appropriateness": [],
+    "conventions": [],
+    "game_slam": [
+      {
+        "hand_number": 3,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 5,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 22,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 34,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 26,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 27,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 28,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 30,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 33,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 31,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 41,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 32,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 45,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 35,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 48,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 49,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 50,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 54,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 56,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 59,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 62,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 65,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 73,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 35,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 81,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 33,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 84,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 85,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 87,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 88,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 96,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 97,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 98,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 107,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 112,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 114,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 118,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 119,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 34,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 120,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 34,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 122,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 126,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "2\u2666"
+      },
+      {
+        "hand_number": 134,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 137,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 138,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 139,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 142,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 147,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 30,
+        "final_contract": "3\u2665"
+      },
+      {
+        "hand_number": 149,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 150,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 152,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 154,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 158,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 160,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 33,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 162,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 164,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 175,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 179,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 182,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 184,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 185,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 188,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 191,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 192,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 194,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 203,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 204,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "2\u2660"
+      },
+      {
+        "hand_number": 208,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 209,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 210,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 211,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 212,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 218,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "2\u2660"
+      },
+      {
+        "hand_number": 222,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 224,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 228,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 32,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 231,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "2\u2666"
+      },
+      {
+        "hand_number": 232,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 235,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 33,
+        "final_contract": "2\u2665"
+      },
+      {
+        "hand_number": 236,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 245,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 30,
+        "final_contract": "2\u2660"
+      },
+      {
+        "hand_number": 247,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 251,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 252,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "2\u2666"
+      },
+      {
+        "hand_number": 253,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 33,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 255,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 34,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 258,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 261,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 263,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 32,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 264,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 267,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 270,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 273,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "2\u2666"
+      },
+      {
+        "hand_number": 276,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 34,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 277,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 280,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 283,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 284,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 285,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 289,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 290,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 293,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 295,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 296,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 298,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 300,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 301,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 304,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 306,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 307,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 316,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 321,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 36,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 322,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 323,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 324,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 34,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 325,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 326,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 327,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 331,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 345,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 34,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 346,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 347,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 348,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 354,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 356,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 359,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 360,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 361,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 30,
+        "final_contract": "2\u2666"
+      },
+      {
+        "hand_number": 362,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 363,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 365,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 367,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 32,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 368,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 370,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 36,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 379,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 381,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 384,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 387,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 390,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 26,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 392,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 394,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 397,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 398,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 403,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "2\u2660"
+      },
+      {
+        "hand_number": 404,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 405,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 409,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 410,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 411,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 415,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 420,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 421,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "2\u2663"
+      },
+      {
+        "hand_number": 423,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 427,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 429,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 431,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 434,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 30,
+        "final_contract": "1\u2663"
+      },
+      {
+        "hand_number": 435,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 27,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 446,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 449,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "2\u2666"
+      },
+      {
+        "hand_number": 450,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 30,
+        "final_contract": "2\u2663"
+      },
+      {
+        "hand_number": 456,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "2\u2666"
+      },
+      {
+        "hand_number": 462,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 464,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 31,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 466,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "2\u2663"
+      },
+      {
+        "hand_number": 471,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 473,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 474,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 29,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 475,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 41,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 484,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1\u2666"
+      },
+      {
+        "hand_number": 485,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 30,
+        "final_contract": "2NT"
+      },
+      {
+        "hand_number": 486,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1NT"
+      },
+      {
+        "hand_number": 487,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 490,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 26,
+        "final_contract": "2\u2665"
+      },
+      {
+        "hand_number": 492,
+        "error": "Stopped below game with 25+ points",
+        "combined_points": 28,
+        "final_contract": "2\u2663"
+      },
+      {
+        "hand_number": 493,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 32,
+        "final_contract": "1\u2660"
+      },
+      {
+        "hand_number": 496,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 25,
+        "final_contract": "1\u2665"
+      },
+      {
+        "hand_number": 498,
+        "error": "Stopped below game in major with 25+ points",
+        "combined_points": 31,
+        "final_contract": "1\u2665"
+      }
+    ]
+  }
+}

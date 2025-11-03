@@ -98,6 +98,11 @@ class MichaelsCuebidConvention(ConventionModule):
         # Extract opponent's suit
         if len(opponent_bid) < 2:
             return None
+
+        # Michaels Cuebid doesn't apply over NT openings
+        if opponent_bid.endswith('NT'):
+            return None
+
         opp_suit = opponent_bid[1]
 
         # After minor opening (1♣ or 1♦): Cuebid shows both majors

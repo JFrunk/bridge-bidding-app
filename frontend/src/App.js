@@ -109,20 +109,72 @@ function PlayerHand({ position, hand, points, vulnerability }) {
   );
 }
 function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer }) {
-  const getBidsForPlayer = (playerIndex) => {
-    let playerBids = [];
-    for (let i = playerIndex; i < auction.length; i += 4) { playerBids.push(auction[i]); }
-    return playerBids;
-  };
-  const northBids = getBidsForPlayer(0), eastBids = getBidsForPlayer(1), southBids = getBidsForPlayer(2), westBids = getBidsForPlayer(3);
-  const maxRows = Math.max(northBids.length, eastBids.length, southBids.length, westBids.length) || 1;
-  let rows = [];
-  for (let i = 0; i < maxRows; i++) { rows.push( <tr key={i}><td onClick={() => northBids[i] && onBidClick(northBids[i])}>{northBids[i]?.bid || ''}</td><td onClick={() => eastBids[i] && onBidClick(eastBids[i])}>{eastBids[i]?.bid || ''}</td><td onClick={() => southBids[i] && onBidClick(southBids[i])}>{southBids[i]?.bid || ''}</td><td onClick={() => westBids[i] && onBidClick(westBids[i])}>{westBids[i]?.bid || ''}</td></tr> ); }
+  // Build table using row-based approach:
+  // - Dealer starts on row 0
+  // - Each player bids in their column on current row
+  // - When North column (column 0) is reached, increment to next row
 
-  // Helper to show dealer indicator - Use prominent emoji
+  const dealerIndex = players.indexOf(dealer);
+
+  // Build a 2D grid: rows[rowIndex][columnIndex] = bid object or null
+  const grid = [];
+  let currentRow = 0;
+  let currentCol = dealerIndex; // Start at dealer's column
+
+  for (let i = 0; i < auction.length; i++) {
+    const bid = auction[i];
+
+    // Ensure row exists
+    if (!grid[currentRow]) {
+      grid[currentRow] = [null, null, null, null]; // [North, East, South, West]
+    }
+
+    // Place bid in current position
+    grid[currentRow][currentCol] = bid;
+
+    // Move to next column (wrapping around)
+    currentCol = (currentCol + 1) % 4;
+
+    // If we just wrapped to North column (column 0), move to next row
+    if (currentCol === 0 && i < auction.length - 1) {
+      currentRow++;
+    }
+  }
+
+  // Render grid as table rows
+  const rows = grid.map((row, rowIndex) => (
+    <tr key={rowIndex}>
+      <td onClick={() => row[0] && onBidClick(row[0])}>{row[0]?.bid || ''}</td>
+      <td onClick={() => row[1] && onBidClick(row[1])}>{row[1]?.bid || ''}</td>
+      <td onClick={() => row[2] && onBidClick(row[2])}>{row[2]?.bid || ''}</td>
+      <td onClick={() => row[3] && onBidClick(row[3])}>{row[3]?.bid || ''}</td>
+    </tr>
+  ));
+
+  // Helper to show dealer indicator
   const dealerIndicator = (pos) => dealer === pos ? ' 🔵' : '';
 
-  return ( <table className="bidding-table" data-testid="bidding-table"><thead><tr><th className={players[nextPlayerIndex] === 'North' ? 'current-player' : ''} data-testid="bidding-header-north">North{dealerIndicator('North')}</th><th className={players[nextPlayerIndex] === 'East' ? 'current-player' : ''} data-testid="bidding-header-east">East{dealerIndicator('East')}</th><th className={players[nextPlayerIndex] === 'South' ? 'current-player' : ''} data-testid="bidding-header-south">South{dealerIndicator('South')}</th><th className={players[nextPlayerIndex] === 'West' ? 'current-player' : ''} data-testid="bidding-header-west">West{dealerIndicator('West')}</th></tr></thead><tbody data-testid="bidding-table-body">{rows}</tbody></table> );
+  return (
+    <table className="bidding-table" data-testid="bidding-table">
+      <thead>
+        <tr>
+          <th className={players[nextPlayerIndex] === 'North' ? 'current-player' : ''} data-testid="bidding-header-north">
+            North{dealerIndicator('North')}
+          </th>
+          <th className={players[nextPlayerIndex] === 'East' ? 'current-player' : ''} data-testid="bidding-header-east">
+            East{dealerIndicator('East')}
+          </th>
+          <th className={players[nextPlayerIndex] === 'South' ? 'current-player' : ''} data-testid="bidding-header-south">
+            South{dealerIndicator('South')}
+          </th>
+          <th className={players[nextPlayerIndex] === 'West' ? 'current-player' : ''} data-testid="bidding-header-west">
+            West{dealerIndicator('West')}
+          </th>
+        </tr>
+      </thead>
+      <tbody data-testid="bidding-table-body">{rows}</tbody>
+    </table>
+  );
 }
 // Note: BiddingBox component migrated to components/bridge/BiddingBox.jsx
 
@@ -197,6 +249,10 @@ function App() {
   // Ref to prevent concurrent AI bids from racing
   const isAiBiddingInProgress = useRef(false);
 
+  // Ref to track if we've triggered initial AI bidding after initialization
+  // Prevents duplicate triggers while avoiding infinite loops
+  const hasTriggeredInitialBid = useRef(false);
+
   const resetAuction = (dealData, skipInitialAiBidding = false) => {
     setInitialDeal(dealData);
     setHand(dealData.hand);
@@ -221,8 +277,9 @@ function App() {
 
     setAuction([]);
 
-    // Reset the AI bidding guard when auction is reset
+    // Reset the AI bidding guards when auction is reset
     isAiBiddingInProgress.current = false;
+    hasTriggeredInitialBid.current = false;
     // NOTE: nextPlayerIndex is now derived from dealer + auction.length
     // No need to manually set it - it will auto-calculate on next render
 
@@ -264,8 +321,13 @@ function App() {
       }
       const data = await response.json();
       console.log('✅ Received all hands data:', data);
+      console.log('🔍 Detailed check - North hand length:', data.hands?.North?.hand?.length);
+      console.log('🔍 Detailed check - East hand length:', data.hands?.East?.hand?.length);
+      console.log('🔍 Detailed check - South hand length:', data.hands?.South?.hand?.length);
+      console.log('🔍 Detailed check - West hand length:', data.hands?.West?.hand?.length);
+      console.log('🔍 Sample North card:', data.hands?.North?.hand?.[0]);
       setAllHands(data.hands);
-      console.log('✅ allHands state updated with:', data.hands);
+      console.log('✅ allHands state scheduled for update with:', data.hands);
     } catch (err) {
       console.error('❌ Error fetching all hands:', err);
       setError("Could not fetch all hands from server.");
@@ -1350,18 +1412,34 @@ Please provide a detailed analysis of the auction and identify any bidding error
     const isAuctionOver = (bids) => {
       if (bids.length < 3) return false;
       const nonPassBids = bids.filter(b => b.bid !== 'Pass');
+
+      // All four players passed out (no one bid)
       if (bids.length >= 4 && nonPassBids.length === 0) return true;
+
+      // No bids yet
       if (nonPassBids.length === 0) return false;
+
+      // Three consecutive passes after at least one non-Pass bid
       return bids.slice(-3).map(b => b.bid).join(',') === 'Pass,Pass,Pass';
     };
 
+    console.log('🤖 AI BIDDING USEEFFECT TRIGGERED:', {
+      isInitializing,
+      isAiBidding,
+      auctionLength: auction.length,
+      dealer,
+      gamePhase
+    });
+
     // Don't start AI bidding during initialization
     if (isInitializing) {
+      console.log('⏸️ AI bidding blocked: isInitializing = true');
       return;
     }
 
     // Check if auction is over
     if (isAuctionOver(auction)) {
+      console.log('🏁 Auction is over');
       if (isAiBidding) {
         setIsAiBidding(false);
       }
@@ -1370,9 +1448,11 @@ Please provide a detailed analysis of the auction and identify any bidding error
 
     // Determine whose turn it is
     const currentPlayer = calculateExpectedBidder(dealer, auction.length);
+    console.log('👤 Current player calculated:', currentPlayer);
 
     // If it's South's turn, stop AI bidding
     if (currentPlayer === 'South') {
+      console.log('👤 South\'s turn - stopping AI bidding');
       if (isAiBidding) {
         setIsAiBidding(false);
       }
@@ -1380,28 +1460,37 @@ Please provide a detailed analysis of the auction and identify any bidding error
     }
 
     // It's an AI player's turn (North/East/West)
+    console.log('🤖 AI player turn:', currentPlayer, '| isAiBidding:', isAiBidding);
+
     // If AI bidding is enabled, make the bid
     if (isAiBidding) {
       // Prevent concurrent AI bids using a ref guard
       if (isAiBiddingInProgress.current) {
+        console.log('⏸️ AI bid already in progress - skipping');
         return;
       }
 
+      console.log('✅ Starting AI turn for:', currentPlayer);
+
       const runAiTurn = async () => {
         isAiBiddingInProgress.current = true;
+        console.log('⏱️ Waiting 500ms before AI bid...');
 
         await new Promise(resolve => setTimeout(resolve, 500));
         try {
           // Calculate current player from auction length and dealer
           const currentPlayer = calculateExpectedBidder(dealer, auction.length);
+          console.log('🎯 AI making bid for:', currentPlayer);
 
           // Double-check it's not South's turn
           if (currentPlayer === 'South') {
+            console.log('❌ Safety check failed - South\'s turn detected');
             setIsAiBidding(false);
             isAiBiddingInProgress.current = false;
             return;
           }
 
+          console.log('📡 Fetching AI bid from server...');
           const response = await fetch(`${API_URL}/api/get-next-bid`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
@@ -1412,40 +1501,53 @@ Please provide a detailed analysis of the auction and identify any bidding error
           });
           if (!response.ok) throw new Error("AI failed to get bid.");
           const data = await response.json();
+          console.log('✅ AI bid received:', data);
+
+          // CRITICAL: Release guard BEFORE updating auction
+          // This prevents race condition where flushSync triggers useEffect before guard is released
+          isAiBiddingInProgress.current = false;
+          console.log('🔓 AI bid guard released (before auction update)');
 
           // Update auction with flushSync to force immediate render
           // This ensures each AI bid appears before the next one starts
           flushSync(() => {
             setAuction(prevAuction => [...prevAuction, data]);
           });
+          console.log('✅ Auction updated with AI bid');
         } catch (err) {
+          console.error('❌ AI bidding error:', err);
           setError("AI bidding failed. Is the server running?");
           setIsAiBidding(false);
-        } finally {
-          // Always reset the guard when bid completes (success or failure)
+          // Release guard on error
           isAiBiddingInProgress.current = false;
+          console.log('🔓 AI bid guard released (error path)');
         }
       };
       runAiTurn();
+    } else {
+      console.log('❌ AI bidding NOT enabled for', currentPlayer, '- waiting for isAiBidding to be true');
     }
     // Note: If isAiBidding is false but it's an AI player's turn, we do nothing
     // This allows the user or other code to manually trigger AI bidding by calling setIsAiBidding(true)
   }, [auction, nextPlayerIndex, isAiBidding, players, isInitializing, dealer, calculateExpectedBidder]);
 
   // Trigger AI bidding after initialization completes (if dealer is not South)
+  // Uses ref to prevent duplicate triggers and avoid infinite loops
   useEffect(() => {
-    if (!isInitializing && gamePhase === 'bidding' && auction.length === 0) {
+    if (!isInitializing && gamePhase === 'bidding' && auction.length === 0 && !hasTriggeredInitialBid.current) {
       const currentPlayer = players[nextPlayerIndex];
       console.log('🎬 Post-initialization check:', {
         isInitializing,
         currentPlayer,
         nextPlayerIndex,
-        shouldStartAI: currentPlayer !== 'South'
+        shouldStartAI: currentPlayer !== 'South',
+        hasTriggered: hasTriggeredInitialBid.current
       });
 
       // Only start AI if it's not South's turn
       if (currentPlayer !== 'South') {
         console.log('▶️ Starting AI bidding after initialization');
+        hasTriggeredInitialBid.current = true;  // Set ref BEFORE state to prevent race
         setIsAiBidding(true);
       }
     }
@@ -1760,7 +1862,9 @@ Please provide a detailed analysis of the auction and identify any bidding error
     runAiPlay();
   }, [gamePhase, isPlayingCard, vulnerability]);
 
-  const shouldShowHands = showHandsThisDeal || alwaysShowHands;
+  // CRITICAL FIX: Only show all hands during bidding phase, not during play
+  // When alwaysShowHands is true, it should only apply to bidding, not card play
+  const shouldShowHands = gamePhase === 'bidding' && (showHandsThisDeal || alwaysShowHands);
 
   // Debug logging for card display
   useEffect(() => {
@@ -1769,7 +1873,14 @@ Please provide a detailed analysis of the auction and identify any bidding error
       showHandsThisDeal,
       alwaysShowHands,
       allHandsExists: !!allHands,
-      allHandsKeys: allHands ? Object.keys(allHands) : null
+      allHandsKeys: allHands ? Object.keys(allHands) : null,
+      northHand: allHands?.North?.hand?.length || 0,
+      eastHand: allHands?.East?.hand?.length || 0,
+      southHand: allHands?.South?.hand?.length || 0,
+      westHand: allHands?.West?.hand?.length || 0,
+      // Detailed structure check
+      northStructure: allHands?.North ? Object.keys(allHands.North) : null,
+      firstNorthCard: allHands?.North?.hand?.[0]
     });
   }, [shouldShowHands, showHandsThisDeal, alwaysShowHands, allHands]);
 

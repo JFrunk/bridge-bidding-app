@@ -62,7 +62,10 @@ Documentation for specific features and systems within the application.
 - **[ENHANCED_EXPLANATIONS.md](features/ENHANCED_EXPLANATIONS.md)** - Enhanced explanation features
 
 #### UI/UX Features
-- **[RESPONSIVE_DESIGN.md](features/RESPONSIVE_DESIGN.md)** - Responsive design implementation (NEW)
+- **[RESPONSIVE_DESIGN.md](features/RESPONSIVE_DESIGN.md)** - Responsive design implementation
+
+#### Error Logging & Monitoring
+- **[ERROR_LOGGING_SYSTEM.md](features/ERROR_LOGGING_SYSTEM.md)** - Automated error logging for bidding/play (NEW - 2025-11-02)
 
 ### 📚 [guides/](guides/)
 User guides, testing procedures, and how-to documentation.

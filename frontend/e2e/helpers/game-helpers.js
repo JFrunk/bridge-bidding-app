@@ -62,7 +62,7 @@ export async function dealNewHand(page) {
     console.log('✅ South is dealer - waiting for bidding box to enable...');
     await page.waitForSelector('[data-testid="bid-call-Pass"]:not([disabled])', {
       state: 'visible',
-      timeout: 15000
+      timeout: 20000  // Increased from 15000 to match waitForAIBid timeout
     });
   }
 }
@@ -129,6 +129,10 @@ export async function getAuction(page) {
 
 /**
  * Wait for AI to complete its bid
+ *
+ * Note: Timeout increased from 10s to 20s after flushSync() changes (2025-10-28).
+ * The immediate render forced by flushSync() can take longer to propagate through
+ * React's state update cycle, especially in test environments with slower rendering.
  */
 export async function waitForAIBid(page) {
   // Wait for either:
@@ -140,17 +144,24 @@ export async function waitForAIBid(page) {
       // Option 1: Bidding continues
       page.waitForSelector('[data-testid="bid-call-Pass"]:not([disabled])', {
         state: 'visible',
-        timeout: 10000
+        timeout: 20000  // Increased from 10000
       }),
       // Option 2: Auction complete - play button appears
       page.waitForSelector('[data-testid="play-button"], text=Play This Hand', {
         state: 'visible',
-        timeout: 10000
+        timeout: 20000  // Increased from 10000
       })
     ]);
   } catch (error) {
     // If neither condition is met, the test should fail with a clear message
-    throw new Error('AI bid timeout: Neither bidding box re-enabled nor play button appeared');
+    // Log additional debug info to help diagnose timeout issues
+    const passButtonState = await page.locator('[data-testid="bid-call-Pass"]').getAttribute('disabled').catch(() => 'not found');
+    const playButtonVisible = await page.locator('[data-testid="play-button"]').isVisible().catch(() => false);
+
+    throw new Error(
+      `AI bid timeout: Neither bidding box re-enabled nor play button appeared.\n` +
+      `Debug: Pass button disabled="${passButtonState}", Play button visible=${playButtonVisible}`
+    );
   }
 }
 

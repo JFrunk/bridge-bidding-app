@@ -6,6 +6,36 @@
 
 **MANDATORY**: Before implementing any fix, complete this systematic analysis:
 
+#### 🔍 Step 0: Check Error Logs (1 minute)
+
+**ALWAYS check error logs FIRST before investigating any bug:**
+
+```bash
+cd backend
+python3 analyze_errors.py                    # Quick summary
+python3 analyze_errors.py --recent 10        # Recent errors with details
+python3 analyze_errors.py --patterns         # Detect recurring issues
+python3 analyze_errors.py --category bidding_logic  # Filter by subsystem
+```
+
+**Error logs provide:**
+- ✅ Complete stack traces (no manual debugging needed)
+- ✅ Full context (auction state, hand data, user session)
+- ✅ Error patterns (recurring issues vs one-offs)
+- ✅ Error hashes (track if bug reappears after fix)
+- ✅ Timestamps (when bug started occurring)
+
+**Questions:**
+- [ ] Is this bug already in the error logs?
+- [ ] Is this a recurring issue (high frequency)?
+- [ ] What's the error hash (for tracking)?
+- [ ] What context was captured (auction, hand, etc.)?
+- [ ] When did it first appear (timestamp)?
+
+**Slash command:** `/analyze-errors` - Quick error analysis
+
+**See:** [ERROR_LOGGING_QUICKSTART.md](../ERROR_LOGGING_QUICKSTART.md), [docs/features/ERROR_LOGGING_SYSTEM.md](../docs/features/ERROR_LOGGING_SYSTEM.md)
+
 #### 🔍 Step 1: Identify & Search (2 minutes)
 ```bash
 # After finding root cause, immediately search for similar patterns
@@ -314,6 +344,7 @@ When Claude does systematic analysis unprompted:
 
 After each issue resolution, verify:
 
+- [ ] Error logs checked before starting (Step 0)
 - [ ] Root cause identified
 - [ ] Similar patterns searched
 - [ ] All affected components listed
@@ -321,6 +352,12 @@ After each issue resolution, verify:
 - [ ] Fix applied to all instances
 - [ ] Pattern documented to prevent recurrence
 - [ ] Tests added if applicable
+- [ ] **Verify fix in error logs** - Monitor error hash after deployment
+  ```bash
+  # After deploying fix, check that error hash stops appearing
+  python3 analyze_errors.py --patterns
+  # Look for the error hash - should not appear after fix timestamp
+  ```
 
 ---
 

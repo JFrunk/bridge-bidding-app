@@ -42,18 +42,41 @@ export function ContractHeader({ contract, tricksWon, auction, scoreData }) {
   // Calculate tricks for 13-block progress bar
   const tricksNeeded = level + 6;
   const declarerSide = (declarer === 'N' || declarer === 'S') ? 'NS' : 'EW';
-  const tricksWonBySide = declarerSide === 'NS'
-    ? (tricksWon.N || 0) + (tricksWon.S || 0)
-    : (tricksWon.E || 0) + (tricksWon.W || 0);
+
+  // CRITICAL: Simplified trick display logic
+  // Rule 1: Declarer fills LEFT → RIGHT
+  // Rule 2: Defender fills RIGHT → LEFT
+  // Rule 3: Player's tricks = GREEN (player is always NS/South)
+  // Rule 4: Opponent's tricks = RED
+  const playerIsNS = true; // Player always plays South (NS team)
+  const playerIsDeclarer = declarerSide === 'NS';
+
+  const tricksWonByPlayer = (tricksWon.N || 0) + (tricksWon.S || 0);
+  const tricksWonByOpponents = (tricksWon.E || 0) + (tricksWon.W || 0);
   const totalTricksPlayed = Object.values(tricksWon).reduce((sum, tricks) => sum + tricks, 0);
   const tricksRemaining = 13 - totalTricksPlayed;
-  const tricksLost = 13 - tricksWonBySide - tricksRemaining;
 
-  // Create 13 blocks array with state (won/remaining/lost)
+  // Create 13 blocks array with simplified logic
   const blocks = Array.from({ length: 13 }, (_, i) => {
-    if (i < tricksWonBySide) return 'won';
-    if (i >= 13 - tricksLost) return 'lost';
-    return 'remaining';
+    if (playerIsDeclarer) {
+      // Player is declarer: Player tricks LEFT→RIGHT (green), Opponent tricks RIGHT→LEFT (red)
+      if (i < tricksWonByPlayer) {
+        return { state: 'won', color: 'green' }; // Player trick (declarer)
+      } else if (i >= 13 - tricksWonByOpponents) {
+        return { state: 'lost', color: 'red' }; // Opponent trick (defender)
+      } else {
+        return { state: 'remaining', color: 'gray' };
+      }
+    } else {
+      // Opponent is declarer: Opponent tricks LEFT→RIGHT (red), Player tricks RIGHT→LEFT (green)
+      if (i < tricksWonByOpponents) {
+        return { state: 'lost', color: 'red' }; // Opponent trick (declarer)
+      } else if (i >= 13 - tricksWonByPlayer) {
+        return { state: 'won', color: 'green' }; // Player trick (defender)
+      } else {
+        return { state: 'remaining', color: 'gray' };
+      }
+    }
   });
 
   // Group auction into rounds (4 bids per round: N, E, S, W)
@@ -114,7 +137,7 @@ export function ContractHeader({ contract, tricksWon, auction, scoreData }) {
 
           {/* 13 Blocks with vertical dividers */}
           <div className="flex flex-row h-12 border-2 border-gray-600 rounded-md overflow-hidden">
-            {blocks.map((state, index) => (
+            {blocks.map((block, index) => (
               <div
                 key={index}
                 className={cn(
@@ -122,30 +145,49 @@ export function ContractHeader({ contract, tricksWon, auction, scoreData }) {
                   "border-r border-gray-600 last:border-r-0",
                   // Bold border at trick needed line
                   index === tricksNeeded - 1 && "border-r-4 border-r-white",
-                  // Colors based on state
-                  state === 'won' && "bg-success",
-                  state === 'remaining' && "bg-bg-tertiary",
-                  state === 'lost' && "bg-danger"
+                  // Colors based on simplified rules
+                  block.state === 'won' && "bg-success",
+                  block.state === 'remaining' && "bg-bg-tertiary",
+                  block.state === 'lost' && "bg-danger"
                 )}
-                aria-label={`Trick ${index + 1}: ${state}`}
+                aria-label={`Trick ${index + 1}: ${block.state}`}
               />
             ))}
           </div>
 
           {/* Labels with counts - positioned closer to bar */}
           <div className="flex flex-row justify-between text-sm text-gray-300 mt-1">
-            <div className="flex flex-row items-center gap-2">
-              <span className="font-bold">Won</span>
-              <span className="text-base text-white">{tricksWonBySide}</span>
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <span className="font-bold">Remaining</span>
-              <span className="text-base text-white">{tricksRemaining}</span>
-            </div>
-            <div className="flex flex-row items-center gap-2">
-              <span className="font-bold">Lost</span>
-              <span className="text-base text-white">{tricksLost}</span>
-            </div>
+            {playerIsDeclarer ? (
+              <>
+                <div className="flex flex-row items-center gap-2">
+                  <span className="font-bold text-success">You (Declarer)</span>
+                  <span className="text-base text-white">{tricksWonByPlayer}</span>
+                </div>
+                <div className="flex flex-row items-center gap-2">
+                  <span className="font-bold">Remaining</span>
+                  <span className="text-base text-white">{tricksRemaining}</span>
+                </div>
+                <div className="flex flex-row items-center gap-2">
+                  <span className="font-bold text-danger">Opponents (Defense)</span>
+                  <span className="text-base text-white">{tricksWonByOpponents}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-row items-center gap-2">
+                  <span className="font-bold text-danger">Opponents (Declarer)</span>
+                  <span className="text-base text-white">{tricksWonByOpponents}</span>
+                </div>
+                <div className="flex flex-row items-center gap-2">
+                  <span className="font-bold">Remaining</span>
+                  <span className="text-base text-white">{tricksRemaining}</span>
+                </div>
+                <div className="flex flex-row items-center gap-2">
+                  <span className="font-bold text-success">You (Defense)</span>
+                  <span className="text-base text-white">{tricksWonByPlayer}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

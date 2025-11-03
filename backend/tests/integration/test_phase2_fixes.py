@@ -19,7 +19,7 @@ from engine.responses import ResponseModule
 from engine.rebids import RebidModule
 from engine.overcalls import OvercallModule
 from engine.advancer_bids import AdvancerBidsModule
-from engine.ai.feature_extractor import FeatureExtractor
+from engine.ai.feature_extractor import extract_features
 
 def create_hand(spades, hearts, diamonds, clubs, hcp):
     """Helper to create a hand from suit lengths and HCP."""

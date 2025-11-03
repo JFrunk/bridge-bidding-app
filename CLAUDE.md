@@ -66,6 +66,43 @@ npm run test:e2e:codegen          # Record actions → auto-generate test code
 ./test_all.sh --skip-e2e          # Skips E2E tests (1 minute)
 ```
 
+### Error Analysis (Automated Bug Detection)
+
+**⚠️ ALWAYS check error logs FIRST when investigating bugs**
+
+```bash
+# From backend/ directory
+python3 analyze_errors.py         # Summary of all errors
+python3 analyze_errors.py --recent 10      # Last 10 errors with details
+python3 analyze_errors.py --patterns       # Detect recurring issues
+python3 analyze_errors.py --category bidding_logic  # Filter by category
+```
+
+**Slash command:** `/analyze-errors` - Quick error analysis workflow
+
+**When to Use:**
+- **FIRST STEP** when investigating any bug report
+- Daily health check for new errors
+- After making changes to bidding/play logic
+- When debugging user-reported issues
+- To find recurring problems
+- Before starting manual debugging
+
+**Why Check Error Logs First:**
+- ✅ Instant stack traces (no manual debugging needed)
+- ✅ Full context captured (auction state, hand data, user session)
+- ✅ Error patterns detected (recurring vs one-off issues)
+- ✅ Error hashes for tracking (verify fixes work)
+- ✅ Timestamps (know when bug started)
+
+**Debugging Workflow:**
+1. **Check error logs** - Run `python3 analyze_errors.py --recent 10`
+2. **If logged:** Use stack trace and context to implement fix
+3. **If not logged:** Reproduce bug, then check logs again (may appear during reproduction)
+4. **After fix:** Monitor error hash to verify bug stays fixed
+
+**See:** [ERROR_LOGGING_QUICKSTART.md](ERROR_LOGGING_QUICKSTART.md), [docs/features/ERROR_LOGGING_SYSTEM.md](docs/features/ERROR_LOGGING_SYSTEM.md)
+
 ---
 
 ## Quality Assurance Protocols

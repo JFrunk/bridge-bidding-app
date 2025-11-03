@@ -1,5 +1,34 @@
 # Claude Quick Start - Systematic Debugging
 
+## When You Get a Bug Report...
+
+### FIRST: Check Error Logs (30 seconds)
+
+Before investigating manually, check if the bug was already logged:
+
+```bash
+cd backend
+python3 analyze_errors.py                    # Quick summary
+python3 analyze_errors.py --recent 10        # Recent errors with details
+python3 analyze_errors.py --patterns         # Detect recurring issues
+python3 analyze_errors.py --category bidding_logic  # Filter by subsystem
+```
+
+**Why check error logs first:**
+- ✅ Instant stack traces (no debugging needed)
+- ✅ Full context captured (auction, hand, session)
+- ✅ See if it's recurring (error patterns)
+- ✅ Track with error hash
+- ✅ Know when it started (timestamp)
+
+**If error is logged:** Skip manual debugging, go straight to fix implementation using stack trace and context.
+
+**If error is NOT logged:** Proceed with manual investigation below.
+
+**Slash command:** `/analyze-errors`
+
+---
+
 ## When You Find a Bug's Root Cause...
 
 ### STOP! Before implementing the fix:

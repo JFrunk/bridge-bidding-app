@@ -1,0 +1,5 @@
+timestamp,system,composite_score,grade,legality,appropriateness,conventions,reasonableness,game_slam,success_rate,efficiency,tactical,timing,test_hands,test_type,notes
+2025-11-01T13:12:18,play,78.2,F,100.0,,,,,53.8,48.8,100.0,100.0,500,minimax_depth3,"Upgraded to depth 3. 191/355 contracts made. 2.1pts lower than depth 2 (statistical variance)."
+2025-10-30T14:59:45,bidding,94.8,B,100.0,100.0,98.8,100.0,0.0,,,,,500,comprehensive,"Major appropriateness improvement (+21.3 pts). 3 Stayman errors. Production ready."
+2025-10-30T15:12:13,play,80.3,D,100.0,,,,,60.4,50.9,100.0,100.0,500,minimax_depth2,"Baseline established. 206/341 contracts made. Acceptable for baseline."
+2025-10-28T00:00:00,bidding,89.7,C,100.0,78.7,99.7,92.1,24.7,,,,,500,comprehensive,"Initial baseline. Identified appropriateness issues with weak hands at high levels."

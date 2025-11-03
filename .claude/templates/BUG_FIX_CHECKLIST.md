@@ -7,8 +7,19 @@
 
 ## Investigation
 
+- [ ] **CHECK ERROR LOGS FIRST** - Run error analysis before investigating
+  ```bash
+  cd backend
+  python3 analyze_errors.py                    # Quick summary
+  python3 analyze_errors.py --recent 10        # Recent errors with details
+  python3 analyze_errors.py --patterns         # Detect recurring issues
+  python3 analyze_errors.py --category bidding_logic  # Filter by type
+  ```
+  - See if the bug was already logged with stack trace and context
+  - Use error hash to track recurring issues
+  - Check error patterns to identify systemic problems
 - [ ] Reproduce the bug reliably
-- [ ] Identify root cause
+- [ ] Identify root cause (may already be in error logs)
 - [ ] Document symptoms and behavior
 - [ ] Check if other areas are affected
 - [ ] Search for similar issues in codebase

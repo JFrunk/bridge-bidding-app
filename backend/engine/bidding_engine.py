@@ -67,8 +67,21 @@ class BiddingEngine:
         Returns:
             Tuple of (bid, explanation_string)
         """
+        import time
+
+        # Time feature extraction
+        t0 = time.time()
         features = extract_features(hand, auction_history, my_position, vulnerability)
+        t1 = time.time()
+        feature_time = (t1 - t0) * 1000
+
+        # Time module selection
         module_name = select_bidding_module(features)
+        t2 = time.time()
+        module_selection_time = (t2 - t1) * 1000
+
+        print(f"  ├─ Feature extraction: {feature_time:.1f}ms")
+        print(f"  ├─ Module selection: {module_selection_time:.1f}ms → {module_name}")
 
         if module_name == 'pass_by_default':
             return ("Pass", "No bid found by any module.")
@@ -85,7 +98,13 @@ class BiddingEngine:
             )
             return ("Pass", "No appropriate bid found.")
 
+        # Time module evaluation
+        t3 = time.time()
         result = specialist.evaluate(hand, features)
+        t4 = time.time()
+        evaluation_time = (t4 - t3) * 1000
+        print(f"  ├─ Module evaluation ({module_name}): {evaluation_time:.1f}ms")
+
         if result:
             bid_to_check = result[0]
             explanation = result[1]
@@ -95,9 +114,13 @@ class BiddingEngine:
             # ADR-0002 Phase 2: MANDATORY validation pipeline
             # This CANNOT be bypassed - all bids must pass validation
             # Metadata can request bypassing specific validators for artificial bids
+            t5 = time.time()
             is_valid, validation_error = self.validation_pipeline.validate(
                 bid_to_check, hand, features, auction_history, metadata
             )
+            t6 = time.time()
+            validation_time = (t6 - t5) * 1000
+            print(f"  ├─ Validation: {validation_time:.1f}ms")
 
             if not is_valid:
                 # Validation failed - graceful fallback to Pass
@@ -110,9 +133,13 @@ class BiddingEngine:
 
             # ADR-0002 Phase 3: Sanity check layer
             # Final safety net to prevent impossible contracts
+            t7 = time.time()
             should_bid, final_bid, sanity_reason = self.sanity_checker.check(
                 bid_to_check, hand, features, auction_history
             )
+            t8 = time.time()
+            sanity_time = (t8 - t7) * 1000
+            print(f"  └─ Sanity check: {sanity_time:.1f}ms")
 
             if not should_bid:
                 # Sanity check prevented bid - use fallback

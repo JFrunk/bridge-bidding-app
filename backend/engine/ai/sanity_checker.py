@@ -73,6 +73,11 @@ class SanityChecker:
         if bid in ["X", "XX"]:
             return True, bid, None
 
+        # Check if this is a Blackwood/control bid sequence - allow slam bidding
+        if self._is_blackwood_sequence(auction):
+            # In Blackwood sequences, allow all bids (the convention module handles appropriateness)
+            return True, bid, None
+
         # Extract bid level
         bid_level = int(bid[0])
 
@@ -145,12 +150,13 @@ class SanityChecker:
 
         Conservative estimates to avoid overbidding.
         """
-        auction_features = features.get('auction_features', {})
-        opener_relationship = auction_features.get('opener_relationship')
+        # Support both flat and nested feature formats
+        auction_features = features.get('auction_features', features)
+        opener_relationship = auction_features.get('opener_relationship') or auction_features.get('opener')
         partner_bids = auction_features.get('partner_bids', [])
 
-        # If partner opened
-        if opener_relationship == 'Partner':
+        # If partner opened (case-insensitive)
+        if opener_relationship and opener_relationship.lower() == 'partner':
             # Find partner's opening bid
             for bid in auction:
                 if bid == "Pass":
@@ -165,8 +171,8 @@ class SanityChecker:
                     return 22  # Strong 2♣
             return 13  # Default opening strength
 
-        # If I opened and partner responded
-        if opener_relationship == 'Me' and len(partner_bids) > 0:
+        # If I opened and partner responded (case-insensitive)
+        if opener_relationship and opener_relationship.lower() == 'me' and len(partner_bids) > 0:
             # Get partner's non-pass bids
             partner_nonpass_bids = [b for b in partner_bids if b != 'Pass']
 
@@ -211,8 +217,8 @@ class SanityChecker:
             # Standard 1-level response
             return 6  # Minimum response
 
-        # If partner overcalled
-        if opener_relationship == 'Opponent' and len(auction) >= 2:
+        # If partner overcalled (case-insensitive)
+        if opener_relationship and opener_relationship.lower() == 'opponent' and len(auction) >= 2:
             return 8  # Overcall minimum
 
         # Partner hasn't bid yet or passed
@@ -266,9 +272,36 @@ class SanityChecker:
                 return True
         return False
 
+    def _is_blackwood_sequence(self, auction: List) -> bool:
+        """
+        Check if this is a Blackwood or control-bid sequence.
+
+        If 4NT or 5NT appears in the auction (and isn't an opening or overcall),
+        this is likely Blackwood asking for aces/kings.
+        """
+        for i, bid in enumerate(auction):
+            # Check for 4NT Blackwood (not as opening, and after game-level bidding)
+            if bid == "4NT" and i > 0:
+                # 4NT after some bidding is Blackwood
+                return True
+            # Check for 5NT (king ask after Blackwood)
+            if bid == "5NT" and i > 0:
+                return True
+            # Check for 5-level ace responses (5♣, 5♦, 5♥, 5♠)
+            if i > 0 and len(bid) >= 2 and bid[0] == '5' and bid != '5NT':
+                # Check if previous bid was 4NT
+                prev_bids = [b for b in auction[:i] if b != 'Pass']
+                if prev_bids and prev_bids[-1] == '4NT':
+                    return True
+        return False
+
     def _is_competitive(self, features: Dict) -> bool:
         """Check if auction is competitive (opponents bidding)."""
-        return features.get('competitive_auction', False)
+        # Support both 'competitive_auction' and nested 'is_contested'
+        if 'competitive_auction' in features:
+            return features['competitive_auction']
+        auction_features = features.get('auction_features', {})
+        return auction_features.get('is_contested', False)
 
     def disable(self):
         """Disable sanity checking (for testing only)."""

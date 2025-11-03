@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-10-31T19:24:36.532877",
+  "scores": {
+    "ai_type": "minimax",
+    "depth": 2,
+    "total_hands": 100,
+    "total_contracts": 78,
+    "contracts_made": 46,
+    "contracts_failed": 32,
+    "overtricks": 83,
+    "undertricks": 61,
+    "scores": {
+      "legality": 100.0,
+      "success_rate": 59.0,
+      "efficiency": 52.8,
+      "tactical": 100.0,
+      "timing": 100,
+      "composite": 80.3
+    },
+    "error_counts": {
+      "legality": 0,
+      "tactical": 0,
+      "strategic": 0,
+      "defense": 0,
+      "declarer": 0
+    },
+    "timing": {
+      "avg_time_per_hand": 0.0,
+      "min_time": 0.0,
+      "max_time": 0.0
+    },
+    "grade": "D (Poor)"
+  },
+  "all_errors": {
+    "legality": [],
+    "tactical": [],
+    "strategic": [],
+    "defense": [],
+    "declarer": []
+  }
+}

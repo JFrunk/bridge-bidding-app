@@ -48,7 +48,7 @@ def generate_random_hand() -> Hand:
 class PlayQualityScorer:
     """Comprehensive play quality testing."""
 
-    def __init__(self, num_hands: int = 500, ai_type: str = 'minimax', depth: int = 2):
+    def __init__(self, num_hands: int = 500, ai_type: str = 'minimax', depth: int = 3):
         self.num_hands = num_hands
         self.ai_type = ai_type
         self.depth = depth
@@ -445,7 +445,7 @@ def main():
     parser.add_argument('--fast', action='store_true', help='Fast mode (100 hands)')
     parser.add_argument('--ai', type=str, default='minimax', choices=['simple', 'minimax', 'dds'],
                        help='AI type to test (default: minimax)')
-    parser.add_argument('--depth', type=int, default=2, help='Minimax depth (default: 2, for 8/10 rating use 2-3)')
+    parser.add_argument('--depth', type=int, default=3, help='Minimax depth (default: 3, upgraded 2025-10-30)')
     parser.add_argument('--output', type=str, help='Output JSON file path')
 
     args = parser.parse_args()
