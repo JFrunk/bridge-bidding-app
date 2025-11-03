@@ -46,11 +46,14 @@ export function VerticalPlayableCard({ card, onClick, disabled = false, classNam
         className
       )}
       onClick={!disabled ? onClick : undefined}
-      onTouchEnd={!disabled ? (e) => {
-        // Prevent ghost clicks on mobile
+      onTouchEnd={(e) => {
+        // CRITICAL: Always handle touch events to prevent stuck :active state
+        // Even on disabled cards, we need to complete the touch event
         e.preventDefault();
-        onClick?.();
-      } : undefined}
+        if (!disabled && onClick) {
+          onClick();
+        }
+      }}
       role={isClickable ? "button" : undefined}
       aria-label={`${displayRank} of ${suitName}`}
       tabIndex={isClickable ? 0 : undefined}

@@ -165,6 +165,40 @@ function shouldShowHand(position, dummyPosition, declarerPosition, userIsDummy, 
 }
 
 /**
+ * CRITICAL: Determine if a card is legal to play based on follow-suit rules
+ *
+ * Bridge Follow-Suit Rules:
+ * 1. If first card in trick, any card is legal
+ * 2. If trick has cards, must follow led suit if able
+ * 3. If no cards in led suit, any card is legal (discard)
+ *
+ * @param {Object} card - Card to check {rank, suit}
+ * @param {Array} hand - Player's current hand
+ * @param {Array} currentTrick - Current trick cards [{card, player}, ...]
+ * @returns {boolean} - Is this card legal to play?
+ */
+function isCardLegalToPlay(card, hand, currentTrick) {
+  // Rule 1: First card in trick - any card is legal
+  if (!currentTrick || currentTrick.length === 0) {
+    return true;
+  }
+
+  // Rule 2: Determine led suit (first card in trick)
+  const ledSuit = currentTrick[0].card.suit;
+
+  // Rule 3: Check if player has any cards in led suit
+  const hasLedSuit = hand.some(c => c.suit === ledSuit);
+
+  // If player has led suit, they must play it
+  if (hasLedSuit) {
+    return card.suit === ledSuit;
+  }
+
+  // If player has no led suit, any card is legal
+  return true;
+}
+
+/**
  * Main play table showing 4 positions and current trick
  */
 export function PlayTable({
@@ -261,14 +295,26 @@ export function PlayTable({
                 const suitCards = sortCards(hand.filter(card => card.suit === suit));
                 return (
                   <div key={suit} className="suit-group">
-                    {suitCards.map((card, index) => (
-                      <PlayableCard
-                        key={`${suit}-${index}`}
-                        card={card}
-                        onClick={dummyPosition === 'N' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
-                        disabled={dummyPosition === 'N' ? (userIsDeclarer ? !isDummyTurn : true) : !isDeclarerTurn}
-                      />
-                    ))}
+                    {suitCards.map((card, index) => {
+                      // CRITICAL: Determine if this specific card is legal to play
+                      const isMyTurn = dummyPosition === 'N' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
+                      const isLegalCard = isCardLegalToPlay(card, hand, current_trick);
+                      const isDisabled = !isMyTurn || !isLegalCard;
+
+                      // CRITICAL: Use unique key across ALL cards (not just within suit)
+                      // Bug: Using suit-index causes React to reuse state for same index across hands
+                      // Fix: Include rank to make key truly unique per card
+                      const cardKey = `north-${card.rank}-${card.suit}`;
+
+                      return (
+                        <PlayableCard
+                          key={cardKey}
+                          card={card}
+                          onClick={dummyPosition === 'N' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
+                          disabled={isDisabled}
+                        />
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -309,14 +355,24 @@ export function PlayTable({
                 const suitCards = sortCards(hand.filter(card => card.suit === suit));
                 return (
                   <div key={suit} className="suit-group">
-                    {suitCards.map((card, index) => (
-                      <VerticalPlayableCard
-                        key={`${suit}-${index}`}
-                        card={card}
-                        onClick={dummyPosition === 'W' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
-                        disabled={dummyPosition === 'W' ? (userIsDeclarer ? !isDummyTurn : true) : !isDeclarerTurn}
-                      />
-                    ))}
+                    {suitCards.map((card, index) => {
+                      // CRITICAL: Determine if this specific card is legal to play
+                      const isMyTurn = dummyPosition === 'W' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
+                      const isLegalCard = isCardLegalToPlay(card, hand, current_trick);
+                      const isDisabled = !isMyTurn || !isLegalCard;
+
+                      // CRITICAL: Use unique key per card
+                      const cardKey = `west-${card.rank}-${card.suit}`;
+
+                      return (
+                        <VerticalPlayableCard
+                          key={cardKey}
+                          card={card}
+                          onClick={dummyPosition === 'W' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
+                          disabled={isDisabled}
+                        />
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -341,14 +397,24 @@ export function PlayTable({
                 const suitCards = sortCards(hand.filter(card => card.suit === suit));
                 return (
                   <div key={suit} className="suit-group">
-                    {suitCards.map((card, index) => (
-                      <VerticalPlayableCard
-                        key={`${suit}-${index}`}
-                        card={card}
-                        onClick={dummyPosition === 'E' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
-                        disabled={dummyPosition === 'E' ? (userIsDeclarer ? !isDummyTurn : true) : !isDeclarerTurn}
-                      />
-                    ))}
+                    {suitCards.map((card, index) => {
+                      // CRITICAL: Determine if this specific card is legal to play
+                      const isMyTurn = dummyPosition === 'E' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
+                      const isLegalCard = isCardLegalToPlay(card, hand, current_trick);
+                      const isDisabled = !isMyTurn || !isLegalCard;
+
+                      // CRITICAL: Use unique key per card
+                      const cardKey = `east-${card.rank}-${card.suit}`;
+
+                      return (
+                        <VerticalPlayableCard
+                          key={cardKey}
+                          card={card}
+                          onClick={dummyPosition === 'E' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
+                          disabled={isDisabled}
+                        />
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -369,14 +435,23 @@ export function PlayTable({
                 const suitCards = sortCards(userHand.filter(card => card.suit === suit));
                 return (
                   <div key={suit} className="suit-group">
-                    {suitCards.map((card, index) => (
-                      <PlayableCard
-                        key={`${suit}-${index}`}
-                        card={card}
-                        onClick={onCardPlay}
-                        disabled={!isUserTurn}
-                      />
-                    ))}
+                    {suitCards.map((card, index) => {
+                      // CRITICAL: Determine if this specific card is legal to play
+                      const isLegalCard = isCardLegalToPlay(card, userHand, current_trick);
+                      const isDisabled = !isUserTurn || !isLegalCard;
+
+                      // CRITICAL: Use unique key per card
+                      const cardKey = `south-${card.rank}-${card.suit}`;
+
+                      return (
+                        <PlayableCard
+                          key={cardKey}
+                          card={card}
+                          onClick={onCardPlay}
+                          disabled={isDisabled}
+                        />
+                      );
+                    })}
                   </div>
                 );
               })}

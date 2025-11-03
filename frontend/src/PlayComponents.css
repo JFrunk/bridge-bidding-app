@@ -621,6 +621,13 @@
   animation: pulse-clickable 1s infinite;
 }
 
+/* CRITICAL: Prevent :active state on disabled cards (prevents stuck highlight bug) */
+.playable-card:not(.clickable):active {
+  transform: none !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
 /* Mobile touch support - show clickable state immediately on touch */
 @media (hover: none) and (pointer: coarse) {
   .playable-card.clickable {
