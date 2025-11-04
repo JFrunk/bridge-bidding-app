@@ -141,8 +141,10 @@ class IntegratedPlayQualityScorer:
 
     def _simulate_bidding(self, hands: Dict[str, Hand], dealer: str, vulnerability: str) -> Optional[Contract]:
         """Simulate bidding to establish contract using BiddingEngine."""
-        positions = ['N', 'E', 'S', 'W']
-        dealer_idx = positions.index(dealer)
+        # PlayEngine uses single letters, BiddingEngine uses full names
+        short_positions = ['N', 'E', 'S', 'W']
+        long_positions = ['North', 'East', 'South', 'West']
+        dealer_idx = short_positions.index(dealer)
 
         auction_history = []
         consecutive_passes = 0
@@ -150,17 +152,20 @@ class IntegratedPlayQualityScorer:
 
         # Run auction
         while consecutive_passes < 3 and len(auction_history) < 50:
-            position = positions[current_idx % 4]
-            hand = hands[position]
+            short_pos = short_positions[current_idx % 4]
+            long_pos = long_positions[current_idx % 4]
+            hand = hands[short_pos]
 
             try:
                 bid, _ = self.bidding_engine.get_next_bid(
                     hand=hand,
                     auction_history=auction_history,
-                    my_position=position,
+                    my_position=long_pos,  # BiddingEngine expects full names
                     vulnerability=vulnerability
                 )
-            except:
+            except Exception as e:
+                # Log exception but continue with Pass
+                print(f"⚠️  Bidding error for {long_pos}: {e}")
                 bid = 'Pass'
 
             auction_history.append(bid)
