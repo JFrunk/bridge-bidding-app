@@ -114,16 +114,16 @@ class IntegratedPlayQualityScorer:
         """Test a single randomly generated hand through complete play."""
         self.results['total_hands'] += 1
 
-        # Generate 4 hands
+        # Generate 4 hands (use single-letter keys for DDS compatibility)
         hands = {
-            'North': generate_random_hand(),
-            'South': generate_random_hand(),
-            'East': generate_random_hand(),
-            'West': generate_random_hand()
+            'N': generate_random_hand(),
+            'S': generate_random_hand(),
+            'E': generate_random_hand(),
+            'W': generate_random_hand()
         }
 
         # Simulate bidding to get contract
-        dealer = random.choice(['North', 'South', 'East', 'West'])
+        dealer = random.choice(['N', 'S', 'E', 'W'])
         vulnerability = random.choice(['None', 'NS', 'EW', 'Both'])
 
         contract = self._simulate_bidding(hands, dealer, vulnerability)
