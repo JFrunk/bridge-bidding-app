@@ -200,14 +200,10 @@ class IntegratedPlayQualityScorer:
         errors = []
         cards_played_count = 0
 
-        # Position mapping (single letter to full name)
-        position_map = {'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West'}
-
         try:
             # Play all 13 tricks
             while not play_state.is_complete and cards_played_count < 52:
-                current_player_short = play_state.next_to_play
-                current_player = position_map.get(current_player_short, current_player_short)
+                current_player = play_state.next_to_play  # Already in single-letter format
                 current_hand = play_state.hands[current_player]
 
                 # Get AI's card choice
@@ -217,7 +213,7 @@ class IntegratedPlayQualityScorer:
                         print(f"   Warning: Player {current_player} has no cards left at hand {hand_number}, trick {len(play_state.trick_history) + 1}")
                         break
 
-                    # AI expects position string, not Hand object
+                    # AI expects single-letter position
                     card_to_play = self.ai.choose_card(play_state, current_player)
 
                     if card_to_play is None:
@@ -245,8 +241,8 @@ class IntegratedPlayQualityScorer:
                         else:
                             break  # Cannot continue
 
-                    # Play the card (use short position name for trick)
-                    play_state.current_trick.append((card_to_play, current_player_short))
+                    # Play the card (current_player is already in single-letter format)
+                    play_state.current_trick.append((card_to_play, current_player))
                     cards_played_count += 1
                     self.results['total_cards_played'] += 1
 
