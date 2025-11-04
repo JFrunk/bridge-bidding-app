@@ -141,7 +141,7 @@ class IntegratedPlayQualityScorer:
 
     def _simulate_bidding(self, hands: Dict[str, Hand], dealer: str, vulnerability: str) -> Optional[Contract]:
         """Simulate bidding to establish contract using BiddingEngine."""
-        positions = ['North', 'East', 'South', 'West']
+        positions = ['N', 'E', 'S', 'W']
         dealer_idx = positions.index(dealer)
 
         auction_history = []
