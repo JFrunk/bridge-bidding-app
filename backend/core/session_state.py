@@ -142,16 +142,36 @@ class SessionStateManager:
 
     Provides isolated state for each user session to prevent
     race conditions and data leakage between concurrent requests.
+
+    Now supports database persistence for session recovery after server restarts.
     """
 
-    def __init__(self):
+    def __init__(self, enable_db_persistence: bool = True):
         self._states: Dict[str, SessionState] = {}
         self._lock = threading.RLock()
         self._cleanup_threshold = 1000  # Clean up when we hit this many sessions
 
+        # Database persistence support
+        self._db_persistence_enabled = enable_db_persistence
+        self._db_storage = None
+
+        if enable_db_persistence:
+            try:
+                from core.db_session_storage import get_db_storage
+                self._db_storage = get_db_storage()
+                print("[SessionStateManager] Database persistence enabled")
+            except Exception as e:
+                print(f"[SessionStateManager] Warning: Database persistence failed to initialize: {e}")
+                self._db_persistence_enabled = False
+
     def get_or_create(self, session_id: str) -> SessionState:
         """
         Get existing state or create new one for session
+
+        Now with database fallback:
+        1. Check memory cache first (fast)
+        2. If not in memory, check database (session recovery)
+        3. If not in database, create new session
 
         Args:
             session_id: Unique session identifier
@@ -160,12 +180,40 @@ class SessionStateManager:
             SessionState instance for this session
         """
         with self._lock:
-            if session_id not in self._states:
-                self._states[session_id] = SessionState(session_id=session_id)
+            # Check memory first
+            if session_id in self._states:
+                state = self._states[session_id]
+                state.touch()
+                return state
 
-                # Periodic cleanup
-                if len(self._states) > self._cleanup_threshold:
-                    self._cleanup_old_sessions()
+            # Not in memory - try database recovery
+            if self._db_persistence_enabled and self._db_storage:
+                try:
+                    play_state = self._db_storage.load_session(session_id)
+                    if play_state:
+                        print(f"[SessionStateManager] Recovered session {session_id} from database")
+
+                        # Reconstruct SessionState from PlayState
+                        state = SessionState(session_id=session_id)
+                        state.play_state = play_state
+                        state.vulnerability = play_state.vulnerability
+                        state.ai_difficulty = getattr(play_state, 'ai_difficulty', DEFAULT_AI_DIFFICULTY)
+
+                        # Store in memory cache
+                        self._states[session_id] = state
+                        state.touch()
+                        return state
+                except Exception as e:
+                    print(f"[SessionStateManager] Error recovering session from DB: {e}")
+                    import traceback
+                    traceback.print_exc()
+
+            # Create new session
+            self._states[session_id] = SessionState(session_id=session_id)
+
+            # Periodic cleanup
+            if len(self._states) > self._cleanup_threshold:
+                self._cleanup_old_sessions()
 
             state = self._states[session_id]
             state.touch()
@@ -193,6 +241,35 @@ class SessionStateManager:
         """Get number of active sessions"""
         with self._lock:
             return len(self._states)
+
+    def save_to_database(self, session_id: str, user_id: Optional[int] = None) -> bool:
+        """
+        Persist session state to database.
+
+        Call this after significant state changes (e.g., card played, contract made).
+
+        Args:
+            session_id: Session to persist
+            user_id: Optional user ID for multi-user tracking
+
+        Returns:
+            True if saved successfully, False otherwise
+        """
+        if not self._db_persistence_enabled or not self._db_storage:
+            return False
+
+        with self._lock:
+            state = self._states.get(session_id)
+            if not state or not state.play_state:
+                return False
+
+            try:
+                return self._db_storage.save_session(session_id, state.play_state, user_id)
+            except Exception as e:
+                print(f"[SessionStateManager] Error saving session to DB: {e}")
+                import traceback
+                traceback.print_exc()
+                return False
 
     def _cleanup_old_sessions(self):
         """

@@ -1712,6 +1712,12 @@ def play_card():
             # Next player clockwise
             state.play_state.next_to_play = play_engine.next_player(position)
 
+        # Save state to database for crash recovery
+        session_id = get_session_id()
+        user_id = data.get('user_id')
+        if session_id:
+            state_manager.save_to_database(session_id, user_id)
+
         return jsonify({
             "legal": True,
             "trick_complete": trick_complete,
@@ -1773,15 +1779,18 @@ def get_ai_play():
         controllable = BridgeRulesEngine.get_controllable_positions(bridge_state)
         if position in controllable:
             # This is a user-controlled position - AI should not play
+            # NOTE: This is a defensive safeguard, not a normal error condition
+            # Frontend should detect user control before calling this endpoint
             user_role = BridgeRulesEngine.get_player_role('S', declarer, dummy)
             return jsonify({
-                "error": f"AI cannot play for position {position} - user controls this position",
+                "message": f"Position {position} is user-controlled",
                 "position": position,
                 "user_role": user_role.value,
                 "controllable_positions": list(controllable),
                 "dummy": dummy,
-                "declarer": declarer
-            }), 403  # 403 Forbidden
+                "declarer": declarer,
+                "reason": "User should play from this position, not AI"
+            }), 403  # 403 Forbidden - signals user turn, not an error
 
         # Validate using rules engine
         is_valid, error_msg = BridgeRulesEngine.validate_play_request(bridge_state, position)
@@ -1959,6 +1968,13 @@ def get_ai_play():
         else:
             # Next player clockwise
             state.play_state.next_to_play = play_engine.next_player(position)
+
+        # Save state to database for crash recovery
+        session_id = get_session_id()
+        data = request.get_json() if request.is_json else {}
+        user_id = data.get('user_id')
+        if session_id:
+            state_manager.save_to_database(session_id, user_id)
 
         return jsonify({
             "card": {"rank": card.rank, "suit": card.suit},
