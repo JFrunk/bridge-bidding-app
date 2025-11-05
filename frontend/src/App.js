@@ -225,6 +225,21 @@ function App() {
   // Loading state for initial system startup
   const [isInitializing, setIsInitializing] = useState(true);
 
+  // Helper function to check if auction is complete
+  const isAuctionOver = useCallback((bids) => {
+    if (bids.length < 3) return false;
+    const nonPassBids = bids.filter(b => b.bid !== 'Pass');
+
+    // All four players passed out (no one bid)
+    if (bids.length >= 4 && nonPassBids.length === 0) return true;
+
+    // No bids yet
+    if (nonPassBids.length === 0) return false;
+
+    // Three consecutive passes after at least one non-Pass bid
+    return bids.slice(-3).map(b => b.bid).join(',') === 'Pass,Pass,Pass';
+  }, []);
+
   // Show login on first visit if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -1409,20 +1424,6 @@ Please provide a detailed analysis of the auction and identify any bidding error
   const handleBidClick = (bidObject) => { setDisplayedMessage(`[${bidObject.bid}] ${bidObject.explanation}`); };
   
   useEffect(() => {
-    const isAuctionOver = (bids) => {
-      if (bids.length < 3) return false;
-      const nonPassBids = bids.filter(b => b.bid !== 'Pass');
-
-      // All four players passed out (no one bid)
-      if (bids.length >= 4 && nonPassBids.length === 0) return true;
-
-      // No bids yet
-      if (nonPassBids.length === 0) return false;
-
-      // Three consecutive passes after at least one non-Pass bid
-      return bids.slice(-3).map(b => b.bid).join(',') === 'Pass,Pass,Pass';
-    };
-
     console.log('🤖 AI BIDDING USEEFFECT TRIGGERED:', {
       isInitializing,
       isAiBidding,
@@ -1718,7 +1719,9 @@ Please provide a detailed analysis of the auction and identify any bidding error
           // If nextPlayer is N, E, or W, AI plays
         }
 
-        // If user should control this play, stop AI loop
+        // DEFENSIVE CHECK: If user should control this play, stop AI loop
+        // This prevents calling /api/get-ai-play for user-controlled positions
+        // Backend also validates as a safeguard (returns 403 if this check is bypassed)
         if (userShouldControl) {
           console.log('⏸️ STOPPING - User controls this play:', {
             nextPlayer,
@@ -1749,15 +1752,38 @@ Please provide a detailed analysis of the auction and identify any bidding error
         });
 
         if (!playResponse.ok) {
-          const errorData = await playResponse.json().catch(() => ({ error: 'Unknown error' }));
+          const responseData = await playResponse.json().catch(() => ({ error: 'Unknown error' }));
+
+          // 403 means user controls this position - this is a defensive safeguard, not an error
+          // Frontend should have already detected user control, but backend validates as well
+          if (playResponse.status === 403) {
+            console.log(`✋ User turn detected by backend: ${nextPlayer} is controlled by user`, {
+              position: nextPlayer,
+              controllablePositions: responseData.controllable_positions,
+              userRole: responseData.user_role,
+              message: responseData.message || responseData.reason
+            });
+            setIsPlayingCard(false);
+
+            // Set user-friendly turn message
+            const turnMsg = nextPlayer === 'S'
+              ? "Your turn (South)"
+              : nextPlayer === 'N' && (declarerPos === 'N' || declarerPos === 'S')
+              ? `Your turn (${responseData.user_role === 'dummy' ? 'Dummy' : 'North'})`
+              : `Your turn to play from ${nextPlayer}`;
+            setDisplayedMessage(turnMsg);
+            return; // Exit gracefully without throwing error
+          }
+
+          // Other errors are real problems
           console.error('❌ AI play failed:', {
             status: playResponse.status,
             statusText: playResponse.statusText,
-            errorData,
+            errorData: responseData,
             position: nextPlayer,
             playState: state
           });
-          throw new Error(`AI play failed for ${nextPlayer}: ${errorData.error || playResponse.statusText}`);
+          throw new Error(`AI play failed for ${nextPlayer}: ${responseData.error || playResponse.statusText}`);
         }
 
         const playData = await playResponse.json();
@@ -1929,12 +1955,12 @@ Please provide a detailed analysis of the auction and identify any bidding error
               <div className="bidding-area">
                 <h2>Bidding</h2>
                 {/* Turn indicator - Shows whose turn it is */}
-                {isAiBidding && players[nextPlayerIndex] !== 'South' && (
+                {isAiBidding && players[nextPlayerIndex] !== 'South' && !isAuctionOver(auction) && (
                   <div className="turn-message">
                     ⏳ Waiting for {players[nextPlayerIndex]} to bid...
                   </div>
                 )}
-                {!isAiBidding && players[nextPlayerIndex] === 'South' && (
+                {!isAiBidding && players[nextPlayerIndex] === 'South' && !isAuctionOver(auction) && (
                   <div className="turn-message your-turn">
                     ✅ Your turn to bid!
                   </div>
@@ -1968,12 +1994,12 @@ Please provide a detailed analysis of the auction and identify any bidding error
         <div className="bidding-area">
           <h2>Bidding</h2>
           {/* Turn indicator - Shows whose turn it is */}
-          {isAiBidding && players[nextPlayerIndex] !== 'South' && (
+          {isAiBidding && players[nextPlayerIndex] !== 'South' && !isAuctionOver(auction) && (
             <div className="turn-message">
               ⏳ Waiting for {players[nextPlayerIndex]} to bid...
             </div>
           )}
-          {!isAiBidding && players[nextPlayerIndex] === 'South' && (
+          {!isAiBidding && players[nextPlayerIndex] === 'South' && !isAuctionOver(auction) && (
             <div className="turn-message your-turn">
               ✅ Your turn to bid!
             </div>

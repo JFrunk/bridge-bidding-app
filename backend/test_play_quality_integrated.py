@@ -114,16 +114,16 @@ class IntegratedPlayQualityScorer:
         """Test a single randomly generated hand through complete play."""
         self.results['total_hands'] += 1
 
-        # Generate 4 hands
+        # Generate 4 hands (use single-letter keys for DDS compatibility)
         hands = {
-            'North': generate_random_hand(),
-            'South': generate_random_hand(),
-            'East': generate_random_hand(),
-            'West': generate_random_hand()
+            'N': generate_random_hand(),
+            'S': generate_random_hand(),
+            'E': generate_random_hand(),
+            'W': generate_random_hand()
         }
 
         # Simulate bidding to get contract
-        dealer = random.choice(['North', 'South', 'East', 'West'])
+        dealer = random.choice(['N', 'S', 'E', 'W'])
         vulnerability = random.choice(['None', 'NS', 'EW', 'Both'])
 
         contract = self._simulate_bidding(hands, dealer, vulnerability)
@@ -141,8 +141,10 @@ class IntegratedPlayQualityScorer:
 
     def _simulate_bidding(self, hands: Dict[str, Hand], dealer: str, vulnerability: str) -> Optional[Contract]:
         """Simulate bidding to establish contract using BiddingEngine."""
-        positions = ['North', 'East', 'South', 'West']
-        dealer_idx = positions.index(dealer)
+        # PlayEngine uses single letters, BiddingEngine uses full names
+        short_positions = ['N', 'E', 'S', 'W']
+        long_positions = ['North', 'East', 'South', 'West']
+        dealer_idx = short_positions.index(dealer)
 
         auction_history = []
         consecutive_passes = 0
@@ -150,17 +152,20 @@ class IntegratedPlayQualityScorer:
 
         # Run auction
         while consecutive_passes < 3 and len(auction_history) < 50:
-            position = positions[current_idx % 4]
-            hand = hands[position]
+            short_pos = short_positions[current_idx % 4]
+            long_pos = long_positions[current_idx % 4]
+            hand = hands[short_pos]
 
             try:
                 bid, _ = self.bidding_engine.get_next_bid(
                     hand=hand,
                     auction_history=auction_history,
-                    my_position=position,
+                    my_position=long_pos,  # BiddingEngine expects full names
                     vulnerability=vulnerability
                 )
-            except:
+            except Exception as e:
+                # Log exception but continue with Pass
+                print(f"⚠️  Bidding error for {long_pos}: {e}")
                 bid = 'Pass'
 
             auction_history.append(bid)
@@ -195,14 +200,10 @@ class IntegratedPlayQualityScorer:
         errors = []
         cards_played_count = 0
 
-        # Position mapping (single letter to full name)
-        position_map = {'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West'}
-
         try:
             # Play all 13 tricks
             while not play_state.is_complete and cards_played_count < 52:
-                current_player_short = play_state.next_to_play
-                current_player = position_map.get(current_player_short, current_player_short)
+                current_player = play_state.next_to_play  # Already in single-letter format
                 current_hand = play_state.hands[current_player]
 
                 # Get AI's card choice
@@ -212,7 +213,7 @@ class IntegratedPlayQualityScorer:
                         print(f"   Warning: Player {current_player} has no cards left at hand {hand_number}, trick {len(play_state.trick_history) + 1}")
                         break
 
-                    # AI expects position string, not Hand object
+                    # AI expects single-letter position
                     card_to_play = self.ai.choose_card(play_state, current_player)
 
                     if card_to_play is None:
@@ -240,8 +241,8 @@ class IntegratedPlayQualityScorer:
                         else:
                             break  # Cannot continue
 
-                    # Play the card (use short position name for trick)
-                    play_state.current_trick.append((card_to_play, current_player_short))
+                    # Play the card (current_player is already in single-letter format)
+                    play_state.current_trick.append((card_to_play, current_player))
                     cards_played_count += 1
                     self.results['total_cards_played'] += 1
 
