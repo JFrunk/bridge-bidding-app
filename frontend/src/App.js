@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import './App.css';
 import { PlayTable, ScoreDisplay, getSuitOrder } from './PlayComponents';
