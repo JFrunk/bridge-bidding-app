@@ -1,13 +1,20 @@
 # Render Blueprint - Auto-deployment configuration
 # This file tells Render how to deploy your app
 
+# PostgreSQL Database for persistent storage
+databases:
+  - name: bridge-bidding-db
+    plan: starter
+    databaseName: bridge_bidding
+    user: bridge_user
+
 services:
   # Backend API (Flask with DDS AI)
   - type: web
     name: bridge-bidding-api
     runtime: python
     buildCommand: "pip install -r backend/requirements.txt"
-    startCommand: "cd backend && gunicorn --bind 0.0.0.0:$PORT server:app --workers 2 --timeout 120"
+    startCommand: "cd backend && python -c 'from db import init_database; init_database()' && gunicorn --bind 0.0.0.0:$PORT server:app --workers 2 --timeout 120"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
@@ -18,6 +25,10 @@ services:
         # Production default: Use Expert AI with DDS (9/10 rating)
         # This ensures best AI quality for production users
         # Local development auto-defaults to 'advanced' (no DDS crashes on macOS)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bridge-bidding-db
+          property: connectionString
     healthCheckPath: /api/scenarios
 
   # Frontend (React)

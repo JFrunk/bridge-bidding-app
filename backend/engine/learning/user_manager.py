@@ -5,11 +5,16 @@ Handles user creation, authentication, settings, and basic user operations.
 Foundation for mistake detection and progress tracking.
 """
 
-import sqlite3
 from datetime import datetime, date, timedelta
 from typing import Dict, Optional, List, Tuple
 from dataclasses import dataclass
 import json
+import sys
+from pathlib import Path
+
+# Database abstraction layer for SQLite/PostgreSQL compatibility
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from db import get_connection
 
 
 @dataclass
@@ -47,13 +52,11 @@ class UserManager:
     """
 
     def __init__(self, db_path: str = 'bridge.db'):
-        self.db_path = db_path
+        self.db_path = db_path  # Kept for backward compatibility
 
-    def _get_connection(self) -> sqlite3.Connection:
-        """Get database connection"""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+    def _get_connection(self):
+        """Get database connection using abstraction layer"""
+        return get_connection()
 
     # ========================================================================
     # USER CRUD OPERATIONS

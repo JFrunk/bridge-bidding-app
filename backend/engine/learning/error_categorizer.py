@@ -5,10 +5,16 @@ Intelligently categorizes bidding mistakes into actionable categories.
 Extensible architecture allows adding new categories without code changes.
 """
 
-import sqlite3
 from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
 import json
+import sys
+from pathlib import Path
+
+# Database abstraction layer for SQLite/PostgreSQL compatibility
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from db import get_connection
+
 from engine.hand import Hand
 
 
@@ -37,14 +43,12 @@ class ErrorCategorizer:
     """
 
     def __init__(self, db_path: str = 'backend/bridge.db'):
-        self.db_path = db_path
+        self.db_path = db_path  # Kept for backward compatibility
         self._load_categories()
 
-    def _get_connection(self) -> sqlite3.Connection:
-        """Get database connection"""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+    def _get_connection(self):
+        """Get database connection using abstraction layer"""
+        return get_connection()
 
     def _load_categories(self):
         """Load error categories from database"""
