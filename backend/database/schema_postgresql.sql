@@ -4,6 +4,22 @@
 -- Auto-converted from SQLite schemas
 -- ============================================================================
 
+-- Drop existing tables to ensure clean schema (reverse order due to foreign keys)
+-- This is safe for fresh deployments; remove for production with data
+DROP TABLE IF EXISTS celebration_templates CASCADE;
+DROP TABLE IF EXISTS error_categories CASCADE;
+DROP TABLE IF EXISTS bidding_decisions CASCADE;
+DROP TABLE IF EXISTS conventions CASCADE;
+DROP TABLE IF EXISTS session_hands CASCADE;
+DROP TABLE IF EXISTS game_sessions CASCADE;
+DROP TABLE IF EXISTS improvement_milestones CASCADE;
+DROP TABLE IF EXISTS mistake_patterns CASCADE;
+DROP TABLE IF EXISTS practice_history CASCADE;
+DROP TABLE IF EXISTS practice_sessions CASCADE;
+DROP TABLE IF EXISTS user_gamification CASCADE;
+DROP TABLE IF EXISTS user_settings CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
 -- ============================================================================
 -- USER MANAGEMENT & LEARNING ANALYTICS
 -- ============================================================================
@@ -13,6 +29,7 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
     email TEXT UNIQUE,
+    phone TEXT UNIQUE,
     display_name TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP,
