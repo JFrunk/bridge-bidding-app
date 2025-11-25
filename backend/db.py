@@ -413,10 +413,14 @@ def init_database():
 
 def _execute_script(cursor, script):
     """Execute a SQL script (multiple statements) on PostgreSQL."""
-    statements = [s.strip() for s in script.split(';') if s.strip()]
+    # Remove single-line comments (-- to end of line)
+    import re
+    clean_script = re.sub(r'--[^\n]*\n', '\n', script)
+
+    statements = [s.strip() for s in clean_script.split(';') if s.strip()]
     for statement in statements:
-        # Skip comments-only statements
-        if statement.startswith('--') or not statement:
+        # Skip empty statements
+        if not statement:
             continue
         try:
             cursor.execute(statement)
