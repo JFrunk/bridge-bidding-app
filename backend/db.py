@@ -362,43 +362,53 @@ def init_database():
 
     schema_dir = Path(__file__).parent / 'database'
 
-    # List of schema files to apply
-    schema_files = [
-        'schema_user_management.sql',
-        'schema_game_sessions.sql',
-        'schema_convention_levels.sql',
-    ]
+    if USE_POSTGRES:
+        # Use dedicated PostgreSQL schema file
+        schema_path = schema_dir / 'schema_postgresql.sql'
+        if schema_path.exists():
+            print(f"Initializing PostgreSQL database from {schema_path}")
+            with open(schema_path, 'r') as f:
+                sql = f.read()
+            with get_connection() as conn:
+                cursor = conn.cursor()
+                _execute_script(cursor, sql)
+            print("PostgreSQL schema initialized successfully")
+        else:
+            print(f"WARNING: PostgreSQL schema not found at {schema_path}")
+    else:
+        # SQLite: use individual schema files
+        schema_files = [
+            'schema_user_management.sql',
+            'schema_game_sessions.sql',
+            'schema_convention_levels.sql',
+        ]
 
-    migration_files = [
-        '../migrations/001_add_bidding_feedback_tables.sql',
-    ]
+        migration_files = [
+            '../migrations/001_add_bidding_feedback_tables.sql',
+        ]
 
-    with get_connection() as conn:
-        cursor = conn.cursor()
+        with get_connection() as conn:
+            cursor = conn.cursor()
 
-        for schema_file in schema_files:
-            schema_path = schema_dir / schema_file
-            if schema_path.exists():
-                with open(schema_path, 'r') as f:
-                    sql = f.read()
-                    if USE_POSTGRES:
-                        sql = _convert_schema_to_postgres(sql)
-                    try:
-                        cursor.executescript(sql) if hasattr(cursor, 'executescript') else _execute_script(cursor, sql)
-                    except Exception as e:
-                        print(f"Warning applying {schema_file}: {e}")
+            for schema_file in schema_files:
+                schema_path = schema_dir / schema_file
+                if schema_path.exists():
+                    with open(schema_path, 'r') as f:
+                        sql = f.read()
+                        try:
+                            cursor.executescript(sql) if hasattr(cursor, 'executescript') else _execute_script(cursor, sql)
+                        except Exception as e:
+                            print(f"Warning applying {schema_file}: {e}")
 
-        for migration_file in migration_files:
-            migration_path = schema_dir / migration_file
-            if migration_path.exists():
-                with open(migration_path, 'r') as f:
-                    sql = f.read()
-                    if USE_POSTGRES:
-                        sql = _convert_schema_to_postgres(sql)
-                    try:
-                        cursor.executescript(sql) if hasattr(cursor, 'executescript') else _execute_script(cursor, sql)
-                    except Exception as e:
-                        print(f"Warning applying {migration_file}: {e}")
+            for migration_file in migration_files:
+                migration_path = schema_dir / migration_file
+                if migration_path.exists():
+                    with open(migration_path, 'r') as f:
+                        sql = f.read()
+                        try:
+                            cursor.executescript(sql) if hasattr(cursor, 'executescript') else _execute_script(cursor, sql)
+                        except Exception as e:
+                            print(f"Warning applying {migration_file}: {e}")
 
 
 def _execute_script(cursor, script):
