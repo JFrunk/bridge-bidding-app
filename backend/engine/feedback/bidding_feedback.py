@@ -12,12 +12,17 @@ This module does NOT modify bidding state or sequences - it only evaluates
 and provides feedback on decisions that have already been made.
 """
 
-import sqlite3
 import json
+import sys
+from pathlib import Path
 from enum import Enum
 from dataclasses import dataclass, asdict
 from typing import Optional, List, Dict, Tuple
 from datetime import datetime
+
+# Database abstraction layer for SQLite/PostgreSQL compatibility
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from db import get_connection
 
 from engine.hand import Hand
 from engine.ai.bid_explanation import BidExplanation
@@ -273,7 +278,7 @@ class BiddingFeedbackGenerator:
                        session_id: Optional[str],
                        hand_analysis_id: Optional[int]):
         """Store feedback in bidding_decisions table"""
-        conn = sqlite3.connect(self.db_path)
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:

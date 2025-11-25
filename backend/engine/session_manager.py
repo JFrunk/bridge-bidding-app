@@ -13,10 +13,15 @@ Features:
 
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Tuple
-import sqlite3
 import json
 from datetime import datetime
 from engine.play_engine import Contract
+
+# Use database abstraction layer for SQLite/PostgreSQL compatibility
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from db import get_connection
 
 
 @dataclass
@@ -161,13 +166,11 @@ class SessionManager:
     """Database operations for game sessions"""
 
     def __init__(self, db_path: str = 'backend/bridge.db'):
-        self.db_path = db_path
+        self.db_path = db_path  # Kept for backward compatibility, but not used
 
-    def _get_connection(self) -> sqlite3.Connection:
-        """Get database connection"""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row  # Enable column access by name
-        return conn
+    def _get_connection(self):
+        """Get database connection using abstraction layer"""
+        return get_connection()
 
     def create_session(self, user_id: int = 1,
                       session_type: str = 'chicago',

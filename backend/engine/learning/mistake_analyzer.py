@@ -12,10 +12,15 @@ Manages:
 Part of the Common Mistake Detection System
 """
 
-import sqlite3
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+import sys
+from pathlib import Path
+
+# Database abstraction layer for SQLite/PostgreSQL compatibility
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from db import get_connection
 
 
 @dataclass
@@ -61,26 +66,12 @@ class MistakeAnalyzer:
     """Analyzes mistake patterns and provides learning insights"""
 
     def __init__(self, db_path: str = 'backend/bridge.db'):
-        self.db_path = db_path
+        self.db_path = db_path  # Kept for backward compatibility
         self._ensure_tables_exist()
 
     def _ensure_tables_exist(self):
-        """Verify required tables exist"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            SELECT name FROM sqlite_master
-            WHERE type='table' AND name IN ('practice_history', 'mistake_patterns', 'error_categories')
-        """)
-
-        tables = [row[0] for row in cursor.fetchall()]
-        conn.close()
-
-        if len(tables) < 3:
-            raise RuntimeError(
-                "Required tables not found. Please run schema_user_management.sql first."
-            )
+        """Verify required tables exist - handled by db initialization"""
+        pass
 
     def analyze_practice_hand(self, user_id: int, practice_id: int) -> Optional[int]:
         """
@@ -93,8 +84,7 @@ class MistakeAnalyzer:
         Returns:
             Pattern ID or None
         """
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:
@@ -164,7 +154,7 @@ class MistakeAnalyzer:
 
     def _create_pattern(self, user_id: int, convention_id: Optional[str],
                        error_category: str, error_subcategory: Optional[str],
-                       cursor: sqlite3.Cursor) -> int:
+                       cursor: Any) -> int:
         """Create a new mistake pattern"""
         cursor.execute("""
             INSERT INTO mistake_patterns (
@@ -182,7 +172,7 @@ class MistakeAnalyzer:
 
         return cursor.lastrowid
 
-    def _update_pattern(self, pattern_id: int, cursor: sqlite3.Cursor):
+    def _update_pattern(self, pattern_id: int, cursor: Any):
         """Update an existing mistake pattern"""
         # Get current pattern
         cursor.execute("""
@@ -218,7 +208,7 @@ class MistakeAnalyzer:
 
     def _update_category_accuracy(self, user_id: int, convention_id: Optional[str],
                                   error_category: Optional[str], was_correct: bool,
-                                  cursor: sqlite3.Cursor):
+                                  cursor: Any):
         """Update accuracy tracking for a category"""
         if not error_category:
             return
@@ -278,8 +268,7 @@ class MistakeAnalyzer:
         Returns:
             True if successful
         """
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:
@@ -357,7 +346,7 @@ class MistakeAnalyzer:
         finally:
             conn.close()
 
-    def _create_resolution_celebration(self, pattern: sqlite3.Row, cursor: sqlite3.Cursor):
+    def _create_resolution_celebration(self, pattern: Any, cursor: Any):
         """Create a celebration for resolving a pattern"""
         # Import here to avoid circular dependency
         from engine.learning.celebration_manager import get_celebration_manager
@@ -391,8 +380,7 @@ class MistakeAnalyzer:
         Returns:
             List of MistakePattern objects
         """
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:
@@ -418,7 +406,7 @@ class MistakeAnalyzer:
         finally:
             conn.close()
 
-    def _row_to_pattern(self, row: sqlite3.Row) -> MistakePattern:
+    def _row_to_pattern(self, row: Any) -> MistakePattern:
         """Convert database row to MistakePattern object"""
         return MistakePattern(
             id=row['id'],
@@ -449,8 +437,7 @@ class MistakeAnalyzer:
         Returns:
             InsightSummary with top growth areas, recent wins, and recommendations
         """
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:
@@ -573,8 +560,7 @@ class MistakeAnalyzer:
         Returns:
             List of recommendation dictionaries with category, convention, and priority
         """
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:
@@ -624,7 +610,7 @@ class MistakeAnalyzer:
         finally:
             conn.close()
 
-    def _get_recommendation_reason(self, pattern: sqlite3.Row) -> str:
+    def _get_recommendation_reason(self, pattern: Any) -> str:
         """Generate encouraging reason for practice recommendation"""
         category_name = pattern['category_name']
         accuracy_pct = int(pattern['current_accuracy'] * 100)
@@ -645,8 +631,7 @@ class MistakeAnalyzer:
         Returns:
             Summary of analysis results
         """
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:

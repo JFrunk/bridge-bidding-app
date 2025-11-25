@@ -13,7 +13,12 @@ To add to server.py:
 
 from flask import request, jsonify
 from typing import Dict, List
-import sqlite3
+import sys
+from pathlib import Path
+
+# Database abstraction layer for SQLite/PostgreSQL compatibility
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from db import get_connection
 
 from engine.ai.conventions.convention_registry import get_convention_registry
 from engine.learning.skill_tree import get_skill_tree_manager
@@ -24,10 +29,8 @@ from engine.learning.skill_tree import get_skill_tree_manager
 # ============================================================================
 
 def get_db_connection(db_path='bridge.db'):
-    """Get database connection"""
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
+    """Get database connection using abstraction layer"""
+    return get_connection()
 
 
 def get_user_completed_skills(user_id: int) -> List[str]:

@@ -17,6 +17,8 @@ from flask import request, jsonify
 from typing import Dict, List, Optional
 import json
 import os
+import sys
+from pathlib import Path
 
 from engine.learning.user_manager import get_user_manager
 from engine.learning.error_categorizer import get_error_categorizer
@@ -24,8 +26,11 @@ from engine.learning.mistake_analyzer import get_mistake_analyzer
 from engine.learning.celebration_manager import get_celebration_manager
 from engine.hand import Hand
 
-# Database path configuration
-# Server runs from backend directory, so database is at bridge.db
+# Database abstraction layer for SQLite/PostgreSQL compatibility
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from db import get_connection
+
+# Legacy DB_PATH kept for reference but not used
 DB_PATH = 'bridge.db'
 
 
@@ -108,8 +113,7 @@ def record_practice():
                 )
 
         # Record in practice_history
-        import sqlite3
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:
@@ -270,10 +274,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
         - critical_errors: Count of critical errors
         - recent_trend: 'improving', 'stable', or 'declining'
     """
-    import sqlite3
-
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     cursor = conn.cursor()
 
     try:
@@ -362,10 +363,7 @@ def get_recent_bidding_decisions_for_user(user_id: int, limit: int = 10) -> List
 
     Returns list of recent decisions with display-friendly format
     """
-    import sqlite3
-
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     cursor = conn.cursor()
 
     try:
@@ -516,10 +514,7 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
         - avg_tricks_as_declarer: Average tricks taken when declaring
         - recent_declarer_success_rate: Success rate in last 20 hands
     """
-    import sqlite3
-
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     cursor = conn.cursor()
 
     try:

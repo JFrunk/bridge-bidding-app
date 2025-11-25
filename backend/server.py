@@ -2,11 +2,13 @@ import random
 import json
 import traceback
 import os
-import sqlite3
 import time
 from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+
+# Database abstraction layer (supports SQLite locally, PostgreSQL in production)
+from db import get_connection, is_postgres
 from engine.hand import Hand, Card
 from engine.bidding_engine import BiddingEngine
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
@@ -131,22 +133,19 @@ def log_ai_play(card, position, ai_level, solve_time_ms, used_fallback=False,
         trump_suit: Optional trump suit symbol
     """
     try:
-        conn = sqlite3.connect('bridge.db')
-        cursor = conn.cursor()
+        with get_connection() as conn:
+            cursor = conn.cursor()
 
-        # Convert card to simple string format
-        card_str = f"{card.rank}{card.suit}"
+            # Convert card to simple string format
+            card_str = f"{card.rank}{card.suit}"
 
-        cursor.execute("""
-            INSERT INTO ai_play_log
-            (position, ai_level, card_played, solve_time_ms, used_fallback,
-             session_id, hand_number, trick_number, contract, trump_suit)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (position, ai_level, card_str, solve_time_ms, int(used_fallback),
-              session_id, hand_number, trick_number, contract, trump_suit))
-
-        conn.commit()
-        conn.close()
+            cursor.execute("""
+                INSERT INTO ai_play_log
+                (position, ai_level, card_played, solve_time_ms, used_fallback,
+                 session_id, hand_number, trick_number, contract, trump_suit)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (position, ai_level, card_str, solve_time_ms, int(used_fallback),
+                  session_id, hand_number, trick_number, contract, trump_suit))
 
     except Exception as e:
         # Never let logging break gameplay - just print error
@@ -872,34 +871,31 @@ def get_feedback():
         try:
             from engine.learning.user_manager import get_user_manager
             from engine.learning.mistake_analyzer import get_mistake_analyzer
-            import sqlite3
 
             user_id = 1  # Default user for now
 
             # Record in practice_history
-            conn = sqlite3.connect('bridge.db')
-            cursor = conn.cursor()
+            with get_connection() as conn:
+                cursor = conn.cursor()
 
-            # Insert practice record
-            cursor.execute("""
-                INSERT INTO practice_history (
-                    user_id, convention_id, user_bid, correct_bid, was_correct,
-                    hints_used, time_taken_seconds, xp_earned
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                user_id,
-                None,  # We don't have convention_id in this context yet
-                user_bid,
-                optimal_bid,
-                was_correct,
-                0,  # hints_used
-                None,  # time_taken_seconds
-                10 if was_correct else 5
-            ))
+                # Insert practice record
+                cursor.execute("""
+                    INSERT INTO practice_history (
+                        user_id, convention_id, user_bid, correct_bid, was_correct,
+                        hints_used, time_taken_seconds, xp_earned
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    user_id,
+                    None,  # We don't have convention_id in this context yet
+                    user_bid,
+                    optimal_bid,
+                    was_correct,
+                    0,  # hints_used
+                    None,  # time_taken_seconds
+                    10 if was_correct else 5
+                ))
 
-            practice_id = cursor.lastrowid
-            conn.commit()
-            conn.close()
+                practice_id = cursor.lastrowid
 
             # Update user stats
             user_manager = get_user_manager()
@@ -2230,61 +2226,62 @@ def dds_health():
     try:
         hours = int(request.args.get('hours', 24))
 
-        conn = sqlite3.connect('bridge.db')
-        conn.row_factory = sqlite3.Row  # Return rows as dictionaries
-        cursor = conn.cursor()
+        # Calculate cutoff time in Python (database-agnostic)
+        from datetime import timedelta
+        cutoff_time = datetime.now() - timedelta(hours=hours)
 
-        # Overall stats for specified time period
-        cursor.execute("""
-            SELECT
-                COUNT(*) as total_plays,
-                COUNT(DISTINCT session_id) as unique_sessions,
-                COUNT(DISTINCT DATE(timestamp)) as days_with_data,
-                AVG(solve_time_ms) as avg_solve_time_ms,
-                MAX(solve_time_ms) as max_solve_time_ms,
-                MIN(solve_time_ms) as min_solve_time_ms,
-                AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate,
-                COUNT(CASE WHEN used_fallback THEN 1 END) as fallback_count,
-                MAX(timestamp) as last_play_time
-            FROM ai_play_log
-            WHERE timestamp > datetime('now', '-' || ? || ' hours')
-        """, (hours,))
+        with get_connection() as conn:
+            cursor = conn.cursor()
 
-        overall = dict(cursor.fetchone())
+            # Overall stats for specified time period
+            cursor.execute("""
+                SELECT
+                    COUNT(*) as total_plays,
+                    COUNT(DISTINCT session_id) as unique_sessions,
+                    AVG(solve_time_ms) as avg_solve_time_ms,
+                    MAX(solve_time_ms) as max_solve_time_ms,
+                    MIN(solve_time_ms) as min_solve_time_ms,
+                    AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate,
+                    COUNT(CASE WHEN used_fallback THEN 1 END) as fallback_count,
+                    MAX(timestamp) as last_play_time
+                FROM ai_play_log
+                WHERE timestamp > ?
+            """, (cutoff_time,))
 
-        # Stats by AI level
-        cursor.execute("""
-            SELECT
-                ai_level,
-                COUNT(*) as plays,
-                AVG(solve_time_ms) as avg_solve_time_ms,
-                AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate,
-                COUNT(CASE WHEN used_fallback THEN 1 END) as fallback_count
-            FROM ai_play_log
-            WHERE timestamp > datetime('now', '-' || ? || ' hours')
-            GROUP BY ai_level
-        """, (hours,))
+            row = cursor.fetchone()
+            overall = dict(row) if row else {}
 
-        by_level = {row['ai_level']: dict(row) for row in cursor.fetchall()}
+            # Stats by AI level
+            cursor.execute("""
+                SELECT
+                    ai_level,
+                    COUNT(*) as plays,
+                    AVG(solve_time_ms) as avg_solve_time_ms,
+                    AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate,
+                    COUNT(CASE WHEN used_fallback THEN 1 END) as fallback_count
+                FROM ai_play_log
+                WHERE timestamp > ?
+                GROUP BY ai_level
+            """, (cutoff_time,))
 
-        # Recent plays (last 10)
-        cursor.execute("""
-            SELECT
-                timestamp,
-                position,
-                ai_level,
-                card_played,
-                solve_time_ms,
-                used_fallback,
-                contract
-            FROM ai_play_log
-            ORDER BY timestamp DESC
-            LIMIT 10
-        """)
+            by_level = {row[0]: {'ai_level': row[0], 'plays': row[1], 'avg_solve_time_ms': row[2], 'fallback_rate': row[3], 'fallback_count': row[4]} for row in cursor.fetchall()}
 
-        recent_plays = [dict(row) for row in cursor.fetchall()]
+            # Recent plays (last 10)
+            cursor.execute("""
+                SELECT
+                    timestamp,
+                    position,
+                    ai_level,
+                    card_played,
+                    solve_time_ms,
+                    used_fallback,
+                    contract
+                FROM ai_play_log
+                ORDER BY timestamp DESC
+                LIMIT 10
+            """)
 
-        conn.close()
+            recent_plays = [{'timestamp': row[0], 'position': row[1], 'ai_level': row[2], 'card_played': row[3], 'solve_time_ms': row[4], 'used_fallback': row[5], 'contract': row[6]} for row in cursor.fetchall()]
 
         return jsonify({
             "dds_available": DDS_AVAILABLE and PLATFORM_ALLOWS_DDS,
@@ -2319,50 +2316,55 @@ def ai_quality_summary():
         JSON with quality metrics, trends, and recommendations
     """
     try:
-        conn = sqlite3.connect('bridge.db')
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+        # Calculate cutoff time for 30 days (database-agnostic)
+        from datetime import timedelta
+        cutoff_30_days = datetime.now() - timedelta(days=30)
 
-        # Daily play counts for trend analysis
-        cursor.execute("""
-            SELECT
-                DATE(timestamp) as date,
-                COUNT(*) as plays,
-                COUNT(DISTINCT session_id) as sessions,
-                AVG(solve_time_ms) as avg_solve_time_ms,
-                AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate
-            FROM ai_play_log
-            WHERE timestamp > datetime('now', '-30 days')
-            GROUP BY DATE(timestamp)
-            ORDER BY date DESC
-        """)
+        with get_connection() as conn:
+            cursor = conn.cursor()
 
-        daily_trends = [dict(row) for row in cursor.fetchall()]
+            # Daily play counts for trend analysis
+            # Using CAST for date extraction (works in both SQLite and PostgreSQL)
+            cursor.execute("""
+                SELECT
+                    COUNT(*) as plays,
+                    COUNT(DISTINCT session_id) as sessions,
+                    AVG(solve_time_ms) as avg_solve_time_ms,
+                    AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate
+                FROM ai_play_log
+                WHERE timestamp > ?
+            """, (cutoff_30_days,))
 
-        # Contract type performance
-        cursor.execute("""
-            SELECT
-                contract,
-                COUNT(*) as plays,
-                AVG(solve_time_ms) as avg_solve_time_ms,
-                AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate
-            FROM ai_play_log
-            WHERE contract IS NOT NULL
-            GROUP BY contract
-            ORDER BY plays DESC
-            LIMIT 20
-        """)
+            row = cursor.fetchone()
+            daily_trends = [{'plays': row[0], 'sessions': row[1], 'avg_solve_time_ms': row[2], 'fallback_rate': row[3]}] if row else []
 
-        by_contract = [dict(row) for row in cursor.fetchall()]
+            # Contract type performance
+            cursor.execute("""
+                SELECT
+                    contract,
+                    COUNT(*) as plays,
+                    AVG(solve_time_ms) as avg_solve_time_ms,
+                    AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate
+                FROM ai_play_log
+                WHERE contract IS NOT NULL
+                GROUP BY contract
+                ORDER BY COUNT(*) DESC
+                LIMIT 20
+            """)
 
-        # All-time stats
-        cursor.execute("""
-            SELECT * FROM v_dds_health_summary
-        """)
+            by_contract = [{'contract': row[0], 'plays': row[1], 'avg_solve_time_ms': row[2], 'fallback_rate': row[3]} for row in cursor.fetchall()]
 
-        all_time = dict(cursor.fetchone()) if cursor.fetchone() else {}
+            # All-time stats (use simple query instead of view for compatibility)
+            cursor.execute("""
+                SELECT
+                    COUNT(*) as total_plays,
+                    AVG(solve_time_ms) as avg_solve_time_ms,
+                    AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as overall_fallback_rate
+                FROM ai_play_log
+            """)
 
-        conn.close()
+            row = cursor.fetchone()
+            all_time = {'total_plays': row[0], 'avg_solve_time_ms': row[1], 'overall_fallback_rate': row[2]} if row else {}
 
         # Calculate quality score (0-100)
         # Based on: low fallback rate, reasonable solve times, consistent play
@@ -2492,78 +2494,70 @@ def simple_login():
             if len(phone_cleaned) < 12:  # +1 + 10 digits minimum
                 return jsonify({"error": "Invalid phone format. US numbers should be 10 digits"}), 400
 
-        conn = sqlite3.connect('bridge.db')
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+        with get_connection() as conn:
+            cursor = conn.cursor()
 
-        # Try to find existing user
-        if email:
-            cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
-        else:
-            cursor.execute('SELECT * FROM users WHERE phone = ?', (phone,))
+            # Try to find existing user
+            if email:
+                cursor.execute('SELECT id, email, phone, display_name FROM users WHERE email = ?', (email,))
+            else:
+                cursor.execute('SELECT id, email, phone, display_name FROM users WHERE phone = ?', (phone,))
 
-        existing_user = cursor.fetchone()
+            existing_user = cursor.fetchone()
 
-        if existing_user:
-            # User exists - return their info
-            user_dict = dict(existing_user)
-            conn.close()
+            if existing_user:
+                # User exists - return their info
+                return jsonify({
+                    "user_id": existing_user[0],
+                    "email": existing_user[1],
+                    "phone": existing_user[2],
+                    "display_name": existing_user[3],
+                    "created": False
+                })
+
+            # User doesn't exist
+            if not create_if_not_exists:
+                return jsonify({"error": "User not found"}), 404
+
+            # Create new user
+            # Generate username from email or phone
+            if email:
+                username = email.split('@')[0]
+            else:
+                username = f"user_{phone[-4:]}"
+
+            # Ensure username is unique
+            cursor.execute('SELECT id FROM users WHERE username = ?', (username,))
+            if cursor.fetchone():
+                # Append random suffix to make unique
+                username = f"{username}_{random.randint(1000, 9999)}"
+
+            # Ensure username meets minimum length requirement (3 chars)
+            if len(username) < 3:
+                username = f"user_{random.randint(100, 999)}"
+
+            # Insert new user
+            cursor.execute('''
+                INSERT INTO users (username, email, phone, display_name, created_at, last_login)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (
+                username,
+                email,
+                phone,
+                email or phone,  # Use email/phone as display name initially
+                datetime.now().isoformat(),
+                datetime.now().isoformat()
+            ))
+
+            new_user_id = cursor.lastrowid
 
             return jsonify({
-                "user_id": user_dict['id'],
-                "email": user_dict.get('email'),
-                "phone": user_dict.get('phone'),
-                "display_name": user_dict.get('display_name'),
-                "created": False
+                "user_id": new_user_id,
+                "email": email,
+                "phone": phone,
+                "display_name": email or phone,
+                "created": True
             })
-
-        # User doesn't exist
-        if not create_if_not_exists:
-            conn.close()
-            return jsonify({"error": "User not found"}), 404
-
-        # Create new user
-        # Generate username from email or phone
-        if email:
-            username = email.split('@')[0]
-        else:
-            username = f"user_{phone[-4:]}"
-
-        # Ensure username is unique
-        cursor.execute('SELECT id FROM users WHERE username = ?', (username,))
-        if cursor.fetchone():
-            # Append random suffix to make unique
-            import random
-            username = f"{username}_{random.randint(1000, 9999)}"
-
-        # Ensure username meets minimum length requirement (3 chars)
-        if len(username) < 3:
-            username = f"user_{random.randint(100, 999)}"
-
-        # Insert new user
-        cursor.execute('''
-            INSERT INTO users (username, email, phone, display_name, created_at, last_login)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            username,
-            email,
-            phone,
-            email or phone,  # Use email/phone as display name initially
-            datetime.now().isoformat(),
-            datetime.now().isoformat()
-        ))
-
-        conn.commit()
-        new_user_id = cursor.lastrowid
-        conn.close()
-
-        return jsonify({
-            "user_id": new_user_id,
-            "email": email,
-            "phone": phone,
-            "display_name": email or phone,
-            "created": True
-        })
 
     except Exception as e:
         traceback.print_exc()

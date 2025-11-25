@@ -11,10 +11,15 @@ Manages:
 Part of the Common Mistake Detection System
 """
 
-import sqlite3
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from datetime import datetime
+import sys
+from pathlib import Path
+
+# Database abstraction layer for SQLite/PostgreSQL compatibility
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from db import get_connection
 
 
 @dataclass
@@ -58,27 +63,7 @@ class CelebrationManager:
     """Manages milestone celebrations and achievement rewards"""
 
     def __init__(self, db_path: str = 'backend/bridge.db'):
-        self.db_path = db_path
-        self._ensure_tables_exist()
-
-    def _ensure_tables_exist(self):
-        """Verify celebration tables exist"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        # Check if tables exist
-        cursor.execute("""
-            SELECT name FROM sqlite_master
-            WHERE type='table' AND name IN ('improvement_milestones', 'celebration_templates')
-        """)
-
-        tables = [row[0] for row in cursor.fetchall()]
-        conn.close()
-
-        if 'improvement_milestones' not in tables or 'celebration_templates' not in tables:
-            raise RuntimeError(
-                "Required tables not found. Please run schema_user_management.sql first."
-            )
+        self.db_path = db_path  # Kept for backward compatibility
 
     def create_milestone(self, user_id: int, milestone_type: str,
                         context: Dict, xp_reward: Optional[int] = None) -> Optional[int]:
@@ -94,7 +79,7 @@ class CelebrationManager:
         Returns:
             Milestone ID or None if creation failed
         """
-        conn = sqlite3.connect(self.db_path)
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:
@@ -160,8 +145,7 @@ class CelebrationManager:
 
     def _get_template(self, milestone_type: str, context: Dict) -> Optional[CelebrationTemplate]:
         """Get appropriate celebration template"""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:
@@ -199,7 +183,7 @@ class CelebrationManager:
         finally:
             conn.close()
 
-    def _row_to_template(self, row: sqlite3.Row) -> CelebrationTemplate:
+    def _row_to_template(self, row: Any) -> CelebrationTemplate:
         """Convert database row to CelebrationTemplate"""
         return CelebrationTemplate(
             id=row['id'],
@@ -246,7 +230,7 @@ class CelebrationManager:
 
         return message
 
-    def _award_xp(self, user_id: int, xp_amount: int, cursor: sqlite3.Cursor):
+    def _award_xp(self, user_id: int, xp_amount: int, cursor: Any):
         """Award XP to user (internal method with existing cursor)"""
         # Get current XP and level
         cursor.execute("""
@@ -290,8 +274,7 @@ class CelebrationManager:
         Returns:
             List of Milestone objects ordered by achievement date (newest first)
         """
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:
@@ -322,8 +305,7 @@ class CelebrationManager:
         Returns:
             List of Milestone objects ordered by achievement date (newest first)
         """
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:
@@ -350,7 +332,7 @@ class CelebrationManager:
         Returns:
             True if successful, False otherwise
         """
-        conn = sqlite3.connect(self.db_path)
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:
@@ -377,7 +359,7 @@ class CelebrationManager:
         Returns:
             True if successful, False otherwise
         """
-        conn = sqlite3.connect(self.db_path)
+        conn = get_connection()
         cursor = conn.cursor()
 
         try:
@@ -398,7 +380,7 @@ class CelebrationManager:
         finally:
             conn.close()
 
-    def _row_to_milestone(self, row: sqlite3.Row) -> Milestone:
+    def _row_to_milestone(self, row: Any) -> Milestone:
         """Convert database row to Milestone object"""
         return Milestone(
             id=row['id'],
