@@ -190,7 +190,7 @@ class MistakeAnalyzer:
             WHERE user_id = ?
               AND convention_id IS ?
               AND error_category = ?
-              AND was_correct = 0
+              AND was_correct = FALSE
               AND timestamp >= datetime('now', '-30 days')
         """, (pattern['user_id'], pattern['convention_id'], pattern['error_category']))
 
