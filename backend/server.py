@@ -152,12 +152,145 @@ ai_instances = {
 # Fallback AI for when DDS/expert fails (prevents 502 crashes)
 fallback_ai = MinimaxPlayAI(max_depth=3)
 
-def safe_ai_choose_card(ai, play_state, position, difficulty, timeout_seconds=10):
-    """
-    Safely execute AI card selection with timeout and fallback.
+# ============================================================================
+# SUBPROCESS-BASED DDS WRAPPER (SEGFAULT PROTECTION)
+# ============================================================================
+# DDS (endplay library) can crash with segfaults that Python can't catch.
+# Running DDS in a subprocess isolates crashes - if the subprocess dies,
+# the main server continues and falls back to Minimax AI.
+# ============================================================================
 
-    On production (Render), DDS can crash or hang causing 502 errors.
-    This wrapper catches issues and falls back to Minimax.
+import multiprocessing
+
+def _dds_worker(play_state_dict, position, result_queue):
+    """
+    Worker function that runs DDS in a separate process.
+
+    If DDS segfaults, this process dies but the main server survives.
+    The result is communicated back via a multiprocessing Queue.
+    """
+    try:
+        # Import DDS inside the subprocess
+        from engine.play.ai.dds_ai import DDSPlayAI
+        from engine.play_engine import PlayState, Contract
+        from engine.hand import Hand, Card
+
+        # Reconstruct PlayState from dict
+        play_state = _reconstruct_play_state(play_state_dict)
+
+        # Run DDS
+        dds_ai = DDSPlayAI()
+        card = dds_ai.choose_card(play_state, position)
+
+        # Return card as dict (can't pickle Card namedtuple across processes easily)
+        result_queue.put({
+            'status': 'success',
+            'card': {'rank': card.rank, 'suit': card.suit}
+        })
+    except Exception as e:
+        result_queue.put({
+            'status': 'error',
+            'error': str(e)
+        })
+
+def _reconstruct_play_state(state_dict):
+    """Reconstruct PlayState from a serializable dictionary."""
+    from engine.play_engine import PlayState, Contract
+    from engine.hand import Hand, Card
+
+    # Reconstruct hands
+    hands = {}
+    for pos, hand_data in state_dict['hands'].items():
+        cards = [Card(c['rank'], c['suit']) for c in hand_data['cards']]
+        hands[pos] = Hand(cards)
+
+    # Reconstruct contract
+    # Contract uses 'strain' not 'trump_suit', and doubled is int (0/1/2)
+    trump_suit = state_dict['contract']['trump_suit']
+    strain = 'NT' if trump_suit is None else trump_suit
+
+    doubled = 0
+    if state_dict['contract'].get('redoubled'):
+        doubled = 2
+    elif state_dict['contract'].get('doubled'):
+        doubled = 1
+
+    contract = Contract(
+        level=state_dict['contract']['level'],
+        strain=strain,
+        declarer=state_dict['contract']['declarer'],
+        doubled=doubled
+    )
+
+    # Reconstruct current trick
+    current_trick = []
+    for card_data, pos in state_dict['current_trick']:
+        card = Card(card_data['rank'], card_data['suit'])
+        current_trick.append((card, pos))
+
+    # Reconstruct tricks_won from NS/EW totals
+    # Note: We distribute evenly between partners since we don't track individual
+    tricks_ns = state_dict.get('tricks_taken_ns', 0)
+    tricks_ew = state_dict.get('tricks_taken_ew', 0)
+    tricks_won = {
+        'N': tricks_ns,  # Attribute all NS tricks to N for simplicity
+        'S': 0,
+        'E': tricks_ew,  # Attribute all EW tricks to E for simplicity
+        'W': 0
+    }
+
+    # Create PlayState
+    play_state = PlayState(
+        hands=hands,
+        contract=contract,
+        current_trick=current_trick,
+        tricks_won=tricks_won
+    )
+    play_state.trick_history = state_dict.get('trick_history', [])
+    play_state.next_to_play = state_dict.get('next_to_play', 'W')
+    play_state.dummy_revealed = state_dict.get('dummy_revealed', False)
+
+    return play_state
+
+def _serialize_play_state(play_state):
+    """Convert PlayState to a serializable dictionary for subprocess."""
+    hands = {}
+    for pos, hand in play_state.hands.items():
+        hands[pos] = {
+            'cards': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards]
+        }
+
+    current_trick = []
+    for card, pos in play_state.current_trick:
+        current_trick.append(({'rank': card.rank, 'suit': card.suit}, pos))
+
+    return {
+        'hands': hands,
+        'contract': {
+            'level': play_state.contract.level,
+            'trump_suit': play_state.contract.trump_suit,
+            'declarer': play_state.contract.declarer,
+            'doubled': getattr(play_state.contract, 'doubled', False),
+            'redoubled': getattr(play_state.contract, 'redoubled', False)
+        },
+        'current_trick': current_trick,
+        'trick_history': play_state.trick_history,
+        'tricks_taken_ns': play_state.tricks_taken_ns,
+        'tricks_taken_ew': play_state.tricks_taken_ew,
+        'next_to_play': play_state.next_to_play,
+        'dummy': play_state.dummy,
+        'dummy_revealed': play_state.dummy_revealed,
+        'vulnerability': getattr(play_state, 'vulnerability', 'None')
+    }
+
+def safe_ai_choose_card(ai, play_state, position, difficulty, timeout_seconds=15):
+    """
+    Safely execute AI card selection with subprocess isolation for DDS.
+
+    For expert (DDS) difficulty, runs in a subprocess to catch segfaults.
+    For other difficulties, runs directly with timeout protection.
+
+    If DDS crashes (segfault) or times out, falls back to Minimax AI.
 
     Args:
         ai: The AI instance to use
@@ -169,58 +302,115 @@ def safe_ai_choose_card(ai, play_state, position, difficulty, timeout_seconds=10
     Returns:
         tuple: (card, used_fallback, actual_ai_name)
     """
-    import signal
-    import sys
-
-    # Timeout handler (Unix only)
-    def timeout_handler(signum, frame):
-        raise TimeoutError(f"AI decision timed out after {timeout_seconds}s")
-
-    used_fallback = False
     actual_ai_name = ai.get_name()
 
-    try:
-        # Set timeout alarm (Unix only - works on Linux/Render)
-        if sys.platform != 'win32':
-            old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(timeout_seconds)
+    # For expert difficulty with DDS available, use subprocess isolation
+    if difficulty == 'expert' and DDS_AVAILABLE and PLATFORM_ALLOWS_DDS:
+        try:
+            # Serialize play state for subprocess
+            state_dict = _serialize_play_state(play_state)
+
+            # Create queue for result
+            result_queue = multiprocessing.Queue()
+
+            # Start subprocess
+            process = multiprocessing.Process(
+                target=_dds_worker,
+                args=(state_dict, position, result_queue)
+            )
+            process.start()
+
+            # Wait for result with timeout
+            process.join(timeout_seconds)
+
+            if process.is_alive():
+                # Timeout - kill the subprocess
+                print(f"⚠️  DDS TIMEOUT: Subprocess timed out after {timeout_seconds}s for {position}")
+                process.terminate()
+                process.join(1)  # Give it 1 second to terminate
+                if process.is_alive():
+                    process.kill()  # Force kill if still alive
+                # Fall through to fallback
+
+            elif process.exitcode != 0:
+                # Subprocess crashed (likely segfault)
+                print(f"⚠️  DDS CRASH: Subprocess exited with code {process.exitcode} for {position}")
+                print(f"   This was likely a segfault in the DDS library")
+                # Fall through to fallback
+
+            else:
+                # Process completed - check result
+                try:
+                    result = result_queue.get_nowait()
+                    if result['status'] == 'success':
+                        card = Card(result['card']['rank'], result['card']['suit'])
+                        return card, False, actual_ai_name
+                    else:
+                        print(f"⚠️  DDS ERROR: {result.get('error', 'Unknown error')}")
+                        # Fall through to fallback
+                except Exception as e:
+                    print(f"⚠️  DDS QUEUE ERROR: {e}")
+                    # Fall through to fallback
+
+        except Exception as e:
+            print(f"⚠️  DDS SUBPROCESS ERROR: {e}")
+            traceback.print_exc()
+            # Fall through to fallback
+
+        # Fallback to Minimax
+        print(f"   Falling back to Minimax AI for {position}")
+        try:
+            card = fallback_ai.choose_card(play_state, position)
+            return card, True, f"{actual_ai_name} (fallback: {fallback_ai.get_name()})"
+        except Exception as fallback_error:
+            print(f"❌ CRITICAL: Even fallback AI failed: {fallback_error}")
+            # Last resort below
+
+    else:
+        # Non-DDS AI: run directly with simple timeout
+        import signal
+        import sys
+
+        def timeout_handler(signum, frame):
+            raise TimeoutError(f"AI decision timed out after {timeout_seconds}s")
 
         try:
-            card = ai.choose_card(play_state, position)
-            return card, False, actual_ai_name
-        finally:
-            # Clear alarm
             if sys.platform != 'win32':
-                signal.alarm(0)
-                signal.signal(signal.SIGALRM, old_handler)
+                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(timeout_seconds)
 
-    except TimeoutError as e:
-        print(f"⚠️  AI TIMEOUT: {difficulty} AI timed out for {position}")
+            try:
+                card = ai.choose_card(play_state, position)
+                return card, False, actual_ai_name
+            finally:
+                if sys.platform != 'win32':
+                    signal.alarm(0)
+                    signal.signal(signal.SIGALRM, old_handler)
+
+        except TimeoutError:
+            print(f"⚠️  AI TIMEOUT: {difficulty} AI timed out for {position}")
+        except Exception as e:
+            print(f"⚠️  AI ERROR: {difficulty} AI failed for {position}: {e}")
+            traceback.print_exc()
+
+        # Fallback to Minimax
         print(f"   Falling back to Minimax AI")
-        used_fallback = True
+        try:
+            card = fallback_ai.choose_card(play_state, position)
+            return card, True, f"{actual_ai_name} (fallback: {fallback_ai.get_name()})"
+        except Exception as fallback_error:
+            print(f"❌ CRITICAL: Even fallback AI failed: {fallback_error}")
 
-    except Exception as e:
-        print(f"⚠️  AI ERROR: {difficulty} AI failed for {position}: {e}")
-        print(f"   Falling back to Minimax AI")
-        traceback.print_exc()
-        used_fallback = True
-
-    # Fallback to Minimax
-    try:
-        card = fallback_ai.choose_card(play_state, position)
-        return card, True, f"{actual_ai_name} (fallback: {fallback_ai.get_name()})"
-    except Exception as fallback_error:
-        print(f"❌ CRITICAL: Even fallback AI failed: {fallback_error}")
-        # Last resort: pick first legal card
-        hand = play_state.hands[position]
-        if play_state.current_trick:
-            led_suit = play_state.current_trick[0][0].suit
-            legal = [c for c in hand.cards if c.suit == led_suit] or list(hand.cards)
-        else:
-            legal = list(hand.cards)
-        if legal:
-            return legal[0], True, "Emergency fallback (first legal card)"
-        raise ValueError(f"No legal cards for {position}")
+    # Last resort: pick first legal card
+    hand = play_state.hands[position]
+    if play_state.current_trick:
+        led_suit = play_state.current_trick[0][0].suit
+        legal = [c for c in hand.cards if c.suit == led_suit] or list(hand.cards)
+    else:
+        legal = list(hand.cards)
+    if legal:
+        return legal[0], True, "Emergency fallback (first legal card)"
+    raise ValueError(f"No legal cards for {position}")
 
 # Import DEFAULT_AI_DIFFICULTY to show startup configuration
 from core.session_state import DEFAULT_AI_DIFFICULTY
