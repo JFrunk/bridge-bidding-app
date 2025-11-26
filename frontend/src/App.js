@@ -381,7 +381,8 @@ function App() {
           user_concern: userConcern,
           game_phase: gamePhase,  // Include current game phase
           user_hand: hand,  // Send actual hand data shown to user
-          user_hand_points: handPoints  // Send actual point data shown to user
+          user_hand_points: handPoints,  // Send actual point data shown to user
+          all_hands: allHands  // Send all hands if available (fallback for production session loss)
         })
       });
 
@@ -391,37 +392,63 @@ function App() {
       setReviewFilename(data.filename);
 
       // Create prompt based on whether file was saved or not
+      // Include appropriate slash command to invoke specialist session
       let prompt;
+      const slashCommand = gamePhase === 'playing' ? '/play-specialist' : '/bidding-specialist';
+
+      // Other specialist commands (uncomment if issue relates to a different area)
+      const otherCommands = gamePhase === 'playing'
+        ? `# /bidding-specialist  - if issue is with the auction
+# /frontend-specialist - if issue is with UI display
+# /learning-specialist - if issue is with feedback/dashboard
+# /server-specialist   - if issue is with API/data`
+        : `# /play-specialist     - if issue is with card play
+# /frontend-specialist - if issue is with UI display
+# /learning-specialist - if issue is with feedback/dashboard
+# /server-specialist   - if issue is with API/data`;
+
       if (data.saved_to_file) {
         // Local: file was saved, reference it
         if (gamePhase === 'playing') {
-          prompt = `Please analyze the gameplay in backend/review_requests/${data.filename}. This includes both the auction and card play progress according to SAYC.${userConcern ? `\n\nI'm particularly concerned about: ${userConcern}` : ''}
+          prompt = `${slashCommand} Analyze the card play in backend/review_requests/${data.filename}.${userConcern ? `\n\nUser's concern: ${userConcern}` : ''}
 
-Please also identify and resolve any system errors (e.g., impossible card plays, invalid game states, or inconsistencies in the hand data).`;
+Focus on declarer play technique, defensive signals, and card selection decisions. Also identify any system errors (e.g., impossible card plays or invalid game states).
+
+---
+Other specialists (uncomment if needed):
+${otherCommands}`;
         } else {
-          prompt = `Please analyze the bidding in backend/review_requests/${data.filename} and identify any errors or questionable bids according to SAYC.${userConcern ? `\n\nI'm particularly concerned about: ${userConcern}` : ''}`;
+          prompt = `${slashCommand} Analyze the bidding in backend/review_requests/${data.filename} and identify any errors or questionable bids according to SAYC.${userConcern ? `\n\nUser's concern: ${userConcern}` : ''}
+
+---
+Other specialists (uncomment if needed):
+${otherCommands}`;
         }
       } else {
         // Render: file not saved, include full data in prompt
         const reviewData = data.review_data;
         if (gamePhase === 'playing') {
-          prompt = `Please analyze this bridge hand including both auction and card play according to SAYC.
+          prompt = `${slashCommand} Analyze the card play in this hand.
 
 **Hand Data:**
 ${JSON.stringify(reviewData, null, 2)}
 
-${userConcern ? `\n**User's Concern:** ${userConcern}` : ''}
+${userConcern ? `**User's Concern:** ${userConcern}\n\n` : ''}Focus on declarer play technique, defensive signals, and card selection decisions. Also identify any system errors (e.g., impossible card plays or invalid game states).
 
-Please provide a detailed analysis of the auction and card play, identifying any bidding or play errors. Also, please identify and resolve any system errors (e.g., impossible card plays, invalid game states, or inconsistencies in the hand data).`;
+---
+Other specialists (uncomment if needed):
+${otherCommands}`;
         } else {
-          prompt = `Please analyze this bridge hand and identify any errors or questionable bids according to SAYC.
+          prompt = `${slashCommand} Analyze this bridge hand and identify any errors or questionable bids according to SAYC.
 
 **Hand Data:**
 ${JSON.stringify(reviewData, null, 2)}
 
-${userConcern ? `\n**User's Concern:** ${userConcern}` : ''}
+${userConcern ? `**User's Concern:** ${userConcern}\n\n` : ''}Please provide a detailed analysis of the auction and identify any bidding errors.
 
-Please provide a detailed analysis of the auction and identify any bidding errors.`;
+---
+Other specialists (uncomment if needed):
+${otherCommands}`;
         }
       }
 

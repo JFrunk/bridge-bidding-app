@@ -1150,6 +1150,7 @@ def request_review():
         game_phase = data.get('game_phase', 'bidding')  # 'bidding' or 'playing'
         user_hand_data = data.get('user_hand')  # Actual hand shown to user
         user_hand_points = data.get('user_hand_points')  # Actual points shown to user
+        frontend_all_hands = data.get('all_hands')  # Fallback: all hands from frontend (if user clicked "Show All Hands")
 
         # Prepare all hands data (current state of hands)
         all_hands = {}
@@ -1184,21 +1185,30 @@ def request_review():
                 else:
                     # Use backend's stored hand for other positions
                     hand = state.deal.get(position)
-                    if not hand:
-                        return jsonify({'error': f'Hand for {position} not available'}), 400
-
-                    hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
-                    points_for_json = {
-                        'hcp': hand.hcp,
-                        'dist_points': hand.dist_points,
-                        'total_points': hand.total_points,
-                        'suit_hcp': hand.suit_hcp,
-                        'suit_lengths': hand.suit_lengths
-                    }
-                    all_hands[position] = {
-                        'cards': hand_for_json,
-                        'points': points_for_json
-                    }
+                    if hand:
+                        hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in hand.cards]
+                        points_for_json = {
+                            'hcp': hand.hcp,
+                            'dist_points': hand.dist_points,
+                            'total_points': hand.total_points,
+                            'suit_hcp': hand.suit_hcp,
+                            'suit_lengths': hand.suit_lengths
+                        }
+                        all_hands[position] = {
+                            'cards': hand_for_json,
+                            'points': points_for_json
+                        }
+                    elif frontend_all_hands and frontend_all_hands.get(position):
+                        # Fallback: use frontend-provided hands (e.g., after server restart on production)
+                        fe_hand = frontend_all_hands[position]
+                        all_hands[position] = {
+                            'cards': fe_hand.get('hand', []),
+                            'points': fe_hand.get('points', {})
+                        }
+                        print(f"ℹ️  Using frontend-provided hand for {position} (backend state lost)")
+                    else:
+                        # No hand available from either source
+                        return jsonify({'error': f'Hand for {position} not available. Try clicking "Show All Hands" first.'}), 400
 
         # Get dealer from session (Chicago rotation) or default to North
         dealer = 'North'  # Default for non-session mode
