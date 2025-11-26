@@ -1,3 +1,7 @@
+# Load environment variables from .env file FIRST (before any other imports)
+from dotenv import load_dotenv
+load_dotenv()
+
 import random
 import json
 import traceback
@@ -61,7 +65,54 @@ except ImportError:
     print("⚠️  DDS AI not available - install endplay for expert play")
 
 app = Flask(__name__)
-CORS(app)
+
+# CORS configuration - allow all origins with explicit settings
+# This ensures CORS headers are sent even on error responses
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "X-Session-ID", "Authorization"],
+        "expose_headers": ["Content-Type"],
+        "supports_credentials": False
+    }
+})
+
+# Global error handler to ensure CORS headers are always sent
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Handle all exceptions and ensure CORS headers are included."""
+    import traceback
+    print(f"❌ Unhandled exception: {e}")
+    traceback.print_exc()
+    response = jsonify({
+        "error": str(e),
+        "type": type(e).__name__
+    })
+    response.status_code = 500
+    return response
+
+@app.errorhandler(400)
+def handle_bad_request(e):
+    """Handle 400 errors with CORS headers."""
+    response = jsonify({"error": str(e.description) if hasattr(e, 'description') else str(e)})
+    response.status_code = 400
+    return response
+
+@app.errorhandler(404)
+def handle_not_found(e):
+    """Handle 404 errors with CORS headers."""
+    response = jsonify({"error": "Not found"})
+    response.status_code = 404
+    return response
+
+@app.errorhandler(500)
+def handle_internal_error(e):
+    """Handle 500 errors with CORS headers."""
+    response = jsonify({"error": "Internal server error"})
+    response.status_code = 500
+    return response
+
 engine = BiddingEngine()
 play_engine = PlayEngine()
 play_ai = SimplePlayAI()  # Default AI (backward compatibility)
@@ -2561,23 +2612,35 @@ def dds_quality_check():
 @app.route("/api/evaluate-play", methods=["POST"])
 def evaluate_play():
     """
-    Evaluate a user's card play against DDS optimal play.
+    Evaluate a user's card play against optimal play.
 
-    This endpoint compares the user's chosen card against what DDS recommends
-    as optimal, providing feedback similar to bidding evaluation.
+    This endpoint compares the user's chosen card against what DDS (or Minimax
+    fallback) recommends as optimal, providing feedback similar to bidding evaluation.
+
+    Uses PlayFeedbackGenerator for structured feedback generation with:
+    - DDS-based evaluation on production (Linux)
+    - Minimax heuristic fallback on development (macOS)
 
     Request body:
         - card: {rank, suit} - The card user played
         - position: str - Position playing from (N/E/S/W)
+        - user_id: int - User ID for tracking
         - For context, uses current play_state from session
 
     Returns:
         - score: 0-10 rating
-        - optimal_cards: List of DDS-optimal cards
-        - rating: "optimal", "good", "suboptimal", "blunder"
+        - correctness: "optimal", "good", "suboptimal", "blunder", "illegal"
+        - optimal_cards: List of optimal cards
+        - tricks_cost: How many tricks this play costs vs optimal
         - feedback: Explanation of why the play was good/bad
-        - tricks_lost: How many tricks this play costs vs optimal
+        - reasoning: Detailed reasoning
+        - helpful_hint: Actionable advice for improvement
+        - play_category: Type of play (opening_lead, following_suit, etc.)
+        - key_concept: Learning concept for this play
+        - dds_available: Whether DDS was used for evaluation
     """
+    from engine.feedback.play_feedback import get_play_feedback_generator
+
     # Get session state
     state = get_state()
 
@@ -2588,120 +2651,56 @@ def evaluate_play():
     if not data or 'card' not in data:
         return jsonify({"error": "Card data required"}), 400
 
-    # If DDS not available, return basic response
-    if not DDS_AVAILABLE or not PLATFORM_ALLOWS_DDS:
-        return jsonify({
-            "dds_available": False,
-            "score": 7,  # Default to "good" when we can't evaluate
-            "rating": "not_evaluated",
-            "feedback": "Play evaluation requires DDS (available on production)",
-            "optimal_cards": []
-        })
-
     try:
-        from endplay.types import Deal, Denom, Card as EndplayCard
-        from endplay.dds import solve_board, par
-
+        # Parse card and position
         card_data = data['card']
         user_card = Card(card_data['rank'], card_data['suit'])
         position = data.get('position', state.play_state.next_to_play)
+        user_id = data.get('user_id', 1)
+        session_id = data.get('session_id')
 
-        # Build PBN from current state
-        hands = []
-        for pos in ['N', 'E', 'S', 'W']:
-            hand = state.play_state.hands[pos]
-            suits = {'♠': [], '♥': [], '♦': [], '♣': []}
-            for card in hand.cards:
-                suits[card.suit].append(card.rank)
-            for suit in suits:
-                suits[suit].sort(key=lambda r: "23456789TJQKA".index(r), reverse=True)
-            hand_str = '.'.join([
-                ''.join(suits['♠']) or '-',
-                ''.join(suits['♥']) or '-',
-                ''.join(suits['♦']) or '-',
-                ''.join(suits['♣']) or '-'
-            ])
-            hands.append(hand_str)
+        # Get feedback generator (uses DDS if available, Minimax otherwise)
+        feedback_generator = get_play_feedback_generator(use_dds=True)
 
-        pbn = f"N:{' '.join(hands)}"
+        # Evaluate and store the play
+        feedback = feedback_generator.evaluate_and_store(
+            user_id=user_id,
+            play_state=state.play_state,
+            user_card=user_card,
+            position=position,
+            session_id=session_id
+        )
 
-        # Get trump
-        trump_suit = state.play_state.contract.trump_suit
-        trump_map = {
-            None: Denom.nt, '♠': Denom.spades, '♥': Denom.hearts,
-            '♦': Denom.diamonds, '♣': Denom.clubs
-        }
-        trump = trump_map.get(trump_suit, Denom.nt)
-
-        # Create deal and solve
-        deal = Deal(pbn)
-
-        # Get DD table for this position
-        from endplay.dds import calc_dd_table
-        dd_table = calc_dd_table(deal)
-        data_table = dd_table.to_list()
-
-        # Determine declarer's expected tricks
-        declarer = state.play_state.contract.declarer
-        denom_idx = {Denom.clubs: 0, Denom.diamonds: 1, Denom.hearts: 2, Denom.spades: 3, Denom.nt: 4}[trump]
-        declarer_idx = {"N": 0, "E": 1, "S": 2, "W": 3}[declarer]
-        optimal_tricks = data_table[denom_idx][declarer_idx]
-
-        # For now, simplified scoring based on whether card is from a reasonable suit
-        # Full implementation would solve for each legal card and compare
+        # Get legal cards for response
         hand = state.play_state.hands[position]
-        legal_cards = [c for c in hand.cards]
-
-        # Check if following suit
+        legal_cards = list(hand.cards)
         if state.play_state.current_trick:
             led_suit = state.play_state.current_trick[0][0].suit
             suit_cards = [c for c in hand.cards if c.suit == led_suit]
             if suit_cards:
                 legal_cards = suit_cards
 
-        # Simple heuristic scoring (full DDS solve for each card would be expensive)
-        # In production, we'd cache or batch these evaluations
-        is_legal = user_card in legal_cards
-
-        if not is_legal:
-            score = 0
-            rating = "illegal"
-            feedback = f"Illegal play - must follow suit"
-        else:
-            # Simplified scoring based on card rank and position
-            # Real implementation would use solve_board for each option
-            score = 7  # Default to "good"
-            rating = "good"
-            feedback = "Play recorded for analysis"
-
-            # Bonus for high cards when cashing out
-            if user_card.rank in ['A', 'K', 'Q']:
-                score = 8
-                rating = "good"
-                feedback = "Solid high card play"
-
-        # Log the evaluation for dashboard
-        try:
-            log_play_decision(
-                user_id=data.get('user_id', 1),
-                position=position,
-                user_card=f"{user_card.rank}{user_card.suit}",
-                score=score,
-                rating=rating,
-                contract=str(state.play_state.contract),
-                trick_number=len(state.play_state.trick_history) + 1
-            )
-        except Exception as log_error:
-            print(f"Warning: Failed to log play decision: {log_error}")
-
         return jsonify({
-            "dds_available": True,
-            "score": score,
-            "rating": rating,
-            "feedback": feedback,
-            "optimal_tricks": optimal_tricks,
-            "user_card": f"{user_card.rank}{user_card.suit}",
-            "legal_cards": [f"{c.rank}{c.suit}" for c in legal_cards]
+            "dds_available": feedback_generator.dds_available,
+            "score": feedback.score,
+            "correctness": feedback.correctness.value,
+            "rating": feedback.correctness.value,  # Alias for backward compatibility
+            "optimal_cards": feedback.optimal_cards,
+            "tricks_cost": feedback.tricks_cost,
+            "tricks_with_user_card": feedback.tricks_with_user_card,
+            "tricks_with_optimal": feedback.tricks_with_optimal,
+            "feedback": feedback.reasoning,
+            "reasoning": feedback.reasoning,
+            "helpful_hint": feedback.helpful_hint,
+            "play_category": feedback.play_category.value,
+            "key_concept": feedback.key_concept,
+            "difficulty": feedback.difficulty,
+            "user_card": feedback.user_card,
+            "legal_cards": [f"{c.rank}{c.suit}" for c in legal_cards],
+            "contract": feedback.contract,
+            "trick_number": feedback.trick_number,
+            "is_declarer_side": feedback.is_declarer_side,
+            "user_message": feedback.to_user_message()
         })
 
     except Exception as e:
@@ -2709,8 +2708,9 @@ def evaluate_play():
         print(f"Play evaluation error: {e}")
         traceback.print_exc()
         return jsonify({
-            "dds_available": True,
+            "dds_available": False,
             "score": 5,
+            "correctness": "error",
             "rating": "error",
             "feedback": f"Evaluation error: {str(e)}",
             "error": str(e)
