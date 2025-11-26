@@ -1,4 +1,4 @@
-# DDS Timeout Fix - November 26, 2025
+# DDS Subprocess Isolation Fix - November 26, 2025
 
 ## Issue
 
@@ -20,67 +20,79 @@ When any of these occur, the Gunicorn worker process dies and Render returns a 5
 
 ## Solution
 
-Added a `safe_ai_choose_card()` wrapper function that:
+**Subprocess Isolation** - Run DDS in a separate process so segfaults don't crash the main server.
 
-1. **Enforces timeout** - Uses SIGALRM to kill long-running DDS calls (15s limit)
-2. **Catches all exceptions** - Wraps AI call in try/except
-3. **Falls back gracefully** - Uses Minimax AI (depth 3) if DDS fails
-4. **Emergency fallback** - Picks first legal card if even Minimax fails
+The `safe_ai_choose_card()` wrapper function now:
 
-### Code Changes
+1. **For expert (DDS) difficulty:**
+   - Serializes PlayState to a dict
+   - Spawns subprocess to run DDS
+   - Waits with 15-second timeout
+   - If subprocess crashes (exitcode != 0) → segfault detected
+   - If subprocess hangs → timeout kills it
+   - Falls back to Minimax AI on any failure
+
+2. **For other difficulties:**
+   - Uses simple SIGALRM timeout
+   - Falls back to Minimax on timeout/exception
+
+### Key Components
 
 ```python
-# Fallback AI for when DDS/expert fails (prevents 502 crashes)
-fallback_ai = MinimaxPlayAI(max_depth=3)
+def _dds_worker(play_state_dict, position, result_queue):
+    """Worker function that runs DDS in a separate process."""
+    # If DDS segfaults here, only this subprocess dies
+    dds_ai = DDSPlayAI()
+    card = dds_ai.choose_card(play_state, position)
+    result_queue.put({'status': 'success', 'card': {...}})
 
-def safe_ai_choose_card(ai, play_state, position, difficulty, timeout_seconds=10):
-    """
-    Safely execute AI card selection with timeout and fallback.
-    """
-    import signal
-    import sys
+def safe_ai_choose_card(ai, play_state, position, difficulty, timeout_seconds=15):
+    if difficulty == 'expert' and DDS_AVAILABLE:
+        # Subprocess isolation
+        process = multiprocessing.Process(target=_dds_worker, ...)
+        process.start()
+        process.join(timeout_seconds)
 
-    def timeout_handler(signum, frame):
-        raise TimeoutError(f"AI decision timed out after {timeout_seconds}s")
-
-    try:
-        # Set timeout alarm (Unix only)
-        if sys.platform != 'win32':
-            old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(timeout_seconds)
-
-        try:
-            card = ai.choose_card(play_state, position)
-            return card, False, ai.get_name()
-        finally:
-            if sys.platform != 'win32':
-                signal.alarm(0)
-                signal.signal(signal.SIGALRM, old_handler)
-
-    except (TimeoutError, Exception) as e:
-        # Fallback to Minimax
-        card = fallback_ai.choose_card(play_state, position)
-        return card, True, f"{ai.get_name()} (fallback)"
+        if process.exitcode != 0:
+            # Segfault detected! Main server survives.
+            print("DDS CRASH: Subprocess exited with code", process.exitcode)
+            # Fall back to Minimax
 ```
 
-## Verification
+### Why Subprocess?
 
-After the fix:
-- AI plays cards even when DDS is unstable
-- No more 502 errors from DDS crashes
-- Game continues with Minimax fallback
-- Logs indicate when fallback was used
+| Issue | Signal Handler | Subprocess |
+|-------|---------------|------------|
+| Timeout | ✅ Catches | ✅ Catches |
+| Python Exception | ✅ Catches | ✅ Catches |
+| Segfault | ❌ Process dies | ✅ Only subprocess dies |
+| Hang | ✅ SIGALRM kills | ✅ terminate() kills |
 
 ## Files Changed
 
-- `backend/server.py` - Added `safe_ai_choose_card()` wrapper and `fallback_ai`
+- `backend/server.py`:
+  - Added `_dds_worker()` - subprocess entry point
+  - Added `_serialize_play_state()` - convert PlayState to dict
+  - Added `_reconstruct_play_state()` - rebuild PlayState in subprocess
+  - Updated `safe_ai_choose_card()` - subprocess isolation for DDS
 
 ## Testing
 
 1. Deploy to production
 2. Play a game with "expert" AI difficulty
-3. Verify AI makes plays without 502 errors
-4. Check server logs for any fallback usage
+3. If DDS crashes, server logs will show:
+   ```
+   ⚠️  DDS CRASH: Subprocess exited with code -11 for W
+      This was likely a segfault in the DDS library
+      Falling back to Minimax AI for W
+   ```
+4. Game continues with Minimax fallback (no 502!)
+
+## Performance
+
+- Subprocess spawn overhead: ~50-100ms
+- Only affects "expert" difficulty with DDS enabled
+- Other difficulties use direct call (no overhead)
 
 ## Related
 
