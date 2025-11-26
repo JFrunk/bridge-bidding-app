@@ -28,7 +28,7 @@ from engine.hand import Hand
 
 # Database abstraction layer for SQLite/PostgreSQL compatibility
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from db import get_connection
+from db import get_connection, date_subtract, date_between
 
 # Legacy DB_PATH kept for reference but not used
 DB_PATH = 'bridge.db'
@@ -279,7 +279,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
 
     try:
         # Overall stats (last 30 days)
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT
                 COUNT(*) as total_decisions,
                 AVG(score) as avg_score,
@@ -290,7 +290,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
                 SUM(CASE WHEN impact = 'critical' THEN 1 ELSE 0 END) as critical_errors
             FROM bidding_decisions
             WHERE user_id = ?
-              AND timestamp >= datetime('now', '-30 days')
+              AND timestamp >= {date_subtract(30)}
         """, (user_id,))
 
         overall_row = cursor.fetchone()
@@ -314,21 +314,22 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
         critical_errors = overall_row['critical_errors'] or 0
 
         # Calculate trend (compare last 7 days vs previous 7 days)
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT AVG(score) as avg_score
             FROM bidding_decisions
             WHERE user_id = ?
-              AND timestamp >= datetime('now', '-7 days')
+              AND timestamp >= {date_subtract(7)}
         """, (user_id,))
         recent_row = cursor.fetchone()
         recent_avg = recent_row['avg_score'] or 0
 
-        cursor.execute("""
+        prev_start, prev_end = date_between(14, 7)
+        cursor.execute(f"""
             SELECT AVG(score) as avg_score
             FROM bidding_decisions
             WHERE user_id = ?
-              AND timestamp >= datetime('now', '-14 days')
-              AND timestamp < datetime('now', '-7 days')
+              AND timestamp >= {prev_start}
+              AND timestamp < {prev_end}
         """, (user_id,))
         previous_row = cursor.fetchone()
         previous_avg = previous_row['avg_score'] or 0
@@ -428,7 +429,7 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
 
     try:
         # Overall stats (last 30 days)
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT
                 COUNT(*) as total_decisions,
                 AVG(score) as avg_score,
@@ -438,7 +439,7 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
                 SUM(CASE WHEN rating = 'blunder' THEN 1 ELSE 0 END) as blunder_count
             FROM play_decisions
             WHERE user_id = ?
-              AND timestamp >= datetime('now', '-30 days')
+              AND timestamp >= {date_subtract(30)}
         """, (user_id,))
 
         overall_row = cursor.fetchone()
@@ -460,21 +461,22 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
         blunder_count = overall_row['blunder_count'] or 0
 
         # Calculate trend (compare last 7 days vs previous 7 days)
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT AVG(score) as avg_score
             FROM play_decisions
             WHERE user_id = ?
-              AND timestamp >= datetime('now', '-7 days')
+              AND timestamp >= {date_subtract(7)}
         """, (user_id,))
         recent_row = cursor.fetchone()
         recent_avg = recent_row['avg_score'] or 0
 
-        cursor.execute("""
+        play_prev_start, play_prev_end = date_between(14, 7)
+        cursor.execute(f"""
             SELECT AVG(score) as avg_score
             FROM play_decisions
             WHERE user_id = ?
-              AND timestamp >= datetime('now', '-14 days')
-              AND timestamp < datetime('now', '-7 days')
+              AND timestamp >= {play_prev_start}
+              AND timestamp < {play_prev_end}
         """, (user_id,))
         previous_row = cursor.fetchone()
         previous_avg = previous_row['avg_score'] or 0

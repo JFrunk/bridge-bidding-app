@@ -20,7 +20,7 @@ from pathlib import Path
 
 # Database abstraction layer for SQLite/PostgreSQL compatibility
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from db import get_connection
+from db import get_connection, date_subtract
 
 
 @dataclass
@@ -184,14 +184,14 @@ class MistakeAnalyzer:
             return
 
         # Calculate recent occurrences (last 30 days)
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT COUNT(*) as count
             FROM practice_history
             WHERE user_id = ?
               AND convention_id IS ?
               AND error_category = ?
               AND was_correct = FALSE
-              AND timestamp >= datetime('now', '-30 days')
+              AND timestamp >= {date_subtract(30)}
         """, (pattern['user_id'], pattern['convention_id'], pattern['error_category']))
 
         recent_count = cursor.fetchone()['count']
