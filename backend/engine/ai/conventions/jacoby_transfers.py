@@ -105,11 +105,15 @@ class JacobyConvention(ConventionModule):
                 len(non_pass_bids) == 1 and
                 (hand.suit_lengths['♥'] >= 5 or hand.suit_lengths['♠'] >= 5))
     
-    def _get_transfer_bid(self, hand: Hand) -> Optional[Tuple[str, str]]:
+    def _get_transfer_bid(self, hand: Hand) -> Optional[Tuple[str, str, dict]]:
+        # Metadata to bypass suit length validation for artificial transfer bids
+        # The bid suit (♦/♥) is NOT the target suit (♥/♠)
+        metadata = {'bypass_suit_length': True}
+
         if hand.suit_lengths['♥'] >= 5:
-            return ("2♦", "Jacoby Transfer showing 5+ Hearts.")
+            return ("2♦", "Jacoby Transfer showing 5+ Hearts.", metadata)
         if hand.suit_lengths['♠'] >= 5:
-            return ("2♥", "Jacoby Transfer showing 5+ Spades.")
+            return ("2♥", "Jacoby Transfer showing 5+ Spades.", metadata)
         return None
 
     def _is_responder_continuation_applicable(self, features: Dict) -> bool:
