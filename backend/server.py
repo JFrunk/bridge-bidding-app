@@ -2339,9 +2339,13 @@ def dds_test():
         from endplay.types import Deal, Player as EndplayPlayer, Denom
         from endplay.dds import calc_dd_table
 
-        # Create a simple test deal (North has all the high cards)
-        # PBN format: "N:AKQ.AKQ.AKQ.AKQJ 432.432.432.5432 JT9.JT9.JT9.T987 876.876.876.6"
-        test_pbn = "N:AKQ.AKQ.AKQ.AKQJ 432.432.432.5432 JT9.JT9.JT9.T987 876.876.876.6"
+        # Create a simple test deal where North-South have all high cards
+        # Each hand must have exactly 13 cards
+        # N: ♠AKQ ♥AKQ ♦AKQ ♣AKQJ = 13 cards
+        # E: ♠5432 ♥5432 ♦5432 ♣5 = 13 cards
+        # S: ♠JT9 ♥JT9 ♦JT9 ♣T987 = 13 cards
+        # W: ♠876 ♥876 ♦876 ♣6432 = 13 cards
+        test_pbn = "N:AKQ.AKQ.AKQ.AKQJ 5432.5432.5432.5 JT9.JT9.JT9.T987 876.876.876.6432"
 
         result["test_performed"] = True
 
