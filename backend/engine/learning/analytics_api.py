@@ -689,14 +689,14 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
         cursor.execute("""
             SELECT
                 COUNT(*) as total_declarer_hands,
-                SUM(CASE WHEN made = 1 THEN 1 ELSE 0 END) as contracts_made,
-                SUM(CASE WHEN made = 0 THEN 1 ELSE 0 END) as contracts_failed,
+                SUM(CASE WHEN made = TRUE THEN 1 ELSE 0 END) as contracts_made,
+                SUM(CASE WHEN made = FALSE THEN 1 ELSE 0 END) as contracts_failed,
                 AVG(tricks_taken) as avg_tricks,
-                AVG(CASE WHEN made = 1 THEN 1.0 ELSE 0.0 END) as success_rate
+                AVG(CASE WHEN made = TRUE THEN 1.0 ELSE 0.0 END) as success_rate
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
             WHERE gs.user_id = ?
-              AND sh.user_was_declarer = 1
+              AND sh.user_was_declarer = TRUE
               AND sh.contract_level IS NOT NULL
         """, (user_id,))
 
@@ -704,17 +704,17 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
 
         # Get recent declarer performance (last 20 hands)
         cursor.execute("""
-            SELECT AVG(CASE WHEN made = 1 THEN 1.0 ELSE 0.0 END) as recent_success_rate
+            SELECT AVG(CASE WHEN made = TRUE THEN 1.0 ELSE 0.0 END) as recent_success_rate
             FROM (
                 SELECT made
                 FROM session_hands sh
                 JOIN game_sessions gs ON sh.session_id = gs.id
                 WHERE gs.user_id = ?
-                  AND sh.user_was_declarer = 1
+                  AND sh.user_was_declarer = TRUE
                   AND sh.contract_level IS NOT NULL
                 ORDER BY sh.played_at DESC
                 LIMIT 20
-            )
+            ) subq
         """, (user_id,))
 
         recent_row = cursor.fetchone()
@@ -725,8 +725,8 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
             WHERE gs.user_id = ?
-              AND sh.user_was_declarer = 0
-              AND sh.user_was_dummy = 0
+              AND sh.user_was_declarer = FALSE
+              AND sh.user_was_dummy = FALSE
               AND sh.contract_level IS NOT NULL
         """, (user_id,))
 
