@@ -42,9 +42,12 @@ class StaymanConvention(ConventionModule):
 
         return True
 
-    def _initiate_stayman(self, hand: Hand, features: Dict) -> Tuple[str, str]:
+    def _initiate_stayman(self, hand: Hand, features: Dict) -> Tuple[str, str, dict]:
         """Bid 2♣ Stayman."""
-        return ("2♣", f"Stayman. Asks partner for a 4-card major. Shows {hand.hcp} HCP.")
+        # Metadata to bypass suit length validation for artificial Stayman bid
+        # 2♣ is asking about majors, not showing clubs
+        metadata = {'bypass_suit_length': True}
+        return ("2♣", f"Stayman. Asks partner for a 4-card major. Shows {hand.hcp} HCP.", metadata)
 
     def _is_stayman_response_position(self, features: Dict) -> bool:
         """Check if we're opener responding to Stayman 2♣."""
