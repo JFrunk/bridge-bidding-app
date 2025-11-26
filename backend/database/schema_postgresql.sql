@@ -395,3 +395,28 @@ INSERT INTO celebration_templates (template_id, milestone_type, title_template, 
 ('hands_milestone_100', 'hands_milestone', '100 Hands Practiced!', 'Century club! 100 hands is serious dedication!', '🎯', 75),
 ('improvement_20pct', 'improvement_milestone', 'Major Improvement!', 'You improved {category} by {improvement}%! Amazing progress!', '📈', 35)
 ON CONFLICT (template_id) DO NOTHING;
+
+-- ============================================================================
+-- AI PLAY LOGGING (for DDS monitoring)
+-- ============================================================================
+
+-- AI play decision logging table
+CREATE TABLE IF NOT EXISTS ai_play_log (
+    id SERIAL PRIMARY KEY,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    session_id TEXT,
+    hand_number INTEGER,
+    trick_number INTEGER,
+    position TEXT NOT NULL CHECK(position IN ('N', 'E', 'S', 'W')),
+    ai_level TEXT NOT NULL CHECK(ai_level IN ('beginner', 'intermediate', 'advanced', 'expert')),
+    card_played TEXT NOT NULL,
+    solve_time_ms REAL,
+    used_fallback BOOLEAN DEFAULT FALSE,
+    contract TEXT,
+    trump_suit TEXT
+);
+
+-- Indexes for efficient DDS health queries
+CREATE INDEX IF NOT EXISTS idx_ai_play_log_timestamp ON ai_play_log(timestamp);
+CREATE INDEX IF NOT EXISTS idx_ai_play_log_ai_level ON ai_play_log(ai_level);
+CREATE INDEX IF NOT EXISTS idx_ai_play_log_fallback ON ai_play_log(used_fallback);

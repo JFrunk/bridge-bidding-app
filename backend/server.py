@@ -2304,6 +2304,80 @@ def dds_health():
         return jsonify({"error": f"Error fetching DDS health: {e}"}), 500
 
 
+@app.route("/api/dds-test", methods=["GET"])
+def dds_test():
+    """
+    DDS self-test endpoint - actually runs a DDS solve to verify it works.
+
+    This is the definitive test for DDS functionality in production.
+    It creates a simple test position and runs DDS to solve it.
+
+    Returns:
+        JSON with test results including timing and correctness
+    """
+    import time
+
+    result = {
+        "platform": platform.system(),
+        "platform_allows_dds": PLATFORM_ALLOWS_DDS,
+        "dds_available": DDS_AVAILABLE,
+        "expert_ai_type": ai_instances['expert'].get_name(),
+        "test_performed": False,
+        "test_passed": False,
+        "error": None,
+        "solve_time_ms": None,
+        "expected_tricks": None,
+        "computed_tricks": None
+    }
+
+    # If DDS not available, return early
+    if not DDS_AVAILABLE or not PLATFORM_ALLOWS_DDS:
+        result["error"] = "DDS not available on this platform"
+        return jsonify(result)
+
+    try:
+        from endplay.types import Deal, Player as EndplayPlayer, Denom
+        from endplay.dds import calc_dd_table
+
+        # Create a simple test deal (North has all the high cards)
+        # PBN format: "N:AKQ.AKQ.AKQ.AKQJ 432.432.432.5432 JT9.JT9.JT9.T987 876.876.876.6"
+        test_pbn = "N:AKQ.AKQ.AKQ.AKQJ 432.432.432.5432 JT9.JT9.JT9.T987 876.876.876.6"
+
+        result["test_performed"] = True
+
+        # Time the DDS solve
+        start_time = time.time()
+        deal = Deal(test_pbn)
+        dd_table = calc_dd_table(deal)
+        solve_time = (time.time() - start_time) * 1000
+
+        result["solve_time_ms"] = round(solve_time, 2)
+
+        # Get the results - North should make 13 tricks in NT
+        # dd_table.to_list() returns [clubs, diamonds, hearts, spades, nt] for each player [N, E, S, W]
+        data = dd_table.to_list()
+        # NT is index 4, North is index 0
+        north_nt_tricks = data[4][0]
+
+        result["expected_tricks"] = 13
+        result["computed_tricks"] = north_nt_tricks
+        result["test_passed"] = (north_nt_tricks == 13)
+
+        if result["test_passed"]:
+            result["message"] = f"DDS working correctly! Solved in {solve_time:.1f}ms"
+        else:
+            result["message"] = f"DDS returned unexpected result: {north_nt_tricks} tricks (expected 13)"
+            result["error"] = "Incorrect solve result"
+
+    except Exception as e:
+        result["error"] = str(e)
+        result["message"] = f"DDS test failed: {e}"
+        import traceback
+        result["traceback"] = traceback.format_exc()
+
+    return jsonify(result)
+
+
 @app.route("/api/ai-quality-summary", methods=["GET"])
 def ai_quality_summary():
     """
