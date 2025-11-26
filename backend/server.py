@@ -2422,48 +2422,53 @@ def dds_quality_check():
         from endplay.dds.solve import SolveMode
 
         # Test positions with known optimal plays
-        # Each position: (pbn, trump, declarer, leader, expected_optimal_cards, description)
-        # expected_optimal_cards is a list of cards that are all equally optimal
+        # Each hand must have EXACTLY 13 cards
+        # PBN format: "N:spades.hearts.diamonds.clubs E-hand S-hand W-hand"
         test_positions = [
-            # Position 1: Simple finesse position - lead toward the king
+            # Position 1: Simple finesse - N has AQ, W has K
+            # N: 2+3+3+5=13, E: 3+3+3+4=13, S: 3+3+3+4=13, W: 5+4+4+0=13
             {
-                "pbn": "N:AQ.432.432.43232 K32.K65.K65.K65 J54.QJ9.QJ9.QJ9 T98.T87.T87.T87",
+                "pbn": "N:AQ.432.432.43232 K32.K65.K65.5432 J54.QJ9.QJ9.QJ98 T9876.T87.T87.-",
                 "trump": "nt",
                 "declarer": "N",
                 "to_play": "S",
                 "description": "Simple finesse - lead low toward AQ",
                 "category": "finesse"
             },
-            # Position 2: Cash winners - take your tricks
+            # Position 2: Cash winners - N has top cards
+            # N: 4+4+2+3=13, E: 4+4+3+2=13, S: 3+3+4+3=13, W: 2+2+4+5=13
             {
-                "pbn": "N:AKQJ.AKQJ.32.432 5432.5432.K65.K6 T98.T98.QJ9.QJ9 76.76.T87.T8765",
+                "pbn": "N:AKQJ.AKQJ.32.432 5432.5432.K65.K6 T98.T98.QJ94.QJ9 76.76.T87.T8765",
                 "trump": "nt",
                 "declarer": "N",
                 "to_play": "N",
                 "description": "Cash winners - run top cards",
                 "category": "cashout"
             },
-            # Position 3: Trump management - draw trumps
+            # Position 3: Trump contract - draw trumps
+            # N: 5+3+2+3=13, E: 4+3+3+3=13, S: 3+3+4+3=13, W: 1+4+4+4=13
             {
-                "pbn": "N:AKQJT.A32.32.432 98765.K65.K65.K6 432.QJ9.QJ98.QJ T.T87.T74.T9875",
+                "pbn": "N:AKQJT.A32.32.432 9876.K65.K65.K65 432.QJ9.QJ98.QJ9 5.T874.T74.T8742",
                 "trump": "spades",
                 "declarer": "N",
                 "to_play": "N",
                 "description": "Trump contract - draw trumps first",
                 "category": "trump_management"
             },
-            # Position 4: Defensive play - return partner's suit
+            # Position 4: Defense - West leads against 3NT
+            # N: 3+3+3+4=13, E: 3+3+3+4=13, S: 3+3+3+4=13, W: 4+4+4+1=13
             {
-                "pbn": "N:AKQ.432.AKQ.5432 J32.AKQ.J32.KQJ9 T98.J98.T98.T876 765.T765.765.A",
+                "pbn": "N:AKQ.432.AKQ.5432 J32.AKQ.J32.KQJ9 T98.J98.T98.T876 7654.T765.765.A",
                 "trump": "nt",
                 "declarer": "S",
                 "to_play": "W",
                 "description": "Defense - cash/establish tricks",
                 "category": "defense"
             },
-            # Position 5: Endplay setup
+            # Position 5: Squeeze setup - North declarer
+            # N: 2+2+3+6=13, E: 4+4+4+1=13, S: 3+3+3+4=13, W: 4+4+3+2=13
             {
-                "pbn": "N:AK.AK.AKQ.AKQJT 432.432.432.5432 QJ.QJ.JT9.9876 T98.T98.876.3",
+                "pbn": "N:AK.AK.AKQ.AKQJT9 5432.5432.5432.5 QJ3.QJ3.JT9.8764 T987.T987.876.32",
                 "trump": "nt",
                 "declarer": "N",
                 "to_play": "N",
