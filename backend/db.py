@@ -362,6 +362,17 @@ def init_database():
 
     schema_dir = Path(__file__).parent / 'database'
 
+    # Critical tables that MUST exist for the app to function
+    CRITICAL_TABLES = [
+        'users',
+        'user_settings',
+        'user_gamification',
+        'game_sessions',
+        'session_hands',
+        'bidding_decisions',
+        'hand_analyses',
+    ]
+
     if USE_POSTGRES:
         # Use dedicated PostgreSQL schema file
         schema_path = schema_dir / 'schema_postgresql.sql'
@@ -372,6 +383,31 @@ def init_database():
             with get_connection() as conn:
                 cursor = conn.cursor()
                 _execute_script(cursor, sql)
+
+            # Verify critical tables exist
+            print("\nVerifying critical tables...")
+            with get_connection() as conn:
+                cursor = conn.cursor()
+                missing_tables = []
+                for table in CRITICAL_TABLES:
+                    cursor.execute("""
+                        SELECT EXISTS (
+                            SELECT FROM information_schema.tables
+                            WHERE table_name = %s
+                        )
+                    """, (table,))
+                    exists = cursor.fetchone()[0]
+                    if exists:
+                        print(f"  ✓ {table}")
+                    else:
+                        print(f"  ✗ {table} - MISSING!")
+                        missing_tables.append(table)
+
+                if missing_tables:
+                    print(f"\n⚠️  WARNING: {len(missing_tables)} critical table(s) missing: {missing_tables}")
+                else:
+                    print("\n✓ All critical tables verified")
+
             print("PostgreSQL schema initialized successfully")
         else:
             print(f"WARNING: PostgreSQL schema not found at {schema_path}")
@@ -414,20 +450,38 @@ def init_database():
 def _execute_script(cursor, script):
     """Execute a SQL script (multiple statements) on PostgreSQL."""
     # Remove single-line comments (-- to end of line)
+    # Also remove multi-line comments /* ... */
     import re
     clean_script = re.sub(r'--[^\n]*\n', '\n', script)
+    clean_script = re.sub(r'/\*.*?\*/', '', clean_script, flags=re.DOTALL)
 
     statements = [s.strip() for s in clean_script.split(';') if s.strip()]
+    success_count = 0
+    error_count = 0
+
     for statement in statements:
         # Skip empty statements
         if not statement:
             continue
         try:
             cursor.execute(statement)
+            success_count += 1
+            # Log table creation for visibility
+            if 'CREATE TABLE' in statement.upper():
+                # Extract table name
+                match = re.search(r'CREATE TABLE[^"\'`\s]*\s+(?:IF NOT EXISTS\s+)?["\']?(\w+)', statement, re.IGNORECASE)
+                if match:
+                    print(f"  ✓ Created table: {match.group(1)}")
         except Exception as e:
+            error_count += 1
+            error_str = str(e).lower()
             # Log but continue for "already exists" type errors
-            if 'already exists' not in str(e).lower():
-                print(f"SQL Warning: {e}")
+            if 'already exists' not in error_str and 'duplicate' not in error_str:
+                print(f"SQL Error: {e}")
+                # Print first 100 chars of statement for debugging
+                print(f"  Statement: {statement[:100]}...")
+
+    print(f"Schema execution complete: {success_count} statements succeeded, {error_count} errors")
 
 
 # Print startup message
