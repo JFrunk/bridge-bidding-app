@@ -149,6 +149,79 @@ ai_instances = {
     'expert': DDSPlayAI() if (DDS_AVAILABLE and PLATFORM_ALLOWS_DDS) else MinimaxPlayAI(max_depth=4)
 }
 
+# Fallback AI for when DDS/expert fails (prevents 502 crashes)
+fallback_ai = MinimaxPlayAI(max_depth=3)
+
+def safe_ai_choose_card(ai, play_state, position, difficulty, timeout_seconds=10):
+    """
+    Safely execute AI card selection with timeout and fallback.
+
+    On production (Render), DDS can crash or hang causing 502 errors.
+    This wrapper catches issues and falls back to Minimax.
+
+    Args:
+        ai: The AI instance to use
+        play_state: Current play state
+        position: Position making the play
+        difficulty: AI difficulty level string
+        timeout_seconds: Max time to wait for AI decision
+
+    Returns:
+        tuple: (card, used_fallback, actual_ai_name)
+    """
+    import signal
+    import sys
+
+    # Timeout handler (Unix only)
+    def timeout_handler(signum, frame):
+        raise TimeoutError(f"AI decision timed out after {timeout_seconds}s")
+
+    used_fallback = False
+    actual_ai_name = ai.get_name()
+
+    try:
+        # Set timeout alarm (Unix only - works on Linux/Render)
+        if sys.platform != 'win32':
+            old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(timeout_seconds)
+
+        try:
+            card = ai.choose_card(play_state, position)
+            return card, False, actual_ai_name
+        finally:
+            # Clear alarm
+            if sys.platform != 'win32':
+                signal.alarm(0)
+                signal.signal(signal.SIGALRM, old_handler)
+
+    except TimeoutError as e:
+        print(f"⚠️  AI TIMEOUT: {difficulty} AI timed out for {position}")
+        print(f"   Falling back to Minimax AI")
+        used_fallback = True
+
+    except Exception as e:
+        print(f"⚠️  AI ERROR: {difficulty} AI failed for {position}: {e}")
+        print(f"   Falling back to Minimax AI")
+        traceback.print_exc()
+        used_fallback = True
+
+    # Fallback to Minimax
+    try:
+        card = fallback_ai.choose_card(play_state, position)
+        return card, True, f"{actual_ai_name} (fallback: {fallback_ai.get_name()})"
+    except Exception as fallback_error:
+        print(f"❌ CRITICAL: Even fallback AI failed: {fallback_error}")
+        # Last resort: pick first legal card
+        hand = play_state.hands[position]
+        if play_state.current_trick:
+            led_suit = play_state.current_trick[0][0].suit
+            legal = [c for c in hand.cards if c.suit == led_suit] or list(hand.cards)
+        else:
+            legal = list(hand.cards)
+        if legal:
+            return legal[0], True, "Emergency fallback (first legal card)"
+        raise ValueError(f"No legal cards for {position}")
+
 # Import DEFAULT_AI_DIFFICULTY to show startup configuration
 from core.session_state import DEFAULT_AI_DIFFICULTY
 print(f"🎯 Default AI Difficulty: {DEFAULT_AI_DIFFICULTY}")
@@ -1896,11 +1969,18 @@ def get_ai_play():
         # but for dummy, the AI is declarer making strategic decisions across both hands
 
         # Time the AI decision for performance monitoring
+        # Use safe wrapper to prevent 502 crashes from DDS timeouts/errors
         start_time = time.time()
-        card = current_ai.choose_card(state.play_state, position)
+        card, ai_used_fallback, ai_name_used = safe_ai_choose_card(
+            current_ai, state.play_state, position, state.ai_difficulty,
+            timeout_seconds=15  # 15s timeout (Render has 30s limit)
+        )
         solve_time_ms = (time.time() - start_time) * 1000  # Convert to milliseconds
 
-        print(f"   ✅ AI chose: {card.rank}{card.suit} (took {solve_time_ms:.1f}ms)")
+        if ai_used_fallback:
+            print(f"   ⚠️ AI used FALLBACK: {card.rank}{card.suit} (took {solve_time_ms:.1f}ms)")
+        else:
+            print(f"   ✅ AI chose: {card.rank}{card.suit} (took {solve_time_ms:.1f}ms)")
 
         # CRITICAL VALIDATION: Verify card is actually in hand before playing
         # This prevents state corruption if AI has a bug
@@ -1941,9 +2021,9 @@ def get_ai_play():
             # Calculate current trick number
             trick_number = len(state.play_state.trick_history) + 1
 
-            # Check if DDS was available and might have been used
-            # If expert level and not on supported platform, fallback was definitely used
-            used_fallback = (
+            # Check if fallback was used (either due to platform or runtime error)
+            # ai_used_fallback is set by safe_ai_choose_card() above
+            used_fallback = ai_used_fallback or (
                 state.ai_difficulty == 'expert' and
                 not (DDS_AVAILABLE and PLATFORM_ALLOWS_DDS)
             )
