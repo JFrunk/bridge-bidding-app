@@ -349,6 +349,35 @@ def is_sqlite():
     return not USE_POSTGRES
 
 
+def date_subtract(days):
+    """
+    Return SQL expression for current timestamp minus N days.
+
+    SQLite: datetime('now', '-N days')
+    PostgreSQL: NOW() - INTERVAL 'N days'
+
+    Usage in query:
+        f"timestamp >= {date_subtract(30)}"
+    """
+    if USE_POSTGRES:
+        return f"NOW() - INTERVAL '{days} days'"
+    else:
+        return f"datetime('now', '-{days} days')"
+
+
+def date_between(days_ago_start, days_ago_end):
+    """
+    Return SQL expressions for a date range (exclusive end).
+
+    Returns tuple: (start_expr, end_expr)
+
+    Usage:
+        start, end = date_between(14, 7)  # Between 14 and 7 days ago
+        f"timestamp >= {start} AND timestamp < {end}"
+    """
+    return (date_subtract(days_ago_start), date_subtract(days_ago_end))
+
+
 # For backwards compatibility - allow importing like sqlite3
 connect = get_connection
 
