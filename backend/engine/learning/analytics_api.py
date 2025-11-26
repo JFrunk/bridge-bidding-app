@@ -410,6 +410,165 @@ def get_recent_bidding_decisions_for_user(user_id: int, limit: int = 10) -> List
         conn.close()
 
 
+def get_play_feedback_stats_for_user(user_id: int) -> Dict:
+    """
+    Calculate play feedback statistics from play_decisions table.
+    Mirrors bidding_feedback_stats structure for dashboard consistency.
+
+    Returns:
+        - avg_score: Average quality score (0-10)
+        - total_decisions: Total play decisions recorded
+        - optimal_rate: Percentage of optimal plays
+        - good_rate: Percentage of good plays
+        - blunder_rate: Percentage of blunders
+        - recent_trend: 'improving', 'stable', or 'declining'
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Overall stats (last 30 days)
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total_decisions,
+                AVG(score) as avg_score,
+                SUM(CASE WHEN rating = 'optimal' THEN 1 ELSE 0 END) as optimal_count,
+                SUM(CASE WHEN rating = 'good' THEN 1 ELSE 0 END) as good_count,
+                SUM(CASE WHEN rating = 'suboptimal' THEN 1 ELSE 0 END) as suboptimal_count,
+                SUM(CASE WHEN rating = 'blunder' THEN 1 ELSE 0 END) as blunder_count
+            FROM play_decisions
+            WHERE user_id = ?
+              AND timestamp >= datetime('now', '-30 days')
+        """, (user_id,))
+
+        overall_row = cursor.fetchone()
+
+        if not overall_row or overall_row['total_decisions'] == 0:
+            return {
+                'avg_score': 0,
+                'total_decisions': 0,
+                'optimal_rate': 0,
+                'good_rate': 0,
+                'blunder_rate': 0,
+                'recent_trend': 'stable'
+            }
+
+        total = overall_row['total_decisions']
+        avg_score = overall_row['avg_score'] or 0
+        optimal_count = overall_row['optimal_count'] or 0
+        good_count = overall_row['good_count'] or 0
+        blunder_count = overall_row['blunder_count'] or 0
+
+        # Calculate trend (compare last 7 days vs previous 7 days)
+        cursor.execute("""
+            SELECT AVG(score) as avg_score
+            FROM play_decisions
+            WHERE user_id = ?
+              AND timestamp >= datetime('now', '-7 days')
+        """, (user_id,))
+        recent_row = cursor.fetchone()
+        recent_avg = recent_row['avg_score'] or 0
+
+        cursor.execute("""
+            SELECT AVG(score) as avg_score
+            FROM play_decisions
+            WHERE user_id = ?
+              AND timestamp >= datetime('now', '-14 days')
+              AND timestamp < datetime('now', '-7 days')
+        """, (user_id,))
+        previous_row = cursor.fetchone()
+        previous_avg = previous_row['avg_score'] or 0
+
+        # Determine trend
+        if previous_avg == 0:
+            trend = 'stable'
+        elif recent_avg > previous_avg + 0.3:
+            trend = 'improving'
+        elif recent_avg < previous_avg - 0.3:
+            trend = 'declining'
+        else:
+            trend = 'stable'
+
+        return {
+            'avg_score': round(avg_score, 1),
+            'total_decisions': total,
+            'optimal_rate': round(optimal_count / total, 3) if total > 0 else 0,
+            'good_rate': round(good_count / total, 3) if total > 0 else 0,
+            'blunder_rate': round(blunder_count / total, 3) if total > 0 else 0,
+            'recent_trend': trend
+        }
+
+    except Exception as e:
+        # Table might not exist yet
+        print(f"Could not get play feedback stats: {e}")
+        return {
+            'avg_score': 0,
+            'total_decisions': 0,
+            'optimal_rate': 0,
+            'good_rate': 0,
+            'blunder_rate': 0,
+            'recent_trend': 'stable'
+        }
+
+    finally:
+        conn.close()
+
+
+def get_recent_play_decisions_for_user(user_id: int, limit: int = 10) -> List[Dict]:
+    """
+    Get recent play decisions for dashboard display.
+    Mirrors get_recent_bidding_decisions_for_user structure.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT
+                id,
+                position,
+                trick_number,
+                user_card,
+                optimal_card,
+                score,
+                rating,
+                tricks_cost,
+                contract,
+                feedback,
+                timestamp
+            FROM play_decisions
+            WHERE user_id = ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        """, (user_id, limit))
+
+        decisions = []
+        for row in cursor.fetchall():
+            decisions.append({
+                'id': row['id'],
+                'position': row['position'],
+                'trick_number': row['trick_number'],
+                'user_card': row['user_card'],
+                'optimal_card': row['optimal_card'],
+                'score': row['score'],
+                'rating': row['rating'],
+                'tricks_cost': row['tricks_cost'],
+                'contract': row['contract'],
+                'feedback': row['feedback'],
+                'timestamp': row['timestamp']
+            })
+
+        return decisions
+
+    except Exception as e:
+        # Table might not exist yet
+        print(f"Could not get recent play decisions: {e}")
+        return []
+
+    finally:
+        conn.close()
+
+
 def get_dashboard():
     """
     GET /api/analytics/dashboard?user_id=<id>
@@ -446,6 +605,12 @@ def get_dashboard():
         # Get recent bidding decisions (Phase 1)
         recent_decisions = get_recent_bidding_decisions_for_user(user_id, limit=10)
 
+        # Get play feedback stats (DDS-based evaluation)
+        play_feedback_stats = get_play_feedback_stats_for_user(user_id)
+
+        # Get recent play decisions
+        recent_play_decisions = get_recent_play_decisions_for_user(user_id, limit=10)
+
         # Get insight summary (bidding)
         insights = analyzer.get_insight_summary(user_id)
 
@@ -470,6 +635,8 @@ def get_dashboard():
             'gameplay_stats': gameplay_stats,
             'bidding_feedback_stats': bidding_feedback_stats,  # Phase 1: NEW
             'recent_decisions': recent_decisions,  # Phase 1: NEW
+            'play_feedback_stats': play_feedback_stats,  # DDS-based play evaluation
+            'recent_play_decisions': recent_play_decisions,  # Recent play decisions
             'insights': {
                 'total_patterns': insights.total_patterns,
                 'active_patterns': insights.active_patterns,
