@@ -217,7 +217,9 @@ class ConnectionWrapper:
     def cursor(self):
         """Get a cursor, wrapped for compatibility if PostgreSQL."""
         if self._is_postgres:
-            return PostgresCursorWrapper(self._conn.cursor())
+            # Use RealDictCursor to get dict-like rows (column access by name)
+            from psycopg2.extras import RealDictCursor
+            return PostgresCursorWrapper(self._conn.cursor(cursor_factory=RealDictCursor))
         return self._conn.cursor()
 
     def commit(self):
