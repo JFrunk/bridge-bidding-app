@@ -520,6 +520,36 @@ def get_state():
     return state
 
 
+def serialize_all_hands(deal):
+    """
+    Serialize all 4 hands from a deal for JSON response.
+
+    This helper ensures frontend receives all hands when a deal is made,
+    eliminating dependency on server state for "Show All Hands" feature.
+
+    Args:
+        deal: Dict with 'North', 'East', 'South', 'West' Hand objects
+
+    Returns:
+        Dict with all hands serialized for JSON
+    """
+    all_hands = {}
+    for position in ['North', 'East', 'South', 'West']:
+        hand = deal.get(position)
+        if hand:
+            all_hands[position] = {
+                'hand': [{'rank': card.rank, 'suit': card.suit} for card in hand.cards],
+                'points': {
+                    'hcp': hand.hcp,
+                    'dist_points': hand.dist_points,
+                    'total_points': hand.total_points,
+                    'suit_hcp': hand.suit_hcp,
+                    'suit_lengths': hand.suit_lengths
+                }
+            }
+    return all_hands
+
+
 # Register learning path endpoints (convention levels system)
 register_learning_endpoints(app)
 
@@ -1021,7 +1051,16 @@ def load_scenario():
         south_hand = state.deal['South']
         hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
         points_for_json = { 'hcp': south_hand.hcp, 'dist_points': south_hand.dist_points, 'total_points': south_hand.total_points, 'suit_hcp': south_hand.suit_hcp, 'suit_lengths': south_hand.suit_lengths }
-        return jsonify({'hand': hand_for_json, 'points': points_for_json, 'vulnerability': state.vulnerability})
+
+        # Include all hands in response to prevent state sync issues
+        all_hands = serialize_all_hands(state.deal)
+
+        return jsonify({
+            'hand': hand_for_json,
+            'points': points_for_json,
+            'vulnerability': state.vulnerability,
+            'all_hands': all_hands  # NEW: All hands for frontend storage
+        })
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': f'Could not load scenario: {e}'}), 500
@@ -1066,12 +1105,16 @@ def deal_hands():
     hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
     points_for_json = { 'hcp': south_hand.hcp, 'dist_points': south_hand.dist_points, 'total_points': south_hand.total_points, 'suit_hcp': south_hand.suit_hcp, 'suit_lengths': south_hand.suit_lengths }
 
-    # Include dealer in response for frontend
+    # Include all hands in response to prevent state sync issues
+    # Frontend stores these locally so "Show All Hands" doesn't depend on server state
+    all_hands = serialize_all_hands(state.deal)
+
     return jsonify({
         'hand': hand_for_json,
         'points': points_for_json,
         'vulnerability': state.vulnerability,
-        'dealer': dealer  # NEW: Send dealer to frontend
+        'dealer': dealer,
+        'all_hands': all_hands  # NEW: All hands for frontend storage
     })
 
 @app.route('/api/get-next-bid', methods=['POST'])
@@ -1891,12 +1934,15 @@ def play_random_hand():
         # Return the generated auction for reference (optional - can be displayed or hidden)
         auction_for_display = [{"bid": bid, "explanation": ""} for bid in auction_history]
 
+        # Include all hands in response to prevent state sync issues
+        all_hands = serialize_all_hands(state.deal)
+
         return jsonify({
             "success": True,
             "hand": hand_for_json,
             "points": points_for_json,
             "vulnerability": state.vulnerability,
-            "dealer": dealer,  # NEW: Include dealer
+            "dealer": dealer,
             "contract": str(contract),
             "contract_details": {
                 "level": contract.level,
@@ -1907,7 +1953,8 @@ def play_random_hand():
             "opening_leader": opening_leader,
             "dummy": dummy_position,
             "next_to_play": opening_leader,
-            "auction": auction_for_display  # Include generated auction
+            "auction": auction_for_display,
+            "all_hands": all_hands  # NEW: All hands for frontend storage
         })
 
     except Exception as e:
@@ -1982,6 +2029,36 @@ def play_card():
                 "error": "Must follow suit if able"
             }), 400
         
+        # === EVALUATE USER'S PLAY BEFORE MODIFYING STATE ===
+        # Only evaluate plays by user (South) or when user controls dummy
+        play_feedback = None
+        user_id = data.get('user_id')
+
+        if position == 'S' or (position == state.play_state.dummy and state.play_state.contract.declarer == 'S'):
+            try:
+                from engine.feedback.play_feedback import get_play_feedback_generator
+                feedback_generator = get_play_feedback_generator(use_dds=False)  # Use Minimax for speed
+
+                # Evaluate the play
+                play_feedback = feedback_generator.evaluate_play(
+                    play_state=state.play_state,
+                    user_card=card,
+                    position=position
+                )
+
+                # Store in database if user_id provided
+                if user_id and play_feedback:
+                    feedback_generator.store_play_decision(
+                        user_id=user_id,
+                        feedback=play_feedback,
+                        session_id=data.get('session_id')
+                    )
+                    print(f"📊 Play evaluated: {card} -> {play_feedback.correctness.value} (score: {play_feedback.score:.1f})")
+            except Exception as eval_error:
+                # Don't fail the play if evaluation fails
+                print(f"⚠️ Play evaluation failed (non-blocking): {eval_error}")
+                traceback.print_exc()
+
         # Play the card
         state.play_state.current_trick.append((card, position))
 
@@ -2032,14 +2109,27 @@ def play_card():
             # Next player clockwise
             state.play_state.next_to_play = play_engine.next_player(position)
 
-        return jsonify({
+        # Build response
+        response = {
             "legal": True,
             "trick_complete": trick_complete,
             "trick_winner": trick_winner,
             "next_to_play": state.play_state.next_to_play,
             "tricks_won": state.play_state.tricks_won,
             "dummy_revealed": state.play_state.dummy_revealed
-        })
+        }
+
+        # Include play feedback if available (only for user plays)
+        if play_feedback:
+            response["play_feedback"] = {
+                "score": play_feedback.score,
+                "rating": play_feedback.correctness.value,
+                "optimal_cards": play_feedback.optimal_cards,
+                "reasoning": play_feedback.reasoning,
+                "helpful_hint": play_feedback.helpful_hint if play_feedback.correctness.value != "optimal" else None
+            }
+
+        return jsonify(response)
         
     except Exception as e:
         traceback.print_exc()
