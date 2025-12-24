@@ -2,6 +2,9 @@ from engine.ai.conventions.stayman import StaymanConvention
 from engine.ai.conventions.jacoby_transfers import JacobyConvention
 from engine.ai.conventions.preempts import PreemptConvention
 from engine.ai.conventions.blackwood import BlackwoodConvention
+from engine.ai.conventions.gerber import GerberConvention
+from engine.ai.conventions.minor_suit_bust import MinorSuitBustConvention
+from engine.ai.conventions.grand_slam_force import GrandSlamForceConvention
 from engine.overcalls import OvercallModule
 from engine.ai.conventions.takeout_doubles import TakeoutDoubleConvention
 from engine.ai.conventions.negative_doubles import NegativeDoubleConvention
@@ -104,6 +107,16 @@ def select_bidding_module(features):
                 return 'responder_rebid'
 
         # Check for slam conventions first
+        # Grand Slam Force (5NT) - check before Blackwood
+        gsf = GrandSlamForceConvention()
+        if gsf.evaluate(features['hand'], features):
+            return 'grand_slam_force'
+
+        # Gerber (4♣) is used over NT openings/rebids - check before Blackwood
+        gerber = GerberConvention()
+        if gerber.evaluate(features['hand'], features):
+            return 'gerber'
+
         blackwood = BlackwoodConvention()
         if blackwood.evaluate(features['hand'], features):
             return 'blackwood'
@@ -129,19 +142,37 @@ def select_bidding_module(features):
             if jacoby.evaluate(features['hand'], features): return 'jacoby'
             stayman = StaymanConvention()
             if stayman.evaluate(features['hand'], features): return 'stayman'
+            # Minor suit bust (2♠ relay for weak hands with long minor)
+            minor_bust = MinorSuitBustConvention()
+            if minor_bust.evaluate(features['hand'], features): return 'minor_suit_bust'
         # Fallback to natural responses (first response only)
         return 'responses'
 
     if auction['opener_relationship'] == 'Me': # I opened
         print(f"   → I am the opener (opener_relationship == 'Me')")
         # Check for 1NT convention completions FIRST (before natural rebids)
-        if auction['opening_bid'] == '1NT':
+        if auction['opening_bid'] in ['1NT', '2NT', '3NT']:
+            # Check Gerber first (4♣ over NT)
+            gerber = GerberConvention()
+            if gerber.evaluate(features['hand'], features): return 'gerber'
+            # Check Minor suit bust (opener responding to 2♠)
+            minor_bust = MinorSuitBustConvention()
+            if minor_bust.evaluate(features['hand'], features): return 'minor_suit_bust'
             jacoby = JacobyConvention()
             if jacoby.evaluate(features['hand'], features): return 'jacoby'
             stayman = StaymanConvention()
             if stayman.evaluate(features['hand'], features): return 'stayman'
 
         # Check for slam conventions
+        # Grand Slam Force (5NT) - check before Blackwood
+        gsf = GrandSlamForceConvention()
+        if gsf.evaluate(features['hand'], features):
+            return 'grand_slam_force'
+
+        # Gerber for NT auctions, Blackwood for suit auctions
+        gerber = GerberConvention()
+        if gerber.evaluate(features['hand'], features):
+            return 'gerber'
         blackwood = BlackwoodConvention()
         if blackwood.evaluate(features['hand'], features):
             return 'blackwood'

@@ -24,6 +24,9 @@ from engine.ai.conventions.michaels_cuebid import MichaelsCuebidConvention
 from engine.ai.conventions.unusual_2nt import Unusual2NTConvention
 from engine.ai.conventions.splinter_bids import SplinterBidsConvention
 from engine.ai.conventions.fourth_suit_forcing import FourthSuitForcingConvention
+from engine.ai.conventions.gerber import GerberConvention
+from engine.ai.conventions.minor_suit_bust import MinorSuitBustConvention
+from engine.ai.conventions.grand_slam_force import GrandSlamForceConvention
 
 class BiddingEngine:
     def __init__(self):
@@ -41,7 +44,8 @@ class BiddingEngine:
         expected_modules = [
             'opening_bids', 'responses', 'openers_rebid', 'responder_rebid',
             'advancer_bids', 'overcalls', 'stayman', 'jacoby', 'preempts',
-            'blackwood', 'takeout_doubles', 'negative_doubles',
+            'blackwood', 'gerber', 'grand_slam_force', 'minor_suit_bust',
+            'takeout_doubles', 'negative_doubles',
             'michaels_cuebid', 'unusual_2nt', 'splinter_bids', 'fourth_suit_forcing'
         ]
 
