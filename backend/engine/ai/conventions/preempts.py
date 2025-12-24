@@ -11,6 +11,10 @@ class PreemptConvention(ConventionModule):
         }
 
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+        # Check for opener's rebid after 2NT inquiry (Feature-showing) FIRST
+        # This must come before opening check since opener already bid
+        if self._is_feature_response_applicable(features):
+            return self._get_feature_response(hand, features)
         if self._is_opening_preempt_applicable(features):
             return self._get_opening_preempt(hand)
         if self._is_response_applicable(features):
@@ -140,9 +144,11 @@ class PreemptConvention(ConventionModule):
         preempt_level = int(opening_bid[0])
         preempt_suit = opening_bid[1]
 
-        # For 2-level preempts: Ogust convention with 15+ HCP
+        # For 2-level preempts: 2NT is forcing inquiry (SAYC Feature-asking)
+        # Partner will show a feature (A/K in side suit) with maximum,
+        # or rebid their suit with minimum
         if preempt_level == 2 and hand.total_points >= 15:
-            return ("2NT", "Ogust Convention asking about preempt quality.")
+            return ("2NT", "Feature-asking inquiry (SAYC). Partner rebids suit with minimum, or shows feature with maximum.")
 
         # With fit (3+ card support), raise based on strength
         if hand.suit_lengths[preempt_suit] >= 3:
@@ -163,6 +169,76 @@ class PreemptConvention(ConventionModule):
             return ("3NT", f"Bidding 3NT with {hand.hcp} HCP, no fit for preempt.")
 
         return ("Pass", f"Passing partner's preempt with {hand.total_points} points.")
+
+    def _is_feature_response_applicable(self, features: Dict) -> bool:
+        """
+        Check if we opened a weak two and partner bid 2NT (feature-asking).
+
+        SAYC: 2NT over weak two is a forcing inquiry asking about hand quality.
+        """
+        auction_features = features.get('auction_features', {})
+
+        # I must be the opener
+        if auction_features.get('opener_relationship') != 'Me':
+            return False
+
+        # My opening must be a weak two
+        opening_bid = auction_features.get('opening_bid', '')
+        if not opening_bid or opening_bid[0] != '2':
+            return False
+        if len(opening_bid) < 2 or opening_bid[1] not in ['♦', '♥', '♠']:
+            return False
+
+        # Partner must have bid 2NT
+        partner_last_bid = auction_features.get('partner_last_bid', '')
+        return partner_last_bid == '2NT'
+
+    def _get_feature_response(self, hand: Hand, features: Dict) -> Tuple[str, str]:
+        """
+        Respond to partner's 2NT inquiry after our weak two opening.
+
+        SAYC Feature-Showing (NOT Ogust):
+        - Rebid own suit at 3-level = Minimum weak two (5-8 HCP)
+        - Bid new suit = Maximum (9-11 HCP) with feature (A or K) in that suit
+        - Bid 3NT = Maximum without outside feature
+
+        A "feature" is an Ace or King in a side suit.
+        """
+        opening_bid = features['auction_features']['opening_bid']
+        my_suit = opening_bid[1]
+
+        # Determine if minimum (5-8) or maximum (9-11)
+        is_minimum = hand.hcp <= 8
+
+        if is_minimum:
+            # Minimum: rebid our suit at 3-level
+            return (f"3{my_suit}", f"Minimum weak two ({hand.hcp} HCP), rebidding {my_suit} suit.")
+
+        # Maximum: look for a feature (A or K) in a side suit
+        feature_suit = None
+        suit_priority = ['♠', '♥', '♦', '♣']  # Check in rank order
+
+        for suit in suit_priority:
+            if suit == my_suit:
+                continue  # Skip our preempt suit
+
+            # Check for A or K in this suit
+            suit_cards = [card for card in hand.cards if card.suit == suit]
+            has_feature = any(card.rank in ['A', 'K'] for card in suit_cards)
+
+            if has_feature:
+                feature_suit = suit
+                break
+
+        if feature_suit:
+            # Show the feature
+            suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}[feature_suit]
+            return (f"3{feature_suit}", f"Maximum weak two ({hand.hcp} HCP) with feature (A/K) in {suit_name}.")
+        else:
+            # Maximum but no outside feature
+            return ("3NT", f"Maximum weak two ({hand.hcp} HCP), no outside feature.")
+
+
 # ADR-0002 Phase 1: Auto-register this module on import
 from engine.ai.module_registry import ModuleRegistry
 ModuleRegistry.register("preempts", PreemptConvention())

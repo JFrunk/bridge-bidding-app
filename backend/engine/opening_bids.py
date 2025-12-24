@@ -14,9 +14,9 @@ class OpeningBidsModule(ConventionModule):
 
     This module handles:
     - 1NT openings (15-17 HCP, balanced)
-    - 2NT openings (22-24 HCP, balanced)
+    - 2NT openings (20-21 HCP, balanced) - SAYC standard
     - 3NT openings (25-27 HCP, balanced)
-    - 2♣ strong artificial openings (22+ total points, non-balanced or extreme hands)
+    - 2♣ strong artificial openings (22+ total points, or 22-24 balanced which rebids 2NT)
     - 1-level suit openings (13-21 points, 5+ card suit or longer minor)
     """
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, Union[str, BidExplanation]]]:
@@ -41,22 +41,23 @@ class OpeningBidsModule(ConventionModule):
             explanation.add_actual_value("Shape", "Balanced")
             explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
             explanation.set_forcing_status("Sign-off")
-            explanation.add_alternative("2NT", f"Too strong (have {hand.hcp} HCP, 2NT shows 22-24)")
-            explanation.add_alternative("2♣", f"Balanced hands use NT openings, not 2♣")
+            explanation.add_alternative("2NT", f"Too strong (have {hand.hcp} HCP, 2NT shows 20-21)")
+            explanation.add_alternative("2♣", f"Balanced hands 25-27 HCP use 3NT opening")
             return ("3NT", explanation)
 
-        # Rule for strong balanced hands (22-24 HCP) - Opens 2NT
-        if hand.is_balanced and 22 <= hand.hcp <= 24:
+        # Rule for strong balanced hands (20-21 HCP) - Opens 2NT per SAYC
+        # Note: 22-24 HCP balanced hands open 2♣ and rebid 2NT
+        if hand.is_balanced and 20 <= hand.hcp <= 21:
             explanation = BidExplanation("2NT")
-            explanation.set_primary_reason("Strong balanced hand opens 2NT")
-            explanation.add_requirement("HCP", "22-24")
+            explanation.set_primary_reason("Strong balanced hand opens 2NT (SAYC: 20-21 HCP)")
+            explanation.add_requirement("HCP", "20-21")
             explanation.add_requirement("Shape", "Balanced")
             explanation.add_actual_value("HCP", str(hand.hcp))
             explanation.add_actual_value("Shape", "Balanced")
             explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
             explanation.set_forcing_status("Forcing to game")
             explanation.add_alternative("1NT", f"Too strong (have {hand.hcp} HCP, 1NT shows 15-17)")
-            explanation.add_alternative("2♣", f"Balanced hands use NT openings, not 2♣")
+            explanation.add_alternative("2♣", f"With 22-24 HCP balanced, open 2♣ then rebid 2NT")
             return ("2NT", explanation)
 
         # Rule for standard balanced 1NT opening (15-17 HCP)

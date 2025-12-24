@@ -1524,10 +1524,13 @@ def request_review():
                         # No hand available from either source
                         return jsonify({'error': f'Hand for {position} not available. Try clicking "Show All Hands" first.'}), 400
 
-        # Get dealer from session (Chicago rotation) or default to North
-        dealer = 'North'  # Default for non-session mode
-        if state.game_session:
-            dealer = state.game_session.get_current_dealer()
+        # Get dealer from request (frontend knows actual dealer from bidding) or fallback to session
+        dealer = data.get('dealer')
+        if not dealer:
+            if state.game_session:
+                dealer = state.game_session.get_current_dealer()
+            else:
+                dealer = 'North'
 
         # Get user position from session or default to South
         user_position = 'South'  # Default for non-session mode
@@ -1651,10 +1654,19 @@ def start_play():
         auction = data.get("auction_history", [])
         vulnerability_str = data.get("vulnerability", "None")
 
-        # Get dealer from request (frontend now sends it) or from session
-        dealer_str = data.get("dealer", "North")
-        if state.game_session:
-            dealer_str = state.game_session.get_current_dealer()
+        # Get dealer from request (frontend sends it based on actual auction order)
+        # CRITICAL: Trust frontend's dealer because the auction was built with that dealer
+        # Only fall back to session if frontend doesn't provide dealer
+        dealer_str = data.get("dealer")
+        if not dealer_str:
+            # Fallback: use session dealer if no dealer provided
+            if state.game_session:
+                dealer_str = state.game_session.get_current_dealer()
+            else:
+                dealer_str = "North"
+
+        # Log for debugging
+        print(f"📋 start_play: dealer={dealer_str}, auction_length={len(auction)}")
 
         # Convert dealer to index for contract determination
         dealer_index = ['N', 'E', 'S', 'W'].index(dealer_str[0].upper())

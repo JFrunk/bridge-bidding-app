@@ -241,6 +241,23 @@ class ResponseModule(ConventionModule):
                 explanation.set_forcing_status("Sign-off (partner may pass)")
                 return (f"2{opening_suit}", explanation)
 
+        # 3NT response to major opening (15-17 HCP, balanced, exactly 2-card support)
+        # SAYC: Shows balanced game-going values without a major suit fit
+        if opening_suit in ['♥', '♠'] and hand.is_balanced and 15 <= hand.hcp <= 17:
+            # Must have exactly 2-card support (3+ would raise the major)
+            if hand.suit_lengths[opening_suit] == 2:
+                explanation = BidExplanation("3NT")
+                explanation.set_primary_reason(f"Balanced game-going hand without 3-card support for partner's {opening_suit}")
+                explanation.add_requirement("HCP", "15-17")
+                explanation.add_requirement("Shape", "Balanced")
+                explanation.add_requirement(f"{opening_suit} Support", "Exactly 2 cards")
+                explanation.add_actual_value("HCP", str(hand.hcp))
+                explanation.add_actual_value(f"{opening_suit} Length", "2 cards")
+                explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
+                explanation.set_forcing_status("Game (sign-off)")
+                explanation.add_alternative(f"4{opening_suit}", "Would require 3+ card support")
+                return ("3NT", explanation)
+
         # Without fit, bid new suits up-the-line (if no interference or low interference)
         if not interference['present'] or interference['level'] <= 1:
             # JUMP SHIFT responses (17+ HCP, game-forcing)
