@@ -271,7 +271,45 @@ class RebidModule(ConventionModule):
                 my_opening_level = int(my_opening_bid[0])
 
                 if partner_level == my_opening_level + 1:  # Simple raise (e.g., 1♠-2♠)
-                    return ("Pass", "Minimum hand (13-15 pts), passing partner's simple raise.")
+                    # Use AuctionContext to make smarter game decision
+                    # Simple raise shows 6-10 pts, combined range is 19-25
+                    # With maximum minimum (15) and good shape, consider game
+                    auction_context = features.get('auction_context')
+                    my_suit = my_opening_bid[1:]
+
+                    # Calculate if game is reasonable based on combined strength
+                    should_bid_game = False
+                    should_invite = False
+
+                    if auction_context is not None:
+                        # Use expert-level range tracking
+                        combined_mid = auction_context.ranges.combined_midpoint
+                        combined_min = auction_context.ranges.combined_minimum
+
+                        # Major suit game needs ~25 combined points
+                        # With fit already established, be aggressive
+                        if combined_mid >= 25:
+                            should_bid_game = True
+                        elif combined_mid >= 23 and hand.total_points >= 14:
+                            # Close to game, invite with extras
+                            should_invite = True
+                    else:
+                        # Fallback: Use traditional logic with more aggressive thresholds
+                        # Partner shows 6-10, we have 13-15
+                        # Combined: 19-25 (midpoint ~22)
+                        if hand.total_points >= 15:
+                            # Maximum minimum + simple raise = consider game with shape
+                            has_long_suit = hand.suit_lengths.get(my_suit, 0) >= 6
+                            has_good_suit = hand.suit_hcp.get(my_suit, 0) >= 6  # 2+ honors
+                            if has_long_suit or has_good_suit:
+                                should_invite = True
+
+                    if should_bid_game and my_suit in ['♥', '♠']:
+                        return (f"4{my_suit}", f"Bidding game with maximum minimum ({hand.total_points} pts) and good combined values.")
+                    elif should_invite and my_suit in ['♥', '♠']:
+                        return (f"3{my_suit}", f"Inviting game with {hand.total_points} pts and good shape (partner can pass or bid 4).")
+                    else:
+                        return ("Pass", "Minimum hand (13-15 pts), passing partner's simple raise.")
 
                 elif partner_level == my_opening_level + 2:  # Invitational raise (e.g., 1♠-3♠)
                     # Partner is inviting game (10-12 points). Accept with maximum or good shape

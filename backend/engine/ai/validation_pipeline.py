@@ -244,11 +244,13 @@ class SuitLengthValidator:
     def _get_min_length(self, bid: str, level: int, features: Dict, auction: List) -> int:
         """Get minimum suit length for bid level."""
         # Check for raises first (applies at all levels)
-        # Raises (showing support): 3+ cards normally, 4+ for jump raises
+        # Raises (showing support): 3+ cards for all raises
+        # Exception: Jacoby super-accept (1NT - 2♦ - 3♥) shows 4+ card fit
         if self._is_raise(bid, auction, features):
-            if level >= 3:
-                return 4  # Jump raise needs 4+ (e.g., Jacoby super-accept)
-            return 3  # Simple raise needs 3+
+            # Jacoby super-accept needs 4+ (opener showing extra trump)
+            if self._is_jacoby_super_accept(bid, auction):
+                return 4
+            return 3  # Standard raises (including limit raises) need 3+
 
         # Check for Jacoby transfer completions (2-level)
         # Pattern: 1NT - Pass - 2♦ - Pass - 2♥ (can be doubleton)
@@ -285,16 +287,71 @@ class SuitLengthValidator:
 
         return False
 
+    def _is_jacoby_super_accept(self, bid: str, auction: List) -> bool:
+        """
+        Check if bid is a Jacoby super-accept (3-level showing 4+ trump).
+
+        Pattern: 1NT - Pass - 2♦ - Pass - 3♥ (super-accept with 4+ hearts)
+        Pattern: 1NT - Pass - 2♥ - Pass - 3♠ (super-accept with 4+ spades)
+        """
+        if len(auction) < 4:
+            return False
+
+        if auction[0] == '1NT':
+            # 2♦ transfer, super-accept with 3♥
+            if auction[2] == '2♦' and bid == '3♥':
+                return True
+            # 2♥ transfer, super-accept with 3♠
+            if auction[2] == '2♥' and bid == '3♠':
+                return True
+
+        return False
+
     def _is_raise(self, bid: str, auction: List, features: Dict) -> bool:
         """
         Check if this bid is a raise of partner's suit.
 
-        Handles both direct raises and Jacoby super-accepts (jump raises after transfer).
-        Normal Jacoby completions (2-level) are NOT raises.
+        Handles:
+        - Direct raises (1♠ - 2♠, 1♠ - 3♠, etc.)
+        - Jacoby super-accepts (1NT - 2♦ - 3♥)
+        - Opener raises responder (1♣ - 1♠ - 2♠, 1♣ - 1♠ - 3♠)
         """
         # Check feature flag first
         if features.get('is_raise'):
             return True
+
+        # Extract bid suit
+        if len(bid) < 2 or bid[1] not in '♠♥♦♣':
+            return False
+        bid_suit = bid[1]
+
+        # Get partner's last bid to check for direct raises
+        auction_features = features.get('auction_features', {})
+        partner_last_bid = auction_features.get('partner_last_bid')
+        opening_bid = auction_features.get('opening_bid')
+        opener_relationship = auction_features.get('opener_relationship')
+
+        # Check if raising partner's suit
+        if partner_last_bid and len(partner_last_bid) >= 2:
+            partner_suit = partner_last_bid[1] if partner_last_bid[1] in '♠♥♦♣' else None
+            if partner_suit and partner_suit == bid_suit:
+                return True
+
+        # Check if raising opener's suit (for responder raises)
+        if opener_relationship == 'Partner' and opening_bid and len(opening_bid) >= 2:
+            opener_suit = opening_bid[1] if opening_bid[1] in '♠♥♦♣' else None
+            if opener_suit and opener_suit == bid_suit:
+                return True
+
+        # Check if opener is raising responder's suit
+        if opener_relationship == 'Me':
+            # Find responder's (partner's) first bid
+            partner_bids = auction_features.get('partner_bids', [])
+            for pb in partner_bids:
+                if pb != 'Pass' and len(pb) >= 2 and pb[1] in '♠♥♦♣':
+                    if pb[1] == bid_suit:
+                        return True
+                    break
 
         # Detect Jacoby super-accept sequences (3-level jump = raise)
         # Pattern: 1NT - Pass - 2♦ - Pass - 3♥ (super-accept showing 4+ hearts)

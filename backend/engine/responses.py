@@ -188,6 +188,11 @@ class ResponseModule(ConventionModule):
         - Direct raises show same ranges (6-9, 10-12, 13+)
         - New suits still forcing
         - Competitive environment but basic structure maintained
+
+        Game-forcing with 13+ HCP:
+        - With 3+ card major support: bid game directly (4♥/4♠)
+        - With minor support: bid 3NT or explore
+        - Without support: jump shift or 3NT if balanced
         """
         opening_suit = opening_bid[1]
 
@@ -309,6 +314,11 @@ class ResponseModule(ConventionModule):
                 # After 1♥ opening, can bid 2♠ with 5+ spades and 10+ HCP
                 if opening_bid == '1♥' and hand.suit_lengths.get('♠', 0) >= 5:
                     return ("2♠", "New suit showing 10+ HCP and 5+ spades (forcing).")
+
+            # 3NT direct response (13-15 HCP, balanced, no fit, stoppers)
+            # This ensures game is reached when responder has game values
+            if hand.is_balanced and 13 <= hand.hcp <= 15:
+                return ("3NT", "Game in NT with 13-15 HCP, balanced, no major fit.")
 
             # 2NT invitational response (11-12 HCP, balanced, no fit)
             if hand.is_balanced and 11 <= hand.hcp <= 12:
