@@ -34,20 +34,141 @@ def get_db_connection(db_path='bridge.db'):
 
 
 def get_user_completed_skills(user_id: int) -> List[str]:
-    """Get list of skills user has completed"""
+    """Get list of skills user has completed (mastered status)."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT skill_id
-        FROM user_progress
-        WHERE user_id = ? AND mastered = 1
-    """, (user_id,))
-
-    skills = [row['skill_id'] for row in cursor.fetchall()]
-    conn.close()
+    try:
+        cursor.execute("""
+            SELECT skill_id
+            FROM user_skill_progress
+            WHERE user_id = ? AND status = 'mastered'
+        """, (user_id,))
+        skills = [row['skill_id'] for row in cursor.fetchall()]
+    except Exception:
+        # Table doesn't exist yet - return empty list
+        skills = []
+    finally:
+        conn.close()
 
     return skills
+
+
+def get_user_skill_status(user_id: int, skill_id: str) -> Dict:
+    """Get detailed status for a specific skill"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT *
+            FROM user_skill_progress
+            WHERE user_id = ? AND skill_id = ?
+        """, (user_id, skill_id))
+
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+    return None
+
+
+def record_skill_practice(user_id: int, skill_id: str, skill_level: int,
+                          was_correct: bool, hand_id: str = None,
+                          user_bid: str = None, correct_bid: str = None) -> Dict:
+    """Record a skill practice attempt and update progress."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Record the practice attempt
+        cursor.execute("""
+            INSERT INTO skill_practice_history
+            (user_id, skill_id, skill_level, hand_id, user_bid, correct_bid, was_correct)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (user_id, skill_id, skill_level, hand_id, user_bid, correct_bid, was_correct))
+
+        # Check if user has progress record for this skill
+        cursor.execute("""
+            SELECT * FROM user_skill_progress
+            WHERE user_id = ? AND skill_id = ?
+        """, (user_id, skill_id))
+        existing = cursor.fetchone()
+
+        if existing:
+            # Update existing progress
+            new_attempts = existing['attempts'] + 1
+            new_correct = existing['correct'] + (1 if was_correct else 0)
+            new_accuracy = new_correct / new_attempts if new_attempts > 0 else 0
+
+            # Check if mastered (80% accuracy with minimum attempts)
+            from engine.learning.skill_tree import get_skill_tree_manager
+            manager = get_skill_tree_manager()
+            skill_node = None
+            for level_id, level_data in manager.tree.items():
+                if 'skills' in level_data:
+                    for skill in level_data['skills']:
+                        if skill.id == skill_id:
+                            skill_node = skill
+                            break
+
+            required_hands = skill_node.practice_hands_required if skill_node else 5
+            required_accuracy = skill_node.passing_accuracy if skill_node else 0.80
+
+            new_status = existing['status']
+            mastered_at = existing['mastered_at']
+
+            if (new_attempts >= required_hands and
+                new_accuracy >= required_accuracy and
+                new_status != 'mastered'):
+                new_status = 'mastered'
+                mastered_at = 'CURRENT_TIMESTAMP'
+
+            cursor.execute("""
+                UPDATE user_skill_progress
+                SET attempts = ?, correct = ?, accuracy = ?,
+                    status = ?, last_practiced = CURRENT_TIMESTAMP
+                WHERE user_id = ? AND skill_id = ?
+            """, (new_attempts, new_correct, new_accuracy, new_status,
+                  user_id, skill_id))
+
+            status = new_status
+            attempts = new_attempts
+            correct = new_correct
+            accuracy = new_accuracy
+        else:
+            # Create new progress record
+            accuracy = 1.0 if was_correct else 0.0
+            cursor.execute("""
+                INSERT INTO user_skill_progress
+                (user_id, skill_id, skill_level, status, attempts, correct, accuracy, started_at, last_practiced)
+                VALUES (?, ?, ?, 'in_progress', 1, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """, (user_id, skill_id, skill_level, 1 if was_correct else 0, accuracy))
+
+            status = 'in_progress'
+            attempts = 1
+            correct = 1 if was_correct else 0
+
+        conn.commit()
+
+        return {
+            'success': True,
+            'skill_id': skill_id,
+            'status': status,
+            'attempts': attempts,
+            'correct': correct,
+            'accuracy': accuracy
+        }
+
+    except Exception as e:
+        conn.rollback()
+        return {'success': False, 'error': str(e)}
+    finally:
+        conn.close()
 
 
 def get_user_mastered_conventions(user_id: int) -> List[str]:
@@ -421,6 +542,96 @@ def unlock_convention():
 
 
 # ============================================================================
+# SKILL PRACTICE ENDPOINT
+# ============================================================================
+
+def record_skill_practice_endpoint():
+    """
+    POST /api/skills/record-practice
+    Record a practice attempt for a skill (non-convention)
+
+    Body:
+        {
+            "user_id": 1,
+            "skill_id": "hand_evaluation_basics",
+            "skill_level": 0,
+            "was_correct": true,
+            "hand_id": "abc123",      (optional)
+            "user_bid": "1H",         (optional)
+            "correct_bid": "1S"       (optional)
+        }
+    """
+    data = request.get_json()
+    user_id = data.get('user_id')
+    skill_id = data.get('skill_id')
+    skill_level = data.get('skill_level', 0)
+    was_correct = data.get('was_correct')
+
+    if not all([user_id, skill_id, was_correct is not None]):
+        return jsonify({'error': 'Missing required fields (user_id, skill_id, was_correct)'}), 400
+
+    result = record_skill_practice(
+        user_id=user_id,
+        skill_id=skill_id,
+        skill_level=skill_level,
+        was_correct=was_correct,
+        hand_id=data.get('hand_id'),
+        user_bid=data.get('user_bid'),
+        correct_bid=data.get('correct_bid')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    else:
+        return jsonify(result), 500
+
+
+def user_skill_progress_endpoint():
+    """
+    GET /api/user/skill-progress?user_id=1
+    Get user's progress on all skills
+    """
+    user_id = request.args.get('user_id', type=int)
+
+    if not user_id:
+        return jsonify({'error': 'user_id required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT skill_id, skill_level, status, attempts, correct, accuracy,
+                   started_at, mastered_at, last_practiced
+            FROM user_skill_progress
+            WHERE user_id = ?
+            ORDER BY skill_level, skill_id
+        """, (user_id,))
+
+        skills = [dict(row) for row in cursor.fetchall()]
+        return jsonify({
+            'user_id': user_id,
+            'skills': skills,
+            'total_skills': len(skills),
+            'mastered_count': sum(1 for s in skills if s['status'] == 'mastered')
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e), 'skills': []})
+    finally:
+        conn.close()
+
+
+def curriculum_summary():
+    """
+    GET /api/curriculum/summary
+    Get summary of entire curriculum
+    """
+    manager = get_skill_tree_manager()
+    return jsonify(manager.get_curriculum_summary())
+
+
+# ============================================================================
 # REGISTER ENDPOINTS
 # ============================================================================
 
@@ -443,9 +654,16 @@ def register_learning_endpoints(app):
 
     # User progress endpoints
     app.route('/api/user/convention-progress', methods=['GET'])(user_convention_progress)
+    app.route('/api/user/skill-progress', methods=['GET'])(user_skill_progress_endpoint)
 
     # Skill tree endpoints
     app.route('/api/skill-tree', methods=['GET'])(skill_tree_full)
     app.route('/api/skill-tree/progress', methods=['GET'])(skill_tree_progress)
+
+    # Skill practice endpoints
+    app.route('/api/skills/record-practice', methods=['POST'])(record_skill_practice_endpoint)
+
+    # Curriculum endpoints
+    app.route('/api/curriculum/summary', methods=['GET'])(curriculum_summary)
 
     print("✓ Learning path API endpoints registered")
