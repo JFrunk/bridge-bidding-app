@@ -631,6 +631,99 @@ def curriculum_summary():
     return jsonify(manager.get_curriculum_summary())
 
 
+def generate_skill_practice_hand():
+    """
+    GET /api/skills/practice-hand?skill_id=hand_evaluation_basics&variant=balanced
+
+    Generate a practice hand for a specific skill.
+
+    Query params:
+        skill_id: The skill ID from skill_tree.py
+        variant: Optional variant for different difficulty/focus
+
+    Returns:
+        {
+            "skill_id": "hand_evaluation_basics",
+            "skill_level": 0,
+            "hand": {
+                "cards": [...],
+                "display": "♠ A K 5 3\n♥ Q J 2\n...",
+                "hcp": 15,
+                "distribution_points": 1,
+                "total_points": 16,
+                "is_balanced": true,
+                "suit_lengths": {"♠": 4, "♥": 3, ...}
+            },
+            "expected_response": {...},
+            "hand_id": "abc123"
+        }
+    """
+    from engine.learning.skill_hand_generators import get_skill_hand_generator, create_deck
+    import uuid
+
+    skill_id = request.args.get('skill_id')
+    variant = request.args.get('variant')
+
+    if not skill_id:
+        return jsonify({'error': 'skill_id required'}), 400
+
+    generator = get_skill_hand_generator(skill_id, variant)
+    if not generator:
+        return jsonify({'error': f'No generator found for skill: {skill_id}'}), 404
+
+    deck = create_deck()
+    hand, remaining = generator.generate(deck)
+
+    if not hand:
+        return jsonify({'error': 'Failed to generate hand with constraints'}), 500
+
+    hand_id = str(uuid.uuid4())[:8]
+
+    # Format cards for JSON
+    cards = [{'rank': c.rank, 'suit': c.suit} for c in hand.cards]
+
+    response_data = {
+        'skill_id': skill_id,
+        'skill_level': generator.skill_level,
+        'hand': {
+            'cards': cards,
+            'display': str(hand),
+            'hcp': hand.hcp,
+            'distribution_points': hand.dist_points,
+            'total_points': hand.total_points,
+            'is_balanced': hand.is_balanced,
+            'suit_lengths': hand.suit_lengths
+        },
+        'expected_response': generator.get_expected_response(hand),
+        'hand_id': hand_id
+    }
+
+    return jsonify(response_data)
+
+
+def get_available_skill_generators():
+    """
+    GET /api/skills/available
+
+    Get list of all skills that have hand generators.
+    """
+    from engine.learning.skill_hand_generators import get_available_skills, SKILL_GENERATORS
+
+    skills = []
+    for skill_id in get_available_skills():
+        gen_class = SKILL_GENERATORS[skill_id]
+        skills.append({
+            'skill_id': skill_id,
+            'level': gen_class.skill_level,
+            'description': gen_class.description
+        })
+
+    return jsonify({
+        'skills': skills,
+        'total': len(skills)
+    })
+
+
 # ============================================================================
 # REGISTER ENDPOINTS
 # ============================================================================
@@ -662,6 +755,8 @@ def register_learning_endpoints(app):
 
     # Skill practice endpoints
     app.route('/api/skills/record-practice', methods=['POST'])(record_skill_practice_endpoint)
+    app.route('/api/skills/practice-hand', methods=['GET'])(generate_skill_practice_hand)
+    app.route('/api/skills/available', methods=['GET'])(get_available_skill_generators)
 
     # Curriculum endpoints
     app.route('/api/curriculum/summary', methods=['GET'])(curriculum_summary)
