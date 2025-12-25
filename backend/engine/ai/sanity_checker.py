@@ -34,10 +34,11 @@ class SanityChecker:
     """
 
     # Maximum safe bid levels by estimated combined HCP
+    # SAYC: Game = 25+ HCP for 3NT/4M, 29+ for 5m
     MAX_BID_LEVELS = {
         (0, 19): 2,     # Part score only (< 20 HCP)
-        (20, 25): 3,    # Part game max (20-25 HCP)
-        (26, 32): 4,    # Game level (26-32 HCP)
+        (20, 24): 3,    # Invitational max (20-24 HCP)
+        (25, 32): 4,    # Game level (25-32 HCP) - 3NT/4M requires 25+
         (33, 36): 5,    # Small slam possible (33-36 HCP)
         (37, 40): 6,    # Small slam (37+ HCP)
         (41, 100): 7,   # Grand slam (very rare)
@@ -46,7 +47,7 @@ class SanityChecker:
     def __init__(self):
         self._enabled = True
 
-    def check(self, bid: str, hand: Hand, features: Dict, auction: List) -> Tuple[bool, str, Optional[str]]:
+    def check(self, bid: str, hand: Hand, features: Dict, auction: List, metadata: Optional[Dict] = None) -> Tuple[bool, str, Optional[str]]:
         """
         Final sanity check before committing to bid.
 
@@ -55,6 +56,7 @@ class SanityChecker:
             hand: The hand making the bid
             features: Extracted features from auction
             auction: List of previous bids
+            metadata: Optional metadata from convention module (can contain bypass flags)
 
         Returns:
             (should_bid, final_bid, reason)
@@ -73,9 +75,22 @@ class SanityChecker:
         if bid in ["X", "XX"]:
             return True, bid, None
 
+        # Check if metadata indicates this is a convention bid that should bypass sanity checks
+        # Preempts, for example, are intentionally weak hands bidding at high levels
+        if metadata and metadata.get('bypass_hcp'):
+            convention = metadata.get('convention', 'unknown')
+            logger.debug(f"Sanity check bypassed for {convention} convention bid '{bid}'")
+            return True, bid, None
+
         # Check if this is a Blackwood/control bid sequence - allow slam bidding
         if self._is_blackwood_sequence(auction):
             # In Blackwood sequences, allow all bids (the convention module handles appropriateness)
+            return True, bid, None
+
+        # Check if this is a Jacoby transfer super-accept sequence - allow game acceptance
+        if self._is_jacoby_super_accept_sequence(auction):
+            # Partner super-accepted, showing max (17 HCP) with 4+ card support
+            # Game is appropriate with any hand
             return True, bid, None
 
         # Extract bid level
@@ -161,14 +176,15 @@ class SanityChecker:
             for bid in auction:
                 if bid == "Pass":
                     continue
-                if bid.startswith("1"):
-                    return 13  # Standard opening
+                # Check specific NT openings FIRST (before general 1-level check)
                 if bid == "1NT":
-                    return 15  # 1NT opening
+                    return 15  # 1NT opening (15-17 HCP)
                 if bid == "2NT":
-                    return 20  # 2NT opening
+                    return 20  # 2NT opening (20-21 HCP)
                 if bid == "2♣":
-                    return 22  # Strong 2♣
+                    return 22  # Strong 2♣ (22+ HCP)
+                if bid.startswith("1"):
+                    return 13  # Standard 1-level opening
             return 13  # Default opening strength
 
         # If I opened and partner responded (case-insensitive)
@@ -178,6 +194,19 @@ class SanityChecker:
 
             if len(partner_nonpass_bids) == 0:
                 return 0  # Partner only passed
+
+            # Check for game-forcing first responses (applies even with single bid)
+            # 3NT response to suit opening = 13-15 HCP balanced
+            if '3NT' in partner_nonpass_bids:
+                return 13  # Game values
+
+            # 2NT response over major (Jacoby) = 13+ with support
+            # 2NT response over minor = natural invitational 11-12
+            if '2NT' in partner_nonpass_bids:
+                opening_bid = auction_features.get('opening_bid', '')
+                if opening_bid and opening_bid[1] in ['♥', '♠']:
+                    return 13  # Jacoby 2NT
+                return 11  # Natural invitational
 
             # If partner bid at 2-level after I rebid 1NT, that's invitational (10-11 HCP)
             # Example: 1♥-1♠-1NT-2♦ shows 10-11 HCP
@@ -206,13 +235,7 @@ class SanityChecker:
                                   for b in partner_nonpass_bids[1:]):
                                 return 10  # Invitational values (10-12 HCP)
 
-                # If partner bid 2NT, that's invitational (11-12 HCP)
-                if '2NT' in partner_nonpass_bids:
-                    return 11  # Invitational 2NT
-
-                # If partner bid 3NT, that's game values (13+ HCP)
-                if '3NT' in partner_nonpass_bids:
-                    return 13  # Game values
+                # Note: 2NT and 3NT are already checked above (before len>=2 check)
 
             # Standard 1-level response
             return 6  # Minimum response
@@ -276,23 +299,88 @@ class SanityChecker:
         """
         Check if this is a Blackwood or control-bid sequence.
 
-        If 4NT or 5NT appears in the auction (and isn't an opening or overcall),
-        this is likely Blackwood asking for aces/kings.
+        4NT is Blackwood (asking for aces) when:
+        - There's been suit agreement (a suit bid and supported)
+        - A suit contract has been established
+
+        4NT is QUANTITATIVE (inviting 6NT) when:
+        - The auction has been NT-based (1NT-3NT-4NT)
+        - No suit has been agreed upon
+
+        This distinction is critical to prevent allowing runaway auctions
+        after quantitative 4NT.
         """
+        # First, check if there's a suit agreement in the auction
+        # A suit is "agreed" if it's been bid by both partners or raised
+        suits_bid = {'♣': [], '♦': [], '♥': [], '♠': []}
+        has_suit_agreement = False
+
         for i, bid in enumerate(auction):
-            # Check for 4NT Blackwood (not as opening, and after game-level bidding)
+            if bid in ['Pass', 'X', 'XX'] or bid.endswith('NT'):
+                continue
+            if len(bid) >= 2 and bid[0].isdigit():
+                suit = bid[1:]
+                if suit in suits_bid:
+                    # Track which positions bid this suit
+                    position = i % 4
+                    partner_position = (position + 2) % 4
+                    suits_bid[suit].append(position)
+
+                    # Check if partner also bid this suit (agreement)
+                    if partner_position in suits_bid[suit]:
+                        has_suit_agreement = True
+
+        for i, bid in enumerate(auction):
+            # Check for 4NT
             if bid == "4NT" and i > 0:
-                # 4NT after some bidding is Blackwood
-                return True
+                # Only treat as Blackwood if there's suit agreement
+                if has_suit_agreement:
+                    return True
+                # Otherwise, it's quantitative - don't bypass sanity checks
+
             # Check for 5NT (king ask after Blackwood)
             if bid == "5NT" and i > 0:
-                return True
+                # 5NT is always a slam try (either king ask or quantitative slam invite)
+                # Allow it if there was suit agreement (Blackwood continuation)
+                if has_suit_agreement:
+                    return True
+
             # Check for 5-level ace responses (5♣, 5♦, 5♥, 5♠)
             if i > 0 and len(bid) >= 2 and bid[0] == '5' and bid != '5NT':
-                # Check if previous bid was 4NT
+                # Check if previous non-Pass bid was 4NT
                 prev_bids = [b for b in auction[:i] if b != 'Pass']
-                if prev_bids and prev_bids[-1] == '4NT':
+                if prev_bids and prev_bids[-1] == '4NT' and has_suit_agreement:
                     return True
+
+        return False
+
+    def _is_jacoby_super_accept_sequence(self, auction: List) -> bool:
+        """
+        Check if this is a Jacoby transfer super-accept sequence.
+
+        Super-accept patterns:
+        - 1NT - Pass - 2♦ - Pass - 3♥ (hearts super-accept)
+        - 1NT - Pass - 2♥ - Pass - 3♠ (spades super-accept)
+
+        When partner super-accepts, they show max (17 HCP) with 4+ card support.
+        Game is appropriate with any hand, even 0 HCP.
+        """
+        # Need at least 6 bids to have super-accept pattern
+        if len(auction) < 6:
+            return False
+
+        # Check for 1NT opening
+        if auction[0] != '1NT':
+            return False
+
+        # Check for heart super-accept: 1NT - Pass - 2♦ - Pass - 3♥
+        if auction[2] == '2♦' and auction[4] == '3♥':
+            return True
+
+        # Check for spade super-accept: 1NT - Pass - 2♥ - Pass - 3♠
+        if auction[2] == '2♥' and auction[4] == '3♠':
+            return True
+
         return False
 
     def _is_competitive(self, features: Dict) -> bool:

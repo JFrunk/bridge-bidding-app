@@ -87,6 +87,9 @@ class GerberConvention(ConventionModule):
 
         SAYC Rule: 4♣ IS GERBER OVER ANY 1NT OR 2NT BY PARTNER,
         INCLUDING A REBID OF 1NT OR 2NT.
+
+        EXCEPTION: After a Jacoby transfer sequence, partner's 2NT is an
+        invitational game try, NOT a natural 2NT bid. Do not use Gerber here.
         """
         partner_last_bid = features['auction_features'].get('partner_last_bid')
         if not partner_last_bid:
@@ -94,6 +97,14 @@ class GerberConvention(ConventionModule):
 
         # Gerber is used when partner's last bid was NT
         if partner_last_bid not in ['1NT', '2NT', '3NT']:
+            return False
+
+        # EXCEPTION: After Jacoby transfer sequence, 2NT is invitational, not natural
+        # Pattern: 1NT - 2♦ - 2♥ - 2NT (partner's 2NT is game invitation)
+        # Pattern: 1NT - 2♥ - 2♠ - 2NT (partner's 2NT is game invitation)
+        # In this case, opener should NOT use Gerber - should handle invitation
+        auction_history = features.get('auction_history', [])
+        if self._is_post_jacoby_invitation(auction_history, partner_last_bid, features):
             return False
 
         # Need slam-going values (typically 15+ HCP when partner opens NT)
@@ -107,7 +118,6 @@ class GerberConvention(ConventionModule):
             return False
 
         # Check we haven't already asked Gerber
-        auction_history = features.get('auction_history', [])
         my_index = features.get('my_index', -1)
         my_bids = [auction_history[i] for i in range(len(auction_history))
                    if features['positions'][i % 4] == features['positions'][my_index]]
@@ -115,6 +125,45 @@ class GerberConvention(ConventionModule):
             return False
 
         return True
+
+    def _is_post_jacoby_invitation(self, auction_history: list, partner_last_bid: str,
+                                   features: Dict) -> bool:
+        """
+        Check if partner's NT bid is a post-Jacoby invitation (not natural).
+
+        After 1NT - 2♦ - 2♥ - 2NT, partner's 2NT is an invitation (8-9 HCP),
+        not a natural 2NT that would trigger Gerber.
+        """
+        if partner_last_bid not in ['2NT', '3NT']:
+            return False
+
+        # Need at least 8 bids: 1NT - X - 2♦ - X - 2♥ - X - 2NT - X
+        if len(auction_history) < 7:
+            return False
+
+        # Check if I opened 1NT and completed a Jacoby transfer
+        my_index = features.get('my_index', -1)
+        my_bids = [auction_history[i] for i in range(len(auction_history))
+                   if features['positions'][i % 4] == features['positions'][my_index]]
+
+        # I need to have opened 1NT and completed a transfer (2♥ or 2♠)
+        if len(my_bids) < 2:
+            return False
+        if my_bids[0] != '1NT':
+            return False
+        if my_bids[1] not in ['2♥', '2♠']:
+            return False
+
+        # Check the sequence matches Jacoby pattern
+        # 1NT - X - 2♦ - X - 2♥ (for hearts transfer)
+        # 1NT - X - 2♥ - X - 2♠ (for spades transfer)
+        if auction_history[0] == '1NT':
+            if auction_history[2] == '2♦' and auction_history[4] == '2♥':
+                return True  # Hearts transfer completed
+            if auction_history[2] == '2♥' and auction_history[4] == '2♠':
+                return True  # Spades transfer completed
+
+        return False
 
     def _get_gerber_bid(self) -> Tuple[str, str, dict]:
         """Returns the 4♣ Gerber ace-asking bid."""

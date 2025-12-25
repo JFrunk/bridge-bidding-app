@@ -8,8 +8,12 @@ class ResponseModule(ConventionModule):
     """
     Playbook for all of the responder's natural bids, based on the user's flowcharts.
     """
-    def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
-        """Main entry point for response actions with bid validation."""
+    def evaluate(self, hand: Hand, features: Dict):
+        """Main entry point for response actions with bid validation.
+
+        Returns:
+            Tuple of (bid, explanation) or (bid, explanation, metadata)
+        """
         auction_history = features['auction_history']
 
         # Get the raw response suggestion
@@ -18,7 +22,12 @@ class ResponseModule(ConventionModule):
         if not result:
             return None
 
-        bid, explanation = result
+        # Handle both 2-tuple and 3-tuple returns
+        if len(result) == 3:
+            bid, explanation, metadata = result
+        else:
+            bid, explanation = result
+            metadata = None
 
         # Always pass Pass bids through
         if bid == "Pass":
@@ -26,7 +35,10 @@ class ResponseModule(ConventionModule):
 
         # Validate the bid is legal
         if BidValidator.is_legal_bid(bid, auction_history):
-            return result
+            # Return with metadata if present
+            if metadata:
+                return (bid, explanation, metadata)
+            return (bid, explanation)
 
         # Bid is illegal - try to find next legal bid of same strain
         next_legal = get_next_legal_bid(bid, auction_history)
@@ -45,6 +57,8 @@ class ResponseModule(ConventionModule):
                 pass
 
             adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
+            if metadata:
+                return (next_legal, adjusted_explanation, metadata)
             return (next_legal, adjusted_explanation)
 
         # No legal bid possible - pass
@@ -91,8 +105,13 @@ class ResponseModule(ConventionModule):
         interference = features['auction_features'].get('interference', {'present': False})
 
         # Route to appropriate handler based on opening bid type
-        if 'NT' in opening_bid:
+        if opening_bid == '1NT':
             return self._respond_to_1nt(hand, opening_bid, interference)
+        elif opening_bid == '2NT':
+            return self._respond_to_2nt(hand, opening_bid, interference)
+        elif 'NT' in opening_bid:
+            # Other NT bids (3NT, etc.) - pass is usually correct
+            return ("Pass", f"Partner opened {opening_bid}, accepting as final contract.")
         else:
             return self._respond_to_suit_opening(hand, opening_bid, interference)
 
@@ -157,6 +176,63 @@ class ResponseModule(ConventionModule):
         # Use natural competitive bidding
         return self._competitive_1nt_response(hand, interference)
 
+    def _respond_to_2nt(self, hand: Hand, opening_bid: str, interference: Dict):
+        """
+        Respond to 2NT opening (20-21 HCP balanced).
+
+        SAYC Rules:
+        - 0-4 HCP: Pass (combined 20-25, not enough for game)
+        - 5-10 HCP: 3NT (game, combined 25-31)
+        - 11-12 HCP: 4NT (quantitative slam invite, combined 31-33)
+        - 13-14 HCP: 6NT (small slam, combined 33-35)
+        - 15+ HCP: 6NT or 7NT (grand slam interest, combined 35+)
+
+        With 5+ card major, can use Jacoby Transfer (3♦ → ♥, 3♥ → ♠)
+        With 4+ card major, can use Stayman (3♣)
+
+        Note: Returns 3-tuple (bid, explanation, metadata) with bypass_hcp=True
+        because standard HCP requirements don't apply to 2NT responses
+        (partner has 20-21 already).
+        """
+        # Metadata to bypass HCP validation - partner's 2NT shows 20-21 already
+        metadata = {'bypass_hcp': True}
+
+        # No interference handling for now (rare after 2NT)
+
+        # Check for Stayman/Jacoby opportunities first (will be handled by conventions)
+        # These natural bids are for balanced hands or when conventions don't apply
+
+        if hand.hcp >= 15:
+            # Grand slam interest
+            return ("7NT", f"Grand slam bid with {hand.hcp} HCP opposite partner's 20-21 (combined 35+).", metadata)
+
+        if hand.hcp >= 13:
+            # Small slam
+            return ("6NT", f"Small slam bid with {hand.hcp} HCP opposite partner's 20-21 (combined 33+).", metadata)
+
+        if hand.hcp >= 11:
+            # Quantitative slam invite
+            return ("4NT", f"Quantitative slam invitation with {hand.hcp} HCP (non-Blackwood).", metadata)
+
+        if hand.hcp >= 5:
+            # Game values - combined 25+
+            # Check for 5+ card major to show
+            for suit in ['♠', '♥']:
+                if hand.suit_lengths.get(suit, 0) >= 5:
+                    # With 5+ major, bid 3M to show the suit (natural, game-forcing)
+                    return (f"3{suit}", f"Game-forcing with 5+ {suit} opposite partner's 2NT.", metadata)
+
+            return ("3NT", f"Game bid with {hand.hcp} HCP opposite partner's 20-21 (combined 25+).", metadata)
+
+        if hand.hcp >= 4:
+            # Borderline - with 4 HCP, combined is 24-25, close to game
+            # Bid 3NT if we have any length
+            if max(hand.suit_lengths.values()) <= 5:
+                return ("3NT", f"Stretching to game with {hand.hcp} HCP opposite partner's 20-21.", metadata)
+
+        # 0-3 HCP - pass (combined 20-24, not enough)
+        return ("Pass", f"Insufficient strength for game opposite 2NT ({hand.hcp} HCP, combined ~23).")
+
     def _competitive_1nt_response(self, hand: Hand, interference: Dict):
         """
         Natural competitive responses after 1NT - (overcall) - ?
@@ -218,17 +294,24 @@ class ResponseModule(ConventionModule):
                 return (bid, explanation)
 
             if 10 <= support_points <= 12:
-                explanation = BidExplanation(f"3{opening_suit}")
-                explanation.set_primary_reason(f"Invitational raise with good fit for partner's {opening_suit}")
-                explanation.add_requirement("Support Points", "10-12")
-                explanation.add_requirement(f"{opening_suit} Support", "3+")
-                explanation.add_actual_value("Support Points", str(support_points))
-                explanation.add_actual_value("HCP", str(hand.hcp))
-                explanation.add_actual_value(f"{opening_suit} Length", f"{hand.suit_lengths[opening_suit]} cards")
-                explanation.set_forcing_status("Invitational")
-                explanation.add_alternative(f"2{opening_suit}", f"Too strong (have {support_points} support points, need 10+)")
-                explanation.add_alternative(f"4{opening_suit}", f"Not quite enough (have {support_points} support points, need 13+)")
-                return (f"3{opening_suit}", explanation)
+                # EXCEPTION: With balanced 11-12 HCP and only 3-card major support,
+                # prefer 2NT to show the balanced nature (no ruffing value)
+                # With 4+ card support or unbalanced, bid 3M
+                if hand.is_balanced and 11 <= hand.hcp <= 12 and hand.suit_lengths[opening_suit] == 3:
+                    # Will fall through to 2NT logic below
+                    pass
+                else:
+                    explanation = BidExplanation(f"3{opening_suit}")
+                    explanation.set_primary_reason(f"Invitational raise with good fit for partner's {opening_suit}")
+                    explanation.add_requirement("Support Points", "10-12")
+                    explanation.add_requirement(f"{opening_suit} Support", "3+")
+                    explanation.add_actual_value("Support Points", str(support_points))
+                    explanation.add_actual_value("HCP", str(hand.hcp))
+                    explanation.add_actual_value(f"{opening_suit} Length", f"{hand.suit_lengths[opening_suit]} cards")
+                    explanation.set_forcing_status("Invitational")
+                    explanation.add_alternative(f"2{opening_suit}", f"Too strong (have {support_points} support points, need 10+)")
+                    explanation.add_alternative(f"4{opening_suit}", f"Not quite enough (have {support_points} support points, need 13+)")
+                    return (f"3{opening_suit}", explanation)
 
             if 6 <= support_points <= 9:
                 explanation = BidExplanation(f"2{opening_suit}")

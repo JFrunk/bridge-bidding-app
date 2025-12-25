@@ -92,6 +92,13 @@ def select_bidding_module(features):
 
     # --- STATE 3: This is an UNCONTESTED PARTNERSHIP auction ---
     if auction['opener_relationship'] == 'Partner': # My partner opened
+        # PRIORITY 1: Check for Blackwood response FIRST (before responder_rebid)
+        # This is critical - if partner asked 4NT Blackwood, we MUST respond with ace count
+        blackwood = BlackwoodConvention()
+        blackwood_result = blackwood.evaluate(features['hand'], features)
+        if blackwood_result:
+            return 'blackwood'
+
         # Check if this is responder's SECOND+ bid
         my_index = features['my_index']
         opener_index = auction.get('opener_index', -1)
@@ -150,9 +157,18 @@ def select_bidding_module(features):
 
     if auction['opener_relationship'] == 'Me': # I opened
         print(f"   → I am the opener (opener_relationship == 'Me')")
-        # Check for 1NT convention completions FIRST (before natural rebids)
+
+        # PRIORITY 1: Check Blackwood signoff FIRST
+        # After I asked 4NT Blackwood and partner responded with ace count,
+        # I need to sign off or continue - this MUST be checked before Gerber
+        blackwood = BlackwoodConvention()
+        blackwood_result = blackwood.evaluate(features['hand'], features)
+        if blackwood_result:
+            return 'blackwood'
+
+        # Check for 1NT convention completions (before natural rebids)
         if auction['opening_bid'] in ['1NT', '2NT', '3NT']:
-            # Check Gerber first (4♣ over NT)
+            # Check Gerber (4♣ over NT) - for asking OR responding
             gerber = GerberConvention()
             if gerber.evaluate(features['hand'], features): return 'gerber'
             # Check Minor suit bust (opener responding to 2♠)
@@ -164,18 +180,15 @@ def select_bidding_module(features):
             if stayman.evaluate(features['hand'], features): return 'stayman'
 
         # Check for slam conventions
-        # Grand Slam Force (5NT) - check before Blackwood
+        # Grand Slam Force (5NT) - check before other slam conventions
         gsf = GrandSlamForceConvention()
         if gsf.evaluate(features['hand'], features):
             return 'grand_slam_force'
 
-        # Gerber for NT auctions, Blackwood for suit auctions
+        # Gerber for NT auctions (if not already handled above)
         gerber = GerberConvention()
         if gerber.evaluate(features['hand'], features):
             return 'gerber'
-        blackwood = BlackwoodConvention()
-        if blackwood.evaluate(features['hand'], features):
-            return 'blackwood'
         # Fallback to natural rebids
         print(f"   → Routing to: openers_rebid")
         return 'openers_rebid'

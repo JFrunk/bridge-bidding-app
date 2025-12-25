@@ -139,7 +139,7 @@ class BiddingEngine:
             # Final safety net to prevent impossible contracts
             t7 = time.time()
             should_bid, final_bid, sanity_reason = self.sanity_checker.check(
-                bid_to_check, hand, features, auction_history
+                bid_to_check, hand, features, auction_history, metadata
             )
             t8 = time.time()
             sanity_time = (t8 - t7) * 1000

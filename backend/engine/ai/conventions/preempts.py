@@ -24,7 +24,7 @@ class PreemptConvention(ConventionModule):
     def _is_opening_preempt_applicable(self, features: Dict) -> bool:
         return not features.get('auction_features', {}).get('opener')
         
-    def _get_opening_preempt(self, hand: Hand, vulnerability: str = 'None') -> Optional[Tuple[str, str]]:
+    def _get_opening_preempt(self, hand: Hand, vulnerability: str = 'None') -> Optional[Tuple[str, str, dict]]:
         """
         Generate opening preemptive bid.
 
@@ -44,6 +44,9 @@ class PreemptConvention(ConventionModule):
             return None
 
         suits, _, _ = constraints['suit_length_req']
+
+        # Metadata to bypass HCP validation - preempts are intentionally weak hands
+        preempt_metadata = {'bypass_hcp': True, 'convention': 'preempt'}
 
         # Check each suit for preempt possibility (prioritize longer suits)
         for suit_length in [8, 7, 6]:
@@ -71,15 +74,15 @@ class PreemptConvention(ConventionModule):
                         # Determine level based on suit length
                         if suit_length == 8:
                             # 4-level preempt (8-card suit)
-                            return (f"4{suit}", f"4-level preempt showing 8-card {suit_name} suit with 6-10 HCP.")
+                            return (f"4{suit}", f"4-level preempt showing 8-card {suit_name} suit with 6-10 HCP.", preempt_metadata)
                         elif suit_length == 7:
                             # 3-level preempt (7-card suit)
-                            return (f"3{suit}", f"3-level preempt showing 7-card {suit_name} suit with 6-10 HCP.")
+                            return (f"3{suit}", f"3-level preempt showing 7-card {suit_name} suit with 6-10 HCP.", preempt_metadata)
                         elif suit_length == 6:
                             # 2-level preempt (weak two) - apply SAYC restrictions
                             if not self._is_valid_weak_two(hand, suit):
                                 continue  # Skip this suit, try next one
-                            return (f"2{suit}", f"Weak Two bid showing 6-card {suit_name} suit with 6-10 HCP.")
+                            return (f"2{suit}", f"Weak Two bid showing 6-card {suit_name} suit with 6-10 HCP.", preempt_metadata)
 
         return None
 

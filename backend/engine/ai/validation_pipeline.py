@@ -73,6 +73,10 @@ class ValidationPipeline:
             if isinstance(validator, HCPRequirementValidator) and metadata.get('bypass_hcp'):
                 logger.debug(f"Bypassing HCPRequirementValidator for conventional response: {bid}")
                 continue
+            if isinstance(validator, BidLevelAppropriatenessValidator) and metadata.get('bypass_hcp'):
+                # Also bypass appropriateness check when bypassing HCP (e.g., responding to 2NT)
+                logger.debug(f"Bypassing BidLevelAppropriatenessValidator for response to strong opening: {bid}")
+                continue
 
             is_valid, error = validator.validate(bid, hand, features, auction)
             if not is_valid:
@@ -174,6 +178,14 @@ class HCPRequirementValidator:
         bid_type = self._classify_bid(bid, features, auction)
         required_hcp = self.HCP_REQUIREMENTS.get(bid_type, 0)
 
+        # For suit bids, allow total points (HCP + distribution) to count
+        # This is important for hands with long suits (6+) that have playing strength
+        # Example: 8 HCP with 7-card suit = 11 total points, valid for 3-level invitational
+        if len(bid) >= 2 and bid[1] in '♣♦♥♠' and bid[0] in '234567':
+            # Use total points for suit bids at 2-level or higher
+            if hand.total_points >= required_hcp:
+                return True, None
+
         if hand.hcp < required_hcp:
             return False, f"Insufficient HCP for {bid_type}: have {hand.hcp}, need {required_hcp}+"
 
@@ -244,16 +256,29 @@ class SuitLengthValidator:
     def _get_min_length(self, bid: str, level: int, features: Dict, auction: List) -> int:
         """Get minimum suit length for bid level."""
         # Check for raises first (applies at all levels)
-        # Raises (showing support): 3+ cards normally, 4+ for jump raises
+        # SAYC raises require 3+ card support at all levels:
+        # - Simple raise (1M-2M): 3+ support, 6-10 pts
+        # - Limit raise (1M-3M): 3+ support, 10-12 pts (invitational)
+        # - Game raise (1M-4M): 3+ support with distributional values
+        # Only Jacoby super-accepts (1NT-2♦-3♥) require 4+ cards
         if self._is_raise(bid, auction, features):
-            if level >= 3:
-                return 4  # Jump raise needs 4+ (e.g., Jacoby super-accept)
-            return 3  # Simple raise needs 3+
+            # Check for Jacoby super-accept specifically (requires 4+ cards)
+            if len(auction) >= 4 and auction[0] == '1NT':
+                if (auction[2] == '2♦' and bid == '3♥') or (auction[2] == '2♥' and bid == '3♠'):
+                    return 4  # Jacoby super-accept needs 4+
+            return 3  # All other raises need only 3+ support
 
         # Check for Jacoby transfer completions (2-level)
         # Pattern: 1NT - Pass - 2♦ - Pass - 2♥ (can be doubleton)
         if self._is_jacoby_completion(bid, auction):
             return 2  # Jacoby completion can be doubleton
+
+        # Check for post-Jacoby continuation bids (opener showing support)
+        # Pattern: 1NT - 2♦ - 2♥ - 2NT - 3♥ (opener shows 3-card support)
+        # Pattern: 1NT - 2♦ - 2♥ - 2NT - 4♥ (opener accepts with fit)
+        # Pattern: 1NT - 2♥ - 2♠ - 2NT - 3♠/4♠ (same for spades)
+        if self._is_post_jacoby_continuation(bid, auction):
+            return 3  # Only need 3-card support (partner has 5+)
 
         # 1-level bids: 4+ cards (3 for minors in some cases)
         if level == 1:
@@ -289,22 +314,86 @@ class SuitLengthValidator:
         """
         Check if this bid is a raise of partner's suit.
 
-        Handles both direct raises and Jacoby super-accepts (jump raises after transfer).
+        Handles:
+        - Direct raises of partner's opening suit (1♥ - 2♥, 1♥ - 3♥, 1♠ - 4♠)
+        - Jacoby super-accepts (jump raises after transfer)
         Normal Jacoby completions (2-level) are NOT raises.
         """
         # Check feature flag first
         if features.get('is_raise'):
             return True
 
+        # Extract bid suit
+        if len(bid) < 2 or bid[0] not in '1234567':
+            return False
+        bid_suit = bid[1:]
+        if bid_suit not in ['♣', '♦', '♥', '♠']:
+            return False
+
+        # Check for direct raise of partner's opening suit
+        # Pattern: Partner opens 1M/1m - I raise to 2M/3M/4M (same suit)
+        auction_features = features.get('auction_features', {})
+        opener_relationship = auction_features.get('opener_relationship', '')
+        opening_bid = auction_features.get('opening_bid', '')
+
+        if opener_relationship == 'Partner' and opening_bid:
+            # Partner opened - check if we're raising their suit
+            if len(opening_bid) >= 2 and opening_bid[1:] == bid_suit:
+                # We're bidding the same suit partner opened
+                return True
+
         # Detect Jacoby super-accept sequences (3-level jump = raise)
         # Pattern: 1NT - Pass - 2♦ - Pass - 3♥ (super-accept showing 4+ hearts)
         # Pattern: 1NT - Pass - 2♥ - Pass - 3♠ (super-accept showing 4+ spades)
-        if len(auction) >= 4 and auction[0] == '1NT':
+        # IMPORTANT: Super-accept only happens as the IMMEDIATE response to transfer
+        # (auction length 4), not after partner continues (auction length 8+)
+        if len(auction) == 4 and auction[0] == '1NT':
             # 2♦ transfer followed by 3♥ super-accept
             if auction[2] == '2♦' and bid == '3♥':
                 return True
             # 2♥ transfer followed by 3♠ super-accept
             if auction[2] == '2♥' and bid == '3♠':
+                return True
+
+        return False
+
+    def _is_post_jacoby_continuation(self, bid: str, auction: List) -> bool:
+        """
+        Check if bid is a continuation after Jacoby transfer completion.
+
+        After 1NT - 2♦ - 2♥ - (partner's continuation), opener can bid:
+        - 3♥/4♥: Showing 3+ card support (partner has 5+ hearts)
+        - 3NT: Preferring NT (only 2 hearts)
+
+        After 1NT - 2♥ - 2♠ - (partner's continuation), opener can bid:
+        - 3♠/4♠: Showing 3+ card support (partner has 5+ spades)
+        - 3NT: Preferring NT (only 2 spades)
+
+        This allows 3-card support since partner has already shown 5+ in the major.
+        """
+        # Need at least 8 bids to be in this position:
+        # 1NT - X - 2♦ - X - 2♥ - X - 2NT/3♥/etc - X - (now bidding)
+        # But auction only shows bids made so far, so we need 8 for our 5th bid
+        if len(auction) < 8:
+            return False
+
+        # Check for heart transfer sequence
+        # Pattern: 1NT - 2♦ - 2♥ - (partner continues) - (our bid)
+        # Positions: 0    2    4     6                   8 (our current bid)
+        # But we're checking against auction which doesn't include our bid yet
+        # So we're at position 8, auction has 8 bids
+        if auction[0] == '1NT' and auction[2] == '2♦' and auction[4] == '2♥':
+            # Partner continued at position 6 (2NT, 3♥, 3NT, 4♥)
+            # Now we're bidding hearts
+            if bid in ['3♥', '4♥']:
+                return True
+
+        # Check for spade transfer sequence
+        # Pattern: 1NT - 2♥ - 2♠ - (partner continues) - (our bid)
+        if auction[0] == '1NT' and auction[2] == '2♥' and auction[4] == '2♠':
+            # Partner continued at position 6 (2NT, 3♠, 3NT, 4♠)
+            # Now we're bidding spades
+            if bid in ['3♠', '4♠']:
                 return True
 
         return False
