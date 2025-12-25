@@ -126,6 +126,14 @@ class ResponderRebidModule(ConventionModule):
 
         opener_rebid = opener_bids[1]
 
+        # SPECIAL CASE: Check for Jacoby Transfer completion
+        # Pattern: 1NT - 2♦ - 2♥ or 1NT - 2♥ - 2♠
+        # After transfer completion, responder must decide based on strength
+        if opening_bid == '1NT':
+            transfer_result = self._handle_post_jacoby_transfer(hand, my_first_response, opener_rebid)
+            if transfer_result:
+                return transfer_result
+
         # Classify the auction context
         auction_context = self._analyze_auction_context(
             opening_bid, my_first_response, opener_rebid, hand
@@ -276,8 +284,20 @@ class ResponderRebidModule(ConventionModule):
             # Otherwise pass (no better option)
             return ("Pass", f"Minimum hand, no better option than {context['opener_rebid']}.")
 
-        # Case 2: Opener bid notrump (e.g., 1♣ - 1♥ - 1NT)
+        # Case 2: Opener bid notrump (e.g., 1♣ - 1♥ - 1NT or 1♣ - 1♠ - 2NT)
         if opener_rebid_type == 'notrump':
+            opener_rebid = context['opener_rebid']
+
+            # IMPORTANT: 2NT rebid (18-19 HCP) is FORCING TO GAME in SAYC
+            # Responder MUST bid even with minimum
+            if opener_rebid == '2NT':
+                # With 6+ card major, bid 3M (gives opener choice)
+                if my_first_suit in ['♥', '♠'] and hand.suit_lengths.get(my_first_suit, 0) >= 6:
+                    return (f"3{my_first_suit}", f"Showing 6+ {my_first_suit} after forcing 2NT rebid. Opener can raise to 4{my_first_suit} or pass.")
+                # Otherwise bid 3NT - game is guaranteed with 2NT (18-19) + any response (6+)
+                return ("3NT", f"Game in NT after partner's forcing 2NT rebid ({hand.hcp} HCP). Combined 24+ HCP.")
+
+            # 1NT rebid (12-14 HCP) is NOT forcing - can pass with minimum
             # Pass with balanced minimum
             if hand.is_balanced or hand.suit_lengths.get(my_first_suit, 0) < 6:
                 return ("Pass", "Minimum hand, accepting notrump contract.")
@@ -396,8 +416,16 @@ class ResponderRebidModule(ConventionModule):
             if hand.is_balanced and hand.hcp >= 10:
                 return ("2NT", "Invitational with 10-12 HCP, balanced.")
 
-        # Case 2: Opener bid notrump - invite to 3NT
+        # Case 2: Opener bid notrump - respond appropriately
         if opener_rebid_type == 'notrump':
+            # 2NT rebid is FORCING - must bid game
+            if opener_rebid == '2NT':
+                # With 6+ card major, show it (partner can raise or pass 3NT)
+                if my_first_suit in ['♥', '♠'] and hand.suit_lengths.get(my_first_suit, 0) >= 6:
+                    return (f"3{my_first_suit}", f"Showing 6+ {my_first_suit} after forcing 2NT. Partner decides between 4{my_first_suit} and 3NT.")
+                # With invitational values (10-12), just bid 3NT - combined 28-31 is game
+                return ("3NT", f"Game after partner's forcing 2NT rebid ({hand.hcp} HCP). Combined 28-31 HCP.")
+
             # Check if opener bid 1NT (invite to 2NT or 3NT)
             if opener_rebid == '1NT':
                 # With 6+ card major, jump to 3-level (invitational)
@@ -407,10 +435,6 @@ class ResponderRebidModule(ConventionModule):
                 # Otherwise invite with 2NT
                 if hand.is_balanced:
                     return ("2NT", "Invitational with 10-12 HCP, asking partner to bid 3NT with maximum.")
-
-            # If opener bid 2NT, raise to 3NT with maximum (12 pts)
-            if opener_rebid == '2NT' and hand.hcp >= 12:
-                return ("3NT", "Accepting partner's 2NT invitation with 12 HCP.")
 
         # Case 3: Opener showed two suits - jump preference
         if opener_rebid_type == 'new_suit' and opener_second_suit:
@@ -547,6 +571,81 @@ class ResponderRebidModule(ConventionModule):
             return ("3NT", "Game in NT with 13+ HCP.")
 
         return None
+
+    def _handle_post_jacoby_transfer(self, hand: Hand, my_first_response: str,
+                                     opener_rebid: str) -> Optional[Tuple[str, str]]:
+        """
+        Handle responder's rebid after Jacoby Transfer completion.
+
+        Sequences handled:
+        - 1NT - 2♦ - 2♥ - ? (after heart transfer)
+        - 1NT - 2♥ - 2♠ - ? (after spade transfer)
+
+        SAYC Guidelines (partner opened 1NT = 15-17 HCP):
+        - 0-7 HCP: Pass (combined 15-24, not enough for game)
+        - 8-9 HCP: Invite (2NT or 3M) - combined 23-26, borderline
+        - 10+ HCP: Game (4M or 3NT) - combined 25+, game values
+
+        With 5-card major:
+        - Minimum: Pass at 2M
+        - Invitational: Bid 2NT (5 cards) or 3M (6 cards)
+        - Game values: Bid 3NT (5 cards) or 4M (6 cards)
+
+        With 6+ card major:
+        - Minimum: Pass at 2M
+        - Invitational: Bid 3M (invites game)
+        - Game values: Bid 4M
+        """
+        # Check if this is a Jacoby transfer completion
+        # 2♦ transfer completed with 2♥
+        if my_first_response == '2♦' and opener_rebid == '2♥':
+            major = '♥'
+            major_name = 'hearts'
+        # 2♥ transfer completed with 2♠
+        elif my_first_response == '2♥' and opener_rebid == '2♠':
+            major = '♠'
+            major_name = 'spades'
+        else:
+            return None  # Not a transfer completion
+
+        major_length = hand.suit_lengths.get(major, 0)
+        hcp = hand.hcp
+        total_pts = hand.total_points
+
+        # Partner has 15-17 HCP, estimate combined strength
+        partner_min = 15
+        partner_max = 17
+        combined_min = hcp + partner_min
+        combined_max = hcp + partner_max
+
+        # MINIMUM (0-7 HCP): Pass - not enough for game
+        if hcp <= 7:
+            return ("Pass", f"Minimum hand ({hcp} HCP), signing off in 2{major}. Combined {combined_min}-{combined_max} HCP.")
+
+        # INVITATIONAL (8-9 HCP): Combined 23-26 HCP, borderline for game
+        if 8 <= hcp <= 9:
+            if major_length >= 6:
+                # With 6+ card major, invite in the suit
+                return (f"3{major}", f"Invitational with {hcp} HCP and 6+ {major_name}. Partner bids 4{major} with max.")
+            else:
+                # With 5-card major, invite via 2NT (lets partner choose 3NT or 3M)
+                return ("2NT", f"Invitational with {hcp} HCP and 5 {major_name}. Partner can pass, bid 3{major}, or 3NT.")
+
+        # GAME VALUES (10+ HCP): Combined 25+ HCP
+        if hcp >= 10:
+            if major_length >= 6:
+                # With 6+ card major, bid game in the major
+                return (f"4{major}", f"Game with {hcp} HCP and 6+ {major_name}. Combined {combined_min}+ HCP.")
+            else:
+                # With 5-card major, offer choice between 3NT and 4M
+                # Bid 3NT to show balanced game values, opener can correct to 4M with 3+ support
+                if hand.is_balanced:
+                    return ("3NT", f"Game with {hcp} HCP and 5 {major_name}. Partner can pass or correct to 4{major}.")
+                else:
+                    # Unbalanced with only 5-card major - still bid 4M, partner has 2+ for Jacoby
+                    return (f"4{major}", f"Game with {hcp} HCP, 5 {major_name}, unbalanced. Partner has 2+ {major_name}.")
+
+        return None  # Should not reach here
 
 # ADR-0002 Phase 1: Auto-register this module on import
 from engine.ai.module_registry import ModuleRegistry

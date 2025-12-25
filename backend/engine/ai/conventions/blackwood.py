@@ -21,15 +21,18 @@ class BlackwoodConvention(ConventionModule):
         if not result:
             return None
 
-        bid, explanation = result
+        # Handle both 2-tuple (bid, explanation) and 3-tuple (bid, explanation, metadata)
+        bid = result[0]
+        explanation = result[1]
+        metadata = result[2] if len(result) > 2 else {}
 
         # Always pass Pass bids through
         if bid == "Pass":
-            return result
+            return (bid, explanation)
 
         # Validate the bid is legal
         if BidValidator.is_legal_bid(bid, auction_history):
-            return result
+            return (bid, explanation)
 
         # Bid is illegal - try to find next legal bid of same strain
         next_legal = get_next_legal_bid(bid, auction_history)
