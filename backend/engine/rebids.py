@@ -101,8 +101,25 @@ class RebidModule(ConventionModule):
 
             # If partner bid 2NT, they're inviting game with 11-12 HCP
             if partner_response == '2NT':
-                if hand.hcp >= 13:  # Maximum of 12-14 range
-                    return ("3NT", f"Accepting invitation with maximum ({hand.hcp} HCP) after 1NT rebid.")
+                # Use AuctionContext for smarter game decision
+                auction_context = features.get('auction_context')
+                should_accept = False
+
+                if auction_context is not None:
+                    combined_mid = auction_context.ranges.combined_midpoint
+                    # 2NT invitation shows 11-12, opener rebid 1NT shows 12-14
+                    # Combined should be ~24-25, need 25 for 3NT
+                    if combined_mid >= 24:
+                        should_accept = True
+                    elif combined_mid >= 23 and hand.hcp >= 13:
+                        should_accept = True
+                else:
+                    # Fallback: accept with maximum
+                    if hand.hcp >= 13:
+                        should_accept = True
+
+                if should_accept:
+                    return ("3NT", f"Accepting invitation with {hand.hcp} HCP after 1NT rebid.")
                 else:
                     return ("Pass", f"Declining invitation with minimum ({hand.hcp} HCP).")
 
@@ -132,12 +149,28 @@ class RebidModule(ConventionModule):
                 partner_suit = partner_response[1]
 
                 # Partner is inviting game at 3-level
-                if hand.hcp >= 13:
-                    # Bid game with maximum
+                # Use AuctionContext for smarter game decision
+                auction_context = features.get('auction_context')
+                should_accept = False
+
+                if auction_context is not None:
+                    combined_mid = auction_context.ranges.combined_midpoint
+                    # 3-level invitation shows invitational values (10-12)
+                    # With fit, be aggressive - need ~25 combined for major game
+                    if combined_mid >= 24:
+                        should_accept = True
+                    elif combined_mid >= 23 and hand.hcp >= 13:
+                        should_accept = True
+                else:
+                    # Fallback: accept with maximum
+                    if hand.hcp >= 13:
+                        should_accept = True
+
+                if should_accept:
                     if partner_suit in ['♥', '♠']:
-                        return (f"4{partner_suit}", f"Accepting 3-level invitation with maximum ({hand.hcp} HCP).")
+                        return (f"4{partner_suit}", f"Accepting 3-level invitation with {hand.hcp} HCP.")
                     else:
-                        return ("3NT", f"Accepting 3-level invitation with maximum ({hand.hcp} HCP).")
+                        return ("3NT", f"Accepting 3-level invitation with {hand.hcp} HCP.")
                 else:
                     return ("Pass", f"Declining 3-level invitation with minimum ({hand.hcp} HCP).")
 
@@ -315,20 +348,38 @@ class RebidModule(ConventionModule):
                     # Partner is inviting game (10-12 points). Accept with maximum or good shape
                     my_suit = my_opening_bid[1:]
 
-                    # Accept invitation if:
-                    # 1. Maximum minimum (15 points), OR
-                    # 2. Good 6+ card suit, OR
-                    # 3. 14+ points with quality suit (2+ honors)
-                    has_long_suit = hand.suit_lengths.get(my_suit, 0) >= 6
-                    has_quality_suit = hand.suit_hcp.get(my_suit, 0) >= 6  # 2+ honors
+                    # Use AuctionContext for smarter game decision
+                    auction_context = features.get('auction_context')
+                    should_bid_game = False
 
-                    if hand.total_points >= 15 or has_long_suit or (hand.total_points >= 14 and has_quality_suit):
+                    if auction_context is not None:
+                        # Expert-level range tracking
+                        combined_mid = auction_context.ranges.combined_midpoint
+                        # Invitational raise shows 10-12, opener has 13-15
+                        # Combined midpoint should be ~24-25
+                        # Be aggressive with fit already established
+                        if combined_mid >= 24:
+                            should_bid_game = True
+                        elif combined_mid >= 23 and hand.total_points >= 14:
+                            should_bid_game = True
+                    else:
+                        # Fallback: Accept invitation if:
+                        # 1. Maximum minimum (15 points), OR
+                        # 2. Good 6+ card suit, OR
+                        # 3. 14+ points with quality suit (2+ honors)
+                        has_long_suit = hand.suit_lengths.get(my_suit, 0) >= 6
+                        has_quality_suit = hand.suit_hcp.get(my_suit, 0) >= 6  # 2+ honors
+
+                        if hand.total_points >= 15 or has_long_suit or (hand.total_points >= 14 and has_quality_suit):
+                            should_bid_game = True
+
+                    if should_bid_game:
                         if my_suit in ['♥', '♠']:
-                            return (f"4{my_suit}", f"Accepting invitation to game with {hand.total_points} points and good shape/suit quality.")
+                            return (f"4{my_suit}", f"Accepting invitation to game with {hand.total_points} points and combined values.")
                         else:
                             return ("3NT", f"Accepting invitation to game with {hand.total_points} points.")
                     else:
-                        return ("Pass", "Declining invitation with minimum (13 points) and no extra shape.")
+                        return ("Pass", "Declining invitation with minimum (13 points) and insufficient combined values.")
             if partner_response == "1NT":
                 # CRITICAL FIX: 1NT is a SEMI-FORCING response showing 6-10 HCP
                 # With minimum opening (12-14 HCP), opener should PASS unless:
