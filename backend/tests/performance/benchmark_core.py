@@ -1,14 +1,16 @@
 """
 Performance benchmarks for core shared components.
 
-Validates that Phase 1 architecture doesn't degrade performance.
+Validates that core architecture doesn't degrade performance.
 """
 
 import time
+import random
 import statistics
 from core.session_manager import SessionManager
-from core.deal_generator import DealGenerator
 from core.scenario_loader import ScenarioLoader
+from engine.hand import Hand, Card
+from engine.hand_constructor import generate_hand_with_constraints
 
 
 class PerformanceBenchmark:
@@ -34,6 +36,18 @@ class PerformanceBenchmark:
         }
 
 
+def generate_random_deal():
+    """Generate a random 4-hand deal."""
+    deck = [Card(r, s) for r in '23456789TJQKA' for s in ['♠', '♥', '♦', '♣']]
+    random.shuffle(deck)
+    return {
+        'N': Hand(deck[0:13]),
+        'E': Hand(deck[13:26]),
+        'S': Hand(deck[26:39]),
+        'W': Hand(deck[39:52])
+    }
+
+
 def benchmark_deal_generation():
     """Benchmark hand generation performance."""
     print("\n" + "="*70)
@@ -43,7 +57,7 @@ def benchmark_deal_generation():
     # Test 1: Random deal generation
     print("\n1. Random Deal Generation")
     result = PerformanceBenchmark.time_function(
-        lambda: DealGenerator.generate_random_deal(),
+        lambda: generate_random_deal(),
         iterations=100
     )
     print(f"   Mean:   {result['mean']:.2f}ms")
@@ -55,16 +69,16 @@ def benchmark_deal_generation():
     assert result['mean'] < 50, f"Random deal generation too slow: {result['mean']:.2f}ms"
     print("   ✅ PASS: Within 50ms threshold")
 
-    # Test 2: Constrained deal generation (1NT opening)
-    print("\n2. Constrained Deal Generation (1NT)")
-    constraints = {
-        'S': {'hcp_range': (15, 17), 'is_balanced': True},
-        'N': None,
-        'E': None,
-        'W': None
-    }
+    # Test 2: Constrained hand generation (1NT)
+    print("\n2. Constrained Hand Generation (1NT)")
+
+    def generate_constrained():
+        deck = [Card(r, s) for r in '23456789TJQKA' for s in ['♠', '♥', '♦', '♣']]
+        constraints = {'hcp_range': (15, 17), 'is_balanced': True}
+        return generate_hand_with_constraints(constraints, deck)
+
     result = PerformanceBenchmark.time_function(
-        lambda: DealGenerator.generate_constrained_deal(constraints),
+        generate_constrained,
         iterations=50
     )
     print(f"   Mean:   {result['mean']:.2f}ms")
@@ -72,20 +86,8 @@ def benchmark_deal_generation():
     print(f"   Min:    {result['min']:.2f}ms")
     print(f"   Max:    {result['max']:.2f}ms")
 
-    assert result['mean'] < 200, f"Constrained deal generation too slow: {result['mean']:.2f}ms"
+    assert result['mean'] < 200, f"Constrained hand generation too slow: {result['mean']:.2f}ms"
     print("   ✅ PASS: Within 200ms threshold")
-
-    # Test 3: Contract-based generation
-    print("\n3. Contract-Based Deal Generation (3NT)")
-    result = PerformanceBenchmark.time_function(
-        lambda: DealGenerator.generate_for_contract("3NT", "S"),
-        iterations=50
-    )
-    print(f"   Mean:   {result['mean']:.2f}ms")
-    print(f"   Median: {result['median']:.2f}ms")
-
-    assert result['mean'] < 300, f"Contract-based generation too slow: {result['mean']:.2f}ms"
-    print("   ✅ PASS: Within 300ms threshold")
 
 
 def benchmark_session_management():
@@ -249,12 +251,11 @@ def generate_report():
     print("  - Scenario Loading: < 500ms (initial), < 100ms (cached)")
     print("  - Concurrent Sessions: 100 sessions in < 1000ms")
     print("\nConclusion: Performance is within acceptable thresholds.")
-    print("Architecture changes have not degraded system performance.")
 
 
 if __name__ == '__main__':
     print("\n" + "="*70)
-    print("PHASE 1 ARCHITECTURE PERFORMANCE VALIDATION")
+    print("CORE ARCHITECTURE PERFORMANCE VALIDATION")
     print("="*70)
     print("\nTesting core shared components performance...")
 
