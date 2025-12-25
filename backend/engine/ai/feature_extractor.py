@@ -1,7 +1,27 @@
 from engine.hand import Hand
+from engine.ai.auction_context import analyze_auction_context
 
-def extract_features(hand: Hand, auction_history: list, my_position: str, vulnerability: str):
-    positions = ['North', 'East', 'South', 'West']
+def extract_features(hand: Hand, auction_history: list, my_position: str, vulnerability: str, dealer: str = 'North'):
+    """
+    Extract features from a hand and auction for bidding decision.
+
+    Args:
+        hand: The player's hand
+        auction_history: List of bids in order (starting from dealer)
+        my_position: Position of player making the bid (North/East/South/West)
+        vulnerability: Vulnerability status
+        dealer: Who dealt (default 'North' for backward compatibility)
+               IMPORTANT: The auction_history is ordered starting from dealer!
+               So auction_history[0] is dealer's bid, auction_history[1] is dealer+1's bid, etc.
+    """
+    # Standard position order - but we need to rotate based on dealer
+    base_positions = ['North', 'East', 'South', 'West']
+    dealer_idx = base_positions.index(dealer)
+
+    # Create positions list starting from dealer
+    # This means positions[i] gives us who made auction_history[i]
+    positions = [base_positions[(dealer_idx + i) % 4] for i in range(4)]
+
     my_index = positions.index(my_position)
     partner_position = positions[(my_index + 2) % 4]
     
@@ -34,10 +54,14 @@ def extract_features(hand: Hand, auction_history: list, my_position: str, vulner
     # Detect interference (RHO's bid between partner's opening and my response)
     interference = _detect_interference(auction_history, positions, my_index, opener_relationship, opener_index)
 
+    # Expert-level auction context with range tracking
+    auction_context = analyze_auction_context(auction_history, positions, my_index)
+
     return {
         'hand_features': { 'hcp': hand.hcp, 'dist_points': hand.dist_points, 'total_points': hand.total_points, 'suit_lengths': hand.suit_lengths, 'is_balanced': hand.is_balanced },
         'auction_features': { 'num_bids': len(auction_history), 'opening_bid': opening_bid, 'opener': opener, 'opener_relationship': opener_relationship, 'partner_bids': partner_bids, 'partner_last_bid': partner_last_bid, 'opener_last_bid': opener_last_bid, 'opener_index': opener_index, 'is_contested': is_contested, 'vulnerability': vulnerability, 'interference': interference },
-        'auction_history': auction_history, 'hand': hand, 'my_index': my_index, 'positions': positions
+        'auction_history': auction_history, 'hand': hand, 'my_index': my_index, 'positions': positions,
+        'auction_context': auction_context
     }
 
 def _detect_interference(auction_history, positions, my_index, opener_relationship, opener_index):

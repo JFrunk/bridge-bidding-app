@@ -406,6 +406,7 @@ class ResponderRebidModule(ConventionModule):
         Handle invitational strength rebids (10-12 points).
 
         Philosophy: Invite game, let opener decide.
+        NEW: Use AuctionContext to check if combined points justify game.
 
         Priorities:
         1. Jump raise opener's suit (3-level)
@@ -419,17 +420,39 @@ class ResponderRebidModule(ConventionModule):
         my_first_suit = context['my_first_suit']
         opener_rebid = context['opener_rebid']
 
+        # NEW: Use AuctionContext for smart game decisions
+        # If combined midpoint is 25+, be more aggressive about game
+        auction_context = features.get('auction_context')
+        should_bid_game = False
+        if auction_context is not None:
+            combined_mid = auction_context.ranges.combined_midpoint
+            # With 11-12 pts and combined mid 25+, go to game
+            if combined_mid >= 25 and hand.total_points >= 11:
+                should_bid_game = True
+            # With 10 pts, need 26+ combined midpoint
+            elif combined_mid >= 26 and hand.total_points >= 10:
+                should_bid_game = True
+
         # Case 1: Opener rebid same suit - jump raise with fit
         if opener_rebid_type == 'same_suit':
             if hand.suit_lengths.get(opener_first_suit, 0) >= 3:
+                # With AuctionContext showing game values, bid game directly
+                if should_bid_game and opener_first_suit in ['♥', '♠']:
+                    return (f"4{opener_first_suit}", f"Game with {opener_first_suit} fit - combined values justify game.")
+                elif should_bid_game:
+                    return ("3NT", f"Game in NT - combined values justify game with {opener_first_suit} fit.")
                 return (f"3{opener_first_suit}", f"Invitational raise (10-12 pts) with 3+ {opener_first_suit}.")
 
             # Jump rebid own suit with 6+ cards
             if my_first_suit and hand.suit_lengths.get(my_first_suit, 0) >= 6:
+                if should_bid_game and my_first_suit in ['♥', '♠']:
+                    return (f"4{my_first_suit}", f"Game with 6+ {my_first_suit} - combined values justify game.")
                 return (f"3{my_first_suit}", f"Invitational jump showing 6+ {my_first_suit} and 10-12 pts.")
 
-            # Bid 2NT with balanced hand
+            # Bid 2NT or 3NT with balanced hand
             if hand.is_balanced and hand.hcp >= 10:
+                if should_bid_game:
+                    return ("3NT", "Game in NT - combined values justify game.")
                 return ("2NT", "Invitational with 10-12 HCP, balanced.")
 
         # Case 2: Opener bid notrump - respond appropriately
@@ -444,41 +467,70 @@ class ResponderRebidModule(ConventionModule):
 
             # Check if opener bid 1NT (invite to 2NT or 3NT)
             if opener_rebid == '1NT':
-                # With 6+ card major, jump to 3-level (invitational)
+                # With 6+ card major, jump to game if combined values support it
                 if my_first_suit in ['♥', '♠'] and hand.suit_lengths.get(my_first_suit, 0) >= 6:
+                    if should_bid_game:
+                        return (f"4{my_first_suit}", f"Game with 6+ {my_first_suit} - combined values justify game.")
                     return (f"3{my_first_suit}", f"Invitational with 6+ {my_first_suit} and 10-12 pts.")
 
-                # Otherwise invite with 2NT
+                # With balanced hand, decide between 2NT and 3NT based on combined values
                 if hand.is_balanced:
+                    if should_bid_game:
+                        return ("3NT", "Game in NT - combined values justify game.")
                     return ("2NT", "Invitational with 10-12 HCP, asking partner to bid 3NT with maximum.")
 
-        # Case 3: Opener showed two suits - jump preference
+            # If opener bid 2NT, raise to 3NT with 11+ pts (opener shows extras)
+            if opener_rebid == '2NT' and hand.hcp >= 11:
+                return ("3NT", f"Accepting partner's 2NT invitation with {hand.hcp} HCP.")
+
+        # Case 3: Opener showed two suits - jump preference (or bid game if combined values support)
         if opener_rebid_type == 'new_suit' and opener_second_suit:
+            if should_bid_game:
+                # Bid game with fit in major
+                fit1 = hand.suit_lengths.get(opener_first_suit, 0)
+                fit2 = hand.suit_lengths.get(opener_second_suit, 0)
+                if fit1 >= 3 and opener_first_suit in ['♥', '♠']:
+                    return (f"4{opener_first_suit}", f"Game with {opener_first_suit} fit - combined values justify game.")
+                if fit2 >= 3 and opener_second_suit in ['♥', '♠']:
+                    return (f"4{opener_second_suit}", f"Game with {opener_second_suit} fit - combined values justify game.")
+                if hand.is_balanced:
+                    return ("3NT", "Game in NT - combined values justify game.")
             return self._give_preference(hand, opener_first_suit, opener_second_suit, strength='invitational')
 
-        # Case 4: Opener made jump rebid (already invitational) - accept with maximum
+        # Case 4: Opener made jump rebid (already invitational) - accept with 10+ pts
         if opener_rebid_type == 'jump_rebid':
-            if hand.total_points >= 11:
+            # Accept invitation with 10+ pts (jump rebid shows extras from opener)
+            if hand.total_points >= 10:
                 # Accept invitation by bidding game
                 if opener_first_suit in ['♥', '♠'] and hand.suit_lengths.get(opener_first_suit, 0) >= 2:
                     return (f"4{opener_first_suit}", f"Accepting game invitation with {hand.total_points} pts.")
                 return ("3NT", f"Accepting game invitation with {hand.total_points} pts.")
             else:
-                # Decline with 10 pts
-                return ("Pass", "Declining partner's invitation with 10 pts.")
+                # Decline with less than 10 pts (rare case)
+                return ("Pass", f"Declining partner's invitation with {hand.total_points} pts.")
 
-        # Case 5: After reverse (forcing) - show invitational values
+        # Case 5: After reverse (forcing) - show invitational values or bid game
         if context['is_forcing']:
-            # With invitational values after reverse, bid game if good fit
+            # Reverse shows 17+ from opener, so combined is likely 27+
+            # With invitational values after reverse, often bid game
             if hand.suit_lengths.get(opener_first_suit, 0) >= 3:
+                if should_bid_game or hand.total_points >= 11:
+                    # After reverse + invitational, usually have game values
+                    if opener_first_suit in ['♥', '♠']:
+                        return (f"4{opener_first_suit}", f"Game with {opener_first_suit} support after partner's reverse.")
+                    return ("3NT", f"Game in NT with {opener_first_suit} support after reverse.")
                 return (f"3{opener_first_suit}", f"Showing support for {opener_first_suit} with invitational values.")
 
-            # Bid 2NT showing invitational balanced
+            # Bid game with balanced hand after reverse (combined values high)
             if hand.is_balanced:
+                if should_bid_game or hand.total_points >= 11:
+                    return ("3NT", "Game in NT after partner's reverse (combined 27+).")
                 return ("2NT", "Showing invitational values (10-12 pts) after partner's reverse.")
 
-        # Default: Bid 2NT invitational
+        # Default: Bid 2NT or 3NT based on combined values
         if hand.is_balanced:
+            if should_bid_game:
+                return ("3NT", "Game in NT - combined values justify game.")
             return ("2NT", "Invitational with 10-12 HCP, balanced.")
 
         return None

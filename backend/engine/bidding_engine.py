@@ -57,25 +57,36 @@ class BiddingEngine:
             logger.warning(f"Registered modules: {ModuleRegistry.list_modules()}")
 
     def get_next_bid(self, hand: Hand, auction_history: list, my_position: str, vulnerability: str,
-                     explanation_level: str = "detailed"):
+                     explanation_level: str = "detailed", dealer: str = None):
         """
         Get the next bid from the AI.
 
         Args:
             hand: The hand to bid with
-            auction_history: List of previous bids
+            auction_history: List of previous bids (starting from dealer)
             my_position: Position of this player (North/East/South/West)
             vulnerability: Vulnerability status
             explanation_level: Level of detail ("simple", "detailed", or "expert")
+            dealer: Who dealt the hand (default: inferred from auction length + my_position)
 
         Returns:
             Tuple of (bid, explanation_string)
         """
         import time
 
+        # Infer dealer if not provided (for backward compatibility)
+        if dealer is None:
+            # Dealer is determined by: auction_history[0] was made by dealer
+            # Current bidder is at position len(auction_history) from dealer
+            # So dealer = my_position - len(auction_history) % 4
+            base_positions = ['North', 'East', 'South', 'West']
+            my_idx = base_positions.index(my_position)
+            dealer_idx = (my_idx - len(auction_history)) % 4
+            dealer = base_positions[dealer_idx]
+
         # Time feature extraction
         t0 = time.time()
-        features = extract_features(hand, auction_history, my_position, vulnerability)
+        features = extract_features(hand, auction_history, my_position, vulnerability, dealer)
         t1 = time.time()
         feature_time = (t1 - t0) * 1000
 
@@ -173,14 +184,22 @@ class BiddingEngine:
 
         return ("Pass", "No appropriate bid found.")
 
-    def get_next_bid_structured(self, hand: Hand, auction_history: list, my_position: str, vulnerability: str):
+    def get_next_bid_structured(self, hand: Hand, auction_history: list, my_position: str, vulnerability: str,
+                                  dealer: str = None):
         """
         Get the next bid with structured explanation data (for JSON API).
 
         Returns:
             Tuple of (bid, explanation_dict)
         """
-        features = extract_features(hand, auction_history, my_position, vulnerability)
+        # Infer dealer if not provided (for backward compatibility)
+        if dealer is None:
+            base_positions = ['North', 'East', 'South', 'West']
+            my_idx = base_positions.index(my_position)
+            dealer_idx = (my_idx - len(auction_history)) % 4
+            dealer = base_positions[dealer_idx]
+
+        features = extract_features(hand, auction_history, my_position, vulnerability, dealer)
         module_name = select_bidding_module(features)
 
         if module_name == 'pass_by_default':

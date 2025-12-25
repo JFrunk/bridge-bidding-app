@@ -52,6 +52,10 @@ class BiddingQualityScorer:
             'appropriateness_errors': [],
             'convention_errors': [],
             'game_slam_errors': [],
+            'game_errors': [],      # Separated: missed game with 25-32 points
+            'slam_errors': [],      # Separated: missed slam with 33+ points
+            'game_situations': 0,   # Track actual game-worth hands
+            'slam_situations': 0,   # Track actual slam-worth hands
             'reasonableness_ratings': {
                 'excellent': 0,
                 'good': 0,
@@ -371,36 +375,93 @@ class BiddingQualityScorer:
         if not final_contract or not declarer:
             return  # Passed out
 
-        # Calculate partnership combined strength
-        if declarer in ['North', 'South']:
-            combined_points = hands['North'].total_points + hands['South'].total_points
-        else:
-            combined_points = hands['East'].total_points + hands['West'].total_points
+        # Calculate partnership combined strength for BOTH partnerships
+        ns_points = hands['North'].total_points + hands['South'].total_points
+        ew_points = hands['East'].total_points + hands['West'].total_points
 
-        # Check game accuracy
+        # Check both partnerships for game/slam potential
+        self._check_partnership_game_slam(
+            ns_points, 'NS', declarer in ['North', 'South'],
+            final_contract, hand_number, hands['North'], hands['South']
+        )
+        self._check_partnership_game_slam(
+            ew_points, 'EW', declarer in ['East', 'West'],
+            final_contract, hand_number, hands['East'], hands['West']
+        )
+
+    def _check_partnership_game_slam(
+        self,
+        combined_points: int,
+        partnership: str,
+        is_declarer: bool,
+        final_contract: str,
+        hand_number: int,
+        hand1: Hand,
+        hand2: Hand
+    ):
+        """Check if a specific partnership reached correct level."""
         try:
             level = int(final_contract[0])
             strain = final_contract[1:]
-
-            # Should be in game with 25+ points
-            if combined_points >= 25:
-                if strain in ['♥', '♠'] and level < 4:
-                    self.results['game_slam_errors'].append({
-                        'hand_number': hand_number,
-                        'error': 'Stopped below game in major with 25+ points',
-                        'combined_points': combined_points,
-                        'final_contract': final_contract
-                    })
-                elif strain in ['♣', '♦', 'NT'] and level < 3:
-                    self.results['game_slam_errors'].append({
-                        'hand_number': hand_number,
-                        'error': 'Stopped below game with 25+ points',
-                        'combined_points': combined_points,
-                        'final_contract': final_contract
-                    })
-
         except (ValueError, IndexError):
-            pass
+            return
+
+        # Determine if this is a game situation (25-32 points)
+        is_game_situation = 25 <= combined_points <= 32
+        # Determine if this is a slam situation (33+ points)
+        is_slam_situation = combined_points >= 33
+
+        if is_game_situation:
+            self.results['game_situations'] += 1
+
+            # If this partnership is declarer, check if they reached game
+            if is_declarer:
+                reached_game = False
+                if strain in ['♥', '♠'] and level >= 4:
+                    reached_game = True
+                elif strain == 'NT' and level >= 3:
+                    reached_game = True
+                elif strain in ['♣', '♦'] and level >= 5:
+                    reached_game = True  # Minor game is 5-level
+
+                if not reached_game:
+                    error_detail = {
+                        'hand_number': hand_number,
+                        'partnership': partnership,
+                        'error': f'Stopped at {final_contract} with {combined_points} combined points',
+                        'combined_points': combined_points,
+                        'final_contract': final_contract,
+                        'hand1_points': hand1.total_points,
+                        'hand2_points': hand2.total_points,
+                        'hand1_hcp': hand1.hcp,
+                        'hand2_hcp': hand2.hcp
+                    }
+                    self.results['game_errors'].append(error_detail)
+                    # Also add to combined list for backward compatibility
+                    self.results['game_slam_errors'].append(error_detail)
+
+        if is_slam_situation:
+            self.results['slam_situations'] += 1
+
+            # If this partnership is declarer, check if they reached slam
+            if is_declarer:
+                reached_slam = level >= 6
+
+                if not reached_slam:
+                    error_detail = {
+                        'hand_number': hand_number,
+                        'partnership': partnership,
+                        'error': f'Stopped at {final_contract} with {combined_points} combined points (slam values)',
+                        'combined_points': combined_points,
+                        'final_contract': final_contract,
+                        'hand1_points': hand1.total_points,
+                        'hand2_points': hand2.total_points,
+                        'hand1_hcp': hand1.hcp,
+                        'hand2_hcp': hand2.hcp
+                    }
+                    self.results['slam_errors'].append(error_detail)
+                    # Also add to combined list for backward compatibility
+                    self.results['game_slam_errors'].append(error_detail)
 
     def _record_appropriateness_error(
         self,
@@ -453,10 +514,20 @@ class BiddingQualityScorer:
         else:
             reasonableness_score = 100
 
-        # 6. Game/Slam Accuracy
+        # 6. Game/Slam Accuracy (now with breakdown)
+        game_errors = len(self.results['game_errors'])
+        slam_errors = len(self.results['slam_errors'])
         game_slam_errors = len(self.results['game_slam_errors'])
-        game_situations = max(1, int(self.results['total_hands'] * 0.3))
-        game_slam_score = ((game_situations - min(game_slam_errors, game_situations)) / game_situations * 100)
+
+        # Use actual situations tracked, with fallback estimate
+        game_situations = max(1, self.results['game_situations']) if self.results['game_situations'] > 0 else max(1, int(self.results['total_hands'] * 0.25))
+        slam_situations = max(1, self.results['slam_situations']) if self.results['slam_situations'] > 0 else max(1, int(self.results['total_hands'] * 0.05))
+
+        game_score = ((game_situations - min(game_errors, game_situations)) / game_situations * 100)
+        slam_score = ((slam_situations - min(slam_errors, slam_situations)) / slam_situations * 100)
+
+        # Combined score weighted toward game (game is 4x more frequent)
+        game_slam_score = game_score * 0.8 + slam_score * 0.2
 
         # Composite Score
         composite_score = (
@@ -479,19 +550,29 @@ class BiddingQualityScorer:
                 'consistency': round(consistency_score, 1),
                 'reasonableness': round(reasonableness_score, 1),
                 'game_slam': round(game_slam_score, 1),
+                'game_only': round(game_score, 1),      # NEW: separate game score
+                'slam_only': round(slam_score, 1),      # NEW: separate slam score
                 'composite': round(composite_score, 1)
             },
             'error_counts': {
                 'legality': legality_errors,
                 'appropriateness': appropriateness_errors,
                 'conventions': convention_errors,
-                'game_slam': game_slam_errors
+                'game_slam': game_slam_errors,
+                'game_only': game_errors,              # NEW
+                'slam_only': slam_errors               # NEW
+            },
+            'situation_counts': {                      # NEW: actual situation counts
+                'game_situations': game_situations,
+                'slam_situations': slam_situations
             },
             'errors': {
                 'legality': self.results['legality_errors'][:10],
                 'appropriateness': self.results['appropriateness_errors'][:10],
                 'conventions': self.results['convention_errors'][:10],
-                'game_slam': self.results['game_slam_errors'][:10]
+                'game_slam': self.results['game_slam_errors'][:10],
+                'game_only': self.results['game_errors'][:10],    # NEW
+                'slam_only': self.results['slam_errors'][:10]     # NEW
             },
             'reasonableness_breakdown': ratings,
             'grade': self._get_grade(composite_score)
@@ -530,6 +611,11 @@ class BiddingQualityScorer:
         print(f"  4. Consistency:     {s['consistency']:5.1f}% {'✅' if s['consistency'] >= 85 else '⚠️ '} (not implemented)")
         print(f"  5. Reasonableness:  {s['reasonableness']:5.1f}% {'✅' if s['reasonableness'] >= 90 else '⚠️ ' if s['reasonableness'] >= 80 else '❌'}")
         print(f"  6. Game/Slam:       {s['game_slam']:5.1f}% {'✅' if s['game_slam'] >= 80 else '⚠️ ' if s['game_slam'] >= 70 else '❌'} ({scores['error_counts']['game_slam']} errors)")
+        print()
+        print("     GAME/SLAM BREAKDOWN:")
+        sit = scores.get('situation_counts', {})
+        print(f"     - Game (25-32 pts): {s.get('game_only', 0):5.1f}% ({scores['error_counts'].get('game_only', 0)} missed / {sit.get('game_situations', '?')} situations)")
+        print(f"     - Slam (33+ pts):   {s.get('slam_only', 0):5.1f}% ({scores['error_counts'].get('slam_only', 0)} missed / {sit.get('slam_situations', '?')} situations)")
         print()
         print("-" * 80)
         print(f"COMPOSITE SCORE: {s['composite']:.1f}%")

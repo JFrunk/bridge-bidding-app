@@ -34,11 +34,12 @@ class SanityChecker:
     """
 
     # Maximum safe bid levels by estimated combined HCP
-    # SAYC: Game = 25+ HCP for 3NT/4M, 29+ for 5m
+    # Bridge rule of thumb: Game needs ~25 points with fit, 26 without
+    # Adjusted thresholds to allow game bidding at 24+ with fit
     MAX_BID_LEVELS = {
         (0, 19): 2,     # Part score only (< 20 HCP)
-        (20, 24): 3,    # Invitational max (20-24 HCP)
-        (25, 32): 4,    # Game level (25-32 HCP) - 3NT/4M requires 25+
+        (20, 23): 3,    # Low invitational (20-23 HCP)
+        (24, 32): 4,    # Game level (24+ HCP with fit, 26+ without)
         (33, 36): 5,    # Small slam possible (33-36 HCP)
         (37, 40): 6,    # Small slam (37+ HCP)
         (41, 100): 7,   # Grand slam (very rare)
@@ -149,14 +150,38 @@ class SanityChecker:
         """
         Estimate combined partnership HCP.
 
-        Uses auction information to estimate partner's strength.
+        Uses AuctionContext for accurate range tracking when available,
+        falls back to legacy estimation otherwise.
         """
         my_hcp = hand.hcp
 
-        # Estimate partner's minimum HCP based on their bids
-        partner_min_hcp = self._estimate_partner_hcp(features, auction)
+        # Use AuctionContext if available (expert-level range tracking)
+        auction_context = features.get('auction_context')
+        if auction_context is not None:
+            ranges = auction_context.ranges
+            auction_features = features.get('auction_features', {})
+            opener_relationship = auction_features.get('opener_relationship')
 
-        # Combined estimate (use minimum to be conservative)
+            if opener_relationship == 'Me':
+                # I opened, partner responded
+                partner_min = ranges.responder_hcp[0]
+                partner_max = ranges.responder_hcp[1]
+            elif opener_relationship == 'Partner':
+                # Partner opened, I'm responding
+                partner_min = ranges.opener_hcp[0]
+                partner_max = ranges.opener_hcp[1]
+            else:
+                # Competitive auction - use legacy estimation
+                partner_min = self._estimate_partner_hcp(features, auction)
+                partner_max = partner_min + 10
+
+            # Use midpoint for better game decisions
+            # (minimum was too conservative, causing missed games)
+            partner_estimate = (partner_min + partner_max) // 2
+            return my_hcp + partner_estimate
+
+        # Fall back to legacy estimation
+        partner_min_hcp = self._estimate_partner_hcp(features, auction)
         return my_hcp + partner_min_hcp
 
     def _estimate_partner_hcp(self, features: Dict, auction: List) -> int:
