@@ -123,8 +123,8 @@ def select_bidding_module(features):
         if negative_double.evaluate(features['hand'], features):
             return 'negative_doubles'
 
-        # Check for conventions over 1NT
-        if auction['opening_bid'] == '1NT':
+        # Check for conventions over 1NT or 2NT
+        if auction['opening_bid'] in ['1NT', '2NT']:
             jacoby = JacobyConvention()
             if jacoby.evaluate(features['hand'], features): return 'jacoby'
             stayman = StaymanConvention()
@@ -134,8 +134,8 @@ def select_bidding_module(features):
 
     if auction['opener_relationship'] == 'Me': # I opened
         print(f"   → I am the opener (opener_relationship == 'Me')")
-        # Check for 1NT convention completions FIRST (before natural rebids)
-        if auction['opening_bid'] == '1NT':
+        # Check for 1NT/2NT convention completions FIRST (before natural rebids)
+        if auction['opening_bid'] in ['1NT', '2NT']:
             jacoby = JacobyConvention()
             if jacoby.evaluate(features['hand'], features): return 'jacoby'
             stayman = StaymanConvention()
