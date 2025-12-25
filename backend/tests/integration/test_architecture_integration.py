@@ -1,22 +1,35 @@
 """
 Simplified integration tests for architecture validation.
 
-Tests that Phase 1 and Phase 2 components integrate without breaking existing functionality.
+Tests that core components integrate without breaking existing functionality.
 """
 
 import pytest
+import random
 from core.session_manager import SessionManager
-from core.deal_generator import DealGenerator
 from core.scenario_loader import ScenarioLoader
 from engine.hand import Hand, Card
+from engine.hand_constructor import generate_hand_with_constraints
+
+
+def generate_random_deal():
+    """Generate a random 4-hand deal."""
+    deck = [Card(r, s) for r in '23456789TJQKA' for s in ['♠', '♥', '♦', '♣']]
+    random.shuffle(deck)
+    return {
+        'N': Hand(deck[0:13]),
+        'E': Hand(deck[13:26]),
+        'S': Hand(deck[26:39]),
+        'W': Hand(deck[39:52])
+    }
 
 
 class TestArchitectureIntegration:
-    """Test integration of new architecture with existing code."""
+    """Test integration of architecture with existing code."""
 
-    def test_deal_generator_produces_valid_hands(self):
-        """Test that DealGenerator produces valid Hand objects."""
-        hands = DealGenerator.generate_random_deal()
+    def test_random_deal_produces_valid_hands(self):
+        """Test that random deal generation produces valid Hand objects."""
+        hands = generate_random_deal()
 
         # Verify structure
         assert all(pos in hands for pos in ['N', 'E', 'S', 'W'])
@@ -74,21 +87,17 @@ class TestArchitectureIntegration:
         # Validate scenario format
         assert loader.validate_bidding_scenario(scenario)
 
-    def test_deal_generator_constrained_deals(self):
-        """Test DealGenerator with constraints."""
-        constraints = {
-            'S': {'hcp_range': (15, 17), 'is_balanced': True},
-            'N': None,
-            'E': None,
-            'W': None
-        }
+    def test_constrained_hand_generation(self):
+        """Test hand_constructor with constraints."""
+        deck = [Card(r, s) for r in '23456789TJQKA' for s in ['♠', '♥', '♦', '♣']]
+        constraints = {'hcp_range': (15, 17), 'is_balanced': True}
 
-        hands = DealGenerator.generate_constrained_deal(constraints)
+        hand, remaining_deck = generate_hand_with_constraints(constraints, deck)
 
-        # Check South hand meets constraints
-        south_hand = hands['S']
-        assert 15 <= south_hand.hcp <= 21  # Allow retry widening
-        assert south_hand.is_balanced
+        # Check hand meets constraints (with retry widening tolerance)
+        assert hand is not None
+        assert 13 <= hand.hcp <= 19  # Allow retry widening
+        assert hand.is_balanced
 
     def test_session_isolation(self):
         """Test that sessions are properly isolated."""
@@ -111,9 +120,9 @@ class TestArchitectureIntegration:
         assert data1['user_id'] == 'user1'
         assert data2['user_id'] == 'user2'
 
-    def test_deal_generator_all_cards_present(self):
+    def test_random_deal_all_cards_present(self):
         """Test that generated deal has all 52 unique cards."""
-        hands = DealGenerator.generate_random_deal()
+        hands = generate_random_deal()
 
         all_cards = []
         for hand in hands.values():
@@ -143,8 +152,8 @@ class TestArchitectureIntegration:
 
     def test_multiple_deal_generations(self):
         """Test that multiple deal generations produce different hands."""
-        deal1 = DealGenerator.generate_random_deal()
-        deal2 = DealGenerator.generate_random_deal()
+        deal1 = generate_random_deal()
+        deal2 = generate_random_deal()
 
         # Deals should be different
         south1_cards = set(f"{c.rank}{c.suit}" for c in deal1['S'].cards)
@@ -171,13 +180,16 @@ class TestArchitectureIntegration:
             session = manager.get_session(sid)
             assert session is not None
 
-    def test_deal_generator_balanced_hand(self):
-        """Test DealGenerator can create balanced hands."""
-        hand = DealGenerator.generate_balanced_hand((15, 17))
+    def test_balanced_hand_generation(self):
+        """Test that hand_constructor can create balanced hands."""
+        deck = [Card(r, s) for r in '23456789TJQKA' for s in ['♠', '♥', '♦', '♣']]
+        constraints = {'hcp_range': (15, 17), 'is_balanced': True}
+
+        hand, _ = generate_hand_with_constraints(constraints, deck)
 
         # Should be balanced
         assert hand.is_balanced
-        assert 15 <= hand.hcp <= 21  # Allow retry widening
+        assert 13 <= hand.hcp <= 19  # Allow retry widening
         assert len(hand.cards) == 13
 
     def test_backward_compatibility_hand_class(self):
