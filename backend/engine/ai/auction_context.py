@@ -134,6 +134,11 @@ class AuctionContext:
     is_competitive: bool = False
     passed_out: bool = False
 
+    @property
+    def has_fit(self) -> bool:
+        """True if partnership has agreed on a trump suit."""
+        return self.ranges.agreed_suit is not None
+
     def __repr__(self):
         return (
             f"AuctionContext(\n"

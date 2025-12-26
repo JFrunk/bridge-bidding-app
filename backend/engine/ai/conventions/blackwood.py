@@ -22,20 +22,20 @@ class BlackwoodConvention(ConventionModule):
             return None
 
         # Handle both 2-tuple (bid, explanation) and 3-tuple (bid, explanation, metadata)
-        bid = result[0]
-        explanation = result[1]
-        metadata = result[2] if len(result) > 2 else None
+        if len(result) == 3:
+            bid, explanation, metadata = result
+        else:
+            bid, explanation = result
+            metadata = {}
 
         # Always pass Pass bids through
         if bid == "Pass":
-            return (bid, explanation)
+            return (bid, explanation, metadata) if metadata else (bid, explanation)
 
         # Validate the bid is legal
         if BidValidator.is_legal_bid(bid, auction_history):
-            # Return with metadata if present (for validation bypass)
-            if metadata:
-                return (bid, explanation, metadata)
-            return (bid, explanation)
+            # Return 3-tuple if we have metadata (for artificial bid bypass)
+            return (bid, explanation, metadata) if metadata else (bid, explanation)
 
         # Bid is illegal - try to find next legal bid of same strain
         next_legal = get_next_legal_bid(bid, auction_history)
@@ -54,7 +54,8 @@ class BlackwoodConvention(ConventionModule):
                 pass
 
             adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
-            return (next_legal, adjusted_explanation)
+            # Preserve metadata for adjusted bids (still artificial)
+            return (next_legal, adjusted_explanation, metadata) if metadata else (next_legal, adjusted_explanation)
 
         # No legal bid possible - pass
         return None
@@ -101,20 +102,68 @@ class BlackwoodConvention(ConventionModule):
         if '1NT' in my_previous_bids and partner_last_bid[0] in ['2', '3']:
             return False
 
+        # Use AuctionContext for accurate combined strength assessment
+        auction_context = features.get('auction_context')
+        estimated_combined = 0
+        if auction_context is not None:
+            estimated_combined = auction_context.ranges.combined_midpoint
+        else:
+            # Fallback: estimate from auction features
+            partner_total_points = features['auction_features'].get('partner_total_points', 0)
+            estimated_combined = hand.total_points + partner_total_points
+
+        # MINIMUM HCP requirement for Blackwood - STRICTLY enforce 16+ HCP
+        # Expert analysis showed 15 HCP hands were triggering Blackwood inappropriately
+        # 16+ HCP is required regardless of estimated combined values
+        if hand.hcp < 16:
+            return False
+
         # Strong direct jump raises (e.g., 1♥ - 4♥) indicate slam interest
-        # This is a jump to 4-level showing strong support
+        # This is a jump to 4-level showing strong support (13-15 pts typically)
         if len(my_previous_bids) == 1 and partner_last_bid[0] == '4' and len(partner_last_bid) == 2:
-            # Partner jumped to 4-level (e.g., 1♥ - 4♥)
-            if hand.total_points >= 18:
+            partner_suit = partner_last_bid[1]
+            # Partner jumped to game in our suit - they have 13-15 pts with fit
+            # With 17+ total points ourselves, combined is 30+, explore slam
+            if hand.total_points >= 17:
+                return True
+            # With fit and 33+ estimated combined, explore slam
+            if estimated_combined >= 33:
                 return True
 
-        # After game-forcing sequence, 3-level bid might show slam interest
-        # But we need to be conservative - only if combined strength is very high
-        partner_total_points = features['auction_features'].get('partner_total_points', 0)
-        if hand.total_points + partner_total_points >= 30:
-            # Clear slam zone - but still only if partner raised our suit
-            is_raise = len(my_previous_bids) >= 1 and partner_last_bid.endswith(my_previous_bids[0][1:])
+        # After game-forcing sequence at 3-level, check for slam exploration
+        # Example: 1♥ - 2♣ - 2♥ - 3♥ (responder showed game-forcing values and raised)
+        if partner_last_bid[0] == '3' and len(partner_last_bid) == 2:
+            partner_suit = partner_last_bid[1]
+            # Check if partner raised our suit at 3-level (shows extras/slam interest)
+            if len(my_previous_bids) >= 1:
+                my_first_suit = my_previous_bids[0][1] if len(my_previous_bids[0]) >= 2 else None
+                if my_first_suit == partner_suit:
+                    # Partner raised our suit - check combined values for slam
+                    if estimated_combined >= 32 and hand.total_points >= 16:
+                        return True
+                    if hand.total_points >= 18:  # Very strong opener, explore slam
+                        return True
+
+        # After partner's jump shift (game-forcing, 17+ pts)
+        # Example: 1♣ - 2♥ shows 17+ pts, if opener has 17+ too, slam is likely
+        if len(my_previous_bids) >= 1 and len(partner_last_bid) == 2:
+            # Check if partner's response was a jump shift (game-forcing, 17+ pts)
+            partner_level = int(partner_last_bid[0]) if partner_last_bid[0].isdigit() else 0
+            if partner_level == 2 and my_previous_bids[0][0] == '1':
+                partner_suit = partner_last_bid[1]
+                my_suit = my_previous_bids[0][1] if len(my_previous_bids[0]) >= 2 else None
+                # Jump shift shows 17+ pts - if we have 17+ too, explore slam
+                if partner_suit != my_suit and hand.total_points >= 17:
+                    return True
+
+        # High combined values warrant slam exploration (33+ combined)
+        if estimated_combined >= 33:
+            # Partner has raised our suit or we have clear fit
+            is_raise = len(my_previous_bids) >= 1 and len(partner_last_bid) >= 2 and partner_last_bid[1:] == my_previous_bids[0][1:]
             if is_raise and partner_last_bid[0] in ['3', '4']:
+                return True
+            # Even without explicit raise, explore slam with very high combined
+            if estimated_combined >= 35 and hand.total_points >= 16:
                 return True
 
         return False

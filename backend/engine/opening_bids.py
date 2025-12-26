@@ -88,7 +88,8 @@ class OpeningBidsModule(ConventionModule):
             # Show longest suit as context
             longest_suit = max(hand.suit_lengths, key=hand.suit_lengths.get)
             explanation.add_actual_value("Longest suit", f"{longest_suit} ({hand.suit_lengths[longest_suit]} cards)")
-            return ("2♣", explanation)
+            # 2♣ is artificial - doesn't promise clubs, bypass suit length validation
+            return ("2♣", explanation, {'bypass_suit_length': True})
 
         # Rule for standard 1-level openings (13-21 points)
         if hand.total_points >= 13:

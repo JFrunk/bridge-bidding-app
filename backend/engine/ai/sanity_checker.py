@@ -119,11 +119,19 @@ class SanityChecker:
                 logger.warning(f"Sanity check prevented: {reason}")
                 return False, "Pass", reason
 
-        # Check 4: Slam bidding requires combined 33+ HCP
+        # Check 4: Slam bidding requires combined 32+ HCP (or 30+ with distribution bonus)
         if bid_level >= 6:
             estimated_combined = self._estimate_combined_hcp(hand, features, auction)
-            if estimated_combined < 33:
-                reason = f"Slam bid with estimated {estimated_combined} combined HCP (need 33+)"
+            # Allow slightly lower threshold with strong distribution
+            auction_context = features.get('auction_context')
+            distribution_bonus = 0
+            if auction_context is not None and auction_context.has_fit:
+                # With fit, distribution points count more for slam
+                distribution_bonus = min(hand.total_points - hand.hcp, 3)
+
+            adjusted_combined = estimated_combined + distribution_bonus
+            if adjusted_combined < 32:
+                reason = f"Slam bid with estimated {estimated_combined} combined HCP + {distribution_bonus} distribution (need 32+)"
                 logger.warning(f"Sanity check prevented: {reason}")
                 return False, "Pass", reason
 
@@ -138,6 +146,14 @@ class SanityChecker:
         """
         # Estimate combined HCP
         combined_hcp = self._estimate_combined_hcp(hand, features, auction)
+
+        # Bonus for distribution points when we have a fit
+        # This helps reach game when we have shape but fewer HCP
+        auction_context = features.get('auction_context')
+        if auction_context is not None and auction_context.has_fit:
+            # Add 1-2 points for distribution when fit is established
+            distribution_bonus = min(hand.total_points - hand.hcp, 2)
+            combined_hcp += distribution_bonus
 
         # Find appropriate max level
         for (min_hcp, max_hcp), max_level in self.MAX_BID_LEVELS.items():

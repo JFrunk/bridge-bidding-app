@@ -276,6 +276,17 @@ class ResponseModule(ConventionModule):
         if opening_suit in hand.suit_lengths and hand.suit_lengths[opening_suit] >= 3:
             support_points = self._calculate_support_points(hand, opening_suit)
 
+            # Slam exploration with very strong support (17+ support points)
+            # Opener shows 13-21 pts, combined could be 30-38 (slam zone)
+            if support_points >= 17 and opening_suit in '♥♠':
+                # With 17+ support points and major fit, explore slam
+                # Jump to 4-level to show strong support, partner can ask Blackwood
+                # Or with 20+ support points, we can ask Blackwood ourselves
+                if support_points >= 20:
+                    return ("4NT", f"Blackwood asking for aces with excellent {opening_suit} support ({support_points} support points).")
+                # 17-19 support points - show strong support at 3-level (slam try)
+                return (f"3{opening_suit}", f"Slam try with excellent {opening_suit} support ({support_points} support points).")
+
             if support_points >= 13:
                 bid = f"4{opening_suit}" if opening_suit in '♥♠' else "3NT"
                 explanation = BidExplanation(bid)
@@ -415,10 +426,31 @@ class ResponseModule(ConventionModule):
                 if opening_bid == '1♥' and hand.suit_lengths.get('♠', 0) >= 5:
                     return ("2♠", "New suit showing 10+ HCP and 5+ spades (forcing).")
 
-            # 3NT direct response (13-15 HCP, balanced, no fit, stoppers)
+            # 3NT direct response (13-16 HCP, balanced, no fit)
             # This ensures game is reached when responder has game values
-            if hand.is_balanced and 13 <= hand.hcp <= 15:
-                return ("3NT", "Game in NT with 13-15 HCP, balanced, no major fit.")
+            # Extended range to 16 HCP for hands without 5-card suit for jump shift
+            if hand.is_balanced and 13 <= hand.hcp <= 16:
+                return ("3NT", f"Game in NT with {hand.hcp} HCP, balanced, no major fit.")
+
+            # Game-forcing with 13+ HCP but unbalanced - bid longest suit forcing
+            # This prevents passing with game values
+            if hand.hcp >= 13 and not hand.is_balanced:
+                # Find longest suit (prefer majors)
+                best_suit = None
+                best_length = 0
+                for suit in ['♠', '♥', '♦', '♣']:
+                    if hand.suit_lengths.get(suit, 0) > best_length:
+                        best_length = hand.suit_lengths.get(suit, 0)
+                        best_suit = suit
+                if best_suit and best_length >= 4:
+                    # Bid at appropriate level (1-level if possible, else 2-level)
+                    if best_suit in ['♥', '♠'] and opening_bid in ['1♣', '1♦']:
+                        return (f"1{best_suit}", f"Showing 4+ {best_suit} with {hand.hcp} HCP (forcing, game values).")
+                    elif best_suit in ['♠'] and opening_bid == '1♥':
+                        return ("1♠", f"Showing 4+ spades with {hand.hcp} HCP (forcing, game values).")
+                    else:
+                        # 2-level new suit is game forcing with 13+ HCP
+                        return (f"2{best_suit}", f"New suit with {hand.hcp} HCP and {best_length}+ {best_suit} (game-forcing).")
 
             # 2NT invitational response (11-12 HCP, balanced, no fit)
             if hand.is_balanced and 11 <= hand.hcp <= 12:

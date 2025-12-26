@@ -509,14 +509,48 @@ class RebidModule(ConventionModule):
             return ("2NT", "Shows a strong hand (16-18 pts) with no obvious fit.")
 
         elif hand.total_points >= 19: # Strong Hand
+            # Check for slam potential using AuctionContext
+            # Expert recommendation: Combined_Points >= 33 AND Fit_Found = slam investigation
+            auction_context = features.get('auction_context')
+            estimated_combined = 0
+            has_fit = False
+
+            if auction_context is not None:
+                estimated_combined = auction_context.ranges.combined_midpoint
+                has_fit = auction_context.has_fit
+            else:
+                # Fallback: partner's response shows 6-10 (new suit/raise), 10-12 (jump)
+                partner_level = int(partner_response[0]) if partner_response[0].isdigit() else 1
+                partner_estimated = 11 if partner_level >= 3 else 8
+                estimated_combined = hand.total_points + partner_estimated
+
+            # SLAM AGGREGATION LOGIC (per expert analysis):
+            # If Combined_Points >= 33 AND Fit_Found = True THEN Force_Slam_Investigation
+            # With 33+ combined and established fit, ask Blackwood directly
+            # With 32+ combined, make a slam try first (3-level)
+            should_bid_blackwood = estimated_combined >= 33 and has_fit and hand.hcp >= 16
+            should_explore_slam = estimated_combined >= 32 and hand.total_points >= 18
+
             if partner_response.endswith(my_opening_bid[1]):
                 partner_suit = my_opening_bid[1]
                 if partner_suit in ['♥', '♠']:
+                    # Partner raised our suit - fit is established
+                    if should_bid_blackwood or (estimated_combined >= 33 and hand.hcp >= 16):
+                        # Force slam investigation with Blackwood
+                        return ("4NT", f"Blackwood - slam investigation with fit and {estimated_combined} estimated combined points.")
+                    elif should_explore_slam:
+                        return (f"3{partner_suit}", f"Slam try with {hand.total_points} pts after partner's raise (estimated combined: {estimated_combined}).")
                     return (f"4{partner_suit}", f"Strong hand ({hand.total_points} pts), bidding game after partner's raise.")
             if len(partner_response) == 2:
                 partner_suit = partner_response[1]
                 if partner_suit in ['♥', '♠'] and hand.suit_lengths.get(partner_suit, 0) >= 4:
-                     return (f"4{partner_suit}", f"Strong hand ({hand.total_points} pts), bidding game with a fit.")
+                    # We have 4-card support for partner's major - fit is established
+                    if should_bid_blackwood or (estimated_combined >= 33 and hand.hcp >= 16):
+                        # Force slam investigation with Blackwood
+                        return ("4NT", f"Blackwood - slam investigation with {partner_suit} fit and {estimated_combined} estimated combined points.")
+                    elif should_explore_slam:
+                        return (f"3{partner_suit}", f"Slam try with {partner_suit} fit and {hand.total_points} pts.")
+                    return (f"4{partner_suit}", f"Strong hand ({hand.total_points} pts), bidding game with a fit.")
 
                 # Check for reverse bid with 4+ card second suit FIRST
                 # With 19+ HCP, reverse shows slam interest
