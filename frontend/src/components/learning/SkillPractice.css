@@ -1,0 +1,362 @@
+/**
+ * Skill Practice Styles
+ */
+
+.skill-practice {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.practice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.back-button {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.skill-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.progress-indicator {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.accuracy {
+  font-size: 24px;
+  font-weight: 600;
+  color: #4CAF50;
+}
+
+.attempts {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Hand Display */
+.hand-display-area {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+}
+
+.hand-card {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 30px;
+  min-width: 300px;
+  text-align: center;
+}
+
+.hand-card h3 {
+  margin: 0 0 20px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.hand-text {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 24px;
+  line-height: 1.6;
+  margin: 0;
+  text-align: left;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.hand-stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.hand-stats span {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+/* Question Area */
+.question-area {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 30px;
+}
+
+.question-prompt {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.question-prompt h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+/* Answer Form */
+.answer-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.answer-input {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: white;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.answer-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.answer-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.hcp-input {
+  max-width: 150px;
+}
+
+/* Yes/No Buttons */
+.yes-no-buttons {
+  display: flex;
+  gap: 20px;
+}
+
+.yn-button {
+  padding: 20px 40px;
+  font-size: 18px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.yn-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.yn-button.selected {
+  background: #4CAF50;
+  border-color: #4CAF50;
+}
+
+/* Bid Input */
+.bid-input-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.bid-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.bid-shortcut {
+  padding: 10px 16px;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bid-shortcut:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Submit Button */
+.submit-button {
+  padding: 16px 48px;
+  font-size: 18px;
+  font-weight: 600;
+  background: #4CAF50;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.submit-button:hover:not(:disabled) {
+  background: #45a049;
+  transform: translateY(-2px);
+}
+
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Feedback Display */
+.feedback-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 30px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.feedback-display.correct {
+  border: 2px solid #4CAF50;
+}
+
+.feedback-display.incorrect {
+  border: 2px solid #f44336;
+}
+
+.feedback-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: bold;
+  border-radius: 50%;
+}
+
+.feedback-display.correct .feedback-icon {
+  background: #4CAF50;
+  color: white;
+}
+
+.feedback-display.incorrect .feedback-icon {
+  background: #f44336;
+  color: white;
+}
+
+.feedback-content h4 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.feedback-text {
+  margin: 10px 0 0;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.explanation {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}
+
+.continue-button {
+  padding: 14px 40px;
+  font-size: 16px;
+  font-weight: 500;
+  background: #2196F3;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.continue-button:hover {
+  background: #1976D2;
+}
+
+/* Error State */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .practice-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .hand-card {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .hand-text {
+    font-size: 18px;
+  }
+
+  .hand-stats {
+    flex-wrap: wrap;
+  }
+
+  .yes-no-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .yn-button {
+    width: 100%;
+  }
+
+  .bid-shortcuts {
+    max-width: 300px;
+  }
+}
