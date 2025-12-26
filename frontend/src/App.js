@@ -8,6 +8,7 @@ import { BiddingBox as BiddingBoxComponent } from './components/bridge/BiddingBo
 import { ReviewModal } from './components/bridge/ReviewModal';
 import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
 import LearningDashboard from './components/learning/LearningDashboard';
+import LearningMode from './components/learning/LearningMode';
 import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SimpleLogin } from './components/auth/SimpleLogin';
@@ -218,6 +219,7 @@ function App() {
   const [showConventionHelp, setShowConventionHelp] = useState(false);
   const [conventionInfo, setConventionInfo] = useState(null);
   const [showLearningDashboard, setShowLearningDashboard] = useState(false);
+  const [showLearningMode, setShowLearningMode] = useState(false);
 
   // Session scoring state
   const [sessionData, setSessionData] = useState(null);
@@ -2117,6 +2119,7 @@ ${otherCommands}`;
           <div className="game-controls">
             {gamePhase === 'bidding' ? (
               <>
+                <button className="learn-button" data-testid="learn-button" onClick={() => setShowLearningMode(true)}>📚 Learn</button>
                 <button className="deal-button" data-testid="deal-button" onClick={dealNewHand}>Deal Hand to Bid</button>
                 <button className="play-button" data-testid="play-random-button" onClick={playRandomHand}>Play Random Hand</button>
                 <button className="replay-button" data-testid="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Rebid Hand</button>
@@ -2240,6 +2243,20 @@ ${otherCommands}`;
               }}
             />
           </div>
+        </div>
+      )}
+
+      {/* Learning Mode - Full-screen guided learning */}
+      {showLearningMode && (
+        <div className="learning-mode-overlay">
+          <LearningMode
+            userId={userId || 1}
+            onClose={() => setShowLearningMode(false)}
+            onPlayFreePlay={() => {
+              setShowLearningMode(false);
+              dealNewHand();
+            }}
+          />
         </div>
       )}
 

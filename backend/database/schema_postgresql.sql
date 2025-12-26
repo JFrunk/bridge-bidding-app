@@ -286,6 +286,36 @@ CREATE TABLE IF NOT EXISTS user_convention_progress (
     PRIMARY KEY (user_id, convention_id)
 );
 
+-- User skill progress (for Learning Mode Levels 0-4, 6)
+CREATE TABLE IF NOT EXISTS user_skill_progress (
+    user_id INTEGER NOT NULL,
+    skill_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'locked' CHECK(status IN ('locked', 'unlocked', 'in_progress', 'mastered')),
+    skill_level INTEGER NOT NULL DEFAULT 0,  -- Curriculum level (0-8)
+    attempts INTEGER DEFAULT 0,
+    correct INTEGER DEFAULT 0,
+    accuracy REAL DEFAULT 0.0,
+    started_at TIMESTAMP,
+    mastered_at TIMESTAMP,
+    last_practiced TIMESTAMP,
+    PRIMARY KEY (user_id, skill_id)
+);
+
+-- Skill practice history
+CREATE TABLE IF NOT EXISTS skill_practice_history (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    skill_id TEXT NOT NULL,
+    skill_level INTEGER NOT NULL,
+    hand_id TEXT,
+    user_bid TEXT,
+    correct_bid TEXT,
+    was_correct BOOLEAN NOT NULL,
+    hints_used INTEGER DEFAULT 0,
+    time_taken_seconds INTEGER,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Convention practice history
 CREATE TABLE IF NOT EXISTS convention_practice_history (
     id SERIAL PRIMARY KEY,
@@ -362,6 +392,11 @@ CREATE INDEX IF NOT EXISTS idx_user_convention_progress_user ON user_convention_
 CREATE INDEX IF NOT EXISTS idx_user_convention_progress_status ON user_convention_progress(status);
 CREATE INDEX IF NOT EXISTS idx_convention_practice_history_user ON convention_practice_history(user_id, convention_id);
 CREATE INDEX IF NOT EXISTS idx_convention_practice_history_timestamp ON convention_practice_history(timestamp);
+CREATE INDEX IF NOT EXISTS idx_user_skill_progress_user ON user_skill_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_skill_progress_status ON user_skill_progress(status);
+CREATE INDEX IF NOT EXISTS idx_user_skill_progress_level ON user_skill_progress(skill_level);
+CREATE INDEX IF NOT EXISTS idx_skill_practice_history_user ON skill_practice_history(user_id, skill_id);
+CREATE INDEX IF NOT EXISTS idx_skill_practice_history_timestamp ON skill_practice_history(timestamp);
 CREATE INDEX IF NOT EXISTS idx_bidding_decisions_user_time ON bidding_decisions(user_id, timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_bidding_decisions_correctness ON bidding_decisions(user_id, correctness, timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_bidding_decisions_session ON bidding_decisions(session_id, bid_number);
