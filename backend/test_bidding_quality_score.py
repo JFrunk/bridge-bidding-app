@@ -280,18 +280,24 @@ class BiddingQualityScorer:
         explanation: str
     ):
         """Check if conventional bids are used correctly."""
-        # Stayman check
-        if bid == '2♣' and len(auction) > 0 and auction[-1] == '1NT':
-            if hand.suit_lengths.get('♠', 0) < 4 and hand.suit_lengths.get('♥', 0) < 4:
-                self.results['convention_errors'].append({
-                    'hand_number': hand_number,
-                    'position': position,
-                    'convention': 'Stayman',
-                    'error': 'Used Stayman without 4-card major',
-                    'hand_hcp': hand.hcp,
-                    'spades': hand.suit_lengths.get('♠', 0),
-                    'hearts': hand.suit_lengths.get('♥', 0)
-                })
+        # Stayman check - must verify this is a response to PARTNER's 1NT (not opponent's)
+        # Partner's 1NT would be 2 bids back in the auction (1NT - Pass - 2♣)
+        # If auction[-1] == '1NT', that's the OPPONENT's 1NT (direct seat), so 2♣ is an overcall
+        if bid == '2♣' and len(auction) >= 2:
+            # Check if partner opened 1NT (auction[-2] should be 1NT, auction[-1] should be Pass)
+            if auction[-2] == '1NT' and auction[-1] == 'Pass':
+                # This is Stayman - check for 4-card major requirement
+                if hand.suit_lengths.get('♠', 0) < 4 and hand.suit_lengths.get('♥', 0) < 4:
+                    self.results['convention_errors'].append({
+                        'hand_number': hand_number,
+                        'position': position,
+                        'convention': 'Stayman',
+                        'error': 'Used Stayman without 4-card major',
+                        'hand_hcp': hand.hcp,
+                        'spades': hand.suit_lengths.get('♠', 0),
+                        'hearts': hand.suit_lengths.get('♥', 0)
+                    })
+            # Note: If auction[-1] == '1NT', that's opponent's 1NT - 2♣ is a club overcall, not Stayman
 
         # Blackwood check
         if bid == '4NT' and 'Blackwood' in explanation:

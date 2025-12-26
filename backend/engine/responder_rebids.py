@@ -496,12 +496,14 @@ class ResponderRebidModule(ConventionModule):
         Handle game-forcing strength rebids (13+ points).
 
         Philosophy: Ensure game is reached, explore best strain.
+        With 16+ points and fit, consider slam exploration.
 
         Priorities:
-        1. Bid game directly if strain is clear
-        2. Use Fourth Suit Forcing to gather more info
-        3. Bid new suit (forcing) to show distribution
-        4. Jump to 3NT with balanced hand
+        1. With 16+ points and fit, explore slam (Blackwood will be triggered)
+        2. Bid game directly if strain is clear
+        3. Use Fourth Suit Forcing to gather more info
+        4. Bid new suit (forcing) to show distribution
+        5. Jump to 3NT with balanced hand
         """
         opener_rebid_type = context['opener_rebid_type']
         opener_first_suit = context['opener_first_suit']
@@ -510,13 +512,42 @@ class ResponderRebidModule(ConventionModule):
         opener_rebid = context['opener_rebid']
         unbid_suit = context['unbid_suit']
 
-        # Case 1: Opener rebid same suit - raise to game with fit
+        # SLAM AGGREGATION LOGIC (per expert analysis):
+        # If Combined_Points >= 33 AND Fit_Found = True THEN Force_Slam_Investigation
+        auction_context = features.get('auction_context')
+        estimated_combined = 0
+        has_fit = False
+
+        if auction_context is not None:
+            estimated_combined = auction_context.ranges.combined_midpoint
+            has_fit = auction_context.has_fit
+        else:
+            # Fallback estimate: opener shows 13-15 after minimum rebid, 16-18 after jump
+            opener_estimated = 14 if opener_rebid_type in ['same_suit', 'new_suit', 'notrump'] else 17
+            estimated_combined = hand.total_points + opener_estimated
+
+        # Expert recommendation: Force slam investigation with 33+ combined and fit
+        # With 32+ combined, make a slam try first (3-level)
+        should_bid_blackwood = estimated_combined >= 33 and has_fit and hand.hcp >= 16
+        should_explore_slam = estimated_combined >= 32 and hand.total_points >= 16
+
+        # Case 1: Opener rebid same suit - raise to game with fit (or explore slam)
         if opener_rebid_type == 'same_suit':
             if hand.suit_lengths.get(opener_first_suit, 0) >= 3:
+                # SLAM AGGREGATION: 33+ combined + fit = Force slam investigation (Blackwood)
+                if should_bid_blackwood or (estimated_combined >= 33 and hand.hcp >= 16):
+                    return ("4NT", f"Blackwood - slam investigation with {opener_first_suit} fit and {estimated_combined} estimated combined points.")
+                # With slam potential but < 16 HCP, make a slam try at 3-level
+                if should_explore_slam and opener_first_suit in ['♥', '♠']:
+                    # Jump to 3-level shows slam interest with fit (cue-bid/slam try)
+                    # This allows partner to ask Blackwood if interested
+                    return (f"3{opener_first_suit}", f"Slam try with {opener_first_suit} fit and {hand.total_points} pts (estimated combined: {estimated_combined}).")
                 if opener_first_suit in ['♥', '♠']:
                     return (f"4{opener_first_suit}", f"Game with {opener_first_suit} fit (13+ pts).")
                 else:
-                    # Minor suit - prefer 3NT if balanced
+                    # Minor suit - prefer 3NT if balanced, unless slam potential
+                    if should_explore_slam:
+                        return (f"3{opener_first_suit}", f"Slam try in {opener_first_suit} with {hand.total_points} pts.")
                     if hand.is_balanced:
                         return ("3NT", f"Game in NT with {opener_first_suit} fit but balanced hand.")
                     return (f"5{opener_first_suit}", f"Game in {opener_first_suit} (13+ pts).")

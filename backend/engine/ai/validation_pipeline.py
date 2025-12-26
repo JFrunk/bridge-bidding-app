@@ -257,7 +257,18 @@ class SuitLengthValidator:
         if self._is_jacoby_completion(bid, auction):
             return 2  # Jacoby completion can be doubleton
 
-        # 1-level bids: 4+ cards (3 for minors in some cases)
+        # Opening bids have specific length requirements (SAYC)
+        # - Minors: 3+ for "convenient minor" rule (4-4-3-2 or 4-4-2-3 hands)
+        # - Majors: 5+ cards required for major suit openings
+        # Opening bid = no previous bids except Pass (can be 4th seat opening after 3 passes)
+        is_opening = all(b == 'Pass' for b in auction)
+        if level == 1 and is_opening:  # Opening bid
+            suit = bid[1:]
+            if suit in ['♣', '♦']:
+                return 3  # Minors can be opened with 3+ (convenient minor)
+            return 5  # Majors need 5+ for opening (SAYC standard)
+
+        # 1-level responses/rebids: 4+ cards
         if level == 1:
             return 4
 

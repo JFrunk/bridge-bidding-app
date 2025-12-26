@@ -131,13 +131,17 @@ class AdvancerBidsModule(ConventionModule):
             # With major suit fit, bid game directly
             if overcall_suit in ['♥', '♠']:
                 return (f"4{overcall_suit}", f"Game bid with {support_points} support points and {support}-card support.")
-            # With minor suit fit and very strong hand (14+), bid game
+            # With minor suit fit, PREFER 3NT over 5m when we have stopper
+            # 3NT requires 9 tricks, 5m requires 11 tricks
+            elif self._has_stopper(hand, opener_bid):
+                return ("3NT", f"Game in NT with {hand.hcp} HCP and stopper (preferred over 5{overcall_suit}).")
             elif hand.total_points >= 14:
-                if hand.is_balanced and self._has_stopper(hand, opener_bid):
-                    return ("3NT", f"Game bid with {hand.hcp} HCP, balanced, with stopper.")
-                else:
-                    # Bid game in minor (5-level)
-                    return (f"5{overcall_suit}", f"Game bid in minor with {support_points} support points and {support}-card support.")
+                # Only bid 5m without stopper and with very strong hand
+                return (f"5{overcall_suit}", f"Game bid in minor with {support_points} support points and {support}-card support.")
+
+        # 1b. Game bid without fit but with game values (13+ HCP)
+        if hand.hcp >= 13 and self._has_stopper(hand, opener_bid):
+            return ("3NT", f"Game in NT with {hand.hcp} HCP and stopper.")
 
         # 2. Jump raise (invitational with 11-12 OR preemptive with weak hand and 4+ support)
         if support >= 3:
