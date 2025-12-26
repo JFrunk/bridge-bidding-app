@@ -1,8 +1,20 @@
 # Learning Mode Implementation Plan
 
 **Created:** 2025-12-25
-**Status:** Planning
+**Status:** Phase 3 Complete (API Ready)
+**Last Updated:** 2025-12-25
 **Companion Document:** [LEARNING_MODE_CURRICULUM.md](LEARNING_MODE_CURRICULUM.md)
+
+## Progress Summary
+
+| Phase | Status | Commit |
+|-------|--------|--------|
+| Phase 0: Infrastructure Validation | ✅ Complete | n/a |
+| Phase 1: Curriculum Structure | ✅ Complete | `feat(learning): Implement Phase 1` |
+| Phase 2: Hand Generation | ✅ Complete | `feat(learning): Implement Phase 2` |
+| Phase 3: Learning Mode API | ✅ Complete | `feat(learning): Implement Phase 3` |
+| Phase 4: Frontend Learning Mode | 🔜 Pending | - |
+| Phase 5: Testing & QA | 🔜 Pending | - |
 
 ---
 
@@ -280,8 +292,29 @@ def generate_hand_for_topic(topic_id: str, subtopic: str = None) -> Dict:
 
 ---
 
-### Phase 3: Learning Mode API (2 days)
+### Phase 3: Learning Mode API (2 days) ✅ COMPLETE
 **Goal:** Add endpoints for guided learning flow
+**Status:** Implemented and tested 2025-12-25
+
+#### Implementation Summary
+
+**File:** `backend/engine/learning/learning_path_api.py`
+
+**New Endpoints Added:**
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/learning/start-session` | POST | Start skill/convention practice |
+| `/api/learning/submit-answer` | POST | Submit answer, get feedback + next hand |
+| `/api/learning/review` | GET | Interleaved review for level |
+| `/api/learning/level-assessment` | GET | Level mastery test (20 hands) |
+| `/api/learning/status` | GET | User's comprehensive learning status |
+
+**Features Implemented:**
+- HCP counting, yes/no, and bidding question evaluation
+- Bid normalization (ASCII "1H" ↔ Unicode "1♥")
+- Automatic next hand generation on answer submit
+- Mastery detection (80% accuracy, 85% for Level 8)
+- Prerequisite checking for assessments
 
 #### 3.1 New Endpoints (extend learning_path_api.py)
 

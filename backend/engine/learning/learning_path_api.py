@@ -725,6 +725,473 @@ def get_available_skill_generators():
 
 
 # ============================================================================
+# LEARNING MODE SESSION MANAGEMENT
+# ============================================================================
+
+import random
+import uuid
+
+
+def normalize_bid(bid: str) -> str:
+    """Normalize bid string for comparison.
+
+    Handles both ASCII (1H) and Unicode (1♥) formats.
+    """
+    if not bid:
+        return ''
+    bid = str(bid).upper().strip()
+    # Map ASCII suit letters to Unicode
+    bid = bid.replace('S', '♠').replace('H', '♥').replace('D', '♦').replace('C', '♣')
+    return bid
+
+
+def start_learning_session():
+    """
+    POST /api/learning/start-session
+
+    Start a new learning session for a skill or convention.
+
+    Body:
+        {
+            "user_id": 1,
+            "topic_id": "hand_evaluation_basics",  // skill_id or convention_id
+            "topic_type": "skill"  // "skill" or "convention"
+        }
+
+    Returns first hand and session info.
+    """
+    from engine.learning.skill_hand_generators import get_skill_hand_generator, create_deck
+
+    data = request.get_json()
+    user_id = data.get('user_id')
+    topic_id = data.get('topic_id')
+    topic_type = data.get('topic_type', 'skill')
+
+    if not all([user_id, topic_id]):
+        return jsonify({'error': 'user_id and topic_id required'}), 400
+
+    session_id = str(uuid.uuid4())[:12]
+
+    # Get progress
+    if topic_type == 'convention':
+        progress = get_user_convention_status(user_id, topic_id)
+        # Get convention hand (existing infrastructure)
+        # For now, return placeholder - convention generators already exist
+        hand_data = {'message': 'Use existing convention practice'}
+        hands_required = 10
+    else:
+        progress = get_user_skill_status(user_id, topic_id)
+        generator = get_skill_hand_generator(topic_id)
+
+        if not generator:
+            return jsonify({'error': f'No generator for skill: {topic_id}'}), 404
+
+        deck = create_deck()
+        hand, _ = generator.generate(deck)
+
+        if not hand:
+            return jsonify({'error': 'Failed to generate hand'}), 500
+
+        hand_data = {
+            'cards': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
+            'display': str(hand),
+            'hcp': hand.hcp,
+            'distribution_points': hand.dist_points,
+            'total_points': hand.total_points,
+            'is_balanced': hand.is_balanced,
+            'suit_lengths': hand.suit_lengths
+        }
+        hands_required = generator.skill_level * 2 + 5  # Simple formula
+
+        # Get expected response
+        expected = generator.get_expected_response(hand)
+
+    return jsonify({
+        'session_id': session_id,
+        'topic_id': topic_id,
+        'topic_type': topic_type,
+        'hand': hand_data,
+        'expected_response': expected if topic_type == 'skill' else None,
+        'progress': {
+            'attempts': progress.get('attempts', 0) if progress else 0,
+            'correct': progress.get('correct', 0) if progress else 0,
+            'accuracy': progress.get('accuracy', 0) if progress else 0,
+            'status': progress.get('status', 'not_started') if progress else 'not_started'
+        },
+        'hands_required': hands_required,
+        'hand_id': str(uuid.uuid4())[:8]
+    })
+
+
+def submit_learning_answer():
+    """
+    POST /api/learning/submit-answer
+
+    Submit answer for current hand, get feedback and optionally next hand.
+
+    Body:
+        {
+            "user_id": 1,
+            "topic_id": "hand_evaluation_basics",
+            "topic_type": "skill",
+            "answer": "15",  // or bid like "1NT"
+            "hand_id": "abc123",
+            "expected_response": {...}  // from previous hand
+        }
+    """
+    from engine.learning.skill_hand_generators import get_skill_hand_generator, create_deck
+    from engine.learning.skill_tree import get_skill_tree_manager
+
+    data = request.get_json()
+    user_id = data.get('user_id')
+    topic_id = data.get('topic_id')
+    topic_type = data.get('topic_type', 'skill')
+    answer = data.get('answer')
+    hand_id = data.get('hand_id')
+    expected = data.get('expected_response', {})
+
+    if not all([user_id, topic_id, answer is not None]):
+        return jsonify({'error': 'user_id, topic_id, and answer required'}), 400
+
+    # Evaluate answer
+    is_correct = False
+    feedback = ''
+
+    if topic_type == 'skill':
+        # Skill-specific evaluation
+        if 'hcp' in expected:
+            # HCP counting question
+            try:
+                user_hcp = int(answer)
+                is_correct = user_hcp == expected['hcp']
+                feedback = f'Correct! {expected["hcp"]} HCP' if is_correct else f'The hand has {expected["hcp"]} HCP, not {user_hcp}'
+            except ValueError:
+                feedback = 'Please enter a number for HCP'
+        elif 'should_open' in expected:
+            # Should open question
+            user_answer = str(answer).lower() in ['yes', 'true', 'open', '1']
+            is_correct = user_answer == expected['should_open']
+            feedback = expected.get('explanation', '')
+        elif 'bid' in expected:
+            # Bidding question - normalize both for comparison
+            is_correct = normalize_bid(answer) == normalize_bid(expected['bid'])
+            feedback = expected.get('explanation', '')
+            if not is_correct:
+                feedback = f'The correct bid is {expected["bid"]}. ' + feedback
+        else:
+            # Generic comparison
+            is_correct = str(answer) == str(expected.get('answer', ''))
+            feedback = expected.get('explanation', '')
+
+        # Record practice
+        manager = get_skill_tree_manager()
+        skill_level = 0
+        for level_id, level_data in manager.tree.items():
+            if 'skills' in level_data:
+                for skill in level_data['skills']:
+                    if skill.id == topic_id:
+                        skill_level = skill.level
+                        break
+
+        result = record_skill_practice(
+            user_id=user_id,
+            skill_id=topic_id,
+            skill_level=skill_level,
+            was_correct=is_correct,
+            hand_id=hand_id
+        )
+    else:
+        # Convention - use existing infrastructure
+        result = {'success': True, 'status': 'in_progress', 'accuracy': 0}
+        feedback = 'Convention evaluation uses existing system'
+
+    # Check if topic is mastered
+    progress = get_user_skill_status(user_id, topic_id) if topic_type == 'skill' else get_user_convention_status(user_id, topic_id)
+    is_mastered = progress and progress.get('status') == 'mastered'
+
+    # Generate next hand if not mastered
+    next_hand = None
+    next_expected = None
+
+    if not is_mastered and topic_type == 'skill':
+        generator = get_skill_hand_generator(topic_id)
+        if generator:
+            deck = create_deck()
+            hand, _ = generator.generate(deck)
+            if hand:
+                next_hand = {
+                    'cards': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
+                    'display': str(hand),
+                    'hcp': hand.hcp,
+                    'distribution_points': hand.dist_points,
+                    'total_points': hand.total_points,
+                    'is_balanced': hand.is_balanced,
+                    'suit_lengths': hand.suit_lengths
+                }
+                next_expected = generator.get_expected_response(hand)
+
+    return jsonify({
+        'is_correct': is_correct,
+        'feedback': feedback,
+        'expected': expected,
+        'progress': {
+            'attempts': progress.get('attempts', 0) if progress else 0,
+            'correct': progress.get('correct', 0) if progress else 0,
+            'accuracy': round(progress.get('accuracy', 0) * 100, 1) if progress else 0,
+            'status': progress.get('status', 'in_progress') if progress else 'in_progress'
+        },
+        'is_mastered': is_mastered,
+        'next_hand': next_hand,
+        'next_expected': next_expected,
+        'next_hand_id': str(uuid.uuid4())[:8] if next_hand else None
+    })
+
+
+def get_interleaved_review():
+    """
+    GET /api/learning/review?user_id=X&level=Y
+
+    Get mixed review hands from completed topics in a level.
+    For interleaved practice after blocked learning.
+    """
+    from engine.learning.skill_hand_generators import get_skill_hand_generator, create_deck
+    from engine.learning.skill_tree import get_skill_tree_manager
+
+    user_id = request.args.get('user_id', type=int)
+    level = request.args.get('level', type=int)
+    count = request.args.get('count', default=10, type=int)
+
+    if not user_id or level is None:
+        return jsonify({'error': 'user_id and level required'}), 400
+
+    manager = get_skill_tree_manager()
+    level_id = manager.get_level_id_by_number(level)
+
+    if not level_id:
+        return jsonify({'error': f'Invalid level: {level}'}), 404
+
+    level_data = manager.get_level(level_id)
+
+    # Get skills or conventions for this level
+    if 'skills' in level_data:
+        topic_ids = [s.id for s in level_data['skills']]
+        topic_type = 'skill'
+    elif 'conventions' in level_data:
+        topic_ids = level_data['conventions']
+        topic_type = 'convention'
+    else:
+        return jsonify({'error': 'No topics in level'}), 400
+
+    # Get completed topics
+    completed = []
+    for topic_id in topic_ids:
+        if topic_type == 'skill':
+            status = get_user_skill_status(user_id, topic_id)
+        else:
+            status = get_user_convention_status(user_id, topic_id)
+
+        if status and status.get('status') in ['mastered', 'in_progress']:
+            completed.append(topic_id)
+
+    if len(completed) < 2:
+        return jsonify({
+            'ready': False,
+            'message': 'Need at least 2 practiced topics for review',
+            'practiced': len(completed),
+            'required': 2
+        })
+
+    # Generate mixed hands
+    hands = []
+    for _ in range(count):
+        topic_id = random.choice(completed)
+
+        if topic_type == 'skill':
+            generator = get_skill_hand_generator(topic_id)
+            if generator:
+                deck = create_deck()
+                hand, _ = generator.generate(deck)
+                if hand:
+                    hands.append({
+                        'topic_id': topic_id,
+                        'hand': {
+                            'cards': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
+                            'display': str(hand),
+                            'hcp': hand.hcp,
+                            'distribution_points': hand.dist_points,
+                            'total_points': hand.total_points,
+                            'is_balanced': hand.is_balanced,
+                            'suit_lengths': hand.suit_lengths
+                        },
+                        'expected_response': generator.get_expected_response(hand),
+                        'hand_id': str(uuid.uuid4())[:8]
+                    })
+
+    random.shuffle(hands)
+
+    return jsonify({
+        'ready': True,
+        'review_session': True,
+        'level': level,
+        'topics_included': completed,
+        'hands': hands,
+        'total_hands': len(hands)
+    })
+
+
+def get_level_assessment():
+    """
+    GET /api/learning/level-assessment?user_id=X&level=Y
+
+    Get assessment test for level completion.
+    All topics must be individually completed first.
+    """
+    from engine.learning.skill_hand_generators import get_skill_hand_generator, create_deck
+    from engine.learning.skill_tree import get_skill_tree_manager
+
+    user_id = request.args.get('user_id', type=int)
+    level = request.args.get('level', type=int)
+
+    if not user_id or level is None:
+        return jsonify({'error': 'user_id and level required'}), 400
+
+    manager = get_skill_tree_manager()
+    level_id = manager.get_level_id_by_number(level)
+
+    if not level_id:
+        return jsonify({'error': f'Invalid level: {level}'}), 404
+
+    level_data = manager.get_level(level_id)
+
+    # Get all topics for level
+    if 'skills' in level_data:
+        all_topics = [s.id for s in level_data['skills']]
+        topic_type = 'skill'
+    elif 'conventions' in level_data:
+        all_topics = level_data['conventions']
+        topic_type = 'convention'
+    else:
+        return jsonify({'error': 'No topics in level'}), 400
+
+    # Check which are mastered
+    mastered = []
+    not_mastered = []
+
+    for topic_id in all_topics:
+        if topic_type == 'skill':
+            status = get_user_skill_status(user_id, topic_id)
+        else:
+            status = get_user_convention_status(user_id, topic_id)
+
+        if status and status.get('status') == 'mastered':
+            mastered.append(topic_id)
+        else:
+            not_mastered.append(topic_id)
+
+    if not_mastered:
+        return jsonify({
+            'ready': False,
+            'message': 'Complete all topics before level assessment',
+            'mastered': len(mastered),
+            'total': len(all_topics),
+            'remaining': not_mastered
+        })
+
+    # Generate assessment hands (20 mixed)
+    hands = []
+    hands_per_topic = max(1, 20 // len(all_topics))
+
+    for topic_id in all_topics:
+        if topic_type == 'skill':
+            generator = get_skill_hand_generator(topic_id)
+            if generator:
+                for _ in range(hands_per_topic):
+                    deck = create_deck()
+                    hand, _ = generator.generate(deck)
+                    if hand:
+                        hands.append({
+                            'topic_id': topic_id,
+                            'hand': {
+                                'cards': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
+                                'display': str(hand),
+                                'hcp': hand.hcp,
+                                'distribution_points': hand.dist_points,
+                                'total_points': hand.total_points,
+                                'is_balanced': hand.is_balanced,
+                                'suit_lengths': hand.suit_lengths
+                            },
+                            'expected_response': generator.get_expected_response(hand),
+                            'hand_id': str(uuid.uuid4())[:8]
+                        })
+
+    random.shuffle(hands)
+
+    passing_accuracy = 0.85 if level == 8 else 0.80
+
+    return jsonify({
+        'ready': True,
+        'assessment': True,
+        'level': level,
+        'level_name': level_data['name'],
+        'topics': all_topics,
+        'hands': hands,
+        'total_hands': len(hands),
+        'passing_accuracy': passing_accuracy
+    })
+
+
+def get_user_learning_status():
+    """
+    GET /api/learning/status?user_id=X
+
+    Get comprehensive learning status for a user.
+    """
+    from engine.learning.skill_tree import get_skill_tree_manager
+
+    user_id = request.args.get('user_id', type=int)
+
+    if not user_id:
+        return jsonify({'error': 'user_id required'}), 400
+
+    manager = get_skill_tree_manager()
+
+    # Get completed skills
+    completed_skills = get_user_completed_skills(user_id)
+    mastered_conventions = get_user_mastered_conventions(user_id)
+
+    user_progress = {
+        'completed_skills': completed_skills,
+        'mastered_conventions': mastered_conventions
+    }
+
+    # Get level progress
+    level_progress = manager.get_user_skill_tree_progress(user_progress)
+
+    # Find current level (first incomplete)
+    current_level = None
+    for level_id, progress in level_progress.items():
+        if progress['unlocked'] and progress['completed'] < progress['total']:
+            current_level = level_id
+            break
+
+    # Calculate overall progress
+    total_skills = sum(p['total'] for p in level_progress.values())
+    completed_count = sum(p['completed'] for p in level_progress.values())
+
+    return jsonify({
+        'user_id': user_id,
+        'current_level': current_level,
+        'overall_progress': {
+            'completed': completed_count,
+            'total': total_skills,
+            'percentage': round(completed_count / total_skills * 100, 1) if total_skills > 0 else 0
+        },
+        'levels': level_progress,
+        'next_recommended': manager.get_next_recommended_level(user_progress)
+    })
+
+
+# ============================================================================
 # REGISTER ENDPOINTS
 # ============================================================================
 
@@ -760,5 +1227,12 @@ def register_learning_endpoints(app):
 
     # Curriculum endpoints
     app.route('/api/curriculum/summary', methods=['GET'])(curriculum_summary)
+
+    # Learning Mode session endpoints
+    app.route('/api/learning/start-session', methods=['POST'])(start_learning_session)
+    app.route('/api/learning/submit-answer', methods=['POST'])(submit_learning_answer)
+    app.route('/api/learning/review', methods=['GET'])(get_interleaved_review)
+    app.route('/api/learning/level-assessment', methods=['GET'])(get_level_assessment)
+    app.route('/api/learning/status', methods=['GET'])(get_user_learning_status)
 
     print("✓ Learning path API endpoints registered")
