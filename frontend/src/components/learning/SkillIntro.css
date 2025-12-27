@@ -1,0 +1,159 @@
+/**
+ * Skill Introduction Styles
+ */
+
+.skill-intro {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+/* Header */
+.intro-header {
+  text-align: center;
+  padding: 20px 0 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.skill-intro .back-button {
+  position: absolute;
+  left: 0;
+  top: 20px;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.skill-intro .back-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.intro-title {
+  margin: 0 0 10px;
+  font-size: 28px;
+  font-weight: 600;
+  color: #4CAF50;
+}
+
+.intro-subtitle {
+  margin: 0;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Content Sections */
+.intro-content {
+  flex: 1;
+  max-width: 700px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.intro-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px 25px;
+  margin-bottom: 20px;
+}
+
+.intro-section h3 {
+  margin: 0 0 15px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #81D4FA;
+}
+
+.section-content {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: pre-line;
+}
+
+/* Practice Tip */
+.practice-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 20px auto;
+  max-width: 700px;
+  width: 100%;
+}
+
+.tip-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.tip-text {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #a5d6a7;
+}
+
+/* Actions */
+.intro-actions {
+  padding: 30px 0;
+  text-align: center;
+}
+
+.start-practice-button {
+  padding: 16px 48px;
+  font-size: 18px;
+  font-weight: 600;
+  background: #4CAF50;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.start-practice-button:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .skill-intro {
+    padding: 15px;
+  }
+
+  .intro-title {
+    font-size: 24px;
+  }
+
+  .intro-section {
+    padding: 15px 20px;
+  }
+
+  .section-content {
+    font-size: 14px;
+  }
+
+  .skill-intro .back-button {
+    position: static;
+    margin-bottom: 20px;
+  }
+
+  .intro-header {
+    padding-top: 0;
+  }
+}

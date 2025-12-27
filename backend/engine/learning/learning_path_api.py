@@ -745,6 +745,101 @@ def normalize_bid(bid: str) -> str:
     return bid
 
 
+def _get_opening_education(correct_bid: str) -> str:
+    """
+    Get educational context about opening bids based on conventions.
+
+    Provides rule reminders for opening bid decisions.
+    """
+    normalized_bid = normalize_bid(correct_bid)
+
+    # Opening bid conventions
+    if normalized_bid == '1NT':
+        return ' Convention: 1NT (15-17 HCP, balanced). Precise and descriptive - partner knows your range immediately!'
+    elif normalized_bid == '2NT':
+        return ' Convention: 2NT (20-21 HCP, balanced). Too strong for 1NT, not forcing like 2♣.'
+    elif normalized_bid == '2♣':
+        return ' Convention: 2♣ (22+ HCP or 9+ tricks). Artificial, game-forcing. Partner must respond!'
+    elif normalized_bid == '1♠':
+        return ' Convention: Open 1♠ with 5+ spades. With two 5-card suits, bid the higher-ranking first.'
+    elif normalized_bid == '1♥':
+        return ' Convention: Open 1♥ with 5+ hearts (or 4 hearts with no 5-card suit).'
+    elif normalized_bid == '1♦':
+        return ' Convention: Open 1♦ with 4+ diamonds (no 5-card major). "Better minor" principle.'
+    elif normalized_bid == '1♣':
+        return ' Convention: Open 1♣ with 3+ clubs (no 5-card major, <4 diamonds). Default opening.'
+    elif normalized_bid.upper() == 'PASS':
+        return ' Convention: Pass with <12 HCP unless Rule of 20 applies (HCP + two longest suits ≥ 20).'
+
+    return ''
+
+
+def _get_responding_education(partner_opening: str, correct_bid: str) -> str:
+    """
+    Get educational context about responding bids based on conventions.
+
+    Provides rule reminders to help users learn the bidding logic.
+    """
+    normalized_bid = normalize_bid(correct_bid)
+    normalized_opening = normalize_bid(partner_opening)
+
+    education = ''
+
+    # Major suit responses (1♥ or 1♠)
+    if normalized_opening in ['1♥', '1♠']:
+        suit = '♥' if normalized_opening == '1♥' else '♠'
+        if normalized_bid.startswith('2') and suit in normalized_bid:
+            education = f' Convention: Single raise (6-10 pts, 3+ {suit}) shows support but limited strength.'
+        elif normalized_bid.startswith('3') and suit in normalized_bid:
+            education = f' Convention: Jump raise (10-12 pts, 4+ {suit}) is invitational - partner bids game with extras.'
+        elif normalized_bid.startswith('4') and suit in normalized_bid:
+            education = f' Convention: Game raise (13+ pts, 4+ {suit}) - you have enough for game!'
+        elif normalized_bid == '1♠' and normalized_opening == '1♥':
+            education = ' Convention: New suit at 1-level (6+ pts, 4+ cards) - show your spades before supporting hearts.'
+        elif normalized_bid == '1NT':
+            education = ' Convention: 1NT response (6-10 pts) denies 4 spades and major support. Balanced, no better bid.'
+        elif normalized_bid == '2NT':
+            education = ' Convention: 2NT (11-12 pts) is invitational. Balanced, no major fit.'
+        elif normalized_bid == '3NT':
+            education = ' Convention: 3NT (13-15 pts) shows game values. Balanced, no major fit.'
+        elif normalized_bid.upper() == 'PASS':
+            education = ' Convention: Pass with fewer than 6 points - not enough to respond.'
+
+    # Minor suit responses (1♣ or 1♦)
+    elif normalized_opening in ['1♣', '1♦']:
+        if normalized_bid == '1♦':
+            education = ' Convention: Bid 1♦ with 4+ diamonds (6+ pts). Show suits "up the line."'
+        elif normalized_bid == '1♥':
+            education = ' Convention: Bid 1♥ with 4+ hearts (6+ pts). Always show a 4-card major over a minor!'
+        elif normalized_bid == '1♠':
+            education = ' Convention: Bid 1♠ with 4+ spades (6+ pts). Show your major suit.'
+        elif normalized_bid == '1NT':
+            education = ' Convention: 1NT response (6-10 pts) - no 4-card major to show.'
+        elif normalized_bid == '2NT':
+            education = ' Convention: 2NT (13-15 pts) is game-forcing. Balanced, no major.'
+        elif normalized_bid == '3NT':
+            education = ' Convention: 3NT (16-17 pts) - bid game directly with strong balanced hand.'
+        elif normalized_bid.upper() == 'PASS':
+            education = ' Convention: Pass with fewer than 6 points - not enough to respond.'
+
+    # 1NT responses
+    elif normalized_opening == '1NT':
+        if normalized_bid == '2♣':
+            education = ' Convention: Stayman (2♣) asks for 4-card majors. Use with 4-card major and 8+ pts.'
+        elif normalized_bid == '2♦':
+            education = ' Convention: Transfer to hearts (2♦→2♥). Shows 5+ hearts.'
+        elif normalized_bid == '2♥':
+            education = ' Convention: Transfer to spades (2♥→2♠). Shows 5+ spades.'
+        elif normalized_bid == '2NT':
+            education = ' Convention: 2NT (8-9 pts) invites game. Partner passes with minimum 15, bids 3NT with maximum.'
+        elif normalized_bid == '3NT':
+            education = ' Convention: 3NT (10-15 pts) - partner has 15-17, combined 25+ for game!'
+        elif normalized_bid.upper() == 'PASS':
+            education = ' Convention: Pass with 0-7 pts balanced - game is unlikely (need 25+ combined).'
+
+    return education
+
+
 def start_learning_session():
     """
     POST /api/learning/start-session
@@ -779,6 +874,7 @@ def start_learning_session():
         # For now, return placeholder - convention generators already exist
         hand_data = {'message': 'Use existing convention practice'}
         hands_required = 10
+        expected = None
     else:
         progress = get_user_skill_status(user_id, topic_id)
         generator = get_skill_hand_generator(topic_id)
@@ -789,22 +885,26 @@ def start_learning_session():
         deck = create_deck()
         hand, _ = generator.generate(deck)
 
-        if not hand:
-            return jsonify({'error': 'Failed to generate hand'}), 500
-
-        hand_data = {
-            'cards': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
-            'display': str(hand),
-            'hcp': hand.hcp,
-            'distribution_points': hand.dist_points,
-            'total_points': hand.total_points,
-            'is_balanced': hand.is_balanced,
-            'suit_lengths': hand.suit_lengths
-        }
-        hands_required = generator.skill_level * 2 + 5  # Simple formula
-
-        # Get expected response
+        # Get expected response first (some skills don't need hands)
         expected = generator.get_expected_response(hand)
+
+        # Check if this is a no-hand skill (like bidding_language)
+        if expected.get('no_hand_required'):
+            hand_data = None
+        elif not hand:
+            return jsonify({'error': 'Failed to generate hand'}), 500
+        else:
+            hand_data = {
+                'cards': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
+                'display': str(hand),
+                'hcp': hand.hcp,
+                'distribution_points': hand.dist_points,
+                'total_points': hand.total_points,
+                'is_balanced': hand.is_balanced,
+                'suit_lengths': hand.suit_lengths
+            }
+
+        hands_required = generator.skill_level * 2 + 5  # Simple formula
 
     return jsonify({
         'session_id': session_id,
@@ -858,26 +958,92 @@ def submit_learning_answer():
     feedback = ''
 
     if topic_type == 'skill':
-        # Skill-specific evaluation
+        # Skill-specific evaluation with educational feedback
         if 'hcp' in expected:
             # HCP counting question
             try:
                 user_hcp = int(answer)
                 is_correct = user_hcp == expected['hcp']
-                feedback = f'Correct! {expected["hcp"]} HCP' if is_correct else f'The hand has {expected["hcp"]} HCP, not {user_hcp}'
+                if is_correct:
+                    feedback = f'Correct! {expected["hcp"]} HCP. '
+                    feedback += 'Remember: A=4, K=3, Q=2, J=1.'
+                else:
+                    feedback = f'The hand has {expected["hcp"]} HCP, not {user_hcp}. '
+                    feedback += 'Count: Ace=4, King=3, Queen=2, Jack=1 points.'
             except ValueError:
                 feedback = 'Please enter a number for HCP'
         elif 'should_open' in expected:
             # Should open question
             user_answer = str(answer).lower() in ['yes', 'true', 'open', '1']
             is_correct = user_answer == expected['should_open']
-            feedback = expected.get('explanation', '')
+            explanation = expected.get('explanation', '')
+            if is_correct:
+                feedback = f'Correct! {explanation}'
+            else:
+                feedback = f'Not quite. {explanation}'
+            # Add educational rule reminder
+            feedback += ' Rule: Open with 12+ HCP, or 11+ HCP if Rule of 20 applies (HCP + two longest suits ≥ 20).'
         elif 'bid' in expected:
             # Bidding question - normalize both for comparison
             is_correct = normalize_bid(answer) == normalize_bid(expected['bid'])
-            feedback = expected.get('explanation', '')
-            if not is_correct:
-                feedback = f'The correct bid is {expected["bid"]}. ' + feedback
+            explanation = expected.get('explanation', '')
+
+            # Build educational feedback based on the skill type
+            if is_correct:
+                feedback = f'Correct! {expected["bid"]}. {explanation}'
+            else:
+                feedback = f'The correct bid is {expected["bid"]}. {explanation}'
+
+            # Add convention-specific educational context
+            partner_opened = expected.get('partner_opened', '')
+            if partner_opened:
+                # This is a responding situation
+                feedback += _get_responding_education(partner_opened, expected['bid'])
+            else:
+                # This is an opening bid situation
+                feedback += _get_opening_education(expected['bid'])
+        elif 'longest_suit' in expected:
+            # Longest suit question (suit quality)
+            # Normalize both to handle different suit representations
+            user_suit = str(answer).strip()
+            expected_suit = expected['longest_suit']
+            # Handle both Unicode symbols and letter representations
+            suit_map = {'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣',
+                       'SPADES': '♠', 'HEARTS': '♥', 'DIAMONDS': '♦', 'CLUBS': '♣',
+                       '♠': '♠', '♥': '♥', '♦': '♦', '♣': '♣'}
+            normalized_user = suit_map.get(user_suit.upper(), user_suit)
+            normalized_expected = suit_map.get(expected_suit.upper(), expected_suit)
+            is_correct = normalized_user == normalized_expected
+            length = expected.get('length', '')
+            if is_correct:
+                feedback = f'Correct! {expected_suit} is the longest suit with {length} cards.'
+            else:
+                feedback = f'The longest suit is {expected_suit} with {length} cards, not {user_suit}.'
+        elif 'correct_answer' in expected and expected.get('no_hand_required'):
+            # Contract-specific game/slam points question (bidding language)
+            try:
+                user_points = int(answer)
+                expected_points = expected['correct_answer']
+                contract = expected.get('display_contract', expected.get('contract', 'game'))
+                is_correct = user_points == expected_points
+                if is_correct:
+                    feedback = f'Correct! {contract} requires about {expected_points} combined points.'
+                else:
+                    feedback = f'{contract} requires about {expected_points} combined points, not {user_points}. {expected.get("explanation", "")}'
+            except ValueError:
+                feedback = 'Please enter a number.'
+        elif 'game_points_needed' in expected:
+            # Legacy game points question (bidding language)
+            try:
+                user_points = int(answer)
+                expected_points = expected['game_points_needed']
+                is_correct = user_points == expected_points
+                if is_correct:
+                    feedback = f'Correct! You need about {expected_points} combined points to bid game.'
+                else:
+                    feedback = f'You need about {expected_points} combined points for game, not {user_points}. {expected.get("explanation", "")}'
+            except ValueError:
+                feedback = 'Please enter a number.'
         else:
             # Generic comparison
             is_correct = str(answer) == str(expected.get('answer', ''))
@@ -909,16 +1075,25 @@ def submit_learning_answer():
     progress = get_user_skill_status(user_id, topic_id) if topic_type == 'skill' else get_user_convention_status(user_id, topic_id)
     is_mastered = progress and progress.get('status') == 'mastered'
 
-    # Generate next hand if not mastered
+    # Generate next hand/question if not mastered
     next_hand = None
     next_expected = None
+    next_hand_id = None
 
     if not is_mastered and topic_type == 'skill':
         generator = get_skill_hand_generator(topic_id)
         if generator:
             deck = create_deck()
             hand, _ = generator.generate(deck)
-            if hand:
+
+            # Get expected response (works for both hand and no-hand skills)
+            next_expected = generator.get_expected_response(hand)
+
+            # Check if this is a no-hand skill
+            if next_expected.get('no_hand_required'):
+                next_hand = None  # No hand needed
+                next_hand_id = str(uuid.uuid4())[:8]  # Still need ID for tracking
+            elif hand:
                 next_hand = {
                     'cards': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
                     'display': str(hand),
@@ -928,7 +1103,7 @@ def submit_learning_answer():
                     'is_balanced': hand.is_balanced,
                     'suit_lengths': hand.suit_lengths
                 }
-                next_expected = generator.get_expected_response(hand)
+                next_hand_id = str(uuid.uuid4())[:8]
 
     return jsonify({
         'is_correct': is_correct,
@@ -943,7 +1118,7 @@ def submit_learning_answer():
         'is_mastered': is_mastered,
         'next_hand': next_hand,
         'next_expected': next_expected,
-        'next_hand_id': str(uuid.uuid4())[:8] if next_hand else None
+        'next_hand_id': next_hand_id
     })
 
 

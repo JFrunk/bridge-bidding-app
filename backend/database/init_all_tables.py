@@ -69,6 +69,7 @@ def init_all_tables(db_path='bridge.db'):
         # List of migration files
         migration_files = [
             'migrations/001_add_bidding_feedback_tables.sql',
+            'migrations/004_add_learning_mode_tables.sql',
         ]
 
         print("📋 Applying schema files...")

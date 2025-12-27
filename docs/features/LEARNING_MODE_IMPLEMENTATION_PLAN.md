@@ -2,7 +2,7 @@
 
 **Created:** 2025-12-25
 **Status:** ✅ MVP Complete
-**Last Updated:** 2025-12-25
+**Last Updated:** 2025-12-27
 **Companion Document:** [LEARNING_MODE_CURRICULUM.md](LEARNING_MODE_CURRICULUM.md)
 
 ## Progress Summary
@@ -24,6 +24,24 @@ All phases have been implemented. The Learning Mode feature includes:
 - Session-based learning with 5 API endpoints
 - Frontend Learning Mode with skill tree navigation
 - 20 integration tests covering all major functionality
+
+### Phase 4 Enhancements (2025-12-27)
+
+**Session-Specific Accuracy:**
+- Fixed accuracy display to use session stats from `handHistory` instead of cumulative DB stats
+- Display shows "this session" accuracy after answering hands
+- No longer confusingly shows "0 of 2" on first hand
+
+**Bid Shortcuts with Pass Trap:**
+- All 8 bid shortcut scenarios now include Pass as a "trap" option
+- Essential for teaching force bids (e.g., 2♣ game-forcing cannot pass)
+- Helps users learn when Pass is legal vs illegal
+
+**Educational Feedback Improvements:**
+- Replaced generic "combined under 25 points" messages with specific requirements
+- Explains Stayman requires 8+ HCP (not just game points)
+- Explains transfer usage for weak hands with 5+ card majors
+- Added case for 4-card major with weak points (cannot use Stayman)
 
 ---
 
