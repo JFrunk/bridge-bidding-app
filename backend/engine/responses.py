@@ -75,6 +75,22 @@ class ResponseModule(ConventionModule):
                 if length == 0: points += 3
         return points
 
+    def _has_good_suit(self, hand: Hand, suit: str) -> bool:
+        """
+        Check if suit has two of the top three honors (A, K, Q).
+        A 'good suit' qualifies for a positive response to 2♣ regardless of HCP.
+        """
+        if hand.suit_lengths.get(suit, 0) < 5:
+            return False
+
+        # Count top honors in this suit
+        top_honors = 0
+        for card in hand.cards:
+            if card.suit == suit and card.rank in ['A', 'K', 'Q']:
+                top_honors += 1
+
+        return top_honors >= 2
+
     def _get_first_response(self, hand: Hand, opening_bid: str, features: Dict):
         """
         Determine responder's first bid after partner's opening.
@@ -82,8 +98,28 @@ class ResponseModule(ConventionModule):
         """
         # Special case: 2♣ opening (strong artificial)
         if opening_bid == "2♣":
-            if hand.hcp >= 8: return ("2NT", "Positive response to 2♣ (8+ HCP, balanced).")
-            else: return ("2♦", "Artificial waiting response to 2♣.")
+            # Positive response conditions:
+            # 1. Good 5+ card suit (two of top three honors: AK, AQ, or KQ)
+            # 2. 8+ HCP with any 5+ card suit
+            # 3. 8+ HCP balanced -> 2NT
+
+            # First check for good suits (qualifies for positive regardless of HCP)
+            for suit in ['♠', '♥', '♦', '♣']:
+                if hand.suit_lengths.get(suit, 0) >= 5 and self._has_good_suit(hand, suit):
+                    if suit in ['♠', '♥']:
+                        return (f"2{suit}", f"Positive response showing good {suit} suit (two of top three honors).")
+                    else:
+                        return (f"3{suit}", f"Positive response showing good {suit} suit (two of top three honors).")
+
+            # Check for 8+ HCP positive responses
+            if hand.hcp >= 8:
+                for suit in ['♠', '♥']:
+                    if hand.suit_lengths.get(suit, 0) >= 5:
+                        return (f"2{suit}", f"Positive response to 2♣ showing {hand.hcp} HCP and 5+ {suit}.")
+                return ("2NT", f"Positive response to 2♣ ({hand.hcp} HCP, no 5-card major).")
+
+            # Default: waiting response
+            return ("2♦", "Artificial waiting response to 2♣ (no good suit, less than 8 HCP).")
 
         if hand.total_points < 6: return ("Pass", "Less than 6 total points.")
 
@@ -91,7 +127,9 @@ class ResponseModule(ConventionModule):
         interference = features['auction_features'].get('interference', {'present': False})
 
         # Route to appropriate handler based on opening bid type
-        if 'NT' in opening_bid:
+        if opening_bid == "2NT":
+            return self._respond_to_2nt(hand, interference)
+        elif 'NT' in opening_bid:
             return self._respond_to_1nt(hand, opening_bid, interference)
         else:
             return self._respond_to_suit_opening(hand, opening_bid, interference)
@@ -179,6 +217,41 @@ class ResponseModule(ConventionModule):
 
         # Otherwise, pass
         return ("Pass", "No suitable competitive action after interference.")
+
+    def _respond_to_2nt(self, hand: Hand, interference: Dict):
+        """
+        Respond to 2NT opening (20-21 HCP).
+
+        After 2NT, conventions are at the 3-level:
+        - 3♣ = Stayman (asks for 4-card major)
+        - 3♦ = Transfer to hearts (5+ hearts)
+        - 3♥ = Transfer to spades (5+ spades)
+
+        With game values (4+ HCP), bid 3NT unless looking for major fit.
+        With a 5+ card major, transfer regardless of strength.
+        """
+        spades = hand.suit_lengths.get('♠', 0)
+        hearts = hand.suit_lengths.get('♥', 0)
+
+        # Check for 5+ card major -> Transfer (any point count!)
+        # With a long major, playing in the major suit is usually better than NT
+        if hearts >= 5:
+            return ("3♦", f"Transfer to hearts (3♦→3♥). With {hearts} hearts, a suit contract plays better than NT.")
+        if spades >= 5:
+            return ("3♥", f"Transfer to spades (3♥→3♠). With {spades} spades, a suit contract plays better than NT.")
+
+        # Check for 4-card major with game values -> Stayman
+        if (spades == 4 or hearts == 4) and hand.hcp >= 4:
+            major = 'spades' if spades == 4 else 'hearts'
+            return ("3♣", f"Stayman (3♣) with 4 {major}. Looking for a 4-4 major fit.")
+
+        # No major suit interest - decide based on points
+        # Partner has 20-21, game (25) needs 4-5 pts
+        if hand.hcp >= 4:
+            return ("3NT", f"Game in NT with {hand.hcp} HCP + partner's 20-21 = {hand.hcp + 20}-{hand.hcp + 21} combined.")
+
+        # Too weak for game
+        return ("Pass", f"Pass with {hand.hcp} HCP - game unlikely (need ~4+ to reach 25 combined).")
 
     def _respond_to_suit_opening(self, hand: Hand, opening_bid: str, interference: Dict):
         """

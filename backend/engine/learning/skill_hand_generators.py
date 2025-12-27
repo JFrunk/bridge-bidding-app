@@ -227,22 +227,108 @@ class SuitQualityGenerator(SkillHandGenerator):
 
 
 class BiddingLanguageGenerator(SkillHandGenerator):
-    """Generate hands for understanding forcing vs non-forcing bids."""
+    """Generate conceptual questions about bidding language - no hand needed."""
 
     skill_id = 'bidding_language'
     skill_level = 0
     description = 'Practice understanding bidding concepts'
 
-    def get_constraints(self) -> Dict:
-        # Various hands for discussing forcing vs non-forcing
-        return {'hcp_range': (10, 17)}
+    # Questions about game/slam points by contract type
+    QUESTIONS = [
+        {
+            'question_type': 'game_points_contract',
+            'contract': '3NT',
+            'display_contract': '3NT (9 tricks)',
+            'correct_answer': 25,
+            'explanation': '3NT requires about 25 combined points (9 tricks in notrump).'
+        },
+        {
+            'question_type': 'game_points_contract',
+            'contract': '4♥',
+            'display_contract': '4♥ (10 tricks)',
+            'correct_answer': 25,
+            'explanation': '4♥ requires about 25 combined points (10 tricks in a major).'
+        },
+        {
+            'question_type': 'game_points_contract',
+            'contract': '4♠',
+            'display_contract': '4♠ (10 tricks)',
+            'correct_answer': 25,
+            'explanation': '4♠ requires about 25 combined points (10 tricks in a major).'
+        },
+        {
+            'question_type': 'game_points_contract',
+            'contract': '5♣',
+            'display_contract': '5♣ (11 tricks)',
+            'correct_answer': 29,
+            'explanation': '5♣ requires about 29 combined points (11 tricks in a minor).'
+        },
+        {
+            'question_type': 'game_points_contract',
+            'contract': '5♦',
+            'display_contract': '5♦ (11 tricks)',
+            'correct_answer': 29,
+            'explanation': '5♦ requires about 29 combined points (11 tricks in a minor).'
+        },
+        {
+            'question_type': 'slam_points',
+            'contract': 'small slam',
+            'display_contract': 'Small Slam (12 tricks)',
+            'correct_answer': 33,
+            'explanation': 'Small slam requires about 33 combined points (12 tricks).'
+        },
+        {
+            'question_type': 'slam_points',
+            'contract': 'grand slam',
+            'display_contract': 'Grand Slam (13 tricks)',
+            'correct_answer': 37,
+            'explanation': 'Grand slam requires about 37 combined points (all 13 tricks).'
+        },
+    ]
 
-    def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+    # Class-level tracking of asked questions (reset when all asked)
+    _asked_indices = []
+
+    def __init__(self, variant: str = None):
+        self.variant = variant
+        self._current_question = None
+
+    def get_constraints(self) -> Dict:
+        # No hand constraints needed - this is a conceptual skill
+        return {'no_hand': True}
+
+    def generate(self, deck: List[Card] = None) -> Tuple[Optional[Hand], List[Card]]:
+        """Override generate - we don't need a hand for this skill."""
+        # Return None for hand - frontend will detect this
+        return None, deck if deck else []
+
+    def get_expected_response(self, hand: Hand = None, auction: List[str] = None) -> Dict:
+        """Return a question about game/slam points, avoiding repeats until all shown."""
+        import random
+
+        # Get available question indices (not yet asked)
+        all_indices = list(range(len(self.QUESTIONS)))
+        available = [i for i in all_indices if i not in BiddingLanguageGenerator._asked_indices]
+
+        # If all questions have been asked, reset and start over
+        if not available:
+            BiddingLanguageGenerator._asked_indices = []
+            available = all_indices
+
+        # Pick a random available question
+        chosen_idx = random.choice(available)
+        BiddingLanguageGenerator._asked_indices.append(chosen_idx)
+
+        question = self.QUESTIONS[chosen_idx]
+        self._current_question = question
+
         return {
-            'game_points_needed': 25,
-            'small_slam_points': 33,
-            'grand_slam_points': 37,
-            'explanation': 'Game requires ~25 points combined, slam ~33+'
+            'question_type': question['question_type'],
+            'contract': question['contract'],
+            'display_contract': question['display_contract'],
+            'correct_answer': question['correct_answer'],
+            'explanation': question['explanation'],
+            'no_hand_required': True
         }
 
 
@@ -251,27 +337,58 @@ class BiddingLanguageGenerator(SkillHandGenerator):
 # ============================================================================
 
 class WhenToOpenGenerator(SkillHandGenerator):
-    """Generate hands for deciding whether to open."""
+    """Generate hands for deciding whether to open.
+
+    ~75% positive cases (should open), ~25% negative cases (should pass).
+    Prerequisite knowledge: Level 0 (hand evaluation, suit quality, bidding language)
+    """
 
     skill_id = 'when_to_open'
     skill_level = 1
     description = 'Practice deciding when to open the bidding'
 
-    def __init__(self, variant: str = 'borderline'):
+    # Variant weights: 75% open, 25% pass
+    VARIANT_WEIGHTS = {
+        'clear_open': 0.50,      # 13-19 HCP, clear open
+        'borderline_open': 0.25, # 11-12 HCP, meets Rule of 20
+        'pass_weak': 0.15,       # 6-10 HCP, should pass
+        'pass_borderline': 0.10, # 11-12 HCP, fails Rule of 20
+    }
+
+    def __init__(self, variant: str = None):
         """
         Variants:
             - 'clear_open': 13+ HCP, clear opener
-            - 'borderline': 11-12 HCP, Rule of 20 decision
-            - 'pass': 0-10 HCP, should pass
+            - 'borderline_open': 11-12 HCP, meets Rule of 20
+            - 'pass_weak': 6-10 HCP, should pass
+            - 'pass_borderline': 11-12 HCP, fails Rule of 20
         """
-        self.variant = variant
+        if variant is None:
+            # Random selection based on weights
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+
+    def _select_variant(self) -> str:
+        """Select variant based on weights."""
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'clear_open'
 
     def get_constraints(self) -> Dict:
         if self.variant == 'clear_open':
             return {'hcp_range': (13, 19)}
-        elif self.variant == 'borderline':
+        elif self.variant == 'borderline_open':
+            # 11-12 HCP with long suits (5-5 or better to meet Rule of 20)
             return {'hcp_range': (11, 12), 'min_longest_suit': 5}
-        else:  # pass
+        elif self.variant == 'pass_borderline':
+            # 11-12 HCP with short suits (fails Rule of 20)
+            return {'hcp_range': (11, 12), 'max_suit_length': 4}
+        else:  # pass_weak
             return {'hcp_range': (6, 10)}
 
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
@@ -280,29 +397,73 @@ class WhenToOpenGenerator(SkillHandGenerator):
         rule_of_20 = hand.hcp + suit_lengths[0] + suit_lengths[1]
         should_open = hand.hcp >= 13 or (hand.hcp >= 11 and rule_of_20 >= 20)
 
+        if should_open:
+            explanation = f'{hand.hcp} HCP'
+            if hand.hcp >= 13:
+                explanation += ' - clear opening strength (13+).'
+            else:
+                explanation += f', Rule of 20 = {rule_of_20} (meets 20). Open!'
+        else:
+            explanation = f'{hand.hcp} HCP'
+            if hand.hcp < 11:
+                explanation += ' - too weak to open (need 12+ or Rule of 20).'
+            else:
+                explanation += f', Rule of 20 = {rule_of_20} (needs 20). Pass.'
+
         return {
             'should_open': should_open,
             'hcp': hand.hcp,
             'rule_of_20_total': rule_of_20,
-            'explanation': f'HCP={hand.hcp}, Rule of 20={rule_of_20}. {"Open" if should_open else "Pass"}'
+            'explanation': explanation
         }
 
 
 class OpeningOneSuitGenerator(SkillHandGenerator):
-    """Generate hands for 1-of-a-suit openings."""
+    """Generate hands for 1-of-a-suit openings.
+
+    ~75% positive cases (open a suit), ~25% boundary cases.
+    Prerequisite knowledge: when_to_open (can reference Pass)
+
+    Boundary cases:
+    - Too weak (should Pass) - references when_to_open
+    - 1NT range balanced (should open 1NT, but learned AFTER this skill)
+      -> For now, we only include Pass as boundary since 1NT comes later
+    """
 
     skill_id = 'opening_one_suit'
     skill_level = 1
     description = 'Practice choosing the right suit opening'
 
-    def __init__(self, variant: str = 'major'):
+    # Variant weights: 75% open suit, 25% boundary
+    VARIANT_WEIGHTS = {
+        'major': 0.30,        # 5+ card major
+        'minor': 0.25,        # No 5-card major, minor opening
+        'two_suits': 0.20,    # Two 5+ card suits (bid higher)
+        'pass_weak': 0.25,    # Too weak to open (boundary case)
+    }
+
+    def __init__(self, variant: str = None):
         """
         Variants:
             - 'major': 5+ card major
             - 'minor': No 5-card major, minor opening
             - 'two_suits': Two 5+ card suits
+            - 'pass_weak': Too weak to open (boundary case)
         """
-        self.variant = variant
+        if variant is None:
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+
+    def _select_variant(self) -> str:
+        """Select variant based on weights."""
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'major'
 
     def get_constraints(self) -> Dict:
         if self.variant == 'major':
@@ -316,14 +477,30 @@ class OpeningOneSuitGenerator(SkillHandGenerator):
                 'hcp_range': (12, 21),
                 'max_suit_length': 4,  # No 5-card major
             }
-        else:  # two_suits
+        elif self.variant == 'two_suits':
             return {
                 'hcp_range': (12, 21),
                 'min_longest_suit': 5,
                 'is_balanced': False
             }
+        else:  # pass_weak - boundary case
+            return {
+                'hcp_range': (7, 11),  # Not enough to open
+            }
 
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        # First check if hand is too weak to open
+        suit_lengths = sorted(hand.suit_lengths.values(), reverse=True)
+        rule_of_20 = hand.hcp + suit_lengths[0] + suit_lengths[1]
+        should_open = hand.hcp >= 12 or (hand.hcp >= 11 and rule_of_20 >= 20)
+
+        if not should_open:
+            return {
+                'bid': 'Pass',
+                'explanation': f'{hand.hcp} HCP is too weak to open. Need 12+ HCP or meet Rule of 20.',
+                'alternatives': []
+            }
+
         # Determine correct opening bid
         spades = hand.suit_lengths['♠']
         hearts = hand.suit_lengths['♥']
@@ -332,16 +509,16 @@ class OpeningOneSuitGenerator(SkillHandGenerator):
 
         if spades >= 5 and spades >= hearts:
             bid = '1♠'
-            explanation = f'Open 1♠ with {spades}-card spade suit'
+            explanation = f'Open 1♠ with {spades}-card spade suit.'
         elif hearts >= 5:
             bid = '1♥'
-            explanation = f'Open 1♥ with {hearts}-card heart suit'
+            explanation = f'Open 1♥ with {hearts}-card heart suit.'
         elif diamonds >= 4:
             bid = '1♦'
-            explanation = f'Open 1♦ with {diamonds} diamonds (no 5-card major)'
+            explanation = f'Open 1♦ with {diamonds} diamonds (no 5-card major).'
         else:
             bid = '1♣'
-            explanation = f'Open 1♣ with {clubs} clubs (no 5-card major or 4+ diamonds)'
+            explanation = f'Open 1♣ with {clubs} clubs (no 5-card major or 4+ diamonds).'
 
         return {
             'bid': bid,
@@ -351,47 +528,97 @@ class OpeningOneSuitGenerator(SkillHandGenerator):
 
 
 class Opening1NTGenerator(SkillHandGenerator):
-    """Generate hands for 1NT opening decisions."""
+    """Generate hands for 1NT opening decisions.
+
+    ~75% positive cases (open 1NT), ~25% boundary cases (open suit instead).
+    Prerequisite knowledge: when_to_open, opening_one_suit
+
+    Boundary cases - all expect a SUIT opening (not 1NT):
+    - Too weak (12-14 balanced): open longest suit
+    - Too strong (18-19 balanced): open longest suit (plan to rebid 2NT)
+    - Right points but unbalanced: open longest suit
+    - 5-card major with 15-17: open the major (debatable, but common)
+    """
 
     skill_id = 'opening_1nt'
     skill_level = 1
     description = 'Practice 1NT opening requirements'
 
-    def __init__(self, variant: str = 'correct'):
+    # Variant weights: 75% open 1NT, 25% boundary (open suit)
+    VARIANT_WEIGHTS = {
+        'correct': 0.75,           # 15-17 HCP, balanced, no 5-card major
+        'too_weak': 0.08,          # 12-14 balanced -> open suit
+        'too_strong': 0.07,        # 18-19 balanced -> open suit (plan 2NT rebid)
+        'unbalanced': 0.10,        # 15-17 unbalanced -> open suit
+    }
+
+    def __init__(self, variant: str = None):
         """
         Variants:
-            - 'correct': 15-17 HCP, balanced
-            - 'too_weak': 12-14 balanced
-            - 'too_strong': 18-19 balanced
-            - 'unbalanced': 15-17 but not balanced
+            - 'correct': 15-17 HCP, balanced, no 5-card major
+            - 'too_weak': 12-14 balanced -> open suit
+            - 'too_strong': 18-19 balanced -> open suit
+            - 'unbalanced': 15-17 but not balanced -> open suit
         """
-        self.variant = variant
+        if variant is None:
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+
+    def _select_variant(self) -> str:
+        """Select variant based on weights."""
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'correct'
 
     def get_constraints(self) -> Dict:
         if self.variant == 'correct':
-            return {'hcp_range': (15, 17), 'is_balanced': True}
+            return {'hcp_range': (15, 17), 'is_balanced': True, 'max_suit_length': 4}
         elif self.variant == 'too_weak':
             return {'hcp_range': (12, 14), 'is_balanced': True}
         elif self.variant == 'too_strong':
             return {'hcp_range': (18, 19), 'is_balanced': True}
         else:  # unbalanced
-            return {'hcp_range': (15, 17), 'is_balanced': False}
+            return {'hcp_range': (15, 17), 'is_balanced': False, 'min_longest_suit': 5}
+
+    def _get_longest_suit_bid(self, hand: Hand) -> str:
+        """Determine the correct suit opening based on hand shape."""
+        spades = hand.suit_lengths['♠']
+        hearts = hand.suit_lengths['♥']
+        diamonds = hand.suit_lengths['♦']
+        clubs = hand.suit_lengths['♣']
+
+        if spades >= 5 and spades >= hearts:
+            return '1♠'
+        elif hearts >= 5:
+            return '1♥'
+        elif diamonds >= 4:
+            return '1♦'
+        else:
+            return '1♣'
 
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
         should_open_1nt = 15 <= hand.hcp <= 17 and hand.is_balanced
 
         if should_open_1nt:
             bid = '1NT'
-            explanation = f'{hand.hcp} HCP, balanced - open 1NT'
-        elif hand.hcp >= 15 and not hand.is_balanced:
-            bid = '1♠' if hand.suit_lengths['♠'] >= 5 else '1♥' if hand.suit_lengths['♥'] >= 5 else '1♦' if hand.suit_lengths['♦'] >= 4 else '1♣'
-            explanation = f'{hand.hcp} HCP but unbalanced - open a suit'
-        elif hand.hcp < 15:
-            bid = 'Pass' if hand.hcp < 12 else '1♦'
-            explanation = f'{hand.hcp} HCP - too weak for 1NT'
+            explanation = f'{hand.hcp} HCP, balanced shape - perfect for 1NT (15-17).'
+        elif hand.hcp < 15 and hand.is_balanced:
+            # Too weak for 1NT
+            bid = self._get_longest_suit_bid(hand)
+            explanation = f'{hand.hcp} HCP is below 1NT range (15-17). Open {bid} instead.'
+        elif hand.hcp > 17 and hand.is_balanced:
+            # Too strong for 1NT (18-19)
+            bid = self._get_longest_suit_bid(hand)
+            explanation = f'{hand.hcp} HCP is above 1NT range (15-17). Open {bid}, plan to rebid 2NT.'
         else:
-            bid = '1♠'
-            explanation = f'{hand.hcp} HCP - too strong for 1NT'
+            # Unbalanced
+            bid = self._get_longest_suit_bid(hand)
+            explanation = f'{hand.hcp} HCP but unbalanced - 1NT requires balanced shape. Open {bid}.'
 
         return {
             'bid': bid,
@@ -401,50 +628,178 @@ class Opening1NTGenerator(SkillHandGenerator):
 
 
 class Opening2CStrongGenerator(SkillHandGenerator):
-    """Generate hands for strong 2C opening."""
+    """Generate hands for strong 2♣ opening.
+
+    ~75% positive cases (open 2♣), ~25% boundary cases (open 1-level).
+    Prerequisite knowledge: when_to_open, opening_one_suit, opening_1nt
+
+    Boundary cases:
+    - 19-21 HCP balanced: too strong for 1NT but not 2♣ -> open suit
+    - 19-21 HCP unbalanced: strong but not game-forcing -> open 1-level
+    """
 
     skill_id = 'opening_2c_strong'
     skill_level = 1
-    description = 'Practice recognizing 2C opening hands'
+    description = 'Practice recognizing 2♣ opening hands'
 
-    def __init__(self, variant: str = 'correct'):
-        self.variant = variant
+    # Variant weights: 75% open 2♣, 25% boundary
+    VARIANT_WEIGHTS = {
+        'correct_balanced': 0.35,    # 22+ balanced
+        'correct_unbalanced': 0.40,  # 22+ with long suit
+        'too_weak_balanced': 0.12,   # 19-21 balanced -> open suit
+        'too_weak_unbalanced': 0.13, # 19-21 unbalanced -> open suit
+    }
+
+    def __init__(self, variant: str = None):
+        if variant is None:
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+
+    def _select_variant(self) -> str:
+        """Select variant based on weights."""
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'correct_balanced'
 
     def get_constraints(self) -> Dict:
-        if self.variant == 'correct':
-            return {'hcp_range': (22, 25)}
-        else:  # almost
-            return {'hcp_range': (19, 21)}
+        if self.variant == 'correct_balanced':
+            return {'hcp_range': (22, 25), 'is_balanced': True}
+        elif self.variant == 'correct_unbalanced':
+            return {'hcp_range': (22, 25), 'is_balanced': False, 'min_longest_suit': 6}
+        elif self.variant == 'too_weak_balanced':
+            return {'hcp_range': (19, 21), 'is_balanced': True}
+        else:  # too_weak_unbalanced
+            return {'hcp_range': (19, 21), 'is_balanced': False, 'min_longest_suit': 5}
+
+    def _get_longest_suit_bid(self, hand: Hand) -> str:
+        """Determine the correct suit opening based on hand shape."""
+        spades = hand.suit_lengths['♠']
+        hearts = hand.suit_lengths['♥']
+        diamonds = hand.suit_lengths['♦']
+        clubs = hand.suit_lengths['♣']
+
+        if spades >= 5 and spades >= hearts:
+            return '1♠'
+        elif hearts >= 5:
+            return '1♥'
+        elif diamonds >= 4:
+            return '1♦'
+        else:
+            return '1♣'
 
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
         should_open_2c = hand.hcp >= 22
+
+        if should_open_2c:
+            bid = '2♣'
+            explanation = f'{hand.hcp} HCP - strong enough for 2♣ (22+). Game-forcing opening!'
+        else:
+            # 19-21 HCP - not strong enough for 2♣
+            bid = self._get_longest_suit_bid(hand)
+            if hand.is_balanced:
+                explanation = f'{hand.hcp} HCP balanced - not quite 2♣ strength (need 22+). Open {bid}, plan to jump rebid.'
+            else:
+                explanation = f'{hand.hcp} HCP - strong but not game-forcing (need 22+). Open {bid}.'
+
         return {
-            'bid': '2♣' if should_open_2c else '1♠',
-            'explanation': f'{hand.hcp} HCP - {"2♣ strong opening" if should_open_2c else "not strong enough for 2♣"}'
+            'bid': bid,
+            'explanation': explanation
         }
 
 
 class Opening2NTGenerator(SkillHandGenerator):
-    """Generate hands for 2NT opening."""
+    """Generate hands for 2NT opening.
+
+    ~75% positive cases (open 2NT), ~25% boundary cases.
+    Prerequisite knowledge: when_to_open, opening_one_suit, opening_1nt, opening_2c_strong
+
+    Boundary cases:
+    - 18-19 HCP balanced: too weak for 2NT -> open 1 of suit (rebid 2NT)
+    - 22+ HCP balanced: too strong for 2NT -> open 2♣
+    - 20-21 HCP unbalanced: right points but wrong shape -> open suit
+    """
 
     skill_id = 'opening_2nt'
     skill_level = 1
     description = 'Practice 2NT opening requirements'
 
-    def __init__(self, variant: str = 'correct'):
-        self.variant = variant
+    # Variant weights: 75% open 2NT, 25% boundary
+    VARIANT_WEIGHTS = {
+        'correct': 0.75,           # 20-21 HCP, balanced
+        'too_weak': 0.08,          # 18-19 balanced -> open suit
+        'too_strong': 0.07,        # 22+ balanced -> open 2♣
+        'unbalanced': 0.10,        # 20-21 unbalanced -> open suit
+    }
+
+    def __init__(self, variant: str = None):
+        if variant is None:
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+
+    def _select_variant(self) -> str:
+        """Select variant based on weights."""
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'correct'
 
     def get_constraints(self) -> Dict:
         if self.variant == 'correct':
             return {'hcp_range': (20, 21), 'is_balanced': True}
-        else:  # borderline
-            return {'hcp_range': (19, 22), 'is_balanced': True}
+        elif self.variant == 'too_weak':
+            return {'hcp_range': (18, 19), 'is_balanced': True}
+        elif self.variant == 'too_strong':
+            return {'hcp_range': (22, 24), 'is_balanced': True}
+        else:  # unbalanced
+            return {'hcp_range': (20, 21), 'is_balanced': False, 'min_longest_suit': 5}
+
+    def _get_longest_suit_bid(self, hand: Hand) -> str:
+        """Determine the correct suit opening based on hand shape."""
+        spades = hand.suit_lengths['♠']
+        hearts = hand.suit_lengths['♥']
+        diamonds = hand.suit_lengths['♦']
+        clubs = hand.suit_lengths['♣']
+
+        if spades >= 5 and spades >= hearts:
+            return '1♠'
+        elif hearts >= 5:
+            return '1♥'
+        elif diamonds >= 4:
+            return '1♦'
+        else:
+            return '1♣'
 
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
         should_open_2nt = 20 <= hand.hcp <= 21 and hand.is_balanced
+
+        if should_open_2nt:
+            bid = '2NT'
+            explanation = f'{hand.hcp} HCP, balanced - perfect for 2NT (20-21).'
+        elif hand.hcp >= 22 and hand.is_balanced:
+            # Too strong for 2NT
+            bid = '2♣'
+            explanation = f'{hand.hcp} HCP is too strong for 2NT (max 21). Open 2♣.'
+        elif hand.hcp < 20 and hand.is_balanced:
+            # Too weak for 2NT (18-19)
+            bid = self._get_longest_suit_bid(hand)
+            explanation = f'{hand.hcp} HCP is below 2NT range (20-21). Open {bid}, plan to jump rebid 2NT.'
+        else:
+            # Unbalanced
+            bid = self._get_longest_suit_bid(hand)
+            explanation = f'{hand.hcp} HCP but unbalanced - 2NT requires balanced shape. Open {bid}.'
+
         return {
-            'bid': '2NT' if should_open_2nt else '1NT' if hand.hcp <= 17 else '2♣',
-            'explanation': f'{hand.hcp} HCP, balanced - {"2NT" if should_open_2nt else "not 2NT range"}'
+            'bid': bid,
+            'explanation': explanation
         }
 
 
@@ -459,52 +814,100 @@ class RespondingToMajorGenerator(SkillHandGenerator):
     skill_level = 2
     description = 'Practice responding to partner\'s 1H/1S opening'
 
-    def __init__(self, variant: str = 'support'):
+    def __init__(self, variant: str = None):
         """
         Variants:
-            - 'support': Has 3+ card support
+            - 'support_hearts': Has 3+ card heart support (partner opened 1♥)
+            - 'support_spades': Has 3+ card spade support (partner opened 1♠)
             - 'no_support': No fit, new suit
-            - 'strong': Game-forcing hand
+            - 'weak': Too weak to respond
         """
-        self.variant = variant
+        if variant is None:
+            # Randomly select variant
+            variants = ['support_hearts', 'support_spades', 'no_support', 'weak']
+            weights = [0.35, 0.35, 0.20, 0.10]
+            r = random.random()
+            cumulative = 0
+            for v, w in zip(variants, weights):
+                cumulative += w
+                if r < cumulative:
+                    self.variant = v
+                    break
+            else:
+                self.variant = 'support_hearts'
+        else:
+            self.variant = variant
+
+        # Determine opening bid based on variant
+        if self.variant == 'support_spades':
+            self.opening_bid = '1♠'
+        else:
+            self.opening_bid = '1♥'
 
     def get_constraints(self) -> Dict:
-        if self.variant == 'support':
+        if self.variant == 'support_hearts':
             return {
-                'hcp_range': (6, 12),
+                'hcp_range': (6, 15),
                 'suit_length_req': (['♥'], 3, 'any_of')  # Support for hearts
             }
+        elif self.variant == 'support_spades':
+            return {
+                'hcp_range': (6, 15),
+                'suit_length_req': (['♠'], 3, 'any_of')  # Support for spades
+            }
         elif self.variant == 'no_support':
-            return {'hcp_range': (6, 12), 'max_suit_length': 4}
-        else:  # strong
-            return {'hcp_range': (13, 17)}
+            return {'hcp_range': (6, 12), 'max_suit_length': 2}  # Max 2 in partner's major
+        else:  # weak
+            return {'hcp_range': (0, 5)}
 
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
-        # Assume partner opened 1H for simplicity
-        hearts = hand.suit_lengths['♥']
-        spades = hand.suit_lengths['♠']
-
-        if hearts >= 3:
-            if hand.hcp >= 6 and hand.hcp <= 9:
-                bid = '2♥'
-                explanation = f'Simple raise with {hearts} hearts and {hand.hcp} HCP'
-            elif hand.hcp >= 10 and hand.hcp <= 12:
-                bid = '3♥'
-                explanation = f'Limit raise with {hearts} hearts and {hand.hcp} HCP'
-            else:
-                bid = '4♥'
-                explanation = f'Game raise with {hearts} hearts and {hand.hcp} HCP'
-        elif spades >= 4 and hand.hcp >= 6:
-            bid = '1♠'
-            explanation = f'Bid 1♠ with {spades} spades (new suit)'
-        elif hand.hcp >= 6 and hand.hcp <= 9:
-            bid = '1NT'
-            explanation = f'{hand.hcp} HCP, no fit - respond 1NT'
+        # Determine which major partner opened
+        if self.opening_bid == '1♠':
+            support_suit = '♠'
+            support_length = hand.suit_lengths['♠']
         else:
-            bid = 'Pass'
-            explanation = 'Too weak to respond'
+            support_suit = '♥'
+            support_length = hand.suit_lengths['♥']
 
-        return {'bid': bid, 'explanation': explanation}
+        spades = hand.suit_lengths['♠']
+        hearts = hand.suit_lengths['♥']
+
+        # Too weak to respond?
+        if hand.hcp < 6:
+            bid = 'Pass'
+            explanation = f'{hand.hcp} HCP is too weak to respond (need 6+).'
+        # Has support for partner's major?
+        elif support_length >= 3:
+            if hand.hcp >= 6 and hand.hcp <= 9:
+                bid = f'2{support_suit}'
+                explanation = f'Simple raise with {support_length} {support_suit} and {hand.hcp} HCP.'
+            elif hand.hcp >= 10 and hand.hcp <= 12:
+                bid = f'3{support_suit}'
+                explanation = f'Limit raise with {support_length} {support_suit} and {hand.hcp} HCP (invitational).'
+            else:
+                bid = f'4{support_suit}'
+                explanation = f'Game raise with {support_length} {support_suit} and {hand.hcp} HCP.'
+        # Can bid spades over 1♥?
+        elif self.opening_bid == '1♥' and spades >= 4 and hand.hcp >= 6:
+            bid = '1♠'
+            explanation = f'Bid 1♠ with {spades} spades (new suit at 1-level).'
+        # NT response
+        elif hand.hcp >= 6 and hand.hcp <= 10:
+            bid = '1NT'
+            explanation = f'{hand.hcp} HCP, no major fit - respond 1NT.'
+        elif hand.hcp >= 11 and hand.hcp <= 12:
+            bid = '2NT'
+            explanation = f'{hand.hcp} HCP, no major fit - 2NT is invitational.'
+        else:
+            bid = '3NT'
+            explanation = f'{hand.hcp} HCP, no major fit - 3NT to play.'
+
+        return {
+            'bid': bid,
+            'explanation': explanation,
+            'opening_bid': self.opening_bid,
+            'partner_opened': self.opening_bid
+        }
 
 
 class RespondingToMinorGenerator(SkillHandGenerator):
@@ -514,33 +917,79 @@ class RespondingToMinorGenerator(SkillHandGenerator):
     skill_level = 2
     description = 'Practice responding to partner\'s 1C/1D opening'
 
-    def __init__(self, variant: str = 'major'):
-        self.variant = variant
+    def __init__(self, variant: str = None):
+        """
+        Variants:
+            - 'clubs_major': Partner opened 1♣, responder has 4+ card major
+            - 'diamonds_major': Partner opened 1♦, responder has 4+ card major
+            - 'no_major': No 4-card major, respond NT or raise minor
+            - 'weak': Too weak to respond
+        """
+        if variant is None:
+            # Randomly select variant
+            variants = ['clubs_major', 'diamonds_major', 'no_major', 'weak']
+            weights = [0.30, 0.30, 0.25, 0.15]
+            r = random.random()
+            cumulative = 0
+            for v, w in zip(variants, weights):
+                cumulative += w
+                if r < cumulative:
+                    self.variant = v
+                    break
+            else:
+                self.variant = 'clubs_major'
+        else:
+            self.variant = variant
+
+        # Determine opening bid based on variant
+        if self.variant == 'diamonds_major' or self.variant == 'diamonds_nt':
+            self.opening_bid = '1♦'
+        else:
+            self.opening_bid = '1♣'
 
     def get_constraints(self) -> Dict:
-        if self.variant == 'major':
+        if self.variant in ['clubs_major', 'diamonds_major']:
             return {
                 'hcp_range': (6, 15),
                 'suit_length_req': (['♠', '♥'], 4, 'any_of')
             }
-        else:  # nt
-            return {'hcp_range': (6, 10), 'is_balanced': True}
+        elif self.variant == 'no_major':
+            return {'hcp_range': (6, 10), 'is_balanced': True, 'max_suit_length': 3}  # No 4-card major
+        else:  # weak
+            return {'hcp_range': (0, 5)}
 
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
         spades = hand.suit_lengths['♠']
         hearts = hand.suit_lengths['♥']
 
-        if hearts >= 4:
+        # Too weak to respond?
+        if hand.hcp < 6:
+            bid = 'Pass'
+            explanation = f'{hand.hcp} HCP is too weak to respond (need 6+).'
+        # Has 4-card major? Bid up-the-line (hearts before spades)
+        elif hearts >= 4:
             bid = '1♥'
-            explanation = f'Bid 1♥ with {hearts} hearts (4-card major over minor)'
+            explanation = f'Bid 1♥ with {hearts} hearts. Always show a 4-card major over a minor.'
         elif spades >= 4:
             bid = '1♠'
-            explanation = f'Bid 1♠ with {spades} spades'
-        else:
+            explanation = f'Bid 1♠ with {spades} spades. Show your 4-card major.'
+        # NT response
+        elif hand.hcp >= 6 and hand.hcp <= 10:
             bid = '1NT'
-            explanation = f'{hand.hcp} HCP, no 4-card major - respond 1NT'
+            explanation = f'{hand.hcp} HCP, no 4-card major - respond 1NT.'
+        elif hand.hcp >= 11 and hand.hcp <= 12:
+            bid = '2NT'
+            explanation = f'{hand.hcp} HCP, no 4-card major - 2NT is invitational.'
+        else:
+            bid = '3NT'
+            explanation = f'{hand.hcp} HCP, no 4-card major - 3NT to play.'
 
-        return {'bid': bid, 'explanation': explanation}
+        return {
+            'bid': bid,
+            'explanation': explanation,
+            'opening_bid': self.opening_bid,
+            'partner_opened': self.opening_bid
+        }
 
 
 class RespondingTo1NTGenerator(SkillHandGenerator):
@@ -568,20 +1017,41 @@ class RespondingTo1NTGenerator(SkillHandGenerator):
             }
 
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
-        if hand.hcp <= 7 and hand.is_balanced:
+        spades = hand.suit_lengths.get('♠', 0)
+        hearts = hand.suit_lengths.get('♥', 0)
+
+        # Check for 5+ card major -> Jacoby Transfer (ANY point count!)
+        if hearts >= 5:
+            bid = '2♦'
+            explanation = f'Transfer to hearts (2♦→2♥). Shows 5+ hearts. No minimum points needed!'
+        elif spades >= 5:
+            bid = '2♥'
+            explanation = f'Transfer to spades (2♥→2♠). Shows 5+ spades. No minimum points needed!'
+        # Check for 4-card major with 8+ points -> Stayman
+        elif (spades == 4 or hearts == 4) and hand.hcp >= 8:
+            major = 'spades' if spades == 4 else 'hearts'
+            bid = '2♣'
+            explanation = f'Stayman (2♣) with 4 {major} and {hand.hcp} HCP. Asks partner for a 4-card major.'
+        # Has 4-card major but too weak for Stayman
+        elif (spades == 4 or hearts == 4) and hand.hcp <= 7:
             bid = 'Pass'
-            explanation = f'{hand.hcp} HCP balanced - pass (partner has 15-17)'
+            major = 'spades' if spades == 4 else 'hearts'
+            explanation = f'{hand.hcp} HCP with 4 {major} - pass. Too weak for Stayman (needs 8+ HCP to invite game).'
+        # Balanced responses without major suit interest
+        elif hand.hcp <= 7 and hand.is_balanced:
+            bid = 'Pass'
+            explanation = f'{hand.hcp} HCP balanced, no 4+ major - pass. Too weak for Stayman (needs 8+) and no 5-card major to transfer.'
         elif 8 <= hand.hcp <= 9:
             bid = '2NT'
-            explanation = f'{hand.hcp} HCP - invite to game with 2NT'
+            explanation = f'{hand.hcp} HCP - invite to game with 2NT (partner bids 3NT with max 17)'
         elif hand.hcp >= 10:
             bid = '3NT'
-            explanation = f'{hand.hcp} HCP - bid game'
+            explanation = f'{hand.hcp} HCP - bid 3NT (combined 25+, game values!)'
         else:
             bid = 'Pass'
             explanation = 'Weak hand - pass'
 
-        return {'bid': bid, 'explanation': explanation}
+        return {'bid': bid, 'explanation': explanation, 'partner_opened': '1NT'}
 
 
 class RespondingTo2CGenerator(SkillHandGenerator):
@@ -594,21 +1064,53 @@ class RespondingTo2CGenerator(SkillHandGenerator):
     def get_constraints(self) -> Dict:
         return {'hcp_range': (0, 12)}
 
+    def _has_good_suit(self, hand: Hand, suit: str) -> bool:
+        """
+        Check if suit has two of the top three honors (A, K, Q).
+        A 'good suit' qualifies for a positive response regardless of HCP.
+        """
+        if hand.suit_lengths.get(suit, 0) < 5:
+            return False
+
+        # Count top honors in this suit
+        top_honors = 0
+        for card in hand.cards:
+            if card.suit == suit and card.rank in ['A', 'K', 'Q']:
+                top_honors += 1
+
+        return top_honors >= 2
+
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        # Check for positive response conditions:
+        # 1. 8+ HCP with any 5+ card suit, OR
+        # 2. Good 5+ card suit (two of top three honors: AK, AQ, or KQ)
+
+        # First check for good suits (qualifies for positive regardless of HCP)
+        for suit in ['♠', '♥', '♦', '♣']:
+            if hand.suit_lengths.get(suit, 0) >= 5 and self._has_good_suit(hand, suit):
+                bid = f'2{suit}' if suit in ['♠', '♥'] else f'3{suit}'
+                explanation = f'Positive response showing good {suit} suit (two of top three honors).'
+                return {'bid': bid, 'explanation': explanation, 'partner_opened': '2♣'}
+
+        # Then check for 8+ HCP positive responses
         if hand.hcp >= 8:
-            # Positive response
+            # Positive response based on HCP
             if hand.suit_lengths['♠'] >= 5:
                 bid = '2♠'
+                explanation = f'{hand.hcp} HCP with 5+ spades - positive response.'
             elif hand.suit_lengths['♥'] >= 5:
                 bid = '2♥'
+                explanation = f'{hand.hcp} HCP with 5+ hearts - positive response.'
             else:
                 bid = '2NT'
-            explanation = f'{hand.hcp} HCP - positive response'
-        else:
-            bid = '2♦'
-            explanation = f'{hand.hcp} HCP - waiting bid (2♦)'
+                explanation = f'{hand.hcp} HCP balanced - positive response (2NT).'
+            return {'bid': bid, 'explanation': explanation, 'partner_opened': '2♣'}
 
-        return {'bid': bid, 'explanation': explanation}
+        # Default: waiting response
+        bid = '2♦'
+        explanation = f'{hand.hcp} HCP, no good suit - waiting bid (2♦).'
+
+        return {'bid': bid, 'explanation': explanation, 'partner_opened': '2♣'}
 
 
 class RespondingTo2NTGenerator(SkillHandGenerator):
@@ -622,18 +1124,39 @@ class RespondingTo2NTGenerator(SkillHandGenerator):
         return {'hcp_range': (0, 12)}
 
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
-        # Partner has 20-21, game is 25+
-        if hand.hcp <= 4:
+        # Partner has 20-21 HCP
+        # After 2NT, transfers are at the 3-level: 3♦ = hearts, 3♥ = spades
+        # Stayman is 3♣
+
+        spades = hand.suit_lengths.get('♠', 0)
+        hearts = hand.suit_lengths.get('♥', 0)
+
+        # Check for 5+ card major -> Transfer (any point count!)
+        # With a long major, playing in the major suit is usually better than 2NT
+        if hearts >= 5:
+            bid = '3♦'
+            explanation = f'Transfer to hearts (3♦→3♥). With {hearts} hearts, a suit contract plays better than NT.'
+        elif spades >= 5:
+            bid = '3♥'
+            explanation = f'Transfer to spades (3♥→3♠). With {spades} spades, a suit contract plays better than NT.'
+        # Check for 4-card major with game values -> Stayman
+        elif (spades == 4 or hearts == 4) and hand.hcp >= 4:
+            major = 'spades' if spades == 4 else 'hearts'
+            bid = '3♣'
+            explanation = f'Stayman (3♣) with 4 {major}. Looking for a 4-4 major fit.'
+        # No major suit interest - decide based on points
+        # Partner has 20-21, game (25) needs 4-5 pts
+        elif hand.hcp <= 3:
             bid = 'Pass'
-            explanation = f'{hand.hcp} HCP - game unlikely, pass'
-        elif hand.hcp >= 5:
+            explanation = f'{hand.hcp} HCP - game unlikely (need ~4+ to reach 25 combined), pass.'
+        elif hand.hcp >= 4:
             bid = '3NT'
-            explanation = f'{hand.hcp} HCP + partner\'s 20-21 = game'
+            explanation = f'{hand.hcp} HCP + partner\'s 20-21 = {hand.hcp + 20}-{hand.hcp + 21} combined. Bid game!'
         else:
             bid = 'Pass'
-            explanation = 'Borderline'
+            explanation = 'Weak hand - pass'
 
-        return {'bid': bid, 'explanation': explanation}
+        return {'bid': bid, 'explanation': explanation, 'partner_opened': '2NT'}
 
 
 # ============================================================================

@@ -1,8 +1,8 @@
 # Learning Mode Implementation Plan
 
 **Created:** 2025-12-25
-**Status:** Phase 3 Complete (API Ready)
-**Last Updated:** 2025-12-25
+**Status:** Phase 4 Complete (Frontend Ready)
+**Last Updated:** 2025-12-27
 **Companion Document:** [LEARNING_MODE_CURRICULUM.md](LEARNING_MODE_CURRICULUM.md)
 
 ## Progress Summary
@@ -13,8 +13,26 @@
 | Phase 1: Curriculum Structure | ✅ Complete | `feat(learning): Implement Phase 1` |
 | Phase 2: Hand Generation | ✅ Complete | `feat(learning): Implement Phase 2` |
 | Phase 3: Learning Mode API | ✅ Complete | `feat(learning): Implement Phase 3` |
-| Phase 4: Frontend Learning Mode | 🔜 Pending | - |
-| Phase 5: Testing & QA | 🔜 Pending | - |
+| Phase 4: Frontend Learning Mode | ✅ Complete | `feat(learning): Implement Phase 4` |
+| Phase 5: Testing & QA | 🔜 In Progress | - |
+
+### Phase 4 Enhancements (2025-12-27)
+
+**Session-Specific Accuracy:**
+- Fixed accuracy display to use session stats from `handHistory` instead of cumulative DB stats
+- Display shows "this session" accuracy after answering hands
+- No longer confusingly shows "0 of 2" on first hand
+
+**Bid Shortcuts with Pass Trap:**
+- All 8 bid shortcut scenarios now include Pass as a "trap" option
+- Essential for teaching force bids (e.g., 2♣ game-forcing cannot pass)
+- Helps users learn when Pass is legal vs illegal
+
+**Educational Feedback Improvements:**
+- Replaced generic "combined under 25 points" messages with specific requirements
+- Explains Stayman requires 8+ HCP (not just game points)
+- Explains transfer usage for weak hands with 5+ card majors
+- Added case for 4-card major with weak points (cannot use Stayman)
 
 ---
 

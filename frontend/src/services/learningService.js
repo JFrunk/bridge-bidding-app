@@ -160,3 +160,19 @@ export async function getCurriculumSummary() {
 
   return response.json();
 }
+
+/**
+ * Get user's progress on all skills
+ * @param {number} userId - User ID
+ * @returns {Promise<Object>} Skills with their status (not_started, in_progress, mastered)
+ */
+export async function getUserSkillProgress(userId) {
+  const response = await fetch(`${API_BASE_URL}/api/user/skill-progress?user_id=${userId}`);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch skill progress');
+  }
+
+  return response.json();
+}
