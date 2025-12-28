@@ -1084,6 +1084,7 @@ def get_next_bid():
         print(f"🔍 DEBUG: Keys in data: {list(data.keys()) if data else 'None'}")
         auction_history, current_player = data['auction_history'], data['current_player']
         explanation_level = data.get('explanation_level', 'detailed')  # simple, detailed, or expert
+        dealer = data.get('dealer')  # Get dealer from frontend
 
         # For non-South players (hidden hands), use convention_only to avoid revealing hand specifics
         if current_player != 'South':
@@ -1094,7 +1095,7 @@ def get_next_bid():
             return jsonify({'error': "Deal has not been made yet."}), 400
 
         bid, explanation = engine.get_next_bid(player_hand, auction_history, current_player,
-                                                state.vulnerability, explanation_level)
+                                                state.vulnerability, explanation_level, dealer=dealer)
         return jsonify({'bid': bid, 'explanation': explanation, 'player': current_player})
 
     except Exception as e:
@@ -1633,6 +1634,77 @@ def request_review():
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': f'Server error in request_review: {e}'}), 500
+
+
+@app.route('/api/submit-feedback', methods=['POST'])
+def submit_feedback():
+    """
+    Submit user feedback about the application.
+    Works for both Learning Mode and Freeplay Mode.
+    Saves feedback to backend/user_feedback/ directory for review.
+    """
+    try:
+        data = request.get_json()
+        feedback_type = data.get('type', 'issue')
+        description = data.get('description', '')
+        context = data.get('context', 'freeplay')  # 'learning' or 'freeplay'
+        context_data = data.get('contextData', {})
+
+        # Create feedback object
+        feedback = {
+            'timestamp': datetime.now().isoformat(),
+            'feedback_type': feedback_type,
+            'description': description,
+            'context': context,
+            'context_data': context_data,
+        }
+
+        # Add user info if available
+        user_id = request.headers.get('X-User-ID')
+        if user_id:
+            feedback['user_id'] = user_id
+
+        # Create filename with timestamp and context
+        timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        filename = f'feedback_{context}_{timestamp_str}.json'
+
+        # Check if we're on Render (production)
+        is_render = os.getenv('RENDER') or os.getenv('RENDER_SERVICE_NAME') or os.getenv('FLASK_ENV') == 'production'
+
+        if is_render:
+            # On Render: log to console (will appear in Render logs)
+            print(f"📝 User Feedback Received:")
+            print(f"   Type: {feedback_type}")
+            print(f"   Context: {context}")
+            print(f"   Description: {description[:200]}..." if len(description) > 200 else f"   Description: {description}")
+            print(f"   Full feedback: {json.dumps(feedback, indent=2)}")
+            saved_to_file = False
+        else:
+            # Local development: save to file
+            try:
+                feedback_dir = 'user_feedback'
+                os.makedirs(feedback_dir, exist_ok=True)
+                filepath = os.path.join(feedback_dir, filename)
+                with open(filepath, 'w') as f:
+                    json.dump(feedback, f, indent=2)
+                saved_to_file = True
+                print(f"📝 Saved user feedback to {filepath}")
+            except Exception as file_error:
+                print(f"⚠️  Could not save feedback to file: {file_error}")
+                saved_to_file = False
+
+        return jsonify({
+            'success': True,
+            'filename': filename if saved_to_file else None,
+            'saved_to_file': saved_to_file,
+            'message': 'Thank you for your feedback!'
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': f'Server error in submit_feedback: {e}'}), 500
+
+
 # ============================================================================
 # CARD PLAY ENDPOINTS
 # ============================================================================
