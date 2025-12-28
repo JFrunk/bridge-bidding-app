@@ -11,6 +11,8 @@
 import React, { useState, useEffect } from 'react';
 import './SkillPractice.css';
 import { LearningHand } from './LearningCard';
+import { FeedbackModal } from '../bridge/FeedbackModal';
+import { submitFeedback } from '../../services/learningService';
 
 const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigateHand }) => {
   const [answer, setAnswer] = useState('');
@@ -18,6 +20,7 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
   const [lastResult, setLastResult] = useState(session?.lastResult || null);
   const [showFeedback, setShowFeedback] = useState(!!session?.lastResult);
   const [showHandStats, setShowHandStats] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   // Sync local state when navigating between hands
   // This handles both new hands and reviewing previous hands
@@ -67,6 +70,24 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
     }
   };
 
+  const handleFeedbackSubmit = async (feedbackData) => {
+    // Build context data for learning mode
+    const contextData = {
+      skill_id: session?.topic_id,
+      hand: session?.hand,
+      expected_response: session?.expected_response,
+      user_answer: answer,
+      last_result: lastResult,
+      hand_index: session?.currentHandIndex,
+    };
+
+    await submitFeedback({
+      ...feedbackData,
+      context: 'learning',
+      contextData,
+    });
+  };
+
   if (!session) {
     return (
       <div className="skill-practice">
@@ -109,7 +130,14 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
       {/* Header */}
       <div className="practice-header">
         <button onClick={onClose} className="back-button">← Back</button>
-        <h2 className="skill-title">{formatSkillName(topic_id)}</h2>
+        <h2 className="skill-title">{formatSkillName(topic_id, expected_response)}</h2>
+        <button
+          onClick={() => setShowFeedbackModal(true)}
+          className="feedback-button"
+          title="Report an issue"
+        >
+          📝 Feedback
+        </button>
         <div className="progress-indicator">
           <div className="progress-stats">
             <span className="hand-counter">
@@ -234,6 +262,21 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
           />
         )}
       </div>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        onSubmit={handleFeedbackSubmit}
+        context="learning"
+        contextData={{
+          skill_id: topic_id,
+          hand: hand,
+          expected_response: expected_response,
+          user_answer: answer,
+          last_result: lastResult,
+        }}
+      />
     </div>
   );
 };
@@ -257,8 +300,20 @@ const getQuestionType = (expected) => {
  * Format skill ID to readable, descriptive name for learners
  * Uses explicit descriptions instead of just converting underscores
  */
-const formatSkillName = (skillId) => {
+const formatSkillName = (skillId, expectedResponse = null) => {
   if (!skillId) return 'Practice';
+
+  // Dynamic titles based on partner's opening (when available)
+  if (expectedResponse?.partner_opened) {
+    const partnerBid = expectedResponse.partner_opened;
+
+    if (skillId === 'responding_to_major') {
+      return `Responding to Partner's ${partnerBid} Opening`;
+    }
+    if (skillId === 'responding_to_minor') {
+      return `Responding to Partner's ${partnerBid} Opening`;
+    }
+  }
 
   // Explicit skill name mappings for clarity
   const skillNames = {
@@ -277,9 +332,9 @@ const formatSkillName = (skillId) => {
     // Level 2: Responding
     'responding_to_major': 'Responding to a Major Suit Opening (1♥/1♠)',
     'responding_to_minor': 'Responding to a Minor Suit Opening (1♣/1♦)',
-    'responding_to_1nt': 'Responding to 1 No Trump',
+    'responding_to_1nt': 'Responding to 1NT Opening',
     'responding_to_2c': 'Responding to a Strong 2♣ Opening',
-    'responding_to_2nt': 'Responding to 2 No Trump',
+    'responding_to_2nt': 'Responding to 2NT Opening',
     'simple_raises': 'Simple Raises (Supporting Partner)',
 
     // Level 3+: Conventions
