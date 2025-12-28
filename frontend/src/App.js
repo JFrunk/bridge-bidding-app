@@ -1527,7 +1527,8 @@ ${otherCommands}`;
             headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
             body: JSON.stringify({
               auction_history: auction.map(a => a.bid),
-              current_player: currentPlayer
+              current_player: currentPlayer,
+              dealer: dealer
             })
           });
           if (!response.ok) throw new Error("AI failed to get bid.");
