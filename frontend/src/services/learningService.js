@@ -176,3 +176,29 @@ export async function getUserSkillProgress(userId) {
 
   return response.json();
 }
+
+/**
+ * Submit user feedback about the learning experience
+ * @param {Object} feedbackData - Feedback data
+ * @param {string} feedbackData.type - Feedback type (issue, incorrect, confusing, suggestion)
+ * @param {string} feedbackData.description - User's description
+ * @param {string} feedbackData.context - Context ('learning' or 'freeplay')
+ * @param {Object} feedbackData.contextData - Context-specific data
+ * @returns {Promise<Object>} Submission result
+ */
+export async function submitFeedback(feedbackData) {
+  const response = await fetch(`${API_BASE_URL}/api/submit-feedback`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(feedbackData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to submit feedback');
+  }
+
+  return response.json();
+}

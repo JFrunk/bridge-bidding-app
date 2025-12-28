@@ -6,6 +6,7 @@ import { BridgeCard } from './components/bridge/BridgeCard';
 import { VerticalCard } from './components/bridge/VerticalCard';
 import { BiddingBox as BiddingBoxComponent } from './components/bridge/BiddingBox';
 import { ReviewModal } from './components/bridge/ReviewModal';
+import { FeedbackModal } from './components/bridge/FeedbackModal';
 import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
 import LearningDashboard from './components/learning/LearningDashboard';
 import LearningMode from './components/learning/LearningMode';
@@ -213,6 +214,7 @@ function App() {
   const [showHandsThisDeal, setShowHandsThisDeal] = useState(false);
   const [alwaysShowHands, setAlwaysShowHands] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [userConcern, setUserConcern] = useState('');
   const [reviewPrompt, setReviewPrompt] = useState('');
   const [reviewFilename, setReviewFilename] = useState('');
@@ -471,6 +473,43 @@ ${otherCommands}`;
     setUserConcern('');
     setReviewPrompt('');
     setReviewFilename('');
+  };
+
+  const handleFeedbackSubmit = async (feedbackData) => {
+    // Build context data for freeplay mode
+    const contextData = {
+      game_phase: gamePhase,
+      auction: auction,
+      vulnerability: vulnerability,
+      dealer: dealer,
+      hand: hand,
+      hand_points: handPoints,
+      all_hands: allHands,
+    };
+
+    try {
+      const response = await fetch(`${API_URL}/api/submit-feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getSessionHeaders(),
+        },
+        body: JSON.stringify({
+          ...feedbackData,
+          context: 'freeplay',
+          contextData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit feedback');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to submit feedback:', error);
+      throw error;
+    }
   };
 
   const handleShowConventionHelp = async () => {
@@ -2155,6 +2194,13 @@ ${otherCommands}`;
               >
                 🤖 Request AI Review
               </button>
+              <button
+                onClick={() => setShowFeedbackModal(true)}
+                className="feedback-button"
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                📝 Feedback
+              </button>
             </div>
           )}
 
@@ -2192,6 +2238,7 @@ ${otherCommands}`;
             <div className="ai-review-controls">
               <button onClick={handleShowConventionHelp} className="help-button" data-testid="convention-help-button">ℹ️ Convention Help</button>
               <button onClick={() => setShowReviewModal(true)} className="ai-review-button" data-testid="ai-review-button">🤖 Request AI Review</button>
+              <button onClick={() => setShowFeedbackModal(true)} className="feedback-button" data-testid="feedback-button">📝 Feedback</button>
               <button onClick={() => setShowLearningDashboard(true)} className="learning-dashboard-button" data-testid="progress-button">📊 My Progress</button>
             </div>
           </>
@@ -2214,6 +2261,18 @@ ${otherCommands}`;
         isOpen={showConventionHelp}
         onClose={handleCloseConventionHelp}
         conventionInfo={conventionInfo}
+      />
+
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        onSubmit={handleFeedbackSubmit}
+        context="freeplay"
+        contextData={{
+          game_phase: gamePhase,
+          auction: auction,
+          hand: hand,
+        }}
       />
 
       {scoreData && (

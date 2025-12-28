@@ -38,6 +38,26 @@
   margin: 0;
   font-size: 20px;
   font-weight: 500;
+  flex: 1;
+  text-align: center;
+}
+
+/* Feedback Button in Practice Header */
+.skill-practice .feedback-button {
+  padding: 8px 16px;
+  background: rgba(5, 150, 105, 0.8);
+  border: 1px solid rgba(5, 150, 105, 1);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.skill-practice .feedback-button:hover {
+  background: rgba(4, 120, 87, 0.9);
+  border-color: rgba(4, 120, 87, 1);
 }
 
 .progress-indicator {

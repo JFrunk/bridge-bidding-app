@@ -632,6 +632,26 @@ body {
   background-color: #6d28d9;
 }
 
+/* Feedback Button */
+.feedback-button {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid #059669;
+  background-color: #059669;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  margin-left: 10px;
+}
+
+.feedback-button:hover {
+  background-color: #047857;
+  border-color: #047857;
+}
+
 /* Modal Styles */
 .modal-overlay {
   position: fixed;
