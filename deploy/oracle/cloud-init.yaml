@@ -1,0 +1,239 @@
+#cloud-config
+# Oracle Cloud Init Script for Bridge Bidding App
+#
+# Usage: Paste this into "Cloud-init script" field when creating VM instance
+# Or save as cloud-init.yaml and use with OCI CLI:
+#   oci compute instance launch --user-data-file cloud-init.yaml ...
+#
+# After VM boots, SSH in and run:
+#   sudo tail -f /var/log/cloud-init-output.log  # Watch progress
+#   bash /opt/bridge-bidding-app/finalize-setup.sh "YourDbPassword"  # Complete setup
+
+package_update: true
+package_upgrade: true
+
+# Install packages based on OS
+packages:
+  - git
+  - curl
+  - wget
+  - nginx
+
+# Create app user and directories
+users:
+  - name: bridge
+    groups: wheel,nginx
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+write_files:
+  # Finalize setup script (run manually after boot)
+  - path: /opt/bridge-bidding-app/finalize-setup.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      # Run this after cloud-init completes to finish setup
+      # Usage: bash /opt/bridge-bidding-app/finalize-setup.sh "YourDbPassword"
+
+      set -e
+
+      DB_PASSWORD="${1:-changeme123}"
+      DB_USER="bridge_user"
+      DB_NAME="bridge_bidding"
+      APP_DIR="/opt/bridge-bidding-app"
+      REPO_URL="https://github.com/JFrunk/bridge-bidding-app.git"
+
+      echo "=== Finalizing Bridge Bidding App Setup ==="
+
+      # Detect OS
+      if [ -f /etc/oracle-release ]; then
+          OS="oracle"
+          PG_HBA="/var/lib/pgsql/data/pg_hba.conf"
+      else
+          OS="ubuntu"
+          PG_VERSION=$(ls /etc/postgresql/ 2>/dev/null | head -n1 || echo "14")
+          PG_HBA="/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
+      fi
+
+      echo "[1/7] Setting up PostgreSQL..."
+      sudo -u postgres psql << EOF
+      DROP DATABASE IF EXISTS $DB_NAME;
+      DROP USER IF EXISTS $DB_USER;
+      CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';
+      CREATE DATABASE $DB_NAME OWNER $DB_USER;
+      GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
+      \c $DB_NAME
+      GRANT ALL ON SCHEMA public TO $DB_USER;
+      EOF
+
+      # Configure auth
+      sudo cp "$PG_HBA" "$PG_HBA.backup"
+      sudo sed -i 's/ident/md5/g' "$PG_HBA" 2>/dev/null || true
+      sudo sed -i 's/peer/md5/g' "$PG_HBA"
+      sudo sed -i 's/scram-sha-256/md5/g' "$PG_HBA" 2>/dev/null || true
+      sudo systemctl restart postgresql
+
+      echo "[2/7] Cloning repository..."
+      cd "$APP_DIR"
+      if [ ! -d ".git" ]; then
+          sudo git clone "$REPO_URL" .
+      else
+          sudo git pull origin main
+      fi
+      sudo chown -R bridge:bridge "$APP_DIR"
+
+      echo "[3/7] Creating environment file..."
+      cat > "$APP_DIR/backend/.env" << EOF
+      FLASK_ENV=production
+      DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@localhost:5432/${DB_NAME}
+      DEFAULT_AI_DIFFICULTY=expert
+      EOF
+      chmod 600 "$APP_DIR/backend/.env"
+
+      echo "[4/7] Setting up Python backend..."
+      cd "$APP_DIR/backend"
+      python3.11 -m venv venv
+      source venv/bin/activate
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python3 database/init_all_tables.py
+
+      echo "[5/7] Building frontend..."
+      PUBLIC_IP=$(curl -s http://169.254.169.254/opc/v1/instance/metadata/publicIp 2>/dev/null || curl -s ifconfig.me)
+      cd "$APP_DIR/frontend"
+      echo "REACT_APP_API_URL=http://${PUBLIC_IP}" > .env.production
+      npm install
+      npm run build
+
+      echo "[6/7] Configuring services..."
+      # Backend service
+      sudo tee /etc/systemd/system/bridge-backend.service << SVCEOF
+      [Unit]
+      Description=Bridge Bidding App Backend
+      After=network.target postgresql.service
+
+      [Service]
+      User=bridge
+      Group=bridge
+      WorkingDirectory=$APP_DIR/backend
+      Environment="PATH=$APP_DIR/backend/venv/bin"
+      EnvironmentFile=$APP_DIR/backend/.env
+      ExecStart=$APP_DIR/backend/venv/bin/gunicorn --bind 127.0.0.1:5001 --workers 2 --timeout 120 server:app
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+      SVCEOF
+
+      # Nginx config
+      sudo tee /etc/nginx/conf.d/bridge-bidding.conf << NGXEOF
+      upstream bridge_backend {
+          server 127.0.0.1:5001;
+          keepalive 32;
+      }
+      server {
+          listen 80;
+          server_name _;
+          gzip on;
+          gzip_types text/plain text/css application/json application/javascript;
+
+          location / {
+              root $APP_DIR/frontend/build;
+              try_files \$uri \$uri/ /index.html;
+          }
+          location /api/ {
+              proxy_pass http://bridge_backend;
+              proxy_http_version 1.1;
+              proxy_set_header Host \$host;
+              proxy_set_header X-Real-IP \$remote_addr;
+              proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+              proxy_read_timeout 120s;
+          }
+      }
+      NGXEOF
+
+      sudo rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+      sudo rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
+
+      sudo systemctl daemon-reload
+      sudo systemctl enable bridge-backend nginx
+      sudo systemctl restart bridge-backend nginx
+
+      echo "[7/7] Setting up maintenance..."
+      # Anti-idle cron
+      (crontab -l 2>/dev/null | grep -v "api/scenarios"; echo "0 */6 * * * curl -s http://localhost/api/scenarios > /dev/null") | crontab -
+
+      echo ""
+      echo "=========================================="
+      echo "  SETUP COMPLETE!"
+      echo "=========================================="
+      echo ""
+      echo "  Your app is live at: http://${PUBLIC_IP}"
+      echo ""
+      echo "  Commands:"
+      echo "    View logs: sudo journalctl -u bridge-backend -f"
+      echo "    Restart:   sudo systemctl restart bridge-backend"
+      echo ""
+
+  # Quick status check script
+  - path: /opt/bridge-bidding-app/status.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      echo "=== Service Status ==="
+      systemctl is-active postgresql && echo "PostgreSQL: ✓ Running" || echo "PostgreSQL: ✗ Stopped"
+      systemctl is-active bridge-backend && echo "Backend:    ✓ Running" || echo "Backend:    ✗ Stopped"
+      systemctl is-active nginx && echo "Nginx:      ✓ Running" || echo "Nginx:      ✗ Stopped"
+      echo ""
+      echo "=== API Health ==="
+      curl -s http://localhost/api/scenarios > /dev/null && echo "API: ✓ Responding" || echo "API: ✗ Not responding"
+      echo ""
+      PUBLIC_IP=$(curl -s http://169.254.169.254/opc/v1/instance/metadata/publicIp 2>/dev/null || curl -s ifconfig.me)
+      echo "Public URL: http://$PUBLIC_IP"
+
+runcmd:
+  # Create app directory
+  - mkdir -p /opt/bridge-bidding-app
+  - chown bridge:bridge /opt/bridge-bidding-app
+
+  # Detect OS and install dependencies
+  - |
+    if [ -f /etc/oracle-release ]; then
+      # Oracle Linux
+      dnf install -y python3.11 python3.11-pip python3.11-devel
+      dnf install -y postgresql-server postgresql-contrib
+      dnf groupinstall -y "Development Tools"
+      curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+      dnf install -y nodejs
+      postgresql-setup --initdb || true
+      systemctl enable postgresql
+      systemctl start postgresql
+      firewall-cmd --permanent --add-service=http || true
+      firewall-cmd --permanent --add-service=https || true
+      firewall-cmd --reload || true
+    else
+      # Ubuntu
+      apt install -y python3.11 python3.11-venv python3.11-dev
+      apt install -y postgresql postgresql-contrib
+      apt install -y build-essential
+      curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+      apt install -y nodejs
+      systemctl enable postgresql
+      systemctl start postgresql
+      ufw allow 22/tcp || true
+      ufw allow 80/tcp || true
+      ufw allow 443/tcp || true
+    fi
+
+  # Enable nginx
+  - systemctl enable nginx
+
+final_message: |
+  Cloud-init complete!
+
+  To finish setup, SSH in and run:
+    bash /opt/bridge-bidding-app/finalize-setup.sh "YourSecureDbPassword"
+
+  Check status anytime with:
+    bash /opt/bridge-bidding-app/status.sh
