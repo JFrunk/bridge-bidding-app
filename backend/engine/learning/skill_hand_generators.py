@@ -73,6 +73,7 @@ def generate_hand_with_constraints(constraints: dict, deck: List[Card]) -> Tuple
         - singleton_suit: suit that must have 1 card
         - doubleton_suit: suit that must have 2 cards
         - max_suit_length: maximum cards in any suit
+        - unique_longest_suit: True requires exactly one suit with max length (no ties)
     """
     hcp_range = constraints.get('hcp_range', (0, 40))
     is_balanced = constraints.get('is_balanced')
@@ -82,6 +83,7 @@ def generate_hand_with_constraints(constraints: dict, deck: List[Card]) -> Tuple
     doubleton_suit = constraints.get('doubleton_suit')
     max_suit_length = constraints.get('max_suit_length')
     min_longest_suit = constraints.get('min_longest_suit')
+    unique_longest_suit = constraints.get('unique_longest_suit', False)
 
     max_attempts = 20000
     for _ in range(max_attempts):
@@ -126,6 +128,13 @@ def generate_hand_with_constraints(constraints: dict, deck: List[Card]) -> Tuple
         # Check min longest suit
         if min_longest_suit and max(temp_hand.suit_lengths.values()) < min_longest_suit:
             continue
+
+        # Check unique longest suit (no ties for longest)
+        if unique_longest_suit:
+            suit_lengths_list = list(temp_hand.suit_lengths.values())
+            max_length = max(suit_lengths_list)
+            if suit_lengths_list.count(max_length) > 1:
+                continue  # Multiple suits tied for longest, reject
 
         # All checks passed
         return temp_hand, deck[13:]
@@ -192,7 +201,7 @@ class SuitQualityGenerator(SkillHandGenerator):
     def __init__(self, variant: str = 'long_suit'):
         """
         Variants:
-            - 'long_suit': Has a 5+ card suit to identify
+            - 'long_suit': Has a 5+ card suit to identify (unique longest - no ties)
             - 'two_suits': Has two 4+ card suits
             - 'no_long': No suit longer than 4
         """
@@ -202,7 +211,8 @@ class SuitQualityGenerator(SkillHandGenerator):
         if self.variant == 'long_suit':
             return {
                 'suit_length_req': (['♠', '♥', '♦', '♣'], 5, 'any_of'),
-                'hcp_range': (10, 18)
+                'hcp_range': (10, 18),
+                'unique_longest_suit': True  # Prevent ties for longest suit
             }
         elif self.variant == 'two_suits':
             return {
