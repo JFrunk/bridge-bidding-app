@@ -1250,11 +1250,65 @@ html, body {
   border-bottom: 2px solid rgba(255, 255, 255, 0.3);
 }
 
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-button {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.home-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.home-button:active {
+  transform: scale(0.95);
+}
+
 .app-title {
   margin: 0;
   font-size: 28px;
   color: white;
   font-weight: 600;
+}
+
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.global-feedback-button {
+  background: rgba(5, 150, 105, 0.8);
+  border: 1px solid rgba(5, 150, 105, 1);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.global-feedback-button:hover {
+  background: rgba(4, 120, 87, 0.9);
+  border-color: rgba(4, 120, 87, 1);
+  transform: translateY(-1px);
+}
+
+.global-feedback-button:active {
+  transform: translateY(0);
 }
 
 .user-menu {

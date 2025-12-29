@@ -10,6 +10,7 @@ import { FeedbackModal } from './components/bridge/FeedbackModal';
 import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
 import LearningDashboard from './components/learning/LearningDashboard';
 import LearningMode from './components/learning/LearningMode';
+import { ModeSelector } from './components/ModeSelector';
 import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SimpleLogin } from './components/auth/SimpleLogin';
@@ -222,6 +223,7 @@ function App() {
   const [conventionInfo, setConventionInfo] = useState(null);
   const [showLearningDashboard, setShowLearningDashboard] = useState(false);
   const [showLearningMode, setShowLearningMode] = useState(false);
+  const [showModeSelector, setShowModeSelector] = useState(true); // Landing page - shown by default
 
   // Session scoring state
   const [sessionData, setSessionData] = useState(null);
@@ -473,6 +475,38 @@ ${otherCommands}`;
     setUserConcern('');
     setReviewPrompt('');
     setReviewFilename('');
+  };
+
+  // Mode selection handler - routes user to appropriate mode from landing page
+  const handleModeSelect = async (modeId) => {
+    setShowModeSelector(false);
+
+    switch (modeId) {
+      case 'learning':
+        // Open Learning Mode overlay
+        setShowLearningMode(true);
+        break;
+
+      case 'freeplay':
+        // Deal a new hand for free bidding practice
+        dealNewHand();
+        break;
+
+      case 'conventions':
+        // Deal a hand and let user select a convention scenario
+        // For now, deal a hand - user can then select scenario from dropdown
+        dealNewHand();
+        // Could also show a convention picker modal here in the future
+        break;
+
+      case 'play':
+        // Start play mode with AI-bid hand
+        playRandomHand();
+        break;
+
+      default:
+        dealNewHand();
+    }
   };
 
   const handleFeedbackSubmit = async (feedbackData) => {
@@ -1999,10 +2033,39 @@ ${otherCommands}`;
 
   return (
     <div className="app-container">
+      {/* Mode Selector - Landing Page */}
+      {showModeSelector && isAuthenticated && (
+        <ModeSelector
+          onSelectMode={handleModeSelect}
+          userName={user?.display_name}
+          onFeedbackClick={() => setShowFeedbackModal(true)}
+        />
+      )}
+
       {/* User Menu in top right */}
       <div className="top-bar">
-        <h1 className="app-title">Bridge Bidding Practice</h1>
-        <UserMenu />
+        <div className="top-bar-left">
+          <button
+            className="home-button"
+            onClick={() => setShowModeSelector(true)}
+            title="Return to mode selection"
+            data-testid="home-button"
+          >
+            🏠
+          </button>
+          <h1 className="app-title">Bridge Bidding Practice</h1>
+        </div>
+        <div className="top-bar-right">
+          <button
+            className="global-feedback-button"
+            onClick={() => setShowFeedbackModal(true)}
+            title="Report an issue or give feedback"
+            data-testid="global-feedback-button"
+          >
+            📝 Feedback
+          </button>
+          <UserMenu />
+        </div>
       </div>
 
       {/* Login Modal */}
@@ -2194,13 +2257,6 @@ ${otherCommands}`;
               >
                 🤖 Request AI Review
               </button>
-              <button
-                onClick={() => setShowFeedbackModal(true)}
-                className="feedback-button"
-                style={{ whiteSpace: 'nowrap' }}
-              >
-                📝 Feedback
-              </button>
             </div>
           )}
 
@@ -2238,7 +2294,6 @@ ${otherCommands}`;
             <div className="ai-review-controls">
               <button onClick={handleShowConventionHelp} className="help-button" data-testid="convention-help-button">ℹ️ Convention Help</button>
               <button onClick={() => setShowReviewModal(true)} className="ai-review-button" data-testid="ai-review-button">🤖 Request AI Review</button>
-              <button onClick={() => setShowFeedbackModal(true)} className="feedback-button" data-testid="feedback-button">📝 Feedback</button>
               <button onClick={() => setShowLearningDashboard(true)} className="learning-dashboard-button" data-testid="progress-button">📊 My Progress</button>
             </div>
           </>
@@ -2310,7 +2365,10 @@ ${otherCommands}`;
         <div className="learning-mode-overlay">
           <LearningMode
             userId={userId || 1}
-            onClose={() => setShowLearningMode(false)}
+            onClose={() => {
+              setShowLearningMode(false);
+              setShowModeSelector(true); // Return to landing page
+            }}
             onPlayFreePlay={() => {
               setShowLearningMode(false);
               dealNewHand();
