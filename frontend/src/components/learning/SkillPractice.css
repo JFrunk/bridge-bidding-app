@@ -8,6 +8,8 @@
   color: #fff;
   display: flex;
   flex-direction: column;
+  /* Ensure content isn't cut off at the top on iOS/Safari */
+  padding-top: env(safe-area-inset-top, 0);
 }
 
 /* Header */
@@ -645,6 +647,31 @@
   font-size: 14px;
   color: rgba(255, 255, 255, 0.6);
   font-style: italic;
+}
+
+/* Feedback Actions Container */
+.feedback-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.replay-button {
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.replay-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .continue-button {

@@ -18,6 +18,7 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
   const [lastResult, setLastResult] = useState(session?.lastResult || null);
   const [showFeedback, setShowFeedback] = useState(!!session?.lastResult);
   const [showHandStats, setShowHandStats] = useState(false);
+  const [isReplaying, setIsReplaying] = useState(false);
 
   // Sync local state when navigating between hands
   // This handles both new hands and reviewing previous hands
@@ -25,6 +26,7 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
     if (session?.hand_id) {
       setAnswer('');
       setShowHandStats(false);
+      setIsReplaying(false);
 
       // Sync feedback state with current hand's result
       if (session.lastResult) {
@@ -36,6 +38,14 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
       }
     }
   }, [session?.hand_id, session?.currentHandIndex, session?.lastResult]);
+
+  // Handle replay - reset answer and hide feedback to try again
+  const handleReplay = () => {
+    setAnswer('');
+    setShowFeedback(false);
+    setIsReplaying(true);
+    // Note: We don't reset lastResult so we can track it was a replay
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -229,7 +239,9 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
             result={lastResult}
             expected={expected_response}
             onContinue={handleContinue}
+            onReplay={handleReplay}
             isReviewing={isReviewing}
+            isReplaying={isReplaying}
             canContinue={!isReviewing || currentHandIndex === (handHistory?.length || 1) - 1}
           />
         )}
@@ -680,7 +692,7 @@ const formatBid = (bid) => {
 /**
  * Feedback Display Component
  */
-const FeedbackDisplay = ({ result, expected, onContinue, isReviewing, canContinue }) => {
+const FeedbackDisplay = ({ result, expected, onContinue, onReplay, isReviewing, isReplaying, canContinue }) => {
   if (!result) return null;
 
   const { isCorrect, feedback } = result;
@@ -700,11 +712,16 @@ const FeedbackDisplay = ({ result, expected, onContinue, isReviewing, canContinu
           <p className="explanation">{expected.explanation}</p>
         )}
       </div>
-      {canContinue && (
-        <button onClick={onContinue} className="continue-button">
-          Continue
+      <div className="feedback-actions">
+        <button onClick={onReplay} className="replay-button">
+          {isReplaying ? 'Try Again' : 'Replay Hand'}
         </button>
-      )}
+        {canContinue && (
+          <button onClick={onContinue} className="continue-button">
+            Continue
+          </button>
+        )}
+      </div>
       {isReviewing && !canContinue && (
         <p className="review-hint">Use the hand navigation above to view other hands</p>
       )}
