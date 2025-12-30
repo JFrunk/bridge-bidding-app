@@ -1,0 +1,602 @@
+/**
+ * Four-Dimension Progress Styles
+ *
+ * Implements:
+ * - Two-column layout for desktop
+ * - Tab-based navigation for mobile
+ * - Progress rings and roadmaps
+ * - Convention mastery grid
+ */
+
+/* ============================================================================
+   CONTAINER & LAYOUT
+   ============================================================================ */
+
+.four-dimension-progress {
+  width: 100%;
+  padding: var(--space-4, 16px);
+}
+
+/* Loading State */
+.four-dimension-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8, 32px);
+  color: var(--text-secondary, #666);
+}
+
+.four-dimension-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--bg-secondary, #f0f0f0);
+  border-top-color: var(--color-primary, #2563eb);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error State */
+.four-dimension-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  padding: var(--space-6, 24px);
+  background: var(--bg-danger-light, #fef2f2);
+  border-radius: 12px;
+}
+
+.four-dimension-error .error-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-danger, #dc2626);
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+}
+
+.four-dimension-error button {
+  padding: var(--space-2, 8px) var(--space-4, 16px);
+  background: var(--color-danger, #dc2626);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ============================================================================
+   MOBILE TAB SWITCHER
+   ============================================================================ */
+
+.mobile-tab-switcher {
+  display: none;
+  margin-bottom: var(--space-4, 16px);
+}
+
+@media (max-width: 768px) {
+  .mobile-tab-switcher {
+    display: flex;
+    background: var(--bg-secondary, #f0f0f0);
+    border-radius: 8px;
+    padding: 4px;
+  }
+
+  .mobile-tab-switcher .tab-button {
+    flex: 1;
+    padding: var(--space-3, 12px);
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-weight: 600;
+    color: var(--text-secondary, #666);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-tab-switcher .tab-button.active {
+    background: white;
+    color: var(--color-primary, #2563eb);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* ============================================================================
+   PROGRESS COLUMNS
+   ============================================================================ */
+
+.progress-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6, 24px);
+}
+
+@media (max-width: 768px) {
+  .progress-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-track {
+    display: none;
+  }
+
+  .progress-track.active {
+    display: block;
+  }
+}
+
+/* Track Header */
+.track-header {
+  margin-bottom: var(--space-4, 16px);
+}
+
+.track-header h3 {
+  margin: 0;
+  font-size: var(--text-lg, 18px);
+  color: var(--text-primary, #111);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+
+.bidding-track .track-header h3::before {
+  content: '🎯';
+}
+
+.play-track .track-header h3::before {
+  content: '🃏';
+}
+
+/* ============================================================================
+   DIMENSION CARD BASE
+   ============================================================================ */
+
+.dimension-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: var(--space-4, 16px);
+  overflow: hidden;
+}
+
+.dimension-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4, 16px);
+  background: var(--bg-secondary, #f8f9fa);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.dimension-card .card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+
+.dimension-card .card-title .card-icon {
+  font-size: 20px;
+}
+
+.dimension-card .card-title h4 {
+  margin: 0;
+  font-size: var(--text-base, 16px);
+  font-weight: 600;
+  color: var(--text-primary, #111);
+}
+
+.dimension-card .card-content {
+  padding: var(--space-4, 16px);
+}
+
+/* ============================================================================
+   JOURNEY PROGRESS CARD
+   ============================================================================ */
+
+/* Overall Progress Badge */
+.overall-progress-badge {
+  background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+  color: #065f46;
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: var(--text-sm, 14px);
+}
+
+/* Level Progress Section */
+.level-progress-section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 16px);
+  margin-bottom: var(--space-4, 16px);
+}
+
+.progress-ring-container {
+  flex-shrink: 0;
+}
+
+.progress-ring {
+  width: 90px;
+  height: 90px;
+}
+
+.progress-ring-bg {
+  stroke: var(--bg-secondary, #e5e7eb);
+}
+
+.progress-ring-fill {
+  stroke: var(--color-primary, #2563eb);
+  transition: stroke-dasharray 0.3s ease;
+}
+
+.ring-level {
+  font-size: 18px;
+  font-weight: 700;
+  fill: var(--text-primary, #111);
+}
+
+.ring-progress {
+  font-size: 12px;
+  fill: var(--text-secondary, #666);
+}
+
+.level-details {
+  flex: 1;
+}
+
+.level-name {
+  font-weight: 600;
+  color: var(--text-primary, #111);
+  margin-bottom: var(--space-1, 4px);
+}
+
+.skills-mastered {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary, #666);
+}
+
+/* Level Roadmap */
+.level-roadmap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3, 12px) 0;
+  margin-bottom: var(--space-3, 12px);
+  position: relative;
+}
+
+.level-roadmap::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--bg-secondary, #e5e7eb);
+  z-index: 0;
+}
+
+.roadmap-node {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 1;
+  transition: transform 0.2s ease;
+}
+
+.roadmap-node.completed {
+  background: var(--color-success, #22c55e);
+  color: white;
+}
+
+.roadmap-node.current {
+  background: var(--color-primary, #2563eb);
+  color: white;
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+.roadmap-node.unlocked {
+  background: white;
+  border: 2px solid var(--color-primary, #2563eb);
+  color: var(--color-primary, #2563eb);
+}
+
+.roadmap-node.locked {
+  background: var(--bg-secondary, #e5e7eb);
+  color: var(--text-muted, #9ca3af);
+}
+
+/* Next Skill */
+.next-skill {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  background: var(--bg-info-light, #eff6ff);
+  border-radius: 6px;
+  margin-bottom: var(--space-3, 12px);
+  font-size: var(--text-sm, 14px);
+}
+
+.next-label {
+  color: var(--text-secondary, #666);
+}
+
+.next-name {
+  color: var(--color-primary, #2563eb);
+  font-weight: 500;
+}
+
+/* Journey Action Button */
+.journey-action-btn {
+  width: 100%;
+  padding: var(--space-3, 12px);
+  background: var(--color-primary, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.journey-action-btn:hover {
+  background: var(--color-primary-dark, #1d4ed8);
+}
+
+/* ============================================================================
+   PRACTICE QUALITY CARD
+   ============================================================================ */
+
+/* Trend Indicator */
+.trend-indicator {
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  border-radius: 20px;
+  font-size: var(--text-sm, 14px);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.trend-improving {
+  background: var(--bg-success-light, #dcfce7);
+  color: var(--color-success-dark, #166534);
+}
+
+.trend-declining {
+  background: var(--bg-danger-light, #fef2f2);
+  color: var(--color-danger, #dc2626);
+}
+
+.trend-stable {
+  background: var(--bg-secondary, #f3f4f6);
+  color: var(--text-secondary, #666);
+}
+
+/* Quality Gauge */
+.quality-gauge {
+  text-align: center;
+  margin-bottom: var(--space-4, 16px);
+}
+
+.gauge-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-primary, #111);
+}
+
+.gauge-label {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary, #666);
+  margin-bottom: var(--space-2, 8px);
+}
+
+.gauge-bar {
+  height: 8px;
+  background: var(--bg-secondary, #e5e7eb);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gauge-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-danger, #dc2626) 0%, var(--color-warning, #f59e0b) 50%, var(--color-success, #22c55e) 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Quality Stats Grid */
+.quality-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3, 12px);
+  margin-bottom: var(--space-4, 16px);
+}
+
+.quality-stats .stat-item {
+  text-align: center;
+}
+
+.quality-stats .stat-value {
+  display: block;
+  font-size: var(--text-lg, 18px);
+  font-weight: 700;
+  color: var(--text-primary, #111);
+}
+
+.quality-stats .stat-label {
+  font-size: var(--text-xs, 12px);
+  color: var(--text-secondary, #666);
+}
+
+/* Total Practiced */
+.total-practiced {
+  text-align: center;
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary, #666);
+  margin-bottom: var(--space-3, 12px);
+}
+
+/* Quality Action Button */
+.quality-action-btn {
+  width: 100%;
+  padding: var(--space-3, 12px);
+  background: white;
+  color: var(--color-primary, #2563eb);
+  border: 2px solid var(--color-primary, #2563eb);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quality-action-btn:hover {
+  background: var(--color-primary, #2563eb);
+  color: white;
+}
+
+/* ============================================================================
+   CONVENTION MASTERY GRID
+   ============================================================================ */
+
+.convention-group {
+  margin-bottom: var(--space-4, 16px);
+}
+
+.convention-group:last-child {
+  margin-bottom: 0;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2, 8px);
+}
+
+.group-name {
+  font-weight: 600;
+  color: var(--text-primary, #111);
+  font-size: var(--text-sm, 14px);
+}
+
+.group-count {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary, #666);
+}
+
+.convention-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 8px);
+}
+
+.convention-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  border-radius: 20px;
+  font-size: var(--text-sm, 14px);
+  background: var(--bg-secondary, #f3f4f6);
+  transition: all 0.2s ease;
+}
+
+.convention-item.status-mastered {
+  background: var(--bg-success-light, #dcfce7);
+}
+
+.convention-item.status-mastered .conv-status {
+  color: var(--color-success, #22c55e);
+}
+
+.convention-item.status-in-progress {
+  background: var(--bg-info-light, #eff6ff);
+}
+
+.convention-item.status-in-progress .conv-status {
+  color: var(--color-primary, #2563eb);
+}
+
+.convention-item.status-not-started .conv-status {
+  color: var(--text-muted, #9ca3af);
+}
+
+.conv-name {
+  color: var(--text-primary, #111);
+}
+
+.conv-accuracy {
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  margin-left: var(--space-1, 4px);
+}
+
+/* Locked Preview */
+.locked-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  padding: var(--space-3, 12px);
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 8px;
+  color: var(--text-secondary, #666);
+  font-size: var(--text-sm, 14px);
+}
+
+.lock-icon {
+  font-size: 16px;
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================ */
+
+@media (max-width: 480px) {
+  .four-dimension-progress {
+    padding: var(--space-3, 12px);
+  }
+
+  .progress-ring {
+    width: 70px;
+    height: 70px;
+  }
+
+  .ring-level {
+    font-size: 14px;
+  }
+
+  .ring-progress {
+    font-size: 10px;
+  }
+
+  .roadmap-node {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  .gauge-value {
+    font-size: 28px;
+  }
+
+  .quality-stats {
+    gap: var(--space-2, 8px);
+  }
+
+  .quality-stats .stat-value {
+    font-size: var(--text-base, 16px);
+  }
+}
