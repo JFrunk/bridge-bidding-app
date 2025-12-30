@@ -165,7 +165,7 @@ class ApiClient {
       user_id: params.userId || 1,
       session_type: params.sessionType || 'chicago',
       player_position: params.playerPosition || 'S',
-      ai_difficulty: params.aiDifficulty || 'intermediate'
+      ai_difficulty: params.aiDifficulty || 'expert'  // Default to expert (DDS when available)
     };
     return this.post('/api/session/start', data);
   }

@@ -544,7 +544,7 @@ def start_session():
         - user_id: int (default 1)
         - session_type: str (default 'chicago')
         - player_position: str (default 'S')
-        - ai_difficulty: str (default 'intermediate')
+        - ai_difficulty: str (default 'expert' - uses DDS when available)
 
     Returns:
         Session data and whether it was resumed
@@ -556,7 +556,7 @@ def start_session():
     user_id = data.get('user_id', 1)
     session_type = data.get('session_type', 'chicago')
     player_position = data.get('player_position', 'S')
-    ai_difficulty = data.get('ai_difficulty', 'intermediate')
+    ai_difficulty = data.get('ai_difficulty', DEFAULT_AI_DIFFICULTY)  # Uses smart default from session_state
 
     try:
         # Check for existing active session
