@@ -95,8 +95,8 @@ class MichaelsCuebidConvention(ConventionModule):
         if hand.hcp < 8 or hand.hcp > 16:
             return None
 
-        # Extract opponent's suit
-        if len(opponent_bid) < 2:
+        # Extract opponent's suit - guard against None
+        if not opponent_bid or len(opponent_bid) < 2:
             return None
 
         # Michaels Cuebid doesn't apply over NT openings
