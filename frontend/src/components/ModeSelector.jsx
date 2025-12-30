@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useAuth } from '../contexts/AuthContext';
 import './ModeSelector.css';
 
 /**
@@ -15,6 +16,17 @@ import './ModeSelector.css';
  * - Progress: View stats and learning insights
  */
 export function ModeSelector({ onSelectMode, userName, onFeedbackClick }) {
+  const { isGuest, promptForRegistration } = useAuth();
+
+  const handleModeSelect = (modeId) => {
+    // Progress mode requires registration for guests
+    if (modeId === 'progress' && isGuest) {
+      promptForRegistration();
+      return;
+    }
+    onSelectMode(modeId);
+  };
+
   const modes = [
     {
       id: 'learning',
@@ -131,11 +143,14 @@ export function ModeSelector({ onSelectMode, userName, onFeedbackClick }) {
 
               <button
                 className={`mode-button ${mode.buttonClass}`}
-                onClick={() => onSelectMode(mode.id)}
+                onClick={() => handleModeSelect(mode.id)}
                 aria-describedby={`mode-title-${mode.id}`}
                 data-testid={`mode-${mode.id}-button`}
               >
                 {mode.buttonText}
+                {mode.id === 'progress' && isGuest && (
+                  <span className="mode-badge" title="Register to track progress"> 🔒</span>
+                )}
               </button>
             </div>
           ))}

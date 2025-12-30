@@ -1,12 +1,18 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext(null);
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
+// Number of hands before prompting for registration
+const HANDS_BEFORE_PROMPT = 3;
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [handsCompleted, setHandsCompleted] = useState(0);
+  const [showRegistrationPrompt, setShowRegistrationPrompt] = useState(false);
+  const [hasSeenPrompt, setHasSeenPrompt] = useState(false);
 
   // Check for existing session on mount
   useEffect(() => {
@@ -29,7 +35,22 @@ export function AuthProvider({ children }) {
     if (token) {
       validateSession(token);
     } else {
+      // Auto-continue as guest for frictionless first experience
+      const guestUser = { id: 1, username: 'guest', display_name: 'Guest', isGuest: true };
+      setUser(guestUser);
       setLoading(false);
+    }
+
+    // Load hands completed from localStorage
+    const savedHands = localStorage.getItem('bridge_hands_completed');
+    if (savedHands) {
+      setHandsCompleted(parseInt(savedHands, 10) || 0);
+    }
+
+    // Check if user has already dismissed the prompt
+    const dismissed = localStorage.getItem('bridge_registration_dismissed');
+    if (dismissed) {
+      setHasSeenPrompt(true);
     }
   }, []);
 
@@ -46,10 +67,16 @@ export function AuthProvider({ children }) {
         setUser(data.user);
       } else {
         localStorage.removeItem('session_token');
+        // Auto-continue as guest
+        const guestUser = { id: 1, username: 'guest', display_name: 'Guest', isGuest: true };
+        setUser(guestUser);
       }
     } catch (error) {
       console.error('Session validation failed:', error);
       localStorage.removeItem('session_token');
+      // Auto-continue as guest
+      const guestUser = { id: 1, username: 'guest', display_name: 'Guest', isGuest: true };
+      setUser(guestUser);
     } finally {
       setLoading(false);
     }
@@ -111,6 +138,8 @@ export function AuthProvider({ children }) {
       setUser(userData);
       // Store user data for persistence
       localStorage.setItem('bridge_user', JSON.stringify(userData));
+      // Hide the registration prompt
+      setShowRegistrationPrompt(false);
 
       return { success: true, created: data.created, user: userData };
     } catch (error) {
@@ -134,7 +163,9 @@ export function AuthProvider({ children }) {
 
     localStorage.removeItem('session_token');
     localStorage.removeItem('bridge_user');
-    setUser(null);
+    // Keep them as guest after logout
+    const guestUser = { id: 1, username: 'guest', display_name: 'Guest', isGuest: true };
+    setUser(guestUser);
   };
 
   const continueAsGuest = () => {
@@ -142,6 +173,45 @@ export function AuthProvider({ children }) {
     setUser({ id: 1, username: 'guest', display_name: 'Guest', isGuest: true });
     setLoading(false);
   };
+
+  // Track completed hands and trigger registration prompt
+  const recordHandCompleted = useCallback(() => {
+    if (user?.isGuest && !hasSeenPrompt) {
+      const newCount = handsCompleted + 1;
+      setHandsCompleted(newCount);
+      localStorage.setItem('bridge_hands_completed', newCount.toString());
+
+      // Show registration prompt after threshold
+      if (newCount >= HANDS_BEFORE_PROMPT) {
+        setShowRegistrationPrompt(true);
+      }
+    }
+  }, [user, handsCompleted, hasSeenPrompt]);
+
+  // Dismiss registration prompt (temporarily or permanently)
+  const dismissRegistrationPrompt = useCallback((permanent = false) => {
+    setShowRegistrationPrompt(false);
+    if (permanent) {
+      setHasSeenPrompt(true);
+      localStorage.setItem('bridge_registration_dismissed', 'true');
+    }
+  }, []);
+
+  // Check if registration is required for a feature
+  const requiresRegistration = useCallback((feature) => {
+    // Features that require registration
+    const protectedFeatures = ['progress', 'dashboard', 'history'];
+    return user?.isGuest && protectedFeatures.includes(feature);
+  }, [user]);
+
+  // Trigger registration prompt for protected features
+  const promptForRegistration = useCallback(() => {
+    if (user?.isGuest) {
+      setShowRegistrationPrompt(true);
+      return true;
+    }
+    return false;
+  }, [user]);
 
   const getAuthToken = () => {
     return localStorage.getItem('session_token');
@@ -158,7 +228,14 @@ export function AuthProvider({ children }) {
       isAuthenticated: user !== null,
       isGuest: user?.isGuest || false,
       getAuthToken,
-      userId: user?.id || null
+      userId: user?.id || null,
+      // New registration prompt features
+      handsCompleted,
+      recordHandCompleted,
+      showRegistrationPrompt,
+      dismissRegistrationPrompt,
+      requiresRegistration,
+      promptForRegistration
     }}>
       {children}
     </AuthContext.Provider>

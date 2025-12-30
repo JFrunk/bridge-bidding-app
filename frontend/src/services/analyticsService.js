@@ -189,3 +189,25 @@ export async function runAnalysis(userId) {
 
   return response.json();
 }
+
+/**
+ * Get four-dimension learning progress
+ * @param {number} userId - User ID
+ * @returns {Promise<Object>} Four-dimension progress data:
+ *   - bid_learning_journey: Structured bidding curriculum progress
+ *   - bid_practice_quality: Bidding practice quality and conventions
+ *   - play_learning_journey: Card play curriculum progress
+ *   - play_practice_quality: Gameplay performance metrics
+ */
+export async function getFourDimensionProgress(userId) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/analytics/four-dimension-progress?user_id=${userId}`
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch four-dimension progress');
+  }
+
+  return response.json();
+}

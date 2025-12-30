@@ -1,0 +1,265 @@
+.registration-prompt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.registration-prompt-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 420px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.registration-prompt-modal .close-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.registration-prompt-modal .close-button:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.prompt-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.prompt-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.prompt-header h2 {
+  margin: 0;
+  color: #1a5f2a;
+  font-size: 24px;
+}
+
+.prompt-message {
+  text-align: center;
+  color: #555;
+  margin-bottom: 20px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 32px;
+  font-weight: bold;
+  color: #1a5f2a;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.benefits-list {
+  margin-bottom: 20px;
+}
+
+.benefit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  color: #444;
+}
+
+.benefit-icon {
+  font-size: 20px;
+}
+
+.login-method-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.login-method-toggle .toggle-btn {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.login-method-toggle .toggle-btn:hover {
+  border-color: #1a5f2a;
+}
+
+.login-method-toggle .toggle-btn.active {
+  border-color: #1a5f2a;
+  background: #e8f5e9;
+  color: #1a5f2a;
+}
+
+.registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.registration-form input {
+  padding: 14px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.registration-form input:focus {
+  outline: none;
+  border-color: #1a5f2a;
+}
+
+.registration-form .btn-primary {
+  padding: 14px 24px;
+  background: #1a5f2a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.registration-form .btn-primary:hover {
+  background: #145022;
+}
+
+.registration-form .btn-primary:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
+
+.registration-form .error-message {
+  color: #d32f2f;
+  font-size: 14px;
+  padding: 8px 12px;
+  background: #ffebee;
+  border-radius: 6px;
+}
+
+.prompt-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 8px;
+}
+
+.btn-text:hover {
+  color: #1a5f2a;
+  text-decoration: underline;
+}
+
+.btn-text.muted {
+  color: #999;
+  font-size: 12px;
+}
+
+.separator {
+  color: #ccc;
+}
+
+.privacy-note {
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .registration-prompt-modal {
+    padding: 24px 20px;
+    margin: 16px;
+    width: calc(100% - 32px);
+  }
+
+  .prompt-icon {
+    font-size: 40px;
+  }
+
+  .prompt-header h2 {
+    font-size: 20px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+}

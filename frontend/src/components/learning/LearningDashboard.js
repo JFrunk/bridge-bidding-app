@@ -2,6 +2,7 @@
  * Learning Dashboard Component
  *
  * Displays comprehensive learning insights including:
+ * - Four-dimension progress (bidding journey, bidding practice, play journey, play practice)
  * - User stats (XP, level, streak, accuracy)
  * - Pending celebrations
  * - Growth opportunities (areas to improve)
@@ -17,8 +18,9 @@ import {
 } from '../../services/analyticsService';
 import BiddingQualityBar from './BiddingQualityBar';
 import RecentDecisionsCard from './RecentDecisionsCard';
+import FourDimensionProgress from './FourDimensionProgress';
 
-const LearningDashboard = ({ userId, onPracticeClick }) => {
+const LearningDashboard = ({ userId, onPracticeClick, onStartLearning, onStartFreeplay }) => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -101,6 +103,15 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
         </p>
       </div>
 
+      {/* Four-Dimension Progress Section (NEW) */}
+      <div className="four-dimension-section">
+        <FourDimensionProgress
+          userId={userId}
+          onStartLearning={onStartLearning}
+          onStartPractice={onStartFreeplay}
+        />
+      </div>
+
       {/* Show welcome message for new players */}
       {!hasAnyData && (
         <div className="empty-dashboard-state" data-testid="dashboard-empty-state">
@@ -120,28 +131,38 @@ const LearningDashboard = ({ userId, onPracticeClick }) => {
         </div>
       )}
 
-      {/* Bidding Stats Bar - only show if has data */}
-      {user_stats && hasBiddingData && (
-        <div className="stats-section">
-          <h3 className="stats-section-title">Bidding</h3>
-          <BiddingStatsBar stats={user_stats} />
-        </div>
-      )}
+      {/* Gamification Stats - collapsed section for detailed metrics */}
+      {hasAnyData && (
+        <details className="detailed-stats-section">
+          <summary className="detailed-stats-toggle">
+            <span>Detailed Statistics</span>
+            <span className="toggle-icon">▼</span>
+          </summary>
 
-      {/* Gameplay Stats Bar - only show if has data */}
-      {gameplay_stats && hasGameplayData && (
-        <div className="stats-section">
-          <h3 className="stats-section-title">Gameplay</h3>
-          <GameplayStatsBar stats={gameplay_stats} />
-        </div>
-      )}
+          {/* Bidding Stats Bar - only show if has data */}
+          {user_stats && hasBiddingData && (
+            <div className="stats-section">
+              <h3 className="stats-section-title">Bidding Gamification</h3>
+              <BiddingStatsBar stats={user_stats} />
+            </div>
+          )}
 
-      {/* Bidding Quality Bar (Phase 1: NEW) - only show if has data */}
-      {bidding_feedback_stats && hasBiddingData && (
-        <div className="stats-section">
-          <h3 className="stats-section-title">Bidding Quality</h3>
-          <BiddingQualityBar stats={bidding_feedback_stats} />
-        </div>
+          {/* Gameplay Stats Bar - only show if has data */}
+          {gameplay_stats && hasGameplayData && (
+            <div className="stats-section">
+              <h3 className="stats-section-title">Gameplay Stats</h3>
+              <GameplayStatsBar stats={gameplay_stats} />
+            </div>
+          )}
+
+          {/* Bidding Quality Bar (Phase 1) - only show if has data */}
+          {bidding_feedback_stats && hasBiddingData && (
+            <div className="stats-section">
+              <h3 className="stats-section-title">Bidding Quality Details</h3>
+              <BiddingQualityBar stats={bidding_feedback_stats} />
+            </div>
+          )}
+        </details>
       )}
 
       {/* Dashboard Grid */}
