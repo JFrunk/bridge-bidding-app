@@ -1100,9 +1100,19 @@ def get_next_bid():
         data = request.get_json()
         print(f"🔍 DEBUG: Received data: {data}")
         print(f"🔍 DEBUG: Keys in data: {list(data.keys()) if data else 'None'}")
-        auction_history, current_player = data['auction_history'], data['current_player']
+        auction_history_raw, current_player = data['auction_history'], data['current_player']
         explanation_level = data.get('explanation_level', 'detailed')  # simple, detailed, or expert
         dealer = data.get('dealer')  # Get dealer from frontend
+
+        # Normalize auction history: frontend may send {bid, explanation} objects or plain strings
+        # Backend expects list of bid strings: ["1NT", "Pass", ...]
+        auction_history = []
+        for item in auction_history_raw:
+            if isinstance(item, dict):
+                bid = item.get('bid')
+                auction_history.append(bid if bid else 'Pass')  # Handle None/missing
+            else:
+                auction_history.append(item if item else 'Pass')  # Handle None strings
 
         # For non-South players (hidden hands), use convention_only to avoid revealing hand specifics
         if current_player != 'South':
@@ -1146,7 +1156,15 @@ def get_next_bid_structured():
     state = get_state()
     try:
         data = request.get_json()
-        auction_history, current_player = data['auction_history'], data['current_player']
+        auction_history_raw, current_player = data['auction_history'], data['current_player']
+
+        # Normalize auction history: frontend may send {bid, explanation} objects or plain strings
+        def normalize_bid(item):
+            if isinstance(item, dict):
+                bid = item.get('bid')
+                return bid if bid else 'Pass'
+            return item if item else 'Pass'
+        auction_history = [normalize_bid(item) for item in auction_history_raw]
 
         player_hand = state.deal[current_player]
         if not player_hand:
@@ -1170,8 +1188,17 @@ def get_feedback():
     state = get_state()
     data = request.get_json()
     try:
-        auction_history = data['auction_history']
+        auction_history_raw = data['auction_history']
         explanation_level = data.get('explanation_level', 'detailed')  # simple, detailed, or expert
+
+        # Normalize auction history: frontend may send {bid, explanation} objects or plain strings
+        def normalize_bid(item):
+            if isinstance(item, dict):
+                bid = item.get('bid')
+                return bid if bid else 'Pass'
+            return item if item else 'Pass'
+        auction_history = [normalize_bid(item) for item in auction_history_raw]
+
         user_bid, auction_before_user_bid = auction_history[-1], auction_history[:-1]
         user_hand = state.deal['South']
         optimal_bid, explanation = engine.get_next_bid(user_hand, auction_before_user_bid, 'South',
@@ -1277,8 +1304,16 @@ def evaluate_bid():
 
         # Required parameters
         user_bid = data.get('user_bid')
-        auction_history = data.get('auction_history', [])
+        auction_history_raw = data.get('auction_history', [])
         current_player = data.get('current_player', 'South')
+
+        # Normalize auction history: frontend may send {bid, explanation} objects or plain strings
+        def normalize_bid(item):
+            if isinstance(item, dict):
+                bid = item.get('bid')
+                return bid if bid else 'Pass'
+            return item if item else 'Pass'
+        auction_history = [normalize_bid(item) for item in auction_history_raw]
 
         # Optional parameters
         user_id = data.get('user_id', 1)  # Default user
