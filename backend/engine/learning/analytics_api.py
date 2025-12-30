@@ -994,6 +994,349 @@ def get_user_info():
 # REGISTER ENDPOINTS
 # ============================================================================
 
+# ============================================================================
+# FOUR-DIMENSION PROGRESS ENDPOINT
+# ============================================================================
+
+def get_four_dimension_progress():
+    """
+    GET /api/analytics/four-dimension-progress?user_id=<id>
+
+    Get comprehensive four-dimension learning progress:
+    1. Bid Learning Journey (structured curriculum progress)
+    2. Bid Practice Quality (freeplay + conventions)
+    3. Play Learning Journey (card play curriculum)
+    4. Play Practice Quality (gameplay performance)
+
+    Returns data optimized for dashboard visualization.
+    """
+    from engine.learning.skill_tree import get_skill_tree_manager
+    from engine.learning.play_skill_tree import get_play_skill_tree_manager
+    from engine.learning.learning_path_api import (
+        get_user_completed_skills,
+        get_user_mastered_conventions,
+        get_user_completed_play_skills
+    )
+    from engine.ai.conventions.convention_registry import get_convention_registry
+
+    user_id = request.args.get('user_id', type=int)
+
+    if not user_id:
+        return jsonify({'error': 'user_id required'}), 400
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # =====================================================================
+        # 1. BID LEARNING JOURNEY
+        # =====================================================================
+        bid_tree_manager = get_skill_tree_manager()
+        completed_skills = get_user_completed_skills(user_id)
+        mastered_conventions = get_user_mastered_conventions(user_id)
+
+        user_progress = {
+            'completed_skills': completed_skills,
+            'mastered_conventions': mastered_conventions
+        }
+
+        bid_level_progress = bid_tree_manager.get_user_skill_tree_progress(user_progress)
+
+        # Find current level and calculate totals
+        bid_current_level = None
+        bid_current_level_name = None
+        bid_skills_in_level = 0
+        bid_skills_completed_in_level = 0
+        bid_total_levels = 9  # Levels 0-8
+        bid_levels_completed = 0
+        bid_total_skills = 0
+        bid_total_skills_mastered = len(completed_skills) + len(mastered_conventions)
+
+        for level_id, progress in bid_level_progress.items():
+            bid_total_skills += progress['total']
+            if progress['completed'] == progress['total']:
+                bid_levels_completed += 1
+            elif progress['unlocked'] and bid_current_level is None:
+                bid_current_level = progress['level_number']
+                bid_current_level_name = progress['name']
+                bid_skills_in_level = progress['total']
+                bid_skills_completed_in_level = progress['completed']
+
+        # Get next skill to practice
+        bid_next_skill = None
+        if bid_current_level is not None:
+            level_id = bid_tree_manager.get_level_id_by_number(bid_current_level)
+            level_data = bid_tree_manager.get_level(level_id)
+            if level_data:
+                if 'skills' in level_data:
+                    for skill in level_data['skills']:
+                        if skill.id not in completed_skills:
+                            bid_next_skill = {'id': skill.id, 'name': skill.name}
+                            break
+                elif 'conventions' in level_data:
+                    for conv_id in level_data['conventions']:
+                        if conv_id not in mastered_conventions:
+                            registry = get_convention_registry()
+                            conv = registry.get_convention(conv_id)
+                            if conv:
+                                bid_next_skill = {'id': conv_id, 'name': conv.name}
+                            break
+
+        bid_learning_journey = {
+            'current_level': bid_current_level if bid_current_level is not None else 0,
+            'current_level_name': bid_current_level_name or 'Level 0: Foundations',
+            'skills_in_level': bid_skills_in_level,
+            'skills_completed_in_level': bid_skills_completed_in_level,
+            'total_levels': bid_total_levels,
+            'levels_completed': bid_levels_completed,
+            'total_skills_mastered': bid_total_skills_mastered,
+            'next_skill': bid_next_skill,
+            'progress_percentage': round(bid_total_skills_mastered / bid_total_skills * 100, 1) if bid_total_skills > 0 else 0,
+            'level_progress': {
+                level_id: {
+                    'level': p['level_number'],
+                    'name': p['name'],
+                    'completed': p['completed'],
+                    'total': p['total'],
+                    'unlocked': p['unlocked'],
+                    'is_convention_group': p['is_convention_group']
+                }
+                for level_id, p in bid_level_progress.items()
+            }
+        }
+
+        # =====================================================================
+        # 2. BID PRACTICE QUALITY (Including Conventions)
+        # =====================================================================
+        bidding_feedback_stats = get_bidding_feedback_stats_for_user(user_id)
+
+        # Get convention mastery details
+        registry = get_convention_registry()
+        convention_mastery = []
+
+        # Get all convention progress
+        try:
+            cursor.execute("""
+                SELECT convention_id, status, accuracy, attempts, last_practiced
+                FROM user_convention_progress
+                WHERE user_id = ?
+                ORDER BY last_practiced DESC
+            """, (user_id,))
+
+            for row in cursor.fetchall():
+                conv = registry.get_convention(row['convention_id'])
+                if conv:
+                    convention_mastery.append({
+                        'id': row['convention_id'],
+                        'name': conv.name,
+                        'level': conv.level,
+                        'accuracy': round(row['accuracy'] * 100, 1) if row['accuracy'] else 0,
+                        'attempts': row['attempts'] or 0,
+                        'status': row['status'],
+                        'last_practiced': row['last_practiced']
+                    })
+        except Exception:
+            pass  # Table might not exist
+
+        # Get error category breakdown
+        error_heatmap = {}
+        try:
+            cursor.execute(f"""
+                SELECT error_category, COUNT(*) as count
+                FROM bidding_decisions
+                WHERE user_id = ?
+                  AND error_category IS NOT NULL
+                  AND timestamp >= {date_subtract(30)}
+                GROUP BY error_category
+                ORDER BY count DESC
+            """, (user_id,))
+
+            total_errors = 0
+            for row in cursor.fetchall():
+                error_heatmap[row['error_category']] = row['count']
+                total_errors += row['count']
+
+            # Convert to rates
+            if total_errors > 0:
+                for cat in error_heatmap:
+                    error_heatmap[cat] = round(error_heatmap[cat] / total_errors, 3)
+        except Exception:
+            pass
+
+        # Find weakest convention (lowest accuracy with attempts)
+        weakest_convention = None
+        if convention_mastery:
+            practiced_convs = [c for c in convention_mastery if c['attempts'] >= 3]
+            if practiced_convs:
+                weakest_convention = min(practiced_convs, key=lambda x: x['accuracy'])
+
+        bid_practice_quality = {
+            'overall_accuracy': round(bidding_feedback_stats.get('avg_score', 0) / 10 * 100, 1),
+            'avg_score': bidding_feedback_stats.get('avg_score', 0),
+            'total_decisions': bidding_feedback_stats.get('total_decisions', 0),
+            'optimal_rate': round(bidding_feedback_stats.get('optimal_rate', 0) * 100, 1),
+            'error_rate': round(bidding_feedback_stats.get('error_rate', 0) * 100, 1),
+            'recent_trend': bidding_feedback_stats.get('recent_trend', 'stable'),
+            'convention_mastery': convention_mastery,
+            'conventions_mastered': len([c for c in convention_mastery if c['status'] == 'mastered']),
+            'conventions_in_progress': len([c for c in convention_mastery if c['status'] == 'in_progress']),
+            'error_heatmap': error_heatmap,
+            'weakest_convention': weakest_convention
+        }
+
+        # =====================================================================
+        # 3. PLAY LEARNING JOURNEY
+        # =====================================================================
+        play_tree_manager = get_play_skill_tree_manager()
+        completed_play_skills = get_user_completed_play_skills(user_id)
+
+        play_user_progress = {'completed_play_skills': completed_play_skills}
+        play_level_progress = play_tree_manager.get_user_skill_tree_progress(play_user_progress)
+
+        # Find current play level and calculate totals
+        play_current_level = None
+        play_current_level_name = None
+        play_skills_in_level = 0
+        play_skills_completed_in_level = 0
+        play_total_levels = 9  # Levels 0-8
+        play_levels_completed = 0
+        play_total_skills = 0
+        play_total_skills_mastered = len(completed_play_skills)
+
+        for level_id, progress in play_level_progress.items():
+            play_total_skills += progress['total']
+            if progress['completed'] == progress['total']:
+                play_levels_completed += 1
+            elif progress['unlocked'] and play_current_level is None:
+                play_current_level = progress['level_number']
+                play_current_level_name = progress['name']
+                play_skills_in_level = progress['total']
+                play_skills_completed_in_level = progress['completed']
+
+        # Get next play skill to practice
+        play_next_skill = None
+        if play_current_level is not None:
+            level_id = play_tree_manager.get_level_id_by_number(play_current_level)
+            level_data = play_tree_manager.get_level(level_id)
+            if level_data and 'skills' in level_data:
+                for skill in level_data['skills']:
+                    if skill.id not in completed_play_skills:
+                        play_next_skill = {'id': skill.id, 'name': skill.name}
+                        break
+
+        play_learning_journey = {
+            'current_level': play_current_level if play_current_level is not None else 0,
+            'current_level_name': play_current_level_name or 'Level 0: Play Foundations',
+            'skills_in_level': play_skills_in_level,
+            'skills_completed_in_level': play_skills_completed_in_level,
+            'total_levels': play_total_levels,
+            'levels_completed': play_levels_completed,
+            'total_skills_mastered': play_total_skills_mastered,
+            'next_skill': play_next_skill,
+            'progress_percentage': round(play_total_skills_mastered / play_total_skills * 100, 1) if play_total_skills > 0 else 0,
+            'level_progress': {
+                level_id: {
+                    'level': p['level_number'],
+                    'name': p['name'],
+                    'completed': p['completed'],
+                    'total': p['total'],
+                    'unlocked': p['unlocked']
+                }
+                for level_id, p in play_level_progress.items()
+            }
+        }
+
+        # =====================================================================
+        # 4. PLAY PRACTICE QUALITY (Gameplay Performance)
+        # =====================================================================
+        gameplay_stats = get_gameplay_stats_for_user(user_id)
+        play_feedback_stats = get_play_feedback_stats_for_user(user_id)
+
+        # Get contract type breakdown
+        contracts_by_type = {
+            'nt_partscore': {'count': 0, 'made': 0},
+            'nt_game': {'count': 0, 'made': 0},
+            'suit_partscore': {'count': 0, 'made': 0},
+            'suit_game': {'count': 0, 'made': 0},
+            'slam': {'count': 0, 'made': 0}
+        }
+
+        try:
+            cursor.execute("""
+                SELECT
+                    contract_level,
+                    contract_suit,
+                    made,
+                    COUNT(*) as count
+                FROM session_hands sh
+                JOIN game_sessions gs ON sh.session_id = gs.id
+                WHERE gs.user_id = ?
+                  AND sh.user_was_declarer = TRUE
+                  AND sh.contract_level IS NOT NULL
+                GROUP BY contract_level, contract_suit, made
+            """, (user_id,))
+
+            for row in cursor.fetchall():
+                level = row['contract_level'] or 0
+                suit = row['contract_suit'] or 'NT'
+                made = row['made']
+                count = row['count']
+
+                # Categorize
+                if level >= 6:
+                    key = 'slam'
+                elif suit == 'NT':
+                    key = 'nt_game' if level >= 3 else 'nt_partscore'
+                else:
+                    key = 'suit_game' if level >= 4 else 'suit_partscore'
+
+                contracts_by_type[key]['count'] += count
+                if made:
+                    contracts_by_type[key]['made'] += count
+        except Exception:
+            pass
+
+        # Calculate success rates per type
+        for key in contracts_by_type:
+            ct = contracts_by_type[key]
+            ct['success_rate'] = round(ct['made'] / ct['count'] * 100, 1) if ct['count'] > 0 else 0
+
+        play_practice_quality = {
+            'declarer_success_rate': round(gameplay_stats.get('declarer_success_rate', 0) * 100, 1),
+            'recent_success_rate': round(gameplay_stats.get('recent_declarer_success_rate', 0) * 100, 1),
+            'total_hands_played': gameplay_stats.get('total_hands_played', 0),
+            'hands_as_declarer': gameplay_stats.get('hands_as_declarer', 0),
+            'contracts_made': gameplay_stats.get('contracts_made', 0),
+            'contracts_failed': gameplay_stats.get('contracts_failed', 0),
+            'avg_tricks': gameplay_stats.get('avg_tricks_as_declarer', 0),
+            'contracts_by_type': contracts_by_type,
+            'play_decision_stats': {
+                'avg_score': play_feedback_stats.get('avg_score', 0),
+                'optimal_rate': round(play_feedback_stats.get('optimal_rate', 0) * 100, 1),
+                'blunder_rate': round(play_feedback_stats.get('blunder_rate', 0) * 100, 1),
+                'recent_trend': play_feedback_stats.get('recent_trend', 'stable')
+            },
+            'recent_trend': 'improving' if gameplay_stats.get('recent_declarer_success_rate', 0) > gameplay_stats.get('declarer_success_rate', 0) + 0.05 else (
+                'declining' if gameplay_stats.get('recent_declarer_success_rate', 0) < gameplay_stats.get('declarer_success_rate', 0) - 0.05 else 'stable'
+            )
+        }
+
+        conn.close()
+
+        return jsonify({
+            'user_id': user_id,
+            'bid_learning_journey': bid_learning_journey,
+            'bid_practice_quality': bid_practice_quality,
+            'play_learning_journey': play_learning_journey,
+            'play_practice_quality': play_practice_quality
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 def register_analytics_endpoints(app):
     """
     Register all analytics endpoints with Flask app.
@@ -1013,9 +1356,11 @@ def register_analytics_endpoints(app):
     app.route('/api/analytics/celebrations', methods=['GET'])(get_celebrations)
     app.route('/api/analytics/acknowledge-celebration', methods=['POST'])(acknowledge_celebration)
     app.route('/api/analytics/run-analysis', methods=['POST'])(run_analysis)
+    app.route('/api/analytics/four-dimension-progress', methods=['GET'])(get_four_dimension_progress)
 
     # User management
     app.route('/api/user/create', methods=['POST'])(create_user)
     app.route('/api/user/info', methods=['GET'])(get_user_info)
 
     print("✓ Analytics API endpoints registered")
+    print("✓ Four-dimension progress endpoint registered")

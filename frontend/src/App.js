@@ -16,6 +16,7 @@ import { PlayWorkspace } from './components/workspaces/PlayWorkspace';
 import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SimpleLogin } from './components/auth/SimpleLogin';
+import { RegistrationPrompt } from './components/auth/RegistrationPrompt';
 import DDSStatusIndicator from './components/DDSStatusIndicator';
 import AIDifficultySelector from './components/AIDifficultySelector';
 import { getSessionHeaders } from './utils/sessionHelper';
@@ -185,8 +186,19 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer })
 // Note: BiddingBox component migrated to components/bridge/BiddingBox.jsx
 
 function App() {
-  // Auth state
-  const { user, logout, isAuthenticated, loading: authLoading, userId } = useAuth();
+  // Auth state - now includes registration prompt features
+  const {
+    user,
+    logout,
+    isAuthenticated,
+    loading: authLoading,
+    userId,
+    isGuest,
+    showRegistrationPrompt,
+    dismissRegistrationPrompt,
+    recordHandCompleted,
+    promptForRegistration
+  } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
 
   const [hand, setHand] = useState([]);
@@ -257,12 +269,8 @@ function App() {
     return bids.slice(-3).map(b => b.bid).join(',') === 'Pass,Pass,Pass';
   }, []);
 
-  // Show login on first visit if not authenticated
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      setShowLogin(true);
-    }
-  }, [authLoading, isAuthenticated]);
+  // No longer auto-show login - users start as guests and can register later
+  // The RegistrationPrompt will appear after they've played a few hands
 
   // Card play state
   const [gamePhase, setGamePhase] = useState('bidding'); // 'bidding' or 'playing'
@@ -822,6 +830,7 @@ ${otherCommands}`;
               const scoreData = await scoreResponse.json();
               console.log('✅ Score calculated:', scoreData);
               setScoreData(scoreData);
+              recordHandCompleted();
             } else {
               const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
               console.error('❌ Failed to get score:', errorData);
@@ -968,6 +977,7 @@ ${otherCommands}`;
               const scoreData = await scoreResponse.json();
               console.log('✅ Score calculated:', scoreData);
               setScoreData(scoreData);
+              recordHandCompleted();
             } else {
               const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
               console.error('❌ Failed to get score:', errorData);
@@ -1120,6 +1130,7 @@ ${otherCommands}`;
               const scoreData = await scoreResponse.json();
               console.log('✅ Score calculated:', scoreData);
               setScoreData(scoreData);
+              recordHandCompleted();
             } else {
               const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
               console.error('❌ Failed to get score:', errorData);
@@ -1524,6 +1535,12 @@ ${otherCommands}`;
   };
 
   const handleUserBid = async (bid) => {
+    // CRITICAL VALIDATION: Check if auction is already complete
+    if (isAuctionOver(auction)) {
+      console.warn('🚫 User tried to bid after auction ended');
+      return;
+    }
+
     // CRITICAL VALIDATION: Check if it's actually South's turn based on dealer rotation
     const expectedBidder = calculateExpectedBidder(dealer, auction.length);
     if (expectedBidder !== 'South') {
@@ -2021,6 +2038,7 @@ ${otherCommands}`;
                 const scoreData = await scoreResponse.json();
                 console.log('✅ Score calculated after AI play:', scoreData);
                 setScoreData(scoreData);
+                recordHandCompleted();
               } else {
                 const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
                 console.error('❌ Failed to get score after AI play:', errorData);
@@ -2152,6 +2170,14 @@ ${otherCommands}`;
 
       {/* Login Modal */}
       {showLogin && <SimpleLogin onClose={() => setShowLogin(false)} />}
+
+      {/* Registration Prompt - appears after guest plays a few hands */}
+      {showRegistrationPrompt && (
+        <RegistrationPrompt
+          message="You're making great progress! Create an account to save your results and track your improvement."
+          onClose={() => dismissRegistrationPrompt(false)}
+        />
+      )}
 
       {/* Glossary Drawer */}
       <GlossaryDrawer
@@ -2327,7 +2353,7 @@ ${otherCommands}`;
 
       <div className="action-area">
         {gamePhase === 'bidding' && (
-          <BiddingBoxComponent onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding} auction={auction} />
+          <BiddingBoxComponent onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding || isAuctionOver(auction)} auction={auction} />
         )}
         <div className="controls-section">
           {/* Game controls - Context-aware based on game phase */}
@@ -2467,6 +2493,21 @@ ${otherCommands}`;
               onPracticeClick={(rec) => {
                 console.log('Practice recommendation:', rec);
                 setShowLearningDashboard(false);
+              }}
+              onStartLearning={(track) => {
+                console.log('Start learning:', track);
+                setShowLearningDashboard(false);
+                setShowLearningMode(true);
+              }}
+              onStartFreeplay={(track) => {
+                console.log('Start freeplay:', track);
+                setShowLearningDashboard(false);
+                if (track === 'play') {
+                  setCurrentWorkspace('play');
+                } else {
+                  setCurrentWorkspace('bid');
+                  dealNewHand();
+                }
               }}
             />
           </div>
