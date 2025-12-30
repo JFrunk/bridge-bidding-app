@@ -1,6 +1,6 @@
 Deploy current development branch to production (main):
 
-⚠️  **CRITICAL: This deploys to live production on Render**
+⚠️  **CRITICAL: This deploys to live production on Oracle Cloud**
 
 **SAFETY CHECKS FIRST:**
 
@@ -24,20 +24,40 @@ Deploy current development branch to production (main):
 11. **Database Migration Check:**
     - If database schema changed, document migration steps
     - Remind user to run `python3 backend/database/init_all_tables.py` on production
-12. Push to trigger Render deploy: `git push origin main`
-13. Display Render deployment URL to monitor
-14. Checkout development: `git checkout development`
+12. Push to GitHub: `git push origin main`
+13. Checkout development: `git checkout development`
+
+**ORACLE CLOUD DEPLOYMENT:**
+
+The server has auto-deploy configured. After pushing to main:
+- If webhook is set up: Deployment happens automatically within 2-3 minutes
+- If no webhook: SSH to server and run: `bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update`
+
+Production URL: https://app.mybridgebuddy.com
 
 **VERIFICATION:**
 
-15. Wait for Render deployment to complete (check dashboard)
-16. Visit production URL and verify:
+14. Wait 2-3 minutes for deployment to complete
+15. Visit production URL and verify:
     - [ ] Dashboard loads without errors
     - [ ] Users can login
     - [ ] New deal works
     - [ ] Bidding feedback works
     - [ ] Dashboard shows statistics
-17. Monitor error logs for 5 minutes: `heroku logs --tail` or Render dashboard
+    - [ ] DDS is active (check /api/dds-test endpoint)
+16. Monitor logs: SSH to server, run `bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh logs`
+
+**QUICK VERIFICATION COMMANDS:**
+```bash
+# Test API is responding
+curl -s https://app.mybridgebuddy.com/api/scenarios | head -c 100
+
+# Test DDS is working
+curl -s https://app.mybridgebuddy.com/api/dds-test | python3 -m json.tool
+
+# Check AI status
+curl -s https://app.mybridgebuddy.com/api/ai/status | python3 -m json.tool
+```
 
 **ROLLBACK (if issues found):**
 ```bash
@@ -47,6 +67,8 @@ git push origin main
 git checkout development
 ```
 
+Then SSH to server and run: `bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update`
+
 ⛔ **Do NOT deploy if:**
 - Any safety checks fail
 - Tests are failing
@@ -54,4 +76,4 @@ git checkout development
 - Uncommitted changes exist
 - User hasn't confirmed deployment
 
-Reference: CLAUDE.md Deploying to Production section
+Reference: CLAUDE.md Deploying to Production section, deploy/oracle/README.md
