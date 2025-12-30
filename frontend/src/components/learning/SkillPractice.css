@@ -8,6 +8,8 @@
   color: #fff;
   display: flex;
   flex-direction: column;
+  /* Ensure content isn't cut off at the top on iOS/Safari */
+  padding-top: env(safe-area-inset-top, 0);
 }
 
 /* Header */
@@ -647,6 +649,31 @@
   font-style: italic;
 }
 
+/* Feedback Actions Container */
+.feedback-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.replay-button {
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.replay-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 .continue-button {
   padding: 14px 40px;
   font-size: 16px;
@@ -671,6 +698,178 @@
   justify-content: center;
   min-height: 50vh;
   gap: 20px;
+}
+
+/* ==========================================
+   PLAY SKILL PRACTICE STYLES
+   ========================================== */
+
+/* Play Deal Display - Contract Info */
+.play-deal-display {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.contract-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  border-radius: 12px;
+}
+
+.contract-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.contract-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #4CAF50;
+}
+
+.combined-hcp {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Dual Hand Display - Side by Side */
+.dual-hand-display {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.dual-hand-display .hand-card {
+  flex: 0 1 auto;
+  min-width: 280px;
+}
+
+.dummy-hand h3 {
+  color: rgba(100, 180, 255, 0.9);
+}
+
+.declarer-hand h3 {
+  color: rgba(76, 175, 80, 0.9);
+}
+
+/* Play Answer Area - Number Input */
+.play-answer-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.play-number-input {
+  max-width: 120px;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.number-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: 400px;
+}
+
+.number-shortcut {
+  width: 44px;
+  height: 44px;
+  font-size: 16px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.number-shortcut:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.number-shortcut.selected {
+  background: #4CAF50;
+  border-color: #4CAF50;
+}
+
+/* Direction Buttons (for finesse direction) */
+.direction-buttons {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.direction-button {
+  padding: 20px 30px;
+  font-size: 16px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.direction-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.direction-button.selected {
+  background: #4CAF50;
+  border-color: #4CAF50;
+}
+
+/* Choice Buttons (for finesse or drop) */
+.choice-buttons {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.choice-button {
+  padding: 24px 40px;
+  font-size: 18px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.choice-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.choice-button.selected {
+  background: #4CAF50;
+  border-color: #4CAF50;
 }
 
 /* Responsive */
@@ -705,5 +904,43 @@
 
   .bid-shortcuts {
     max-width: 300px;
+  }
+
+  /* Play skill responsive */
+  .dual-hand-display {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .dual-hand-display .hand-card {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .contract-info {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .combined-hcp {
+    border-left: none;
+    padding-left: 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .number-shortcuts {
+    max-width: 100%;
+  }
+
+  .direction-buttons,
+  .choice-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .direction-button,
+  .choice-button {
+    width: 100%;
   }
 }

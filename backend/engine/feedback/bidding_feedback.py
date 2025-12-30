@@ -28,6 +28,19 @@ from engine.hand import Hand
 from engine.ai.bid_explanation import BidExplanation
 from engine.learning.error_categorizer import get_error_categorizer
 
+# Import bidding modules for generating acceptable alternatives
+from engine.overcalls import OvercallModule
+from engine.ai.conventions.takeout_doubles import TakeoutDoubleConvention
+from engine.ai.conventions.michaels_cuebid import MichaelsCuebidConvention
+from engine.ai.conventions.unusual_2nt import Unusual2NTConvention
+from engine.ai.conventions.negative_doubles import NegativeDoubleConvention
+from engine.opening_bids import OpeningBidsModule
+from engine.ai.conventions.preempts import PreemptConvention
+from engine.responses import ResponseModule
+from engine.ai.conventions.stayman import StaymanConvention
+from engine.ai.conventions.jacoby_transfers import JacobyConvention
+from engine.ai.conventions.blackwood import BlackwoodConvention
+
 
 class CorrectnessLevel(Enum):
     """Classification of bid correctness"""
@@ -104,9 +117,19 @@ class BiddingFeedback:
             return msg
 
         elif self.correctness == CorrectnessLevel.ACCEPTABLE:
-            msg = f"✓ {self.user_bid} is acceptable. {self.reasoning}"
-            if verbosity == "detailed":
-                msg += f"\n\nNote: {self.optimal_bid} is slightly more precise."
+            msg = f"✓ {self.user_bid} is acceptable."
+            if self.reasoning:
+                msg += f" {self.reasoning}"
+            # Always show the optimal alternative for learning purposes
+            if self.optimal_bid and self.optimal_bid != self.user_bid:
+                if verbosity == "minimal":
+                    msg += f" (Optimal: {self.optimal_bid})"
+                else:
+                    msg += f"\n\nNote: {self.optimal_bid} is slightly more precise"
+                    if self.helpful_hint:
+                        msg += f" — {self.helpful_hint}"
+                    else:
+                        msg += "."
             return msg
 
         elif self.correctness == CorrectnessLevel.SUBOPTIMAL:
@@ -207,7 +230,7 @@ class BiddingFeedbackGenerator:
         if error:
             helpful_hint = error.helpful_hint
         elif correctness == CorrectnessLevel.ACCEPTABLE:
-            helpful_hint = f"{optimal_bid} is slightly more standard in SAYC."
+            helpful_hint = self._generate_acceptable_hint(user_bid, optimal_bid, hand, auction_context)
         else:
             helpful_hint = ""
 
@@ -374,22 +397,230 @@ class BiddingFeedbackGenerator:
         """
         Get list of bids that are acceptable (not perfect, but reasonable)
 
-        Examples:
-        - Optimal: 1NT, Acceptable: 1♣ (with 3-3-3-4 15 HCP)
-        - Optimal: 4♥, Acceptable: 3♥ (borderline game values)
+        This method runs multiple bidding modules to find valid alternative bids.
+        A bid is acceptable if:
+        1. A recognized bidding module would recommend it
+        2. It's legal given the auction
+        3. It's reasonably close in meaning/strength to the optimal bid
 
-        For now, returns empty list. Can be enhanced later with
-        bidding engine integration.
+        Examples:
+        - Optimal: 1NT overcall, Acceptable: X (takeout double) - both show ~15+ HCP
+        - Optimal: 4♥, Acceptable: 3♥ (borderline game values)
+        - Optimal: 1♠, Acceptable: 1♥ (both show 5-card major opening)
         """
-        # Future enhancement: Use bidding engine to generate alternatives
-        return []
+        alternatives = []
+
+        # Build features dict for module evaluation
+        features = self._build_features_for_alternatives(hand, auction_context)
+        if not features:
+            return []
+
+        # Get relevant modules based on auction state
+        modules_to_check = self._get_relevant_modules(auction_context, features)
+
+        # Run each module and collect valid alternative bids
+        for module in modules_to_check:
+            try:
+                result = module.evaluate(hand, features)
+                if result:
+                    bid = result[0]
+                    # Skip if same as optimal or already in alternatives
+                    if bid == optimal_bid or bid in alternatives:
+                        continue
+                    # Check if it's a reasonable alternative
+                    if self._is_reasonable_alternative(bid, optimal_bid, hand, auction_context):
+                        alternatives.append(bid)
+            except Exception as e:
+                # Don't fail feedback generation if a module errors
+                print(f"Warning: Module {type(module).__name__} failed: {e}")
+                continue
+
+        return alternatives
+
+    def _build_features_for_alternatives(self, hand: Hand, auction_context: Dict) -> Optional[Dict]:
+        """Build the features dict needed for module evaluation"""
+        try:
+            from engine.ai.feature_extractor import extract_features
+
+            history = auction_context.get('history', [])
+            current_player = auction_context.get('current_player', 'South')
+            vulnerability = auction_context.get('vulnerability', 'None')
+            dealer = auction_context.get('dealer', 'North')
+
+            return extract_features(hand, history, current_player, vulnerability, dealer)
+        except Exception as e:
+            print(f"Warning: Could not build features for alternatives: {e}")
+            return None
+
+    def _get_relevant_modules(self, auction_context: Dict, features: Dict) -> List:
+        """
+        Determine which bidding modules are relevant for this auction state.
+
+        We check modules that might produce valid alternative bids based on:
+        - Opening vs competitive situation
+        - Partnership vs opponent auction
+        - What conventions might apply
+        """
+        modules = []
+        auction = features.get('auction_features', {})
+
+        # Competitive situation (opponent opened)
+        if auction.get('opener_relationship') == 'Opponent':
+            # All competitive bidding options
+            modules.extend([
+                OvercallModule(),
+                TakeoutDoubleConvention(),
+                MichaelsCuebidConvention(),
+                Unusual2NTConvention(),
+            ])
+
+        # Partner opened - response options
+        elif auction.get('opener_relationship') == 'Partner':
+            modules.append(ResponseModule())
+            # Check for conventions over NT
+            opening_bid = auction.get('opening_bid', '')
+            if opening_bid in ['1NT', '2NT']:
+                modules.extend([
+                    StaymanConvention(),
+                    JacobyConvention(),
+                ])
+            # Slam conventions
+            modules.append(BlackwoodConvention())
+            # Negative doubles if opponent interfered
+            modules.append(NegativeDoubleConvention())
+
+        # Opening situation
+        elif not auction.get('opener'):
+            modules.extend([
+                OpeningBidsModule(),
+                PreemptConvention(),
+            ])
+
+        return modules
+
+    def _is_reasonable_alternative(self, bid: str, optimal_bid: str,
+                                   hand: Hand, auction_context: Dict) -> bool:
+        """
+        Check if a bid is a reasonable alternative to the optimal bid.
+
+        Criteria:
+        1. Same general category (competitive action, game try, slam try, etc.)
+        2. Not wildly different in level (within 1 level usually)
+        3. Both legal
+        4. Makes bridge sense (e.g., 1NT and X are both valid over opponent's 1♦)
+        """
+        # Special case: Pass is only acceptable if optimal is also conservative
+        if bid == 'Pass':
+            # Pass is acceptable alternative to weak bids or when borderline
+            optimal_level = self._parse_bid_level(optimal_bid)
+            if optimal_level and optimal_level >= 3:
+                return False  # Don't accept Pass as alternative to game+ bids
+            # Pass could be acceptable for borderline hands
+            if hand.hcp < 12:
+                return True
+            return False
+
+        # Double (X) and NT overcalls are reasonable alternatives to each other
+        # when both show similar strength in competitive situations
+        competitive_equivalents = {
+            ('X', '1NT'), ('1NT', 'X'),
+            ('X', '2NT'), ('2NT', 'X'),
+        }
+        if (bid, optimal_bid) in competitive_equivalents or (optimal_bid, bid) in competitive_equivalents:
+            return True
+
+        # Same suit at different levels (game try vs invitation)
+        bid_suit = self._extract_suit(bid)
+        optimal_suit = self._extract_suit(optimal_bid)
+        bid_level = self._parse_bid_level(bid)
+        optimal_level = self._parse_bid_level(optimal_bid)
+
+        if bid_suit and optimal_suit and bid_suit == optimal_suit:
+            # Same suit, within 1 level = acceptable
+            if bid_level and optimal_level and abs(bid_level - optimal_level) <= 1:
+                return True
+
+        # Different suits at same level in opening/response situations
+        # (e.g., 1♥ vs 1♠ as opening bids)
+        if bid_level and optimal_level and bid_level == optimal_level == 1:
+            if bid_suit and optimal_suit:
+                # Both are 1-level suit bids - reasonable alternatives
+                return True
+
+        # NT vs suit at same/similar level
+        if bid_level and optimal_level and abs(bid_level - optimal_level) <= 1:
+            if (bid_suit == 'NT' or optimal_suit == 'NT'):
+                return True
+
+        # Two-suited bids are alternatives to each other
+        two_suited_bids = {'X', 'michaels', 'unusual_2nt'}
+        # Michaels cuebid is 2 of opponent's suit, Unusual 2NT is 2NT
+        # These are alternatives to each other and to takeout double
+
+        return False
+
+    def _extract_suit(self, bid: str) -> Optional[str]:
+        """Extract suit from bid string"""
+        if not bid or bid in ['Pass', 'X', 'XX']:
+            return None
+        if 'NT' in bid:
+            return 'NT'
+        for suit in ['♠', '♥', '♦', '♣', 'S', 'H', 'D', 'C']:
+            if suit in bid:
+                return suit
+        # Try extracting after level number
+        if len(bid) >= 2:
+            return bid[1:]
+        return None
 
     def _get_alternatives(self,
                          hand: Hand,
                          auction_context: Dict) -> List[str]:
-        """Get alternative bids worth considering"""
-        # Future enhancement
+        """Get alternative bids worth considering (for display purposes)"""
+        # This is used for the alternative_bids field in feedback
+        # We can reuse the acceptable alternatives logic here
         return []
+
+    def _generate_acceptable_hint(self, user_bid: str, optimal_bid: str,
+                                  hand: Hand, auction_context: Dict) -> str:
+        """
+        Generate a helpful hint explaining why the optimal bid is preferred
+        over the acceptable alternative the user chose.
+        """
+        # 1NT vs X (takeout double) - most common case
+        if (user_bid == 'X' and 'NT' in optimal_bid) or (optimal_bid == 'X' and 'NT' in user_bid):
+            if 'NT' in optimal_bid:
+                # User doubled, optimal was NT
+                return f"it shows {hand.hcp} HCP balanced with a stopper, giving partner a clearer picture of your hand."
+            else:
+                # User bid NT, optimal was double
+                return "a takeout double better describes your shape and gets all suits into play."
+
+        # Same suit, different levels (e.g., 3♥ vs 4♥)
+        user_suit = self._extract_suit(user_bid)
+        optimal_suit = self._extract_suit(optimal_bid)
+        user_level = self._parse_bid_level(user_bid)
+        optimal_level = self._parse_bid_level(optimal_bid)
+
+        if user_suit == optimal_suit and user_level and optimal_level:
+            if optimal_level > user_level:
+                return f"with {hand.hcp} HCP and {hand.total_points} total points, you have enough for the higher level."
+            else:
+                return f"the lower level is more cautious and leaves room to explore."
+
+        # Different suits at same level
+        if user_level == optimal_level and user_suit and optimal_suit and user_suit != optimal_suit:
+            if optimal_suit == 'NT':
+                return f"with balanced shape, NT better describes your hand type."
+            else:
+                return f"showing {optimal_suit} first follows standard bidding priorities."
+
+        # Opening bid alternatives
+        if user_level == 1 and optimal_level == 1:
+            return "this follows standard opening bid priorities in SAYC."
+
+        # Default hint
+        return f"{optimal_bid} is slightly more standard in SAYC."
 
     def _extract_key_concept(self, explanation: Optional[BidExplanation]) -> str:
         """Extract the key learning concept from explanation"""

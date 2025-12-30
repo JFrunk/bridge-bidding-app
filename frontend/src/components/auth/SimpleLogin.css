@@ -4,12 +4,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease-in;
+  z-index: var(--z-modal);
+  animation: fadeIn var(--duration-fast) ease-in;
 }
 
 @keyframes fadeIn {
@@ -18,14 +18,14 @@
 }
 
 .simple-login-modal {
-  background: white;
-  border-radius: 12px;
-  padding: 40px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-10);
   max-width: 440px;
   width: 90%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
   position: relative;
-  animation: slideUp 0.3s ease-out;
+  animation: slideUp var(--duration-normal) ease-out;
 }
 
 @keyframes slideUp {
@@ -39,123 +39,123 @@
   }
 }
 
-.close-button {
+.simple-login-modal .close-button {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: var(--space-4);
+  right: var(--space-4);
   background: none;
   border: none;
   font-size: 32px;
-  color: #999;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 0;
   width: 32px;
   height: 32px;
   line-height: 1;
-  transition: color 0.2s;
+  transition: color var(--duration-fast);
 }
 
-.close-button:hover {
-  color: #333;
+.simple-login-modal .close-button:hover {
+  color: var(--text-primary-dark);
 }
 
 .simple-login-modal h2 {
-  margin: 0 0 24px 0;
-  font-size: 24px;
-  color: #1a1a1a;
+  margin: 0 0 var(--space-6) 0;
+  font-size: var(--text-2xl);
+  color: var(--text-primary-dark);
   text-align: center;
 }
 
 .login-method-toggle {
   display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
   background: #f5f5f5;
-  padding: 4px;
-  border-radius: 8px;
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
 }
 
 .toggle-btn {
   flex: 1;
-  padding: 10px;
+  padding: var(--space-3);
   border: none;
   background: transparent;
-  border-radius: 6px;
-  font-size: 15px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
   cursor: pointer;
-  transition: all 0.2s;
-  color: #666;
-  font-weight: 500;
+  transition: all var(--duration-fast);
+  color: var(--text-secondary-dark);
+  font-weight: var(--font-medium);
 }
 
 .toggle-btn.active {
-  background: white;
-  color: #4CAF50;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--bg-card);
+  color: var(--color-success);
+  box-shadow: var(--shadow-sm);
 }
 
 .login-subtitle {
-  color: #666;
-  margin: 0 0 24px 0;
+  color: var(--text-secondary-dark);
+  margin: 0 0 var(--space-6) 0;
   text-align: center;
-  font-size: 15px;
+  font-size: var(--text-base);
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #333;
-  font-size: 14px;
+  margin-bottom: var(--space-2);
+  font-weight: var(--font-medium);
+  color: var(--text-primary-dark);
+  font-size: var(--text-sm);
 }
 
 .form-group input {
   width: 100%;
-  padding: 12px;
+  padding: var(--space-3);
   border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 16px;
-  color: #000; /* Black text for visibility */
-  background-color: #fff; /* White background */
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  color: var(--text-primary-dark);
+  background-color: var(--bg-card);
   box-sizing: border-box;
-  transition: border-color 0.2s;
+  transition: border-color var(--duration-fast);
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #4CAF50;
+  border-color: var(--color-success);
   box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
 
 .input-hint {
   display: block;
-  margin-top: 6px;
-  font-size: 13px;
-  color: #999;
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
 .btn-primary, .btn-secondary {
   width: 100%;
-  padding: 12px;
+  padding: var(--space-3);
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 500;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--duration-fast);
 }
 
 .btn-primary {
-  background: #4CAF50;
-  color: white;
+  background: var(--color-success);
+  color: var(--text-primary);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #45a049;
+  background: var(--color-success-dark);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 }
@@ -170,8 +170,8 @@
 }
 
 .btn-secondary {
-  background: white;
-  color: #666;
+  background: var(--bg-card);
+  color: var(--text-secondary-dark);
   border: 1px solid #ddd;
 }
 
@@ -181,7 +181,7 @@
 }
 
 .divider {
-  margin: 20px 0;
+  margin: var(--space-5) 0;
   text-align: center;
   position: relative;
 }
@@ -197,33 +197,33 @@
 }
 
 .divider span {
-  background: white;
-  padding: 0 12px;
+  background: var(--bg-card);
+  padding: 0 var(--space-3);
   position: relative;
-  color: #999;
-  font-size: 14px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
 }
 
-.error-message {
+.simple-login-modal .error-message {
   background: #ffebee;
-  color: #c62828;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 16px;
-  font-size: 14px;
+  color: var(--color-danger-dark);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
-.error-message::before {
+.simple-login-modal .error-message::before {
   content: '⚠️';
 }
 
 .privacy-note {
-  margin-top: 20px;
-  font-size: 13px;
-  color: #999;
+  margin-top: var(--space-5);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
   text-align: center;
   line-height: 1.6;
 }
@@ -231,11 +231,11 @@
 /* Responsive */
 @media (max-width: 480px) {
   .simple-login-modal {
-    padding: 24px;
+    padding: var(--space-6);
     width: 95%;
   }
 
   .simple-login-modal h2 {
-    font-size: 20px;
+    font-size: var(--text-xl);
   }
 }

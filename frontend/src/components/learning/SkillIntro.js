@@ -3,10 +3,15 @@
  *
  * Shows educational content explaining a skill before the user starts practicing.
  * Helps beginners understand the concept they're about to learn.
+ *
+ * Features:
+ * - Auto-highlights bridge terms with tooltips (TermHighlight)
+ * - Quick access to glossary button
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import './SkillIntro.css';
+import { GlossaryDrawer, TermHighlight } from '../glossary';
 
 // Educational content for each skill
 const SKILL_CONTENT = {
@@ -532,6 +537,293 @@ With good shape and slam interest, use Jacoby 2NT instead.`
   }
 };
 
+// ==========================================
+// PLAY SKILL CONTENT
+// ==========================================
+
+const PLAY_SKILL_CONTENT = {
+  // Level 0: Play Foundations
+  counting_winners: {
+    title: 'Counting Winners',
+    subtitle: 'Know your sure tricks in NT contracts',
+    sections: [
+      {
+        heading: 'What Are Winners?',
+        content: `Winners (or "sure tricks") are cards that will win tricks without giving up the lead.
+In notrump contracts, count your winners first to plan the play.`
+      },
+      {
+        heading: 'Sure Winners Include',
+        content: `• Aces - always winners
+• Kings with the Ace (in either hand)
+• Queens with A-K (solid sequence)
+• Long cards in established suits
+
+Example: A-K-Q-J-x = 5 winners`
+      },
+      {
+        heading: 'The Counting Method',
+        content: `Go suit by suit, counting tricks you can take:
+♠: A-K = 2 winners
+♥: A = 1 winner
+♦: A-K-Q = 3 winners
+♣: A = 1 winner
+Total: 7 winners`
+      }
+    ],
+    practice_tip: 'Count Aces first, then A-K combinations, then solid sequences. In 3NT, you need 9 tricks!'
+  },
+
+  counting_losers: {
+    title: 'Counting Losers',
+    subtitle: 'Essential for suit contracts',
+    sections: [
+      {
+        heading: 'Why Count Losers?',
+        content: `In suit contracts, count losers to plan how to eliminate them.
+Look at the first THREE cards of each suit in declarer's hand (not dummy).`
+      },
+      {
+        heading: 'What Counts as a Loser?',
+        content: `• Small cards without Ace protection = losers
+• K-x = 1 loser (might lose to the Ace)
+• Q-x-x = 2 losers (might lose to A and K)
+• x-x-x = 3 losers
+
+Voids and singletons reduce losers!`
+      },
+      {
+        heading: 'Example Count',
+        content: `♠ A-K-x-x = 1 loser (the x after A-K)
+♥ Q-J-x = 2 losers
+♦ x-x = 2 losers (only count 2, not more)
+♣ A-x-x = 2 losers
+Total: 7 losers`
+      }
+    ],
+    practice_tip: 'In 4♠, you can afford 3 losers. Count from declarer\'s hand only, first 3 cards per suit.'
+  },
+
+  analyzing_the_lead: {
+    title: 'Analyzing the Lead',
+    subtitle: 'Learn from the opening lead',
+    sections: [
+      {
+        heading: 'Standard Leads',
+        content: `The opening lead reveals information:
+• 4th best from longest suit (7-6-5-3 → lead 5)
+• Top of sequence (K-Q-J → lead K)
+• Top of nothing (8-6-3 → lead 8)
+• MUD from 3 small (8-5-3 → lead 5, then 8)`
+      },
+      {
+        heading: 'What the Lead Tells You',
+        content: `A low card (2, 3, 4): Suggests 4+ cards, probably with an honor
+A high card (Q, J, 10): Usually top of a sequence
+A middle card (6, 7, 8): Might be top of nothing or MUD`
+      },
+      {
+        heading: 'Using the Information',
+        content: `If they lead the 4 (4th best):
+They have 3 cards higher, so max 3 cards lower
+Rule of Eleven: 11 - 4 = 7 cards higher than 4 in other hands`
+      }
+    ],
+    practice_tip: 'Use the Rule of Eleven with 4th best leads: 11 minus the card led = cards higher held by others.'
+  },
+
+  // Level 2: Finessing
+  simple_finesse: {
+    title: 'Simple Finesse',
+    subtitle: 'Leading toward honors',
+    sections: [
+      {
+        heading: 'What is a Finesse?',
+        content: `A finesse is an attempt to win a trick with a card that isn't the highest.
+You "lead TOWARD" the card you want to finesse, hoping the higher card is in the wrong opponent's hand.`
+      },
+      {
+        heading: 'The Basic Technique',
+        content: `With A-Q in dummy facing x-x-x:
+Lead LOW from hand TOWARD the A-Q
+If LHO plays low, finesse the Queen
+If Queen wins, LHO has the King!
+
+If RHO has the King, finesse fails (50% chance)`
+      },
+      {
+        heading: 'Key Principle',
+        content: `Always lead TOWARD the card you want to finesse.
+Never lead the honor itself!
+
+Wrong: Leading Q from A-Q
+Right: Lead toward A-Q from the opposite hand`
+      }
+    ],
+    practice_tip: 'A finesse has about 50% chance of success. Lead toward the honor, never away from it!'
+  },
+
+  finesse_or_drop: {
+    title: 'Finesse or Drop',
+    subtitle: 'When to finesse vs play for the drop',
+    sections: [
+      {
+        heading: 'The Decision',
+        content: `With A-K-J-x-x opposite x-x-x, missing the Queen:
+Should you finesse (play J hoping LHO has Q)?
+Or play A-K hoping Q drops (RHO has singleton or doubleton Q)?`
+      },
+      {
+        heading: 'The Math',
+        content: `Missing 5 cards including the Queen:
+• Finesse: ~50% (Q is with LHO)
+• Drop: ~35% (Q is doubleton or singleton)
+
+With more cards, drop becomes better!
+Missing 4 cards: Drop is ~52%
+Missing 3 cards: Drop is even better`
+      },
+      {
+        heading: 'The Rule',
+        content: `"Eight ever, nine never"
+• 8 cards in suit: Finesse (always)
+• 9 cards in suit: Play for drop (never finesse)
+
+This is a guideline, not absolute - other clues matter!`
+      }
+    ],
+    practice_tip: 'Eight ever, nine never! With 8 cards finesse for the Queen, with 9 cards play for the drop.'
+  },
+
+  // Level 3: Suit Establishment
+  establishing_long_suits: {
+    title: 'Establishing Long Suits',
+    subtitle: 'Creating winners through length',
+    sections: [
+      {
+        heading: 'The Concept',
+        content: `A long suit can generate winners even with small cards.
+If you have A-K-x-x-x, the last two cards become winners after clearing the suit.`
+      },
+      {
+        heading: 'The Process',
+        content: `With A-K-x-x-x opposite x-x:
+1. Play A (both follow)
+2. Play K (both follow)
+3. Give up a trick (opponents win)
+4. Now x-x are winners!
+
+Lost 1 trick but created 2 winners.`
+      },
+      {
+        heading: 'Counting',
+        content: `Count how opponents' cards divide:
+• 8 cards total = opponents have 5
+• If 3-2 split (likely): 3 rounds clears suit
+• If 4-1 split: Need 4 rounds
+
+Always assume the likely split unless clues suggest otherwise.`
+      }
+    ],
+    practice_tip: 'To establish a suit, count how many rounds needed to clear opponents\' cards.'
+  },
+
+  // Level 4: Trump Management
+  drawing_trumps: {
+    title: 'Drawing Trumps',
+    subtitle: 'When and how to pull trumps',
+    sections: [
+      {
+        heading: 'Why Draw Trumps?',
+        content: `Drawing trumps prevents opponents from ruffing your winners.
+Usually you want to draw trumps early in suit contracts.`
+      },
+      {
+        heading: 'How Many Rounds?',
+        content: `Count opponents' trumps (usually 5):
+• If 3-2 split: Draw 3 rounds
+• If 4-1 split: Draw 4 rounds
+• Watch for the count!
+
+Stop when opponents have no trumps left.`
+      },
+      {
+        heading: 'Exceptions',
+        content: `DON'T draw trumps immediately if:
+• You need to ruff losers in dummy
+• You need entries (dummy's trumps are entries)
+• Cross-ruff is the plan
+
+Plan the whole hand before touching trumps!`
+      }
+    ],
+    practice_tip: 'Usually draw trumps first, but stop to think if you need dummy\'s trumps for ruffing or entries.'
+  },
+
+  ruffing_losers: {
+    title: 'Ruffing Losers',
+    subtitle: 'Using dummy\'s trumps to eliminate losers',
+    sections: [
+      {
+        heading: 'The Basic Idea',
+        content: `If you have a loser in hand, you can ruff it in dummy.
+This eliminates a loser without drawing trumps first.`
+      },
+      {
+        heading: 'Setting Up the Ruff',
+        content: `To ruff a loser:
+1. Create a void (or shortness) in dummy in the loser's suit
+2. Lead the loser from hand
+3. Ruff with a trump in dummy
+
+Each ruff eliminates one loser!`
+      },
+      {
+        heading: 'Important Notes',
+        content: `• Ruff in the SHORT hand (usually dummy)
+• Ruffing in the long trump hand doesn't gain
+• Do this BEFORE drawing all the trumps
+• Count how many ruffs you need`
+      }
+    ],
+    practice_tip: 'Ruff losers in the SHORT trump hand (usually dummy) BEFORE drawing all the trumps.'
+  },
+
+  // Level 7: Timing & Planning
+  hold_up_plays: {
+    title: 'Hold-Up Plays',
+    subtitle: 'Cutting defenders\' communications',
+    sections: [
+      {
+        heading: 'What is a Hold-Up?',
+        content: `A hold-up means NOT winning a trick when you could.
+By ducking, you exhaust one defender's cards in that suit.`
+      },
+      {
+        heading: 'Classic Example',
+        content: `Contract: 3NT. They lead ♠5.
+You have: ♠ A-x-x
+Don't win the Ace immediately!
+
+Duck twice, then win the third round.
+Now one defender is out of spades and can't return the suit.`
+      },
+      {
+        heading: 'When to Hold Up',
+        content: `Hold up when:
+• You have one stopper
+• You need to establish a suit (giving up the lead)
+• You want to cut communications
+
+Don't hold up if:
+• You have multiple stoppers
+• They might shift to a worse suit`
+      }
+    ],
+    practice_tip: 'Hold up to exhaust one defender\'s cards. "One in, one out" - duck until only one defender has the suit.'
+  }
+};
+
 // Default content for skills without specific content
 const DEFAULT_CONTENT = {
   title: 'Practice Time!',
@@ -545,10 +837,26 @@ const DEFAULT_CONTENT = {
   practice_tip: 'Read each hand carefully and apply what you\'ve learned.'
 };
 
-const SkillIntro = ({ skillId, skillName, onStart, onBack }) => {
-  const content = SKILL_CONTENT[skillId] || {
+const SkillIntro = ({ skillId, skillName, onStart, onBack, onFeedbackClick }) => {
+  const [showGlossary, setShowGlossary] = useState(false);
+  const [selectedTermId, setSelectedTermId] = useState(null);
+
+  // Check both bidding and play skill content
+  const content = SKILL_CONTENT[skillId] || PLAY_SKILL_CONTENT[skillId] || {
     ...DEFAULT_CONTENT,
     title: skillName || DEFAULT_CONTENT.title
+  };
+
+  // Handle opening glossary to a specific term
+  const handleOpenGlossary = (termId) => {
+    setSelectedTermId(termId);
+    setShowGlossary(true);
+  };
+
+  // Handle closing glossary (reset selected term)
+  const handleCloseGlossary = () => {
+    setShowGlossary(false);
+    setSelectedTermId(null);
   };
 
   return (
@@ -557,13 +865,35 @@ const SkillIntro = ({ skillId, skillName, onStart, onBack }) => {
         <button onClick={onBack} className="back-button">← Back</button>
         <h1 className="intro-title">{content.title}</h1>
         <p className="intro-subtitle">{content.subtitle}</p>
+        <div className="header-actions">
+          <button
+            onClick={() => {
+              setSelectedTermId(null);
+              setShowGlossary(true);
+            }}
+            className="glossary-link-button"
+            title="View bridge terminology"
+          >
+            📖 Glossary
+          </button>
+          {onFeedbackClick && (
+            <button onClick={onFeedbackClick} className="feedback-button">
+              📝 Feedback
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="intro-content">
         {content.sections.map((section, index) => (
           <div key={index} className="intro-section">
             <h3>{section.heading}</h3>
-            <p className="section-content">{section.content}</p>
+            <p className="section-content">
+              <TermHighlight
+                text={section.content}
+                onOpenGlossary={handleOpenGlossary}
+              />
+            </p>
           </div>
         ))}
       </div>
@@ -571,7 +901,12 @@ const SkillIntro = ({ skillId, skillName, onStart, onBack }) => {
       {content.practice_tip && (
         <div className="practice-tip">
           <span className="tip-icon">💡</span>
-          <span className="tip-text">{content.practice_tip}</span>
+          <span className="tip-text">
+            <TermHighlight
+              text={content.practice_tip}
+              onOpenGlossary={handleOpenGlossary}
+            />
+          </span>
         </div>
       )}
 
@@ -580,6 +915,13 @@ const SkillIntro = ({ skillId, skillName, onStart, onBack }) => {
           Start Practice →
         </button>
       </div>
+
+      {/* Glossary Drawer */}
+      <GlossaryDrawer
+        isOpen={showGlossary}
+        onClose={handleCloseGlossary}
+        initialTermId={selectedTermId}
+      />
     </div>
   );
 };

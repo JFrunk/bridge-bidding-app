@@ -1,0 +1,247 @@
+/**
+ * TermTooltip Styles
+ *
+ * Contextual tooltips for bridge terms with:
+ * - Hover preview (desktop)
+ * - Click/tap to pin
+ * - Senior-friendly mode
+ * - Mobile-responsive positioning
+ */
+
+/* Trigger Element - the clickable term */
+.term-trigger {
+  color: #81C784;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: rgba(129, 199, 132, 0.5);
+  text-underline-offset: 3px;
+  cursor: help;
+  transition: all 0.2s;
+  display: inline;
+  position: relative;
+}
+
+.term-trigger:hover {
+  color: #4CAF50;
+  text-decoration-color: #4CAF50;
+}
+
+.term-trigger:focus {
+  outline: 2px solid rgba(76, 175, 80, 0.5);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Help Icon (optional) */
+.help-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 3px;
+  background: rgba(76, 175, 80, 0.2);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 600;
+  color: #4CAF50;
+  vertical-align: super;
+}
+
+/* Senior Mode - larger trigger */
+.term-trigger.senior-mode {
+  font-size: 1.1em;
+}
+
+.term-trigger.senior-mode .help-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+}
+
+/* Tooltip Container */
+.term-tooltip {
+  position: fixed;
+  z-index: 2000;
+  width: 280px;
+  max-width: calc(100vw - 40px);
+  padding: 14px 16px;
+  background: linear-gradient(145deg, #1e3a1e 0%, #0d2010 100%);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: tooltipFadeIn 0.2s ease;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Pinned state - slightly different styling */
+.term-tooltip.pinned {
+  border-color: #4CAF50;
+  box-shadow: 0 8px 32px rgba(76, 175, 80, 0.3);
+}
+
+/* Senior Mode - larger tooltip */
+.term-tooltip.senior-mode {
+  width: 320px;
+  padding: 18px 20px;
+}
+
+.term-tooltip.senior-mode .tooltip-term {
+  font-size: 18px;
+}
+
+.term-tooltip.senior-mode .tooltip-definition {
+  font-size: 16px;
+}
+
+/* Tooltip Header */
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.tooltip-term {
+  font-size: 16px;
+  font-weight: 600;
+  color: #4CAF50;
+}
+
+.tooltip-difficulty {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.tooltip-difficulty.beginner {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+}
+
+.tooltip-difficulty.intermediate {
+  background: rgba(33, 150, 243, 0.2);
+  color: #64B5F6;
+}
+
+.tooltip-difficulty.advanced {
+  background: rgba(156, 39, 176, 0.2);
+  color: #CE93D8;
+}
+
+/* Definition */
+.tooltip-definition {
+  margin: 0 0 10px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Example */
+.tooltip-example {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Link to Full Glossary */
+.tooltip-more-link {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  margin-top: 8px;
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 6px;
+  color: #81C784;
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tooltip-more-link:hover {
+  background: rgba(76, 175, 80, 0.25);
+  color: white;
+}
+
+.tooltip-more-link:focus {
+  outline: 2px solid #4CAF50;
+  outline-offset: 2px;
+}
+
+/* Hint for Pinned State */
+.tooltip-hint {
+  display: block;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  text-align: center;
+}
+
+/* TermHighlight wrapper */
+.term-highlight-text {
+  display: inline;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 480px) {
+  .term-tooltip {
+    width: calc(100vw - 40px);
+    left: 20px !important;
+    right: 20px;
+    padding: 12px 14px;
+  }
+
+  .tooltip-term {
+    font-size: 15px;
+  }
+
+  .tooltip-definition {
+    font-size: 14px;
+  }
+}
+
+/* Tablet */
+@media (min-width: 481px) and (max-width: 768px) {
+  .term-tooltip {
+    width: 260px;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .term-trigger {
+    text-decoration-style: solid;
+    text-decoration-thickness: 2px;
+  }
+
+  .term-tooltip {
+    border-width: 2px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .term-tooltip {
+    animation: none;
+  }
+}

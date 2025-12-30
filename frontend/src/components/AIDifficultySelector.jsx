@@ -3,6 +3,7 @@ import './AIDifficultySelector.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
+// Base difficulty info - expert rating/description updated dynamically based on DDS availability
 const DIFFICULTY_INFO = {
   beginner: {
     name: 'Beginner',
@@ -39,6 +40,12 @@ const AIDifficultySelector = ({ onDifficultyChange }) => {
   const [isChanging, setIsChanging] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [ddsStatus, setDdsStatus] = useState({
+    ddsActive: false,
+    isProduction: false,
+    platform: 'unknown',
+    ddsDisabledReason: null
+  });
 
   useEffect(() => {
     // Fetch current difficulty on mount
@@ -53,7 +60,17 @@ const AIDifficultySelector = ({ onDifficultyChange }) => {
         const data = await response.json();
         const backendDifficulty = data.current_difficulty;
         console.log('✅ Fetched current AI difficulty from backend:', backendDifficulty);
+        console.log('   DDS Active:', data.dds_active, '| Platform:', data.platform, '| Environment:', data.environment);
         setCurrentDifficulty(backendDifficulty || 'intermediate');
+
+        // Track DDS status for display
+        setDdsStatus({
+          ddsActive: data.dds_active || false,
+          isProduction: data.is_production || false,
+          platform: data.platform || 'unknown',
+          environment: data.environment || 'development',
+          ddsDisabledReason: data.dds_disabled_reason
+        });
       } else {
         console.error('Failed to fetch AI difficulty, defaulting to intermediate');
         setCurrentDifficulty('intermediate');
@@ -112,7 +129,18 @@ const AIDifficultySelector = ({ onDifficultyChange }) => {
     );
   }
 
-  const currentInfo = DIFFICULTY_INFO[currentDifficulty];
+  // Get difficulty info, adjusting expert based on DDS availability
+  const getDifficultyInfo = (key) => {
+    const info = { ...DIFFICULTY_INFO[key] };
+    if (key === 'expert' && !ddsStatus.ddsActive) {
+      // DDS not active - show fallback info
+      info.rating = '8+/10';
+      info.description = 'Deep minimax search (4-ply)';
+    }
+    return info;
+  };
+
+  const currentInfo = getDifficultyInfo(currentDifficulty);
 
   return (
     <div className="ai-difficulty-selector">
@@ -132,8 +160,23 @@ const AIDifficultySelector = ({ onDifficultyChange }) => {
 
       {showInfo && (
         <div className="difficulty-options">
-          {Object.entries(DIFFICULTY_INFO).map(([key, info]) => {
+          {/* DDS Status Banner */}
+          <div className={`dds-status-banner ${ddsStatus.ddsActive ? 'dds-active' : 'dds-inactive'}`}>
+            <span className="dds-status-icon">{ddsStatus.ddsActive ? '✅' : '⚠️'}</span>
+            <span className="dds-status-text">
+              {ddsStatus.ddsActive
+                ? 'DDS Active (Production)'
+                : `DDS Disabled (${ddsStatus.platform})`}
+            </span>
+            {!ddsStatus.ddsActive && ddsStatus.ddsDisabledReason && (
+              <span className="dds-reason">{ddsStatus.ddsDisabledReason}</span>
+            )}
+          </div>
+
+          {Object.entries(DIFFICULTY_INFO).map(([key, baseInfo]) => {
+            const info = getDifficultyInfo(key);
             const isActive = key === currentDifficulty;
+            const isExpertWithoutDDS = key === 'expert' && !ddsStatus.ddsActive;
             return (
               <button
                 key={key}
@@ -149,6 +192,7 @@ const AIDifficultySelector = ({ onDifficultyChange }) => {
                   <span className="option-emoji">{info.emoji}</span>
                   <span className="option-name">{info.name}</span>
                   <span className="option-rating">{info.rating}</span>
+                  {isExpertWithoutDDS && <span className="fallback-badge">Fallback</span>}
                   {isActive && <span className="active-indicator">✓</span>}
                 </div>
                 <div className="option-description">{info.description}</div>
@@ -157,9 +201,11 @@ const AIDifficultySelector = ({ onDifficultyChange }) => {
           })}
 
           <div className="difficulty-note">
-            <strong>Note:</strong> Expert difficulty uses DDS (Double Dummy Solver) for near-perfect play when available.
-            This provides the best AI performance but may be unstable on some systems.
-            Change difficulty before starting a new hand.
+            <strong>Note:</strong> Expert difficulty uses DDS (Double Dummy Solver) for perfect play
+            {ddsStatus.ddsActive
+              ? ' - currently active in production.'
+              : ` - currently using Minimax fallback on ${ddsStatus.platform}.`}
+            {' '}Change difficulty before starting a new hand.
           </div>
         </div>
       )}

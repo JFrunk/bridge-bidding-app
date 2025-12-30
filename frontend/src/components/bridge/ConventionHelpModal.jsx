@@ -6,6 +6,7 @@ import {
   DialogFooter,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
+import { TermHighlight } from "../glossary";
 
 /**
  * ConventionHelpModal Component
@@ -38,7 +39,7 @@ export function ConventionHelpModal({ isOpen, onClose, conventionInfo }) {
               Background
             </h3>
             <p className="text-sm text-gray-700 leading-relaxed">
-              {conventionInfo.background}
+              <TermHighlight text={conventionInfo.background || ''} />
             </p>
           </div>
 
@@ -48,7 +49,7 @@ export function ConventionHelpModal({ isOpen, onClose, conventionInfo }) {
               When to Use
             </h3>
             <p className="text-sm text-gray-700 leading-relaxed">
-              {conventionInfo.when_used}
+              <TermHighlight text={conventionInfo.when_used || ''} />
             </p>
           </div>
 
@@ -58,7 +59,7 @@ export function ConventionHelpModal({ isOpen, onClose, conventionInfo }) {
               How It Works
             </h3>
             <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-              {conventionInfo.how_it_works}
+              <TermHighlight text={conventionInfo.how_it_works || ''} />
             </p>
           </div>
 
@@ -68,7 +69,7 @@ export function ConventionHelpModal({ isOpen, onClose, conventionInfo }) {
               As Responder
             </h3>
             <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-              {conventionInfo.responder_actions}
+              <TermHighlight text={conventionInfo.responder_actions || ''} />
             </p>
           </div>
 
@@ -78,7 +79,7 @@ export function ConventionHelpModal({ isOpen, onClose, conventionInfo }) {
               As Opener
             </h3>
             <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-              {conventionInfo.opener_actions}
+              <TermHighlight text={conventionInfo.opener_actions || ''} />
             </p>
           </div>
         </div>
