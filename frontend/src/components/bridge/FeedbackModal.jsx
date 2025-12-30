@@ -78,7 +78,7 @@ export function FeedbackModal({
           </DialogHeader>
           <div className="text-center py-6">
             <div className="text-4xl mb-4">✅</div>
-            <p className="text-gray-600">
+            <p className="text-gray-700">
               Your feedback has been saved. We'll review it to improve the app.
             </p>
           </div>
@@ -118,12 +118,12 @@ export function FeedbackModal({
                   onClick={() => setFeedbackType(type.value)}
                   className={`p-3 rounded-lg border text-left transition-all ${
                     feedbackType === type.value
-                      ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
-                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200 text-gray-900"
+                      : "border-gray-200 bg-white text-gray-900 hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
                   <span className="text-lg mr-2">{type.icon}</span>
-                  <span className="text-sm font-medium">{type.label}</span>
+                  <span className="text-sm font-medium text-gray-900">{type.label}</span>
                 </button>
               ))}
             </div>
@@ -152,8 +152,8 @@ export function FeedbackModal({
           </div>
 
           {/* Context info */}
-          <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
-            <strong>What will be saved:</strong>
+          <div className="text-xs text-gray-700 bg-gray-100 p-3 rounded-lg">
+            <strong className="text-gray-900">What will be saved:</strong>
             <ul className="mt-1 list-disc list-inside">
               {context === "learning" ? (
                 <>

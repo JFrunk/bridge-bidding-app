@@ -2,7 +2,8 @@
  * Learning Mode Component
  *
  * Main guided learning interface showing:
- * - Skill tree with 9 levels (0-8)
+ * - Track selector (Bidding | Card Play)
+ * - Skill tree with 9 levels (0-8) per track
  * - Progress through each level
  * - Skill practice sessions
  * - Level assessments
@@ -16,11 +17,19 @@ import {
   getUserSkillProgress,
   startLearningSession,
   submitLearningAnswer,
+  getPlayLearningStatus,
+  getPlaySkillTree,
+  getUserPlayProgress,
+  getPlayPracticeHand,
+  recordPlayPractice,
 } from '../../services/learningService';
 import SkillPractice from './SkillPractice';
 import SkillIntro from './SkillIntro';
 
-const LearningMode = ({ userId, onClose, onPlayFreePlay }) => {
+const LearningMode = ({ userId, onClose, onPlayFreePlay, onFeedbackClick }) => {
+  // Track selector: 'bidding' or 'play'
+  const [selectedTrack, setSelectedTrack] = useState('bidding');
+
   const [learningStatus, setLearningStatus] = useState(null);
   const [skillTree, setSkillTree] = useState(null);
   const [skillProgress, setSkillProgress] = useState({}); // Map of skill_id -> status
@@ -28,17 +37,30 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay }) => {
   const [error, setError] = useState(null);
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [activeSession, setActiveSession] = useState(null);
-  const [showingIntro, setShowingIntro] = useState(null); // { skillId, skillName }
+  const [showingIntro, setShowingIntro] = useState(null); // { skillId, skillName, track }
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const [status, tree, progress] = await Promise.all([
-        getLearningStatus(userId),
-        getSkillTree(),
-        getUserSkillProgress(userId),
-      ]);
+
+      let status, tree, progress;
+
+      if (selectedTrack === 'bidding') {
+        [status, tree, progress] = await Promise.all([
+          getLearningStatus(userId),
+          getSkillTree(),
+          getUserSkillProgress(userId),
+        ]);
+      } else {
+        // Card Play track
+        [status, tree, progress] = await Promise.all([
+          getPlayLearningStatus(userId),
+          getPlaySkillTree(),
+          getUserPlayProgress(userId),
+        ]);
+      }
+
       setLearningStatus(status);
       setSkillTree(tree);
 
@@ -60,31 +82,67 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay }) => {
     } finally {
       setLoading(false);
     }
-  }, [userId, selectedLevel]);
+  }, [userId, selectedLevel, selectedTrack]);
 
   // Load learning status and skill tree
   useEffect(() => {
     loadData();
   }, [loadData]);
 
+  // Handle track switching
+  const handleTrackChange = (track) => {
+    if (track !== selectedTrack) {
+      setSelectedTrack(track);
+      setSelectedLevel(null); // Reset selected level when switching tracks
+      setLearningStatus(null);
+      setSkillTree(null);
+      setSkillProgress({});
+    }
+  };
+
   const handleStartSkill = (skillId, skillName) => {
-    // Show intro screen first
-    setShowingIntro({ skillId, skillName });
+    // Show intro screen first, include track info
+    setShowingIntro({ skillId, skillName, track: selectedTrack });
   };
 
   const handleStartPractice = async () => {
     if (!showingIntro) return;
 
     try {
-      const session = await startLearningSession(userId, showingIntro.skillId, 'skill');
+      let session;
+
+      if (showingIntro.track === 'play') {
+        // Play skill - use play practice hand API
+        const playData = await getPlayPracticeHand(showingIntro.skillId);
+        session = {
+          topic_id: showingIntro.skillId,
+          topic_type: 'play_skill',
+          track: 'play',
+          deal: playData.deal,
+          situation: playData.situation,
+          hand_id: playData.hand_id,
+          skill_level: playData.skill_level,
+          practice_format: playData.practice_format,
+          // For play skills, expected_response comes from situation
+          expected_response: playData.situation.expected_response,
+          progress: { attempts: 0, correct: 0, accuracy: 0, status: 'not_started' },
+        };
+      } else {
+        // Bidding skill - use existing session API
+        session = await startLearningSession(userId, showingIntro.skillId, 'skill');
+      }
+
       setActiveSession({
         ...session,
         skillId: showingIntro.skillId,
+        track: showingIntro.track,
         // Track hand history for navigation
         handHistory: [{
           hand: session.hand,
+          deal: session.deal,
           hand_id: session.hand_id,
           expected_response: session.expected_response,
+          situation: session.situation,
           result: null, // Will be filled after user answers
         }],
         currentHandIndex: 0,
@@ -104,14 +162,64 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay }) => {
     if (!activeSession) return;
 
     try {
-      const result = await submitLearningAnswer({
-        user_id: userId,
-        topic_id: activeSession.skillId,
-        topic_type: 'skill',
-        answer,
-        hand_id: activeSession.hand_id,
-        expected_response: activeSession.expected_response,
-      });
+      let result;
+
+      if (activeSession.track === 'play') {
+        // Play skill - evaluate locally and record practice
+        const expected = activeSession.expected_response;
+        const userAnswer = parseInt(answer, 10);
+        const correctAnswer = expected.winners ?? expected.losers ?? expected.correct_answer;
+
+        // Check if answer is correct (within acceptable range if provided)
+        let isCorrect = false;
+        if (expected.acceptable_range) {
+          isCorrect = userAnswer >= expected.acceptable_range[0] &&
+                      userAnswer <= expected.acceptable_range[1];
+        } else {
+          isCorrect = userAnswer === correctAnswer;
+        }
+
+        // Generate feedback
+        const feedback = isCorrect
+          ? `Correct! ${expected.explanation || ''}`
+          : `The answer is ${correctAnswer}. ${expected.explanation || ''}`;
+
+        // Record the practice attempt
+        const recordResult = await recordPlayPractice({
+          user_id: userId,
+          skill_id: activeSession.skillId,
+          skill_level: activeSession.skill_level || 0,
+          was_correct: isCorrect,
+          hand_id: activeSession.hand_id,
+          user_answer: String(answer),
+          correct_answer: String(correctAnswer),
+        });
+
+        // Get next hand for play skill
+        const nextPlayData = await getPlayPracticeHand(activeSession.skillId);
+
+        result = {
+          is_correct: isCorrect,
+          feedback,
+          progress: recordResult.progress || activeSession.progress,
+          is_mastered: recordResult.is_mastered || false,
+          next_hand: null, // Play skills use deal instead
+          next_deal: nextPlayData.deal,
+          next_situation: nextPlayData.situation,
+          next_hand_id: nextPlayData.hand_id,
+          next_expected: nextPlayData.situation.expected_response,
+        };
+      } else {
+        // Bidding skill - use existing API
+        result = await submitLearningAnswer({
+          user_id: userId,
+          topic_id: activeSession.skillId,
+          topic_type: 'skill',
+          answer,
+          hand_id: activeSession.hand_id,
+          expected_response: activeSession.expected_response,
+        });
+      }
 
       // Update history with result for current hand
       const updatedHistory = [...activeSession.handHistory];
@@ -141,6 +249,19 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay }) => {
       } else {
         // Store result but keep current hand visible
         // Next hand data is stored in pendingNext for when user clicks Continue
+        const pendingNext = activeSession.track === 'play'
+          ? {
+              deal: result.next_deal,
+              hand_id: result.next_hand_id,
+              expected_response: result.next_expected,
+              situation: result.next_situation,
+            }
+          : result.next_hand ? {
+              hand: result.next_hand,
+              hand_id: result.next_hand_id,
+              expected_response: result.next_expected,
+            } : null;
+
         setActiveSession({
           ...activeSession,
           progress: result.progress,
@@ -148,11 +269,7 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay }) => {
             isCorrect: result.is_correct,
             feedback: result.feedback,
           },
-          pendingNext: result.next_hand ? {
-            hand: result.next_hand,
-            hand_id: result.next_hand_id,
-            expected_response: result.next_expected,
-          } : null,
+          pendingNext,
           handHistory: updatedHistory,
         });
       }
@@ -182,18 +299,24 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay }) => {
 
     // Apply pending next hand and add to history
     if (activeSession.pendingNext) {
+      const isPlayTrack = activeSession.track === 'play';
+
       const newHistoryEntry = {
         hand: activeSession.pendingNext.hand,
+        deal: activeSession.pendingNext.deal,
         hand_id: activeSession.pendingNext.hand_id,
         expected_response: activeSession.pendingNext.expected_response,
+        situation: activeSession.pendingNext.situation,
         result: null,
       };
 
       setActiveSession({
         ...activeSession,
         hand: activeSession.pendingNext.hand,
+        deal: isPlayTrack ? activeSession.pendingNext.deal : activeSession.deal,
         hand_id: activeSession.pendingNext.hand_id,
         expected_response: activeSession.pendingNext.expected_response,
+        situation: activeSession.pendingNext.situation,
         lastResult: null,
         pendingNext: null,
         handHistory: [...activeSession.handHistory, newHistoryEntry],
@@ -210,8 +333,10 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay }) => {
     setActiveSession({
       ...activeSession,
       hand: historyEntry.hand,
+      deal: historyEntry.deal,
       hand_id: historyEntry.hand_id,
       expected_response: historyEntry.expected_response,
+      situation: historyEntry.situation,
       currentHandIndex: index,
       // If reviewing a past hand, show its result
       lastResult: historyEntry.result,
@@ -251,6 +376,7 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay }) => {
         skillName={showingIntro.skillName}
         onStart={handleStartPractice}
         onBack={handleBackFromIntro}
+        onFeedbackClick={onFeedbackClick}
       />
     );
   }
@@ -264,6 +390,7 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay }) => {
         onContinue={handleContinue}
         onClose={handleCloseSession}
         onNavigateHand={handleNavigateHand}
+        onFeedbackClick={onFeedbackClick}
       />
     );
   }
@@ -275,16 +402,54 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay }) => {
     <div className="learning-mode">
       {/* Header */}
       <div className="learning-mode-header">
-        <div className="header-content">
-          <h1>Learning Mode</h1>
-          <p className="subtitle">Master bridge bidding step by step</p>
+        <div className="header-left">
+          <button
+            onClick={onClose}
+            className="home-button"
+            title="Return to mode selection"
+            data-testid="learning-home-button"
+          >
+            🏠
+          </button>
+          <div className="header-content">
+            <h1>Learning Mode</h1>
+            <p className="subtitle">
+              {selectedTrack === 'bidding'
+                ? 'Master bridge bidding step by step'
+                : 'Master declarer play techniques'}
+            </p>
+          </div>
         </div>
         <div className="header-actions">
+          {onFeedbackClick && (
+            <button onClick={onFeedbackClick} className="feedback-button">
+              📝 Feedback
+            </button>
+          )}
           <button onClick={onPlayFreePlay} className="free-play-button">
             Free Play
           </button>
-          <button onClick={onClose} className="close-button">×</button>
         </div>
+      </div>
+
+      {/* Track Selector Tabs */}
+      <div className="track-selector">
+        <button
+          className={`track-tab ${selectedTrack === 'bidding' ? 'active' : ''}`}
+          onClick={() => handleTrackChange('bidding')}
+          data-testid="track-bidding"
+        >
+          <span className="track-icon">🎯</span>
+          <span className="track-label">Bidding</span>
+        </button>
+        <button
+          className={`track-tab ${selectedTrack === 'play' ? 'active' : ''}`}
+          onClick={() => handleTrackChange('play')}
+          data-testid="track-play"
+        >
+          <span className="track-icon">♠</span>
+          <span className="track-label">Card Play</span>
+        </button>
       </div>
 
       {/* Overall Progress */}

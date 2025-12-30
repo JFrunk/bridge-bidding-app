@@ -13,6 +13,7 @@
 
 import React, { useState } from 'react';
 import './RecentDecisionsCard.css';
+import { TermHighlight } from '../glossary';
 
 const RecentDecisionsCard = ({ decisions }) => {
   const [expandedId, setExpandedId] = useState(null);
@@ -134,7 +135,9 @@ const DecisionItem = ({ decision, isExpanded, onToggle }) => {
         <div className="decision-bid">
           <div className="bid-text">{bidDisplay}</div>
           {decision.key_concept && (
-            <div className="bid-concept">{decision.key_concept}</div>
+            <div className="bid-concept">
+              <TermHighlight text={decision.key_concept} />
+            </div>
           )}
         </div>
 
@@ -161,7 +164,9 @@ const DecisionItem = ({ decision, isExpanded, onToggle }) => {
           {decision.helpful_hint && (
             <div className="decision-hint">
               <div className="hint-icon">💡</div>
-              <div className="hint-text">{decision.helpful_hint}</div>
+              <div className="hint-text">
+                <TermHighlight text={decision.helpful_hint} />
+              </div>
             </div>
           )}
 

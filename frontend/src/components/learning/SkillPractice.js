@@ -11,8 +11,9 @@
 import React, { useState, useEffect } from 'react';
 import './SkillPractice.css';
 import { LearningHand } from './LearningCard';
+import { TermHighlight } from '../glossary';
 
-const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigateHand }) => {
+const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigateHand, onFeedbackClick }) => {
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastResult, setLastResult] = useState(session?.lastResult || null);
@@ -88,9 +89,10 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
     );
   }
 
-  const { topic_id, hand, expected_response, progress, handHistory, currentHandIndex, isReviewing } = session;
-  const questionType = getQuestionType(expected_response);
-  const noHandRequired = expected_response?.no_hand_required || !hand;
+  const { topic_id, hand, deal, situation, expected_response, progress, handHistory, currentHandIndex, isReviewing, track } = session;
+  const isPlayTrack = track === 'play';
+  const questionType = isPlayTrack ? getPlayQuestionType(situation) : getQuestionType(expected_response);
+  const noHandRequired = expected_response?.no_hand_required || (!hand && !deal);
 
   // Calculate hand progress
   // Minimum is 6 hands, but can be more if accuracy isn't met
@@ -120,6 +122,11 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
       <div className="practice-header">
         <button onClick={onClose} className="back-button">← Back</button>
         <h2 className="skill-title">{formatSkillName(topic_id, expected_response)}</h2>
+        {onFeedbackClick && (
+          <button onClick={onFeedbackClick} className="feedback-button">
+            📝 Feedback
+          </button>
+        )}
         <div className="progress-indicator">
           <div className="progress-stats">
             <span className="hand-counter">
@@ -181,40 +188,81 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
       {/* Hand Display - only show if hand is required */}
       {!noHandRequired && (
         <div className="hand-display-area">
-          <div className="hand-card visual-hand">
-            <h3>Your Hand</h3>
-            {/* Visual card display - matches main app styling */}
-            {hand?.cards && hand.cards.length > 0 ? (
-              <LearningHand cards={hand.cards} size="medium" />
-            ) : (
-              <pre className="hand-text">{hand?.display || 'No hand data'}</pre>
-            )}
-            {/* Hide stats by default - user can reveal if desired */}
-            <div className="hand-stats-toggle">
-              {showHandStats || showFeedback ? (
-                <div className="hand-stats">
-                  <span>HCP: {hand?.hcp}</span>
-                  <span>Dist: {hand?.distribution_points}</span>
-                  <span>Total: {hand?.total_points}</span>
-                  <span>{hand?.is_balanced ? 'Balanced' : 'Unbalanced'}</span>
+          {/* Play skills: Show both declarer and dummy hands */}
+          {isPlayTrack && deal ? (
+            <div className="play-deal-display">
+              {/* Contract info */}
+              {deal.contract && (
+                <div className="contract-info">
+                  <span className="contract-label">Contract:</span>
+                  <span className="contract-value">{deal.contract}</span>
+                  <span className="combined-hcp">Combined: {deal.combined_hcp} HCP</span>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  className="reveal-stats-button"
-                  onClick={() => setShowHandStats(true)}
-                >
-                  Show Hand Stats
-                </button>
               )}
+              <div className="dual-hand-display">
+                {/* Dummy hand (North) */}
+                <div className="hand-card visual-hand dummy-hand">
+                  <h3>Dummy (North)</h3>
+                  {deal.dummy_hand?.cards && deal.dummy_hand.cards.length > 0 ? (
+                    <LearningHand cards={deal.dummy_hand.cards} size="medium" />
+                  ) : (
+                    <pre className="hand-text">{deal.dummy_hand?.display || 'No hand data'}</pre>
+                  )}
+                  <div className="hand-stats">
+                    <span>HCP: {deal.dummy_hand?.hcp}</span>
+                  </div>
+                </div>
+                {/* Declarer hand (South) */}
+                <div className="hand-card visual-hand declarer-hand">
+                  <h3>Declarer (South)</h3>
+                  {deal.declarer_hand?.cards && deal.declarer_hand.cards.length > 0 ? (
+                    <LearningHand cards={deal.declarer_hand.cards} size="medium" />
+                  ) : (
+                    <pre className="hand-text">{deal.declarer_hand?.display || 'No hand data'}</pre>
+                  )}
+                  <div className="hand-stats">
+                    <span>HCP: {deal.declarer_hand?.hcp}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            /* Bidding skills: Show single hand */
+            <div className="hand-card visual-hand">
+              <h3>Your Hand</h3>
+              {/* Visual card display - matches main app styling */}
+              {hand?.cards && hand.cards.length > 0 ? (
+                <LearningHand cards={hand.cards} size="medium" />
+              ) : (
+                <pre className="hand-text">{hand?.display || 'No hand data'}</pre>
+              )}
+              {/* Hide stats by default - user can reveal if desired */}
+              <div className="hand-stats-toggle">
+                {showHandStats || showFeedback ? (
+                  <div className="hand-stats">
+                    <span>HCP: {hand?.hcp}</span>
+                    <span>Dist: {hand?.distribution_points}</span>
+                    <span>Total: {hand?.total_points}</span>
+                    <span>{hand?.is_balanced ? 'Balanced' : 'Unbalanced'}</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="reveal-stats-button"
+                    onClick={() => setShowHandStats(true)}
+                  >
+                    Show Hand Stats
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Question Area */}
       <div className={`question-area ${noHandRequired ? 'centered' : ''}`}>
-        <QuestionPrompt questionType={questionType} expected={expected_response} />
+        <QuestionPrompt questionType={questionType} expected={expected_response} situation={situation} />
 
         {/* Answer Input */}
         {!showFeedback ? (
@@ -251,7 +299,7 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
 };
 
 /**
- * Determine question type from expected response
+ * Determine question type from expected response (bidding skills)
  */
 const getQuestionType = (expected) => {
   if (!expected) return 'unknown';
@@ -263,6 +311,24 @@ const getQuestionType = (expected) => {
   // Contract-specific game/slam points (bidding_language skill)
   if ('correct_answer' in expected && expected.no_hand_required) return 'contract_points';
   return 'unknown';
+};
+
+/**
+ * Determine question type from situation (play skills)
+ */
+const getPlayQuestionType = (situation) => {
+  if (!situation) return 'unknown';
+  const questionType = situation.question_type;
+  if (questionType === 'count_winners') return 'count_winners';
+  if (questionType === 'count_losers') return 'count_losers';
+  if (questionType === 'analyze_lead') return 'analyze_lead';
+  if (questionType === 'finesse_direction') return 'finesse_direction';
+  if (questionType === 'finesse_or_drop') return 'finesse_or_drop';
+  if (questionType === 'establish_suit') return 'establish_suit';
+  if (questionType === 'hold_up') return 'hold_up';
+  if (questionType === 'draw_trumps') return 'draw_trumps';
+  if (questionType === 'ruff_losers') return 'ruff_losers';
+  return 'play_numeric'; // Default for most play skills
 };
 
 /**
@@ -286,6 +352,7 @@ const formatSkillName = (skillId, expectedResponse = null) => {
 
   // Explicit skill name mappings for clarity
   const skillNames = {
+    // === BIDDING SKILLS ===
     // Level 0: Foundations
     'hand_evaluation_basics': 'Hand Evaluation Basics',
     'suit_quality': 'Understanding Suit Quality',
@@ -310,6 +377,61 @@ const formatSkillName = (skillId, expectedResponse = null) => {
     'stayman': 'Stayman Convention',
     'jacoby_transfer': 'Jacoby Transfers',
     'blackwood': 'Blackwood Convention (Ace-Asking)',
+
+    // === PLAY SKILLS ===
+    // Level 0: Foundations
+    'counting_winners': 'Counting Winners',
+    'counting_losers': 'Counting Losers',
+    'analyzing_the_lead': 'Analyzing the Lead',
+
+    // Level 1: Basic Techniques
+    'leading_to_tricks': 'Leading to Tricks',
+    'second_hand_play': 'Second Hand Play',
+    'third_hand_play': 'Third Hand Play',
+    'ducking': 'Ducking',
+
+    // Level 2: Finessing
+    'simple_finesse': 'Simple Finesse',
+    'double_finesse': 'Double Finesse',
+    'finesse_or_drop': 'Finesse or Drop',
+    'two_way_finesse': 'Two-Way Finesse',
+
+    // Level 3: Suit Establishment
+    'establishing_long_suits': 'Establishing Long Suits',
+    'ducking_to_establish': 'Ducking to Establish',
+    'counting_tricks_needed': 'Counting Tricks Needed',
+    'timing_suit_establishment': 'Timing Suit Establishment',
+
+    // Level 4: Trump Management
+    'drawing_trumps': 'Drawing Trumps',
+    'when_not_to_draw': 'When Not to Draw Trumps',
+    'ruffing_losers': 'Ruffing Losers',
+    'crossruff': 'Crossruff',
+
+    // Level 5: Entry Management
+    'preserving_entries': 'Preserving Entries',
+    'creating_entries': 'Creating Entries',
+    'using_dummy_entries': 'Using Dummy Entries',
+    'entry_killing_plays': 'Entry-Killing Plays',
+
+    // Level 6: Card Combinations
+    'safety_plays': 'Safety Plays',
+    'percentage_plays': 'Percentage Plays',
+    'restricted_choice': 'Restricted Choice',
+    'suit_combinations': 'Suit Combinations',
+
+    // Level 7: Timing & Planning
+    'planning_the_play': 'Planning the Play',
+    'danger_hand': 'The Danger Hand',
+    'avoidance_plays': 'Avoidance Plays',
+    'hold_up_plays': 'Hold-Up Plays',
+
+    // Level 8: Advanced Techniques
+    'squeeze_basics': 'Squeeze Basics',
+    'endplays': 'Endplays',
+    'throw_in': 'Throw-In Plays',
+    'loser_on_loser': 'Loser-on-Loser',
+    'trump_coup': 'Trump Coup',
   };
 
   // Return explicit name if available, otherwise format the ID
@@ -327,9 +449,15 @@ const formatSkillName = (skillId, expectedResponse = null) => {
 /**
  * Question Prompt Component
  */
-const QuestionPrompt = ({ questionType, expected }) => {
+const QuestionPrompt = ({ questionType, expected, situation }) => {
   const getPrompt = () => {
+    // Play skills - use the question from situation
+    if (situation?.question) {
+      return situation.question;
+    }
+
     switch (questionType) {
+      // Bidding skill types
       case 'hcp':
         return 'How many High Card Points (HCP) does this hand have?';
       case 'should_open':
@@ -348,6 +476,29 @@ const QuestionPrompt = ({ questionType, expected }) => {
         // Contract-specific question
         const contract = expected?.display_contract || expected?.contract || 'game';
         return `How many combined points do you need to bid ${contract}?`;
+
+      // Play skill types
+      case 'count_winners':
+        return 'How many sure tricks do you have in this contract?';
+      case 'count_losers':
+        return 'How many losers do you have in this hand?';
+      case 'analyze_lead':
+        return 'What does the opening lead tell you?';
+      case 'finesse_direction':
+        return 'Which direction should you finesse?';
+      case 'finesse_or_drop':
+        return 'Should you finesse or play for the drop?';
+      case 'establish_suit':
+        return 'How many tricks can you establish in this suit?';
+      case 'hold_up':
+        return 'How many times should you hold up?';
+      case 'draw_trumps':
+        return 'How many rounds of trumps should you draw?';
+      case 'ruff_losers':
+        return 'How many losers can you ruff in dummy?';
+      case 'play_numeric':
+        return 'Enter your answer:';
+
       default:
         return 'Evaluate this hand:';
     }
@@ -652,6 +803,100 @@ const AnswerInput = ({ questionType, expected, value, onChange, disabled }) => {
         </div>
       );
 
+    // Play skill types - most use numeric input
+    case 'count_winners':
+    case 'count_losers':
+    case 'establish_suit':
+    case 'hold_up':
+    case 'draw_trumps':
+    case 'ruff_losers':
+    case 'play_numeric':
+      return (
+        <div className="play-answer-area">
+          <input
+            type="number"
+            className="answer-input play-number-input"
+            placeholder="Enter number"
+            min="0"
+            max="13"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={disabled}
+            autoFocus
+          />
+          <div className="number-shortcuts">
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((num) => (
+              <button
+                key={num}
+                type="button"
+                className={`number-shortcut ${value === String(num) ? 'selected' : ''}`}
+                onClick={() => onChange(String(num))}
+                disabled={disabled}
+              >
+                {num}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+
+    case 'finesse_direction':
+      return (
+        <div className="direction-buttons">
+          <button
+            type="button"
+            className={`direction-button ${value === 'toward_dummy' ? 'selected' : ''}`}
+            onClick={() => onChange('toward_dummy')}
+            disabled={disabled}
+          >
+            Lead toward Dummy
+          </button>
+          <button
+            type="button"
+            className={`direction-button ${value === 'toward_hand' ? 'selected' : ''}`}
+            onClick={() => onChange('toward_hand')}
+            disabled={disabled}
+          >
+            Lead toward Hand
+          </button>
+        </div>
+      );
+
+    case 'finesse_or_drop':
+      return (
+        <div className="choice-buttons">
+          <button
+            type="button"
+            className={`choice-button ${value === 'finesse' ? 'selected' : ''}`}
+            onClick={() => onChange('finesse')}
+            disabled={disabled}
+          >
+            Finesse
+          </button>
+          <button
+            type="button"
+            className={`choice-button ${value === 'drop' ? 'selected' : ''}`}
+            onClick={() => onChange('drop')}
+            disabled={disabled}
+          >
+            Play for the Drop
+          </button>
+        </div>
+      );
+
+    case 'analyze_lead':
+      return (
+        <input
+          type="text"
+          className="answer-input"
+          placeholder="Describe the lead..."
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          autoFocus
+        />
+      );
+
     default:
       return (
         <input
@@ -707,9 +952,13 @@ const FeedbackDisplay = ({ result, expected, onContinue, onReplay, isReviewing, 
       </div>
       <div className="feedback-content">
         <h4>{isCorrect ? 'Correct!' : 'Not quite...'}</h4>
-        <p className="feedback-text">{feedback}</p>
+        <p className="feedback-text">
+          <TermHighlight text={feedback || ''} />
+        </p>
         {expected?.explanation && !isCorrect && (
-          <p className="explanation">{expected.explanation}</p>
+          <p className="explanation">
+            <TermHighlight text={expected.explanation} />
+          </p>
         )}
       </div>
       <div className="feedback-actions">

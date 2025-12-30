@@ -140,7 +140,48 @@ Your deployment uses these resources:
 
 ## Preventing Instance Reclamation
 
-Oracle reclaims idle instances. The `maintenance.sh full-setup` command configures a cron job that keeps your instance active.
+Oracle Cloud reclaims Always Free instances that remain idle for 7 consecutive days. An instance is considered idle when the **95th percentile** of all these metrics falls below 20%:
+
+- CPU Utilization < 20%
+- Memory Utilization < 20% (ARM/Ampere shapes)
+- Network Utilization < 20%
+
+Since a card game server has low resource usage, you must artificially inflate CPU usage to prevent reclamation.
+
+### Automatic Protection (Recommended)
+
+The `keep-alive.sh` script uses `stress-ng` to periodically stress the CPU:
+
+```bash
+# Install the keep-alive service (runs automatically every 4 hours)
+bash maintenance.sh setup-anti-idle
+
+# Check status
+bash maintenance.sh keepalive-status
+
+# Or use the script directly
+bash keep-alive.sh install    # Install systemd service + timer
+bash keep-alive.sh status     # Check status
+bash keep-alive.sh test       # Test run (30 seconds)
+bash keep-alive.sh uninstall  # Remove if needed
+```
+
+### How It Works
+
+- Runs every 4 hours with a random 30-minute delay
+- Stresses CPU at 25% for 30 minutes per cycle
+- Covers ~12.5% of total time at elevated CPU
+- Ensures the 7-day 95th percentile stays above 20% even with minimal app usage
+- Uses systemd timer for reliability
+- Logs activity to `/var/log/oracle-keep-alive.log`
+
+### What Happens If Reclaimed
+
+If Oracle does stop your instance:
+1. **Data is preserved** - Boot volumes and block volumes are NOT deleted
+2. **Notification** - You'll receive an email before the instance is stopped
+3. **Restart may fail** - ARM capacity is limited; you may not be able to restart immediately
+4. **Account inactivity** - If the entire account is inactive for 30-90 days, Oracle may terminate and delete everything
 
 ## Troubleshooting
 

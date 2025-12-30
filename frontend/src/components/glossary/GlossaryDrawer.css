@@ -1,0 +1,542 @@
+/**
+ * GlossaryDrawer Styles
+ *
+ * Based on best practices for:
+ * - Non-modal slide-in drawer (maintains context)
+ * - Senior-friendly design (larger targets, readable text)
+ * - Mobile-responsive layout
+ * - Accessibility (focus states, color contrast)
+ */
+
+/* Backdrop - semi-transparent overlay */
+.glossary-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Main Drawer */
+.glossary-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 380px;
+  max-width: 90vw;
+  height: 100vh;
+  background: linear-gradient(180deg, #1a2a1a 0%, #0d1a0d 100%);
+  border-left: 1px solid rgba(76, 175, 80, 0.3);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* Senior Mode - Larger everything */
+.glossary-drawer.senior-mode {
+  width: 420px;
+  font-size: 18px;
+}
+
+.glossary-drawer.senior-mode .term-name {
+  font-size: 20px;
+}
+
+.glossary-drawer.senior-mode .term-definition {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.glossary-drawer.senior-mode .search-input {
+  font-size: 18px;
+  padding: 14px 16px 14px 44px;
+}
+
+.glossary-drawer.senior-mode .category-tab {
+  padding: 12px 16px;
+  font-size: 15px;
+}
+
+/* Header */
+.glossary-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.glossary-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.glossary-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #4CAF50;
+}
+
+.close-button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 24px;
+  line-height: 1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.glossary-subtitle {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+}
+
+/* Search */
+.glossary-search {
+  padding: 16px 20px;
+  flex-shrink: 0;
+}
+
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 40px 12px 40px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.search-input:focus {
+  border-color: #4CAF50;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.clear-search {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-search:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Category Tabs */
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 20px 16px;
+  flex-shrink: 0;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.category-tab {
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.category-tab:hover {
+  border-color: rgba(76, 175, 80, 0.5);
+  color: white;
+}
+
+.category-tab.active {
+  background: #4CAF50;
+  border-color: #4CAF50;
+  color: white;
+}
+
+.category-icon {
+  font-size: 14px;
+}
+
+.category-name {
+  display: none;
+}
+
+.category-tab.active .category-name {
+  display: inline;
+}
+
+/* Results Info */
+.results-info {
+  padding: 8px 20px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.no-results {
+  color: #ff9800;
+}
+
+/* Terms List */
+.terms-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+}
+
+/* Individual Term */
+.term-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.term-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.term-item.expanded {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+/* Term Header (clickable) */
+.term-header {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  gap: 12px;
+}
+
+.term-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.term-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: white;
+}
+
+.expand-icon {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+}
+
+/* Difficulty Badges */
+.difficulty-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.difficulty-badge.beginner {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+}
+
+.difficulty-badge.intermediate {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196F3;
+}
+
+.difficulty-badge.advanced {
+  background: rgba(156, 39, 176, 0.2);
+  color: #CE93D8;
+}
+
+/* Term Content (expanded) */
+.term-content {
+  padding: 0 16px 16px;
+  animation: expandIn 0.2s ease;
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.term-definition {
+  margin: 0 0 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.term-example {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.example-label {
+  color: #FFB74D;
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+.example-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+}
+
+/* Related Terms */
+.related-terms {
+  margin-bottom: 12px;
+}
+
+.related-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.related-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.related-link {
+  padding: 4px 10px;
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 14px;
+  color: #81C784;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.related-link:hover {
+  background: rgba(76, 175, 80, 0.3);
+  color: white;
+}
+
+/* Category Chip */
+.term-category {
+  margin-top: 8px;
+}
+
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+}
+
+/* Difficulty Legend */
+.difficulty-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.legend-title {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-item.beginner .legend-dot {
+  background: #4CAF50;
+}
+
+.legend-item.beginner {
+  color: #4CAF50;
+}
+
+.legend-item.intermediate .legend-dot {
+  background: #2196F3;
+}
+
+.legend-item.intermediate {
+  color: #2196F3;
+}
+
+.legend-item.advanced .legend-dot {
+  background: #CE93D8;
+}
+
+.legend-item.advanced {
+  color: #CE93D8;
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .glossary-drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .category-tabs {
+    padding: 0 16px 12px;
+    gap: 6px;
+  }
+
+  .category-tab {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .term-header {
+    padding: 12px 14px;
+  }
+
+  .term-name {
+    font-size: 15px;
+  }
+
+  .difficulty-legend {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+}
+
+/* Tablet */
+@media (min-width: 481px) and (max-width: 768px) {
+  .glossary-drawer {
+    width: 320px;
+  }
+}
+
+/* Focus States for Accessibility */
+.category-tab:focus,
+.term-header:focus,
+.related-link:focus,
+.close-button:focus,
+.clear-search:focus {
+  outline: 2px solid #4CAF50;
+  outline-offset: 2px;
+}
+
+/* Scrollbar Styling */
+.terms-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.terms-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.terms-list::-webkit-scrollbar-thumb {
+  background: rgba(76, 175, 80, 0.3);
+  border-radius: 4px;
+}
+
+.terms-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(76, 175, 80, 0.5);
+}

@@ -11,12 +11,15 @@ import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
 import LearningDashboard from './components/learning/LearningDashboard';
 import LearningMode from './components/learning/LearningMode';
 import { ModeSelector } from './components/ModeSelector';
+import { BiddingWorkspace } from './components/workspaces/BiddingWorkspace';
+import { PlayWorkspace } from './components/workspaces/PlayWorkspace';
 import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SimpleLogin } from './components/auth/SimpleLogin';
 import DDSStatusIndicator from './components/DDSStatusIndicator';
 import AIDifficultySelector from './components/AIDifficultySelector';
 import { getSessionHeaders } from './utils/sessionHelper';
+import { GlossaryDrawer } from './components/glossary';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -216,6 +219,7 @@ function App() {
   const [alwaysShowHands, setAlwaysShowHands] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showGlossary, setShowGlossary] = useState(false);
   const [userConcern, setUserConcern] = useState('');
   const [reviewPrompt, setReviewPrompt] = useState('');
   const [reviewFilename, setReviewFilename] = useState('');
@@ -224,6 +228,13 @@ function App() {
   const [showLearningDashboard, setShowLearningDashboard] = useState(false);
   const [showLearningMode, setShowLearningMode] = useState(false);
   const [showModeSelector, setShowModeSelector] = useState(true); // Landing page - shown by default
+
+  // Current workspace mode: 'bid' or 'play' (null when on landing page or learning mode)
+  const [currentWorkspace, setCurrentWorkspace] = useState(null);
+  // Active tab within bidding workspace: 'random', 'conventions', 'history'
+  const [biddingTab, setBiddingTab] = useState('random');
+  // Session hands history for replay
+  const [sessionHands, setSessionHands] = useState([]);
 
   // Session scoring state
   const [sessionData, setSessionData] = useState(null);
@@ -485,29 +496,76 @@ ${otherCommands}`;
       case 'learning':
         // Open Learning Mode overlay
         setShowLearningMode(true);
+        setCurrentWorkspace(null);
         break;
 
-      case 'freeplay':
-        // Deal a new hand for free bidding practice
+      case 'bid':
+        // Open Bidding workspace with Random tab
+        setCurrentWorkspace('bid');
+        setBiddingTab('random');
         dealNewHand();
-        break;
-
-      case 'conventions':
-        // Deal a hand and let user select a convention scenario
-        // For now, deal a hand - user can then select scenario from dropdown
-        dealNewHand();
-        // Could also show a convention picker modal here in the future
         break;
 
       case 'play':
-        // Start play mode with AI-bid hand
-        playRandomHand();
+        // Open Play workspace
+        setCurrentWorkspace('play');
+        // Don't auto-start - let user choose from play options
+        break;
+
+      case 'progress':
+        // Open Progress dashboard
+        setShowLearningDashboard(true);
         break;
 
       default:
+        setCurrentWorkspace('bid');
         dealNewHand();
     }
   };
+
+  // Handle bidding tab changes
+  const handleBiddingTabChange = (tab) => {
+    setBiddingTab(tab);
+    if (tab === 'random') {
+      // Optionally deal a new hand when switching to random
+    }
+  };
+
+  // Add hand to session history when bidding completes
+  const addToSessionHistory = useCallback((handData) => {
+    setSessionHands(prev => [{
+      id: Date.now(),
+      hand: handData.hand,
+      hcp: handData.points?.hcp || 0,
+      contract: handData.contract || null,
+      result: handData.result,
+      dealer: handData.dealer,
+      vulnerability: handData.vulnerability,
+      auction: handData.auction,
+      allHands: handData.allHands,
+      timestamp: new Date().toISOString()
+    }, ...prev].slice(0, 20)); // Keep last 20 hands
+  }, []);
+
+  // Replay a hand from session history
+  const handleReplayFromHistory = useCallback((handData) => {
+    // Restore the hand state
+    if (handData.allHands) {
+      setAllHands(handData.allHands);
+    }
+    if (handData.hand) {
+      setHand(handData.hand);
+    }
+    if (handData.dealer) {
+      setDealer(handData.dealer);
+    }
+    if (handData.vulnerability) {
+      setVulnerability(handData.vulnerability);
+    }
+    setAuction([]);
+    setGamePhase('bidding');
+    setDisplayedMessage('Replaying hand from history');
+  }, []);
 
   const handleFeedbackSubmit = async (feedbackData) => {
     // Build context data for freeplay mode
@@ -1376,6 +1434,22 @@ ${otherCommands}`;
     } catch (err) { setError("Could not load scenario from server."); }
   };
 
+  // Load scenario by name (for convention grid)
+  const loadScenarioByName = async (scenarioName) => {
+    if (!scenarioName) return;
+    try {
+      const response = await fetch(`${API_URL}/api/load-scenario`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+        body: JSON.stringify({ name: scenarioName })
+      });
+      if (!response.ok) throw new Error("Failed to load scenario.");
+      const data = await response.json();
+      resetAuction(data, true);
+      setIsInitializing(false);
+      setSelectedScenario(scenarioName); // Update dropdown to match
+    } catch (err) { setError("Could not load scenario from server."); }
+  };
+
   const handleReplayHand = () => {
     if (!initialDeal) return;
     resetAuction(initialDeal, true); // Skip initial AI bidding - wait for proper turn
@@ -2057,6 +2131,14 @@ ${otherCommands}`;
         </div>
         <div className="top-bar-right">
           <button
+            className="glossary-button"
+            onClick={() => setShowGlossary(true)}
+            title="Bridge terminology glossary"
+            data-testid="glossary-button"
+          >
+            📖 Glossary
+          </button>
+          <button
             className="global-feedback-button"
             onClick={() => setShowFeedbackModal(true)}
             title="Report an issue or give feedback"
@@ -2071,8 +2153,39 @@ ${otherCommands}`;
       {/* Login Modal */}
       {showLogin && <SimpleLogin onClose={() => setShowLogin(false)} />}
 
+      {/* Glossary Drawer */}
+      <GlossaryDrawer
+        isOpen={showGlossary}
+        onClose={() => setShowGlossary(false)}
+      />
+
       {/* Session Score Panel */}
       <SessionScorePanel sessionData={sessionData} />
+
+      {/* Play Workspace - Show options when entering play mode (before playing) */}
+      {currentWorkspace === 'play' && gamePhase === 'bidding' && !hand?.length && (
+        <PlayWorkspace
+          onNewHand={playRandomHand}
+          onPlayLastBid={startPlayPhase}
+          onReplayLast={replayCurrentHand}
+          hasLastBidHand={auction.length >= 4 && auction.slice(-3).every(bid => bid.bid === 'Pass')}
+          hasLastPlayedHand={!!initialDeal}
+          isPlaying={false}
+        />
+      )}
+
+      {/* Bidding Workspace Tabs - Show above bidding content */}
+      {currentWorkspace === 'bid' && gamePhase === 'bidding' && (
+        <BiddingWorkspace
+          activeTab={biddingTab}
+          onTabChange={handleBiddingTabChange}
+          onDealHand={dealNewHand}
+          onLoadScenario={loadScenarioByName}
+          onReplayHand={handleReplayFromHistory}
+          scenarios={scenariosByLevel}
+          sessionHands={sessionHands}
+        />
+      )}
 
       {shouldShowHands && allHands ? (
         <div className="table-layout">
@@ -2373,6 +2486,7 @@ ${otherCommands}`;
               setShowLearningMode(false);
               dealNewHand();
             }}
+            onFeedbackClick={() => setShowFeedbackModal(true)}
           />
         </div>
       )}

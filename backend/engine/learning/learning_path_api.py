@@ -22,6 +22,7 @@ from db import get_connection
 
 from engine.ai.conventions.convention_registry import get_convention_registry
 from engine.learning.skill_tree import get_skill_tree_manager
+from engine.learning.play_skill_tree import get_play_skill_tree_manager
 
 
 # ============================================================================
@@ -1367,6 +1368,372 @@ def get_user_learning_status():
 
 
 # ============================================================================
+# PLAY SKILL ENDPOINTS
+# ============================================================================
+
+def play_skill_tree_full():
+    """
+    GET /api/play-skill-tree
+
+    Get the complete play skill tree structure.
+    """
+    manager = get_play_skill_tree_manager()
+    return jsonify(manager.get_all_levels())
+
+
+def play_skill_tree_progress():
+    """
+    GET /api/play-skill-tree/progress?user_id=1
+
+    Get user's progress through play skill tree.
+    """
+    user_id = request.args.get('user_id', type=int)
+
+    if not user_id:
+        return jsonify({'error': 'user_id required'}), 400
+
+    # Get user's completed play skills
+    completed_play_skills = get_user_completed_play_skills(user_id)
+    user_progress = {'completed_play_skills': completed_play_skills}
+
+    manager = get_play_skill_tree_manager()
+    progress = manager.get_user_skill_tree_progress(user_progress)
+
+    return jsonify({
+        'user_id': user_id,
+        'track': 'play',
+        'progress': progress,
+        'next_recommended': manager.get_next_recommended_level(user_progress)
+    })
+
+
+def get_user_completed_play_skills(user_id: int) -> List[str]:
+    """Get list of play skills user has completed (mastered status)."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT skill_id
+            FROM user_play_progress
+            WHERE user_id = ? AND status = 'mastered'
+        """, (user_id,))
+        skills = [row['skill_id'] for row in cursor.fetchall()]
+    except Exception:
+        # Table doesn't exist yet - return empty list
+        skills = []
+    finally:
+        conn.close()
+
+    return skills
+
+
+def generate_play_practice_hand():
+    """
+    GET /api/play-skills/practice-hand?skill_id=counting_winners
+
+    Generate a practice hand for a specific play skill.
+
+    Returns:
+        {
+            "skill_id": "counting_winners",
+            "skill_level": 0,
+            "deal": {
+                "declarer_hand": {...},
+                "dummy_hand": {...},
+                "contract": "3NT",
+                "lead": {...}
+            },
+            "situation": {
+                "question": "How many sure tricks?",
+                "expected_response": {...}
+            },
+            "hand_id": "abc123"
+        }
+    """
+    from engine.learning.play_skill_hand_generators import get_play_skill_hand_generator
+    import uuid
+
+    skill_id = request.args.get('skill_id')
+
+    if not skill_id:
+        return jsonify({'error': 'skill_id required'}), 400
+
+    generator = get_play_skill_hand_generator(skill_id)
+    if not generator:
+        return jsonify({'error': f'No generator found for play skill: {skill_id}'}), 404
+
+    try:
+        deal, situation = generator.generate()
+    except Exception as e:
+        return jsonify({'error': f'Failed to generate play hand: {str(e)}'}), 500
+
+    hand_id = str(uuid.uuid4())[:8]
+
+    response_data = {
+        'skill_id': skill_id,
+        'skill_level': generator.skill_level,
+        'practice_format': generator.practice_format,
+        'deal': deal.to_dict(),
+        'situation': situation,
+        'hand_id': hand_id,
+        'track': 'play'
+    }
+
+    return jsonify(response_data)
+
+
+def get_available_play_skill_generators():
+    """
+    GET /api/play-skills/available
+
+    Get list of all play skills that have hand generators.
+    """
+    from engine.learning.play_skill_hand_generators import get_available_play_skills, PLAY_SKILL_GENERATORS
+
+    skills = []
+    for skill_id in get_available_play_skills():
+        gen_class = PLAY_SKILL_GENERATORS[skill_id]
+        skills.append({
+            'skill_id': skill_id,
+            'level': gen_class.skill_level,
+            'description': gen_class.description,
+            'practice_format': gen_class.practice_format,
+            'track': 'play'
+        })
+
+    return jsonify({
+        'skills': skills,
+        'total': len(skills),
+        'track': 'play'
+    })
+
+
+def record_play_skill_practice(user_id: int, skill_id: str, skill_level: int,
+                                was_correct: bool, hand_id: str = None,
+                                user_answer: str = None, correct_answer: str = None) -> Dict:
+    """Record a play skill practice attempt and update progress."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Record the practice attempt
+        cursor.execute("""
+            INSERT INTO play_practice_history
+            (user_id, skill_id, skill_level, hand_id, user_answer, correct_answer, was_correct)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (user_id, skill_id, skill_level, hand_id, user_answer, correct_answer, was_correct))
+
+        # Check if user has progress record for this skill
+        cursor.execute("""
+            SELECT * FROM user_play_progress
+            WHERE user_id = ? AND skill_id = ?
+        """, (user_id, skill_id))
+        existing = cursor.fetchone()
+
+        if existing:
+            attempts = existing['attempts'] + 1
+            correct = existing['correct'] + (1 if was_correct else 0)
+            accuracy = correct / attempts
+            current_status = existing['status']
+
+            # Determine new status
+            if current_status in ['not_started', 'in_progress']:
+                # Check if mastered (needs 80% on 5+ attempts for most skills)
+                manager = get_play_skill_tree_manager()
+                skill_node = manager.get_skill_by_id(skill_id)
+                if skill_node:
+                    required_accuracy = skill_node.passing_accuracy
+                    required_hands = skill_node.practice_hands_required
+                else:
+                    required_accuracy = 0.80
+                    required_hands = 5
+
+                if accuracy >= required_accuracy and attempts >= required_hands:
+                    new_status = 'mastered'
+                else:
+                    new_status = 'in_progress'
+            else:
+                new_status = current_status
+
+            cursor.execute("""
+                UPDATE user_play_progress
+                SET attempts = ?, correct = ?, accuracy = ?, status = ?,
+                    last_practiced = CURRENT_TIMESTAMP,
+                    mastered_at = CASE WHEN ? = 'mastered' AND status != 'mastered'
+                                       THEN CURRENT_TIMESTAMP ELSE mastered_at END
+                WHERE user_id = ? AND skill_id = ?
+            """, (attempts, correct, accuracy, new_status, new_status, user_id, skill_id))
+
+        else:
+            # Create initial record
+            accuracy = 1.0 if was_correct else 0.0
+            cursor.execute("""
+                INSERT INTO user_play_progress (
+                    user_id, skill_id, skill_level, attempts, correct, accuracy,
+                    status, started_at, last_practiced
+                ) VALUES (?, ?, ?, 1, ?, ?, 'in_progress', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """, (user_id, skill_id, skill_level, 1 if was_correct else 0, accuracy))
+
+        conn.commit()
+
+        # Get updated progress
+        cursor.execute("""
+            SELECT * FROM user_play_progress
+            WHERE user_id = ? AND skill_id = ?
+        """, (user_id, skill_id))
+        updated = dict(cursor.fetchone())
+
+        return {
+            'success': True,
+            'progress': updated,
+            'is_mastered': updated.get('status') == 'mastered'
+        }
+
+    except Exception as e:
+        conn.rollback()
+        return {'success': False, 'error': str(e)}
+
+    finally:
+        conn.close()
+
+
+def record_play_skill_practice_endpoint():
+    """
+    POST /api/play-skills/record-practice
+
+    Record a practice attempt for a play skill.
+
+    Body:
+        {
+            "user_id": 1,
+            "skill_id": "counting_winners",
+            "skill_level": 0,
+            "was_correct": true,
+            "hand_id": "abc123",
+            "user_answer": "7",
+            "correct_answer": "7"
+        }
+    """
+    data = request.get_json()
+    user_id = data.get('user_id')
+    skill_id = data.get('skill_id')
+    skill_level = data.get('skill_level', 0)
+    was_correct = data.get('was_correct')
+
+    if not all([user_id, skill_id, was_correct is not None]):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    result = record_play_skill_practice(
+        user_id=user_id,
+        skill_id=skill_id,
+        skill_level=skill_level,
+        was_correct=was_correct,
+        hand_id=data.get('hand_id'),
+        user_answer=data.get('user_answer'),
+        correct_answer=data.get('correct_answer')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    else:
+        return jsonify(result), 500
+
+
+def user_play_progress_endpoint():
+    """
+    GET /api/user/play-progress?user_id=1
+
+    Get user's progress on all play skills.
+    """
+    user_id = request.args.get('user_id', type=int)
+
+    if not user_id:
+        return jsonify({'error': 'user_id required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT skill_id, skill_level, status, attempts, correct, accuracy,
+                   started_at, mastered_at, last_practiced
+            FROM user_play_progress
+            WHERE user_id = ?
+            ORDER BY skill_level, skill_id
+        """, (user_id,))
+
+        skills = [dict(row) for row in cursor.fetchall()]
+        return jsonify({
+            'user_id': user_id,
+            'track': 'play',
+            'skills': skills,
+            'total_skills': len(skills),
+            'mastered_count': sum(1 for s in skills if s['status'] == 'mastered')
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e), 'skills': [], 'track': 'play'})
+    finally:
+        conn.close()
+
+
+def get_play_learning_status():
+    """
+    GET /api/learning/play-status?user_id=X
+
+    Get comprehensive play learning status for a user.
+    """
+    user_id = request.args.get('user_id', type=int)
+
+    if not user_id:
+        return jsonify({'error': 'user_id required'}), 400
+
+    manager = get_play_skill_tree_manager()
+
+    # Get completed play skills
+    completed_play_skills = get_user_completed_play_skills(user_id)
+    user_progress = {'completed_play_skills': completed_play_skills}
+
+    # Get level progress
+    level_progress = manager.get_user_skill_tree_progress(user_progress)
+
+    # Find current level (first incomplete)
+    current_level = None
+    for level_id, progress in level_progress.items():
+        if progress['unlocked'] and progress['completed'] < progress['total']:
+            current_level = level_id
+            break
+
+    # Calculate overall progress
+    total_skills = sum(p['total'] for p in level_progress.values())
+    completed_count = sum(p['completed'] for p in level_progress.values())
+
+    return jsonify({
+        'user_id': user_id,
+        'track': 'play',
+        'current_level': current_level,
+        'overall_progress': {
+            'completed': completed_count,
+            'total': total_skills,
+            'percentage': round(completed_count / total_skills * 100, 1) if total_skills > 0 else 0
+        },
+        'levels': level_progress,
+        'next_recommended': manager.get_next_recommended_level(user_progress)
+    })
+
+
+def play_curriculum_summary():
+    """
+    GET /api/play-curriculum/summary
+
+    Get summary of play curriculum.
+    """
+    manager = get_play_skill_tree_manager()
+    return jsonify(manager.get_curriculum_summary())
+
+
+# ============================================================================
 # REGISTER ENDPOINTS
 # ============================================================================
 
@@ -1410,4 +1777,19 @@ def register_learning_endpoints(app):
     app.route('/api/learning/level-assessment', methods=['GET'])(get_level_assessment)
     app.route('/api/learning/status', methods=['GET'])(get_user_learning_status)
 
+    # Play skill tree endpoints
+    app.route('/api/play-skill-tree', methods=['GET'])(play_skill_tree_full)
+    app.route('/api/play-skill-tree/progress', methods=['GET'])(play_skill_tree_progress)
+
+    # Play skill practice endpoints
+    app.route('/api/play-skills/practice-hand', methods=['GET'])(generate_play_practice_hand)
+    app.route('/api/play-skills/available', methods=['GET'])(get_available_play_skill_generators)
+    app.route('/api/play-skills/record-practice', methods=['POST'])(record_play_skill_practice_endpoint)
+
+    # Play progress endpoints
+    app.route('/api/user/play-progress', methods=['GET'])(user_play_progress_endpoint)
+    app.route('/api/learning/play-status', methods=['GET'])(get_play_learning_status)
+    app.route('/api/play-curriculum/summary', methods=['GET'])(play_curriculum_summary)
+
     print("✓ Learning path API endpoints registered")
+    print("✓ Play skill API endpoints registered")

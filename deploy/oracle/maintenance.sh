@@ -151,22 +151,31 @@ restart_services() {
     show_status
 }
 
-# Setup anti-idle cron (prevents Oracle reclamation)
+# Setup anti-idle (prevents Oracle reclamation)
+# Uses CPU stress to maintain 95th percentile above 20% threshold
 setup_anti_idle() {
-    log_section "Setting Up Anti-Idle Cron"
+    log_section "Setting Up Anti-Idle Protection"
 
-    # Check if already configured
-    if crontab -l 2>/dev/null | grep -q "api/scenarios"; then
-        log_info "Anti-idle cron already configured"
-        crontab -l | grep "api/scenarios"
-        return
+    KEEPALIVE_SCRIPT="$APP_DIR/deploy/oracle/keep-alive.sh"
+
+    if [ -f "$KEEPALIVE_SCRIPT" ]; then
+        log_info "Using keep-alive.sh for CPU stress-based protection"
+        bash "$KEEPALIVE_SCRIPT" install
+    else
+        log_warn "keep-alive.sh not found at $KEEPALIVE_SCRIPT"
+        log_info "Falling back to basic API ping cron job"
+
+        # Legacy: basic API ping (doesn't actually prevent reclamation)
+        if crontab -l 2>/dev/null | grep -q "api/scenarios"; then
+            log_info "API ping cron already configured"
+            crontab -l | grep "api/scenarios"
+            return
+        fi
+
+        (crontab -l 2>/dev/null; echo "0 */6 * * * curl -s http://localhost/api/scenarios > /dev/null 2>&1") | crontab -
+        log_warn "Basic API ping configured (may not prevent Oracle reclamation)"
+        log_info "For proper protection, ensure keep-alive.sh is deployed"
     fi
-
-    # Add cron job
-    (crontab -l 2>/dev/null; echo "0 */6 * * * curl -s http://localhost/api/scenarios > /dev/null 2>&1") | crontab -
-
-    log_info "Anti-idle cron job added (runs every 6 hours)"
-    log_info "This prevents Oracle from reclaiming your instance as idle"
 }
 
 # Setup logrotate
@@ -209,6 +218,14 @@ main() {
         setup-anti-idle)
             setup_anti_idle
             ;;
+        keepalive-status)
+            KEEPALIVE_SCRIPT="$APP_DIR/deploy/oracle/keep-alive.sh"
+            if [ -f "$KEEPALIVE_SCRIPT" ]; then
+                bash "$KEEPALIVE_SCRIPT" status
+            else
+                log_error "keep-alive.sh not found"
+            fi
+            ;;
         setup-logrotate)
             setup_logrotate
             ;;
@@ -222,14 +239,15 @@ main() {
             echo "Usage: bash maintenance.sh [command]"
             echo ""
             echo "Commands:"
-            echo "  status          Show status of all services (default)"
-            echo "  logs            View recent backend logs"
-            echo "  backup          Backup database"
-            echo "  update          Pull latest code and redeploy"
-            echo "  restart         Restart all services"
-            echo "  setup-anti-idle Configure anti-idle cron job"
-            echo "  setup-logrotate Configure log rotation"
-            echo "  full-setup      Run all setup tasks"
+            echo "  status           Show status of all services (default)"
+            echo "  logs             View recent backend logs"
+            echo "  backup           Backup database"
+            echo "  update           Pull latest code and redeploy"
+            echo "  restart          Restart all services"
+            echo "  setup-anti-idle  Install CPU stress keep-alive (prevents Oracle reclamation)"
+            echo "  keepalive-status Check keep-alive service status"
+            echo "  setup-logrotate  Configure log rotation"
+            echo "  full-setup       Run all setup tasks"
             ;;
     esac
 }
