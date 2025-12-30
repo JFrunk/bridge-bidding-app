@@ -3,6 +3,11 @@ import './DDSStatusIndicator.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
+// Get session ID from localStorage (same as api.js SessionManager)
+const getSessionId = () => {
+  return localStorage.getItem('bridge_session_id') || 'default';
+};
+
 // Standard difficulty order: Beginner -> Intermediate -> Advanced -> Expert
 const DIFFICULTY_ORDER = ['beginner', 'intermediate', 'advanced', 'expert'];
 
@@ -17,7 +22,9 @@ const DDSStatusIndicator = () => {
 
   const fetchAIStatus = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/ai/status`);
+      const response = await fetch(`${API_URL}/api/ai/status`, {
+        headers: { 'X-Session-ID': getSessionId() }
+      });
       const data = await response.json();
       setAiStatus(data);
       setLoading(false);

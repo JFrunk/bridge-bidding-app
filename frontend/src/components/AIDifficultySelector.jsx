@@ -3,6 +3,11 @@ import './AIDifficultySelector.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
+// Get session ID from localStorage (same as api.js SessionManager)
+const getSessionId = () => {
+  return localStorage.getItem('bridge_session_id') || 'default';
+};
+
 // Base difficulty info - expert rating/description updated dynamically based on DDS availability
 const DIFFICULTY_INFO = {
   beginner: {
@@ -55,7 +60,9 @@ const AIDifficultySelector = ({ onDifficultyChange }) => {
   const fetchCurrentDifficulty = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_URL}/api/ai/status`);
+      const response = await fetch(`${API_URL}/api/ai/status`, {
+        headers: { 'X-Session-ID': getSessionId() }
+      });
       if (response.ok) {
         const data = await response.json();
         const backendDifficulty = data.current_difficulty;
@@ -90,7 +97,10 @@ const AIDifficultySelector = ({ onDifficultyChange }) => {
     try {
       const response = await fetch(`${API_URL}/api/set-ai-difficulty`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-ID': getSessionId()
+        },
         body: JSON.stringify({ difficulty: newDifficulty })
       });
 
