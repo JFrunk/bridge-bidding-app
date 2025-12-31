@@ -26,7 +26,7 @@ import {
 import SkillPractice from './SkillPractice';
 import SkillIntro from './SkillIntro';
 
-const LearningMode = ({ userId, onClose, onPlayFreePlay, onFeedbackClick }) => {
+const LearningMode = ({ userId }) => {
   // Track selector: 'bidding' or 'play'
   const [selectedTrack, setSelectedTrack] = useState('bidding');
 
@@ -376,7 +376,6 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay, onFeedbackClick }) => {
         skillName={showingIntro.skillName}
         onStart={handleStartPractice}
         onBack={handleBackFromIntro}
-        onFeedbackClick={onFeedbackClick}
       />
     );
   }
@@ -390,7 +389,6 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay, onFeedbackClick }) => {
         onContinue={handleContinue}
         onClose={handleCloseSession}
         onNavigateHand={handleNavigateHand}
-        onFeedbackClick={onFeedbackClick}
       />
     );
   }
@@ -400,35 +398,15 @@ const LearningMode = ({ userId, onClose, onPlayFreePlay, onFeedbackClick }) => {
 
   return (
     <div className="learning-mode">
-      {/* Header */}
+      {/* Header - simplified since TopNavigation provides main navigation */}
       <div className="learning-mode-header">
-        <div className="header-left">
-          <button
-            onClick={onClose}
-            className="home-button"
-            title="Return to mode selection"
-            data-testid="learning-home-button"
-          >
-            🏠
-          </button>
-          <div className="header-content">
-            <h1>Learning Mode</h1>
-            <p className="subtitle">
-              {selectedTrack === 'bidding'
-                ? 'Master bridge bidding step by step'
-                : 'Master declarer play techniques'}
-            </p>
-          </div>
-        </div>
-        <div className="header-actions">
-          {onFeedbackClick && (
-            <button onClick={onFeedbackClick} className="feedback-button">
-              📝 Feedback
-            </button>
-          )}
-          <button onClick={onPlayFreePlay} className="free-play-button">
-            Free Play
-          </button>
+        <div className="header-content">
+          <h1>Learning Mode</h1>
+          <p className="subtitle">
+            {selectedTrack === 'bidding'
+              ? 'Master bridge bidding step by step'
+              : 'Master declarer play techniques'}
+          </p>
         </div>
       </div>
 

@@ -24,6 +24,7 @@ body {
   flex-direction: column;
   gap: var(--space-5);
   padding: 0 var(--space-2);
+  padding-top: 80px; /* Space for TopNavigation (64px) + gap */
 }
 
 /* Responsive: Adjust container on small screens */
@@ -31,6 +32,7 @@ body {
   .app-container {
     gap: var(--space-3);
     padding: 0 var(--space-2);
+    padding-top: 72px; /* Space for TopNavigation (56px) + gap */
   }
 }
 
@@ -38,6 +40,7 @@ body {
   .app-container {
     gap: var(--space-2);
     padding: 0 var(--space-1);
+    padding-top: 64px; /* Space for TopNavigation (56px) + smaller gap */
   }
 }
 .my-hand {
@@ -252,7 +255,63 @@ body {
 }
 .game-controls {
   display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+/* Convention mode badge */
+.convention-mode-badge {
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: linear-gradient(135deg, #4263eb 0%, #5c7cfa 100%);
+  border-radius: var(--radius-lg);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(66, 99, 235, 0.3);
+}
+
+.convention-mode-badge .convention-name {
+  font-size: var(--text-base);
+}
+
+.convention-mode-badge .exit-convention-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.convention-mode-badge .exit-convention-button:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Primary/Secondary action hierarchy */
+.primary-action {
+  font-size: var(--text-lg) !important;
+  padding: var(--space-3) var(--space-6) !important;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.secondary-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.secondary-action {
+  opacity: 0.9;
+  font-size: var(--text-sm) !important;
 }
 .replay-button {
   font-family: inherit;
@@ -355,27 +414,36 @@ body {
 .show-hands-controls {
   display: flex;
   gap: var(--space-2);
-  flex-direction: column;
+  align-items: center;
 }
-.show-hands-controls button {
-  font-family: inherit;
-  font-size: var(--text-sm);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  border: none;
-  background-color: var(--color-info);
-  color: var(--text-primary);
+
+/* Checkbox toggle for show all hands */
+.show-hands-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   cursor: pointer;
-  transition: background-color var(--duration-fast) ease;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  transition: background var(--duration-fast) ease;
 }
-.show-hands-controls button:hover {
-  background-color: var(--color-info-dark);
+
+.show-hands-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
-.show-hands-controls button.active {
-  background-color: var(--color-success);
+
+.show-hands-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-success);
+  cursor: pointer;
 }
-.show-hands-controls button.active:hover {
-  background-color: var(--color-success-dark);
+
+.show-hands-toggle span {
+  user-select: none;
 }
 
 /* Table Layout - Bridge Table View */
@@ -1145,78 +1213,53 @@ html, body {
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
+/* Progress/Dashboard Full-Screen Overlay - same pattern as Learning Mode */
 .learning-dashboard-overlay {
   position: fixed;
-  top: 0;
+  top: 64px; /* Below TopNavigation */
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--bg-overlay);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
+  z-index: 900; /* Below TopNavigation (1000) */
   overflow-y: auto;
-  padding: var(--space-5);
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ed 100%);
 }
 
-.learning-dashboard-modal {
-  position: relative;
-  background: var(--text-primary);
-  border-radius: var(--radius-xl);
-  max-width: 1200px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-xl);
-}
-
-.close-dashboard {
-  position: absolute;
-  top: var(--space-5);
-  right: var(--space-5);
-  background: rgba(0, 0, 0, 0.1);
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  font-size: 28px;
-  font-weight: var(--font-bold);
-  color: var(--text-primary-dark);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--duration-fast) ease;
-  z-index: 10001;
-}
-
-.close-dashboard:hover {
-  background: rgba(0, 0, 0, 0.2);
-  transform: rotate(90deg);
-}
-
+/* Responsive adjustments for dashboard overlay */
 @media (max-width: 768px) {
-  .learning-dashboard-modal {
-    max-width: 100%;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-
   .learning-dashboard-overlay {
-    padding: 0;
+    top: 56px; /* Tablet TopNavigation height */
+  }
+}
+
+@media (max-width: 480px) {
+  .learning-dashboard-overlay {
+    top: 56px; /* Mobile TopNavigation height */
   }
 }
 
 /* Learning Mode Full-Screen Overlay */
 .learning-mode-overlay {
   position: fixed;
-  top: 0;
+  top: 64px; /* Below TopNavigation */
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 20000;
+  z-index: 900; /* Below TopNavigation (1000) */
   overflow-y: auto;
+}
+
+/* Responsive adjustments for learning mode overlay */
+@media (max-width: 768px) {
+  .learning-mode-overlay {
+    top: 56px; /* Tablet TopNavigation height */
+  }
+}
+
+@media (max-width: 480px) {
+  .learning-mode-overlay {
+    top: 56px; /* Mobile TopNavigation height */
+  }
 }
 
 /* Learn Button */

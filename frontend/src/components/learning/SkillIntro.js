@@ -837,7 +837,7 @@ const DEFAULT_CONTENT = {
   practice_tip: 'Read each hand carefully and apply what you\'ve learned.'
 };
 
-const SkillIntro = ({ skillId, skillName, onStart, onBack, onFeedbackClick }) => {
+const SkillIntro = ({ skillId, skillName, onStart, onBack }) => {
   const [showGlossary, setShowGlossary] = useState(false);
   const [selectedTermId, setSelectedTermId] = useState(null);
 
@@ -876,11 +876,6 @@ const SkillIntro = ({ skillId, skillName, onStart, onBack, onFeedbackClick }) =>
           >
             📖 Glossary
           </button>
-          {onFeedbackClick && (
-            <button onClick={onFeedbackClick} className="feedback-button">
-              📝 Feedback
-            </button>
-          )}
         </div>
       </div>
 

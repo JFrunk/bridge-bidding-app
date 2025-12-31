@@ -3,12 +3,13 @@
  */
 
 .skill-intro {
-  min-height: 100vh;
+  min-height: 100%;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   color: #fff;
   display: flex;
   flex-direction: column;
   padding: 20px;
+  /* Overlay already positioned below TopNavigation */
 }
 
 /* Header */
@@ -38,26 +39,7 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Feedback Button */
-.skill-intro .feedback-button {
-  position: absolute;
-  right: 0;
-  top: 20px;
-  padding: 10px 20px;
-  background: rgba(5, 150, 105, 0.9);
-  border: 1px solid rgba(5, 150, 105, 1);
-  border-radius: 8px;
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.skill-intro .feedback-button:hover {
-  background: rgba(4, 120, 87, 1);
-  border-color: rgba(4, 120, 87, 1);
-}
+/* Header actions (glossary button) */
 
 .intro-title {
   margin: 0 0 10px;

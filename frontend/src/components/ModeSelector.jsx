@@ -15,7 +15,7 @@ import './ModeSelector.css';
  * - Play: Practice card play
  * - Progress: View stats and learning insights
  */
-export function ModeSelector({ onSelectMode, userName, onFeedbackClick }) {
+export function ModeSelector({ onSelectMode, userName }) {
   const { isGuest, promptForRegistration } = useAuth();
 
   const handleModeSelect = (modeId) => {
@@ -88,24 +88,11 @@ export function ModeSelector({ onSelectMode, userName, onFeedbackClick }) {
 
   return (
     <div className="mode-selector-container">
-      {/* Global Feedback Button - Always visible */}
-      {onFeedbackClick && (
-        <button
-          className="mode-selector-feedback-button"
-          onClick={onFeedbackClick}
-          title="Report an issue or give feedback"
-          aria-label="Report an issue or give feedback"
-          data-testid="mode-selector-feedback-button"
-        >
-          <span aria-hidden="true">📝</span> Feedback
-        </button>
-      )}
-
       <div className="mode-selector-content">
         {/* Header */}
         <div className="mode-selector-header">
           <h1 className="mode-selector-title">
-            Bridge Bidding Trainer
+            My Bridge Buddy
           </h1>
           <p className="mode-selector-subtitle">
             Learn Standard American Yellow Card (SAYC) bidding through interactive practice
@@ -158,7 +145,7 @@ export function ModeSelector({ onSelectMode, userName, onFeedbackClick }) {
 
         {/* Footer hint */}
         <p className="mode-selector-hint">
-          You can switch between modes anytime using the 🏠 button
+          Switch between modes anytime using the navigation icons above
         </p>
       </div>
     </div>
@@ -167,13 +154,11 @@ export function ModeSelector({ onSelectMode, userName, onFeedbackClick }) {
 
 ModeSelector.propTypes = {
   onSelectMode: PropTypes.func.isRequired,
-  userName: PropTypes.string,
-  onFeedbackClick: PropTypes.func
+  userName: PropTypes.string
 };
 
 ModeSelector.defaultProps = {
-  userName: null,
-  onFeedbackClick: null
+  userName: null
 };
 
 export default ModeSelector;

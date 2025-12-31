@@ -13,7 +13,7 @@ import './SkillPractice.css';
 import { LearningHand } from './LearningCard';
 import { TermHighlight } from '../glossary';
 
-const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigateHand, onFeedbackClick }) => {
+const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigateHand }) => {
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastResult, setLastResult] = useState(session?.lastResult || null);
@@ -122,11 +122,6 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
       <div className="practice-header">
         <button onClick={onClose} className="back-button">← Back</button>
         <h2 className="skill-title">{formatSkillName(topic_id, expected_response)}</h2>
-        {onFeedbackClick && (
-          <button onClick={onFeedbackClick} className="feedback-button">
-            📝 Feedback
-          </button>
-        )}
         <div className="progress-indicator">
           <div className="progress-stats">
             <span className="hand-counter">
