@@ -57,12 +57,7 @@ export function PlayableCard({ card, onClick, disabled = false, compact = false,
         <span className={cn(compact ? "text-xl" : "text-base")}>{card.suit}</span>
       </div>
 
-      {/* Center suit symbol - hidden in compact mode (saves space for overlapping) */}
-      {!compact && (
-        <div className={cn("absolute inset-0 flex items-center justify-center", suitColor)}>
-          <span className="text-4xl">{card.suit}</span>
-        </div>
-      )}
+      {/* Center suit symbol removed for mobile-friendly card display */}
 
       {/* Bottom-right corner (rotated) - hidden in compact mode */}
       {!compact && (
