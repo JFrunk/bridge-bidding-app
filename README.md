@@ -67,7 +67,7 @@ When using Claude to debug or develop:
 
 - **[.claude/QUICK_START.md](.claude/QUICK_START.md)** - Quick reference for systematic debugging
 - **[.claude/CODING_GUIDELINES.md](.claude/CODING_GUIDELINES.md)** - Complete systematic analysis framework
-- **[SYSTEMATIC_ANALYSIS_SUMMARY.md](SYSTEMATIC_ANALYSIS_SUMMARY.md)** - Overview and usage guide
+- **[docs/project-status/SYSTEMATIC_ANALYSIS_SUMMARY.md](docs/project-status/SYSTEMATIC_ANALYSIS_SUMMARY.md)** - Overview and usage guide
 
 **Key Practice**: When debugging, always check if an issue exists broadly across the codebase, not just in the reported location.
 
@@ -271,7 +271,7 @@ See [docs/guides/TEST_VALIDATION_REPORT.md](docs/guides/TEST_VALIDATION_REPORT.m
 
 See [docs/project-overview/DEPLOYMENT.md](docs/project-overview/DEPLOYMENT.md) for deployment instructions.
 
-The application is configured for deployment on Render with separate frontend and backend services.
+The application is deployed on Oracle Cloud Always Free tier. See [deploy/oracle/README.md](deploy/oracle/README.md) for deployment instructions.
 
 ## Known Issues
 

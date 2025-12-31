@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-**Last Updated:** 2025-10-29
+**Last Updated:** 2025-12-31
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -14,7 +14,7 @@ This is a **Bridge Bidding Training Application** that teaches players the Stand
 - **Database**: SQLite (bridge.db)
 - **Architecture**: Client-server with REST API communication
 
-**Production:** Deployed on Render, auto-deploys from `main` branch
+**Production:** Deployed on Oracle Cloud Always Free (https://app.mybridgebuddy.com)
 
 ---
 
@@ -101,7 +101,7 @@ python3 analyze_errors.py --category bidding_logic  # Filter by category
 3. **If not logged:** Reproduce bug, then check logs again (may appear during reproduction)
 4. **After fix:** Monitor error hash to verify bug stays fixed
 
-**See:** [ERROR_LOGGING_QUICKSTART.md](ERROR_LOGGING_QUICKSTART.md), [docs/features/ERROR_LOGGING_SYSTEM.md](docs/features/ERROR_LOGGING_SYSTEM.md)
+**See:** [docs/features/ERROR_LOGGING_QUICKSTART.md](docs/features/ERROR_LOGGING_QUICKSTART.md), [docs/features/ERROR_LOGGING_SYSTEM.md](docs/features/ERROR_LOGGING_SYSTEM.md)
 
 ---
 
@@ -254,7 +254,7 @@ Proceed with implementation?
 
 This project uses a **two-branch workflow**:
 - **`development`** - Active development branch (default for commits)
-- **`main`** - Production branch (triggers Render deployment)
+- **`main`** - Production branch (deploy via Oracle Cloud)
 
 ### Standard Workflow (Development Branch)
 
@@ -268,7 +268,7 @@ git checkout development
 git add .
 git commit -m "Descriptive commit message"
 
-# Push to GitHub (does NOT deploy to Render)
+# Push to GitHub
 git push origin development
 ```
 
@@ -278,8 +278,10 @@ git push origin development
 
 **Step 1: Database Migration (Production)**
 ```bash
-# On production server or Render shell
-cd backend
+# SSH to Oracle Cloud server
+ssh opc@<ORACLE_IP>
+cd /opt/bridge-bidding-app/backend
+source venv/bin/activate
 python3 database/init_all_tables.py
 
 # Verify tables exist
@@ -296,8 +298,13 @@ git checkout main
 # Merge development changes
 git merge development
 
-# Push to trigger Render deployment
+# Push to GitHub, then deploy to Oracle
 git push origin main
+
+# Deploy to Oracle (use webhook or SSH)
+# Option 1: If webhook is configured, push triggers auto-deploy
+# Option 2: SSH to server and run:
+ssh opc@<ORACLE_IP> "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"
 
 # Switch back to development for continued work
 git checkout development
@@ -345,10 +352,11 @@ git status
 
 - **Always commit to `development`** unless deploying
 - **Only push to `main`** when ready for public deployment
-- Render auto-deploys only from `main` branch
+- Production is on Oracle Cloud Always Free (https://app.mybridgebuddy.com)
+- Deploy via webhook (auto) or SSH maintenance script (manual)
 - Keep `development` as your default working branch
 
-**See:** `READY_FOR_PRODUCTION.md`, `docs/project-overview/DEPLOYMENT.md`
+**See:** `deploy/oracle/README.md`, `docs/deployment/ORACLE_CLOUD_MIGRATION.md`
 
 ---
 
