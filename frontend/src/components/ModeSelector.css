@@ -354,6 +354,35 @@
   }
 }
 
+/* Extra small phones */
+@media (max-width: 360px) {
+  .mode-selector-container {
+    padding: var(--space-2, 8px);
+    padding-top: var(--space-4, 16px);
+  }
+
+  .mode-cards-grid {
+    gap: var(--space-3, 12px);
+  }
+
+  .mode-card {
+    padding: var(--space-3, 12px);
+  }
+
+  .mode-title {
+    font-size: 1.1rem;
+  }
+
+  .mode-features li {
+    font-size: 0.8rem;
+  }
+
+  .mode-button {
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    font-size: 0.9rem;
+  }
+}
+
 /* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .mode-selector-feedback-button,

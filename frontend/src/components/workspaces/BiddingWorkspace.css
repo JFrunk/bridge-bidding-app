@@ -80,7 +80,7 @@
   color: rgba(255, 255, 255, 0.85);
   font-size: var(--text-base);
   flex: 1;
-  min-width: 200px;
+  min-width: min(200px, 100%); /* Responsive min-width */
 }
 
 .primary-action-button {
@@ -387,6 +387,39 @@
   .history-item .replay-button {
     min-height: 44px; /* Touch target compliance */
     min-width: 80px;
+  }
+}
+
+/* Extra small phones (under 360px) */
+@media (max-width: 360px) {
+  .workspace-tabs {
+    gap: var(--space-1);
+  }
+
+  .workspace-tab {
+    padding: var(--space-2) var(--space-2);
+    min-width: 0;
+  }
+
+  .panel-description {
+    font-size: var(--text-sm);
+  }
+
+  .convention-grid {
+    gap: var(--space-2);
+  }
+
+  .convention-card {
+    padding: var(--space-2);
+  }
+
+  .convention-card h4 {
+    font-size: var(--text-sm);
+  }
+
+  .convention-examples span {
+    font-size: var(--text-xs);
+    padding: 2px 6px;
   }
 }
 
