@@ -15,6 +15,8 @@ This is a **Bridge Bidding Training Application** that teaches players the Stand
 - **Architecture**: Client-server with REST API communication
 
 **Production:** Deployed on Oracle Cloud Always Free (https://app.mybridgebuddy.com)
+- **Deploy command:** `ssh oracle-bridge "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"`
+- **SSH config:** `~/.ssh/config` has alias `oracle-bridge` → 161.153.7.196
 
 ---
 
