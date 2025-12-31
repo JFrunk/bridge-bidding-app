@@ -29,8 +29,8 @@ export function BridgeCard({ rank, suit, onClick, disabled = false, compact = fa
   return (
     <div
       className={cn(
-        // Base styles - Rule of Three: spacing (gap-4), border-radius (rounded-card)
-        "relative w-[70px] h-[100px] bg-white border border-gray-400 rounded-card shadow-md",
+        // Base styles - card class provides dimensions and responsive sizing
+        "card relative bg-white border border-gray-400 rounded-card shadow-md",
         // Hover effect (only if clickable)
         "transition-transform duration-200",
         isClickable && "cursor-pointer hover:-translate-y-4 hover:z-50",
