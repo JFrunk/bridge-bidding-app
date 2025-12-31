@@ -22,6 +22,7 @@ import AIDifficultySelector from './components/AIDifficultySelector';
 import { getSessionHeaders } from './utils/sessionHelper';
 import { GlossaryDrawer } from './components/glossary';
 import TopNavigation from './components/navigation/TopNavigation';
+import { useDevMode } from './hooks/useDevMode';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -201,6 +202,11 @@ function App() {
     promptForRegistration
   } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
+
+  // Dev mode - toggle with Ctrl+Shift+D (or Cmd+Shift+D on Mac)
+  // Also available via URL param ?dev=true or console: window.enableDevMode()
+  // Controls visibility of: AI Review button, AI Difficulty Selector, AI messages
+  const { isDevMode } = useDevMode();
 
   const [hand, setHand] = useState([]);
   const [handPoints, setHandPoints] = useState(null);
@@ -1502,7 +1508,7 @@ ${otherCommands}`;
   };
   
   useEffect(() => {
-    const fetchScenariosAndDeal = async () => {
+    const fetchScenariosAndSession = async () => {
       try {
         const response = await fetch(`${API_URL}/api/scenarios`, { headers: { ...getSessionHeaders() } });
         const data = await response.json();
@@ -1522,7 +1528,6 @@ ${otherCommands}`;
         setSessionData(sessionData);
 
         // Use dealer and vulnerability from session
-        const sessionDealer = sessionData.session.dealer;
         const sessionVuln = sessionData.session.vulnerability;
         setVulnerability(sessionVuln);
 
@@ -1531,31 +1536,11 @@ ${otherCommands}`;
         console.error("Could not start session", err);
       }
 
-      // Deal initial hand
-      try {
-        const response = await fetch(`${API_URL}/api/deal-hands`, { headers: { ...getSessionHeaders() } });
-        if (!response.ok) throw new Error("Failed to deal hands.");
-        const data = await response.json();
-
-        // FIX: Map abbreviated dealer names and calculate if AI should bid
-        const dealerMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
-        const dealerFromBackend = data.dealer || 'North';
-        const currentDealer = dealerMap[dealerFromBackend] || dealerFromBackend;
-        const shouldAiBid = players.indexOf(currentDealer) !== 2; // Dealer is not South
-
-        // Reset auction with correct skipInitialAiBidding value
-        resetAuction(data, !shouldAiBid);
-
-        // System is now ready - wait a bit for state to settle
-        setTimeout(() => {
-          setIsInitializing(false);
-        }, 200);
-      } catch (err) {
-        setError("Could not connect to server to deal.");
-        setIsInitializing(false);
-      }
+      // Don't auto-deal - let user choose mode first from ModeSelector
+      // Hand dealing happens when user selects Bid mode via handleModeSelect
+      setIsInitializing(false);
     };
-    fetchScenariosAndDeal();
+    fetchScenariosAndSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -2288,8 +2273,9 @@ ${otherCommands}`;
                   </div>
                 )}
                 <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} />
-                {displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
-                {error && <div className="error-message">{error}</div>}
+                {/* AI messages - Dev mode only */}
+                {isDevMode && displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
+                {isDevMode && error && <div className="error-message">{error}</div>}
               </div>
             </div>
             <div className="table-east">
@@ -2327,15 +2313,16 @@ ${otherCommands}`;
             </div>
           )}
           <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} />
-          {displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
-          {error && <div className="error-message">{error}</div>}
+          {/* AI messages - Dev mode only */}
+          {isDevMode && displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
+          {isDevMode && error && <div className="error-message">{error}</div>}
         </div>
       )}
 
       {!shouldShowHands && gamePhase === 'playing' && playState && (
         <div className="play-phase">
-          {/* DEBUG INDICATOR: Shows AI loop state - Only show during active play, not after completion - Less prominent for testing only */}
-          {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && (
+          {/* DEBUG INDICATOR: Shows AI loop state - Dev mode only */}
+          {isDevMode && Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && (
             <div style={{
               position: 'fixed',
               top: '10px',
@@ -2394,7 +2381,8 @@ ${otherCommands}`;
             onHideLastTrick={() => setShowLastTrick(false)}
           />
           {/* Don't show AI bidding status messages during play - only show errors if they occur */}
-          {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && error && <div className="error-message">{error}</div>}
+          {/* Play phase errors - Dev mode only */}
+          {isDevMode && Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && error && <div className="error-message">{error}</div>}
 
           {/* Show All Hands toggle for play phase - available after hand is complete */}
           {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) === 13 && (
@@ -2463,8 +2451,8 @@ ${otherCommands}`;
             )}
           </div>
 
-          {/* AI Difficulty Selector - Only visible during gameplay */}
-          {gamePhase === 'playing' && (
+          {/* AI Difficulty Selector & Review - Dev mode only (Ctrl+Shift+D to toggle) */}
+          {isDevMode && gamePhase === 'playing' && (
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <AIDifficultySelector
                 onDifficultyChange={(difficulty, data) => {
@@ -2499,7 +2487,10 @@ ${otherCommands}`;
               {activeConvention && (
                 <button onClick={handleShowConventionHelp} className="help-button" data-testid="convention-help-button">ℹ️ Convention Help</button>
               )}
-              <button onClick={() => setShowReviewModal(true)} className="ai-review-button" data-testid="ai-review-button">🤖 Request AI Review</button>
+              {/* AI Review - Dev mode only (Ctrl+Shift+D to toggle) */}
+              {isDevMode && (
+                <button onClick={() => setShowReviewModal(true)} className="ai-review-button" data-testid="ai-review-button">🤖 Request AI Review</button>
+              )}
             </div>
           </>
         )}
@@ -2584,8 +2575,32 @@ ${otherCommands}`;
         </div>
       )}
 
-      {/* DDS Status Indicator - Shows if expert AI is using DDS */}
-      <DDSStatusIndicator />
+      {/* DDS Status Indicator - Dev mode only */}
+      {isDevMode && <DDSStatusIndicator />}
+
+      {/* Dev mode indicator - subtle badge when dev mode is active */}
+      {isDevMode && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '8px',
+            left: '8px',
+            background: 'rgba(139, 92, 246, 0.9)',
+            color: 'white',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            zIndex: 10000,
+            cursor: 'pointer',
+            userSelect: 'none'
+          }}
+          onClick={() => window.disableDevMode?.()}
+          title="Click to disable dev mode (or press Ctrl+Shift+D)"
+        >
+          DEV
+        </div>
+      )}
     </div>
   );
 }
