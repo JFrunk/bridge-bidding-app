@@ -545,63 +545,111 @@ const PLAY_SKILL_CONTENT = {
   // Level 0: Play Foundations
   counting_winners: {
     title: 'Counting Winners',
-    subtitle: 'Know your sure tricks in NT contracts',
+    subtitle: 'The key technique for notrump contracts',
     sections: [
       {
-        heading: 'What Are Winners?',
-        content: `Winners (or "sure tricks") are cards that will win tricks without giving up the lead.
-In notrump contracts, count your winners first to plan the play.`
+        heading: 'Why Count Winners in Notrump?',
+        content: `In notrump, you have NO TRUMPS. This creates two dangers:
+• No cross-ruff available - you can't ruff losers in either hand
+• If you lose control, opponents can RUN A LONG SUIT against you
+
+So you must count what you can WIN with high cards, then develop more winners BEFORE opponents establish their suit.`
       },
       {
-        heading: 'Sure Winners Include',
-        content: `• Aces - always winners
+        heading: 'Winners vs Losers',
+        content: `Bridge uses two counting methods:
+• NOTRUMP → Count WINNERS (you need high cards to win)
+• SUIT CONTRACTS → Count LOSERS (you have trumps to eliminate them)
+
+Different contracts, different thinking!`
+      },
+      {
+        heading: 'What Are Winners?',
+        content: `Winners (or "sure tricks") are cards that win without giving up the lead:
+• Aces - always winners
 • Kings with the Ace (in either hand)
 • Queens with A-K (solid sequence)
 • Long cards in established suits
 
-Example: A-K-Q-J-x = 5 winners`
+Example: A-K-Q-J-x = 5 sure winners`
       },
       {
         heading: 'The Counting Method',
-        content: `Go suit by suit, counting tricks you can take:
+        content: `Go suit by suit, counting tricks you can take NOW:
 ♠: A-K = 2 winners
 ♥: A = 1 winner
 ♦: A-K-Q = 3 winners
 ♣: A = 1 winner
-Total: 7 winners`
+Total: 7 winners
+
+In 3NT you need 9 tricks. With 7 winners, you need to develop 2 more.`
       }
     ],
-    practice_tip: 'Count Aces first, then A-K combinations, then solid sequences. In 3NT, you need 9 tricks!'
+    practice_tip: 'In notrump, always count winners first. Compare to tricks needed (3NT = 9 tricks) to know how many you must develop.'
   },
 
   counting_losers: {
     title: 'Counting Losers',
-    subtitle: 'Essential for suit contracts',
+    subtitle: 'The key technique for suit contracts',
     sections: [
       {
-        heading: 'Why Count Losers?',
-        content: `In suit contracts, count losers to plan how to eliminate them.
-Look at the first THREE cards of each suit in declarer's hand (not dummy).`
+        heading: 'Why Count Losers in Suit Contracts?',
+        content: `In suit contracts, you have TRUMPS - a huge advantage! Trumps let you:
+• RUFF losers in the short hand (usually dummy)
+• CROSS-RUFF between hands
+• CONTROL the hand - opponents can't run a long suit against you
+
+So count your LOSERS, then plan how to eliminate them (ruff, discard, or finesse).`
+      },
+      {
+        heading: 'Winners vs Losers',
+        content: `Bridge uses two counting methods:
+• NOTRUMP → Count WINNERS (no trumps to help, need high cards)
+• SUIT CONTRACTS → Count LOSERS (trumps let you eliminate them)
+
+Different contracts, different thinking!`
+      },
+      {
+        heading: 'The First-Three Rule',
+        content: `Only count the FIRST THREE cards of each suit.
+Why? In suit contracts, you'll trump by the 4th round, so cards beyond the 3rd don't matter.
+
+Maximum 3 losers per suit, regardless of length.`
       },
       {
         heading: 'What Counts as a Loser?',
-        content: `• Small cards without Ace protection = losers
-• K-x = 1 loser (might lose to the Ace)
-• Q-x-x = 2 losers (might lose to A and K)
-• x-x-x = 3 losers
+        content: `Look at your top 3 cards in each suit:
+• A = not a loser (it wins)
+• K = not a loser (it wins or forces the Ace)
+• Q = not a loser (covers the 3rd position)
+• J and below = loser
 
-Voids and singletons reduce losers!`
+Examples:
+• A-K-x = 1 loser (only the x)
+• K-x-x = 2 losers (the two x's)
+• Q-J-x = 2 losers (J and x are losers)
+• x-x-x = 3 losers`
+      },
+      {
+        heading: 'Short Suits',
+        content: `Short suits have fewer losers:
+• Void = 0 losers (no cards to lose!)
+• Singleton A = 0 losers
+• Singleton K = 0-1 loser (risky)
+• Doubleton x-x = 2 losers (max for 2 cards)
+
+The 4th+ cards are ignored: A-K-x-x = 1 loser (count A-K-x only)`
       },
       {
         heading: 'Example Count',
-        content: `♠ A-K-x-x = 1 loser (the x after A-K)
-♥ Q-J-x = 2 losers
-♦ x-x = 2 losers (only count 2, not more)
-♣ A-x-x = 2 losers
+        content: `♠ A-K-5-3: Count A-K-5 → 1 loser (the 5)
+♥ Q-J-6: Count Q-J-6 → 2 losers (J and 6)
+♦ 8-4: Only 2 cards → 2 losers
+♣ A-7-2: Count A-7-2 → 2 losers (7 and 2)
 Total: 7 losers`
       }
     ],
-    practice_tip: 'In 4♠, you can afford 3 losers. Count from declarer\'s hand only, first 3 cards per suit.'
+    practice_tip: 'Remember: only count the first 3 cards per suit. In 4♠, you can afford 3 losers (13 - 10 tricks needed).'
   },
 
   analyzing_the_lead: {

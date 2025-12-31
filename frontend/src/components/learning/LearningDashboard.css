@@ -184,7 +184,8 @@
 /* Dashboard Grid */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  /* Use min() to ensure cards never exceed viewport width on narrow screens */
+  grid-template-columns: repeat(auto-fit, minmax(min(350px, 100%), 1fr));
   gap: var(--space-5);
   margin-bottom: var(--space-8);
 }
