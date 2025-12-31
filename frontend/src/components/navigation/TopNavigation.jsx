@@ -17,7 +17,7 @@ const modules = [
   },
   {
     id: 'bid',
-    icon: '🎲',
+    icon: '🏷️',
     label: 'Bid',
     description: 'Bidding practice'
   },

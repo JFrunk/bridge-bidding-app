@@ -44,7 +44,7 @@ export function ModeSelector({ onSelectMode, userName }) {
     },
     {
       id: 'bid',
-      icon: '🎲',
+      icon: '🏷️',
       title: 'Bid',
       subtitle: 'Practice bidding with random hands or conventions',
       description: 'Best for: General practice, drilling specific conventions',
