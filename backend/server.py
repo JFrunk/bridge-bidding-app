@@ -615,7 +615,10 @@ def complete_session_hand():
     Complete current hand and update session scores
 
     Request body:
-        - score_data: dict with hand results
+        - score_data: dict with hand results (score, tricks_taken, made, breakdown)
+        - contract_data: dict with contract info (level, strain, declarer, doubled) - optional fallback
+        - auction_history: list of bids
+        - play_history: list of plays (optional)
 
     Returns:
         Updated session data
@@ -626,47 +629,76 @@ def complete_session_hand():
     if not state.game_session:
         return jsonify({'error': 'No active session'}), 400
 
-    if not state.play_state:
-        return jsonify({'error': 'No play state available'}), 400
-
     try:
         data = request.get_json() or {}
         score_data = data.get('score_data', {})
+        contract_data = data.get('contract_data', {})
 
         # Calculate hand duration
         hand_duration = 0
         if state.hand_start_time:
             hand_duration = int((datetime.now() - state.hand_start_time).total_seconds())
 
-        # Determine if user was declarer or dummy
-        declarer = state.play_state.contract.declarer
-        dummy = state.play_state.dummy
-        user_position = state.game_session.player_position
+        # Get contract info - prefer play_state if available, fall back to frontend data
+        if state.play_state and state.play_state.contract:
+            contract = state.play_state.contract
+            declarer = contract.declarer
+            dummy = state.play_state.dummy
+        elif contract_data:
+            # Fallback: use contract data from frontend
+            from engine.play_engine import Contract
+            contract = Contract(
+                level=contract_data.get('level', 1),
+                strain=contract_data.get('strain', 'NT'),
+                declarer=contract_data.get('declarer', 'S'),
+                doubled=contract_data.get('doubled', 0)
+            )
+            declarer = contract.declarer
+            # Calculate dummy position (partner of declarer)
+            partner_map = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
+            dummy = partner_map.get(declarer, 'N')
+        else:
+            return jsonify({'error': 'No play state or contract data available'}), 400
 
+        user_position = state.game_session.player_position
         user_was_declarer = (declarer == user_position)
         user_was_dummy = (dummy == user_position)
 
         # Add score to session
-        hand_score = score_data['score']
+        hand_score = score_data.get('score', 0)
         state.game_session.add_hand_score(declarer, hand_score)
+
+        # Get deal data if available
+        deal_data = {}
+        if state.play_state and state.play_state.hands:
+            deal_data = {
+                pos: {
+                    'hand': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
+                    'points': None
+                }
+                for pos, hand in state.play_state.hands.items()
+            }
+        elif state.original_deal:
+            # Fall back to original deal if available
+            deal_data = {
+                pos: {
+                    'hand': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
+                    'points': None
+                }
+                for pos, hand in state.original_deal.items()
+            }
 
         # Prepare hand data for database
         hand_data = {
             'hand_number': state.game_session.hands_completed,  # Already incremented by add_hand_score
-            'dealer': session_manager.CHICAGO_DEALERS[(state.game_session.hands_completed - 1) % 4],
-            'vulnerability': state.vulnerability,
-            'contract': state.play_state.contract,
-            'tricks_taken': score_data['tricks_taken'],
+            'dealer': GameSession.CHICAGO_DEALERS[(state.game_session.hands_completed - 1) % 4],
+            'vulnerability': state.vulnerability or 'None',
+            'contract': contract,
+            'tricks_taken': score_data.get('tricks_taken', 0),
             'hand_score': hand_score,
-            'made': score_data['made'],
-            'breakdown': score_data['breakdown'],
-            'deal_data': {
-                pos: {
-                    'hand': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
-                    'points': None  # Could add point count here
-                }
-                for pos, hand in state.play_state.hands.items()
-            },
+            'made': score_data.get('made', False),
+            'breakdown': score_data.get('breakdown', {}),
+            'deal_data': deal_data,
             'auction_history': data.get('auction_history', []),
             'play_history': data.get('play_history', []),
             'user_was_declarer': user_was_declarer,
@@ -676,6 +708,7 @@ def complete_session_hand():
 
         # Save to database
         session_manager.save_hand_result(state.game_session, hand_data)
+        print(f"✅ Hand {state.game_session.hands_completed} saved to session_hands table")
 
         # Check if session is complete
         session_complete = state.game_session.is_complete()
@@ -3402,4 +3435,6 @@ def simple_login():
 
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5001, debug=True)
+    # Use 0.0.0.0 to allow connections from other devices on the network
+    # (e.g., testing on iPad, iPhone, Android via local IP address)
+    app.run(host='0.0.0.0', port=5001, debug=True)

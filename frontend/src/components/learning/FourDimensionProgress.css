@@ -24,7 +24,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-8, 32px);
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary-dark, #666);
 }
 
 .four-dimension-loading .loading-spinner {
@@ -127,14 +127,14 @@
   border-top: 3px solid var(--color-success, #22c55e);
 }
 
-/* Card Header */
+/* Card Header - uses light background for contrast with white card body */
 .progress-card .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: var(--space-3, 12px) var(--space-4, 16px);
-  background: var(--bg-secondary, #f8f9fa);
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .progress-card .card-title {
@@ -151,7 +151,7 @@
   margin: 0;
   font-size: var(--text-base, 16px);
   font-weight: 600;
-  color: var(--text-primary, #111);
+  color: var(--text-primary-dark, #111);
 }
 
 /* Card Content */
@@ -240,12 +240,12 @@
 .ring-level {
   font-size: 16px;
   font-weight: 700;
-  fill: var(--text-primary, #111);
+  fill: var(--text-primary-dark, #111);
 }
 
 .ring-progress {
   font-size: 11px;
-  fill: var(--text-secondary, #666);
+  fill: var(--text-secondary-dark, #666);
 }
 
 .level-details {
@@ -255,14 +255,14 @@
 
 .level-name {
   font-weight: 600;
-  color: var(--text-primary, #111);
+  color: var(--text-primary-dark, #111);
   margin-bottom: var(--space-1, 4px);
   font-size: var(--text-sm, 14px);
 }
 
 .skills-mastered {
   font-size: var(--text-xs, 12px);
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary-dark, #666);
 }
 
 /* Level Roadmap */
@@ -335,7 +335,7 @@
 }
 
 .next-label {
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary-dark, #666);
 }
 
 .next-name {
@@ -344,6 +344,71 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.in-progress-badge {
+  font-size: var(--text-xs, 12px);
+  color: var(--color-warning, #f59e0b);
+  font-weight: 500;
+  margin-left: auto;
+}
+
+/* Current Skill Progress (in-progress skill feedback) */
+.current-skill-progress {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 8px;
+  padding: var(--space-3, 12px);
+  margin-bottom: var(--space-3, 12px);
+}
+
+.skill-progress-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-2, 8px);
+}
+
+.skill-progress-header .skill-label {
+  color: var(--text-secondary-dark, #666);
+  font-size: var(--text-xs, 12px);
+}
+
+.skill-progress-header .skill-name {
+  color: var(--text-primary-dark, #111);
+  font-weight: 600;
+  font-size: var(--text-sm, 14px);
+}
+
+.skill-progress-stats {
+  display: flex;
+  gap: var(--space-4, 16px);
+  margin-bottom: var(--space-2, 8px);
+}
+
+.skill-progress-stats .stat {
+  font-size: var(--text-xs, 12px);
+  color: var(--text-secondary-dark, #666);
+}
+
+.skill-progress-bar {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: var(--space-2, 8px);
+}
+
+.skill-progress-fill {
+  height: 100%;
+  background: var(--color-success, #22c55e);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.skill-progress-hint {
+  font-size: var(--text-xs, 12px);
+  color: var(--text-secondary-dark, #666);
+  font-style: italic;
 }
 
 /* ============================================================================
@@ -371,7 +436,7 @@
 
 .trend-stable {
   background: var(--bg-secondary, #f3f4f6);
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary-dark, #666);
 }
 
 /* Quality Gauge */
@@ -383,13 +448,13 @@
 .gauge-value {
   font-size: 32px;
   font-weight: 700;
-  color: var(--text-primary, #111);
+  color: var(--text-primary-dark, #111);
   line-height: 1.2;
 }
 
 .gauge-label {
   font-size: var(--text-sm, 14px);
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary-dark, #666);
   margin-bottom: var(--space-2, 8px);
 }
 
@@ -402,9 +467,21 @@
 
 .gauge-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-danger, #dc2626) 0%, var(--color-warning, #f59e0b) 50%, var(--color-success, #22c55e) 100%);
   border-radius: 3px;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Score-based colors set via inline style or data attribute */
+.gauge-fill.score-low {
+  background: var(--color-danger, #dc2626);
+}
+
+.gauge-fill.score-medium {
+  background: var(--color-warning, #f59e0b);
+}
+
+.gauge-fill.score-high {
+  background: var(--color-success, #22c55e);
 }
 
 /* Quality Stats Grid */
@@ -423,19 +500,19 @@
   display: block;
   font-size: var(--text-base, 16px);
   font-weight: 700;
-  color: var(--text-primary, #111);
+  color: var(--text-primary-dark, #111);
 }
 
 .quality-stats .stat-label {
   font-size: var(--text-xs, 12px);
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary-dark, #666);
 }
 
 /* Total Practiced */
 .total-practiced {
   text-align: center;
   font-size: var(--text-xs, 12px);
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary-dark, #666);
   margin-bottom: var(--space-3, 12px);
 }
 
@@ -468,7 +545,7 @@
   margin: 0;
   font-size: var(--text-base, 16px);
   font-weight: 600;
-  color: var(--text-primary, #111);
+  color: var(--text-primary-dark, #111);
 }
 
 .convention-content {
@@ -492,13 +569,13 @@
 
 .group-name {
   font-weight: 600;
-  color: var(--text-primary, #111);
+  color: var(--text-primary-dark, #111);
   font-size: var(--text-sm, 14px);
 }
 
 .group-count {
   font-size: var(--text-sm, 14px);
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary-dark, #666);
 }
 
 .convention-list {
@@ -539,12 +616,12 @@
 }
 
 .conv-name {
-  color: var(--text-primary, #111);
+  color: var(--text-primary-dark, #111);
 }
 
 .conv-accuracy {
   font-weight: 600;
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary-dark, #666);
   margin-left: var(--space-1, 4px);
 }
 
@@ -556,7 +633,7 @@
   padding: var(--space-3, 12px);
   background: var(--bg-secondary, #f3f4f6);
   border-radius: 8px;
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary-dark, #666);
   font-size: var(--text-sm, 14px);
 }
 
