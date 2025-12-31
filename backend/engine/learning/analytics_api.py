@@ -1042,6 +1042,31 @@ def get_four_dimension_progress():
 
         bid_level_progress = bid_tree_manager.get_user_skill_tree_progress(user_progress)
 
+        # Get in-progress skills (started but not yet mastered) - key for showing immediate progress
+        in_progress_skills = []
+        current_skill_progress = None
+        try:
+            cursor.execute("""
+                SELECT skill_id, attempts, correct, accuracy, status, last_practiced
+                FROM user_skill_progress
+                WHERE user_id = ? AND status = 'in_progress'
+                ORDER BY last_practiced DESC
+            """, (user_id,))
+            for row in cursor.fetchall():
+                skill_data = {
+                    'skill_id': row['skill_id'],
+                    'attempts': row['attempts'],
+                    'correct': row['correct'],
+                    'accuracy': round(row['accuracy'] * 100, 1) if row['accuracy'] else 0,
+                    'status': row['status']
+                }
+                in_progress_skills.append(skill_data)
+                # Most recent in-progress skill is the current one
+                if current_skill_progress is None:
+                    current_skill_progress = skill_data
+        except Exception:
+            pass  # Table might not exist
+
         # Find current level and calculate totals
         bid_current_level = None
         bid_current_level_name = None
@@ -1062,7 +1087,7 @@ def get_four_dimension_progress():
                 bid_skills_in_level = progress['total']
                 bid_skills_completed_in_level = progress['completed']
 
-        # Get next skill to practice
+        # Get next skill to practice (considering in-progress skills)
         bid_next_skill = None
         if bid_current_level is not None:
             level_id = bid_tree_manager.get_level_id_by_number(bid_current_level)
@@ -1071,7 +1096,18 @@ def get_four_dimension_progress():
                 if 'skills' in level_data:
                     for skill in level_data['skills']:
                         if skill.id not in completed_skills:
-                            bid_next_skill = {'id': skill.id, 'name': skill.name}
+                            # Check if this skill is in-progress
+                            in_progress_info = next(
+                                (s for s in in_progress_skills if s['skill_id'] == skill.id),
+                                None
+                            )
+                            bid_next_skill = {
+                                'id': skill.id,
+                                'name': skill.name,
+                                'in_progress': in_progress_info is not None,
+                                'attempts': in_progress_info['attempts'] if in_progress_info else 0,
+                                'accuracy': in_progress_info['accuracy'] if in_progress_info else 0
+                            }
                             break
                 elif 'conventions' in level_data:
                     for conv_id in level_data['conventions']:
@@ -1090,6 +1126,8 @@ def get_four_dimension_progress():
             'total_levels': bid_total_levels,
             'levels_completed': bid_levels_completed,
             'total_skills_mastered': bid_total_skills_mastered,
+            'skills_in_progress': len(in_progress_skills),
+            'current_skill_progress': current_skill_progress,
             'next_skill': bid_next_skill,
             'progress_percentage': round(bid_total_skills_mastered / bid_total_skills * 100, 1) if bid_total_skills > 0 else 0,
             'level_progress': {
@@ -1193,6 +1231,30 @@ def get_four_dimension_progress():
         play_user_progress = {'completed_play_skills': completed_play_skills}
         play_level_progress = play_tree_manager.get_user_skill_tree_progress(play_user_progress)
 
+        # Get in-progress play skills (started but not yet mastered)
+        play_in_progress_skills = []
+        play_current_skill_progress = None
+        try:
+            cursor.execute("""
+                SELECT skill_id, attempts, correct, accuracy, status, last_practiced
+                FROM user_play_progress
+                WHERE user_id = ? AND status = 'in_progress'
+                ORDER BY last_practiced DESC
+            """, (user_id,))
+            for row in cursor.fetchall():
+                skill_data = {
+                    'skill_id': row['skill_id'],
+                    'attempts': row['attempts'],
+                    'correct': row['correct'],
+                    'accuracy': round(row['accuracy'] * 100, 1) if row['accuracy'] else 0,
+                    'status': row['status']
+                }
+                play_in_progress_skills.append(skill_data)
+                if play_current_skill_progress is None:
+                    play_current_skill_progress = skill_data
+        except Exception:
+            pass  # Table might not exist
+
         # Find current play level and calculate totals
         play_current_level = None
         play_current_level_name = None
@@ -1213,7 +1275,7 @@ def get_four_dimension_progress():
                 play_skills_in_level = progress['total']
                 play_skills_completed_in_level = progress['completed']
 
-        # Get next play skill to practice
+        # Get next play skill to practice (considering in-progress skills)
         play_next_skill = None
         if play_current_level is not None:
             level_id = play_tree_manager.get_level_id_by_number(play_current_level)
@@ -1221,7 +1283,18 @@ def get_four_dimension_progress():
             if level_data and 'skills' in level_data:
                 for skill in level_data['skills']:
                     if skill.id not in completed_play_skills:
-                        play_next_skill = {'id': skill.id, 'name': skill.name}
+                        # Check if this skill is in-progress
+                        in_progress_info = next(
+                            (s for s in play_in_progress_skills if s['skill_id'] == skill.id),
+                            None
+                        )
+                        play_next_skill = {
+                            'id': skill.id,
+                            'name': skill.name,
+                            'in_progress': in_progress_info is not None,
+                            'attempts': in_progress_info['attempts'] if in_progress_info else 0,
+                            'accuracy': in_progress_info['accuracy'] if in_progress_info else 0
+                        }
                         break
 
         play_learning_journey = {
@@ -1232,6 +1305,8 @@ def get_four_dimension_progress():
             'total_levels': play_total_levels,
             'levels_completed': play_levels_completed,
             'total_skills_mastered': play_total_skills_mastered,
+            'skills_in_progress': len(play_in_progress_skills),
+            'current_skill_progress': play_current_skill_progress,
             'next_skill': play_next_skill,
             'progress_percentage': round(play_total_skills_mastered / play_total_skills * 100, 1) if play_total_skills > 0 else 0,
             'level_progress': {

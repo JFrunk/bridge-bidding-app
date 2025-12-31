@@ -16,10 +16,10 @@
   background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  min-width: 350px;
-  max-width: 400px;
+  min-width: min(350px, calc(100vw - 40px)); /* Responsive min-width */
+  max-width: min(400px, calc(100vw - 40px)); /* Responsive max-width */
   opacity: 0;
-  transform: translateX(400px);
+  transform: translateX(100%); /* Use percentage for responsive animation */
   transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
@@ -30,7 +30,7 @@
 
 .celebration-toast.exiting {
   opacity: 0;
-  transform: translateX(400px);
+  transform: translateX(100%); /* Use percentage for responsive animation */
 }
 
 .celebration-toast-content {
