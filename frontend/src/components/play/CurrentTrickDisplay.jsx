@@ -28,7 +28,7 @@ export function CurrentTrickDisplay({ trick, trickWinner, trickComplete }) {
     cardsByPosition[position] = card;
   });
 
-  // Card component for trick display
+  // Card component for trick display - compact top-left corner only
   const TrickCard = ({ card, position, isWinner }) => {
     if (!card) return null;
 
@@ -37,7 +37,7 @@ export function CurrentTrickDisplay({ trick, trickWinner, trickComplete }) {
     return (
       <div
         className={cn(
-          "w-[70px] h-[100px] bg-white rounded-card shadow-md flex flex-col items-center justify-center",
+          "trick-card relative bg-white rounded-card shadow-md",
           "transition-all duration-500",
           // Bold border (ring) for winner
           isWinner ? "ring-4 ring-white shadow-2xl border-0" : "border border-gray-400",
@@ -45,12 +45,11 @@ export function CurrentTrickDisplay({ trick, trickWinner, trickComplete }) {
           isWinner && "scale-105"
         )}
       >
-        <span className={cn("text-3xl font-bold", suitColor(card.suit))}>
-          {displayRank}
-        </span>
-        <span className={cn("text-2xl", suitColor(card.suit))}>
-          {card.suit}
-        </span>
+        {/* Top-left corner only - matches PlayableCard/BridgeCard style */}
+        <div className={cn("absolute top-1 left-1.5 leading-none flex flex-col items-center", suitColor(card.suit))}>
+          <span className="text-lg font-bold">{displayRank}</span>
+          <span className="text-base">{card.suit}</span>
+        </div>
       </div>
     );
   };
