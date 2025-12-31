@@ -3,12 +3,12 @@
  */
 
 .learning-mode {
-  min-height: 100vh;
+  min-height: 100%;
   background: var(--bg-learning);
   color: var(--text-primary);
   padding: var(--space-5);
-  /* Ensure content isn't cut off at the top on iOS/Safari */
-  padding-top: max(20px, env(safe-area-inset-top, 20px));
+  /* Overlay already positioned below TopNavigation, just add safe area padding */
+  padding-top: calc(var(--space-5) + env(safe-area-inset-top, 0px));
 }
 
 /* Loading State */
@@ -64,40 +64,12 @@
   background: var(--color-success-dark);
 }
 
-/* Header */
+/* Header - Simplified since TopNavigation provides main nav */
 .learning-mode-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-5) 0;
+  padding: var(--space-4) 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: var(--space-8);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.learning-mode-header .home-button {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
-  font-size: var(--text-xl);
-  cursor: pointer;
-  transition: all var(--duration-fast) ease;
-  line-height: 1;
-}
-
-.learning-mode-header .home-button:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: scale(1.05);
-}
-
-.learning-mode-header .home-button:active {
-  transform: scale(0.95);
+  margin-bottom: var(--space-6);
+  text-align: center;
 }
 
 .header-content h1 {
@@ -110,44 +82,6 @@
   margin: var(--space-1) 0 0;
   color: rgba(255, 255, 255, 0.6);
   font-size: var(--text-sm);
-}
-
-.header-actions {
-  display: flex;
-  gap: var(--space-3);
-}
-
-/* Feedback Button */
-.learning-mode .feedback-button {
-  padding: var(--space-3) var(--space-5);
-  background: var(--feedback-bg);
-  border: 1px solid var(--feedback-border);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  cursor: pointer;
-  transition: all var(--duration-fast);
-}
-
-.learning-mode .feedback-button:hover {
-  background: var(--feedback-hover);
-  border-color: var(--feedback-hover);
-}
-
-.free-play-button {
-  padding: var(--space-3) var(--space-5);
-  background: var(--color-accent-blue);
-  border: none;
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: var(--text-sm);
-  cursor: pointer;
-  transition: background var(--duration-fast);
-}
-
-.free-play-button:hover {
-  background: var(--color-accent-blue-dark);
 }
 
 .close-button {

@@ -21,6 +21,7 @@ import DDSStatusIndicator from './components/DDSStatusIndicator';
 import AIDifficultySelector from './components/AIDifficultySelector';
 import { getSessionHeaders } from './utils/sessionHelper';
 import { GlossaryDrawer } from './components/glossary';
+import TopNavigation from './components/navigation/TopNavigation';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -223,12 +224,14 @@ function App() {
   const [displayedMessage, setDisplayedMessage] = useState('');
   const [scenarioList, setScenarioList] = useState([]);
   const [scenariosByLevel, setScenariosByLevel] = useState(null);
-  const [selectedScenario, setSelectedScenario] = useState('');
   const [initialDeal, setInitialDeal] = useState(null);
   const [vulnerability, setVulnerability] = useState('None');
   const [allHands, setAllHands] = useState(null);
-  const [showHandsThisDeal, setShowHandsThisDeal] = useState(false);
-  const [alwaysShowHands, setAlwaysShowHands] = useState(false);
+  // Single toggle for showing all hands - persisted to localStorage
+  const [showAllHands, setShowAllHands] = useState(() => {
+    const saved = localStorage.getItem('bridge-show-all-hands');
+    return saved === 'true';
+  });
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
@@ -245,6 +248,8 @@ function App() {
   const [currentWorkspace, setCurrentWorkspace] = useState(null);
   // Active tab within bidding workspace: 'random', 'conventions', 'history'
   const [biddingTab, setBiddingTab] = useState('random');
+  // Active convention name when practicing a specific convention (null = random hands mode)
+  const [activeConvention, setActiveConvention] = useState(null);
   // Session hands history for replay
   const [sessionHands, setSessionHands] = useState([]);
 
@@ -328,7 +333,6 @@ function App() {
     // Set AI bidding state - but it won't actually run until isInitializing = false
     // The new useEffect (post-initialization check) will ensure AI starts at the right time
     setIsAiBidding(!skipInitialAiBidding);
-    setShowHandsThisDeal(false);
     // Reset play state
     setGamePhase('bidding');
     setPlayState(null);
@@ -336,7 +340,8 @@ function App() {
     setDeclarerHand(null);
     setScoreData(null);
     setIsPlayingCard(false);
-    if (alwaysShowHands) {
+    // Fetch hands if showAllHands is enabled
+    if (showAllHands) {
       fetchAllHands();
     } else {
       setAllHands(null);
@@ -374,25 +379,17 @@ function App() {
     }
   };
 
-  const handleShowHandsThisDeal = async () => {
-    console.log('🔵 handleShowHandsThisDeal clicked, current state:', showHandsThisDeal);
-    if (!showHandsThisDeal) {
+  // Toggle show all hands - persists to localStorage
+  const handleToggleShowAllHands = async () => {
+    const newValue = !showAllHands;
+    setShowAllHands(newValue);
+    localStorage.setItem('bridge-show-all-hands', String(newValue));
+
+    if (newValue) {
       console.log('📡 Fetching all hands...');
       await fetchAllHands();
-    }
-    setShowHandsThisDeal(!showHandsThisDeal);
-    console.log('🔵 showHandsThisDeal toggled to:', !showHandsThisDeal);
-  };
-
-  const handleToggleAlwaysShowHands = async () => {
-    const newValue = !alwaysShowHands;
-    setAlwaysShowHands(newValue);
-    if (newValue) {
-      await fetchAllHands();
-      setShowHandsThisDeal(true);
     } else {
       setAllHands(null);
-      setShowHandsThisDeal(false);
     }
   };
 
@@ -534,8 +531,9 @@ ${otherCommands}`;
   // Handle bidding tab changes
   const handleBiddingTabChange = (tab) => {
     setBiddingTab(tab);
-    if (tab === 'random') {
-      // Optionally deal a new hand when switching to random
+    // Exit convention mode when switching to random tab
+    if (tab === 'random' && activeConvention) {
+      setActiveConvention(null);
     }
   };
 
@@ -613,10 +611,10 @@ ${otherCommands}`;
   };
 
   const handleShowConventionHelp = async () => {
-    if (!selectedScenario) return;
+    if (!activeConvention) return;
 
     // Extract convention name from scenario (e.g., "Jacoby Transfer Test" -> "Jacoby Transfer")
-    const conventionName = selectedScenario.replace(' Test', '');
+    const conventionName = activeConvention.replace(' Test', '');
 
     try {
       const response = await fetch(`${API_URL}/api/convention-info?name=${encodeURIComponent(conventionName)}`, { headers: { ...getSessionHeaders() } });
@@ -713,8 +711,7 @@ ${otherCommands}`;
 
       // Transition to play phase
       setGamePhase('playing');
-      setShowHandsThisDeal(false);  // Hide all hands when transitioning to play
-      setAllHands(null);  // Clear all hands data
+      // Note: showAllHands persists user preference - don't force hide
       setDisplayedMessage(`Contract: ${data.contract}. Opening leader: ${data.opening_leader}`);
 
       // CRITICAL FIX: Use setTimeout to ensure gamePhase updates BEFORE triggering AI loop
@@ -1266,6 +1263,7 @@ ${otherCommands}`;
 
       resetAuction(data, !shouldAiBid); // Pass correct skipInitialAiBidding value
       setIsInitializing(false); // Ensure we're not in initializing state for manual deals
+      setActiveConvention(null); // Exit convention mode when dealing random hand
     } catch (err) { setError("Could not connect to server to deal."); }
   };
 
@@ -1294,8 +1292,7 @@ ${otherCommands}`;
 
       // Transition directly to play phase
       setGamePhase('playing');
-      setShowHandsThisDeal(false);  // Hide all hands when transitioning to play
-      setAllHands(null);  // Clear all hands data
+      // Note: showAllHands persists user preference - don't force hide
       setDisplayedMessage(`Contract: ${data.contract}. The AI bid all 4 hands. Opening leader: ${data.opening_leader}`);
 
       // Fetch initial play state
@@ -1407,8 +1404,7 @@ ${otherCommands}`;
 
       // Reset to play phase start
       setGamePhase('playing');
-      setShowHandsThisDeal(false);  // Hide all hands when replaying
-      setAllHands(null);  // Clear all hands data
+      // Note: showAllHands persists user preference - don't force hide
       setScoreData(null);
       setDisplayedMessage(`Contract: ${data.contract}. Opening leader: ${data.opening_leader}`);
 
@@ -1430,19 +1426,24 @@ ${otherCommands}`;
       console.error(err);
     }
   };
-  
-  const handleLoadScenario = async () => {
-    if (!selectedScenario) return;
-    try {
-      const response = await fetch(`${API_URL}/api/load-scenario`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-        body: JSON.stringify({ name: selectedScenario })
-      });
-      if (!response.ok) throw new Error("Failed to load scenario.");
-      const data = await response.json();
-      resetAuction(data, true); // Skip initial AI bidding - wait for proper turn
-      setIsInitializing(false); // Ensure we're not in initializing state for scenario loads
-    } catch (err) { setError("Could not load scenario from server."); }
+
+  // Get short convention name for display (e.g., "Jacoby Transfer Test" -> "Jacoby")
+  const getShortConventionName = (fullName) => {
+    if (!fullName) return '';
+    // Remove common suffixes and simplify
+    const shortNames = {
+      'Jacoby Transfer Test': 'Jacoby',
+      'Stayman Test': 'Stayman',
+      'Blackwood Test': 'Blackwood',
+      'Preemptive Test': 'Preempt',
+      'Takeout Double Test': 'Takeout Double',
+      'Negative Double Test': 'Negative Double',
+      'Michaels Cuebid Test': 'Michaels',
+      'Unusual 2NT Test': 'Unusual 2NT',
+      'Fourth Suit Forcing Test': 'Fourth Suit',
+      'Splinter Test': 'Splinter',
+    };
+    return shortNames[fullName] || fullName.replace(' Test', '');
   };
 
   // Load scenario by name (for convention grid)
@@ -1457,8 +1458,14 @@ ${otherCommands}`;
       const data = await response.json();
       resetAuction(data, true);
       setIsInitializing(false);
-      setSelectedScenario(scenarioName); // Update dropdown to match
+      setActiveConvention(scenarioName); // Enter convention mode
     } catch (err) { setError("Could not load scenario from server."); }
+  };
+
+  // Exit convention mode and return to random hands
+  const exitConventionMode = () => {
+    setActiveConvention(null);
+    dealNewHand();
   };
 
   const handleReplayHand = () => {
@@ -1473,7 +1480,7 @@ ${otherCommands}`;
         const data = await response.json();
         setScenarioList(data.scenarios);
         setScenariosByLevel(data.scenarios_by_level);
-        if (data.scenarios.length > 0) setSelectedScenario(data.scenarios[0]);
+        // Scenarios loaded for convention grid - no default selection needed
       } catch (err) { console.error("Could not fetch scenarios", err); }
 
       // Start or resume session
@@ -2083,16 +2090,14 @@ ${otherCommands}`;
     runAiPlay();
   }, [gamePhase, isPlayingCard, vulnerability]);
 
-  // CRITICAL FIX: Only show all hands during bidding phase, not during play
-  // When alwaysShowHands is true, it should only apply to bidding, not card play
-  const shouldShowHands = gamePhase === 'bidding' && (showHandsThisDeal || alwaysShowHands);
+  // Show all hands during bidding phase only when toggle is enabled
+  const shouldShowHands = gamePhase === 'bidding' && showAllHands;
 
   // Debug logging for card display
   useEffect(() => {
     console.log('🎨 Render state:', {
       shouldShowHands,
-      showHandsThisDeal,
-      alwaysShowHands,
+      showAllHands,
       allHandsExists: !!allHands,
       allHandsKeys: allHands ? Object.keys(allHands) : null,
       northHand: allHands?.North?.hand?.length || 0,
@@ -2103,7 +2108,7 @@ ${otherCommands}`;
       northStructure: allHands?.North ? Object.keys(allHands.North) : null,
       firstNorthCard: allHands?.North?.hand?.[0]
     });
-  }, [shouldShowHands, showHandsThisDeal, alwaysShowHands, allHands]);
+  }, [shouldShowHands, showAllHands, allHands]);
 
   // User menu component
   const UserMenu = () => {
@@ -2123,50 +2128,63 @@ ${otherCommands}`;
     );
   };
 
+  // Determine current active module for navigation
+  const getCurrentModule = () => {
+    if (showLearningMode) return 'learning';
+    if (showLearningDashboard) return 'progress';
+    if (currentWorkspace === 'play') return 'play';
+    if (currentWorkspace === 'bid') return 'bid';
+    return null; // On home/mode selector
+  };
+
+  // Handle navigation from TopNavigation
+  const handleNavModuleSelect = (modeId) => {
+    // Close any open overlays first
+    setShowLearningMode(false);
+    setShowLearningDashboard(false);
+    setShowModeSelector(false);
+
+    // Navigate to selected module
+    handleModeSelect(modeId);
+  };
+
   return (
     <div className="app-container">
+      {/* Top Navigation - Always visible */}
+      {isAuthenticated && (
+        <TopNavigation
+          currentModule={getCurrentModule()}
+          onModuleSelect={handleNavModuleSelect}
+          showTitle={!showModeSelector}
+        >
+          {/* Utility buttons in nav right section */}
+          <button
+            className="nav-utility-button"
+            onClick={() => setShowGlossary(true)}
+            title="Bridge terminology glossary"
+            data-testid="glossary-button"
+          >
+            📖 <span className="nav-utility-label">Glossary</span>
+          </button>
+          <button
+            className="nav-utility-button nav-feedback-button"
+            onClick={() => setShowFeedbackModal(true)}
+            title="Report an issue or give feedback"
+            data-testid="global-feedback-button"
+          >
+            📝 <span className="nav-utility-label">Feedback</span>
+          </button>
+          <UserMenu />
+        </TopNavigation>
+      )}
+
       {/* Mode Selector - Landing Page */}
       {showModeSelector && isAuthenticated && (
         <ModeSelector
           onSelectMode={handleModeSelect}
           userName={user?.display_name}
-          onFeedbackClick={() => setShowFeedbackModal(true)}
         />
       )}
-
-      {/* User Menu in top right */}
-      <div className="top-bar">
-        <div className="top-bar-left">
-          <button
-            className="home-button"
-            onClick={() => setShowModeSelector(true)}
-            title="Return to mode selection"
-            data-testid="home-button"
-          >
-            🏠
-          </button>
-          <h1 className="app-title">Bridge Bidding Practice</h1>
-        </div>
-        <div className="top-bar-right">
-          <button
-            className="glossary-button"
-            onClick={() => setShowGlossary(true)}
-            title="Bridge terminology glossary"
-            data-testid="glossary-button"
-          >
-            📖 Glossary
-          </button>
-          <button
-            className="global-feedback-button"
-            onClick={() => setShowFeedbackModal(true)}
-            title="Report an issue or give feedback"
-            data-testid="global-feedback-button"
-          >
-            📝 Feedback
-          </button>
-          <UserMenu />
-        </div>
-      </div>
 
       {/* Login Modal */}
       {showLogin && <SimpleLogin onClose={() => setShowLogin(false)} />}
@@ -2340,12 +2358,17 @@ ${otherCommands}`;
           {/* Don't show AI bidding status messages during play - only show errors if they occur */}
           {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && error && <div className="error-message">{error}</div>}
 
-          {/* Show All Hands button for play phase - available after hand is complete */}
+          {/* Show All Hands toggle for play phase - available after hand is complete */}
           {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) === 13 && (
             <div className="show-hands-controls" style={{ marginTop: '20px' }}>
-              <button onClick={handleShowHandsThisDeal}>
-                {showHandsThisDeal ? 'Hide All Hands' : 'Show All Hands'}
-              </button>
+              <label className="show-hands-toggle">
+                <input
+                  type="checkbox"
+                  checked={showAllHands}
+                  onChange={handleToggleShowAllHands}
+                />
+                <span>Show All Hands</span>
+              </label>
             </div>
           )}
         </div>
@@ -2360,23 +2383,44 @@ ${otherCommands}`;
           <div className="game-controls">
             {gamePhase === 'bidding' ? (
               <>
-                <button className="learn-button" data-testid="learn-button" onClick={() => setShowLearningMode(true)}>📚 Learn</button>
-                <button className="deal-button" data-testid="deal-button" onClick={dealNewHand}>Deal Hand to Bid</button>
-                <button className="play-button" data-testid="play-random-button" onClick={playRandomHand}>Play Random Hand</button>
-                <button className="replay-button" data-testid="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>Rebid Hand</button>
-                {/* Show "Play This Hand" button when bidding is complete */}
+                {/* Convention mode badge */}
+                {activeConvention && (
+                  <div className="convention-mode-badge" data-testid="convention-mode-badge">
+                    <span className="convention-name">🎯 {getShortConventionName(activeConvention)}</span>
+                    <button
+                      className="exit-convention-button"
+                      onClick={exitConventionMode}
+                      title="Exit convention mode"
+                      data-testid="exit-convention-button"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+                {/* Primary action when bidding is complete */}
                 {auction.length >= 4 && auction.slice(-3).every(bid => bid.bid === 'Pass') && (
-                  <button className="play-this-hand-button" data-testid="play-this-hand-button" onClick={startPlayPhase}>
+                  <button className="play-this-hand-button primary-action" data-testid="play-this-hand-button" onClick={startPlayPhase}>
                     ▶ Play This Hand
                   </button>
                 )}
+                {/* Secondary actions */}
+                <div className="secondary-actions">
+                  {activeConvention ? (
+                    <button className="deal-button" data-testid="deal-convention-button" onClick={() => loadScenarioByName(activeConvention)}>
+                      🎯 Bid Another {getShortConventionName(activeConvention)} Hand
+                    </button>
+                  ) : (
+                    <button className="deal-button" data-testid="deal-button" onClick={dealNewHand}>🎲 Deal New Hand</button>
+                  )}
+                  <button className="replay-button" data-testid="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>🔄 Rebid Hand</button>
+                </div>
               </>
             ) : (
               <>
-                <button className="play-button" data-testid="play-another-hand-button" onClick={playRandomHand}>Play Another Hand</button>
-                <button className="replay-button" data-testid="replay-hand-button" onClick={replayCurrentHand}>Replay Hand</button>
-                <button className="deal-button" data-testid="bid-new-hand-button" onClick={dealNewHand}>Bid New Hand</button>
-                <button className="learning-dashboard-button" data-testid="dashboard-button" onClick={() => setShowLearningDashboard(true)}>📊 My Progress</button>
+                {/* Primary action after play */}
+                <button className="deal-button primary-action" data-testid="deal-new-hand-button" onClick={dealNewHand}>🎲 Deal New Hand</button>
+                {/* Secondary action */}
+                <button className="replay-button secondary-action" data-testid="replay-hand-button" onClick={replayCurrentHand}>🔄 Replay Hand</button>
               </>
             )}
           </div>
@@ -2398,42 +2442,26 @@ ${otherCommands}`;
               </button>
             </div>
           )}
-
-          {/* Scenario loader - Only visible during bidding */}
-          {gamePhase === 'bidding' && (
-            <div className="scenario-loader">
-              <select value={selectedScenario} onChange={(e) => setSelectedScenario(e.target.value)}>
-                {scenariosByLevel ? (
-                  <>
-                    <optgroup label="Essential Conventions">
-                      {scenariosByLevel.Essential?.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-                    </optgroup>
-                    <optgroup label="Intermediate Conventions">
-                      {scenariosByLevel.Intermediate?.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-                    </optgroup>
-                    <optgroup label="Advanced Conventions">
-                      {scenariosByLevel.Advanced?.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-                    </optgroup>
-                  </>
-                ) : (
-                  <option>Loading...</option>
-                )}
-              </select>
-              <button onClick={handleLoadScenario}>Practice Convention</button>
-            </div>
-          )}
         </div>
         {/* Only show bidding-specific controls during bidding phase */}
         {gamePhase === 'bidding' && (
           <>
             <div className="show-hands-controls">
-              <button onClick={handleShowHandsThisDeal}>{showHandsThisDeal ? 'Hide Hands (This Deal)' : 'Show Hands (This Deal)'}</button>
-              <button onClick={handleToggleAlwaysShowHands} className={alwaysShowHands ? 'active' : ''}>{alwaysShowHands ? 'Always Show: ON' : 'Always Show: OFF'}</button>
+              <label className="show-hands-toggle">
+                <input
+                  type="checkbox"
+                  checked={showAllHands}
+                  onChange={handleToggleShowAllHands}
+                  data-testid="show-all-hands-toggle"
+                />
+                <span>Show All Hands</span>
+              </label>
             </div>
             <div className="ai-review-controls">
-              <button onClick={handleShowConventionHelp} className="help-button" data-testid="convention-help-button">ℹ️ Convention Help</button>
+              {activeConvention && (
+                <button onClick={handleShowConventionHelp} className="help-button" data-testid="convention-help-button">ℹ️ Convention Help</button>
+              )}
               <button onClick={() => setShowReviewModal(true)} className="ai-review-button" data-testid="ai-review-button">🤖 Request AI Review</button>
-              <button onClick={() => setShowLearningDashboard(true)} className="learning-dashboard-button" data-testid="progress-button">📊 My Progress</button>
             </div>
           </>
         )}
@@ -2481,54 +2509,40 @@ ${otherCommands}`;
         />
       )}
 
-      {/* Learning Dashboard Modal */}
+      {/* Progress/Dashboard - Full-screen page */}
       {showLearningDashboard && (
-        <div className="learning-dashboard-overlay" data-testid="dashboard-overlay" onClick={() => setShowLearningDashboard(false)}>
-          <div className="learning-dashboard-modal" data-testid="dashboard-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="close-dashboard" data-testid="dashboard-close-button" onClick={() => setShowLearningDashboard(false)}>×</button>
-            {/* Force remount on each open to refresh data */}
-            <LearningDashboard
-              key={Date.now()}
-              userId={userId || 1}
-              onPracticeClick={(rec) => {
-                console.log('Practice recommendation:', rec);
-                setShowLearningDashboard(false);
-              }}
-              onStartLearning={(track) => {
-                console.log('Start learning:', track);
-                setShowLearningDashboard(false);
-                setShowLearningMode(true);
-              }}
-              onStartFreeplay={(track) => {
-                console.log('Start freeplay:', track);
-                setShowLearningDashboard(false);
-                if (track === 'play') {
-                  setCurrentWorkspace('play');
-                } else {
-                  setCurrentWorkspace('bid');
-                  dealNewHand();
-                }
-              }}
-            />
-          </div>
+        <div className="learning-dashboard-overlay" data-testid="dashboard-overlay">
+          {/* Force remount on each open to refresh data */}
+          <LearningDashboard
+            key={Date.now()}
+            userId={userId || 1}
+            onPracticeClick={(rec) => {
+              console.log('Practice recommendation:', rec);
+              setShowLearningDashboard(false);
+            }}
+            onStartLearning={(track) => {
+              console.log('Start learning:', track);
+              setShowLearningDashboard(false);
+              setShowLearningMode(true);
+            }}
+            onStartFreeplay={(track) => {
+              console.log('Start freeplay:', track);
+              setShowLearningDashboard(false);
+              if (track === 'play') {
+                setCurrentWorkspace('play');
+              } else {
+                setCurrentWorkspace('bid');
+                dealNewHand();
+              }
+            }}
+          />
         </div>
       )}
 
       {/* Learning Mode - Full-screen guided learning */}
       {showLearningMode && (
         <div className="learning-mode-overlay">
-          <LearningMode
-            userId={userId || 1}
-            onClose={() => {
-              setShowLearningMode(false);
-              setShowModeSelector(true); // Return to landing page
-            }}
-            onPlayFreePlay={() => {
-              setShowLearningMode(false);
-              dealNewHand();
-            }}
-            onFeedbackClick={() => setShowFeedbackModal(true)}
-          />
+          <LearningMode userId={userId || 1} />
         </div>
       )}
 

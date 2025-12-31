@@ -26,7 +26,7 @@
 
 .mode-selector-container {
   position: fixed;
-  top: 0;
+  top: 64px; /* Space for TopNavigation */
   left: 0;
   right: 0;
   bottom: 0;
@@ -36,13 +36,20 @@
   align-items: center;
   padding: var(--space-5, 20px);
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 900; /* Below TopNavigation (1000) */
 }
 
-/* Feedback Button - Fixed in top right */
+/* Adjust for mobile nav height */
+@media (max-width: 768px) {
+  .mode-selector-container {
+    top: 56px;
+  }
+}
+
+/* Feedback Button - Fixed below nav */
 .mode-selector-feedback-button {
   position: fixed;
-  top: var(--space-5, 20px);
+  top: 80px; /* 64px nav + 16px padding */
   right: var(--space-5, 20px);
   background: var(--feedback-bg);
   border: 1px solid var(--feedback-border);
@@ -53,8 +60,14 @@
   color: var(--text-primary, white);
   cursor: pointer;
   transition: all var(--duration-fast, 0.2s) ease;
-  z-index: 1001;
+  z-index: 901;
   box-shadow: var(--shadow-md, 0 2px 8px rgba(0, 0, 0, 0.2));
+}
+
+@media (max-width: 768px) {
+  .mode-selector-feedback-button {
+    top: 72px; /* 56px nav + 16px padding */
+  }
 }
 
 .mode-selector-feedback-button:hover {
