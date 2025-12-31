@@ -283,6 +283,25 @@ function App() {
   // No longer auto-show login - users start as guests and can register later
   // The RegistrationPrompt will appear after they've played a few hands
 
+  // Clear game state when user logs out (isAuthenticated becomes false)
+  useEffect(() => {
+    if (!isAuthenticated && !authLoading) {
+      // User logged out - clear all game state to prevent stale data
+      setHand([]);
+      setAuction([]);
+      setGamePhase('bidding');
+      setPlayState(null);
+      setDummyHand(null);
+      setDeclarerHand(null);
+      setScoreData(null);
+      setShowLastTrick(false);
+      setLastTrick(null);
+      setAllHands(null);
+      setShowModeSelector(true);  // Return to landing page
+      setCurrentWorkspace(null);
+    }
+  }, [isAuthenticated, authLoading]);
+
   // Card play state
   const [gamePhase, setGamePhase] = useState('bidding'); // 'bidding' or 'playing'
   const [playState, setPlayState] = useState(null);
@@ -539,17 +558,26 @@ ${otherCommands}`;
         // Open Bidding workspace with Random tab
         setCurrentWorkspace('bid');
         setBiddingTab('random');
-        dealNewHand();
+        // Only deal new hand if not already in bidding with an active auction
+        // This prevents losing progress when user clicks Bid nav while bidding
+        if (!hand || hand.length === 0 || auction.length === 0) {
+          dealNewHand();
+        }
         break;
 
       case 'play':
-        // Open Play workspace - clear any existing hand to show PlayWorkspace options
+        // Open Play workspace
         setCurrentWorkspace('play');
-        setHand([]);  // Clear hand so PlayWorkspace shows
-        setAllHands(null);  // Clear all hands display
-        setGamePhase('bidding');  // Reset to bidding phase
-        setAuction([]);  // Clear auction
-        // Don't auto-start - let user choose from play options
+
+        // CRITICAL: Only reset state if NOT already in play phase
+        // This prevents losing progress when user clicks Play nav while playing
+        if (gamePhase !== 'playing') {
+          setHand([]);  // Clear hand so PlayWorkspace shows
+          setAllHands(null);  // Clear all hands display
+          setGamePhase('bidding');  // Reset to bidding phase
+          setAuction([]);  // Clear auction
+        }
+        // If already playing, keep current state intact
         break;
 
       case 'progress':

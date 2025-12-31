@@ -2525,6 +2525,19 @@ def get_play_state():
                 "position": dummy_pos
             }
 
+        # Serialize trick history for "Show Last Trick" feature
+        trick_history_json = []
+        for trick in state.play_state.trick_history:
+            trick_cards = [
+                {"card": {"rank": card.rank, "suit": card.suit}, "position": player}
+                for card, player in trick.cards
+            ]
+            trick_history_json.append({
+                "cards": trick_cards,
+                "leader": trick.leader,
+                "winner": trick.winner
+            })
+
         return jsonify({
             "contract": {
                 "level": state.play_state.contract.level,
@@ -2535,6 +2548,7 @@ def get_play_state():
             "current_trick": current_trick_json,
             "trick_complete": trick_complete,
             "trick_winner": trick_winner,
+            "trick_history": trick_history_json,  # For "Show Last Trick" feature
             "tricks_won": state.play_state.tricks_won,
             "next_to_play": state.play_state.next_to_play,
             "dummy": state.play_state.dummy,
