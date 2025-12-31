@@ -275,7 +275,7 @@ git push origin development
 ### Deploying to Production
 
 **Oracle Cloud Server Details:**
-- **IP Address:** 129.146.229.15
+- **IP Address:** 161.153.7.196
 - **SSH Host Alias:** oracle-bridge (configured in ~/.ssh/config)
 - **Production URL:** https://app.mybridgebuddy.com
 
@@ -362,7 +362,7 @@ git status
 - **Only push to `main`** when ready for public deployment
 - Production is on Oracle Cloud Always Free (https://app.mybridgebuddy.com)
 - **Deploy via SSH:** `ssh oracle-bridge "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"`
-- SSH config at `~/.ssh/config` has alias `oracle-bridge` → 129.146.229.15
+- SSH config at `~/.ssh/config` has alias `oracle-bridge` → 161.153.7.196
 - Keep `development` as your default working branch
 
 **See:** `deploy/oracle/README.md`, `docs/deployment/ORACLE_CLOUD_MIGRATION.md`

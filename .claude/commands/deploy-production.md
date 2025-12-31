@@ -30,7 +30,7 @@ Deploy current development branch to production (main):
 **ORACLE CLOUD DEPLOYMENT:**
 
 **Server Details:**
-- **IP:** 129.146.229.15
+- **IP:** 161.153.7.196
 - **SSH Alias:** oracle-bridge (configured in ~/.ssh/config)
 - **Production URL:** https://app.mybridgebuddy.com
 
