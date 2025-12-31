@@ -559,6 +559,7 @@ ${otherCommands}`;
         // Open Bidding workspace with Random tab
         setCurrentWorkspace('bid');
         setBiddingTab('random');
+        setGamePhase('bidding');  // Reset to bidding phase (fixes stuck screen when switching from play)
         // Only deal new hand if not already in bidding with an active auction
         // This prevents losing progress when user clicks Bid nav while bidding
         if (!hand || hand.length === 0 || auction.length === 0) {
@@ -2308,6 +2309,7 @@ ${otherCommands}`;
           onReplayHand={handleReplayFromHistory}
           scenarios={scenariosByLevel}
           sessionHands={sessionHands}
+          hasActiveHand={hand && hand.length > 0}
         />
       )}
 

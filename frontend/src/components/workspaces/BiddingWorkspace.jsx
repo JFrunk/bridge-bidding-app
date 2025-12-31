@@ -19,7 +19,8 @@ export function BiddingWorkspace({
   onLoadScenario,
   onReplayHand,
   scenarios,
-  sessionHands
+  sessionHands,
+  hasActiveHand = false
 }) {
   const [selectedTab, setSelectedTab] = useState(activeTab);
 
@@ -80,7 +81,7 @@ export function BiddingWorkspace({
       </div>
 
       {/* Tab Content - Only show panels for non-random tabs */}
-      {selectedTab === 'random' && (
+      {selectedTab === 'random' && !hasActiveHand && (
         <div className="tab-panel random-panel">
           <div className="panel-header">
             <p className="panel-description">
