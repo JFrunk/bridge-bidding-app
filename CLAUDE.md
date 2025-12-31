@@ -15,6 +15,8 @@ This is a **Bridge Bidding Training Application** that teaches players the Stand
 - **Architecture**: Client-server with REST API communication
 
 **Production:** Deployed on Oracle Cloud Always Free (https://app.mybridgebuddy.com)
+- **Deploy command:** `ssh oracle-bridge "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"`
+- **SSH config:** `~/.ssh/config` has alias `oracle-bridge` → 161.153.7.196
 
 ---
 
@@ -274,12 +276,17 @@ git push origin development
 
 ### Deploying to Production
 
+**Oracle Cloud Server Details:**
+- **IP Address:** 161.153.7.196
+- **SSH Host Alias:** oracle-bridge (configured in ~/.ssh/config)
+- **Production URL:** https://app.mybridgebuddy.com
+
 **⚠️ CRITICAL: Database migration must run BEFORE deploying code**
 
 **Step 1: Database Migration (Production)**
 ```bash
-# SSH to Oracle Cloud server
-ssh opc@<ORACLE_IP>
+# SSH to Oracle Cloud server (use alias)
+ssh oracle-bridge
 cd /opt/bridge-bidding-app/backend
 source venv/bin/activate
 python3 database/init_all_tables.py
@@ -298,16 +305,19 @@ git checkout main
 # Merge development changes
 git merge development
 
-# Push to GitHub, then deploy to Oracle
+# Push to GitHub
 git push origin main
 
-# Deploy to Oracle (use webhook or SSH)
-# Option 1: If webhook is configured, push triggers auto-deploy
-# Option 2: SSH to server and run:
-ssh opc@<ORACLE_IP> "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"
+# Deploy to Oracle via SSH
+ssh oracle-bridge "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"
 
 # Switch back to development for continued work
 git checkout development
+```
+
+**One-liner for quick deploy (after pushing to main):**
+```bash
+ssh oracle-bridge "cd /opt/bridge-bidding-app && git pull origin main && bash deploy/oracle/maintenance.sh restart"
 ```
 
 **Step 3: Verification**
@@ -353,7 +363,8 @@ git status
 - **Always commit to `development`** unless deploying
 - **Only push to `main`** when ready for public deployment
 - Production is on Oracle Cloud Always Free (https://app.mybridgebuddy.com)
-- Deploy via webhook (auto) or SSH maintenance script (manual)
+- **Deploy via SSH:** `ssh oracle-bridge "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"`
+- SSH config at `~/.ssh/config` has alias `oracle-bridge` → 161.153.7.196
 - Keep `development` as your default working branch
 
 **See:** `deploy/oracle/README.md`, `docs/deployment/ORACLE_CLOUD_MIGRATION.md`

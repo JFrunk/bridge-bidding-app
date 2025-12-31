@@ -320,7 +320,35 @@
    Responsive Design
    ======================================== */
 
-/* Tablet */
+/* iPad Landscape & Small Desktop (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .top-navigation {
+    height: 60px;
+  }
+
+  .nav-icon {
+    width: 52px;
+    height: 46px;
+  }
+
+  .nav-icon-emoji {
+    font-size: 19px;
+  }
+
+  .nav-icon-label {
+    font-size: 9px;
+  }
+
+  .nav-app-title {
+    font-size: var(--text-lg);
+  }
+
+  .nav-right-section {
+    gap: var(--space-2);
+  }
+}
+
+/* Tablet Portrait (481px - 768px) */
 @media (max-width: 768px) {
   .top-navigation {
     height: 56px;
@@ -357,7 +385,7 @@
   }
 }
 
-/* Mobile */
+/* Mobile (0 - 480px) */
 @media (max-width: 480px) {
   .top-nav-content {
     padding: 0 var(--space-2);
@@ -370,12 +398,12 @@
 
   .nav-icon {
     width: 44px;
-    height: 40px;
+    height: 44px; /* Fixed: Was 40px, now meets 44px touch target standard */
     padding: var(--space-1);
   }
 
   .nav-icon-emoji {
-    font-size: 16px;
+    font-size: 18px; /* Slightly larger for better visibility */
   }
 
   .nav-icon-label {
@@ -393,10 +421,28 @@
   /* Hide feedback button text on mobile */
   .nav-utility-button {
     padding: var(--space-1);
+    min-width: 44px; /* Ensure touch target compliance */
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .nav-right-section .user-display {
     display: none; /* Hide user name on mobile */
+  }
+}
+
+/* Touch feedback for mobile devices */
+@media (hover: none) and (pointer: coarse) {
+  .nav-icon:active {
+    transform: scale(0.95);
+    transition: transform 100ms ease;
+  }
+
+  .nav-utility-button:active {
+    transform: scale(0.95);
+    transition: transform 100ms ease;
   }
 }
 

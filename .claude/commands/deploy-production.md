@@ -29,11 +29,20 @@ Deploy current development branch to production (main):
 
 **ORACLE CLOUD DEPLOYMENT:**
 
-The server has auto-deploy configured. After pushing to main:
-- If webhook is set up: Deployment happens automatically within 2-3 minutes
-- If no webhook: SSH to server and run: `bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update`
+**Server Details:**
+- **IP:** 161.153.7.196
+- **SSH Alias:** oracle-bridge (configured in ~/.ssh/config)
+- **Production URL:** https://app.mybridgebuddy.com
 
-Production URL: https://app.mybridgebuddy.com
+After pushing to main, deploy via SSH:
+```bash
+ssh oracle-bridge "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"
+```
+
+Or one-liner pull + restart:
+```bash
+ssh oracle-bridge "cd /opt/bridge-bidding-app && git pull origin main && bash deploy/oracle/maintenance.sh restart"
+```
 
 **VERIFICATION:**
 
@@ -67,7 +76,10 @@ git push origin main
 git checkout development
 ```
 
-Then SSH to server and run: `bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update`
+Then SSH to server and run:
+```bash
+ssh oracle-bridge "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"
+```
 
 ⛔ **Do NOT deploy if:**
 - Any safety checks fail

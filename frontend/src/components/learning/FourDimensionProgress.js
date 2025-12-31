@@ -183,6 +183,8 @@ const JourneyContent = ({ journey }) => {
     skills_in_level,
     skills_completed_in_level,
     total_skills_mastered,
+    skills_in_progress,
+    current_skill_progress,
     next_skill,
     level_progress
   } = journey;
@@ -227,10 +229,42 @@ const JourneyContent = ({ journey }) => {
         <div className="level-details">
           <div className="level-name">{current_level_name}</div>
           <div className="skills-mastered">
-            {total_skills_mastered} skills mastered
+            {total_skills_mastered > 0 ? (
+              `${total_skills_mastered} skills mastered`
+            ) : skills_in_progress > 0 ? (
+              `${skills_in_progress} skill${skills_in_progress > 1 ? 's' : ''} in progress`
+            ) : (
+              'Ready to start!'
+            )}
           </div>
         </div>
       </div>
+
+      {/* Current Skill Progress - Show when user is actively practicing */}
+      {current_skill_progress && current_skill_progress.attempts > 0 && (
+        <div className="current-skill-progress">
+          <div className="skill-progress-header">
+            <span className="skill-label">Current:</span>
+            <span className="skill-name">{next_skill?.name || current_skill_progress.skill_id}</span>
+          </div>
+          <div className="skill-progress-stats">
+            <span className="stat">{current_skill_progress.attempts} attempts</span>
+            <span className="stat">{current_skill_progress.accuracy}% accuracy</span>
+          </div>
+          <div className="skill-progress-bar">
+            <div
+              className="skill-progress-fill"
+              style={{ width: `${Math.min(current_skill_progress.accuracy, 100)}%` }}
+            />
+          </div>
+          <div className="skill-progress-hint">
+            {current_skill_progress.accuracy >= 80
+              ? 'Almost mastered!'
+              : `Need 80% accuracy to master (${5 - current_skill_progress.attempts} more hands min)`
+            }
+          </div>
+        </div>
+      )}
 
       {/* Level Roadmap */}
       <div className="level-roadmap">
@@ -261,11 +295,16 @@ const JourneyContent = ({ journey }) => {
         })}
       </div>
 
-      {/* Next Skill */}
-      {next_skill && (
+      {/* Next Skill - Only show if not already showing current progress */}
+      {next_skill && (!current_skill_progress || current_skill_progress.attempts === 0) && (
         <div className="next-skill">
           <span className="next-label">Next:</span>
           <span className="next-name">{next_skill.name}</span>
+          {next_skill.in_progress && next_skill.attempts > 0 && (
+            <span className="in-progress-badge">
+              {next_skill.attempts} done, {next_skill.accuracy}%
+            </span>
+          )}
         </div>
       )}
     </>
@@ -287,6 +326,13 @@ const QualityContent = ({ quality, type }) => {
     ? quality.total_decisions
     : quality.total_hands_played;
 
+  // Determine color class based on score
+  const getScoreClass = (score) => {
+    if (score >= 70) return 'score-high';
+    if (score >= 50) return 'score-medium';
+    return 'score-low';
+  };
+
   return (
     <>
       {/* Main Metric Gauge */}
@@ -297,7 +343,7 @@ const QualityContent = ({ quality, type }) => {
         </div>
         <div className="gauge-bar">
           <div
-            className="gauge-fill"
+            className={`gauge-fill ${getScoreClass(mainMetric || 0)}`}
             style={{ width: `${Math.min(mainMetric || 0, 100)}%` }}
           />
         </div>

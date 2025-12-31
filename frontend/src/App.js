@@ -887,6 +887,9 @@ ${otherCommands}`;
             if (scoreResponse.ok) {
               const scoreData = await scoreResponse.json();
               console.log('✅ Score calculated:', scoreData);
+              // Save hand to database immediately - pass contract info as fallback
+              const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
+              if (saved) scoreData._saved = true;
               setScoreData(scoreData);
               recordHandCompleted();
             } else {
@@ -1034,6 +1037,9 @@ ${otherCommands}`;
             if (scoreResponse.ok) {
               const scoreData = await scoreResponse.json();
               console.log('✅ Score calculated:', scoreData);
+              // Save hand to database immediately - pass contract info as fallback
+              const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
+              if (saved) scoreData._saved = true;
               setScoreData(scoreData);
               recordHandCompleted();
             } else {
@@ -1187,6 +1193,9 @@ ${otherCommands}`;
             if (scoreResponse.ok) {
               const scoreData = await scoreResponse.json();
               console.log('✅ Score calculated:', scoreData);
+              // Save hand to database immediately - pass contract info as fallback
+              const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
+              if (saved) scoreData._saved = true;
               setScoreData(scoreData);
               recordHandCompleted();
             } else {
@@ -1233,77 +1242,96 @@ ${otherCommands}`;
     }
   };
 
-  const handleCloseScore = async () => {
-    // Always try to save the hand if we have score data
-    if (scoreData) {
-      try {
-        console.log('💾 Attempting to save hand to session...');
-        console.log('Current state:', {
-          hasSessionData: !!sessionData,
-          sessionActive: sessionData?.active,
-          hasScoreData: !!scoreData
-        });
-
-        // Check current session status to ensure we have an active session
-        const sessionStatusResponse = await fetch(`${API_URL}/api/session/status`, {
-          headers: { ...getSessionHeaders() }
-        });
-
-        if (sessionStatusResponse.ok) {
-          const currentSession = await sessionStatusResponse.json();
-          console.log('Session status:', currentSession);
-
-          if (currentSession.active) {
-            // Save the hand to session_hands table
-            const response = await fetch(`${API_URL}/api/session/complete-hand`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-              body: JSON.stringify({
-                score_data: scoreData,
-                auction_history: auction.map(a => a.bid)
-              })
-            });
-
-            if (response.ok) {
-              const result = await response.json();
-              console.log('✅ Hand saved successfully to database');
-              console.log('Session updated:', result.session);
-              setSessionData({ active: true, session: result.session });
-
-              if (result.session_complete) {
-                setDisplayedMessage(`Session complete! Winner: ${result.winner}`);
-              } else {
-                // Update dealer and vulnerability for next hand
-                setVulnerability(result.session.vulnerability);
-              }
-            } else {
-              const errorText = await response.text();
-              console.error('❌ Failed to save hand:', errorText);
-            }
-          } else {
-            console.warn('⚠️ No active session - hand not saved. Starting new session...');
-            // Try to start a new session
-            const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-              body: JSON.stringify({ user_id: userId || 1, session_type: 'chicago' })
-            });
-            if (sessionResponse.ok) {
-              const newSession = await sessionResponse.json();
-              setSessionData(newSession);
-              console.log('✅ New session started');
-            }
-          }
-        } else {
-          console.error('❌ Failed to check session status');
-        }
-      } catch (err) {
-        console.error('❌ Error saving hand to session:', err);
-      }
-    } else {
+  // Helper function to save hand to database - called immediately when play ends
+  // This ensures hand is saved even if user navigates away before closing score display
+  const saveHandToDatabase = useCallback(async (scoreDataToSave, auctionToSave, contractInfo = null) => {
+    if (!scoreDataToSave) {
       console.warn('⚠️ No score data available - cannot save hand');
+      return false;
     }
 
+    try {
+      console.log('💾 Saving hand to session...');
+
+      // Check current session status to ensure we have an active session
+      const sessionStatusResponse = await fetch(`${API_URL}/api/session/status`, {
+        headers: { ...getSessionHeaders() }
+      });
+
+      if (sessionStatusResponse.ok) {
+        const currentSession = await sessionStatusResponse.json();
+        console.log('Session status:', currentSession);
+
+        if (currentSession.active) {
+          // Build request body with contract data as fallback for backend
+          const requestBody = {
+            score_data: scoreDataToSave,
+            auction_history: auctionToSave.map(a => typeof a === 'object' ? a.bid : a)
+          };
+
+          // Include contract data if available (fallback for when backend play_state is lost)
+          if (contractInfo) {
+            requestBody.contract_data = {
+              level: contractInfo.level,
+              strain: contractInfo.strain,
+              declarer: contractInfo.declarer,
+              doubled: contractInfo.doubled || 0
+            };
+          }
+
+          // Save the hand to session_hands table
+          const response = await fetch(`${API_URL}/api/session/complete-hand`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+            body: JSON.stringify(requestBody)
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Hand saved successfully to database');
+            console.log('Session updated:', result.session);
+            setSessionData({ active: true, session: result.session });
+
+            if (result.session_complete) {
+              setDisplayedMessage(`Session complete! Winner: ${result.winner}`);
+            } else {
+              // Update dealer and vulnerability for next hand
+              setVulnerability(result.session.vulnerability);
+            }
+            return true;
+          } else {
+            const errorText = await response.text();
+            console.error('❌ Failed to save hand:', errorText);
+          }
+        } else {
+          console.warn('⚠️ No active session - starting new session...');
+          // Try to start a new session
+          const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+            body: JSON.stringify({ user_id: userId || 1, session_type: 'chicago' })
+          });
+          if (sessionResponse.ok) {
+            const newSession = await sessionResponse.json();
+            setSessionData(newSession);
+            console.log('✅ New session started - hand will be saved on next attempt');
+          }
+        }
+      } else {
+        console.error('❌ Failed to check session status');
+      }
+    } catch (err) {
+      console.error('❌ Error saving hand to session:', err);
+    }
+    return false;
+  }, [userId]);
+
+  const handleCloseScore = async () => {
+    // Hand should already be saved by now (saved immediately when play ended)
+    // But if not saved yet for some reason, try again
+    if (scoreData && !scoreData._saved) {
+      await saveHandToDatabase(scoreData, auction, playState?.contract);
+    }
     setScoreData(null);
   };
 
@@ -1549,7 +1577,7 @@ ${otherCommands}`;
         const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-          body: JSON.stringify({ user_id: 1, session_type: 'chicago' })
+          body: JSON.stringify({ user_id: userId || 1, session_type: 'chicago' })
         });
         const sessionData = await sessionResponse.json();
         setSessionData(sessionData);
@@ -1902,7 +1930,11 @@ ${otherCommands}`;
           if (scoreResponse.ok) {
             const scoreData = await scoreResponse.json();
             console.log('✅ Score calculated:', scoreData);
+            // Save hand to database immediately - pass contract info as fallback
+            const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
+            if (saved) scoreData._saved = true;
             setScoreData(scoreData);
+            recordHandCompleted();
           } else {
             // Handle error response
             const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
@@ -2084,6 +2116,9 @@ ${otherCommands}`;
               if (scoreResponse.ok) {
                 const scoreData = await scoreResponse.json();
                 console.log('✅ Score calculated after AI play:', scoreData);
+                // Save hand to database immediately - pass contract info as fallback
+                const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
+                if (saved) scoreData._saved = true;
                 setScoreData(scoreData);
                 recordHandCompleted();
               } else {
