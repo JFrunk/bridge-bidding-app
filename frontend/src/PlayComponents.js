@@ -14,6 +14,7 @@ import './PlayComponents.css';
 import { TurnIndicator, CompactTurnIndicator } from './components/play/TurnIndicator';
 import { ContractHeader } from './components/play/ContractHeader';
 import { CurrentTrickDisplay } from './components/play/CurrentTrickDisplay';
+import { LastTrickOverlay } from './components/play/LastTrickOverlay';
 import { ScoreModal } from './components/play/ScoreModal';
 import { PlayableCard as PlayableCardComponent } from './components/play/PlayableCard';
 import { VerticalPlayableCard } from './components/play/VerticalPlayableCard';
@@ -179,7 +180,12 @@ export function PlayTable({
   isDeclarerTurn,
   onDummyCardPlay,
   isDummyTurn,
-  scoreData
+  scoreData,
+  // Last trick feature props
+  showLastTrick,
+  lastTrick,
+  onShowLastTrick,
+  onHideLastTrick
 }) {
   if (!playState) return null;
 
@@ -284,13 +290,34 @@ export function PlayTable({
 
         {/* Current trick in center - CRITICAL: Positioned in center grid area */}
         <div className="current-trick-container">
-          <CurrentTrick
-            trick={current_trick}
-            positions={positions}
-            trickWinner={trick_winner}
-            trickComplete={trick_complete}
-          />
+          {showLastTrick && lastTrick ? (
+            <LastTrickOverlay
+              trick={lastTrick}
+              trickNumber={playState.trick_history?.length || 0}
+              onClose={onHideLastTrick}
+            />
+          ) : (
+            <CurrentTrick
+              trick={current_trick}
+              positions={positions}
+              trickWinner={trick_winner}
+              trickComplete={trick_complete}
+            />
+          )}
         </div>
+
+        {/* Show Last Trick button - only visible after at least one trick completed */}
+        {lastTrick && !isHandComplete && (
+          <div className="last-trick-button-container">
+            <button
+              className="last-trick-button"
+              onClick={showLastTrick ? onHideLastTrick : onShowLastTrick}
+              title={showLastTrick ? "Return to current trick" : "View the last completed trick"}
+            >
+              {showLastTrick ? "Current Trick" : "↶ Last Trick"}
+            </button>
+          </div>
+        )}
 
         {/* West position - Left side (standard bridge layout) */}
         <div className="position position-west">
