@@ -512,8 +512,12 @@ ${otherCommands}`;
         break;
 
       case 'play':
-        // Open Play workspace
+        // Open Play workspace - clear any existing hand to show PlayWorkspace options
         setCurrentWorkspace('play');
+        setHand([]);  // Clear hand so PlayWorkspace shows
+        setAllHands(null);  // Clear all hands display
+        setGamePhase('bidding');  // Reset to bidding phase
+        setAuction([]);  // Clear auction
         // Don't auto-start - let user choose from play options
         break;
 

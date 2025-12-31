@@ -59,7 +59,7 @@ function TopNavigation({ currentModule, onModuleSelect, showTitle = true, childr
         {/* App Title */}
         {showTitle && (
           <div className="nav-title-section">
-            <h1 className="nav-app-title">Bridge Bidding Trainer</h1>
+            <h1 className="nav-app-title">My Bridge Buddy</h1>
           </div>
         )}
 
