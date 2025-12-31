@@ -7,6 +7,31 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 // Number of hands before prompting for registration
 const HANDS_BEFORE_PROMPT = 3;
 
+// Generate or retrieve a unique guest ID for this browser
+// Uses large negative numbers to avoid collision with real user IDs (which are positive)
+const getOrCreateGuestId = () => {
+  const GUEST_ID_KEY = 'bridge_guest_id';
+  let guestId = localStorage.getItem(GUEST_ID_KEY);
+
+  // Check if we have a valid numeric guest ID
+  // Old format was "guest_<timestamp>_<random>" which is invalid
+  const numericId = guestId ? parseInt(guestId, 10) : NaN;
+
+  if (!guestId || isNaN(numericId)) {
+    // Generate a unique numeric ID using timestamp + random
+    // Use numbers in the range -1000000000 to -1 to avoid collision with real IDs
+    // Real user IDs start at 1 and increment positively
+    const timestamp = Date.now() % 100000000; // Last 8 digits of timestamp
+    const random = Math.floor(Math.random() * 100); // 2 random digits
+    // Create negative number: e.g., -1735600012345
+    const newId = -(timestamp * 100 + random);
+    localStorage.setItem(GUEST_ID_KEY, String(newId));
+    return newId;
+  }
+
+  return numericId;
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,9 +60,9 @@ export function AuthProvider({ children }) {
     if (token) {
       validateSession(token);
     } else {
-      // Auto-continue as guest for frictionless first experience
-      const guestUser = { id: 1, username: 'guest', display_name: 'Guest', isGuest: true };
-      setUser(guestUser);
+      // No stored session - user needs to login or choose guest
+      // Setting user to null will trigger login screen
+      setUser(null);
       setLoading(false);
     }
 
@@ -67,16 +92,14 @@ export function AuthProvider({ children }) {
         setUser(data.user);
       } else {
         localStorage.removeItem('session_token');
-        // Auto-continue as guest
-        const guestUser = { id: 1, username: 'guest', display_name: 'Guest', isGuest: true };
-        setUser(guestUser);
+        // Session invalid - require login
+        setUser(null);
       }
     } catch (error) {
       console.error('Session validation failed:', error);
       localStorage.removeItem('session_token');
-      // Auto-continue as guest
-      const guestUser = { id: 1, username: 'guest', display_name: 'Guest', isGuest: true };
-      setUser(guestUser);
+      // Session validation failed - require login
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -163,14 +186,15 @@ export function AuthProvider({ children }) {
 
     localStorage.removeItem('session_token');
     localStorage.removeItem('bridge_user');
-    // Keep them as guest after logout
-    const guestUser = { id: 1, username: 'guest', display_name: 'Guest', isGuest: true };
-    setUser(guestUser);
+    // Clear user state - this will show login screen (isAuthenticated becomes false)
+    setUser(null);
+    setLoading(false);
   };
 
   const continueAsGuest = () => {
-    // Use existing guest functionality with user_id = 1 (default guest)
-    setUser({ id: 1, username: 'guest', display_name: 'Guest', isGuest: true });
+    // Each browser gets a unique guest ID to prevent data collision
+    const guestId = getOrCreateGuestId();
+    setUser({ id: guestId, username: 'guest', display_name: 'Guest', isGuest: true });
     setLoading(false);
   };
 

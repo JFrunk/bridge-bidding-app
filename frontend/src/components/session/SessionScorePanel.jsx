@@ -6,12 +6,28 @@
  * - Current scores (NS vs EW)
  * - Current hand dealer and vulnerability
  * - Score leader indicator
+ *
+ * Features:
+ * - Collapsible panel (persists preference to localStorage)
+ * - Collapsed state shows just progress badge
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import './SessionScorePanel.css';
 
 export function SessionScorePanel({ sessionData, onViewHistory }) {
+  // Collapse state - persisted to localStorage
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    const saved = localStorage.getItem('bridge-session-panel-collapsed');
+    return saved === 'true';
+  });
+
+  const handleToggleCollapse = () => {
+    const newValue = !isCollapsed;
+    setIsCollapsed(newValue);
+    localStorage.setItem('bridge-session-panel-collapsed', String(newValue));
+  };
+
   if (!sessionData || !sessionData.active) {
     return null;
   }
@@ -24,8 +40,39 @@ export function SessionScorePanel({ sessionData, onViewHistory }) {
   const userLabel = userOnNS ? 'North-South (You)' : 'East-West (You)';
   const opponentLabel = userOnNS ? 'East-West' : 'North-South';
 
+  // Collapsed view - just show progress badge
+  if (isCollapsed) {
+    return (
+      <div className="session-score-panel session-score-panel-collapsed">
+        <button
+          className="session-collapse-toggle"
+          onClick={handleToggleCollapse}
+          aria-label="Expand session panel"
+          title="Expand session panel"
+        >
+          <span className="collapse-badge">
+            Hand {session.hand_number}/{session.max_hands}
+          </span>
+          <span className="collapse-score">
+            {userScore} - {opponentScore}
+          </span>
+          <span className="collapse-icon">▼</span>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="session-score-panel">
+      <button
+        className="session-collapse-toggle session-collapse-expanded"
+        onClick={handleToggleCollapse}
+        aria-label="Collapse session panel"
+        title="Collapse session panel"
+      >
+        <span className="collapse-icon">▲</span>
+      </button>
+
       <div className="session-header">
         <div className="session-title">
           <h3>Chicago Bridge Session</h3>

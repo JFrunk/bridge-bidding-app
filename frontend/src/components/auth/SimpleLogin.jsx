@@ -77,7 +77,7 @@ export function SimpleLogin({ onClose }) {
           ×
         </button>
 
-        <h2>Welcome to Bridge Bidding Practice</h2>
+        <h2>Welcome to My Bridge Buddy</h2>
 
         <div className="login-method-toggle" data-testid="login-method-toggle">
           <button
