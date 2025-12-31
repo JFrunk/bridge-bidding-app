@@ -437,6 +437,12 @@
   min-height: 350px;
   z-index: 50; /* Ensure played cards appear above all hand cards */
   position: relative;
+  pointer-events: none; /* Allow clicks to pass through to cards below */
+}
+
+/* Trick cards themselves should receive pointer events */
+.trick-card {
+  pointer-events: auto;
 }
 
 /* Current Trick in Center - Compass Layout */

@@ -37,7 +37,7 @@ export function CurrentTrickDisplay({ trick, trickWinner, trickComplete }) {
     return (
       <div
         className={cn(
-          "trick-card relative bg-white rounded-card shadow-md",
+          "trick-card relative bg-white rounded-card shadow-md pointer-events-auto",
           "transition-all duration-500",
           // Bold border (ring) for winner
           isWinner ? "ring-4 ring-white shadow-2xl border-0" : "border border-gray-400",
@@ -55,10 +55,10 @@ export function CurrentTrickDisplay({ trick, trickWinner, trickComplete }) {
   };
 
   return (
-    <div className="relative flex items-center justify-center w-full h-full min-h-[350px]">
+    <div className="relative flex items-center justify-center w-full h-full min-h-[350px] pointer-events-none">
       {displayTrick.length === 0 ? (
         // Waiting for cards message
-        <div className="flex items-center justify-center p-12 rounded-lg border-2 border-dashed border-gray-600 bg-bg-secondary">
+        <div className="flex items-center justify-center p-12 rounded-lg border-2 border-dashed border-gray-600 bg-bg-secondary pointer-events-auto">
           <p className="text-base text-gray-400">Waiting for cards...</p>
         </div>
       ) : (
