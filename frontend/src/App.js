@@ -285,6 +285,28 @@ function App() {
   const [isPlayingCard, setIsPlayingCard] = useState(false);
   const [scoreData, setScoreData] = useState(null);
 
+  // Last trick display state
+  const [showLastTrick, setShowLastTrick] = useState(false);
+  const [lastTrick, setLastTrick] = useState(null);
+
+  // Extract last trick from play state whenever it changes
+  useEffect(() => {
+    if (playState?.trick_history && playState.trick_history.length > 0) {
+      const latestTrick = playState.trick_history[playState.trick_history.length - 1];
+      setLastTrick(latestTrick);
+      // Hide last trick overlay when a new trick completes (user should see current trick)
+      setShowLastTrick(false);
+    }
+  }, [playState?.trick_history?.length]);
+
+  // Auto-dismiss last trick overlay after 3 seconds
+  useEffect(() => {
+    if (showLastTrick) {
+      const timer = setTimeout(() => setShowLastTrick(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showLastTrick]);
+
   // Ref to store AI play loop timeout ID so we can cancel it
   const aiPlayTimeoutRef = useRef(null);
 
@@ -340,6 +362,8 @@ function App() {
     setDeclarerHand(null);
     setScoreData(null);
     setIsPlayingCard(false);
+    setShowLastTrick(false);
+    setLastTrick(null);
     // Fetch hands if showAllHands is enabled
     if (showAllHands) {
       fetchAllHands();
@@ -2190,8 +2214,13 @@ ${otherCommands}`;
         />
       )}
 
-      {/* Login Modal */}
-      {showLogin && <SimpleLogin onClose={() => setShowLogin(false)} />}
+      {/* Login Modal - Show when explicitly opened OR when not authenticated (after loading) */}
+      {(showLogin || (!isAuthenticated && !authLoading)) && (
+        <SimpleLogin onClose={() => {
+          setShowLogin(false);
+          // If still not authenticated after closing, they chose to be guest
+        }} />
+      )}
 
       {/* Registration Prompt - appears after guest plays a few hands */}
       {showRegistrationPrompt && (
@@ -2358,6 +2387,11 @@ ${otherCommands}`;
             }
             auction={auction}
             scoreData={scoreData}
+            // Last trick feature
+            showLastTrick={showLastTrick}
+            lastTrick={lastTrick}
+            onShowLastTrick={() => setShowLastTrick(true)}
+            onHideLastTrick={() => setShowLastTrick(false)}
           />
           {/* Don't show AI bidding status messages during play - only show errors if they occur */}
           {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && error && <div className="error-message">{error}</div>}

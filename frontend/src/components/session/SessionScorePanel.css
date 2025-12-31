@@ -1,12 +1,64 @@
 /* Session Score Panel - Display current session progress and scores */
 
 .session-score-panel {
+  position: relative;
   background: linear-gradient(135deg, #1e3a5f 0%, #2a5a8f 100%);
   color: white;
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   margin-bottom: 20px;
+}
+
+/* Collapsed state */
+.session-score-panel-collapsed {
+  padding: 0;
+}
+
+/* Collapse toggle button */
+.session-collapse-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 12px 16px;
+  width: 100%;
+  font-size: 0.95rem;
+  transition: background 0.2s ease;
+}
+
+.session-collapse-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.session-collapse-expanded {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: auto;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.collapse-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.collapse-score {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.collapse-icon {
+  margin-left: auto;
+  opacity: 0.7;
+  font-size: 0.8rem;
 }
 
 .session-header {
