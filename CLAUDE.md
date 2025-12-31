@@ -965,9 +965,18 @@ This is the **authoritative source** for all UI/UX decisions.
 
 **Responsive Design (MANDATORY):**
 - **Mobile-first approach**
-- **Test at breakpoints:** 375px (mobile), 768px (tablet), 1280px (desktop)
+- **Test at breakpoints:** 360px (small phone), 480px (phone), 768px (tablet), 1024px (iPad landscape), 1280px (desktop)
 - **Use responsive classes:** `w-9 sm:w-12 md:w-16` (NOT fixed `w-12`)
 - **Breakpoint prefixes:** base, sm:, md:, lg:
+
+**Responsive CSS Patterns (CRITICAL):**
+- **NEVER use fixed `min-width` over 300px** - Use `min-width: min(350px, 100%)` instead
+- **NEVER use fixed `min-height` over 200px** without a responsive fallback
+- **ALWAYS add 360px breakpoint** for extra small phones when using grids/flex layouts
+- **ALWAYS use `calc(100vw - Xpx)` or `min()` function** for widths that could overflow
+- **ALWAYS test on 360px viewport** before committing CSS changes
+- **Grid layouts:** Use `minmax(min(300px, 100%), 1fr)` pattern for responsive grids
+- **Animations:** Use percentage-based transforms (`translateX(100%)`) not fixed pixels (`translateX(400px)`)
 
 **Accessibility (WCAG 2.1 AA):**
 - Keyboard navigation support
