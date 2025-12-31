@@ -3,18 +3,28 @@ body {
   background-color: var(--bg-app);
   color: var(--text-primary);
   padding: var(--space-5);
+  /* Safe area handling for notched devices (iPhone X+) */
+  padding-left: max(var(--space-5), env(safe-area-inset-left));
+  padding-right: max(var(--space-5), env(safe-area-inset-right));
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Responsive: Reduce body padding on small screens */
 @media (max-width: 768px) {
   body {
     padding: var(--space-3) var(--space-2);
+    padding-left: max(var(--space-2), env(safe-area-inset-left));
+    padding-right: max(var(--space-2), env(safe-area-inset-right));
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
 @media (max-width: 480px) {
   body {
     padding: var(--space-2) var(--space-1);
+    padding-left: max(var(--space-1), env(safe-area-inset-left));
+    padding-right: max(var(--space-1), env(safe-area-inset-right));
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 .app-container {
@@ -60,6 +70,40 @@ body {
   margin-top: var(--space-2);
   padding: var(--space-2);
   min-height: 125px;
+}
+
+/* Mobile: Horizontal scroll for 13-card hands that overflow */
+@media (max-width: 480px) {
+  .hand-display {
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    padding-bottom: var(--space-3); /* Space for scrollbar */
+    margin-left: calc(-1 * var(--space-1)); /* Offset container padding */
+    margin-right: calc(-1 * var(--space-1));
+    padding-left: var(--space-2);
+    padding-right: var(--space-2);
+  }
+
+  .hand-display::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .hand-display::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+
+  .hand-display::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+  }
+
+  .suit-group {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
 }
 .suit-group {
   display: flex;
@@ -732,6 +776,8 @@ body {
   justify-content: center;
   align-items: center;
   z-index: var(--z-modal);
+  /* Safe area handling for notched devices */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 .modal-content {
@@ -743,6 +789,57 @@ body {
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: var(--shadow-xl);
+}
+
+/* iPad modal adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .modal-content {
+    max-width: 550px;
+    width: 85%;
+    padding: var(--space-6);
+  }
+}
+
+/* Mobile modal - full screen for better usability */
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end; /* Slide up from bottom */
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    padding: var(--space-5);
+    padding-top: var(--space-6);
+    padding-bottom: max(var(--space-5), env(safe-area-inset-bottom));
+    margin: 0;
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Drag handle indicator for mobile modals */
+  .modal-content::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    margin: 0 auto var(--space-4);
+  }
 }
 
 .modal-content h2 {
