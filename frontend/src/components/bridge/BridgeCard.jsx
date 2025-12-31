@@ -60,15 +60,7 @@ export function BridgeCard({ rank, suit, onClick, disabled = false, compact = fa
         <span className={cn(compact ? "text-xl" : "text-base")}>{suit}</span>
       </div>
 
-      {/* Center suit symbol removed for mobile-friendly card display */}
-
-      {/* Bottom-right corner (rotated) - hidden in compact mode */}
-      {!compact && (
-        <div className={cn("absolute bottom-1 right-1.5 flex flex-col items-center rotate-180 leading-none", suitColor)}>
-          <span className="text-lg font-bold">{displayRank}</span>
-          <span className="text-base">{suit}</span>
-        </div>
-      )}
+      {/* Center and bottom-right removed for compact mobile-friendly display */}
     </div>
   );
 }
