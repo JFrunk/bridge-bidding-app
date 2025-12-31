@@ -57,15 +57,7 @@ export function PlayableCard({ card, onClick, disabled = false, compact = false,
         <span className={cn(compact ? "text-xl" : "text-base")}>{card.suit}</span>
       </div>
 
-      {/* Center suit symbol removed for mobile-friendly card display */}
-
-      {/* Bottom-right corner (rotated) - hidden in compact mode */}
-      {!compact && (
-        <div className={cn("absolute bottom-1 right-1.5 flex flex-col items-center rotate-180 leading-none", suitColor)}>
-          <span className="text-lg font-bold">{displayRank}</span>
-          <span className="text-base">{card.suit}</span>
-        </div>
-      )}
+      {/* Center and bottom-right removed for compact mobile-friendly display */}
     </div>
   );
 }
