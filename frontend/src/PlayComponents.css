@@ -588,20 +588,21 @@
   display: block;
 }
 
-/* Playable Cards */
+/* Playable Cards - Desktop default size */
 .playable-card {
   background-color: white;
   border: 2px solid #333;
-  border-radius: 10px;
-  padding: 15px 10px;
-  min-width: 70px;
-  min-height: 100px;
+  border-radius: 8px;
+  padding: 8px 5px;
+  width: 60px;
+  height: 84px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: inline-block;
-  margin: 3px;
+  margin: 2px;
   position: relative;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  flex-shrink: 0;
 }
 
 .playable-card.clickable {
@@ -923,9 +924,9 @@
   position: relative;
 }
 
-/* Overlap playable cards horizontally - show 35% of each card (65% hidden) */
+/* Overlap playable cards horizontally - show ~60% of each card */
 .suit-group .playable-card {
-  margin-left: -45px; /* Card width 70px, show 35% = 24.5px, hide 65% = 45.5px */
+  margin-left: -25px; /* Card width 60px, show 35px (~60%) */
   margin-top: 0;
   margin-right: 0;
   margin-bottom: 0;
@@ -939,7 +940,7 @@
 .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
 .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
 .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-  margin-left: -45px; /* Same overlap between suits */
+  margin-left: -25px; /* Same overlap between suits */
 }
 
 /* Suit Colors */
@@ -1193,52 +1194,53 @@
   }
 }
 
+/* Mobile phones - smaller cards like Learn module */
 @media (max-width: 480px) {
   .play-area {
-    grid-template-columns: 80px 1fr 80px;
-    grid-template-rows: auto 150px auto;
-    gap: 5px;
-    padding: 5px;
+    grid-template-columns: 70px 1fr 70px;
+    grid-template-rows: auto 130px auto;
+    gap: 4px;
+    padding: 4px;
   }
 
   .current-trick {
-    gap: 5px;
-    padding: 5px;
-    min-height: 80px;
+    gap: 4px;
+    padding: 4px;
+    min-height: 70px;
   }
 
   .trick-card {
-    min-width: 35px;
-    padding: 8px 3px;
+    min-width: 32px;
+    padding: 6px 2px;
   }
 
   .trick-rank {
-    font-size: 1.2em;
+    font-size: 1.1em;
   }
 
   .trick-suit {
-    font-size: 1em;
+    font-size: 0.95em;
   }
 
-  /* Mobile card sizing - match Learn module proportions */
+  /* Mobile card sizing - match Learn module medium size (50x70) */
   .playable-card {
-    min-width: 42px;
-    min-height: 59px;
-    padding: 4px 2px;
+    width: 45px;
+    height: 63px;
+    padding: 3px 2px;
     margin: 1px;
-    border-radius: 6px;
+    border-radius: 5px;
     border-width: 1px;
   }
 
-  /* Mobile: reduced overlap for better visibility */
+  /* Mobile: overlap to show ~50% of each card */
   .suit-group {
-    flex-wrap: nowrap; /* Keep single row - let container handle overflow */
+    flex-wrap: nowrap;
     min-height: auto;
-    padding: 3px;
+    padding: 2px;
   }
 
   .suit-group .playable-card {
-    margin-left: -20px; /* Show ~50% of each card */
+    margin-left: -22px;
     margin-top: 0;
     margin-right: 0;
   }
@@ -1250,30 +1252,30 @@
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -20px;
+    margin-left: -22px;
   }
 
   .playable-card .rank {
-    font-size: 0.85em;
+    font-size: 0.8em;
   }
 
   .playable-card .suit-symbol-large {
-    font-size: 1.2em;
+    font-size: 1.1em;
   }
 
-  /* Hand containers - use fit-content to prevent clipping */
+  /* Hand containers - center and don't clip */
   .user-play-hand,
   .dummy-hand,
   .declarer-hand {
     max-width: 100%;
     width: fit-content;
     margin: 0 auto;
-    overflow: visible; /* Don't clip cards */
+    overflow: visible;
   }
 
   .position-label {
-    font-size: 0.8em;
-    padding: 2px 6px;
+    font-size: 0.75em;
+    padding: 2px 5px;
   }
 
   .bidding-summary-table {
@@ -1281,16 +1283,16 @@
   }
 
   .contract-details {
-    font-size: 1em;
+    font-size: 0.95em;
   }
 
   .contract-bid {
-    font-size: 1.2em;
+    font-size: 1.1em;
   }
 
   .tricks-count {
-    font-size: 0.95em;
-    gap: 10px;
+    font-size: 0.9em;
+    gap: 8px;
   }
 
   .score-modal {
@@ -1312,90 +1314,90 @@
   }
 }
 
-/* Extra small phones (Android <360px) - further reduced sizing */
+/* Extra small phones (Android <360px) */
 @media (max-width: 360px) {
   .play-area {
-    grid-template-columns: 60px 1fr 60px;
-    grid-template-rows: auto 120px auto;
+    grid-template-columns: 55px 1fr 55px;
+    grid-template-rows: auto 100px auto;
     gap: 3px;
     padding: 3px;
   }
 
   .current-trick {
-    min-height: 70px;
+    min-height: 60px;
     padding: 3px;
   }
 
   .trick-card {
-    min-width: 30px;
-    padding: 6px 2px;
+    min-width: 28px;
+    padding: 5px 2px;
   }
 
   .trick-rank {
-    font-size: 1em;
+    font-size: 0.95em;
   }
 
   .trick-suit {
-    font-size: 0.9em;
+    font-size: 0.85em;
   }
 
-  /* Extra small cards - similar to Learn module small size */
+  /* Extra small cards - Learn module small size (38x53) */
   .playable-card {
-    min-width: 36px;
-    min-height: 50px;
-    padding: 3px 2px;
-    border-radius: 5px;
+    width: 38px;
+    height: 53px;
+    padding: 2px 1px;
+    border-radius: 4px;
   }
 
   .suit-group {
-    padding: 2px;
+    padding: 1px;
   }
 
   /* Tighter overlap on very small screens */
   .suit-group .playable-card {
-    margin-left: -16px; /* Show ~55% of each card */
+    margin-left: -18px;
   }
 
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -16px;
+    margin-left: -18px;
   }
 
   .playable-card .rank {
-    font-size: 0.75em;
+    font-size: 0.7em;
   }
 
   .playable-card .suit-symbol-large {
-    font-size: 1em;
+    font-size: 0.9em;
   }
 
   .playable-card .card-corner {
-    font-size: 0.7em;
+    font-size: 0.65em;
   }
 
   .playable-card .card-corner.top-left {
-    top: 2px;
-    left: 3px;
+    top: 1px;
+    left: 2px;
   }
 
   .playable-card .card-corner.bottom-right {
-    bottom: 2px;
-    right: 3px;
+    bottom: 1px;
+    right: 2px;
   }
 
   .position-label {
-    font-size: 0.7em;
-    padding: 1px 4px;
+    font-size: 0.65em;
+    padding: 1px 3px;
   }
 
   .tricks-count {
-    font-size: 0.85em;
-    gap: 6px;
+    font-size: 0.8em;
+    gap: 5px;
   }
 
   .contract-bid {
-    font-size: 1em;
+    font-size: 0.95em;
   }
 }
 
