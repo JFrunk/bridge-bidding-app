@@ -23,10 +23,6 @@ BACKUP_DIR="$APP_DIR/backups"
 show_status() {
     log_section "Service Status"
 
-    echo "PostgreSQL:"
-    systemctl is-active postgresql && echo "  Status: Running" || echo "  Status: Stopped"
-
-    echo ""
     echo "Backend (Gunicorn):"
     systemctl is-active bridge-backend && echo "  Status: Running" || echo "  Status: Stopped"
 
@@ -57,35 +53,33 @@ show_logs() {
     sudo journalctl -u bridge-backend --no-pager -n 50
 }
 
-# Backup database
+# Backup database (SQLite)
 backup_database() {
     log_section "Creating Database Backup"
     mkdir -p "$BACKUP_DIR"
 
     DATE=$(date +%Y%m%d_%H%M%S)
-    BACKUP_FILE="$BACKUP_DIR/db_backup_$DATE.sql"
+    BACKUP_FILE="$BACKUP_DIR/db_backup_$DATE.db"
+    DB_FILE="$APP_DIR/backend/bridge.db"
 
-    # Get database URL from env file
-    source "$APP_DIR/backend/.env"
+    if [ -f "$DB_FILE" ]; then
+        log_info "Backing up SQLite database to $BACKUP_FILE..."
+        # Use sqlite3 .backup for safe copy (handles locks)
+        sqlite3 "$DB_FILE" ".backup '$BACKUP_FILE'" 2>/dev/null || cp "$DB_FILE" "$BACKUP_FILE"
 
-    # Parse DATABASE_URL
-    DB_USER=$(echo $DATABASE_URL | sed -n 's/.*:\/\/\([^:]*\):.*/\1/p')
-    DB_NAME=$(echo $DATABASE_URL | sed -n 's/.*\/\([^?]*\).*/\1/p')
+        # Compress backup
+        gzip "$BACKUP_FILE"
+        log_info "Backup created: ${BACKUP_FILE}.gz"
 
-    log_info "Backing up database to $BACKUP_FILE..."
-    PGPASSWORD=$(echo $DATABASE_URL | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p') \
-        pg_dump -U "$DB_USER" "$DB_NAME" > "$BACKUP_FILE"
+        # Clean old backups (keep last 7 days)
+        find "$BACKUP_DIR" -name "*.gz" -mtime +7 -delete
+        log_info "Old backups cleaned"
 
-    # Compress backup
-    gzip "$BACKUP_FILE"
-    log_info "Backup created: ${BACKUP_FILE}.gz"
-
-    # Clean old backups (keep last 7 days)
-    find "$BACKUP_DIR" -name "*.gz" -mtime +7 -delete
-    log_info "Old backups cleaned"
-
-    log_section "Available Backups"
-    ls -lh "$BACKUP_DIR"/*.gz 2>/dev/null || echo "No backups found"
+        log_section "Available Backups"
+        ls -lh "$BACKUP_DIR"/*.gz 2>/dev/null || echo "No backups found"
+    else
+        log_warn "Database file not found: $DB_FILE"
+    fi
 }
 
 # Update application
@@ -137,9 +131,6 @@ update_app() {
 # Restart services
 restart_services() {
     log_section "Restarting Services"
-
-    log_info "Restarting PostgreSQL..."
-    sudo systemctl restart postgresql
 
     log_info "Restarting backend..."
     sudo systemctl restart bridge-backend
