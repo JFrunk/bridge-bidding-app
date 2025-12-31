@@ -1,11 +1,11 @@
 /**
  * Four-Dimension Progress Styles
  *
- * Implements:
- * - Two-column layout for desktop
- * - Tab-based navigation for mobile
- * - Progress rings and roadmaps
- * - Convention mastery grid
+ * Layout: 2x2 grid matching navigation structure
+ * - Learn Bid | Practice Bid
+ * - Learn Play | Practice Play
+ *
+ * Responsive: Stacks to single column on mobile
  */
 
 /* ============================================================================
@@ -73,134 +73,131 @@
 }
 
 /* ============================================================================
-   MOBILE TAB SWITCHER
+   PROGRESS GRID - 2x2 Layout
    ============================================================================ */
 
-.mobile-tab-switcher {
-  display: none;
-  margin-bottom: var(--space-4, 16px);
-}
-
-@media (max-width: 768px) {
-  .mobile-tab-switcher {
-    display: flex;
-    background: var(--bg-secondary, #f0f0f0);
-    border-radius: 8px;
-    padding: 4px;
-  }
-
-  .mobile-tab-switcher .tab-button {
-    flex: 1;
-    padding: var(--space-3, 12px);
-    border: none;
-    background: transparent;
-    border-radius: 6px;
-    font-weight: 600;
-    color: var(--text-secondary, #666);
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .mobile-tab-switcher .tab-button.active {
-    background: white;
-    color: var(--color-primary, #2563eb);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-}
-
-/* ============================================================================
-   PROGRESS COLUMNS
-   ============================================================================ */
-
-.progress-columns {
+.progress-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-6, 24px);
+  gap: var(--space-4, 16px);
 }
 
+/* Tablet: Keep 2x2 but reduce gap */
 @media (max-width: 768px) {
-  .progress-columns {
+  .progress-grid {
+    gap: var(--space-3, 12px);
+  }
+}
+
+/* Mobile: Stack to single column */
+@media (max-width: 480px) {
+  .progress-grid {
     grid-template-columns: 1fr;
+    gap: var(--space-3, 12px);
   }
-
-  .progress-track {
-    display: none;
-  }
-
-  .progress-track.active {
-    display: block;
-  }
-}
-
-/* Track Header */
-.track-header {
-  margin-bottom: var(--space-4, 16px);
-}
-
-.track-header h3 {
-  margin: 0;
-  font-size: var(--text-lg, 18px);
-  color: var(--text-primary, #111);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 8px);
-}
-
-.bidding-track .track-header h3::before {
-  content: '🎯';
-}
-
-.play-track .track-header h3::before {
-  content: '🃏';
 }
 
 /* ============================================================================
-   DIMENSION CARD BASE
+   PROGRESS CARD - Unified Card Component
    ============================================================================ */
 
-.dimension-card {
+.progress-card {
   background: white;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: var(--space-4, 16px);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.dimension-card .card-header {
+/* Card type-specific accent colors */
+.progress-card-learn-bid {
+  border-top: 3px solid var(--color-primary, #2563eb);
+}
+
+.progress-card-practice-bid {
+  border-top: 3px solid var(--color-warning, #f59e0b);
+}
+
+.progress-card-learn-play {
+  border-top: 3px solid var(--color-info, #06b6d4);
+}
+
+.progress-card-practice-play {
+  border-top: 3px solid var(--color-success, #22c55e);
+}
+
+/* Card Header */
+.progress-card .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-4, 16px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
   background: var(--bg-secondary, #f8f9fa);
   border-bottom: 1px solid var(--border-color, #e5e7eb);
 }
 
-.dimension-card .card-title {
+.progress-card .card-title {
   display: flex;
   align-items: center;
   gap: var(--space-2, 8px);
 }
 
-.dimension-card .card-title .card-icon {
+.progress-card .card-title .card-icon {
   font-size: 20px;
 }
 
-.dimension-card .card-title h4 {
+.progress-card .card-title h4 {
   margin: 0;
   font-size: var(--text-base, 16px);
   font-weight: 600;
   color: var(--text-primary, #111);
 }
 
-.dimension-card .card-content {
+/* Card Content */
+.progress-card .card-content {
   padding: var(--space-4, 16px);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card Action Button */
+.card-action-btn {
+  width: 100%;
+  padding: var(--space-3, 12px);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: auto;
+}
+
+.card-action-btn.primary {
+  background: var(--color-primary, #2563eb);
+  color: white;
+  border: none;
+}
+
+.card-action-btn.primary:hover {
+  background: var(--color-primary-dark, #1d4ed8);
+}
+
+.card-action-btn.secondary {
+  background: white;
+  color: var(--color-primary, #2563eb);
+  border: 2px solid var(--color-primary, #2563eb);
+}
+
+.card-action-btn.secondary:hover {
+  background: var(--color-primary, #2563eb);
+  color: white;
 }
 
 /* ============================================================================
-   JOURNEY PROGRESS CARD
+   OVERALL PROGRESS BADGE
    ============================================================================ */
 
-/* Overall Progress Badge */
 .overall-progress-badge {
   background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
   color: #065f46;
@@ -210,12 +207,16 @@
   font-size: var(--text-sm, 14px);
 }
 
+/* ============================================================================
+   JOURNEY CONTENT (Learn Cards)
+   ============================================================================ */
+
 /* Level Progress Section */
 .level-progress-section {
   display: flex;
   align-items: center;
-  gap: var(--space-4, 16px);
-  margin-bottom: var(--space-4, 16px);
+  gap: var(--space-3, 12px);
+  margin-bottom: var(--space-3, 12px);
 }
 
 .progress-ring-container {
@@ -223,8 +224,8 @@
 }
 
 .progress-ring {
-  width: 90px;
-  height: 90px;
+  width: 80px;
+  height: 80px;
 }
 
 .progress-ring-bg {
@@ -237,28 +238,30 @@
 }
 
 .ring-level {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   fill: var(--text-primary, #111);
 }
 
 .ring-progress {
-  font-size: 12px;
+  font-size: 11px;
   fill: var(--text-secondary, #666);
 }
 
 .level-details {
   flex: 1;
+  min-width: 0;
 }
 
 .level-name {
   font-weight: 600;
   color: var(--text-primary, #111);
   margin-bottom: var(--space-1, 4px);
+  font-size: var(--text-sm, 14px);
 }
 
 .skills-mastered {
-  font-size: var(--text-sm, 14px);
+  font-size: var(--text-xs, 12px);
   color: var(--text-secondary, #666);
 }
 
@@ -267,8 +270,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-3, 12px) 0;
-  margin-bottom: var(--space-3, 12px);
+  padding: var(--space-2, 8px) 0;
+  margin-bottom: var(--space-2, 8px);
   position: relative;
 }
 
@@ -284,13 +287,13 @@
 }
 
 .roadmap-node {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   z-index: 1;
   transition: transform 0.2s ease;
@@ -338,34 +341,20 @@
 .next-name {
   color: var(--color-primary, #2563eb);
   font-weight: 500;
-}
-
-/* Journey Action Button */
-.journey-action-btn {
-  width: 100%;
-  padding: var(--space-3, 12px);
-  background: var(--color-primary, #2563eb);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.journey-action-btn:hover {
-  background: var(--color-primary-dark, #1d4ed8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ============================================================================
-   PRACTICE QUALITY CARD
+   QUALITY CONTENT (Practice Cards)
    ============================================================================ */
 
 /* Trend Indicator */
 .trend-indicator {
-  padding: var(--space-1, 4px) var(--space-3, 12px);
+  padding: var(--space-1, 4px) var(--space-2, 8px);
   border-radius: 20px;
-  font-size: var(--text-sm, 14px);
+  font-size: var(--text-xs, 12px);
   font-weight: 500;
   text-transform: capitalize;
 }
@@ -388,13 +377,14 @@
 /* Quality Gauge */
 .quality-gauge {
   text-align: center;
-  margin-bottom: var(--space-4, 16px);
+  margin-bottom: var(--space-3, 12px);
 }
 
 .gauge-value {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--text-primary, #111);
+  line-height: 1.2;
 }
 
 .gauge-label {
@@ -404,16 +394,16 @@
 }
 
 .gauge-bar {
-  height: 8px;
+  height: 6px;
   background: var(--bg-secondary, #e5e7eb);
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .gauge-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--color-danger, #dc2626) 0%, var(--color-warning, #f59e0b) 50%, var(--color-success, #22c55e) 100%);
-  border-radius: 4px;
+  border-radius: 3px;
   transition: width 0.3s ease;
 }
 
@@ -421,8 +411,8 @@
 .quality-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-3, 12px);
-  margin-bottom: var(--space-4, 16px);
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-3, 12px);
 }
 
 .quality-stats .stat-item {
@@ -431,7 +421,7 @@
 
 .quality-stats .stat-value {
   display: block;
-  font-size: var(--text-lg, 18px);
+  font-size: var(--text-base, 16px);
   font-weight: 700;
   color: var(--text-primary, #111);
 }
@@ -444,32 +434,46 @@
 /* Total Practiced */
 .total-practiced {
   text-align: center;
-  font-size: var(--text-sm, 14px);
+  font-size: var(--text-xs, 12px);
   color: var(--text-secondary, #666);
   margin-bottom: var(--space-3, 12px);
 }
 
-/* Quality Action Button */
-.quality-action-btn {
-  width: 100%;
-  padding: var(--space-3, 12px);
-  background: white;
-  color: var(--color-primary, #2563eb);
-  border: 2px solid var(--color-primary, #2563eb);
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.quality-action-btn:hover {
-  background: var(--color-primary, #2563eb);
-  color: white;
-}
-
 /* ============================================================================
-   CONVENTION MASTERY GRID
+   CONVENTION MASTERY SECTION - Full width below grid
    ============================================================================ */
+
+.convention-mastery-section {
+  margin-top: var(--space-4, 16px);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.convention-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  background: var(--bg-secondary, #f8f9fa);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.convention-header .convention-icon {
+  font-size: 20px;
+}
+
+.convention-header h4 {
+  margin: 0;
+  font-size: var(--text-base, 16px);
+  font-weight: 600;
+  color: var(--text-primary, #111);
+}
+
+.convention-content {
+  padding: var(--space-4, 16px);
+}
 
 .convention-group {
   margin-bottom: var(--space-4, 16px);
@@ -564,7 +568,7 @@
    RESPONSIVE ADJUSTMENTS
    ============================================================================ */
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .four-dimension-progress {
     padding: var(--space-3, 12px);
   }
@@ -583,20 +587,59 @@
   }
 
   .roadmap-node {
-    width: 24px;
-    height: 24px;
-    font-size: 10px;
+    width: 22px;
+    height: 22px;
+    font-size: 9px;
   }
 
   .gauge-value {
     font-size: 28px;
   }
 
-  .quality-stats {
+  .progress-card .card-title h4 {
+    font-size: var(--text-sm, 14px);
+  }
+
+  .card-action-btn {
+    padding: var(--space-2, 8px);
+    font-size: var(--text-sm, 14px);
+  }
+}
+
+@media (max-width: 480px) {
+  .progress-ring {
+    width: 60px;
+    height: 60px;
+  }
+
+  .ring-level {
+    font-size: 12px;
+  }
+
+  .ring-progress {
+    font-size: 9px;
+  }
+
+  .level-progress-section {
     gap: var(--space-2, 8px);
   }
 
+  .roadmap-node {
+    width: 20px;
+    height: 20px;
+    font-size: 8px;
+  }
+
+  .gauge-value {
+    font-size: 24px;
+  }
+
   .quality-stats .stat-value {
-    font-size: var(--text-base, 16px);
+    font-size: var(--text-sm, 14px);
+  }
+
+  .next-skill {
+    font-size: var(--text-xs, 12px);
+    padding: var(--space-1, 4px) var(--space-2, 8px);
   }
 }

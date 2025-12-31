@@ -1,11 +1,10 @@
 /**
  * Four-Dimension Progress Components
  *
- * Displays comprehensive learning progress across four dimensions:
- * 1. Bid Learning Journey - Structured bidding curriculum progress
- * 2. Bid Practice Quality - Freeplay bidding and convention mastery
- * 3. Play Learning Journey - Card play curriculum progress
- * 4. Play Practice Quality - Gameplay performance metrics
+ * Displays comprehensive learning progress across four sections that align
+ * with navigation: Learn Bid, Practice Bid, Learn Play, Practice Play
+ *
+ * Layout: 2x2 grid on desktop, stacked on mobile
  */
 
 import React, { useState, useEffect } from 'react';
@@ -20,7 +19,6 @@ const FourDimensionProgress = ({ userId, onStartLearning, onStartPractice }) => 
   const [progressData, setProgressData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('bidding'); // For mobile: 'bidding' | 'play'
 
   useEffect(() => {
     loadProgress();
@@ -67,78 +65,118 @@ const FourDimensionProgress = ({ userId, onStartLearning, onStartPractice }) => 
 
   return (
     <div className="four-dimension-progress">
-      {/* Mobile Tab Switcher */}
-      <div className="mobile-tab-switcher">
-        <button
-          className={`tab-button ${activeTab === 'bidding' ? 'active' : ''}`}
-          onClick={() => setActiveTab('bidding')}
-        >
-          Bidding
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'play' ? 'active' : ''}`}
-          onClick={() => setActiveTab('play')}
-        >
-          Card Play
-        </button>
+      {/* 2x2 Grid: Learn Bid, Practice Bid, Learn Play, Practice Play */}
+      <div className="progress-grid">
+        {/* Row 1: Bidding */}
+        <ProgressCard
+          type="learn-bid"
+          icon="📚"
+          title="Learn Bid"
+          journey={bid_learning_journey}
+          onAction={() => onStartLearning?.('bidding')}
+          actionLabel="Continue Learning"
+        />
+
+        <ProgressCard
+          type="practice-bid"
+          icon="🎲"
+          title="Practice Bid"
+          quality={bid_practice_quality}
+          qualityType="bidding"
+          onAction={() => onStartPractice?.('bidding')}
+          actionLabel="Practice Now"
+        />
+
+        {/* Row 2: Card Play */}
+        <ProgressCard
+          type="learn-play"
+          icon="🃏"
+          title="Learn Play"
+          journey={play_learning_journey}
+          onAction={() => onStartLearning?.('play')}
+          actionLabel="Continue Learning"
+        />
+
+        <ProgressCard
+          type="practice-play"
+          icon="♠"
+          title="Practice Play"
+          quality={play_practice_quality}
+          qualityType="play"
+          onAction={() => onStartPractice?.('play')}
+          actionLabel="Practice Now"
+        />
       </div>
 
-      {/* Desktop: Two-column layout / Mobile: Tab content */}
-      <div className="progress-columns">
-        {/* Bidding Track */}
-        <div className={`progress-track bidding-track ${activeTab === 'bidding' ? 'active' : ''}`}>
-          <div className="track-header">
-            <h3>Bidding Track</h3>
-          </div>
+      {/* Convention Mastery Section - Full width below grid */}
+      {bid_practice_quality.convention_mastery?.length > 0 && (
+        <ConventionMasteryGrid
+          conventions={bid_practice_quality.convention_mastery}
+          currentLevel={bid_learning_journey.current_level}
+        />
+      )}
+    </div>
+  );
+};
 
-          <JourneyProgressCard
-            journey={bid_learning_journey}
-            type="bidding"
-            onStartLearning={() => onStartLearning?.('bidding')}
-          />
+// ============================================================================
+// UNIFIED PROGRESS CARD
+// ============================================================================
 
-          <PracticeQualityCard
-            quality={bid_practice_quality}
-            type="bidding"
-            onStartPractice={() => onStartPractice?.('bidding')}
-          />
+const ProgressCard = ({
+  type,
+  icon,
+  title,
+  journey,
+  quality,
+  qualityType,
+  onAction,
+  actionLabel
+}) => {
+  const isJourneyCard = !!journey;
+  const isQualityCard = !!quality;
 
-          {bid_practice_quality.convention_mastery?.length > 0 && (
-            <ConventionMasteryGrid
-              conventions={bid_practice_quality.convention_mastery}
-              currentLevel={bid_learning_journey.current_level}
-            />
-          )}
+  return (
+    <div className={`progress-card progress-card-${type}`}>
+      <div className="card-header">
+        <div className="card-title">
+          <span className="card-icon">{icon}</span>
+          <h4>{title}</h4>
         </div>
-
-        {/* Card Play Track */}
-        <div className={`progress-track play-track ${activeTab === 'play' ? 'active' : ''}`}>
-          <div className="track-header">
-            <h3>Card Play Track</h3>
+        {isJourneyCard && (
+          <div className="overall-progress-badge">
+            {Math.round(journey.progress_percentage)}%
           </div>
+        )}
+        {isQualityCard && (
+          <TrendIndicator trend={quality.recent_trend} />
+        )}
+      </div>
 
-          <JourneyProgressCard
-            journey={play_learning_journey}
-            type="play"
-            onStartLearning={() => onStartLearning?.('play')}
-          />
+      <div className="card-content">
+        {isJourneyCard && (
+          <JourneyContent journey={journey} />
+        )}
+        {isQualityCard && (
+          <QualityContent quality={quality} type={qualityType} />
+        )}
 
-          <PracticeQualityCard
-            quality={play_practice_quality}
-            type="play"
-            onStartPractice={() => onStartPractice?.('play')}
-          />
-        </div>
+        <button
+          className={`card-action-btn ${isJourneyCard ? 'primary' : 'secondary'}`}
+          onClick={onAction}
+        >
+          {actionLabel}
+        </button>
       </div>
     </div>
   );
 };
 
 // ============================================================================
-// JOURNEY PROGRESS CARD
+// JOURNEY CONTENT (for Learn Bid / Learn Play cards)
 // ============================================================================
 
-const JourneyProgressCard = ({ journey, type, onStartLearning }) => {
+const JourneyContent = ({ journey }) => {
   const {
     current_level,
     current_level_name,
@@ -146,133 +184,173 @@ const JourneyProgressCard = ({ journey, type, onStartLearning }) => {
     skills_completed_in_level,
     total_skills_mastered,
     next_skill,
-    progress_percentage,
     level_progress
   } = journey;
 
-  // Calculate level progress percentage
   const levelPercentage = skills_in_level > 0
     ? Math.round((skills_completed_in_level / skills_in_level) * 100)
     : 0;
 
   return (
-    <div className="dimension-card journey-card">
-      <div className="card-header">
-        <div className="card-title">
-          <span className="card-icon">{type === 'bidding' ? '🎯' : '🃏'}</span>
-          <h4>Learning Journey</h4>
+    <>
+      {/* Current Level Progress */}
+      <div className="level-progress-section">
+        <div className="progress-ring-container">
+          <svg className="progress-ring" viewBox="0 0 100 100">
+            <circle
+              className="progress-ring-bg"
+              cx="50"
+              cy="50"
+              r="42"
+              fill="none"
+              strokeWidth="8"
+            />
+            <circle
+              className="progress-ring-fill"
+              cx="50"
+              cy="50"
+              r="42"
+              fill="none"
+              strokeWidth="8"
+              strokeDasharray={`${levelPercentage * 2.64} 264`}
+              strokeLinecap="round"
+              transform="rotate(-90 50 50)"
+            />
+            <text x="50" y="45" textAnchor="middle" className="ring-level">
+              L{current_level}
+            </text>
+            <text x="50" y="62" textAnchor="middle" className="ring-progress">
+              {skills_completed_in_level}/{skills_in_level}
+            </text>
+          </svg>
         </div>
-        <div className="overall-progress-badge">
-          {Math.round(progress_percentage)}%
+        <div className="level-details">
+          <div className="level-name">{current_level_name}</div>
+          <div className="skills-mastered">
+            {total_skills_mastered} skills mastered
+          </div>
         </div>
       </div>
 
-      <div className="card-content">
-        {/* Current Level Progress Ring */}
-        <div className="level-progress-section">
-          <div className="progress-ring-container">
-            <svg className="progress-ring" viewBox="0 0 100 100">
-              <circle
-                className="progress-ring-bg"
-                cx="50"
-                cy="50"
-                r="42"
-                fill="none"
-                strokeWidth="8"
-              />
-              <circle
-                className="progress-ring-fill"
-                cx="50"
-                cy="50"
-                r="42"
-                fill="none"
-                strokeWidth="8"
-                strokeDasharray={`${levelPercentage * 2.64} 264`}
-                strokeLinecap="round"
-                transform="rotate(-90 50 50)"
-              />
-              <text x="50" y="45" textAnchor="middle" className="ring-level">
-                L{current_level}
-              </text>
-              <text x="50" y="62" textAnchor="middle" className="ring-progress">
-                {skills_completed_in_level}/{skills_in_level}
-              </text>
-            </svg>
-          </div>
-          <div className="level-details">
-            <div className="level-name">{current_level_name}</div>
-            <div className="skills-mastered">
-              {total_skills_mastered} skills mastered
-            </div>
-          </div>
-        </div>
+      {/* Level Roadmap */}
+      <div className="level-roadmap">
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((level) => {
+          const levelId = Object.keys(level_progress).find(
+            (id) => level_progress[id].level === level
+          );
+          const levelData = levelId ? level_progress[levelId] : null;
 
-        {/* Level Roadmap */}
-        <div className="level-roadmap">
-          {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((level) => {
-            const levelId = Object.keys(level_progress).find(
-              (id) => level_progress[id].level === level
-            );
-            const levelData = levelId ? level_progress[levelId] : null;
-
-            let status = 'locked';
-            if (levelData) {
-              if (levelData.completed === levelData.total) {
-                status = 'completed';
-              } else if (levelData.unlocked) {
-                status = level === current_level ? 'current' : 'unlocked';
-              }
+          let status = 'locked';
+          if (levelData) {
+            if (levelData.completed === levelData.total) {
+              status = 'completed';
+            } else if (levelData.unlocked) {
+              status = level === current_level ? 'current' : 'unlocked';
             }
+          }
 
-            return (
-              <div
-                key={level}
-                className={`roadmap-node ${status}`}
-                title={levelData?.name || `Level ${level}`}
-              >
-                {status === 'completed' ? '✓' : level}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Next Skill */}
-        {next_skill && (
-          <div className="next-skill">
-            <span className="next-label">Next:</span>
-            <span className="next-name">{next_skill.name}</span>
-          </div>
-        )}
-
-        {/* Action Button */}
-        <button className="journey-action-btn" onClick={onStartLearning}>
-          Continue Learning
-        </button>
+          return (
+            <div
+              key={level}
+              className={`roadmap-node ${status}`}
+              title={levelData?.name || `Level ${level}`}
+            >
+              {status === 'completed' ? '✓' : level}
+            </div>
+          );
+        })}
       </div>
-    </div>
+
+      {/* Next Skill */}
+      {next_skill && (
+        <div className="next-skill">
+          <span className="next-label">Next:</span>
+          <span className="next-name">{next_skill.name}</span>
+        </div>
+      )}
+    </>
   );
 };
 
 // ============================================================================
-// PRACTICE QUALITY CARD
+// QUALITY CONTENT (for Practice Bid / Practice Play cards)
 // ============================================================================
 
-const PracticeQualityCard = ({ quality, type, onStartPractice }) => {
+const QualityContent = ({ quality, type }) => {
   const isBidding = type === 'bidding';
 
-  // Extract relevant stats based on type
   const mainMetric = isBidding
     ? quality.overall_accuracy
     : quality.declarer_success_rate;
-
-  const trend = isBidding
-    ? quality.recent_trend
-    : quality.recent_trend;
 
   const totalPracticed = isBidding
     ? quality.total_decisions
     : quality.total_hands_played;
 
+  return (
+    <>
+      {/* Main Metric Gauge */}
+      <div className="quality-gauge">
+        <div className="gauge-value">{Math.round(mainMetric || 0)}%</div>
+        <div className="gauge-label">
+          {isBidding ? 'Accuracy' : 'Success Rate'}
+        </div>
+        <div className="gauge-bar">
+          <div
+            className="gauge-fill"
+            style={{ width: `${Math.min(mainMetric || 0, 100)}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="quality-stats">
+        {isBidding ? (
+          <>
+            <div className="stat-item">
+              <span className="stat-value">{quality.optimal_rate || 0}%</span>
+              <span className="stat-label">Optimal</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{quality.error_rate || 0}%</span>
+              <span className="stat-label">Errors</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{quality.conventions_mastered || 0}</span>
+              <span className="stat-label">Conv.</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="stat-item">
+              <span className="stat-value">{quality.contracts_made || 0}</span>
+              <span className="stat-label">Made</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{quality.contracts_failed || 0}</span>
+              <span className="stat-label">Failed</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{quality.avg_tricks || 0}</span>
+              <span className="stat-label">Avg Tricks</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Total Practiced */}
+      <div className="total-practiced">
+        {totalPracticed || 0} {isBidding ? 'decisions' : 'hands'} practiced
+      </div>
+    </>
+  );
+};
+
+// ============================================================================
+// TREND INDICATOR
+// ============================================================================
+
+const TrendIndicator = ({ trend }) => {
   const getTrendIcon = (t) => {
     switch (t) {
       case 'improving': return '↗';
@@ -290,77 +368,8 @@ const PracticeQualityCard = ({ quality, type, onStartPractice }) => {
   };
 
   return (
-    <div className="dimension-card quality-card">
-      <div className="card-header">
-        <div className="card-title">
-          <span className="card-icon">{isBidding ? '📊' : '🏆'}</span>
-          <h4>Practice Quality</h4>
-        </div>
-        <div className={`trend-indicator ${getTrendClass(trend)}`}>
-          {getTrendIcon(trend)} {trend}
-        </div>
-      </div>
-
-      <div className="card-content">
-        {/* Main Metric Gauge */}
-        <div className="quality-gauge">
-          <div className="gauge-value">{Math.round(mainMetric)}%</div>
-          <div className="gauge-label">
-            {isBidding ? 'Accuracy' : 'Success Rate'}
-          </div>
-          <div className="gauge-bar">
-            <div
-              className="gauge-fill"
-              style={{ width: `${Math.min(mainMetric, 100)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="quality-stats">
-          {isBidding ? (
-            <>
-              <div className="stat-item">
-                <span className="stat-value">{quality.optimal_rate}%</span>
-                <span className="stat-label">Optimal</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">{quality.error_rate}%</span>
-                <span className="stat-label">Errors</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">{quality.conventions_mastered}</span>
-                <span className="stat-label">Conv. Mastered</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="stat-item">
-                <span className="stat-value">{quality.contracts_made}</span>
-                <span className="stat-label">Made</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">{quality.contracts_failed}</span>
-                <span className="stat-label">Failed</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">{quality.avg_tricks}</span>
-                <span className="stat-label">Avg Tricks</span>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Total Practiced */}
-        <div className="total-practiced">
-          {totalPracticed} {isBidding ? 'decisions' : 'hands'} practiced
-        </div>
-
-        {/* Action Button */}
-        <button className="quality-action-btn" onClick={onStartPractice}>
-          Practice Now
-        </button>
-      </div>
+    <div className={`trend-indicator ${getTrendClass(trend)}`}>
+      {getTrendIcon(trend)} {trend || 'stable'}
     </div>
   );
 };
@@ -406,15 +415,13 @@ const ConventionMasteryGrid = ({ conventions, currentLevel }) => {
   );
 
   return (
-    <div className="dimension-card convention-card">
-      <div className="card-header">
-        <div className="card-title">
-          <span className="card-icon">🎓</span>
-          <h4>Convention Mastery</h4>
-        </div>
+    <div className="convention-mastery-section">
+      <div className="convention-header">
+        <span className="convention-icon">🎓</span>
+        <h4>Convention Mastery</h4>
       </div>
 
-      <div className="card-content">
+      <div className="convention-content">
         {/* Essential Conventions (Level 5) */}
         {essential.length > 0 && (
           <div className="convention-group">

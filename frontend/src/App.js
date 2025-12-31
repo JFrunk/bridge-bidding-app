@@ -248,6 +248,7 @@ function App() {
   const [conventionInfo, setConventionInfo] = useState(null);
   const [showLearningDashboard, setShowLearningDashboard] = useState(false);
   const [showLearningMode, setShowLearningMode] = useState(false);
+  const [learningModeTrack, setLearningModeTrack] = useState('bidding'); // 'bidding' or 'play'
   const [showModeSelector, setShowModeSelector] = useState(true); // Landing page - shown by default
 
   // Current workspace mode: 'bid' or 'play' (null when on landing page or learning mode)
@@ -566,16 +567,13 @@ ${otherCommands}`;
         break;
 
       case 'play':
-        // Open Play workspace
+        // Open Play workspace and immediately start a random hand
         setCurrentWorkspace('play');
 
-        // CRITICAL: Only reset state if NOT already in play phase
+        // Only start new hand if NOT already in active play phase
         // This prevents losing progress when user clicks Play nav while playing
         if (gamePhase !== 'playing') {
-          setHand([]);  // Clear hand so PlayWorkspace shows
-          setAllHands(null);  // Clear all hands display
-          setGamePhase('bidding');  // Reset to bidding phase
-          setAuction([]);  // Clear auction
+          playRandomHand();  // Immediately deal and start playing
         }
         // If already playing, keep current state intact
         break;
@@ -2581,6 +2579,7 @@ ${otherCommands}`;
             onStartLearning={(track) => {
               console.log('Start learning:', track);
               setShowLearningDashboard(false);
+              setLearningModeTrack(track || 'bidding');
               setShowLearningMode(true);
             }}
             onStartFreeplay={(track) => {
@@ -2588,6 +2587,11 @@ ${otherCommands}`;
               setShowLearningDashboard(false);
               if (track === 'play') {
                 setCurrentWorkspace('play');
+                // Immediately start a random hand (consistent with bidding behavior)
+                // But only if not already in active play (preserves progress)
+                if (gamePhase !== 'playing') {
+                  playRandomHand();
+                }
               } else {
                 setCurrentWorkspace('bid');
                 dealNewHand();
@@ -2600,7 +2604,7 @@ ${otherCommands}`;
       {/* Learning Mode - Full-screen guided learning */}
       {showLearningMode && (
         <div className="learning-mode-overlay">
-          <LearningMode userId={userId || 1} />
+          <LearningMode userId={userId || 1} initialTrack={learningModeTrack} />
         </div>
       )}
 

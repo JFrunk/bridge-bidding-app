@@ -26,9 +26,9 @@ import {
 import SkillPractice from './SkillPractice';
 import SkillIntro from './SkillIntro';
 
-const LearningMode = ({ userId }) => {
+const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   // Track selector: 'bidding' or 'play'
-  const [selectedTrack, setSelectedTrack] = useState('bidding');
+  const [selectedTrack, setSelectedTrack] = useState(initialTrack);
 
   const [learningStatus, setLearningStatus] = useState(null);
   const [skillTree, setSkillTree] = useState(null);
