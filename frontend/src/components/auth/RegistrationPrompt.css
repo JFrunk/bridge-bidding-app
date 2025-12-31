@@ -165,7 +165,13 @@
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   font-size: 16px;
+  color: var(--text-primary-dark);
+  background-color: white;
   transition: border-color 0.2s;
+}
+
+.registration-form input::placeholder {
+  color: var(--text-muted);
 }
 
 .registration-form input:focus {
