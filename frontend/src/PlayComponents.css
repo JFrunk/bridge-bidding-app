@@ -566,25 +566,27 @@
   font-weight: bold;
 }
 
+/* Trick cards - cards played in the current trick (center of table) */
 .trick-card {
   background-color: white;
   border: 2px solid #333;
-  border-radius: 8px;
-  padding: 15px 10px;
-  min-width: 60px;
+  border-radius: 6px;
+  padding: 8px 6px;
+  min-width: 45px;
+  width: 50px;
   text-align: center;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.25);
   transition: all 0.3s ease;
 }
 
 .trick-rank {
-  font-size: 1.8em;
+  font-size: 1.4em;
   font-weight: bold;
   display: block;
 }
 
 .trick-suit {
-  font-size: 1.5em;
+  font-size: 1.2em;
   display: block;
 }
 
@@ -1210,16 +1212,19 @@
   }
 
   .trick-card {
-    min-width: 32px;
-    padding: 6px 2px;
+    min-width: 36px;
+    width: 40px;
+    padding: 4px 3px;
+    border-radius: 4px;
+    border-width: 1px;
   }
 
   .trick-rank {
-    font-size: 1.1em;
+    font-size: 1em;
   }
 
   .trick-suit {
-    font-size: 0.95em;
+    font-size: 0.85em;
   }
 
   /* Mobile card sizing - match Learn module medium size (50x70) */
@@ -1329,16 +1334,18 @@
   }
 
   .trick-card {
-    min-width: 28px;
-    padding: 5px 2px;
+    min-width: 32px;
+    width: 34px;
+    padding: 3px 2px;
+    border-radius: 3px;
   }
 
   .trick-rank {
-    font-size: 0.95em;
+    font-size: 0.9em;
   }
 
   .trick-suit {
-    font-size: 0.85em;
+    font-size: 0.75em;
   }
 
   /* Extra small cards - Learn module small size (38x53) */
