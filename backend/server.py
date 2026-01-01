@@ -1709,11 +1709,20 @@ def request_review():
                 print(f"Could not save to file: {file_error}")
                 saved_to_file = False
 
+        # Send email notification (works in both local and production)
+        email_sent = False
+        try:
+            from engine.notifications import send_review_notification
+            email_sent = send_review_notification(review_request, filename)
+        except Exception as email_error:
+            print(f"⚠️  Email notification failed: {email_error}")
+
         # Return the full review data so frontend can display it
         return jsonify({
             'success': True,
             'filename': filename,
             'saved_to_file': saved_to_file,
+            'email_sent': email_sent,
             'review_data': review_request  # Include full data in response
         })
 
@@ -1789,6 +1798,264 @@ def submit_feedback():
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': f'Server error in submit_feedback: {e}'}), 500
+
+
+# ============================================================================
+# ADMIN ENDPOINTS
+# ============================================================================
+
+@app.route('/api/admin/review-requests', methods=['GET'])
+def get_review_requests():
+    """
+    List all review requests with their content.
+    Returns HTML page for browser viewing or JSON for API calls.
+    """
+    try:
+        review_dir = 'review_requests'
+        requests_list = []
+
+        if os.path.exists(review_dir):
+            for filename in sorted(os.listdir(review_dir), reverse=True):
+                if filename.endswith('.json'):
+                    filepath = os.path.join(review_dir, filename)
+                    try:
+                        with open(filepath, 'r') as f:
+                            data = json.load(f)
+                            requests_list.append({
+                                'filename': filename,
+                                'timestamp': data.get('timestamp', ''),
+                                'game_phase': data.get('game_phase', 'unknown'),
+                                'user_concern': data.get('user_concern', ''),
+                                'user_position': data.get('user_position', 'South'),
+                                'vulnerability': data.get('vulnerability', 'None'),
+                                'dealer': data.get('dealer', 'N'),
+                                'data': data
+                            })
+                    except Exception as e:
+                        print(f"Error reading {filename}: {e}")
+
+        # Check Accept header to determine response format
+        accept = request.headers.get('Accept', '')
+        if 'text/html' in accept:
+            return _render_review_requests_html(requests_list)
+        else:
+            return jsonify({
+                'success': True,
+                'count': len(requests_list),
+                'requests': requests_list
+            })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': f'Server error: {e}'}), 500
+
+
+@app.route('/api/admin/review-requests/<filename>', methods=['GET'])
+def get_review_request_detail(filename):
+    """Get a single review request by filename."""
+    try:
+        filepath = os.path.join('review_requests', filename)
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'Review request not found'}), 404
+
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+
+        accept = request.headers.get('Accept', '')
+        if 'text/html' in accept:
+            return _render_review_request_detail_html(data, filename)
+        else:
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'data': data
+            })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': f'Server error: {e}'}), 500
+
+
+def _format_hand_html(hand_data):
+    """Format a hand for HTML display."""
+    cards = hand_data.get('cards', [])
+    points = hand_data.get('points', {})
+
+    suits = {'♠': [], '♥': [], '♦': [], '♣': []}
+    for card in cards:
+        suit = card.get('suit', '')
+        rank = card.get('rank', '')
+        if suit in suits:
+            suits[suit].append(rank)
+
+    lines = []
+    suit_colors = {'♠': '#000', '♥': '#c00', '♦': '#c00', '♣': '#000'}
+    for suit in ['♠', '♥', '♦', '♣']:
+        cards_in_suit = suits.get(suit, [])
+        rank_order = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10}
+        cards_in_suit.sort(key=lambda r: rank_order.get(r, int(r) if r.isdigit() else 0), reverse=True)
+        color = suit_colors.get(suit, '#000')
+        card_str = ''.join(cards_in_suit) if cards_in_suit else '-'
+        lines.append(f'<span style="color:{color}">{suit}</span> {card_str}')
+
+    hcp = points.get('hcp', 0)
+    total = points.get('total_points', hcp)
+
+    return '<br>'.join(lines) + f'<br><small>({hcp} HCP, {total} total)</small>'
+
+
+def _render_review_requests_html(requests_list):
+    """Render HTML page for review requests list."""
+    rows = ""
+    for req in requests_list:
+        concern = req['user_concern'][:100] + '...' if len(req['user_concern']) > 100 else req['user_concern']
+        rows += f"""
+        <tr onclick="window.location='/api/admin/review-requests/{req['filename']}'" style="cursor:pointer">
+            <td>{req['timestamp'][:16] if req['timestamp'] else 'N/A'}</td>
+            <td>{req['game_phase']}</td>
+            <td>{req['user_position']}</td>
+            <td>{concern}</td>
+            <td><a href="/api/admin/review-requests/{req['filename']}">View</a></td>
+        </tr>
+        """
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Review Requests - Bridge Buddy Admin</title>
+        <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }}
+            h1 {{ color: #1a5f2a; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+            th, td {{ padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }}
+            th {{ background: #1a5f2a; color: white; }}
+            tr:hover {{ background: #f5f5f5; }}
+            .count {{ color: #666; font-size: 14px; }}
+            a {{ color: #1a5f2a; }}
+        </style>
+    </head>
+    <body>
+        <h1>🃏 Review Requests</h1>
+        <p class="count">{len(requests_list)} request(s)</p>
+        <table>
+            <tr>
+                <th>Timestamp</th>
+                <th>Phase</th>
+                <th>User Position</th>
+                <th>Concern</th>
+                <th>Action</th>
+            </tr>
+            {rows if rows else '<tr><td colspan="5">No review requests yet</td></tr>'}
+        </table>
+    </body>
+    </html>
+    """
+    return html
+
+
+def _render_review_request_detail_html(data, filename):
+    """Render HTML page for a single review request."""
+    # Format hands
+    all_hands = data.get('all_hands', {})
+    hands_html = ""
+    user_position = data.get('user_position', 'South')
+    for position in ['North', 'East', 'South', 'West']:
+        hand = all_hands.get(position, {})
+        if hand:
+            marker = " 👤" if position == user_position else ""
+            hands_html += f"""
+            <div class="hand-box">
+                <strong>{position}{marker}</strong><br>
+                {_format_hand_html(hand)}
+            </div>
+            """
+
+    # Format auction
+    auction = data.get('auction', [])
+    auction_html = ""
+    positions = ['North', 'East', 'South', 'West']
+    for i, bid_data in enumerate(auction):
+        pos = positions[i % 4]
+        bid = bid_data.get('bid', '?')
+        explanation = bid_data.get('explanation', '')
+        if len(explanation) > 150:
+            explanation = explanation[:147] + "..."
+        auction_html += f"""
+        <tr>
+            <td><strong>{pos}</strong></td>
+            <td style="font-size: 20px;">{bid}</td>
+            <td style="color: #666; font-size: 13px;">{explanation}</td>
+        </tr>
+        """
+
+    # Play data section
+    play_html = ""
+    play_data = data.get('play_data')
+    if play_data:
+        contract = play_data.get('contract', {})
+        play_html = f"""
+        <div class="section">
+            <h3>🎴 Play Data</h3>
+            <p><strong>Contract:</strong> {contract.get('string', 'Unknown')}</p>
+            <p><strong>Declarer:</strong> {contract.get('declarer', 'Unknown')}</p>
+            <p><strong>Tricks:</strong> NS: {play_data.get('tricks_taken_ns', 0)} | EW: {play_data.get('tricks_taken_ew', 0)}</p>
+        </div>
+        """
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Review Request - {filename}</title>
+        <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; }}
+            h1 {{ color: #1a5f2a; }}
+            .back {{ margin-bottom: 20px; }}
+            .back a {{ color: #1a5f2a; text-decoration: none; }}
+            .concern {{ background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 20px 0; }}
+            .hands {{ display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; }}
+            .hand-box {{ flex: 1; min-width: 150px; padding: 12px; background: #f5f5f5; border-radius: 8px; font-family: monospace; }}
+            .section {{ margin: 20px 0; }}
+            table {{ width: 100%; border-collapse: collapse; }}
+            td {{ padding: 8px; border-bottom: 1px solid #eee; }}
+            .meta {{ color: #666; font-size: 14px; margin: 10px 0; }}
+        </style>
+    </head>
+    <body>
+        <div class="back"><a href="/api/admin/review-requests">← Back to all requests</a></div>
+        <h1>🃏 Review Request</h1>
+        <p class="meta">
+            <strong>File:</strong> {filename} |
+            <strong>Phase:</strong> {data.get('game_phase', 'unknown')} |
+            <strong>Dealer:</strong> {data.get('dealer', 'N')} |
+            <strong>Vuln:</strong> {data.get('vulnerability', 'None')}
+        </p>
+
+        <div class="concern">
+            <h3>💬 User's Concern</h3>
+            <p>{data.get('user_concern', 'No specific concern noted')}</p>
+        </div>
+
+        <div class="section">
+            <h3>🎴 Hands</h3>
+            <div class="hands">{hands_html}</div>
+        </div>
+
+        <div class="section">
+            <h3>📋 Auction</h3>
+            <table>
+                {auction_html if auction_html else '<tr><td>No bids yet</td></tr>'}
+            </table>
+        </div>
+
+        {play_html}
+    </body>
+    </html>
+    """
+    return html
 
 
 # ============================================================================
