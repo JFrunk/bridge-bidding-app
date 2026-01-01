@@ -17,6 +17,7 @@ import {
   acknowledgeCelebration,
 } from '../../services/analyticsService';
 import BiddingQualityBar from './BiddingQualityBar';
+import PlayQualityBar from './PlayQualityBar';
 import RecentDecisionsCard from './RecentDecisionsCard';
 import FourDimensionProgress from './FourDimensionProgress';
 
@@ -86,12 +87,13 @@ const LearningDashboard = ({ userId, onPracticeClick, onStartLearning, onStartFr
     return null;
   }
 
-  const { user_stats, gameplay_stats, bidding_feedback_stats, recent_decisions, insights, pending_celebrations, practice_recommendations } = dashboardData;
+  const { user_stats, gameplay_stats, bidding_feedback_stats, play_feedback_stats, recent_decisions, insights, pending_celebrations, practice_recommendations } = dashboardData;
 
   // Check if user has any meaningful data
   const hasGameplayData = gameplay_stats && gameplay_stats.total_hands_played > 0;
   const hasBiddingData = bidding_feedback_stats && bidding_feedback_stats.total_decisions > 0;
-  const hasAnyData = hasGameplayData || hasBiddingData || (recent_decisions && recent_decisions.length > 0);
+  const hasPlayFeedbackData = play_feedback_stats && play_feedback_stats.total_decisions > 0;
+  const hasAnyData = hasGameplayData || hasBiddingData || hasPlayFeedbackData || (recent_decisions && recent_decisions.length > 0);
 
   return (
     <div className="learning-dashboard" data-testid="dashboard-content">
@@ -160,6 +162,14 @@ const LearningDashboard = ({ userId, onPracticeClick, onStartLearning, onStartFr
             <div className="stats-section">
               <h3 className="stats-section-title">Bidding Quality Details</h3>
               <BiddingQualityBar stats={bidding_feedback_stats} />
+            </div>
+          )}
+
+          {/* Play Quality Bar (DDS-Based) - only show if has data */}
+          {play_feedback_stats && (hasPlayFeedbackData || hasGameplayData) && (
+            <div className="stats-section">
+              <h3 className="stats-section-title">Card Play Analysis</h3>
+              <PlayQualityBar stats={play_feedback_stats} />
             </div>
           )}
         </details>
