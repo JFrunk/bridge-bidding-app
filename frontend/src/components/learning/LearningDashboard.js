@@ -10,25 +10,42 @@
  * - Practice recommendations
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './LearningDashboard.css';
 import {
   getDashboardData,
   acknowledgeCelebration,
+  getHandHistory,
 } from '../../services/analyticsService';
 import BiddingQualityBar from './BiddingQualityBar';
 import PlayQualityBar from './PlayQualityBar';
 import RecentDecisionsCard from './RecentDecisionsCard';
 import FourDimensionProgress from './FourDimensionProgress';
+import HandHistoryCard from './HandHistoryCard';
+import HandReviewModal from './HandReviewModal';
 
 const LearningDashboard = ({ userId, onPracticeClick, onStartLearning, onStartFreeplay }) => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [handHistory, setHandHistory] = useState([]);
+  const [selectedHandId, setSelectedHandId] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+
+  // Load hand history
+  const loadHandHistory = useCallback(async () => {
+    try {
+      const data = await getHandHistory(userId, 15);
+      setHandHistory(data.hands || []);
+    } catch (err) {
+      console.error('Failed to load hand history:', err);
+    }
+  }, [userId]);
 
   useEffect(() => {
     loadDashboardData();
-  }, [userId]);
+    loadHandHistory();
+  }, [userId, loadHandHistory]);
 
   const loadDashboardData = async () => {
     try {
@@ -61,6 +78,18 @@ const LearningDashboard = ({ userId, onPracticeClick, onStartLearning, onStartFr
         recommendedHands: recommendation.recommended_hands,
       });
     }
+  };
+
+  // Handle opening hand review modal
+  const handleOpenReview = (hand) => {
+    setSelectedHandId(hand.id);
+    setShowReviewModal(true);
+  };
+
+  // Handle closing hand review modal
+  const handleCloseReview = () => {
+    setShowReviewModal(false);
+    setSelectedHandId(null);
   };
 
   if (loading) {
@@ -219,7 +248,23 @@ const LearningDashboard = ({ userId, onPracticeClick, onStartLearning, onStartFr
             }}
           />
         )}
+
+        {/* Hand History Section */}
+        {handHistory && handHistory.length > 0 && (
+          <HandHistorySection
+            hands={handHistory}
+            onHandClick={handleOpenReview}
+          />
+        )}
       </div>
+
+      {/* Hand Review Modal */}
+      {showReviewModal && selectedHandId && (
+        <HandReviewModal
+          handId={selectedHandId}
+          onClose={handleCloseReview}
+        />
+      )}
     </div>
   );
 };
@@ -510,6 +555,52 @@ const OverallTrendCard = ({ trend, stats }) => {
         <div className="trend-icon">{trendInfo.icon}</div>
         <h3 className="trend-text">{trendInfo.text}</h3>
         <p className="trend-description">{trendInfo.description}</p>
+      </div>
+    </div>
+  );
+};
+
+// Hand History Section Component
+const HandHistorySection = ({ hands, onHandClick }) => {
+  const [showAll, setShowAll] = useState(false);
+  const displayHands = showAll ? hands : hands.slice(0, 5);
+
+  return (
+    <div className="dashboard-card hand-history-card-container">
+      <div className="dashboard-card-header">
+        <h3 className="dashboard-card-title">Recent Hands</h3>
+        <span className="dashboard-card-icon">🃏</span>
+      </div>
+      <div className="dashboard-card-body">
+        {hands.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">🎴</div>
+            <p className="empty-state-text">Play some hands to see your history here!</p>
+          </div>
+        ) : (
+          <>
+            <div className="hand-history-grid">
+              {displayHands.map((hand) => (
+                <HandHistoryCard
+                  key={hand.id}
+                  hand={hand}
+                  onClick={onHandClick}
+                />
+              ))}
+            </div>
+            {hands.length > 5 && (
+              <button
+                className="show-more-hands-btn"
+                onClick={() => setShowAll(!showAll)}
+              >
+                {showAll ? 'Show Less' : `Show All ${hands.length} Hands`}
+              </button>
+            )}
+            <p className="hand-history-hint">
+              Click on a hand to analyze your play with DDS
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

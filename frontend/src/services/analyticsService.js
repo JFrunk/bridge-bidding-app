@@ -211,3 +211,70 @@ export async function getFourDimensionProgress(userId) {
 
   return response.json();
 }
+
+/**
+ * Get hand history for user
+ * @param {number} userId - User ID
+ * @param {number} limit - Maximum number of hands to return (default 15)
+ * @returns {Promise<Object>} Hand history with list of hands
+ */
+export async function getHandHistory(userId, limit = 15) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/hand-history?user_id=${userId}&limit=${limit}`
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch hand history');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get detailed hand data for replay
+ * @param {number} handId - Hand ID
+ * @returns {Promise<Object>} Full hand data including deal, auction, and play history
+ */
+export async function getHandDetail(handId) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/hand-detail?hand_id=${handId}`
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch hand detail');
+  }
+
+  return response.json();
+}
+
+/**
+ * Analyze a specific play using DDS
+ * @param {number} handId - Hand ID
+ * @param {number} trickNumber - Trick number (1-13)
+ * @param {number} playIndex - Index within trick (0-3)
+ * @param {boolean} openingLead - If true, analyze opening lead specifically
+ * @returns {Promise<Object>} DDS analysis with optimal play and alternatives
+ */
+export async function analyzePlay(handId, trickNumber, playIndex, openingLead = false) {
+  const response = await fetch(`${API_BASE_URL}/api/analyze-play`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      hand_id: handId,
+      trick_number: trickNumber,
+      play_index: playIndex,
+      opening_lead: openingLead,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to analyze play');
+  }
+
+  return response.json();
+}

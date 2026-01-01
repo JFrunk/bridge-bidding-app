@@ -1,0 +1,169 @@
+/* Hand History Card - Individual hand display */
+
+.hand-history-card {
+  background: white;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  transition: all 0.2s ease;
+  border: 1px solid #e5e7eb;
+}
+
+.hand-history-card.clickable {
+  cursor: pointer;
+}
+
+.hand-history-card.clickable:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  transform: translateY(-1px);
+}
+
+.hand-history-card.no-replay {
+  opacity: 0.8;
+}
+
+/* Main row - contract and result */
+.hand-card-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.hand-contract {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.hand-result {
+  font-size: 16px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.hand-result.result-exact {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.hand-result.result-overtrick {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+.hand-result.result-undertrick {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Details row - role, score, date */
+.hand-card-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #6b7280;
+  gap: 8px;
+}
+
+.hand-role {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-size: 10px;
+}
+
+.hand-role.role-declarer {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.hand-role.role-defender {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.hand-role.role-dummy {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.hand-score {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.hand-score.score-positive {
+  color: #059669;
+}
+
+.hand-score.score-negative {
+  color: #dc2626;
+}
+
+.hand-score.score-zero {
+  color: #6b7280;
+}
+
+.hand-date {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* Replay indicator */
+.hand-replay-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #3b82f6;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.hand-history-card.clickable:hover .hand-replay-indicator {
+  opacity: 1;
+}
+
+.replay-icon {
+  font-size: 12px;
+}
+
+.replay-text {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .hand-history-card {
+    padding: 10px 12px;
+  }
+
+  .hand-contract {
+    font-size: 16px;
+  }
+
+  .hand-result {
+    font-size: 14px;
+    padding: 1px 6px;
+  }
+
+  .hand-card-details {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}

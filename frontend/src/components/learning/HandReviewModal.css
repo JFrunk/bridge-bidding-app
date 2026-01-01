@@ -1,0 +1,549 @@
+/* Hand Review Modal - Full hand replay with DDS analysis */
+
+.hand-review-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.hand-review-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
+
+.modal-title h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #1f2937;
+}
+
+.contract-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.contract {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.result {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+.result.made {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+.result.down {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0 8px;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: #111827;
+}
+
+/* Content */
+.modal-content {
+  padding: 24px;
+}
+
+/* Loading/Error states */
+.loading-state,
+.error-state {
+  padding: 40px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.error-state button {
+  margin-top: 16px;
+  padding: 8px 24px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Deal display - 4 hands in compass layout */
+.deal-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.north-position,
+.south-position {
+  display: flex;
+  justify-content: center;
+}
+
+.ew-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+}
+
+.center-info {
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+  padding: 12px;
+}
+
+.center-info .vulnerability {
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.center-info .dealer {
+  margin-top: 4px;
+}
+
+/* Hand display */
+.review-hand {
+  background: white;
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 160px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.review-hand.user-hand {
+  border: 2px solid #3b82f6;
+}
+
+.hand-position {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.hand-suits {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.suit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.suit-symbol {
+  font-size: 16px;
+  width: 16px;
+}
+
+.suit-cards {
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.card-rank {
+  margin-right: 2px;
+}
+
+.card-void {
+  color: #9ca3af;
+}
+
+/* Analysis actions */
+.analysis-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.analyze-lead-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.analyze-lead-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.analyze-lead-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* DDS Analysis Panel */
+.dds-analysis-panel {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.dds-analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.dds-analysis-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #0369a1;
+}
+
+.dds-close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.dds-unavailable {
+  text-align: center;
+  color: #6b7280;
+  padding: 12px;
+}
+
+.dds-analysis-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dds-rating {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 16px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  align-self: flex-start;
+}
+
+.dds-your-play {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 8px;
+}
+
+.dds-your-play .label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.dds-your-play .tricks-lost {
+  font-size: 12px;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.dds-alternatives {
+  padding-top: 8px;
+  border-top: 1px solid #bae6fd;
+}
+
+.alternatives-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0369a1;
+  margin-bottom: 8px;
+}
+
+.alternatives-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.alternative-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: white;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.alternative-card.is-actual {
+  border: 2px solid #3b82f6;
+}
+
+.alt-tricks {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.best-label,
+.your-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.best-label {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.your-label {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Play history section */
+.play-history-section {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.play-history-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #374151;
+}
+
+.trick-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.trick-navigation button {
+  padding: 6px 16px;
+  background: #e5e7eb;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.trick-navigation button:hover:not(:disabled) {
+  background: #d1d5db;
+}
+
+.trick-navigation button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trick-navigation span {
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Trick display */
+.trick-display {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.trick-number {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.trick-cards {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.trick-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  min-width: 60px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.trick-card:hover {
+  background: #e5e7eb;
+}
+
+.trick-card.analyzed {
+  background: #dbeafe;
+  border: 2px solid #3b82f6;
+}
+
+.trick-card.empty {
+  background: transparent;
+  cursor: default;
+}
+
+.trick-card-position {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+}
+
+.click-hint {
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 8px 0 0 0;
+}
+
+/* Card display */
+.review-card {
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.review-card.clickable {
+  cursor: pointer;
+}
+
+.review-card.highlighted {
+  background: #fef3c7;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.review-card.played {
+  opacity: 0.4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hand-review-modal-overlay {
+    padding: 10px;
+  }
+
+  .hand-review-modal {
+    max-height: 95vh;
+  }
+
+  .modal-header {
+    padding: 16px;
+  }
+
+  .modal-content {
+    padding: 16px;
+  }
+
+  .ew-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .center-info {
+    order: -1;
+    padding: 8px;
+  }
+
+  .review-hand {
+    min-width: 100%;
+  }
+
+  .trick-cards {
+    flex-wrap: wrap;
+  }
+
+  .alternatives-list {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .contract-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .trick-navigation {
+    gap: 8px;
+  }
+
+  .trick-navigation button {
+    padding: 4px 12px;
+    font-size: 12px;
+  }
+}

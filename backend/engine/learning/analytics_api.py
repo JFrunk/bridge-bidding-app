@@ -1525,6 +1525,432 @@ def get_four_dimension_progress():
         return jsonify({'error': str(e)}), 500
 
 
+# ============================================================================
+# HAND HISTORY & DDS ANALYSIS
+# ============================================================================
+
+def get_hand_history():
+    """
+    GET /api/hand-history?user_id=<id>&limit=<n>
+    Get recent hands with replay data for the user.
+
+    Query params:
+        user_id: User ID (required)
+        limit: Max hands to return (default 15, max 50)
+
+    Returns list of hands with contract, result, and available replay data.
+    """
+    user_id = request.args.get('user_id', type=int)
+    limit = request.args.get('limit', default=15, type=int)
+    limit = min(limit, 50)  # Cap at 50
+
+    if not user_id:
+        return jsonify({'error': 'user_id required'}), 400
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                sh.id,
+                sh.session_id,
+                sh.hand_number,
+                sh.dealer,
+                sh.vulnerability,
+                sh.contract_level,
+                sh.contract_strain,
+                sh.contract_declarer,
+                sh.contract_doubled,
+                sh.tricks_taken,
+                sh.tricks_needed,
+                sh.made,
+                sh.hand_score,
+                sh.user_was_declarer,
+                sh.user_was_dummy,
+                sh.played_at,
+                sh.deal_data IS NOT NULL as has_deal_data,
+                sh.play_history IS NOT NULL as has_play_history
+            FROM session_hands sh
+            JOIN game_sessions gs ON sh.session_id = gs.id
+            WHERE gs.user_id = ?
+              AND sh.contract_level IS NOT NULL
+            ORDER BY sh.played_at DESC
+            LIMIT ?
+        """, (user_id, limit))
+
+        hands = []
+        for row in cursor.fetchall():
+            # Format contract display
+            contract_display = None
+            if row['contract_level']:
+                contract_display = f"{row['contract_level']}{row['contract_strain']}"
+                if row['contract_doubled'] == 1:
+                    contract_display += "X"
+                elif row['contract_doubled'] == 2:
+                    contract_display += "XX"
+                contract_display += f" by {row['contract_declarer']}"
+
+            # Calculate result string
+            result_str = None
+            if row['tricks_taken'] is not None and row['tricks_needed'] is not None:
+                diff = row['tricks_taken'] - row['tricks_needed']
+                if diff == 0:
+                    result_str = "="
+                elif diff > 0:
+                    result_str = f"+{diff}"
+                else:
+                    result_str = str(diff)
+
+            hands.append({
+                'id': row['id'],
+                'session_id': row['session_id'],
+                'hand_number': row['hand_number'],
+                'dealer': row['dealer'],
+                'vulnerability': row['vulnerability'],
+                'contract': contract_display,
+                'contract_level': row['contract_level'],
+                'contract_strain': row['contract_strain'],
+                'contract_declarer': row['contract_declarer'],
+                'tricks_taken': row['tricks_taken'],
+                'tricks_needed': row['tricks_needed'],
+                'result': result_str,
+                'made': row['made'],
+                'score': row['hand_score'],
+                'user_was_declarer': row['user_was_declarer'],
+                'user_was_dummy': row['user_was_dummy'],
+                'played_at': row['played_at'],
+                'can_replay': bool(row['has_deal_data'] and row['has_play_history'])
+            })
+
+        conn.close()
+
+        return jsonify({
+            'user_id': user_id,
+            'hands': hands,
+            'count': len(hands)
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+def get_hand_detail():
+    """
+    GET /api/hand-history/<hand_id>
+    Get full detail for a specific hand including all cards and plays.
+
+    Returns:
+        - Full deal (all 4 hands)
+        - Auction history
+        - Play history (all 52 cards played in order)
+        - Contract and result details
+    """
+    hand_id = request.args.get('hand_id', type=int)
+
+    if not hand_id:
+        return jsonify({'error': 'hand_id required'}), 400
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                sh.*,
+                gs.user_id,
+                gs.player_position
+            FROM session_hands sh
+            JOIN game_sessions gs ON sh.session_id = gs.id
+            WHERE sh.id = ?
+        """, (hand_id,))
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return jsonify({'error': 'Hand not found'}), 404
+
+        # Parse JSON fields
+        deal_data = json.loads(row['deal_data']) if row['deal_data'] else None
+        auction_history = json.loads(row['auction_history']) if row['auction_history'] else []
+        play_history = json.loads(row['play_history']) if row['play_history'] else []
+        score_breakdown = json.loads(row['score_breakdown']) if row['score_breakdown'] else {}
+
+        # Format contract display
+        contract_display = None
+        if row['contract_level']:
+            contract_display = f"{row['contract_level']}{row['contract_strain']}"
+            if row['contract_doubled'] == 1:
+                contract_display += "X"
+            elif row['contract_doubled'] == 2:
+                contract_display += "XX"
+            contract_display += f" by {row['contract_declarer']}"
+
+        return jsonify({
+            'hand_id': hand_id,
+            'session_id': row['session_id'],
+            'hand_number': row['hand_number'],
+            'dealer': row['dealer'],
+            'vulnerability': row['vulnerability'],
+            'contract': contract_display,
+            'contract_level': row['contract_level'],
+            'contract_strain': row['contract_strain'],
+            'contract_declarer': row['contract_declarer'],
+            'contract_doubled': row['contract_doubled'],
+            'tricks_taken': row['tricks_taken'],
+            'tricks_needed': row['tricks_needed'],
+            'made': row['made'],
+            'score': row['hand_score'],
+            'score_breakdown': score_breakdown,
+            'user_was_declarer': row['user_was_declarer'],
+            'user_was_dummy': row['user_was_dummy'],
+            'user_position': row['player_position'],
+            'played_at': row['played_at'],
+            'deal': deal_data,
+            'auction': auction_history,
+            'play_history': play_history
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+def analyze_play():
+    """
+    POST /api/analyze-play
+    Analyze a specific play from a hand using DDS.
+
+    Body:
+        {
+            "hand_id": 123,
+            "trick_number": 1,  # 1-13
+            "play_index": 0     # 0-3 for which card in the trick
+        }
+
+    Or for opening lead analysis:
+        {
+            "hand_id": 123,
+            "opening_lead": true
+        }
+
+    Returns DDS analysis of the play including:
+        - Optimal play
+        - Tricks lost/gained
+        - All alternative plays ranked
+    """
+    data = request.get_json()
+    hand_id = data.get('hand_id')
+    opening_lead = data.get('opening_lead', False)
+    trick_number = data.get('trick_number', 1 if opening_lead else None)
+    play_index = data.get('play_index', 0 if opening_lead else None)
+
+    if not hand_id:
+        return jsonify({'error': 'hand_id required'}), 400
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Get hand details
+        cursor.execute("""
+            SELECT
+                sh.deal_data,
+                sh.play_history,
+                sh.contract_level,
+                sh.contract_strain,
+                sh.contract_declarer,
+                gs.player_position
+            FROM session_hands sh
+            JOIN game_sessions gs ON sh.session_id = gs.id
+            WHERE sh.id = ?
+        """, (hand_id,))
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return jsonify({'error': 'Hand not found'}), 404
+
+        deal_data = json.loads(row['deal_data']) if row['deal_data'] else None
+        play_history = json.loads(row['play_history']) if row['play_history'] else []
+
+        if not deal_data or not play_history:
+            return jsonify({'error': 'Hand does not have replay data'}), 400
+
+        # Find the specific play to analyze
+        if opening_lead:
+            trick_number = 1
+            play_index = 0
+
+        if trick_number is None or play_index is None:
+            return jsonify({'error': 'trick_number and play_index required'}), 400
+
+        # Calculate which play in the sequence this is
+        # Each trick has 4 plays, so play N is at index (trick-1)*4 + play_index
+        total_play_index = (trick_number - 1) * 4 + play_index
+
+        if total_play_index >= len(play_history):
+            return jsonify({'error': 'Play not found in hand'}), 404
+
+        # Get the actual play made
+        actual_play = play_history[total_play_index]
+
+        # Build hand state at the time of this play
+        # This requires reconstructing what cards were still in each hand
+
+        # Try to import DDS for analysis
+        try:
+            from engine.play.dds_interface import solve_board
+            dds_available = True
+        except ImportError:
+            dds_available = False
+
+        if not dds_available:
+            # Return basic analysis without DDS
+            return jsonify({
+                'hand_id': hand_id,
+                'trick_number': trick_number,
+                'play_index': play_index,
+                'actual_play': actual_play,
+                'dds_available': False,
+                'message': 'DDS analysis not available on this server'
+            })
+
+        # Reconstruct the hand state before this play
+        # Start with original deal and remove played cards
+        remaining_hands = {}
+        for pos, pos_data in deal_data.items():
+            remaining_hands[pos] = []
+            for card in pos_data.get('hand', []):
+                remaining_hands[pos].append((card['rank'], card['suit']))
+
+        # Remove cards played before this point
+        for i in range(total_play_index):
+            played = play_history[i]
+            player = played.get('player', played.get('position'))
+            card = (played.get('rank'), played.get('suit'))
+            if player in remaining_hands and card in remaining_hands[player]:
+                remaining_hands[player].remove(card)
+
+        # Get the player for this play
+        player = actual_play.get('player', actual_play.get('position'))
+
+        # Get current trick cards (cards played in this trick before this play)
+        current_trick = []
+        trick_start = (trick_number - 1) * 4
+        for i in range(trick_start, total_play_index):
+            current_trick.append(play_history[i])
+
+        # Determine who led this trick
+        if play_index == 0:
+            # This is the lead - determine from previous trick winner or declarer's LHO
+            if trick_number == 1:
+                # Opening lead - leader is declarer's LHO
+                declarer = row['contract_declarer']
+                position_order = ['N', 'E', 'S', 'W']
+                declarer_idx = position_order.index(declarer)
+                leader = position_order[(declarer_idx + 1) % 4]
+            else:
+                # Need to find previous trick winner - this is complex
+                # For now, we'll skip this analysis for non-opening leads
+                leader = player
+        else:
+            leader = current_trick[0].get('player', current_trick[0].get('position'))
+
+        # For DDS, we need to convert to board format
+        # This is a simplified version - full implementation would need proper conversion
+        contract_strain = row['contract_strain']
+        trump_suit = {'♠': 0, '♥': 1, '♦': 2, '♣': 3, 'NT': 4,
+                     'S': 0, 'H': 1, 'D': 2, 'C': 3}.get(contract_strain, 4)
+
+        # Convert position to DDS format (0=N, 1=E, 2=S, 3=W)
+        player_idx = {'N': 0, 'E': 1, 'S': 2, 'W': 3}.get(player, 2)
+
+        try:
+            # Prepare hands for DDS in the required format
+            # This is a placeholder - actual DDS integration would be more complex
+            dds_result = solve_board(
+                remaining_hands,
+                trump_suit,
+                player_idx,
+                current_trick
+            )
+
+            # Find the actual card played and compare to optimal
+            actual_card = (actual_play.get('rank'), actual_play.get('suit'))
+
+            # Get legal plays for this position
+            legal_plays = remaining_hands.get(player, [])
+
+            # If we need to follow suit
+            if current_trick:
+                led_suit = current_trick[0].get('suit')
+                suit_cards = [c for c in legal_plays if c[1] == led_suit]
+                if suit_cards:
+                    legal_plays = suit_cards
+
+            # Rank the legal plays by DDS evaluation
+            play_analysis = []
+            optimal_tricks = None
+            actual_tricks = None
+
+            for card in legal_plays:
+                # Get DDS evaluation for this card
+                tricks = dds_result.get(card, 0)
+                play_analysis.append({
+                    'card': {'rank': card[0], 'suit': card[1]},
+                    'tricks': tricks,
+                    'is_actual': card == actual_card
+                })
+                if card == actual_card:
+                    actual_tricks = tricks
+                if optimal_tricks is None or tricks > optimal_tricks:
+                    optimal_tricks = tricks
+
+            # Sort by tricks (highest first)
+            play_analysis.sort(key=lambda x: x['tricks'], reverse=True)
+
+            # Calculate tricks lost
+            tricks_lost = (optimal_tricks or 0) - (actual_tricks or 0)
+
+            return jsonify({
+                'hand_id': hand_id,
+                'trick_number': trick_number,
+                'play_index': play_index,
+                'is_opening_lead': opening_lead or (trick_number == 1 and play_index == 0),
+                'player': player,
+                'actual_play': actual_play,
+                'dds_available': True,
+                'optimal_tricks': optimal_tricks,
+                'actual_tricks': actual_tricks,
+                'tricks_lost': tricks_lost,
+                'rating': 'optimal' if tricks_lost == 0 else ('good' if tricks_lost <= 0.5 else ('suboptimal' if tricks_lost <= 1 else 'blunder')),
+                'alternatives': play_analysis
+            })
+
+        except Exception as dds_error:
+            # DDS analysis failed, return basic info
+            return jsonify({
+                'hand_id': hand_id,
+                'trick_number': trick_number,
+                'play_index': play_index,
+                'actual_play': actual_play,
+                'dds_available': False,
+                'error': f'DDS analysis failed: {str(dds_error)}',
+                'message': 'Could not complete DDS analysis for this position'
+            })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 def register_analytics_endpoints(app):
     """
     Register all analytics endpoints with Flask app.
@@ -1550,5 +1976,11 @@ def register_analytics_endpoints(app):
     app.route('/api/user/create', methods=['POST'])(create_user)
     app.route('/api/user/info', methods=['GET'])(get_user_info)
 
+    # Hand history & DDS analysis
+    app.route('/api/hand-history', methods=['GET'])(get_hand_history)
+    app.route('/api/hand-detail', methods=['GET'])(get_hand_detail)
+    app.route('/api/analyze-play', methods=['POST'])(analyze_play)
+
     print("✓ Analytics API endpoints registered")
     print("✓ Four-dimension progress endpoint registered")
+    print("✓ Hand history & DDS analysis endpoints registered")
