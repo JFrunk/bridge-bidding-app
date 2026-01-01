@@ -171,6 +171,11 @@
   line-height: 1;
 }
 
+/* Spade icon needs dark color on white card background */
+.mode-card:nth-child(3) .mode-icon {
+  color: #1a1a1a;
+}
+
 .mode-title {
   font-size: 1.4rem;
   font-weight: 700;
