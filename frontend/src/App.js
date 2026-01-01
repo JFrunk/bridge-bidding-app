@@ -150,15 +150,37 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer })
     }
   }
 
+  // If auction is empty, ensure we show at least one empty row with current player highlighted
+  if (grid.length === 0) {
+    grid.push([null, null, null, null]);
+  }
+
   // Render grid as table rows
-  const rows = grid.map((row, rowIndex) => (
-    <tr key={rowIndex}>
-      <td onClick={() => row[0] && onBidClick(row[0])}>{row[0]?.bid || ''}</td>
-      <td onClick={() => row[1] && onBidClick(row[1])}>{row[1]?.bid || ''}</td>
-      <td onClick={() => row[2] && onBidClick(row[2])}>{row[2]?.bid || ''}</td>
-      <td onClick={() => row[3] && onBidClick(row[3])}>{row[3]?.bid || ''}</td>
-    </tr>
-  ));
+  // Highlight the cell where the next player should bid
+  const rows = grid.map((row, rowIndex) => {
+    // Determine if this is the active row (last row with bids or empty first row)
+    const isActiveRow = rowIndex === grid.length - 1;
+
+    // Find the next empty cell in the active row to highlight
+    const getHighlightClass = (colIndex) => {
+      if (!isActiveRow) return '';
+      // Check if this cell is where the next bid should go
+      const cellPlayer = players[colIndex];
+      if (cellPlayer === players[nextPlayerIndex] && row[colIndex] === null) {
+        return 'current-player';
+      }
+      return '';
+    };
+
+    return (
+      <tr key={rowIndex}>
+        <td className={getHighlightClass(0)} onClick={() => row[0] && onBidClick(row[0])}>{row[0]?.bid || ''}</td>
+        <td className={getHighlightClass(1)} onClick={() => row[1] && onBidClick(row[1])}>{row[1]?.bid || ''}</td>
+        <td className={getHighlightClass(2)} onClick={() => row[2] && onBidClick(row[2])}>{row[2]?.bid || ''}</td>
+        <td className={getHighlightClass(3)} onClick={() => row[3] && onBidClick(row[3])}>{row[3]?.bid || ''}</td>
+      </tr>
+    );
+  });
 
   // Helper to show dealer indicator
   const dealerIndicator = (pos) => dealer === pos ? ' 🔵' : '';
