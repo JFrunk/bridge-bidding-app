@@ -411,6 +411,111 @@ def get_recent_bidding_decisions_for_user(user_id: int, limit: int = 10) -> List
         conn.close()
 
 
+def get_play_category_stats_for_user(user_id: int) -> Dict:
+    """
+    Calculate play statistics broken down by play category.
+
+    Returns breakdown of accuracy by category:
+    - opening_lead, following_suit, discarding, trumping, etc.
+    - Each category includes: attempts, optimal_rate, avg_tricks_cost
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Get stats by play category (last 30 days)
+        cursor.execute(f"""
+            SELECT
+                play_category,
+                COUNT(*) as attempts,
+                AVG(score) as avg_score,
+                SUM(CASE WHEN rating = 'optimal' THEN 1 ELSE 0 END) as optimal_count,
+                SUM(CASE WHEN rating = 'good' THEN 1 ELSE 0 END) as good_count,
+                SUM(CASE WHEN rating = 'blunder' THEN 1 ELSE 0 END) as blunder_count,
+                AVG(tricks_cost) as avg_tricks_cost,
+                SUM(tricks_cost) as total_tricks_cost
+            FROM play_decisions
+            WHERE user_id = ?
+              AND timestamp >= {date_subtract(30)}
+              AND play_category IS NOT NULL
+            GROUP BY play_category
+            ORDER BY attempts DESC
+        """, (user_id,))
+
+        categories = {}
+        total_tricks_lost = 0
+
+        for row in cursor.fetchall():
+            cat = row['play_category']
+            attempts = row['attempts'] or 0
+            optimal = row['optimal_count'] or 0
+            good = row['good_count'] or 0
+            blunders = row['blunder_count'] or 0
+            avg_score = row['avg_score'] or 0
+            avg_cost = row['avg_tricks_cost'] or 0
+            total_cost = row['total_tricks_cost'] or 0
+
+            total_tricks_lost += total_cost
+
+            # Determine skill level based on accuracy
+            accuracy = ((optimal + good) / attempts * 100) if attempts > 0 else 0
+            if accuracy >= 85:
+                skill_level = 'strong'
+            elif accuracy >= 70:
+                skill_level = 'good'
+            elif accuracy >= 55:
+                skill_level = 'developing'
+            else:
+                skill_level = 'focus_area'
+
+            categories[cat] = {
+                'attempts': attempts,
+                'avg_score': round(avg_score, 1),
+                'optimal_rate': round(optimal / attempts * 100, 1) if attempts > 0 else 0,
+                'good_rate': round(good / attempts * 100, 1) if attempts > 0 else 0,
+                'blunder_rate': round(blunders / attempts * 100, 1) if attempts > 0 else 0,
+                'accuracy': round(accuracy, 1),
+                'avg_tricks_cost': round(avg_cost, 2),
+                'total_tricks_cost': total_cost,
+                'skill_level': skill_level
+            }
+
+        # Category display names
+        category_names = {
+            'opening_lead': 'Opening Leads',
+            'following_suit': 'Following Suit',
+            'discarding': 'Discarding',
+            'trumping': 'Trumping',
+            'overruffing': 'Overruffing',
+            'sluffing': 'Sluff vs Ruff',
+            'finessing': 'Finessing',
+            'cashing': 'Cashing Winners',
+            'hold_up': 'Hold-up Plays',
+            'ducking': 'Ducking'
+        }
+
+        # Add display names
+        for cat in categories:
+            categories[cat]['display_name'] = category_names.get(cat, cat.replace('_', ' ').title())
+
+        return {
+            'categories': categories,
+            'total_tricks_lost': total_tricks_lost,
+            'category_count': len(categories)
+        }
+
+    except Exception as e:
+        print(f"Could not get play category stats: {e}")
+        return {
+            'categories': {},
+            'total_tricks_lost': 0,
+            'category_count': 0
+        }
+
+    finally:
+        conn.close()
+
+
 def get_play_feedback_stats_for_user(user_id: int) -> Dict:
     """
     Calculate play feedback statistics from play_decisions table.
@@ -423,6 +528,7 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
         - good_rate: Percentage of good plays
         - blunder_rate: Percentage of blunders
         - recent_trend: 'improving', 'stable', or 'declining'
+        - category_breakdown: Stats by play category
     """
     conn = get_connection()
     cursor = conn.cursor()
@@ -491,13 +597,18 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
         else:
             trend = 'stable'
 
+        # Get category breakdown
+        category_stats = get_play_category_stats_for_user(user_id)
+
         return {
             'avg_score': round(avg_score, 1),
             'total_decisions': total,
             'optimal_rate': round(optimal_count / total, 3) if total > 0 else 0,
             'good_rate': round(good_count / total, 3) if total > 0 else 0,
             'blunder_rate': round(blunder_count / total, 3) if total > 0 else 0,
-            'recent_trend': trend
+            'recent_trend': trend,
+            'category_breakdown': category_stats['categories'],
+            'total_tricks_lost': category_stats['total_tricks_lost']
         }
 
     except Exception as e:
@@ -509,7 +620,9 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
             'optimal_rate': 0,
             'good_rate': 0,
             'blunder_rate': 0,
-            'recent_trend': 'stable'
+            'recent_trend': 'stable',
+            'category_breakdown': {},
+            'total_tricks_lost': 0
         }
 
     finally:
