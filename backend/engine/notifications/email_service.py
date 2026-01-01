@@ -317,3 +317,90 @@ def send_review_notification(review_data: Dict[str, Any], filename: str) -> bool
         True if email sent successfully, False otherwise
     """
     return get_email_service().send_review_request_notification(review_data, filename)
+
+
+def send_feedback_notification(feedback_data: Dict[str, Any], filename: str) -> bool:
+    """
+    Send email notification for general user feedback.
+
+    Args:
+        feedback_data: The feedback data
+        filename: The filename of the saved feedback
+
+    Returns:
+        True if email sent successfully, False otherwise
+    """
+    service = get_email_service()
+    if not service.is_configured():
+        print("⚠️  Email not configured - skipping feedback notification")
+        return False
+
+    try:
+        feedback_type = feedback_data.get('feedback_type', 'unknown')
+        description = feedback_data.get('description', 'No description')
+        context = feedback_data.get('context', 'unknown')
+        timestamp = feedback_data.get('timestamp', '')
+
+        # Build email
+        subject = f"📝 Bridge Feedback ({feedback_type}) - {context}"
+
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="UTF-8"></head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #0077be; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+                <h1 style="margin: 0;">📝 User Feedback</h1>
+                <p style="margin: 5px 0 0 0; opacity: 0.9;">Type: {feedback_type} | Context: {context}</p>
+            </div>
+            <div style="border: 1px solid #ddd; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin-top: 0; color: #0077be;">💬 Feedback</h3>
+                    <p style="margin-bottom: 0; font-size: 16px;">{description or 'No description provided'}</p>
+                </div>
+                <p style="color: #666; font-size: 12px;">
+                    Timestamp: {timestamp}<br>
+                    File: {filename}
+                </p>
+                <div style="margin-top: 20px;">
+                    <a href="{service.app_url}/api/admin/review-requests"
+                       style="display: inline-block; background: #0077be; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">
+                        View All Requests →
+                    </a>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_body = f"""
+USER FEEDBACK
+=============
+Type: {feedback_type}
+Context: {context}
+Timestamp: {timestamp}
+
+Description:
+{description}
+
+File: {filename}
+"""
+
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = service.sender_email
+        msg['To'] = service.recipient_email
+        msg.attach(MIMEText(text_body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
+
+        with smtplib.SMTP(service.smtp_server, service.smtp_port) as server:
+            server.starttls()
+            server.login(service.sender_email, service.sender_password)
+            server.sendmail(service.sender_email, service.recipient_email, msg.as_string())
+
+        print(f"✅ Feedback email notification sent: {filename}")
+        return True
+
+    except Exception as e:
+        print(f"❌ Failed to send feedback email: {e}")
+        return False

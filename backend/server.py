@@ -1693,14 +1693,15 @@ def request_review():
 
         # Check if we're on Render (ephemeral storage - files won't persist for user access)
         # Render sets RENDER or RENDER_SERVICE_NAME environment variables
-        is_render = os.getenv('RENDER') or os.getenv('RENDER_SERVICE_NAME') or os.getenv('FLASK_ENV') == 'production'
+        # Oracle Cloud has persistent storage, so we save files there
+        is_render = os.getenv('RENDER') or os.getenv('RENDER_SERVICE_NAME')
 
         if is_render:
             # On Render: don't save to file, embed data in prompt instead
             print("Running on Render - will embed full data in prompt (files not accessible to users)")
             saved_to_file = False
         else:
-            # Local development: save to file for reference
+            # Local development or Oracle Cloud: save to file for reference
             try:
                 filepath = os.path.join('review_requests', filename)
                 os.makedirs('review_requests', exist_ok=True)
@@ -1766,8 +1767,9 @@ def submit_feedback():
         timestamp_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         filename = f'feedback_{context}_{timestamp_str}.json'
 
-        # Check if we're on Render (production)
-        is_render = os.getenv('RENDER') or os.getenv('RENDER_SERVICE_NAME') or os.getenv('FLASK_ENV') == 'production'
+        # Check if we're on Render (ephemeral storage)
+        # Oracle Cloud has persistent storage, so we save files there
+        is_render = os.getenv('RENDER') or os.getenv('RENDER_SERVICE_NAME')
 
         if is_render:
             # On Render: log to console (will appear in Render logs)
@@ -1778,7 +1780,7 @@ def submit_feedback():
             print(f"   Full feedback: {json.dumps(feedback, indent=2)}")
             saved_to_file = False
         else:
-            # Local development: save to file
+            # Local development or Oracle Cloud: save to file
             try:
                 feedback_dir = 'user_feedback'
                 os.makedirs(feedback_dir, exist_ok=True)
@@ -1791,10 +1793,19 @@ def submit_feedback():
                 print(f"⚠️  Could not save feedback to file: {file_error}")
                 saved_to_file = False
 
+        # Send email notification for feedback
+        email_sent = False
+        try:
+            from engine.notifications import send_feedback_notification
+            email_sent = send_feedback_notification(feedback, filename)
+        except Exception as email_error:
+            print(f"⚠️  Email notification failed: {email_error}")
+
         return jsonify({
             'success': True,
             'filename': filename if saved_to_file else None,
             'saved_to_file': saved_to_file,
+            'email_sent': email_sent,
             'message': 'Thank you for your feedback!'
         })
 
