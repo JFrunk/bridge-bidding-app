@@ -126,7 +126,7 @@ class PlayFeedback:
             return msg
 
         elif self.correctness == PlayCorrectnessLevel.GOOD:
-            msg = f"{self.user_card} is a good play."
+            msg = f"{self.user_card} is a reasonable play."
             if self.tricks_cost == 1:
                 msg += f" (Optimal: {', '.join(self.optimal_cards[:2])} - costs 1 trick)"
             if verbosity != "minimal" and self.helpful_hint:
@@ -150,7 +150,7 @@ class PlayFeedback:
             return msg
 
         else:  # ILLEGAL
-            msg = f"{self.user_card} is not a legal play."
+            msg = f"Illegal play: {self.user_card}."
             if self.helpful_hint:
                 msg += f" {self.helpful_hint}"
             return msg
