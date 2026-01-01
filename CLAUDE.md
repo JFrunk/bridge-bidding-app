@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-**Last Updated:** 2025-12-31
+**Last Updated:** 2026-01-01
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -14,8 +14,20 @@ This is a **Bridge Bidding Training Application** that teaches players the Stand
 - **Database**: SQLite (bridge.db)
 - **Architecture**: Client-server with REST API communication
 
-**Production:** Deployed on Oracle Cloud Always Free (https://app.mybridgebuddy.com)
-- **Deploy command:** `ssh oracle-bridge "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"`
+**Production URLs:**
+- **Landing Page:** https://mybridgebuddy.com (GitHub Pages)
+- **Application:** https://app.mybridgebuddy.com (Oracle Cloud)
+
+**Hosting Architecture:**
+| Domain | Host | Purpose |
+|--------|------|---------|
+| mybridgebuddy.com | GitHub Pages | Landing page |
+| www.mybridgebuddy.com | GitHub Pages | Landing page |
+| app.mybridgebuddy.com | Oracle Cloud (161.153.7.196) | Bridge app |
+
+**Deployment:**
+- **App:** `ssh oracle-bridge "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"`
+- **Landing page:** Push to GitHub Pages repo (auto-deploys)
 - **SSH config:** `~/.ssh/config` has alias `oracle-bridge` → 161.153.7.196
 
 ---
@@ -276,10 +288,15 @@ git push origin development
 
 ### Deploying to Production
 
-**Oracle Cloud Server Details:**
+**Production Infrastructure:**
+| Component | Host | URL |
+|-----------|------|-----|
+| Landing page | GitHub Pages | https://mybridgebuddy.com |
+| Bridge app | Oracle Cloud (161.153.7.196) | https://app.mybridgebuddy.com |
+
+**Oracle Cloud Server:**
 - **IP Address:** 161.153.7.196
 - **SSH Host Alias:** oracle-bridge (configured in ~/.ssh/config)
-- **Production URL:** https://app.mybridgebuddy.com
 
 **⚠️ CRITICAL: Database migration must run BEFORE deploying code**
 
@@ -362,8 +379,9 @@ git status
 
 - **Always commit to `development`** unless deploying
 - **Only push to `main`** when ready for public deployment
-- Production is on Oracle Cloud Always Free (https://app.mybridgebuddy.com)
-- **Deploy via SSH:** `ssh oracle-bridge "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"`
+- **App** is on Oracle Cloud (https://app.mybridgebuddy.com)
+- **Landing page** is on GitHub Pages (https://mybridgebuddy.com)
+- **Deploy app via SSH:** `ssh oracle-bridge "bash /opt/bridge-bidding-app/deploy/oracle/maintenance.sh update"`
 - SSH config at `~/.ssh/config` has alias `oracle-bridge` → 161.153.7.196
 - Keep `development` as your default working branch
 
@@ -434,7 +452,7 @@ HTTP Request → server.py → PlayEngine → AI (Simple/Minimax/DDS) → Card S
 **7. Play AI Systems** (`engine/play/ai/`):
 - **SimplePlayAI** (Levels 1-6): Basic heuristics, fast performance (<1s/hand), 40-60% success
 - **MinimaxPlayAI** (Levels 7-8): Lookahead search depth 2-3, 2-3s/hand, 70-80% success
-- **DDS** (Levels 9-10): Perfect play analysis, 15-30s/hand, 85-95% success, Linux only
+- **DDS** (Levels 9-10): Perfect play analysis, **<1ms/play**, 95%+ success, Linux only (default on production)
 
 **8. engine/hand.py** - `Hand` class:
 - Represents 13-card bridge hand
@@ -566,9 +584,10 @@ Full card play implementation with AI opponent simulation.
 - Moderate performance (2-3s per hand)
 
 **Level 9-10: DDS (Double Dummy Solver)**
-- Perfect play analysis
-- Success rate: 85-95%
-- Slow performance (15-30s per hand)
+- Perfect play analysis using solve_board
+- Success rate: 95%+ (optimal double-dummy play)
+- **Fast performance (<1ms per play)** - suitable for real-time
+- **Default on production (Linux)** - uses endplay library
 - **⚠️ Linux only** (crashes on macOS M1/M2)
 
 #### Play Flow

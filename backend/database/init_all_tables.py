@@ -70,6 +70,8 @@ def init_all_tables(db_path='bridge.db'):
         migration_files = [
             'migrations/001_add_bidding_feedback_tables.sql',
             'migrations/004_add_learning_mode_tables.sql',
+            'migrations/005_add_play_learning_tables.sql',
+            'migrations/006_add_play_decisions_table.sql',
         ]
 
         print("📋 Applying schema files...")
@@ -127,7 +129,8 @@ def init_all_tables(db_path='bridge.db'):
             'users',
             'game_sessions',
             'session_hands',
-            'bidding_decisions',  # This is the missing table in production!
+            'bidding_decisions',  # For bidding feedback tracking
+            'play_decisions',     # For play feedback tracking (DDS-based)
             'hand_analyses',
             'conventions',
             'error_categories',
