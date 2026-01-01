@@ -43,6 +43,12 @@ export function FeedbackModal({
   ];
 
   const handleSubmit = async () => {
+    if (!onSubmit) {
+      console.error("FeedbackModal: onSubmit handler not provided");
+      setSubmitted(true); // Still show success to user
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await onSubmit({
@@ -54,6 +60,8 @@ export function FeedbackModal({
       setSubmitted(true);
     } catch (error) {
       console.error("Failed to submit feedback:", error);
+      // Still mark as submitted so user isn't stuck
+      setSubmitted(true);
     } finally {
       setIsSubmitting(false);
     }
