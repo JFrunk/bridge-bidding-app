@@ -62,6 +62,10 @@ class PlayCategory(Enum):
     TRUMPING = "trumping"               # Void in led suit, can ruff
     OVERRUFFING = "overruffing"         # Ruff over opponent's ruff
     SLUFFING = "sluffing"               # Discard when could trump
+    FINESSING = "finessing"             # Finesse play
+    CASHING = "cashing"                 # Cashing winners
+    HOLD_UP = "hold_up"                 # Hold-up play in NT
+    DUCKING = "ducking"                 # Ducking to maintain entries
 
 
 @dataclass
@@ -79,6 +83,7 @@ class PlayFeedback:
     user_card: str              # What user played (e.g., "A♠")
     contract: str               # Contract string (e.g., "4♠")
     is_declarer_side: bool      # True if declarer/dummy, False if defender
+    led_suit: Optional[str]     # Suit that was led (None if opening lead)
 
     # Evaluation
     correctness: PlayCorrectnessLevel
@@ -253,6 +258,11 @@ class PlayFeedbackGenerator:
         key_concept = self._extract_key_concept(play_category, play_state)
         difficulty = self._assess_difficulty(play_category, play_state)
 
+        # Determine led suit
+        led_suit = None
+        if play_state.current_trick:
+            led_suit = play_state.current_trick[0][0].suit
+
         # Build feedback object
         return PlayFeedback(
             trick_number=len(play_state.trick_history) + 1,
@@ -260,6 +270,7 @@ class PlayFeedbackGenerator:
             user_card=user_card_str,
             contract=str(play_state.contract) if play_state.contract else "",
             is_declarer_side=self._is_declarer_side(position, play_state.contract),
+            led_suit=led_suit,
             correctness=correctness,
             score=score,
             optimal_cards=[f"{c.rank}{c.suit}" for c in optimal_cards],
@@ -535,17 +546,101 @@ class PlayFeedbackGenerator:
         else:
             return "Count your winners and plan the play."
 
-    def _extract_key_concept(self, category: PlayCategory, state: PlayState) -> str:
+    def _extract_key_concept(self, category: PlayCategory, state: PlayState = None) -> str:
         """Determine what bridge concept this play tests"""
         concept_map = {
-            PlayCategory.OPENING_LEAD: "Opening lead principles",
+            PlayCategory.OPENING_LEAD: "Opening leads",
             PlayCategory.FOLLOWING_SUIT: "Card play in suit",
-            PlayCategory.TRUMPING: "Ruffing technique",
+            PlayCategory.TRUMPING: "Trump management",
             PlayCategory.OVERRUFFING: "Trump management",
             PlayCategory.DISCARDING: "Discard signals",
-            PlayCategory.SLUFFING: "Sluff vs ruff decision"
+            PlayCategory.SLUFFING: "Sluff vs ruff decision",
+            PlayCategory.FINESSING: "Finessing techniques",
+            PlayCategory.CASHING: "Cashing winners",
+            PlayCategory.HOLD_UP: "Hold-up plays",
+            PlayCategory.DUCKING: "Ducking technique"
         }
         return concept_map.get(category, "Card play")
+
+    def _get_key_concept(self, category: PlayCategory) -> str:
+        """Alias for tests - get key concept for a category"""
+        return self._extract_key_concept(category)
+
+    def _get_correctness_and_score(self, tricks_cost: int) -> Tuple[PlayCorrectnessLevel, float]:
+        """
+        Get correctness level and score from tricks cost.
+
+        This is the main scoring function used by tests.
+
+        Args:
+            tricks_cost: Number of tricks lost compared to optimal play
+
+        Returns:
+            Tuple of (PlayCorrectnessLevel, score)
+        """
+        if tricks_cost == 0:
+            return PlayCorrectnessLevel.OPTIMAL, 10.0
+        elif tricks_cost == 1:
+            return PlayCorrectnessLevel.GOOD, 7.5
+        elif tricks_cost == 2:
+            return PlayCorrectnessLevel.SUBOPTIMAL, 5.0
+        else:  # 3+ tricks cost
+            # Score decreases by 1 for each additional trick lost
+            score = max(0.0, 3.0 - (tricks_cost - 3))
+            return PlayCorrectnessLevel.BLUNDER, score
+
+    def _generate_feedback_text(self, play_state, user_card: Card, position: str,
+                                optimal_cards: List[str], tricks_cost: int,
+                                play_category: PlayCategory) -> Tuple[str, str]:
+        """
+        Generate reasoning and hint text for feedback.
+
+        Args:
+            play_state: Current play state (can be None for tests)
+            user_card: Card user played
+            position: Position making play
+            optimal_cards: List of optimal card strings
+            tricks_cost: Tricks lost compared to optimal
+            play_category: Type of play
+
+        Returns:
+            Tuple of (reasoning, helpful_hint)
+        """
+        user_str = f"{user_card.rank}{user_card.suit}"
+
+        if tricks_cost == 0:
+            reasoning = f"Playing {user_str} is correct. Good card play."
+            hint = ""
+        elif tricks_cost == 1:
+            optimal_str = ', '.join(optimal_cards[:2]) if optimal_cards else "unknown"
+            reasoning = f"{user_str} is reasonable, but {optimal_str} is slightly better."
+            hint = "Consider the optimal alternatives for future hands."
+        elif tricks_cost == 2:
+            optimal_str = ', '.join(optimal_cards[:2]) if optimal_cards else "unknown"
+            reasoning = f"{optimal_str} would save {tricks_cost} tricks."
+            hint = self._get_category_hint(play_category)
+        else:  # Blunder
+            optimal_str = ', '.join(optimal_cards[:2]) if optimal_cards else "unknown"
+            reasoning = f"This mistake cost {tricks_cost} tricks. {optimal_str} was better."
+            hint = self._get_category_hint(play_category)
+
+        return reasoning, hint
+
+    def _get_category_hint(self, category: PlayCategory) -> str:
+        """Get a hint based on play category"""
+        hints = {
+            PlayCategory.OPENING_LEAD: "Consider leading from length (4th best) or top of sequence.",
+            PlayCategory.FOLLOWING_SUIT: "Review second hand low, third hand high principles.",
+            PlayCategory.TRUMPING: "Ruff with lowest trump that wins.",
+            PlayCategory.OVERRUFFING: "Consider whether overruffing is worthwhile.",
+            PlayCategory.DISCARDING: "Discard from your longest weak suit.",
+            PlayCategory.SLUFFING: "Weigh the pros and cons of ruffing vs discarding.",
+            PlayCategory.FINESSING: "A finesse has a 50% chance of success.",
+            PlayCategory.CASHING: "Cash winners in the right order to avoid blocking.",
+            PlayCategory.HOLD_UP: "Hold up to cut defender communications.",
+            PlayCategory.DUCKING: "Ducking can preserve entries."
+        }
+        return hints.get(category, "Count your winners and plan the play.")
 
     def _assess_difficulty(self, category: PlayCategory, state: PlayState) -> str:
         """Assess difficulty level of this decision"""
@@ -593,6 +688,7 @@ class PlayFeedbackGenerator:
             user_card=user_str,
             contract=str(state.contract) if state.contract else "",
             is_declarer_side=self._is_declarer_side(position, state.contract),
+            led_suit=led_suit,
             correctness=PlayCorrectnessLevel.ILLEGAL,
             score=0.0,
             optimal_cards=[],
