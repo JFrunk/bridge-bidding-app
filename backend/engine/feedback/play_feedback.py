@@ -492,28 +492,126 @@ class PlayFeedbackGenerator:
                             tricks_cost: int, state: PlayState, position: str) -> str:
         """Generate explanation of why this play was good/bad"""
         user_str = f"{user_card.rank}{user_card.suit}"
+        optimal_str = ', '.join([f"{c.rank}{c.suit}" for c in optimal_cards[:2]]) if optimal_cards else ""
 
         if correctness == PlayCorrectnessLevel.OPTIMAL:
-            if category == PlayCategory.OPENING_LEAD:
-                return f"{user_str} is the best opening lead."
-            elif category == PlayCategory.FOLLOWING_SUIT:
-                return f"Playing {user_str} is correct."
-            elif category == PlayCategory.TRUMPING:
-                return f"Ruffing with {user_str} wins this trick optimally."
-            else:
-                return f"{user_str} is the right discard."
+            return self._explain_optimal_play(user_str, category, state, position)
 
-        elif correctness == PlayCorrectnessLevel.GOOD:
-            optimal_str = ', '.join([f"{c.rank}{c.suit}" for c in optimal_cards[:2]])
-            return f"{user_str} works, but {optimal_str} is slightly better."
+        # For non-optimal plays, explain WHY the optimal is better
+        context_reason = self._explain_why_better(
+            user_card, optimal_cards, category, state, position, tricks_cost
+        )
 
+        if correctness == PlayCorrectnessLevel.GOOD:
+            return f"{user_str} works, but {optimal_str} is slightly better. {context_reason}"
         elif correctness == PlayCorrectnessLevel.SUBOPTIMAL:
-            optimal_str = ', '.join([f"{c.rank}{c.suit}" for c in optimal_cards[:2]])
-            return f"{optimal_str} would save {tricks_cost} trick{'s' if tricks_cost > 1 else ''}."
-
+            return f"{optimal_str} saves {tricks_cost} trick{'s' if tricks_cost > 1 else ''}. {context_reason}"
         else:  # BLUNDER
-            optimal_str = ', '.join([f"{c.rank}{c.suit}" for c in optimal_cards[:2]])
-            return f"Critical mistake! {optimal_str} saves {tricks_cost} tricks."
+            return f"Critical mistake costing {tricks_cost} tricks. {optimal_str} is better. {context_reason}"
+
+    def _explain_optimal_play(self, user_str: str, category: PlayCategory,
+                               state: PlayState, position: str) -> str:
+        """Generate explanation for an optimal play"""
+        if category == PlayCategory.OPENING_LEAD:
+            return f"{user_str} is the best opening lead."
+        elif category == PlayCategory.FOLLOWING_SUIT:
+            trick_pos = len(state.current_trick) if state and state.current_trick else 0
+            if trick_pos == 1:
+                return f"Playing {user_str} second hand low is correct."
+            elif trick_pos == 2:
+                return f"Playing {user_str} third hand high is correct."
+            else:
+                return f"Playing {user_str} is correct."
+        elif category == PlayCategory.TRUMPING:
+            return f"Ruffing with {user_str} wins this trick optimally."
+        elif category == PlayCategory.DISCARDING:
+            return f"{user_str} is the right discard - it preserves your winners."
+        else:
+            return f"{user_str} is the correct play."
+
+    def _explain_why_better(self, user_card: Card, optimal_cards: List[Card],
+                            category: PlayCategory, state: PlayState,
+                            position: str, tricks_cost: int) -> str:
+        """
+        Generate contextual explanation of WHY the optimal play is better.
+        This provides bridge-specific reasoning beyond just trick counts.
+        """
+        if not optimal_cards or not state:
+            return ""
+
+        opt_card = optimal_cards[0]
+        user_rank = user_card.rank
+        opt_rank = opt_card.rank
+        user_suit = user_card.suit
+        opt_suit = opt_card.suit
+
+        # Get position in trick (0=lead, 1=second, 2=third, 3=fourth)
+        trick_pos = len(state.current_trick) if state.current_trick else 0
+
+        # Analyze the specific situation
+        reasons = []
+
+        # Opening lead analysis
+        if category == PlayCategory.OPENING_LEAD:
+            if opt_suit != user_suit:
+                reasons.append(f"Leading {opt_suit} attacks a weaker suit")
+            if opt_rank in ['4', '5', '6', '7']:
+                reasons.append("4th best from length establishes your suit")
+            elif opt_rank in ['K', 'Q', 'J', 'T']:
+                reasons.append("Top of sequence leads are safe and establish tricks")
+            elif opt_rank == 'A':
+                reasons.append("Leading ace prevents declarer from ducking")
+
+        # Second hand analysis
+        elif trick_pos == 1 and category == PlayCategory.FOLLOWING_SUIT:
+            high_ranks = ['A', 'K', 'Q', 'J', 'T']
+            if user_rank in high_ranks and opt_rank not in high_ranks:
+                reasons.append("Second hand low saves your honors for later")
+            if opt_rank in ['2', '3', '4', '5', '6']:
+                reasons.append("Play low to let partner's third hand high win")
+
+        # Third hand analysis
+        elif trick_pos == 2 and category == PlayCategory.FOLLOWING_SUIT:
+            if user_rank in ['2', '3', '4', '5', '6'] and opt_rank in ['A', 'K', 'Q', 'J', 'T']:
+                reasons.append("Third hand high forces declarer to use their honors")
+            # Check if partner led high
+            if state.current_trick and len(state.current_trick) >= 1:
+                led_card = state.current_trick[0][0]
+                if led_card.rank in ['K', 'Q', 'J']:
+                    if opt_rank not in ['A', 'K', 'Q', 'J']:
+                        reasons.append("Unblock by playing low when partner leads an honor")
+
+        # Fourth hand analysis
+        elif trick_pos == 3 and category == PlayCategory.FOLLOWING_SUIT:
+            # Win as cheaply as possible
+            if self._rank_value(opt_rank) < self._rank_value(user_rank):
+                reasons.append("Win with the lowest card that takes the trick")
+
+        # Trump management
+        elif category == PlayCategory.TRUMPING:
+            if self._rank_value(opt_rank) < self._rank_value(user_rank):
+                reasons.append("Ruff with lowest trump to preserve high trumps for later")
+            if self._rank_value(opt_rank) > self._rank_value(user_rank):
+                reasons.append("Ruff high enough to overruff if necessary")
+
+        # Discard analysis
+        elif category == PlayCategory.DISCARDING:
+            if opt_suit != user_suit:
+                reasons.append(f"Discarding from {opt_suit} keeps your winners in {user_suit}")
+
+        # Build the explanation
+        if reasons:
+            return reasons[0]  # Return most relevant reason
+        elif tricks_cost >= 2:
+            return "This play sets up extra tricks for the opponents."
+        else:
+            return ""
+
+    def _rank_value(self, rank: str) -> int:
+        """Convert rank to numeric value for comparison"""
+        rank_order = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8,
+                      '9': 9, 'T': 10, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        return rank_order.get(rank, 0)
 
     def _generate_hint(self, category: PlayCategory, correctness: PlayCorrectnessLevel,
                        user_card: Card, optimal_cards: List[Card],
