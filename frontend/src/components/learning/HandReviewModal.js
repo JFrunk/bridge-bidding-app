@@ -14,7 +14,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlayableCard } from '../play/PlayableCard';
-import { VerticalPlayableCard } from '../play/VerticalPlayableCard';
 import './HandReviewModal.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE || '';
@@ -109,9 +108,9 @@ const HandDisplay = ({ cards, position, isUser }) => {
 };
 
 // Replay hand display - shows remaining cards with visual PlayableCard components
+// Horizontal layout for N/S, two-column vertical layout for E/W
 const ReplayHandDisplay = ({ cards, position, trumpStrain, isVertical = false }) => {
   const suitOrder = getSuitOrder(trumpStrain);
-  const CardComponent = isVertical ? VerticalPlayableCard : PlayableCard;
 
   // Group and sort cards by suit
   const cardsBySuit = useMemo(() => {
@@ -134,8 +133,54 @@ const ReplayHandDisplay = ({ cards, position, trumpStrain, isVertical = false })
 
   const positionLabels = { N: 'North', E: 'East', S: 'South', W: 'West' };
 
+  // For vertical (E/W) hands: split into 2 columns (♠♥ in col1, ♦♣ in col2)
+  if (isVertical) {
+    const col1Suits = suitOrder.filter(s => s === '♠' || s === '♥');
+    const col2Suits = suitOrder.filter(s => s === '♦' || s === '♣');
+
+    return (
+      <div className={`replay-hand replay-hand-${position.toLowerCase()} vertical-2col`}>
+        <div className="replay-hand-label">{positionLabels[position]}</div>
+        <div className="replay-hand-2col">
+          {/* Column 1: Spades + Hearts */}
+          <div className="replay-col">
+            {col1Suits.map(suit => {
+              const suitCards = cardsBySuit[suit];
+              return suitCards.map((card) => (
+                <PlayableCard
+                  key={`${card.rank}-${card.suit}`}
+                  card={card}
+                  disabled
+                  compact
+                />
+              ));
+            })}
+          </div>
+          {/* Column 2: Diamonds + Clubs */}
+          <div className="replay-col">
+            {col2Suits.map(suit => {
+              const suitCards = cardsBySuit[suit];
+              return suitCards.map((card) => (
+                <PlayableCard
+                  key={`${card.rank}-${card.suit}`}
+                  card={card}
+                  disabled
+                  compact
+                />
+              ));
+            })}
+          </div>
+        </div>
+        {cards.length === 0 && (
+          <div className="replay-hand-empty">No cards</div>
+        )}
+      </div>
+    );
+  }
+
+  // Horizontal layout for N/S
   return (
-    <div className={`replay-hand replay-hand-${position.toLowerCase()} ${isVertical ? 'vertical' : 'horizontal'}`}>
+    <div className={`replay-hand replay-hand-${position.toLowerCase()} horizontal`}>
       <div className="replay-hand-label">{positionLabels[position]}</div>
       <div className="replay-hand-cards">
         {suitOrder.map(suit => {
@@ -144,11 +189,10 @@ const ReplayHandDisplay = ({ cards, position, trumpStrain, isVertical = false })
           return (
             <div key={suit} className="replay-suit-group">
               {suitCards.map((card) => (
-                <CardComponent
+                <PlayableCard
                   key={`${card.rank}-${card.suit}`}
                   card={card}
                   disabled
-                  compact={isVertical}
                 />
               ))}
             </div>
@@ -207,7 +251,15 @@ const ReplayTrickDisplay = ({ trick, leader }) => {
 
 // Visual card display with rating indicator
 const AnalyzedCard = ({ card, decision, position, isUserPosition }) => {
-  if (!card) return null;
+  if (!card) {
+    // Show empty placeholder when no card played at this position yet
+    return (
+      <div className="analyzed-card-wrapper empty-card">
+        <div className="position-label">{position}</div>
+        <div className="card-placeholder">-</div>
+      </div>
+    );
+  }
 
   const normalizedCard = {
     rank: card.rank || card.r,
@@ -246,9 +298,11 @@ const TrickDisplayVisual = ({ trick, trickNumber, decision, userPosition }) => {
   // Create position -> play mapping
   const playsByPosition = useMemo(() => {
     const map = {};
-    trick.forEach(play => {
+    trick.forEach((play) => {
       const pos = play.player || play.position;
-      map[pos] = play;
+      if (pos) {
+        map[pos] = play;
+      }
     });
     return map;
   }, [trick]);
@@ -421,6 +475,136 @@ const PlayQualitySummary = ({ summary }) => {
   );
 };
 
+// DD Table display - shows tricks makeable by each player in each strain
+const DDTableDisplay = ({ ddAnalysis, contractStrain, contractDeclarer }) => {
+  if (!ddAnalysis?.dd_table) {
+    return null;
+  }
+
+  const strains = ['NT', 'S', 'H', 'D', 'C'];
+  const strainSymbols = { 'NT': 'NT', 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣' };
+  const strainColors = { 'NT': '#374151', 'S': '#000', 'H': '#dc2626', 'D': '#dc2626', 'C': '#000' };
+  const positions = ['N', 'S', 'E', 'W'];
+
+  // Normalize contract strain for comparison
+  const normalizeStrain = (s) => {
+    const map = { '♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C' };
+    return map[s] || s;
+  };
+  const activeStrain = normalizeStrain(contractStrain);
+
+  return (
+    <div className="dd-table-display">
+      <h4>Double Dummy Analysis</h4>
+      <p className="dd-table-subtitle">Tricks makeable with perfect play</p>
+      <table className="dd-table">
+        <thead>
+          <tr>
+            <th></th>
+            {strains.map(strain => (
+              <th
+                key={strain}
+                className={strain === activeStrain ? 'active-strain' : ''}
+                style={{ color: strainColors[strain] }}
+              >
+                {strainSymbols[strain]}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {positions.map(pos => (
+            <tr key={pos} className={pos === contractDeclarer ? 'active-declarer' : ''}>
+              <td className="position-cell">{pos}</td>
+              {strains.map(strain => {
+                const tricks = ddAnalysis.dd_table[pos]?.[strain] ?? '-';
+                const isActive = strain === activeStrain && pos === contractDeclarer;
+                return (
+                  <td
+                    key={strain}
+                    className={isActive ? 'active-cell' : ''}
+                  >
+                    {tricks}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+// Par comparison display - shows how result compares to optimal bidding
+const ParComparisonDisplay = ({ ddAnalysis, parComparison, tricksNeeded, tricksTaken }) => {
+  if (!ddAnalysis?.par || !parComparison?.available) {
+    return null;
+  }
+
+  const { par } = ddAnalysis;
+  const { dd_tricks, optimal_play, score_difference } = parComparison;
+
+  // Determine result quality
+  const getResultQuality = () => {
+    if (optimal_play && tricksTaken >= tricksNeeded) {
+      return { label: 'Perfect', color: '#059669', icon: '✓' };
+    }
+    if (tricksTaken >= dd_tricks) {
+      return { label: 'Good', color: '#3b82f6', icon: '○' };
+    }
+    if (tricksTaken >= tricksNeeded) {
+      return { label: 'Made', color: '#059669', icon: '✓' };
+    }
+    return { label: 'Could improve', color: '#f59e0b', icon: '!' };
+  };
+
+  const quality = getResultQuality();
+
+  return (
+    <div className="par-comparison-display">
+      <h4>Contract Analysis</h4>
+
+      <div className="par-stats">
+        {/* DD Expected */}
+        <div className="par-stat">
+          <span className="par-stat-label">DD Optimal</span>
+          <span className="par-stat-value">{dd_tricks} tricks</span>
+        </div>
+
+        {/* Actual result */}
+        <div className="par-stat">
+          <span className="par-stat-label">You made</span>
+          <span className="par-stat-value">{tricksTaken} tricks</span>
+        </div>
+
+        {/* Play quality */}
+        <div className="par-stat">
+          <span className="par-stat-label">Play</span>
+          <span className="par-stat-value" style={{ color: quality.color }}>
+            {quality.icon} {quality.label}
+          </span>
+        </div>
+      </div>
+
+      {/* Par score info */}
+      <div className="par-score-info">
+        <div className="par-contracts">
+          <span className="par-label">Par:</span>
+          <span className="par-value">{par.contracts?.join(' or ') || 'Pass'}</span>
+          <span className="par-score">({par.score > 0 ? '+' : ''}{par.score})</span>
+        </div>
+
+        {score_difference !== undefined && score_difference !== 0 && (
+          <div className={`score-impact ${score_difference > 0 ? 'positive' : 'negative'}`}>
+            {score_difference > 0 ? '+' : ''}{score_difference} vs par
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const HandReviewModal = ({ handId, onClose }) => {
   const [handData, setHandData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -531,20 +715,25 @@ const HandReviewModal = ({ handId, onClose }) => {
   }, [handData?.deal, handData?.play_history, replayPosition]);
 
   // Get current trick cards for replay (cards played in current trick at replayPosition)
+  // replayPosition represents how many cards have been played (0 = none, 52 = all)
+  // When position is 4, we should show all 4 cards of trick 1 (indices 0-3)
   const currentReplayTrick = useMemo(() => {
-    if (!handData?.play_history) return [];
-    const trickStartIdx = Math.floor(replayPosition / 4) * 4;
-    const cardsInTrick = replayPosition - trickStartIdx;
+    if (!handData?.play_history || replayPosition === 0) return [];
+    // Use replayPosition - 1 to get the index of the last card played
+    const lastPlayedIdx = replayPosition - 1;
+    const trickStartIdx = Math.floor(lastPlayedIdx / 4) * 4;
+    const cardsInTrick = (lastPlayedIdx % 4) + 1; // +1 because we want to include the card at lastPlayedIdx
     return handData.play_history.slice(trickStartIdx, trickStartIdx + cardsInTrick);
   }, [handData?.play_history, replayPosition]);
 
-  // Get the current trick number for replay
-  const currentReplayTrickNumber = Math.floor(replayPosition / 4) + 1;
+  // Get the current trick number for replay (based on the last card played)
+  const currentReplayTrickNumber = replayPosition === 0 ? 1 : Math.floor((replayPosition - 1) / 4) + 1;
 
   // Get leader for current replay trick
   const currentReplayLeader = useMemo(() => {
     if (!handData?.play_history || replayPosition === 0) return null;
-    const trickStartIdx = Math.floor(replayPosition / 4) * 4;
+    const lastPlayedIdx = replayPosition - 1;
+    const trickStartIdx = Math.floor(lastPlayedIdx / 4) * 4;
     if (trickStartIdx < handData.play_history.length) {
       return handData.play_history[trickStartIdx]?.player || handData.play_history[trickStartIdx]?.position;
     }
@@ -553,9 +742,9 @@ const HandReviewModal = ({ handId, onClose }) => {
 
   // Get decision for current card being viewed in replay
   const currentReplayDecision = useMemo(() => {
-    if (!handData?.play_quality_summary?.all_decisions) return null;
-    // Find decision that matches this play position
-    const trickNum = Math.floor(replayPosition / 4) + 1;
+    if (!handData?.play_quality_summary?.all_decisions || replayPosition === 0) return null;
+    // Find decision that matches this play position (using corrected trick number)
+    const trickNum = Math.floor((replayPosition - 1) / 4) + 1;
     return decisionsByTrick[trickNum] || null;
   }, [handData?.play_quality_summary?.all_decisions, replayPosition, decisionsByTrick]);
 
@@ -702,21 +891,23 @@ const HandReviewModal = ({ handId, onClose }) => {
                 </button>
               </div>
 
-              {/* Replay table - 4 hands + current trick */}
+              {/* Replay table - traditional compass layout */}
               {remainingHands && (
-                <div className="replay-table">
-                  {/* North hand */}
-                  <div className="replay-position replay-north">
-                    <ReplayHandDisplay
-                      cards={remainingHands.N}
-                      position="N"
-                      trumpStrain={trumpStrain}
-                      isVertical={false}
-                    />
+                <div className="replay-table-compass">
+                  {/* North hand - top */}
+                  <div className="replay-row replay-row-north">
+                    <div className="replay-position">
+                      <ReplayHandDisplay
+                        cards={remainingHands.N}
+                        position="N"
+                        trumpStrain={trumpStrain}
+                        isVertical={false}
+                      />
+                    </div>
                   </div>
 
-                  {/* West - Trick - East row */}
-                  <div className="replay-middle-row">
+                  {/* Middle row: West - Trick - East */}
+                  <div className="replay-row replay-row-middle">
                     <div className="replay-position replay-west">
                       <ReplayHandDisplay
                         cards={remainingHands.W}
@@ -743,14 +934,16 @@ const HandReviewModal = ({ handId, onClose }) => {
                     </div>
                   </div>
 
-                  {/* South hand */}
-                  <div className="replay-position replay-south">
-                    <ReplayHandDisplay
-                      cards={remainingHands.S}
-                      position="S"
-                      trumpStrain={trumpStrain}
-                      isVertical={false}
-                    />
+                  {/* South hand - bottom */}
+                  <div className="replay-row replay-row-south">
+                    <div className="replay-position">
+                      <ReplayHandDisplay
+                        cards={remainingHands.S}
+                        position="S"
+                        trumpStrain={trumpStrain}
+                        isVertical={false}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -807,6 +1000,23 @@ const HandReviewModal = ({ handId, onClose }) => {
 
               {/* Play Quality Summary - shows overall performance for this hand */}
               <PlayQualitySummary summary={handData?.play_quality_summary} />
+
+              {/* DD Analysis Section - Double Dummy grid and Par comparison */}
+              {handData?.dd_analysis && (
+                <div className="dd-analysis-section">
+                  <DDTableDisplay
+                    ddAnalysis={handData.dd_analysis}
+                    contractStrain={handData.contract_strain}
+                    contractDeclarer={handData.contract_declarer}
+                  />
+                  <ParComparisonDisplay
+                    ddAnalysis={handData.dd_analysis}
+                    parComparison={handData.par_comparison}
+                    tricksNeeded={handData.tricks_needed}
+                    tricksTaken={handData.tricks_taken}
+                  />
+                </div>
+              )}
 
               {/* Play-by-play section */}
               {tricks.length > 0 && (
