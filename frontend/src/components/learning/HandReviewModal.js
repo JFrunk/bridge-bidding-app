@@ -18,8 +18,9 @@ const API_BASE = process.env.REACT_APP_API_BASE || '';
 
 // Card display helper
 const CardDisplay = ({ rank, suit, onClick, isHighlighted, isPlayed }) => {
-  const suitSymbols = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣' };
-  const suitColors = { 'S': '#000', 'H': '#dc2626', 'D': '#dc2626', 'C': '#000' };
+  // Support both letter format ('S', 'H', 'D', 'C') and Unicode format ('♠', '♥', '♦', '♣')
+  const suitSymbols = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣', '♠': '♠', '♥': '♥', '♦': '♦', '♣': '♣' };
+  const suitColors = { 'S': '#000', 'H': '#dc2626', 'D': '#dc2626', 'C': '#000', '♠': '#000', '♥': '#dc2626', '♦': '#dc2626', '♣': '#000' };
   const symbol = suitSymbols[suit] || suit;
   const color = suitColors[suit] || '#000';
 
@@ -36,15 +37,19 @@ const CardDisplay = ({ rank, suit, onClick, isHighlighted, isPlayed }) => {
 
 // Hand display helper - shows a single player's hand
 const HandDisplay = ({ cards, position, isUser, onClick }) => {
-  // Group cards by suit
+  // Group cards by suit - support both letter and Unicode formats
   const suits = ['S', 'H', 'D', 'C'];
   const suitSymbols = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣' };
+  // Map Unicode suits back to letter format for grouping
+  const unicodeToLetter = { '♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C' };
 
   const cardsBySuit = {};
   suits.forEach(s => cardsBySuit[s] = []);
 
   cards.forEach(card => {
-    const suit = card.suit || card.s;
+    let suit = card.suit || card.s;
+    // Normalize Unicode suits to letter format
+    suit = unicodeToLetter[suit] || suit;
     if (cardsBySuit[suit]) {
       cardsBySuit[suit].push(card);
     }

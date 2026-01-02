@@ -31,9 +31,11 @@ const BiddingQualityBar = ({ stats }) => {
     );
   }
 
-  // Calculate percentages
+  // Calculate percentages - using 3-tier system
   const optimalPercentage = Math.round(stats.optimal_rate * 100);
   const acceptablePercentage = Math.round(stats.acceptable_rate * 100);
+  const goodPercentage = Math.round((stats.good_rate || (stats.optimal_rate + stats.acceptable_rate)) * 100);
+  const suboptimalPercentage = Math.round((stats.suboptimal_rate || 0) * 100);
   const errorPercentage = Math.round(stats.error_rate * 100);
 
   // Determine quality rating based on average score
@@ -78,41 +80,45 @@ const BiddingQualityBar = ({ stats }) => {
         </div>
       </div>
 
-      {/* Optimal Bids */}
+      {/* Good Bids (Optimal + Acceptable) */}
       <div className="quality-stat-item">
         <div className="quality-stat-value">
-          {optimalPercentage}%
+          {goodPercentage}%
         </div>
         <div className="quality-stat-label">
-          <div className="quality-main-label">Optimal Bids</div>
-          <div className="quality-sublabel">{stats.optimal_rate > 0 ? `${Math.round(stats.optimal_rate * stats.total_decisions)} of ${stats.total_decisions}` : 'None yet'}</div>
+          <div className="quality-main-label">Good Bids</div>
+          <div className="quality-sublabel">{optimalPercentage}% optimal, {acceptablePercentage}% acceptable</div>
         </div>
-        <div className="quality-progress-bar">
+        <div className="quality-progress-bar stacked">
           <div
             className="quality-progress-fill optimal-fill"
             style={{ width: `${optimalPercentage}%` }}
           ></div>
-        </div>
-      </div>
-
-      {/* Acceptable Bids */}
-      <div className="quality-stat-item">
-        <div className="quality-stat-value">
-          {acceptablePercentage}%
-        </div>
-        <div className="quality-stat-label">
-          <div className="quality-main-label">Acceptable</div>
-          <div className="quality-sublabel">{stats.acceptable_rate > 0 ? `${Math.round(stats.acceptable_rate * stats.total_decisions)} of ${stats.total_decisions}` : 'None'}</div>
-        </div>
-        <div className="quality-progress-bar">
           <div
             className="quality-progress-fill acceptable-fill"
-            style={{ width: `${acceptablePercentage}%` }}
+            style={{ width: `${acceptablePercentage}%`, left: `${optimalPercentage}%` }}
           ></div>
         </div>
       </div>
 
-      {/* Error Rate */}
+      {/* Needs Work (Suboptimal) */}
+      <div className="quality-stat-item">
+        <div className="quality-stat-value suboptimal-value">
+          {suboptimalPercentage}%
+        </div>
+        <div className="quality-stat-label">
+          <div className="quality-main-label">Needs Work</div>
+          <div className="quality-sublabel">Suboptimal bids</div>
+        </div>
+        <div className="quality-progress-bar">
+          <div
+            className="quality-progress-fill suboptimal-fill"
+            style={{ width: `${suboptimalPercentage}%` }}
+          ></div>
+        </div>
+      </div>
+
+      {/* Errors */}
       <div className="quality-stat-item">
         <div className="quality-stat-value error-value">
           {errorPercentage}%

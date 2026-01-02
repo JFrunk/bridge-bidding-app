@@ -109,6 +109,10 @@
   color: #fecaca;
 }
 
+.quality-stat-value.suboptimal-value {
+  color: #fef08a;
+}
+
 /* Labels */
 .quality-stat-label {
   text-align: center;
@@ -138,20 +142,34 @@
   border-radius: 3px;
   overflow: hidden;
   margin-top: 8px;
+  position: relative;
+}
+
+.quality-progress-bar.stacked {
+  overflow: visible;
 }
 
 .quality-progress-fill {
   height: 100%;
   transition: width 0.4s ease;
   border-radius: 3px;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .optimal-fill {
   background: linear-gradient(90deg, #10b981, #34d399);
+  z-index: 2;
 }
 
 .acceptable-fill {
   background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  z-index: 1;
+}
+
+.suboptimal-fill {
+  background: linear-gradient(90deg, #eab308, #facc15);
 }
 
 .error-fill {
