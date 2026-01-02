@@ -1955,8 +1955,8 @@ def analyze_play():
 
         # Try to import DDS for analysis
         try:
-            from engine.play.dds_interface import solve_board
-            dds_available = True
+            from engine.play.dds_analysis import is_dds_available, get_dds_service
+            dds_available = is_dds_available()
         except ImportError:
             dds_available = False
 
@@ -1968,7 +1968,7 @@ def analyze_play():
                 'play_index': play_index,
                 'actual_play': actual_play,
                 'dds_available': False,
-                'message': 'DDS analysis not available on this server'
+                'message': 'DDS analysis not available on this server (endplay library not installed)'
             })
 
         # Reconstruct the hand state before this play
@@ -2012,62 +2012,46 @@ def analyze_play():
         else:
             leader = current_trick[0].get('player', current_trick[0].get('position'))
 
-        # For DDS, we need to convert to board format
-        # This is a simplified version - full implementation would need proper conversion
-        contract_strain = row['contract_strain']
-        trump_suit = {'♠': 0, '♥': 1, '♦': 2, '♣': 3, 'NT': 4,
-                     'S': 0, 'H': 1, 'D': 2, 'C': 3}.get(contract_strain, 4)
-
-        # Convert position to DDS format (0=N, 1=E, 2=S, 3=W)
-        player_idx = {'N': 0, 'E': 1, 'S': 2, 'W': 3}.get(player, 2)
+        # On-demand DDS analysis for specific plays
+        # This provides detailed analysis of what the optimal play would have been
+        # Note: Real-time DDS analysis during gameplay is recorded in play_decisions table
+        # This endpoint provides retroactive analysis of any play position
 
         try:
-            # Prepare hands for DDS in the required format
-            # This is a placeholder - actual DDS integration would be more complex
-            dds_result = solve_board(
-                remaining_hands,
-                trump_suit,
-                player_idx,
-                current_trick
-            )
+            # Get DDS service
+            dds_service = get_dds_service()
 
-            # Find the actual card played and compare to optimal
-            actual_card = (actual_play.get('rank'), actual_play.get('suit'))
+            # Build Hand objects from remaining cards
+            from engine.hand import Hand, Card as BridgeCard
+            hand_objects = {}
+            for pos, cards in remaining_hands.items():
+                # Convert (rank, suit) tuples to Card objects
+                card_objs = [BridgeCard(rank=r, suit=s) for r, s in cards]
+                hand_objects[pos] = Hand(cards=card_objs)
 
-            # Get legal plays for this position
-            legal_plays = remaining_hands.get(player, [])
+            # Get the contract strain for DD analysis
+            contract_strain = row['contract_strain']
 
-            # If we need to follow suit
-            if current_trick:
-                led_suit = current_trick[0].get('suit')
-                suit_cards = [c for c in legal_plays if c[1] == led_suit]
-                if suit_cards:
-                    legal_plays = suit_cards
+            # Use DDS to analyze this position
+            analysis = dds_service.analyze_deal(hand_objects)
 
-            # Rank the legal plays by DDS evaluation
-            play_analysis = []
-            optimal_tricks = None
-            actual_tricks = None
-
-            for card in legal_plays:
-                # Get DDS evaluation for this card
-                tricks = dds_result.get(card, 0)
-                play_analysis.append({
-                    'card': {'rank': card[0], 'suit': card[1]},
-                    'tricks': tricks,
-                    'is_actual': card == actual_card
+            if not analysis.is_valid:
+                return jsonify({
+                    'hand_id': hand_id,
+                    'trick_number': trick_number,
+                    'play_index': play_index,
+                    'actual_play': actual_play,
+                    'dds_available': False,
+                    'error': analysis.error or 'DDS analysis failed',
+                    'message': 'Position analysis not available'
                 })
-                if card == actual_card:
-                    actual_tricks = tricks
-                if optimal_tricks is None or tricks > optimal_tricks:
-                    optimal_tricks = tricks
 
-            # Sort by tricks (highest first)
-            play_analysis.sort(key=lambda x: x['tricks'], reverse=True)
+            # Get DD results for this position/strain
+            strain_key = {'♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C', 'NT': 'NT',
+                         'S': 'S', 'H': 'H', 'D': 'D', 'C': 'C'}.get(contract_strain, 'NT')
+            dd_tricks = analysis.dd_table.get_tricks(player, strain_key)
 
-            # Calculate tricks lost
-            tricks_lost = (optimal_tricks or 0) - (actual_tricks or 0)
-
+            # Return analysis with DD table info
             return jsonify({
                 'hand_id': hand_id,
                 'trick_number': trick_number,
@@ -2076,23 +2060,21 @@ def analyze_play():
                 'player': player,
                 'actual_play': actual_play,
                 'dds_available': True,
-                'optimal_tricks': optimal_tricks,
-                'actual_tricks': actual_tricks,
-                'tricks_lost': tricks_lost,
-                'rating': 'optimal' if tricks_lost == 0 else ('good' if tricks_lost <= 0.5 else ('suboptimal' if tricks_lost <= 1 else 'blunder')),
-                'alternatives': play_analysis
+                'dd_tricks_from_position': dd_tricks,
+                'message': 'DD analysis shows optimal play from this position',
+                'note': 'Detailed play-by-play analysis available in the Play Quality Summary above'
             })
 
         except Exception as dds_error:
-            # DDS analysis failed, return basic info
+            # DDS analysis failed, return informative message
             return jsonify({
                 'hand_id': hand_id,
                 'trick_number': trick_number,
                 'play_index': play_index,
                 'actual_play': actual_play,
                 'dds_available': False,
-                'error': f'DDS analysis failed: {str(dds_error)}',
-                'message': 'Could not complete DDS analysis for this position'
+                'error': f'DDS analysis error: {str(dds_error)}',
+                'message': 'View Play Quality Summary above for recorded analysis'
             })
 
     except Exception as e:

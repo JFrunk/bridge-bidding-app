@@ -195,10 +195,12 @@
   font-family: 'Monaco', 'Consolas', monospace;
   font-size: 14px;
   font-weight: 500;
+  color: #1f2937; /* Dark gray - visible on white background */
 }
 
 .card-rank {
   margin-right: 2px;
+  color: inherit; /* Inherit from suit-cards */
 }
 
 .card-void {
@@ -664,6 +666,22 @@
   font-family: 'Monaco', 'Consolas', monospace;
   font-size: 18px;
   font-weight: 600;
+  color: #000000; /* Default to black - inline styles will override for red suits */
+}
+
+/* Ensure card text is visible in trick display (dark text on light background) */
+.trick-card .review-card {
+  /* Color is set inline by CardDisplay component based on suit */
+}
+
+/* Navigation buttons need dark text */
+.trick-navigation button {
+  color: #374151;
+}
+
+/* Ensure trick card position labels are visible */
+.trick-card-position {
+  color: #6b7280;
 }
 
 .review-card.clickable {
