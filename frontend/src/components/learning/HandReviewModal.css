@@ -1115,42 +1115,55 @@
 }
 
 .replay-hand.vertical-2col .playable-card {
-  margin-top: -28px; /* Shows ~22px of each card (was -40px showing only 16px) */
+  margin-top: -28px; /* Shows ~22px of each card */
 }
 
 .replay-hand.vertical-2col .replay-col .playable-card:first-child {
   margin-top: 0;
 }
 
-/* Compact cards in replay mode - smaller size, more visibility */
-.replay-hand .playable-card {
+/* Compact cards in replay mode - smaller size for hand review */
+/* CRITICAL: Use very high specificity to override PlayComponents.css base styles */
+.hand-review-modal .replay-hand .playable-card,
+.hand-review-modal .replay-hand .playable-card.disabled,
+.hand-review-modal .replay-hand div.playable-card,
+.replay-mode .replay-hand .playable-card,
+.replay-mode .replay-hand .playable-card.disabled,
+.replay-hand .playable-card,
+.replay-hand .playable-card.disabled {
   width: 36px !important;
   height: 50px !important;
   min-width: 36px !important;
   min-height: 50px !important;
+  max-width: 36px !important;
+  max-height: 50px !important;
+  padding: 0 !important;
+  border-width: 1px !important;
+  border-radius: 4px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Card text positioning and sizing for replay mode */
 /* Target the inner container that holds rank and suit */
 .replay-hand .playable-card > div {
-  top: 2px !important;
-  left: 3px !important;
+  top: 1px !important;
+  left: 2px !important;
 }
 
-/* Rank text - same size for all positions */
+/* Rank text - compact size for small cards */
 .replay-hand .playable-card span:first-child {
-  font-size: 14px !important;
-  line-height: 1 !important;
-}
-
-/* Suit symbol - same size for all positions */
-.replay-hand .playable-card span:last-child {
   font-size: 12px !important;
   line-height: 1 !important;
 }
 
+/* Suit symbol - compact size for small cards */
+.replay-hand .playable-card span:last-child {
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+
 .replay-hand.horizontal .playable-card {
-  margin-left: -14px; /* Shows ~22px of each card (was -24px showing only 16px) */
+  margin-left: -14px; /* Shows ~22px of each card */
 }
 
 .replay-hand.horizontal .replay-suit-group .playable-card:first-child {
@@ -1335,11 +1348,27 @@
     max-width: 100%;
   }
 
-  .replay-hand .playable-card {
+  .hand-review-modal .replay-hand .playable-card,
+  .hand-review-modal .replay-hand .playable-card.disabled,
+  .replay-mode .replay-hand .playable-card,
+  .replay-mode .replay-hand .playable-card.disabled,
+  .replay-hand .playable-card,
+  .replay-hand .playable-card.disabled {
     width: 32px !important;
     height: 44px !important;
     min-width: 32px !important;
     min-height: 44px !important;
+    max-width: 32px !important;
+    max-height: 44px !important;
+  }
+
+  /* Mobile: Smaller text for compact cards */
+  .replay-hand .playable-card span:first-child {
+    font-size: 10px !important;
+  }
+
+  .replay-hand .playable-card span:last-child {
+    font-size: 8px !important;
   }
 
   .replay-hand.vertical-2col .playable-card {
