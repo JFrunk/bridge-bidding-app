@@ -70,10 +70,10 @@ function PlayerHand({ position, hand, points, vulnerability }) {
                     }, 0);
                     const absoluteIndex = cardsBeforeThisSuit + cardIndex;
 
-                    // Apply 65% overlap for rotated cards: use marginLeft for horizontal stacking
+                    // Apply 50% overlap for rotated cards: use marginLeft for horizontal stacking
                     // Since cards are rotated 90deg, horizontal negative margin creates vertical appearance
-                    // 65% of 70px = 46px overlap, leaving 24px visible per card
-                    const inlineStyle = absoluteIndex === 0 ? {} : { marginLeft: '-46px' };
+                    // 50% of 70px = 35px overlap, leaving 35px visible per card (improved readability)
+                    const inlineStyle = absoluteIndex === 0 ? {} : { marginLeft: '-35px' };
 
                     return (
                       <CardComponent
@@ -117,7 +117,7 @@ function PlayerHand({ position, hand, points, vulnerability }) {
     </div>
   );
 }
-function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer }) {
+function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer, isComplete = false }) {
   // Build table using row-based approach:
   // - Dealer starts on row 0
   // - Each player bids in their column on current row
@@ -163,6 +163,7 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer })
 
     // Find the next empty cell in the active row to highlight
     const getHighlightClass = (colIndex) => {
+      if (isComplete) return ''; // No highlighting after auction ends
       if (!isActiveRow) return '';
       // Check if this cell is where the next bid should go
       const cellPlayer = players[colIndex];
@@ -185,20 +186,26 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer })
   // Helper to show dealer indicator
   const dealerIndicator = (pos) => dealer === pos ? ' 🔵' : '';
 
+  // Helper to get header highlight class (disabled when auction is complete)
+  const getHeaderClass = (position) => {
+    if (isComplete) return '';
+    return players[nextPlayerIndex] === position ? 'current-player' : '';
+  };
+
   return (
     <table className="bidding-table" data-testid="bidding-table">
       <thead>
         <tr>
-          <th className={players[nextPlayerIndex] === 'North' ? 'current-player' : ''} data-testid="bidding-header-north">
+          <th className={getHeaderClass('North')} data-testid="bidding-header-north">
             North{dealerIndicator('North')}
           </th>
-          <th className={players[nextPlayerIndex] === 'East' ? 'current-player' : ''} data-testid="bidding-header-east">
+          <th className={getHeaderClass('East')} data-testid="bidding-header-east">
             East{dealerIndicator('East')}
           </th>
-          <th className={players[nextPlayerIndex] === 'South' ? 'current-player' : ''} data-testid="bidding-header-south">
+          <th className={getHeaderClass('South')} data-testid="bidding-header-south">
             South{dealerIndicator('South')}
           </th>
-          <th className={players[nextPlayerIndex] === 'West' ? 'current-player' : ''} data-testid="bidding-header-west">
+          <th className={getHeaderClass('West')} data-testid="bidding-header-west">
             West{dealerIndicator('West')}
           </th>
         </tr>
@@ -2231,7 +2238,10 @@ ${otherCommands}`;
     if (showLearningMode) return 'learning';
     if (showLearningDashboard) return 'progress';
     if (currentWorkspace === 'play') return 'play';
-    if (currentWorkspace === 'bid') return 'bid';
+    // When in bid workspace but playing phase, show play module active
+    if (currentWorkspace === 'bid') {
+      return gamePhase === 'playing' ? 'play' : 'bid';
+    }
     return null; // On home/mode selector
   };
 
@@ -2358,7 +2368,7 @@ ${otherCommands}`;
                     ✅ Your turn to bid!
                   </div>
                 )}
-                <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} />
+                <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(auction)} />
                 {/* AI messages - Dev mode only */}
                 {isDevMode && displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
                 {isDevMode && error && <div className="error-message">{error}</div>}
@@ -2398,7 +2408,7 @@ ${otherCommands}`;
               ✅ Your turn to bid!
             </div>
           )}
-          <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} />
+          <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(auction)} />
           {/* AI messages - Dev mode only */}
           {isDevMode && displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
           {isDevMode && error && <div className="error-message">{error}</div>}
@@ -2452,11 +2462,13 @@ ${otherCommands}`;
             isUserTurn={playState.is_user_turn ?? (playState.next_to_play === 'S' && playState.dummy !== 'S')}
             isDeclarerTurn={
               (playState.controllable_positions?.includes(playState.contract.declarer) && playState.next_to_play === playState.contract.declarer)
-              ?? (playState.next_to_play === playState.contract.declarer && playState.dummy === 'S')
+              // Fallback: User controls declarer when NS is declaring (declarer is N or S)
+              ?? (playState.next_to_play === playState.contract.declarer && (playState.contract.declarer === 'N' || playState.contract.declarer === 'S'))
             }
             isDummyTurn={
               (playState.controllable_positions?.includes(playState.dummy) && playState.next_to_play === playState.dummy)
-              ?? (playState.next_to_play === playState.dummy && playState.contract.declarer === 'S')
+              // Fallback: User controls dummy when NS is declaring (declarer is N or S)
+              ?? (playState.next_to_play === playState.dummy && (playState.contract.declarer === 'N' || playState.contract.declarer === 'S'))
             }
             auction={auction}
             scoreData={scoreData}
