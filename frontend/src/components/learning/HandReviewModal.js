@@ -37,15 +37,19 @@ const CardDisplay = ({ rank, suit, onClick, isHighlighted, isPlayed }) => {
 
 // Hand display helper - shows a single player's hand
 const HandDisplay = ({ cards, position, isUser, onClick }) => {
-  // Group cards by suit
+  // Group cards by suit - support both letter and Unicode formats
   const suits = ['S', 'H', 'D', 'C'];
   const suitSymbols = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣' };
+  // Map Unicode suits back to letter format for grouping
+  const unicodeToLetter = { '♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C' };
 
   const cardsBySuit = {};
   suits.forEach(s => cardsBySuit[s] = []);
 
   cards.forEach(card => {
-    const suit = card.suit || card.s;
+    let suit = card.suit || card.s;
+    // Normalize Unicode suits to letter format
+    suit = unicodeToLetter[suit] || suit;
     if (cardsBySuit[suit]) {
       cardsBySuit[suit].push(card);
     }
