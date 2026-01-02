@@ -70,10 +70,10 @@ function PlayerHand({ position, hand, points, vulnerability }) {
                     }, 0);
                     const absoluteIndex = cardsBeforeThisSuit + cardIndex;
 
-                    // Apply 50% overlap for rotated cards: use marginLeft for horizontal stacking
+                    // Apply overlap for rotated cards: use marginLeft for horizontal stacking
                     // Since cards are rotated 90deg, horizontal negative margin creates vertical appearance
-                    // 50% of 70px = 35px overlap, leaving 35px visible per card (improved readability)
-                    const inlineStyle = absoluteIndex === 0 ? {} : { marginLeft: '-35px' };
+                    // 25px overlap, leaving 45px visible per card (improved readability per user feedback)
+                    const inlineStyle = absoluteIndex === 0 ? {} : { marginLeft: '-25px' };
 
                     return (
                       <CardComponent
@@ -589,9 +589,9 @@ ${otherCommands}`;
         setCurrentWorkspace('bid');
         setBiddingTab('random');
         setGamePhase('bidding');  // Reset to bidding phase (fixes stuck screen when switching from play)
-        // Only deal new hand if not already in bidding with an active auction
-        // This prevents losing progress when user clicks Bid nav while bidding
-        if (!hand || hand.length === 0 || auction.length === 0) {
+        // Always deal new hand when coming from landing page (showModeSelector is true)
+        // But preserve state when navigating within session via top nav (if hand and auction exist)
+        if (showModeSelector || !hand || hand.length === 0 || auction.length === 0) {
           dealNewHand();
         }
         break;
@@ -600,12 +600,12 @@ ${otherCommands}`;
         // Open Play workspace and immediately start a random hand
         setCurrentWorkspace('play');
 
-        // Only start new hand if NOT already in active play phase
-        // This prevents losing progress when user clicks Play nav while playing
-        if (gamePhase !== 'playing') {
-          playRandomHand();  // Immediately deal and start playing
+        // Always deal new hand when coming from landing page (showModeSelector is true)
+        // But preserve state when navigating within session via top nav
+        if (showModeSelector || gamePhase !== 'playing') {
+          playRandomHand();  // Deal fresh hand
         }
-        // If already playing, keep current state intact
+        // If navigating via top nav while already playing, keep current state intact
         break;
 
       case 'progress':
@@ -1413,6 +1413,18 @@ ${otherCommands}`;
   const playRandomHand = async () => {
     // Reset save guard for new hand
     handSaveInProgressRef.current = false;
+
+    // Set game phase to 'playing' IMMEDIATELY to prevent showing PlayWorkspace options menu
+    // The PlayWorkspace options menu shows when gamePhase === 'bidding' && !hand?.length
+    setGamePhase('playing');
+
+    // Clear previous play state immediately to prevent stale data display
+    setPlayState(null);
+    setDummyHand(null);
+    setDeclarerHand(null);
+    setScoreData(null);
+    setLastTrick(null);
+    setShowLastTrick(false);
 
     try {
       const response = await fetch(`${API_URL}/api/play-random-hand`, {
@@ -2451,6 +2463,16 @@ ${otherCommands}`;
         </div>
       )}
 
+      {/* Loading state - showing when transitioning to play but playState not yet loaded */}
+      {!shouldShowHands && gamePhase === 'playing' && !playState && (
+        <div className="play-phase loading-play">
+          <div className="loading-indicator">
+            <div className="loading-spinner"></div>
+            <p>Dealing hand and setting up play...</p>
+          </div>
+        </div>
+      )}
+
       {!shouldShowHands && gamePhase === 'playing' && playState && (
         <div className="play-phase">
           {/* DEBUG INDICATOR: Shows AI loop state - Dev mode only */}
@@ -2539,9 +2561,20 @@ ${otherCommands}`;
           <BiddingBoxComponent onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding || isAuctionOver(auction)} auction={auction} />
         )}
         <div className="controls-section">
-          {/* Game controls - Context-aware based on game phase */}
+          {/* Game controls - Context-aware based on game phase AND workspace */}
           <div className="game-controls">
-            {gamePhase === 'bidding' ? (
+            {/* In Play workspace: always show play-oriented buttons */}
+            {currentWorkspace === 'play' ? (
+              <>
+                {/* Primary action - Play a new hand (AI bids, user plays) */}
+                <button className="play-new-hand-button primary-action" data-testid="play-new-hand-button" onClick={playRandomHand}>🎲 Play New Hand</button>
+                {/* Secondary actions */}
+                <div className="secondary-actions">
+                  <button className="deal-button" data-testid="bid-new-hand-button" onClick={dealNewHand}>📝 Bid New Hand</button>
+                  <button className="replay-button" data-testid="replay-hand-button" onClick={replayCurrentHand} disabled={!initialDeal}>🔄 Replay Hand</button>
+                </div>
+              </>
+            ) : gamePhase === 'bidding' ? (
               <>
                 {/* Convention mode badge */}
                 {activeConvention && (
@@ -2577,7 +2610,7 @@ ${otherCommands}`;
               </>
             ) : (
               <>
-                {/* Primary action after play - Play another hand (AI bids, user plays) */}
+                {/* Playing phase in Bid workspace - show play controls */}
                 <button className="play-new-hand-button primary-action" data-testid="play-new-hand-button" onClick={playRandomHand}>🎲 Play New Hand</button>
                 {/* Secondary actions */}
                 <div className="secondary-actions">
@@ -2697,11 +2730,9 @@ ${otherCommands}`;
               setShowLearningDashboard(false);
               if (track === 'play') {
                 setCurrentWorkspace('play');
-                // Immediately start a random hand (consistent with bidding behavior)
-                // But only if not already in active play (preserves progress)
-                if (gamePhase !== 'playing') {
-                  playRandomHand();
-                }
+                // Always start a fresh random hand when coming from dashboard
+                // User expects a new hand ready for gameplay, not to see previous hand state
+                playRandomHand();
               } else {
                 setCurrentWorkspace('bid');
                 dealNewHand();
