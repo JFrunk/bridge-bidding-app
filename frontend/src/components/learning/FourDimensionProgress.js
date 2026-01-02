@@ -15,7 +15,7 @@ import './FourDimensionProgress.css';
 // MAIN COMPONENT
 // ============================================================================
 
-const FourDimensionProgress = ({ userId, onStartLearning, onStartPractice }) => {
+const FourDimensionProgress = ({ userId, onStartLearning, onStartPractice, onShowHandHistory }) => {
   const [progressData, setProgressData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -105,6 +105,7 @@ const FourDimensionProgress = ({ userId, onStartLearning, onStartPractice }) => 
           qualityType="play"
           onAction={() => onStartPractice?.('play')}
           actionLabel="Practice Now"
+          onShowHandHistory={onShowHandHistory}
         />
       </div>
 
@@ -131,7 +132,8 @@ const ProgressCard = ({
   quality,
   qualityType,
   onAction,
-  actionLabel
+  actionLabel,
+  onShowHandHistory
 }) => {
   const isJourneyCard = !!journey;
   const isQualityCard = !!quality;
@@ -158,7 +160,7 @@ const ProgressCard = ({
           <JourneyContent journey={journey} />
         )}
         {isQualityCard && (
-          <QualityContent quality={quality} type={qualityType} />
+          <QualityContent quality={quality} type={qualityType} onShowHandHistory={onShowHandHistory} />
         )}
 
         <button
@@ -315,7 +317,7 @@ const JourneyContent = ({ journey }) => {
 // QUALITY CONTENT (for Practice Bid / Practice Play cards)
 // ============================================================================
 
-const QualityContent = ({ quality, type }) => {
+const QualityContent = ({ quality, type, onShowHandHistory }) => {
   const isBidding = type === 'bidding';
 
   // For play: prefer DDS-based play_decision_stats if available, else use gameplay stats
@@ -416,7 +418,20 @@ const QualityContent = ({ quality, type }) => {
         {isBidding
           ? `${totalPracticed || 0} decisions practiced`
           : hasPlayDecisionData
-            ? `${quality.total_hands_played || 0} hands, DDS analyzed`
+            ? (
+              <span
+                className="hands-link"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShowHandHistory?.();
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && onShowHandHistory?.()}
+              >
+                {quality.total_hands_played || 0} hands analyzed →
+              </span>
+            )
             : `${totalPracticed || 0} hands practiced`
         }
       </div>

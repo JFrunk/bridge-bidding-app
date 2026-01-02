@@ -10,7 +10,7 @@
  * - Practice recommendations
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './LearningDashboard.css';
 import {
   getDashboardData,
@@ -31,6 +31,7 @@ const LearningDashboard = ({ userId, onPracticeClick, onStartLearning, onStartFr
   const [handHistory, setHandHistory] = useState([]);
   const [selectedHandId, setSelectedHandId] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const handHistoryRef = useRef(null);
 
   // Load hand history
   const loadHandHistory = useCallback(async () => {
@@ -92,6 +93,18 @@ const LearningDashboard = ({ userId, onPracticeClick, onStartLearning, onStartFr
     setSelectedHandId(null);
   };
 
+  // Scroll to hand history section
+  const handleShowHandHistory = useCallback(() => {
+    if (handHistoryRef.current) {
+      handHistoryRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Add a brief highlight effect
+      handHistoryRef.current.classList.add('highlight-section');
+      setTimeout(() => {
+        handHistoryRef.current?.classList.remove('highlight-section');
+      }, 2000);
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="loading-dashboard" data-testid="dashboard-loading">
@@ -140,6 +153,7 @@ const LearningDashboard = ({ userId, onPracticeClick, onStartLearning, onStartFr
           userId={userId}
           onStartLearning={onStartLearning}
           onStartPractice={onStartFreeplay}
+          onShowHandHistory={handleShowHandHistory}
         />
       </div>
 
@@ -251,10 +265,12 @@ const LearningDashboard = ({ userId, onPracticeClick, onStartLearning, onStartFr
 
         {/* Hand History Section */}
         {handHistory && handHistory.length > 0 && (
-          <HandHistorySection
-            hands={handHistory}
-            onHandClick={handleOpenReview}
-          />
+          <div ref={handHistoryRef}>
+            <HandHistorySection
+              hands={handHistory}
+              onHandClick={handleOpenReview}
+            />
+          </div>
         )}
       </div>
 

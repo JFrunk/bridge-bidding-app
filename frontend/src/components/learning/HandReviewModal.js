@@ -121,8 +121,99 @@ const TrickDisplay = ({ trick, trickNumber, onCardClick, analyzedPlay }) => {
   );
 };
 
-// DDS Analysis display
-const DDSAnalysis = ({ analysis, onClose }) => {
+// Play Quality Summary display - shows overall hand performance
+const PlayQualitySummary = ({ summary }) => {
+  if (!summary || !summary.has_data) {
+    return (
+      <div className="play-quality-summary empty">
+        <p className="no-data-message">{summary?.message || 'Play analysis not available for this hand'}</p>
+      </div>
+    );
+  }
+
+  const getRatingColor = (rate) => {
+    if (rate >= 80) return '#059669';
+    if (rate >= 60) return '#3b82f6';
+    if (rate >= 40) return '#f59e0b';
+    return '#dc2626';
+  };
+
+  return (
+    <div className="play-quality-summary">
+      <h4>Your Play Performance</h4>
+
+      {/* Score gauge */}
+      <div className="summary-gauge">
+        <div className="gauge-score" style={{ color: getRatingColor(summary.accuracy_rate) }}>
+          {summary.accuracy_rate}%
+        </div>
+        <div className="gauge-label">Accuracy ({summary.optimal_count + summary.good_count}/{summary.total_plays} plays)</div>
+      </div>
+
+      {/* Stats breakdown */}
+      <div className="summary-stats">
+        <div className="stat-pill optimal">
+          <span className="stat-icon">✓</span>
+          <span className="stat-count">{summary.optimal_count}</span>
+          <span className="stat-label">Optimal</span>
+        </div>
+        <div className="stat-pill good">
+          <span className="stat-icon">○</span>
+          <span className="stat-count">{summary.good_count}</span>
+          <span className="stat-label">Good</span>
+        </div>
+        <div className="stat-pill suboptimal">
+          <span className="stat-icon">⚠</span>
+          <span className="stat-count">{summary.suboptimal_count}</span>
+          <span className="stat-label">Suboptimal</span>
+        </div>
+        <div className="stat-pill blunder">
+          <span className="stat-icon">✗</span>
+          <span className="stat-count">{summary.blunder_count}</span>
+          <span className="stat-label">Blunder</span>
+        </div>
+      </div>
+
+      {/* Tricks lost warning */}
+      {summary.total_tricks_lost > 0 && (
+        <div className="tricks-lost-warning">
+          <span className="warning-icon">⚠</span>
+          {summary.total_tricks_lost} trick{summary.total_tricks_lost !== 1 ? 's' : ''} lost from suboptimal plays
+        </div>
+      )}
+
+      {/* Notable mistakes */}
+      {summary.notable_mistakes && summary.notable_mistakes.length > 0 && (
+        <div className="notable-mistakes">
+          <h5>Key Learning Moments</h5>
+          {summary.notable_mistakes.map((mistake, idx) => (
+            <div key={idx} className={`mistake-item ${mistake.rating}`}>
+              <div className="mistake-header">
+                <span className="trick-num">Trick {mistake.trick_number}</span>
+                <span className="rating-badge">{mistake.rating}</span>
+              </div>
+              <div className="mistake-detail">
+                <span className="played">Played: {mistake.user_card}</span>
+                {mistake.optimal_card && (
+                  <span className="optimal">Better: {mistake.optimal_card}</span>
+                )}
+                {mistake.tricks_cost > 0 && (
+                  <span className="cost">-{mistake.tricks_cost} trick{mistake.tricks_cost !== 1 ? 's' : ''}</span>
+                )}
+              </div>
+              {mistake.feedback && (
+                <div className="mistake-feedback">{mistake.feedback}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Trick Analysis display - shows analysis of a specific card play
+const TrickAnalysis = ({ analysis, onClose }) => {
   if (!analysis) return null;
 
   const getRatingColor = (rating) => {
@@ -139,34 +230,34 @@ const DDSAnalysis = ({ analysis, onClose }) => {
     switch (rating) {
       case 'optimal': return 'Optimal Play';
       case 'good': return 'Good Play';
-      case 'suboptimal': return 'Suboptimal';
-      case 'blunder': return 'Blunder';
+      case 'suboptimal': return 'Could Be Better';
+      case 'blunder': return 'Costly Mistake';
       default: return 'Unknown';
     }
   };
 
   return (
-    <div className="dds-analysis-panel">
-      <div className="dds-analysis-header">
+    <div className="trick-analysis-panel">
+      <div className="trick-analysis-header">
         <h4>
           {analysis.is_opening_lead ? 'Opening Lead Analysis' : `Trick ${analysis.trick_number} Analysis`}
         </h4>
-        <button className="dds-close-btn" onClick={onClose}>×</button>
+        <button className="trick-analysis-close-btn" onClick={onClose}>×</button>
       </div>
 
       {!analysis.dds_available ? (
-        <div className="dds-unavailable">
-          <p>{analysis.message || 'DDS analysis not available'}</p>
+        <div className="analysis-unavailable">
+          <p>{analysis.message || 'Analysis not available for this play'}</p>
         </div>
       ) : (
-        <div className="dds-analysis-content">
+        <div className="trick-analysis-content">
           {/* Rating badge */}
-          <div className="dds-rating" style={{ backgroundColor: getRatingColor(analysis.rating) }}>
+          <div className="analysis-rating" style={{ backgroundColor: getRatingColor(analysis.rating) }}>
             {getRatingLabel(analysis.rating)}
           </div>
 
           {/* Your play */}
-          <div className="dds-your-play">
+          <div className="your-play-info">
             <span className="label">You played:</span>
             <CardDisplay
               rank={analysis.actual_play?.rank || analysis.actual_play?.r}
@@ -181,7 +272,7 @@ const DDSAnalysis = ({ analysis, onClose }) => {
 
           {/* Alternatives */}
           {analysis.alternatives && analysis.alternatives.length > 0 && (
-            <div className="dds-alternatives">
+            <div className="play-alternatives">
               <div className="alternatives-header">All options ranked:</div>
               <div className="alternatives-list">
                 {analysis.alternatives.slice(0, 5).map((alt, idx) => (
@@ -363,6 +454,9 @@ const HandReviewModal = ({ handId, onClose }) => {
             </div>
           )}
 
+          {/* Play Quality Summary - shows overall performance for this hand */}
+          <PlayQualitySummary summary={handData?.play_quality_summary} />
+
           {/* Action buttons */}
           <div className="analysis-actions">
             <button
@@ -374,9 +468,9 @@ const HandReviewModal = ({ handId, onClose }) => {
             </button>
           </div>
 
-          {/* DDS Analysis panel */}
+          {/* Trick Analysis panel */}
           {analyzedPlay && (
-            <DDSAnalysis
+            <TrickAnalysis
               analysis={analyzedPlay}
               onClose={() => setAnalyzedPlay(null)}
             />

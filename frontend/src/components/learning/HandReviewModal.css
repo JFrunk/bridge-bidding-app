@@ -234,49 +234,239 @@
   cursor: not-allowed;
 }
 
-/* DDS Analysis Panel */
-.dds-analysis-panel {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 1px solid #bae6fd;
+/* Play Quality Summary - Overall performance for this hand */
+.play-quality-summary {
+  background: var(--bg-secondary, #f8fafc);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.play-quality-summary.empty {
+  text-align: center;
+  padding: 16px;
+}
+
+.play-quality-summary h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary-dark, #1f2937);
+}
+
+.summary-gauge {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.summary-gauge .gauge-score {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.summary-gauge .gauge-label {
+  font-size: 13px;
+  color: var(--text-secondary-dark, #6b7280);
+}
+
+.summary-stats {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+.stat-pill .stat-icon {
+  font-size: 12px;
+}
+
+.stat-pill .stat-count {
+  font-weight: 600;
+}
+
+.stat-pill .stat-label {
+  font-size: 11px;
+  color: var(--text-secondary-dark, #6b7280);
+}
+
+.stat-pill.optimal {
+  background: var(--bg-success-light, #dcfce7);
+  color: var(--color-success-dark, #166534);
+}
+
+.stat-pill.good {
+  background: var(--bg-info-light, #dbeafe);
+  color: var(--color-info-dark, #1e40af);
+}
+
+.stat-pill.suboptimal {
+  background: var(--bg-warning-light, #fef3c7);
+  color: var(--color-warning-dark, #92400e);
+}
+
+.stat-pill.blunder {
+  background: var(--bg-danger-light, #fee2e2);
+  color: var(--color-danger-dark, #991b1b);
+}
+
+.tricks-lost-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-warning-light, #fef3c7);
+  border-radius: 8px;
+  color: var(--color-warning-dark, #92400e);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.notable-mistakes {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.notable-mistakes h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary-dark, #1f2937);
+}
+
+.mistake-item {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--color-warning, #f59e0b);
+}
+
+.mistake-item.blunder {
+  border-left-color: var(--color-danger, #dc2626);
+}
+
+.mistake-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mistake-header .trick-num {
+  font-weight: 600;
+  color: var(--text-primary-dark, #374151);
+  font-size: 13px;
+}
+
+.mistake-header .rating-badge {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--bg-warning-light, #fef3c7);
+  color: var(--color-warning-dark, #92400e);
+}
+
+.mistake-item.blunder .rating-badge {
+  background: var(--bg-danger-light, #fee2e2);
+  color: var(--color-danger-dark, #991b1b);
+}
+
+.mistake-detail {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-secondary-dark, #6b7280);
+}
+
+.mistake-detail .played {
+  color: var(--text-primary-dark, #374151);
+}
+
+.mistake-detail .optimal {
+  color: var(--color-success-dark, #166534);
+  font-weight: 500;
+}
+
+.mistake-detail .cost {
+  color: var(--color-danger, #dc2626);
+  font-weight: 500;
+}
+
+.mistake-feedback {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary-dark, #6b7280);
+  font-style: italic;
+}
+
+.no-data-message {
+  color: var(--text-secondary-dark, #6b7280);
+  font-size: 14px;
+}
+
+/* Trick Analysis Panel (renamed from DDS Analysis) */
+.trick-analysis-panel {
+  background: var(--bg-secondary, #f0f4f8);
+  border: 1px solid var(--border-color, #d1d5db);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 20px;
 }
 
-.dds-analysis-header {
+.trick-analysis-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
 }
 
-.dds-analysis-header h4 {
+.trick-analysis-header h4 {
   margin: 0;
   font-size: 16px;
-  color: #0369a1;
+  color: var(--text-primary-dark, #374151);
 }
 
-.dds-close-btn {
+.trick-analysis-close-btn {
   background: none;
   border: none;
   font-size: 20px;
-  color: #6b7280;
+  color: var(--text-secondary-dark, #6b7280);
   cursor: pointer;
 }
 
-.dds-unavailable {
+.trick-analysis-close-btn:hover {
+  color: var(--text-primary-dark, #374151);
+}
+
+.analysis-unavailable {
   text-align: center;
-  color: #6b7280;
+  color: var(--text-secondary-dark, #6b7280);
   padding: 12px;
 }
 
-.dds-analysis-content {
+.trick-analysis-content {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.dds-rating {
+.analysis-rating {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 16px;
@@ -286,7 +476,7 @@
   align-self: flex-start;
 }
 
-.dds-your-play {
+.your-play-info {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -295,26 +485,26 @@
   border-radius: 8px;
 }
 
-.dds-your-play .label {
+.your-play-info .label {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-secondary-dark, #6b7280);
 }
 
-.dds-your-play .tricks-lost {
+.your-play-info .tricks-lost {
   font-size: 12px;
-  color: #dc2626;
+  color: var(--color-danger, #dc2626);
   font-weight: 500;
 }
 
-.dds-alternatives {
+.play-alternatives {
   padding-top: 8px;
-  border-top: 1px solid #bae6fd;
+  border-top: 1px solid var(--border-color, #e5e7eb);
 }
 
 .alternatives-header {
   font-size: 13px;
   font-weight: 600;
-  color: #0369a1;
+  color: var(--text-primary-dark, #374151);
   margin-bottom: 8px;
 }
 
