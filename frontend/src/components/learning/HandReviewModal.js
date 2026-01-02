@@ -178,7 +178,7 @@ const ReplayHandDisplay = ({ cards, position, trumpStrain, isVertical = false })
     );
   }
 
-  // Horizontal layout for N/S
+  // Horizontal layout for N/S - use compact mode so rank+suit are side by side
   return (
     <div className={`replay-hand replay-hand-${position.toLowerCase()} horizontal`}>
       <div className="replay-hand-label">{positionLabels[position]}</div>
@@ -193,6 +193,7 @@ const ReplayHandDisplay = ({ cards, position, trumpStrain, isVertical = false })
                   key={`${card.rank}-${card.suit}`}
                   card={card}
                   disabled
+                  compact
                 />
               ))}
             </div>
@@ -294,7 +295,9 @@ const AnalyzedCard = ({ card, decision, position, isUserPosition }) => {
 };
 
 // Compass-style trick display using visual cards
-const TrickDisplayVisual = ({ trick, trickNumber, decision, userPosition }) => {
+// userControlledPositions: array of positions the user played (e.g., ['S'] or ['S', 'N'])
+// decisionsByPosition: map of position -> decision for this trick
+const TrickDisplayVisual = ({ trick, trickNumber, decisionsByPosition, userControlledPositions }) => {
   // Create position -> play mapping
   const playsByPosition = useMemo(() => {
     const map = {};
@@ -310,6 +313,9 @@ const TrickDisplayVisual = ({ trick, trickNumber, decision, userPosition }) => {
   // Determine trick winner (simplified - just highlight if data available)
   const leader = trick[0]?.player || trick[0]?.position;
 
+  // Helper to check if user controlled this position
+  const isUserControlled = (pos) => userControlledPositions?.includes(pos) || false;
+
   return (
     <div className="trick-visual-display">
       <div className="trick-header">
@@ -323,8 +329,8 @@ const TrickDisplayVisual = ({ trick, trickNumber, decision, userPosition }) => {
           <AnalyzedCard
             card={playsByPosition.N}
             position="N"
-            decision={userPosition === 'N' ? decision : null}
-            isUserPosition={userPosition === 'N'}
+            decision={isUserControlled('N') ? decisionsByPosition?.N : null}
+            isUserPosition={isUserControlled('N')}
           />
         </div>
 
@@ -334,8 +340,8 @@ const TrickDisplayVisual = ({ trick, trickNumber, decision, userPosition }) => {
             <AnalyzedCard
               card={playsByPosition.W}
               position="W"
-              decision={userPosition === 'W' ? decision : null}
-              isUserPosition={userPosition === 'W'}
+              decision={isUserControlled('W') ? decisionsByPosition?.W : null}
+              isUserPosition={isUserControlled('W')}
             />
           </div>
           <div className="compass-center" />
@@ -343,8 +349,8 @@ const TrickDisplayVisual = ({ trick, trickNumber, decision, userPosition }) => {
             <AnalyzedCard
               card={playsByPosition.E}
               position="E"
-              decision={userPosition === 'E' ? decision : null}
-              isUserPosition={userPosition === 'E'}
+              decision={isUserControlled('E') ? decisionsByPosition?.E : null}
+              isUserPosition={isUserControlled('E')}
             />
           </div>
         </div>
@@ -354,8 +360,8 @@ const TrickDisplayVisual = ({ trick, trickNumber, decision, userPosition }) => {
           <AnalyzedCard
             card={playsByPosition.S}
             position="S"
-            decision={userPosition === 'S' ? decision : null}
-            isUserPosition={userPosition === 'S'}
+            decision={isUserControlled('S') ? decisionsByPosition?.S : null}
+            isUserPosition={isUserControlled('S')}
           />
         </div>
       </div>
@@ -464,11 +470,11 @@ const PlayQualitySummary = ({ summary }) => {
         </div>
       </div>
 
-      {/* Tricks lost warning */}
-      {summary.total_tricks_lost > 0 && (
+      {/* Mistakes warning - show count of plays that cost tricks */}
+      {(summary.suboptimal_count + summary.blunder_count) > 0 && (
         <div className="tricks-lost-warning">
           <span className="warning-icon">!</span>
-          {summary.total_tricks_lost} trick{summary.total_tricks_lost !== 1 ? 's' : ''} lost from suboptimal plays
+          {summary.suboptimal_count + summary.blunder_count} play{(summary.suboptimal_count + summary.blunder_count) !== 1 ? 's' : ''} could be improved
         </div>
       )}
     </div>
@@ -652,16 +658,43 @@ const HandReviewModal = ({ handId, onClose }) => {
     return result;
   }, [handData?.play_history]);
 
-  // Map decisions by trick number for quick lookup
+  // Get user-controlled positions (S always, plus dummy when NS declaring)
+  const userControlledPositions = useMemo(() => {
+    return handData?.user_controlled_positions || ['S'];
+  }, [handData?.user_controlled_positions]);
+
+  // Map decisions by trick number AND position for accurate lookup
+  // Key format: "trick_position" e.g., "3_S" for trick 3, South's play
+  const decisionsByTrickAndPosition = useMemo(() => {
+    const map = {};
+    if (handData?.play_quality_summary?.all_decisions) {
+      handData.play_quality_summary.all_decisions.forEach(d => {
+        // Only include decisions for positions the user controlled
+        if (d.position && userControlledPositions.includes(d.position)) {
+          const key = `${d.trick_number}_${d.position}`;
+          map[key] = d;
+        }
+      });
+    }
+    return map;
+  }, [handData?.play_quality_summary?.all_decisions, userControlledPositions]);
+
+  // Legacy: Map decisions by trick number (first user decision in that trick)
   const decisionsByTrick = useMemo(() => {
     const map = {};
     if (handData?.play_quality_summary?.all_decisions) {
       handData.play_quality_summary.all_decisions.forEach(d => {
-        map[d.trick_number] = d;
+        // Only include decisions for positions the user controlled
+        if (d.position && userControlledPositions.includes(d.position)) {
+          // Keep first decision per trick (for backwards compatibility)
+          if (!map[d.trick_number]) {
+            map[d.trick_number] = d;
+          }
+        }
       });
     }
     return map;
-  }, [handData?.play_quality_summary?.all_decisions]);
+  }, [handData?.play_quality_summary?.all_decisions, userControlledPositions]);
 
   // Get user position
   const userPosition = handData?.user_position || 'S';
@@ -741,12 +774,25 @@ const HandReviewModal = ({ handId, onClose }) => {
   }, [handData?.play_history, replayPosition]);
 
   // Get decision for current card being viewed in replay
+  // Uses the precise trick_position key to get the correct decision
   const currentReplayDecision = useMemo(() => {
-    if (!handData?.play_quality_summary?.all_decisions || replayPosition === 0) return null;
-    // Find decision that matches this play position (using corrected trick number)
-    const trickNum = Math.floor((replayPosition - 1) / 4) + 1;
-    return decisionsByTrick[trickNum] || null;
-  }, [handData?.play_quality_summary?.all_decisions, replayPosition, decisionsByTrick]);
+    if (!handData?.play_history || replayPosition === 0) return null;
+
+    // Get the last played card's info
+    const lastPlayedIdx = replayPosition - 1;
+    const lastPlay = handData.play_history[lastPlayedIdx];
+    if (!lastPlay) return null;
+
+    const trickNum = Math.floor(lastPlayedIdx / 4) + 1;
+    const position = lastPlay.player || lastPlay.position;
+
+    // Only show decision if this position was controlled by user
+    if (!userControlledPositions.includes(position)) return null;
+
+    // Look up by trick_position key for precise matching
+    const key = `${trickNum}_${position}`;
+    return decisionsByTrickAndPosition[key] || null;
+  }, [handData?.play_history, replayPosition, userControlledPositions, decisionsByTrickAndPosition]);
 
   // Total plays for navigation
   const totalPlays = handData?.play_history?.length || 0;
@@ -808,6 +854,22 @@ const HandReviewModal = ({ handId, onClose }) => {
   }
 
   const totalTricks = tricks.length;
+
+  // Get decisions for the current trick, organized by position
+  // This allows showing feedback for multiple user-controlled positions in the same trick
+  const currentTrickDecisionsByPosition = useMemo(() => {
+    const map = {};
+    if (handData?.play_quality_summary?.all_decisions) {
+      handData.play_quality_summary.all_decisions.forEach(d => {
+        if (d.trick_number === currentTrick && d.position && userControlledPositions.includes(d.position)) {
+          map[d.position] = d;
+        }
+      });
+    }
+    return map;
+  }, [handData?.play_quality_summary?.all_decisions, currentTrick, userControlledPositions]);
+
+  // For the feedback panel, get the first user decision in this trick
   const currentDecision = decisionsByTrick[currentTrick];
 
   return (
@@ -1046,8 +1108,8 @@ const HandReviewModal = ({ handId, onClose }) => {
                   <TrickDisplayVisual
                     trick={tricks[currentTrick - 1] || []}
                     trickNumber={currentTrick}
-                    decision={currentDecision}
-                    userPosition={userPosition}
+                    decisionsByPosition={currentTrickDecisionsByPosition}
+                    userControlledPositions={userControlledPositions}
                   />
 
                   {/* Feedback panel */}
