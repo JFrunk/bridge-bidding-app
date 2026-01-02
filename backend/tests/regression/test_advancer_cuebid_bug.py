@@ -74,11 +74,11 @@ class TestAdvancerCuebidBug:
         Test that advancer with 12+ points and major suit fit bids game directly.
 
         Auction: 1♦ - 1♠ - Pass - ?
-        Advancer holds: 13 HCP with 3-card spade support
+        Advancer holds: 17 HCP with 3-card spade support
         Should: Bid 4♠ (game)
         Should NOT: Cuebid 3♦
         """
-        # Strong hand with spade support
+        # Strong hand with spade support (17 HCP)
         advancer_hand = Hand([
             Card('K', '♠'), Card('J', '♠'), Card('9', '♠'),
             Card('A', '♥'), Card('K', '♥'), Card('5', '♥'),
@@ -86,12 +86,14 @@ class TestAdvancerCuebidBug:
             Card('A', '♣'), Card('8', '♣'), Card('3', '♣'), Card('2', '♣')
         ])
 
-        auction = ['Pass', 'Pass', '1♦', '1♠']  # Advancer to bid
+        # South opens 1♦, West overcalls 1♠, North passes, East to bid
+        auction = ['1♦', '1♠', 'Pass']
         bid, explanation = self.engine.get_next_bid(
             advancer_hand,
             auction,
             my_position='East',
-            vulnerability='NS'
+            vulnerability='NS',
+            dealer='South'
         )
 
         # Should bid 4♠ (game) with 13 HCP and 3-card support

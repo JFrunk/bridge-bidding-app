@@ -269,6 +269,15 @@ class ResponseModule(ConventionModule):
         """
         opening_suit = opening_bid[1]
 
+        # PRIORITY: Show a 4+ card major BEFORE raising partner's minor with only 3-card support
+        # This is standard SAYC - majors take priority over minor raises
+        if opening_suit in ['♣', '♦']:  # Partner opened a minor
+            # Check for 4+ card major to show at 1-level
+            if hand.suit_lengths.get('♥', 0) >= 4:
+                return ("1♥", f"Showing a 4+ card heart suit (priority over raising {opening_suit}).")
+            if hand.suit_lengths.get('♠', 0) >= 4:
+                return ("1♠", f"Showing a 4+ card spade suit (priority over raising {opening_suit}).")
+
         # Raise partner's suit with 3+ card support
         if opening_suit in hand.suit_lengths and hand.suit_lengths[opening_suit] >= 3:
             support_points = self._calculate_support_points(hand, opening_suit)

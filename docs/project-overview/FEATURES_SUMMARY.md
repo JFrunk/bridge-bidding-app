@@ -327,6 +327,16 @@
 - Social features
 - Progress tracking
 
+### Phase 6: ACBL Integration & Tournament Analysis
+**Foundation implemented:** DDS analysis service with full DD table and par calculation (see `backend/engine/play/dds_analysis.py`)
+
+- **PBN File Import:** Parse and import ACBL tournament results from PBN files
+- **Event Analysis:** View hands from ACBL events with DDS analysis overlay
+- **Par Score Comparison:** Compare your bidding/play against par (optimal) results
+- **Performance Tracking:** Track improvement across tournament hands
+- **Multi-format Support:** Import from PBN, LIN (Bridge Base Online), and ACBL formats
+- **Database:** `imported_hands` table ready for imported tournament data (migration 007)
+
 ---
 
 **Feature Completeness:** 70% (23/33 convention issues resolved)

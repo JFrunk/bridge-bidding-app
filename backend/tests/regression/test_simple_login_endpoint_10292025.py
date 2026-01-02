@@ -28,10 +28,10 @@ def client(tmp_path):
     app.config['TESTING'] = True
 
     # Create temporary database file for this test
-    test_db_path = str(tmp_path / "test_bridge.db")
+    test_db_path = tmp_path / "test_bridge.db"
 
     # Initialize test database
-    conn = sqlite3.connect(test_db_path)
+    conn = sqlite3.connect(str(test_db_path))
     cursor = conn.cursor()
 
     # Create users table
@@ -53,22 +53,17 @@ def client(tmp_path):
     conn.commit()
     conn.close()
 
-    # Monkey-patch sqlite3.connect for this test
-    original_connect = sqlite3.connect
-    def mock_connect(db_name, *args, **kwargs):
-        if db_name == 'bridge.db':
-            return original_connect(test_db_path, *args, **kwargs)
-        return original_connect(db_name, *args, **kwargs)
-
-    # Apply monkey patch
-    sqlite3.connect = mock_connect
+    # Patch db.SQLITE_PATH to use test database
+    import db
+    original_sqlite_path = db.SQLITE_PATH
+    db.SQLITE_PATH = test_db_path
 
     try:
         with app.test_client() as test_client:
             yield test_client
     finally:
-        # Restore original connect
-        sqlite3.connect = original_connect
+        # Restore original path
+        db.SQLITE_PATH = original_sqlite_path
 
 
 class TestSimpleLoginEndpoint:

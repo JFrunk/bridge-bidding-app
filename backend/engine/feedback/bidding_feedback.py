@@ -14,6 +14,7 @@ and provides feedback on decisions that have already been made.
 
 import json
 import sys
+import sqlite3
 from pathlib import Path
 from enum import Enum
 from dataclasses import dataclass, asdict
@@ -301,7 +302,12 @@ class BiddingFeedbackGenerator:
                        session_id: Optional[str],
                        hand_analysis_id: Optional[int]):
         """Store feedback in bidding_decisions table"""
-        conn = get_connection()
+        # Use custom db_path if provided (for testing), otherwise use global connection
+        if self.db_path and self.db_path != 'backend/bridge.db':
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+        else:
+            conn = get_connection()
         cursor = conn.cursor()
 
         try:

@@ -59,7 +59,8 @@ class Test1NTOvercallMarginalStoppers:
 
     def test_15hcp_balanced_jxx_stopper_after_1h(self):
         """15 HCP balanced with Jxx in hearts - should bid 1NT after 1♥ opening"""
-        hand = create_hand('♠KT9 ♥J76 ♦AQ4 ♣KJ85')
+        # K=3 + J=1 + A=4 + Q=2 + K=3 + Q=2 = 15 HCP
+        hand = create_hand('♠KT9 ♥J76 ♦AQ4 ♣KQ85')
         assert hand.hcp == 15
         assert hand.is_balanced
 
@@ -103,7 +104,8 @@ class Test1NTOvercallMarginalStoppers:
 
     def test_17hcp_balanced_txx_stopper_after_1d(self):
         """17 HCP balanced with Txx in diamonds - should bid 1NT after 1♦ opening"""
-        hand = create_hand('♠AK9 ♥KJ7 ♦T84 ♣AJ85')
+        # A=4 + K=3 + K=3 + Q=2 + A=4 + J=1 = 17 HCP
+        hand = create_hand('♠AK9 ♥KQ7 ♦T84 ♣AJ85')
         assert hand.hcp == 17
         assert hand.is_balanced
 
@@ -128,7 +130,8 @@ class Test1NTOvercallMarginalStoppers:
         14 HCP balanced with Jxx - should NOT bid 1NT (below 15 HCP threshold)
         Marginal stoppers only apply with 15+ HCP
         """
-        hand = create_hand('♠KT9 ♥J76 ♦Q94 ♣KJ85')
+        # K=3 + J=1 + A=4 + K=3 + J=1 + Q=2 = 14 HCP
+        hand = create_hand('♠KT9 ♥J76 ♦A94 ♣KJQ5')
         assert hand.hcp == 14
         assert hand.is_balanced
 
@@ -154,7 +157,8 @@ class Test1NTOvercallMarginalStoppers:
         15 HCP balanced with only Jx (doubleton J) - should NOT bid 1NT
         Need at least Jxx (3 cards) for marginal stopper
         """
-        hand = create_hand('♠AK9 ♥J7 ♦Q984 ♣KJ85')
+        # A=4 + K=3 + J=1 + Q=2 + K=3 + Q=2 = 15 HCP
+        hand = create_hand('♠AK9 ♥J7 ♦Q984 ♣KQ85')
         assert hand.hcp == 15
 
         module = OvercallModule()
@@ -203,7 +207,8 @@ class TestStopperFunction:
 
     def test_jxx_with_14hcp(self):
         """Jxx should NOT be a stopper with 14 HCP"""
-        hand = create_hand('♠K98 ♥J76 ♦Q74 ♣KJ85')
+        # K=3 + J=1 + Q=2 + K=3 + A=4 + J=1 = 14 HCP
+        hand = create_hand('♠K98 ♥J76 ♦Q74 ♣KAJ5')
         assert hand.hcp == 14
         module = OvercallModule()
         assert not module._has_stopper(hand, '♥'), "Jxx should not be stopper with 14 HCP"
@@ -217,14 +222,16 @@ class TestStopperFunction:
 
     def test_txx_with_16hcp(self):
         """Txx should be a stopper with 16+ HCP"""
-        hand = create_hand('♠AK9 ♥KJ7 ♦T84 ♣AJ85')
+        # A=4 + K=3 + K=3 + Q=2 + A=4 + J=1 = 17 HCP
+        hand = create_hand('♠AK9 ♥KQ7 ♦T84 ♣AJ85')
         assert hand.hcp == 17
         module = OvercallModule()
         assert module._has_stopper(hand, '♦'), "Txx should be stopper with 17 HCP"
 
     def test_txx_with_15hcp(self):
         """Txx should NOT be a stopper with only 15 HCP (need 16+)"""
-        hand = create_hand('♠AK9 ♥K97 ♦T84 ♣KJ85')
+        # A=4 + K=3 + K=3 + K=3 + Q=2 = 15 HCP
+        hand = create_hand('♠AK9 ♥K97 ♦T84 ♣KQ85')
         assert hand.hcp == 15
         module = OvercallModule()
         assert not module._has_stopper(hand, '♦'), "Txx should not be stopper with only 15 HCP"
@@ -233,19 +240,19 @@ class TestStopperFunction:
         """Verify traditional full stoppers still work"""
         module = OvercallModule()
 
-        # Ace always works
+        # Ace always works (13 cards: A98 + K76 + Q74 + KJ85 = 3+3+3+4)
         hand = create_hand('♠A98 ♥K76 ♦Q74 ♣KJ85')
         assert module._has_stopper(hand, '♠')
 
-        # Kx+ works
-        hand = create_hand('♠K9 ♥K76 ♦Q74 ♣AJ85')
+        # Kx+ works (13 cards: K97 + K76 + Q74 + AJ85 = 3+3+3+4)
+        hand = create_hand('♠K97 ♥K76 ♦Q74 ♣AJ85')
         assert module._has_stopper(hand, '♠')
 
-        # Qxx+ works
+        # Qxx+ works (13 cards: Q98 + K76 + K74 + AJ85 = 3+3+3+4)
         hand = create_hand('♠Q98 ♥K76 ♦K74 ♣AJ85')
         assert module._has_stopper(hand, '♠')
 
-        # Jxxx+ works (with any HCP)
+        # Jxxx+ works (with any HCP) (13 cards: J987 + K76 + K74 + AJ8 = 4+3+3+3)
         hand = create_hand('♠J987 ♥K76 ♦K74 ♣AJ8')
         assert module._has_stopper(hand, '♠')
 

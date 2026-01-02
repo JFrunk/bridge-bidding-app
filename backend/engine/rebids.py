@@ -46,7 +46,12 @@ class RebidModule(ConventionModule):
         if not result:
             return ("Pass", "No rebid found.")
 
-        bid, explanation = result
+        # Handle both 2-tuple (bid, explanation) and 3-tuple (bid, explanation, metadata)
+        if len(result) == 3:
+            bid, explanation, metadata = result
+        else:
+            bid, explanation = result
+            metadata = None
 
         # Always pass Pass bids through
         if bid == "Pass":
@@ -73,6 +78,8 @@ class RebidModule(ConventionModule):
                 pass
 
             adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
+            if metadata:
+                return (next_legal, adjusted_explanation, metadata)
             return (next_legal, adjusted_explanation)
 
         # No legal bid possible - pass
@@ -253,13 +260,14 @@ class RebidModule(ConventionModule):
 
             # Prefer spades at 1-level if we have 3+ cards (economical)
             # Check spades first since it can be bid at 1-level
+            # After negative double, 3-card support is sufficient - bypass suit length validation
             if hand.suit_lengths.get('♠', 0) >= 3:
                 if hand.total_points <= 15:
-                    return ("1♠", "Supporting partner's negative double with 3+ spades.")
+                    return ("1♠", "Supporting partner's negative double with 3+ spades.", {'bypass_suit_length': True})
                 elif hand.total_points <= 18:
-                    return ("2♠", "Jump supporting partner's negative double with 16-18 pts and 3+ spades.")
+                    return ("2♠", "Jump supporting partner's negative double with 16-18 pts and 3+ spades.", {'bypass_suit_length': True})
                 else:
-                    return ("3♠", "Strong jump supporting partner's negative double with 19+ pts and 3+ spades.")
+                    return ("3♠", "Strong jump supporting partner's negative double with 19+ pts and 3+ spades.", {'bypass_suit_length': True})
 
             # Then check hearts (requires 2-level bid)
             if hand.suit_lengths.get('♥', 0) >= 4:
@@ -507,6 +515,20 @@ class RebidModule(ConventionModule):
                     if suit != my_opening_bid[1] and hand.suit_lengths.get(suit, 0) >= 4:
                         if self._is_reverse_bid(my_opening_bid, suit):
                             return (f"2{suit}", f"Reverse bid showing 19+ HCP and 4+ {suit} (forcing, slam interest).")
+
+            # Check if partner's bid is at the 3-level (showing preference, not a raise)
+            # This happens after opener's jump rebid when partner returns to their suit
+            # With game values (19+ pts) and combined ~25-27 HCP, bid 3NT for game
+            if partner_response and len(partner_response) == 2 and partner_response[0] == '3':
+                partner_suit = partner_response[1]
+                # Partner is showing preference at 3-level (e.g., 3♠ after 1♦-1♠-3♦)
+                # This shows 6-9 HCP typically, combined is ~25-28 - game values
+                if partner_suit in ['♥', '♠'] and hand.suit_lengths.get(partner_suit, 0) >= 4:
+                    # 4-card support for partner's major (8+ total trumps) - bid 4 of the major
+                    return (f"4{partner_suit}", f"Game in partner's major with 4+ support and {hand.total_points} pts.")
+                else:
+                    # Only 3-card support (7 total trumps) or minor - prefer 3NT
+                    return ("3NT", f"Game in NT with {hand.hcp} HCP after partner's preference.")
 
             # Before jumping to 3NT, check if we have a 6-card suit to show
             my_suit = my_opening_bid[1]
