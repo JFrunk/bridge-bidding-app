@@ -9,7 +9,7 @@
  * - Level assessments
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './LearningMode.css';
 import {
   getLearningStatus,
@@ -29,6 +29,7 @@ import SkillIntro from './SkillIntro';
 const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   // Track selector: 'bidding' or 'play'
   const [selectedTrack, setSelectedTrack] = useState(initialTrack);
+  const containerRef = useRef(null);
 
   const [learningStatus, setLearningStatus] = useState(null);
   const [skillTree, setSkillTree] = useState(null);
@@ -89,6 +90,14 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
     loadData();
   }, [loadData]);
 
+  // Scroll to top helper
+  const scrollToTop = useCallback(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
   // Handle track switching
   const handleTrackChange = (track) => {
     if (track !== selectedTrack) {
@@ -97,6 +106,7 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
       setLearningStatus(null);
       setSkillTree(null);
       setSkillProgress({});
+      scrollToTop();
     }
   };
 
@@ -156,6 +166,7 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
 
   const handleBackFromIntro = () => {
     setShowingIntro(null);
+    scrollToTop();
   };
 
   const handleSubmitAnswer = async (answer) => {
@@ -249,6 +260,8 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
       } else {
         // Store result but keep current hand visible
         // Next hand data is stored in pendingNext for when user clicks Continue
+        // For bidding skills, we need next_expected OR next_hand to advance
+        // (Some skills like bidding_language have no hand but still have next questions)
         const pendingNext = activeSession.track === 'play'
           ? {
               deal: result.next_deal,
@@ -256,7 +269,7 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
               expected_response: result.next_expected,
               situation: result.next_situation,
             }
-          : result.next_hand ? {
+          : (result.next_hand || result.next_expected) ? {
               hand: result.next_hand,
               hand_id: result.next_hand_id,
               expected_response: result.next_expected,
@@ -284,6 +297,7 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   const handleCloseSession = () => {
     setActiveSession(null);
     loadData(); // Refresh progress
+    scrollToTop();
   };
 
   const handleContinue = () => {
@@ -397,7 +411,7 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   const overallProgress = learningStatus?.overall_progress || { completed: 0, total: 0, percentage: 0 };
 
   return (
-    <div className="learning-mode">
+    <div className="learning-mode" ref={containerRef}>
       {/* Header - simplified since TopNavigation provides main navigation */}
       <div className="learning-mode-header">
         <div className="header-content">

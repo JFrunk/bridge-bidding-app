@@ -125,8 +125,8 @@ export function PlayableCard({ card, onClick, disabled }) {
  * Display current trick in progress
  * MIGRATED: Now uses CurrentTrickDisplay component from components/play/
  */
-export function CurrentTrick({ trick, positions, trickWinner, trickComplete }) {
-  return <CurrentTrickDisplay trick={trick} trickWinner={trickWinner} trickComplete={trickComplete} />;
+export function CurrentTrick({ trick, positions, trickWinner, trickComplete, nextToPlay }) {
+  return <CurrentTrickDisplay trick={trick} trickWinner={trickWinner} trickComplete={trickComplete} nextToPlay={nextToPlay} />;
 }
 
 /**
@@ -348,6 +348,7 @@ export function PlayTable({
               positions={positions}
               trickWinner={trick_winner}
               trickComplete={trick_complete}
+              nextToPlay={next_to_play}
             />
           )}
         </div>

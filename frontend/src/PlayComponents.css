@@ -793,11 +793,11 @@
 }
 
 /* Cards within East/West suit groups stack vertically with overlap
-   Show ~45px of each card (rank + suit + more white space for readability) */
+   Show ~55px of each card (rank + suit + more white space for readability) */
 .position-east .dummy-hand .suit-group .playable-card,
 .position-west .dummy-hand .suit-group .playable-card {
   margin-left: 0 !important; /* Force no horizontal margin */
-  margin-top: -55px; /* Improved readability - show ~45px of each card */
+  margin-top: -45px; /* Improved readability - show ~55px of each card */
   margin-right: 0;
   margin-bottom: 0;
 }
@@ -812,7 +812,7 @@
 .position-east .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
 .position-west .dummy-hand .suit-group:not(:first-child) .playable-card:first-child {
   margin-left: 0 !important; /* Force no horizontal margin */
-  margin-top: -55px; /* Same overlap as within suits - continuous flow */
+  margin-top: -45px; /* Same overlap as within suits - continuous flow */
 }
 
 /* Declarer Hand (when user is dummy) - Default horizontal for North/South */
@@ -895,7 +895,7 @@
 .position-east .declarer-hand .suit-group .playable-card,
 .position-west .declarer-hand .suit-group .playable-card {
   margin-left: 0 !important; /* Force no horizontal margin */
-  margin-top: -55px; /* Improved readability - show ~45px of each card */
+  margin-top: -45px; /* Improved readability - show ~55px of each card */
   margin-right: 0;
   margin-bottom: 0;
 }
@@ -908,7 +908,7 @@
 .position-east .declarer-hand .suit-group:not(:first-child) .playable-card:first-child,
 .position-west .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
   margin-left: 0 !important; /* Force no horizontal margin */
-  margin-top: -55px; /* Same overlap as within suits */
+  margin-top: -45px; /* Same overlap as within suits */
 }
 
 /* Suit Group - organizes cards by suit in a horizontal overlapping row */

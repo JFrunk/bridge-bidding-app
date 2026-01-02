@@ -7,8 +7,12 @@ import { cn } from "../../lib/utils";
  * Cards appear in front of player positions with bold border for winner
  * PRIMARY visual element during card play
  */
-export function CurrentTrickDisplay({ trick, trickWinner, trickComplete }) {
-  console.log('🃏 CurrentTrickDisplay received:', { trick, trick_length: trick?.length, trickWinner, trickComplete });
+export function CurrentTrickDisplay({ trick, trickWinner, trickComplete, nextToPlay }) {
+  console.log('🃏 CurrentTrickDisplay received:', { trick, trick_length: trick?.length, trickWinner, trickComplete, nextToPlay });
+
+  // Map position codes to full names
+  const positionNames = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
+  const nextPlayerName = positionNames[nextToPlay] || nextToPlay;
 
   // DEFENSIVE: Only show the first 4 cards (a complete trick)
   const displayTrick = trick?.slice(0, 4) || [];
@@ -57,9 +61,11 @@ export function CurrentTrickDisplay({ trick, trickWinner, trickComplete }) {
   return (
     <div className="relative flex items-center justify-center w-full h-full min-h-[350px] pointer-events-none">
       {displayTrick.length === 0 ? (
-        // Waiting for cards message
+        // Show who should play next
         <div className="flex items-center justify-center p-12 rounded-lg border-2 border-dashed border-gray-600 bg-bg-secondary pointer-events-auto">
-          <p className="text-base text-gray-400">Waiting for cards...</p>
+          <p className="text-base text-gray-400">
+            {nextToPlay ? `${nextPlayerName} to lead...` : 'Waiting for cards...'}
+          </p>
         </div>
       ) : (
         // Compass layout: North (top), East (right), South (bottom), West (left)
@@ -109,9 +115,9 @@ export function CurrentTrickDisplay({ trick, trickWinner, trickComplete }) {
           )}
 
           {/* Center "Waiting" text (only visible when cards < 4) */}
-          {displayTrick.length < 4 && (
+          {displayTrick.length < 4 && displayTrick.length > 0 && (
             <div className="text-gray-500 text-sm">
-              Waiting for cards...
+              {nextToPlay ? `${nextPlayerName} to play...` : 'Waiting for cards...'}
             </div>
           )}
         </div>
