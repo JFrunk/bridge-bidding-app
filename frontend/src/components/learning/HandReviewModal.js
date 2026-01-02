@@ -1,17 +1,17 @@
 /**
- * HandReviewModal Component - Unified hand analysis with accordion layout
+ * HandReviewModal Component - Unified hand analysis with stacked card layout
  *
  * Features:
- * - Single scrollable view with expandable sections (accordion)
+ * - Single scrollable view with stacked section cards (always visible)
  * - STRATEGY: Overview of the deal with hand display
  * - YOUR PLAY: Performance summary with accuracy stats
  * - PERFECT PLAY: What optimal play would achieve (replaces "Double Dummy")
  * - PLAY-BY-PLAY: Interactive card-by-card replay with feedback
  *
  * Design Philosophy:
- * - Unified accordion UI eliminates confusing mode toggles
- * - Collapsed sections show summary previews
- * - Mobile: one section at a time; Desktop: allow multiple
+ * - Stacked card layout shows all content without clicking
+ * - Better visibility on desktop with wider modal
+ * - Mobile-friendly with natural scrolling
  * - "Perfect Play" terminology replaces jargon like "Double Dummy"
  *
  * Requires hand_id to be passed as prop.
@@ -21,46 +21,32 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlayableCard } from '../play/PlayableCard';
 import './HandReviewModal.css';
 
-// ===== ACCORDION SECTION COMPONENT =====
-// Reusable accordion section following existing design patterns from LearningDashboard
-const AccordionSection = ({
+// ===== SECTION CARD COMPONENT =====
+// Simple card wrapper for stacked layout - always visible (no accordion)
+const SectionCard = ({
   id,
   title,
   subtitle,
   icon,
-  isOpen,
-  onToggle,
-  summary,
+  headerRight,
   children
 }) => {
   return (
-    <div className={`accordion-section ${isOpen ? 'open' : ''}`}>
-      <button
-        className="accordion-header"
-        onClick={onToggle}
-        aria-expanded={isOpen}
-        aria-controls={`accordion-content-${id}`}
-      >
-        <div className="accordion-title-group">
-          {icon && <span className="accordion-icon">{icon}</span>}
-          <div className="accordion-titles">
-            <span className="accordion-title">{title}</span>
-            {subtitle && <span className="accordion-subtitle">{subtitle}</span>}
+    <div className="section-card" id={`section-${id}`}>
+      <div className="section-card-header">
+        <div className="section-title-group">
+          {icon && <span className="section-icon">{icon}</span>}
+          <div className="section-titles">
+            <span className="section-title">{title}</span>
+            {subtitle && <span className="section-subtitle">{subtitle}</span>}
           </div>
         </div>
-        <div className="accordion-right">
-          {!isOpen && summary && (
-            <span className="accordion-summary">{summary}</span>
-          )}
-          <span className={`accordion-toggle-icon ${isOpen ? 'open' : ''}`}>▼</span>
-        </div>
-      </button>
-      <div
-        id={`accordion-content-${id}`}
-        className={`accordion-content ${isOpen ? 'open' : ''}`}
-        aria-hidden={!isOpen}
-      >
-        {isOpen && children}
+        {headerRight && (
+          <div className="section-header-right">{headerRight}</div>
+        )}
+      </div>
+      <div className="section-card-content">
+        {children}
       </div>
     </div>
   );
@@ -634,38 +620,7 @@ const HandReviewModal = ({ handId, onClose }) => {
   const [error, setError] = useState(null);
   const [replayPosition, setReplayPosition] = useState(0); // 0 to 52 (each card played)
 
-  // Accordion state - track which sections are open
-  // Default: Strategy section open on load
-  const [openSections, setOpenSections] = useState({
-    strategy: true,
-    yourPlay: false,
-    perfectPlay: false,
-    playByPlay: false
-  });
-
-  // Toggle accordion section - on mobile, close others when opening one
-  const toggleSection = useCallback((sectionId) => {
-    setOpenSections(prev => {
-      // Check if we're on mobile (< 768px)
-      const isMobile = window.innerWidth < 768;
-
-      if (isMobile) {
-        // Mobile: only one section open at a time
-        const newState = {
-          strategy: false,
-          yourPlay: false,
-          perfectPlay: false,
-          playByPlay: false
-        };
-        // Toggle the clicked section (if it was open, close it; otherwise open it)
-        newState[sectionId] = !prev[sectionId];
-        return newState;
-      } else {
-        // Desktop: allow multiple sections open
-        return { ...prev, [sectionId]: !prev[sectionId] };
-      }
-    });
-  }, []);
+  // No accordion state needed - all sections always visible in stacked layout
 
   // Fetch hand details
   useEffect(() => {
@@ -821,26 +776,24 @@ const HandReviewModal = ({ handId, onClose }) => {
   // Total plays for navigation
   const totalPlays = handData?.play_history?.length || 0;
 
-  // Navigate with keyboard - works when Play-by-Play section is open
+  // Navigate with keyboard - arrow keys control replay navigation
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
       onClose();
       return;
     }
 
-    // When Play-by-Play section is open, arrow keys navigate the replay
-    if (openSections.playByPlay) {
-      if (e.key === 'ArrowLeft' && replayPosition > 0) {
-        setReplayPosition(p => p - 1);
-      } else if (e.key === 'ArrowRight' && replayPosition < totalPlays) {
-        setReplayPosition(p => p + 1);
-      } else if (e.key === 'Home') {
-        setReplayPosition(0);
-      } else if (e.key === 'End') {
-        setReplayPosition(totalPlays);
-      }
+    // Arrow keys navigate the replay (always available now with stacked layout)
+    if (e.key === 'ArrowLeft' && replayPosition > 0) {
+      setReplayPosition(p => p - 1);
+    } else if (e.key === 'ArrowRight' && replayPosition < totalPlays) {
+      setReplayPosition(p => p + 1);
+    } else if (e.key === 'Home') {
+      setReplayPosition(0);
+    } else if (e.key === 'End') {
+      setReplayPosition(totalPlays);
     }
-  }, [openSections.playByPlay, replayPosition, totalPlays, onClose]);
+  }, [replayPosition, totalPlays, onClose]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
@@ -872,42 +825,18 @@ const HandReviewModal = ({ handId, onClose }) => {
 
   const totalTricks = tricks.length;
 
-  // Generate summary text for collapsed accordion sections
-  const getStrategySummary = () => {
-    if (handData?.strategy_summary?.summary) {
-      // Truncate to ~50 chars for preview
-      const full = handData.strategy_summary.summary;
-      return full.length > 50 ? full.substring(0, 47) + '...' : full;
-    }
-    return 'View deal and strategy';
-  };
-
-  const getYourPlaySummary = () => {
+  // Generate header-right content for section cards
+  const getYourPlayHeaderRight = () => {
     const summary = handData?.play_quality_summary;
     if (summary?.has_data) {
-      return `${summary.accuracy_rate}% accuracy`;
+      return <span className="accuracy-badge">{summary.accuracy_rate}% accuracy</span>;
     }
-    return 'View your performance';
-  };
-
-  const getPerfectPlaySummary = () => {
-    if (handData?.dd_analysis?.dd_table) {
-      const ddTricks = handData?.par_comparison?.dd_tricks;
-      return ddTricks ? `${ddTricks} tricks achievable` : 'View optimal analysis';
-    }
-    return 'View optimal analysis';
-  };
-
-  const getPlayByPlaySummary = () => {
-    if (totalPlays > 0) {
-      return `${totalTricks} tricks to review`;
-    }
-    return 'Step through each play';
+    return null;
   };
 
   return (
     <div className="hand-review-modal-overlay" onClick={onClose}>
-      <div className="hand-review-modal accordion-layout" onClick={e => e.stopPropagation()}>
+      <div className="hand-review-modal stacked-layout" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="modal-header">
           <div className="modal-title">
@@ -925,20 +854,17 @@ const HandReviewModal = ({ handId, onClose }) => {
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
-        {/* Accordion Content */}
-        <div className="modal-content accordion-container">
+        {/* Stacked Section Cards */}
+        <div className="modal-content stacked-container">
 
           {/* SECTION 1: STRATEGY - Deal overview and strategic guidance */}
-          <AccordionSection
+          <SectionCard
             id="strategy"
             title="Strategy"
             subtitle="Deal overview and plan"
             icon="🎯"
-            isOpen={openSections.strategy}
-            onToggle={() => toggleSection('strategy')}
-            summary={getStrategySummary()}
           >
-            {/* Deal display - 4 hands in text format */}
+            {/* Deal display - 4 hands in compass layout */}
             {handData?.deal && (
               <div className="deal-display">
                 <div className="north-position">
@@ -982,31 +908,26 @@ const HandReviewModal = ({ handId, onClose }) => {
             {handData?.strategy_summary && (
               <StrategySummaryDisplay strategy={handData.strategy_summary} />
             )}
-          </AccordionSection>
+          </SectionCard>
 
           {/* SECTION 2: YOUR PLAY - Performance summary */}
-          <AccordionSection
+          <SectionCard
             id="yourPlay"
             title="Your Play"
             subtitle="Performance summary"
             icon="📊"
-            isOpen={openSections.yourPlay}
-            onToggle={() => toggleSection('yourPlay')}
-            summary={getYourPlaySummary()}
+            headerRight={getYourPlayHeaderRight()}
           >
             <PlayQualitySummary summary={handData?.play_quality_summary} />
-          </AccordionSection>
+          </SectionCard>
 
           {/* SECTION 3: PERFECT PLAY - DD analysis */}
           {handData?.dd_analysis && (
-            <AccordionSection
+            <SectionCard
               id="perfectPlay"
               title="Perfect Play"
               subtitle="Optimal analysis"
               icon="✨"
-              isOpen={openSections.perfectPlay}
-              onToggle={() => toggleSection('perfectPlay')}
-              summary={getPerfectPlaySummary()}
             >
               <div className="dd-analysis-section">
                 <DDTableDisplay
@@ -1021,19 +942,16 @@ const HandReviewModal = ({ handId, onClose }) => {
                   tricksTaken={handData.tricks_taken}
                 />
               </div>
-            </AccordionSection>
+            </SectionCard>
           )}
 
           {/* SECTION 4: PLAY-BY-PLAY - Interactive replay */}
           {tricks.length > 0 && (
-            <AccordionSection
+            <SectionCard
               id="playByPlay"
               title="Play-by-Play"
-              subtitle="Card-by-card replay"
+              subtitle={`${totalTricks} tricks to review`}
               icon="🎬"
-              isOpen={openSections.playByPlay}
-              onToggle={() => toggleSection('playByPlay')}
-              summary={getPlayByPlaySummary()}
             >
               <div className="replay-mode">
                 {/* Replay navigation */}
@@ -1140,7 +1058,7 @@ const HandReviewModal = ({ handId, onClose }) => {
 
                 <p className="navigation-hint">Use ← → keys to step through plays</p>
               </div>
-            </AccordionSection>
+            </SectionCard>
           )}
         </div>
       </div>

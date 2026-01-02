@@ -86,7 +86,7 @@
 .hand-review-modal {
   background: white;
   border-radius: 16px;
-  max-width: 900px;
+  max-width: 1100px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
@@ -332,24 +332,24 @@
   margin-right: var(--space-2);
 }
 
-/* Card sizing for Strategy section - slightly smaller than trick display */
+/* Card sizing for Strategy section - larger for better visibility */
 .strategy-hand .playable-card,
 .strategy-hand .playable-card.disabled {
-  width: 40px;
-  height: 56px;
-  min-width: 40px;
-  min-height: 56px;
+  width: 48px;
+  height: 68px;
+  min-width: 48px;
+  min-height: 68px;
   padding: 0;
   border-width: 1px;
   border-radius: var(--radius-sm);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   cursor: default;
   background: var(--bg-card);
 }
 
 /* Overlap cards within suit groups */
 .strategy-suit-group .playable-card {
-  margin-left: -18px;
+  margin-left: -22px;
 }
 
 .strategy-suit-group .playable-card:first-child {
@@ -358,19 +358,19 @@
 
 /* Card text positioning for strategy cards */
 .strategy-hand .playable-card > div {
-  top: 2px;
-  left: 3px;
+  top: 3px;
+  left: 4px;
 }
 
 /* Rank text */
 .strategy-hand .playable-card span:first-child {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
 }
 
 /* Suit symbol */
 .strategy-hand .playable-card span:last-child {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
 }
 
@@ -386,6 +386,33 @@
   .strategy-hand {
     min-width: 120px;
     padding: var(--space-2) var(--space-3);
+  }
+
+  .strategy-hand .playable-card,
+  .strategy-hand .playable-card.disabled {
+    width: 40px;
+    height: 56px;
+    min-width: 40px;
+    min-height: 56px;
+  }
+
+  .strategy-suit-group .playable-card {
+    margin-left: -18px;
+  }
+
+  .strategy-hand .playable-card span:first-child {
+    font-size: 14px;
+  }
+
+  .strategy-hand .playable-card span:last-child {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .strategy-hand {
+    min-width: 90px;
+    padding: var(--space-2);
   }
 
   .strategy-hand .playable-card,
@@ -406,33 +433,6 @@
 
   .strategy-hand .playable-card span:last-child {
     font-size: 10px;
-  }
-}
-
-@media (max-width: 480px) {
-  .strategy-hand {
-    min-width: 100px;
-    padding: var(--space-2);
-  }
-
-  .strategy-hand .playable-card,
-  .strategy-hand .playable-card.disabled {
-    width: 30px;
-    height: 42px;
-    min-width: 30px;
-    min-height: 42px;
-  }
-
-  .strategy-suit-group .playable-card {
-    margin-left: -14px;
-  }
-
-  .strategy-hand .playable-card span:first-child {
-    font-size: 10px;
-  }
-
-  .strategy-hand .playable-card span:last-child {
-    font-size: 8px;
   }
 }
 
@@ -1964,231 +1964,167 @@
 }
 
 /* =====================================================
-   ACCORDION LAYOUT - Unified Hand Analysis UI
+   STACKED CARD LAYOUT - Section Cards (Always Visible)
    ===================================================== */
 
-/* Accordion container */
-.accordion-container {
+/* Stacked container */
+.stacked-container {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: var(--space-4, 16px);
+  padding: var(--space-4, 16px);
 }
 
-/* Accordion section wrapper */
-.accordion-section {
+/* Section card wrapper */
+.section-card {
   background: var(--bg-card, white);
   border: 1px solid var(--border-color, #e5e7eb);
-  overflow: hidden;
-}
-
-.accordion-section:first-child {
-  border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
-}
-
-.accordion-section:last-child {
-  border-radius: 0 0 var(--radius-lg, 12px) var(--radius-lg, 12px);
-}
-
-.accordion-section:not(:last-child) {
-  border-bottom: none;
-}
-
-/* Only one section - full rounded corners */
-.accordion-section:first-child:last-child {
   border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* Accordion header button - Light mode styling */
-.accordion-header {
+/* Section card header */
+.section-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
-  padding: var(--space-4) var(--space-5);
-  background: var(--bg-secondary);
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  transition: background-color 0.2s ease;
-  min-height: 60px;
-}
-
-.accordion-header:hover {
-  background: var(--bg-hover);
-}
-
-.accordion-section.open .accordion-header {
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+  background: var(--bg-secondary, #f8fafc);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
 }
 
 /* Title group with icon */
-.accordion-title-group {
+.section-title-group {
   display: flex;
   align-items: center;
   gap: var(--space-3, 12px);
 }
 
-.accordion-icon {
+.section-icon {
   font-size: 20px;
   flex-shrink: 0;
 }
 
-.accordion-titles {
+.section-titles {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.accordion-title {
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
+.section-title {
+  font-size: var(--text-base, 16px);
+  font-weight: var(--font-semibold, 600);
+  color: var(--text-primary, #1f2937);
 }
 
-.accordion-subtitle {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
+.section-subtitle {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary, #6b7280);
 }
 
-/* Right side with summary and toggle */
-.accordion-right {
+/* Header right content (e.g., accuracy badge) */
+.section-header-right {
   display: flex;
   align-items: center;
-  gap: var(--space-3, 12px);
+  gap: var(--space-2, 8px);
 }
 
-.accordion-summary {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.accuracy-badge {
+  font-size: var(--text-sm, 14px);
+  font-weight: var(--font-semibold, 600);
+  color: var(--color-success-dark, #166534);
+  background: var(--bg-success-light, #dcfce7);
+  padding: 4px 12px;
+  border-radius: 16px;
 }
 
-.accordion-toggle-icon {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  transition: transform 0.2s ease;
-}
-
-.accordion-toggle-icon.open {
-  transform: rotate(180deg);
-}
-
-/* Accordion content */
-.accordion-content {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease;
-}
-
-.accordion-content.open {
-  max-height: 2000px; /* Large enough to accommodate content */
-  overflow: visible;
-}
-
-.accordion-content > * {
+/* Section card content */
+.section-card-content {
   padding: var(--space-4, 16px) var(--space-5, 20px);
 }
 
-/* Nested content spacing adjustments */
-.accordion-content .deal-display {
+/* Content spacing adjustments for stacked layout */
+.section-card-content .deal-display {
   margin-bottom: 0;
 }
 
-.accordion-content .strategy-summary-display {
+.section-card-content .strategy-summary-display {
   margin-bottom: 0;
-  border-radius: 0;
 }
 
-.accordion-content .play-quality-summary {
+.section-card-content .play-quality-summary {
   margin-bottom: 0;
-  border-radius: 0;
   background: transparent;
-}
-
-.accordion-content .dd-analysis-section {
-  margin: 0;
-  padding: var(--space-4, 16px) var(--space-5, 20px);
-}
-
-.accordion-content .replay-mode {
-  padding: var(--space-4, 16px) var(--space-5, 20px);
-}
-
-/* Modal layout adjustments for accordion */
-.hand-review-modal.accordion-layout .modal-content {
   padding: 0;
 }
 
-.hand-review-modal.accordion-layout .modal-content.accordion-container {
-  padding: var(--space-4, 16px);
+.section-card-content .dd-analysis-section {
+  margin: 0;
+  padding: 0;
 }
 
-/* Responsive accordion styles */
+.section-card-content .replay-mode {
+  padding: 0;
+}
+
+/* Modal layout for stacked cards */
+.hand-review-modal.stacked-layout .modal-content {
+  padding: 0;
+}
+
+/* Responsive stacked card styles */
 @media (max-width: 768px) {
-  .accordion-header {
-    padding: var(--space-3, 12px) var(--space-4, 16px);
-    min-height: 56px;
+  .stacked-container {
+    gap: var(--space-3, 12px);
+    padding: var(--space-3, 12px);
   }
 
-  .accordion-icon {
+  .section-card-header {
+    padding: var(--space-3, 12px) var(--space-4, 16px);
+  }
+
+  .section-icon {
     font-size: 18px;
   }
 
-  .accordion-title {
+  .section-title {
     font-size: var(--text-sm, 14px);
   }
 
-  .accordion-subtitle {
+  .section-subtitle {
     font-size: var(--text-xs, 12px);
   }
 
-  .accordion-summary {
-    display: none; /* Hide summary on mobile - space is limited */
-  }
-
-  .accordion-content > * {
+  .section-card-content {
     padding: var(--space-3, 12px) var(--space-4, 16px);
-  }
-
-  .hand-review-modal.accordion-layout .modal-content.accordion-container {
-    padding: var(--space-2, 8px);
   }
 }
 
 @media (max-width: 480px) {
-  .accordion-header {
-    padding: var(--space-2, 8px) var(--space-3, 12px);
-    min-height: 52px;
+  .stacked-container {
+    gap: var(--space-2, 8px);
+    padding: var(--space-2, 8px);
   }
 
-  .accordion-title-group {
+  .section-card-header {
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+  }
+
+  .section-title-group {
     gap: var(--space-2, 8px);
   }
 
-  .accordion-icon {
+  .section-icon {
     font-size: 16px;
   }
 
-  .accordion-content > * {
+  .section-card-content {
     padding: var(--space-2, 8px) var(--space-3, 12px);
   }
 
-  .hand-review-modal.accordion-layout .modal-content.accordion-container {
-    padding: var(--space-1, 4px);
-  }
-}
-
-/* Touch-friendly accordion on mobile */
-@media (hover: none) and (pointer: coarse) {
-  .accordion-header {
-    min-height: 56px; /* Ensure 44px+ touch target */
-  }
-
-  .accordion-header:active {
-    background: var(--bg-hover, #e5e7eb);
+  .accuracy-badge {
+    font-size: var(--text-xs, 12px);
+    padding: 2px 8px;
   }
 }
