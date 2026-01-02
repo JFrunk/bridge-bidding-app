@@ -27,6 +27,7 @@ from engine.play.ai.minimax_ai import MinimaxPlayAI
 from engine.learning.learning_path_api import register_learning_endpoints
 from engine.session_manager import SessionManager, GameSession
 from engine.bridge_rules_engine import BridgeRulesEngine, GameState as BridgeGameState
+from engine.feedback.play_feedback import get_play_feedback_generator
 
 
 # Session state management (fixes global state race conditions)
@@ -2417,7 +2418,29 @@ def play_card():
                 "legal": False,
                 "error": "Must follow suit if able"
             }), 400
-        
+
+        # === EVALUATE PLAY FOR DASHBOARD (before modifying state) ===
+        # Record plays from South OR from dummy when user controls dummy (as declarer)
+        user_id = data.get('user_id')
+        play_feedback = None
+        is_user_controlled = position == 'S' or (
+            position == state.play_state.dummy and
+            state.play_state.contract.declarer == 'S'
+        )
+        if user_id and is_user_controlled:
+            try:
+                feedback_gen = get_play_feedback_generator(use_dds=PLATFORM_ALLOWS_DDS)
+                play_feedback = feedback_gen.evaluate_and_store(
+                    user_id=user_id,
+                    play_state=state.play_state,
+                    user_card=card,
+                    position=position,
+                    session_id=data.get('session_id')
+                )
+            except Exception as feedback_err:
+                # Non-blocking - don't fail the play if feedback fails
+                print(f"Play feedback error (non-blocking): {feedback_err}")
+
         # Play the card
         state.play_state.current_trick.append((card, position))
 
