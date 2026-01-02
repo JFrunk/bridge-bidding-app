@@ -1106,7 +1106,7 @@
 .replay-hand.vertical-2col .replay-hand-2col {
   display: flex;
   flex-direction: row;
-  gap: 4px;
+  gap: 2px;
 }
 
 .replay-hand.vertical-2col .replay-col {
@@ -1115,23 +1115,37 @@
 }
 
 .replay-hand.vertical-2col .playable-card {
-  margin-top: -40px;
+  margin-top: -28px; /* Shows ~22px of each card (was -40px showing only 16px) */
 }
 
 .replay-hand.vertical-2col .replay-col .playable-card:first-child {
   margin-top: 0;
 }
 
-/* Make cards smaller in replay mode for compact layout */
+/* Compact cards in replay mode - smaller size, more visibility */
 .replay-hand .playable-card {
-  width: 40px !important;
-  height: 56px !important;
-  min-width: 40px !important;
-  min-height: 56px !important;
+  width: 36px !important;
+  height: 50px !important;
+  min-width: 36px !important;
+  min-height: 50px !important;
+  font-size: 12px !important;
+}
+
+/* Adjust card text sizing for smaller cards */
+.replay-hand .playable-card .text-2xl {
+  font-size: 14px !important;
+}
+
+.replay-hand .playable-card .text-lg {
+  font-size: 11px !important;
+}
+
+.replay-hand .playable-card .text-5xl {
+  font-size: 20px !important;
 }
 
 .replay-hand.horizontal .playable-card {
-  margin-left: -24px;
+  margin-left: -14px; /* Shows ~22px of each card (was -24px showing only 16px) */
 }
 
 .replay-hand.horizontal .replay-suit-group .playable-card:first-child {
@@ -1317,10 +1331,18 @@
   }
 
   .replay-hand .playable-card {
-    width: 40px !important;
-    height: 56px !important;
-    min-width: 40px !important;
-    min-height: 56px !important;
+    width: 32px !important;
+    height: 44px !important;
+    min-width: 32px !important;
+    min-height: 44px !important;
+  }
+
+  .replay-hand.vertical-2col .playable-card {
+    margin-top: -24px; /* Mobile: Shows ~20px of each card */
+  }
+
+  .replay-hand.horizontal .playable-card {
+    margin-left: -12px; /* Mobile: Shows ~20px of each card */
   }
 
   .replay-trick-display {
