@@ -313,6 +313,14 @@ const HandReviewModal = ({ handId, onClose }) => {
         if (!response.ok) throw new Error('Failed to load hand');
         const data = await response.json();
         setHandData(data);
+
+        // Default to the first trick with analysis (usually trick 1 for opening lead)
+        if (data?.play_quality_summary?.all_decisions?.length > 0) {
+          const firstDecisionTrick = Math.min(
+            ...data.play_quality_summary.all_decisions.map(d => d.trick_number)
+          );
+          setCurrentTrick(firstDecisionTrick);
+        }
       } catch (err) {
         setError(err.message);
       } finally {
