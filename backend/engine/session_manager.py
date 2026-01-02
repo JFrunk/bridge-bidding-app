@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Tuple
 import json
 from datetime import datetime
+import logging
 from engine.play_engine import Contract
 
 # Use database abstraction layer for SQLite/PostgreSQL compatibility
@@ -22,6 +23,16 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from db import get_connection
+
+# DDS analysis for post-game insights (optional - graceful degradation)
+try:
+    from engine.play.dds_analysis import get_dds_service, is_dds_available
+    DDS_ENABLED = is_dds_available()
+except ImportError:
+    DDS_ENABLED = False
+    get_dds_service = None
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -326,43 +337,115 @@ class SessionManager:
 
         contract = hand_data.get('contract')
 
-        # Insert hand result
-        cursor.execute("""
-            INSERT INTO session_hands
-            (session_id, hand_number, dealer, vulnerability,
-             contract_level, contract_strain, contract_declarer, contract_doubled,
-             tricks_taken, tricks_needed, made,
-             hand_score, score_breakdown, honors_bonus,
-             ns_total_after, ew_total_after,
-             deal_data, auction_history, play_history,
-             user_played_position, user_was_declarer, user_was_dummy,
-             hand_duration_seconds)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            session.id,
-            hand_data['hand_number'],
-            hand_data['dealer'],
-            hand_data['vulnerability'],
-            contract.level if contract else None,
-            contract.strain if contract else None,
-            contract.declarer if contract else None,
-            contract.doubled if contract else 0,
-            hand_data.get('tricks_taken'),
-            contract.tricks_needed if contract else None,
-            hand_data.get('made', False),
-            hand_data['hand_score'],
-            json.dumps(hand_data.get('breakdown', {})),
-            hand_data.get('breakdown', {}).get('honors_bonus', 0),
-            session.ns_score,
-            session.ew_score,
-            json.dumps(hand_data.get('deal_data', {})),
-            json.dumps(hand_data.get('auction_history', [])),
-            json.dumps(hand_data.get('play_history', [])),
-            session.player_position,
-            hand_data.get('user_was_declarer', False),
-            hand_data.get('user_was_dummy', False),
-            hand_data.get('hand_duration_seconds', 0)
-        ))
+        # Check if DDS columns exist (migration 007)
+        cursor.execute("PRAGMA table_info(session_hands)")
+        columns = {row['name'] for row in cursor.fetchall()}
+        has_dds_columns = 'dds_analysis' in columns
+
+        # Perform DDS analysis if available (non-blocking)
+        dds_analysis_json = None
+        par_score = None
+        par_contract = None
+        dd_tricks = None
+
+        if has_dds_columns and DDS_ENABLED and contract and hand_data.get('deal_data'):
+            try:
+                dds_result = self._perform_dds_analysis(
+                    hand_data['deal_data'],
+                    hand_data.get('dealer', 'N'),
+                    hand_data.get('vulnerability', 'None'),
+                    contract
+                )
+                if dds_result:
+                    dds_analysis_json = dds_result.get('analysis_json')
+                    par_score = dds_result.get('par_score')
+                    par_contract = dds_result.get('par_contract')
+                    dd_tricks = dds_result.get('dd_tricks')
+                    logger.info(f"DDS analysis complete: par={par_score}, dd_tricks={dd_tricks}")
+            except Exception as e:
+                logger.warning(f"DDS analysis failed (non-blocking): {e}")
+
+        # Insert hand result - use appropriate query based on schema
+        if has_dds_columns:
+            cursor.execute("""
+                INSERT INTO session_hands
+                (session_id, hand_number, dealer, vulnerability,
+                 contract_level, contract_strain, contract_declarer, contract_doubled,
+                 tricks_taken, tricks_needed, made,
+                 hand_score, score_breakdown, honors_bonus,
+                 ns_total_after, ew_total_after,
+                 deal_data, auction_history, play_history,
+                 user_played_position, user_was_declarer, user_was_dummy,
+                 hand_duration_seconds,
+                 dds_analysis, par_score, par_contract, dd_tricks)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                session.id,
+                hand_data['hand_number'],
+                hand_data['dealer'],
+                hand_data['vulnerability'],
+                contract.level if contract else None,
+                contract.strain if contract else None,
+                contract.declarer if contract else None,
+                contract.doubled if contract else 0,
+                hand_data.get('tricks_taken'),
+                contract.tricks_needed if contract else None,
+                hand_data.get('made', False),
+                hand_data['hand_score'],
+                json.dumps(hand_data.get('breakdown', {})),
+                hand_data.get('breakdown', {}).get('honors_bonus', 0),
+                session.ns_score,
+                session.ew_score,
+                json.dumps(hand_data.get('deal_data', {})),
+                json.dumps(hand_data.get('auction_history', [])),
+                json.dumps(hand_data.get('play_history', [])),
+                session.player_position,
+                hand_data.get('user_was_declarer', False),
+                hand_data.get('user_was_dummy', False),
+                hand_data.get('hand_duration_seconds', 0),
+                dds_analysis_json,
+                par_score,
+                par_contract,
+                dd_tricks
+            ))
+        else:
+            # Fallback for databases without DDS columns
+            cursor.execute("""
+                INSERT INTO session_hands
+                (session_id, hand_number, dealer, vulnerability,
+                 contract_level, contract_strain, contract_declarer, contract_doubled,
+                 tricks_taken, tricks_needed, made,
+                 hand_score, score_breakdown, honors_bonus,
+                 ns_total_after, ew_total_after,
+                 deal_data, auction_history, play_history,
+                 user_played_position, user_was_declarer, user_was_dummy,
+                 hand_duration_seconds)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                session.id,
+                hand_data['hand_number'],
+                hand_data['dealer'],
+                hand_data['vulnerability'],
+                contract.level if contract else None,
+                contract.strain if contract else None,
+                contract.declarer if contract else None,
+                contract.doubled if contract else 0,
+                hand_data.get('tricks_taken'),
+                contract.tricks_needed if contract else None,
+                hand_data.get('made', False),
+                hand_data['hand_score'],
+                json.dumps(hand_data.get('breakdown', {})),
+                hand_data.get('breakdown', {}).get('honors_bonus', 0),
+                session.ns_score,
+                session.ew_score,
+                json.dumps(hand_data.get('deal_data', {})),
+                json.dumps(hand_data.get('auction_history', [])),
+                json.dumps(hand_data.get('play_history', [])),
+                session.player_position,
+                hand_data.get('user_was_declarer', False),
+                hand_data.get('user_was_dummy', False),
+                hand_data.get('hand_duration_seconds', 0)
+            ))
 
         # Update session
         cursor.execute("""
@@ -387,6 +470,104 @@ class SessionManager:
 
         conn.commit()
         conn.close()
+
+    def _perform_dds_analysis(self, deal_data: Dict, dealer: str,
+                              vulnerability: str, contract: Contract) -> Optional[Dict]:
+        """
+        Perform DDS analysis on a completed hand.
+
+        Args:
+            deal_data: Dictionary with hand data for all 4 positions
+            dealer: Dealer position ('N', 'E', 'S', 'W')
+            vulnerability: Vulnerability string ('None', 'NS', 'EW', 'Both')
+            contract: Contract object with level, strain, declarer
+
+        Returns:
+            Dictionary with analysis_json, par_score, par_contract, dd_tricks
+            or None if analysis fails
+        """
+        if not DDS_ENABLED or get_dds_service is None:
+            return None
+
+        try:
+            dds_service = get_dds_service()
+            if dds_service is None:
+                return None
+
+            # Convert deal_data to PBN format for DDS
+            # deal_data format: {'North': Hand, 'East': Hand, 'South': Hand, 'West': Hand}
+            # or {'North': {'spades': [...], ...}, ...}
+
+            # Build hands in PBN format
+            hands_pbn = []
+            for pos in ['N', 'E', 'S', 'W']:
+                pos_name = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[pos]
+                hand_data = deal_data.get(pos_name, deal_data.get(pos))
+
+                if hand_data is None:
+                    logger.warning(f"Missing hand data for {pos_name}")
+                    return None
+
+                # Handle different hand data formats
+                if hasattr(hand_data, 'cards'):
+                    # Hand object
+                    suits = {'S': [], 'H': [], 'D': [], 'C': []}
+                    for card in hand_data.cards:
+                        suits[card.suit].append(card.rank)
+                elif isinstance(hand_data, dict):
+                    # Dictionary format {'spades': [...], 'hearts': [...], ...}
+                    suit_map = {'spades': 'S', 'hearts': 'H', 'diamonds': 'D', 'clubs': 'C'}
+                    suits = {'S': [], 'H': [], 'D': [], 'C': []}
+                    for suit_name, suit_letter in suit_map.items():
+                        cards = hand_data.get(suit_name, [])
+                        suits[suit_letter] = [c if isinstance(c, str) else str(c) for c in cards]
+                else:
+                    logger.warning(f"Unknown hand data format for {pos_name}")
+                    return None
+
+                # Convert to PBN format (SHDC order)
+                hand_pbn = '.'.join([
+                    ''.join(suits['S']),
+                    ''.join(suits['H']),
+                    ''.join(suits['D']),
+                    ''.join(suits['C'])
+                ])
+                hands_pbn.append(hand_pbn)
+
+            # Full PBN deal string: "N:spades.hearts.diamonds.clubs spades.hearts..."
+            deal_pbn = f"N:{' '.join(hands_pbn)}"
+
+            # Perform full analysis
+            analysis = dds_service.analyze_deal(deal_pbn, dealer, vulnerability)
+
+            if analysis is None:
+                return None
+
+            # Get DD tricks for the actual contract played
+            dd_tricks = None
+            if analysis.dd_table and contract:
+                declarer = contract.declarer
+                strain = contract.strain
+                # DD table is indexed by declarer and strain
+                strain_map = {'C': 0, 'D': 1, 'H': 2, 'S': 3, 'NT': 4}
+                declarer_map = {'N': 0, 'E': 1, 'S': 2, 'W': 3}
+
+                strain_idx = strain_map.get(strain)
+                declarer_idx = declarer_map.get(declarer)
+
+                if strain_idx is not None and declarer_idx is not None:
+                    dd_tricks = analysis.dd_table.tricks[declarer_idx][strain_idx]
+
+            return {
+                'analysis_json': json.dumps(analysis.to_dict()) if hasattr(analysis, 'to_dict') else None,
+                'par_score': analysis.par_result.score if analysis.par_result else None,
+                'par_contract': analysis.par_result.contract if analysis.par_result else None,
+                'dd_tricks': dd_tricks
+            }
+
+        except Exception as e:
+            logger.warning(f"DDS analysis failed: {e}")
+            return None
 
     def get_session_hands(self, session_id: int) -> List[Dict]:
         """Get all hands for a session"""
