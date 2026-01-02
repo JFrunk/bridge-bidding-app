@@ -1128,20 +1128,25 @@
   height: 50px !important;
   min-width: 36px !important;
   min-height: 50px !important;
-  font-size: 12px !important;
 }
 
-/* Adjust card text sizing for smaller cards */
-.replay-hand .playable-card .text-2xl {
+/* Card text positioning and sizing for replay mode */
+/* Target the inner container that holds rank and suit */
+.replay-hand .playable-card > div {
+  top: 2px !important;
+  left: 3px !important;
+}
+
+/* Rank text - same size for all positions */
+.replay-hand .playable-card span:first-child {
   font-size: 14px !important;
+  line-height: 1 !important;
 }
 
-.replay-hand .playable-card .text-lg {
-  font-size: 11px !important;
-}
-
-.replay-hand .playable-card .text-5xl {
-  font-size: 20px !important;
+/* Suit symbol - same size for all positions */
+.replay-hand .playable-card span:last-child {
+  font-size: 12px !important;
+  line-height: 1 !important;
 }
 
 .replay-hand.horizontal .playable-card {
