@@ -932,6 +932,297 @@
   opacity: 0.4;
 }
 
+/* ===== VIEW MODE TOGGLE ===== */
+
+.view-mode-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 24px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mode-btn {
+  padding: 8px 20px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.mode-btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+/* ===== REPLAY MODE ===== */
+
+.replay-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.replay-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.replay-navigation button {
+  padding: 8px 16px;
+  background: #e5e7eb;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.replay-navigation button:hover:not(:disabled) {
+  background: #d1d5db;
+}
+
+.replay-navigation button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.replay-counter {
+  font-weight: 600;
+  color: #374151;
+  min-width: 160px;
+  text-align: center;
+}
+
+.trick-indicator {
+  font-weight: 400;
+  color: #6b7280;
+}
+
+/* Replay table - 4 hands layout */
+.replay-table {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #f0f9ff;
+  border-radius: 12px;
+  min-height: 500px;
+}
+
+.replay-middle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.replay-position {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.replay-north,
+.replay-south {
+  display: flex;
+  justify-content: center;
+}
+
+.replay-west,
+.replay-east {
+  flex: 0 0 auto;
+  min-width: 80px;
+}
+
+.replay-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+/* Replay hand display */
+.replay-hand {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.replay-hand-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.replay-hand-cards {
+  display: flex;
+  gap: 4px;
+}
+
+.replay-hand.horizontal .replay-hand-cards {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.replay-hand.vertical .replay-hand-cards {
+  flex-direction: column;
+  align-items: center;
+}
+
+.replay-suit-group {
+  display: flex;
+}
+
+.replay-hand.horizontal .replay-suit-group {
+  flex-direction: row;
+  margin-right: 8px;
+}
+
+.replay-hand.vertical .replay-suit-group {
+  flex-direction: column;
+  margin-bottom: 4px;
+}
+
+/* Make cards smaller in replay mode */
+.replay-hand .playable-card {
+  width: 48px !important;
+  height: 68px !important;
+  min-width: 48px !important;
+  min-height: 68px !important;
+}
+
+.replay-hand.horizontal .playable-card {
+  margin-left: -28px;
+}
+
+.replay-hand.horizontal .replay-suit-group .playable-card:first-child {
+  margin-left: 0;
+}
+
+.replay-hand.vertical .playable-card {
+  margin-top: -48px;
+}
+
+.replay-hand.vertical .replay-suit-group .playable-card:first-child {
+  margin-top: 0;
+}
+
+.replay-hand-empty {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+  padding: 8px;
+}
+
+/* Replay trick display - compass layout */
+.replay-trick-display {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  background: #e0f2fe;
+  border-radius: 12px;
+  border: 2px solid #7dd3fc;
+}
+
+.replay-trick-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.replay-trick-leader {
+  font-size: 11px;
+  color: #6b7280;
+  background: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.replay-trick-north {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.replay-trick-south {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.replay-trick-west {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.replay-trick-east {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.replay-trick-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.replay-trick-card-wrapper .playable-card {
+  width: 44px !important;
+  height: 62px !important;
+  min-width: 44px !important;
+  min-height: 62px !important;
+}
+
+.replay-trick-position-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.replay-trick-empty {
+  width: 44px;
+  height: 62px;
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px dashed #cbd5e1;
+  border-radius: 6px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .hand-review-modal-overlay {
@@ -987,5 +1278,89 @@
   .trick-navigation button {
     padding: 4px 12px;
     font-size: 12px;
+  }
+
+  /* Replay mode mobile adjustments */
+  .replay-navigation {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .replay-navigation button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .replay-counter {
+    min-width: 100%;
+    order: -1;
+    margin-bottom: 4px;
+  }
+
+  .replay-table {
+    min-height: 400px;
+    padding: 8px;
+  }
+
+  .replay-middle-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .replay-west,
+  .replay-east {
+    min-width: auto;
+  }
+
+  .replay-hand.vertical .replay-hand-cards {
+    flex-direction: row;
+  }
+
+  .replay-hand.vertical .replay-suit-group {
+    flex-direction: row;
+    margin-bottom: 0;
+    margin-right: 8px;
+  }
+
+  .replay-hand.vertical .playable-card {
+    margin-top: 0;
+    margin-left: -28px;
+  }
+
+  .replay-hand.vertical .replay-suit-group .playable-card:first-child {
+    margin-left: 0;
+  }
+
+  .replay-hand .playable-card {
+    width: 40px !important;
+    height: 56px !important;
+    min-width: 40px !important;
+    min-height: 56px !important;
+  }
+
+  .replay-trick-display {
+    width: 160px;
+    height: 160px;
+  }
+
+  .replay-trick-card-wrapper .playable-card {
+    width: 36px !important;
+    height: 50px !important;
+    min-width: 36px !important;
+    min-height: 50px !important;
+  }
+
+  .replay-trick-empty {
+    width: 36px;
+    height: 50px;
+  }
+
+  .view-mode-toggle {
+    padding: 8px 12px;
+  }
+
+  .mode-btn {
+    padding: 6px 14px;
+    font-size: 13px;
   }
 }

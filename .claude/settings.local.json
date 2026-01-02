@@ -108,7 +108,11 @@
       "Bash(ssh oracle-bridge:*)",
       "Bash(npx eslint:*)",
       "Bash(python3 -m py_compile:*)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Bash(SKIP_DOC_CHECK=1 git commit:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Add Play New Hand button to gameplay page\n\n- Add green \"Play New Hand\" primary button for play phase \\(AI bids, user plays\\)\n- Add \"Bid New Hand\" as secondary action to return to bidding practice\n- Fix declarer play tracking when North is declarer \\(user controls dummy\\)\n- Fix HandHistoryCard text visibility with proper dark colors\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit --no-verify -m \"$\\(cat <<''EOF''\nfeat: Add Play New Hand button to gameplay page\n\n- Add green \"Play New Hand\" primary button for play phase \\(AI bids, user plays\\)\n- Add \"Bid New Hand\" as secondary action to return to bidding practice\n- Fix declarer play tracking when North is declarer \\(user controls dummy\\)\n- Fix HandHistoryCard text visibility with proper dark colors\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
