@@ -1,0 +1,853 @@
+{
+  "timestamp": "2026-01-01T19:32:19.636730",
+  "scores": {
+    "total_hands": 100,
+    "total_bids": 641,
+    "total_non_pass_bids": 202,
+    "scores": {
+      "legality": 100.0,
+      "appropriateness": 89.1,
+      "conventions": 100.0,
+      "consistency": 100,
+      "reasonableness": 94.1,
+      "game_slam": 63.1,
+      "game_only": 73.3,
+      "slam_only": 22.2,
+      "composite": 94.5
+    },
+    "error_counts": {
+      "legality": 0,
+      "appropriateness": 22,
+      "conventions": 0,
+      "game_slam": 19,
+      "game_only": 12,
+      "slam_only": 7
+    },
+    "situation_counts": {
+      "game_situations": 45,
+      "slam_situations": 9
+    },
+    "errors": {
+      "legality": [],
+      "appropriateness": [
+        {
+          "hand_number": 6,
+          "position": "North",
+          "bid": "3\u2660",
+          "hand_hcp": 10,
+          "hand_total_points": 10,
+          "hand_shape": "3334",
+          "reason": "Bid \u2660 with only 3 cards"
+        },
+        {
+          "hand_number": 14,
+          "position": "East",
+          "bid": "4\u2660",
+          "hand_hcp": 13,
+          "hand_total_points": 13,
+          "hand_shape": "3343",
+          "reason": "Bid \u2660 with only 3 cards"
+        },
+        {
+          "hand_number": 14,
+          "position": "East",
+          "bid": "5\u2665",
+          "hand_hcp": 13,
+          "hand_total_points": 13,
+          "hand_shape": "3343",
+          "reason": "Bid \u2665 with only 3 cards"
+        },
+        {
+          "hand_number": 24,
+          "position": "West",
+          "bid": "2\u2666",
+          "hand_hcp": 8,
+          "hand_total_points": 8,
+          "hand_shape": "3433",
+          "reason": "Bid \u2666 with only 3 cards"
+        },
+        {
+          "hand_number": 35,
+          "position": "North",
+          "bid": "3\u2665",
+          "hand_hcp": 10,
+          "hand_total_points": 10,
+          "hand_shape": "3343",
+          "reason": "Bid \u2665 with only 3 cards"
+        },
+        {
+          "hand_number": 41,
+          "position": "North",
+          "bid": "2\u2666",
+          "hand_hcp": 7,
+          "hand_total_points": 7,
+          "hand_shape": "2434",
+          "reason": "Bid \u2666 with only 3 cards"
+        },
+        {
+          "hand_number": 42,
+          "position": "South",
+          "bid": "2\u2660",
+          "hand_hcp": 6,
+          "hand_total_points": 6,
+          "hand_shape": "3424",
+          "reason": "Bid \u2660 with only 3 cards"
+        },
+        {
+          "hand_number": 43,
+          "position": "South",
+          "bid": "2\u2663",
+          "hand_hcp": 8,
+          "hand_total_points": 9,
+          "hand_shape": "4153",
+          "reason": "Bid \u2663 with only 3 cards"
+        },
+        {
+          "hand_number": 44,
+          "position": "East",
+          "bid": "1\u2663",
+          "hand_hcp": 13,
+          "hand_total_points": 13,
+          "hand_shape": "4333",
+          "reason": "Bid \u2663 with only 3 cards"
+        },
+        {
+          "hand_number": 44,
+          "position": "West",
+          "bid": "2\u2663",
+          "hand_hcp": 7,
+          "hand_total_points": 8,
+          "hand_shape": "2353",
+          "reason": "Bid \u2663 with only 3 cards"
+        }
+      ],
+      "conventions": [],
+      "game_slam": [
+        {
+          "hand_number": 12,
+          "partnership": "EW",
+          "error": "Stopped at 4NT with 34 combined points (slam values)",
+          "combined_points": 34,
+          "final_contract": "4NT",
+          "hand1_points": 15,
+          "hand2_points": 19,
+          "hand1_hcp": 14,
+          "hand2_hcp": 19
+        },
+        {
+          "hand_number": 21,
+          "partnership": "NS",
+          "error": "Stopped at 2NT with 30 combined points",
+          "combined_points": 30,
+          "final_contract": "2NT",
+          "hand1_points": 8,
+          "hand2_points": 22,
+          "hand1_hcp": 8,
+          "hand2_hcp": 21
+        },
+        {
+          "hand_number": 25,
+          "partnership": "EW",
+          "error": "Stopped at 4NT with 37 combined points (slam values)",
+          "combined_points": 37,
+          "final_contract": "4NT",
+          "hand1_points": 14,
+          "hand2_points": 23,
+          "hand1_hcp": 14,
+          "hand2_hcp": 21
+        },
+        {
+          "hand_number": 29,
+          "partnership": "NS",
+          "error": "Stopped at 1\u2660 with 32 combined points",
+          "combined_points": 32,
+          "final_contract": "1\u2660",
+          "hand1_points": 16,
+          "hand2_points": 16,
+          "hand1_hcp": 15,
+          "hand2_hcp": 15
+        },
+        {
+          "hand_number": 30,
+          "partnership": "EW",
+          "error": "Stopped at 3\u2666 with 26 combined points",
+          "combined_points": 26,
+          "final_contract": "3\u2666",
+          "hand1_points": 15,
+          "hand2_points": 11,
+          "hand1_hcp": 14,
+          "hand2_hcp": 8
+        },
+        {
+          "hand_number": 32,
+          "partnership": "NS",
+          "error": "Stopped at 4NT with 35 combined points (slam values)",
+          "combined_points": 35,
+          "final_contract": "4NT",
+          "hand1_points": 14,
+          "hand2_points": 21,
+          "hand1_hcp": 13,
+          "hand2_hcp": 20
+        },
+        {
+          "hand_number": 43,
+          "partnership": "NS",
+          "error": "Stopped at 2\u2660 with 25 combined points",
+          "combined_points": 25,
+          "final_contract": "2\u2660",
+          "hand1_points": 16,
+          "hand2_points": 9,
+          "hand1_hcp": 15,
+          "hand2_hcp": 8
+        },
+        {
+          "hand_number": 51,
+          "partnership": "EW",
+          "error": "Stopped at 3\u2666 with 26 combined points",
+          "combined_points": 26,
+          "final_contract": "3\u2666",
+          "hand1_points": 11,
+          "hand2_points": 15,
+          "hand1_hcp": 8,
+          "hand2_hcp": 13
+        },
+        {
+          "hand_number": 54,
+          "partnership": "NS",
+          "error": "Stopped at 3\u2660 with 25 combined points",
+          "combined_points": 25,
+          "final_contract": "3\u2660",
+          "hand1_points": 9,
+          "hand2_points": 16,
+          "hand1_hcp": 8,
+          "hand2_hcp": 13
+        },
+        {
+          "hand_number": 58,
+          "partnership": "NS",
+          "error": "Stopped at 4NT with 36 combined points (slam values)",
+          "combined_points": 36,
+          "final_contract": "4NT",
+          "hand1_points": 22,
+          "hand2_points": 14,
+          "hand1_hcp": 22,
+          "hand2_hcp": 12
+        }
+      ],
+      "game_only": [
+        {
+          "hand_number": 21,
+          "partnership": "NS",
+          "error": "Stopped at 2NT with 30 combined points",
+          "combined_points": 30,
+          "final_contract": "2NT",
+          "hand1_points": 8,
+          "hand2_points": 22,
+          "hand1_hcp": 8,
+          "hand2_hcp": 21
+        },
+        {
+          "hand_number": 29,
+          "partnership": "NS",
+          "error": "Stopped at 1\u2660 with 32 combined points",
+          "combined_points": 32,
+          "final_contract": "1\u2660",
+          "hand1_points": 16,
+          "hand2_points": 16,
+          "hand1_hcp": 15,
+          "hand2_hcp": 15
+        },
+        {
+          "hand_number": 30,
+          "partnership": "EW",
+          "error": "Stopped at 3\u2666 with 26 combined points",
+          "combined_points": 26,
+          "final_contract": "3\u2666",
+          "hand1_points": 15,
+          "hand2_points": 11,
+          "hand1_hcp": 14,
+          "hand2_hcp": 8
+        },
+        {
+          "hand_number": 43,
+          "partnership": "NS",
+          "error": "Stopped at 2\u2660 with 25 combined points",
+          "combined_points": 25,
+          "final_contract": "2\u2660",
+          "hand1_points": 16,
+          "hand2_points": 9,
+          "hand1_hcp": 15,
+          "hand2_hcp": 8
+        },
+        {
+          "hand_number": 51,
+          "partnership": "EW",
+          "error": "Stopped at 3\u2666 with 26 combined points",
+          "combined_points": 26,
+          "final_contract": "3\u2666",
+          "hand1_points": 11,
+          "hand2_points": 15,
+          "hand1_hcp": 8,
+          "hand2_hcp": 13
+        },
+        {
+          "hand_number": 54,
+          "partnership": "NS",
+          "error": "Stopped at 3\u2660 with 25 combined points",
+          "combined_points": 25,
+          "final_contract": "3\u2660",
+          "hand1_points": 9,
+          "hand2_points": 16,
+          "hand1_hcp": 8,
+          "hand2_hcp": 13
+        },
+        {
+          "hand_number": 64,
+          "partnership": "NS",
+          "error": "Stopped at 2NT with 27 combined points",
+          "combined_points": 27,
+          "final_contract": "2NT",
+          "hand1_points": 6,
+          "hand2_points": 21,
+          "hand1_hcp": 6,
+          "hand2_hcp": 21
+        },
+        {
+          "hand_number": 66,
+          "partnership": "NS",
+          "error": "Stopped at 2\u2665 with 29 combined points",
+          "combined_points": 29,
+          "final_contract": "2\u2665",
+          "hand1_points": 12,
+          "hand2_points": 17,
+          "hand1_hcp": 10,
+          "hand2_hcp": 15
+        },
+        {
+          "hand_number": 72,
+          "partnership": "NS",
+          "error": "Stopped at 4\u2663 with 27 combined points",
+          "combined_points": 27,
+          "final_contract": "4\u2663",
+          "hand1_points": 16,
+          "hand2_points": 11,
+          "hand1_hcp": 16,
+          "hand2_hcp": 11
+        },
+        {
+          "hand_number": 73,
+          "partnership": "NS",
+          "error": "Stopped at 3\u2663 with 30 combined points",
+          "combined_points": 30,
+          "final_contract": "3\u2663",
+          "hand1_points": 14,
+          "hand2_points": 16,
+          "hand1_hcp": 12,
+          "hand2_hcp": 15
+        }
+      ],
+      "slam_only": [
+        {
+          "hand_number": 12,
+          "partnership": "EW",
+          "error": "Stopped at 4NT with 34 combined points (slam values)",
+          "combined_points": 34,
+          "final_contract": "4NT",
+          "hand1_points": 15,
+          "hand2_points": 19,
+          "hand1_hcp": 14,
+          "hand2_hcp": 19
+        },
+        {
+          "hand_number": 25,
+          "partnership": "EW",
+          "error": "Stopped at 4NT with 37 combined points (slam values)",
+          "combined_points": 37,
+          "final_contract": "4NT",
+          "hand1_points": 14,
+          "hand2_points": 23,
+          "hand1_hcp": 14,
+          "hand2_hcp": 21
+        },
+        {
+          "hand_number": 32,
+          "partnership": "NS",
+          "error": "Stopped at 4NT with 35 combined points (slam values)",
+          "combined_points": 35,
+          "final_contract": "4NT",
+          "hand1_points": 14,
+          "hand2_points": 21,
+          "hand1_hcp": 13,
+          "hand2_hcp": 20
+        },
+        {
+          "hand_number": 58,
+          "partnership": "NS",
+          "error": "Stopped at 4NT with 36 combined points (slam values)",
+          "combined_points": 36,
+          "final_contract": "4NT",
+          "hand1_points": 22,
+          "hand2_points": 14,
+          "hand1_hcp": 22,
+          "hand2_hcp": 12
+        },
+        {
+          "hand_number": 74,
+          "partnership": "EW",
+          "error": "Stopped at 5NT with 34 combined points (slam values)",
+          "combined_points": 34,
+          "final_contract": "5NT",
+          "hand1_points": 17,
+          "hand2_points": 17,
+          "hand1_hcp": 17,
+          "hand2_hcp": 16
+        },
+        {
+          "hand_number": 78,
+          "partnership": "NS",
+          "error": "Stopped at 4NT with 40 combined points (slam values)",
+          "combined_points": 40,
+          "final_contract": "4NT",
+          "hand1_points": 17,
+          "hand2_points": 23,
+          "hand1_hcp": 16,
+          "hand2_hcp": 20
+        },
+        {
+          "hand_number": 98,
+          "partnership": "EW",
+          "error": "Stopped at 4\u2660 with 35 combined points (slam values)",
+          "combined_points": 35,
+          "final_contract": "4\u2660",
+          "hand1_points": 13,
+          "hand2_points": 22,
+          "hand1_hcp": 10,
+          "hand2_hcp": 20
+        }
+      ]
+    },
+    "reasonableness_breakdown": {
+      "excellent": 60,
+      "good": 130,
+      "questionable": 0,
+      "poor": 11,
+      "terrible": 1
+    },
+    "grade": "B (Good, minor issues)"
+  },
+  "all_errors": {
+    "legality": [],
+    "appropriateness": [
+      {
+        "hand_number": 6,
+        "position": "North",
+        "bid": "3\u2660",
+        "hand_hcp": 10,
+        "hand_total_points": 10,
+        "hand_shape": "3334",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 14,
+        "position": "East",
+        "bid": "4\u2660",
+        "hand_hcp": 13,
+        "hand_total_points": 13,
+        "hand_shape": "3343",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 14,
+        "position": "East",
+        "bid": "5\u2665",
+        "hand_hcp": 13,
+        "hand_total_points": 13,
+        "hand_shape": "3343",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 24,
+        "position": "West",
+        "bid": "2\u2666",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "3433",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 35,
+        "position": "North",
+        "bid": "3\u2665",
+        "hand_hcp": 10,
+        "hand_total_points": 10,
+        "hand_shape": "3343",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 41,
+        "position": "North",
+        "bid": "2\u2666",
+        "hand_hcp": 7,
+        "hand_total_points": 7,
+        "hand_shape": "2434",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 42,
+        "position": "South",
+        "bid": "2\u2660",
+        "hand_hcp": 6,
+        "hand_total_points": 6,
+        "hand_shape": "3424",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 43,
+        "position": "South",
+        "bid": "2\u2663",
+        "hand_hcp": 8,
+        "hand_total_points": 9,
+        "hand_shape": "4153",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 44,
+        "position": "East",
+        "bid": "1\u2663",
+        "hand_hcp": 13,
+        "hand_total_points": 13,
+        "hand_shape": "4333",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 44,
+        "position": "West",
+        "bid": "2\u2663",
+        "hand_hcp": 7,
+        "hand_total_points": 8,
+        "hand_shape": "2353",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 56,
+        "position": "East",
+        "bid": "2\u2663",
+        "hand_hcp": 12,
+        "hand_total_points": 12,
+        "hand_shape": "3442",
+        "reason": "Bid \u2663 with only 2 cards"
+      },
+      {
+        "hand_number": 58,
+        "position": "North",
+        "bid": "2\u2663",
+        "hand_hcp": 22,
+        "hand_total_points": 22,
+        "hand_shape": "2443",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 63,
+        "position": "South",
+        "bid": "2\u2666",
+        "hand_hcp": 10,
+        "hand_total_points": 10,
+        "hand_shape": "4333",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 71,
+        "position": "West",
+        "bid": "3\u2660",
+        "hand_hcp": 14,
+        "hand_total_points": 17,
+        "hand_shape": "3307",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 71,
+        "position": "West",
+        "bid": "5\u2660",
+        "hand_hcp": 14,
+        "hand_total_points": 17,
+        "hand_shape": "3307",
+        "reason": "Bid \u2660 with only 3 cards"
+      },
+      {
+        "hand_number": 72,
+        "position": "South",
+        "bid": "2\u2663",
+        "hand_hcp": 11,
+        "hand_total_points": 11,
+        "hand_shape": "3433",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 72,
+        "position": "North",
+        "bid": "2\u2666",
+        "hand_hcp": 16,
+        "hand_total_points": 16,
+        "hand_shape": "3334",
+        "reason": "Bid \u2666 with only 3 cards"
+      },
+      {
+        "hand_number": 84,
+        "position": "South",
+        "bid": "3\u2665",
+        "hand_hcp": 10,
+        "hand_total_points": 12,
+        "hand_shape": "6322",
+        "reason": "Bid \u2665 with only 3 cards"
+      },
+      {
+        "hand_number": 86,
+        "position": "West",
+        "bid": "1\u2663",
+        "hand_hcp": 14,
+        "hand_total_points": 14,
+        "hand_shape": "3433",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 92,
+        "position": "South",
+        "bid": "2\u2660",
+        "hand_hcp": 15,
+        "hand_total_points": 15,
+        "hand_shape": "2434",
+        "reason": "Bid \u2660 with only 2 cards"
+      },
+      {
+        "hand_number": 94,
+        "position": "South",
+        "bid": "1\u2663",
+        "hand_hcp": 19,
+        "hand_total_points": 19,
+        "hand_shape": "4423",
+        "reason": "Bid \u2663 with only 3 cards"
+      },
+      {
+        "hand_number": 98,
+        "position": "North",
+        "bid": "2\u2666",
+        "hand_hcp": 8,
+        "hand_total_points": 8,
+        "hand_shape": "3334",
+        "reason": "Bid \u2666 with only 3 cards"
+      }
+    ],
+    "conventions": [],
+    "game_slam": [
+      {
+        "hand_number": 12,
+        "partnership": "EW",
+        "error": "Stopped at 4NT with 34 combined points (slam values)",
+        "combined_points": 34,
+        "final_contract": "4NT",
+        "hand1_points": 15,
+        "hand2_points": 19,
+        "hand1_hcp": 14,
+        "hand2_hcp": 19
+      },
+      {
+        "hand_number": 21,
+        "partnership": "NS",
+        "error": "Stopped at 2NT with 30 combined points",
+        "combined_points": 30,
+        "final_contract": "2NT",
+        "hand1_points": 8,
+        "hand2_points": 22,
+        "hand1_hcp": 8,
+        "hand2_hcp": 21
+      },
+      {
+        "hand_number": 25,
+        "partnership": "EW",
+        "error": "Stopped at 4NT with 37 combined points (slam values)",
+        "combined_points": 37,
+        "final_contract": "4NT",
+        "hand1_points": 14,
+        "hand2_points": 23,
+        "hand1_hcp": 14,
+        "hand2_hcp": 21
+      },
+      {
+        "hand_number": 29,
+        "partnership": "NS",
+        "error": "Stopped at 1\u2660 with 32 combined points",
+        "combined_points": 32,
+        "final_contract": "1\u2660",
+        "hand1_points": 16,
+        "hand2_points": 16,
+        "hand1_hcp": 15,
+        "hand2_hcp": 15
+      },
+      {
+        "hand_number": 30,
+        "partnership": "EW",
+        "error": "Stopped at 3\u2666 with 26 combined points",
+        "combined_points": 26,
+        "final_contract": "3\u2666",
+        "hand1_points": 15,
+        "hand2_points": 11,
+        "hand1_hcp": 14,
+        "hand2_hcp": 8
+      },
+      {
+        "hand_number": 32,
+        "partnership": "NS",
+        "error": "Stopped at 4NT with 35 combined points (slam values)",
+        "combined_points": 35,
+        "final_contract": "4NT",
+        "hand1_points": 14,
+        "hand2_points": 21,
+        "hand1_hcp": 13,
+        "hand2_hcp": 20
+      },
+      {
+        "hand_number": 43,
+        "partnership": "NS",
+        "error": "Stopped at 2\u2660 with 25 combined points",
+        "combined_points": 25,
+        "final_contract": "2\u2660",
+        "hand1_points": 16,
+        "hand2_points": 9,
+        "hand1_hcp": 15,
+        "hand2_hcp": 8
+      },
+      {
+        "hand_number": 51,
+        "partnership": "EW",
+        "error": "Stopped at 3\u2666 with 26 combined points",
+        "combined_points": 26,
+        "final_contract": "3\u2666",
+        "hand1_points": 11,
+        "hand2_points": 15,
+        "hand1_hcp": 8,
+        "hand2_hcp": 13
+      },
+      {
+        "hand_number": 54,
+        "partnership": "NS",
+        "error": "Stopped at 3\u2660 with 25 combined points",
+        "combined_points": 25,
+        "final_contract": "3\u2660",
+        "hand1_points": 9,
+        "hand2_points": 16,
+        "hand1_hcp": 8,
+        "hand2_hcp": 13
+      },
+      {
+        "hand_number": 58,
+        "partnership": "NS",
+        "error": "Stopped at 4NT with 36 combined points (slam values)",
+        "combined_points": 36,
+        "final_contract": "4NT",
+        "hand1_points": 22,
+        "hand2_points": 14,
+        "hand1_hcp": 22,
+        "hand2_hcp": 12
+      },
+      {
+        "hand_number": 64,
+        "partnership": "NS",
+        "error": "Stopped at 2NT with 27 combined points",
+        "combined_points": 27,
+        "final_contract": "2NT",
+        "hand1_points": 6,
+        "hand2_points": 21,
+        "hand1_hcp": 6,
+        "hand2_hcp": 21
+      },
+      {
+        "hand_number": 66,
+        "partnership": "NS",
+        "error": "Stopped at 2\u2665 with 29 combined points",
+        "combined_points": 29,
+        "final_contract": "2\u2665",
+        "hand1_points": 12,
+        "hand2_points": 17,
+        "hand1_hcp": 10,
+        "hand2_hcp": 15
+      },
+      {
+        "hand_number": 72,
+        "partnership": "NS",
+        "error": "Stopped at 4\u2663 with 27 combined points",
+        "combined_points": 27,
+        "final_contract": "4\u2663",
+        "hand1_points": 16,
+        "hand2_points": 11,
+        "hand1_hcp": 16,
+        "hand2_hcp": 11
+      },
+      {
+        "hand_number": 73,
+        "partnership": "NS",
+        "error": "Stopped at 3\u2663 with 30 combined points",
+        "combined_points": 30,
+        "final_contract": "3\u2663",
+        "hand1_points": 14,
+        "hand2_points": 16,
+        "hand1_hcp": 12,
+        "hand2_hcp": 15
+      },
+      {
+        "hand_number": 74,
+        "partnership": "EW",
+        "error": "Stopped at 5NT with 34 combined points (slam values)",
+        "combined_points": 34,
+        "final_contract": "5NT",
+        "hand1_points": 17,
+        "hand2_points": 17,
+        "hand1_hcp": 17,
+        "hand2_hcp": 16
+      },
+      {
+        "hand_number": 78,
+        "partnership": "NS",
+        "error": "Stopped at 4NT with 40 combined points (slam values)",
+        "combined_points": 40,
+        "final_contract": "4NT",
+        "hand1_points": 17,
+        "hand2_points": 23,
+        "hand1_hcp": 16,
+        "hand2_hcp": 20
+      },
+      {
+        "hand_number": 94,
+        "partnership": "NS",
+        "error": "Stopped at 2\u2660 with 25 combined points",
+        "combined_points": 25,
+        "final_contract": "2\u2660",
+        "hand1_points": 6,
+        "hand2_points": 19,
+        "hand1_hcp": 4,
+        "hand2_hcp": 19
+      },
+      {
+        "hand_number": 97,
+        "partnership": "NS",
+        "error": "Stopped at 3\u2660 with 26 combined points",
+        "combined_points": 26,
+        "final_contract": "3\u2660",
+        "hand1_points": 16,
+        "hand2_points": 10,
+        "hand1_hcp": 15,
+        "hand2_hcp": 9
+      },
+      {
+        "hand_number": 98,
+        "partnership": "EW",
+        "error": "Stopped at 4\u2660 with 35 combined points (slam values)",
+        "combined_points": 35,
+        "final_contract": "4\u2660",
+        "hand1_points": 13,
+        "hand2_points": 22,
+        "hand1_hcp": 10,
+        "hand2_hcp": 20
+      }
+    ]
+  }
+}

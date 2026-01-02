@@ -90,7 +90,12 @@
       "Bash(git stash:*)",
       "Bash(./test_full.sh:*)",
       "Bash(npm run test:e2e:report:*)",
-      "Bash(timeout 10 curl:*)"
+      "Bash(timeout 10 curl:*)",
+      "Bash(gh pr create --base development --title \"fix: Declarer determination bug after Jacoby Transfer\" --body \"$(cat <<''EOF''\n## Summary\n\n- Fixed critical bug where declarer was incorrectly assigned after Jacoby Transfer auction\n- System was showing \"4♠ by East\" when North should have been declarer\n- Root cause: Backend overriding frontend''s dealer with potentially stale session state\n\n## Root Cause\n\nIn `/api/start-play`, the code was:\n```python\ndealer_str = data.get(\"dealer\", \"North\")\nif state.game_session:\n    dealer_str = state.game_session.get_current_dealer()  # ALWAYS overrides!\n```\n\nThis caused auction parsing to use wrong position offsets when session state was out of sync with frontend.\n\n## Solution\n\n- Trust frontend''s dealer parameter (auction was built with that dealer)\n- Only fall back to session if frontend doesn''t provide dealer\n- Same fix applied to `/api/request-review`\n- Frontend now sends dealer in review requests\n\n## Test plan\n\n- [x] New regression test with 6 test cases (all pass)\n- [x] Tests cover all dealer positions (N, E, S, W)\n- [x] Test demonstrates the bug with mismatched dealer\n- [x] Hearts transfer variant tested\n\nRun tests:\n```bash\ncd backend\nPYTHONPATH=. pytest tests/regression/test_jacoby_transfer_declarer_bug.py -v\n```\n\n## Verification\n\n1. Start hand with dealer != North (e.g., hand 2 = East dealer)\n2. Bid using Jacoby Transfer: 1NT → 2♥ → 2♠ → 4♠\n3. Click \"Play This Hand\"\n4. Verify declarer is shown correctly (1NT opener who completed transfer)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\nEOF\n)\")",
+      "Bash(SKIP_TESTS=1 git commit:*)",
+      "Bash(source venv/bin/activate)",
+      "Bash(python -m pytest:*)",
+      "Bash(./test_medium.sh:*)"
     ],
     "deny": [],
     "ask": []

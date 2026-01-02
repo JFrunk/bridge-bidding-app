@@ -483,7 +483,8 @@ function App() {
           game_phase: gamePhase,  // Include current game phase
           user_hand: hand,  // Send actual hand data shown to user
           user_hand_points: handPoints,  // Send actual point data shown to user
-          all_hands: allHands  // Send all hands if available (fallback for production session loss)
+          all_hands: allHands,  // Send all hands if available (fallback for production session loss)
+          dealer: dealer  // Send dealer to ensure correct declarer determination
         })
       });
 

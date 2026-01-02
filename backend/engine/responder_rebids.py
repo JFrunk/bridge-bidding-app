@@ -21,7 +21,7 @@ class ResponderRebidModule(ConventionModule):
     # Suit ranking for various calculations
     SUIT_RANK = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
 
-    def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+    def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple]:
         """
         Main entry point for responder rebid logic with bid validation.
 
@@ -30,6 +30,9 @@ class ResponderRebidModule(ConventionModule):
         2. We responded
         3. Partner rebid
         4. It's our turn again
+
+        Returns:
+            2-tuple (bid, explanation) or 3-tuple (bid, explanation, metadata)
         """
         auction_history = features['auction_history']
 
@@ -39,7 +42,10 @@ class ResponderRebidModule(ConventionModule):
         if not result:
             return None
 
-        bid, explanation = result
+        # Handle 2-tuple or 3-tuple results
+        bid = result[0]
+        explanation = result[1]
+        metadata = result[2] if len(result) > 2 else None
 
         # Always pass Pass bids through
         if bid == "Pass":
@@ -66,6 +72,8 @@ class ResponderRebidModule(ConventionModule):
                 pass
 
             adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
+            if metadata:
+                return (next_legal, adjusted_explanation, metadata)
             return (next_legal, adjusted_explanation)
 
         # No legal bid possible - pass
@@ -125,6 +133,22 @@ class ResponderRebidModule(ConventionModule):
             return None  # Opener hasn't rebid yet
 
         opener_rebid = opener_bids[1]
+
+        # SPECIAL CASE: Check for Stayman continuation
+        # Pattern: 1NT - 2♣ - 2♦/2♥/2♠ - ?
+        # After Stayman response, responder must continue based on fit and strength
+        if opening_bid == '1NT' and my_first_response == '2♣':
+            stayman_result = self._handle_post_stayman(hand, opener_rebid, features)
+            if stayman_result:
+                return stayman_result
+
+        # SPECIAL CASE: Check for Jacoby Transfer completion
+        # Pattern: 1NT - 2♦ - 2♥ or 1NT - 2♥ - 2♠
+        # After transfer completion, responder must decide based on strength
+        if opening_bid == '1NT':
+            transfer_result = self._handle_post_jacoby_transfer(hand, my_first_response, opener_rebid)
+            if transfer_result:
+                return transfer_result
 
         # Classify the auction context
         auction_context = self._analyze_auction_context(
@@ -276,8 +300,20 @@ class ResponderRebidModule(ConventionModule):
             # Otherwise pass (no better option)
             return ("Pass", f"Minimum hand, no better option than {context['opener_rebid']}.")
 
-        # Case 2: Opener bid notrump (e.g., 1♣ - 1♥ - 1NT)
+        # Case 2: Opener bid notrump (e.g., 1♣ - 1♥ - 1NT or 1♣ - 1♠ - 2NT)
         if opener_rebid_type == 'notrump':
+            opener_rebid = context['opener_rebid']
+
+            # IMPORTANT: 2NT rebid (18-19 HCP) is FORCING TO GAME in SAYC
+            # Responder MUST bid even with minimum
+            if opener_rebid == '2NT':
+                # With 6+ card major, bid 3M (gives opener choice)
+                if my_first_suit in ['♥', '♠'] and hand.suit_lengths.get(my_first_suit, 0) >= 6:
+                    return (f"3{my_first_suit}", f"Showing 6+ {my_first_suit} after forcing 2NT rebid. Opener can raise to 4{my_first_suit} or pass.")
+                # Otherwise bid 3NT - game is guaranteed with 2NT (18-19) + any response (6+)
+                return ("3NT", f"Game in NT after partner's forcing 2NT rebid ({hand.hcp} HCP). Combined 24+ HCP.")
+
+            # 1NT rebid (12-14 HCP) is NOT forcing - can pass with minimum
             # Pass with balanced minimum
             if hand.is_balanced or hand.suit_lengths.get(my_first_suit, 0) < 6:
                 return ("Pass", "Minimum hand, accepting notrump contract.")
@@ -419,8 +455,16 @@ class ResponderRebidModule(ConventionModule):
                     return ("3NT", "Game in NT - combined values justify game.")
                 return ("2NT", "Invitational with 10-12 HCP, balanced.")
 
-        # Case 2: Opener bid notrump - invite to 3NT
+        # Case 2: Opener bid notrump - respond appropriately
         if opener_rebid_type == 'notrump':
+            # 2NT rebid is FORCING - must bid game
+            if opener_rebid == '2NT':
+                # With 6+ card major, show it (partner can raise or pass 3NT)
+                if my_first_suit in ['♥', '♠'] and hand.suit_lengths.get(my_first_suit, 0) >= 6:
+                    return (f"3{my_first_suit}", f"Showing 6+ {my_first_suit} after forcing 2NT. Partner decides between 4{my_first_suit} and 3NT.")
+                # With invitational values (10-12), just bid 3NT - combined 28-31 is game
+                return ("3NT", f"Game after partner's forcing 2NT rebid ({hand.hcp} HCP). Combined 28-31 HCP.")
+
             # Check if opener bid 1NT (invite to 2NT or 3NT)
             if opener_rebid == '1NT':
                 # With 6+ card major, jump to game if combined values support it
@@ -626,6 +670,231 @@ class ResponderRebidModule(ConventionModule):
             return ("3NT", "Game in NT with 13+ HCP.")
 
         return None
+
+    def _handle_post_stayman(self, hand: Hand, opener_rebid: str,
+                              features: Dict) -> Optional[Tuple[str, str]]:
+        """
+        Handle responder's rebid after Stayman response.
+
+        Sequences handled:
+        - 1NT - 2♣ - 2♦ - ? (opener denied 4-card major)
+        - 1NT - 2♣ - 2♥ - ? (opener showed 4+ hearts)
+        - 1NT - 2♣ - 2♠ - ? (opener showed 4+ spades)
+
+        SAYC Guidelines (partner opened 1NT = 15-17 HCP):
+        - 8-9 HCP: Invitational (2NT or 3M if fit found)
+        - 10-14 HCP: Game values (3NT, 4M if fit found)
+        - 15+ HCP: Slam interest (explored via 4NT/quantitative)
+
+        Key Context:
+        - Responder bid Stayman (2♣) with at least one 4-card major
+        - Opener's response tells us about THEIR major holdings
+        - We need to combine this info to find the best contract
+
+        Returns:
+            3-tuple (bid, explanation, metadata) with bypass_hcp=True for convention bids
+        """
+        hcp = hand.hcp
+        spade_length = hand.suit_lengths.get('♠', 0)
+        heart_length = hand.suit_lengths.get('♥', 0)
+
+        # Partner has 15-17 HCP
+        partner_min = 15
+        combined_min = hcp + partner_min
+
+        # Metadata to bypass validation for Stayman convention bids
+        # Stayman with 8-9 HCP bidding 3M is valid (invitational raise with fit)
+        # Stayman with 10-14 HCP bidding 4M is valid (game with fit)
+        # Also bypass suit length - 4 cards is enough when raising partner's shown major
+        stayman_metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'stayman_continuation'}
+
+        # Case 1: Opener bid 2♦ (no 4-card major)
+        if opener_rebid == '2♦':
+            # No major fit possible via Stayman
+            # With invitational: 2NT
+            # With game values: 3NT
+            # With 5-card major: show it
+
+            # Check for 5-card major (we had 4-card to bid Stayman, maybe also have 5 in other)
+            if spade_length >= 5:
+                # Show 5-card spade suit
+                if 8 <= hcp <= 9:
+                    return ("2♠", f"Invitational with 5 spades after Stayman denial. Partner raises with 3+ spades or bids 2NT/3NT.", stayman_metadata)
+                elif hcp >= 10:
+                    return ("3♠", f"Game-forcing with 5+ spades. Partner bids 4♠ with 3+ support or 3NT.", stayman_metadata)
+
+            if heart_length >= 5:
+                # Show 5-card heart suit
+                if 8 <= hcp <= 9:
+                    return ("2♥", f"Invitational with 5 hearts after Stayman denial. Partner raises or bids NT.", stayman_metadata)
+                elif hcp >= 10:
+                    return ("3♥", f"Game-forcing with 5+ hearts. Partner bids 4♥ with 3+ support or 3NT.", stayman_metadata)
+
+            # No 5-card major - bid NT based on strength
+            if 8 <= hcp <= 9:
+                return ("2NT", f"Invitational after Stayman ({hcp} HCP). Combined {combined_min}+ HCP.", stayman_metadata)
+            elif 10 <= hcp <= 14:
+                return ("3NT", f"Game after Stayman denial ({hcp} HCP). Combined {combined_min}+ HCP.", stayman_metadata)
+            elif hcp >= 15:
+                return ("4NT", f"Quantitative slam invite ({hcp} HCP). Partner bids 6NT with 17 HCP.", stayman_metadata)
+
+        # Case 2: Opener bid 2♥ (has 4+ hearts)
+        elif opener_rebid == '2♥':
+            # We have a heart fit if we have 4+ hearts
+            if heart_length >= 4:
+                # Heart fit found!
+                if 8 <= hcp <= 9:
+                    return ("3♥", f"Invitational with 4+ heart fit. Partner bids 4♥ with 16-17 HCP.", stayman_metadata)
+                elif 10 <= hcp <= 14:
+                    return ("4♥", f"Game with 4+ heart fit ({hcp} HCP). Combined {combined_min}+ HCP.", stayman_metadata)
+                elif hcp >= 15:
+                    # Slam interest with fit
+                    return ("4NT", f"RKCB for hearts - slam interest with 4+ heart fit and {hcp} HCP.", stayman_metadata)
+
+            else:
+                # No heart fit - we must have 4 spades (why we bid Stayman)
+                # Opener may also have 4 spades (could have bid up-the-line)
+                # Ask about spades or bid NT
+
+                # With 4 spades, bid NT (opener showed hearts first, so prefers hearts)
+                if 8 <= hcp <= 9:
+                    return ("2NT", f"Invitational, no heart fit ({hcp} HCP). Have 4 spades but partner bid hearts.", stayman_metadata)
+                elif hcp >= 10:
+                    # With game values, we can bid 3♠ to check for 4-4 spade fit
+                    # (opener might have both majors)
+                    if spade_length >= 4:
+                        return ("3♠", f"Game-forcing, showing 4 spades. Partner bids 4♠ with 4 spades, else 3NT.", stayman_metadata)
+                    return ("3NT", f"Game, no heart fit ({hcp} HCP).", stayman_metadata)
+
+        # Case 3: Opener bid 2♠ (has 4+ spades)
+        elif opener_rebid == '2♠':
+            # We have a spade fit if we have 4+ spades
+            if spade_length >= 4:
+                # Spade fit found!
+                if 8 <= hcp <= 9:
+                    return ("3♠", f"Invitational with 4+ spade fit. Partner bids 4♠ with 16-17 HCP.", stayman_metadata)
+                elif 10 <= hcp <= 14:
+                    return ("4♠", f"Game with 4+ spade fit ({hcp} HCP). Combined {combined_min}+ HCP.", stayman_metadata)
+                elif hcp >= 15:
+                    # Slam interest with fit
+                    return ("4NT", f"RKCB for spades - slam interest with 4+ spade fit and {hcp} HCP.", stayman_metadata)
+
+            else:
+                # No spade fit - we must have 4 hearts (why we bid Stayman)
+                # Opener doesn't have 4 hearts (would have bid 2♥ first with both)
+                # Bid NT based on strength
+
+                if 8 <= hcp <= 9:
+                    return ("2NT", f"Invitational, no spade fit ({hcp} HCP). Have 4 hearts but partner denied.", stayman_metadata)
+                elif hcp >= 10:
+                    return ("3NT", f"Game, no spade fit ({hcp} HCP). Combined {combined_min}+ HCP.", stayman_metadata)
+
+        return None  # Unexpected Stayman response
+
+    def _handle_post_jacoby_transfer(self, hand: Hand, my_first_response: str,
+                                     opener_rebid: str) -> Optional[Tuple[str, str]]:
+        """
+        Handle responder's rebid after Jacoby Transfer completion or super-accept.
+
+        Sequences handled:
+        - 1NT - 2♦ - 2♥ - ? (after heart transfer)
+        - 1NT - 2♥ - 2♠ - ? (after spade transfer)
+        - 1NT - 2♦ - 3♥ - ? (after heart super-accept)
+        - 1NT - 2♥ - 3♠ - ? (after spade super-accept)
+
+        SAYC Guidelines (partner opened 1NT = 15-17 HCP):
+        - 0-7 HCP: Pass (combined 15-24, not enough for game)
+        - 8-9 HCP: Invite (2NT or 3M) - combined 23-26, borderline
+        - 10+ HCP: Game (4M or 3NT) - combined 25+, game values
+
+        Super-accept (3M) shows 17 HCP + 4-card support:
+        - Any hand: Accept game (4M) - partner has max with fit
+        - Slam interest (10+ HCP): Explore slam
+
+        With 5-card major:
+        - Minimum: Pass at 2M
+        - Invitational: Bid 2NT (5 cards) or 3M (6 cards)
+        - Game values: Bid 3NT (5 cards) or 4M (6 cards)
+
+        With 6+ card major:
+        - Minimum: Pass at 2M
+        - Invitational: Bid 3M (invites game)
+        - Game values: Bid 4M
+        """
+        # Metadata to bypass validation for Jacoby convention bids
+        jacoby_metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'jacoby_continuation'}
+
+        # Check for super-accept first (3-level response to transfer)
+        # Super-accept: Opener shows max (17 HCP) with 4+ card support
+        if my_first_response == '2♦' and opener_rebid == '3♥':
+            # Partner super-accepted hearts - bid 4♥ with any hand
+            # Partner has 17 HCP + 4 hearts, combined minimum is responder's HCP + 17
+            if hand.hcp >= 10:
+                # Slam interest - use RKCB
+                return ("4NT", f"RKCB for hearts - slam interest after super-accept ({hand.hcp} HCP + partner's 17).", jacoby_metadata)
+            else:
+                # Accept game
+                return ("4♥", f"Accepting super-accept - partner showed max with 4+ hearts ({hand.hcp} HCP + partner's 17).", jacoby_metadata)
+
+        if my_first_response == '2♥' and opener_rebid == '3♠':
+            # Partner super-accepted spades - bid 4♠ with any hand
+            if hand.hcp >= 10:
+                # Slam interest - use RKCB
+                return ("4NT", f"RKCB for spades - slam interest after super-accept ({hand.hcp} HCP + partner's 17).", jacoby_metadata)
+            else:
+                # Accept game
+                return ("4♠", f"Accepting super-accept - partner showed max with 4+ spades ({hand.hcp} HCP + partner's 17).", jacoby_metadata)
+
+        # Check if this is a standard Jacoby transfer completion
+        # 2♦ transfer completed with 2♥
+        if my_first_response == '2♦' and opener_rebid == '2♥':
+            major = '♥'
+            major_name = 'hearts'
+        # 2♥ transfer completed with 2♠
+        elif my_first_response == '2♥' and opener_rebid == '2♠':
+            major = '♠'
+            major_name = 'spades'
+        else:
+            return None  # Not a transfer completion or super-accept
+
+        major_length = hand.suit_lengths.get(major, 0)
+        hcp = hand.hcp
+        total_pts = hand.total_points
+
+        # Partner has 15-17 HCP, estimate combined strength
+        partner_min = 15
+        partner_max = 17
+        combined_min = hcp + partner_min
+        combined_max = hcp + partner_max
+
+        # MINIMUM (0-7 HCP): Pass - not enough for game
+        if hcp <= 7:
+            return ("Pass", f"Minimum hand ({hcp} HCP), signing off in 2{major}. Combined {combined_min}-{combined_max} HCP.")
+
+        # INVITATIONAL (8-9 HCP): Combined 23-26 HCP, borderline for game
+        if 8 <= hcp <= 9:
+            if major_length >= 6:
+                # With 6+ card major, invite in the suit
+                return (f"3{major}", f"Invitational with {hcp} HCP and 6+ {major_name}. Partner bids 4{major} with max.")
+            else:
+                # With 5-card major, invite via 2NT (lets partner choose 3NT or 3M)
+                return ("2NT", f"Invitational with {hcp} HCP and 5 {major_name}. Partner can pass, bid 3{major}, or 3NT.")
+
+        # GAME VALUES (10+ HCP): Combined 25+ HCP
+        if hcp >= 10:
+            if major_length >= 6:
+                # With 6+ card major, bid game in the major
+                return (f"4{major}", f"Game with {hcp} HCP and 6+ {major_name}. Combined {combined_min}+ HCP.")
+            else:
+                # With 5-card major, offer choice between 3NT and 4M
+                # Bid 3NT to show balanced game values, opener can correct to 4M with 3+ support
+                if hand.is_balanced:
+                    return ("3NT", f"Game with {hcp} HCP and 5 {major_name}. Partner can pass or correct to 4{major}.")
+                else:
+                    # Unbalanced with only 5-card major - still bid 4M, partner has 2+ for Jacoby
+                    return (f"4{major}", f"Game with {hcp} HCP, 5 {major_name}, unbalanced. Partner has 2+ {major_name}.")
+
+        return None  # Should not reach here
 
 # ADR-0002 Phase 1: Auto-register this module on import
 from engine.ai.module_registry import ModuleRegistry

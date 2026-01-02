@@ -1,0 +1,258 @@
+/* Recent Play Decisions Card - Play Feedback System */
+
+.recent-play-decisions-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Empty State */
+.recent-play-decisions-card .empty-decisions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px;
+  text-align: center;
+}
+
+.recent-play-decisions-card .empty-decisions-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+.recent-play-decisions-card .empty-decisions-text {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 280px;
+  margin: 0;
+}
+
+/* Decisions List */
+.recent-play-decisions-card .decisions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Decision Item */
+.play-decision-item {
+  background: #f9fafb;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: background-color 0.2s ease;
+}
+
+.play-decision-item:hover {
+  background: #f3f4f6;
+}
+
+.play-decision-item.expanded {
+  background: #f3f4f6;
+}
+
+/* Main Row */
+.play-decision-item-main {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  cursor: pointer;
+  gap: 12px;
+}
+
+/* Rating Indicator */
+.play-decision-rating {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* Card Display */
+.play-decision-card {
+  flex: 1;
+  min-width: 0;
+}
+
+.play-decision-card .card-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.play-decision-card .card-context {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+/* Score Display */
+.play-decision-score {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  min-width: 50px;
+  justify-content: flex-end;
+}
+
+.play-decision-score .score-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.play-decision-score .score-label {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Timestamp */
+.play-decision-time {
+  font-size: 12px;
+  color: #9ca3af;
+  min-width: 60px;
+  text-align: right;
+}
+
+/* Expand Indicator */
+.play-decision-expand {
+  font-size: 10px;
+  color: #9ca3af;
+  width: 16px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.play-decision-item.expanded .play-decision-expand {
+  color: #059669;
+}
+
+/* Expanded Details */
+.play-decision-item-details {
+  padding: 0 15px 15px 15px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 0;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hint Box */
+.play-decision-hint {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.play-decision-hint .hint-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.play-decision-hint .hint-text {
+  font-size: 13px;
+  color: #065f46;
+  line-height: 1.5;
+}
+
+/* Metadata */
+.play-decision-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.play-decision-metadata .metadata-item {
+  display: flex;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.play-decision-metadata .metadata-label {
+  color: #6b7280;
+}
+
+.play-decision-metadata .metadata-value {
+  font-weight: 500;
+  color: #374151;
+}
+
+.play-decision-metadata .metadata-value.tricks-cost {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* Rating Colors */
+.play-decision-metadata .metadata-value.rating-optimal {
+  color: #10b981;
+}
+
+.play-decision-metadata .metadata-value.rating-good {
+  color: #3b82f6;
+}
+
+.play-decision-metadata .metadata-value.rating-suboptimal {
+  color: #f59e0b;
+}
+
+.play-decision-metadata .metadata-value.rating-blunder {
+  color: #ef4444;
+}
+
+.play-decision-metadata .metadata-value.rating-illegal {
+  color: #dc2626;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .play-decision-item-main {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .play-decision-rating {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .play-decision-card .card-text {
+    font-size: 14px;
+  }
+
+  .play-decision-score .score-value {
+    font-size: 16px;
+  }
+
+  .play-decision-time {
+    display: none;
+  }
+
+  .play-decision-metadata {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
