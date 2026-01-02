@@ -495,7 +495,7 @@ def get_state():
     if not session_id:
         # Backward compatibility: use user_id as session identifier
         data = request.get_json(silent=True) or {}
-        user_id = data.get('user_id', request.args.get('user_id', 1))
+        user_id = data.get('user_id') or request.args.get('user_id') or 1
         session_id = f"user_{user_id}_default"
 
     # Get or create session state
@@ -503,20 +503,24 @@ def get_state():
 
     # CRITICAL FIX: Load active game session from database if not already loaded
     # This ensures gameplay tracking persists across requests
+    # BUG FIX: Only load if user_id is EXPLICITLY provided to prevent cross-user contamination
     if not state.game_session:
-        # Extract user_id from request
+        # Extract user_id from request - DO NOT default to 1
         data = request.get_json(silent=True) or {}
-        user_id = data.get('user_id', request.args.get('user_id', 1))
+        user_id = data.get('user_id') or request.args.get('user_id')
 
-        # Check for active session in database
-        try:
-            existing_session = session_manager.get_active_session(user_id)
-            if existing_session:
-                state.game_session = existing_session
-                print(f"✅ Loaded active session {existing_session.id} for user {user_id} (hands: {existing_session.hands_completed})")
-        except Exception as e:
-            # Don't fail the request if session loading fails
-            print(f"⚠️  Could not load active session for user {user_id}: {e}")
+        # Only load session if user_id was explicitly provided
+        # This prevents loading user 1's session for other users when user_id is missing
+        if user_id is not None:
+            try:
+                user_id = int(user_id)  # Ensure it's an int
+                existing_session = session_manager.get_active_session(user_id)
+                if existing_session:
+                    state.game_session = existing_session
+                    print(f"✅ Loaded active session {existing_session.id} for user {user_id} (hands: {existing_session.hands_completed})")
+            except Exception as e:
+                # Don't fail the request if session loading fails
+                print(f"⚠️  Could not load active session for user {user_id}: {e}")
 
     return state
 
