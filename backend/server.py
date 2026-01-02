@@ -669,25 +669,48 @@ def complete_session_hand():
         hand_score = score_data.get('score', 0)
         state.game_session.add_hand_score(declarer, hand_score)
 
-        # Get deal data if available
+        # Get deal data - MUST use original_deal (preserved at start of play)
+        # because play_state.hands is empty after all cards have been played
         deal_data = {}
-        if state.play_state and state.play_state.hands:
-            deal_data = {
-                pos: {
+        # Map full names to single letters for consistent storage
+        name_to_pos = {'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W'}
+
+        if state.original_deal:
+            # Use preserved original deal (full 13 cards per hand)
+            # original_deal uses full names (North, East, etc.)
+            for full_name, hand in state.original_deal.items():
+                pos = name_to_pos.get(full_name, full_name)  # Convert to single letter
+                deal_data[pos] = {
                     'hand': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
-                    'points': None
+                    'points': hand.hcp if hasattr(hand, 'hcp') else None
                 }
-                for pos, hand in state.play_state.hands.items()
-            }
-        elif state.original_deal:
-            # Fall back to original deal if available
-            deal_data = {
-                pos: {
-                    'hand': [{'rank': c.rank, 'suit': c.suit} for c in hand.cards],
-                    'points': None
-                }
-                for pos, hand in state.original_deal.items()
-            }
+            total_cards = sum(len(h.cards) for h in state.original_deal.values())
+            print(f"✅ Using original_deal for hand history ({total_cards} cards)")
+        else:
+            print("⚠️ No original_deal available - hand history will be incomplete")
+
+        # Build play_history from trick_history on backend
+        # This is the authoritative source - don't rely on frontend
+        play_history = []
+        if state.play_state and state.play_state.trick_history:
+            for trick_num, trick in enumerate(state.play_state.trick_history, 1):
+                for play_idx, (card, position) in enumerate(trick.cards):
+                    play_history.append({
+                        'trick': trick_num,
+                        'play_index': play_idx,
+                        'position': position,
+                        'rank': card.rank,
+                        'suit': card.suit,
+                        'is_winner': position == trick.winner if hasattr(trick, 'winner') else False
+                    })
+            print(f"✅ Built play_history from trick_history ({len(play_history)} plays)")
+        else:
+            # Fall back to frontend-provided play_history if available
+            play_history = data.get('play_history', [])
+            if play_history:
+                print(f"⚠️ Using frontend play_history ({len(play_history)} plays)")
+            else:
+                print("⚠️ No play_history available - replay will not work")
 
         # Prepare hand data for database
         hand_data = {
@@ -701,7 +724,7 @@ def complete_session_hand():
             'breakdown': score_data.get('breakdown', {}),
             'deal_data': deal_data,
             'auction_history': data.get('auction_history', []),
-            'play_history': data.get('play_history', []),
+            'play_history': play_history,
             'user_was_declarer': user_was_declarer,
             'user_was_dummy': user_was_dummy,
             'hand_duration_seconds': hand_duration
