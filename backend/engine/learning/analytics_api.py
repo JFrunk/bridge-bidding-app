@@ -1592,6 +1592,7 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
             SELECT
                 id,
                 trick_number,
+                position,
                 user_card,
                 optimal_card,
                 score,
@@ -1602,7 +1603,7 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
             FROM play_decisions
             WHERE user_id = ?
               AND session_id = ?
-            ORDER BY trick_number
+            ORDER BY trick_number, id
         """, (user_id, str(session_id)))
 
         decisions = []
@@ -1610,6 +1611,7 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
             decisions.append({
                 'id': row['id'],
                 'trick_number': row['trick_number'],
+                'position': row['position'],
                 'user_card': row['user_card'],
                 'optimal_card': row['optimal_card'],
                 'score': row['score'],
@@ -1632,8 +1634,15 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
         good = sum(1 for d in decisions if d['rating'] == 'good')
         suboptimal = sum(1 for d in decisions if d['rating'] == 'suboptimal')
         blunders = sum(1 for d in decisions if d['rating'] == 'blunder')
-        total_tricks_lost = sum(d['tricks_cost'] or 0 for d in decisions)
+        # Sum of individual tricks_cost values - note this can exceed 13 because
+        # each play's cost is calculated independently (potential tricks lost from that position)
+        raw_tricks_lost = sum(d['tricks_cost'] or 0 for d in decisions)
+        # Cap at 13 for display since a hand only has 13 tricks
+        # This is more meaningful as "tricks below double-dummy par"
+        total_tricks_lost = min(raw_tricks_lost, 13)
         avg_score = sum(d['score'] for d in decisions) / total if total > 0 else 0
+        # Count of plays that cost tricks (more meaningful than raw sum)
+        mistakes_count = sum(1 for d in decisions if (d['tricks_cost'] or 0) > 0)
 
         # Get notable mistakes (blunders and suboptimal plays with tricks_cost > 0)
         notable_mistakes = [
@@ -1653,6 +1662,7 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
             'blunder_count': blunders,
             'avg_score': round(avg_score, 1),
             'total_tricks_lost': total_tricks_lost,
+            'mistakes_count': mistakes_count,
             'optimal_rate': round(optimal / total * 100, 1) if total > 0 else 0,
             'accuracy_rate': round((optimal + good) / total * 100, 1) if total > 0 else 0,
             'notable_mistakes': notable_mistakes,
@@ -1838,6 +1848,97 @@ def get_hand_detail():
             row['user_id']
         )
 
+        # Get DD table and par analysis if DDS is available
+        dd_analysis = None
+        par_comparison = None
+        try:
+            from engine.play.dds_analysis import is_dds_available, get_dds_service
+            from engine.hand import Hand, Card as BridgeCard
+
+            if is_dds_available() and deal_data:
+                dds_service = get_dds_service()
+
+                # Convert deal_data to Hand objects
+                hands = {}
+                for pos in ['N', 'E', 'S', 'W']:
+                    if pos in deal_data and 'hand' in deal_data[pos]:
+                        cards = []
+                        for card in deal_data[pos]['hand']:
+                            rank = card.get('rank') or card.get('r')
+                            suit = card.get('suit') or card.get('s')
+                            # Normalize suit symbols
+                            suit_map = {'♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C'}
+                            suit = suit_map.get(suit, suit)
+                            cards.append(BridgeCard(rank=rank, suit=suit))
+                        hands[pos] = Hand(cards=cards)
+
+                if len(hands) == 4:
+                    # Get full DD analysis
+                    analysis = dds_service.analyze_deal(
+                        hands,
+                        dealer=row['dealer'] or 'N',
+                        vulnerability=row['vulnerability'] or 'None'
+                    )
+
+                    if analysis.is_valid:
+                        dd_analysis = analysis.to_dict()
+
+                        # Compare with par if we have contract info
+                        if row['contract_level'] and row['contract_strain'] and row['tricks_taken'] is not None:
+                            par_comparison = dds_service.compare_with_par(
+                                hands,
+                                contract_level=row['contract_level'],
+                                contract_strain=row['contract_strain'],
+                                declarer=row['contract_declarer'] or 'S',
+                                tricks_made=row['tricks_taken'],
+                                vulnerability=row['vulnerability'] or 'None'
+                            )
+
+                            # Calculate actual score vs par score impact
+                            if par_comparison.get('available') and analysis.par_result:
+                                actual_score = row['hand_score'] or 0
+                                par_score = analysis.par_result.score
+
+                                # Determine if user was on declaring side
+                                declarer_side = 'NS' if row['contract_declarer'] in ['N', 'S'] else 'EW'
+                                user_side = 'NS' if row['player_position'] in ['N', 'S'] else 'EW'
+
+                                # Adjust par score direction based on user's side
+                                # Par score is always from NS perspective
+                                if user_side == 'EW':
+                                    par_score = -par_score
+                                    actual_score = -actual_score
+
+                                par_comparison['actual_score'] = row['hand_score'] or 0
+                                par_comparison['par_score_for_user'] = par_score
+                                par_comparison['score_difference'] = actual_score - par_score
+                                par_comparison['user_side'] = user_side
+
+        except Exception as dds_error:
+            # DDS not available or failed - continue without it
+            import traceback
+            traceback.print_exc()
+            dd_analysis = {'error': str(dds_error), 'available': False}
+
+        # Calculate which positions the user controlled during play
+        # User controls their position, plus dummy when on declaring side
+        user_position = row['player_position'] or 'S'
+        declarer = row['contract_declarer']
+
+        # Check if user was on the declaring side
+        user_side = 'NS' if user_position in ['N', 'S'] else 'EW'
+        declarer_side = 'NS' if declarer in ['N', 'S'] else 'EW'
+
+        if user_side == declarer_side:
+            # User was on declaring side - they controlled both declarer and dummy
+            if declarer_side == 'NS':
+                user_controlled_positions = ['N', 'S']
+            else:
+                user_controlled_positions = ['E', 'W']
+        else:
+            # User was on defending side - they only controlled their position
+            user_controlled_positions = [user_position]
+
         return jsonify({
             'hand_id': hand_id,
             'session_id': row['session_id'],
@@ -1857,11 +1958,14 @@ def get_hand_detail():
             'user_was_declarer': row['user_was_declarer'],
             'user_was_dummy': row['user_was_dummy'],
             'user_position': row['player_position'],
+            'user_controlled_positions': user_controlled_positions,
             'played_at': row['played_at'],
             'deal': deal_data,
             'auction': auction_history,
             'play_history': play_history,
-            'play_quality_summary': play_quality_summary
+            'play_quality_summary': play_quality_summary,
+            'dd_analysis': dd_analysis,
+            'par_comparison': par_comparison
         })
 
     except Exception as e:
