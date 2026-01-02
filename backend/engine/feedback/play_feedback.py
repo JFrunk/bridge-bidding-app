@@ -616,13 +616,10 @@ class PlayFeedbackGenerator:
             if opt_suit != user_suit:
                 reasons.append(f"Discarding from {opt_suit} keeps your winners in {user_suit}")
 
-        # Build the explanation
+        # Build the explanation - only return specific, contextual reasons
+        # Avoid generic fallback messages that could be misleading
         if reasons:
-            return reasons[0]  # Return most relevant reason
-        elif tricks_cost >= 2:
-            return "The better play maintains your trick potential."
-        elif tricks_cost == 1:
-            return "A small improvement is available."
+            return reasons[0]
         else:
             return ""
 
