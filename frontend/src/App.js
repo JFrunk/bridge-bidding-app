@@ -850,7 +850,8 @@ ${otherCommands}`;
         headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({
           position: 'S',
-          card: { rank: card.rank, suit: card.suit }
+          card: { rank: card.rank, suit: card.suit },
+          user_id: userId || 1
         })
       });
 
@@ -1000,7 +1001,8 @@ ${otherCommands}`;
         headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({
           position: declarerPosition,
-          card: { rank: card.rank, suit: card.suit }
+          card: { rank: card.rank, suit: card.suit },
+          user_id: userId || 1
         })
       });
 
@@ -1156,7 +1158,8 @@ ${otherCommands}`;
         headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({
           position: dummyPosition,
-          card: { rank: card.rank, suit: card.suit }
+          card: { rank: card.rank, suit: card.suit },
+          user_id: userId || 1
         })
       });
 
