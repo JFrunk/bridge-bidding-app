@@ -275,9 +275,10 @@ class BlackwoodConvention(ConventionModule):
         partner_last_bid = features['auction_features'].get('partner_last_bid', '')
         return partner_last_bid in ['5♣', '5♦', '5♥', '5♠']
 
-    def _get_signoff_bid(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+    def _get_signoff_bid(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str, dict]]:
         """Signoff after receiving ace response."""
         partner_last_bid = features['auction_features'].get('partner_last_bid', '')
+        auction_history = features.get('auction_history', [])
 
         # Decode partner's ace count
         ace_responses = {'5♣': [0, 4], '5♦': [1], '5♥': [2], '5♠': [3]}
@@ -286,10 +287,13 @@ class BlackwoodConvention(ConventionModule):
         # Count our own aces
         my_aces = sum(1 for card in hand.cards if card.rank == 'A')
 
-        # Determine trump suit from auction (simplified - check for agreed major)
-        auction_features = features.get('auction_features', {})
-        opening_bid = auction_features.get('opening_bid', '')
-        trump_suit = opening_bid[1] if len(opening_bid) >= 2 and opening_bid[1] in ['♥', '♠'] else None
+        # Determine trump suit from auction - look at most recently bid suit by either partner
+        # Priority: majors > minors, and most recently bid takes precedence
+        trump_suit = self._find_trump_suit(features, auction_history)
+
+        # Metadata for Blackwood signoff bids - bypass HCP and suit length validation
+        # Slam bids after Blackwood are FORCED based on ace count, not HCP
+        signoff_metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'blackwood_signoff'}
 
         # Decide slam level based on aces
         if partner_aces[0] == 0 or (len(partner_aces) > 1 and partner_aces[1] == 4):
@@ -298,21 +302,21 @@ class BlackwoodConvention(ConventionModule):
             if missing_aces >= 2:
                 # Missing 2+ aces, sign off at 5-level
                 if trump_suit:
-                    return (f"5{trump_suit}", f"Signing off at 5-level, missing {missing_aces} aces.")
+                    return (f"5{trump_suit}", f"Signing off at 5-level, missing {missing_aces} aces.", signoff_metadata)
                 else:
-                    return ("5NT", "Signing off (no clear trump suit).")
+                    return ("5NT", "Signing off (no clear trump suit).", signoff_metadata)
             elif missing_aces == 1:
                 # Missing 1 ace, bid small slam
                 if trump_suit:
-                    return (f"6{trump_suit}", f"Bidding small slam with {my_aces + partner_aces[0]} aces.")
+                    return (f"6{trump_suit}", f"Bidding small slam with {my_aces + partner_aces[0]} aces.", signoff_metadata)
                 else:
-                    return ("6NT", "Bidding small slam in NT.")
+                    return ("6NT", "Bidding small slam in NT.", signoff_metadata)
             else:
                 # All 4 aces present - bid grand slam!
                 if trump_suit:
-                    return (f"7{trump_suit}", f"Bidding grand slam with all 4 aces present!")
+                    return (f"7{trump_suit}", f"Bidding grand slam with all 4 aces present!", signoff_metadata)
                 else:
-                    return ("7NT", "Bidding grand slam in NT with all 4 aces.")
+                    return ("7NT", "Bidding grand slam in NT with all 4 aces.", signoff_metadata)
         else:
             # Partner has definite count
             total_aces = my_aces + partner_aces[0]
@@ -320,21 +324,68 @@ class BlackwoodConvention(ConventionModule):
             if total_aces <= 2:
                 # Missing 2+ aces, sign off at 5-level
                 if trump_suit:
-                    return (f"5{trump_suit}", f"Signing off at 5-level with {total_aces} aces.")
+                    return (f"5{trump_suit}", f"Signing off at 5-level with {total_aces} aces.", signoff_metadata)
                 else:
-                    return ("5NT", "Signing off (no clear trump suit).")
+                    return ("5NT", "Signing off (no clear trump suit).", signoff_metadata)
             elif total_aces == 3:
                 # Missing 1 ace, bid small slam
                 if trump_suit:
-                    return (f"6{trump_suit}", f"Bidding small slam with {total_aces} aces.")
+                    return (f"6{trump_suit}", f"Bidding small slam with {total_aces} aces.", signoff_metadata)
                 else:
-                    return ("6NT", "Bidding small slam in NT with 3 aces.")
+                    return ("6NT", "Bidding small slam in NT with 3 aces.", signoff_metadata)
             else:
                 # All 4 aces present - bid grand slam!
                 if trump_suit:
-                    return (f"7{trump_suit}", f"Bidding grand slam with all 4 aces present!")
+                    return (f"7{trump_suit}", f"Bidding grand slam with all 4 aces present!", signoff_metadata)
                 else:
-                    return ("7NT", "Bidding grand slam in NT with all 4 aces.")
+                    return ("7NT", "Bidding grand slam in NT with all 4 aces.", signoff_metadata)
+
+    def _find_trump_suit(self, features: Dict, auction_history: list) -> Optional[str]:
+        """
+        Find the agreed trump suit from the auction.
+
+        Priority:
+        1. Most recently bid major (♥ or ♠) by either partner
+        2. Most recently bid minor (♦ or ♣) by either partner
+        3. NT if no suit agreement
+
+        Excludes the 4NT Blackwood bid and 5-level responses.
+        """
+        my_index = features.get('my_index', 0)
+        partner_index = (my_index + 2) % 4
+
+        # Collect suits bid by partnership (excluding 4NT and Blackwood responses)
+        partnership_suits = []
+        for i, bid in enumerate(auction_history):
+            bidder_idx = i % 4
+            if bidder_idx not in [my_index, partner_index]:
+                continue  # Skip opponent bids
+            if bid in ['Pass', 'X', 'XX', '4NT']:
+                continue
+            if len(bid) >= 2 and bid[0].isdigit() and bid[1] in '♣♦♥♠':
+                level = int(bid[0])
+                suit = bid[1]
+                # Skip 5-level responses (Blackwood answers)
+                if level == 5:
+                    continue
+                partnership_suits.append((i, suit))
+
+        if not partnership_suits:
+            return None
+
+        # Find most recent major suit
+        for i in reversed(range(len(partnership_suits))):
+            _, suit = partnership_suits[i]
+            if suit in ['♥', '♠']:
+                return suit
+
+        # Fall back to most recent minor
+        for i in reversed(range(len(partnership_suits))):
+            _, suit = partnership_suits[i]
+            if suit in ['♦', '♣']:
+                return suit
+
+        return None
 
     def _is_king_asking_applicable(self, hand: Hand, features: Dict) -> bool:
         """Check if we should ask for kings (all aces present)."""
