@@ -1,4 +1,73 @@
 /* Hand Review Modal - Full hand replay with DDS analysis */
+/* Design System: Following UI_UX_DESIGN_STANDARDS.md */
+
+/* =====================================================
+   CSS VARIABLES - Light mode defaults for modal
+   These override any dark mode variables from parent
+   ===================================================== */
+.hand-review-modal {
+  /* Backgrounds - Light mode for modal */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f3f5;
+
+  /* Text colors - Dark text on light background */
+  --text-primary: #1f2937;
+  --text-primary-dark: #1f2937;
+  --text-secondary: #6b7280;
+  --text-secondary-dark: #6b7280;
+  --text-disabled: #9ca3af;
+
+  /* Feedback colors */
+  --color-success: #4caf50;
+  --color-success-dark: #166534;
+  --color-danger: #f44336;
+  --color-danger-dark: #991b1b;
+  --color-warning: #ff9800;
+  --color-warning-dark: #92400e;
+  --color-info: #61dafb;
+  --color-info-dark: #1e40af;
+
+  /* Background variants for feedback */
+  --bg-success-light: #dcfce7;
+  --bg-danger-light: #fee2e2;
+  --bg-warning-light: #fef3c7;
+  --bg-info-light: #dbeafe;
+
+  /* Card suits */
+  --suit-red: #dc2626;
+  --suit-black: #000000;
+
+  /* Borders */
+  --border-color: #e5e7eb;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Typography */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+
+  /* Font weights */
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+}
 
 .hand-review-modal-overlay {
   position: fixed;
@@ -24,67 +93,81 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-/* Header */
+/* Header - Uses CSS variables for consistent theming */
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
-  background: white;
+  background: var(--bg-primary);
   z-index: 10;
 }
 
 .modal-title h2 {
   margin: 0;
-  font-size: 20px;
-  color: #1f2937;
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
 }
 
 .contract-info {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 4px;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
 }
 
 .contract {
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
 }
 
 .result {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
   padding: 2px 10px;
   border-radius: 12px;
 }
 
 .result.made {
-  background-color: #d1fae5;
-  color: #047857;
+  background-color: var(--bg-success-light);
+  color: var(--color-success-dark);
 }
 
 .result.down {
-  background-color: #fee2e2;
-  color: #b91c1c;
+  background-color: var(--bg-danger-light);
+  color: var(--color-danger-dark);
 }
 
 .close-btn {
   background: none;
   border: none;
   font-size: 28px;
-  color: #6b7280;
+  color: var(--text-secondary);
   cursor: pointer;
-  padding: 0 8px;
+  padding: 0 var(--space-2);
   line-height: 1;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .close-btn:hover {
-  color: #111827;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.close-btn:focus {
+  outline: 2px solid var(--color-info);
+  outline-offset: 2px;
 }
 
 /* Content */
@@ -205,6 +288,152 @@
 
 .card-void {
   color: #9ca3af;
+}
+
+/* =====================================================
+   STRATEGY HAND DISPLAY - Visual cards for Strategy section
+   Unified with Play-by-Play section for consistency
+   ===================================================== */
+
+.strategy-hand {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-width: 140px;
+}
+
+.strategy-hand.user-hand {
+  border: 2px solid var(--color-info);
+  box-shadow: 0 0 8px rgba(97, 218, 251, 0.3);
+}
+
+.strategy-hand-label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: var(--space-2);
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.strategy-hand-cards {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.strategy-suit-group {
+  display: flex;
+  flex-direction: row;
+  margin-right: var(--space-2);
+}
+
+/* Card sizing for Strategy section - slightly smaller than trick display */
+.strategy-hand .playable-card,
+.strategy-hand .playable-card.disabled {
+  width: 40px;
+  height: 56px;
+  min-width: 40px;
+  min-height: 56px;
+  padding: 0;
+  border-width: 1px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  cursor: default;
+  background: var(--bg-card);
+}
+
+/* Overlap cards within suit groups */
+.strategy-suit-group .playable-card {
+  margin-left: -18px;
+}
+
+.strategy-suit-group .playable-card:first-child {
+  margin-left: 0;
+}
+
+/* Card text positioning for strategy cards */
+.strategy-hand .playable-card > div {
+  top: 2px;
+  left: 3px;
+}
+
+/* Rank text */
+.strategy-hand .playable-card span:first-child {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Suit symbol */
+.strategy-hand .playable-card span:last-child {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.strategy-hand-empty {
+  font-size: var(--text-sm);
+  color: var(--text-disabled);
+  font-style: italic;
+  padding: var(--space-2);
+}
+
+/* Responsive strategy hand */
+@media (max-width: 768px) {
+  .strategy-hand {
+    min-width: 120px;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .strategy-hand .playable-card,
+  .strategy-hand .playable-card.disabled {
+    width: 34px;
+    height: 48px;
+    min-width: 34px;
+    min-height: 48px;
+  }
+
+  .strategy-suit-group .playable-card {
+    margin-left: -16px;
+  }
+
+  .strategy-hand .playable-card span:first-child {
+    font-size: 12px;
+  }
+
+  .strategy-hand .playable-card span:last-child {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .strategy-hand {
+    min-width: 100px;
+    padding: var(--space-2);
+  }
+
+  .strategy-hand .playable-card,
+  .strategy-hand .playable-card.disabled {
+    width: 30px;
+    height: 42px;
+    min-width: 30px;
+    min-height: 42px;
+  }
+
+  .strategy-suit-group .playable-card {
+    margin-left: -14px;
+  }
+
+  .strategy-hand .playable-card span:first-child {
+    font-size: 10px;
+  }
+
+  .strategy-hand .playable-card span:last-child {
+    font-size: 8px;
+  }
 }
 
 /* Analysis actions */
@@ -1123,43 +1352,38 @@
 }
 
 /* Compact cards in replay mode - smaller size for hand review */
-/* CRITICAL: Use very high specificity to override PlayComponents.css base styles */
+/* Using scoped CSS variables for cleaner sizing without !important overuse */
 .hand-review-modal .replay-hand .playable-card,
-.hand-review-modal .replay-hand .playable-card.disabled,
-.hand-review-modal .replay-hand div.playable-card,
-.replay-mode .replay-hand .playable-card,
-.replay-mode .replay-hand .playable-card.disabled,
-.replay-hand .playable-card,
-.replay-hand .playable-card.disabled {
-  width: 36px !important;
-  height: 50px !important;
-  min-width: 36px !important;
-  min-height: 50px !important;
-  max-width: 36px !important;
-  max-height: 50px !important;
-  padding: 0 !important;
-  border-width: 1px !important;
-  border-radius: 4px !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+.hand-review-modal .replay-hand .playable-card.disabled {
+  width: 40px;
+  height: 56px;
+  min-width: 40px;
+  min-height: 56px;
+  /* Removed max-width/max-height to allow proper card display */
+  padding: 0;
+  border-width: 1px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  background: var(--bg-card);
 }
 
 /* Card text positioning and sizing for replay mode */
 /* Target the inner container that holds rank and suit */
-.replay-hand .playable-card > div {
-  top: 1px !important;
-  left: 2px !important;
+.hand-review-modal .replay-hand .playable-card > div {
+  top: 2px;
+  left: 3px;
 }
 
 /* Rank text - compact size for small cards */
-.replay-hand .playable-card span:first-child {
-  font-size: 12px !important;
-  line-height: 1 !important;
+.hand-review-modal .replay-hand .playable-card span:first-child {
+  font-size: 14px;
+  line-height: 1;
 }
 
 /* Suit symbol - compact size for small cards */
-.replay-hand .playable-card span:last-child {
-  font-size: 10px !important;
-  line-height: 1 !important;
+.hand-review-modal .replay-hand .playable-card span:last-child {
+  font-size: 12px;
+  line-height: 1;
 }
 
 .replay-hand.horizontal .playable-card {
@@ -1349,26 +1573,20 @@
   }
 
   .hand-review-modal .replay-hand .playable-card,
-  .hand-review-modal .replay-hand .playable-card.disabled,
-  .replay-mode .replay-hand .playable-card,
-  .replay-mode .replay-hand .playable-card.disabled,
-  .replay-hand .playable-card,
-  .replay-hand .playable-card.disabled {
-    width: 32px !important;
-    height: 44px !important;
-    min-width: 32px !important;
-    min-height: 44px !important;
-    max-width: 32px !important;
-    max-height: 44px !important;
+  .hand-review-modal .replay-hand .playable-card.disabled {
+    width: 34px;
+    height: 48px;
+    min-width: 34px;
+    min-height: 48px;
   }
 
   /* Mobile: Smaller text for compact cards */
-  .replay-hand .playable-card span:first-child {
-    font-size: 10px !important;
+  .hand-review-modal .replay-hand .playable-card span:first-child {
+    font-size: 12px;
   }
 
-  .replay-hand .playable-card span:last-child {
-    font-size: 8px !important;
+  .hand-review-modal .replay-hand .playable-card span:last-child {
+    font-size: 10px;
   }
 
   .replay-hand.vertical-2col .playable-card {
@@ -1780,14 +1998,14 @@
   border-radius: var(--radius-lg, 12px);
 }
 
-/* Accordion header button */
+/* Accordion header button - Light mode styling */
 .accordion-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: var(--space-4, 16px) var(--space-5, 20px);
-  background: var(--bg-secondary, #f8f9fa);
+  padding: var(--space-4) var(--space-5);
+  background: var(--bg-secondary);
   border: none;
   cursor: pointer;
   text-align: left;
@@ -1796,12 +2014,12 @@
 }
 
 .accordion-header:hover {
-  background: var(--bg-hover, #f1f3f5);
+  background: var(--bg-hover);
 }
 
 .accordion-section.open .accordion-header {
-  background: var(--bg-card, white);
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
 }
 
 /* Title group with icon */
@@ -1823,14 +2041,14 @@
 }
 
 .accordion-title {
-  font-size: var(--text-base, 16px);
-  font-weight: var(--font-semibold, 600);
-  color: var(--text-primary-dark, #1f2937);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
 }
 
 .accordion-subtitle {
-  font-size: var(--text-sm, 14px);
-  color: var(--text-secondary-dark, #6b7280);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
 }
 
 /* Right side with summary and toggle */
@@ -1841,8 +2059,8 @@
 }
 
 .accordion-summary {
-  font-size: var(--text-sm, 14px);
-  color: var(--text-secondary-dark, #6b7280);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1850,8 +2068,8 @@
 }
 
 .accordion-toggle-icon {
-  font-size: var(--text-sm, 14px);
-  color: var(--text-secondary-dark, #6b7280);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
   transition: transform 0.2s ease;
 }
 

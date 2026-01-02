@@ -106,17 +106,20 @@ const normalizeSuit = (suit) => {
   return map[suit] || suit;
 };
 
-// Hand display helper - shows a single player's hand in traditional format
+// Hand display helper - shows a single player's hand using PlayableCard components
+// Unified with Play-by-Play section for consistent visual style
 const HandDisplay = ({ cards, position, isUser }) => {
   const suits = ['♠', '♥', '♦', '♣'];
-  const suitColors = { '♠': '#000', '♥': '#dc2626', '♦': '#dc2626', '♣': '#000' };
 
   const cardsBySuit = useMemo(() => {
     const grouped = { '♠': [], '♥': [], '♦': [], '♣': [] };
     cards.forEach(card => {
       const suit = normalizeSuit(card.suit || card.s);
       if (grouped[suit]) {
-        grouped[suit].push(card);
+        grouped[suit].push({
+          rank: card.rank || card.r,
+          suit: suit
+        });
       }
     });
 
@@ -124,9 +127,7 @@ const HandDisplay = ({ cards, position, isUser }) => {
     const rankOrder = ['A', 'K', 'Q', 'J', 'T', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
     Object.keys(grouped).forEach(suit => {
       grouped[suit].sort((a, b) => {
-        const aRank = a.rank || a.r;
-        const bRank = b.rank || b.r;
-        return rankOrder.indexOf(aRank) - rankOrder.indexOf(bRank);
+        return rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank);
       });
     });
 
@@ -134,24 +135,27 @@ const HandDisplay = ({ cards, position, isUser }) => {
   }, [cards]);
 
   return (
-    <div className={`review-hand ${isUser ? 'user-hand' : ''}`}>
-      <div className="hand-position">{position}</div>
-      <div className="hand-suits">
-        {suits.map(suit => (
-          <div key={suit} className="suit-row">
-            <span className="suit-symbol" style={{ color: suitColors[suit] }}>
-              {suit}
-            </span>
-            <span className="suit-cards">
-              {cardsBySuit[suit].length > 0
-                ? cardsBySuit[suit].map((card, idx) => (
-                    <span key={idx} className="card-rank">{card.rank || card.r}</span>
-                  ))
-                : <span className="card-void">—</span>
-              }
-            </span>
-          </div>
-        ))}
+    <div className={`strategy-hand ${isUser ? 'user-hand' : ''}`}>
+      <div className="strategy-hand-label">{position}</div>
+      <div className="strategy-hand-cards">
+        {suits.map(suit => {
+          const suitCards = cardsBySuit[suit];
+          if (suitCards.length === 0) return null;
+          return (
+            <div key={suit} className="strategy-suit-group">
+              {suitCards.map((card) => (
+                <PlayableCard
+                  key={`${card.rank}-${card.suit}`}
+                  card={card}
+                  disabled
+                />
+              ))}
+            </div>
+          );
+        })}
+        {cards.length === 0 && (
+          <div className="strategy-hand-empty">No cards</div>
+        )}
       </div>
     </div>
   );
