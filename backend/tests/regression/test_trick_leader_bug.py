@@ -25,7 +25,7 @@ class TestTrickLeaderTracking:
             north="♠AKQ ♥432 ♦KQJ2 ♣432",
             east="♠765 ♥765 ♦7654 ♣765",
             south="♠432 ♥AKQ ♦A32 ♣AKQ8",
-            west="♠JT98 ♥JT98 ♦T98 ♣JT9"
+            west="♠JT98 ♥JT98 ♦T98 ♣JT"  # 4+4+3+2=13 cards
         )
 
         play_state = create_play_scenario("3NT by S", deal, "None")
@@ -74,7 +74,7 @@ class TestTrickLeaderTracking:
             north="♠AKQ ♥432 ♦KQJ2 ♣432",
             east="♠765 ♥765 ♦7654 ♣765",
             south="♠432 ♥AKQ ♦A32 ♣AKQ8",
-            west="♠JT98 ♥JT98 ♦T98 ♣JT9"
+            west="♠JT98 ♥JT98 ♦T98 ♣JT"  # 4+4+3+2=13 cards
         )
 
         play_state = create_play_scenario("3NT by S", deal, "None")
@@ -130,7 +130,7 @@ class TestTrickLeaderTracking:
             north="♠234 ♥AKQ ♦AKQ2 ♣432",
             east="♠AKQ ♥765 ♦7654 ♣765",
             south="♠765 ♥432 ♦432 ♣AKQ8",
-            west="♠JT98 ♥JT98 ♦JT98 ♣JT9"
+            west="♠JT98 ♥JT98 ♦T98 ♣JT"  # 4+4+3+2=13 cards
         )
 
         play_state = create_play_scenario("3NT by S", deal, "None")

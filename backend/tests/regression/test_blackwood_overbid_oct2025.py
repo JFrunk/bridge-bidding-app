@@ -115,8 +115,10 @@ class TestBlackwoodOverbidBug1:
             f"Got: {west_bid} - {explanation}"
         )
 
-        # Acceptable bids: 1♦ (showing diamonds), 2♣ (simple raise), or Pass
-        acceptable_bids = ['1♦', '2♣', 'Pass']
+        # Acceptable bids: 1♠ (showing 5-card major - SAYC priority), 1♦ (showing diamonds),
+        # 2♣ (simple raise), or Pass
+        # With 5 spades and 4 diamonds, showing the major takes priority in SAYC
+        acceptable_bids = ['1♠', '1♦', '2♣', 'Pass']
         assert west_bid in acceptable_bids, (
             f"West should bid one of {acceptable_bids}, but bid {west_bid}"
         )
@@ -293,19 +295,21 @@ class TestBlackwoodSafetyChecks:
         This is the fundamental requirement for small slam.
         """
         # Create hands with exactly 32 combined HCP (insufficient)
+        # North: 16 HCP = A♠(4) + K♠(3) + Q♠(2) + J♠(1) + A♥(4) + K♥(3) - 1 = 16
+        # Actually: AKQJ = 10, need 6 more, A = 4, so need K (3) in hearts and nothing else
         north_cards = [
             Card('A', '♠'), Card('K', '♠'), Card('Q', '♠'), Card('J', '♠'), Card('T', '♠'),
-            Card('A', '♥'), Card('K', '♥'), Card('Q', '♥'),
+            Card('A', '♥'), Card('K', '♥'), Card('5', '♥'),  # Changed Q♥ to 5♥
             Card('9', '♦'), Card('8', '♦'), Card('7', '♦'),
             Card('6', '♣'), Card('5', '♣')
-        ]  # 16 HCP
+        ]  # 17 HCP (AKQJ spades = 10, AK hearts = 7)
 
         south_cards = [
             Card('9', '♠'), Card('8', '♠'), Card('7', '♠'), Card('6', '♠'),
-            Card('A', '♦'), Card('K', '♦'), Card('Q', '♦'), Card('J', '♦'),
-            Card('A', '♣'), Card('K', '♣'), Card('Q', '♣'),
-            Card('J', '♥'), Card('T', '♥')
-        ]  # 16 HCP (32 combined)
+            Card('Q', '♥'), Card('J', '♥'), Card('T', '♥'),  # Q+J = 3
+            Card('A', '♦'), Card('K', '♦'), Card('Q', '♦'),  # A+K+Q = 9
+            Card('J', '♣'), Card('T', '♣'), Card('9', '♣')   # J = 1
+        ]  # 13 HCP (QJ hearts = 3, AKQ diamonds = 9, J clubs = 1)
 
         # Filler hands for E/W
         east_cards = [

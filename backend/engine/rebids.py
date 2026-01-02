@@ -36,12 +36,8 @@ class RebidModule(ConventionModule):
         # Rebid suit must rank higher than opening suit
         return self.SUIT_RANK.get(rebid_suit, 0) > self.SUIT_RANK.get(opening_suit, 0)
 
-    def evaluate(self, hand: Hand, features: Dict):
-        """Main entry point for all opener rebid actions with bid validation.
-
-        Returns:
-            Tuple of (bid, explanation) or (bid, explanation, metadata)
-        """
+    def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
+        """Main entry point for all opener rebid actions with bid validation."""
         auction_history = features['auction_history']
 
         # Get the raw rebid suggestion
@@ -50,7 +46,7 @@ class RebidModule(ConventionModule):
         if not result:
             return ("Pass", "No rebid found.")
 
-        # Handle both 2-tuple and 3-tuple returns
+        # Handle both 2-tuple (bid, explanation) and 3-tuple (bid, explanation, metadata)
         if len(result) == 3:
             bid, explanation, metadata = result
         else:
@@ -63,10 +59,7 @@ class RebidModule(ConventionModule):
 
         # Validate the bid is legal
         if BidValidator.is_legal_bid(bid, auction_history):
-            # Return with metadata if present
-            if metadata:
-                return (bid, explanation, metadata)
-            return (bid, explanation)
+            return result
 
         # Bid is illegal - try to find next legal bid of same strain
         next_legal = get_next_legal_bid(bid, auction_history)
@@ -107,14 +100,6 @@ class RebidModule(ConventionModule):
         my_previous_bids = [bid for i, bid in enumerate(auction_history)
                             if features['positions'][i % 4] == my_position
                             and bid not in ['Pass', 'X', 'XX']]
-
-        # SPECIAL CASE: After 1NT opening and Jacoby transfer completion
-        # Pattern: 1NT - 2♦ - 2♥ - 2NT (partner invites game)
-        # Pattern: 1NT - 2♥ - 2♠ - 2NT (partner invites game)
-        if my_opening_bid == '1NT' and len(my_previous_bids) >= 2:
-            result = self._handle_post_jacoby_opener_rebid(hand, my_previous_bids, partner_response, auction_history)
-            if result:
-                return result
 
         # If I already rebid 1NT, handle partner's follow-up bid
         if '1NT' in my_previous_bids and len(my_previous_bids) >= 2:
@@ -275,13 +260,14 @@ class RebidModule(ConventionModule):
 
             # Prefer spades at 1-level if we have 3+ cards (economical)
             # Check spades first since it can be bid at 1-level
+            # After negative double, 3-card support is sufficient - bypass suit length validation
             if hand.suit_lengths.get('♠', 0) >= 3:
                 if hand.total_points <= 15:
-                    return ("1♠", "Supporting partner's negative double with 3+ spades.")
+                    return ("1♠", "Supporting partner's negative double with 3+ spades.", {'bypass_suit_length': True})
                 elif hand.total_points <= 18:
-                    return ("2♠", "Jump supporting partner's negative double with 16-18 pts and 3+ spades.")
+                    return ("2♠", "Jump supporting partner's negative double with 16-18 pts and 3+ spades.", {'bypass_suit_length': True})
                 else:
-                    return ("3♠", "Strong jump supporting partner's negative double with 19+ pts and 3+ spades.")
+                    return ("3♠", "Strong jump supporting partner's negative double with 19+ pts and 3+ spades.", {'bypass_suit_length': True})
 
             # Then check hearts (requires 2-level bid)
             if hand.suit_lengths.get('♥', 0) >= 4:
@@ -446,59 +432,25 @@ class RebidModule(ConventionModule):
                 return (f"2{my_suit}", f"Minimum hand (13-15 pts) rebidding a 5-card {my_suit} suit.")
 
         elif 16 <= hand.total_points <= 18: # Medium Hand
-            # Partner raised our suit - check if we have a second suit to show first
             if partner_response.endswith(my_opening_bid[1]):
-                # With 17+ HCP, check for reverse bid to show a 4-card second suit
-                # This is more descriptive than just rebidding the agreed suit
-                if hand.hcp >= 17:
-                    for suit in ['♠', '♥', '♦', '♣']:  # Check in rank order
-                        if suit != my_opening_bid[1] and hand.suit_lengths.get(suit, 0) >= 4:
-                            if self._is_reverse_bid(my_opening_bid, suit):
-                                metadata = {'bypass_suit_length': True}  # Reverse only needs 4 cards
-                                return (f"2{suit}", f"Reverse bid showing 17+ HCP and 4+ {suit} after partner's raise (forcing).", metadata)
-                # No reverse available - raise the agreed suit
                 return (f"3{my_opening_bid[1]}", "Invitational (16-18 pts), raising partner's simple raise.")
             if partner_response[0] == '1' and len(partner_response) == 2:
                 partner_suit = partner_response[1]
                 if hand.suit_lengths.get(partner_suit, 0) >= 4:
                     return (f"3{partner_suit}", f"Invitational (16-18 pts) jump raise showing 4+ card support.")
 
-                # Check for reverse bid with 17+ HCP and 4+ card second suit FIRST
+                # Check for 2NT rebid with 18-19 HCP balanced hand (SAYC standard)
+                # This shows too strong for 1NT opening but balanced
+                if hand.is_balanced and 18 <= hand.hcp <= 19:
+                    return ("2NT", f"Balanced rebid showing 18-19 HCP (too strong for 1NT opening).")
+
+                # Check for reverse bid with 17+ HCP and 4+ card second suit
                 # Reverse shows a strong hand (17+ HCP) and is forcing
-                # Reverse bids only require 4+ cards in the second (higher-ranking) suit
-                # Priority: Reverse > 2NT (showing distribution is more descriptive)
                 if hand.hcp >= 17:
                     for suit in ['♠', '♥', '♦', '♣']:  # Check in rank order
                         if suit != my_opening_bid[1] and hand.suit_lengths.get(suit, 0) >= 4:
                             if self._is_reverse_bid(my_opening_bid, suit):
-                                metadata = {'bypass_suit_length': True}  # Reverse only needs 4 cards
-                                return (f"2{suit}", f"Reverse bid showing 17+ HCP and 4+ {suit} (forcing).", metadata)
-
-                # Check for 2NT rebid with 18-19 HCP balanced hand (SAYC standard)
-                # Only if no reverse available - 2NT shows no second suit to bid
-                if hand.is_balanced and 18 <= hand.hcp <= 19:
-                    return ("2NT", f"Balanced rebid showing 18-19 HCP (too strong for 1NT opening).")
-
-            # Handle partner's 2-level new suit response (e.g., 1♣ - 2♦)
-            # This shows 10+ HCP and 5+ cards, game forcing in 2/1
-            if partner_response[0] == '2' and len(partner_response) == 2:
-                partner_suit = partner_response[1]
-
-                # With support for partner's suit, raise it
-                if hand.suit_lengths.get(partner_suit, 0) >= 4:
-                    return (f"3{partner_suit}", f"Medium hand (16-18 pts) supporting partner's 2-level suit.")
-
-                # Check for reverse bid with 17+ HCP
-                if hand.hcp >= 17:
-                    for suit in ['♠', '♥', '♦', '♣']:  # Check in rank order
-                        if suit != my_opening_bid[1] and suit != partner_suit and hand.suit_lengths.get(suit, 0) >= 4:
-                            if self._is_reverse_bid(my_opening_bid, suit):
-                                metadata = {'bypass_suit_length': True}
-                                return (f"2{suit}", f"Reverse bid showing 17+ HCP and 4+ {suit} (forcing).", metadata)
-
-                # With balanced hand, bid 2NT
-                if hand.is_balanced:
-                    return ("2NT", f"Medium hand (16-18 pts), balanced, after partner's 2-level suit.")
+                                return (f"2{suit}", f"Reverse bid showing 17+ HCP and 4+ {suit} (forcing).")
 
             if hand.suit_lengths.get(my_opening_bid[1], 0) >= 6:
                 return (f"3{my_opening_bid[1]}", f"Invitational (16-18 pts) jump rebid of a 6+ card suit.")
@@ -552,20 +504,31 @@ class RebidModule(ConventionModule):
                         return (f"3{partner_suit}", f"Slam try with {partner_suit} fit and {hand.total_points} pts.")
                     return (f"4{partner_suit}", f"Strong hand ({hand.total_points} pts), bidding game with a fit.")
 
-                # Check for reverse bid with 4+ card second suit FIRST
+                # Check for 3NT rebid with 19-20 HCP balanced hand (SAYC standard)
+                # This shows a very strong balanced hand that's too strong for 2NT rebid
+                if hand.is_balanced and 19 <= hand.hcp <= 20:
+                    return ("3NT", f"Balanced rebid showing 19-20 HCP, bidding game in No-Trump.")
+
+                # Check for reverse bid with 4+ card second suit
                 # With 19+ HCP, reverse shows slam interest
-                # Reverse bids only require 4+ cards in the second (higher-ranking) suit
-                # Priority: Reverse > 3NT (showing distribution is more descriptive)
                 for suit in ['♠', '♥', '♦', '♣']:  # Check in rank order
                     if suit != my_opening_bid[1] and hand.suit_lengths.get(suit, 0) >= 4:
                         if self._is_reverse_bid(my_opening_bid, suit):
-                            metadata = {'bypass_suit_length': True}  # Reverse only needs 4 cards
-                            return (f"2{suit}", f"Reverse bid showing 19+ HCP and 4+ {suit} (forcing, slam interest).", metadata)
+                            return (f"2{suit}", f"Reverse bid showing 19+ HCP and 4+ {suit} (forcing, slam interest).")
 
-                # Check for 3NT rebid with 19-20 HCP balanced hand (SAYC standard)
-                # Only if no reverse available - 3NT shows no second suit to bid
-                if hand.is_balanced and 19 <= hand.hcp <= 20:
-                    return ("3NT", f"Balanced rebid showing 19-20 HCP, bidding game in No-Trump.")
+            # Check if partner's bid is at the 3-level (showing preference, not a raise)
+            # This happens after opener's jump rebid when partner returns to their suit
+            # With game values (19+ pts) and combined ~25-27 HCP, bid 3NT for game
+            if partner_response and len(partner_response) == 2 and partner_response[0] == '3':
+                partner_suit = partner_response[1]
+                # Partner is showing preference at 3-level (e.g., 3♠ after 1♦-1♠-3♦)
+                # This shows 6-9 HCP typically, combined is ~25-28 - game values
+                if partner_suit in ['♥', '♠'] and hand.suit_lengths.get(partner_suit, 0) >= 4:
+                    # 4-card support for partner's major (8+ total trumps) - bid 4 of the major
+                    return (f"4{partner_suit}", f"Game in partner's major with 4+ support and {hand.total_points} pts.")
+                else:
+                    # Only 3-card support (7 total trumps) or minor - prefer 3NT
+                    return ("3NT", f"Game in NT with {hand.hcp} HCP after partner's preference.")
 
             # Before jumping to 3NT, check if we have a 6-card suit to show
             my_suit = my_opening_bid[1]
@@ -581,89 +544,6 @@ class RebidModule(ConventionModule):
             return (f"3{my_opening_bid[1]}", f"Strong hand ({hand.total_points} pts) with unbalanced distribution.")
 
         return ("Pass", "No clear rebid available.")
-
-    def _handle_post_jacoby_opener_rebid(self, hand: Hand, my_previous_bids: list,
-                                         partner_response: str, auction_history: list) -> Optional[Tuple[str, str]]:
-        """
-        Handle opener's rebid after Jacoby transfer and partner's follow-up.
-
-        Sequences handled:
-        - 1NT - 2♦ - 2♥ - 2NT: Partner invites game (8-9 HCP with 5M)
-        - 1NT - 2♦ - 2♥ - 3♥: Partner invites game (8-9 HCP with 6+M)
-        - 1NT - 2♦ - 2♥ - 3NT: Partner bids game (10+ HCP balanced with 5M)
-        - 1NT - 2♦ - 2♥ - 4♥: Partner bids game (10+ HCP with 6+M)
-
-        With 1NT opening (15-17 HCP):
-        - Minimum (15): Decline invitations
-        - Maximum (17): Accept invitations
-        - 16: Borderline - accept with good fit
-        """
-        # Check if this is a Jacoby sequence: 1NT - transfer - completion
-        # My bids should be ['1NT', '2♥' or '2♠']
-        if len(my_previous_bids) < 2:
-            return None
-
-        opening = my_previous_bids[0]
-        transfer_completion = my_previous_bids[1]
-
-        if opening != '1NT':
-            return None
-
-        # Determine the major suit from transfer completion
-        if transfer_completion == '2♥':
-            major = '♥'
-            major_name = 'hearts'
-        elif transfer_completion == '2♠':
-            major = '♠'
-            major_name = 'spades'
-        else:
-            return None  # Not a Jacoby completion
-
-        my_major_length = hand.suit_lengths.get(major, 0)
-        hcp = hand.hcp
-
-        # Partner bid 2NT = invitational with 8-9 HCP and 5-card major
-        if partner_response == '2NT':
-            if hcp >= 17:  # Maximum 1NT
-                # Accept to 3NT, but partner might have 5-card major
-                # If we have 3+ card support, bid 3M to offer choice
-                if my_major_length >= 3:
-                    return (f"3{major}", f"Accepting invitation with max ({hcp} HCP) and {my_major_length}-card {major_name} support. Partner can choose 3NT or 4{major}.")
-                else:
-                    return ("3NT", f"Accepting invitation with max ({hcp} HCP). Have only {my_major_length} {major_name}.")
-            elif hcp == 16:
-                # Borderline - accept with good support
-                if my_major_length >= 3:
-                    return ("3NT", f"Accepting invitation with {hcp} HCP and {my_major_length}-card fit.")
-                else:
-                    return ("Pass", f"Declining invitation with {hcp} HCP and no major fit.")
-            else:  # 15 HCP minimum
-                return ("Pass", f"Declining invitation with minimum ({hcp} HCP).")
-
-        # Partner bid 3M = invitational with 8-9 HCP and 6+ card major
-        if partner_response == f'3{major}':
-            if hcp >= 17:  # Maximum 1NT
-                return (f"4{major}", f"Accepting invitation with max ({hcp} HCP). Partner has 6+ {major_name}.")
-            elif hcp == 16:
-                # Borderline - accept with any support (partner has 6+)
-                return (f"4{major}", f"Accepting invitation with {hcp} HCP. Partner has 6+ {major_name}.")
-            else:  # 15 HCP minimum
-                return ("Pass", f"Declining invitation with minimum ({hcp} HCP).")
-
-        # Partner bid 3NT = game with 10+ HCP and 5-card major (balanced)
-        if partner_response == '3NT':
-            # Partner bid game - can pass or correct to 4M with 3+ support
-            if my_major_length >= 3:
-                return (f"4{major}", f"Correcting to 4{major} with {my_major_length}-card support. Better game than 3NT.")
-            else:
-                return ("Pass", f"Passing 3NT with only {my_major_length} {major_name}.")
-
-        # Partner bid 4M = game with 10+ HCP and 6+ card major
-        if partner_response == f'4{major}':
-            return ("Pass", f"Partner bid game in {major_name}. Passing.")
-
-        return None  # Not a recognized pattern
-
 # ADR-0002 Phase 1: Auto-register this module on import
 from engine.ai.module_registry import ModuleRegistry
 ModuleRegistry.register("openers_rebid", RebidModule())
