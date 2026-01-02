@@ -1275,6 +1275,9 @@ ${otherCommands}`;
     }
   };
 
+  // Guard to prevent duplicate saves - multiple code paths can detect hand completion
+  const handSaveInProgressRef = useRef(false);
+
   // Helper function to save hand to database - called immediately when play ends
   // This ensures hand is saved even if user navigates away before closing score display
   const saveHandToDatabase = useCallback(async (scoreDataToSave, auctionToSave, contractInfo = null) => {
@@ -1283,7 +1286,14 @@ ${otherCommands}`;
       return false;
     }
 
+    // Prevent duplicate saves - multiple code paths may try to save the same hand
+    if (handSaveInProgressRef.current) {
+      console.log('⏳ Hand save already in progress - skipping duplicate');
+      return false;
+    }
+
     try {
+      handSaveInProgressRef.current = true;
       console.log('💾 Saving hand to session...');
 
       // Check current session status to ensure we have an active session
@@ -1355,6 +1365,11 @@ ${otherCommands}`;
       }
     } catch (err) {
       console.error('❌ Error saving hand to session:', err);
+    } finally {
+      // Reset the save guard after a short delay to allow for next hand
+      setTimeout(() => {
+        handSaveInProgressRef.current = false;
+      }, 1000);
     }
     return false;
   }, [userId]);
@@ -1371,6 +1386,9 @@ ${otherCommands}`;
   // ========== END CARD PLAY FUNCTIONS ==========
 
   const dealNewHand = async () => {
+    // Reset save guard for new hand
+    handSaveInProgressRef.current = false;
+
     try {
       const response = await fetch(`${API_URL}/api/deal-hands`, { headers: { ...getSessionHeaders() } });
       if (!response.ok) throw new Error("Failed to deal hands.");
@@ -1390,6 +1408,9 @@ ${otherCommands}`;
   };
 
   const playRandomHand = async () => {
+    // Reset save guard for new hand
+    handSaveInProgressRef.current = false;
+
     try {
       const response = await fetch(`${API_URL}/api/play-random-hand`, {
         method: 'POST',
