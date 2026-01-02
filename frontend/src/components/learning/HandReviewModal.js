@@ -830,6 +830,21 @@ const HandReviewModal = ({ handId, onClose }) => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // Get decisions for the current trick, organized by position
+  // This allows showing feedback for multiple user-controlled positions in the same trick
+  // Must be defined before early returns to satisfy React hooks rules
+  const currentTrickDecisionsByPosition = useMemo(() => {
+    const map = {};
+    if (handData?.play_quality_summary?.all_decisions) {
+      handData.play_quality_summary.all_decisions.forEach(d => {
+        if (d.trick_number === currentTrick && d.position && userControlledPositions.includes(d.position)) {
+          map[d.position] = d;
+        }
+      });
+    }
+    return map;
+  }, [handData?.play_quality_summary?.all_decisions, currentTrick, userControlledPositions]);
+
   if (loading) {
     return (
       <div className="hand-review-modal-overlay" onClick={onClose}>
@@ -854,20 +869,6 @@ const HandReviewModal = ({ handId, onClose }) => {
   }
 
   const totalTricks = tricks.length;
-
-  // Get decisions for the current trick, organized by position
-  // This allows showing feedback for multiple user-controlled positions in the same trick
-  const currentTrickDecisionsByPosition = useMemo(() => {
-    const map = {};
-    if (handData?.play_quality_summary?.all_decisions) {
-      handData.play_quality_summary.all_decisions.forEach(d => {
-        if (d.trick_number === currentTrick && d.position && userControlledPositions.includes(d.position)) {
-          map[d.position] = d;
-        }
-      });
-    }
-    return map;
-  }, [handData?.play_quality_summary?.all_decisions, currentTrick, userControlledPositions]);
 
   // For the feedback panel, get the first user decision in this trick
   const currentDecision = decisionsByTrick[currentTrick];
