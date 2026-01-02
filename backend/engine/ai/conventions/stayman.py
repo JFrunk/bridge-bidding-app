@@ -194,25 +194,28 @@ class StaymanConvention(ConventionModule):
                     return (f"4{fit_suit}", f"Game-forcing ({hand.hcp} HCP) with 4-card {fit_suit} fit.", metadata)
             else:
                 # No fit found
+                # Game-forcing metadata for 10+ HCP (combined 25+ with partner's 15-17)
+                game_metadata = {'bypass_suit_length': True, 'bypass_hcp': True, 'game_forcing': True, 'convention': 'stayman_continuation'}
+
                 if is_denial:
                     if hand.hcp <= 7:
                         if hand.suit_lengths['♥'] == 5:
-                            return ("2♥", f"Weak hand ({hand.hcp} HCP), signing off in 5-card hearts.")
+                            return ("2♥", f"Weak hand ({hand.hcp} HCP), signing off in 5-card hearts.", metadata)
                         elif hand.suit_lengths['♠'] == 5:
-                            return ("2♠", f"Weak hand ({hand.hcp} HCP), signing off in 5-card spades.")
+                            return ("2♠", f"Weak hand ({hand.hcp} HCP), signing off in 5-card spades.", metadata)
                         else:
                             return ("Pass", f"Weak hand ({hand.hcp} HCP), no fit found, passing 2♦.")
                     elif 8 <= hand.hcp <= 9:
-                        return ("2NT", f"Invitational ({hand.hcp} HCP), no major fit found.")
+                        return ("2NT", f"Invitational ({hand.hcp} HCP), no major fit found.", metadata)
                     else:
-                        return ("3NT", f"Game-forcing ({hand.hcp} HCP), no major fit, bidding 3NT.", metadata)
+                        return ("3NT", f"Game-forcing ({hand.hcp} HCP), no major fit, bidding 3NT.", game_metadata)
                 else:
                     if hand.hcp <= 7:
                         return ("Pass", f"Minimum ({hand.hcp} HCP), no fit for partner's {partner_suit}.")
                     elif 8 <= hand.hcp <= 9:
-                        return ("2NT", f"Invitational ({hand.hcp} HCP), no fit for partner's {partner_suit}.")
+                        return ("2NT", f"Invitational ({hand.hcp} HCP), no fit for partner's {partner_suit}.", metadata)
                     else:
-                        return ("3NT", f"Game-forcing ({hand.hcp} HCP), bidding 3NT with no major fit.", metadata)
+                        return ("3NT", f"Game-forcing ({hand.hcp} HCP), bidding 3NT with no major fit.", game_metadata)
 # ADR-0002 Phase 1: Auto-register this module on import
 from engine.ai.module_registry import ModuleRegistry
 ModuleRegistry.register("stayman", StaymanConvention())

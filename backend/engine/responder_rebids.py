@@ -134,6 +134,15 @@ class ResponderRebidModule(ConventionModule):
 
         opener_rebid = opener_bids[1]
 
+        # SPECIAL CASE: 2♣ Strong Opening
+        # 2♣ is GAME FORCING (unless responder shows negative with 2♦ - 2NT sequence)
+        # After 2♣ - 2♦ - 2NT, responder MUST continue to 3NT even with 0 points
+        # After 2♣ - 2♦ - (suit), responder should continue until game is reached
+        if opening_bid == '2♣':
+            strong_result = self._handle_strong_2c_continuation(hand, opener_rebid, my_first_response, features)
+            if strong_result:
+                return strong_result
+
         # SPECIAL CASE: Check for Stayman continuation
         # Pattern: 1NT - 2♣ - 2♦/2♥/2♠ - ?
         # After Stayman response, responder must continue based on fit and strength
@@ -305,13 +314,14 @@ class ResponderRebidModule(ConventionModule):
             opener_rebid = context['opener_rebid']
 
             # IMPORTANT: 2NT rebid (18-19 HCP) is FORCING TO GAME in SAYC
-            # Responder MUST bid even with minimum
+            # Responder MUST bid even with minimum - bypass HCP validation
+            forcing_2nt_metadata = {'bypass_hcp': True, 'forcing_sequence': '2NT_rebid'}
             if opener_rebid == '2NT':
                 # With 6+ card major, bid 3M (gives opener choice)
                 if my_first_suit in ['♥', '♠'] and hand.suit_lengths.get(my_first_suit, 0) >= 6:
-                    return (f"3{my_first_suit}", f"Showing 6+ {my_first_suit} after forcing 2NT rebid. Opener can raise to 4{my_first_suit} or pass.")
+                    return (f"3{my_first_suit}", f"Showing 6+ {my_first_suit} after forcing 2NT rebid. Opener can raise to 4{my_first_suit} or pass.", forcing_2nt_metadata)
                 # Otherwise bid 3NT - game is guaranteed with 2NT (18-19) + any response (6+)
-                return ("3NT", f"Game in NT after partner's forcing 2NT rebid ({hand.hcp} HCP). Combined 24+ HCP.")
+                return ("3NT", f"Game in NT after partner's forcing 2NT rebid ({hand.hcp} HCP). Combined 24+ HCP.", forcing_2nt_metadata)
 
             # 1NT rebid (12-14 HCP) is NOT forcing - can pass with minimum
             # Pass with balanced minimum
@@ -324,8 +334,14 @@ class ResponderRebidModule(ConventionModule):
 
             return ("Pass", "Minimum hand, passing 1NT.")
 
-        # Case 3: Opener showed two suits (e.g., 1♣ - 1♥ - 1♠)
+        # Case 3: Opener showed two suits (e.g., 1♥ - 1♠ - 2♣)
         if opener_rebid_type == 'new_suit' and opener_second_suit:
+            # Priority: Rebid own 6+ card suit before giving preference
+            # With 6-card suit and minimum, we want to play in our suit rather than opener's
+            if my_first_suit and hand.suit_lengths.get(my_first_suit, 0) >= 6:
+                return (f"2{my_first_suit}", f"Minimum hand rebidding 6+ card {my_first_suit} suit.")
+
+            # Give preference between opener's suits
             return self._give_preference(hand, opener_first_suit, opener_second_suit, strength='minimum')
 
         # Case 4: Opener made jump rebid (invitational)
@@ -420,18 +436,22 @@ class ResponderRebidModule(ConventionModule):
         my_first_suit = context['my_first_suit']
         opener_rebid = context['opener_rebid']
 
-        # NEW: Use AuctionContext for smart game decisions
-        # If combined midpoint is 25+, be more aggressive about game
-        auction_context = features.get('auction_context')
+        # For invitational rebids (10-12 HCP), we should INVITE, not bid game
+        # The AuctionContext may have wide ranges that overestimate combined values
+        # With 10-12 HCP after opener's 1NT rebid (12-14), combined is 22-26
+        # This is invitational, NOT game. Let opener decide with 2NT.
+        #
+        # Only bid game directly if we have 12 HCP AND opener showed extras (2NT rebid)
         should_bid_game = False
-        if auction_context is not None:
-            combined_mid = auction_context.ranges.combined_midpoint
-            # With 11-12 pts and combined mid 25+, go to game
-            if combined_mid >= 25 and hand.total_points >= 11:
+        opener_rebid = context.get('opener_rebid', '')
+
+        # Only consider game with top of invitational range (12 HCP) and extra evidence
+        if hand.hcp >= 12:
+            # After 2NT rebid (18-19 HCP), combined is 30-31 - game for sure
+            if opener_rebid == '2NT':
                 should_bid_game = True
-            # With 10 pts, need 26+ combined midpoint
-            elif combined_mid >= 26 and hand.total_points >= 10:
-                should_bid_game = True
+            # After 1NT rebid (12-14 HCP) with 12 HCP, combined is 24-26 - still invitational
+            # Let opener decide by bidding 2NT
 
         # Case 1: Opener rebid same suit - jump raise with fit
         if opener_rebid_type == 'same_suit':
@@ -457,13 +477,14 @@ class ResponderRebidModule(ConventionModule):
 
         # Case 2: Opener bid notrump - respond appropriately
         if opener_rebid_type == 'notrump':
-            # 2NT rebid is FORCING - must bid game
+            # 2NT rebid is FORCING - must bid game (bypass HCP validation)
+            forcing_2nt_metadata = {'bypass_hcp': True, 'forcing_sequence': '2NT_rebid'}
             if opener_rebid == '2NT':
                 # With 6+ card major, show it (partner can raise or pass 3NT)
                 if my_first_suit in ['♥', '♠'] and hand.suit_lengths.get(my_first_suit, 0) >= 6:
-                    return (f"3{my_first_suit}", f"Showing 6+ {my_first_suit} after forcing 2NT. Partner decides between 4{my_first_suit} and 3NT.")
+                    return (f"3{my_first_suit}", f"Showing 6+ {my_first_suit} after forcing 2NT. Partner decides between 4{my_first_suit} and 3NT.", forcing_2nt_metadata)
                 # With invitational values (10-12), just bid 3NT - combined 28-31 is game
-                return ("3NT", f"Game after partner's forcing 2NT rebid ({hand.hcp} HCP). Combined 28-31 HCP.")
+                return ("3NT", f"Game after partner's forcing 2NT rebid ({hand.hcp} HCP). Combined 28-31 HCP.", forcing_2nt_metadata)
 
             # Check if opener bid 1NT (invite to 2NT or 3NT)
             if opener_rebid == '1NT':
@@ -510,22 +531,22 @@ class ResponderRebidModule(ConventionModule):
                 return ("Pass", f"Declining partner's invitation with {hand.total_points} pts.")
 
         # Case 5: After reverse (forcing) - show invitational values or bid game
+        # Reverse shows 17+ from opener, with 10-12 from responder = 27+ combined = GAME
+        # Use bypass metadata since reverse is game-forcing with invitational values
         if context['is_forcing']:
-            # Reverse shows 17+ from opener, so combined is likely 27+
-            # With invitational values after reverse, often bid game
+            reverse_metadata = {'bypass_hcp': True, 'game_forcing': True, 'forcing_sequence': 'reverse'}
+
+            # Reverse shows 17+ from opener, so combined is 27+ with invitational
+            # This is definitely game territory - don't just invite
             if hand.suit_lengths.get(opener_first_suit, 0) >= 3:
-                if should_bid_game or hand.total_points >= 11:
-                    # After reverse + invitational, usually have game values
-                    if opener_first_suit in ['♥', '♠']:
-                        return (f"4{opener_first_suit}", f"Game with {opener_first_suit} support after partner's reverse.")
-                    return ("3NT", f"Game in NT with {opener_first_suit} support after reverse.")
-                return (f"3{opener_first_suit}", f"Showing support for {opener_first_suit} with invitational values.")
+                # After reverse + invitational, we HAVE game values (27+)
+                if opener_first_suit in ['♥', '♠']:
+                    return (f"4{opener_first_suit}", f"Game with {opener_first_suit} support after partner's reverse (combined 27+).", reverse_metadata)
+                return ("3NT", f"Game in NT with {opener_first_suit} support after reverse (combined 27+).", reverse_metadata)
 
             # Bid game with balanced hand after reverse (combined values high)
             if hand.is_balanced:
-                if should_bid_game or hand.total_points >= 11:
-                    return ("3NT", "Game in NT after partner's reverse (combined 27+).")
-                return ("2NT", "Showing invitational values (10-12 pts) after partner's reverse.")
+                return ("3NT", "Game in NT after partner's reverse (combined 27+).", reverse_metadata)
 
         # Default: Bid 2NT or 3NT based on combined values
         if hand.is_balanced:
@@ -654,16 +675,20 @@ class ResponderRebidModule(ConventionModule):
             return ("3NT", "Game in NT with 13+ HCP.")
 
         # Case 5: After reverse (already forcing) - continue to game
+        # Reverse shows 17+ HCP from opener - with 13+ from responder, combined is 30+
+        # MUST bid game - use bypass metadata
         if context['is_forcing']:
+            reverse_metadata = {'bypass_hcp': True, 'game_forcing': True, 'forcing_sequence': 'reverse'}
+
             # Bid game with fit
             if hand.suit_lengths.get(opener_first_suit, 0) >= 3:
                 if opener_first_suit in ['♥', '♠']:
-                    return (f"4{opener_first_suit}", f"Game with {opener_first_suit} support.")
-                return ("3NT", f"Game with {opener_first_suit} support.")
+                    return (f"4{opener_first_suit}", f"Game with {opener_first_suit} support after partner's reverse (combined 30+).", reverse_metadata)
+                return ("3NT", f"Game with {opener_first_suit} support after partner's reverse.", reverse_metadata)
 
             # Bid 3NT with balanced
             if hand.is_balanced:
-                return ("3NT", "Game in NT with 13+ HCP after partner's reverse.")
+                return ("3NT", "Game in NT with 13+ HCP after partner's reverse (combined 30+).", reverse_metadata)
 
         # Default: Bid 3NT
         if hand.is_balanced and hand.hcp >= 13:
@@ -884,17 +909,120 @@ class ResponderRebidModule(ConventionModule):
         if hcp >= 10:
             if major_length >= 6:
                 # With 6+ card major, bid game in the major
-                return (f"4{major}", f"Game with {hcp} HCP and 6+ {major_name}. Combined {combined_min}+ HCP.")
+                return (f"4{major}", f"Game with {hcp} HCP and 6+ {major_name}. Combined {combined_min}+ HCP.", jacoby_metadata)
             else:
                 # With 5-card major, offer choice between 3NT and 4M
                 # Bid 3NT to show balanced game values, opener can correct to 4M with 3+ support
                 if hand.is_balanced:
-                    return ("3NT", f"Game with {hcp} HCP and 5 {major_name}. Partner can pass or correct to 4{major}.")
+                    return ("3NT", f"Game with {hcp} HCP and 5 {major_name}. Partner can pass or correct to 4{major}.", jacoby_metadata)
                 else:
                     # Unbalanced with only 5-card major - still bid 4M, partner has 2+ for Jacoby
-                    return (f"4{major}", f"Game with {hcp} HCP, 5 {major_name}, unbalanced. Partner has 2+ {major_name}.")
+                    return (f"4{major}", f"Game with {hcp} HCP, 5 {major_name}, unbalanced. Partner has 2+ {major_name}.", jacoby_metadata)
 
         return None  # Should not reach here
+
+    def _handle_strong_2c_continuation(self, hand: Hand, opener_rebid: str,
+                                       my_first_response: str, features: Dict) -> Optional[Tuple[str, str]]:
+        """
+        Handle responder's continuation after a 2♣ strong opening.
+
+        2♣ Opening is GAME FORCING in SAYC unless:
+        - 2♣ - 2♦ - 2NT (22-24 balanced) followed by 3♣ Stayman or Pass
+
+        Standard 2♣ Sequences:
+        - 2♣ - 2♦ - 2NT: Opener has 22-24 balanced. Responder bids 3♣ (Stayman), 3♦/3♥ (transfer), or 3NT
+        - 2♣ - 2♦ - 3NT: Opener has 25-27 balanced. Responder passes or bids slam
+        - 2♣ - 2♦ - 2♥/2♠: Opener has 5+ in suit. Responder supports or bids own suit
+        - 2♣ - 2♦ - 3♣/3♦: Opener has 5+ in minor. Responder supports or bids 3NT
+
+        Key: After 2♣, partnership MUST reach game unless opener shows 22-24 balanced
+        and responder has absolute minimum (0-3 HCP).
+
+        Returns:
+            3-tuple (bid, explanation, metadata) - ALWAYS returns something (never None for 2♣ auctions)
+        """
+        hcp = hand.hcp
+
+        # Metadata for 2♣ forcing sequence - always bypass HCP requirements
+        strong_2c_metadata = {'bypass_hcp': True, 'forcing_sequence': '2c_game_forcing', 'convention': '2c_continuation'}
+
+        # Case 1: Opener rebid 2NT (22-24 balanced)
+        if opener_rebid == '2NT':
+            # Combined = 22-24 + responder's HCP
+            # With 0-3 HCP (combined 22-27): Can pass for game or invite
+            # With 4-7 HCP (combined 26-31): Bid 3NT
+            # With 8-9 HCP (combined 30-33): Slam invite (4NT quantitative)
+            # With 10+ HCP (combined 32+): 6NT or investigate slam
+
+            if hcp <= 3:
+                # Minimum - 3NT is safe with 22+ from partner
+                return ("3NT", f"Game in NT after partner's 2NT (22-24 HCP + my {hcp} = {22+hcp}+ combined).", strong_2c_metadata)
+            elif 4 <= hcp <= 7:
+                return ("3NT", f"Game in NT ({hcp} HCP + partner's 22-24 = {22+hcp}-{24+hcp} combined).", strong_2c_metadata)
+            elif 8 <= hcp <= 9:
+                return ("4NT", f"Quantitative slam invite ({hcp} HCP + partner's 22-24 = {22+hcp}-{24+hcp} combined). Partner bids 6NT with max.", strong_2c_metadata)
+            else:  # 10+ HCP
+                return ("6NT", f"Small slam with {hcp} HCP + partner's 22-24 = {22+hcp}+ combined.", strong_2c_metadata)
+
+        # Case 2: Opener rebid 3NT (25-27 balanced)
+        if opener_rebid == '3NT':
+            # Combined = 25-27 + responder's HCP
+            # With 0-5 HCP (combined 25-32): Pass - game is already bid
+            # With 6-7 HCP (combined 31-34): Slam invite (4NT or 5NT)
+            # With 8+ HCP (combined 33+): Bid slam
+
+            if hcp <= 5:
+                return ("Pass", f"Accepting 3NT game. Partner has 25-27, combined {25+hcp}+ is enough for game.", strong_2c_metadata)
+            elif 6 <= hcp <= 7:
+                return ("4NT", f"Quantitative slam invite ({hcp} HCP + partner's 25-27 = {25+hcp}+ combined).", strong_2c_metadata)
+            else:  # 8+ HCP
+                return ("6NT", f"Slam with {hcp} HCP + partner's 25-27 = {25+hcp}+ combined.", strong_2c_metadata)
+
+        # Case 3: Opener rebid a major (2♥ or 2♠) - shows 5+ cards
+        if opener_rebid in ['2♥', '2♠']:
+            major = opener_rebid[1]
+            major_name = 'hearts' if major == '♥' else 'spades'
+            support = hand.suit_lengths.get(major, 0)
+
+            # With 3+ support, raise to game
+            if support >= 3:
+                return (f"4{major}", f"Game with {support}-card {major_name} support after partner's strong 2♣ and rebid.", strong_2c_metadata)
+
+            # With 2-card support, still need to reach game
+            if support == 2:
+                # Bid 3 of the major (forcing) to show preference
+                return (f"3{major}", f"Preference to {major_name} with doubleton (game forcing sequence).", strong_2c_metadata)
+
+            # No support - bid own 5+ card suit or 2NT (waiting)
+            for suit in ['♠', '♥', '♦', '♣']:
+                if hand.suit_lengths.get(suit, 0) >= 5:
+                    level = '2' if suit in ['♠'] and major == '♥' else '3'
+                    return (f"{level}{suit}", f"Own 5+ card suit in game forcing sequence.", strong_2c_metadata)
+
+            # No fit, no suit - bid 2NT waiting or 3NT
+            if opener_rebid == '2♥':
+                return ("2NT", f"Waiting/negative, no heart support, no suit to show.", strong_2c_metadata)
+            else:
+                return ("3NT", f"No spade support, suggesting NT game.", strong_2c_metadata)
+
+        # Case 4: Opener rebid 3♣ or 3♦ (strong minor)
+        if opener_rebid in ['3♣', '3♦']:
+            minor = opener_rebid[1]
+            minor_name = 'clubs' if minor == '♣' else 'diamonds'
+            support = hand.suit_lengths.get(minor, 0)
+
+            # With minor support, still probably better in 3NT unless very long
+            if support >= 4:
+                # Raise to show support, partner decides
+                return (f"4{minor}", f"Supporting partner's {minor_name} (4+ cards). Partner chooses 5m or 3NT.", strong_2c_metadata)
+
+            # Default: 3NT is usually best with no major fit
+            return ("3NT", f"Game in NT after partner's {opener_rebid}. No major fit.", strong_2c_metadata)
+
+        # Case 5: Other rebids - ensure we reach game
+        # Default: bid 3NT if nothing else applies
+        return ("3NT", f"Continuing to game after 2♣ opening.", strong_2c_metadata)
+
 
 # ADR-0002 Phase 1: Auto-register this module on import
 from engine.ai.module_registry import ModuleRegistry

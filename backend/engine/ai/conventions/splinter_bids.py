@@ -137,10 +137,21 @@ class SplinterBidsConvention(ConventionModule):
 
         shortness_desc = "singleton" if short_length == 1 else "void"
 
+        # Metadata to bypass suit length validation - splinter bids are ARTIFICIAL
+        # The bid shows shortness in the suit, NOT length
+        # Also bypass HCP validation since this uses support points
+        splinter_metadata = {
+            'bypass_suit_length': True,
+            'bypass_hcp': True,
+            'convention': 'splinter',
+            'game_forcing': True  # Splinters are game-forcing
+        }
+
         return (splinter_bid,
                f"Splinter bid showing {support}-card {self._suit_name(opening_suit)} support, "
                f"{shortness_desc} in {self._suit_name(splinter_suit)}, and slam interest "
-               f"({hand.hcp} HCP, {support_points} support points).")
+               f"({hand.hcp} HCP, {support_points} support points).",
+               splinter_metadata)
 
     def _suit_name(self, suit: str) -> str:
         """Convert suit symbol to name"""

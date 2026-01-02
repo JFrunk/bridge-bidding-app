@@ -6,11 +6,22 @@ this pipeline before being accepted.
 
 Part of ADR-0002: Bidding System Robustness Improvements
 Layer 2: Centralized Validation Pipeline
+
+IMPORTANT: This pipeline now checks AuctionContext for game_forcing status.
+When game_forcing=True, HCP requirements are bypassed because the partnership
+has already established game-going values and must continue bidding.
+
+Game-forcing sequences include:
+- 2NT rebid by opener (18-19 HCP)
+- Reverses by opener (17+ HCP)
+- Jump shifts by responder (game forcing)
+- 2-over-1 responses (10+ HCP, game forcing in many systems)
 """
 
 import logging
 from typing import Tuple, Optional, Dict, List
 from engine.hand import Hand
+from engine.ai.auction_context import analyze_auction_context
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +61,7 @@ class ValidationPipeline:
             metadata: Optional metadata dict with bypass flags:
                 - bypass_suit_length: Skip suit length validation (for artificial bids)
                 - bypass_hcp: Skip HCP validation (for conventional responses)
+                - forcing_sequence: Describes the forcing sequence type
 
         Returns:
             (is_valid, error_message)
@@ -65,14 +77,31 @@ class ValidationPipeline:
 
         metadata = metadata or {}
 
+        # CRITICAL: Check if we're in a game-forcing sequence
+        # When game_forcing=True, we MUST bypass HCP requirements because:
+        # 1. The partnership has already established game-going values
+        # 2. Responder MUST bid even with minimum values
+        # 3. Validation should not prevent forced bids
+        game_forcing = self._check_game_forcing_status(features, auction, metadata)
+
         for validator in self.validators:
             # Check if this validator should be bypassed
             if isinstance(validator, SuitLengthValidator) and metadata.get('bypass_suit_length'):
                 logger.debug(f"Bypassing SuitLengthValidator for artificial bid: {bid}")
                 continue
-            if isinstance(validator, HCPRequirementValidator) and metadata.get('bypass_hcp'):
-                logger.debug(f"Bypassing HCPRequirementValidator for conventional response: {bid}")
-                continue
+
+            # Bypass HCP validators in game-forcing sequences
+            if isinstance(validator, HCPRequirementValidator):
+                if metadata.get('bypass_hcp') or game_forcing:
+                    if game_forcing:
+                        logger.debug(f"Bypassing HCPRequirementValidator for game-forcing sequence: {bid}")
+                    continue
+
+            if isinstance(validator, BidLevelAppropriatenessValidator):
+                if metadata.get('bypass_hcp') or game_forcing:
+                    if game_forcing:
+                        logger.debug(f"Bypassing BidLevelAppropriatenessValidator for game-forcing sequence: {bid}")
+                    continue
 
             is_valid, error = validator.validate(bid, hand, features, auction)
             if not is_valid:
@@ -80,6 +109,47 @@ class ValidationPipeline:
                 return False, error
 
         return True, None
+
+    def _check_game_forcing_status(self, features: Dict, auction: List, metadata: Dict) -> bool:
+        """
+        Check if we're in a game-forcing sequence where HCP requirements should be bypassed.
+
+        This checks both:
+        1. Explicit metadata from bidding modules (forcing_sequence key)
+        2. AuctionContext analysis (game_forcing flag set by auction analyzer)
+
+        Returns True if HCP validation should be bypassed.
+        """
+        # Check explicit metadata first (most reliable)
+        if metadata.get('forcing_sequence'):
+            logger.debug(f"Game-forcing from metadata: {metadata.get('forcing_sequence')}")
+            return True
+
+        # Check if metadata explicitly says game forcing
+        if metadata.get('game_forcing'):
+            return True
+
+        # Analyze auction context for game-forcing status
+        try:
+            positions = features.get('positions', ['North', 'East', 'South', 'West'])
+            my_index = features.get('my_index', 0)
+
+            context = analyze_auction_context(auction, positions, my_index)
+
+            if context.ranges.game_forcing:
+                logger.debug(f"Game-forcing detected by AuctionContext analysis")
+                return True
+
+            # Also check if combined midpoint suggests game is likely
+            # When combined_midpoint >= 25, partnership should be bidding game
+            if context.ranges.combined_midpoint >= 25:
+                logger.debug(f"Game likely: combined_midpoint={context.ranges.combined_midpoint}")
+                return True
+
+        except Exception as e:
+            logger.debug(f"Error analyzing auction context: {e}")
+
+        return False
 
     def add_validator(self, validator):
         """Add custom validator to pipeline."""
