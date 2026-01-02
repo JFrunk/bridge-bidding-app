@@ -852,7 +852,7 @@ ${otherCommands}`;
           position: 'S',
           card: { rank: card.rank, suit: card.suit },
           user_id: userId || 1,
-          session_id: sessionData?.session?.session_id
+          session_id: sessionData?.session?.id
         })
       });
 
@@ -1004,7 +1004,7 @@ ${otherCommands}`;
           position: declarerPosition,
           card: { rank: card.rank, suit: card.suit },
           user_id: userId || 1,
-          session_id: sessionData?.session?.session_id
+          session_id: sessionData?.session?.id
         })
       });
 
@@ -1162,7 +1162,7 @@ ${otherCommands}`;
           position: dummyPosition,
           card: { rank: card.rank, suit: card.suit },
           user_id: userId || 1,
-          session_id: sessionData?.session?.session_id
+          session_id: sessionData?.session?.id
         })
       });
 
@@ -1733,7 +1733,7 @@ ${otherCommands}`;
           auction_history: auction.map(a => a.bid), // Auction BEFORE user's bid
           current_player: 'South',
           user_id: userId || 1,
-          session_id: sessionData?.session?.session_id,
+          session_id: sessionData?.session?.id,
           feedback_level: 'intermediate'
         })
       });
