@@ -74,14 +74,13 @@ const HandHistoryCard = ({ hand, onClick }) => {
   const scoreDisplay = getScoreDisplay();
 
   // Format suit symbols for contract display
+  // Note: Contract format is "3♦ by S" - the strain is already a symbol,
+  // and the declarer (N/E/S/W) should NOT be converted to a suit symbol
   const formatContract = (contract) => {
     if (!contract) return 'Passed Out';
-    // Replace suit letters with symbols if needed
-    return contract
-      .replace(/S(?![A-Za-z])/g, '♠')
-      .replace(/H(?![A-Za-z])/g, '♥')
-      .replace(/D(?![A-Za-z])/g, '♦')
-      .replace(/C(?![A-Za-z])/g, '♣');
+    // The backend already returns strain as symbols (♠♥♦♣), so no conversion needed
+    // Just return as-is to avoid accidentally converting position letters (N/E/S/W) to suits
+    return contract;
   };
 
   // Get suit color for contract display
