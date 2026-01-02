@@ -1,0 +1,312 @@
+{
+  "timestamp": "2025-12-30T09:21:42.615079",
+  "game_phase": "bidding",
+  "all_hands": {
+    "North": {
+      "cards": [
+        {
+          "rank": "K",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 12,
+        "dist_points": 1,
+        "total_points": 13,
+        "suit_hcp": {
+          "\u2660": 3,
+          "\u2665": 2,
+          "\u2666": 7,
+          "\u2663": 0
+        },
+        "suit_lengths": {
+          "\u2660": 4,
+          "\u2665": 5,
+          "\u2666": 3,
+          "\u2663": 1
+        }
+      }
+    },
+    "East": {
+      "cards": [
+        {
+          "rank": "3",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 13,
+        "dist_points": 3,
+        "total_points": 16,
+        "suit_hcp": {
+          "\u2660": 0,
+          "\u2665": 4,
+          "\u2666": 0,
+          "\u2663": 9
+        },
+        "suit_lengths": {
+          "\u2660": 2,
+          "\u2665": 3,
+          "\u2666": 1,
+          "\u2663": 7
+        }
+      }
+    },
+    "South": {
+      "cards": [
+        {
+          "rank": "J",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 9,
+        "dist_points": 2,
+        "total_points": 11,
+        "suit_hcp": {
+          "\u2660": 1,
+          "\u2665": 4,
+          "\u2666": 3,
+          "\u2663": 1
+        },
+        "suit_lengths": {
+          "\u2660": 1,
+          "\u2665": 4,
+          "\u2666": 6,
+          "\u2663": 2
+        }
+      }
+    },
+    "West": {
+      "cards": [
+        {
+          "rank": "A",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 6,
+        "dist_points": 2,
+        "total_points": 8,
+        "suit_hcp": {
+          "\u2660": 6,
+          "\u2665": 0,
+          "\u2666": 0,
+          "\u2663": 0
+        },
+        "suit_lengths": {
+          "\u2660": 6,
+          "\u2665": 1,
+          "\u2666": 3,
+          "\u2663": 3
+        }
+      }
+    }
+  },
+  "auction": [
+    {
+      "bid": "1\u2665",
+      "explanation": "\ud83d\udccb Open longest suit - hearts (5+ cards)\n\n\ud83d\udcd0 Requirements for this bid:\n  \u2022 Opening Points: 13+\n  \u2022 Heart Length: 5+\n\n\u26a1 Status: Forcing for 1 round"
+    },
+    {
+      "bid": "2\u2663",
+      "explanation": "Overcall showing 13 HCP and 7-card Club suit."
+    }
+  ],
+  "vulnerability": "None",
+  "dealer": "N",
+  "user_position": "South",
+  "user_concern": "Is North's opening bid correct? What about East's response?"
+}

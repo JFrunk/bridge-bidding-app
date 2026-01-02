@@ -1,0 +1,95 @@
+{
+  "timestamp": "2025-12-28T16:53:48.194635",
+  "feedback_type": "issue",
+  "description": "I don`t like the developer.",
+  "context": "freeplay",
+  "context_data": {
+    "game_phase": "bidding",
+    "auction": [
+      {
+        "bid": "Pass",
+        "explanation": "\ud83d\udccb Not enough strength to open\n\n\ud83d\udcd0 Requirements for this bid:\n  \u2022 Opening Points: 13+",
+        "player": "North"
+      },
+      {
+        "bid": "Pass",
+        "explanation": "\ud83d\udccb Not enough strength to open\n\n\ud83d\udcd0 Requirements for this bid:\n  \u2022 Opening Points: 13+",
+        "player": "East"
+      }
+    ],
+    "vulnerability": "None",
+    "dealer": "North",
+    "hand": [
+      {
+        "rank": "T",
+        "suit": "\u2660"
+      },
+      {
+        "rank": "5",
+        "suit": "\u2660"
+      },
+      {
+        "rank": "3",
+        "suit": "\u2660"
+      },
+      {
+        "rank": "A",
+        "suit": "\u2665"
+      },
+      {
+        "rank": "8",
+        "suit": "\u2665"
+      },
+      {
+        "rank": "5",
+        "suit": "\u2665"
+      },
+      {
+        "rank": "4",
+        "suit": "\u2665"
+      },
+      {
+        "rank": "A",
+        "suit": "\u2666"
+      },
+      {
+        "rank": "T",
+        "suit": "\u2666"
+      },
+      {
+        "rank": "A",
+        "suit": "\u2663"
+      },
+      {
+        "rank": "K",
+        "suit": "\u2663"
+      },
+      {
+        "rank": "7",
+        "suit": "\u2663"
+      },
+      {
+        "rank": "5",
+        "suit": "\u2663"
+      }
+    ],
+    "hand_points": {
+      "dist_points": 0,
+      "hcp": 15,
+      "suit_hcp": {
+        "\u2660": 0,
+        "\u2663": 7,
+        "\u2665": 4,
+        "\u2666": 4
+      },
+      "suit_lengths": {
+        "\u2660": 3,
+        "\u2663": 4,
+        "\u2665": 4,
+        "\u2666": 2
+      },
+      "total_points": 15
+    },
+    "all_hands": null
+  }
+}
