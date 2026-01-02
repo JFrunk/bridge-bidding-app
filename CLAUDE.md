@@ -117,6 +117,32 @@ python3 analyze_errors.py --category bidding_logic  # Filter by category
 
 **See:** [docs/features/ERROR_LOGGING_QUICKSTART.md](docs/features/ERROR_LOGGING_QUICKSTART.md), [docs/features/ERROR_LOGGING_SYSTEM.md](docs/features/ERROR_LOGGING_SYSTEM.md)
 
+### User Feedback (Production)
+
+**⚠️ User feedback from the app is stored on the PRODUCTION server, not locally**
+
+User feedback submitted via the in-app feedback button is saved to:
+- **Production:** `/opt/bridge-bidding-app/backend/user_feedback/` on Oracle Cloud server
+- **Local (dev only):** `backend/user_feedback/` (only captures local testing)
+
+**To review user feedback:**
+```bash
+# List all feedback files on production
+ssh oracle-bridge "ls -la /opt/bridge-bidding-app/backend/user_feedback/"
+
+# Read specific feedback file
+ssh oracle-bridge "cat /opt/bridge-bidding-app/backend/user_feedback/feedback_YYYY-MM-DD_HH-MM-SS.json"
+
+# Read all recent feedback (last 3 days)
+ssh oracle-bridge "find /opt/bridge-bidding-app/backend/user_feedback/ -mtime -3 -name '*.json' -exec cat {} \;"
+```
+
+**Feedback File Format:**
+- `feedback_freeplay_YYYY-MM-DD_HH-MM-SS.json` - General feedback from freeplay
+- `feedback_YYYY-MM-DD_HH-MM-SS.json` - Feedback with full context
+
+**Email Notifications:** Feedback also triggers email notifications if configured (see `backend/engine/notifications/email_service.py`)
+
 ---
 
 ## Quality Assurance Protocols

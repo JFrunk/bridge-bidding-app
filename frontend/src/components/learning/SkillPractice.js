@@ -8,7 +8,7 @@
  * - Tracks progress
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './SkillPractice.css';
 import { LearningHand } from './LearningCard';
 import { TermHighlight } from '../glossary';
@@ -20,6 +20,15 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
   const [showFeedback, setShowFeedback] = useState(!!session?.lastResult);
   const [showHandStats, setShowHandStats] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
+  const containerRef = useRef(null);
+
+  // Scroll to top when component mounts or hand changes
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+  }, [session?.hand_id, session?.skill_id]);
 
   // Sync local state when navigating between hands
   // This handles both new hands and reviewing previous hands
@@ -80,7 +89,7 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
 
   if (!session) {
     return (
-      <div className="skill-practice">
+      <div className="skill-practice" ref={containerRef}>
         <div className="error-state">
           <p>No active session</p>
           <button onClick={onClose}>Go Back</button>
@@ -117,7 +126,7 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
   });
 
   return (
-    <div className="skill-practice">
+    <div className="skill-practice" ref={containerRef}>
       {/* Header */}
       <div className="practice-header">
         <button onClick={onClose} className="back-button">← Back</button>

@@ -9,7 +9,7 @@
  * - Quick access to glossary button
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './SkillIntro.css';
 import { GlossaryDrawer, TermHighlight } from '../glossary';
 
@@ -888,6 +888,17 @@ const DEFAULT_CONTENT = {
 const SkillIntro = ({ skillId, skillName, onStart, onBack }) => {
   const [showGlossary, setShowGlossary] = useState(false);
   const [selectedTermId, setSelectedTermId] = useState(null);
+  const containerRef = useRef(null);
+
+  // Scroll to top when component mounts or skillId changes
+  useEffect(() => {
+    // Scroll the container to top
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+    // Also scroll the window to top for good measure
+    window.scrollTo(0, 0);
+  }, [skillId]);
 
   // Check both bidding and play skill content
   const content = SKILL_CONTENT[skillId] || PLAY_SKILL_CONTENT[skillId] || {
@@ -908,7 +919,7 @@ const SkillIntro = ({ skillId, skillName, onStart, onBack }) => {
   };
 
   return (
-    <div className="skill-intro">
+    <div className="skill-intro" ref={containerRef}>
       <div className="intro-header">
         <button onClick={onBack} className="back-button">← Back</button>
         <h1 className="intro-title">{content.title}</h1>
