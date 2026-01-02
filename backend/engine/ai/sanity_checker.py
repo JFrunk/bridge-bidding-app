@@ -341,58 +341,56 @@ class SanityChecker:
         """
         Check if this is a Blackwood or control-bid sequence.
 
-        4NT is Blackwood (asking for aces) when:
-        - There's been suit agreement (a suit bid and supported)
-        - A suit contract has been established
+        Blackwood is indicated by:
+        1. Someone bid 4NT (asking for aces) - NOT after 1NT/2NT/3NT opening without suit shown
+        2. A 5-level response (5♣/5♦/5♥/5♠) followed 4NT
+        3. The current bid follows a Blackwood response (signoff phase)
 
-        4NT is QUANTITATIVE (inviting 6NT) when:
-        - The auction has been NT-based (1NT-3NT-4NT)
-        - No suit has been agreed upon
+        4NT is QUANTITATIVE (NOT Blackwood) when:
+        - The auction has been purely NT-based (1NT-4NT or 2NT-4NT with no suit shown)
 
-        This distinction is critical to prevent allowing runaway auctions
-        after quantitative 4NT.
+        This is critical for allowing slam signoff after Blackwood responses.
         """
-        # First, check if there's a suit agreement in the auction
-        # A suit is "agreed" if it's been bid by both partners or raised
-        suits_bid = {'♣': [], '♦': [], '♥': [], '♠': []}
-        has_suit_agreement = False
+        has_4nt = False
+        has_blackwood_response = False
+        nt_only_auction = True  # Track if auction is pure NT
 
-        for i, bid in enumerate(auction):
-            if bid in ['Pass', 'X', 'XX'] or bid.endswith('NT'):
+        # Check if any suit was shown (makes 4NT = Blackwood)
+        for bid in auction:
+            if bid in ['Pass', 'X', 'XX']:
                 continue
-            if len(bid) >= 2 and bid[0].isdigit():
-                suit = bid[1:]
-                if suit in suits_bid:
-                    # Track which positions bid this suit
-                    position = i % 4
-                    partner_position = (position + 2) % 4
-                    suits_bid[suit].append(position)
-
-                    # Check if partner also bid this suit (agreement)
-                    if partner_position in suits_bid[suit]:
-                        has_suit_agreement = True
+            if len(bid) >= 2 and bid[0].isdigit() and bid[1] in '♣♦♥♠':
+                nt_only_auction = False
+                break
 
         for i, bid in enumerate(auction):
             # Check for 4NT
-            if bid == "4NT" and i > 0:
-                # Only treat as Blackwood if there's suit agreement
-                if has_suit_agreement:
-                    return True
-                # Otherwise, it's quantitative - don't bypass sanity checks
+            if bid == "4NT":
+                # 4NT is Blackwood unless it's a pure NT auction (1NT-4NT, 2NT-4NT)
+                if not nt_only_auction:
+                    has_4nt = True
+                # Even in NT auctions, if responder showed a suit, 4NT is Blackwood
+                # Example: 1NT - 2♥(transfer) - 2♠ - 4NT is Blackwood for spades
 
-            # Check for 5NT (king ask after Blackwood)
-            if bid == "5NT" and i > 0:
-                # 5NT is always a slam try (either king ask or quantitative slam invite)
-                # Allow it if there was suit agreement (Blackwood continuation)
-                if has_suit_agreement:
-                    return True
+            # Check for Blackwood responses (5♣, 5♦, 5♥, 5♠ after 4NT)
+            if len(bid) >= 2 and bid[0] == '5' and bid[1] in '♣♦♥♠':
+                # Check if 4NT was bid earlier
+                if has_4nt:
+                    has_blackwood_response = True
 
-            # Check for 5-level ace responses (5♣, 5♦, 5♥, 5♠)
-            if i > 0 and len(bid) >= 2 and bid[0] == '5' and bid != '5NT':
-                # Check if previous non-Pass bid was 4NT
-                prev_bids = [b for b in auction[:i] if b != 'Pass']
-                if prev_bids and prev_bids[-1] == '4NT' and has_suit_agreement:
-                    return True
+            # Check for 5NT (king ask) - definitely a slam sequence
+            if bid == "5NT" and has_4nt:
+                return True
+
+        # If we have 4NT followed by a Blackwood response, this is a Blackwood sequence
+        # The ASKER is now allowed to bid slam (6/7 level)
+        if has_4nt and has_blackwood_response:
+            return True
+
+        # If we just have 4NT with no response yet, it's still a potential Blackwood sequence
+        # Allow the response to come through
+        if has_4nt:
+            return True
 
         return False
 
