@@ -18,8 +18,9 @@ const API_BASE = process.env.REACT_APP_API_BASE || '';
 
 // Card display helper
 const CardDisplay = ({ rank, suit, onClick, isHighlighted, isPlayed }) => {
-  const suitSymbols = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣' };
-  const suitColors = { 'S': '#000', 'H': '#dc2626', 'D': '#dc2626', 'C': '#000' };
+  // Support both letter format ('S', 'H', 'D', 'C') and Unicode format ('♠', '♥', '♦', '♣')
+  const suitSymbols = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣', '♠': '♠', '♥': '♥', '♦': '♦', '♣': '♣' };
+  const suitColors = { 'S': '#000', 'H': '#dc2626', 'D': '#dc2626', 'C': '#000', '♠': '#000', '♥': '#dc2626', '♦': '#dc2626', '♣': '#000' };
   const symbol = suitSymbols[suit] || suit;
   const color = suitColors[suit] || '#000';
 

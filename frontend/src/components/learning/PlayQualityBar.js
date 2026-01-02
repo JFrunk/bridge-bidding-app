@@ -35,11 +35,12 @@ const PlayQualityBar = ({ stats }) => {
     );
   }
 
-  // Calculate percentages
+  // Calculate percentages - using 3-tier system matching bidding
   const optimalPercentage = Math.round(stats.optimal_rate * 100);
   const goodPercentage = Math.round(stats.good_rate * 100);
+  const combinedGoodPercentage = Math.round((stats.combined_good_rate || (stats.optimal_rate + stats.good_rate)) * 100);
+  const suboptimalPercentage = Math.round((stats.suboptimal_rate || 0) * 100);
   const blunderPercentage = Math.round(stats.blunder_rate * 100);
-  const accuracyPercentage = optimalPercentage + goodPercentage;
 
   // Determine quality rating based on average score
   const getQualityRating = (score) => {
@@ -107,13 +108,13 @@ const PlayQualityBar = ({ stats }) => {
           </div>
         </div>
 
-        {/* Play Accuracy (Optimal + Good) */}
+        {/* Good Plays (Optimal + Good combined) */}
         <div className="quality-stat-item">
           <div className="quality-stat-value accuracy-value">
-            {accuracyPercentage}%
+            {combinedGoodPercentage}%
           </div>
           <div className="quality-stat-label">
-            <div className="quality-main-label">Play Accuracy</div>
+            <div className="quality-main-label">Good Plays</div>
             <div className="quality-sublabel">
               {optimalPercentage}% optimal, {goodPercentage}% good
             </div>
@@ -130,13 +131,30 @@ const PlayQualityBar = ({ stats }) => {
           </div>
         </div>
 
-        {/* Blunder Rate */}
+        {/* Needs Work (Suboptimal) */}
+        <div className="quality-stat-item">
+          <div className="quality-stat-value suboptimal-value">
+            {suboptimalPercentage}%
+          </div>
+          <div className="quality-stat-label">
+            <div className="quality-main-label">Needs Work</div>
+            <div className="quality-sublabel">Suboptimal plays</div>
+          </div>
+          <div className="quality-progress-bar">
+            <div
+              className="quality-progress-fill suboptimal-fill"
+              style={{ width: `${suboptimalPercentage}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Errors (Blunders) */}
         <div className="quality-stat-item">
           <div className="quality-stat-value blunder-value">
             {blunderPercentage}%
           </div>
           <div className="quality-stat-label">
-            <div className="quality-main-label">Blunders</div>
+            <div className="quality-main-label">Errors</div>
             <div className="quality-sublabel">
               {stats.total_tricks_lost || 0} tricks lost
             </div>

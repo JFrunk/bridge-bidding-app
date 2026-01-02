@@ -118,6 +118,10 @@
   color: #fecaca;
 }
 
+.play-quality-bar .suboptimal-value {
+  color: #fef08a;
+}
+
 /* Labels */
 .play-quality-bar .quality-stat-label {
   text-align: center;
@@ -171,6 +175,10 @@
 .play-quality-bar .good-fill {
   background: linear-gradient(90deg, #60a5fa, #93c5fd);
   z-index: 1;
+}
+
+.play-quality-bar .suboptimal-fill {
+  background: linear-gradient(90deg, #eab308, #facc15);
 }
 
 .play-quality-bar .blunder-fill {

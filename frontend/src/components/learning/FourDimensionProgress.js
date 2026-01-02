@@ -351,7 +351,7 @@ const QualityContent = ({ quality, type, onShowHandHistory }) => {
       <div className="quality-gauge">
         <div className="gauge-value">{Math.round(mainMetric || 0)}%</div>
         <div className="gauge-label">
-          {isBidding ? 'Accuracy' : (hasPlayDecisionData ? 'Play Quality' : 'Success Rate')}
+          {isBidding ? 'Avg Score' : (hasPlayDecisionData ? 'Play Quality' : 'Success Rate')}
         </div>
         <div className="gauge-bar">
           <div
@@ -366,32 +366,32 @@ const QualityContent = ({ quality, type, onShowHandHistory }) => {
         {isBidding ? (
           <>
             <div className="stat-item">
-              <span className="stat-value">{quality.optimal_rate || 0}%</span>
-              <span className="stat-label">Optimal</span>
+              <span className="stat-value">{quality.good_rate || 0}%</span>
+              <span className="stat-label">Good</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{quality.suboptimal_rate || 0}%</span>
+              <span className="stat-label">Needs Work</span>
             </div>
             <div className="stat-item">
               <span className="stat-value">{quality.error_rate || 0}%</span>
               <span className="stat-label">Errors</span>
             </div>
-            <div className="stat-item">
-              <span className="stat-value">{quality.conventions_mastered || 0}</span>
-              <span className="stat-label">Conv.</span>
-            </div>
           </>
         ) : hasPlayDecisionData ? (
-          // DDS-based play quality stats
+          // DDS-based play quality stats - 3-tier display matching bidding
           <>
             <div className="stat-item">
-              <span className="stat-value">{Math.round(playDecisionStats.avg_score * 10) || 0}%</span>
-              <span className="stat-label">Avg Score</span>
+              <span className="stat-value">{playDecisionStats.good_rate || 0}%</span>
+              <span className="stat-label">Good</span>
             </div>
             <div className="stat-item">
-              <span className="stat-value">{Math.round(playDecisionStats.blunder_rate) || 0}%</span>
-              <span className="stat-label">Blunders</span>
+              <span className="stat-value">{playDecisionStats.suboptimal_rate || 0}%</span>
+              <span className="stat-label">Needs Work</span>
             </div>
             <div className="stat-item">
-              <span className="stat-value">{quality.contracts_made || 0}/{quality.contracts_failed || 0}</span>
-              <span className="stat-label">Made/Down</span>
+              <span className="stat-value">{playDecisionStats.blunder_rate || 0}%</span>
+              <span className="stat-label">Errors</span>
             </div>
           </>
         ) : (
@@ -416,7 +416,7 @@ const QualityContent = ({ quality, type, onShowHandHistory }) => {
       {/* Total Practiced */}
       <div className="total-practiced">
         {isBidding
-          ? `${totalPracticed || 0} decisions practiced`
+          ? `${totalPracticed || 0} hands bid`
           : hasPlayDecisionData
             ? (
               <span

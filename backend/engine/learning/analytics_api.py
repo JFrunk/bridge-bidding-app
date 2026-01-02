@@ -301,6 +301,8 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
                 'total_decisions': 0,
                 'optimal_rate': 0,
                 'acceptable_rate': 0,
+                'good_rate': 0,
+                'suboptimal_rate': 0,
                 'error_rate': 0,
                 'critical_errors': 0,
                 'recent_trend': 'stable'
@@ -310,6 +312,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
         avg_score = overall_row['avg_score'] or 0
         optimal_count = overall_row['optimal_count'] or 0
         acceptable_count = overall_row['acceptable_count'] or 0
+        suboptimal_count = overall_row['suboptimal_count'] or 0
         error_count = overall_row['error_count'] or 0
         critical_errors = overall_row['critical_errors'] or 0
 
@@ -344,12 +347,21 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
         else:
             trend = 'stable'
 
+        # Calculate rates
+        optimal_rate = optimal_count / total if total > 0 else 0
+        acceptable_rate = acceptable_count / total if total > 0 else 0
+        suboptimal_rate = suboptimal_count / total if total > 0 else 0
+        error_rate = error_count / total if total > 0 else 0
+        good_rate = optimal_rate + acceptable_rate  # Combined for 3-tier display
+
         return {
             'avg_score': round(avg_score, 1),
             'total_decisions': total,
-            'optimal_rate': round(optimal_count / total, 3) if total > 0 else 0,
-            'acceptable_rate': round(acceptable_count / total, 3) if total > 0 else 0,
-            'error_rate': round(error_count / total, 3) if total > 0 else 0,
+            'optimal_rate': round(optimal_rate, 3),
+            'acceptable_rate': round(acceptable_rate, 3),
+            'good_rate': round(good_rate, 3),  # Combined: optimal + acceptable
+            'suboptimal_rate': round(suboptimal_rate, 3),  # "Needs Work"
+            'error_rate': round(error_rate, 3),
             'critical_errors': critical_errors,
             'recent_trend': trend
         }
@@ -556,6 +568,8 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
                 'total_decisions': 0,
                 'optimal_rate': 0,
                 'good_rate': 0,
+                'combined_good_rate': 0,
+                'suboptimal_rate': 0,
                 'blunder_rate': 0,
                 'recent_trend': 'stable'
             }
@@ -564,6 +578,7 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
         avg_score = overall_row['avg_score'] or 0
         optimal_count = overall_row['optimal_count'] or 0
         good_count = overall_row['good_count'] or 0
+        suboptimal_count = overall_row['suboptimal_count'] or 0
         blunder_count = overall_row['blunder_count'] or 0
 
         # Calculate trend (compare last 7 days vs previous 7 days)
@@ -600,12 +615,23 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
         # Get category breakdown
         category_stats = get_play_category_stats_for_user(user_id)
 
+        # Calculate rates
+        optimal_rate = optimal_count / total if total > 0 else 0
+        good_rate_raw = good_count / total if total > 0 else 0
+        suboptimal_rate = suboptimal_count / total if total > 0 else 0
+        blunder_rate = blunder_count / total if total > 0 else 0
+
+        # Combined good rate (optimal + good) for 3-tier display
+        combined_good_rate = optimal_rate + good_rate_raw
+
         return {
             'avg_score': round(avg_score, 1),
             'total_decisions': total,
-            'optimal_rate': round(optimal_count / total, 3) if total > 0 else 0,
-            'good_rate': round(good_count / total, 3) if total > 0 else 0,
-            'blunder_rate': round(blunder_count / total, 3) if total > 0 else 0,
+            'optimal_rate': round(optimal_rate, 3),
+            'good_rate': round(good_rate_raw, 3),  # Just "good" rating
+            'combined_good_rate': round(combined_good_rate, 3),  # optimal + good
+            'suboptimal_rate': round(suboptimal_rate, 3),  # "Needs Work"
+            'blunder_rate': round(blunder_rate, 3),  # Errors
             'recent_trend': trend,
             'category_breakdown': category_stats['categories'],
             'total_tricks_lost': category_stats['total_tricks_lost']
@@ -619,6 +645,8 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
             'total_decisions': 0,
             'optimal_rate': 0,
             'good_rate': 0,
+            'combined_good_rate': 0,
+            'suboptimal_rate': 0,
             'blunder_rate': 0,
             'recent_trend': 'stable',
             'category_breakdown': {},
@@ -1321,12 +1349,24 @@ def get_four_dimension_progress():
             if practiced_convs:
                 weakest_convention = min(practiced_convs, key=lambda x: x['accuracy'])
 
+        # Calculate combined rates for simpler 3-tier display
+        optimal_rate = bidding_feedback_stats.get('optimal_rate', 0)
+        acceptable_rate = bidding_feedback_stats.get('acceptable_rate', 0)
+        error_rate = bidding_feedback_stats.get('error_rate', 0)
+        # Suboptimal is whatever remains (scores 4-6)
+        suboptimal_rate = max(0, 1.0 - optimal_rate - acceptable_rate - error_rate)
+        # Good = optimal + acceptable (scores 7-10)
+        good_rate = optimal_rate + acceptable_rate
+
         bid_practice_quality = {
             'overall_accuracy': round(bidding_feedback_stats.get('avg_score', 0) / 10 * 100, 1),
             'avg_score': bidding_feedback_stats.get('avg_score', 0),
             'total_decisions': bidding_feedback_stats.get('total_decisions', 0),
-            'optimal_rate': round(bidding_feedback_stats.get('optimal_rate', 0) * 100, 1),
-            'error_rate': round(bidding_feedback_stats.get('error_rate', 0) * 100, 1),
+            'optimal_rate': round(optimal_rate * 100, 1),
+            'acceptable_rate': round(acceptable_rate * 100, 1),
+            'good_rate': round(good_rate * 100, 1),  # Combined: optimal + acceptable
+            'suboptimal_rate': round(suboptimal_rate * 100, 1),  # Scores 4-6
+            'error_rate': round(error_rate * 100, 1),
             'recent_trend': bidding_feedback_stats.get('recent_trend', 'stable'),
             'convention_mastery': convention_mastery,
             'conventions_mastered': len([c for c in convention_mastery if c['status'] == 'mastered']),
@@ -1501,7 +1541,9 @@ def get_four_dimension_progress():
             'play_decision_stats': {
                 'avg_score': play_feedback_stats.get('avg_score', 0),
                 'optimal_rate': round(play_feedback_stats.get('optimal_rate', 0) * 100, 1),
-                'blunder_rate': round(play_feedback_stats.get('blunder_rate', 0) * 100, 1),
+                'good_rate': round(play_feedback_stats.get('combined_good_rate', 0) * 100, 1),  # Combined: optimal + good
+                'suboptimal_rate': round(play_feedback_stats.get('suboptimal_rate', 0) * 100, 1),  # Needs Work
+                'blunder_rate': round(play_feedback_stats.get('blunder_rate', 0) * 100, 1),  # Errors
                 'recent_trend': play_feedback_stats.get('recent_trend', 'stable')
             },
             'recent_trend': 'improving' if gameplay_stats.get('recent_declarer_success_rate', 0) > gameplay_stats.get('declarer_success_rate', 0) + 0.05 else (
