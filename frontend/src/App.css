@@ -465,6 +465,22 @@ body {
   background-color: var(--color-success-dark);
   transform: translateY(-1px);
 }
+.play-new-hand-button {
+  font-family: inherit;
+  font-size: var(--text-base);
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-md);
+  border: none;
+  background-color: var(--color-success);
+  color: var(--text-primary);
+  font-weight: var(--font-bold);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease, transform var(--duration-instant) ease;
+}
+.play-new-hand-button:hover {
+  background-color: var(--color-success-dark);
+  transform: translateY(-1px);
+}
 .feedback-panel {
   margin-top: var(--space-3);
   padding: var(--space-3);
@@ -1184,7 +1200,7 @@ html, body {
     width: 100%;
   }
 
-  .deal-button, .replay-button {
+  .deal-button, .replay-button, .play-new-hand-button {
     width: 100%;
   }
 

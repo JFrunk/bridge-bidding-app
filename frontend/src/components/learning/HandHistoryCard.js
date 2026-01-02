@@ -86,13 +86,14 @@ const HandHistoryCard = ({ hand, onClick }) => {
 
   // Get suit color for contract display
   const getSuitColor = (strain) => {
-    if (!strain) return 'inherit';
+    if (!strain) return '#1f2937'; // Dark gray fallback
     const s = strain.toUpperCase();
     if (s === 'S' || s === '♠') return '#000000';
     if (s === 'H' || s === '♥') return '#dc2626';
     if (s === 'D' || s === '♦') return '#dc2626';
     if (s === 'C' || s === '♣') return '#000000';
-    return 'inherit';
+    if (s === 'NT' || s === 'N') return '#1f2937'; // Dark gray for NT
+    return '#1f2937'; // Dark gray fallback for unknown
   };
 
   return (

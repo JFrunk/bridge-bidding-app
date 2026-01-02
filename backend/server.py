@@ -2455,12 +2455,18 @@ def play_card():
             }), 400
 
         # === EVALUATE PLAY FOR DASHBOARD (before modifying state) ===
-        # Record plays from South OR from dummy when user controls dummy (as declarer)
+        # Record plays from South OR from North/dummy when user controls both as declarer
+        # User (South) controls: South always, AND dummy when South or North is declarer
         user_id = data.get('user_id')
         play_feedback = None
+        declarer = state.play_state.contract.declarer
+        dummy = state.play_state.dummy
+        # User is declarer if South is declarer, or if North is declarer (user plays dummy)
+        user_is_declarer = declarer == 'S' or declarer == 'N'
         is_user_controlled = position == 'S' or (
-            position == state.play_state.dummy and
-            state.play_state.contract.declarer == 'S'
+            user_is_declarer and position == dummy
+        ) or (
+            user_is_declarer and position == declarer and declarer == 'N'
         )
         if user_id and is_user_controlled:
             try:
