@@ -515,16 +515,55 @@ class BiddingFeedbackGenerator:
         3. Both legal
         4. Makes bridge sense (e.g., 1NT and X are both valid over opponent's 1♦)
         """
+        # Parse bid information for use throughout
+        bid_suit = self._extract_suit(bid)
+        optimal_suit = self._extract_suit(optimal_bid)
+        bid_level = self._parse_bid_level(bid)
+        optimal_level = self._parse_bid_level(optimal_bid)
+
         # Special case: Pass is only acceptable if optimal is also conservative
         if bid == 'Pass':
             # Pass is acceptable alternative to weak bids or when borderline
-            optimal_level = self._parse_bid_level(optimal_bid)
             if optimal_level and optimal_level >= 3:
                 return False  # Don't accept Pass as alternative to game+ bids
             # Pass could be acceptable for borderline hands
             if hand.hcp < 12:
                 return True
             return False
+
+        # SLAM BIDDING ALTERNATIVES
+        # Handle game vs slam decisions - these are often judgment calls
+        if optimal_level and optimal_level >= 6:
+            # Optimal is slam - check if user's bid is acceptable alternative
+
+            # Game bid in same suit is acceptable (conservative slam decision)
+            if bid_level and bid_level in [4, 5] and bid_suit == optimal_suit:
+                # With 30-32 HCP, game is a reasonable alternative to slam
+                if hand.hcp < 18:  # Not a powerhouse hand
+                    return True
+
+            # Blackwood (4NT) is acceptable alternative to direct slam bid
+            # User might want to check aces before committing
+            if bid == '4NT':
+                return True
+
+            # Different slam level is acceptable (6 vs 7, or small vs grand)
+            if bid_level and bid_level >= 6:
+                return True
+
+        # If optimal is Blackwood (4NT), direct game or slam in a suit is acceptable
+        if optimal_bid == '4NT':
+            # Direct game or slam in a major is acceptable
+            if bid_level and bid_level >= 4 and bid_suit in ['♥', '♠', 'NT']:
+                return True
+
+        # Game vs slam try decisions
+        if optimal_level and optimal_level in [4, 5]:
+            # If optimal is game and user bids slam, check if reasonable
+            if bid_level and bid_level == 6 and bid_suit == optimal_suit:
+                # Slam try is acceptable if hand has slam-ish values
+                if hand.hcp >= 15:
+                    return True
 
         # Double (X) and NT overcalls are reasonable alternatives to each other
         # when both show similar strength in competitive situations
@@ -536,11 +575,6 @@ class BiddingFeedbackGenerator:
             return True
 
         # Same suit at different levels (game try vs invitation)
-        bid_suit = self._extract_suit(bid)
-        optimal_suit = self._extract_suit(optimal_bid)
-        bid_level = self._parse_bid_level(bid)
-        optimal_level = self._parse_bid_level(optimal_bid)
-
         if bid_suit and optimal_suit and bid_suit == optimal_suit:
             # Same suit, within 1 level = acceptable
             if bid_level and optimal_level and abs(bid_level - optimal_level) <= 1:
@@ -593,6 +627,36 @@ class BiddingFeedbackGenerator:
         Generate a helpful hint explaining why the optimal bid is preferred
         over the acceptable alternative the user chose.
         """
+        user_suit = self._extract_suit(user_bid)
+        optimal_suit = self._extract_suit(optimal_bid)
+        user_level = self._parse_bid_level(user_bid)
+        optimal_level = self._parse_bid_level(optimal_bid)
+
+        # SLAM BIDDING HINTS
+        # User bid game, optimal was slam
+        if optimal_level and optimal_level >= 6 and user_level and user_level in [4, 5]:
+            return (f"with {hand.hcp} HCP and partnership values around 33+ points, "
+                    f"slam is likely makeable. Consider using Blackwood (4NT) to check for aces.")
+
+        # User bid slam, optimal was Blackwood
+        if optimal_bid == '4NT' and user_level and user_level >= 6:
+            return (f"Blackwood (4NT) first lets you check for aces before committing to slam. "
+                    f"This avoids bidding slam missing two aces.")
+
+        # User bid Blackwood, optimal was direct slam
+        if user_bid == '4NT' and optimal_level and optimal_level >= 6:
+            return (f"with a strong hand and likely sufficient aces, "
+                    f"direct slam bidding is more efficient here.")
+
+        # User bid small slam, optimal was grand
+        if user_level == 6 and optimal_level == 7:
+            return (f"with {hand.hcp} HCP and all aces accounted for, "
+                    f"consider the grand slam when you have the values.")
+
+        # User bid grand slam, optimal was small slam
+        if user_level == 7 and optimal_level == 6:
+            return "be cautious about grand slams - missing even one ace is fatal."
+
         # 1NT vs X (takeout double) - most common case
         if (user_bid == 'X' and 'NT' in optimal_bid) or (optimal_bid == 'X' and 'NT' in user_bid):
             if 'NT' in optimal_bid:
@@ -603,11 +667,6 @@ class BiddingFeedbackGenerator:
                 return "a takeout double better describes your shape and gets all suits into play."
 
         # Same suit, different levels (e.g., 3♥ vs 4♥)
-        user_suit = self._extract_suit(user_bid)
-        optimal_suit = self._extract_suit(optimal_bid)
-        user_level = self._parse_bid_level(user_bid)
-        optimal_level = self._parse_bid_level(optimal_bid)
-
         if user_suit == optimal_suit and user_level and optimal_level:
             if optimal_level > user_level:
                 return f"with {hand.hcp} HCP and {hand.total_points} total points, you have enough for the higher level."

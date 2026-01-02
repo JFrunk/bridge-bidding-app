@@ -196,6 +196,11 @@ class ErrorCategorizer:
         """
         # Handle Pass vs Bid errors
         if user_bid == 'Pass' and correct_bid != 'Pass':
+            # Check if this is a missed slam opportunity
+            if correct_level and correct_level >= 6:
+                return ('slam_bidding', 'missed_slam')
+            if correct_bid == '4NT':
+                return ('slam_bidding', 'missed_blackwood')
             return ('missed_opportunity', 'passed_when_should_bid')
 
         if user_bid != 'Pass' and correct_bid == 'Pass':
@@ -204,6 +209,28 @@ class ErrorCategorizer:
         # Handle X/XX separately
         if user_bid in ['X', 'XX'] or correct_bid in ['X', 'XX']:
             return ('convention_meaning', 'defensive_bid')
+
+        # SLAM BIDDING ERRORS - check before general level errors
+        if user_level is not None and correct_level is not None:
+            # Missed slam - user stopped at game, should have bid slam
+            if correct_level >= 6 and user_level in [4, 5]:
+                return ('slam_bidding', 'missed_slam')
+
+            # Missed Blackwood - user bid slam directly instead of asking for aces
+            # Check this BEFORE overbid_slam since 4NT level is 4
+            if correct_bid == '4NT' and user_level >= 6:
+                return ('slam_bidding', 'missed_blackwood')
+
+            # Overbid to slam - user bid slam with insufficient values
+            if user_level >= 6 and correct_level in [4, 5]:
+                return ('slam_bidding', 'overbid_slam')
+
+            # Wrong slam level (6 vs 7)
+            if user_level >= 6 and correct_level >= 6 and user_level != correct_level:
+                if user_level > correct_level:
+                    return ('slam_bidding', 'overbid_grand')
+                else:
+                    return ('slam_bidding', 'missed_grand')
 
         # Both are actual bids
         if user_level is not None and correct_level is not None:
@@ -290,6 +317,13 @@ class ErrorCategorizer:
             },
             'missed_fit': {
                 'didnt_support': "When you have 4+ card support for partner's suit, show it!"
+            },
+            'slam_bidding': {
+                'missed_slam': f"With {hand_chars['hcp']} HCP and strong combined values (33+ points), explore slam! Use Blackwood (4NT) to check for aces.",
+                'overbid_slam': f"Slam requires about 33+ combined points. With {hand_chars['hcp']} HCP, game is the safer choice.",
+                'missed_blackwood': "Use Blackwood (4NT) to ask for aces before committing to slam. This prevents bidding slam missing two aces.",
+                'overbid_grand': "Grand slams require all the aces and usually 37+ points. Small slam is safer here.",
+                'missed_grand': f"With {hand_chars['hcp']} HCP and all aces accounted for, consider the grand slam!"
             }
         }
 
@@ -303,6 +337,7 @@ class ErrorCategorizer:
             'wrong_strain': f"The correct bid is {correct_bid}. Think about suit quality and fit.",
             'wrong_meaning': f"This convention means something specific - review what {correct_bid} shows.",
             'strength_evaluation': f"With {hand_chars['hcp']} HCP, {correct_bid} describes your hand better.",
+            'slam_bidding': f"Slam bidding requires careful evaluation. With {hand_chars['hcp']} HCP, {correct_bid} is the correct choice."
         }
 
         return general_hints.get(category, f"The correct bid here is {correct_bid}.")
