@@ -1529,6 +1529,106 @@ def get_four_dimension_progress():
 # HAND HISTORY & DDS ANALYSIS
 # ============================================================================
 
+def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: int) -> Dict:
+    """
+    Get a summary of play quality for a specific hand.
+
+    Returns:
+        - total_plays: Number of plays by the user in this hand
+        - optimal_count, good_count, suboptimal_count, blunder_count
+        - avg_score: Average play score (0-10)
+        - total_tricks_lost: Sum of tricks lost from suboptimal plays
+        - notable_mistakes: List of the worst plays (blunders/suboptimal with details)
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Get all play decisions for this user in this hand
+        # Note: play_decisions uses session_id as text, not integer
+        cursor.execute("""
+            SELECT
+                id,
+                trick_number,
+                user_card,
+                optimal_card,
+                score,
+                rating,
+                tricks_cost,
+                contract,
+                feedback
+            FROM play_decisions
+            WHERE user_id = ?
+              AND session_id = ?
+            ORDER BY trick_number
+        """, (user_id, str(session_id)))
+
+        decisions = []
+        for row in cursor.fetchall():
+            decisions.append({
+                'id': row['id'],
+                'trick_number': row['trick_number'],
+                'user_card': row['user_card'],
+                'optimal_card': row['optimal_card'],
+                'score': row['score'],
+                'rating': row['rating'],
+                'tricks_cost': row['tricks_cost'],
+                'contract': row['contract'],
+                'feedback': row['feedback']
+            })
+
+        if not decisions:
+            return {
+                'has_data': False,
+                'total_plays': 0,
+                'message': 'No play analysis recorded for this hand'
+            }
+
+        # Calculate summary stats
+        total = len(decisions)
+        optimal = sum(1 for d in decisions if d['rating'] == 'optimal')
+        good = sum(1 for d in decisions if d['rating'] == 'good')
+        suboptimal = sum(1 for d in decisions if d['rating'] == 'suboptimal')
+        blunders = sum(1 for d in decisions if d['rating'] == 'blunder')
+        total_tricks_lost = sum(d['tricks_cost'] or 0 for d in decisions)
+        avg_score = sum(d['score'] for d in decisions) / total if total > 0 else 0
+
+        # Get notable mistakes (blunders and suboptimal plays with tricks_cost > 0)
+        notable_mistakes = [
+            d for d in decisions
+            if d['rating'] in ('blunder', 'suboptimal') and (d['tricks_cost'] or 0) > 0
+        ]
+        # Sort by tricks cost (worst first)
+        notable_mistakes.sort(key=lambda x: -(x['tricks_cost'] or 0))
+        notable_mistakes = notable_mistakes[:5]  # Limit to top 5
+
+        return {
+            'has_data': True,
+            'total_plays': total,
+            'optimal_count': optimal,
+            'good_count': good,
+            'suboptimal_count': suboptimal,
+            'blunder_count': blunders,
+            'avg_score': round(avg_score, 1),
+            'total_tricks_lost': total_tricks_lost,
+            'optimal_rate': round(optimal / total * 100, 1) if total > 0 else 0,
+            'accuracy_rate': round((optimal + good) / total * 100, 1) if total > 0 else 0,
+            'notable_mistakes': notable_mistakes,
+            'all_decisions': decisions
+        }
+
+    except Exception as e:
+        print(f"Error getting play quality summary: {e}")
+        return {
+            'has_data': False,
+            'total_plays': 0,
+            'message': f'Error loading play analysis: {str(e)}'
+        }
+
+    finally:
+        conn.close()
+
+
 def get_hand_history():
     """
     GET /api/hand-history?user_id=<id>&limit=<n>
@@ -1689,6 +1789,13 @@ def get_hand_detail():
                 contract_display += "XX"
             contract_display += f" by {row['contract_declarer']}"
 
+        # Get play quality summary for this hand
+        play_quality_summary = get_hand_play_quality_summary(
+            row['session_id'],
+            row['hand_number'],
+            row['user_id']
+        )
+
         return jsonify({
             'hand_id': hand_id,
             'session_id': row['session_id'],
@@ -1711,7 +1818,8 @@ def get_hand_detail():
             'played_at': row['played_at'],
             'deal': deal_data,
             'auction': auction_history,
-            'play_history': play_history
+            'play_history': play_history,
+            'play_quality_summary': play_quality_summary
         })
 
     except Exception as e:

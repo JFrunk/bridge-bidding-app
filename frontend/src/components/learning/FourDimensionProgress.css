@@ -523,6 +523,26 @@
   margin-bottom: var(--space-3, 12px);
 }
 
+/* Clickable hands link */
+.total-practiced .hands-link {
+  color: var(--color-primary, #2563eb);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.total-practiced .hands-link:hover {
+  background: var(--bg-info-light, #eff6ff);
+  text-decoration: underline;
+}
+
+.total-practiced .hands-link:focus {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
 /* ============================================================================
    CONVENTION MASTERY SECTION - Full width below grid
    ============================================================================ */

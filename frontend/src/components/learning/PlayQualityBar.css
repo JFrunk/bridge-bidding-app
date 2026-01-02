@@ -1,7 +1,7 @@
 /* Play Quality Bar - DDS-Based Play Feedback */
 
 .play-quality-bar {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
   border-radius: 12px;
   color: white;
   overflow: hidden;
