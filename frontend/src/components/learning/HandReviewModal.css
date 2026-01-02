@@ -654,11 +654,245 @@
   text-transform: uppercase;
 }
 
-.click-hint {
+.click-hint,
+.navigation-hint {
   text-align: center;
   font-size: 12px;
   color: #9ca3af;
   margin: 8px 0 0 0;
+}
+
+/* ===== NEW VISUAL TRICK DISPLAY ===== */
+
+/* Trick visual display container */
+.trick-visual-display {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.trick-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.trick-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.lead-indicator {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.trick-counter {
+  font-weight: 600;
+  color: #374151;
+  min-width: 100px;
+  text-align: center;
+}
+
+/* Compass layout for trick cards */
+.compass-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  min-height: 280px;
+}
+
+.compass-north,
+.compass-south {
+  display: flex;
+  justify-content: center;
+}
+
+.compass-middle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+.compass-west,
+.compass-east {
+  flex: 0 0 auto;
+}
+
+.compass-center {
+  flex: 1;
+  min-width: 60px;
+}
+
+/* Analyzed card wrapper */
+.analyzed-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.analyzed-card-wrapper .position-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.analyzed-card-wrapper.user-play .position-label {
+  color: #3b82f6;
+  font-weight: 700;
+}
+
+.card-with-rating {
+  position: relative;
+}
+
+/* Rating indicator badge on card */
+.rating-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.rating-indicator.rating-optimal {
+  background-color: #059669;
+}
+
+.rating-indicator.rating-good {
+  background-color: #3b82f6;
+}
+
+.rating-indicator.rating-suboptimal {
+  background-color: #f59e0b;
+}
+
+.rating-indicator.rating-blunder {
+  background-color: #dc2626;
+}
+
+/* Tricks lost badge */
+.tricks-lost-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+/* ===== TRICK FEEDBACK PANEL ===== */
+
+.trick-feedback-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  border-left: 4px solid #e5e7eb;
+  margin-bottom: 12px;
+}
+
+.trick-feedback-panel.no-data {
+  text-align: center;
+  color: #6b7280;
+  background: #f9fafb;
+  border-left-color: #d1d5db;
+}
+
+.trick-feedback-panel.optimal {
+  border-left-color: #059669;
+}
+
+.trick-feedback-panel.good {
+  border-left-color: #3b82f6;
+}
+
+.trick-feedback-panel.suboptimal {
+  border-left-color: #f59e0b;
+}
+
+.trick-feedback-panel.blunder {
+  border-left-color: #dc2626;
+}
+
+.feedback-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.feedback-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tricks-cost {
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.feedback-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.play-comparison {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.played-card {
+  color: #374151;
+}
+
+.optimal-card {
+  color: #059669;
+}
+
+.feedback-text {
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
 }
 
 /* Card display */
