@@ -8,6 +8,7 @@ import { BiddingBox as BiddingBoxComponent } from './components/bridge/BiddingBo
 import { ReviewModal } from './components/bridge/ReviewModal';
 import { FeedbackModal } from './components/bridge/FeedbackModal';
 import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
+import BidFeedbackPanel from './components/bridge/BidFeedbackPanel';
 import LearningDashboard from './components/learning/LearningDashboard';
 import LearningMode from './components/learning/LearningMode';
 import { ModeSelector } from './components/ModeSelector';
@@ -257,6 +258,8 @@ function App() {
   const [isAiBidding, setIsAiBidding] = useState(false);
   const [error, setError] = useState('');
   const [displayedMessage, setDisplayedMessage] = useState('');
+  const [bidFeedback, setBidFeedback] = useState(null);  // Structured feedback from evaluate-bid
+  const [lastUserBid, setLastUserBid] = useState(null);  // Track last user bid for feedback display
   const [scenarioList, setScenarioList] = useState([]);
   const [scenariosByLevel, setScenariosByLevel] = useState(null);
   const [initialDeal, setInitialDeal] = useState(null);
@@ -407,6 +410,9 @@ function App() {
 
     setDisplayedMessage('');
     setError('');
+    // Clear bid feedback from previous hand
+    setBidFeedback(null);
+    setLastUserBid(null);
     // Set AI bidding state - but it won't actually run until isInitializing = false
     // The new useEffect (post-initialization check) will ensure AI starts at the right time
     setIsAiBidding(!skipInitialAiBidding);
@@ -1758,9 +1764,13 @@ ${otherCommands}`;
         stored: feedbackData.decision_id ? 'YES' : 'UNKNOWN'
       });
 
+      // Store structured feedback for the BidFeedbackPanel
+      setLastUserBid(bid);
+      setBidFeedback(feedbackData.feedback || null);
       setDisplayedMessage(feedbackData.user_message || feedbackData.explanation || 'Bid recorded.');
     } catch (err) {
       console.error('❌ Error evaluating bid:', err);
+      setBidFeedback(null);
       setDisplayedMessage('Could not get feedback from the server.');
     }
     // NOTE: nextPlayerIndex is now derived - no need to manually increment
@@ -2417,8 +2427,14 @@ ${otherCommands}`;
                   </div>
                 )}
                 <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(auction)} />
-                {/* AI messages - Dev mode only */}
-                {isDevMode && displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
+                {/* Bid feedback panel - shows after each user bid */}
+                <BidFeedbackPanel
+                  feedback={bidFeedback}
+                  userBid={lastUserBid}
+                  isVisible={!!bidFeedback && gamePhase === 'bidding'}
+                  onDismiss={() => setBidFeedback(null)}
+                  onOpenGlossary={(termId) => setShowGlossary(termId || true)}
+                />
                 {isDevMode && error && <div className="error-message">{error}</div>}
               </div>
             </div>
@@ -2457,8 +2473,14 @@ ${otherCommands}`;
             </div>
           )}
           <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(auction)} />
-          {/* AI messages - Dev mode only */}
-          {isDevMode && displayedMessage && <div className="feedback-panel">{displayedMessage}</div>}
+          {/* Bid feedback panel - shows after each user bid */}
+          <BidFeedbackPanel
+            feedback={bidFeedback}
+            userBid={lastUserBid}
+            isVisible={!!bidFeedback && gamePhase === 'bidding'}
+            onDismiss={() => setBidFeedback(null)}
+            onOpenGlossary={(termId) => setShowGlossary(termId || true)}
+          />
           {isDevMode && error && <div className="error-message">{error}</div>}
         </div>
       )}
