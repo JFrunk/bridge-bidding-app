@@ -851,7 +851,8 @@ ${otherCommands}`;
         body: JSON.stringify({
           position: 'S',
           card: { rank: card.rank, suit: card.suit },
-          user_id: userId || 1
+          user_id: userId || 1,
+          session_id: sessionData?.session?.session_id
         })
       });
 
@@ -1002,7 +1003,8 @@ ${otherCommands}`;
         body: JSON.stringify({
           position: declarerPosition,
           card: { rank: card.rank, suit: card.suit },
-          user_id: userId || 1
+          user_id: userId || 1,
+          session_id: sessionData?.session?.session_id
         })
       });
 
@@ -1159,7 +1161,8 @@ ${otherCommands}`;
         body: JSON.stringify({
           position: dummyPosition,
           card: { rank: card.rank, suit: card.suit },
-          user_id: userId || 1
+          user_id: userId || 1,
+          session_id: sessionData?.session?.session_id
         })
       });
 
@@ -2574,10 +2577,13 @@ ${otherCommands}`;
               </>
             ) : (
               <>
-                {/* Primary action after play */}
-                <button className="deal-button primary-action" data-testid="deal-new-hand-button" onClick={dealNewHand}>🎲 Deal New Hand</button>
-                {/* Secondary action */}
-                <button className="replay-button secondary-action" data-testid="replay-hand-button" onClick={replayCurrentHand}>🔄 Replay Hand</button>
+                {/* Primary action after play - Play another hand (AI bids, user plays) */}
+                <button className="play-new-hand-button primary-action" data-testid="play-new-hand-button" onClick={playRandomHand}>🎲 Play New Hand</button>
+                {/* Secondary actions */}
+                <div className="secondary-actions">
+                  <button className="deal-button" data-testid="bid-new-hand-button" onClick={dealNewHand}>📝 Bid New Hand</button>
+                  <button className="replay-button" data-testid="replay-hand-button" onClick={replayCurrentHand}>🔄 Replay Hand</button>
+                </div>
               </>
             )}
           </div>
