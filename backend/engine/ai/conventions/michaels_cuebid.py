@@ -25,15 +25,20 @@ class MichaelsCuebidConvention(ConventionModule):
         if not result:
             return None
 
-        bid, explanation = result
+        # Handle both 2-tuple and 3-tuple returns
+        if len(result) == 3:
+            bid, explanation, metadata = result
+        else:
+            bid, explanation = result
+            metadata = {}
 
         # Always pass Pass bids through
         if bid == "Pass":
-            return result
+            return (bid, explanation, metadata) if metadata else (bid, explanation)
 
         # Validate the bid is legal
         if BidValidator.is_legal_bid(bid, auction_history):
-            return result
+            return (bid, explanation, metadata) if metadata else (bid, explanation)
 
         # Bid is illegal - try to find next legal bid of same strain
         next_legal = get_next_legal_bid(bid, auction_history)
@@ -52,7 +57,7 @@ class MichaelsCuebidConvention(ConventionModule):
                 pass
 
             adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
-            return (next_legal, adjusted_explanation)
+            return (next_legal, adjusted_explanation, metadata) if metadata else (next_legal, adjusted_explanation)
 
         # No legal bid possible - pass
         return None
@@ -88,7 +93,7 @@ class MichaelsCuebidConvention(ConventionModule):
 
         return None
 
-    def _check_michaels_cuebid(self, hand: Hand, opponent_bid: str) -> Optional[Tuple[str, str]]:
+    def _check_michaels_cuebid(self, hand: Hand, opponent_bid: str) -> Optional[Tuple[str, str, dict]]:
         """Check if hand qualifies for Michaels cuebid"""
 
         # Strength: 8-16 HCP (don't want to be too strong)
@@ -105,13 +110,18 @@ class MichaelsCuebidConvention(ConventionModule):
 
         opp_suit = opponent_bid[1]
 
+        # Metadata to bypass suit length validation - Michaels is an ARTIFICIAL cuebid
+        # We don't have cards in opponent's suit; we're showing 5-5 in OTHER suits
+        michaels_metadata = {'bypass_suit_length': True, 'convention': 'michaels_cuebid'}
+
         # After minor opening (1♣ or 1♦): Cuebid shows both majors
         if opp_suit in ['♣', '♦']:
             if hand.suit_lengths['♥'] >= 5 and hand.suit_lengths['♠'] >= 5:
                 cuebid_level = int(opponent_bid[0]) + 1
                 cuebid = f"{cuebid_level}{opp_suit}"
                 return (cuebid,
-                       f"Michaels Cuebid showing 5-5+ in both majors ({hand.hcp} HCP).")
+                       f"Michaels Cuebid showing 5-5+ in both majors ({hand.hcp} HCP).",
+                       michaels_metadata)
 
         # After 1♥: Cuebid shows spades + minor (5-5+)
         elif opp_suit == '♥':
@@ -123,7 +133,8 @@ class MichaelsCuebidConvention(ConventionModule):
                 # Find which minor is 5+ cards
                 if club_len >= 5 or diamond_len >= 5:
                     return ("2♥",
-                           f"Michaels Cuebid showing 5+ spades and 5+ in a minor ({hand.hcp} HCP). Partner can ask with 2NT.")
+                           f"Michaels Cuebid showing 5+ spades and 5+ in a minor ({hand.hcp} HCP). Partner can ask with 2NT.",
+                           michaels_metadata)
 
         # After 1♠: Cuebid shows hearts + minor (5-5+)
         elif opp_suit == '♠':
@@ -135,7 +146,8 @@ class MichaelsCuebidConvention(ConventionModule):
                 # Find which minor is 5+ cards
                 if club_len >= 5 or diamond_len >= 5:
                     return ("2♠",
-                           f"Michaels Cuebid showing 5+ hearts and 5+ in a minor ({hand.hcp} HCP). Partner can ask with 2NT.")
+                           f"Michaels Cuebid showing 5+ hearts and 5+ in a minor ({hand.hcp} HCP). Partner can ask with 2NT.",
+                           michaels_metadata)
 
         return None
 

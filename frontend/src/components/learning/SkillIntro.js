@@ -86,11 +86,11 @@ Notrump game: 3NT (9 tricks)`
       },
       {
         heading: 'Biddable Suits',
-        content: `A biddable suit typically has:
-• At least 4 cards, OR
-• At least 3 cards with good honors (A, K, or Q)
+        content: `In SAYC, suit length requirements are:
+• Major suits (♥/♠): 5+ cards to open or bid a new suit
+• Minor suits (♣/♦): 3+ cards to open, 4+ to bid a new suit
 
-You want length or quality (ideally both) to suggest a suit as trumps.`
+For responses, you generally need 4+ cards to bid a new suit at the 1-level.`
       }
     ],
     practice_tip: 'Identify the longest suit in each hand. If two suits tie, the higher-ranking suit is often preferred.'

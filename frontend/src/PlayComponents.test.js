@@ -20,6 +20,7 @@ function createMockPlayState(declarerPos, dummyPos) {
       doubled: 0
     },
     dummy: dummyPos,
+    dummy_revealed: true,  // CRITICAL: Dummy must be revealed for visibility tests
     current_trick: [],
     tricks_won: { N: 0, E: 0, S: 0, W: 0 },
     next_to_play: declarerPos,

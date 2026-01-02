@@ -136,48 +136,11 @@ class GameSlamDiagnostic:
             my_index = positions.index(bidder_pos)
             auction_context = analyze_auction_context(auction_history, positions, my_index)
 
-            if module_name == 'pass_by_default':
-                bid = 'Pass'
-                explanation = 'No module selected'
-            else:
-                specialist = ModuleRegistry.get(module_name)
-                if specialist:
-                    with SuppressOutput():
-                        result = specialist.evaluate(hand, features)
-                    if result:
-                        suggested_bid = result[0]
-                        explanation = result[1]
-                        metadata = result[2] if len(result) > 2 else None
-
-                        # Check validation
-                        is_valid, validation_error = self.validation_pipeline.validate(
-                            suggested_bid, hand, features, auction_history, metadata
-                        )
-
-                        if is_valid:
-                            bid = suggested_bid
-                        else:
-                            # VALIDATION REJECTED - key failure type
-                            if bidder_pos in ['North', 'South'] and self._is_game_bid(suggested_bid):
-                                self.failures['validation_rejected'].append({
-                                    'hand_num': hand_num,
-                                    'ns_hcp': ns_hcp,
-                                    'bidder': bidder_pos,
-                                    'suggested_bid': suggested_bid,
-                                    'validation_error': validation_error,
-                                    'hand_hcp': hand.hcp,
-                                    'module': module_name,
-                                    'auction': auction_history.copy(),
-                                    'game_forcing': auction_context.ranges.game_forcing,
-                                    'combined_midpoint': auction_context.ranges.combined_midpoint,
-                                })
-                            bid = 'Pass'
-                    else:
-                        bid = 'Pass'
-                        explanation = 'Module returned None'
-                else:
-                    bid = 'Pass'
-                    explanation = f'Module {module_name} not found'
+            # Use the REAL BiddingEngine to get bids (includes safety net!)
+            with SuppressOutput():
+                bid, explanation = self.engine.get_next_bid(
+                    hand, auction_history, bidder_pos, vulnerability, dealer
+                )
 
             # Track NS bids that should have been game
             if bidder_pos in ['North', 'South']:

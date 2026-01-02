@@ -78,7 +78,8 @@ class SanityChecker:
 
         # Check if metadata indicates this is a convention bid that should bypass sanity checks
         # Preempts, for example, are intentionally weak hands bidding at high levels
-        if metadata and metadata.get('bypass_hcp'):
+        # Takeout double responses also bypass - partner promises support
+        if metadata and (metadata.get('bypass_hcp') or metadata.get('bypass_sanity_check')):
             convention = metadata.get('convention', 'unknown')
             logger.debug(f"Sanity check bypassed for {convention} convention bid '{bid}'")
             return True, bid, None

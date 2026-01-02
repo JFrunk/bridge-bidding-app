@@ -337,6 +337,30 @@
 - **Multi-format Support:** Import from PBN, LIN (Bridge Base Online), and ACBL formats
 - **Database:** `imported_hands` table ready for imported tournament data (migration 007)
 
+### Deferred: Canonical Hand Repository (PBN-Based)
+
+**Status:** Evaluated and deferred (2026-01-02)
+
+**Concept:** Create a centralized JSON repository storing hands in PBN (Portable Bridge Notation) format with rich metadata for conventions, teaching points, and SAYC references. Would serve as single source of truth for testing, learning mode, convention practice, and external validation.
+
+**Why Deferred:**
+1. **No forcing function:** Current test suite (135+ ACBL tests, 98.2% validation rate) works well
+2. **High effort, uncertain return:** 30-60+ hours investment before seeing benefits
+3. **Added complexity:** PBN format is awkward for test definitions compared to current Python approach
+4. **External validation limited:** Bridge Baron requires license, BBO uses mixed systems, expert data uses non-SAYC systems
+5. **Speculative benefits:** Learning mode integration assumes user needs not yet validated
+6. **Migration burden:** Would require maintaining two systems during transition
+
+**Revisit When:**
+- Need to import hands from external bridge software
+- Users request curated canonical examples in learning mode
+- Want to publish hands for external consumption
+- External validation source becomes available (e.g., Bridge Baron API)
+
+**Current Approach:** Continue expanding ACBL test suite directly in Python, using official ACBL SAYC booklet as authoritative source.
+
+**See:** [ACBL_SAYC_TEST_SUITE.md](../features/ACBL_SAYC_TEST_SUITE.md) for current test suite documentation
+
 ---
 
 **Feature Completeness:** 70% (23/33 convention issues resolved)

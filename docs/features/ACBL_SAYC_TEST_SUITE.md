@@ -186,15 +186,17 @@ When adding tests to this suite:
 
 ## Test Count by Category
 
-| Category | Approximate Test Count |
-|----------|----------------------|
-| Opening Bids | 20+ |
-| Responses | 25+ |
-| Rebids | 20+ |
-| Notrump | 25+ |
-| Slam Bidding | 15+ |
-| Competitive | 30+ |
-| **Total** | **~135+ test cases** |
+| Category | Test Count |
+|----------|------------|
+| Opening Bids | 44 |
+| Responses | 34 |
+| Rebids | 25 |
+| Notrump | 25 |
+| Slam Bidding | 16 |
+| Competitive | 30 |
+| **Total** | **174 test cases** |
+
+*Last updated: 2026-01-02*
 
 ## Relationship to Other Tests
 
@@ -212,7 +214,33 @@ When adding tests to this suite:
 - [ ] Include vulnerability-dependent tests
 - [ ] Add competitive interference variations
 - [ ] Expert review and validation of edge cases
-- [ ] Cross-reference with Bridge Baron/GIB for validation
+
+### Deferred: PBN-Based Canonical Repository
+
+**Status:** Evaluated and deferred (2026-01-02)
+
+The idea to create a centralized PBN-based repository with JSON metadata was evaluated and deferred. The current Python-based test approach is working well, and the effort to migrate to PBN format doesn't provide sufficient near-term benefit.
+
+**Deferred items:**
+- ~~Cross-reference with Bridge Baron/GIB for validation~~ — External validation sources are limited (Bridge Baron requires license, BBO uses mixed systems)
+- ~~PBN format for all test hands~~ — Current Python `make_hand()` approach is more readable and maintainable
+
+**See:** [FEATURES_SUMMARY.md](../project-overview/FEATURES_SUMMARY.md#deferred-canonical-hand-repository-pbn-based) for full rationale.
+
+## External Sources Used
+
+The test suite draws from multiple authoritative SAYC sources:
+
+| Source | URL | Content Used |
+|--------|-----|--------------|
+| ACBL SAYC Booklet | [web2.acbl.org](https://web2.acbl.org/documentLibrary/play/sayc_book.pdf) | Core bidding rules, point ranges, shape requirements |
+| ACBL SAYC System Card | [web2.acbl.org](https://web2.acbl.org/documentLibrary/play/SP3%20(for%20web).pdf) | Formal convention card definitions |
+| ACBL Unit 390 SAYC Guide | [acblunit390.org](https://www.acblunit390.org/Simon/sayc.htm) | Weak two bid edge cases, suit quality examples |
+| 60 Second Bridge | [60secondbridge.com](https://www.60secondbridge.com/lessons/preemptive-opening-bids/) | Preemptive bidding examples |
+| Larry Cohen Articles | [larryco.com](https://www.larryco.com/bridge-articles/1-of-a-minor-opening) | Minor suit opening examples |
+| KW Bridge | [kwbridge.com](https://kwbridge.com/responses.htm) | Response and rebid patterns |
+
+**Note:** All test cases are validated against the official ACBL SAYC booklet as the authoritative source. External sources provide additional examples and edge cases that align with SAYC principles.
 
 ## References
 

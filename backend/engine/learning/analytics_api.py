@@ -1789,6 +1789,159 @@ def get_hand_history():
         return jsonify({'error': str(e)}), 500
 
 
+def generate_hand_strategy_summary(
+    declarer_hand: Hand,
+    dummy_hand: Hand,
+    contract_level: int,
+    contract_strain: str,
+    is_nt: bool
+) -> Dict:
+    """
+    Generate strategic guidance for the hand.
+
+    For NT contracts:
+    - Count sure tricks and identify how many more needed
+    - Identify suits with establishment potential
+
+    For Suit contracts:
+    - Count losers in declarer's hand
+    - Identify ruffing opportunities in dummy
+
+    Returns:
+        Dict with strategy summary including natural language guidance
+    """
+    from engine.learning.play_skill_hand_generators import count_sure_winners, count_losers_in_suit
+
+    tricks_needed = 6 + contract_level  # e.g., 3NT needs 9 tricks
+    result = {
+        'contract': f"{contract_level}{contract_strain}",
+        'tricks_needed': tricks_needed,
+        'is_nt': is_nt
+    }
+
+    if is_nt:
+        # NT Contract Analysis - Count sure tricks
+        sure_tricks = count_sure_winners(declarer_hand, dummy_hand)
+        tricks_to_develop = max(0, tricks_needed - sure_tricks)
+
+        result['sure_tricks'] = sure_tricks
+        result['tricks_to_develop'] = tricks_to_develop
+
+        # Identify suits with establishment potential
+        establishment_candidates = []
+        suits = ['♠', '♥', '♦', '♣']
+
+        for suit in suits:
+            decl_suit = [c for c in declarer_hand.cards if c.suit == suit]
+            dummy_suit = [c for c in dummy_hand.cards if c.suit == suit]
+            combined_length = len(decl_suit) + len(dummy_suit)
+
+            if combined_length == 0:
+                continue
+
+            # Get combined ranks
+            combined_ranks = [c.rank for c in decl_suit + dummy_suit]
+            has_ace = 'A' in combined_ranks
+            has_king = 'K' in combined_ranks
+            has_queen = 'Q' in combined_ranks
+
+            # Calculate potential extra tricks from this suit
+            longer_hand_length = max(len(decl_suit), len(dummy_suit))
+
+            # Count top honors
+            top_honors = 0
+            if has_ace:
+                top_honors = 1
+                if has_king:
+                    top_honors = 2
+                    if has_queen:
+                        top_honors = 3
+
+            # Potential = length in longer hand minus guaranteed tricks
+            potential_extra = longer_hand_length - top_honors
+
+            # Suits with 5+ cards and some high cards are establishment candidates
+            if combined_length >= 5 and potential_extra >= 2 and (has_ace or has_king):
+                establishment_candidates.append({
+                    'suit': suit,
+                    'length': combined_length,
+                    'potential_tricks': longer_hand_length,
+                    'high_cards': top_honors
+                })
+
+        result['establishment_candidates'] = establishment_candidates
+
+        # Generate natural language summary
+        if sure_tricks >= tricks_needed:
+            result['summary'] = f"You have {sure_tricks} sure tricks - enough to make {contract_level}NT. Cash your winners carefully."
+        else:
+            if establishment_candidates:
+                suit_list = ', '.join([c['suit'] for c in establishment_candidates[:2]])
+                result['summary'] = f"You have {sure_tricks} sure tricks and need {tricks_needed}. Develop {tricks_to_develop} more from {suit_list}."
+            else:
+                result['summary'] = f"You have {sure_tricks} sure tricks and need {tricks_needed}. Look for finesse opportunities."
+
+    else:
+        # Suit Contract Analysis - Count losers
+        trump_suit = contract_strain
+        total_losers = 0
+        loser_breakdown = {}
+
+        for suit in ['♠', '♥', '♦', '♣']:
+            losers = count_losers_in_suit(declarer_hand, suit)
+            total_losers += losers
+            loser_breakdown[suit] = losers
+
+        result['total_losers'] = int(total_losers)
+        result['loser_breakdown'] = loser_breakdown
+
+        # Losers we can afford = 13 - tricks_needed
+        losers_allowed = 13 - tricks_needed
+        losers_to_eliminate = int(max(0, total_losers - losers_allowed))
+
+        result['losers_allowed'] = losers_allowed
+        result['losers_to_eliminate'] = losers_to_eliminate
+
+        # Check dummy for ruffing opportunities
+        ruffing_opportunities = []
+        dummy_trumps = len([c for c in dummy_hand.cards if c.suit == trump_suit])
+
+        if dummy_trumps > 0:
+            for suit in ['♠', '♥', '♦', '♣']:
+                if suit == trump_suit:
+                    continue
+                dummy_length = len([c for c in dummy_hand.cards if c.suit == suit])
+                decl_length = len([c for c in declarer_hand.cards if c.suit == suit])
+
+                # Short in dummy, long in declarer = ruffing opportunity
+                if dummy_length <= 2 and decl_length >= 4:
+                    ruffs_available = min(dummy_trumps, decl_length - dummy_length)
+                    if ruffs_available > 0:
+                        ruffing_opportunities.append({
+                            'suit': suit,
+                            'dummy_length': dummy_length,
+                            'ruffs_possible': ruffs_available
+                        })
+
+        result['ruffing_opportunities'] = ruffing_opportunities
+
+        # Generate natural language summary
+        if losers_to_eliminate == 0:
+            result['summary'] = f"You have {int(total_losers)} losers and can afford {losers_allowed}. Make your contract with careful play."
+        else:
+            methods = []
+            if ruffing_opportunities:
+                suits = ', '.join([r['suit'] for r in ruffing_opportunities[:2]])
+                methods.append(f"ruff {suits} in dummy")
+            if losers_to_eliminate > len(ruffing_opportunities):
+                methods.append("finesse or discard losers")
+
+            method_str = ' or '.join(methods) if methods else "find discards"
+            result['summary'] = f"You have {int(total_losers)} losers but can only afford {losers_allowed}. Eliminate {losers_to_eliminate} by: {method_str}."
+
+    return result
+
+
 def get_hand_detail():
     """
     GET /api/hand-history/<hand_id>
@@ -1920,6 +2073,47 @@ def get_hand_detail():
             traceback.print_exc()
             dd_analysis = {'error': str(dds_error), 'available': False}
 
+        # Generate strategy summary for the hand
+        strategy_summary = None
+        try:
+            if deal_data and row['contract_level'] and row['contract_strain']:
+                from engine.hand import Hand, Card as BridgeCard
+
+                # Determine declarer and dummy positions
+                declarer_pos = row['contract_declarer'] or 'S'
+                dummy_pos = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}.get(declarer_pos, 'N')
+
+                # Convert deal_data to Hand objects for declarer and dummy
+                declarer_hand = None
+                dummy_hand = None
+
+                for pos in [declarer_pos, dummy_pos]:
+                    if pos in deal_data and 'hand' in deal_data[pos]:
+                        cards = []
+                        for card in deal_data[pos]['hand']:
+                            rank = card.get('rank') or card.get('r')
+                            suit = card.get('suit') or card.get('s')
+                            # Keep suit symbols as-is for our analysis (they use ♠♥♦♣)
+                            cards.append(BridgeCard(rank=rank, suit=suit))
+                        if pos == declarer_pos:
+                            declarer_hand = Hand(cards=cards)
+                        else:
+                            dummy_hand = Hand(cards=cards)
+
+                if declarer_hand and dummy_hand:
+                    is_nt = row['contract_strain'] in ['NT', 'N']
+                    strategy_summary = generate_hand_strategy_summary(
+                        declarer_hand=declarer_hand,
+                        dummy_hand=dummy_hand,
+                        contract_level=row['contract_level'],
+                        contract_strain=row['contract_strain'],
+                        is_nt=is_nt
+                    )
+        except Exception as strategy_error:
+            import traceback
+            traceback.print_exc()
+            strategy_summary = {'error': str(strategy_error)}
+
         # Calculate which positions the user controlled during play
         # User controls their position, plus dummy when on declaring side
         user_position = row['player_position'] or 'S'
@@ -1965,7 +2159,8 @@ def get_hand_detail():
             'play_history': play_history,
             'play_quality_summary': play_quality_summary,
             'dd_analysis': dd_analysis,
-            'par_comparison': par_comparison
+            'par_comparison': par_comparison,
+            'strategy_summary': strategy_summary
         })
 
     except Exception as e:

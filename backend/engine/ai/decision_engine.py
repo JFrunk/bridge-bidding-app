@@ -158,19 +158,25 @@ def select_bidding_module(features):
     if auction['opener_relationship'] == 'Me': # I opened
         print(f"   → I am the opener (opener_relationship == 'Me')")
 
-        # PRIORITY 1: Check Blackwood signoff FIRST
+        # Check for 1NT/2NT/3NT convention responses FIRST (before Blackwood)
+        # When I opened NT and partner bids 4♣, that's GERBER asking for aces
+        # I must respond with ace count, NOT ask Blackwood myself
+        if auction['opening_bid'] in ['1NT', '2NT', '3NT']:
+            # Check Gerber (4♣ over NT) - MUST check before Blackwood
+            # Partner's 4♣ over my NT is Gerber, I respond with ace count
+            gerber = GerberConvention()
+            if gerber.evaluate(features['hand'], features): return 'gerber'
+
+        # PRIORITY 2: Check Blackwood signoff
         # After I asked 4NT Blackwood and partner responded with ace count,
-        # I need to sign off or continue - this MUST be checked before Gerber
+        # I need to sign off or continue
         blackwood = BlackwoodConvention()
         blackwood_result = blackwood.evaluate(features['hand'], features)
         if blackwood_result:
             return 'blackwood'
 
-        # Check for 1NT/2NT convention completions FIRST (before natural rebids)
+        # Check for other 1NT/2NT convention completions (after Gerber check)
         if auction['opening_bid'] in ['1NT', '2NT', '3NT']:
-            # Check Gerber (4♣ over NT) - for asking OR responding
-            gerber = GerberConvention()
-            if gerber.evaluate(features['hand'], features): return 'gerber'
             # Check Minor suit bust (opener responding to 2♠)
             minor_bust = MinorSuitBustConvention()
             if minor_bust.evaluate(features['hand'], features): return 'minor_suit_bust'

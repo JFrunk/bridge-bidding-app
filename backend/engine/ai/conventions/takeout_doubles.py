@@ -69,9 +69,17 @@ class TakeoutDoubleConvention(ConventionModule):
 
         Also handles STRONG balanced hands (17+ HCP) that are too strong for 1NT overcall.
         These hands double first and bid NT later to show 19-21 HCP.
+
+        In BALANCING SEAT (passout seat), HCP requirements are reduced to 8+ HCP
+        because partner has already passed showing some values.
         """
+        # Determine if we're in balancing seat (opponent opened, partner passed, opponent passed)
+        is_balancing = self._is_balancing_seat(features)
+
         # Rule 1: Must have opening strength (SAYC standard is 12+ HCP).
-        if hand.hcp < 12:
+        # In balancing seat, only 8+ HCP is needed (partner has passed showing values)
+        min_hcp = 8 if is_balancing else 12
+        if hand.hcp < min_hcp:
             return False
 
         # Determine which suit we're doubling
@@ -147,6 +155,36 @@ class TakeoutDoubleConvention(ConventionModule):
         """Returns partner's position given my position."""
         partners = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
         return partners.get(my_pos, '')
+
+    def _is_balancing_seat(self, features: Dict) -> bool:
+        """
+        Check if we're in balancing (passout) seat.
+
+        Balancing seat is when:
+        - Opponent opened
+        - Partner passed
+        - RHO passed
+        - If we pass, the auction is over
+
+        Example: 1♥ - Pass - Pass - ?
+        We're in balancing seat - the auction will die if we pass.
+        """
+        auction_history = features.get('auction_history', [])
+
+        if len(auction_history) < 3:
+            return False
+
+        # Check if the last two bids before us were passes
+        if auction_history[-1] != 'Pass' or auction_history[-2] != 'Pass':
+            return False
+
+        # Check if there was only one substantive bid before the passes
+        non_pass_bids = [b for b in auction_history if b != 'Pass']
+        if len(non_pass_bids) != 1:
+            return False  # More than one bid = not simple balancing
+
+        # The one bid should be from an opponent (opening bid)
+        return True
 
     def _check_support_double(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
         """

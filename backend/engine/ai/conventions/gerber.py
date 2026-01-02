@@ -88,8 +88,11 @@ class GerberConvention(ConventionModule):
         SAYC Rule: 4♣ IS GERBER OVER ANY 1NT OR 2NT BY PARTNER,
         INCLUDING A REBID OF 1NT OR 2NT.
 
-        EXCEPTION: After a Jacoby transfer sequence, partner's 2NT is an
+        EXCEPTION 1: After a Jacoby transfer sequence, partner's 2NT is an
         invitational game try, NOT a natural 2NT bid. Do not use Gerber here.
+
+        EXCEPTION 2: When WE opened a suit and partner responded 1NT, this is
+        NOT a gerber situation - we should make a rebid, not ask for aces.
         """
         partner_last_bid = features['auction_features'].get('partner_last_bid')
         if not partner_last_bid:
@@ -97,6 +100,14 @@ class GerberConvention(ConventionModule):
 
         # Gerber is used when partner's last bid was NT
         if partner_last_bid not in ['1NT', '2NT', '3NT']:
+            return False
+
+        # EXCEPTION: If we are the opener (we opened a suit, partner responded NT),
+        # we should NOT use Gerber - we should be making a rebid
+        opener_relationship = features['auction_features'].get('opener_relationship')
+        if opener_relationship == 'Me':
+            # We opened, so partner's 1NT/2NT is a RESPONSE, not an opening
+            # We should rebid our suit, show distribution, or bid NT - not ask for aces
             return False
 
         # EXCEPTION: After Jacoby transfer sequence, 2NT is invitational, not natural
@@ -107,13 +118,18 @@ class GerberConvention(ConventionModule):
         if self._is_post_jacoby_invitation(auction_history, partner_last_bid, features):
             return False
 
-        # Need slam-going values (typically 15+ HCP when partner opens NT)
-        # With 1NT (15-17) + 15 = 30+, slam is possible
-        # With 2NT (20-21) + 12 = 32+, slam is possible
-        if partner_last_bid == '1NT' and hand.hcp < 15:
-            return False
-        if partner_last_bid == '2NT' and hand.hcp < 12:
-            return False
+        # Need slam-going values to use Gerber (ace-asking)
+        # IMPORTANT: Gerber commits to slam if aces are sufficient
+        # With 16-17 HCP opposite 1NT, use 4NT QUANTITATIVE instead (invites slam)
+        # Only use Gerber with 18+ HCP (definite slam values if aces are there)
+        #
+        # Threshold for Gerber:
+        # - 1NT (15-17) + 18 = 33+, guaranteed slam if aces are there
+        # - 2NT (20-21) + 14 = 34+, guaranteed slam if aces are there
+        if partner_last_bid == '1NT' and hand.hcp < 18:
+            return False  # Use 4NT quantitative with 16-17 HCP instead
+        if partner_last_bid == '2NT' and hand.hcp < 14:
+            return False  # Use 4NT quantitative with 12-13 HCP instead
         if partner_last_bid == '3NT' and hand.hcp < 12:
             return False
 
@@ -167,7 +183,9 @@ class GerberConvention(ConventionModule):
 
     def _get_gerber_bid(self) -> Tuple[str, str, dict]:
         """Returns the 4♣ Gerber ace-asking bid."""
-        metadata = {'bypass_suit_length': True}
+        # Gerber 4♣ is an ARTIFICIAL bid (ace-asking), not a real club contract
+        # Bypass both suit length validation and sanity check (which expects trump fit)
+        metadata = {'bypass_suit_length': True, 'bypass_sanity_check': True, 'convention': 'gerber'}
         return ("4♣", "Gerber convention, asking for aces over NT.", metadata)
 
     def _is_ace_answering_applicable(self, features: Dict) -> bool:
@@ -182,11 +200,14 @@ class GerberConvention(ConventionModule):
 
         # Check if our last bid was NT (which would make partner's 4♣ Gerber)
         auction_history = features.get('auction_history', [])
+        positions = features.get('positions', [])
         my_index = features.get('my_index', 0)
+        my_pos_str = positions[my_index]
 
+        # Get my non-pass bids correctly using position matching
         my_bids = [
             bid for i, bid in enumerate(auction_history)
-            if (i % 4) == my_index and bid not in ['Pass', 'X', 'XX']
+            if positions[i % 4] == my_pos_str and bid not in ['Pass', 'X', 'XX']
         ]
 
         # If our last bid was NT, partner's 4♣ is Gerber
@@ -206,7 +227,8 @@ class GerberConvention(ConventionModule):
         - 4NT = 3 aces
         """
         num_aces = sum(1 for card in hand.cards if card.rank == 'A')
-        metadata = {'bypass_suit_length': True}
+        # Gerber responses are FORCED - bypass validation regardless of HCP
+        metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'gerber_response'}
 
         if num_aces == 0 or num_aces == 4:
             return ("4♦", "Gerber response: 0 or 4 aces.", metadata)

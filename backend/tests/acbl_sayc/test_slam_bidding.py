@@ -202,7 +202,7 @@ class TestSlamDecisionsWithoutBlackwood:
     """SAYC: Direct slam bidding without conventions."""
 
     def test_bid_small_slam_with_values(self):
-        """SAYC: Bid 6NT directly with 33+ combined points balanced."""
+        """SAYC: Explore slam with 33+ combined points balanced."""
         # Partner opened 1NT (15-17), we have 18 = 33+ minimum
         # ♠ AK2 ♥ KQ2 ♦ AJ32 ♣ K32
         # HCP: A(4)+K(3)+K(3)+Q(2)+A(4)+J(1)+K(3) = 20
@@ -210,10 +210,12 @@ class TestSlamDecisionsWithoutBlackwood:
         assert hand.hcp >= 18
         bid, _ = get_bid(hand, ["1NT", "Pass"])
         # 15-17 + 20 = 35-37, slam values
-        assert bid in ["4NT", "6NT"], f"With slam values should bid slam, got {bid}"
+        # 4♣ is Gerber (ace-asking) - standard SAYC approach for slam exploration over NT
+        # 4NT is quantitative (invitational), 6NT is direct slam bid
+        assert bid in ["4♣", "4NT", "6NT"], f"With slam values should explore slam, got {bid}"
 
     def test_bid_grand_slam_with_values(self):
-        """SAYC: Bid 7NT with 37+ combined points and controls."""
+        """SAYC: Explore grand slam with 37+ combined points and controls."""
         # Partner opened 2NT (20-21), we have 17 = 37+ minimum
         # ♠ AK2 ♥ KQ2 ♦ AK32 ♣ K32
         # HCP: A(4)+K(3)+K(3)+Q(2)+A(4)+K(3)+K(3) = 22
@@ -221,7 +223,8 @@ class TestSlamDecisionsWithoutBlackwood:
         assert hand.hcp >= 17
         bid, _ = get_bid(hand, ["2NT", "Pass"])
         # 20-21 + 22 = 42-43, grand slam values
-        assert bid in ["4NT", "6NT", "7NT"], f"With grand slam values should bid slam, got {bid}"
+        # 4♣ is Gerber (ace-asking) - standard SAYC for slam exploration over NT
+        assert bid in ["4♣", "4NT", "6NT", "7NT"], f"With grand slam values should explore slam, got {bid}"
 
 
 # =============================================================================

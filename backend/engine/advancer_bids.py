@@ -25,15 +25,20 @@ class AdvancerBidsModule(ConventionModule):
         if not result:
             return None
 
-        bid, explanation = result
+        # Handle both 2-tuple (bid, explanation) and 3-tuple (bid, explanation, metadata)
+        if len(result) == 3:
+            bid, explanation, metadata = result
+        else:
+            bid, explanation = result
+            metadata = {}
 
         # Always pass Pass bids through
         if bid == "Pass":
-            return result
+            return (bid, explanation, metadata) if metadata else (bid, explanation)
 
         # Validate the bid is legal
         if BidValidator.is_legal_bid(bid, auction_history):
-            return result
+            return (bid, explanation, metadata) if metadata else (bid, explanation)
 
         # Bid is illegal - try to find next legal bid of same strain
         next_legal = get_next_legal_bid(bid, auction_history)
@@ -52,7 +57,7 @@ class AdvancerBidsModule(ConventionModule):
                 pass
 
             adjusted_explanation = f"{explanation} [Adjusted from {bid} to {next_legal} for legality]"
-            return (next_legal, adjusted_explanation)
+            return (next_legal, adjusted_explanation, metadata) if metadata else (next_legal, adjusted_explanation)
 
         # No legal bid possible - pass
         return None
@@ -66,9 +71,13 @@ class AdvancerBidsModule(ConventionModule):
         if not partner_overcall or partner_overcall == 'Pass':
             return None  # Not an advancing situation
 
-        # Partner doubled for takeout - handle separately (could add logic later)
-        if partner_overcall in ['X', 'XX']:
-            return None  # Responding to doubles needs different logic
+        # Partner doubled for takeout - respond to the double
+        if partner_overcall == 'X':
+            return self._respond_to_takeout_double(hand, opener_bid, features)
+
+        # Redouble - different situation (typically shows strength after opponent's double)
+        if partner_overcall == 'XX':
+            return None  # Redouble needs different logic
 
         # Partner bid NT - different logic needed
         if 'NT' in partner_overcall:
@@ -207,6 +216,113 @@ class AdvancerBidsModule(ConventionModule):
 
         # No clear action - pass
         return ("Pass", "No clear action to advance partner's overcall.")
+
+    def _respond_to_takeout_double(self, hand: Hand, opener_bid: str, features: Dict) -> Optional[Tuple[str, str]]:
+        """
+        Respond to partner's takeout double.
+
+        SAYC Guidelines:
+        - 0-8 HCP: Bid cheapest 4-card unbid suit (FORCED, even with 0 points)
+        - 9-11 HCP: Jump bid in best suit (invitational)
+        - 12+ HCP: Cuebid or bid game
+        - With stopper in opener's suit: 1NT (6-10), 2NT (11-12), 3NT (12+)
+
+        Partner's double promises:
+        - Opening values (12+ HCP)
+        - Support for unbid suits (especially unbid majors)
+        """
+        if len(opener_bid) < 2:
+            return None
+
+        # Extract opener's suit
+        if opener_bid.endswith('NT'):
+            # Double of NT opener is for penalty, not takeout
+            return None
+
+        opp_suit = opener_bid[1]
+        opp_level = int(opener_bid[0])
+
+        # Determine unbid suits (excludes opener's suit)
+        unbid_suits = [s for s in ['♠', '♥', '♦', '♣'] if s != opp_suit]
+
+        # Find best unbid suit (longest, prefer major)
+        best_suit = None
+        best_length = 0
+        for suit in unbid_suits:
+            length = hand.suit_lengths.get(suit, 0)
+            # Prefer majors, then longer suits
+            is_major = suit in ['♥', '♠']
+            if length > best_length or (length == best_length and is_major and best_suit not in ['♥', '♠']):
+                best_suit = suit
+                best_length = length
+
+        # With stopper in opener's suit - consider NT response
+        has_stopper = self._has_stopper(hand, opener_bid)
+
+        # Metadata for responses to takeout double - only 4+ cards required (not 5+)
+        # Takeout doubles ask partner to bid their best suit with just 4 cards
+        # Partner promises 4+ cards in unbid suits, so we have an 8+ card fit with 4
+        # Bypass sanity check for game bids - partner's double guarantees support
+        takeout_response_metadata = {'bypass_suit_length': True, 'bypass_sanity_check': True, 'convention': 'takeout_double_response'}
+
+        # Game values (12+ HCP) with stopper - bid 3NT or cuebid
+        if hand.hcp >= 12:
+            if has_stopper:
+                return ("3NT", f"Game in NT with {hand.hcp} HCP and stopper in opener's suit.")
+            # Could cuebid opponent's suit (game-forcing), but for now bid game in best major
+            if best_suit in ['♥', '♠'] and best_length >= 4:
+                return (f"4{best_suit}", f"Game in {best_suit} with {hand.hcp} HCP and {best_length}-card suit.", takeout_response_metadata)
+            # Or cuebid for game-forcing values
+            cuebid_level = opp_level + 1
+            cuebid_metadata = {'bypass_suit_length': True, 'convention': 'cuebid_gf'}
+            return (f"{cuebid_level}{opp_suit}", f"Cuebid showing game-forcing values ({hand.hcp} HCP).", cuebid_metadata)
+
+        # With stopper in opener's suit - bid NT at appropriate level
+        # 1NT: 6-10 HCP, 2NT: 11-12 HCP (invitational)
+        if has_stopper:
+            if 6 <= hand.hcp <= 10:
+                return ("1NT", f"1NT showing {hand.hcp} HCP with stopper in opener's suit.")
+            elif 11 <= hand.hcp <= 12:
+                return ("2NT", f"Invitational 2NT with {hand.hcp} HCP and stopper.")
+
+        # Jump response with 9-11 HCP (invitational) - for hands without stopper
+        if 9 <= hand.hcp <= 11:
+            # Jump in best unbid suit (prefer suit bid when no stopper)
+            if best_suit and best_length >= 4:
+                jump_level = opp_level + 1 if opp_level == 1 else opp_level + 2
+                # Make sure jump level is reasonable
+                suit_rank = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+                if suit_rank.get(best_suit, 0) > suit_rank.get(opp_suit, 0):
+                    # Can jump at same-level + 1
+                    jump_level = opp_level + 1
+                else:
+                    jump_level = opp_level + 2
+                if jump_level <= 3:
+                    return (f"{jump_level}{best_suit}", f"Jump response showing {hand.hcp} HCP and {best_length}-card {best_suit} (invitational).", takeout_response_metadata)
+
+        # Bid cheapest unbid suit with 4+ cards
+        if best_suit and best_length >= 4:
+            # Determine cheapest level
+            suit_rank = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+            if suit_rank.get(best_suit, 0) > suit_rank.get(opp_suit, 0):
+                # Can bid at same level
+                bid_level = opp_level
+            else:
+                # Must bid at next level
+                bid_level = opp_level + 1
+            return (f"{bid_level}{best_suit}", f"Responding to takeout double with {best_length}-card {best_suit} ({hand.hcp} HCP).")
+
+        # With 4333 shape or no 4-card unbid suit, bid longest suit
+        if best_suit:
+            suit_rank = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+            if suit_rank.get(best_suit, 0) > suit_rank.get(opp_suit, 0):
+                bid_level = opp_level
+            else:
+                bid_level = opp_level + 1
+            return (f"{bid_level}{best_suit}", f"Responding to takeout double with {best_length}-card {best_suit} ({hand.hcp} HCP, best available).")
+
+        # Fallback - should rarely reach here
+        return ("Pass", "No clear response to takeout double.")
 
     def _advance_nt_overcall(self, hand: Hand, partner_nt_bid: str, opener_bid: str) -> Optional[Tuple[str, str]]:
         """

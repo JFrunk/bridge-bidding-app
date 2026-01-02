@@ -237,6 +237,22 @@ class BiddingQualityScorer:
         # Simplified appropriateness checks
         # (Full logic would need complete auction analysis)
 
+        # Skip appropriateness check for forcing sequences and artificial bids
+        # 4NT is always Blackwood (artificial, no suit length required)
+        if bid == '4NT':
+            return  # Always OK - Blackwood is artificial
+
+        # NT bids don't require suit length
+        if strain == 'NT':
+            # Check for forcing sequences that allow weak responder bids
+            # After partner's 2NT rebid (18-19 HCP), responder can bid 3NT with any points
+            if self._is_forcing_sequence(auction, level, strain):
+                return  # OK - forced bid in forcing sequence
+
+        # Check if this is a forced bid in a forcing sequence
+        if self._is_forcing_sequence(auction, level, strain):
+            return  # OK - partner's bid created a force
+
         # Check for obvious inappropriate bids
         if level >= 3:
             # 3-level or higher with weak hand
@@ -249,10 +265,12 @@ class BiddingQualityScorer:
                     )
             elif hand.total_points < 10 and suit_length < 5:
                 # 3-level constructive needs 10+ HCP or 6+ card preempt
-                self._record_appropriateness_error(
-                    hand_number, position, bid, hand,
-                    f"3-level bid with {hand.total_points} points and only {suit_length} cards"
-                )
+                # But skip NT bids (already checked above)
+                if strain != 'NT':
+                    self._record_appropriateness_error(
+                        hand_number, position, bid, hand,
+                        f"3-level bid with {hand.total_points} points and only {suit_length} cards"
+                    )
 
         if level >= 4:
             # 4-level needs game values or extreme distribution
@@ -263,12 +281,41 @@ class BiddingQualityScorer:
                 )
 
         # Check for bidding suits with insufficient length
-        if suit_length < 4 and strain in ['♠', '♥', '♦', '♣']:
-            # Never bid a suit with <4 cards (except special conventions)
-            self._record_appropriateness_error(
-                hand_number, position, bid, hand,
-                f"Bid {strain} with only {suit_length} cards"
-            )
+        # EXCEPT: Convention bids where suit length doesn't matter
+        is_convention_bid = self._is_convention_bid(bid, auction, level, strain)
+
+        if suit_length < 4 and strain in ['♠', '♥', '♦', '♣'] and not is_convention_bid:
+            # Don't flag 1♣ opening with 3 cards (SAYC standard short club)
+            # Check if this is an opening bid (no prior non-pass bids)
+            non_pass_bids = [b for b in auction if b not in ['Pass']]
+            if bid == '1♣' and suit_length == 3 and len(non_pass_bids) == 0:
+                pass  # Valid SAYC short club opening
+            # Don't flag 2♣ strong opening (artificial, 22+ HCP)
+            elif bid == '2♣' and hand.hcp >= 20:
+                pass  # Valid SAYC strong 2♣ opening (artificial)
+            # Don't flag 2♣ responses (e.g., new minor forcing, various conventions)
+            elif bid == '2♣' and len(auction) >= 2:
+                pass  # Could be new minor forcing or other convention
+            # Don't flag 2♦ waiting response to strong 2♣
+            elif bid == '2♦' and '2♣' in auction:
+                pass  # 2♦ waiting response to strong 2♣
+            # Don't flag 3-card raises of partner's suit
+            elif self._is_raise_of_partner_suit(bid, auction, strain):
+                pass  # Valid raise with 3-card support
+            # Don't flag responses to takeout double (forced bids)
+            elif self._is_response_to_takeout_double(auction):
+                pass  # Forced response to partner's double
+            # Don't flag Stayman responses (2♦/2♥/2♠ after 2♣)
+            elif self._is_stayman_response(bid, auction, level, strain):
+                pass  # Stayman response
+            # Don't flag Jacoby transfer completions
+            elif self._is_jacoby_completion(bid, auction, level, strain):
+                pass  # Jacoby transfer completion
+            else:
+                self._record_appropriateness_error(
+                    hand_number, position, bid, hand,
+                    f"Bid {strain} with only {suit_length} cards"
+                )
 
     def _check_conventions(
         self,
@@ -418,10 +465,11 @@ class BiddingQualityScorer:
         is_slam_situation = combined_points >= 33
 
         if is_game_situation:
-            self.results['game_situations'] += 1
-
-            # If this partnership is declarer, check if they reached game
+            # Only count this as a "game situation" if this partnership is declaring
+            # If opponents outbid us, that's competitive bidding, not a game-finding failure
             if is_declarer:
+                self.results['game_situations'] += 1
+
                 reached_game = False
                 if strain in ['♥', '♠'] and level >= 4:
                     reached_game = True
@@ -447,10 +495,10 @@ class BiddingQualityScorer:
                     self.results['game_slam_errors'].append(error_detail)
 
         if is_slam_situation:
-            self.results['slam_situations'] += 1
-
-            # If this partnership is declarer, check if they reached slam
+            # Only count this as a "slam situation" if this partnership is declaring
             if is_declarer:
+                self.results['slam_situations'] += 1
+
                 reached_slam = level >= 6
 
                 if not reached_slam:
@@ -468,6 +516,204 @@ class BiddingQualityScorer:
                     self.results['slam_errors'].append(error_detail)
                     # Also add to combined list for backward compatibility
                     self.results['game_slam_errors'].append(error_detail)
+
+    def _is_convention_bid(self, bid: str, auction: List[str], level: int, strain: str) -> bool:
+        """
+        Check if a bid is a conventional bid where suit length doesn't apply.
+
+        Convention bids include:
+        - Blackwood responses (5♣/5♦/5♥/5♠) after 4NT
+        - King ask responses (6♣/6♦/6♥/6♠) after 5NT
+        - Gerber responses (4♦/4♥/4♠) after 4♣ over NT
+        - Cuebids (bidding opponent's suit)
+        - Michaels Cuebid
+        """
+        if len(auction) < 1:
+            return False
+
+        # Blackwood responses: 5♣/5♦/5♥/5♠ after partner's 4NT
+        if level == 5 and strain in ['♣', '♦', '♥', '♠']:
+            # Check if 4NT was bid recently (within last 2 bids = partner)
+            if len(auction) >= 2 and auction[-2] == '4NT':
+                return True
+            if len(auction) >= 1 and auction[-1] == '4NT':
+                return True
+
+        # King responses: 6♣/6♦/6♥/6♠ after partner's 5NT
+        if level == 6 and strain in ['♣', '♦', '♥', '♠']:
+            if len(auction) >= 2 and auction[-2] == '5NT':
+                return True
+
+        # Gerber responses: 4♦/4♥/4♠ after partner's 4♣ (which was over NT)
+        if level == 4 and strain in ['♦', '♥', '♠']:
+            if len(auction) >= 2 and auction[-2] == '4♣':
+                # Check if there was an NT bid before 4♣
+                for i, prev_bid in enumerate(auction[:-2]):
+                    if prev_bid in ['1NT', '2NT', '3NT']:
+                        return True
+
+        # Cuebid of opponent's suit (control-showing or Michaels)
+        # Check if strain matches an opponent's bid
+        for i, prev_bid in enumerate(auction):
+            if len(prev_bid) >= 2 and prev_bid[1:] == strain:
+                # This bid uses the same suit as a previous bid
+                # If it's a higher level, it's likely a cuebid
+                try:
+                    prev_level = int(prev_bid[0])
+                    if level > prev_level:
+                        return True
+                except (ValueError, IndexError):
+                    pass
+
+        return False
+
+    def _is_raise_of_partner_suit(self, bid: str, auction: List[str], strain: str) -> bool:
+        """
+        Check if this bid is a raise of partner's suit.
+
+        Raises with 3-card support are valid in many situations:
+        - Simple raises (1♠ - 2♠)
+        - Limit raises (1♠ - 3♠)
+        - Game raises (1♠ - 4♠)
+        """
+        if len(auction) < 2:
+            return False
+
+        # Partner's last bid is 2 positions back
+        partner_bid = auction[-2] if len(auction) >= 2 else None
+
+        if partner_bid and len(partner_bid) >= 2:
+            try:
+                partner_strain = partner_bid[1:]
+                # If we're bidding the same suit partner bid, it's a raise
+                if partner_strain == strain:
+                    return True
+            except (IndexError):
+                pass
+
+        return False
+
+    def _is_response_to_takeout_double(self, auction: List[str]) -> bool:
+        """
+        Check if we're responding to partner's takeout double.
+        Forced responses don't require normal suit length.
+        """
+        if len(auction) < 2:
+            return False
+
+        # Partner's last bid should be a double, preceded by opponent's suit bid
+        partner_bid = auction[-2] if len(auction) >= 2 else None
+        if partner_bid == 'X':
+            # Check if there's a suit bid before the double (opponent's opening)
+            for prev_bid in auction[:-2]:
+                if len(prev_bid) >= 2 and prev_bid[1] in ['♠', '♥', '♦', '♣']:
+                    return True
+        return False
+
+    def _is_stayman_response(self, bid: str, auction: List[str], level: int, strain: str) -> bool:
+        """
+        Check if this is a response to Stayman (2♦/2♥/2♠ showing or denying majors).
+        """
+        if len(auction) < 4:
+            return False
+
+        # Check for 1NT - Pass - 2♣ - Pass pattern before this bid
+        # Our position means partner's bid is 2 back, so 1NT would be 4 back
+        if len(auction) >= 4:
+            if auction[-4] == '1NT' and auction[-2] == '2♣':
+                # This is a Stayman response (2♦/2♥/2♠)
+                if level == 2 and strain in ['♦', '♥', '♠']:
+                    return True
+
+        return False
+
+    def _is_jacoby_completion(self, bid: str, auction: List[str], level: int, strain: str) -> bool:
+        """
+        Check if this is opener completing a Jacoby transfer.
+        Pattern: 1NT - Pass - 2♦ - Pass - 2♥ (opener completing hearts transfer)
+        Pattern: 1NT - Pass - 2♥ - Pass - 2♠ (opener completing spades transfer)
+        """
+        if len(auction) < 4:
+            return False
+
+        # Check if partner's last bid was a transfer bid
+        partner_bid = auction[-2] if len(auction) >= 2 else None
+        our_previous = auction[-4] if len(auction) >= 4 else None
+
+        # We opened 1NT, partner transferred
+        if our_previous == '1NT':
+            if partner_bid == '2♦' and bid == '2♥':
+                return True  # Hearts transfer completion
+            if partner_bid == '2♥' and bid == '2♠':
+                return True  # Spades transfer completion
+
+        return False
+
+    def _is_forcing_sequence(self, auction: List[str], level: int, strain: str) -> bool:
+        """
+        Check if partner's previous bid creates a forcing sequence.
+        In forcing sequences, responder must bid even with minimum values.
+
+        Forcing sequences include:
+        - After partner's 2NT rebid (18-19 HCP) - game forcing
+        - After partner's reverse (17+ HCP) - one round force
+        - After partner's jump shift - game forcing
+        """
+        if len(auction) < 2:
+            return False
+
+        # Partner's bid is 2 positions back
+        partner_bid = auction[-2] if len(auction) >= 2 else None
+        if not partner_bid or partner_bid in ['Pass', 'X', 'XX']:
+            return False
+
+        # Check for 2NT rebid (game forcing)
+        if partner_bid == '2NT':
+            # 2NT rebid shows 18-19 HCP, forcing to game
+            return True
+
+        # Check for jump shift by partner (game forcing)
+        # Example: 1♣ - Pass - 2♥ (jump shift shows 19+ points)
+        if len(auction) >= 4 and len(partner_bid) >= 2:
+            try:
+                partner_level = int(partner_bid[0])
+                # Jump to 2-level new suit could be a jump shift
+                if partner_level == 2:
+                    # Check if opening bid was at 1-level in a different suit
+                    opening_bid = auction[-4] if len(auction) >= 4 else None
+                    if opening_bid and len(opening_bid) >= 2:
+                        opener_level = int(opening_bid[0])
+                        opener_suit = opening_bid[1:]
+                        partner_suit = partner_bid[1:]
+                        # Jump shift: opener bid 1-level, responder jumped to 2-level in new suit
+                        if opener_level == 1 and partner_suit != opener_suit and partner_suit in ['♠', '♥', '♦', '♣']:
+                            # This is a jump shift - game forcing
+                            return True
+            except (ValueError, IndexError):
+                pass
+
+        # Check for reverse by opener (one round force)
+        # A reverse is when opener bids a HIGHER-ranking suit at the 2-level
+        # Example: 1♦ - 1♠ - 2♥ (hearts > diamonds, reverse showing 17+)
+        if len(auction) >= 4 and partner_bid[0] == '2':
+            # Check if this looks like a reverse pattern
+            opening_bid = None
+            for i, bid in enumerate(auction[:-2]):
+                if bid not in ['Pass', 'X', 'XX'] and len(bid) >= 2:
+                    # First non-pass bid might be the opening
+                    opening_bid = bid
+                    break
+
+            if opening_bid and opening_bid[0] == '1' and len(partner_bid) >= 2:
+                opener_suit = opening_bid[1]
+                rebid_suit = partner_bid[1]
+                SUIT_RANK = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+                if opener_suit in SUIT_RANK and rebid_suit in SUIT_RANK:
+                    if SUIT_RANK[rebid_suit] > SUIT_RANK[opener_suit]:
+                        # This is a reverse - one round force
+                        return True
+
+        return False
 
     def _record_appropriateness_error(
         self,

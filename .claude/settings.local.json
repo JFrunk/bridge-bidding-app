@@ -1,4 +1,5 @@
 {
+  "model": "opusplan",
   "permissions": {
     "allow": [
       "Bash(source:*)",
@@ -112,7 +113,32 @@
       "Bash(SKIP_DOC_CHECK=1 git commit:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Add Play New Hand button to gameplay page\n\n- Add green \"Play New Hand\" primary button for play phase \\(AI bids, user plays\\)\n- Add \"Bid New Hand\" as secondary action to return to bidding practice\n- Fix declarer play tracking when North is declarer \\(user controls dummy\\)\n- Fix HandHistoryCard text visibility with proper dark colors\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit --no-verify -m \"$\\(cat <<''EOF''\nfeat: Add Play New Hand button to gameplay page\n\n- Add green \"Play New Hand\" primary button for play phase \\(AI bids, user plays\\)\n- Add \"Bid New Hand\" as secondary action to return to bidding practice\n- Fix declarer play tracking when North is declarer \\(user controls dummy\\)\n- Fix HandHistoryCard text visibility with proper dark colors\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(grep:*)",
+      "Bash(ssh oracle-bridge \"ls -la /opt/bridge-bidding-app/backend/user_feedback/ 2>/dev/null || echo ''Directory not found''\")",
+      "Bash(git commit --no-verify -m \"$\\(cat <<''EOF''\nfix: Practice Now button deals fresh hand ready for gameplay\n\n- Fixed stale state issue when clicking Practice Now from My Progress\n- Set gamePhase to ''playing'' immediately in playRandomHand\\(\\) to prevent\n  showing PlayWorkspace options menu during API fetch\n- Added loading spinner while hand is being dealt\n- Fixed navigation from landing page to always deal fresh hand\n- Clear previous play state \\(tricks, dummy, score\\) before dealing new hand\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(python -c:*)",
+      "Bash(npx playwright test --grep \"learning|learn|skill\" --reporter=list)",
+      "Bash(__NEW_LINE__ echo -e \"\\\\n✅ Issue #8 CSS VERIFIED: Suit icons reduced from 32px to 28px \\(base\\) and 24px \\(mobile\\)\")",
+      "Bash(frontend/src/components/learning/SkillIntro.js )",
+      "Bash(frontend/src/components/learning/SkillPractice.js )",
+      "Bash(frontend/src/components/learning/SkillPractice.css )",
+      "Bash(frontend/src/components/play/CurrentTrickDisplay.jsx )",
+      "Bash(frontend/src/PlayComponents.css )",
+      "Bash(frontend/src/PlayComponents.js )",
+      "Bash(CLAUDE.md)",
+      "Skill(deploy-now)",
+      "Skill(deploy-now:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: Improve play-by-play feedback accuracy in Hand Review Modal\n\n- Fix \"32 tricks lost\" impossible display by capping at 13 and changing\n  wording to \"X plays could be improved\"\n- Add position field to play decisions API for accurate card matching\n- Add user_controlled_positions to API \\(S always + dummy when NS declaring\\)\n- Filter feedback to only show for user-controlled positions\n- Fix card mismatch by using trick_number + position key for lookups\n- Update TrickDisplayVisual to show feedback for both S and N when user\n  was declarer\n\nFixes user feedback #1 from 2026-01-02\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit --no-verify -m \"$\\(cat <<''EOF''\nfix: Improve play-by-play feedback accuracy in Hand Review Modal\n\n- Fix \"32 tricks lost\" impossible display by capping at 13 and changing\n  wording to \"X plays could be improved\"\n- Add position field to play decisions API for accurate card matching\n- Add user_controlled_positions to API \\(S always + dummy when NS declaring\\)\n- Filter feedback to only show for user-controlled positions\n- Fix card mismatch by using trick_number + position key for lookups\n- Update TrickDisplayVisual to show feedback for both S and N when user\n  was declarer\n\nFixes user feedback #1 from 2026-01-02\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(timeout 300 python3:*)",
+      "Bash(timeout 600 python3:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Improve game/slam detection with game-forcing metadata\n\nAdd game_forcing metadata flag to validation pipeline to prevent\nincorrectly rejecting valid bids in game-forcing sequences.\n\nKey changes:\n- validation_pipeline.py: Add _check_game_forcing_status\\(\\) that checks\n  metadata and AuctionContext to bypass HCP validators in forcing sequences\n- rebids.py: Add _is_jump_shift_response\\(\\) helper and jump shift handling\n  with game_forcing metadata\n- responder_rebids.py: Add reverse_metadata for game-forcing sequences\n  after opener reverses \\(17+ HCP\\)\n- stayman.py: Add game_metadata for 10+ HCP Stayman continuations\n- splinter_bids.py: Add splinter_metadata with bypass_suit_length to\n  prevent rejection of artificial bids showing shortness\n\nResults:\n- Game/Slam score: 24.7% → 58.7% \\(+34%\\)\n- Composite score: 89.7% → 95.5% \\(Grade A\\)\n- Games reached in diagnostic: ~60% → 75%\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit --no-verify -m \"$\\(cat <<''EOF''\nfeat: Improve game/slam detection with game-forcing metadata\n\nAdd game_forcing metadata flag to validation pipeline to prevent\nincorrectly rejecting valid bids in game-forcing sequences.\n\nKey changes:\n- validation_pipeline.py: Add _check_game_forcing_status\\(\\) that checks\n  metadata and AuctionContext to bypass HCP validators in forcing sequences\n- rebids.py: Add _is_jump_shift_response\\(\\) helper and jump shift handling\n  with game_forcing metadata\n- responder_rebids.py: Add reverse_metadata for game-forcing sequences\n  after opener reverses \\(17+ HCP\\)\n- stayman.py: Add game_metadata for 10+ HCP Stayman continuations\n- splinter_bids.py: Add splinter_metadata with bypass_suit_length to\n  prevent rejection of artificial bids showing shortness\n\nResults:\n- Game/Slam score: 24.7% → 58.7% \\(+34%\\)\n- Composite score: 89.7% → 95.5% \\(Grade A\\)\n- Games reached in diagnostic: ~60% → 75%\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(the opponents\" to clearer \"The better play maintains your trick potential\"\n- Added explanation for third hand situations where playing higher \\(but not\n  necessarily honor-high\\) is recommended\n- Added message for 1-trick cost situations\n\nThe previous message was ambiguous about whether it described the optimal\nplay or the user''s mistake.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(potential\" can be misleading when we don''t know the actual reason.\n\nBetter to show no explanation than a potentially incorrect one.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(for i in 1 2 3)",
+      "Bash(do echo \"=== Run $i ===\")"
     ],
     "deny": [],
     "ask": []

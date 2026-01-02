@@ -82,11 +82,25 @@ class ResponseModule(ConventionModule):
             return self._get_responder_rebid(hand, features, my_bids_after_opening)
 
     def _calculate_support_points(self, hand: Hand, trump_suit: str) -> int:
+        """Calculate support points for raising partner's suit.
+
+        SAYC Dummy Points (when raising partner's suit):
+        - Void: +5 points
+        - Singleton: +3 points
+        - Doubleton: +1 point
+
+        Note: Some sources use +3/+2/+1 (our original) or +5/+3/+1 (SAYC standard).
+        We use +5/+3/+1 for accuracy per ACBL SAYC booklet.
+        """
         points = hand.hcp
         for suit, length in hand.suit_lengths.items():
             if suit != trump_suit:
-                if length == 1: points += 2
-                if length == 0: points += 3
+                if length == 0:
+                    points += 5   # Void
+                elif length == 1:
+                    points += 3   # Singleton
+                elif length == 2:
+                    points += 1   # Doubleton
         return points
 
     def _has_good_suit(self, hand: Hand, suit: str) -> bool:
@@ -132,17 +146,26 @@ class ResponseModule(ConventionModule):
                         return (f"2{suit}", f"Positive response to 2♣ showing {hand.hcp} HCP and 5+ {suit}.")
                 return ("2NT", f"Positive response to 2♣ ({hand.hcp} HCP, no 5-card major).")
 
-            # Default: waiting response
-            return ("2♦", "Artificial waiting response to 2♣ (no good suit, less than 8 HCP).")
-
-        if hand.total_points < 6: return ("Pass", "Less than 6 total points.")
+            # Default: waiting response (artificial bid, bypass suit length validation)
+            metadata = {'bypass_suit_length': True, 'bypass_hcp': True}
+            return ("2♦", "Artificial waiting response to 2♣ (no good suit, less than 8 HCP).", metadata)
 
         # Get interference information
         interference = features['auction_features'].get('interference', {'present': False})
 
-        # Route to appropriate handler based on opening bid type
+        # Special case: 2NT opening
+        # With a 5+ card major, ALWAYS transfer - even with very weak hand
+        # Partner has 20-21 HCP, so playing in a major with a fit is often best
         if opening_bid == "2NT":
             return self._respond_to_2nt(hand, interference)
+
+        # Special case: Weak two opening (2♦/2♥/2♠)
+        # Partner shows 5-11 HCP with a good 6-card suit
+        if opening_bid in ['2♦', '2♥', '2♠']:
+            return self._respond_to_weak_two(hand, opening_bid, interference)
+
+        # For other openings, minimum 6 points needed
+        if hand.total_points < 6: return ("Pass", "Less than 6 total points.")
         elif opening_bid == '1NT':
             return self._respond_to_1nt(hand, opening_bid, interference)
         elif 'NT' in opening_bid:
@@ -269,6 +292,105 @@ class ResponseModule(ConventionModule):
         # 0-3 HCP - pass (combined 20-24, not enough)
         return ("Pass", f"Insufficient strength for game opposite 2NT ({hand.hcp} HCP, combined ~23).")
 
+    def _respond_to_weak_two(self, hand: Hand, opening_bid: str, interference: Dict):
+        """
+        Respond to weak two opening (2♦/2♥/2♠).
+
+        Partner shows 5-11 HCP with a good 6+ card suit.
+
+        SAYC Guidelines:
+        - Pass: Weak hand without fit
+        - Raise to 3M: Preemptive with 3+ card support (Law of Total Tricks)
+        - Raise to 4M: Game values with 3+ card support
+        - 2NT: Feature-asking (Ogust-style) with game interest
+        - New suit: Forcing, 5+ cards, 10+ HCP (rare)
+        - 3NT: Gambling with outside stoppers and running suit
+
+        Returns:
+            3-tuple (bid, explanation, metadata) with bypass_hcp=True for raises
+        """
+        opening_suit = opening_bid[1]  # ♦, ♥, or ♠
+        support = hand.suit_lengths.get(opening_suit, 0)
+
+        # Metadata to bypass normal HCP validation for weak two responses
+        # The bidding structure is different from normal auctions
+        metadata = {'bypass_hcp': True}
+
+        # Combined values: Partner has ~5-11 HCP (average 8)
+        # Need ~25 pts for game, so responder needs ~14-20 HCP
+        # For slam, need ~33 pts, so responder needs ~22-28 HCP
+
+        # With 3+ card support (at any strength level)
+        if support >= 3:
+            support_points = self._calculate_support_points(hand, opening_suit)
+
+            # Game values with fit:
+            # Partner has 5-11 HCP (avg ~8), so for game (~25 pts) we need ~14-20 HCP
+            # But with a 10-card fit (4+ support), game plays well even with fewer HCP
+            # SAYC: Raise to game with 12+ HCP and 4+ card support, or 14+ support points
+            game_values = (support_points >= 14 or
+                          (hand.hcp >= 12 and support >= 4 and opening_suit in ['♥', '♠']) or
+                          (hand.hcp >= 14 and opening_suit in ['♥', '♠']))
+            if game_values:
+                if opening_suit in ['♥', '♠']:
+                    return (f"4{opening_suit}", f"Game raise with {hand.hcp} HCP and {support} {opening_suit} support.", metadata)
+                else:
+                    # Diamond game is 5♦ - need more values
+                    if support_points >= 16:
+                        return ("5♦", f"Game in diamonds with {hand.hcp} HCP and {support} diamond support.", metadata)
+                    return ("3♦", f"Preemptive raise with {hand.hcp} HCP and {support} diamond support.", metadata)
+
+            # Preemptive raise with fit (weaker hands)
+            # Raise to 3M with 3+ support (Law of Total Tricks)
+            if support >= 3 and hand.hcp < 14:
+                return (f"3{opening_suit}", f"Preemptive raise with {support} {opening_suit} support (Law of Total Tricks).", metadata)
+
+        # Strong hand with 2-card support and game interest: 2NT feature-ask
+        # 2NT asks partner about their suit quality (Ogust-style)
+        if hand.hcp >= 15 and support >= 2:
+            return ("2NT", f"Feature-asking bid with {hand.hcp} HCP and game interest.", metadata)
+
+        # Strong balanced hand without fit: 3NT (gambling on running suit)
+        if hand.hcp >= 15 and support < 3 and hand.is_balanced:
+            # Check for outside stoppers
+            other_suits_stopped = sum(1 for s in ['♠', '♥', '♦', '♣']
+                                     if s != opening_suit and self._has_stopper(hand, s))
+            if other_suits_stopped >= 2:
+                return ("3NT", f"Gambling 3NT with {hand.hcp} HCP, hoping partner's suit runs.", metadata)
+
+        # New suit at 3-level: Forcing, natural, 10+ HCP, 5+ cards
+        if hand.hcp >= 10:
+            for suit in ['♠', '♥', '♦', '♣']:
+                if suit != opening_suit and hand.suit_lengths.get(suit, 0) >= 5:
+                    # Only bid new suit if it's forcing at the right level
+                    suit_level = 3 if suit > opening_suit else 3
+                    return (f"{suit_level}{suit}", f"New suit showing {hand.hcp} HCP and 5+ {suit}.", metadata)
+
+        # Weak without fit - pass
+        return ("Pass", f"Pass weak two with {hand.hcp} HCP and only {support} {opening_suit} support.")
+
+    def _has_stopper(self, hand: Hand, suit: str) -> bool:
+        """Check if hand has at least one stopper in a suit (A, Kx, Qxx, Jxxx)."""
+        length = hand.suit_lengths.get(suit, 0)
+        if length == 0:
+            return False
+
+        # Check for high cards in this suit
+        has_ace = any(c.suit == suit and c.rank == 'A' for c in hand.cards)
+        has_king = any(c.suit == suit and c.rank == 'K' for c in hand.cards)
+        has_queen = any(c.suit == suit and c.rank == 'Q' for c in hand.cards)
+        has_jack = any(c.suit == suit and c.rank == 'J' for c in hand.cards)
+
+        if has_ace:
+            return True
+        if has_king and length >= 2:
+            return True
+        if has_queen and length >= 3:
+            return True
+        if has_jack and length >= 4:
+            return True
+        return False
+
     def _competitive_1nt_response(self, hand: Hand, interference: Dict):
         """
         Natural competitive responses after 1NT - (overcall) - ?
@@ -303,26 +425,35 @@ class ResponseModule(ConventionModule):
 
         With game values (4+ HCP), bid 3NT unless looking for major fit.
         With a 5+ card major, transfer regardless of strength.
+
+        Returns:
+            3-tuple (bid, explanation, metadata) with bypass_hcp=True for convention bids
         """
         spades = hand.suit_lengths.get('♠', 0)
         hearts = hand.suit_lengths.get('♥', 0)
 
+        # Metadata to bypass HCP validation for conventional bids at 3-level
+        # Transfers can be made with any hand strength (even 0 HCP)
+        # Stayman over 2NT can also be made with weak hands looking for major fit
+        convention_metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': '2nt_response'}
+
         # Check for 5+ card major -> Transfer (any point count!)
         # With a long major, playing in the major suit is usually better than NT
         if hearts >= 5:
-            return ("3♦", f"Transfer to hearts (3♦→3♥). With {hearts} hearts, a suit contract plays better than NT.")
+            return ("3♦", f"Transfer to hearts (3♦→3♥). With {hearts} hearts, a suit contract plays better than NT.", convention_metadata)
         if spades >= 5:
-            return ("3♥", f"Transfer to spades (3♥→3♠). With {spades} spades, a suit contract plays better than NT.")
+            return ("3♥", f"Transfer to spades (3♥→3♠). With {spades} spades, a suit contract plays better than NT.", convention_metadata)
 
         # Check for 4-card major with game values -> Stayman
+        # Note: Stayman over 2NT typically requires some values (4+ HCP)
         if (spades == 4 or hearts == 4) and hand.hcp >= 4:
             major = 'spades' if spades == 4 else 'hearts'
-            return ("3♣", f"Stayman (3♣) with 4 {major}. Looking for a 4-4 major fit.")
+            return ("3♣", f"Stayman (3♣) with 4 {major}. Looking for a 4-4 major fit.", convention_metadata)
 
         # No major suit interest - decide based on points
         # Partner has 20-21, game (25) needs 4-5 pts
         if hand.hcp >= 4:
-            return ("3NT", f"Game in NT with {hand.hcp} HCP + partner's 20-21 = {hand.hcp + 20}-{hand.hcp + 21} combined.")
+            return ("3NT", f"Game in NT with {hand.hcp} HCP + partner's 20-21 = {hand.hcp + 20}-{hand.hcp + 21} combined.", convention_metadata)
 
         # Too weak for game
         return ("Pass", f"Pass with {hand.hcp} HCP - game unlikely (need ~4+ to reach 25 combined).")
@@ -343,9 +474,19 @@ class ResponseModule(ConventionModule):
         """
         opening_suit = opening_bid[1]
 
-        # PRIORITY: Show a 4+ card major BEFORE raising partner's minor with only 3-card support
-        # This is standard SAYC - majors take priority over minor raises
-        if opening_suit in ['♣', '♦']:  # Partner opened a minor
+        # PRIORITY: Show 4+ card suits at 1-level BEFORE raising partner's minor with only 3-card support
+        # This is standard SAYC - bid up the line at the 1-level
+        if opening_suit == '♣':  # Partner opened 1♣
+            # Check for 4+ card diamond to show at 1-level (before raising clubs with 3)
+            if hand.suit_lengths.get('♦', 0) >= 4:
+                return ("1♦", f"Showing a 4+ card diamond suit (priority over raising {opening_suit}).")
+            # Check for 4+ card major to show at 1-level
+            if hand.suit_lengths.get('♥', 0) >= 4:
+                return ("1♥", f"Showing a 4+ card heart suit (priority over raising {opening_suit}).")
+            if hand.suit_lengths.get('♠', 0) >= 4:
+                return ("1♠", f"Showing a 4+ card spade suit (priority over raising {opening_suit}).")
+
+        if opening_suit == '♦':  # Partner opened 1♦
             # Check for 4+ card major to show at 1-level
             if hand.suit_lengths.get('♥', 0) >= 4:
                 return ("1♥", f"Showing a 4+ card heart suit (priority over raising {opening_suit}).")
@@ -407,7 +548,9 @@ class ResponseModule(ConventionModule):
                     explanation.set_forcing_status("Invitational")
                     explanation.add_alternative(f"2{opening_suit}", f"Too strong (have {support_points} support points, need 10+)")
                     explanation.add_alternative(f"4{opening_suit}", f"Not quite enough (have {support_points} support points, need 13+)")
-                    return (f"3{opening_suit}", explanation)
+                    # Bypass HCP check - limit raises use support points, not raw HCP
+                    metadata = {'bypass_hcp': True}
+                    return (f"3{opening_suit}", explanation, metadata)
 
             if 6 <= support_points <= 9:
                 explanation = BidExplanation(f"2{opening_suit}")
@@ -495,16 +638,21 @@ class ResponseModule(ConventionModule):
                     if hand.suit_lengths.get('♣', 0) >= 5:
                         return ("2♣", "New suit at 2-level showing 10+ HCP and 5+ clubs.")
 
-                # After 1♥ or 1♠ opening, can bid a lower-ranking suit at 2-level
+                # After 1♥ opening, can bid 2♠ with 5+ spades and 10+ HCP (higher ranking)
+                if opening_bid == '1♥' and hand.suit_lengths.get('♠', 0) >= 5:
+                    return ("2♠", "New suit showing 10+ HCP and 5+ spades (forcing).")
+
+                # After 1♠ opening, can bid 2♥ with 5+ hearts and 10+ HCP (lower ranking)
+                # PRIORITY: Show 5-card heart suit before minors
+                if opening_bid == '1♠' and hand.suit_lengths.get('♥', 0) >= 5:
+                    return ("2♥", "New suit showing 10+ HCP and 5+ hearts (forcing).")
+
+                # After 1♥ or 1♠ opening, can bid a minor at 2-level
                 if opening_bid in ['1♥', '1♠']:
-                    # Bid longest unbid suit (5+ cards) at 2-level
+                    # Bid longest unbid minor suit (5+ cards) at 2-level
                     for suit in ['♦', '♣']:  # Check minors
                         if hand.suit_lengths.get(suit, 0) >= 5:
                             return (f"2{suit}", f"New suit at 2-level showing 10+ HCP and 5+ {suit}.")
-
-                # After 1♥ opening, can bid 2♠ with 5+ spades and 10+ HCP
-                if opening_bid == '1♥' and hand.suit_lengths.get('♠', 0) >= 5:
-                    return ("2♠", "New suit showing 10+ HCP and 5+ spades (forcing).")
 
             # 3NT direct response (13-16 HCP, balanced, no fit)
             # This ensures game is reached when responder has game values

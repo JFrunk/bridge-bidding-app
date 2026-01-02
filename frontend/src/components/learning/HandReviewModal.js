@@ -178,7 +178,7 @@ const ReplayHandDisplay = ({ cards, position, trumpStrain, isVertical = false })
     );
   }
 
-  // Horizontal layout for N/S - use compact mode so rank+suit are side by side
+  // Horizontal layout for N/S - show suit below rank (same as center trick display)
   return (
     <div className={`replay-hand replay-hand-${position.toLowerCase()} horizontal`}>
       <div className="replay-hand-label">{positionLabels[position]}</div>
@@ -193,7 +193,7 @@ const ReplayHandDisplay = ({ cards, position, trumpStrain, isVertical = false })
                   key={`${card.rank}-${card.suit}`}
                   card={card}
                   disabled
-                  compact
+                  // No compact prop - show suit below rank for readability
                 />
               ))}
             </div>
@@ -538,6 +538,86 @@ const DDTableDisplay = ({ ddAnalysis, contractStrain, contractDeclarer }) => {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+};
+
+// Strategy Summary display - shows high-level strategic guidance for the hand
+const StrategySummaryDisplay = ({ strategy }) => {
+  if (!strategy || strategy.error) {
+    return null;
+  }
+
+  const suitColors = { '♠': '#000', '♥': '#dc2626', '♦': '#dc2626', '♣': '#000' };
+
+  return (
+    <div className="strategy-summary-display">
+      <h4>Hand Strategy</h4>
+      <p className="strategy-main-summary">{strategy.summary}</p>
+
+      {/* NT-specific details */}
+      {strategy.is_nt && (
+        <div className="strategy-details">
+          <div className="strategy-stat">
+            <span className="stat-label">Sure Tricks:</span>
+            <span className="stat-value">{strategy.sure_tricks}</span>
+          </div>
+          <div className="strategy-stat">
+            <span className="stat-label">Tricks Needed:</span>
+            <span className="stat-value">{strategy.tricks_needed}</span>
+          </div>
+          {strategy.tricks_to_develop > 0 && (
+            <div className="strategy-stat">
+              <span className="stat-label">To Develop:</span>
+              <span className="stat-value highlight">{strategy.tricks_to_develop}</span>
+            </div>
+          )}
+          {strategy.establishment_candidates?.length > 0 && (
+            <div className="establishment-candidates">
+              <span className="candidates-label">Best suits to develop:</span>
+              <div className="candidates-list">
+                {strategy.establishment_candidates.map((c, idx) => (
+                  <span key={idx} className="candidate-suit" style={{ color: suitColors[c.suit] }}>
+                    {c.suit} ({c.length} cards)
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Suit contract details */}
+      {!strategy.is_nt && (
+        <div className="strategy-details">
+          <div className="strategy-stat">
+            <span className="stat-label">Losers:</span>
+            <span className="stat-value">{strategy.total_losers}</span>
+          </div>
+          <div className="strategy-stat">
+            <span className="stat-label">Can Afford:</span>
+            <span className="stat-value">{strategy.losers_allowed}</span>
+          </div>
+          {strategy.losers_to_eliminate > 0 && (
+            <div className="strategy-stat">
+              <span className="stat-label">Must Eliminate:</span>
+              <span className="stat-value highlight">{strategy.losers_to_eliminate}</span>
+            </div>
+          )}
+          {strategy.ruffing_opportunities?.length > 0 && (
+            <div className="ruffing-opportunities">
+              <span className="ruff-label">Ruffing opportunities:</span>
+              <div className="ruff-list">
+                {strategy.ruffing_opportunities.map((r, idx) => (
+                  <span key={idx} className="ruff-suit" style={{ color: suitColors[r.suit] }}>
+                    {r.suit} ({r.ruffs_possible} ruff{r.ruffs_possible !== 1 ? 's' : ''})
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -1059,6 +1139,11 @@ const HandReviewModal = ({ handId, onClose }) => {
                     />
                   </div>
                 </div>
+              )}
+
+              {/* Strategy Summary - high-level guidance for how to play the hand */}
+              {handData?.strategy_summary && (
+                <StrategySummaryDisplay strategy={handData.strategy_summary} />
               )}
 
               {/* Play Quality Summary - shows overall performance for this hand */}

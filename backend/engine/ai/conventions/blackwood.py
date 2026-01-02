@@ -243,8 +243,9 @@ class BlackwoodConvention(ConventionModule):
     def _get_ace_answer_bid(self, hand: Hand) -> Tuple[str, str, dict]:
         """Counts aces and returns the correct conventional response."""
         num_aces = sum(1 for card in hand.cards if card.rank == 'A')
-        # Metadata to bypass suit length validation for artificial Blackwood responses
-        metadata = {'bypass_suit_length': True}
+        # Metadata to bypass HCP and suit length validation for artificial Blackwood responses
+        # Blackwood responses are FORCED - you must respond regardless of HCP
+        metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'blackwood_response'}
 
         if num_aces == 0 or num_aces == 4:
             return ("5♣", "Response to Blackwood: 0 or 4 aces.", metadata)
@@ -377,8 +378,9 @@ class BlackwoodConvention(ConventionModule):
     def _get_king_answer_bid(self, hand: Hand) -> Tuple[str, str, dict]:
         """Counts kings and returns the correct conventional response (same as aces)."""
         num_kings = sum(1 for card in hand.cards if card.rank == 'K')
-        # Metadata to bypass suit length validation for artificial Blackwood responses
-        metadata = {'bypass_suit_length': True}
+        # Metadata to bypass HCP and suit length validation for artificial 5NT king responses
+        # King responses are FORCED - you must respond regardless of HCP
+        metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'blackwood_king_response'}
 
         if num_kings == 0 or num_kings == 4:
             return ("6♣", "Response to 5NT: 0 or 4 kings.", metadata)

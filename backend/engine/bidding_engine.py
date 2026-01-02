@@ -5,6 +5,7 @@ from engine.ai.bid_explanation import BidExplanation, ExplanationLevel
 from engine.ai.module_registry import ModuleRegistry
 from engine.ai.validation_pipeline import ValidationPipeline
 from engine.ai.sanity_checker import SanityChecker
+from engine.ai.auction_context import analyze_auction_context
 
 # Import all specialist modules (triggers auto-registration)
 # ADR-0002 Phase 1: Modules now register themselves on import
@@ -99,6 +100,10 @@ class BiddingEngine:
         print(f"  ├─ Module selection: {module_selection_time:.1f}ms → {module_name}")
 
         if module_name == 'pass_by_default':
+            # SAFETY NET: Check if we should override Pass due to game-forcing values
+            should_override, game_bid, explanation = self._game_forcing_safety_net(hand, features, auction_history)
+            if should_override:
+                return (game_bid, explanation)
             return ("Pass", "No bid found by any module.")
 
         # ADR-0002 Phase 1: Use ModuleRegistry for safe module lookup
@@ -111,6 +116,10 @@ class BiddingEngine:
                 f"Module '{module_name}' not found in registry. "
                 f"Available: {ModuleRegistry.list_modules()}"
             )
+            # SAFETY NET: Check if we should override Pass due to game-forcing values
+            should_override, game_bid, explanation = self._game_forcing_safety_net(hand, features, auction_history)
+            if should_override:
+                return (game_bid, explanation)
             return ("Pass", "No appropriate bid found.")
 
         # Time module evaluation
@@ -144,6 +153,10 @@ class BiddingEngine:
                 logger.warning(
                     f"Validation failed for {module_name} bid '{bid_to_check}': {validation_error}"
                 )
+                # SAFETY NET: Check if we should override Pass due to game-forcing values
+                should_override, game_bid, explanation = self._game_forcing_safety_net(hand, features, auction_history)
+                if should_override:
+                    return (game_bid, explanation)
                 return ("Pass", "No appropriate bid found.")
 
             # ADR-0002 Phase 3: Sanity check layer
@@ -167,6 +180,13 @@ class BiddingEngine:
 
             # Legacy legality check (kept for backward compatibility)
             if self._is_bid_legal(bid_to_check, auction_history):
+                # CRITICAL: If module returned Pass, check game-forcing safety net FIRST!
+                # This catches cases where modules pass when they shouldn't (game forcing situations)
+                if bid_to_check == 'Pass':
+                    should_override, game_bid, override_explanation = self._game_forcing_safety_net(hand, features, auction_history)
+                    if should_override:
+                        return (game_bid, override_explanation)
+
                 # Convert BidExplanation to string if needed
                 if isinstance(explanation, BidExplanation):
                     # Format at requested level
@@ -180,8 +200,16 @@ class BiddingEngine:
                     return (bid_to_check, explanation)
             else:
                 print(f"WARNING: AI module '{module_name}' suggested illegal bid '{bid_to_check}'. Overriding to Pass.")
+                # SAFETY NET: Check if we should override Pass due to game-forcing values
+                should_override, game_bid, explanation = self._game_forcing_safety_net(hand, features, auction_history)
+                if should_override:
+                    return (game_bid, explanation)
                 return ("Pass", "AI bid overridden due to illegality.")
 
+        # Module returned None - SAFETY NET check
+        should_override, game_bid, explanation = self._game_forcing_safety_net(hand, features, auction_history)
+        if should_override:
+            return (game_bid, explanation)
         return ("Pass", "No appropriate bid found.")
 
     def get_next_bid_structured(self, hand: Hand, auction_history: list, my_position: str, vulnerability: str,
@@ -241,6 +269,166 @@ class BiddingEngine:
             last_level, last_suit = int(last_real_bid[0]), last_real_bid[1:]
             if my_level > last_level: return True
             if my_level == last_level and suit_rank.get(my_suit, 0) > suit_rank.get(last_suit, 0): return True
+        except (ValueError, IndexError):
+            return False
+        return False
+
+    def _game_forcing_safety_net(self, hand: Hand, features: dict, auction_history: list) -> tuple:
+        """
+        SAFETY NET: Prevent Pass when game-forcing values are established.
+
+        This is the LAST RESORT when all modules return None or Pass.
+        If the partnership has established game values (25+ combined HCP or
+        game_forcing flag is set), we MUST bid something toward game.
+
+        Works for BOTH responder AND opener:
+        - If I'm responder: Check if we have 25+ combined or game_forcing
+        - If I'm opener: Check if partner's response shows enough for game, or if 2♣ opening
+
+        Returns:
+            (should_override, bid, explanation) - bid to make instead of Pass
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        auction = features.get('auction_features', {})
+        opener_rel = auction.get('opener_relationship')
+
+        # Only applies to partnership auctions (I opened or partner opened)
+        if opener_rel not in ['Partner', 'Me']:
+            return (False, None, None)
+
+        # Check if game is already reached
+        for bid in auction_history:
+            if self._is_game_bid(bid):
+                return (False, None, None)  # Game already reached
+
+        # Analyze auction context for game-forcing status
+        try:
+            positions = features.get('positions', ['North', 'East', 'South', 'West'])
+            my_index = features.get('my_index', 0)
+            context = analyze_auction_context(auction_history, positions, my_index)
+
+            combined_pts = context.ranges.combined_midpoint
+            game_forcing = context.ranges.game_forcing
+            opening_bid = auction.get('opening_bid', '')
+
+            # SPECIAL CASE: 2♣ opening is ALWAYS game-forcing
+            # If I opened 2♣ and partner responded, I MUST continue to game
+            if opener_rel == 'Me' and opening_bid == '2♣':
+                partner_responded = any(bid != 'Pass' for i, bid in enumerate(auction_history)
+                                       if i % 2 == 1)  # Partner's bids are at odd indices
+                if partner_responded:
+                    game_forcing = True
+                    logger.info("GAME SAFETY NET: 2♣ opener must continue to game")
+
+            # SPECIAL CASE: Partner's 2NT response shows 11-12 HCP
+            # With my opening (13-21), combined is 24-33, usually game
+            if opener_rel == 'Me':
+                partner_last = auction.get('partner_last_bid', '')
+                if partner_last == '2NT':
+                    # Partner showed 11-12 HCP, I have 13+ (opened)
+                    # Combined is 24+, probably game
+                    if hand.hcp >= 14:  # With 14+, combined is 25+
+                        combined_pts = max(combined_pts, 25)
+                        logger.info(f"GAME SAFETY NET: Partner's 2NT + my {hand.hcp} HCP = game")
+
+            # Only intervene if game values are present
+            if not game_forcing and combined_pts < 25:
+                return (False, None, None)
+
+            logger.info(f"GAME SAFETY NET: combined={combined_pts}, game_forcing={game_forcing}, opener_rel={opener_rel}")
+
+            # Find the best game bid to make
+            game_bid = self._find_best_game_bid(hand, features, auction_history, context)
+
+            if game_bid and self._is_bid_legal(game_bid, auction_history):
+                explanation = f"Game safety net: Partnership has {combined_pts} combined points, must reach game."
+                logger.info(f"GAME SAFETY NET: Overriding Pass with {game_bid}")
+                return (True, game_bid, explanation)
+
+        except Exception as e:
+            logger.debug(f"Error in game safety net: {e}")
+
+        return (False, None, None)
+
+    def _find_best_game_bid(self, hand: Hand, features: dict, auction_history: list, context) -> str:
+        """Find the best game contract to bid."""
+        auction = features.get('auction_features', {})
+        opener_rel = auction.get('opener_relationship')
+        partner_suit = None
+        my_suit = None
+
+        # Check if partner showed a suit
+        partner_last = auction.get('partner_last_bid', '')
+        if partner_last and len(partner_last) >= 2 and partner_last[1] in '♠♥♦♣':
+            partner_suit = partner_last[1]
+
+        # Check my opening suit (if I'm opener)
+        opening_bid = auction.get('opening_bid', '')
+        if opener_rel == 'Me' and opening_bid and len(opening_bid) >= 2 and opening_bid[1] in '♠♥♦♣':
+            my_suit = opening_bid[1]
+
+        # If I opened a major and partner supported it
+        if my_suit in ['♥', '♠']:
+            # Check if partner raised
+            if partner_last and len(partner_last) >= 2 and partner_last[1] == my_suit:
+                game_bid = f"4{my_suit}"
+                if self._is_bid_legal(game_bid, auction_history):
+                    return game_bid
+            # Even without explicit raise, bid my major if long enough
+            if hand.suit_lengths.get(my_suit, 0) >= 6:
+                game_bid = f"4{my_suit}"
+                if self._is_bid_legal(game_bid, auction_history):
+                    return game_bid
+
+        # If partner showed a major and we have support, bid game in that major
+        if partner_suit in ['♥', '♠']:
+            support = hand.suit_lengths.get(partner_suit, 0)
+            if support >= 2:
+                game_bid = f"4{partner_suit}"
+                if self._is_bid_legal(game_bid, auction_history):
+                    return game_bid
+
+        # Check our own longest major (5+ cards)
+        if hand.suit_lengths.get('♠', 0) >= 5:
+            if self._is_bid_legal('4♠', auction_history):
+                return '4♠'
+        if hand.suit_lengths.get('♥', 0) >= 5:
+            if self._is_bid_legal('4♥', auction_history):
+                return '4♥'
+
+        # Default to 3NT for game
+        if self._is_bid_legal('3NT', auction_history):
+            return '3NT'
+
+        # If 3NT isn't legal (auction is higher), try 4NT or 5-minor
+        if self._is_bid_legal('4NT', auction_history):
+            return '4NT'
+
+        # Last resort: 5 of a minor
+        if hand.suit_lengths.get('♦', 0) >= 5:
+            if self._is_bid_legal('5♦', auction_history):
+                return '5♦'
+        if hand.suit_lengths.get('♣', 0) >= 5:
+            if self._is_bid_legal('5♣', auction_history):
+                return '5♣'
+
+        return None
+
+    def _is_game_bid(self, bid: str) -> bool:
+        """Check if a bid is at game level or higher."""
+        if not bid or bid in ['Pass', 'X', 'XX']:
+            return False
+        try:
+            level = int(bid[0])
+            strain = bid[1:] if len(bid) > 1 else ''
+            if level >= 5:
+                return True
+            if level == 4 and strain in ['♥', '♠', 'NT']:
+                return True
+            if level >= 3 and strain == 'NT':
+                return True
         except (ValueError, IndexError):
             return False
         return False

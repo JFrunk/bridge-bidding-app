@@ -202,15 +202,21 @@ class TestJacobyTransfers:
         assert bid in ["2♥", "3♥"], f"Should accept transfer, got {bid}"
 
     def test_transfer_then_bid_game(self):
-        """SAYC: After transfer completes, bid 4♥ with game values."""
+        """SAYC: After transfer completes, bid game with 10+ HCP.
+        Valid options with 5-card major and game values:
+        - 3♥: Invitational (some partnerships play as game try)
+        - 4♥: Commits to major game (correct with 6+ hearts or unbalanced)
+        - 3NT: Game bid, offers partner choice (correct with 5 hearts and balanced)
+        """
         # Partner opened 1NT, we transferred, partner completed
         # ♠ 32 ♥ AJ432 ♦ KQ2 ♣ 432
-        # HCP: A(4)+J(1)+K(3)+Q(2) = 10
+        # HCP: A(4)+J(1)+K(3)+Q(2) = 10, shape 2-5-3-3 (balanced)
         hand = make_hand("32", "AJ432", "KQ2", "432")
         assert hand.hcp >= 10
         assert hand.suit_lengths['♥'] >= 5
         bid, _ = get_bid(hand, ["1NT", "Pass", "2♦", "Pass", "2♥", "Pass"])
-        assert bid in ["3♥", "4♥"], f"With game values should bid game or invite, got {bid}"
+        # With balanced 10 HCP and 5 hearts, 3NT is also correct (offers partner choice)
+        assert bid in ["3♥", "4♥", "3NT"], f"With game values should bid game, got {bid}"
 
     def test_transfer_then_pass_weak(self):
         """SAYC: After transfer completes, pass with weak hand."""
