@@ -1,13 +1,18 @@
 /**
- * HandReviewModal Component - Full hand replay with DDS analysis
+ * HandReviewModal Component - Unified hand analysis with accordion layout
  *
  * Features:
- * - Shows all 4 hands using game-consistent card display
- * - Displays auction and contract
- * - REPLAY MODE: Step through hand card-by-card seeing remaining cards
- * - ANALYSIS MODE: Step through play trick by trick with visual cards
- * - DDS feedback on each user play (optimal/good/suboptimal/blunder)
- * - Shows optimal alternative when play was suboptimal
+ * - Single scrollable view with expandable sections (accordion)
+ * - STRATEGY: Overview of the deal with hand display
+ * - YOUR PLAY: Performance summary with accuracy stats
+ * - PERFECT PLAY: What optimal play would achieve (replaces "Double Dummy")
+ * - PLAY-BY-PLAY: Interactive card-by-card replay with feedback
+ *
+ * Design Philosophy:
+ * - Unified accordion UI eliminates confusing mode toggles
+ * - Collapsed sections show summary previews
+ * - Mobile: one section at a time; Desktop: allow multiple
+ * - "Perfect Play" terminology replaces jargon like "Double Dummy"
  *
  * Requires hand_id to be passed as prop.
  */
@@ -15,6 +20,51 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlayableCard } from '../play/PlayableCard';
 import './HandReviewModal.css';
+
+// ===== ACCORDION SECTION COMPONENT =====
+// Reusable accordion section following existing design patterns from LearningDashboard
+const AccordionSection = ({
+  id,
+  title,
+  subtitle,
+  icon,
+  isOpen,
+  onToggle,
+  summary,
+  children
+}) => {
+  return (
+    <div className={`accordion-section ${isOpen ? 'open' : ''}`}>
+      <button
+        className="accordion-header"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-controls={`accordion-content-${id}`}
+      >
+        <div className="accordion-title-group">
+          {icon && <span className="accordion-icon">{icon}</span>}
+          <div className="accordion-titles">
+            <span className="accordion-title">{title}</span>
+            {subtitle && <span className="accordion-subtitle">{subtitle}</span>}
+          </div>
+        </div>
+        <div className="accordion-right">
+          {!isOpen && summary && (
+            <span className="accordion-summary">{summary}</span>
+          )}
+          <span className={`accordion-toggle-icon ${isOpen ? 'open' : ''}`}>▼</span>
+        </div>
+      </button>
+      <div
+        id={`accordion-content-${id}`}
+        className={`accordion-content ${isOpen ? 'open' : ''}`}
+        aria-hidden={!isOpen}
+      >
+        {isOpen && children}
+      </div>
+    </div>
+  );
+};
 
 const API_BASE = process.env.REACT_APP_API_BASE || '';
 
@@ -250,131 +300,12 @@ const ReplayTrickDisplay = ({ trick, leader }) => {
   );
 };
 
-// Visual card display with rating indicator
-const AnalyzedCard = ({ card, decision, position, isUserPosition }) => {
-  if (!card) {
-    // Show empty placeholder when no card played at this position yet
-    return (
-      <div className="analyzed-card-wrapper empty-card">
-        <div className="position-label">{position}</div>
-        <div className="card-placeholder">-</div>
-      </div>
-    );
-  }
-
-  const normalizedCard = {
-    rank: card.rank || card.r,
-    suit: normalizeSuit(card.suit || card.s)
-  };
-
-  const rating = decision?.rating;
-  const config = rating ? RATING_CONFIG[rating] : null;
-
-  return (
-    <div className={`analyzed-card-wrapper ${isUserPosition ? 'user-play' : ''}`}>
-      <div className="position-label">{position}</div>
-      <div className="card-with-rating">
-        <PlayableCard card={normalizedCard} />
-        {config && isUserPosition && (
-          <div
-            className={`rating-indicator rating-${rating}`}
-            style={{ backgroundColor: config.color }}
-            title={config.label}
-          >
-            {config.icon}
-          </div>
-        )}
-      </div>
-      {decision?.tricks_cost > 0 && isUserPosition && (
-        <div className="tricks-lost-badge">
-          -{decision.tricks_cost} trick{decision.tricks_cost !== 1 ? 's' : ''}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Compass-style trick display using visual cards
-// userControlledPositions: array of positions the user played (e.g., ['S'] or ['S', 'N'])
-// decisionsByPosition: map of position -> decision for this trick
-const TrickDisplayVisual = ({ trick, trickNumber, decisionsByPosition, userControlledPositions }) => {
-  // Create position -> play mapping
-  const playsByPosition = useMemo(() => {
-    const map = {};
-    trick.forEach((play) => {
-      const pos = play.player || play.position;
-      if (pos) {
-        map[pos] = play;
-      }
-    });
-    return map;
-  }, [trick]);
-
-  // Determine trick winner (simplified - just highlight if data available)
-  const leader = trick[0]?.player || trick[0]?.position;
-
-  // Helper to check if user controlled this position
-  const isUserControlled = (pos) => userControlledPositions?.includes(pos) || false;
-
-  return (
-    <div className="trick-visual-display">
-      <div className="trick-header">
-        <span className="trick-label">Trick {trickNumber}</span>
-        {leader && <span className="lead-indicator">Lead: {leader}</span>}
-      </div>
-
-      <div className="compass-layout">
-        {/* North */}
-        <div className="compass-north">
-          <AnalyzedCard
-            card={playsByPosition.N}
-            position="N"
-            decision={isUserControlled('N') ? decisionsByPosition?.N : null}
-            isUserPosition={isUserControlled('N')}
-          />
-        </div>
-
-        {/* West and East row */}
-        <div className="compass-middle">
-          <div className="compass-west">
-            <AnalyzedCard
-              card={playsByPosition.W}
-              position="W"
-              decision={isUserControlled('W') ? decisionsByPosition?.W : null}
-              isUserPosition={isUserControlled('W')}
-            />
-          </div>
-          <div className="compass-center" />
-          <div className="compass-east">
-            <AnalyzedCard
-              card={playsByPosition.E}
-              position="E"
-              decision={isUserControlled('E') ? decisionsByPosition?.E : null}
-              isUserPosition={isUserControlled('E')}
-            />
-          </div>
-        </div>
-
-        {/* South */}
-        <div className="compass-south">
-          <AnalyzedCard
-            card={playsByPosition.S}
-            position="S"
-            decision={isUserControlled('S') ? decisionsByPosition?.S : null}
-            isUserPosition={isUserControlled('S')}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // Feedback panel for the current trick
 const TrickFeedbackPanel = ({ decision }) => {
   if (!decision) {
     return (
       <div className="trick-feedback-panel no-data">
-        <p>No DDS analysis available for this trick</p>
+        <p>No analysis available for this play</p>
       </div>
     );
   }
@@ -482,6 +413,7 @@ const PlayQualitySummary = ({ summary }) => {
 };
 
 // DD Table display - shows tricks makeable by each player in each strain
+// Note: "Perfect Play" terminology replaces "Double Dummy" for user clarity
 const DDTableDisplay = ({ ddAnalysis, contractStrain, contractDeclarer }) => {
   if (!ddAnalysis?.dd_table) {
     return null;
@@ -501,8 +433,8 @@ const DDTableDisplay = ({ ddAnalysis, contractStrain, contractDeclarer }) => {
 
   return (
     <div className="dd-table-display">
-      <h4>Double Dummy Analysis</h4>
-      <p className="dd-table-subtitle">Tricks makeable with perfect play</p>
+      <h4>Perfect Play Analysis</h4>
+      <p className="dd-table-subtitle">Tricks achievable with optimal play by all</p>
       <table className="dd-table">
         <thead>
           <tr>
@@ -623,6 +555,7 @@ const StrategySummaryDisplay = ({ strategy }) => {
 };
 
 // Par comparison display - shows how result compares to optimal bidding
+// Uses "Perfect Play" terminology instead of "DD" or "Double Dummy"
 const ParComparisonDisplay = ({ ddAnalysis, parComparison, tricksNeeded, tricksTaken }) => {
   if (!ddAnalysis?.par || !parComparison?.available) {
     return null;
@@ -652,9 +585,9 @@ const ParComparisonDisplay = ({ ddAnalysis, parComparison, tricksNeeded, tricksT
       <h4>Contract Analysis</h4>
 
       <div className="par-stats">
-        {/* DD Expected */}
+        {/* Perfect Play Expected */}
         <div className="par-stat">
-          <span className="par-stat-label">DD Optimal</span>
+          <span className="par-stat-label">Perfect Play</span>
           <span className="par-stat-value">{dd_tricks} tricks</span>
         </div>
 
@@ -695,9 +628,40 @@ const HandReviewModal = ({ handId, onClose }) => {
   const [handData, setHandData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentTrick, setCurrentTrick] = useState(1);
-  const [viewMode, setViewMode] = useState('replay'); // 'replay' or 'analysis'
   const [replayPosition, setReplayPosition] = useState(0); // 0 to 52 (each card played)
+
+  // Accordion state - track which sections are open
+  // Default: Strategy section open on load
+  const [openSections, setOpenSections] = useState({
+    strategy: true,
+    yourPlay: false,
+    perfectPlay: false,
+    playByPlay: false
+  });
+
+  // Toggle accordion section - on mobile, close others when opening one
+  const toggleSection = useCallback((sectionId) => {
+    setOpenSections(prev => {
+      // Check if we're on mobile (< 768px)
+      const isMobile = window.innerWidth < 768;
+
+      if (isMobile) {
+        // Mobile: only one section open at a time
+        const newState = {
+          strategy: false,
+          yourPlay: false,
+          perfectPlay: false,
+          playByPlay: false
+        };
+        // Toggle the clicked section (if it was open, close it; otherwise open it)
+        newState[sectionId] = !prev[sectionId];
+        return newState;
+      } else {
+        // Desktop: allow multiple sections open
+        return { ...prev, [sectionId]: !prev[sectionId] };
+      }
+    });
+  }, []);
 
   // Fetch hand details
   useEffect(() => {
@@ -708,14 +672,6 @@ const HandReviewModal = ({ handId, onClose }) => {
         if (!response.ok) throw new Error('Failed to load hand');
         const data = await response.json();
         setHandData(data);
-
-        // Default to the first trick with analysis (usually trick 1 for opening lead)
-        if (data?.play_quality_summary?.all_decisions?.length > 0) {
-          const firstDecisionTrick = Math.min(
-            ...data.play_quality_summary.all_decisions.map(d => d.trick_number)
-          );
-          setCurrentTrick(firstDecisionTrick);
-        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -759,22 +715,6 @@ const HandReviewModal = ({ handId, onClose }) => {
     return map;
   }, [handData?.play_quality_summary?.all_decisions, userControlledPositions]);
 
-  // Legacy: Map decisions by trick number (first user decision in that trick)
-  const decisionsByTrick = useMemo(() => {
-    const map = {};
-    if (handData?.play_quality_summary?.all_decisions) {
-      handData.play_quality_summary.all_decisions.forEach(d => {
-        // Only include decisions for positions the user controlled
-        if (d.position && userControlledPositions.includes(d.position)) {
-          // Keep first decision per trick (for backwards compatibility)
-          if (!map[d.trick_number]) {
-            map[d.trick_number] = d;
-          }
-        }
-      });
-    }
-    return map;
-  }, [handData?.play_quality_summary?.all_decisions, userControlledPositions]);
 
   // Get user position
   const userPosition = handData?.user_position || 'S';
@@ -877,15 +817,15 @@ const HandReviewModal = ({ handId, onClose }) => {
   // Total plays for navigation
   const totalPlays = handData?.play_history?.length || 0;
 
-  // Navigate with keyboard - different behavior per mode
+  // Navigate with keyboard - works when Play-by-Play section is open
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
       onClose();
       return;
     }
 
-    if (viewMode === 'replay') {
-      // Replay mode: step through individual cards
+    // When Play-by-Play section is open, arrow keys navigate the replay
+    if (openSections.playByPlay) {
       if (e.key === 'ArrowLeft' && replayPosition > 0) {
         setReplayPosition(p => p - 1);
       } else if (e.key === 'ArrowRight' && replayPosition < totalPlays) {
@@ -895,35 +835,13 @@ const HandReviewModal = ({ handId, onClose }) => {
       } else if (e.key === 'End') {
         setReplayPosition(totalPlays);
       }
-    } else {
-      // Analysis mode: step through tricks
-      if (e.key === 'ArrowLeft' && currentTrick > 1) {
-        setCurrentTrick(t => t - 1);
-      } else if (e.key === 'ArrowRight' && currentTrick < tricks.length) {
-        setCurrentTrick(t => t + 1);
-      }
     }
-  }, [viewMode, replayPosition, totalPlays, currentTrick, tricks.length, onClose]);
+  }, [openSections.playByPlay, replayPosition, totalPlays, onClose]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
-
-  // Get decisions for the current trick, organized by position
-  // This allows showing feedback for multiple user-controlled positions in the same trick
-  // Must be defined before early returns to satisfy React hooks rules
-  const currentTrickDecisionsByPosition = useMemo(() => {
-    const map = {};
-    if (handData?.play_quality_summary?.all_decisions) {
-      handData.play_quality_summary.all_decisions.forEach(d => {
-        if (d.trick_number === currentTrick && d.position && userControlledPositions.includes(d.position)) {
-          map[d.position] = d;
-        }
-      });
-    }
-    return map;
-  }, [handData?.play_quality_summary?.all_decisions, currentTrick, userControlledPositions]);
 
   if (loading) {
     return (
@@ -950,22 +868,52 @@ const HandReviewModal = ({ handId, onClose }) => {
 
   const totalTricks = tricks.length;
 
-  // For the feedback panel, get the first user decision in this trick
-  const currentDecision = decisionsByTrick[currentTrick];
+  // Generate summary text for collapsed accordion sections
+  const getStrategySummary = () => {
+    if (handData?.strategy_summary?.summary) {
+      // Truncate to ~50 chars for preview
+      const full = handData.strategy_summary.summary;
+      return full.length > 50 ? full.substring(0, 47) + '...' : full;
+    }
+    return 'View deal and strategy';
+  };
+
+  const getYourPlaySummary = () => {
+    const summary = handData?.play_quality_summary;
+    if (summary?.has_data) {
+      return `${summary.accuracy_rate}% accuracy`;
+    }
+    return 'View your performance';
+  };
+
+  const getPerfectPlaySummary = () => {
+    if (handData?.dd_analysis?.dd_table) {
+      const ddTricks = handData?.par_comparison?.dd_tricks;
+      return ddTricks ? `${ddTricks} tricks achievable` : 'View optimal analysis';
+    }
+    return 'View optimal analysis';
+  };
+
+  const getPlayByPlaySummary = () => {
+    if (totalPlays > 0) {
+      return `${totalTricks} tricks to review`;
+    }
+    return 'Step through each play';
+  };
 
   return (
     <div className="hand-review-modal-overlay" onClick={onClose}>
-      <div className="hand-review-modal" onClick={e => e.stopPropagation()}>
+      <div className="hand-review-modal accordion-layout" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="modal-header">
           <div className="modal-title">
-            <h2>Hand Review</h2>
+            <h2>Hand Analysis</h2>
             <div className="contract-info">
               <span className="contract">{handData?.contract || 'Unknown'}</span>
               <span className={`result ${handData?.made ? 'made' : 'down'}`}>
                 {handData?.made ? 'Made' : 'Down'}
                 {handData?.tricks_taken !== undefined && handData?.tricks_needed !== undefined && (
-                  <> ({handData.tricks_taken} / {handData.tricks_needed})</>
+                  <> ({handData.tricks_taken}/{handData.tricks_needed})</>
                 )}
               </span>
             </div>
@@ -973,238 +921,222 @@ const HandReviewModal = ({ handId, onClose }) => {
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
-        {/* View Mode Toggle */}
-        <div className="view-mode-toggle">
-          <button
-            className={`mode-btn ${viewMode === 'replay' ? 'active' : ''}`}
-            onClick={() => setViewMode('replay')}
-          >
-            Replay Hand
-          </button>
-          <button
-            className={`mode-btn ${viewMode === 'analysis' ? 'active' : ''}`}
-            onClick={() => setViewMode('analysis')}
-          >
-            Trick Analysis
-          </button>
-        </div>
+        {/* Accordion Content */}
+        <div className="modal-content accordion-container">
 
-        {/* Main content */}
-        <div className="modal-content">
-          {viewMode === 'replay' ? (
-            /* REPLAY MODE - Step through card by card with remaining hands */
-            <div className="replay-mode">
-              {/* Replay navigation */}
-              <div className="replay-navigation">
-                <button
-                  disabled={replayPosition <= 0}
-                  onClick={() => setReplayPosition(0)}
-                  aria-label="Go to start"
-                  title="Go to start (Home)"
-                >
-                  ⏮
-                </button>
-                <button
-                  disabled={replayPosition <= 0}
-                  onClick={() => setReplayPosition(p => p - 1)}
-                  aria-label="Previous card"
-                >
-                  ← Prev
-                </button>
-                <span className="replay-counter">
-                  Play {replayPosition} of {totalPlays}
-                  {replayPosition > 0 && (
-                    <span className="trick-indicator"> (Trick {currentReplayTrickNumber})</span>
-                  )}
-                </span>
-                <button
-                  disabled={replayPosition >= totalPlays}
-                  onClick={() => setReplayPosition(p => p + 1)}
-                  aria-label="Next card"
-                >
-                  Next →
-                </button>
-                <button
-                  disabled={replayPosition >= totalPlays}
-                  onClick={() => setReplayPosition(totalPlays)}
-                  aria-label="Go to end"
-                  title="Go to end (End)"
-                >
-                  ⏭
-                </button>
+          {/* SECTION 1: STRATEGY - Deal overview and strategic guidance */}
+          <AccordionSection
+            id="strategy"
+            title="Strategy"
+            subtitle="Deal overview and plan"
+            icon="🎯"
+            isOpen={openSections.strategy}
+            onToggle={() => toggleSection('strategy')}
+            summary={getStrategySummary()}
+          >
+            {/* Deal display - 4 hands in text format */}
+            {handData?.deal && (
+              <div className="deal-display">
+                <div className="north-position">
+                  <HandDisplay
+                    cards={handData.deal.N?.hand || []}
+                    position="North"
+                    isUser={userPosition === 'N'}
+                  />
+                </div>
+                <div className="ew-row">
+                  <HandDisplay
+                    cards={handData.deal.W?.hand || []}
+                    position="West"
+                    isUser={userPosition === 'W'}
+                  />
+                  <div className="center-info">
+                    <div className="vulnerability">
+                      Vul: {handData.vulnerability || 'None'}
+                    </div>
+                    <div className="dealer">
+                      Dealer: {handData.dealer}
+                    </div>
+                  </div>
+                  <HandDisplay
+                    cards={handData.deal.E?.hand || []}
+                    position="East"
+                    isUser={userPosition === 'E'}
+                  />
+                </div>
+                <div className="south-position">
+                  <HandDisplay
+                    cards={handData.deal.S?.hand || []}
+                    position="South"
+                    isUser={userPosition === 'S'}
+                  />
+                </div>
               </div>
+            )}
 
-              {/* Replay table - traditional compass layout */}
-              {remainingHands && (
-                <div className="replay-table-compass">
-                  {/* North hand - top */}
-                  <div className="replay-row replay-row-north">
-                    <div className="replay-position">
-                      <ReplayHandDisplay
-                        cards={remainingHands.N}
-                        position="N"
-                        trumpStrain={trumpStrain}
-                        isVertical={false}
-                      />
-                    </div>
-                  </div>
+            {/* Strategy Summary - high-level guidance */}
+            {handData?.strategy_summary && (
+              <StrategySummaryDisplay strategy={handData.strategy_summary} />
+            )}
+          </AccordionSection>
 
-                  {/* Middle row: West - Trick - East */}
-                  <div className="replay-row replay-row-middle">
-                    <div className="replay-position replay-west">
-                      <ReplayHandDisplay
-                        cards={remainingHands.W}
-                        position="W"
-                        trumpStrain={trumpStrain}
-                        isVertical={true}
-                      />
-                    </div>
+          {/* SECTION 2: YOUR PLAY - Performance summary */}
+          <AccordionSection
+            id="yourPlay"
+            title="Your Play"
+            subtitle="Performance summary"
+            icon="📊"
+            isOpen={openSections.yourPlay}
+            onToggle={() => toggleSection('yourPlay')}
+            summary={getYourPlaySummary()}
+          >
+            <PlayQualitySummary summary={handData?.play_quality_summary} />
+          </AccordionSection>
 
-                    <div className="replay-center">
-                      <ReplayTrickDisplay
-                        trick={currentReplayTrick}
-                        leader={currentReplayLeader}
-                      />
-                    </div>
+          {/* SECTION 3: PERFECT PLAY - DD analysis */}
+          {handData?.dd_analysis && (
+            <AccordionSection
+              id="perfectPlay"
+              title="Perfect Play"
+              subtitle="Optimal analysis"
+              icon="✨"
+              isOpen={openSections.perfectPlay}
+              onToggle={() => toggleSection('perfectPlay')}
+              summary={getPerfectPlaySummary()}
+            >
+              <div className="dd-analysis-section">
+                <DDTableDisplay
+                  ddAnalysis={handData.dd_analysis}
+                  contractStrain={handData.contract_strain}
+                  contractDeclarer={handData.contract_declarer}
+                />
+                <ParComparisonDisplay
+                  ddAnalysis={handData.dd_analysis}
+                  parComparison={handData.par_comparison}
+                  tricksNeeded={handData.tricks_needed}
+                  tricksTaken={handData.tricks_taken}
+                />
+              </div>
+            </AccordionSection>
+          )}
 
-                    <div className="replay-position replay-east">
-                      <ReplayHandDisplay
-                        cards={remainingHands.E}
-                        position="E"
-                        trumpStrain={trumpStrain}
-                        isVertical={true}
-                      />
-                    </div>
-                  </div>
-
-                  {/* South hand - bottom */}
-                  <div className="replay-row replay-row-south">
-                    <div className="replay-position">
-                      <ReplayHandDisplay
-                        cards={remainingHands.S}
-                        position="S"
-                        trumpStrain={trumpStrain}
-                        isVertical={false}
-                      />
-                    </div>
-                  </div>
+          {/* SECTION 4: PLAY-BY-PLAY - Interactive replay */}
+          {tricks.length > 0 && (
+            <AccordionSection
+              id="playByPlay"
+              title="Play-by-Play"
+              subtitle="Card-by-card replay"
+              icon="🎬"
+              isOpen={openSections.playByPlay}
+              onToggle={() => toggleSection('playByPlay')}
+              summary={getPlayByPlaySummary()}
+            >
+              <div className="replay-mode">
+                {/* Replay navigation */}
+                <div className="replay-navigation">
+                  <button
+                    disabled={replayPosition <= 0}
+                    onClick={() => setReplayPosition(0)}
+                    aria-label="Go to start"
+                    title="Go to start (Home)"
+                  >
+                    ⏮
+                  </button>
+                  <button
+                    disabled={replayPosition <= 0}
+                    onClick={() => setReplayPosition(p => p - 1)}
+                    aria-label="Previous card"
+                  >
+                    ← Prev
+                  </button>
+                  <span className="replay-counter">
+                    Play {replayPosition} of {totalPlays}
+                    {replayPosition > 0 && (
+                      <span className="trick-indicator"> (Trick {currentReplayTrickNumber})</span>
+                    )}
+                  </span>
+                  <button
+                    disabled={replayPosition >= totalPlays}
+                    onClick={() => setReplayPosition(p => p + 1)}
+                    aria-label="Next card"
+                  >
+                    Next →
+                  </button>
+                  <button
+                    disabled={replayPosition >= totalPlays}
+                    onClick={() => setReplayPosition(totalPlays)}
+                    aria-label="Go to end"
+                    title="Go to end (End)"
+                  >
+                    ⏭
+                  </button>
                 </div>
-              )}
 
-              {/* Feedback for current play if available */}
-              {currentReplayDecision && replayPosition > 0 && (
-                <TrickFeedbackPanel decision={currentReplayDecision} />
-              )}
-
-              <p className="navigation-hint">Use arrow keys ← → to step through plays, Home/End to jump</p>
-            </div>
-          ) : (
-            /* ANALYSIS MODE - Trick by trick with detailed feedback */
-            <>
-              {/* Deal display - 4 hands in text format */}
-              {handData?.deal && (
-                <div className="deal-display">
-                  <div className="north-position">
-                    <HandDisplay
-                      cards={handData.deal.N?.hand || []}
-                      position="North"
-                      isUser={userPosition === 'N'}
-                    />
-                  </div>
-                  <div className="ew-row">
-                    <HandDisplay
-                      cards={handData.deal.W?.hand || []}
-                      position="West"
-                      isUser={userPosition === 'W'}
-                    />
-                    <div className="center-info">
-                      <div className="vulnerability">
-                        Vul: {handData.vulnerability || 'None'}
+                {/* Replay table - traditional compass layout */}
+                {remainingHands && (
+                  <div className="replay-table-compass">
+                    {/* North hand - top */}
+                    <div className="replay-row replay-row-north">
+                      <div className="replay-position">
+                        <ReplayHandDisplay
+                          cards={remainingHands.N}
+                          position="N"
+                          trumpStrain={trumpStrain}
+                          isVertical={false}
+                        />
                       </div>
-                      <div className="dealer">
-                        Dealer: {handData.dealer}
+                    </div>
+
+                    {/* Middle row: West - Trick - East */}
+                    <div className="replay-row replay-row-middle">
+                      <div className="replay-position replay-west">
+                        <ReplayHandDisplay
+                          cards={remainingHands.W}
+                          position="W"
+                          trumpStrain={trumpStrain}
+                          isVertical={true}
+                        />
+                      </div>
+
+                      <div className="replay-center">
+                        <ReplayTrickDisplay
+                          trick={currentReplayTrick}
+                          leader={currentReplayLeader}
+                        />
+                      </div>
+
+                      <div className="replay-position replay-east">
+                        <ReplayHandDisplay
+                          cards={remainingHands.E}
+                          position="E"
+                          trumpStrain={trumpStrain}
+                          isVertical={true}
+                        />
                       </div>
                     </div>
-                    <HandDisplay
-                      cards={handData.deal.E?.hand || []}
-                      position="East"
-                      isUser={userPosition === 'E'}
-                    />
+
+                    {/* South hand - bottom */}
+                    <div className="replay-row replay-row-south">
+                      <div className="replay-position">
+                        <ReplayHandDisplay
+                          cards={remainingHands.S}
+                          position="S"
+                          trumpStrain={trumpStrain}
+                          isVertical={false}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="south-position">
-                    <HandDisplay
-                      cards={handData.deal.S?.hand || []}
-                      position="South"
-                      isUser={userPosition === 'S'}
-                    />
-                  </div>
-                </div>
-              )}
+                )}
 
-              {/* Strategy Summary - high-level guidance for how to play the hand */}
-              {handData?.strategy_summary && (
-                <StrategySummaryDisplay strategy={handData.strategy_summary} />
-              )}
+                {/* Feedback for current play if available */}
+                {currentReplayDecision && replayPosition > 0 && (
+                  <TrickFeedbackPanel decision={currentReplayDecision} />
+                )}
 
-              {/* Play Quality Summary - shows overall performance for this hand */}
-              <PlayQualitySummary summary={handData?.play_quality_summary} />
-
-              {/* DD Analysis Section - Double Dummy grid and Par comparison */}
-              {handData?.dd_analysis && (
-                <div className="dd-analysis-section">
-                  <DDTableDisplay
-                    ddAnalysis={handData.dd_analysis}
-                    contractStrain={handData.contract_strain}
-                    contractDeclarer={handData.contract_declarer}
-                  />
-                  <ParComparisonDisplay
-                    ddAnalysis={handData.dd_analysis}
-                    parComparison={handData.par_comparison}
-                    tricksNeeded={handData.tricks_needed}
-                    tricksTaken={handData.tricks_taken}
-                  />
-                </div>
-              )}
-
-              {/* Play-by-play section */}
-              {tricks.length > 0 && (
-                <div className="play-history-section">
-                  <h3>Play-by-Play Analysis</h3>
-
-                  {/* Trick navigation */}
-                  <div className="trick-navigation">
-                    <button
-                      disabled={currentTrick <= 1}
-                      onClick={() => setCurrentTrick(t => t - 1)}
-                      aria-label="Previous trick"
-                    >
-                      ← Prev
-                    </button>
-                    <span className="trick-counter">Trick {currentTrick} of {totalTricks}</span>
-                    <button
-                      disabled={currentTrick >= totalTricks}
-                      onClick={() => setCurrentTrick(t => t + 1)}
-                      aria-label="Next trick"
-                    >
-                      Next →
-                    </button>
-                  </div>
-
-                  {/* Visual trick display */}
-                  <TrickDisplayVisual
-                    trick={tricks[currentTrick - 1] || []}
-                    trickNumber={currentTrick}
-                    decisionsByPosition={currentTrickDecisionsByPosition}
-                    userControlledPositions={userControlledPositions}
-                  />
-
-                  {/* Feedback panel */}
-                  <TrickFeedbackPanel decision={currentDecision} />
-
-                  <p className="navigation-hint">Use arrow keys ← → to navigate tricks</p>
-                </div>
-              )}
-            </>
+                <p className="navigation-hint">Use ← → keys to step through plays</p>
+              </div>
+            </AccordionSection>
           )}
         </div>
       </div>

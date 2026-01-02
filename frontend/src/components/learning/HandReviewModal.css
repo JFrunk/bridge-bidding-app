@@ -1744,3 +1744,233 @@
     font-size: 18px;
   }
 }
+
+/* =====================================================
+   ACCORDION LAYOUT - Unified Hand Analysis UI
+   ===================================================== */
+
+/* Accordion container */
+.accordion-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Accordion section wrapper */
+.accordion-section {
+  background: var(--bg-card, white);
+  border: 1px solid var(--border-color, #e5e7eb);
+  overflow: hidden;
+}
+
+.accordion-section:first-child {
+  border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
+}
+
+.accordion-section:last-child {
+  border-radius: 0 0 var(--radius-lg, 12px) var(--radius-lg, 12px);
+}
+
+.accordion-section:not(:last-child) {
+  border-bottom: none;
+}
+
+/* Only one section - full rounded corners */
+.accordion-section:first-child:last-child {
+  border-radius: var(--radius-lg, 12px);
+}
+
+/* Accordion header button */
+.accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+  background: var(--bg-secondary, #f8f9fa);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s ease;
+  min-height: 60px;
+}
+
+.accordion-header:hover {
+  background: var(--bg-hover, #f1f3f5);
+}
+
+.accordion-section.open .accordion-header {
+  background: var(--bg-card, white);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+/* Title group with icon */
+.accordion-title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+}
+
+.accordion-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.accordion-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.accordion-title {
+  font-size: var(--text-base, 16px);
+  font-weight: var(--font-semibold, 600);
+  color: var(--text-primary-dark, #1f2937);
+}
+
+.accordion-subtitle {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary-dark, #6b7280);
+}
+
+/* Right side with summary and toggle */
+.accordion-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+}
+
+.accordion-summary {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary-dark, #6b7280);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accordion-toggle-icon {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary-dark, #6b7280);
+  transition: transform 0.2s ease;
+}
+
+.accordion-toggle-icon.open {
+  transform: rotate(180deg);
+}
+
+/* Accordion content */
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.accordion-content.open {
+  max-height: 2000px; /* Large enough to accommodate content */
+  overflow: visible;
+}
+
+.accordion-content > * {
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+}
+
+/* Nested content spacing adjustments */
+.accordion-content .deal-display {
+  margin-bottom: 0;
+}
+
+.accordion-content .strategy-summary-display {
+  margin-bottom: 0;
+  border-radius: 0;
+}
+
+.accordion-content .play-quality-summary {
+  margin-bottom: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.accordion-content .dd-analysis-section {
+  margin: 0;
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+}
+
+.accordion-content .replay-mode {
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+}
+
+/* Modal layout adjustments for accordion */
+.hand-review-modal.accordion-layout .modal-content {
+  padding: 0;
+}
+
+.hand-review-modal.accordion-layout .modal-content.accordion-container {
+  padding: var(--space-4, 16px);
+}
+
+/* Responsive accordion styles */
+@media (max-width: 768px) {
+  .accordion-header {
+    padding: var(--space-3, 12px) var(--space-4, 16px);
+    min-height: 56px;
+  }
+
+  .accordion-icon {
+    font-size: 18px;
+  }
+
+  .accordion-title {
+    font-size: var(--text-sm, 14px);
+  }
+
+  .accordion-subtitle {
+    font-size: var(--text-xs, 12px);
+  }
+
+  .accordion-summary {
+    display: none; /* Hide summary on mobile - space is limited */
+  }
+
+  .accordion-content > * {
+    padding: var(--space-3, 12px) var(--space-4, 16px);
+  }
+
+  .hand-review-modal.accordion-layout .modal-content.accordion-container {
+    padding: var(--space-2, 8px);
+  }
+}
+
+@media (max-width: 480px) {
+  .accordion-header {
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    min-height: 52px;
+  }
+
+  .accordion-title-group {
+    gap: var(--space-2, 8px);
+  }
+
+  .accordion-icon {
+    font-size: 16px;
+  }
+
+  .accordion-content > * {
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+  }
+
+  .hand-review-modal.accordion-layout .modal-content.accordion-container {
+    padding: var(--space-1, 4px);
+  }
+}
+
+/* Touch-friendly accordion on mobile */
+@media (hover: none) and (pointer: coarse) {
+  .accordion-header {
+    min-height: 56px; /* Ensure 44px+ touch target */
+  }
+
+  .accordion-header:active {
+    background: var(--bg-hover, #e5e7eb);
+  }
+}
