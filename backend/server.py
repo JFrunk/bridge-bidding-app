@@ -2475,12 +2475,15 @@ def play_card():
         if user_id and is_user_controlled:
             try:
                 feedback_gen = get_play_feedback_generator(use_dds=PLATFORM_ALLOWS_DDS)
+                # Get hand_number from game session (1-indexed for display)
+                hand_number = state.game_session.hands_completed + 1 if state.game_session else None
                 play_feedback = feedback_gen.evaluate_and_store(
                     user_id=user_id,
                     play_state=state.play_state,
                     user_card=card,
                     position=position,
-                    session_id=data.get('session_id')
+                    session_id=data.get('session_id'),
+                    hand_number=hand_number
                 )
             except Exception as feedback_err:
                 # Non-blocking - don't fail the play if feedback fails
@@ -3446,6 +3449,8 @@ def evaluate_play():
         position = data.get('position', state.play_state.next_to_play)
         user_id = data.get('user_id', 1)
         session_id = data.get('session_id')
+        # Get hand_number from game session (1-indexed for display)
+        hand_number = state.game_session.hands_completed + 1 if state.game_session else None
 
         # Get feedback generator (uses DDS if available, Minimax otherwise)
         feedback_generator = get_play_feedback_generator(use_dds=True)
@@ -3456,7 +3461,8 @@ def evaluate_play():
             play_state=state.play_state,
             user_card=user_card,
             position=position,
-            session_id=session_id
+            session_id=session_id,
+            hand_number=hand_number
         )
 
         # Get legal cards for response

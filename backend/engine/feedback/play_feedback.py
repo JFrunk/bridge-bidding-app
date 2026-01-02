@@ -91,9 +91,9 @@ class PlayFeedback:
 
     # Optimal analysis
     optimal_cards: List[str]    # Cards that achieve maximum tricks
-    tricks_cost: int            # Tricks lost vs optimal (0 = optimal)
-    tricks_with_user_card: int  # Tricks achievable with user's play
-    tricks_with_optimal: int    # Tricks achievable with best play
+    tricks_cost: int            # Tricks lost vs optimal (0 = optimal, -1 = unknown/heuristic)
+    tricks_with_user_card: int  # Tricks achievable with user's play (-1 = unknown)
+    tricks_with_optimal: int    # Tricks achievable with best play (-1 = unknown)
 
     # Explanation
     reasoning: str              # Why this play? What went wrong?
@@ -103,6 +103,9 @@ class PlayFeedback:
     # Learning
     key_concept: str            # Bridge concept being tested
     difficulty: str             # beginner, intermediate, advanced, expert
+
+    # Analysis source (added to distinguish DDS vs heuristic evaluation)
+    analysis_source: str = "dds"  # "dds" = exact, "heuristic" = Minimax estimation
 
     def to_dict(self) -> Dict:
         """Convert to JSON-serializable dict"""
@@ -119,6 +122,9 @@ class PlayFeedback:
         Args:
             verbosity: "minimal", "normal", or "detailed"
         """
+        # Flag for heuristic analysis (tricks_cost = -1 means unknown)
+        is_heuristic = self.analysis_source == "heuristic" or self.tricks_cost < 0
+
         if self.correctness == PlayCorrectnessLevel.OPTIMAL:
             msg = f"Excellent! {self.user_card} is perfect here."
             if verbosity != "minimal" and self.reasoning:
@@ -127,8 +133,10 @@ class PlayFeedback:
 
         elif self.correctness == PlayCorrectnessLevel.GOOD:
             msg = f"{self.user_card} is a reasonable play."
-            if self.tricks_cost == 1:
+            if not is_heuristic and self.tricks_cost == 1:
                 msg += f" (Optimal: {', '.join(self.optimal_cards[:2])} - costs 1 trick)"
+            elif self.optimal_cards:
+                msg += f" (Optimal: {', '.join(self.optimal_cards[:2])})"
             if verbosity != "minimal" and self.helpful_hint:
                 msg += f"\n\nTip: {self.helpful_hint}"
             return msg
@@ -136,14 +144,18 @@ class PlayFeedback:
         elif self.correctness == PlayCorrectnessLevel.SUBOPTIMAL:
             optimal_str = ', '.join(self.optimal_cards[:2])
             msg = f"{optimal_str} would be better than {self.user_card}."
-            msg += f" (Costs {self.tricks_cost} trick{'s' if self.tricks_cost > 1 else ''})"
+            if not is_heuristic and self.tricks_cost > 0:
+                msg += f" (Costs {self.tricks_cost} trick{'s' if self.tricks_cost > 1 else ''})"
             if verbosity != "minimal" and self.helpful_hint:
                 msg += f"\n\n{self.helpful_hint}"
             return msg
 
         elif self.correctness == PlayCorrectnessLevel.BLUNDER:
             optimal_str = ', '.join(self.optimal_cards[:2])
-            msg = f"Mistake: {self.user_card} costs {self.tricks_cost} tricks!"
+            if not is_heuristic and self.tricks_cost > 0:
+                msg = f"Mistake: {self.user_card} costs {self.tricks_cost} tricks!"
+            else:
+                msg = f"Mistake: {self.user_card} is not the best play here."
             msg += f"\n\nBetter play: {optimal_str}"
             if verbosity != "minimal" and self.helpful_hint:
                 msg += f"\n\n{self.helpful_hint}"
@@ -231,12 +243,21 @@ class PlayFeedbackGenerator:
         play_category = self._categorize_play(play_state, position, user_card)
 
         # Get optimal plays using DDS or Minimax
-        optimal_cards, user_tricks, optimal_tricks = self._analyze_plays(
+        optimal_cards, user_tricks, optimal_tricks, analysis_source = self._analyze_plays(
             play_state, position, user_card, legal_cards
         )
 
-        # Calculate trick cost
-        tricks_cost = optimal_tricks - user_tricks
+        # Calculate trick cost (may be -1 if using heuristics and not optimal)
+        if user_tricks >= 0 and optimal_tricks >= 0:
+            tricks_cost = optimal_tricks - user_tricks
+        else:
+            # Heuristic mode - we don't know exact trick cost
+            # Check if user played optimal card
+            user_is_optimal = any(
+                user_card.rank == c.rank and user_card.suit == c.suit
+                for c in optimal_cards
+            )
+            tricks_cost = 0 if user_is_optimal else -1  # -1 = unknown
 
         # Determine correctness level
         correctness = self._determine_correctness(tricks_cost, user_card, optimal_cards)
@@ -281,7 +302,8 @@ class PlayFeedbackGenerator:
             play_category=play_category,
             helpful_hint=helpful_hint,
             key_concept=key_concept,
-            difficulty=difficulty
+            difficulty=difficulty,
+            analysis_source=analysis_source
         )
 
     def evaluate_and_store(self,
@@ -289,7 +311,8 @@ class PlayFeedbackGenerator:
                            play_state: PlayState,
                            user_card: Card,
                            position: str,
-                           session_id: Optional[str] = None) -> PlayFeedback:
+                           session_id: Optional[str] = None,
+                           hand_number: Optional[int] = None) -> PlayFeedback:
         """
         Evaluate play AND store in database for dashboard tracking.
 
@@ -299,6 +322,7 @@ class PlayFeedbackGenerator:
             user_card: Card user played
             position: Position making play
             session_id: Optional session ID
+            hand_number: Optional hand number within session (1-indexed)
 
         Returns:
             PlayFeedback object
@@ -309,7 +333,7 @@ class PlayFeedbackGenerator:
         feedback = self.evaluate_play(play_state, user_card, position)
 
         # Store in database
-        self._store_feedback(user_id, feedback, session_id)
+        self._store_feedback(user_id, feedback, session_id, hand_number)
 
         return feedback
 
@@ -362,12 +386,13 @@ class PlayFeedbackGenerator:
 
     def _analyze_plays(self, state: PlayState, position: str,
                        user_card: Card, legal_cards: List[Card]
-                       ) -> Tuple[List[Card], int, int]:
+                       ) -> Tuple[List[Card], int, int, str]:
         """
         Analyze all legal plays using DDS or Minimax.
 
         Returns:
-            (optimal_cards, user_tricks, optimal_tricks)
+            (optimal_cards, user_tricks, optimal_tricks, analysis_source)
+            - analysis_source: "dds" for exact analysis, "heuristic" for Minimax
         """
         if self.dds_available and self._dds_ai:
             return self._analyze_with_dds(state, position, user_card, legal_cards)
@@ -376,7 +401,7 @@ class PlayFeedbackGenerator:
 
     def _analyze_with_dds(self, state: PlayState, position: str,
                           user_card: Card, legal_cards: List[Card]
-                          ) -> Tuple[List[Card], int, int]:
+                          ) -> Tuple[List[Card], int, int, str]:
         """
         Use DDS solve_board to find optimal plays.
 
@@ -388,6 +413,10 @@ class PlayFeedbackGenerator:
         current trick, we must set deal.first to the LEADER of the trick (not
         the current player), then play the cards in order. This ensures endplay
         correctly tracks the trick state and who is to play next.
+
+        Returns:
+            (optimal_cards, user_tricks, optimal_tricks, analysis_source)
+            - analysis_source is "dds" for exact DDS analysis
         """
         try:
             from endplay.types import Deal, Player as EndplayPlayer, Denom
@@ -435,7 +464,7 @@ class PlayFeedbackGenerator:
             user_key = f"{user_card.rank}{user_card.suit}"
             user_tricks = card_tricks.get(user_key, 0)
 
-            return optimal_cards, user_tricks, max_tricks
+            return optimal_cards, user_tricks, max_tricks, "dds"
 
         except Exception as e:
             print(f"DDS analysis failed: {e}, falling back to Minimax")
@@ -443,12 +472,17 @@ class PlayFeedbackGenerator:
 
     def _analyze_with_minimax(self, state: PlayState, position: str,
                                user_card: Card, legal_cards: List[Card]
-                               ) -> Tuple[List[Card], int, int]:
+                               ) -> Tuple[List[Card], int, int, str]:
         """
         Use Minimax to estimate optimal plays.
 
         Less accurate than DDS but works on all platforms.
         Returns relative scoring rather than exact trick counts.
+
+        Returns:
+            (optimal_cards, user_tricks, optimal_tricks, analysis_source)
+            - When using heuristics, tricks values are set to -1 (unknown)
+            - analysis_source is "heuristic" to indicate inexact evaluation
         """
         # Get Minimax's choice
         try:
@@ -457,19 +491,17 @@ class PlayFeedbackGenerator:
             print(f"Minimax failed: {e}")
             optimal_card = legal_cards[0] if legal_cards else user_card
 
-        # For Minimax, we estimate tricks based on position evaluation
-        # This is an approximation - we compare user's choice to optimal
+        # For Minimax, we can only determine if user's choice matches optimal
+        # We CANNOT determine exact trick counts, so we use -1 to indicate unknown
 
         # If user played the same as Minimax, it's optimal
         if user_card.rank == optimal_card.rank and user_card.suit == optimal_card.suit:
-            return [optimal_card], 10, 10  # Treat as 10 "evaluation points"
+            # Optimal play - tricks_cost will be 0
+            return [optimal_card], 0, 0, "heuristic"
 
-        # Otherwise, estimate the cost using simple heuristics
-        # (Minimax doesn't give us exact trick counts like DDS)
-        user_tricks = 8  # Baseline estimate
-        optimal_tricks = 10
-
-        return [optimal_card], user_tricks, optimal_tricks
+        # Non-optimal play - we don't know exact trick cost
+        # Use -1 to indicate "unknown" rather than making up fake values
+        return [optimal_card], -1, -1, "heuristic"
 
     def _determine_correctness(self, tricks_cost: int, user_card: Card,
                                optimal_cards: List[Card]) -> PlayCorrectnessLevel:
@@ -481,6 +513,10 @@ class PlayFeedbackGenerator:
 
         if tricks_cost == 0:
             return PlayCorrectnessLevel.OPTIMAL
+        elif tricks_cost == -1:
+            # Heuristic mode - we know it's not optimal but don't know how bad
+            # Default to SUBOPTIMAL (non-judgmental - we don't claim specific trick loss)
+            return PlayCorrectnessLevel.SUBOPTIMAL
         elif tricks_cost == 1:
             return PlayCorrectnessLevel.GOOD
         elif tricks_cost == 2:
@@ -495,8 +531,13 @@ class PlayFeedbackGenerator:
         elif correctness == PlayCorrectnessLevel.GOOD:
             return 8.0  # 1 trick cost
         elif correctness == PlayCorrectnessLevel.SUBOPTIMAL:
-            return 5.0 - (tricks_cost - 2)  # 2-3 tricks cost
+            # Heuristic mode (tricks_cost = -1): give neutral score
+            if tricks_cost < 0:
+                return 6.0  # Unknown cost - give benefit of doubt
+            return 5.0 - max(0, tricks_cost - 2)  # 2-3 tricks cost
         elif correctness == PlayCorrectnessLevel.BLUNDER:
+            if tricks_cost < 0:
+                return 3.0  # Unknown cost blunder
             return max(0.0, 3.0 - tricks_cost)  # 4+ tricks cost
         else:  # ILLEGAL
             return 0.0
@@ -519,9 +560,17 @@ class PlayFeedbackGenerator:
         if correctness == PlayCorrectnessLevel.GOOD:
             return f"{user_str} works, but {optimal_str} is slightly better. {context_reason}"
         elif correctness == PlayCorrectnessLevel.SUBOPTIMAL:
-            return f"{optimal_str} saves {tricks_cost} trick{'s' if tricks_cost > 1 else ''}. {context_reason}"
+            # Check if we know the actual trick cost (DDS) or not (heuristic)
+            if tricks_cost > 0:
+                return f"{optimal_str} saves {tricks_cost} trick{'s' if tricks_cost > 1 else ''}. {context_reason}"
+            else:
+                # Heuristic mode - don't claim specific trick cost
+                return f"{optimal_str} is likely better. {context_reason}"
         else:  # BLUNDER
-            return f"Critical mistake costing {tricks_cost} tricks. {optimal_str} is better. {context_reason}"
+            if tricks_cost > 0:
+                return f"Critical mistake costing {tricks_cost} tricks. {optimal_str} is better. {context_reason}"
+            else:
+                return f"This play is likely costly. {optimal_str} is better. {context_reason}"
 
     def _explain_optimal_play(self, user_str: str, category: PlayCategory,
                                state: PlayState, position: str) -> str:
@@ -817,7 +866,7 @@ class PlayFeedbackGenerator:
         )
 
     def _store_feedback(self, user_id: int, feedback: PlayFeedback,
-                        session_id: Optional[str]):
+                        session_id: Optional[str], hand_number: Optional[int] = None):
         """Store feedback in play_decisions table"""
         conn = get_connection()
         cursor = conn.cursor()
@@ -825,16 +874,17 @@ class PlayFeedbackGenerator:
         try:
             cursor.execute("""
                 INSERT INTO play_decisions (
-                    user_id, session_id, position, trick_number,
+                    user_id, session_id, hand_number, position, trick_number,
                     user_card, optimal_card, score, rating,
                     tricks_cost, tricks_with_user_card, tricks_with_optimal,
                     contract, is_declarer_side, play_category,
                     key_concept, difficulty, feedback, helpful_hint,
                     timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (
                 user_id,
                 session_id,
+                hand_number,
                 feedback.position,
                 feedback.trick_number,
                 feedback.user_card,

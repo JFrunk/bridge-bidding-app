@@ -1586,8 +1586,9 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
     cursor = conn.cursor()
 
     try:
-        # Get all play decisions for this user in this hand
+        # Get all play decisions for this user in this specific hand
         # Note: play_decisions uses session_id as text, not integer
+        # Filter by hand_number to get plays for only this hand (not entire session)
         cursor.execute("""
             SELECT
                 id,
@@ -1603,8 +1604,9 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
             FROM play_decisions
             WHERE user_id = ?
               AND session_id = ?
+              AND (hand_number = ? OR hand_number IS NULL)
             ORDER BY trick_number, id
-        """, (user_id, str(session_id)))
+        """, (user_id, str(session_id), hand_number))
 
         decisions = []
         for row in cursor.fetchall():
