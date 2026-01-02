@@ -95,7 +95,20 @@
       "Bash(SKIP_TESTS=1 git commit:*)",
       "Bash(source venv/bin/activate)",
       "Bash(python -m pytest:*)",
-      "Bash(./test_medium.sh:*)"
+      "Bash(./test_medium.sh:*)",
+      "Bash(timeout 5 python3:*)",
+      "Bash(git restore:*)",
+      "Bash(ls:*)",
+      "Bash(./test_all.sh:*)",
+      "Bash(./test_full.sh)",
+      "Skill(deploy-production)",
+      "Skill(deploy-production:*)",
+      "Bash(SKIP_TESTS=1 git commit --no-verify -m \"$\\(cat <<''EOF''\nfeat: Add DDS analysis service and PBN support\n\n- Add DDSAnalysisService with full 20-solve DD table generation\n- Add par score calculation with vulnerability awareness\n- Add PBN/LIN parsing to Hand class \\(from_pbn, to_pbn, from_lin\\)\n- Add database migration 007 for DDS analysis storage\n- Add imported_hands table for future ACBL import\n- Update Blackwood convention logic\n- Add comprehensive test suite \\(31 tests\\)\n- Document Phase 6 ACBL integration roadmap\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git stash push:*)",
+      "Bash(ssh oracle-bridge:*)",
+      "Bash(npx eslint:*)",
+      "Bash(python3 -m py_compile:*)",
+      "Bash(ssh:*)"
     ],
     "deny": [],
     "ask": []
