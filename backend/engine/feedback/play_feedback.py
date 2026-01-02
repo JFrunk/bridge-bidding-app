@@ -383,6 +383,11 @@ class PlayFeedbackGenerator:
         solve_board returns (card, tricks) pairs showing how many tricks
         can be made with each legal play. We find which cards achieve
         the maximum and compare to user's choice.
+
+        IMPORTANT: When reconstructing a deal with cards already played to the
+        current trick, we must set deal.first to the LEADER of the trick (not
+        the current player), then play the cards in order. This ensures endplay
+        correctly tracks the trick state and who is to play next.
         """
         try:
             from endplay.types import Deal, Player as EndplayPlayer, Denom
@@ -390,14 +395,23 @@ class PlayFeedbackGenerator:
 
             # Convert state to endplay format
             deal = self._dds_ai._convert_to_endplay_deal(state)
-            deal.first = self._dds_ai._convert_position(position)
             deal.trump = self._dds_ai._convert_trump(state.contract.trump_suit)
 
-            # Add cards already in current trick
+            # Set up the current trick state correctly
             if state.current_trick:
+                # Set deal.first to the LEADER of the trick (first player who played)
+                # This is critical - endplay needs to know who led to reconstruct the trick
+                leader = state.current_trick[0][1]  # (card, position) - get position
+                deal.first = self._dds_ai._convert_position(leader)
+
+                # Play the cards already in the trick
+                # After this, endplay will know the current player is `position`
                 for played_card, played_pos in state.current_trick:
                     endplay_card = self._dds_ai._convert_card_to_endplay(played_card)
                     deal.play(endplay_card)
+            else:
+                # No cards in current trick - position is leading
+                deal.first = self._dds_ai._convert_position(position)
 
             # Solve to get optimal plays
             solved = solve_board(deal)
@@ -574,6 +588,9 @@ class PlayFeedbackGenerator:
         elif trick_pos == 2 and category == PlayCategory.FOLLOWING_SUIT:
             if user_rank in ['2', '3', '4', '5', '6'] and opt_rank in ['A', 'K', 'Q', 'J', 'T']:
                 reasons.append("Third hand high forces declarer to use their honors")
+            # Playing higher than necessary in third seat
+            elif self._rank_value(opt_rank) > self._rank_value(user_rank):
+                reasons.append("Playing higher third hand helps win or promote tricks")
             # Check if partner led high
             if state.current_trick and len(state.current_trick) >= 1:
                 led_card = state.current_trick[0][0]
@@ -603,7 +620,9 @@ class PlayFeedbackGenerator:
         if reasons:
             return reasons[0]  # Return most relevant reason
         elif tricks_cost >= 2:
-            return "This play sets up extra tricks for the opponents."
+            return "The better play maintains your trick potential."
+        elif tricks_cost == 1:
+            return "A small improvement is available."
         else:
             return ""
 
