@@ -1595,22 +1595,34 @@ ${otherCommands}`;
     resetAuction(initialDeal, true); // Skip initial AI bidding - wait for proper turn
   };
   
+  // Fetch scenarios (only once on mount)
   useEffect(() => {
-    const fetchScenariosAndSession = async () => {
+    const fetchScenarios = async () => {
       try {
         const response = await fetch(`${API_URL}/api/scenarios`, { headers: { ...getSessionHeaders() } });
         const data = await response.json();
         setScenarioList(data.scenarios);
         setScenariosByLevel(data.scenarios_by_level);
-        // Scenarios loaded for convention grid - no default selection needed
       } catch (err) { console.error("Could not fetch scenarios", err); }
+    };
+    fetchScenarios();
+  }, []);
 
-      // Start or resume session
+  // Start or resume session AFTER auth is loaded (when userId is available)
+  useEffect(() => {
+    // Wait for auth to finish loading before starting session
+    if (authLoading) return;
+
+    const startSession = async () => {
       try {
+        // Use the actual userId or fallback to 1 for guests
+        const sessionUserId = userId || 1;
+        console.log(`🔄 Starting session for user_id: ${sessionUserId}`);
+
         const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-          body: JSON.stringify({ user_id: userId || 1, session_type: 'chicago' })
+          body: JSON.stringify({ user_id: sessionUserId, session_type: 'chicago' })
         });
         const sessionData = await sessionResponse.json();
         setSessionData(sessionData);
@@ -1619,18 +1631,15 @@ ${otherCommands}`;
         const sessionVuln = sessionData.session.vulnerability;
         setVulnerability(sessionVuln);
 
-        console.log(`Session ${sessionData.resumed ? 'resumed' : 'started'}: ${sessionData.message}`);
+        console.log(`✅ Session ${sessionData.resumed ? 'resumed' : 'started'} for user ${sessionUserId}: ${sessionData.message}`);
       } catch (err) {
         console.error("Could not start session", err);
       }
 
-      // Don't auto-deal - let user choose mode first from ModeSelector
-      // Hand dealing happens when user selects Bid mode via handleModeSelect
       setIsInitializing(false);
     };
-    fetchScenariosAndSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    startSession();
+  }, [authLoading, userId]);
 
   // Helper function to calculate whose turn it is based on dealer and auction length
   const calculateExpectedBidder = (currentDealer, auctionLength) => {

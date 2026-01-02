@@ -318,13 +318,23 @@ const JourneyContent = ({ journey }) => {
 const QualityContent = ({ quality, type }) => {
   const isBidding = type === 'bidding';
 
+  // For play: prefer DDS-based play_decision_stats if available, else use gameplay stats
+  const playDecisionStats = !isBidding ? quality.play_decision_stats : null;
+  const hasPlayDecisionData = playDecisionStats && (playDecisionStats.optimal_rate > 0 || playDecisionStats.avg_score > 0);
+
+  // Main metric: bidding uses overall_accuracy, play uses optimal_rate from DDS or declarer_success_rate
   const mainMetric = isBidding
     ? quality.overall_accuracy
-    : quality.declarer_success_rate;
+    : hasPlayDecisionData
+      ? playDecisionStats.optimal_rate  // DDS-based optimal play rate
+      : quality.declarer_success_rate;
 
+  // Total practiced: bidding uses decisions, play uses DDS analyzed plays or hands played
   const totalPracticed = isBidding
     ? quality.total_decisions
-    : quality.total_hands_played;
+    : hasPlayDecisionData
+      ? (quality.total_hands_played || 0) + ' hands'  // From gameplay
+      : quality.total_hands_played;
 
   // Determine color class based on score
   const getScoreClass = (score) => {
@@ -339,7 +349,7 @@ const QualityContent = ({ quality, type }) => {
       <div className="quality-gauge">
         <div className="gauge-value">{Math.round(mainMetric || 0)}%</div>
         <div className="gauge-label">
-          {isBidding ? 'Accuracy' : 'Success Rate'}
+          {isBidding ? 'Accuracy' : (hasPlayDecisionData ? 'Play Quality' : 'Success Rate')}
         </div>
         <div className="gauge-bar">
           <div
@@ -366,7 +376,24 @@ const QualityContent = ({ quality, type }) => {
               <span className="stat-label">Conv.</span>
             </div>
           </>
+        ) : hasPlayDecisionData ? (
+          // DDS-based play quality stats
+          <>
+            <div className="stat-item">
+              <span className="stat-value">{Math.round(playDecisionStats.avg_score * 10) || 0}%</span>
+              <span className="stat-label">Avg Score</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{Math.round(playDecisionStats.blunder_rate) || 0}%</span>
+              <span className="stat-label">Blunders</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{quality.contracts_made || 0}/{quality.contracts_failed || 0}</span>
+              <span className="stat-label">Made/Down</span>
+            </div>
+          </>
         ) : (
+          // Fallback: session-based gameplay stats
           <>
             <div className="stat-item">
               <span className="stat-value">{quality.contracts_made || 0}</span>
@@ -386,7 +413,12 @@ const QualityContent = ({ quality, type }) => {
 
       {/* Total Practiced */}
       <div className="total-practiced">
-        {totalPracticed || 0} {isBidding ? 'decisions' : 'hands'} practiced
+        {isBidding
+          ? `${totalPracticed || 0} decisions practiced`
+          : hasPlayDecisionData
+            ? `${quality.total_hands_played || 0} hands, DDS analyzed`
+            : `${totalPracticed || 0} hands practiced`
+        }
       </div>
     </>
   );
