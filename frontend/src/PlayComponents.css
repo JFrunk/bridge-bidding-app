@@ -954,93 +954,7 @@
   color: #000;
 }
 
-/* Score Modal */
-.score-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.score-modal {
-  background-color: #282c34;
-  padding: 30px;
-  border-radius: 12px;
-  max-width: 500px;
-  width: 90%;
-  color: white;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-
-.score-modal h2 {
-  margin-top: 0;
-  color: var(--color-info);
-  text-align: center;
-}
-
-.score-details {
-  margin: 20px 0;
-}
-
-.score-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--bg-tertiary);
-}
-
-.score-row.total {
-  font-size: 1.3em;
-  font-weight: bold;
-  margin-top: 15px;
-  border-top: 2px solid var(--color-info);
-  border-bottom: none;
-  padding-top: 15px;
-}
-
-.score-value {
-  font-weight: bold;
-}
-
-.score-value.made {
-  color: #4caf50;
-}
-
-.score-value.down {
-  color: #f44336;
-}
-
-.score-value.positive {
-  color: #4caf50;
-}
-
-.score-value.negative {
-  color: #f44336;
-}
-
-.close-button {
-  width: 100%;
-  padding: 12px;
-  background-color: var(--color-info);
-  border: none;
-  border-radius: 6px;
-  color: #282c34;
-  font-size: 1em;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 20px;
-  transition: background-color 0.2s;
-}
-
-.close-button:hover {
-  background-color: #4fa8c5;
-}
+/* Old Score Modal CSS removed - now using ScoreModal.jsx with Shadcn Dialog */
 
 /* ========================================
    RESPONSIVE SAFETY NET - PLAY COMPONENTS
@@ -1172,20 +1086,6 @@
     font-size: 0.9em;
     padding: 3px 8px;
   }
-
-  .score-modal {
-    width: 95%;
-    padding: 20px;
-  }
-
-  .score-modal h2 {
-    font-size: 1.3em;
-  }
-
-  .score-row {
-    padding: 8px 0;
-    font-size: 0.95em;
-  }
 }
 
 /* Mobile phones - smaller cards like Learn module */
@@ -1288,19 +1188,6 @@
   .tricks-count {
     font-size: 0.9em;
     gap: 8px;
-  }
-
-  .score-modal {
-    padding: 15px;
-  }
-
-  .score-modal h2 {
-    font-size: 1.2em;
-  }
-
-  .score-row {
-    padding: 6px 0;
-    font-size: 0.9em;
   }
 
   .trick-winner-announcement {
