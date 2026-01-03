@@ -925,11 +925,13 @@
   border: 1px solid var(--border-color, #e5e7eb);
 }
 
-.category-name {
+.category-card .category-name {
+  display: block;
   font-weight: 600;
   font-size: var(--text-xs, 12px);
   color: var(--text-primary-dark, #111);
   margin-bottom: var(--space-1, 4px);
+  text-transform: capitalize;
 }
 
 .category-stats {
@@ -1254,8 +1256,9 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .category-name {
-    font-size: 10px;
+  .category-card .category-name {
+    display: block;
+    font-size: 11px;
   }
 
   .category-accuracy {

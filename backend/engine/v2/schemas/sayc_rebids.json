@@ -5,6 +5,156 @@
   "description": "Opener and responder rebids",
   "rules": [
     {
+      "id": "opener_complete_texas_hearts",
+      "bid": "4♥",
+      "priority": 100,
+      "description": "1NT opener completes Texas transfer to hearts",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": "1NT",
+        "partner_last_bid": "4♦"
+      },
+      "forcing": "none",
+      "explanation": "Completing Texas transfer to hearts",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_complete_texas_spades",
+      "bid": "4♠",
+      "priority": 99,
+      "description": "1NT opener completes Texas transfer to spades",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": "1NT",
+        "partner_last_bid": "4♥"
+      },
+      "forcing": "none",
+      "explanation": "Completing Texas transfer to spades",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_smolen_3h",
+      "bid": "3♥",
+      "priority": 98,
+      "description": "Smolen: 4 hearts, 5 spades, game values",
+      "conditions": {
+        "opener_relationship": "Partner",
+        "my_bid_count": {
+          "min": 1
+        },
+        "my_last_bid": "2♣",
+        "partner_last_bid": "2♦",
+        "hearts_length": {
+          "min": 4,
+          "max": 4
+        },
+        "spades_length": {
+          "min": 5
+        },
+        "hcp": {
+          "min": 10
+        }
+      },
+      "forcing": "game",
+      "explanation": "Smolen showing 4 hearts and 5 spades with game values",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "responder_smolen_3s",
+      "bid": "3♠",
+      "priority": 97,
+      "description": "Smolen: 4 spades, 5 hearts, game values",
+      "conditions": {
+        "opener_relationship": "Partner",
+        "my_bid_count": {
+          "min": 1
+        },
+        "my_last_bid": "2♣",
+        "partner_last_bid": "2♦",
+        "spades_length": {
+          "min": 4,
+          "max": 4
+        },
+        "hearts_length": {
+          "min": 5
+        },
+        "hcp": {
+          "min": 10
+        }
+      },
+      "forcing": "game",
+      "explanation": "Smolen showing 4 spades and 5 hearts with game values",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "opener_accept_smolen_spades",
+      "bid": "4♠",
+      "priority": 96,
+      "description": "Accept Smolen with 3+ spades (partner has 5)",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": "2♦",
+        "partner_last_bid": "3♥",
+        "spades_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in spades - we have a fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_reject_smolen_spades",
+      "bid": "3NT",
+      "priority": 95,
+      "description": "Reject Smolen - no spade fit",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": "2♦",
+        "partner_last_bid": "3♥",
+        "spades_length": {
+          "max": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "3NT - no spade fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_accept_smolen_hearts",
+      "bid": "4♥",
+      "priority": 94,
+      "description": "Accept Smolen with 3+ hearts (partner has 5)",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": "2♦",
+        "partner_last_bid": "3♠",
+        "hearts_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in hearts - we have a fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_reject_smolen_hearts",
+      "bid": "3NT",
+      "priority": 93,
+      "description": "Reject Smolen - no heart fit",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": "2♦",
+        "partner_last_bid": "3♠",
+        "hearts_length": {
+          "max": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "3NT - no heart fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "opener_rebid_1nt",
       "bid": "1NT",
       "priority": 90,

@@ -232,7 +232,18 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
 
     # My first suit (the suit I bid first)
     flat['my_suit'] = None
+    flat['my_last_bid'] = None
     my_bids = _get_my_bids(auction_history, my_position)
+
+    # Get my last bid (for transfer completion rules)
+    if my_bids:
+        flat['my_last_bid'] = my_bids[-1]
+
+    # RHO's last bid (for redouble after takeout double, etc.)
+    rho_bids = _get_rho_bids(auction_history, my_position)
+    flat['rho_last_bid'] = rho_bids[-1] if rho_bids else None
+
+    # Get my first natural suit bid
     for bid in my_bids:
         suit = get_suit_from_bid(bid)
         if suit:
@@ -277,6 +288,36 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
             bid_suits.add(suit)
     unbid_suits = {'♠', '♥', '♦', '♣'} - bid_suits
     flat['unbid_suit_support'] = sum(1 for s in unbid_suits if suit_lengths.get(s, 0) >= 3)
+
+    # Enhanced takeout double shape detection
+    # "Perfect shape" = 3+ in all unbid suits AND short in opponent's suit
+    opponent_suit = None
+    if opening_bid:
+        opponent_suit = get_suit_from_bid(opening_bid)
+
+    flat['short_in_opponent_suit'] = False
+    if opponent_suit:
+        opponent_length = suit_lengths.get(opponent_suit, 0)
+        flat['short_in_opponent_suit'] = opponent_length <= 2
+
+    # Perfect takeout shape: 4+ in all unbid majors, 3+ in all unbid minors, short in their suit
+    flat['perfect_takeout_shape'] = False
+    if opponent_suit and flat['short_in_opponent_suit']:
+        unbid_majors = [s for s in ['♠', '♥'] if s != opponent_suit]
+        unbid_minors = [s for s in ['♣', '♦'] if s != opponent_suit]
+        major_support = all(suit_lengths.get(s, 0) >= 4 for s in unbid_majors)
+        minor_support = all(suit_lengths.get(s, 0) >= 3 for s in unbid_minors)
+        flat['perfect_takeout_shape'] = major_support and minor_support
+
+    # Other major length (for Michaels)
+    flat['other_major_length'] = 0
+    if opponent_suit == '♥':
+        flat['other_major_length'] = suit_lengths.get('♠', 0)
+    elif opponent_suit == '♠':
+        flat['other_major_length'] = suit_lengths.get('♥', 0)
+
+    # Any minor length (for Michaels over major)
+    flat['any_minor_length'] = max(suit_lengths.get('♣', 0), suit_lengths.get('♦', 0))
 
     # PBN representation
     flat['pbn'] = hand_to_pbn(hand)
@@ -332,6 +373,23 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
             elif opening in ['1♣', '1♦', '1♥', '1♠']:
                 flat['partner_min_hcp'] = 12
                 flat['partner_max_hcp'] = 21  # Could be any strength until rebid
+
+    # Key cards for RKCB (Roman Key Card Blackwood)
+    # Key cards = 4 aces + trump King (if trump suit is known)
+    # Count aces held
+    aces_held = sum(1 for c in hand.cards if c.rank == 'A')
+    flat['aces_held'] = aces_held
+
+    # Key cards depend on agreed trump suit
+    trump_king = 0
+    if agreed['agreed_suit']:
+        trump_suit = agreed['agreed_suit']
+        trump_king = 1 if any(c.rank == 'K' and c.suit == trump_suit for c in hand.cards) else 0
+
+    flat['key_cards'] = aces_held + trump_king
+    flat['has_trump_queen'] = False
+    if agreed['agreed_suit']:
+        flat['has_trump_queen'] = any(c.rank == 'Q' and c.suit == agreed['agreed_suit'] for c in hand.cards)
 
     # Keep reference to original structures
     flat['_hand'] = hand
@@ -428,3 +486,26 @@ def _get_my_bids(auction_history: List[str], my_position: str) -> List[str]:
             my_bids.append(bid)
 
     return my_bids
+
+
+def _get_rho_bids(auction_history: List[str], my_position: str) -> List[str]:
+    """
+    Extract Right Hand Opponent's bids from the auction history.
+
+    Args:
+        auction_history: List of bids in order
+        my_position: My position (North, East, South, West)
+
+    Returns:
+        List of RHO's bids in order
+    """
+    positions = ['North', 'East', 'South', 'West']
+    my_idx = positions.index(my_position) if my_position in positions else 0
+    rho_idx = (my_idx - 1) % 4  # RHO is to my right (bid just before me)
+
+    rho_bids = []
+    for i, bid in enumerate(auction_history):
+        if i % 4 == rho_idx:
+            rho_bids.append(bid)
+
+    return rho_bids

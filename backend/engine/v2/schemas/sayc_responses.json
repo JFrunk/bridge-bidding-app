@@ -8,22 +8,30 @@
       "id": "stayman_2c",
       "bid": "2♣",
       "priority": 100,
-      "description": "Stayman convention over 1NT",
+      "description": "Stayman convention over 1NT (looking for 4-4 major fit)",
       "conditions": {
         "is_response": true,
         "partner_last_bid": "1NT",
         "hcp": {
           "min": 8
         },
+        "spades_length": {
+          "max": 5
+        },
+        "hearts_length": {
+          "max": 5
+        },
         "OR": [
           {
             "spades_length": {
-              "min": 4
+              "min": 4,
+              "max": 4
             }
           },
           {
             "hearts_length": {
-              "min": 4
+              "min": 4,
+              "max": 4
             }
           }
         ]
@@ -41,27 +49,107 @@
         "is_response": true,
         "partner_last_bid": "1NT",
         "hearts_length": {
-          "min": 5
+          "min": 5,
+          "max": 5
         }
       },
       "forcing": "one_round",
-      "explanation": "Jacoby transfer showing 5+ hearts",
+      "explanation": "Jacoby transfer showing 5 hearts",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "jacoby_transfer_hearts_invitational",
+      "bid": "2♦",
+      "priority": 98,
+      "description": "Jacoby transfer to hearts (invitational with 6+ cards)",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1NT",
+        "hearts_length": {
+          "min": 6
+        },
+        "hcp": {
+          "min": 8,
+          "max": 9
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Jacoby transfer showing 6+ hearts, invitational values",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "jacoby_transfer_spades",
       "bid": "2♥",
-      "priority": 98,
+      "priority": 97,
       "description": "Jacoby transfer to spades",
       "conditions": {
         "is_response": true,
         "partner_last_bid": "1NT",
         "spades_length": {
-          "min": 5
+          "min": 5,
+          "max": 5
         }
       },
       "forcing": "one_round",
-      "explanation": "Jacoby transfer showing 5+ spades",
+      "explanation": "Jacoby transfer showing 5 spades",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "jacoby_transfer_spades_invitational",
+      "bid": "2♥",
+      "priority": 96,
+      "description": "Jacoby transfer to spades (invitational with 6+ cards)",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1NT",
+        "spades_length": {
+          "min": 6
+        },
+        "hcp": {
+          "min": 8,
+          "max": 9
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Jacoby transfer showing 6+ spades, invitational values",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "texas_transfer_hearts",
+      "bid": "4♦",
+      "priority": 95,
+      "description": "Texas transfer to hearts (6+ hearts, game values)",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1NT",
+        "hearts_length": {
+          "min": 6
+        },
+        "hcp": {
+          "min": 10
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Texas transfer showing 6+ hearts with game values",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "texas_transfer_spades",
+      "bid": "4♥",
+      "priority": 94,
+      "description": "Texas transfer to spades (6+ spades, game values)",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1NT",
+        "spades_length": {
+          "min": 6
+        },
+        "hcp": {
+          "min": 10
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Texas transfer showing 6+ spades with game values",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {

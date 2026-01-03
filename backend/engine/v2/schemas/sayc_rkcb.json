@@ -1,0 +1,261 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "rkcb",
+  "description": "Roman Key Card Blackwood (1430 responses) for slam bidding",
+  "rules": [
+    {
+      "id": "rkcb_5c_1_or_4",
+      "bid": "5♣",
+      "priority": 100,
+      "description": "RKCB response showing 1 or 4 key cards",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "fit_known": true,
+        "OR": [
+          {
+            "key_cards": {
+              "exact": 1
+            }
+          },
+          {
+            "key_cards": {
+              "exact": 4
+            }
+          }
+        ]
+      },
+      "forcing": "one_round",
+      "explanation": "RKCB: 1 or 4 key cards (1430)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "rkcb_5d_0_or_3",
+      "bid": "5♦",
+      "priority": 99,
+      "description": "RKCB response showing 0 or 3 key cards",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "fit_known": true,
+        "OR": [
+          {
+            "key_cards": {
+              "exact": 0
+            }
+          },
+          {
+            "key_cards": {
+              "exact": 3
+            }
+          }
+        ]
+      },
+      "forcing": "one_round",
+      "explanation": "RKCB: 0 or 3 key cards (1430)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "rkcb_5h_2_no_queen",
+      "bid": "5♥",
+      "priority": 98,
+      "description": "RKCB response showing 2 key cards without trump Queen",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "fit_known": true,
+        "key_cards": {
+          "exact": 2
+        },
+        "has_trump_queen": false
+      },
+      "forcing": "one_round",
+      "explanation": "RKCB: 2 key cards without trump Queen",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "rkcb_5s_2_with_queen",
+      "bid": "5♠",
+      "priority": 97,
+      "description": "RKCB response showing 2 key cards with trump Queen",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "fit_known": true,
+        "key_cards": {
+          "exact": 2
+        },
+        "has_trump_queen": true
+      },
+      "forcing": "one_round",
+      "explanation": "RKCB: 2 key cards with trump Queen",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "rkcb_5_all_keys",
+      "bid": "5NT",
+      "priority": 96,
+      "description": "RKCB response showing 5 key cards (all of them)",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "fit_known": true,
+        "key_cards": {
+          "exact": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "RKCB: All 5 key cards!",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "queen_ask_positive",
+      "bid": "6{agreed_suit}",
+      "priority": 90,
+      "description": "Queen Ask response - have trump Queen",
+      "conditions": {
+        "partner_last_bid": {
+          "in": ["5♣", "5♦"]
+        },
+        "fit_known": true,
+        "has_trump_queen": true
+      },
+      "forcing": "none",
+      "explanation": "Have trump Queen - bidding 6 of trumps",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "queen_ask_negative_5h",
+      "bid": "5{agreed_suit}",
+      "priority": 85,
+      "description": "Queen Ask response - no trump Queen (sign off)",
+      "conditions": {
+        "partner_last_bid": {
+          "in": ["5♣", "5♦"]
+        },
+        "fit_known": true,
+        "has_trump_queen": false,
+        "agreed_suit": {
+          "in": ["♥", "♠"]
+        }
+      },
+      "forcing": "none",
+      "explanation": "No trump Queen - signing off at 5-level",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "ask_for_specific_king",
+      "bid": "5NT",
+      "priority": 80,
+      "description": "King Ask after RKCB (asking for specific kings)",
+      "conditions": {
+        "my_last_bid": "4NT",
+        "partner_last_bid": {
+          "in": ["5♣", "5♦", "5♥", "5♠"]
+        },
+        "fit_known": true,
+        "hcp": {
+          "min": 15
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "King Ask - asking for specific kings",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "king_response_clubs",
+      "bid": "6♣",
+      "priority": 75,
+      "description": "King Ask response - show club King",
+      "conditions": {
+        "partner_last_bid": "5NT",
+        "fit_known": true,
+        "clubs_stopped": true
+      },
+      "forcing": "none",
+      "explanation": "Showing club King",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "king_response_diamonds",
+      "bid": "6♦",
+      "priority": 74,
+      "description": "King Ask response - show diamond King",
+      "conditions": {
+        "partner_last_bid": "5NT",
+        "fit_known": true,
+        "diamonds_stopped": true,
+        "clubs_stopped": false
+      },
+      "forcing": "none",
+      "explanation": "Showing diamond King",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "king_response_hearts",
+      "bid": "6♥",
+      "priority": 73,
+      "description": "King Ask response - show heart King",
+      "conditions": {
+        "partner_last_bid": "5NT",
+        "fit_known": true,
+        "agreed_suit": {
+          "in": ["♠"]
+        },
+        "hearts_stopped": true,
+        "diamonds_stopped": false,
+        "clubs_stopped": false
+      },
+      "forcing": "none",
+      "explanation": "Showing heart King",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "king_response_no_outside_king",
+      "bid": "6{agreed_suit}",
+      "priority": 70,
+      "description": "King Ask response - no outside king",
+      "conditions": {
+        "partner_last_bid": "5NT",
+        "fit_known": true
+      },
+      "forcing": "none",
+      "explanation": "No outside king to show",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "signoff_6_after_rkcb",
+      "bid": "6{agreed_suit}",
+      "priority": 60,
+      "description": "Sign off in small slam after RKCB",
+      "conditions": {
+        "my_last_bid": "4NT",
+        "partner_last_bid": {
+          "in": ["5♣", "5♦", "5♥", "5♠"]
+        },
+        "fit_known": true
+      },
+      "forcing": "none",
+      "explanation": "Small slam in {agreed_suit}",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "grand_slam_after_rkcb",
+      "bid": "7{agreed_suit}",
+      "priority": 55,
+      "description": "Grand slam after RKCB with all key cards accounted",
+      "conditions": {
+        "my_last_bid": "4NT",
+        "partner_last_bid": {
+          "in": ["5♠", "5NT"]
+        },
+        "fit_known": true,
+        "hcp": {
+          "min": 18
+        },
+        "key_cards": {
+          "min": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Grand slam!",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

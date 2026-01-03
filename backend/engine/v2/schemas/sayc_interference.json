@@ -1,0 +1,441 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "interference",
+  "description": "Competitive bidding after opponent interference - thresholds drop from constructive to competitive",
+  "rules": [
+    {
+      "id": "competitive_limit_raise_cuebid",
+      "bid": "{opponent_suit}",
+      "priority": 180,
+      "description": "Cuebid of opponent's suit showing limit raise values",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "hcp": {
+          "min": 10
+        },
+        "support_for_partner": {
+          "min": 3
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Cuebid showing 10+ HCP with support for partner's suit",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "simple_overcall_1_level_spades",
+      "bid": "1♠",
+      "priority": 105,
+      "description": "Simple 1♠ overcall",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": ["1♣", "1♦", "1♥"]
+        },
+        "hcp": {
+          "min": 8,
+          "max": 16
+        },
+        "spades_length": {
+          "min": 5
+        },
+        "quick_tricks": {
+          "min": 1.0
+        }
+      },
+      "forcing": "none",
+      "explanation": "Simple overcall showing 8-16 HCP and 5+ spades",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "simple_overcall_1_level_hearts",
+      "bid": "1♥",
+      "priority": 104,
+      "description": "Simple 1♥ overcall",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": ["1♣", "1♦"]
+        },
+        "hcp": {
+          "min": 8,
+          "max": 16
+        },
+        "hearts_length": {
+          "min": 5
+        },
+        "quick_tricks": {
+          "min": 1.0
+        }
+      },
+      "forcing": "none",
+      "explanation": "Simple overcall showing 8-16 HCP and 5+ hearts",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "simple_overcall_2_level",
+      "bid": "2{longest_suit}",
+      "priority": 85,
+      "description": "Simple 2-level overcall",
+      "conditions": {
+        "is_overcall": true,
+        "hcp": {
+          "min": 10,
+          "max": 16
+        },
+        "longest_suit_length": {
+          "min": 5
+        },
+        "quick_tricks": {
+          "min": 1.5
+        }
+      },
+      "forcing": "none",
+      "explanation": "2-level overcall showing 10-16 HCP and good 5+ card suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "direct_nt_overcall_1nt",
+      "bid": "1NT",
+      "priority": 110,
+      "description": "Direct 1NT overcall with stopper",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": ["1♣", "1♦", "1♥", "1♠"]
+        },
+        "hcp": {
+          "min": 15,
+          "max": 18
+        },
+        "stopper_in_opponent_suit": true,
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "1NT overcall showing 15-18 HCP balanced with stopper",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "direct_nt_overcall_2nt",
+      "bid": "2NT",
+      "priority": 105,
+      "description": "Direct 2NT overcall (unusual or strong)",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": ["1♣", "1♦", "1♥", "1♠"]
+        },
+        "hcp": {
+          "min": 19,
+          "max": 21
+        },
+        "stopper_in_opponent_suit": true,
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "2NT overcall showing 19-21 HCP balanced with stopper",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "takeout_double_standard",
+      "bid": "X",
+      "priority": 100,
+      "description": "Standard takeout double",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": ["1♣", "1♦", "1♥", "1♠"]
+        },
+        "hcp": {
+          "min": 12
+        },
+        "unbid_suit_support": {
+          "min": 3
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Takeout double showing opening values with support for unbid suits",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_light",
+      "bid": "X",
+      "priority": 98,
+      "description": "Light takeout double with perfect shape",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": ["1♣", "1♦", "1♥", "1♠"]
+        },
+        "hcp": {
+          "min": 10,
+          "max": 11
+        },
+        "unbid_suit_support": {
+          "min": 3
+        },
+        "support_for_partner": {
+          "max": 2
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Light takeout double with excellent shape",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "negative_double_1_level",
+      "bid": "X",
+      "priority": 120,
+      "description": "Negative double at 1-level",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "hcp": {
+          "min": 6
+        },
+        "unbid_suit_support": {
+          "min": 2
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Negative double showing values and unbid suits",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "negative_double_2_level",
+      "bid": "X",
+      "priority": 115,
+      "description": "Negative double at 2-level",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "hcp": {
+          "min": 8
+        },
+        "unbid_suit_support": {
+          "min": 2
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Negative double at 2-level showing 8+ HCP",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "free_bid_new_suit",
+      "bid": "2{suit}",
+      "priority": 80,
+      "description": "Free bid of new suit after interference",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "hcp": {
+          "min": 10
+        },
+        "suit_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Free bid showing 10+ HCP and 5+ card suit",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "free_raise_after_interference",
+      "bid": "2{partner_suit}",
+      "priority": 75,
+      "description": "Free raise after opponent's overcall",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "hcp": {
+          "min": 8,
+          "max": 10
+        },
+        "support_for_partner": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Free raise showing 8-10 HCP with support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "jump_raise_after_interference",
+      "bid": "3{partner_suit}",
+      "priority": 70,
+      "description": "Jump raise (preemptive) after interference",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "hcp": {
+          "min": 6,
+          "max": 9
+        },
+        "support_for_partner": {
+          "min": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Preemptive jump raise with 4+ support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "redouble_after_takeout_double",
+      "bid": "XX",
+      "priority": 130,
+      "description": "Redouble showing 10+ HCP after opponent's takeout double",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "partner_last_bid": {
+          "in": ["1♣", "1♦", "1♥", "1♠"]
+        },
+        "rho_last_bid": "X",
+        "hcp": {
+          "min": 10
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Redouble showing 10+ HCP - penalty interest",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "pass_with_trap",
+      "bid": "Pass",
+      "priority": 125,
+      "description": "Trap pass after partner's double - convert to penalty",
+      "conditions": {
+        "partner_last_bid": "X",
+        "hcp": {
+          "min": 8
+        },
+        "support_for_partner": {
+          "max": 2
+        },
+        "stopper_in_opponent_suit": true
+      },
+      "forcing": "none",
+      "explanation": "Pass to convert takeout double to penalty",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "michaels_cuebid_major",
+      "bid": "{opponent_suit}",
+      "priority": 90,
+      "description": "Michaels cuebid of opponent's major",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": ["1♥", "1♠"]
+        },
+        "hcp": {
+          "min": 6,
+          "max": 11
+        },
+        "other_major_length": {
+          "min": 5
+        },
+        "any_minor_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Michaels showing 5-5 in other major and a minor",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "michaels_cuebid_minor",
+      "bid": "{opponent_suit}",
+      "priority": 88,
+      "description": "Michaels cuebid of opponent's minor",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": ["1♣", "1♦"]
+        },
+        "hcp": {
+          "min": 6,
+          "max": 11
+        },
+        "spades_length": {
+          "min": 5
+        },
+        "hearts_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Michaels showing 5-5 in both majors",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "unusual_2nt",
+      "bid": "2NT",
+      "priority": 85,
+      "description": "Unusual 2NT showing minors",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": ["1♥", "1♠"]
+        },
+        "hcp": {
+          "min": 6,
+          "max": 11
+        },
+        "diamonds_length": {
+          "min": 5
+        },
+        "clubs_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Unusual 2NT showing 5-5 in the minors",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "pass_competitive_weak",
+      "bid": "Pass",
+      "priority": 5,
+      "description": "Pass in competitive auction with weak hand",
+      "conditions": {
+        "is_contested": true,
+        "hcp": {
+          "max": 5
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with only {hcp} HCP in competitive auction",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_competitive_no_fit",
+      "bid": "Pass",
+      "priority": 4,
+      "description": "Pass in competitive auction with no fit",
+      "conditions": {
+        "is_contested": true,
+        "hcp": {
+          "min": 6,
+          "max": 9
+        },
+        "support_for_partner": {
+          "max": 2
+        },
+        "longest_suit_length": {
+          "max": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with {hcp} HCP - no fit and no suit to bid",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

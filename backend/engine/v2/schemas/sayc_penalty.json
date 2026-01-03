@@ -1,0 +1,151 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "penalty",
+  "description": "Penalty doubles and forcing passes in competitive auctions",
+  "rules": [
+    {
+      "id": "penalty_double_high_level",
+      "bid": "X",
+      "priority": 200,
+      "description": "Penalty double at high level (3-level or higher)",
+      "conditions": {
+        "is_contested": true,
+        "auction_level": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 10
+        },
+        "stopper_in_opponent_suit": true,
+        "support_for_partner": {
+          "max": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Penalty double - expecting to defeat contract",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "forcing_pass_game_level",
+      "bid": "Pass",
+      "priority": 195,
+      "description": "Forcing pass at game level - partner must act",
+      "conditions": {
+        "game_forcing": true,
+        "is_contested": true,
+        "hcp": {
+          "min": 8
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Forcing pass - partner must double or bid on",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "penalty_pass_convert_double",
+      "bid": "Pass",
+      "priority": 190,
+      "description": "Pass to convert partner's takeout double to penalty",
+      "conditions": {
+        "partner_last_bid": "X",
+        "stopper_in_opponent_suit": true,
+        "hcp": {
+          "min": 8
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass converting double to penalty - strong in their suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "cooperative_double",
+      "bid": "X",
+      "priority": 185,
+      "description": "Cooperative (optional) double at 3+ level - partner can pass or pull",
+      "conditions": {
+        "is_contested": true,
+        "auction_level": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 12
+        },
+        "quick_tricks": {
+          "min": 2.0
+        }
+      },
+      "forcing": "none",
+      "explanation": "Cooperative double - partner decides penalty or pull",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "lead_directing_double",
+      "bid": "X",
+      "priority": 170,
+      "description": "Lead-directing double of artificial bid (cue/transfer)",
+      "conditions": {
+        "is_contested": true,
+        "opponent_bid_artificial": true,
+        "hcp": {
+          "min": 6
+        }
+      },
+      "forcing": "none",
+      "explanation": "Lead-directing double - requesting this suit lead",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "lightner_double",
+      "bid": "X",
+      "priority": 165,
+      "description": "Lightner double of slam - unusual lead requested",
+      "conditions": {
+        "is_contested": true,
+        "auction_level": {
+          "min": 6
+        }
+      },
+      "forcing": "none",
+      "explanation": "Lightner double - do NOT lead a trump or our suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "sacrifice_bid",
+      "bid": "5{agreed_suit}",
+      "priority": 150,
+      "description": "Sacrifice bid over opponent's game",
+      "conditions": {
+        "is_contested": true,
+        "fit_known": true,
+        "hcp": {
+          "max": 10
+        },
+        "fit_length": {
+          "min": 9
+        }
+      },
+      "forcing": "none",
+      "explanation": "Sacrifice - cheaper to go down than let them make",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "double_and_bid",
+      "bid": "X",
+      "priority": 140,
+      "description": "Double then bid - showing strong hand",
+      "conditions": {
+        "is_overcall": true,
+        "hcp": {
+          "min": 17
+        },
+        "longest_suit_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Double then bid - too strong for simple overcall",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    }
+  ]
+}
