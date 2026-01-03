@@ -353,10 +353,72 @@ from engine.hand import Hand, Card
 }
 ```
 
+### 14. Game-Force Raises Schema (NEW)
+
+**File:** `backend/engine/v2/schemas/sayc_gf_raises.json`
+
+**Purpose:** Handle game-forcing auctions when responder has a strong hand (13+ HCP) with support.
+
+#### Jacoby 2NT
+
+Game-forcing raise with 4+ trump support in response to 1M opening.
+
+**Rules:**
+| Rule ID | Bid | Description |
+|---------|-----|-------------|
+| `jacoby_2nt_over_1h` | 2NT | 13+ HCP, 4+ hearts |
+| `jacoby_2nt_over_1s` | 2NT | 13+ HCP, 4+ spades |
+
+**Opener Rebids after Jacoby 2NT:**
+| Rule ID | Bid | Description |
+|---------|-----|-------------|
+| `opener_rebid_jacoby_shortness_void` | 3X | Show void (singleton suit) |
+| `opener_rebid_jacoby_shortness_singleton` | 3X | Show singleton |
+| `opener_rebid_jacoby_minimum` | 4M | Minimum hand (12-14 HCP) |
+| `opener_rebid_jacoby_strong` | 3M | Strong hand (18+ HCP) |
+
+#### Splinter Bids
+
+Jump to 4-level showing shortness (void or singleton) with 4+ support and 11-14 HCP.
+
+**Rules:**
+| Rule ID | Bid | Description |
+|---------|-----|-------------|
+| `splinter_4c_over_1h` | 4♣ | Singleton/void ♣, 4+ ♥, 11-14 HCP |
+| `splinter_4d_over_1h` | 4♦ | Singleton/void ♦, 4+ ♥, 11-14 HCP |
+| `splinter_4c_over_1s` | 4♣ | Singleton/void ♣, 4+ ♠, 11-14 HCP |
+| `splinter_4d_over_1s` | 4♦ | Singleton/void ♦, 4+ ♠, 11-14 HCP |
+| `splinter_4h_over_1s` | 4♥ | Singleton/void ♥, 4+ ♠, 11-14 HCP |
+| `splinter_3s_over_1h` | 3♠ | Singleton/void ♠, 4+ ♥, 11-14 HCP |
+
+#### Fourth Suit Forcing (FSF)
+
+Bidding the only unbid suit as an artificial game force, asking for more information.
+
+**Rules:**
+| Rule ID | Bid | Description |
+|---------|-----|-------------|
+| `fourth_suit_forcing_2c` | 2♣ | Fourth suit forcing (GF) |
+| `fourth_suit_forcing_2d` | 2♦ | Fourth suit forcing (GF) |
+| `fourth_suit_forcing_2h` | 2♥ | Fourth suit forcing (GF) |
+| `fourth_suit_forcing_2s` | 2♠ | Fourth suit forcing (GF) |
+
+**New Features Added:**
+| Feature | Type | Description |
+|---------|------|-------------|
+| `has_void` | bool | True if hand has a void |
+| `has_singleton` | bool | True if hand has a singleton |
+| `has_doubleton` | bool | True if hand has a doubleton |
+| `short_suit` | str | The shortest suit (for splinter/shortness showing) |
+| `short_suit_length` | int | Length of the shortest suit |
+| `is_fourth_suit` | bool | True if exactly 3 suits have been bid naturally |
+| `fourth_suit` | str | The unbid suit (if is_fourth_suit is True) |
+| `lho_last_bid` | str | Left Hand Opponent's last bid |
+
 ## Future Work
 
 1. ~~**Expand rule coverage** - Reduce "No Rule Found" rate from 59.6%~~ ✅ Reduced to 45.9%
-2. **Add fourth_suit_available feature** - Enable fourth suit forcing detection
+2. ~~**Add fourth_suit_available feature** - Enable fourth suit forcing detection~~ ✅ Added is_fourth_suit, fourth_suit
 3. ~~**Add partner_first_suit tracking** - For preference bids~~ ✅ Implemented
 4. ~~**Add my_suit tracking** - For rebidding own suit~~ ✅ Implemented
 5. **Add more advancer rules** - Responses to partner's overcalls/doubles
@@ -365,6 +427,9 @@ from engine.hand import Hand, Card
 8. ~~**Smolen Convention** - 5-4 majors after Stayman denial~~ ✅ Implemented
 9. ~~**RKCB 1430** - Key card responses for slam bidding~~ ✅ Implemented
 10. ~~**Penalty and Forcing Passes** - High-level competitive decisions~~ ✅ Added sayc_penalty.json
+11. ~~**Jacoby 2NT** - Game-forcing raise with 4+ trump support~~ ✅ Added sayc_gf_raises.json
+12. ~~**Splinter Bids** - 4-level jumps showing shortness + support~~ ✅ Added sayc_gf_raises.json
+13. ~~**Fourth Suit Forcing** - Artificial game force~~ ✅ Added sayc_gf_raises.json
 
 ## Related Files
 
@@ -379,5 +444,6 @@ from engine.hand import Hand, Card
   - Doubles: `backend/engine/v2/schemas/sayc_doubles.json`
   - Balancing: `backend/engine/v2/schemas/sayc_balancing.json`
   - RKCB: `backend/engine/v2/schemas/sayc_rkcb.json`
-  - Interference: `backend/engine/v2/schemas/sayc_interference.json` (NEW)
-  - Penalty: `backend/engine/v2/schemas/sayc_penalty.json` (NEW)
+  - Interference: `backend/engine/v2/schemas/sayc_interference.json`
+  - Penalty: `backend/engine/v2/schemas/sayc_penalty.json`
+  - GF Raises: `backend/engine/v2/schemas/sayc_gf_raises.json` (NEW)

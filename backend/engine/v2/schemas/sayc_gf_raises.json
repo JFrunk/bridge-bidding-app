@@ -1,0 +1,363 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "gf_raises",
+  "description": "Game-forcing raises: Jacoby 2NT, Splinters, Fourth Suit Forcing",
+  "rules": [
+    {
+      "id": "jacoby_2nt_over_1h",
+      "bid": "2NT",
+      "priority": 250,
+      "description": "Jacoby 2NT: Game-forcing raise of 1♥ with 4+ support",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1♥",
+        "hcp": {
+          "min": 13
+        },
+        "hearts_length": {
+          "min": 4
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby 2NT: Game-forcing raise with 4+ trump support",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_2nt_over_1s",
+      "bid": "2NT",
+      "priority": 249,
+      "description": "Jacoby 2NT: Game-forcing raise of 1♠ with 4+ support",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1♠",
+        "hcp": {
+          "min": 13
+        },
+        "spades_length": {
+          "min": 4
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby 2NT: Game-forcing raise with 4+ trump support",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "splinter_4c_over_1h",
+      "bid": "4♣",
+      "priority": 260,
+      "description": "Splinter: Club shortness over 1♥",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1♥",
+        "hcp": {
+          "min": 11,
+          "max": 14
+        },
+        "hearts_length": {
+          "min": 4
+        },
+        "clubs_length": {
+          "max": 1
+        }
+      },
+      "forcing": "game",
+      "explanation": "Splinter showing game values and club shortness",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "splinter_4d_over_1h",
+      "bid": "4♦",
+      "priority": 259,
+      "description": "Splinter: Diamond shortness over 1♥",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1♥",
+        "hcp": {
+          "min": 11,
+          "max": 14
+        },
+        "hearts_length": {
+          "min": 4
+        },
+        "diamonds_length": {
+          "max": 1
+        }
+      },
+      "forcing": "game",
+      "explanation": "Splinter showing game values and diamond shortness",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "splinter_4s_over_1h",
+      "bid": "4♠",
+      "priority": 258,
+      "description": "Splinter: Spade shortness over 1♥",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1♥",
+        "hcp": {
+          "min": 11,
+          "max": 14
+        },
+        "hearts_length": {
+          "min": 4
+        },
+        "spades_length": {
+          "max": 1
+        }
+      },
+      "forcing": "game",
+      "explanation": "Splinter showing game values and spade shortness",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "splinter_4c_over_1s",
+      "bid": "4♣",
+      "priority": 257,
+      "description": "Splinter: Club shortness over 1♠",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1♠",
+        "hcp": {
+          "min": 11,
+          "max": 14
+        },
+        "spades_length": {
+          "min": 4
+        },
+        "clubs_length": {
+          "max": 1
+        }
+      },
+      "forcing": "game",
+      "explanation": "Splinter showing game values and club shortness",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "splinter_4d_over_1s",
+      "bid": "4♦",
+      "priority": 256,
+      "description": "Splinter: Diamond shortness over 1♠",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1♠",
+        "hcp": {
+          "min": 11,
+          "max": 14
+        },
+        "spades_length": {
+          "min": 4
+        },
+        "diamonds_length": {
+          "max": 1
+        }
+      },
+      "forcing": "game",
+      "explanation": "Splinter showing game values and diamond shortness",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "splinter_4h_over_1s",
+      "bid": "4♥",
+      "priority": 255,
+      "description": "Splinter: Heart shortness over 1♠",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1♠",
+        "hcp": {
+          "min": 11,
+          "max": 14
+        },
+        "spades_length": {
+          "min": 4
+        },
+        "hearts_length": {
+          "max": 1
+        }
+      },
+      "forcing": "game",
+      "explanation": "Splinter showing game values and heart shortness",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "fourth_suit_forcing_2c",
+      "bid": "2♣",
+      "priority": 200,
+      "description": "Fourth Suit Forcing: 2♣ after 1♦-1♥-1♠",
+      "conditions": {
+        "is_response": true,
+        "opener_relationship": "Partner",
+        "my_bid_count": {
+          "min": 1
+        },
+        "hcp": {
+          "min": 12
+        },
+        "is_fourth_suit": true,
+        "fourth_suit": "♣"
+      },
+      "forcing": "game",
+      "explanation": "Fourth Suit Forcing: Artificial game force asking for more info",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "fourth_suit_forcing_2d",
+      "bid": "2♦",
+      "priority": 199,
+      "description": "Fourth Suit Forcing: 2♦ after 1♣-1♥-1♠",
+      "conditions": {
+        "is_response": true,
+        "opener_relationship": "Partner",
+        "my_bid_count": {
+          "min": 1
+        },
+        "hcp": {
+          "min": 12
+        },
+        "is_fourth_suit": true,
+        "fourth_suit": "♦"
+      },
+      "forcing": "game",
+      "explanation": "Fourth Suit Forcing: Artificial game force asking for more info",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "fourth_suit_forcing_2h",
+      "bid": "2♥",
+      "priority": 198,
+      "description": "Fourth Suit Forcing: 2♥ after 1♣-1♦-1♠ or 1♦-1♠-2♣",
+      "conditions": {
+        "is_response": true,
+        "opener_relationship": "Partner",
+        "my_bid_count": {
+          "min": 1
+        },
+        "hcp": {
+          "min": 12
+        },
+        "is_fourth_suit": true,
+        "fourth_suit": "♥"
+      },
+      "forcing": "game",
+      "explanation": "Fourth Suit Forcing: Artificial game force asking for more info",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "fourth_suit_forcing_2s",
+      "bid": "2♠",
+      "priority": 197,
+      "description": "Fourth Suit Forcing: 2♠ after various sequences",
+      "conditions": {
+        "is_response": true,
+        "opener_relationship": "Partner",
+        "my_bid_count": {
+          "min": 1
+        },
+        "hcp": {
+          "min": 12
+        },
+        "is_fourth_suit": true,
+        "fourth_suit": "♠"
+      },
+      "forcing": "game",
+      "explanation": "Fourth Suit Forcing: Artificial game force asking for more info",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "opener_rebid_jacoby_shortness_void",
+      "bid": "3{short_suit}",
+      "priority": 245,
+      "description": "Opener shows void after Jacoby 2NT",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": {
+          "in": ["1♥", "1♠"]
+        },
+        "has_void": true
+      },
+      "forcing": "game",
+      "explanation": "Showing void in {short_suit} after Jacoby 2NT",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "opener_rebid_jacoby_shortness_singleton",
+      "bid": "3{short_suit}",
+      "priority": 244,
+      "description": "Opener shows singleton after Jacoby 2NT",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": {
+          "in": ["1♥", "1♠"]
+        },
+        "has_singleton": true
+      },
+      "forcing": "game",
+      "explanation": "Showing singleton in {short_suit} after Jacoby 2NT",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "opener_rebid_jacoby_minimum",
+      "bid": "4{my_suit}",
+      "priority": 240,
+      "description": "Opener rebids 4M with minimum after Jacoby 2NT",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": {
+          "in": ["1♥", "1♠"]
+        },
+        "hcp": {
+          "min": 12,
+          "max": 14
+        },
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "Minimum balanced hand, signing off in game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_jacoby_extra_strength",
+      "bid": "3NT",
+      "priority": 242,
+      "description": "Opener shows extra strength balanced after Jacoby 2NT",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": {
+          "in": ["1♥", "1♠"]
+        },
+        "hcp": {
+          "min": 15,
+          "max": 17
+        },
+        "is_balanced": true
+      },
+      "forcing": "game",
+      "explanation": "Extra values (15-17 HCP), balanced, slam interest",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "opener_rebid_jacoby_strong",
+      "bid": "3{my_suit}",
+      "priority": 243,
+      "description": "Opener rebids 3M with 18+ HCP after Jacoby 2NT",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": {
+          "in": ["1♥", "1♠"]
+        },
+        "hcp": {
+          "min": 18
+        }
+      },
+      "forcing": "game",
+      "explanation": "Strong hand (18+ HCP), serious slam interest",
+      "sets_forcing_level": "GAME_FORCE"
+    }
+  ]
+}

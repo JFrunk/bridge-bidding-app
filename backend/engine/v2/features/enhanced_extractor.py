@@ -319,6 +319,37 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # Any minor length (for Michaels over major)
     flat['any_minor_length'] = max(suit_lengths.get('♣', 0), suit_lengths.get('♦', 0))
 
+    # Shortness detection (for Splinters and Jacoby rebids)
+    flat['has_void'] = any(l == 0 for l in suit_lengths.values())
+    flat['has_singleton'] = any(l == 1 for l in suit_lengths.values())
+    flat['has_doubleton'] = any(l == 2 for l in suit_lengths.values())
+
+    # Find the short suit (void or singleton)
+    flat['short_suit'] = None
+    flat['short_suit_length'] = 13
+    for suit in ['♠', '♥', '♦', '♣']:
+        length = suit_lengths.get(suit, 0)
+        if length < flat['short_suit_length']:
+            flat['short_suit_length'] = length
+            flat['short_suit'] = suit
+
+    # Fourth Suit Forcing detection
+    # Track which suits have been bid naturally
+    all_suits = {'♠', '♥', '♦', '♣'}
+    bid_suits_natural = set()
+    for bid in auction_history:
+        suit = get_suit_from_bid(bid)
+        if suit:
+            bid_suits_natural.add(suit)
+
+    unbid_suits_remaining = all_suits - bid_suits_natural
+    flat['is_fourth_suit'] = len(unbid_suits_remaining) == 1
+    flat['fourth_suit'] = list(unbid_suits_remaining)[0] if flat['is_fourth_suit'] else None
+
+    # LHO's last bid (for balancing checks)
+    lho_bids = _get_lho_bids(auction_history, my_position)
+    flat['lho_last_bid'] = lho_bids[-1] if lho_bids else None
+
     # PBN representation
     flat['pbn'] = hand_to_pbn(hand)
 
@@ -509,3 +540,26 @@ def _get_rho_bids(auction_history: List[str], my_position: str) -> List[str]:
             rho_bids.append(bid)
 
     return rho_bids
+
+
+def _get_lho_bids(auction_history: List[str], my_position: str) -> List[str]:
+    """
+    Extract Left Hand Opponent's bids from the auction history.
+
+    Args:
+        auction_history: List of bids in order
+        my_position: My position (North, East, South, West)
+
+    Returns:
+        List of LHO's bids in order
+    """
+    positions = ['North', 'East', 'South', 'West']
+    my_idx = positions.index(my_position) if my_position in positions else 0
+    lho_idx = (my_idx + 1) % 4  # LHO is to my left (bids after me)
+
+    lho_bids = []
+    for i, bid in enumerate(auction_history):
+        if i % 4 == lho_idx:
+            lho_bids.append(bid)
+
+    return lho_bids
