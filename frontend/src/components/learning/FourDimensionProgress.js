@@ -267,9 +267,9 @@ const ProgressBar = ({
   children
 }) => {
   return (
-    <div className={`progress-bar progress-bar-${accentColor} ${expanded ? 'expanded' : ''}`}>
+    <div className={`expandable-progress-bar accent-${accentColor} ${expanded ? 'expanded' : ''}`}>
       {/* Collapsed Header */}
-      <div className="progress-bar-header" onClick={onToggle}>
+      <div className="expandable-progress-bar-header" onClick={onToggle}>
         <div className="bar-left">
           <span className="bar-icon">{icon}</span>
           <span className="bar-title">{title}</span>
@@ -294,7 +294,7 @@ const ProgressBar = ({
       </div>
 
       {/* Expanded Content */}
-      <div className={`progress-bar-content ${expanded ? 'show' : ''}`}>
+      <div className={`expandable-progress-bar-content ${expanded ? 'show' : ''}`}>
         {children}
       </div>
     </div>

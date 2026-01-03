@@ -139,7 +139,7 @@
    PROGRESS BAR (Expandable Bar)
    ============================================================================ */
 
-.progress-bar {
+.expandable-progress-bar {
   background: white;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -148,33 +148,33 @@
   transition: box-shadow 0.2s ease;
 }
 
-.progress-bar:hover {
+.expandable-progress-bar:hover {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 /* Accent Colors */
-.progress-bar-primary {
+.expandable-progress-bar.accent-primary {
   border-left-color: var(--color-primary, #2563eb);
 }
 
-.progress-bar-warning {
+.expandable-progress-bar.accent-warning {
   border-left-color: var(--color-warning, #f59e0b);
 }
 
-.progress-bar-info {
+.expandable-progress-bar.accent-info {
   border-left-color: var(--color-info, #06b6d4);
 }
 
-.progress-bar-success {
+.expandable-progress-bar.accent-success {
   border-left-color: var(--color-success, #22c55e);
 }
 
-.progress-bar-neutral {
+.expandable-progress-bar.accent-neutral {
   border-left-color: var(--text-muted, #9ca3af);
 }
 
 /* Bar Header (Collapsed View) */
-.progress-bar-header {
+.expandable-progress-bar-header {
   display: flex;
   align-items: center;
   padding: var(--space-4, 16px) var(--space-5, 20px);
@@ -184,7 +184,7 @@
   transition: background 0.2s ease;
 }
 
-.progress-bar-header:hover {
+.expandable-progress-bar-header:hover {
   background: var(--bg-secondary, #f8f9fa);
 }
 
@@ -256,7 +256,7 @@
 }
 
 /* Bar Content (Expanded View) */
-.progress-bar-content {
+.expandable-progress-bar-content {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease-out, padding 0.3s ease-out;
@@ -264,7 +264,7 @@
   border-top: 1px solid transparent;
 }
 
-.progress-bar-content.show {
+.expandable-progress-bar-content.show {
   max-height: 800px;
   padding: var(--space-4, 16px);
   border-top-color: var(--border-color, #e5e7eb);
@@ -1075,7 +1075,7 @@
     width: 100%;
   }
 
-  .progress-bar-header {
+  .expandable-progress-bar-header {
     min-height: 56px;
     padding: var(--space-3, 12px) var(--space-4, 16px);
   }
@@ -1137,7 +1137,7 @@
     gap: var(--space-3, 12px);
   }
 
-  .progress-bar-header {
+  .expandable-progress-bar-header {
     flex-wrap: wrap;
     gap: var(--space-2, 8px);
     min-height: 52px;
