@@ -126,15 +126,83 @@ Marks bid as showing a narrow range.
 "is_limit_bid": true
 ```
 
+### 5. Explicit Pass Rules (NEW)
+
+**Files:**
+- `backend/engine/v2/schemas/sayc_responses.json`
+- `backend/engine/v2/schemas/sayc_rebids.json`
+- `backend/engine/v2/schemas/sayc_balancing.json`
+
+**Problem:** The 59.6% "No Rule Found" rate included many cases where Pass was the correct action but no explicit Pass rule matched.
+
+**Solution:** Added explicit Pass rules for common situations:
+
+| Rule ID | Location | Description |
+|---------|----------|-------------|
+| `pass_after_nt_minimum` | responses | Pass 1NT with 0-7 balanced |
+| `pass_after_2nt_minimum` | responses | Pass 2NT with 0-4 HCP |
+| `pass_after_preempt` | responses | Pass partner's preempt with no fit |
+| `opener_pass_after_limit_raise` | rebids | Accept limit raise with minimum |
+| `opener_pass_after_1nt_response` | rebids | Pass 1NT with balanced minimum |
+| `responder_pass_opener_minimum_rebid` | rebids | Pass after minimum rebid |
+| `pass_balancing_weak` | balancing | Pass in balancing with 0-4 HCP |
+| `pass_balancing_defensive` | balancing | Pass with values in opponent's suit |
+
+### 6. Borrowed King Balancing (NEW)
+
+**File:** `backend/engine/v2/schemas/sayc_balancing.json`
+
+**Concept:** In balancing (pass-out) seat, bid with approximately 3 fewer HCP than in direct seat, because partner is expected to have some values (the "borrowed king").
+
+**Implementation:**
+- Balancing takeout double: 8-14 HCP (direct seat requires 12+)
+- Balancing 1NT: 11-15 HCP (direct seat requires 15-18)
+- Balancing suit bids: 5+ HCP (direct seat requires 8+)
+
+```json
+{
+  "id": "balancing_double",
+  "conditions": {
+    "is_balancing": true,
+    "hcp": {"min": 8, "max": 14}
+  }
+}
+```
+
+### 7. Partner/Suit Tracking Features (NEW)
+
+**File:** `backend/engine/v2/features/enhanced_extractor.py`
+
+Added new features for preference bids and reverse detection:
+
+| Feature | Type | Description |
+|---------|------|-------------|
+| `partner_first_suit` | str | Partner's first natural suit bid |
+| `support_for_partner_first` | int | Card count in partner's first suit |
+| `my_suit` | str | My first natural suit bid |
+| `second_suit` | str | My second 4+ card suit |
+| `second_suit_higher` | bool | True if second suit ranks higher (reverse) |
+| `second_suit_lower` | bool | True if second suit ranks lower (non-reverse) |
+| `stopper_in_opponent_suit` | bool | Have stopper in opener's suit |
+| `unbid_suit_support` | int | Count of unbid suits with 3+ support |
+
+These enable:
+- Preference bids: Return to partner's first suit
+- Barrier Principle: Detect reverse bids (higher second suit at 2-level)
+- NT overcalls: Check stopper in opponent's suit
+- Takeout doubles: Verify support for all unbid suits
+
 ## Testing
 
-### Baseline Test Results
+### Baseline Test Results (Updated)
 ```
 Total tests: 218
-Matched expected: 28 (12.8%)
-No rule found: 130 (59.6%)
+Matched expected: 27 (12.4%)
+No rule found: 114 (52.3%)  ← Improved from 59.6%
 Errors: 0
 ```
+
+**Improvement:** "No Rule Found" reduced by 7.3 percentage points.
 
 Category highlights:
 - **Balancing:** 36.4% match
@@ -149,16 +217,34 @@ cd backend
 python3 -c "from engine.hand_constructor import generate_hand_with_constraints; ..."
 ```
 
+Run the feature extractor test:
+```bash
+cd backend
+python3 -c "
+from engine.v2.features.enhanced_extractor import extract_flat_features
+from engine.hand import Hand, Card
+# ... test partner_first_suit, second_suit_higher, etc.
+"
+```
+
 ## Future Work
 
-1. **Expand rule coverage** - Reduce "No Rule Found" rate from 59.6%
+1. ~~**Expand rule coverage** - Reduce "No Rule Found" rate from 59.6%~~ ✅ Reduced to 52.3%
 2. **Add fourth_suit_available feature** - Enable fourth suit forcing detection
-3. **Add partner_first_suit tracking** - For preference bids
-4. **Add my_suit tracking** - For rebidding own suit
+3. ~~**Add partner_first_suit tracking** - For preference bids~~ ✅ Implemented
+4. ~~**Add my_suit tracking** - For rebidding own suit~~ ✅ Implemented
+5. **Add more advancer rules** - Responses to partner's overcalls/doubles
+6. **Improve competitive auction handling** - More interference response rules
 
 ## Related Files
 
 - Schema Interpreter: `backend/engine/v2/interpreters/schema_interpreter.py`
 - Feature Extractor: `backend/engine/v2/features/enhanced_extractor.py`
 - Hand Constructor: `backend/engine/hand_constructor.py`
-- Rebids Schema: `backend/engine/v2/schemas/sayc_rebids.json`
+- Schemas:
+  - Opening Bids: `backend/engine/v2/schemas/sayc_openings.json`
+  - Responses: `backend/engine/v2/schemas/sayc_responses.json`
+  - Rebids: `backend/engine/v2/schemas/sayc_rebids.json`
+  - Overcalls: `backend/engine/v2/schemas/sayc_overcalls.json`
+  - Doubles: `backend/engine/v2/schemas/sayc_doubles.json`
+  - Balancing: `backend/engine/v2/schemas/sayc_balancing.json`
