@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "../../lib/utils";
+import "./TrickPotentialChart.css";
 
 /**
  * TrickPotentialChart - Shows double-dummy trick potential for NS/EW
@@ -27,6 +27,7 @@ const STRAINS = [
 
 // Determine contract level based on tricks
 function getContractLevel(tricks, strain) {
+  if (typeof tricks !== 'number') return 'partscore';
   if (tricks >= 13) return 'grand';
   if (tricks >= 12) return 'slam';
 
@@ -41,54 +42,34 @@ function getContractLevel(tricks, strain) {
   return 'partscore';
 }
 
-// Get border class for contract level
-function getBorderClass(level) {
-  switch (level) {
-    case 'grand':
-      return 'ring-2 ring-red-500';
-    case 'slam':
-      return 'ring-2 ring-orange-400';
-    case 'game':
-      return 'ring-2 ring-green-500';
-    default:
-      return '';
-  }
-}
-
 // Trick cell component
 function TrickCell({ tricks, strain }) {
   const level = getContractLevel(tricks, strain);
-  const borderClass = getBorderClass(level);
+  const displayValue = typeof tricks === 'number' ? tricks : '-';
 
   return (
-    <td className="px-2 py-1 text-center">
-      <span
-        className={cn(
-          "inline-block w-7 h-7 leading-7 rounded text-sm font-medium",
-          borderClass,
-          level === 'partscore' && "text-gray-300"
-        )}
-      >
-        {tricks}
+    <td className={`trick-cell ${level}`}>
+      <span className={`trick-value ${level}`}>
+        {displayValue}
       </span>
     </td>
   );
 }
 
-// Legend component
+// Legend component - subtle, right-aligned
 function Legend() {
   return (
-    <div className="flex items-center gap-3 text-xs text-gray-400 mt-2">
-      <div className="flex items-center gap-1">
-        <span className="inline-block w-3 h-3 rounded ring-2 ring-green-500"></span>
+    <div className="trick-potential-legend">
+      <div className="legend-item">
+        <span className="legend-swatch game"></span>
         <span>Game</span>
       </div>
-      <div className="flex items-center gap-1">
-        <span className="inline-block w-3 h-3 rounded ring-2 ring-orange-400"></span>
+      <div className="legend-item">
+        <span className="legend-swatch slam"></span>
         <span>Slam</span>
       </div>
-      <div className="flex items-center gap-1">
-        <span className="inline-block w-3 h-3 rounded ring-2 ring-red-500"></span>
+      <div className="legend-item">
+        <span className="legend-swatch grand"></span>
         <span>Grand</span>
       </div>
     </div>
@@ -98,39 +79,39 @@ function Legend() {
 export function TrickPotentialChart({ ddTable, onClose, compact = false }) {
   if (!ddTable) return null;
 
-  const suitColor = (symbol) =>
-    symbol === '♥' || symbol === '♦' ? 'text-suit-red' : 'text-suit-black';
+  const suitColorClass = (symbol) =>
+    symbol === '♥' || symbol === '♦' ? 'suit-red' : 'suit-black';
 
   const tableContent = (
     <div className="trick-potential-chart">
-      <table className="w-full text-center">
+      <table>
         <thead>
-          <tr className="text-gray-400 text-sm">
-            <th className="px-2 py-1"></th>
+          <tr>
+            <th></th>
             {STRAINS.map(strain => (
-              <th key={strain.key} className={cn("px-2 py-1", suitColor(strain.symbol))}>
+              <th key={strain.key} className={suitColorClass(strain.symbol)}>
                 {strain.symbol}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="text-white">
+        <tbody>
           <tr>
-            <td className="px-2 py-1 text-left text-gray-300 font-medium">NS</td>
+            <td className="row-label">NS</td>
             {STRAINS.map(strain => (
               <TrickCell
                 key={strain.key}
-                tricks={ddTable.NS?.[strain.key] ?? '-'}
+                tricks={ddTable.NS?.[strain.key]}
                 strain={strain}
               />
             ))}
           </tr>
           <tr>
-            <td className="px-2 py-1 text-left text-gray-300 font-medium">EW</td>
+            <td className="row-label">EW</td>
             {STRAINS.map(strain => (
               <TrickCell
                 key={strain.key}
-                tricks={ddTable.EW?.[strain.key] ?? '-'}
+                tricks={ddTable.EW?.[strain.key]}
                 strain={strain}
               />
             ))}
@@ -148,28 +129,18 @@ export function TrickPotentialChart({ ddTable, onClose, compact = false }) {
 
   // Overlay mode: wrap in dismissible container
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="bg-bg-secondary rounded-lg shadow-xl p-4 max-w-xs"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-200">Trick Potential</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white text-lg leading-none"
-            aria-label="Close"
-          >
+    <div className="trick-potential-overlay" onClick={onClose}>
+      <div className="trick-potential-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <span className="modal-title">Trick Potential</span>
+          <button className="modal-close" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
         {tableContent}
-        <p className="text-xs text-gray-500 mt-3 text-center">
+        <div className="modal-footer">
           Double-dummy analysis
-        </p>
+        </div>
       </div>
     </div>
   );
@@ -184,14 +155,7 @@ export function TrickPotentialButton({ onClick, disabled = false }) {
   return (
     <button
       onClick={onClick}
-      className={cn(
-        "inline-flex items-center justify-center",
-        "w-7 h-7 rounded",
-        "bg-bg-tertiary hover:bg-bg-secondary",
-        "text-gray-400 hover:text-white",
-        "transition-colors duration-150",
-        "text-sm"
-      )}
+      className="trick-potential-button"
       title="View trick potential"
       aria-label="View trick potential chart"
     >

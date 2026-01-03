@@ -1,0 +1,189 @@
+/* TrickPotentialChart Component Styles */
+/* Supports both dark mode (main app) and light mode (modals) */
+
+.trick-potential-chart {
+  /* Default to dark mode (for main app bidding area) */
+  --tpc-text-primary: #e5e7eb;
+  --tpc-text-secondary: #9ca3af;
+  --tpc-text-muted: #6b7280;
+  --tpc-bg: transparent;
+}
+
+/* Light mode override (inside modals) */
+.hand-review-modal .trick-potential-chart,
+.trick-potential-section .trick-potential-chart {
+  --tpc-text-primary: #1f2937;
+  --tpc-text-secondary: #6b7280;
+  --tpc-text-muted: #9ca3af;
+  --tpc-bg: #f8fafc;
+}
+
+.trick-potential-chart table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.trick-potential-chart th,
+.trick-potential-chart td {
+  padding: 4px 8px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.trick-potential-chart th {
+  color: var(--tpc-text-secondary);
+  font-weight: 500;
+}
+
+.trick-potential-chart .row-label {
+  color: var(--tpc-text-secondary);
+  font-weight: 500;
+  text-align: left;
+}
+
+.trick-potential-chart .trick-cell {
+  color: var(--tpc-text-primary);
+}
+
+.trick-potential-chart .trick-cell.partscore {
+  color: var(--tpc-text-muted);
+}
+
+/* Game/Slam/Grand indicators - subtle ring borders */
+.trick-potential-chart .trick-value {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.trick-potential-chart .trick-value.game {
+  box-shadow: inset 0 0 0 2px #22c55e;
+}
+
+.trick-potential-chart .trick-value.slam {
+  box-shadow: inset 0 0 0 2px #fb923c;
+}
+
+.trick-potential-chart .trick-value.grand {
+  box-shadow: inset 0 0 0 2px #ef4444;
+}
+
+/* Legend */
+.trick-potential-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--tpc-text-muted);
+}
+
+.trick-potential-legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trick-potential-legend .legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.trick-potential-legend .legend-swatch.game {
+  box-shadow: inset 0 0 0 2px #22c55e;
+}
+
+.trick-potential-legend .legend-swatch.slam {
+  box-shadow: inset 0 0 0 2px #fb923c;
+}
+
+.trick-potential-legend .legend-swatch.grand {
+  box-shadow: inset 0 0 0 2px #ef4444;
+}
+
+/* Suit colors */
+.trick-potential-chart .suit-red {
+  color: #dc2626;
+}
+
+.trick-potential-chart .suit-black {
+  color: var(--tpc-text-primary);
+}
+
+/* Overlay mode (popup) */
+.trick-potential-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.trick-potential-overlay .trick-potential-modal {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 16px;
+  max-width: 320px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.trick-potential-overlay .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.trick-potential-overlay .modal-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.trick-potential-overlay .modal-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.trick-potential-overlay .modal-close:hover {
+  color: #fff;
+}
+
+.trick-potential-overlay .modal-footer {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* Trigger button */
+.trick-potential-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease;
+}
+
+.trick-potential-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}

@@ -2053,6 +2053,47 @@
   margin-bottom: 0;
 }
 
+/* Trick Potential Chart Section */
+.trick-potential-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.trick-potential-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+}
+
+.trick-potential-section .trick-potential-chart {
+  background: var(--bg-secondary, #f8fafc);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.trick-potential-section .trick-potential-chart table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.trick-potential-section .trick-potential-chart th,
+.trick-potential-section .trick-potential-chart td {
+  padding: 6px 8px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.trick-potential-section .trick-potential-chart th {
+  color: var(--text-secondary, #6b7280);
+  font-weight: 500;
+}
+
+.trick-potential-section .trick-potential-chart td {
+  color: var(--text-primary, #1f2937);
+}
+
 .section-card-content .play-quality-summary {
   margin-bottom: 0;
   background: transparent;
