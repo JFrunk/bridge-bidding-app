@@ -3,7 +3,6 @@
   "system": "SAYC",
   "category": "balancing",
   "description": "Balancing (pass-out) seat actions",
-
   "rules": [
     {
       "id": "balancing_double",
@@ -13,12 +12,25 @@
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
-        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
-        "hcp": {"min": 9, "max": 14},
-        "unbid_suit_support": {"min": 3}
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 9,
+          "max": 14
+        },
+        "unbid_suit_support": {
+          "min": 3
+        }
       },
       "forcing": "one_round",
-      "explanation": "Balancing double (about 3 HCP less than direct)"
+      "explanation": "Balancing double (about 3 HCP less than direct)",
+      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "balancing_double_strong",
@@ -28,11 +40,21 @@
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
-        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
-        "hcp": {"min": 15}
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 15
+        }
       },
       "forcing": "one_round",
-      "explanation": "Strong balancing double with {hcp} HCP"
+      "explanation": "Strong balancing double with {hcp} HCP",
+      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "balancing_double_flexible",
@@ -42,12 +64,25 @@
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
-        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
-        "hcp": {"min": 9, "max": 14},
-        "unbid_suit_support": {"min": 2}
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 9,
+          "max": 14
+        },
+        "unbid_suit_support": {
+          "min": 2
+        }
       },
       "forcing": "one_round",
-      "explanation": "Balancing double with {hcp} HCP (flexible shape)"
+      "explanation": "Balancing double with {hcp} HCP (flexible shape)",
+      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "balancing_1nt",
@@ -57,13 +92,24 @@
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
-        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
-        "hcp": {"min": 11, "max": 14},
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 11,
+          "max": 14
+        },
         "is_balanced": true,
         "stopper_in_opponent_suit": true
       },
       "forcing": "none",
-      "explanation": "Balancing 1NT showing {hcp} HCP with stopper"
+      "explanation": "Balancing 1NT showing {hcp} HCP with stopper",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "balancing_suit_1_level",
@@ -73,12 +119,23 @@
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
-        "opening_bid": {"in": ["1♣", "1♦"]},
-        "hcp": {"min": 5, "max": 14},
-        "longest_suit_length": {"min": 5}
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦"
+          ]
+        },
+        "hcp": {
+          "min": 5,
+          "max": 14
+        },
+        "longest_suit_length": {
+          "min": 5
+        }
       },
       "forcing": "none",
-      "explanation": "Balancing bid in {longest_suit} with {hcp} HCP"
+      "explanation": "Balancing bid in {longest_suit} with {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "balancing_suit_2_level",
@@ -88,12 +145,20 @@
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
-        "hcp": {"min": 8, "max": 14},
-        "longest_suit_length": {"min": 5},
-        "suit_quality_longest": {"min": "fair"}
+        "hcp": {
+          "min": 8,
+          "max": 14
+        },
+        "longest_suit_length": {
+          "min": 5
+        },
+        "suit_quality_longest": {
+          "min": "fair"
+        }
       },
       "forcing": "none",
-      "explanation": "Balancing 2-level bid with {hcp} HCP"
+      "explanation": "Balancing 2-level bid with {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "balancing_cuebid",
@@ -103,13 +168,26 @@
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
-        "opening_bid": {"in": ["1♥", "1♠"]},
-        "hcp": {"min": 6, "max": 14},
-        "other_major_length": {"min": 5},
-        "any_minor_length": {"min": 5}
+        "opening_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 6,
+          "max": 14
+        },
+        "other_major_length": {
+          "min": 5
+        },
+        "any_minor_length": {
+          "min": 5
+        }
       },
       "forcing": "one_round",
-      "explanation": "Balancing Michaels showing two suits"
+      "explanation": "Balancing Michaels showing two suits",
+      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "advancer_jump_after_balancing_double",
@@ -120,11 +198,17 @@
         "partner_last_bid": "X",
         "is_balancing": false,
         "partner_balancing": true,
-        "hcp": {"min": 10, "max": 12},
-        "suit_length": {"min": 5}
+        "hcp": {
+          "min": 10,
+          "max": 12
+        },
+        "suit_length": {
+          "min": 5
+        }
       },
       "forcing": "none",
-      "explanation": "Jump showing {hcp} HCP (partner may have only 9)"
+      "explanation": "Jump showing {hcp} HCP (partner may have only 9)",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "advancer_respond_to_balancing_double",
@@ -134,12 +218,18 @@
       "conditions": {
         "partner_last_bid": "X",
         "is_balancing": false,
-        "hcp": {"min": 6, "max": 10},
-        "suit_length": {"min": 4}
+        "hcp": {
+          "min": 6,
+          "max": 10
+        },
+        "suit_length": {
+          "min": 4
+        }
       },
       "forcing": "none",
       "suit_selection": "longest_unbid",
-      "explanation": "Respond to partner's balancing double"
+      "explanation": "Respond to partner's balancing double",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "advancer_nt_after_balancing_double",
@@ -148,12 +238,16 @@
       "description": "2NT response to balancing double",
       "conditions": {
         "partner_last_bid": "X",
-        "hcp": {"min": 10, "max": 12},
+        "hcp": {
+          "min": 10,
+          "max": 12
+        },
         "is_balanced": true,
         "stopper_in_opponent_suit": true
       },
       "forcing": "none",
-      "explanation": "2NT showing {hcp} HCP balanced with stopper"
+      "explanation": "2NT showing {hcp} HCP balanced with stopper",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "pass_balancing",
@@ -164,15 +258,24 @@
         "is_overcall": true,
         "is_balancing": true,
         "OR": [
-          {"hcp": {"max": 4}},
           {
-            "hcp": {"max": 8},
-            "longest_suit_length": {"max": 4}
+            "hcp": {
+              "max": 4
+            }
+          },
+          {
+            "hcp": {
+              "max": 8
+            },
+            "longest_suit_length": {
+              "max": 4
+            }
           }
         ]
       },
       "forcing": "none",
-      "explanation": "Pass without suitable hand for balancing action"
+      "explanation": "Pass without suitable hand for balancing action",
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }

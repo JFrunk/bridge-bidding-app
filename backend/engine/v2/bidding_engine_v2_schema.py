@@ -7,12 +7,18 @@ Python code. This allows for:
 2. System toggling (SAYC vs 2/1) via different schema files
 3. Machine-readable rules for analysis and testing
 4. Cleaner separation of bidding knowledge from engine logic
+5. Proper forcing level tracking across the auction
 """
 
 from typing import Dict, Optional, Tuple, List
 from engine.hand import Hand
 from engine.v2.features.enhanced_extractor import extract_flat_features
-from engine.v2.interpreters.schema_interpreter import SchemaInterpreter, BidCandidate
+from engine.v2.interpreters.schema_interpreter import (
+    SchemaInterpreter,
+    BidCandidate,
+    BidValidationResult,
+    ForcingLevel
+)
 
 
 class BiddingEngineV2Schema:
@@ -21,6 +27,11 @@ class BiddingEngineV2Schema:
 
     Uses JSON schema files to determine bids rather than Python modules.
     This is the core of the refactored V2 approach.
+
+    Features:
+    - JSON-based bidding rules
+    - Forcing level state tracking (NON_FORCING, FORCING_1_ROUND, GAME_FORCE)
+    - Validation of bids against forcing constraints
     """
 
     def __init__(self, schema_dir: str = None):
@@ -32,6 +43,14 @@ class BiddingEngineV2Schema:
         """
         self.interpreter = SchemaInterpreter(schema_dir)
         self._bid_legality_cache = {}
+
+    def new_deal(self):
+        """Reset state for a new deal. Call this before each new hand."""
+        self.interpreter.reset_state()
+
+    def get_forcing_state(self) -> Dict:
+        """Get the current forcing state of the auction."""
+        return self.interpreter.get_forcing_state()
 
     def get_next_bid(
         self,
@@ -59,19 +78,47 @@ class BiddingEngineV2Schema:
             hand, auction_history, my_position, vulnerability, dealer
         )
 
+        # Add forcing state to features for rule evaluation
+        forcing_state = self.interpreter.get_forcing_state()
+        features['forcing_level'] = forcing_state['forcing_level']
+        features['is_game_forced'] = forcing_state['is_game_forced']
+
         # Add auction-derived features needed for schema rules
         features = self._enhance_features(features, hand, auction_history)
 
-        # Evaluate schemas
-        result = self.interpreter.evaluate(features)
+        # Evaluate schemas and get candidates
+        candidates = self.interpreter.evaluate_with_details(features)
 
-        if result:
-            bid, explanation = result
-            # Validate bid is legal
-            if self._is_bid_legal(bid, auction_history):
-                return (bid, explanation)
+        if candidates:
+            # Find the best legal bid that doesn't violate forcing constraints
+            for candidate in candidates:
+                bid = candidate.bid
 
-        # Fallback to Pass
+                # Validate bid is legal in the auction
+                if not self._is_bid_legal(bid, auction_history):
+                    continue
+
+                # Validate against forcing constraints
+                forcing_validation = self.interpreter.validate_bid_against_forcing(bid)
+                if not forcing_validation.is_valid:
+                    # Skip this bid if it violates forcing
+                    continue
+
+                # Update forcing state based on this bid's metadata
+                if candidate.sets_forcing_level:
+                    self.interpreter._update_forcing_state(
+                        candidate.sets_forcing_level,
+                        candidate.rule_id
+                    )
+
+                return (bid, candidate.explanation)
+
+        # Fallback to Pass (but check forcing constraints first)
+        forcing_validation = self.interpreter.validate_bid_against_forcing("Pass")
+        if not forcing_validation.is_valid:
+            # Cannot pass - return a warning explanation
+            return ('Pass', f'Warning: {forcing_validation.reason}')
+
         return ('Pass', 'No applicable bidding rule found')
 
     def get_bid_candidates(

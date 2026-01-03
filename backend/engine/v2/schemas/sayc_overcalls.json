@@ -3,7 +3,6 @@
   "system": "SAYC",
   "category": "overcalls",
   "description": "Overcalls and competitive bidding",
-
   "rules": [
     {
       "id": "takeout_double",
@@ -12,20 +11,34 @@
       "description": "Takeout double",
       "conditions": {
         "is_overcall": true,
-        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
-        "hcp": {"min": 12},
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 12
+        },
         "OR": [
           {
             "support_all_unbid": true,
-            "hcp": {"min": 12}
+            "hcp": {
+              "min": 12
+            }
           },
           {
-            "hcp": {"min": 17}
+            "hcp": {
+              "min": 17
+            }
           }
         ]
       },
       "forcing": "one_round",
-      "explanation": "Takeout double showing {hcp} HCP with support for unbid suits"
+      "explanation": "Takeout double showing {hcp} HCP with support for unbid suits",
+      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "1nt_overcall",
@@ -34,13 +47,24 @@
       "description": "1NT overcall",
       "conditions": {
         "is_overcall": true,
-        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
-        "hcp": {"min": 15, "max": 18},
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 15,
+          "max": 18
+        },
         "is_balanced": true,
         "stopper_in_opponent_suit": true
       },
       "forcing": "none",
-      "explanation": "1NT overcall showing {hcp} HCP balanced with stopper"
+      "explanation": "1NT overcall showing {hcp} HCP balanced with stopper",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "1nt_overcall_balancing",
@@ -50,12 +74,16 @@
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
-        "hcp": {"min": 12, "max": 15},
+        "hcp": {
+          "min": 12,
+          "max": 15
+        },
         "is_balanced": true,
         "stopper_in_opponent_suit": true
       },
       "forcing": "none",
-      "explanation": "Balancing 1NT showing {hcp} HCP (3 less than direct)"
+      "explanation": "Balancing 1NT showing {hcp} HCP (3 less than direct)",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "michaels_cuebid_major",
@@ -64,13 +92,26 @@
       "description": "Michaels cuebid over major",
       "conditions": {
         "is_overcall": true,
-        "opening_bid": {"in": ["1♥", "1♠"]},
-        "hcp": {"min": 8, "max": 16},
-        "other_major_length": {"min": 5},
-        "any_minor_length": {"min": 5}
+        "opening_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 8,
+          "max": 16
+        },
+        "other_major_length": {
+          "min": 5
+        },
+        "any_minor_length": {
+          "min": 5
+        }
       },
       "forcing": "one_round",
-      "explanation": "Michaels cuebid showing 5-5 in other major and a minor"
+      "explanation": "Michaels cuebid showing 5-5 in other major and a minor",
+      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "michaels_cuebid_minor",
@@ -79,13 +120,26 @@
       "description": "Michaels cuebid over minor",
       "conditions": {
         "is_overcall": true,
-        "opening_bid": {"in": ["1♣", "1♦"]},
-        "hcp": {"min": 8, "max": 16},
-        "spades_length": {"min": 5},
-        "hearts_length": {"min": 5}
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦"
+          ]
+        },
+        "hcp": {
+          "min": 8,
+          "max": 16
+        },
+        "spades_length": {
+          "min": 5
+        },
+        "hearts_length": {
+          "min": 5
+        }
       },
       "forcing": "one_round",
-      "explanation": "Michaels cuebid showing 5-5 in the majors"
+      "explanation": "Michaels cuebid showing 5-5 in the majors",
+      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "unusual_2nt",
@@ -94,13 +148,26 @@
       "description": "Unusual 2NT",
       "conditions": {
         "is_overcall": true,
-        "opening_bid": {"in": ["1♥", "1♠"]},
-        "hcp": {"min": 6, "max": 15},
-        "clubs_length": {"min": 5},
-        "diamonds_length": {"min": 5}
+        "opening_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 6,
+          "max": 15
+        },
+        "clubs_length": {
+          "min": 5
+        },
+        "diamonds_length": {
+          "min": 5
+        }
       },
       "forcing": "one_round",
-      "explanation": "Unusual 2NT showing 5-5 in the minors"
+      "explanation": "Unusual 2NT showing 5-5 in the minors",
+      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "simple_overcall_1_level",
@@ -109,15 +176,28 @@
       "description": "Simple 1-level overcall",
       "conditions": {
         "is_overcall": true,
-        "opening_bid": {"in": ["1♣", "1♦"]},
-        "hcp": {"min": 8, "max": 16},
-        "suit_length": {"min": 5},
-        "suit_quality": {"min": "good"},
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦"
+          ]
+        },
+        "hcp": {
+          "min": 8,
+          "max": 16
+        },
+        "suit_length": {
+          "min": 5
+        },
+        "suit_quality": {
+          "min": "good"
+        },
         "bid_higher_than_opening": true
       },
       "forcing": "none",
       "suit_selection": "best_5_card_suit",
-      "explanation": "Simple overcall with {hcp} HCP and {suit_length}-card {suit}"
+      "explanation": "Simple overcall with {hcp} HCP and {suit_length}-card {suit}",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "simple_overcall_1_level_balancing",
@@ -127,13 +207,21 @@
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
-        "hcp": {"min": 5, "max": 16},
-        "suit_length": {"min": 5},
-        "suit_quality": {"min": "fair"}
+        "hcp": {
+          "min": 5,
+          "max": 16
+        },
+        "suit_length": {
+          "min": 5
+        },
+        "suit_quality": {
+          "min": "fair"
+        }
       },
       "forcing": "none",
       "suit_selection": "best_5_card_suit",
-      "explanation": "Balancing overcall with {hcp} HCP"
+      "explanation": "Balancing overcall with {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "simple_overcall_2_level",
@@ -142,14 +230,22 @@
       "description": "Simple 2-level overcall",
       "conditions": {
         "is_overcall": true,
-        "hcp": {"min": 11, "max": 16},
-        "suit_length": {"min": 5},
-        "suit_quality": {"min": "good"},
+        "hcp": {
+          "min": 11,
+          "max": 16
+        },
+        "suit_length": {
+          "min": 5
+        },
+        "suit_quality": {
+          "min": "good"
+        },
         "bid_level": 2
       },
       "forcing": "none",
       "suit_selection": "best_5_card_suit",
-      "explanation": "2-level overcall with {hcp} HCP and good {suit}"
+      "explanation": "2-level overcall with {hcp} HCP and good {suit}",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "weak_jump_overcall",
@@ -158,14 +254,28 @@
       "description": "Weak jump overcall",
       "conditions": {
         "is_overcall": true,
-        "opening_bid": {"in": ["1♣", "1♦", "1♥"]},
-        "hcp": {"min": 6, "max": 10},
-        "suit_length": {"min": 6},
-        "suit_quality": {"min": "fair"},
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦",
+            "1♥"
+          ]
+        },
+        "hcp": {
+          "min": 6,
+          "max": 10
+        },
+        "suit_length": {
+          "min": 6
+        },
+        "suit_quality": {
+          "min": "fair"
+        },
         "is_jump": true
       },
       "forcing": "none",
-      "explanation": "Weak jump overcall with {hcp} HCP and 6-card {suit}"
+      "explanation": "Weak jump overcall with {hcp} HCP and 6-card {suit}",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "negative_double",
@@ -175,11 +285,14 @@
       "conditions": {
         "is_response": true,
         "interference_present": true,
-        "hcp": {"min": 6},
+        "hcp": {
+          "min": 6
+        },
         "support_unbid_major": true
       },
       "forcing": "one_round",
-      "explanation": "Negative double showing unbid major(s)"
+      "explanation": "Negative double showing unbid major(s)",
+      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "pass_no_action",
@@ -189,12 +302,21 @@
       "conditions": {
         "is_overcall": true,
         "OR": [
-          {"hcp": {"max": 7}},
-          {"suit_length": {"max": 4}}
+          {
+            "hcp": {
+              "max": 7
+            }
+          },
+          {
+            "suit_length": {
+              "max": 4
+            }
+          }
         ]
       },
       "forcing": "none",
-      "explanation": "Pass without sufficient values for action"
+      "explanation": "Pass without sufficient values for action",
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }

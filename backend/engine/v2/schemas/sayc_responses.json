@@ -3,7 +3,6 @@
   "system": "SAYC",
   "category": "responses",
   "description": "Responses to partner's opening bids",
-
   "rules": [
     {
       "id": "stayman_2c",
@@ -13,14 +12,25 @@
       "conditions": {
         "is_response": true,
         "partner_last_bid": "1NT",
-        "hcp": {"min": 8},
+        "hcp": {
+          "min": 8
+        },
         "OR": [
-          {"spades_length": {"min": 4}},
-          {"hearts_length": {"min": 4}}
+          {
+            "spades_length": {
+              "min": 4
+            }
+          },
+          {
+            "hearts_length": {
+              "min": 4
+            }
+          }
         ]
       },
       "forcing": "one_round",
-      "explanation": "Stayman, asking for 4-card major with {hcp} HCP"
+      "explanation": "Stayman, asking for 4-card major with {hcp} HCP",
+      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "jacoby_transfer_hearts",
@@ -30,10 +40,13 @@
       "conditions": {
         "is_response": true,
         "partner_last_bid": "1NT",
-        "hearts_length": {"min": 5}
+        "hearts_length": {
+          "min": 5
+        }
       },
       "forcing": "one_round",
-      "explanation": "Jacoby transfer showing 5+ hearts"
+      "explanation": "Jacoby transfer showing 5+ hearts",
+      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "jacoby_transfer_spades",
@@ -43,10 +56,13 @@
       "conditions": {
         "is_response": true,
         "partner_last_bid": "1NT",
-        "spades_length": {"min": 5}
+        "spades_length": {
+          "min": 5
+        }
       },
       "forcing": "one_round",
-      "explanation": "Jacoby transfer showing 5+ spades"
+      "explanation": "Jacoby transfer showing 5+ spades",
+      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "raise_1nt_to_3nt",
@@ -56,12 +72,16 @@
       "conditions": {
         "is_response": true,
         "partner_last_bid": "1NT",
-        "hcp": {"min": 10, "max": 14},
+        "hcp": {
+          "min": 10,
+          "max": 14
+        },
         "is_balanced": true,
         "has_5_card_major": false
       },
       "forcing": "none",
-      "explanation": "Raise to 3NT with {hcp} HCP balanced"
+      "explanation": "Raise to 3NT with {hcp} HCP balanced",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "raise_1nt_invitational",
@@ -71,12 +91,16 @@
       "conditions": {
         "is_response": true,
         "partner_last_bid": "1NT",
-        "hcp": {"min": 8, "max": 9},
+        "hcp": {
+          "min": 8,
+          "max": 9
+        },
         "is_balanced": true,
         "has_5_card_major": false
       },
       "forcing": "none",
-      "explanation": "Invitational 2NT with {hcp} HCP balanced"
+      "explanation": "Invitational 2NT with {hcp} HCP balanced",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "new_suit_1_level",
@@ -85,16 +109,32 @@
       "description": "New suit at 1-level",
       "conditions": {
         "is_response": true,
-        "opening_bid": {"in": ["1♣", "1♦"]},
-        "hcp": {"min": 6},
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦"
+          ]
+        },
+        "hcp": {
+          "min": 6
+        },
         "OR": [
-          {"spades_length": {"min": 4}},
-          {"hearts_length": {"min": 4}}
+          {
+            "spades_length": {
+              "min": 4
+            }
+          },
+          {
+            "hearts_length": {
+              "min": 4
+            }
+          }
         ]
       },
       "forcing": "one_round",
       "suit_selection": "longest_major_first",
-      "explanation": "New suit response showing 6+ HCP and 4+ {suit}"
+      "explanation": "New suit response showing 6+ HCP and 4+ {suit}",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "respond_1nt_no_fit",
@@ -103,13 +143,26 @@
       "description": "1NT response showing 6-10 HCP",
       "conditions": {
         "is_response": true,
-        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
-        "hcp": {"min": 6, "max": 10},
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 6,
+          "max": 10
+        },
         "is_balanced": true,
-        "support_for_partner": {"max": 2}
+        "support_for_partner": {
+          "max": 2
+        }
       },
       "forcing": "none",
-      "explanation": "1NT response showing {hcp} HCP, no major fit"
+      "explanation": "1NT response showing {hcp} HCP, no major fit",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "single_raise_major",
@@ -118,12 +171,23 @@
       "description": "Single raise of partner's major",
       "conditions": {
         "is_response": true,
-        "partner_last_bid": {"in": ["1♥", "1♠"]},
-        "hcp": {"min": 6, "max": 10},
-        "support_for_partner": {"min": 3}
+        "partner_last_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 6,
+          "max": 10
+        },
+        "support_for_partner": {
+          "min": 3
+        }
       },
       "forcing": "none",
-      "explanation": "Single raise with {hcp} HCP and {support_for_partner}-card support"
+      "explanation": "Single raise with {hcp} HCP and {support_for_partner}-card support",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "limit_raise_major",
@@ -132,12 +196,23 @@
       "description": "Limit raise of partner's major",
       "conditions": {
         "is_response": true,
-        "partner_last_bid": {"in": ["1♥", "1♠"]},
-        "hcp": {"min": 10, "max": 12},
-        "support_for_partner": {"min": 3}
+        "partner_last_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 10,
+          "max": 12
+        },
+        "support_for_partner": {
+          "min": 3
+        }
       },
       "forcing": "none",
-      "explanation": "Limit raise with {hcp} HCP and {support_for_partner}-card support"
+      "explanation": "Limit raise with {hcp} HCP and {support_for_partner}-card support",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "game_raise_major",
@@ -146,14 +221,35 @@
       "description": "Game raise of partner's major",
       "conditions": {
         "is_response": true,
-        "partner_last_bid": {"in": ["1♥", "1♠"]},
+        "partner_last_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
         "OR": [
-          {"hcp": {"min": 13}, "support_for_partner": {"min": 3}},
-          {"hcp": {"min": 6, "max": 9}, "support_for_partner": {"min": 5}}
+          {
+            "hcp": {
+              "min": 13
+            },
+            "support_for_partner": {
+              "min": 3
+            }
+          },
+          {
+            "hcp": {
+              "min": 6,
+              "max": 9
+            },
+            "support_for_partner": {
+              "min": 5
+            }
+          }
         ]
       },
       "forcing": "none",
-      "explanation": "Game raise with {support_for_partner}-card support"
+      "explanation": "Game raise with {support_for_partner}-card support",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "new_suit_2_level",
@@ -162,13 +258,23 @@
       "description": "New suit at 2-level (game forcing in 2/1)",
       "conditions": {
         "is_response": true,
-        "opening_bid": {"in": ["1♥", "1♠"]},
-        "hcp": {"min": 10},
-        "suit_length": {"min": 5}
+        "opening_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 10
+        },
+        "suit_length": {
+          "min": 5
+        }
       },
       "forcing": "game",
       "suit_selection": "longest_lower_suit",
-      "explanation": "2/1 game-forcing response showing {hcp} HCP"
+      "explanation": "2/1 game-forcing response showing {hcp} HCP",
+      "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "respond_2c_positive",
@@ -178,10 +284,14 @@
       "conditions": {
         "is_response": true,
         "partner_last_bid": "2♣",
-        "hcp": {"min": 0, "max": 7}
+        "hcp": {
+          "min": 0,
+          "max": 7
+        }
       },
       "forcing": "one_round",
-      "explanation": "2♦ waiting response (0-7 HCP)"
+      "explanation": "2♦ waiting response (0-7 HCP)",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "respond_2c_positive_suit",
@@ -191,12 +301,19 @@
       "conditions": {
         "is_response": true,
         "partner_last_bid": "2♣",
-        "hcp": {"min": 8},
-        "longest_suit_length": {"min": 5},
-        "suit_quality_longest": {"min": "good"}
+        "hcp": {
+          "min": 8
+        },
+        "longest_suit_length": {
+          "min": 5
+        },
+        "suit_quality_longest": {
+          "min": "good"
+        }
       },
       "forcing": "game",
-      "explanation": "Positive response to 2♣ with good {longest_suit} suit"
+      "explanation": "Positive response to 2♣ with good {longest_suit} suit",
+      "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "pass_no_values",
@@ -205,13 +322,16 @@
       "description": "Pass with insufficient values",
       "conditions": {
         "is_response": true,
-        "hcp": {"max": 5},
+        "hcp": {
+          "max": 5
+        },
         "NOT": {
           "partner_last_bid": "2♣"
         }
       },
       "forcing": "none",
-      "explanation": "Pass with only {hcp} HCP"
+      "explanation": "Pass with only {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }

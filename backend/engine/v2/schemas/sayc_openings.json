@@ -3,7 +3,6 @@
   "system": "SAYC",
   "category": "openings",
   "description": "Standard American Yellow Card opening bids",
-
   "rules": [
     {
       "id": "open_2c_strong",
@@ -12,14 +11,25 @@
       "description": "Strong artificial forcing opening",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 22},
+        "hcp": {
+          "min": 22
+        },
         "OR": [
-          {"quick_tricks": {"min": 4}},
-          {"hcp": {"min": 24}}
+          {
+            "quick_tricks": {
+              "min": 4
+            }
+          },
+          {
+            "hcp": {
+              "min": 24
+            }
+          }
         ]
       },
       "forcing": "game",
-      "explanation": "Strong artificial 2♣ opening showing {hcp} HCP"
+      "explanation": "Strong artificial 2♣ opening showing {hcp} HCP",
+      "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "open_2c_playing_strength",
@@ -28,12 +38,20 @@
       "description": "Strong 2♣ with playing strength",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 18, "max": 21},
-        "quick_tricks": {"min": 4},
-        "losing_trick_count": {"max": 4}
+        "hcp": {
+          "min": 18,
+          "max": 21
+        },
+        "quick_tricks": {
+          "min": 4
+        },
+        "losing_trick_count": {
+          "max": 4
+        }
       },
       "forcing": "game",
-      "explanation": "Strong 2♣ with {hcp} HCP and {quick_tricks} quick tricks"
+      "explanation": "Strong 2♣ with {hcp} HCP and {quick_tricks} quick tricks",
+      "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "open_2nt",
@@ -42,11 +60,15 @@
       "description": "Strong balanced notrump",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 20, "max": 21},
+        "hcp": {
+          "min": 20,
+          "max": 21
+        },
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "2NT opening showing {hcp} HCP, balanced"
+      "explanation": "2NT opening showing {hcp} HCP, balanced",
+      "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "open_1nt",
@@ -55,11 +77,15 @@
       "description": "Standard 1NT opening",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 15, "max": 17},
+        "hcp": {
+          "min": 15,
+          "max": 17
+        },
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "1NT opening showing {hcp} HCP, balanced"
+      "explanation": "1NT opening showing {hcp} HCP, balanced",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "open_1_spades",
@@ -68,11 +94,17 @@
       "description": "One spade opening",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 12, "max": 21},
-        "spades_length": {"min": 5}
+        "hcp": {
+          "min": 12,
+          "max": 21
+        },
+        "spades_length": {
+          "min": 5
+        }
       },
       "forcing": "none",
-      "explanation": "1♠ opening showing {hcp} HCP and {spades_length}-card spade suit"
+      "explanation": "1♠ opening showing {hcp} HCP and {spades_length}-card spade suit",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "open_1_hearts",
@@ -81,15 +113,29 @@
       "description": "One heart opening",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 12, "max": 21},
-        "hearts_length": {"min": 5},
+        "hcp": {
+          "min": 12,
+          "max": 21
+        },
+        "hearts_length": {
+          "min": 5
+        },
         "OR": [
-          {"spades_length": {"max": 4}},
-          {"hearts_length": {"min": "spades_length"}}
+          {
+            "spades_length": {
+              "max": 4
+            }
+          },
+          {
+            "hearts_length": {
+              "min": "spades_length"
+            }
+          }
         ]
       },
       "forcing": "none",
-      "explanation": "1♥ opening showing {hcp} HCP and {hearts_length}-card heart suit"
+      "explanation": "1♥ opening showing {hcp} HCP and {hearts_length}-card heart suit",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "open_1_diamonds",
@@ -98,16 +144,33 @@
       "description": "One diamond opening",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 12, "max": 21},
-        "diamonds_length": {"min": 4},
+        "hcp": {
+          "min": 12,
+          "max": 21
+        },
+        "diamonds_length": {
+          "min": 4
+        },
         "has_5_card_major": false,
         "OR": [
-          {"diamonds_length": {"min": "clubs_length"}},
-          {"diamonds_length": {"min": 4}, "clubs_length": {"max": 3}}
+          {
+            "diamonds_length": {
+              "min": "clubs_length"
+            }
+          },
+          {
+            "diamonds_length": {
+              "min": 4
+            },
+            "clubs_length": {
+              "max": 3
+            }
+          }
         ]
       },
       "forcing": "none",
-      "explanation": "1♦ opening showing {hcp} HCP and {diamonds_length}-card diamond suit"
+      "explanation": "1♦ opening showing {hcp} HCP and {diamonds_length}-card diamond suit",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "open_1_clubs",
@@ -116,13 +179,21 @@
       "description": "One club opening",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 12, "max": 21},
-        "clubs_length": {"min": 3},
+        "hcp": {
+          "min": 12,
+          "max": 21
+        },
+        "clubs_length": {
+          "min": 3
+        },
         "has_5_card_major": false,
-        "diamonds_length": {"max": 3}
+        "diamonds_length": {
+          "max": 3
+        }
       },
       "forcing": "none",
-      "explanation": "1♣ opening showing {hcp} HCP and {clubs_length}+ clubs"
+      "explanation": "1♣ opening showing {hcp} HCP and {clubs_length}+ clubs",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "open_1c_balanced_no_nt",
@@ -131,12 +202,18 @@
       "description": "Balanced hand outside NT range",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 12, "max": 14},
+        "hcp": {
+          "min": 12,
+          "max": 14
+        },
         "is_balanced": true,
-        "clubs_length": {"min": 3}
+        "clubs_length": {
+          "min": 3
+        }
       },
       "forcing": "none",
-      "explanation": "1♣ opening with balanced {hcp} HCP (too weak for 1NT)"
+      "explanation": "1♣ opening with balanced {hcp} HCP (too weak for 1NT)",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "open_1c_strong_balanced",
@@ -145,11 +222,15 @@
       "description": "Strong balanced hand outside NT range",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 18, "max": 19},
+        "hcp": {
+          "min": 18,
+          "max": 19
+        },
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "1♣ opening with balanced {hcp} HCP (too strong for 1NT)"
+      "explanation": "1♣ opening with balanced {hcp} HCP (too strong for 1NT)",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "preempt_3_major",
@@ -158,13 +239,26 @@
       "description": "Weak three-bid in major",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 5, "max": 10},
-        "longest_suit": {"in": ["♠", "♥"]},
-        "longest_suit_length": {"min": 7},
-        "suit_quality_longest": {"min": "fair"}
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "longest_suit": {
+          "in": [
+            "♠",
+            "♥"
+          ]
+        },
+        "longest_suit_length": {
+          "min": 7
+        },
+        "suit_quality_longest": {
+          "min": "fair"
+        }
       },
       "forcing": "none",
-      "explanation": "Preemptive 3-bid with {hcp} HCP and 7-card {longest_suit} suit"
+      "explanation": "Preemptive 3-bid with {hcp} HCP and 7-card {longest_suit} suit",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "preempt_3_minor",
@@ -173,13 +267,26 @@
       "description": "Weak three-bid in minor",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 5, "max": 10},
-        "longest_suit": {"in": ["♦", "♣"]},
-        "longest_suit_length": {"min": 7},
-        "suit_quality_longest": {"min": "fair"}
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "longest_suit": {
+          "in": [
+            "♦",
+            "♣"
+          ]
+        },
+        "longest_suit_length": {
+          "min": 7
+        },
+        "suit_quality_longest": {
+          "min": "fair"
+        }
       },
       "forcing": "none",
-      "explanation": "Preemptive 3-bid with {hcp} HCP and 7-card {longest_suit} suit"
+      "explanation": "Preemptive 3-bid with {hcp} HCP and 7-card {longest_suit} suit",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "preempt_2_major",
@@ -188,13 +295,26 @@
       "description": "Weak two-bid in major",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 5, "max": 10},
-        "longest_suit": {"in": ["♠", "♥"]},
-        "longest_suit_length": {"exact": 6},
-        "suit_quality_longest": {"min": "fair"}
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "longest_suit": {
+          "in": [
+            "♠",
+            "♥"
+          ]
+        },
+        "longest_suit_length": {
+          "exact": 6
+        },
+        "suit_quality_longest": {
+          "min": "fair"
+        }
       },
       "forcing": "none",
-      "explanation": "Weak 2-bid with {hcp} HCP and 6-card {longest_suit} suit"
+      "explanation": "Weak 2-bid with {hcp} HCP and 6-card {longest_suit} suit",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "preempt_2_diamonds",
@@ -203,13 +323,21 @@
       "description": "Weak two diamonds",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 5, "max": 10},
-        "diamonds_length": {"exact": 6},
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "diamonds_length": {
+          "exact": 6
+        },
         "has_5_card_major": false,
-        "suit_quality_diamonds": {"min": "fair"}
+        "suit_quality_diamonds": {
+          "min": "fair"
+        }
       },
       "forcing": "none",
-      "explanation": "Weak 2♦ with {hcp} HCP and 6-card diamond suit"
+      "explanation": "Weak 2♦ with {hcp} HCP and 6-card diamond suit",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "rule_of_20",
@@ -218,11 +346,15 @@
       "description": "Light opening by Rule of 20",
       "conditions": {
         "is_opening": true,
-        "hcp": {"min": 10, "max": 11},
+        "hcp": {
+          "min": 10,
+          "max": 11
+        },
         "rule_of_20": true
       },
       "forcing": "none",
-      "explanation": "Rule of 20 opening with {hcp} HCP and {longest_suit_length}-card suit"
+      "explanation": "Rule of 20 opening with {hcp} HCP and {longest_suit_length}-card suit",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "pass_weak",
@@ -231,10 +363,13 @@
       "description": "Pass with insufficient values",
       "conditions": {
         "is_opening": true,
-        "hcp": {"max": 11}
+        "hcp": {
+          "max": 11
+        }
       },
       "forcing": "none",
-      "explanation": "Pass with only {hcp} HCP"
+      "explanation": "Pass with only {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }
