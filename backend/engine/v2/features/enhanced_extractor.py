@@ -218,6 +218,66 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     else:
         flat['support_for_partner'] = 0
 
+    # Partner's first suit (for preference bids)
+    # Scan partner's bids to find their first natural suit bid
+    flat['partner_first_suit'] = None
+    flat['support_for_partner_first'] = 0
+    partner_bids = _get_partner_bids(auction_history, my_position)
+    for bid in partner_bids:
+        suit = get_suit_from_bid(bid)
+        if suit:
+            flat['partner_first_suit'] = suit
+            flat['support_for_partner_first'] = suit_lengths.get(suit, 0)
+            break
+
+    # My first suit (the suit I bid first)
+    flat['my_suit'] = None
+    my_bids = _get_my_bids(auction_history, my_position)
+    for bid in my_bids:
+        suit = get_suit_from_bid(bid)
+        if suit:
+            flat['my_suit'] = suit
+            break
+
+    # Second suit features (for Barrier Principle - reverses)
+    # Find if I have a second 4+ card suit
+    flat['second_suit'] = None
+    flat['second_suit_length'] = 0
+    flat['second_suit_higher'] = False
+    flat['second_suit_lower'] = False
+
+    if flat['my_suit']:
+        my_first_suit = flat['my_suit']
+        # Find second longest suit that's 4+ cards
+        suit_ranking = {'♣': 0, '♦': 1, '♥': 2, '♠': 3}
+        for suit, length in sorted(suit_lengths.items(), key=lambda x: -x[1]):
+            if suit != my_first_suit and length >= 4:
+                flat['second_suit'] = suit
+                flat['second_suit_length'] = length
+                flat['second_suit_higher'] = suit_ranking.get(suit, 0) > suit_ranking.get(my_first_suit, 0)
+                flat['second_suit_lower'] = suit_ranking.get(suit, 0) < suit_ranking.get(my_first_suit, 0)
+                break
+
+    # Stopper in opponent's suit (for NT overcalls/rebids)
+    flat['stopper_in_opponent_suit'] = False
+    opening_bid = flat.get('opening_bid', '')
+    if opening_bid and af['opener_relationship'] in ['Opponent', 'RHO', 'LHO']:
+        opponent_suit = get_suit_from_bid(opening_bid)
+        if opponent_suit:
+            suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}.get(opponent_suit)
+            if suit_name:
+                flat['stopper_in_opponent_suit'] = flat.get(f'{suit_name}_stopped', False)
+
+    # Unbid suit support count (for takeout doubles)
+    # Count how many unbid suits we have 3+ card support in
+    bid_suits = set()
+    for bid in auction_history:
+        suit = get_suit_from_bid(bid)
+        if suit:
+            bid_suits.add(suit)
+    unbid_suits = {'♠', '♥', '♦', '♣'} - bid_suits
+    flat['unbid_suit_support'] = sum(1 for s in unbid_suits if suit_lengths.get(s, 0) >= 3)
+
     # PBN representation
     flat['pbn'] = hand_to_pbn(hand)
 
@@ -323,3 +383,48 @@ def evaluate_suit_quality(hand: Hand, suit: str) -> str:
         return 'fair'
 
     return 'poor'
+
+
+def _get_partner_bids(auction_history: List[str], my_position: str) -> List[str]:
+    """
+    Extract partner's bids from the auction history.
+
+    Args:
+        auction_history: List of bids in order
+        my_position: My position (North, East, South, West)
+
+    Returns:
+        List of partner's bids in order
+    """
+    positions = ['North', 'East', 'South', 'West']
+    my_idx = positions.index(my_position) if my_position in positions else 0
+    partner_idx = (my_idx + 2) % 4  # Partner is across the table
+
+    partner_bids = []
+    for i, bid in enumerate(auction_history):
+        if i % 4 == partner_idx:
+            partner_bids.append(bid)
+
+    return partner_bids
+
+
+def _get_my_bids(auction_history: List[str], my_position: str) -> List[str]:
+    """
+    Extract my bids from the auction history.
+
+    Args:
+        auction_history: List of bids in order
+        my_position: My position (North, East, South, West)
+
+    Returns:
+        List of my bids in order
+    """
+    positions = ['North', 'East', 'South', 'West']
+    my_idx = positions.index(my_position) if my_position in positions else 0
+
+    my_bids = []
+    for i, bid in enumerate(auction_history):
+        if i % 4 == my_idx:
+            my_bids.append(bid)
+
+    return my_bids

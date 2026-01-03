@@ -318,8 +318,8 @@
     {
       "id": "pass_no_values",
       "bid": "Pass",
-      "priority": 1,
-      "description": "Pass with insufficient values",
+      "priority": 5,
+      "description": "Pass with insufficient values to respond",
       "conditions": {
         "is_response": true,
         "hcp": {
@@ -330,7 +330,80 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with only {hcp} HCP",
+      "explanation": "Pass with only {hcp} HCP (need 6+ to respond)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_after_nt_minimum",
+      "bid": "Pass",
+      "priority": 4,
+      "description": "Pass partner's 1NT with minimum balanced",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1NT",
+        "hcp": {
+          "max": 7
+        },
+        "is_balanced": true,
+        "has_5_card_major": false
+      },
+      "forcing": "none",
+      "explanation": "Pass 1NT with {hcp} HCP balanced (combined 22-24)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_after_2nt_minimum",
+      "bid": "Pass",
+      "priority": 3,
+      "description": "Pass partner's 2NT with minimum",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "2NT",
+        "hcp": {
+          "max": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass 2NT with {hcp} HCP (not enough for game)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_after_preempt",
+      "bid": "Pass",
+      "priority": 2,
+      "description": "Pass partner's preemptive opening",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": {
+          "in": ["2♦", "2♥", "2♠", "3♣", "3♦", "3♥", "3♠"]
+        },
+        "hcp": {
+          "max": 13
+        },
+        "support_for_partner": {
+          "max": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's preempt with {hcp} HCP and {support_for_partner}-card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_after_major_opening_no_fit_weak",
+      "bid": "Pass",
+      "priority": 1,
+      "description": "Pass partner's major opening with minimum and no fit",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": {
+          "in": ["1♥", "1♠"]
+        },
+        "hcp": {
+          "max": 5
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with only {hcp} HCP - insufficient to respond",
       "sets_forcing_level": "NON_FORCING"
     }
   ]

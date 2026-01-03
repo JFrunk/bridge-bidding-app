@@ -2828,7 +2828,7 @@ def get_ai_play():
                 ai_level=state.ai_difficulty,
                 solve_time_ms=solve_time_ms,
                 used_fallback=used_fallback,
-                session_id=state.game_session.session_id if state.game_session else None,
+                session_id=state.game_session.id if state.game_session else None,
                 hand_number=state.game_session.hands_completed + 1 if state.game_session else None,
                 trick_number=trick_number,
                 contract=contract_str,

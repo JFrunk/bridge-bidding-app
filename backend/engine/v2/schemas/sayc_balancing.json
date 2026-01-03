@@ -2,13 +2,13 @@
   "schema_version": "1.0",
   "system": "SAYC",
   "category": "balancing",
-  "description": "Balancing (pass-out) seat actions",
+  "description": "Balancing (pass-out) seat actions - 'Borrowed King' principle: bid with ~3 HCP less than direct seat",
   "rules": [
     {
       "id": "balancing_double",
       "bid": "X",
       "priority": 100,
-      "description": "Balancing takeout double",
+      "description": "Balancing takeout double (Borrowed King: 9+ instead of 12+)",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
@@ -21,7 +21,7 @@
           ]
         },
         "hcp": {
-          "min": 9,
+          "min": 8,
           "max": 14
         },
         "unbid_suit_support": {
@@ -29,7 +29,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Balancing double (about 3 HCP less than direct)",
+      "explanation": "Balancing double with {hcp} HCP (Borrowed King: partner has 8-10 HCP)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -60,7 +60,7 @@
       "id": "balancing_double_flexible",
       "bid": "X",
       "priority": 98,
-      "description": "Balancing double with imperfect shape",
+      "description": "Balancing double with imperfect shape (Borrowed King)",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
@@ -73,7 +73,7 @@
           ]
         },
         "hcp": {
-          "min": 9,
+          "min": 8,
           "max": 14
         },
         "unbid_suit_support": {
@@ -81,14 +81,14 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Balancing double with {hcp} HCP (flexible shape)",
+      "explanation": "Balancing double with {hcp} HCP (flexible shape, Borrowed King)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "balancing_1nt",
       "bid": "1NT",
       "priority": 95,
-      "description": "Balancing 1NT",
+      "description": "Balancing 1NT (Borrowed King: 11-14 instead of 15-18)",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
@@ -102,13 +102,13 @@
         },
         "hcp": {
           "min": 11,
-          "max": 14
+          "max": 15
         },
         "is_balanced": true,
         "stopper_in_opponent_suit": true
       },
       "forcing": "none",
-      "explanation": "Balancing 1NT showing {hcp} HCP with stopper",
+      "explanation": "Balancing 1NT with {hcp} HCP (Borrowed King: ~3 less than direct 1NT overcall)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -250,31 +250,79 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "pass_balancing",
+      "id": "pass_balancing_weak",
       "bid": "Pass",
-      "priority": 1,
-      "description": "Pass in balancing seat with nothing to say",
+      "priority": 5,
+      "description": "Pass in balancing seat with weak hand",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
-        "OR": [
-          {
-            "hcp": {
-              "max": 4
-            }
-          },
-          {
-            "hcp": {
-              "max": 8
-            },
-            "longest_suit_length": {
-              "max": 4
-            }
-          }
-        ]
+        "hcp": {
+          "max": 4
+        }
       },
       "forcing": "none",
-      "explanation": "Pass without suitable hand for balancing action",
+      "explanation": "Pass with only {hcp} HCP - too weak to balance",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_balancing_no_shape",
+      "bid": "Pass",
+      "priority": 4,
+      "description": "Pass in balancing seat without suitable shape",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": true,
+        "hcp": {
+          "min": 5,
+          "max": 7
+        },
+        "longest_suit_length": {
+          "max": 4
+        },
+        "unbid_suit_support": {
+          "max": 1
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with {hcp} HCP but unsuitable shape for balancing",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_balancing_defensive",
+      "bid": "Pass",
+      "priority": 3,
+      "description": "Pass in balancing seat with defensive values in opponent's suit",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": true,
+        "hcp": {
+          "min": 8,
+          "max": 10
+        },
+        "stopper_in_opponent_suit": true,
+        "unbid_suit_support": {
+          "max": 1
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with {hcp} HCP - values in opponent's suit, let them play",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_balancing_catchall",
+      "bid": "Pass",
+      "priority": 1,
+      "description": "Pass in balancing seat - no suitable action",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": true,
+        "hcp": {
+          "max": 7
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with {hcp} HCP - no suitable balancing action",
       "sets_forcing_level": "NON_FORCING"
     }
   ]
