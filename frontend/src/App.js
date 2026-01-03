@@ -958,8 +958,11 @@ ${otherCommands}`;
           }
 
           // Start AI loop only if it's not the user's turn
+          // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
+          // This fixes the bug where user couldn't play from North after first trick
+          const nsDeclaringAfterTrick = nextState.contract.declarer === 'N' || nextState.contract.declarer === 'S';
           const nextIsUserTurn = nextState.next_to_play === 'S' ||
-                                (nextState.next_to_play === nextState.dummy && nextState.contract.declarer === 'S');
+                                (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
           if (!nextIsUserTurn) {
             // Reset flag first to ensure useEffect triggers, then set it back to true
             setIsPlayingCard(false);
@@ -973,8 +976,10 @@ ${otherCommands}`;
         const updatedState = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } }).then(r => r.json());
         setPlayState(updatedState);
 
+        // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
+        const nsDeclaringInProgress = updatedState.contract.declarer === 'N' || updatedState.contract.declarer === 'S';
         const nextIsUserTurn = updatedState.next_to_play === 'S' ||
-                              (updatedState.next_to_play === updatedState.dummy && updatedState.contract.declarer === 'S');
+                              (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
         if (!nextIsUserTurn) {
           // Reset flag first to ensure useEffect triggers, then set it back to true
           setIsPlayingCard(false);
@@ -1110,8 +1115,11 @@ ${otherCommands}`;
           }
 
           // Start AI loop only if it's not the user's turn
+          // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
+          // This fixes the bug where user couldn't play from North after first trick
+          const nsDeclaringAfterTrick = nextState.contract.declarer === 'N' || nextState.contract.declarer === 'S';
           const nextIsUserTurn = nextState.next_to_play === 'S' ||
-                                (nextState.next_to_play === nextState.dummy && nextState.contract.declarer === 'S');
+                                (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
           if (!nextIsUserTurn) {
             // Reset flag first to ensure useEffect triggers, then set it back to true
             setIsPlayingCard(false);
@@ -1125,8 +1133,10 @@ ${otherCommands}`;
         const updatedState = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } }).then(r => r.json());
         setPlayState(updatedState);
 
+        // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
+        const nsDeclaringInProgress = updatedState.contract.declarer === 'N' || updatedState.contract.declarer === 'S';
         const nextIsUserTurn = updatedState.next_to_play === 'S' ||
-                              (updatedState.next_to_play === updatedState.dummy && updatedState.contract.declarer === 'S');
+                              (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
         if (!nextIsUserTurn) {
           // Reset flag first to ensure useEffect triggers, then set it back to true
           setIsPlayingCard(false);
@@ -1268,8 +1278,11 @@ ${otherCommands}`;
           }
 
           // Start AI loop only if it's not the user's turn
+          // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
+          // This fixes the bug where user couldn't play from North after first trick
+          const nsDeclaringAfterTrick = nextState.contract.declarer === 'N' || nextState.contract.declarer === 'S';
           const nextIsUserTurn = nextState.next_to_play === 'S' ||
-                                (nextState.next_to_play === nextState.dummy && nextState.contract.declarer === 'S');
+                                (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
           if (!nextIsUserTurn) {
             // Reset flag first to ensure useEffect triggers, then set it back to true
             setIsPlayingCard(false);
@@ -1283,8 +1296,10 @@ ${otherCommands}`;
         const updatedState = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } }).then(r => r.json());
         setPlayState(updatedState);
 
+        // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
+        const nsDeclaringInProgress = updatedState.contract.declarer === 'N' || updatedState.contract.declarer === 'S';
         const nextIsUserTurn = updatedState.next_to_play === 'S' ||
-                              (updatedState.next_to_play === updatedState.dummy && updatedState.contract.declarer === 'S');
+                              (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
         if (!nextIsUserTurn) {
           // Reset flag first to ensure useEffect triggers, then set it back to true
           setIsPlayingCard(false);
@@ -2240,8 +2255,11 @@ ${otherCommands}`;
             }
 
             // CRITICAL FIX: Check if next player is user-controlled before restarting AI loop
+            // User controls BOTH N and S when NS is declaring (declarer is N or S)
+            // This fixes the bug where user couldn't play from North after first trick
+            const nsDeclaringAI = clearedState.contract.declarer === 'N' || clearedState.contract.declarer === 'S';
             const nextIsUserControlled = clearedState.next_to_play === 'S' ||
-              (clearedState.next_to_play === clearedState.dummy && clearedState.contract.declarer === 'S');
+              (clearedState.next_to_play === 'N' && nsDeclaringAI);
 
             if (nextIsUserControlled) {
               console.log('⏸️ STOPPING - Next player after trick clear is user-controlled');
@@ -2570,13 +2588,14 @@ ${otherCommands}`;
             isPlayingCard: isPlayingCard,
             dummy: playState.dummy,
             declarer: playState.contract.declarer,
-            userIsDeclarer: playState.contract.declarer === 'S',
+            nsIsDeclaring: playState.contract.declarer === 'N' || playState.contract.declarer === 'S',
             dummy_hand_in_state: playState.dummy_hand?.cards?.length || playState.dummy_hand?.length || 0,
             dummy_revealed: playState.dummy_revealed,
-            isUserTurn_OLD: playState.next_to_play === 'S' && playState.dummy !== 'S',
-            isUserTurn_NEW: (playState.next_to_play === 'S' && playState.dummy !== 'S') || (playState.next_to_play === playState.dummy && playState.contract.declarer === 'S') || (playState.next_to_play === playState.contract.declarer && playState.dummy === 'S'),
-            isDeclarerTurn: playState.next_to_play === playState.contract.declarer && playState.dummy === 'S',
-            isDummyTurn: playState.next_to_play === playState.dummy && playState.contract.declarer === 'S'
+            // User controls both N and S when NS is declaring
+            userControlsNorth: (playState.contract.declarer === 'N' || playState.contract.declarer === 'S'),
+            userControlsSouth: true, // Always
+            isUserTurn: playState.next_to_play === 'S' || (playState.next_to_play === 'N' && (playState.contract.declarer === 'N' || playState.contract.declarer === 'S')),
+            controllable_positions: playState.controllable_positions
           })}
           <PlayTable
             playState={playState}
