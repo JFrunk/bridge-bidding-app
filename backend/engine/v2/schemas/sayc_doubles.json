@@ -23,12 +23,102 @@
           "min": 12,
           "max": 17
         },
+        "quick_tricks": {
+          "min": 1.5
+        },
         "unbid_suit_support": {
           "min": 3
         }
       },
       "forcing": "one_round",
-      "explanation": "Takeout double showing {hcp} HCP with support for unbid suits",
+      "explanation": "Takeout double showing {hcp} HCP with {quick_tricks} QT and support for unbid suits",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_light",
+      "bid": "X",
+      "priority": 98,
+      "description": "Light takeout double with perfect shape",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 10,
+          "max": 14
+        },
+        "quick_tricks": {
+          "min": 1.0
+        },
+        "unbid_suit_support": {
+          "min": 3
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Light takeout double with {hcp} HCP and support for unbid suits",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_flexible_shape",
+      "bid": "X",
+      "priority": 97,
+      "description": "Takeout double with imperfect shape but good values",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 10,
+          "max": 15
+        },
+        "quick_tricks": {
+          "min": 1.5
+        },
+        "unbid_suit_support": {
+          "min": 2
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Takeout double with {hcp} HCP (flexible shape)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_offshape",
+      "bid": "X",
+      "priority": 96,
+      "description": "Off-shape takeout double with strong values",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 10,
+          "max": 17
+        },
+        "quick_tricks": {
+          "min": 1.5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Takeout double with {hcp} HCP (off-shape but strong)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {

@@ -283,6 +283,9 @@ class SchemaInterpreter:
         - Numeric comparisons: {"min": x, "max": y, "exact": z}
         - Boolean logic: OR, AND, NOT
         - Set membership: {"in": [...]}
+        - Special expert constraints:
+          - stoppers_required: minimum number of stopped suits
+          - stoppers_in: specific suits that must be stopped
         """
         for key, expected in conditions.items():
             # Handle OR conditions
@@ -305,6 +308,35 @@ class SchemaInterpreter:
             if key == 'NOT':
                 if self._evaluate_conditions(expected, features):
                     return False
+                continue
+
+            # Handle special expert constraints
+            if key == 'stoppers_required':
+                # Count stopped suits from individual stopper features
+                stopped_count = sum(1 for suit in ['spades', 'hearts', 'diamonds', 'clubs']
+                                   if features.get(f'{suit}_stopped', False))
+                if stopped_count < expected:
+                    return False
+                continue
+
+            if key == 'stoppers_in':
+                # Check that specific suits are stopped
+                # expected is a list like ["spades", "hearts"] or ["opponent_suit"]
+                if isinstance(expected, list):
+                    for suit_ref in expected:
+                        # Handle dynamic reference to opponent's suit
+                        if suit_ref == 'opponent_suit':
+                            opening_bid = features.get('opening_bid', '')
+                            if opening_bid and len(opening_bid) >= 2:
+                                suit_symbol = opening_bid[1] if opening_bid[0].isdigit() else None
+                                suit_map = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}
+                                suit_name = suit_map.get(suit_symbol)
+                                if suit_name and not features.get(f'{suit_name}_stopped', False):
+                                    return False
+                        else:
+                            # Direct suit name
+                            if not features.get(f'{suit_ref}_stopped', False):
+                                return False
                 continue
 
             # Get actual value from features

@@ -81,10 +81,32 @@
           "min": 15,
           "max": 17
         },
-        "is_balanced": true
+        "is_balanced": true,
+        "stoppers_required": 3
       },
       "forcing": "none",
-      "explanation": "1NT opening showing {hcp} HCP, balanced",
+      "explanation": "1NT opening showing {hcp} HCP, balanced with stoppers in {stopper_count} suits",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "open_1nt_weak_stoppers",
+      "bid": "1NT",
+      "priority": 89,
+      "description": "1NT opening with 2 stoppers but maximum HCP",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 16,
+          "max": 17
+        },
+        "is_balanced": true,
+        "stoppers_required": 2,
+        "quick_tricks": {
+          "min": 2.0
+        }
+      },
+      "forcing": "none",
+      "explanation": "1NT opening showing {hcp} HCP balanced (maximum range compensates for stoppers)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

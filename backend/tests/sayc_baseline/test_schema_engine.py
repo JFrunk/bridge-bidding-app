@@ -93,6 +93,9 @@ def main():
 
         position = positions[len(tc.history) % 4]
 
+        # Reset forcing state for each new test case (each is a new deal)
+        engine.new_deal()
+
         try:
             bid, explanation = engine.get_next_bid(
                 hand=hand,
@@ -157,6 +160,9 @@ def main():
             continue
 
         position = positions[len(tc.history) % 4]
+
+        # Reset forcing state for each test case
+        engine.new_deal()
 
         try:
             bid, explanation = engine.get_next_bid(
