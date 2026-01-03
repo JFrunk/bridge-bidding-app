@@ -1,0 +1,217 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "responses",
+  "description": "Responses to partner's opening bids",
+
+  "rules": [
+    {
+      "id": "stayman_2c",
+      "bid": "2♣",
+      "priority": 100,
+      "description": "Stayman convention over 1NT",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1NT",
+        "hcp": {"min": 8},
+        "OR": [
+          {"spades_length": {"min": 4}},
+          {"hearts_length": {"min": 4}}
+        ]
+      },
+      "forcing": "one_round",
+      "explanation": "Stayman, asking for 4-card major with {hcp} HCP"
+    },
+    {
+      "id": "jacoby_transfer_hearts",
+      "bid": "2♦",
+      "priority": 99,
+      "description": "Jacoby transfer to hearts",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1NT",
+        "hearts_length": {"min": 5}
+      },
+      "forcing": "one_round",
+      "explanation": "Jacoby transfer showing 5+ hearts"
+    },
+    {
+      "id": "jacoby_transfer_spades",
+      "bid": "2♥",
+      "priority": 98,
+      "description": "Jacoby transfer to spades",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1NT",
+        "spades_length": {"min": 5}
+      },
+      "forcing": "one_round",
+      "explanation": "Jacoby transfer showing 5+ spades"
+    },
+    {
+      "id": "raise_1nt_to_3nt",
+      "bid": "3NT",
+      "priority": 95,
+      "description": "Raise 1NT to game",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1NT",
+        "hcp": {"min": 10, "max": 14},
+        "is_balanced": true,
+        "has_5_card_major": false
+      },
+      "forcing": "none",
+      "explanation": "Raise to 3NT with {hcp} HCP balanced"
+    },
+    {
+      "id": "raise_1nt_invitational",
+      "bid": "2NT",
+      "priority": 90,
+      "description": "Invitational raise of 1NT",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "1NT",
+        "hcp": {"min": 8, "max": 9},
+        "is_balanced": true,
+        "has_5_card_major": false
+      },
+      "forcing": "none",
+      "explanation": "Invitational 2NT with {hcp} HCP balanced"
+    },
+    {
+      "id": "new_suit_1_level",
+      "bid": "1{suit}",
+      "priority": 80,
+      "description": "New suit at 1-level",
+      "conditions": {
+        "is_response": true,
+        "opening_bid": {"in": ["1♣", "1♦"]},
+        "hcp": {"min": 6},
+        "OR": [
+          {"spades_length": {"min": 4}},
+          {"hearts_length": {"min": 4}}
+        ]
+      },
+      "forcing": "one_round",
+      "suit_selection": "longest_major_first",
+      "explanation": "New suit response showing 6+ HCP and 4+ {suit}"
+    },
+    {
+      "id": "respond_1nt_no_fit",
+      "bid": "1NT",
+      "priority": 70,
+      "description": "1NT response showing 6-10 HCP",
+      "conditions": {
+        "is_response": true,
+        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
+        "hcp": {"min": 6, "max": 10},
+        "is_balanced": true,
+        "support_for_partner": {"max": 2}
+      },
+      "forcing": "none",
+      "explanation": "1NT response showing {hcp} HCP, no major fit"
+    },
+    {
+      "id": "single_raise_major",
+      "bid": "2{partner_suit}",
+      "priority": 65,
+      "description": "Single raise of partner's major",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": {"in": ["1♥", "1♠"]},
+        "hcp": {"min": 6, "max": 10},
+        "support_for_partner": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Single raise with {hcp} HCP and {support_for_partner}-card support"
+    },
+    {
+      "id": "limit_raise_major",
+      "bid": "3{partner_suit}",
+      "priority": 64,
+      "description": "Limit raise of partner's major",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": {"in": ["1♥", "1♠"]},
+        "hcp": {"min": 10, "max": 12},
+        "support_for_partner": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Limit raise with {hcp} HCP and {support_for_partner}-card support"
+    },
+    {
+      "id": "game_raise_major",
+      "bid": "4{partner_suit}",
+      "priority": 63,
+      "description": "Game raise of partner's major",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": {"in": ["1♥", "1♠"]},
+        "OR": [
+          {"hcp": {"min": 13}, "support_for_partner": {"min": 3}},
+          {"hcp": {"min": 6, "max": 9}, "support_for_partner": {"min": 5}}
+        ]
+      },
+      "forcing": "none",
+      "explanation": "Game raise with {support_for_partner}-card support"
+    },
+    {
+      "id": "new_suit_2_level",
+      "bid": "2{suit}",
+      "priority": 50,
+      "description": "New suit at 2-level (game forcing in 2/1)",
+      "conditions": {
+        "is_response": true,
+        "opening_bid": {"in": ["1♥", "1♠"]},
+        "hcp": {"min": 10},
+        "suit_length": {"min": 5}
+      },
+      "forcing": "game",
+      "suit_selection": "longest_lower_suit",
+      "explanation": "2/1 game-forcing response showing {hcp} HCP"
+    },
+    {
+      "id": "respond_2c_positive",
+      "bid": "2♦",
+      "priority": 45,
+      "description": "Waiting response to 2♣",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "2♣",
+        "hcp": {"min": 0, "max": 7}
+      },
+      "forcing": "one_round",
+      "explanation": "2♦ waiting response (0-7 HCP)"
+    },
+    {
+      "id": "respond_2c_positive_suit",
+      "bid": "2{longest_suit}",
+      "priority": 44,
+      "description": "Positive response to 2♣ with good suit",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "2♣",
+        "hcp": {"min": 8},
+        "longest_suit_length": {"min": 5},
+        "suit_quality_longest": {"min": "good"}
+      },
+      "forcing": "game",
+      "explanation": "Positive response to 2♣ with good {longest_suit} suit"
+    },
+    {
+      "id": "pass_no_values",
+      "bid": "Pass",
+      "priority": 1,
+      "description": "Pass with insufficient values",
+      "conditions": {
+        "is_response": true,
+        "hcp": {"max": 5},
+        "NOT": {
+          "partner_last_bid": "2♣"
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with only {hcp} HCP"
+    }
+  ]
+}

@@ -1,0 +1,246 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "rebids",
+  "description": "Opener and responder rebids",
+
+  "rules": [
+    {
+      "id": "opener_rebid_1nt",
+      "bid": "1NT",
+      "priority": 90,
+      "description": "Opener rebids 1NT with balanced minimum",
+      "conditions": {
+        "is_rebid": true,
+        "hcp": {"min": 12, "max": 14},
+        "is_balanced": true,
+        "my_bid_count": {"exact": 1}
+      },
+      "forcing": "none",
+      "explanation": "Rebid 1NT showing {hcp} HCP balanced minimum"
+    },
+    {
+      "id": "opener_rebid_2nt",
+      "bid": "2NT",
+      "priority": 89,
+      "description": "Opener rebids 2NT with balanced 18-19",
+      "conditions": {
+        "is_rebid": true,
+        "hcp": {"min": 18, "max": 19},
+        "is_balanced": true,
+        "my_bid_count": {"exact": 1}
+      },
+      "forcing": "none",
+      "explanation": "Rebid 2NT showing {hcp} HCP balanced"
+    },
+    {
+      "id": "opener_rebid_3nt",
+      "bid": "3NT",
+      "priority": 88,
+      "description": "Opener rebids 3NT with balanced 20-21",
+      "conditions": {
+        "is_rebid": true,
+        "hcp": {"min": 20, "max": 21},
+        "is_balanced": true,
+        "my_bid_count": {"exact": 1}
+      },
+      "forcing": "none",
+      "explanation": "Rebid 3NT showing {hcp} HCP balanced"
+    },
+    {
+      "id": "opener_raise_major",
+      "bid": "2{partner_suit}",
+      "priority": 85,
+      "description": "Opener raises partner's major with 3-card support",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": {"in": ["1♥", "1♠"]},
+        "hcp": {"min": 12, "max": 15},
+        "support_for_partner": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Raise partner's major with {support_for_partner}-card support"
+    },
+    {
+      "id": "opener_jump_raise_major",
+      "bid": "3{partner_suit}",
+      "priority": 84,
+      "description": "Opener jump raises partner's major",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": {"in": ["1♥", "1♠"]},
+        "hcp": {"min": 16, "max": 18},
+        "support_for_partner": {"min": 4}
+      },
+      "forcing": "none",
+      "explanation": "Jump raise showing {hcp} HCP and {support_for_partner}-card support"
+    },
+    {
+      "id": "opener_game_raise_major",
+      "bid": "4{partner_suit}",
+      "priority": 83,
+      "description": "Opener raises to game in partner's major",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": {"in": ["1♥", "1♠"]},
+        "hcp": {"min": 19},
+        "support_for_partner": {"min": 4}
+      },
+      "forcing": "none",
+      "explanation": "Raise to game with {hcp} HCP and {support_for_partner}-card support"
+    },
+    {
+      "id": "opener_rebid_own_suit",
+      "bid": "2{first_suit}",
+      "priority": 75,
+      "description": "Opener rebids own suit showing 6+ cards",
+      "conditions": {
+        "is_rebid": true,
+        "hcp": {"min": 12, "max": 15},
+        "longest_suit_length": {"min": 6},
+        "my_bid_count": {"exact": 1}
+      },
+      "forcing": "none",
+      "explanation": "Rebid own suit showing 6+ card suit minimum"
+    },
+    {
+      "id": "opener_reverse",
+      "bid": "2{higher_suit}",
+      "priority": 70,
+      "description": "Opener reverses showing 17+ HCP",
+      "conditions": {
+        "is_rebid": true,
+        "hcp": {"min": 17},
+        "second_suit_length": {"min": 4},
+        "second_suit_higher": true,
+        "my_bid_count": {"exact": 1}
+      },
+      "forcing": "one_round",
+      "explanation": "Reverse showing {hcp} HCP and two suits"
+    },
+    {
+      "id": "opener_new_suit_lower",
+      "bid": "2{lower_suit}",
+      "priority": 65,
+      "description": "Opener bids new lower suit",
+      "conditions": {
+        "is_rebid": true,
+        "hcp": {"min": 12},
+        "second_suit_length": {"min": 4},
+        "second_suit_lower": true,
+        "my_bid_count": {"exact": 1}
+      },
+      "forcing": "none",
+      "explanation": "Show second suit"
+    },
+    {
+      "id": "responder_rebid_new_suit",
+      "bid": "2{new_suit}",
+      "priority": 60,
+      "description": "Responder bids fourth suit forcing",
+      "conditions": {
+        "is_response": true,
+        "my_bid_count": {"min": 1},
+        "partner_bid_count": {"min": 2},
+        "hcp": {"min": 11},
+        "fourth_suit_available": true
+      },
+      "forcing": "game",
+      "explanation": "Fourth suit forcing showing {hcp}+ HCP"
+    },
+    {
+      "id": "responder_rebid_nt",
+      "bid": "2NT",
+      "priority": 55,
+      "description": "Responder rebids 2NT invitational",
+      "conditions": {
+        "is_response": true,
+        "my_bid_count": {"min": 1},
+        "hcp": {"min": 11, "max": 12},
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "2NT invitational showing {hcp} HCP balanced"
+    },
+    {
+      "id": "responder_rebid_3nt",
+      "bid": "3NT",
+      "priority": 54,
+      "description": "Responder rebids 3NT",
+      "conditions": {
+        "is_response": true,
+        "my_bid_count": {"min": 1},
+        "hcp": {"min": 13, "max": 15},
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "3NT showing {hcp} HCP balanced"
+    },
+    {
+      "id": "responder_preference",
+      "bid": "2{partner_first_suit}",
+      "priority": 50,
+      "description": "Responder gives preference to partner's first suit",
+      "conditions": {
+        "is_response": true,
+        "my_bid_count": {"min": 1},
+        "partner_bid_count": {"min": 2},
+        "support_for_partner_first": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Preference to partner's first suit"
+    },
+    {
+      "id": "responder_raise_opener_rebid",
+      "bid": "3{partner_suit}",
+      "priority": 45,
+      "description": "Responder raises opener's rebid suit",
+      "conditions": {
+        "is_response": true,
+        "my_bid_count": {"min": 1},
+        "hcp": {"min": 10},
+        "support_for_partner": {"min": 4}
+      },
+      "forcing": "none",
+      "explanation": "Raise partner's suit showing fit"
+    },
+    {
+      "id": "responder_rebid_own_suit",
+      "bid": "2{my_suit}",
+      "priority": 40,
+      "description": "Responder rebids own suit showing 6+ cards",
+      "conditions": {
+        "is_response": true,
+        "my_bid_count": {"min": 1},
+        "hcp": {"min": 6, "max": 10},
+        "longest_suit_length": {"min": 6}
+      },
+      "forcing": "none",
+      "explanation": "Rebid own suit showing 6+ cards"
+    },
+    {
+      "id": "pass_in_rebid",
+      "bid": "Pass",
+      "priority": 1,
+      "description": "Pass in rebid situation",
+      "conditions": {
+        "OR": [
+          {
+            "is_rebid": true,
+            "hcp": {"max": 14},
+            "fit_known": false,
+            "forcing_type": "non_forcing"
+          },
+          {
+            "is_response": true,
+            "my_bid_count": {"min": 1},
+            "hcp": {"max": 10},
+            "forcing_type": "non_forcing"
+          }
+        ]
+      },
+      "forcing": "none",
+      "explanation": "Pass with minimum values"
+    }
+  ]
+}

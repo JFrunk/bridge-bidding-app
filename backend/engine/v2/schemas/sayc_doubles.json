@@ -1,0 +1,155 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "doubles",
+  "description": "Takeout doubles, negative doubles, and penalty doubles",
+
+  "rules": [
+    {
+      "id": "takeout_double_standard",
+      "bid": "X",
+      "priority": 100,
+      "description": "Standard takeout double of 1-level opening",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
+        "hcp": {"min": 12, "max": 17},
+        "unbid_suit_support": {"min": 3}
+      },
+      "forcing": "one_round",
+      "explanation": "Takeout double showing {hcp} HCP with support for unbid suits"
+    },
+    {
+      "id": "takeout_double_strong",
+      "bid": "X",
+      "priority": 99,
+      "description": "Strong takeout double (17+ HCP)",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
+        "hcp": {"min": 17}
+      },
+      "forcing": "one_round",
+      "explanation": "Strong takeout double showing {hcp} HCP (will bid again)"
+    },
+    {
+      "id": "takeout_double_balancing",
+      "bid": "X",
+      "priority": 95,
+      "description": "Balancing takeout double",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": true,
+        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
+        "hcp": {"min": 9, "max": 14},
+        "unbid_suit_support": {"min": 3}
+      },
+      "forcing": "one_round",
+      "explanation": "Balancing double showing {hcp} HCP (about 3 less than direct)"
+    },
+    {
+      "id": "negative_double_1_level",
+      "bid": "X",
+      "priority": 90,
+      "description": "Negative double at 1-level",
+      "conditions": {
+        "is_response": true,
+        "opener_relationship": "Partner",
+        "interference_present": true,
+        "interference_level": 1,
+        "hcp": {"min": 6},
+        "has_unbid_major_4": true
+      },
+      "forcing": "one_round",
+      "explanation": "Negative double showing 4+ cards in unbid major(s)"
+    },
+    {
+      "id": "negative_double_2_level",
+      "bid": "X",
+      "priority": 89,
+      "description": "Negative double at 2-level",
+      "conditions": {
+        "is_response": true,
+        "opener_relationship": "Partner",
+        "interference_present": true,
+        "interference_level": 2,
+        "hcp": {"min": 8},
+        "has_unbid_major_4": true
+      },
+      "forcing": "one_round",
+      "explanation": "Negative double at 2-level showing {hcp} HCP"
+    },
+    {
+      "id": "negative_double_3_level",
+      "bid": "X",
+      "priority": 88,
+      "description": "Negative double at 3-level",
+      "conditions": {
+        "is_response": true,
+        "opener_relationship": "Partner",
+        "interference_present": true,
+        "interference_level": 3,
+        "hcp": {"min": 10},
+        "has_unbid_major_4": true
+      },
+      "forcing": "one_round",
+      "explanation": "Negative double at 3-level showing {hcp} HCP"
+    },
+    {
+      "id": "responsive_double",
+      "bid": "X",
+      "priority": 80,
+      "description": "Responsive double after partner's takeout double",
+      "conditions": {
+        "partner_last_bid": "X",
+        "opponent_raised": true,
+        "hcp": {"min": 6},
+        "has_both_unbid_suits": true
+      },
+      "forcing": "one_round",
+      "explanation": "Responsive double showing both unbid suits"
+    },
+    {
+      "id": "support_double",
+      "bid": "X",
+      "priority": 75,
+      "description": "Support double showing 3-card support",
+      "conditions": {
+        "opener_relationship": "Me",
+        "interference_present": true,
+        "partner_bid_major": true,
+        "support_for_partner": {"exact": 3}
+      },
+      "forcing": "one_round",
+      "explanation": "Support double showing exactly 3-card support"
+    },
+    {
+      "id": "reopening_double",
+      "bid": "X",
+      "priority": 70,
+      "description": "Reopening double by opener",
+      "conditions": {
+        "opener_relationship": "Me",
+        "my_bid_count": {"min": 1},
+        "partner_bid_count": {"exact": 0},
+        "opponent_bid_present": true,
+        "hcp": {"min": 11}
+      },
+      "forcing": "one_round",
+      "explanation": "Reopening double showing short in opponent's suit"
+    },
+    {
+      "id": "penalty_double_high_level",
+      "bid": "X",
+      "priority": 50,
+      "description": "Penalty double at high level",
+      "conditions": {
+        "opponent_bid_level": {"min": 4},
+        "trump_length_vs_opponent": {"min": 4},
+        "hcp": {"min": 10}
+      },
+      "forcing": "none",
+      "explanation": "Penalty double with trump stack"
+    }
+  ]
+}
