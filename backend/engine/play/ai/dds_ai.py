@@ -24,7 +24,7 @@ Platform Notes:
 from engine.hand import Hand, Card
 from engine.play_engine import PlayState, Contract, PlayEngine
 from engine.play.ai.base_ai import BasePlayAI
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import time
 
 try:
@@ -130,31 +130,31 @@ class DDSPlayAI(BasePlayAI):
             # if they play optimally from this point
             solved = solve_board(deal)
 
-            # Determine if we're on declarer's side (want to maximize tricks)
-            # or defender's side (want to minimize declarer's tricks)
-            is_declarer_side = self._is_declarer_side(position, state.contract.declarer)
-
-            # Find the best card from the solved results
-            # solve_board returns tricks that the CURRENT PLAYER'S SIDE can make
-            # So both declarer and defenders want to MAXIMIZE this value
-            best_card = None
-            best_tricks = -1  # Start with worst case
-
+            # Collect all cards with their trick counts
+            card_options = []
             for endplay_card, tricks in solved:
-                # Convert endplay card back to our Card format
                 our_card = self._convert_endplay_card_to_ours(endplay_card, legal_cards)
+                if our_card is not None:
+                    card_options.append((our_card, tricks))
 
-                if our_card is None:
-                    continue  # Card not in our legal cards (shouldn't happen)
+            if not card_options:
+                # Fallback if no cards matched
+                print(f"⚠️  DDS solve_board returned no matching cards for {position}")
+                return legal_cards[0]
 
-                # Both sides want to maximize their own tricks
-                # solve_board returns tricks for the side to play
-                if tricks > best_tricks:
-                    best_tricks = tricks
-                    best_card = our_card
-                elif tricks == best_tricks and best_card is None:
-                    # If equal and no card chosen yet, take this one
-                    best_card = our_card
+            # Find the maximum trick count
+            max_tricks = max(tricks for _, tricks in card_options)
+
+            # Get all cards that achieve the maximum tricks
+            best_cards = [(card, tricks) for card, tricks in card_options if tricks == max_tricks]
+
+            if len(best_cards) == 1:
+                # Only one best option
+                best_card = best_cards[0][0]
+            else:
+                # Multiple cards tied for best - use intelligent tie-breaking
+                # This is critical for discards where DDS sees all options as "equal"
+                best_card = self._break_tie(best_cards, state, position, legal_cards)
 
             self.solve_time = time.time() - start_time
             self.solves_count += 1
@@ -354,6 +354,68 @@ class DDSPlayAI(BasePlayAI):
                 return float(state.tricks_taken_ns - state.tricks_taken_ew)
             else:
                 return float(state.tricks_taken_ew - state.tricks_taken_ns)
+
+    def _break_tie(self, tied_cards: List[Tuple[Card, int]], state: PlayState,
+                   position: str, all_legal_cards: List[Card]) -> Card:
+        """
+        Break ties when multiple cards have the same DDS trick count.
+
+        This is critical for discards where DDS often sees all options as "equal"
+        but in practice some discards are catastrophic (like discarding a stopper).
+
+        Strategy:
+        1. When discarding (void in led suit), prefer low cards from long suits
+        2. Avoid discarding lone high cards (likely stoppers)
+        3. Prefer discarding from suits where we have length
+        """
+        hand = state.hands[position]
+        cards = [card for card, _ in tied_cards]
+
+        # Check if this is a discard situation (void in led suit)
+        is_discard = False
+        if state.current_trick:
+            led_suit = state.current_trick[0][0].suit
+            has_led_suit = any(c.suit == led_suit for c in hand.cards)
+            is_discard = not has_led_suit
+
+        if is_discard:
+            # Discard logic: prefer low cards from long suits, avoid lone stoppers
+            best_card = None
+            best_score = -1000  # Higher is better for discard
+
+            # Count cards in each suit
+            suit_counts = {}
+            for c in hand.cards:
+                suit_counts[c.suit] = suit_counts.get(c.suit, 0) + 1
+
+            for card in cards:
+                score = 0
+                suit_count = suit_counts.get(card.suit, 0)
+                rank_value = self._rank_value(card.rank)
+
+                # Prefer discarding from longer suits
+                score += suit_count * 10
+
+                # Prefer discarding low cards
+                score -= rank_value
+
+                # Heavily penalize discarding lone high cards (likely stoppers)
+                if suit_count == 1 and rank_value >= 12:  # K or A
+                    score -= 100  # Strong penalty for discarding lone K or A
+
+                # Penalize discarding from short suits with high cards
+                if suit_count <= 2 and rank_value >= 10:  # T or higher
+                    score -= 20
+
+                if score > best_score:
+                    best_score = score
+                    best_card = card
+
+            return best_card if best_card else cards[0]
+
+        else:
+            # Not a discard - prefer lowest card (standard play, no preference)
+            return min(cards, key=lambda c: self._rank_value(c.rank))
 
     def _get_legal_cards(self, state: PlayState, position: str) -> List[Card]:
         """Get all legal cards for current position"""
