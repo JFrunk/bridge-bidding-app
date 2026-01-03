@@ -24,7 +24,6 @@ import AIDifficultySelector from './components/AIDifficultySelector';
 import { getSessionHeaders } from './utils/sessionHelper';
 import { getRecentLogs } from './utils/consoleCapture';
 import { getRecentActions } from './utils/actionTracker';
-import { captureScreenshot } from './utils/screenshotCapture';
 import { GlossaryDrawer } from './components/glossary';
 import TopNavigation from './components/navigation/TopNavigation';
 import { useDevMode } from './hooks/useDevMode';
@@ -697,9 +696,6 @@ ${otherCommands}`;
   }, []);
 
   const handleFeedbackSubmit = async (feedbackData) => {
-    // Capture screenshot before building context (captures current UI state)
-    const screenshot = await captureScreenshot({ ignoreModals: true });
-
     // Build context data for freeplay mode
     const contextData = {
       game_phase: gamePhase,
@@ -711,7 +707,7 @@ ${otherCommands}`;
       all_hands: allHands,
       console_logs: getRecentLogs(30),
       user_actions: getRecentActions(20),
-      screenshot: screenshot,
+      screenshot: feedbackData.screenshot || null,  // User-captured screenshot from modal
     };
 
     try {

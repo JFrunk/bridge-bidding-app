@@ -9,6 +9,7 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { captureScreenshot } from "../../utils/screenshotCapture";
 
 /**
  * FeedbackModal Component
@@ -34,6 +35,8 @@ export function FeedbackModal({
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [screenshot, setScreenshot] = useState(null);
+  const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
 
   const feedbackTypes = [
     { value: "issue", label: "Something seems wrong", icon: "🐛" },
@@ -56,6 +59,7 @@ export function FeedbackModal({
         description: description.trim(),
         context,
         contextData,
+        screenshot,
       });
       setSubmitted(true);
     } catch (error) {
@@ -72,7 +76,27 @@ export function FeedbackModal({
     setFeedbackType("issue");
     setDescription("");
     setSubmitted(false);
+    setScreenshot(null);
     onClose();
+  };
+
+  const handleCaptureScreenshot = async () => {
+    setIsCapturingScreenshot(true);
+    try {
+      // Hide modal temporarily to capture the app behind it
+      const captured = await captureScreenshot({ ignoreModals: true });
+      if (captured) {
+        setScreenshot(captured);
+      }
+    } catch (error) {
+      console.error("Failed to capture screenshot:", error);
+    } finally {
+      setIsCapturingScreenshot(false);
+    }
+  };
+
+  const handleRemoveScreenshot = () => {
+    setScreenshot(null);
   };
 
   if (submitted) {
@@ -159,6 +183,53 @@ export function FeedbackModal({
             />
           </div>
 
+          {/* Screenshot capture */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Screenshot (optional)
+            </label>
+            {screenshot ? (
+              <div className="relative">
+                <img
+                  src={screenshot}
+                  alt="Captured screenshot"
+                  className="w-full rounded-lg border border-gray-200 max-h-40 object-contain bg-gray-50"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveScreenshot}
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                  aria-label="Remove screenshot"
+                >
+                  ×
+                </button>
+                <p className="text-xs text-green-600 mt-1">Screenshot attached</p>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleCaptureScreenshot}
+                disabled={isCapturingScreenshot}
+                className="w-full p-3 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 text-gray-600 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-all flex items-center justify-center gap-2"
+              >
+                {isCapturingScreenshot ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    <span>Capturing...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>📸</span>
+                    <span>Capture Screenshot</span>
+                  </>
+                )}
+              </button>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              Captures the current game screen to help us understand the issue
+            </p>
+          </div>
+
           {/* Context info */}
           <div className="text-xs text-gray-700 bg-gray-100 p-3 rounded-lg">
             <strong className="text-gray-900">What will be saved:</strong>
@@ -176,6 +247,7 @@ export function FeedbackModal({
                   <li>Current game phase and state</li>
                 </>
               )}
+              <li>Console logs and actions for debugging</li>
             </ul>
           </div>
         </div>
