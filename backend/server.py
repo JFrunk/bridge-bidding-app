@@ -28,6 +28,7 @@ from engine.learning.learning_path_api import register_learning_endpoints
 from engine.session_manager import SessionManager, GameSession
 from engine.bridge_rules_engine import BridgeRulesEngine, GameState as BridgeGameState
 from engine.feedback.play_feedback import get_play_feedback_generator
+from engine.play.dds_analysis import get_dds_service, is_dds_available
 
 
 # Session state management (fixes global state race conditions)
@@ -1147,13 +1148,42 @@ def deal_hands():
     hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
     points_for_json = { 'hcp': south_hand.hcp, 'dist_points': south_hand.dist_points, 'total_points': south_hand.total_points, 'suit_hcp': south_hand.suit_hcp, 'suit_lengths': south_hand.suit_lengths }
 
+    # Calculate DD table for trick potential (production only - Linux with DDS)
+    dd_table = None
+    if PLATFORM_ALLOWS_DDS and is_dds_available():
+        try:
+            dds_service = get_dds_service()
+            hands_dict = {
+                'N': state.deal['North'],
+                'E': state.deal['East'],
+                'S': state.deal['South'],
+                'W': state.deal['West']
+            }
+            analysis = dds_service.analyze_deal(hands_dict, dealer=dealer[0], vulnerability=state.vulnerability)
+            if analysis.is_valid and analysis.dd_table:
+                # Simplify to NS/EW rows (partners have same trick counts)
+                raw_table = analysis.dd_table.to_dict()
+                dd_table = {
+                    'NS': raw_table.get('N', raw_table.get('S', {})),
+                    'EW': raw_table.get('E', raw_table.get('W', {}))
+                }
+        except Exception as e:
+            print(f"⚠️ DD table calculation failed: {e}")
+            # Non-fatal - just don't include dd_table
+
     # Include dealer in response for frontend
-    return jsonify({
+    response_data = {
         'hand': hand_for_json,
         'points': points_for_json,
         'vulnerability': state.vulnerability,
-        'dealer': dealer  # NEW: Send dealer to frontend
-    })
+        'dealer': dealer
+    }
+
+    # Only include dd_table if calculated (production only)
+    if dd_table:
+        response_data['dd_table'] = dd_table
+
+    return jsonify(response_data)
 
 @app.route('/api/get-next-bid', methods=['POST'])
 def get_next_bid():
@@ -3778,6 +3808,15 @@ def simple_login():
             ))
 
             new_user_id = cursor.lastrowid
+
+            # Send welcome email to new users (only for email signups)
+            if email:
+                try:
+                    from engine.notifications.email_service import send_welcome_email
+                    send_welcome_email(email, username)
+                except Exception as email_error:
+                    # Don't fail signup if email fails
+                    print(f"⚠️ Welcome email failed (non-blocking): {email_error}")
 
             return jsonify({
                 "user_id": new_user_id,

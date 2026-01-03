@@ -278,3 +278,32 @@ export async function analyzePlay(handId, trickNumber, playIndex, openingLead = 
 
   return response.json();
 }
+
+/**
+ * Get board analysis data for Performance Overview chart
+ * Each board is classified by bidding quality (actual vs par) and
+ * play quality (tricks made vs DD tricks)
+ *
+ * @param {number} userId - User ID
+ * @param {number|null} sessionId - Optional session ID to filter
+ * @param {number} limit - Maximum number of boards to return (default 25)
+ * @returns {Promise<Object>} Board analysis data:
+ *   - boards: Array of board objects with quality classifications
+ *   - sessions: Available sessions for filtering
+ *   - summary: Count of boards in each quadrant
+ */
+export async function getBoardAnalysis(userId, sessionId = null, limit = 25) {
+  let url = `${API_BASE_URL}/api/analytics/board-analysis?user_id=${userId}&limit=${limit}`;
+  if (sessionId) {
+    url += `&session_id=${sessionId}`;
+  }
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch board analysis');
+  }
+
+  return response.json();
+}

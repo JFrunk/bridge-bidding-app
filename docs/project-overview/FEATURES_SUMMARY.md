@@ -326,6 +326,7 @@
 - Add multiplayer functionality
 - Social features
 - Progress tracking
+- **Weekly Progress Emails** - See [WEEKLY_PROGRESS_EMAIL.md](../features/WEEKLY_PROGRESS_EMAIL.md)
 
 ### Phase 6: ACBL Integration & Tournament Analysis
 **Foundation implemented:** DDS analysis service with full DD table and par calculation (see `backend/engine/play/dds_analysis.py`)

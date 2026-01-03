@@ -19,6 +19,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlayableCard } from '../play/PlayableCard';
+import { TrickPotentialChart } from '../analysis/TrickPotentialChart';
 import './HandReviewModal.css';
 
 // ===== SECTION CARD COMPONENT =====
@@ -1284,6 +1285,20 @@ const HandReviewModal = ({
             {/* Strategy Summary - high-level guidance */}
             {handData?.strategy_summary && (
               <StrategySummaryDisplay strategy={handData.strategy_summary} />
+            )}
+
+            {/* Trick Potential Chart - simplified NS/EW view with game/slam indicators */}
+            {handData?.dd_analysis?.dd_table && (
+              <div className="trick-potential-section">
+                <h4>Trick Potential</h4>
+                <TrickPotentialChart
+                  ddTable={{
+                    NS: handData.dd_analysis.dd_table.N || handData.dd_analysis.dd_table.S,
+                    EW: handData.dd_analysis.dd_table.E || handData.dd_analysis.dd_table.W
+                  }}
+                  compact={true}
+                />
+              </div>
             )}
           </SectionCard>
 

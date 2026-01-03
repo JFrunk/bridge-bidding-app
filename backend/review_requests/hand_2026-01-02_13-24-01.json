@@ -1,0 +1,356 @@
+{
+  "timestamp": "2026-01-02T13:24:01.842251",
+  "game_phase": "playing",
+  "all_hands": {
+    "North": {
+      "cards": [
+        {
+          "rank": "2",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 16,
+        "dist_points": 2,
+        "total_points": 18,
+        "suit_hcp": {
+          "\u2660": 0,
+          "\u2665": 7,
+          "\u2666": 2,
+          "\u2663": 7
+        },
+        "suit_lengths": {
+          "\u2660": 1,
+          "\u2665": 5,
+          "\u2666": 2,
+          "\u2663": 5
+        }
+      }
+    },
+    "East": {
+      "cards": [
+        {
+          "rank": "A",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "K",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2666"
+        }
+      ],
+      "points": {
+        "hcp": 11,
+        "dist_points": 4,
+        "total_points": 15,
+        "suit_hcp": {
+          "\u2660": 7,
+          "\u2665": 1,
+          "\u2666": 3,
+          "\u2663": 0
+        },
+        "suit_lengths": {
+          "\u2660": 6,
+          "\u2665": 1,
+          "\u2666": 6,
+          "\u2663": 0
+        }
+      }
+    },
+    "South": {
+      "cards": [
+        {
+          "rank": "J",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "5",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "7",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "6",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 4,
+        "dist_points": 2,
+        "total_points": 6,
+        "suit_hcp": {
+          "\u2660": 1,
+          "\u2665": 0,
+          "\u2666": 0,
+          "\u2663": 3
+        },
+        "suit_lengths": {
+          "\u2660": 2,
+          "\u2665": 2,
+          "\u2666": 3,
+          "\u2663": 6
+        }
+      }
+    },
+    "West": {
+      "cards": [
+        {
+          "rank": "Q",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "T",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2660"
+        },
+        {
+          "rank": "Q",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "4",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "3",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "2",
+          "suit": "\u2665"
+        },
+        {
+          "rank": "A",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "J",
+          "suit": "\u2666"
+        },
+        {
+          "rank": "9",
+          "suit": "\u2663"
+        },
+        {
+          "rank": "8",
+          "suit": "\u2663"
+        }
+      ],
+      "points": {
+        "hcp": 9,
+        "dist_points": 1,
+        "total_points": 10,
+        "suit_hcp": {
+          "\u2660": 2,
+          "\u2665": 2,
+          "\u2666": 5,
+          "\u2663": 0
+        },
+        "suit_lengths": {
+          "\u2660": 4,
+          "\u2665": 5,
+          "\u2666": 2,
+          "\u2663": 2
+        }
+      }
+    }
+  },
+  "auction": [
+    {
+      "bid": "1NT",
+      "explanation": "North bid 1NT"
+    },
+    {
+      "bid": "Pass",
+      "explanation": "East bid Pass"
+    },
+    {
+      "bid": "3NT",
+      "explanation": "South bid 3NT"
+    },
+    {
+      "bid": "Pass",
+      "explanation": "West bid Pass"
+    },
+    {
+      "bid": "Pass",
+      "explanation": "North bid Pass"
+    },
+    {
+      "bid": "Pass",
+      "explanation": "East bid Pass"
+    }
+  ],
+  "vulnerability": "NS",
+  "dealer": "North",
+  "user_position": "South",
+  "user_concern": "Was the opening lead correct? What about declarer's plan?",
+  "play_data": {
+    "contract": {
+      "level": 3,
+      "strain": "NT",
+      "declarer": "N",
+      "doubled": 0,
+      "string": "3NT by N"
+    },
+    "dummy": "S",
+    "opening_leader": "E",
+    "trick_history": [],
+    "current_trick": [
+      {
+        "card": {
+          "rank": "9",
+          "suit": "\u2660"
+        },
+        "player": "E"
+      }
+    ],
+    "tricks_won": {
+      "N": 0,
+      "E": 0,
+      "S": 0,
+      "W": 0
+    },
+    "tricks_taken_ns": 0,
+    "tricks_taken_ew": 0,
+    "next_to_play": "S",
+    "dummy_revealed": true,
+    "is_complete": false
+  }
+}

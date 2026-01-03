@@ -219,6 +219,16 @@ body {
   background-color: var(--bg-card-dark);
   border-radius: var(--radius-md);
 }
+.hand-analysis-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.hand-analysis-header h4 {
+  margin: 0;
+}
 .hand-analysis h4 {
   margin-top: 0;
   text-align: center;

@@ -319,6 +319,187 @@ def send_review_notification(review_data: Dict[str, Any], filename: str) -> bool
     return get_email_service().send_review_request_notification(review_data, filename)
 
 
+def send_welcome_email(user_email: str, display_name: str = None) -> bool:
+    """
+    Send welcome email to new users.
+
+    Args:
+        user_email: The user's email address
+        display_name: Optional display name for personalization
+
+    Returns:
+        True if email sent successfully, False otherwise
+    """
+    service = get_email_service()
+    if not service.is_configured():
+        print("⚠️  Email not configured - skipping welcome email")
+        return False
+
+    try:
+        name = display_name or user_email.split('@')[0]
+        created_date = datetime.now().strftime('%B %d, %Y')
+        app_url = service.app_url.replace('localhost:5001', 'app.mybridgebuddy.com')
+        if 'localhost' in app_url:
+            app_url = 'https://app.mybridgebuddy.com'
+
+        subject = "Welcome to My Bridge Buddy! 🃏"
+
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+            <div style="background: #1a5f2a; color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+                <h1 style="margin: 0; font-size: 28px;">🃏 Welcome to My Bridge Buddy!</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 16px;">Your personal bridge training companion</p>
+            </div>
+
+            <div style="background: white; border: 1px solid #ddd; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
+                <p style="font-size: 18px; color: #333;">Hi {name},</p>
+
+                <p style="font-size: 16px; color: #555; line-height: 1.6;">
+                    Thanks for joining <strong>My Bridge Buddy</strong> - your personal bridge training companion!
+                </p>
+
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                    <h3 style="margin-top: 0; color: #1a5f2a; font-size: 18px;">What You Can Do:</h3>
+
+                    <p style="margin: 12px 0; font-size: 15px; color: #444;">
+                        🎯 <strong>Practice Bidding</strong><br>
+                        <span style="color: #666; font-size: 14px;">Learn the Standard American Yellow Card (SAYC) system with real-time feedback on every bid.</span>
+                    </p>
+
+                    <p style="margin: 12px 0; font-size: 15px; color: #444;">
+                        🤖 <strong>Play Against AI</strong><br>
+                        <span style="color: #666; font-size: 14px;">Complete hands against AI opponents at adjustable difficulty levels.</span>
+                    </p>
+
+                    <p style="margin: 12px 0; font-size: 15px; color: #444;">
+                        📊 <strong>Track Your Progress</strong><br>
+                        <span style="color: #666; font-size: 14px;">View your dashboard to see bidding accuracy, common mistakes, and improvement over time.</span>
+                    </p>
+
+                    <p style="margin: 12px 0; font-size: 15px; color: #444;">
+                        📚 <strong>Learn Conventions</strong><br>
+                        <span style="color: #666; font-size: 14px;">Master Stayman, Jacoby Transfers, Blackwood, and more with guided scenarios.</span>
+                    </p>
+                </div>
+
+                <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                    <h3 style="margin-top: 0; color: #1a5f2a; font-size: 16px;">Your Account</h3>
+                    <p style="margin: 5px 0; font-size: 14px; color: #555;">
+                        <strong>Email:</strong> {user_email}<br>
+                        <strong>Created:</strong> {created_date}
+                    </p>
+                </div>
+
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{app_url}"
+                       style="display: inline-block; background: #1a5f2a; color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                        Start Playing →
+                    </a>
+                </div>
+
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #ffc107;">
+                    <p style="margin: 0; font-size: 14px; color: #856404;">
+                        💡 <strong>Tip:</strong> Keep this email! If you ever forget which email you used to sign up,
+                        just search your inbox for "Bridge Buddy" to find it.
+                    </p>
+                </div>
+
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #2196f3;">
+                    <p style="margin: 0; font-size: 14px; color: #0d47a1;">
+                        🤝 <strong>Share the Love:</strong> Know someone who wants to improve their bridge game?
+                        Forward this email or share the link: <a href="{app_url}" style="color: #1a5f2a;">{app_url}</a>
+                    </p>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+
+                <p style="font-size: 16px; color: #333; margin-bottom: 5px;">Happy bidding!</p>
+                <p style="font-size: 14px; color: #666; margin-top: 0;"><strong>The My Bridge Buddy Team</strong></p>
+
+                <p style="font-size: 12px; color: #999; margin-top: 20px;">
+                    Questions or feedback? Just reply to this email.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_body = f"""
+WELCOME TO MY BRIDGE BUDDY!
+===========================
+
+Hi {name},
+
+Thanks for joining My Bridge Buddy - your personal bridge training companion!
+
+WHAT YOU CAN DO:
+
+🎯 Practice Bidding
+Learn the Standard American Yellow Card (SAYC) system with real-time feedback on every bid.
+
+🤖 Play Against AI
+Complete hands against AI opponents at adjustable difficulty levels.
+
+📊 Track Your Progress
+View your dashboard to see bidding accuracy, common mistakes, and improvement over time.
+
+📚 Learn Conventions
+Master Stayman, Jacoby Transfers, Blackwood, and more with guided scenarios.
+
+---
+
+YOUR ACCOUNT:
+
+Email: {user_email}
+Created: {created_date}
+
+Return to the app anytime: {app_url}
+
+---
+
+💡 TIP: Keep this email! If you ever forget which email you used to sign up,
+just search your inbox for "Bridge Buddy" to find it.
+
+---
+
+🤝 SHARE THE LOVE:
+
+Know someone who wants to improve their bridge game?
+Forward this email or share the link: {app_url}
+
+---
+
+Happy bidding!
+The My Bridge Buddy Team
+
+Questions or feedback? Just reply to this email.
+"""
+
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = service.sender_email
+        msg['To'] = user_email
+        msg.attach(MIMEText(text_body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
+
+        with smtplib.SMTP(service.smtp_server, service.smtp_port) as server:
+            server.starttls()
+            server.login(service.sender_email, service.sender_password)
+            server.sendmail(service.sender_email, user_email, msg.as_string())
+
+        print(f"✅ Welcome email sent to: {user_email}")
+        return True
+
+    except Exception as e:
+        print(f"❌ Failed to send welcome email: {e}")
+        return False
+
+
 def send_feedback_notification(feedback_data: Dict[str, Any], filename: str) -> bool:
     """
     Send email notification for general user feedback.

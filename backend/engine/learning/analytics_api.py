@@ -2487,6 +2487,171 @@ def analyze_play():
         return jsonify({'error': str(e)}), 500
 
 
+# ============================================================================
+# BOARD ANALYSIS - Performance Overview Chart Data
+# ============================================================================
+
+def get_board_analysis():
+    """
+    GET /api/analytics/board-analysis
+
+    Returns board-by-board analysis data for the Performance Overview chart.
+    Each board is classified by bidding quality (actual vs par) and
+    play quality (tricks made vs DD tricks).
+
+    Parameters:
+        user_id (required): User ID
+        session_id (optional): Filter to specific session
+        limit (optional): Max boards to return (default 25)
+
+    Returns:
+        {
+            boards: [{
+                board_id, hand_id, session_id,
+                actual_tricks, dd_tricks,
+                actual_score, par_score,
+                contract, declarer, made,
+                play_quality, bidding_quality,
+                played_at
+            }],
+            sessions: [{session_id, started_at, hands_count}],
+            summary: {total_boards, good_good, good_bad, bad_good, bad_bad}
+        }
+    """
+    user_id = request.args.get('user_id')
+    session_id = request.args.get('session_id')
+    limit = request.args.get('limit', 25, type=int)
+
+    if not user_id:
+        return jsonify({'error': 'user_id required'}), 400
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Build query with optional session filter
+        query = """
+            SELECT
+                sh.id as hand_id,
+                sh.hand_number as board_id,
+                sh.session_id,
+                sh.tricks_taken as actual_tricks,
+                sh.dd_tricks,
+                sh.hand_score as actual_score,
+                sh.par_score,
+                sh.contract_level,
+                sh.contract_strain,
+                sh.contract_declarer as declarer,
+                sh.made,
+                sh.played_at,
+                gs.started_at as session_started
+            FROM session_hands sh
+            JOIN game_sessions gs ON sh.session_id = gs.id
+            WHERE gs.user_id = ?
+              AND sh.dd_tricks IS NOT NULL
+              AND sh.par_score IS NOT NULL
+        """
+        params = [user_id]
+
+        if session_id:
+            query += " AND sh.session_id = ?"
+            params.append(session_id)
+
+        query += " ORDER BY sh.played_at DESC LIMIT ?"
+        params.append(limit)
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+
+        # Process boards
+        boards = []
+        summary = {'total_boards': 0, 'good_good': 0, 'good_bad': 0, 'bad_good': 0, 'bad_bad': 0}
+
+        for row in rows:
+            # Build contract string (e.g., "4♥")
+            contract = None
+            if row['contract_level'] and row['contract_strain']:
+                strain = row['contract_strain']
+                # Convert strain to symbol if needed
+                strain_symbols = {'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣', 'NT': 'NT', 'N': 'NT'}
+                strain_display = strain_symbols.get(strain, strain)
+                contract = f"{row['contract_level']}{strain_display}"
+
+            # Determine quality (the "physics" of the chart)
+            actual_tricks = row['actual_tricks'] or 0
+            dd_tricks = row['dd_tricks'] or 0
+            actual_score = row['actual_score'] or 0
+            par_score = row['par_score'] or 0
+
+            play_good = actual_tricks >= dd_tricks
+            bidding_good = actual_score >= par_score
+
+            # Update summary
+            summary['total_boards'] += 1
+            if bidding_good and play_good:
+                summary['good_good'] += 1
+            elif bidding_good and not play_good:
+                summary['good_bad'] += 1
+            elif not bidding_good and play_good:
+                summary['bad_good'] += 1
+            else:
+                summary['bad_bad'] += 1
+
+            boards.append({
+                'hand_id': row['hand_id'],
+                'board_id': row['board_id'],
+                'session_id': row['session_id'],
+                'actual_tricks': actual_tricks,
+                'dd_tricks': dd_tricks,
+                'actual_score': actual_score,
+                'par_score': par_score,
+                'contract': contract,
+                'declarer': row['declarer'],
+                'made': row['made'],
+                'play_quality': 'good' if play_good else 'bad',
+                'bidding_quality': 'good' if bidding_good else 'bad',
+                'played_at': row['played_at']
+            })
+
+        # Get available sessions for the dropdown
+        cursor.execute("""
+            SELECT
+                gs.id as session_id,
+                gs.started_at,
+                COUNT(sh.id) as hands_count
+            FROM game_sessions gs
+            JOIN session_hands sh ON sh.session_id = gs.id
+            WHERE gs.user_id = ?
+              AND sh.dd_tricks IS NOT NULL
+              AND sh.par_score IS NOT NULL
+            GROUP BY gs.id
+            HAVING hands_count > 0
+            ORDER BY gs.started_at DESC
+            LIMIT 10
+        """, (user_id,))
+
+        sessions = []
+        for row in cursor.fetchall():
+            sessions.append({
+                'session_id': row['session_id'],
+                'started_at': row['started_at'],
+                'hands_count': row['hands_count']
+            })
+
+        conn.close()
+
+        return jsonify({
+            'boards': boards,
+            'sessions': sessions,
+            'summary': summary
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 def register_analytics_endpoints(app):
     """
     Register all analytics endpoints with Flask app.
@@ -2516,6 +2681,9 @@ def register_analytics_endpoints(app):
     app.route('/api/hand-history', methods=['GET'])(get_hand_history)
     app.route('/api/hand-detail', methods=['GET'])(get_hand_detail)
     app.route('/api/analyze-play', methods=['POST'])(analyze_play)
+
+    # Board analysis for Performance Overview chart
+    app.route('/api/analytics/board-analysis', methods=['GET'])(get_board_analysis)
 
     print("✓ Analytics API endpoints registered")
     print("✓ Four-dimension progress endpoint registered")

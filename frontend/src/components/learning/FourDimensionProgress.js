@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getFourDimensionProgress, getDashboardData, getHandHistory } from '../../services/analyticsService';
+import { getFourDimensionProgress, getDashboardData, getHandHistory, getBoardAnalysis } from '../../services/analyticsService';
 import './FourDimensionProgress.css';
 
 // ============================================================================
@@ -189,15 +189,15 @@ const FourDimensionProgress = ({
         <ProgressBar
           id="performance-overview"
           icon="📊"
-          title="Performance Overview"
+          title="Board Analysis"
           miniStats={getPerformanceOverviewMiniStats(bid_practice_quality, play_practice_quality)}
           expanded={expandedBars['performance-overview']}
           onToggle={() => toggleBar('performance-overview')}
           accentColor="neutral"
         >
-          <PerformanceOverviewExpanded
-            bidQuality={bid_practice_quality}
-            playQuality={play_practice_quality}
+          <BoardAnalysisExpanded
+            userId={userId}
+            onReviewHand={onReviewHand}
           />
         </ProgressBar>
       </div>
@@ -701,99 +701,282 @@ const PracticePlayExpanded = ({ quality, handHistory, onReviewHand, onShowHandHi
 };
 
 // ============================================================================
-// PERFORMANCE OVERVIEW EXPANDED
+// BOARD ANALYSIS EXPANDED - Pianola-style Performance Chart
 // ============================================================================
 
-const PerformanceOverviewExpanded = ({ bidQuality, playQuality }) => {
-  const bidPct = Math.round(bidQuality?.overall_accuracy || 0);
-  const playStats = playQuality?.play_decision_stats;
-  const playPct = Math.round(playStats?.optimal_rate || playQuality?.declarer_success_rate || 0);
+const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
+  const [boards, setBoards] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [tooltip, setTooltip] = useState(null);
+  const [summary, setSummary] = useState({ total_boards: 0, good_good: 0, good_bad: 0, bad_good: 0, bad_bad: 0 });
 
-  // Determine quadrant
-  const getQuadrantLabel = () => {
-    if (bidPct >= 70 && playPct >= 70) return "Strong overall performance!";
-    if (bidPct >= 70 && playPct < 70) return "Good bidding, focus on card play";
-    if (bidPct < 70 && playPct >= 70) return "Good play, focus on bidding";
-    return "Room to improve in both areas";
+  useEffect(() => {
+    loadBoardAnalysis();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, selectedSession]);
+
+  const loadBoardAnalysis = async () => {
+    if (!userId) return;
+
+    try {
+      setLoading(true);
+      const data = await getBoardAnalysis(userId, selectedSession, 25);
+      setBoards(data.boards || []);
+      setSessions(data.sessions || []);
+      setSummary(data.summary || { total_boards: 0, good_good: 0, good_bad: 0, bad_good: 0, bad_bad: 0 });
+    } catch (err) {
+      console.error('Failed to load board analysis:', err);
+      setBoards([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getRecommendation = () => {
-    if (bidPct >= 70 && playPct >= 70) return "Keep up the great work! Consider advancing to more complex conventions.";
-    if (bidPct >= 70) return "Your bidding is solid! Focus on card play, especially finessing and discarding.";
-    if (playPct >= 70) return "Your play is strong! Work on bidding fundamentals and convention usage.";
-    return "Practice both bidding scenarios and complete hands to improve your overall game.";
+  // Group boards by quadrant
+  const quadrants = {
+    'strong': [],      // good bidding + good play (top-right)
+    'bid-focus': [],   // good bidding, bad play (top-left)
+    'play-focus': [],  // bad bidding, good play (bottom-right)
+    'review': []       // bad bidding + bad play (bottom-left)
   };
 
-  return (
-    <div className="expanded-content performance-overview-content">
-      <div className="quadrant-section">
-        <div className="section-title">Where Should You Focus?</div>
+  boards.forEach(board => {
+    const playGood = board.play_quality === 'good';
+    const bidGood = board.bidding_quality === 'good';
 
-        {/* Quadrant Chart */}
-        <div className="quadrant-chart">
-          <svg viewBox="0 0 220 220" className="quadrant-svg">
-            {/* Background quadrants */}
-            <rect x="10" y="10" width="100" height="100" fill="#fef2f2" opacity="0.5" />
-            <rect x="110" y="10" width="100" height="100" fill="#fffbeb" opacity="0.5" />
-            <rect x="10" y="110" width="100" height="100" fill="#fffbeb" opacity="0.5" />
-            <rect x="110" y="110" width="100" height="100" fill="#ecfdf5" opacity="0.5" />
+    if (bidGood && playGood) quadrants['strong'].push(board);
+    else if (bidGood && !playGood) quadrants['bid-focus'].push(board);
+    else if (!bidGood && playGood) quadrants['play-focus'].push(board);
+    else quadrants['review'].push(board);
+  });
 
-            {/* Grid lines */}
-            <line x1="110" y1="10" x2="110" y2="210" stroke="#e5e7eb" strokeWidth="1" />
-            <line x1="10" y1="110" x2="210" y2="110" stroke="#e5e7eb" strokeWidth="1" />
+  // Grid packing: position boards in rows within each quadrant
+  const getGridPosition = (quadrantKey, index) => {
+    const cols = 5;
+    const row = Math.floor(index / cols);
+    const col = index % cols;
+    const spacingX = 26;
+    const spacingY = 24;
 
-            {/* Axis lines */}
-            <line x1="10" y1="210" x2="210" y2="210" stroke="#9ca3af" strokeWidth="2" />
-            <line x1="10" y1="10" x2="10" y2="210" stroke="#9ca3af" strokeWidth="2" />
+    // Quadrant centers (in 320x280 SVG)
+    const centers = {
+      'strong': { x: 240, y: 70 },
+      'bid-focus': { x: 80, y: 70 },
+      'play-focus': { x: 240, y: 210 },
+      'review': { x: 80, y: 210 }
+    };
 
-            {/* Axis labels */}
-            <text x="110" y="228" textAnchor="middle" className="axis-label">Bidding %</text>
-            <text x="-110" y="5" textAnchor="middle" transform="rotate(-90)" className="axis-label">Play %</text>
+    const center = centers[quadrantKey];
+    return {
+      x: center.x - 52 + col * spacingX,
+      y: center.y - 24 + row * spacingY
+    };
+  };
 
-            {/* Scale markers */}
-            <text x="10" y="225" textAnchor="middle" className="scale-marker">0</text>
-            <text x="110" y="225" textAnchor="middle" className="scale-marker">50</text>
-            <text x="210" y="225" textAnchor="middle" className="scale-marker">100</text>
+  // Our distinctive color palette (teal/amber/indigo/rose - NOT green/yellow/red)
+  const quadrantColors = {
+    'strong': { badge: '#0d9488', bg: '#ccfbf1', bgEnd: '#99f6e4' },      // teal
+    'bid-focus': { badge: '#f59e0b', bg: '#fef3c7', bgEnd: '#fde68a' },   // amber
+    'play-focus': { badge: '#6366f1', bg: '#e0e7ff', bgEnd: '#c7d2fe' },  // indigo
+    'review': { badge: '#e11d48', bg: '#ffe4e6', bgEnd: '#fecdd3' }       // rose
+  };
 
-            {/* Data point */}
-            <circle
-              cx={10 + (bidPct * 2)}
-              cy={210 - (playPct * 2)}
-              r="10"
-              fill="#3b82f6"
-              stroke="#1d4ed8"
-              strokeWidth="2"
-            />
+  const handleBoardClick = (handId) => {
+    if (onReviewHand && handId) {
+      onReviewHand(handId);
+    }
+  };
 
-            {/* Quadrant labels */}
-            <text x="55" y="55" textAnchor="middle" className="quadrant-label">Needs Work</text>
-            <text x="160" y="55" textAnchor="middle" className="quadrant-label">Bid Well</text>
-            <text x="55" y="165" textAnchor="middle" className="quadrant-label">Play Well</text>
-            <text x="160" y="165" textAnchor="middle" className="quadrant-label">Strong</text>
-          </svg>
-        </div>
+  const handleMouseEnter = (e, board) => {
+    const rect = e.target.getBoundingClientRect();
+    setTooltip({
+      board,
+      x: rect.left + rect.width / 2,
+      y: rect.top - 10
+    });
+  };
 
-        {/* Stats Summary */}
-        <div className="quadrant-stats">
-          <div className="stat-row">
-            <span className="stat-name">Bidding:</span>
-            <span className={`stat-value ${bidPct >= 70 ? 'good' : 'needs-work'}`}>{bidPct}%</span>
-          </div>
-          <div className="stat-row">
-            <span className="stat-name">Play:</span>
-            <span className={`stat-value ${playPct >= 70 ? 'good' : 'needs-work'}`}>{playPct}%</span>
-          </div>
-        </div>
+  const handleMouseLeave = () => {
+    setTooltip(null);
+  };
 
-        {/* Recommendation */}
-        <div className="recommendation-box">
-          <span className="recommendation-icon">💡</span>
-          <div className="recommendation-text">
-            <strong>{getQuadrantLabel()}</strong>
-            <p>{getRecommendation()}</p>
-          </div>
+  if (loading) {
+    return (
+      <div className="expanded-content board-analysis-content">
+        <div className="board-analysis-loading">Loading board analysis...</div>
+      </div>
+    );
+  }
+
+  if (boards.length === 0) {
+    return (
+      <div className="expanded-content board-analysis-content">
+        <div className="board-analysis-empty">
+          <p>No analyzed boards yet.</p>
+          <p className="empty-hint">Complete hands with DDS analysis enabled to see your performance breakdown.</p>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="expanded-content board-analysis-content">
+      {/* Session Filter */}
+      <div className="session-filter">
+        <select
+          value={selectedSession || ''}
+          onChange={e => setSelectedSession(e.target.value || null)}
+          className="session-select"
+        >
+          <option value="">Last 25 hands</option>
+          {sessions.map(s => (
+            <option key={s.session_id} value={s.session_id}>
+              Session ({s.hands_count} hands)
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Board Analysis Chart */}
+      <div className="board-analysis-chart-container">
+        <svg viewBox="0 0 320 280" className="board-analysis-chart">
+          {/* Gradient definitions */}
+          <defs>
+            {Object.entries(quadrantColors).map(([key, colors]) => (
+              <linearGradient key={key} id={`gradient-${key}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={colors.bg} />
+                <stop offset="100%" stopColor={colors.bgEnd} />
+              </linearGradient>
+            ))}
+          </defs>
+
+          {/* Quadrant backgrounds with rounded corners */}
+          <rect x="4" y="4" width="152" height="132" rx="8" fill="url(#gradient-bid-focus)" />
+          <rect x="164" y="4" width="152" height="132" rx="8" fill="url(#gradient-strong)" />
+          <rect x="4" y="144" width="152" height="132" rx="8" fill="url(#gradient-review)" />
+          <rect x="164" y="144" width="152" height="132" rx="8" fill="url(#gradient-play-focus)" />
+
+          {/* Axis labels */}
+          <text x="160" y="276" textAnchor="middle" className="chart-axis-label">Card Play Quality →</text>
+          <text x="10" y="140" textAnchor="middle" transform="rotate(-90, 10, 140)" className="chart-axis-label">↑ Bidding</text>
+
+          {/* Quadrant labels with bridge suit icons */}
+          <text x="80" y="20" textAnchor="middle" className="chart-quadrant-title">♥ Focus: Play</text>
+          <text x="240" y="20" textAnchor="middle" className="chart-quadrant-title">♠ Strong</text>
+          <text x="80" y="262" textAnchor="middle" className="chart-quadrant-title">♣ Review</text>
+          <text x="240" y="262" textAnchor="middle" className="chart-quadrant-title">♦ Focus: Bidding</text>
+
+          {/* Board badges */}
+          {Object.entries(quadrants).map(([quadrantKey, quadrantBoards]) =>
+            quadrantBoards.slice(0, 20).map((board, index) => {
+              const pos = getGridPosition(quadrantKey, index);
+              const colors = quadrantColors[quadrantKey];
+
+              return (
+                <g
+                  key={board.hand_id}
+                  className="board-badge"
+                  onClick={() => handleBoardClick(board.hand_id)}
+                  onMouseEnter={(e) => handleMouseEnter(e, board)}
+                  onMouseLeave={handleMouseLeave}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {/* Pill-shaped badge */}
+                  <rect
+                    x={pos.x - 11}
+                    y={pos.y - 9}
+                    width="22"
+                    height="18"
+                    rx="4"
+                    fill={colors.badge}
+                    className="badge-bg"
+                  />
+                  {/* Contract or board number */}
+                  <text
+                    x={pos.x}
+                    y={pos.y + 4}
+                    textAnchor="middle"
+                    className="badge-text"
+                  >
+                    {board.contract || `#${board.board_id}`}
+                  </text>
+                </g>
+              );
+            })
+          )}
+
+          {/* Overflow indicators */}
+          {Object.entries(quadrants).map(([quadrantKey, quadrantBoards]) => {
+            if (quadrantBoards.length <= 20) return null;
+            const overflow = quadrantBoards.length - 20;
+            const positions = {
+              'strong': { x: 308, y: 130 },
+              'bid-focus': { x: 12, y: 130 },
+              'play-focus': { x: 308, y: 270 },
+              'review': { x: 12, y: 270 }
+            };
+            const pos = positions[quadrantKey];
+            return (
+              <text
+                key={`overflow-${quadrantKey}`}
+                x={pos.x}
+                y={pos.y}
+                textAnchor={pos.x < 160 ? 'start' : 'end'}
+                className="overflow-indicator"
+              >
+                +{overflow}
+              </text>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="board-analysis-summary">
+        <div className="summary-item strong">
+          <span className="summary-count">{summary.good_good}</span>
+          <span className="summary-label">Strong</span>
+        </div>
+        <div className="summary-item bid-focus">
+          <span className="summary-count">{summary.good_bad}</span>
+          <span className="summary-label">Focus: Play</span>
+        </div>
+        <div className="summary-item play-focus">
+          <span className="summary-count">{summary.bad_good}</span>
+          <span className="summary-label">Focus: Bid</span>
+        </div>
+        <div className="summary-item review">
+          <span className="summary-count">{summary.bad_bad}</span>
+          <span className="summary-label">Review</span>
+        </div>
+      </div>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          className="board-tooltip"
+          style={{
+            position: 'fixed',
+            left: tooltip.x,
+            top: tooltip.y,
+            transform: 'translate(-50%, -100%)'
+          }}
+        >
+          <div className="tooltip-header">
+            <strong>{tooltip.board.contract || `Board ${tooltip.board.board_id}`}</strong>
+            {tooltip.board.declarer && <span> by {tooltip.board.declarer}</span>}
+          </div>
+          <div className="tooltip-row">
+            Tricks: {tooltip.board.actual_tricks}/{tooltip.board.dd_tricks} (DD)
+          </div>
+          <div className="tooltip-row">
+            Score: {tooltip.board.actual_score} (Par: {tooltip.board.par_score})
+          </div>
+          <div className="tooltip-hint">Click to review</div>
+        </div>
+      )}
     </div>
   );
 };

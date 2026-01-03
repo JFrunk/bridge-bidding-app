@@ -265,7 +265,8 @@ class BiddingFeedbackGenerator:
                           optimal_bid: str,
                           optimal_explanation: BidExplanation,
                           session_id: Optional[str] = None,
-                          hand_analysis_id: Optional[int] = None) -> BiddingFeedback:
+                          hand_analysis_id: Optional[int] = None,
+                          hand_number: Optional[int] = None) -> BiddingFeedback:
         """
         Evaluate bid AND store in database for dashboard tracking
 
@@ -278,6 +279,7 @@ class BiddingFeedbackGenerator:
             optimal_explanation: BidExplanation object
             session_id: Optional session ID
             hand_analysis_id: Optional hand analysis ID (for Phase 3)
+            hand_number: Optional hand number within session (1-indexed)
 
         Returns:
             BiddingFeedback object
@@ -291,7 +293,7 @@ class BiddingFeedbackGenerator:
         )
 
         # Store in database
-        self._store_feedback(user_id, feedback, auction_context, session_id, hand_analysis_id)
+        self._store_feedback(user_id, feedback, auction_context, session_id, hand_analysis_id, hand_number)
 
         return feedback
 
@@ -300,7 +302,8 @@ class BiddingFeedbackGenerator:
                        feedback: BiddingFeedback,
                        auction_context: Dict,
                        session_id: Optional[str],
-                       hand_analysis_id: Optional[int]):
+                       hand_analysis_id: Optional[int],
+                       hand_number: Optional[int] = None):
         """Store feedback in bidding_decisions table"""
         # Use custom db_path if provided (for testing), otherwise use global connection
         if self.db_path and self.db_path != 'backend/bridge.db':
@@ -313,7 +316,7 @@ class BiddingFeedbackGenerator:
         try:
             cursor.execute("""
                 INSERT INTO bidding_decisions (
-                    hand_analysis_id, user_id, session_id,
+                    hand_analysis_id, user_id, session_id, hand_number,
                     bid_number, position, dealer, vulnerability,
                     user_bid, optimal_bid, auction_before,
                     correctness, score, impact,
@@ -321,11 +324,12 @@ class BiddingFeedbackGenerator:
                     key_concept, difficulty,
                     helpful_hint, reasoning,
                     timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (
                 hand_analysis_id,
                 user_id,
                 session_id,
+                hand_number,
                 feedback.bid_number,
                 feedback.position,
                 auction_context.get('dealer'),

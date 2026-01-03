@@ -3,17 +3,20 @@ import { useAuth } from '../../contexts/AuthContext';
 import './SimpleLogin.css';
 
 export function SimpleLogin({ onClose }) {
+  const [userType, setUserType] = useState('new'); // 'new' or 'returning'
   const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'phone'
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const { simpleLogin, continueAsGuest } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setLoading(true);
 
     const identifier = loginMethod === 'email' ? email : phone;
@@ -28,11 +31,14 @@ export function SimpleLogin({ onClose }) {
 
     if (result.success) {
       if (result.created) {
-        console.log('Welcome! New account created.');
+        // New user created
+        setSuccessMessage('Welcome! Your account has been created.');
+        setTimeout(() => onClose?.(), 1500);
       } else {
-        console.log('Welcome back!');
+        // Existing user found
+        setSuccessMessage('Welcome back!');
+        setTimeout(() => onClose?.(), 1000);
       }
-      onClose?.();
     } else {
       setError(result.error);
     }
@@ -79,6 +85,27 @@ export function SimpleLogin({ onClose }) {
 
         <h2>Welcome to My Bridge Buddy</h2>
 
+        {/* New/Returning User Tabs */}
+        <div className="user-type-tabs" data-testid="user-type-tabs">
+          <button
+            type="button"
+            className={`user-type-tab ${userType === 'new' ? 'active' : ''}`}
+            onClick={() => { setUserType('new'); setError(''); setSuccessMessage(''); }}
+            data-testid="tab-new-user"
+          >
+            New User
+          </button>
+          <button
+            type="button"
+            className={`user-type-tab ${userType === 'returning' ? 'active' : ''}`}
+            onClick={() => { setUserType('returning'); setError(''); setSuccessMessage(''); }}
+            data-testid="tab-returning-user"
+          >
+            Returning User
+          </button>
+        </div>
+
+        {/* Email/Phone Toggle */}
         <div className="login-method-toggle" data-testid="login-method-toggle">
           <button
             type="button"
@@ -86,7 +113,7 @@ export function SimpleLogin({ onClose }) {
             onClick={() => setLoginMethod('email')}
             data-testid="login-toggle-email"
           >
-            📧 Email
+            Email
           </button>
           <button
             type="button"
@@ -94,15 +121,20 @@ export function SimpleLogin({ onClose }) {
             onClick={() => setLoginMethod('phone')}
             data-testid="login-toggle-phone"
           >
-            📱 Phone
+            Phone
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form" data-testid="login-form">
           <p className="login-subtitle">
-            {loginMethod === 'email'
-              ? 'Enter your email to continue'
-              : 'Enter your phone number to continue'}
+            {userType === 'new'
+              ? (loginMethod === 'email'
+                  ? 'Enter your email to create an account'
+                  : 'Enter your phone number to create an account')
+              : (loginMethod === 'email'
+                  ? 'Enter your email to sign in'
+                  : 'Enter your phone number to sign in')
+            }
           </p>
 
           {loginMethod === 'email' ? (
@@ -138,22 +170,25 @@ export function SimpleLogin({ onClose }) {
             </div>
           )}
 
-          <div className="form-group">
-            <label htmlFor="displayName">
-              Display Name (optional)
-            </label>
-            <input
-              id="displayName"
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="How should we call you?"
-              autoComplete="name"
-              data-testid="login-displayname-input"
-            />
-          </div>
+          {userType === 'new' && (
+            <div className="form-group">
+              <label htmlFor="displayName">
+                Display Name (optional)
+              </label>
+              <input
+                id="displayName"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="How should we call you?"
+                autoComplete="name"
+                data-testid="login-displayname-input"
+              />
+            </div>
+          )}
 
           {error && <div className="error-message" data-testid="login-error">{error}</div>}
+          {successMessage && <div className="success-message" data-testid="login-success">{successMessage}</div>}
 
           <button
             type="submit"
@@ -161,8 +196,15 @@ export function SimpleLogin({ onClose }) {
             disabled={loading}
             data-testid="login-submit-button"
           >
-            {loading ? 'Please wait...' : 'Continue'}
+            {loading ? 'Please wait...' : (userType === 'new' ? 'Create Account' : 'Sign In')}
           </button>
+
+          {/* Forgot email hint for returning users */}
+          {userType === 'returning' && loginMethod === 'email' && (
+            <p className="forgot-hint">
+              Forgot which email you used? Search your inbox for "Bridge Buddy" to find your welcome email.
+            </p>
+          )}
 
           <div className="divider">
             <span>or</span>
@@ -178,8 +220,10 @@ export function SimpleLogin({ onClose }) {
           </button>
 
           <p className="privacy-note">
-            No password required. We'll remember you on this device.
-            Your progress will be saved to your {loginMethod === 'email' ? 'email' : 'phone number'}.
+            {userType === 'new'
+              ? `No password required. We'll send you a welcome email and remember you on this device.`
+              : `No password required. We'll remember you on this device.`
+            }
           </p>
         </form>
       </div>

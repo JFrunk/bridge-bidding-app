@@ -24,15 +24,30 @@ import { getSessionHeaders } from './utils/sessionHelper';
 import { GlossaryDrawer } from './components/glossary';
 import TopNavigation from './components/navigation/TopNavigation';
 import { useDevMode } from './hooks/useDevMode';
+import { TrickPotentialChart, TrickPotentialButton } from './components/analysis/TrickPotentialChart';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 // --- UI Components ---
 // Note: Card component migrated to BridgeCard (components/bridge/BridgeCard.jsx)
-function HandAnalysis({ points, vulnerability }) {
+function HandAnalysis({ points, vulnerability, ddTable, onShowTrickPotential }) {
   if (!points) return null;
-  return ( <div className="hand-analysis"><h4>Hand Analysis (Vuln: {vulnerability})</h4><p><strong>HCP:</strong> {points.hcp} + <strong>Dist:</strong> {points.dist_points} = <strong>Total: {points.total_points}</strong></p><div className="suit-points"><div><span className="suit-black">♠</span> {points.suit_hcp['♠']} pts ({points.suit_lengths['♠']})</div><div><span className="suit-red">♥</span> {points.suit_hcp['♥']} pts ({points.suit_lengths['♥']})</div><div><span className="suit-red">♦</span> {points.suit_hcp['♦']} pts ({points.suit_lengths['♦']})</div><div><span className="suit-black">♣</span> {points.suit_hcp['♣']} pts ({points.suit_lengths['♣']})</div></div></div> );
+  return (
+    <div className="hand-analysis">
+      <div className="hand-analysis-header">
+        <h4>Hand Analysis (Vuln: {vulnerability})</h4>
+        {ddTable && <TrickPotentialButton onClick={onShowTrickPotential} />}
+      </div>
+      <p><strong>HCP:</strong> {points.hcp} + <strong>Dist:</strong> {points.dist_points} = <strong>Total: {points.total_points}</strong></p>
+      <div className="suit-points">
+        <div><span className="suit-black">♠</span> {points.suit_hcp['♠']} pts ({points.suit_lengths['♠']})</div>
+        <div><span className="suit-red">♥</span> {points.suit_hcp['♥']} pts ({points.suit_lengths['♥']})</div>
+        <div><span className="suit-red">♦</span> {points.suit_hcp['♦']} pts ({points.suit_lengths['♦']})</div>
+        <div><span className="suit-black">♣</span> {points.suit_hcp['♣']} pts ({points.suit_lengths['♣']})</div>
+      </div>
+    </div>
+  );
 }
 
 function PlayerHand({ position, hand, points, vulnerability }) {
@@ -240,6 +255,8 @@ function App() {
 
   const [hand, setHand] = useState([]);
   const [handPoints, setHandPoints] = useState(null);
+  const [ddTable, setDdTable] = useState(null);  // Double-dummy trick potential table
+  const [showTrickPotential, setShowTrickPotential] = useState(false);  // Overlay visibility
   const [auction, setAuction] = useState([]);
   const [players] = useState(['North', 'East', 'South', 'West']);
   const [dealer, setDealer] = useState('North');
@@ -1410,6 +1427,9 @@ ${otherCommands}`;
 
       const shouldAiBid = players.indexOf(currentDealer) !== 2; // Dealer is not South
 
+      // Store DD table if provided (production only)
+      setDdTable(data.dd_table || null);
+
       resetAuction(data, !shouldAiBid); // Pass correct skipInitialAiBidding value
       setIsInitializing(false); // Ensure we're not in initializing state for manual deals
       setActiveConvention(null); // Exit convention mode when dealing random hand
@@ -2283,10 +2303,26 @@ ${otherCommands}`;
       );
     }
 
+    // Show email/phone or display name, with preference for showing what they registered with
+    const displayText = user.email || user.phone || user.display_name || 'User';
+    const isGuest = user.isGuest;
+
+    const handleUserAction = () => {
+      if (isGuest) {
+        setShowLogin(true);
+      } else {
+        logout();
+      }
+    };
+
     return (
       <div className="user-menu" data-testid="user-menu">
-        <span className="user-display" data-testid="user-display-name">👤 {user.display_name}</span>
-        <button onClick={logout} className="logout-button" data-testid="logout-button">Logout</button>
+        <span className="user-display" data-testid="user-display-name">
+          {isGuest ? '👤 Guest' : `👤 ${displayText}`}
+        </span>
+        <button onClick={handleUserAction} className="logout-button" data-testid="logout-button">
+          {isGuest ? 'Sign In' : 'Logout'}
+        </button>
       </div>
     );
   };
@@ -2453,10 +2489,23 @@ ${otherCommands}`;
             <div className="hand-display">
               {hand && hand.length > 0 ? getSuitOrder(null).map(suit => ( <div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => ( <BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p>{isInitializing ? 'System Initiating...' : 'Dealing...'}</p>}
             </div>
-            <HandAnalysis points={handPoints} vulnerability={vulnerability} />
+            <HandAnalysis
+              points={handPoints}
+              vulnerability={vulnerability}
+              ddTable={ddTable}
+              onShowTrickPotential={() => setShowTrickPotential(true)}
+            />
           </div>
         </div>
       ) : null}
+
+      {/* Trick Potential Chart Overlay */}
+      {showTrickPotential && ddTable && (
+        <TrickPotentialChart
+          ddTable={ddTable}
+          onClose={() => setShowTrickPotential(false)}
+        />
+      )}
 
       {!shouldShowHands && gamePhase === 'bidding' && (
         <div className="bidding-area">

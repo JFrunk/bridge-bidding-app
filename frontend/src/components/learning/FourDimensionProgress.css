@@ -1292,4 +1292,230 @@
   .quadrant-svg {
     max-width: 180px;
   }
+
+  .board-analysis-chart {
+    max-width: 280px;
+  }
+
+  .board-analysis-summary {
+    gap: var(--space-1, 4px);
+  }
+
+  .summary-item {
+    padding: var(--space-1, 4px) var(--space-2, 8px);
+  }
+
+  .summary-count {
+    font-size: var(--text-base, 14px);
+  }
+
+  .summary-label {
+    font-size: var(--text-xs, 10px);
+  }
+}
+
+/* ============================================================================
+   BOARD ANALYSIS CHART
+   ============================================================================ */
+
+.board-analysis-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+  padding: var(--space-4, 16px);
+}
+
+.board-analysis-loading {
+  text-align: center;
+  padding: var(--space-6, 24px);
+  color: var(--text-secondary-dark, #666);
+}
+
+.board-analysis-empty {
+  text-align: center;
+  padding: var(--space-6, 24px);
+  color: var(--text-secondary-dark, #666);
+}
+
+.board-analysis-empty p {
+  margin: 0 0 var(--space-2, 8px) 0;
+}
+
+.board-analysis-empty .empty-hint {
+  font-size: var(--text-sm, 13px);
+  color: var(--text-muted, #999);
+}
+
+/* Session Filter */
+.session-filter {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.session-select {
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 6px;
+  font-size: var(--text-sm, 13px);
+  background: white;
+  color: var(--text-primary-dark, #111);
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.session-select:hover {
+  border-color: var(--border-color-hover, #9ca3af);
+}
+
+.session-select:focus {
+  outline: none;
+  border-color: var(--color-primary, #0d9488);
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
+}
+
+/* Chart Container */
+.board-analysis-chart-container {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-2, 8px) 0;
+}
+
+.board-analysis-chart {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+}
+
+/* Chart Text Styles */
+.chart-axis-label {
+  font-size: 10px;
+  fill: var(--text-secondary-dark, #666);
+  font-weight: 500;
+}
+
+.chart-quadrant-title {
+  font-size: 10px;
+  fill: var(--text-secondary-dark, #555);
+  font-weight: 600;
+}
+
+/* Board Badges */
+.board-badge {
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.board-badge:hover {
+  transform: scale(1.15);
+  filter: brightness(1.1);
+}
+
+.badge-bg {
+  transition: opacity 0.15s ease;
+}
+
+.badge-text {
+  font-size: 8px;
+  font-weight: 600;
+  fill: white;
+  pointer-events: none;
+  user-select: none;
+}
+
+.overflow-indicator {
+  font-size: 9px;
+  fill: var(--text-muted, #999);
+  font-weight: 500;
+}
+
+/* Summary Stats */
+.board-analysis-summary {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3, 12px);
+  flex-wrap: wrap;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  border-radius: 8px;
+  min-width: 60px;
+}
+
+.summary-item.strong {
+  background: #ccfbf1;
+}
+
+.summary-item.bid-focus {
+  background: #fef3c7;
+}
+
+.summary-item.play-focus {
+  background: #e0e7ff;
+}
+
+.summary-item.review {
+  background: #ffe4e6;
+}
+
+.summary-count {
+  font-size: var(--text-lg, 18px);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.summary-item.strong .summary-count {
+  color: #0d9488;
+}
+
+.summary-item.bid-focus .summary-count {
+  color: #d97706;
+}
+
+.summary-item.play-focus .summary-count {
+  color: #4f46e5;
+}
+
+.summary-item.review .summary-count {
+  color: #e11d48;
+}
+
+.summary-label {
+  font-size: var(--text-xs, 11px);
+  color: var(--text-secondary-dark, #666);
+  white-space: nowrap;
+}
+
+/* Tooltip */
+.board-tooltip {
+  background: white;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: var(--text-sm, 12px);
+  z-index: 1000;
+  pointer-events: none;
+  max-width: 200px;
+}
+
+.tooltip-header {
+  font-size: var(--text-sm, 13px);
+  margin-bottom: var(--space-1, 4px);
+  color: var(--text-primary-dark, #111);
+}
+
+.tooltip-row {
+  color: var(--text-secondary-dark, #555);
+  margin-bottom: 2px;
+}
+
+.tooltip-hint {
+  font-size: var(--text-xs, 10px);
+  color: var(--text-muted, #999);
+  margin-top: var(--space-1, 4px);
+  font-style: italic;
 }
