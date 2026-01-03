@@ -885,16 +885,23 @@ def get_ai_status():
 
         # DDS is only truly active on Linux production servers
         # macOS (Apple Silicon) has known DDS crashes - Error Code -14
-        dds_active = DDS_AVAILABLE and PLATFORM_ALLOWS_DDS
+        dds_platform_ready = DDS_AVAILABLE and PLATFORM_ALLOWS_DDS
+
+        # CRITICAL: dds_active should reflect ACTUAL usage, not just availability
+        # DDS is only active if: platform supports it AND session is using 'expert' difficulty
+        dds_actually_active = dds_platform_ready and state.ai_difficulty == 'expert'
 
         ai_status = {
             'dds_available': DDS_AVAILABLE,
-            'dds_active': dds_active,  # Actually enabled and usable
+            'dds_platform_ready': dds_platform_ready,  # Platform can use DDS
+            'dds_active': dds_actually_active,  # DDS is ACTUALLY being used for this session
             'platform': current_platform,
             'is_production': is_production,
             'environment': 'production' if is_production else 'development',
-            'dds_disabled_reason': None if dds_active else (
-                f'DDS disabled on {current_platform} (Apple Silicon crashes)'
+            'dds_disabled_reason': None if dds_actually_active else (
+                f'Session using {state.ai_difficulty} difficulty (not expert)'
+                if dds_platform_ready and state.ai_difficulty != 'expert'
+                else f'DDS disabled on {current_platform} (Apple Silicon crashes)'
                 if current_platform == 'Darwin'
                 else 'DDS library not installed' if not DDS_AVAILABLE
                 else f'DDS not supported on {current_platform}'
@@ -917,16 +924,16 @@ def get_ai_status():
                 },
                 'expert': {
                     'name': ai_instances['expert'].get_name(),
-                    'rating': '9/10' if dds_active else '8+/10',
-                    'description': 'Double Dummy Solver (perfect play)' if dds_active else 'Deep minimax search (4-ply)',
-                    'using_dds': dds_active
+                    'rating': '9/10' if dds_platform_ready else '8+/10',
+                    'description': 'Double Dummy Solver (perfect play)' if dds_platform_ready else 'Deep minimax search (4-ply)',
+                    'using_dds': dds_platform_ready
                 }
             },
             'current_difficulty': state.ai_difficulty
         }
 
         # Add DDS statistics if available and active
-        if dds_active and state.ai_difficulty == 'expert':
+        if dds_actually_active:
             try:
                 expert_ai = ai_instances['expert']
                 if hasattr(expert_ai, 'get_statistics'):
