@@ -1194,14 +1194,26 @@ def deal_hands():
                 'S': state.deal['South'],
                 'W': state.deal['West']
             }
+
+            # Debug: Log the hands being analyzed
+            print(f"📊 DDS Analysis - Hands being analyzed:")
+            for pos in ['N', 'E', 'S', 'W']:
+                print(f"   {pos}: {hands_dict[pos].to_pbn()}")
+
+            # Clear cache to ensure fresh analysis (cache may cause stale data issues)
+            dds_service.clear_cache()
+
             analysis = dds_service.analyze_deal(hands_dict, dealer=dealer[0], vulnerability=state.vulnerability)
             if analysis.is_valid and analysis.dd_table:
-                # Simplify to NS/EW rows (partners have same trick counts)
+                # Use North's values for NS row, East's values for EW row
+                # (partners CAN have different optimal declarers, but we pick one for simplicity)
                 raw_table = analysis.dd_table.to_dict()
+                print(f"📊 DDS Raw Table: {raw_table}")
                 dd_table = {
-                    'NS': raw_table.get('N', raw_table.get('S', {})),
-                    'EW': raw_table.get('E', raw_table.get('W', {}))
+                    'NS': raw_table.get('N', {}),
+                    'EW': raw_table.get('E', {})
                 }
+                print(f"📊 DDS Simplified Table: {dd_table}")
         except Exception as e:
             print(f"⚠️ DD table calculation failed: {e}")
             # Non-fatal - just don't include dd_table
