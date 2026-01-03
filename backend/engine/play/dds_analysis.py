@@ -45,7 +45,9 @@ except ImportError as e:
 
 # Position mappings
 POSITION_ORDER = ['N', 'E', 'S', 'W']
-STRAIN_ORDER = ['C', 'D', 'H', 'S', 'NT']
+# endplay Denom enum order: spades=0, hearts=1, diamonds=2, clubs=3, nt=4
+# This is the order returned by calc_dd_table.to_list()[strain_idx]
+STRAIN_ORDER = ['S', 'H', 'D', 'C', 'NT']
 STRAIN_SYMBOLS = {'C': '♣', 'D': '♦', 'H': '♥', 'S': '♠', 'NT': 'NT'}
 
 
