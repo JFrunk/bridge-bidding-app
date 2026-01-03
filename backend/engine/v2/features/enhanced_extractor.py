@@ -153,16 +153,32 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['fit_length'] = agreed['fit_length']
 
     # CRITICAL: Recalculate support points when fit is confirmed
-    # Support points = HCP + shortness points (void=5, singleton=3, doubleton=1)
-    # Only add shortness points when we have a confirmed trump fit
+    # Support points = HCP + shortness points + trump length bonus (Law of Total Tricks)
+    # Only add bonuses when we have a confirmed trump fit
     if agreed['fit_known'] and agreed['agreed_suit']:
-        # Recalculate with confirmed trump suit
-        flat['support_points'] = calculate_support_points(hand, agreed['agreed_suit'])
-        flat['support_points_active'] = True  # Flag that shortness is being counted
+        # Estimate partner's trump length from their bid
+        # If partner opened a major, assume 5; if they raised, assume 3-4
+        partner_trump_length = 5  # Default assumption for opener's suit
+        if flat['partner_last_bid']:
+            partner_bid = flat['partner_last_bid']
+            # If partner raised our suit, they likely have 3-4
+            # If partner bid their own suit, assume 5
+            if partner_bid and partner_bid[0].isdigit():
+                level = int(partner_bid[0])
+                if level >= 2:  # Raise typically shows 3-4 card support
+                    partner_trump_length = 4
+
+        # Recalculate with confirmed trump suit and partner length
+        flat['support_points'] = calculate_support_points(
+            hand, agreed['agreed_suit'], partner_trump_length
+        )
+        flat['support_points_active'] = True  # Flag that bonuses are being counted
+        flat['trump_length_bonus'] = max(0, hand.suit_lengths.get(agreed['agreed_suit'], 0) + partner_trump_length - 8)
     else:
-        # Without confirmed fit, support points = HCP (no shortness bonus yet)
+        # Without confirmed fit, support points = HCP (no bonuses yet)
         flat['support_points'] = hf['hcp']
         flat['support_points_active'] = False
+        flat['trump_length_bonus'] = 0
 
     # Bid counts
     bc = af['bid_counts']
@@ -205,9 +221,57 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # PBN representation
     flat['pbn'] = hand_to_pbn(hand)
 
-    # Limit bid detection (placeholder - actual tracking done by schema interpreter)
-    # Partner's bid being a limit bid means they've shown their range
-    flat['partner_showed_limit'] = False  # Updated by auction tracker when relevant
+    # Limit bid detection and partner HCP range inference
+    # When partner makes a limit bid, we know both their floor AND ceiling
+    flat['partner_showed_limit'] = False
+    flat['partner_min_hcp'] = 0
+    flat['partner_max_hcp'] = 40  # No ceiling until limit bid
+
+    # Infer partner's HCP range from their bids
+    if flat['partner_last_bid']:
+        partner_bid = flat['partner_last_bid']
+
+        # Common limit bid HCP ranges in SAYC
+        limit_bid_ranges = {
+            # Responses to 1-level openings
+            '1NT': (6, 10),      # 1NT response = 6-10 HCP
+            '2NT': (11, 12),     # 2NT invitational = 11-12 HCP
+            '3NT': (13, 15),     # 3NT = 13-15 HCP balanced
+
+            # Single raises
+            '2♠': (6, 10),       # Single raise = 6-10 support points
+            '2♥': (6, 10),
+            '2♦': (6, 10),
+            '2♣': (10, 12),      # 2♣ over 1NT = Stayman (different)
+
+            # Limit raises
+            '3♠': (10, 12),      # Limit raise = 10-12 support points
+            '3♥': (10, 12),
+            '3♦': (10, 12),
+            '3♣': (10, 12),
+        }
+
+        # Check if partner's bid is a known limit bid
+        if partner_bid in limit_bid_ranges:
+            min_hcp, max_hcp = limit_bid_ranges[partner_bid]
+            flat['partner_showed_limit'] = True
+            flat['partner_min_hcp'] = min_hcp
+            flat['partner_max_hcp'] = max_hcp
+
+        # Opening bids also define ranges
+        if af['opener_relationship'] == 'Partner':
+            opening = af['opening_bid']
+            if opening == '1NT':
+                flat['partner_min_hcp'] = 15
+                flat['partner_max_hcp'] = 17
+                flat['partner_showed_limit'] = True
+            elif opening == '2NT':
+                flat['partner_min_hcp'] = 20
+                flat['partner_max_hcp'] = 21
+                flat['partner_showed_limit'] = True
+            elif opening in ['1♣', '1♦', '1♥', '1♠']:
+                flat['partner_min_hcp'] = 12
+                flat['partner_max_hcp'] = 21  # Could be any strength until rebid
 
     # Keep reference to original structures
     flat['_hand'] = hand

@@ -95,19 +95,42 @@ def count_stoppers(hand: Hand) -> int:
     return sum(1 for stopped in stoppers.values() if stopped)
 
 
-def calculate_support_points(hand: Hand, trump_suit: str = None) -> int:
-    """Calculate Support Points (HCP + shortness when raising partner)."""
+def calculate_support_points(hand: Hand, trump_suit: str = None, partner_trump_length: int = 5) -> int:
+    """
+    Calculate Support Points (HCP + shortness + trump length bonus).
+
+    Based on the Law of Total Tricks:
+    - Shortness points: void=5, singleton=3, doubleton=1
+    - Trump length bonus: +1 for each trump beyond the 8th in partnership
+
+    Args:
+        hand: Hand object
+        trump_suit: The agreed trump suit (None if no fit)
+        partner_trump_length: Assumed length in partner's trump suit (default 5)
+
+    Returns:
+        Total support points
+    """
     shortness_points = 0
+    trump_length_bonus = 0
+
     for suit, length in hand.suit_lengths.items():
         if trump_suit and suit == trump_suit:
+            # Calculate trump length bonus (Law of Total Tricks)
+            # +1 for each trump beyond 8 in the partnership
+            combined_trumps = length + partner_trump_length
+            if combined_trumps > 8:
+                trump_length_bonus = combined_trumps - 8
             continue
+        # Shortness points in non-trump suits
         if length == 0:
             shortness_points += 5
         elif length == 1:
             shortness_points += 3
         elif length == 2:
             shortness_points += 1
-    return hand.hcp + shortness_points
+
+    return hand.hcp + shortness_points + trump_length_bonus
 
 
 def calculate_losing_trick_count(hand: Hand) -> int:
