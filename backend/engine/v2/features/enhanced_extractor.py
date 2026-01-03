@@ -109,7 +109,7 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['quick_tricks'] = hf['quick_tricks']
     flat['stopper_count'] = hf['stopper_count']
     flat['losing_trick_count'] = hf['losing_trick_count']
-    flat['support_points'] = hf['support_points']
+    # NOTE: support_points is calculated later, after agreed_suit is determined
 
     # Suit lengths as individual keys
     for suit, length in hf['suit_lengths'].items():
@@ -150,6 +150,19 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     agreed = af['agreed_suit']
     flat['agreed_suit'] = agreed['agreed_suit']
     flat['fit_known'] = agreed['fit_known']
+    flat['fit_length'] = agreed['fit_length']
+
+    # CRITICAL: Recalculate support points when fit is confirmed
+    # Support points = HCP + shortness points (void=5, singleton=3, doubleton=1)
+    # Only add shortness points when we have a confirmed trump fit
+    if agreed['fit_known'] and agreed['agreed_suit']:
+        # Recalculate with confirmed trump suit
+        flat['support_points'] = calculate_support_points(hand, agreed['agreed_suit'])
+        flat['support_points_active'] = True  # Flag that shortness is being counted
+    else:
+        # Without confirmed fit, support points = HCP (no shortness bonus yet)
+        flat['support_points'] = hf['hcp']
+        flat['support_points_active'] = False
 
     # Bid counts
     bc = af['bid_counts']
@@ -191,6 +204,10 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
 
     # PBN representation
     flat['pbn'] = hand_to_pbn(hand)
+
+    # Limit bid detection (placeholder - actual tracking done by schema interpreter)
+    # Partner's bid being a limit bid means they've shown their range
+    flat['partner_showed_limit'] = False  # Updated by auction tracker when relevant
 
     # Keep reference to original structures
     flat['_hand'] = hand

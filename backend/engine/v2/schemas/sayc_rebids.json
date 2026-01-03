@@ -205,7 +205,7 @@
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
-      "id": "responder_rebid_new_suit",
+      "id": "responder_rebid_fourth_suit_forcing",
       "bid": "2{new_suit}",
       "priority": 60,
       "description": "Responder bids fourth suit forcing",
@@ -227,7 +227,29 @@
       "sets_forcing_level": "GAME_FORCE"
     },
     {
-      "id": "responder_rebid_nt",
+      "id": "responder_jump_to_game_in_major",
+      "bid": "4{agreed_suit}",
+      "priority": 59,
+      "description": "Responder jumps to game in agreed major",
+      "conditions": {
+        "is_response": true,
+        "my_bid_count": {
+          "min": 1
+        },
+        "fit_known": true,
+        "agreed_suit": {
+          "in": ["♥", "♠"]
+        },
+        "support_points": {
+          "min": 13
+        }
+      },
+      "forcing": "none",
+      "explanation": "Jump to game with {support_points} support points",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rebid_2nt_invitational",
       "bid": "2NT",
       "priority": 55,
       "description": "Responder rebids 2NT invitational",
@@ -240,14 +262,16 @@
           "min": 11,
           "max": 12
         },
-        "is_balanced": true
+        "is_balanced": true,
+        "fit_known": false
       },
       "forcing": "none",
       "explanation": "2NT invitational showing {hcp} HCP balanced",
-      "sets_forcing_level": "NON_FORCING"
+      "sets_forcing_level": "NON_FORCING",
+      "is_limit_bid": true
     },
     {
-      "id": "responder_rebid_3nt",
+      "id": "responder_rebid_3nt_game",
       "bid": "3NT",
       "priority": 54,
       "description": "Responder rebids 3NT",
@@ -260,14 +284,41 @@
           "min": 13,
           "max": 15
         },
-        "is_balanced": true
+        "is_balanced": true,
+        "stopper_count": {
+          "min": 3
+        }
       },
       "forcing": "none",
-      "explanation": "3NT showing {hcp} HCP balanced",
+      "explanation": "3NT showing {hcp} HCP balanced with stoppers",
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "responder_preference",
+      "id": "responder_delayed_game_raise",
+      "bid": "3{partner_suit}",
+      "priority": 53,
+      "description": "Responder shows delayed game raise",
+      "conditions": {
+        "is_response": true,
+        "my_bid_count": {
+          "min": 1
+        },
+        "partner_last_bid": {
+          "in": ["1♥", "1♠", "2♥", "2♠"]
+        },
+        "support_points": {
+          "min": 13
+        },
+        "support_for_partner": {
+          "min": 3
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Delayed game raise with {support_points} support points",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "responder_preference_to_first_suit",
       "bid": "2{partner_first_suit}",
       "priority": 50,
       "description": "Responder gives preference to partner's first suit",
@@ -280,18 +331,48 @@
           "min": 2
         },
         "support_for_partner_first": {
-          "min": 3
+          "min": 2
+        },
+        "hcp": {
+          "min": 6,
+          "max": 10
         }
       },
       "forcing": "none",
-      "explanation": "Preference to partner's first suit",
+      "explanation": "Preference to partner's first suit with minimum",
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "responder_raise_opener_rebid",
+      "id": "responder_jump_preference",
+      "bid": "3{partner_first_suit}",
+      "priority": 49,
+      "description": "Responder jump preference showing invitational values",
+      "conditions": {
+        "is_response": true,
+        "my_bid_count": {
+          "min": 1
+        },
+        "partner_bid_count": {
+          "min": 2
+        },
+        "support_for_partner_first": {
+          "min": 3
+        },
+        "support_points": {
+          "min": 10,
+          "max": 12
+        }
+      },
+      "forcing": "none",
+      "explanation": "Jump preference showing {support_points} support points invitational",
+      "sets_forcing_level": "NON_FORCING",
+      "is_limit_bid": true
+    },
+    {
+      "id": "responder_raise_opener_second_suit",
       "bid": "3{partner_suit}",
       "priority": 45,
-      "description": "Responder raises opener's rebid suit",
+      "description": "Responder raises opener's second suit",
       "conditions": {
         "is_response": true,
         "my_bid_count": {
@@ -309,10 +390,10 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "responder_rebid_own_suit",
+      "id": "responder_rebid_own_suit_weak",
       "bid": "2{my_suit}",
-      "priority": 40,
-      "description": "Responder rebids own suit showing 6+ cards",
+      "priority": 42,
+      "description": "Responder rebids own suit showing 6+ cards (weak)",
       "conditions": {
         "is_response": true,
         "my_bid_count": {
@@ -320,14 +401,85 @@
         },
         "hcp": {
           "min": 6,
-          "max": 10
+          "max": 9
         },
         "longest_suit_length": {
           "min": 6
+        },
+        "fit_known": false
+      },
+      "forcing": "none",
+      "explanation": "Rebid own suit showing 6+ cards, weak",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rebid_own_suit_invitational",
+      "bid": "3{my_suit}",
+      "priority": 41,
+      "description": "Responder jump rebids own suit (invitational)",
+      "conditions": {
+        "is_response": true,
+        "my_bid_count": {
+          "min": 1
+        },
+        "hcp": {
+          "min": 10,
+          "max": 12
+        },
+        "longest_suit_length": {
+          "min": 6
+        },
+        "suit_quality_longest": {
+          "min": "good"
         }
       },
       "forcing": "none",
-      "explanation": "Rebid own suit showing 6+ cards",
+      "explanation": "Jump rebid showing 6+ card suit and {hcp} HCP invitational",
+      "sets_forcing_level": "NON_FORCING",
+      "is_limit_bid": true
+    },
+    {
+      "id": "responder_new_suit_at_2_level",
+      "bid": "2{new_lower_suit}",
+      "priority": 40,
+      "description": "Responder bids new lower suit",
+      "conditions": {
+        "is_response": true,
+        "my_bid_count": {
+          "min": 1
+        },
+        "hcp": {
+          "min": 10
+        },
+        "second_suit_length": {
+          "min": 4
+        },
+        "second_suit_lower": true
+      },
+      "forcing": "one_round",
+      "explanation": "New suit showing {hcp} HCP and second suit",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "responder_support_opener_minimum",
+      "bid": "2{partner_suit}",
+      "priority": 38,
+      "description": "Responder supports opener's suit with minimum",
+      "conditions": {
+        "is_response": true,
+        "my_bid_count": {
+          "min": 1
+        },
+        "hcp": {
+          "max": 9
+        },
+        "support_for_partner": {
+          "min": 3
+        },
+        "fit_known": false
+      },
+      "forcing": "none",
+      "explanation": "Support partner with minimum values",
       "sets_forcing_level": "NON_FORCING"
     },
     {

@@ -51,6 +51,7 @@ class BidCandidate:
     forcing: str
     conditions_met: Dict[str, bool]
     sets_forcing_level: Optional[str] = None  # The forcing level this bid establishes
+    is_limit_bid: bool = False  # Whether this bid shows a narrow range (pass or accept)
 
 
 @dataclass
@@ -254,7 +255,8 @@ class SchemaInterpreter:
                     explanation=explanation,
                     forcing=rule.get('forcing', 'none'),
                     conditions_met={},  # Could populate for debugging
-                    sets_forcing_level=rule.get('sets_forcing_level')  # Track forcing level
+                    sets_forcing_level=rule.get('sets_forcing_level'),  # Track forcing level
+                    is_limit_bid=rule.get('is_limit_bid', False)  # Track limit bids
                 )
                 candidates.append(candidate)
 
