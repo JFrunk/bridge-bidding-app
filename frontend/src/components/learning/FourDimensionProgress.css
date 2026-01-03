@@ -132,7 +132,7 @@
 .progress-bars-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3, 12px);
+  gap: var(--space-4, 16px);
 }
 
 /* ============================================================================
@@ -177,7 +177,8 @@
 .progress-bar-header {
   display: flex;
   align-items: center;
-  padding: var(--space-3, 12px) var(--space-4, 16px);
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+  min-height: 64px;
   cursor: pointer;
   user-select: none;
   transition: background 0.2s ease;
@@ -195,12 +196,12 @@
 }
 
 .bar-icon {
-  font-size: 20px;
+  font-size: 24px;
 }
 
 .bar-title {
   font-weight: 600;
-  font-size: var(--text-base, 16px);
+  font-size: var(--text-lg, 18px);
   color: var(--text-primary-dark, #111);
   white-space: nowrap;
 }
@@ -213,7 +214,7 @@
 }
 
 .bar-mini-stats {
-  font-size: var(--text-sm, 14px);
+  font-size: var(--text-base, 16px);
   color: var(--text-secondary-dark, #666);
   white-space: nowrap;
   overflow: hidden;
@@ -227,9 +228,9 @@
 }
 
 .bar-action-btn {
-  padding: var(--space-1, 4px) var(--space-3, 12px);
-  border-radius: 6px;
-  font-size: var(--text-sm, 14px);
+  padding: var(--space-2, 8px) var(--space-4, 16px);
+  border-radius: 8px;
+  font-size: var(--text-base, 16px);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -244,9 +245,10 @@
 }
 
 .bar-chevron {
-  font-size: 12px;
-  color: var(--text-muted, #9ca3af);
+  font-size: 16px;
+  color: var(--text-secondary-dark, #666);
   transition: transform 0.3s ease;
+  margin-left: var(--space-2, 8px);
 }
 
 .bar-chevron.rotated {
@@ -1073,21 +1075,30 @@
     width: 100%;
   }
 
+  .progress-bar-header {
+    min-height: 56px;
+    padding: var(--space-3, 12px) var(--space-4, 16px);
+  }
+
   .bar-left {
     min-width: 120px;
   }
 
+  .bar-icon {
+    font-size: 20px;
+  }
+
   .bar-title {
-    font-size: var(--text-sm, 14px);
+    font-size: var(--text-base, 16px);
   }
 
   .bar-mini-stats {
-    font-size: var(--text-xs, 12px);
+    font-size: var(--text-sm, 14px);
   }
 
   .bar-action-btn {
-    font-size: var(--text-xs, 12px);
-    padding: var(--space-1, 4px) var(--space-2, 8px);
+    font-size: var(--text-sm, 14px);
+    padding: var(--space-1, 4px) var(--space-3, 12px);
   }
 
   .level-ring {
@@ -1123,12 +1134,14 @@
   }
 
   .progress-bars-stack {
-    gap: var(--space-2, 8px);
+    gap: var(--space-3, 12px);
   }
 
   .progress-bar-header {
     flex-wrap: wrap;
     gap: var(--space-2, 8px);
+    min-height: 52px;
+    padding: var(--space-3, 12px);
   }
 
   .bar-left {
@@ -1136,11 +1149,23 @@
     flex: 0 0 auto;
   }
 
+  .bar-icon {
+    font-size: 18px;
+  }
+
+  .bar-title {
+    font-size: var(--text-sm, 14px);
+  }
+
   .bar-center {
     order: 3;
     flex: 1 1 100%;
     justify-content: flex-start;
     padding: 0;
+  }
+
+  .bar-mini-stats {
+    font-size: var(--text-sm, 14px);
   }
 
   .bar-right {
