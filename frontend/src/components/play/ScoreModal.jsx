@@ -22,7 +22,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
  * Designed as SECONDARY visual hierarchy (celebratory but not overwhelming)
  * Enhanced with session scoring context
  */
-export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionData, onShowLearningDashboard, onPlayAnotherHand, onReplayHand }) {
+export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionData, onShowLearningDashboard, onPlayAnotherHand, onReplayHand, onReviewHand }) {
   // State for collapsible breakdown (must be before any early returns)
   const [isBreakdownOpen, setIsBreakdownOpen] = React.useState(false);
 
@@ -206,6 +206,19 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
 
           {/* Secondary actions row */}
           <div className="flex gap-3 w-full">
+            {onReviewHand && (
+              <Button
+                onClick={() => {
+                  onReviewHand();
+                  onClose();
+                }}
+                className="flex-1"
+                size="lg"
+                variant="outline"
+              >
+                Review Hand
+              </Button>
+            )}
             {onReplayHand && (
               <Button
                 onClick={() => {

@@ -20,10 +20,18 @@ class OvercallModule(ConventionModule):
         if not self._is_applicable(features):
             return None
 
-        # Determine if we're in balancing seat
-        is_balancing = self._is_balancing_seat(features)
+        # Use balancing info from features (already calculated in feature_extractor)
+        auction_features = features.get('auction_features', {})
+        balancing_info = auction_features.get('balancing', {})
+        is_balancing = balancing_info.get('is_balancing', False)
+        hcp_adjustment = balancing_info.get('hcp_adjustment', 0)
 
-        return self._get_overcall_bid(hand, features, is_balancing)
+        # Fall back to old detection if features not present
+        if not balancing_info:
+            is_balancing = self._is_balancing_seat(features)
+            hcp_adjustment = -3 if is_balancing else 0
+
+        return self._get_overcall_bid(hand, features, is_balancing, hcp_adjustment)
 
     def _is_applicable(self, features: Dict) -> bool:
         """

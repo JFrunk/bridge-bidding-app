@@ -115,7 +115,41 @@ def handle_internal_error(e):
     response.status_code = 500
     return response
 
-engine = BiddingEngine()
+# =============================================================================
+# BIDDING ENGINE SELECTION (V1 vs V2)
+# =============================================================================
+# V2 engine has explicit state machine and improved SAYC compliance.
+# Enable via environment variable: USE_V2_BIDDING_ENGINE=true
+#
+# Comparison mode runs both engines and logs discrepancies for safe migration.
+# Enable via: BIDDING_ENGINE_COMPARISON_MODE=true
+# =============================================================================
+
+USE_V2_ENGINE = os.getenv('USE_V2_BIDDING_ENGINE', 'false').lower() == 'true'
+COMPARISON_MODE = os.getenv('BIDDING_ENGINE_COMPARISON_MODE', 'false').lower() == 'true'
+
+# Initialize bidding engines
+engine_v1 = BiddingEngine()
+
+# V2 engine (lazy loaded if enabled)
+engine_v2 = None
+if USE_V2_ENGINE or COMPARISON_MODE:
+    try:
+        from engine.bidding_engine_v2 import BiddingEngineV2
+        engine_v2 = BiddingEngineV2(comparison_mode=COMPARISON_MODE)
+        print(f"✅ BiddingEngineV2 initialized (comparison_mode={COMPARISON_MODE})")
+    except Exception as e:
+        print(f"⚠️  Failed to initialize BiddingEngineV2: {e}")
+        USE_V2_ENGINE = False
+
+# Select active engine
+if USE_V2_ENGINE and engine_v2:
+    engine = engine_v2
+    print("🔷 Using BiddingEngineV2 (new state machine)")
+else:
+    engine = engine_v1
+    print("🔶 Using BiddingEngine V1 (classic)")
+
 play_engine = PlayEngine()
 play_ai = SimplePlayAI()  # Default AI (backward compatibility)
 session_manager = SessionManager('bridge.db')  # Session management
@@ -737,9 +771,9 @@ def complete_session_hand():
             'hand_duration_seconds': hand_duration
         }
 
-        # Save to database
-        session_manager.save_hand_result(state.game_session, hand_data)
-        print(f"✅ Hand {state.game_session.hands_completed} saved to session_hands table")
+        # Save to database and get hand_id
+        hand_id = session_manager.save_hand_result(state.game_session, hand_data)
+        print(f"✅ Hand {state.game_session.hands_completed} saved to session_hands table (id={hand_id})")
 
         # Check if session is complete
         session_complete = state.game_session.is_complete()
@@ -752,6 +786,7 @@ def complete_session_hand():
         return jsonify({
             'success': True,
             'session': state.game_session.to_dict(),
+            'hand_id': hand_id,
             'hand_completed': state.game_session.hands_completed,
             'session_complete': session_complete,
             'winner': winner,

@@ -311,7 +311,7 @@ class SessionManager:
             total_time_seconds=row['total_time_seconds']
         )
 
-    def save_hand_result(self, session: GameSession, hand_data: Dict) -> None:
+    def save_hand_result(self, session: GameSession, hand_data: Dict) -> Optional[int]:
         """
         Save hand result and update session scores
 
@@ -468,8 +468,13 @@ class SessionManager:
             session.id
         ))
 
+        # Get the hand_id of the inserted row
+        hand_id = cursor.lastrowid
+
         conn.commit()
         conn.close()
+
+        return hand_id
 
     def _perform_dds_analysis(self, deal_data: Dict, dealer: str,
                               vulnerability: str, contract: Contract) -> Optional[Dict]:
@@ -515,12 +520,22 @@ class SessionManager:
                     for card in hand_data.cards:
                         suits[card.suit].append(card.rank)
                 elif isinstance(hand_data, dict):
-                    # Dictionary format {'spades': [...], 'hearts': [...], ...}
-                    suit_map = {'spades': 'S', 'hearts': 'H', 'diamonds': 'D', 'clubs': 'C'}
                     suits = {'S': [], 'H': [], 'D': [], 'C': []}
-                    for suit_name, suit_letter in suit_map.items():
-                        cards = hand_data.get(suit_name, [])
-                        suits[suit_letter] = [c if isinstance(c, str) else str(c) for c in cards]
+
+                    # Format 1: {'hand': [{'rank': 'A', 'suit': '♠'}, ...], 'points': X}
+                    if 'hand' in hand_data and isinstance(hand_data['hand'], list):
+                        suit_symbol_map = {'♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C',
+                                          'S': 'S', 'H': 'H', 'D': 'D', 'C': 'C'}
+                        for card in hand_data['hand']:
+                            if isinstance(card, dict) and 'rank' in card and 'suit' in card:
+                                suit_letter = suit_symbol_map.get(card['suit'], card['suit'])
+                                suits[suit_letter].append(card['rank'])
+                    # Format 2: {'spades': [...], 'hearts': [...], ...}
+                    else:
+                        suit_map = {'spades': 'S', 'hearts': 'H', 'diamonds': 'D', 'clubs': 'C'}
+                        for suit_name, suit_letter in suit_map.items():
+                            cards = hand_data.get(suit_name, [])
+                            suits[suit_letter] = [c if isinstance(c, str) else str(c) for c in cards]
                 else:
                     logger.warning(f"Unknown hand data format for {pos_name}")
                     return None

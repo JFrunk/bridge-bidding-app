@@ -142,6 +142,375 @@ def get_suit_from_bid(bid: str) -> str:
     return None
 
 
+def get_bid_level(bid: str) -> int:
+    """Extract level from a bid string. Returns 0 for Pass/X/XX."""
+    if not bid or bid in ['Pass', 'X', 'XX']:
+        return 0
+    if len(bid) >= 1 and bid[0].isdigit():
+        return int(bid[0])
+    return 0
+
+
+# =============================================================================
+# FORCING SEQUENCE ANALYSIS
+# Critical for SAYC bidding decisions - determines if auction is game-forcing,
+# one-round forcing, or non-forcing.
+# =============================================================================
+
+GAME_FORCING_SEQUENCES = {
+    # 2♣ opening is game forcing (unless 2♦ negative response followed by rebid)
+    '2♣': 'game_forcing',
+    # Jump shifts by responder (1♥-2♠, 1♦-2♥, etc.) are game forcing
+    'jump_shift_response': 'game_forcing',
+    # New suit by responder at 2-level after 1-level response is game forcing in 2/1
+    '2_over_1': 'game_forcing',
+    # Fourth suit forcing is game forcing
+    'fourth_suit': 'game_forcing',
+}
+
+ONE_ROUND_FORCING_BIDS = {
+    # New suit by responder is forcing one round
+    'new_suit_response': 'one_round',
+    # Opener's reverse is forcing one round
+    'reverse': 'one_round',
+    # Jump rebid by opener in new suit
+    'jump_shift_rebid': 'one_round',
+}
+
+
+def analyze_forcing_status(auction_history: list, positions: list, my_index: int) -> dict:
+    """
+    Analyze the forcing status of the auction.
+
+    Returns:
+        dict with:
+        - forcing_type: 'game_forcing', 'one_round_forcing', 'invitational', 'non_forcing'
+        - forcing_source: What created the forcing status (e.g., '2♣ opening', 'reverse')
+        - must_bid: Whether we MUST bid (can't pass)
+        - minimum_level: Minimum level we must bid to (e.g., game level)
+    """
+    result = {
+        'forcing_type': 'non_forcing',
+        'forcing_source': None,
+        'must_bid': False,
+        'minimum_level': 0,
+        'game_forcing_established': False,
+    }
+
+    if not auction_history:
+        return result
+
+    # Find opener and their suit
+    opener_index = -1
+    opening_bid = None
+    for i, bid in enumerate(auction_history):
+        if bid not in ['Pass', 'X', 'XX']:
+            opener_index = i % 4
+            opening_bid = bid
+            break
+
+    if opening_bid is None:
+        return result
+
+    # Check for 2♣ game-forcing opening
+    if opening_bid == '2♣':
+        result['forcing_type'] = 'game_forcing'
+        result['forcing_source'] = '2♣ opening'
+        result['game_forcing_established'] = True
+        result['minimum_level'] = 4  # Must reach game
+
+        # Check if we're past the 2♦ waiting bid
+        non_pass_bids = [b for b in auction_history if b not in ['Pass', 'X', 'XX']]
+        if len(non_pass_bids) >= 2:
+            result['must_bid'] = True
+        return result
+
+    # Track bids by partnership
+    partner_index = (my_index + 2) % 4
+
+    # Collect partnership bids
+    my_bids = []
+    partner_bids = []
+    opener_bids = []
+
+    for i, bid in enumerate(auction_history):
+        bidder = i % 4
+        if bid not in ['Pass', 'X', 'XX']:
+            if bidder == my_index:
+                my_bids.append((i, bid))
+            elif bidder == partner_index:
+                partner_bids.append((i, bid))
+            if bidder == opener_index:
+                opener_bids.append((i, bid))
+
+    # Check for reverse by opener (I am responder, partner opened)
+    if opener_index == partner_index and len(opener_bids) >= 2:
+        first_bid = opener_bids[0][1]
+        second_bid = opener_bids[1][1]
+        first_suit = get_suit_from_bid(first_bid)
+        second_suit = get_suit_from_bid(second_bid)
+        second_level = get_bid_level(second_bid)
+
+        if first_suit and second_suit and second_level == 2:
+            # Reverse: higher-ranking suit at 2-level
+            suit_ranks = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+            if suit_ranks.get(second_suit, 0) > suit_ranks.get(first_suit, 0):
+                result['forcing_type'] = 'one_round_forcing'
+                result['forcing_source'] = 'opener_reverse'
+                result['must_bid'] = True
+                return result
+
+    # Check for jump shift by responder (game forcing)
+    if opener_index == partner_index and len(my_bids) >= 1:
+        # My first response
+        first_response = my_bids[0][1]
+        first_response_level = get_bid_level(first_response)
+        opening_level = get_bid_level(opening_bid)
+
+        # Jump shift = skipping a level in a new suit
+        if first_response_level >= opening_level + 2:
+            response_suit = get_suit_from_bid(first_response)
+            opening_suit = get_suit_from_bid(opening_bid)
+            if response_suit and opening_suit and response_suit != opening_suit:
+                result['forcing_type'] = 'game_forcing'
+                result['forcing_source'] = 'jump_shift_response'
+                result['game_forcing_established'] = True
+                result['minimum_level'] = 4
+                result['must_bid'] = True
+                return result
+
+    # Check for new suit by responder (one round forcing)
+    if opener_index == partner_index and len(my_bids) >= 1:
+        first_response = my_bids[0][1]
+        response_suit = get_suit_from_bid(first_response)
+        opening_suit = get_suit_from_bid(opening_bid)
+
+        if response_suit and opening_suit and response_suit != opening_suit:
+            # New suit response is forcing one round
+            result['forcing_type'] = 'one_round_forcing'
+            result['forcing_source'] = 'new_suit_response'
+            # Only forcing if we haven't had a chance to pass
+            if len(auction_history) % 4 == my_index:
+                result['must_bid'] = False  # It's my turn, not partner's
+            return result
+
+    # Check if partner's last bid was a new suit (forcing on me)
+    if partner_bids:
+        last_partner_bid = partner_bids[-1][1]
+        last_partner_suit = get_suit_from_bid(last_partner_bid)
+
+        # Count unique suits partner has bid
+        partner_suits = set()
+        for _, bid in partner_bids:
+            s = get_suit_from_bid(bid)
+            if s:
+                partner_suits.add(s)
+
+        # If partner just bid a new suit, it's forcing
+        if len(partner_suits) >= 2:
+            previous_suits = set()
+            for _, bid in partner_bids[:-1]:
+                s = get_suit_from_bid(bid)
+                if s:
+                    previous_suits.add(s)
+
+            if last_partner_suit and last_partner_suit not in previous_suits:
+                result['forcing_type'] = 'one_round_forcing'
+                result['forcing_source'] = 'new_suit_by_partner'
+                result['must_bid'] = True
+
+    return result
+
+
+def detect_balancing_seat(auction_history: list, positions: list, my_index: int) -> dict:
+    """
+    Detect if player is in balancing (pass-out) seat.
+
+    Balancing seat occurs when:
+    1. Opponent opened
+    2. Two passes followed
+    3. My pass would end the auction
+
+    In balancing seat, can bid with ~3 HCP less than normal.
+
+    Returns:
+        dict with:
+        - is_balancing: True if in pass-out position
+        - hcp_adjustment: How many HCP to subtract from requirements (-3 typical)
+        - reason: Why this is/isn't balancing seat
+    """
+    result = {
+        'is_balancing': False,
+        'hcp_adjustment': 0,
+        'reason': 'not_applicable',
+    }
+
+    if len(auction_history) < 3:
+        result['reason'] = 'auction_too_short'
+        return result
+
+    # Check if last two bids were Pass
+    if auction_history[-1] != 'Pass' or auction_history[-2] != 'Pass':
+        result['reason'] = 'not_two_passes'
+        return result
+
+    # Find opener
+    opener_index = -1
+    for i, bid in enumerate(auction_history):
+        if bid not in ['Pass', 'X', 'XX']:
+            opener_index = i % 4
+            break
+
+    if opener_index == -1:
+        result['reason'] = 'no_opener'
+        return result
+
+    # Check if opener is opponent
+    partner_index = (my_index + 2) % 4
+    if opener_index == my_index or opener_index == partner_index:
+        result['reason'] = 'partnership_opened'
+        return result
+
+    # Count non-pass bids from each side
+    my_team_bids = 0
+    opp_team_bids = 0
+    for i, bid in enumerate(auction_history):
+        if bid not in ['Pass', 'X', 'XX']:
+            bidder = i % 4
+            if bidder == my_index or bidder == partner_index:
+                my_team_bids += 1
+            else:
+                opp_team_bids += 1
+
+    # Classic balancing: opponents bid, we haven't, two passes
+    if opp_team_bids >= 1 and my_team_bids == 0:
+        result['is_balancing'] = True
+        result['hcp_adjustment'] = -3  # Can bid with 3 fewer HCP
+        result['reason'] = 'pass_out_seat_after_opponent_bid'
+        return result
+
+    # Also balancing if auction would die at low level
+    # e.g., 1♥ - Pass - Pass - ? (direct balancing)
+    if len(auction_history) == 3:
+        if auction_history[1] == 'Pass' and auction_history[2] == 'Pass':
+            result['is_balancing'] = True
+            result['hcp_adjustment'] = -3
+            result['reason'] = 'direct_balancing_seat'
+            return result
+
+    return result
+
+
+def find_agreed_suit(auction_history: list, positions: list, my_index: int) -> dict:
+    """
+    Determine if partnership has agreed on a trump suit.
+
+    Agreement occurs when:
+    1. Partner raises my suit
+    2. I raise partner's suit
+    3. Both bid same suit
+    4. Implicit agreement through certain conventions
+
+    Returns:
+        dict with:
+        - agreed_suit: The agreed trump suit (or None)
+        - agreement_level: Level at which suit was agreed
+        - fit_known: True if we know we have 8+ card fit
+        - fit_length: Combined length if known
+    """
+    result = {
+        'agreed_suit': None,
+        'agreement_level': 0,
+        'fit_known': False,
+        'fit_length': 0,
+    }
+
+    partner_index = (my_index + 2) % 4
+
+    my_suits = []
+    partner_suits = []
+
+    for i, bid in enumerate(auction_history):
+        bidder = i % 4
+        suit = get_suit_from_bid(bid)
+        level = get_bid_level(bid)
+
+        if suit:
+            if bidder == my_index:
+                my_suits.append((suit, level))
+            elif bidder == partner_index:
+                partner_suits.append((suit, level))
+
+    # Check for explicit agreement (same suit bid by both)
+    for my_suit, my_level in my_suits:
+        for partner_suit, partner_level in partner_suits:
+            if my_suit == partner_suit:
+                result['agreed_suit'] = my_suit
+                result['agreement_level'] = max(my_level, partner_level)
+                result['fit_known'] = True
+                # Assume 8-card fit minimum when suit is raised
+                result['fit_length'] = 8
+                return result
+
+    # Check for raise (partner bids my suit or vice versa)
+    if my_suits and partner_suits:
+        my_first_suit = my_suits[0][0]
+        for partner_suit, partner_level in partner_suits:
+            if partner_suit == my_first_suit:
+                result['agreed_suit'] = my_first_suit
+                result['agreement_level'] = partner_level
+                result['fit_known'] = True
+                result['fit_length'] = 8
+                return result
+
+        partner_first_suit = partner_suits[0][0]
+        for my_suit, my_level in my_suits:
+            if my_suit == partner_first_suit:
+                result['agreed_suit'] = partner_first_suit
+                result['agreement_level'] = my_level
+                result['fit_known'] = True
+                result['fit_length'] = 8
+                return result
+
+    return result
+
+
+def count_partnership_bids(auction_history: list, positions: list, my_index: int) -> dict:
+    """
+    Count bids made by each member of partnership.
+
+    Returns:
+        dict with:
+        - my_bid_count: Number of non-pass bids I've made
+        - partner_bid_count: Number of non-pass bids partner made
+        - my_pass_count: Number of passes I've made
+        - total_auction_rounds: How many complete rounds
+    """
+    partner_index = (my_index + 2) % 4
+
+    my_bids = 0
+    my_passes = 0
+    partner_bids = 0
+
+    for i, bid in enumerate(auction_history):
+        bidder = i % 4
+        if bidder == my_index:
+            if bid == 'Pass':
+                my_passes += 1
+            elif bid not in ['X', 'XX']:
+                my_bids += 1
+        elif bidder == partner_index:
+            if bid not in ['Pass', 'X', 'XX']:
+                partner_bids += 1
+
+    return {
+        'my_bid_count': my_bids,
+        'partner_bid_count': partner_bids,
+        'my_pass_count': my_passes,
+        'total_auction_rounds': len(auction_history) // 4,
+    }
+
+
 def extract_features(hand: Hand, auction_history: list, my_position: str, vulnerability: str, dealer: str = 'North'):
     """Extract features from a hand and auction for bidding decision."""
     base_positions = ['North', 'East', 'South', 'West']
@@ -188,6 +557,12 @@ def extract_features(hand: Hand, auction_history: list, my_position: str, vulner
     partner_suit = get_suit_from_bid(partner_last_bid) if partner_last_bid else None
     support_points = calculate_support_points(hand, partner_suit)
 
+    # NEW: Calculate forcing status, balancing, agreed suit, bid counts
+    forcing_status = analyze_forcing_status(auction_history, positions, my_index)
+    balancing_info = detect_balancing_seat(auction_history, positions, my_index)
+    agreed_suit_info = find_agreed_suit(auction_history, positions, my_index)
+    bid_counts = count_partnership_bids(auction_history, positions, my_index)
+
     return {
         'hand_features': {
             'hcp': hand.hcp,
@@ -213,7 +588,15 @@ def extract_features(hand: Hand, auction_history: list, my_position: str, vulner
             'opener_index': opener_index,
             'is_contested': is_contested,
             'vulnerability': vulnerability,
-            'interference': interference
+            'interference': interference,
+            # NEW: Forcing sequence tracking
+            'forcing_status': forcing_status,
+            # NEW: Balancing seat detection
+            'balancing': balancing_info,
+            # NEW: Agreed suit tracking
+            'agreed_suit': agreed_suit_info,
+            # NEW: Partnership bid counts
+            'bid_counts': bid_counts,
         },
         'auction_history': auction_history,
         'hand': hand,

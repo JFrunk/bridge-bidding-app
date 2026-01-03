@@ -1,0 +1,356 @@
+{
+  "metadata": {
+    "system": "SAYC",
+    "version": "1.0",
+    "source": "Gemini conversation analysis + ACBL SAYC booklet",
+    "created": "2026-01-03",
+    "description": "Ground truth rules and test cases for SAYC bidding validation"
+  },
+
+  "opening_rules": {
+    "1NT": {
+      "points": [15, 17],
+      "shape": "balanced",
+      "notes": "No 5-card major typically, but some allow with weak major"
+    },
+    "2NT": {
+      "points": [20, 21],
+      "shape": "balanced"
+    },
+    "3NT": {
+      "points": [25, 27],
+      "shape": "balanced",
+      "notes": "Gambling 3NT is alternative with solid 7-card minor"
+    },
+    "1H_1S": {
+      "points": [13, 21],
+      "suit_length": 5,
+      "notes": "5-card major requirement in SAYC"
+    },
+    "1C": {
+      "points": [13, 21],
+      "suit_length": 3,
+      "notes": "Open 1C with 3-3 in minors"
+    },
+    "1D": {
+      "points": [13, 21],
+      "suit_length": 3,
+      "notes": "Open 1D with 4-4 in minors or 4-4-3-2 shape"
+    },
+    "2C": {
+      "points": [22, 100],
+      "forcing": "game",
+      "notes": "Strong, artificial, game-forcing"
+    }
+  },
+
+  "minor_suit_tiebreakers": {
+    "3_3_minors": {
+      "open": "1C",
+      "reason": "Short club - standard SAYC"
+    },
+    "4_4_minors": {
+      "open": "1D",
+      "reason": "Higher ranking minor with equal length"
+    },
+    "4_4_3_2_shape": {
+      "open": "1D",
+      "reason": "Prepare convenient rebid"
+    }
+  },
+
+  "responder_to_minor": {
+    "new_suit_level_1": {
+      "points": [6, 100],
+      "forcing": true,
+      "priority": 1,
+      "notes": "Show 4-card major at 1-level first"
+    },
+    "up_the_line": {
+      "description": "With two 4-card majors, bid 1H before 1S",
+      "reason": "Allows partner to show 4 spades at 1-level"
+    },
+    "1NT": {
+      "points": [6, 9],
+      "forcing": false,
+      "notes": "No 4-card major"
+    },
+    "2NT": {
+      "points": [10, 12],
+      "forcing": "invitational"
+    },
+    "3NT": {
+      "points": [13, 15],
+      "forcing": false
+    }
+  },
+
+  "responder_to_major": {
+    "1NT": {
+      "points": [6, 9],
+      "forcing": false,
+      "support": "fewer than 3"
+    },
+    "simple_raise": {
+      "points": [6, 10],
+      "support": 3,
+      "forcing": false
+    },
+    "limit_raise": {
+      "points": [10, 12],
+      "support": 3,
+      "forcing": "invitational"
+    },
+    "jacoby_2NT": {
+      "points": [13, 100],
+      "support": 4,
+      "forcing": "game"
+    }
+  },
+
+  "opener_rebid_categories": {
+    "minimum": {
+      "points": [12, 15],
+      "actions": [
+        {"bid": "1NT", "meaning": "Balanced, denies 4-card support"},
+        {"bid": "2_of_partner_suit", "meaning": "4-card support"},
+        {"bid": "2_of_original_suit", "meaning": "6+ cards, minimum"},
+        {"bid": "2_of_new_lower_suit", "meaning": "4+ cards, lower ranking"}
+      ]
+    },
+    "medium": {
+      "points": [16, 18],
+      "actions": [
+        {"bid": "2NT", "meaning": "18-19 HCP balanced"},
+        {"bid": "3_of_partner_suit", "meaning": "Jump raise, invitational"},
+        {"bid": "3_of_original_suit", "meaning": "Jump rebid, invitational"},
+        {"bid": "2_of_new_higher_suit", "meaning": "REVERSE: 17+ HCP, forcing"}
+      ]
+    },
+    "maximum": {
+      "points": [19, 21],
+      "actions": [
+        {"bid": "3NT", "meaning": "19-21 HCP balanced"},
+        {"bid": "4_of_partner_suit", "meaning": "Game with support"},
+        {"bid": "jump_shift_new_suit", "meaning": "19+ HCP, game forcing"}
+      ]
+    }
+  },
+
+  "reverse_definition": {
+    "description": "A rebid in a new suit higher-ranking than the first suit at the 2-level",
+    "hcp_requirement": 17,
+    "forcing": "one_round",
+    "examples": [
+      {"sequence": "1D-1S-2H", "is_reverse": true, "reason": "H > D at 2-level"},
+      {"sequence": "1H-1S-2D", "is_reverse": false, "reason": "D < H"},
+      {"sequence": "1C-1D-2H", "is_reverse": true, "reason": "H > C at 2-level"}
+    ]
+  },
+
+  "jump_shift_definition": {
+    "description": "A bid that skips a level into a new suit",
+    "hcp_requirement": 19,
+    "forcing": "game",
+    "examples": [
+      {"sequence": "1C-2H", "is_jump_shift": true, "reason": "Skipped 1-level"},
+      {"sequence": "1H-2S", "is_jump_shift": false, "reason": "1S available"},
+      {"sequence": "1D-3C", "is_jump_shift": true, "reason": "Skipped 2C"}
+    ]
+  },
+
+  "test_cases": {
+    "opening_bids": [
+      {
+        "id": "OPEN_001",
+        "hand": "K62.AQ5.KT8.AJ93",
+        "hcp": 16,
+        "distribution": "3-3-3-4",
+        "history": [],
+        "expected": "1NT",
+        "reason": "15-17 HCP balanced"
+      },
+      {
+        "id": "OPEN_002",
+        "hand": "AQJ10.K83.A3.1083",
+        "hcp": 14,
+        "distribution": "4-3-2-4",
+        "history": [],
+        "expected": "1NT",
+        "reason": "Upgrade 14 HCP with quality spades"
+      },
+      {
+        "id": "OPEN_003",
+        "hand": "K62.A5.KJ93.J942",
+        "hcp": 13,
+        "distribution": "3-2-4-4",
+        "history": [],
+        "expected": "1D",
+        "reason": "4-4 in minors, open 1D"
+      },
+      {
+        "id": "OPEN_004",
+        "hand": "K62.AQ5.K93.J93",
+        "hcp": 14,
+        "distribution": "3-3-3-3",
+        "history": [],
+        "expected": "1C",
+        "reason": "3-3 in minors, open 1C"
+      },
+      {
+        "id": "OPEN_005",
+        "hand": "AKQ.AQJ.KJ2.A983",
+        "hcp": 23,
+        "distribution": "3-3-3-4",
+        "history": [],
+        "expected": "2C",
+        "reason": "22+ HCP, strong artificial"
+      }
+    ],
+
+    "responses_to_minor": [
+      {
+        "id": "RESP_001",
+        "hand": "KJ82.32.QJ5.T842",
+        "hcp": 8,
+        "distribution": "4-2-3-4",
+        "history": ["1D", "Pass"],
+        "expected": "1S",
+        "reason": "Show 4-card major at 1-level"
+      },
+      {
+        "id": "RESP_002",
+        "hand": "K82.QJ32.QJ5.842",
+        "hcp": 10,
+        "distribution": "3-4-3-3",
+        "history": ["1D", "Pass"],
+        "expected": "1H",
+        "reason": "Show 4-card major first"
+      },
+      {
+        "id": "RESP_003",
+        "hand": "K82.K32.QJ5.J842",
+        "hcp": 11,
+        "distribution": "3-3-3-4",
+        "history": ["1C", "Pass"],
+        "expected": "2NT",
+        "reason": "10-12 HCP, no 4-card major"
+      },
+      {
+        "id": "RESP_004",
+        "hand": "QJ82.KJ32.J5.842",
+        "hcp": 9,
+        "distribution": "4-4-2-3",
+        "history": ["1D", "Pass"],
+        "expected": "1H",
+        "reason": "Up the line with 4-4 majors"
+      }
+    ],
+
+    "opener_rebids": [
+      {
+        "id": "REBID_001",
+        "hand": "K62.AQ5.KJ93.J93",
+        "hcp": 14,
+        "distribution": "3-3-4-3",
+        "history": ["1D", "Pass", "1S", "Pass"],
+        "expected": "1NT",
+        "reason": "Minimum balanced, no spade support"
+      },
+      {
+        "id": "REBID_002",
+        "hand": "K62.AQ5.KJ93.AJ3",
+        "hcp": 17,
+        "distribution": "3-3-4-3",
+        "history": ["1D", "Pass", "1H", "Pass"],
+        "expected": "2NT",
+        "reason": "18-19 HCP balanced (or jump to 2NT with 17)"
+      },
+      {
+        "id": "REBID_003",
+        "hand": "K6.AQJ5.KJ932.J3",
+        "hcp": 15,
+        "distribution": "2-4-5-2",
+        "history": ["1D", "Pass", "1S", "Pass"],
+        "expected": "2H",
+        "reason": "New lower suit, minimum"
+      }
+    ],
+
+    "reverse_tests": [
+      {
+        "id": "REV_001",
+        "hand": "K6.AQJ5.KJ932.A3",
+        "hcp": 17,
+        "distribution": "2-4-5-2",
+        "history": ["1D", "Pass", "1S", "Pass"],
+        "expected": "2H",
+        "is_reverse": true,
+        "valid": true,
+        "reason": "17+ HCP, valid reverse"
+      },
+      {
+        "id": "REV_002",
+        "hand": "K6.QJ95.KJ932.J3",
+        "hcp": 13,
+        "distribution": "2-4-5-2",
+        "history": ["1D", "Pass", "1S", "Pass"],
+        "expected": "1NT",
+        "is_reverse": false,
+        "invalid_reverse_reason": "Only 13 HCP, cannot reverse"
+      }
+    ],
+
+    "game_slam_tests": [
+      {
+        "id": "GAME_001",
+        "partnership_hcp": 25,
+        "trump_fit": 8,
+        "expected_level": "game",
+        "reason": "25 HCP with 8-card fit = game"
+      },
+      {
+        "id": "GAME_002",
+        "partnership_hcp": 24,
+        "trump_fit": 10,
+        "expected_level": "game",
+        "reason": "24 HCP with 10-card fit = game (fit bonus)"
+      },
+      {
+        "id": "SLAM_001",
+        "partnership_hcp": 33,
+        "trump_fit": 8,
+        "expected_level": "slam",
+        "reason": "33 HCP = small slam"
+      },
+      {
+        "id": "SLAM_002",
+        "partnership_hcp": 30,
+        "trump_fit": 9,
+        "has_void": true,
+        "expected_level": "slam",
+        "reason": "30 HCP + void + 9-card fit = slam exploration"
+      }
+    ]
+  },
+
+  "suit_ranks": {
+    "C": 1,
+    "D": 2,
+    "H": 3,
+    "S": 4,
+    "NT": 5
+  },
+
+  "support_points": {
+    "void": 5,
+    "singleton": 3,
+    "doubleton": 1
+  },
+
+  "length_points": {
+    "5_cards": 1,
+    "6_cards": 2,
+    "7_plus_cards": 3
+  }
+}

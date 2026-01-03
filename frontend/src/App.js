@@ -11,6 +11,7 @@ import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
 import BidFeedbackPanel from './components/bridge/BidFeedbackPanel';
 import LearningDashboard from './components/learning/LearningDashboard';
 import LearningMode from './components/learning/LearningMode';
+import HandReviewModal from './components/learning/HandReviewModal';
 import { ModeSelector } from './components/ModeSelector';
 import { BiddingWorkspace } from './components/workspaces/BiddingWorkspace';
 import { PlayWorkspace } from './components/workspaces/PlayWorkspace';
@@ -360,6 +361,10 @@ function App() {
   const [isPlayingCard, setIsPlayingCard] = useState(false);
   const [scoreData, setScoreData] = useState(null);
 
+  // Hand review state
+  const [lastSavedHandId, setLastSavedHandId] = useState(null);
+  const [showHandReviewModal, setShowHandReviewModal] = useState(false);
+
   // Last trick display state
   const [showLastTrick, setShowLastTrick] = useState(false);
   const [lastTrick, setLastTrick] = useState(null);
@@ -442,6 +447,7 @@ function App() {
     setIsPlayingCard(false);
     setShowLastTrick(false);
     setLastTrick(null);
+    setLastSavedHandId(null);  // Clear for new hand
     // Fetch hands if showAllHands is enabled
     if (showAllHands) {
       fetchAllHands();
@@ -1374,7 +1380,13 @@ ${otherCommands}`;
             const result = await response.json();
             console.log('✅ Hand saved successfully to database');
             console.log('Session updated:', result.session);
+            console.log('Hand ID:', result.hand_id);
             setSessionData({ active: true, session: result.session });
+
+            // Store hand_id for Review Hand functionality
+            if (result.hand_id) {
+              setLastSavedHandId(result.hand_id);
+            }
 
             if (result.session_complete) {
               setDisplayedMessage(`Session complete! Winner: ${result.winner}`);
@@ -1466,6 +1478,7 @@ ${otherCommands}`;
     setScoreData(null);
     setLastTrick(null);
     setShowLastTrick(false);
+    setLastSavedHandId(null);  // Clear for new hand
 
     try {
       const response = await fetch(`${API_URL}/api/play-random-hand`, {
@@ -2795,6 +2808,15 @@ ${otherCommands}`;
           onShowLearningDashboard={() => setShowLearningDashboard(true)}
           onPlayAnotherHand={playRandomHand}
           onReplayHand={replayCurrentHand}
+          onReviewHand={lastSavedHandId ? () => setShowHandReviewModal(true) : null}
+        />
+      )}
+
+      {/* Hand Review Modal - Play-by-play analysis */}
+      {showHandReviewModal && lastSavedHandId && (
+        <HandReviewModal
+          handId={lastSavedHandId}
+          onClose={() => setShowHandReviewModal(false)}
         />
       )}
 

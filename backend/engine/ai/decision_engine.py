@@ -42,6 +42,15 @@ def select_bidding_module(features):
     # --- STATE 2: Is this a COMPETITIVE situation? ---
     if auction['opener_relationship'] == 'Opponent':
         print(f"   → Competitive auction (opponent opened)")
+
+        # NEW: Check balancing seat using extracted features
+        balancing = auction.get('balancing', {})
+        is_balancing = balancing.get('is_balancing', False)
+        hcp_adjustment = balancing.get('hcp_adjustment', 0)
+
+        if is_balancing:
+            print(f"   → BALANCING SEAT detected: {balancing.get('reason')}, HCP adjustment: {hcp_adjustment}")
+
         # Check if I'm the advancer (partner made an overcall or double)
         # This can be my first OR subsequent bid
         # Only advance if partner is NOT the opener (i.e., partner overcalled/doubled)
@@ -54,7 +63,8 @@ def select_bidding_module(features):
             return 'advancer_bids'
 
         # If it's my first bid after an opponent opened, I can overcall or double.
-        if len(my_bids) == 0:
+        # Also check balancing seat (can be first action if opponent opened and passed around)
+        if len(my_bids) == 0 or is_balancing:
             # Check for Michaels Cuebid (5-5 two suits)
             michaels = MichaelsCuebidConvention()
             if michaels.evaluate(features['hand'], features): return 'michaels_cuebid'
@@ -63,26 +73,19 @@ def select_bidding_module(features):
             unusual_2nt = Unusual2NTConvention()
             if unusual_2nt.evaluate(features['hand'], features): return 'unusual_2nt'
 
+            # Overcall module will use balancing HCP adjustment from features
             overcall_specialist = OvercallModule()
             if overcall_specialist.evaluate(features['hand'], features): return 'overcalls'
 
             takeout_double_specialist = TakeoutDoubleConvention()
             if takeout_double_specialist.evaluate(features['hand'], features): return 'takeout_doubles'
-        else: # My second+ bid in a competitive auction
 
-            # Check if I'm in balancing seat (pass-out seat)
-            # Last 2 bids were Pass, and my Pass would end the auction
-            auction_history = features['auction_history']
-            if len(auction_history) >= 2 and auction_history[-1] == 'Pass' and auction_history[-2] == 'Pass':
-                # I'm in balancing/pass-out seat
-                # Try to balance with an overcall or takeout double
-                overcall_specialist = OvercallModule()
-                if overcall_specialist.evaluate(features['hand'], features): return 'overcalls'
+            # In balancing seat, if no module returned a bid, route to balancing specialist
+            if is_balancing:
+                print(f"   → Routing to: balancing (pass-out seat)")
+                return 'balancing'
 
-                takeout_double_specialist = TakeoutDoubleConvention()
-                if takeout_double_specialist.evaluate(features['hand'], features): return 'takeout_doubles'
-
-            # Otherwise, I passed initially and now competing
+        else: # My second+ bid in a competitive auction (not balancing)
             # Can still try to overcall or double
             overcall_specialist = OvercallModule()
             if overcall_specialist.evaluate(features['hand'], features): return 'overcalls'
