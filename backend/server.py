@@ -554,7 +554,10 @@ def get_state():
                 existing_session = session_manager.get_active_session(user_id)
                 if existing_session:
                     state.game_session = existing_session
-                    print(f"✅ Loaded active session {existing_session.id} for user {user_id} (hands: {existing_session.hands_completed})")
+                    # CRITICAL: Sync AI difficulty from resumed session
+                    # Without this, DDS won't be used even when session was created with 'expert'
+                    state.ai_difficulty = existing_session.ai_difficulty
+                    print(f"✅ Loaded active session {existing_session.id} for user {user_id} (hands: {existing_session.hands_completed}, ai: {existing_session.ai_difficulty})")
             except Exception as e:
                 # Don't fail the request if session loading fails
                 print(f"⚠️  Could not load active session for user {user_id}: {e}")
@@ -605,11 +608,15 @@ def start_session():
         existing = session_manager.get_active_session(user_id)
         if existing:
             state.game_session = existing
+            # CRITICAL: Sync AI difficulty from resumed session
+            # Without this, DDS won't be used even when session was created with 'expert'
+            state.ai_difficulty = existing.ai_difficulty
             state.hand_start_time = datetime.now()
+            print(f"✅ Resumed session {existing.id} with ai_difficulty={existing.ai_difficulty}")
             return jsonify({
                 'session': existing.to_dict(),
                 'resumed': True,
-                'message': f'Resumed session #{existing.id}'
+                'message': f'Resumed session #{existing.id} (AI: {existing.ai_difficulty})'
             })
 
         # Create new session
@@ -619,12 +626,15 @@ def start_session():
             player_position=player_position,
             ai_difficulty=ai_difficulty
         )
+        # Sync state.ai_difficulty with new session's difficulty
+        state.ai_difficulty = ai_difficulty
         state.hand_start_time = datetime.now()
+        print(f"✅ Created new session {state.game_session.id} with ai_difficulty={ai_difficulty}")
 
         return jsonify({
             'session': state.game_session.to_dict(),
             'resumed': False,
-            'message': f'Started new {session_type} session'
+            'message': f'Started new {session_type} session (AI: {ai_difficulty})'
         })
 
     except Exception as e:
