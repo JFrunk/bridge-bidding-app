@@ -82,9 +82,13 @@ const LearningDashboard = ({ userId, onPracticeClick, onStartLearning, onStartFr
   };
 
   // Handle opening hand review modal
-  const handleOpenReview = (hand) => {
-    setSelectedHandId(hand.id);
-    setShowReviewModal(true);
+  // Accepts either a hand object with id property, or just the hand ID directly
+  const handleOpenReview = (handOrId) => {
+    const handId = typeof handOrId === 'object' ? handOrId.id : handOrId;
+    if (handId) {
+      setSelectedHandId(handId);
+      setShowReviewModal(true);
+    }
   };
 
   // Handle closing hand review modal
@@ -154,6 +158,7 @@ const LearningDashboard = ({ userId, onPracticeClick, onStartLearning, onStartFr
           onStartLearning={onStartLearning}
           onStartPractice={onStartFreeplay}
           onShowHandHistory={handleShowHandHistory}
+          onReviewHand={handleOpenReview}
         />
       </div>
 

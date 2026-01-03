@@ -58,8 +58,182 @@ const API_BASE = process.env.REACT_APP_API_BASE || '';
 const RATING_CONFIG = {
   optimal: { color: '#059669', bgColor: '#ecfdf5', icon: '✓', label: 'Optimal' },
   good: { color: '#3b82f6', bgColor: '#eff6ff', icon: '○', label: 'Good' },
+  acceptable: { color: '#3b82f6', bgColor: '#eff6ff', icon: '○', label: 'Acceptable' },
   suboptimal: { color: '#f59e0b', bgColor: '#fffbeb', icon: '!', label: 'Suboptimal' },
-  blunder: { color: '#dc2626', bgColor: '#fef2f2', icon: '✗', label: 'Blunder' }
+  blunder: { color: '#dc2626', bgColor: '#fef2f2', icon: '✗', label: 'Blunder' },
+  error: { color: '#dc2626', bgColor: '#fef2f2', icon: '✗', label: 'Error' }
+};
+
+// ===== PERFORMANCE QUADRANT CHART =====
+// Shows bidding vs play quality as a 2D scatter plot
+const PerformanceQuadrantChart = ({ biddingQuality, playQuality }) => {
+  // Get quality percentages (0-100)
+  const bidPct = biddingQuality?.accuracy_rate || 0;
+  const playPct = playQuality?.accuracy_rate || 0;
+
+  // Determine quadrant label
+  const getQuadrantLabel = () => {
+    if (bidPct >= 50 && playPct >= 50) return "Strong overall performance";
+    if (bidPct >= 50 && playPct < 50) return "Good bidding, work on card play";
+    if (bidPct < 50 && playPct >= 50) return "Good play, work on bidding";
+    return "Room to improve both areas";
+  };
+
+  // No data available
+  if (!biddingQuality?.has_data && !playQuality?.has_data) {
+    return (
+      <div className="quadrant-chart-empty">
+        <p>Performance data not available for this hand</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="quadrant-chart">
+      <div className="quadrant-svg-container">
+        <svg viewBox="0 0 220 220" className="quadrant-svg">
+          {/* Background quadrants */}
+          <rect x="10" y="10" width="100" height="100" fill="#fef2f2" opacity="0.5" />
+          <rect x="110" y="10" width="100" height="100" fill="#fffbeb" opacity="0.5" />
+          <rect x="10" y="110" width="100" height="100" fill="#fffbeb" opacity="0.5" />
+          <rect x="110" y="110" width="100" height="100" fill="#ecfdf5" opacity="0.5" />
+
+          {/* Grid lines */}
+          <line x1="110" y1="10" x2="110" y2="210" stroke="#e5e7eb" strokeWidth="1" />
+          <line x1="10" y1="110" x2="210" y2="110" stroke="#e5e7eb" strokeWidth="1" />
+
+          {/* Axis lines */}
+          <line x1="10" y1="210" x2="210" y2="210" stroke="#9ca3af" strokeWidth="2" />
+          <line x1="10" y1="10" x2="10" y2="210" stroke="#9ca3af" strokeWidth="2" />
+
+          {/* Axis labels */}
+          <text x="110" y="228" textAnchor="middle" className="axis-label">Bidding %</text>
+          <text x="-110" y="5" textAnchor="middle" transform="rotate(-90)" className="axis-label">Play %</text>
+
+          {/* Scale markers */}
+          <text x="10" y="225" textAnchor="middle" className="scale-marker">0</text>
+          <text x="110" y="225" textAnchor="middle" className="scale-marker">50</text>
+          <text x="210" y="225" textAnchor="middle" className="scale-marker">100</text>
+          <text x="5" y="214" textAnchor="end" className="scale-marker">0</text>
+          <text x="5" y="114" textAnchor="end" className="scale-marker">50</text>
+          <text x="5" y="14" textAnchor="end" className="scale-marker">100</text>
+
+          {/* Data point - current hand */}
+          <circle
+            cx={10 + (bidPct * 2)}
+            cy={210 - (playPct * 2)}
+            r="10"
+            fill="#3b82f6"
+            stroke="#1d4ed8"
+            strokeWidth="2"
+          />
+
+          {/* Quadrant labels (subtle) */}
+          <text x="55" y="55" textAnchor="middle" className="quadrant-label">Needs Work</text>
+          <text x="160" y="55" textAnchor="middle" className="quadrant-label">Bid Well</text>
+          <text x="55" y="165" textAnchor="middle" className="quadrant-label">Play Well</text>
+          <text x="160" y="165" textAnchor="middle" className="quadrant-label">Strong</text>
+        </svg>
+      </div>
+
+      <div className="quadrant-stats">
+        <div className="stat-row">
+          <span className="stat-label">Bidding:</span>
+          <span className="stat-value" style={{ color: bidPct >= 50 ? '#059669' : '#f59e0b' }}>
+            {bidPct}%
+          </span>
+          <span className="stat-detail">
+            ({biddingQuality?.optimal_count || 0} optimal, {biddingQuality?.total_bids || 0} total)
+          </span>
+        </div>
+        <div className="stat-row">
+          <span className="stat-label">Play:</span>
+          <span className="stat-value" style={{ color: playPct >= 50 ? '#059669' : '#f59e0b' }}>
+            {playPct}%
+          </span>
+          <span className="stat-detail">
+            ({playQuality?.optimal_count || 0} optimal, {playQuality?.total_plays || 0} total)
+          </span>
+        </div>
+        <div className="quadrant-summary">
+          {getQuadrantLabel()}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ===== CARD IMPACT MATRIX =====
+// Shows ranked card choices with trick potential for a specific play
+const CardImpactMatrix = ({ decision }) => {
+  if (!decision) {
+    return null;
+  }
+
+  const { user_card, optimal_card, rating, tricks_cost, score, feedback, trick_number, position } = decision;
+
+  // Get rating config
+  const ratingConfig = RATING_CONFIG[rating] || RATING_CONFIG.suboptimal;
+
+  // Build card list (user card and optimal card if different)
+  const cards = [];
+
+  if (optimal_card && optimal_card !== user_card) {
+    cards.push({
+      card: optimal_card,
+      isOptimal: true,
+      isUserPlay: false,
+      label: 'Optimal'
+    });
+  }
+
+  cards.push({
+    card: user_card,
+    isOptimal: rating === 'optimal' || rating === 'good',
+    isUserPlay: true,
+    label: rating === 'optimal' ? 'Optimal' : 'You played'
+  });
+
+  return (
+    <div className="card-impact-matrix">
+      <div className="impact-header">
+        <span className="impact-title">Trick {trick_number} • {position}</span>
+        <span
+          className="impact-badge"
+          style={{ backgroundColor: ratingConfig.bgColor, color: ratingConfig.color }}
+        >
+          {ratingConfig.icon} {ratingConfig.label}
+        </span>
+      </div>
+
+      <div className="impact-cards-list">
+        {cards.map((item, idx) => (
+          <div
+            key={idx}
+            className={`impact-card-row ${item.isUserPlay ? 'user-play' : ''} ${item.isOptimal ? 'optimal' : ''}`}
+            style={{ borderLeftColor: item.isOptimal ? '#059669' : (item.isUserPlay ? ratingConfig.color : '#e5e7eb') }}
+          >
+            <span className="impact-icon">{item.isOptimal ? '✓' : (item.isUserPlay ? '→' : '')}</span>
+            <span className="impact-card">{item.card}</span>
+            <span className="impact-label">{item.label}</span>
+            {tricks_cost > 0 && item.isUserPlay && !item.isOptimal && (
+              <span className="impact-cost">-{tricks_cost} trick{tricks_cost > 1 ? 's' : ''}</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {feedback && (
+        <div className="impact-feedback">
+          {feedback}
+        </div>
+      )}
+
+      <div className="impact-score">
+        Score: {score?.toFixed(1) || '?'}/10
+      </div>
+    </div>
+  );
 };
 
 // Suit order (trump-aware for replay)
@@ -614,7 +788,188 @@ const ParComparisonDisplay = ({ ddAnalysis, parComparison, tricksNeeded, tricksT
   );
 };
 
-const HandReviewModal = ({ handId, onClose }) => {
+// ===== RESULT SECTION =====
+// Shows contract, score, tricks, role - replaces ScoreModal when coming from MyProgress
+const ResultSection = ({
+  contract,
+  made,
+  tricksNeeded,
+  tricksTaken,
+  score,
+  role,
+  onPlayAnother,
+  onReplay,
+  onViewProgress
+}) => {
+  // Format the result text
+  const getResultText = () => {
+    if (tricksTaken === undefined || tricksNeeded === undefined) return '';
+    const diff = tricksTaken - tricksNeeded;
+    if (diff === 0) return '=';
+    if (diff > 0) return `+${diff}`;
+    return `${diff}`;
+  };
+
+  return (
+    <div className="result-section">
+      <div className="result-main">
+        <div className="result-contract">
+          <span className="contract-value">{contract || 'Unknown'}</span>
+          <span className={`result-badge ${made ? 'made' : 'down'}`}>
+            {made ? 'Made' : 'Down'} {getResultText()}
+          </span>
+        </div>
+        <div className="result-details">
+          <div className="result-stat">
+            <span className="stat-label">Tricks</span>
+            <span className="stat-value">{tricksTaken}/{tricksNeeded}</span>
+          </div>
+          <div className="result-stat">
+            <span className="stat-label">Score</span>
+            <span className="stat-value">{score > 0 ? '+' : ''}{score || 0}</span>
+          </div>
+          <div className="result-stat">
+            <span className="stat-label">Role</span>
+            <span className="stat-value">{role || 'Unknown'}</span>
+          </div>
+        </div>
+      </div>
+      {(onPlayAnother || onReplay || onViewProgress) && (
+        <div className="result-actions">
+          {onPlayAnother && (
+            <button className="action-btn primary" onClick={onPlayAnother}>
+              Play Another
+            </button>
+          )}
+          {onReplay && (
+            <button className="action-btn secondary" onClick={onReplay}>
+              Replay Hand
+            </button>
+          )}
+          {onViewProgress && (
+            <button className="action-btn secondary" onClick={onViewProgress}>
+              My Progress
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ===== BIDDING REVIEW SECTION =====
+// Shows bid-by-bid analysis, equivalent to play-by-play for bidding
+const BiddingReviewSection = ({ biddingSummary, auction }) => {
+  if (!biddingSummary?.has_data) {
+    return (
+      <div className="bidding-review-empty">
+        <p>{biddingSummary?.message || 'No bidding analysis available for this hand'}</p>
+      </div>
+    );
+  }
+
+  const decisions = biddingSummary.all_decisions || [];
+  const getRatingConfig = (correctness) => {
+    return RATING_CONFIG[correctness] || RATING_CONFIG.suboptimal;
+  };
+
+  // Format auction display
+  const formatAuction = () => {
+    if (!auction || auction.length === 0) return 'No auction recorded';
+    return auction.map(b => b.bid || b).join(' - ');
+  };
+
+  return (
+    <div className="bidding-review-section">
+      {/* Full auction display */}
+      <div className="auction-display">
+        <span className="auction-label">Auction:</span>
+        <span className="auction-sequence">{formatAuction()}</span>
+      </div>
+
+      {/* Bid-by-bid analysis */}
+      <div className="bidding-decisions-list">
+        <h5>Your Bids</h5>
+        {decisions.map((decision, idx) => {
+          const config = getRatingConfig(decision.correctness);
+          const showOptimal = decision.optimal_bid && decision.optimal_bid !== decision.user_bid;
+
+          return (
+            <div
+              key={decision.id || idx}
+              className={`bidding-decision-card ${decision.correctness}`}
+              style={{ borderLeftColor: config.color }}
+            >
+              <div className="bid-main">
+                <span
+                  className="bid-badge"
+                  style={{ backgroundColor: config.bgColor, color: config.color }}
+                >
+                  {config.icon} {decision.user_bid}
+                </span>
+                {showOptimal && (
+                  <span className="optimal-indicator">
+                    → {decision.optimal_bid}
+                  </span>
+                )}
+                <span className="bid-score">{decision.score?.toFixed(1) || '?'}/10</span>
+              </div>
+              {decision.helpful_hint && (
+                <div className="bid-feedback">
+                  {decision.helpful_hint}
+                </div>
+              )}
+              {decision.impact && (
+                <div className="bid-impact">
+                  {decision.impact}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bidding quality summary */}
+      <div className="bidding-quality-summary">
+        <div className="quality-stat">
+          <span className="quality-value">{biddingSummary.accuracy_rate}%</span>
+          <span className="quality-label">Bidding Quality</span>
+        </div>
+        <div className="quality-breakdown">
+          <span className="breakdown-item optimal">
+            {biddingSummary.optimal_count} optimal
+          </span>
+          {biddingSummary.acceptable_count > 0 && (
+            <span className="breakdown-item acceptable">
+              {biddingSummary.acceptable_count} acceptable
+            </span>
+          )}
+          {biddingSummary.suboptimal_count > 0 && (
+            <span className="breakdown-item suboptimal">
+              {biddingSummary.suboptimal_count} suboptimal
+            </span>
+          )}
+          {biddingSummary.error_count > 0 && (
+            <span className="breakdown-item error">
+              {biddingSummary.error_count} error{biddingSummary.error_count !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const HandReviewModal = ({
+  handId,
+  onClose,
+  // Optional callbacks for action buttons (used when coming from post-hand flow)
+  onPlayAnother,
+  onReplay,
+  onViewProgress,
+  // Whether to show the result section prominently (true when replacing ScoreModal)
+  showResultSection = false
+}) => {
   const [handData, setHandData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -857,6 +1212,28 @@ const HandReviewModal = ({ handId, onClose }) => {
         {/* Stacked Section Cards */}
         <div className="modal-content stacked-container">
 
+          {/* SECTION 0: RESULT - Score summary (shown when replacing ScoreModal) */}
+          {showResultSection && (
+            <SectionCard
+              id="result"
+              title="Result"
+              subtitle="Hand outcome"
+              icon="🏆"
+            >
+              <ResultSection
+                contract={handData?.contract}
+                made={handData?.made}
+                tricksNeeded={handData?.tricks_needed}
+                tricksTaken={handData?.tricks_taken}
+                score={handData?.hand_score}
+                role={handData?.user_role || (handData?.contract_declarer === userPosition ? 'Declarer' : 'Defender')}
+                onPlayAnother={onPlayAnother}
+                onReplay={onReplay}
+                onViewProgress={onViewProgress}
+              />
+            </SectionCard>
+          )}
+
           {/* SECTION 1: STRATEGY - Deal overview and strategic guidance */}
           <SectionCard
             id="strategy"
@@ -910,6 +1287,26 @@ const HandReviewModal = ({ handId, onClose }) => {
             )}
           </SectionCard>
 
+          {/* SECTION 1.5: BIDDING REVIEW - Bid-by-bid analysis */}
+          {handData?.bidding_quality_summary?.has_data && (
+            <SectionCard
+              id="biddingReview"
+              title="Bidding Review"
+              subtitle="Bid-by-bid analysis"
+              icon="📋"
+              headerRight={
+                <span className="accuracy-badge">
+                  {handData.bidding_quality_summary.accuracy_rate}% accuracy
+                </span>
+              }
+            >
+              <BiddingReviewSection
+                biddingSummary={handData.bidding_quality_summary}
+                auction={handData.auction_history}
+              />
+            </SectionCard>
+          )}
+
           {/* SECTION 2: YOUR PLAY - Performance summary */}
           <SectionCard
             id="yourPlay"
@@ -920,6 +1317,21 @@ const HandReviewModal = ({ handId, onClose }) => {
           >
             <PlayQualitySummary summary={handData?.play_quality_summary} />
           </SectionCard>
+
+          {/* SECTION 2.5: PERFORMANCE ANALYSIS - Bidding vs Play quadrant */}
+          {(handData?.bidding_quality_summary?.has_data || handData?.play_quality_summary?.has_data) && (
+            <SectionCard
+              id="performanceAnalysis"
+              title="Performance Analysis"
+              subtitle="Bidding vs Play quality"
+              icon="📈"
+            >
+              <PerformanceQuadrantChart
+                biddingQuality={handData?.bidding_quality_summary}
+                playQuality={handData?.play_quality_summary}
+              />
+            </SectionCard>
+          )}
 
           {/* SECTION 3: PERFECT PLAY - DD analysis */}
           {handData?.dd_analysis && (
@@ -1053,7 +1465,10 @@ const HandReviewModal = ({ handId, onClose }) => {
 
                 {/* Feedback for current play if available */}
                 {currentReplayDecision && replayPosition > 0 && (
-                  <TrickFeedbackPanel decision={currentReplayDecision} />
+                  <div className="play-feedback-container">
+                    <TrickFeedbackPanel decision={currentReplayDecision} />
+                    <CardImpactMatrix decision={currentReplayDecision} />
+                  </div>
                 )}
 
                 <p className="navigation-hint">Use ← → keys to step through plays</p>

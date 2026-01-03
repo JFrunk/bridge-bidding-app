@@ -1,24 +1,77 @@
 /**
- * Four-Dimension Progress Styles
+ * Four-Dimension Progress Styles (Redesigned)
  *
- * Layout: 2x2 grid matching navigation structure
- * - Learn Bid | Practice Bid
- * - Learn Play | Practice Play
+ * Layout: Horizontal expandable bars stacked vertically
+ * Order: Learn Bid, Practice Bid, Learn Play, Practice Play, Performance Overview
  *
- * Responsive: Stacks to single column on mobile
+ * Features:
+ * - Collapsed bars: Icon + Title | Mini stats | Action button | Expand chevron
+ * - Expanded content slides down with smooth animation
+ * - Visual segmented quality bars (Good/Needs Work/Errors)
+ * - Play categories grid in Practice Play
+ * - Performance quadrant chart in Overview section
  */
 
 /* ============================================================================
-   CONTAINER & LAYOUT
+   CONTAINER & HEADER
    ============================================================================ */
 
-.four-dimension-progress {
+.my-progress {
   width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
   padding: var(--space-4, 16px);
 }
 
+.my-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4, 16px);
+  flex-wrap: wrap;
+  gap: var(--space-2, 8px);
+}
+
+.my-progress-header h2 {
+  margin: 0;
+  font-size: var(--text-xl, 20px);
+  font-weight: 700;
+  color: var(--text-primary-dark, #111);
+}
+
+.gamification-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  flex-wrap: wrap;
+}
+
+.streak-badge,
+.level-badge,
+.xp-badge {
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border-radius: 12px;
+  font-size: var(--text-sm, 14px);
+  font-weight: 600;
+}
+
+.streak-badge {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+}
+
+.level-badge {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+}
+
+.xp-badge {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+}
+
 /* Loading State */
-.four-dimension-loading {
+.my-progress-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -27,7 +80,7 @@
   color: var(--text-secondary-dark, #666);
 }
 
-.four-dimension-loading .loading-spinner {
+.my-progress-loading .loading-spinner {
   width: 40px;
   height: 40px;
   border: 3px solid var(--bg-secondary, #f0f0f0);
@@ -41,7 +94,7 @@
 }
 
 /* Error State */
-.four-dimension-error {
+.my-progress-error {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -51,7 +104,7 @@
   border-radius: 12px;
 }
 
-.four-dimension-error .error-icon {
+.my-progress-error .error-icon {
   width: 40px;
   height: 40px;
   display: flex;
@@ -63,7 +116,7 @@
   font-weight: bold;
 }
 
-.four-dimension-error button {
+.my-progress-error button {
   padding: var(--space-2, 8px) var(--space-4, 16px);
   background: var(--color-danger, #dc2626);
   color: white;
@@ -73,202 +126,224 @@
 }
 
 /* ============================================================================
-   PROGRESS GRID - 2x2 Layout
+   PROGRESS BARS STACK
    ============================================================================ */
 
-.progress-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4, 16px);
-}
-
-/* Tablet: Keep 2x2 but reduce gap */
-@media (max-width: 768px) {
-  .progress-grid {
-    gap: var(--space-3, 12px);
-  }
-}
-
-/* Mobile: Stack to single column */
-@media (max-width: 480px) {
-  .progress-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-3, 12px);
-  }
-}
-
-/* Extra small phones */
-@media (max-width: 360px) {
-  .progress-grid {
-    gap: var(--space-2, 8px);
-  }
+.progress-bars-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
 }
 
 /* ============================================================================
-   PROGRESS CARD - Unified Card Component
+   PROGRESS BAR (Expandable Bar)
    ============================================================================ */
 
-.progress-card {
+.progress-bar {
   background: white;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  border-left: 4px solid transparent;
+  transition: box-shadow 0.2s ease;
+}
+
+.progress-bar:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* Accent Colors */
+.progress-bar-primary {
+  border-left-color: var(--color-primary, #2563eb);
+}
+
+.progress-bar-warning {
+  border-left-color: var(--color-warning, #f59e0b);
+}
+
+.progress-bar-info {
+  border-left-color: var(--color-info, #06b6d4);
+}
+
+.progress-bar-success {
+  border-left-color: var(--color-success, #22c55e);
+}
+
+.progress-bar-neutral {
+  border-left-color: var(--text-muted, #9ca3af);
+}
+
+/* Bar Header (Collapsed View) */
+.progress-bar-header {
   display: flex;
-  flex-direction: column;
-}
-
-/* Card type-specific accent colors */
-.progress-card-learn-bid {
-  border-top: 3px solid var(--color-primary, #2563eb);
-}
-
-.progress-card-practice-bid {
-  border-top: 3px solid var(--color-warning, #f59e0b);
-}
-
-.progress-card-learn-play {
-  border-top: 3px solid var(--color-info, #06b6d4);
-}
-
-.progress-card-practice-play {
-  border-top: 3px solid var(--color-success, #22c55e);
-}
-
-/* Card Header - uses light background for contrast with white card body */
-.progress-card .card-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: var(--space-3, 12px) var(--space-4, 16px);
-  background: #f8f9fa;
-  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
 }
 
-.progress-card .card-title {
+.progress-bar-header:hover {
+  background: var(--bg-secondary, #f8f9fa);
+}
+
+.bar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  min-width: 140px;
+}
+
+.bar-icon {
+  font-size: 20px;
+}
+
+.bar-title {
+  font-weight: 600;
+  font-size: var(--text-base, 16px);
+  color: var(--text-primary-dark, #111);
+  white-space: nowrap;
+}
+
+.bar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--space-2, 8px);
+}
+
+.bar-mini-stats {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary-dark, #666);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bar-right {
   display: flex;
   align-items: center;
   gap: var(--space-2, 8px);
 }
 
-.progress-card .card-title .card-icon {
-  font-size: 20px;
-}
-
-.progress-card .card-title h4 {
-  margin: 0;
-  font-size: var(--text-base, 16px);
-  font-weight: 600;
-  color: var(--text-primary-dark, #111);
-}
-
-/* Card Content */
-.progress-card .card-content {
-  padding: var(--space-4, 16px);
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Card Action Button */
-.card-action-btn {
-  width: 100%;
-  padding: var(--space-3, 12px);
-  border-radius: 8px;
+.bar-action-btn {
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  border-radius: 6px;
+  font-size: var(--text-sm, 14px);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-top: auto;
-}
-
-.card-action-btn.primary {
-  background: var(--color-primary, #2563eb);
-  color: white;
   border: none;
-}
-
-.card-action-btn.primary:hover {
-  background: var(--color-primary-dark, #1d4ed8);
-}
-
-.card-action-btn.secondary {
-  background: white;
-  color: var(--color-primary, #2563eb);
-  border: 2px solid var(--color-primary, #2563eb);
-}
-
-.card-action-btn.secondary:hover {
   background: var(--color-primary, #2563eb);
   color: white;
 }
 
-/* ============================================================================
-   OVERALL PROGRESS BADGE
-   ============================================================================ */
+.bar-action-btn:hover {
+  background: var(--color-primary-dark, #1d4ed8);
+  transform: translateY(-1px);
+}
 
-.overall-progress-badge {
-  background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-  color: #065f46;
-  padding: var(--space-1, 4px) var(--space-3, 12px);
-  border-radius: 20px;
-  font-weight: 700;
-  font-size: var(--text-sm, 14px);
+.bar-chevron {
+  font-size: 12px;
+  color: var(--text-muted, #9ca3af);
+  transition: transform 0.3s ease;
+}
+
+.bar-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+/* Bar Content (Expanded View) */
+.progress-bar-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+  background: var(--bg-secondary, #f8f9fa);
+  border-top: 1px solid transparent;
+}
+
+.progress-bar-content.show {
+  max-height: 800px;
+  padding: var(--space-4, 16px);
+  border-top-color: var(--border-color, #e5e7eb);
+}
+
+.expanded-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
 }
 
 /* ============================================================================
-   JOURNEY CONTENT (Learn Cards)
+   LEVEL SECTION (Learn Bid/Play)
    ============================================================================ */
 
-/* Level Progress Section */
-.level-progress-section {
+.level-section {
+  background: white;
+  border-radius: 8px;
+  padding: var(--space-3, 12px);
+}
+
+.level-header {
   display: flex;
   align-items: center;
   gap: var(--space-3, 12px);
   margin-bottom: var(--space-3, 12px);
 }
 
-.progress-ring-container {
+.level-ring {
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
 }
 
-.progress-ring {
-  width: 80px;
-  height: 80px;
+.level-ring svg {
+  width: 100%;
+  height: 100%;
 }
 
-.progress-ring-bg {
+.ring-bg {
+  fill: none;
   stroke: var(--bg-secondary, #e5e7eb);
+  stroke-width: 8;
 }
 
-.progress-ring-fill {
+.ring-fill {
+  fill: none;
   stroke: var(--color-primary, #2563eb);
-  transition: stroke-dasharray 0.3s ease;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.5s ease;
+}
+
+.ring-fill-play {
+  stroke: var(--color-info, #06b6d4);
 }
 
 .ring-level {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   fill: var(--text-primary-dark, #111);
 }
 
 .ring-progress {
-  font-size: 11px;
+  font-size: 12px;
   fill: var(--text-secondary-dark, #666);
 }
 
-.level-details {
+.level-info {
   flex: 1;
-  min-width: 0;
 }
 
 .level-name {
   font-weight: 600;
+  font-size: var(--text-base, 16px);
   color: var(--text-primary-dark, #111);
   margin-bottom: var(--space-1, 4px);
-  font-size: var(--text-sm, 14px);
 }
 
-.skills-mastered {
-  font-size: var(--text-xs, 12px);
+.level-detail {
+  font-size: var(--text-sm, 14px);
   color: var(--text-secondary-dark, #666);
 }
 
@@ -278,7 +353,6 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-2, 8px) 0;
-  margin-bottom: var(--space-2, 8px);
   position: relative;
 }
 
@@ -286,8 +360,8 @@
   content: '';
   position: absolute;
   top: 50%;
-  left: 0;
-  right: 0;
+  left: 12px;
+  right: 12px;
   height: 2px;
   background: var(--bg-secondary, #e5e7eb);
   z-index: 0;
@@ -303,6 +377,7 @@
   font-size: 10px;
   font-weight: 600;
   z-index: 1;
+  background: white;
   transition: transform 0.2s ease;
 }
 
@@ -329,75 +404,40 @@
   color: var(--text-muted, #9ca3af);
 }
 
-/* Next Skill */
-.next-skill {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 8px);
-  padding: var(--space-2, 8px) var(--space-3, 12px);
-  background: var(--bg-info-light, #eff6ff);
-  border-radius: 6px;
-  margin-bottom: var(--space-3, 12px);
-  font-size: var(--text-sm, 14px);
-}
-
-.next-label {
-  color: var(--text-secondary-dark, #666);
-}
-
-.next-name {
-  color: var(--color-primary, #2563eb);
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.in-progress-badge {
-  font-size: var(--text-xs, 12px);
-  color: var(--color-warning, #f59e0b);
-  font-weight: 500;
-  margin-left: auto;
-}
-
-/* Current Skill Progress (in-progress skill feedback) */
-.current-skill-progress {
+/* Current Skill Progress Box */
+.current-skill-box {
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   border-radius: 8px;
   padding: var(--space-3, 12px);
-  margin-bottom: var(--space-3, 12px);
 }
 
-.skill-progress-header {
+.skill-header {
   display: flex;
   align-items: center;
   gap: var(--space-2, 8px);
   margin-bottom: var(--space-2, 8px);
 }
 
-.skill-progress-header .skill-label {
-  color: var(--text-secondary-dark, #666);
+.skill-label {
   font-size: var(--text-xs, 12px);
+  color: var(--text-secondary-dark, #666);
 }
 
-.skill-progress-header .skill-name {
-  color: var(--text-primary-dark, #111);
+.skill-name {
   font-weight: 600;
   font-size: var(--text-sm, 14px);
+  color: var(--text-primary-dark, #111);
 }
 
-.skill-progress-stats {
+.skill-stats {
   display: flex;
   gap: var(--space-4, 16px);
+  font-size: var(--text-xs, 12px);
+  color: var(--text-secondary-dark, #666);
   margin-bottom: var(--space-2, 8px);
 }
 
-.skill-progress-stats .stat {
-  font-size: var(--text-xs, 12px);
-  color: var(--text-secondary-dark, #666);
-}
-
-.skill-progress-bar {
+.skill-bar {
   height: 6px;
   background: rgba(0, 0, 0, 0.1);
   border-radius: 3px;
@@ -405,281 +445,715 @@
   margin-bottom: var(--space-2, 8px);
 }
 
-.skill-progress-fill {
+.skill-bar-play .skill-fill {
+  background: var(--color-info, #06b6d4);
+}
+
+.skill-fill {
   height: 100%;
   background: var(--color-success, #22c55e);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
 
-.skill-progress-hint {
+.skill-hint {
   font-size: var(--text-xs, 12px);
   color: var(--text-secondary-dark, #666);
   font-style: italic;
 }
 
-/* ============================================================================
-   QUALITY CONTENT (Practice Cards)
-   ============================================================================ */
-
-/* Trend Indicator */
-.trend-indicator {
-  padding: var(--space-1, 4px) var(--space-2, 8px);
-  border-radius: 20px;
-  font-size: var(--text-xs, 12px);
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
-.trend-improving {
-  background: var(--bg-success-light, #dcfce7);
-  color: var(--color-success-dark, #166534);
-}
-
-.trend-declining {
-  background: var(--bg-danger-light, #fef2f2);
-  color: var(--color-danger, #dc2626);
-}
-
-.trend-stable {
-  background: var(--bg-secondary, #f3f4f6);
-  color: var(--text-secondary-dark, #666);
-}
-
-/* Quality Gauge */
-.quality-gauge {
-  text-align: center;
-  margin-bottom: var(--space-3, 12px);
-}
-
-.gauge-value {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--text-primary-dark, #111);
-  line-height: 1.2;
-}
-
-.gauge-label {
-  font-size: var(--text-sm, 14px);
-  color: var(--text-secondary-dark, #666);
-  margin-bottom: var(--space-2, 8px);
-}
-
-.gauge-bar {
-  height: 6px;
-  background: var(--bg-secondary, #e5e7eb);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.gauge-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.3s ease, background-color 0.3s ease;
-}
-
-/* Score-based colors set via inline style or data attribute */
-.gauge-fill.score-low {
-  background: var(--color-danger, #dc2626);
-}
-
-.gauge-fill.score-medium {
-  background: var(--color-warning, #f59e0b);
-}
-
-.gauge-fill.score-high {
-  background: var(--color-success, #22c55e);
-}
-
-/* Quality Stats Grid */
-.quality-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-2, 8px);
-  margin-bottom: var(--space-3, 12px);
-}
-
-.quality-stats .stat-item {
-  text-align: center;
-}
-
-.quality-stats .stat-value {
-  display: block;
-  font-size: var(--text-base, 16px);
-  font-weight: 700;
-  color: var(--text-primary-dark, #111);
-}
-
-.quality-stats .stat-label {
-  font-size: var(--text-xs, 12px);
-  color: var(--text-secondary-dark, #666);
-}
-
-/* Total Practiced */
-.total-practiced {
-  text-align: center;
-  font-size: var(--text-xs, 12px);
-  color: var(--text-secondary-dark, #666);
-  margin-bottom: var(--space-3, 12px);
-}
-
-/* Clickable hands link */
-.total-practiced .hands-link {
-  color: var(--color-primary, #2563eb);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: var(--space-1, 4px) var(--space-2, 8px);
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.total-practiced .hands-link:hover {
-  background: var(--bg-info-light, #eff6ff);
-  text-decoration: underline;
-}
-
-.total-practiced .hands-link:focus {
-  outline: 2px solid var(--color-primary, #2563eb);
-  outline-offset: 2px;
-}
-
-/* ============================================================================
-   CONVENTION MASTERY SECTION - Full width below grid
-   ============================================================================ */
-
-.convention-mastery-section {
-  margin-top: var(--space-4, 16px);
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.convention-header {
+/* Next Skill Box */
+.next-skill-box {
   display: flex;
   align-items: center;
   gap: var(--space-2, 8px);
-  padding: var(--space-3, 12px) var(--space-4, 16px);
-  background: var(--bg-secondary, #f8f9fa);
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  background: var(--bg-info-light, #eff6ff);
+  border-radius: 6px;
 }
 
-.convention-header .convention-icon {
-  font-size: 20px;
+.next-label {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary-dark, #666);
 }
 
-.convention-header h4 {
-  margin: 0;
-  font-size: var(--text-base, 16px);
+.next-name {
+  font-weight: 500;
+  font-size: var(--text-sm, 14px);
+  color: var(--color-primary, #2563eb);
+}
+
+/* ============================================================================
+   CONVENTIONS SECTION
+   ============================================================================ */
+
+.conventions-section {
+  background: white;
+  border-radius: 8px;
+  padding: var(--space-3, 12px);
+}
+
+.section-title {
   font-weight: 600;
+  font-size: var(--text-sm, 14px);
+  color: var(--text-primary-dark, #111);
+  margin-bottom: var(--space-2, 8px);
+}
+
+.convention-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 8px);
+}
+
+.convention-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border-radius: 16px;
+  font-size: var(--text-sm, 14px);
+  background: var(--bg-secondary, #f3f4f6);
+}
+
+.convention-chip.mastered {
+  background: var(--bg-success-light, #dcfce7);
+}
+
+.convention-chip.mastered .chip-status {
+  color: var(--color-success, #22c55e);
+}
+
+.convention-chip.in-progress {
+  background: var(--bg-info-light, #eff6ff);
+}
+
+.convention-chip.in-progress .chip-status {
+  color: var(--color-primary, #2563eb);
+}
+
+.convention-chip.not-started .chip-status {
+  color: var(--text-muted, #9ca3af);
+}
+
+.chip-name {
   color: var(--text-primary-dark, #111);
 }
 
-.convention-content {
-  padding: var(--space-4, 16px);
+.chip-accuracy {
+  font-weight: 600;
+  color: var(--text-secondary-dark, #666);
+  margin-left: var(--space-1, 4px);
 }
 
-.convention-group {
-  margin-bottom: var(--space-4, 16px);
+.locked-chip {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-muted, #9ca3af);
+  font-style: italic;
 }
 
-.convention-group:last-child {
-  margin-bottom: 0;
+/* ============================================================================
+   QUALITY SECTION (Practice Bid/Play)
+   ============================================================================ */
+
+.quality-section {
+  background: white;
+  border-radius: 8px;
+  padding: var(--space-3, 12px);
+  text-align: center;
 }
 
-.group-header {
+.quality-header {
+  margin-bottom: var(--space-3, 12px);
+}
+
+.quality-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary-dark, #111);
+  display: block;
+  line-height: 1.2;
+}
+
+.quality-label {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary-dark, #666);
+}
+
+.tricks-lost {
+  color: var(--color-danger, #dc2626);
+}
+
+/* Segmented Quality Bar */
+.segmented-bar-container {
+  margin-top: var(--space-2, 8px);
+}
+
+.segmented-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg-secondary, #e5e7eb);
+}
+
+.segment {
+  transition: width 0.3s ease;
+}
+
+.segment.good {
+  background: var(--color-success, #22c55e);
+}
+
+.segment.suboptimal {
+  background: var(--color-warning, #f59e0b);
+}
+
+.segment.error {
+  background: var(--color-danger, #dc2626);
+}
+
+.segment-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-1, 4px);
+  font-size: var(--text-xs, 12px);
+}
+
+.segment-labels .label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+}
+
+.segment-labels .label.good {
+  color: var(--color-success-dark, #166534);
+}
+
+.segment-labels .label.suboptimal {
+  color: #b45309;
+}
+
+.segment-labels .label.error {
+  color: var(--color-danger, #dc2626);
+}
+
+.segment-labels .label::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.segment-labels .label.good::before {
+  background: var(--color-success, #22c55e);
+}
+
+.segment-labels .label.suboptimal::before {
+  background: var(--color-warning, #f59e0b);
+}
+
+.segment-labels .label.error::before {
+  background: var(--color-danger, #dc2626);
+}
+
+/* ============================================================================
+   RECENT DECISIONS/HANDS SECTIONS
+   ============================================================================ */
+
+.recent-decisions-section,
+.recent-hands-section,
+.focus-areas-section {
+  background: white;
+  border-radius: 8px;
+  padding: var(--space-3, 12px);
+}
+
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-2, 8px);
 }
 
-.group-name {
-  font-weight: 600;
-  color: var(--text-primary-dark, #111);
+.see-all-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary, #2563eb);
   font-size: var(--text-sm, 14px);
+  cursor: pointer;
+  padding: 0;
 }
 
-.group-count {
-  font-size: var(--text-sm, 14px);
-  color: var(--text-secondary-dark, #666);
+.see-all-btn:hover {
+  text-decoration: underline;
 }
 
-.convention-list {
+.decisions-list,
+.hands-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--space-2, 8px);
 }
 
-.convention-item {
+/* Decision Row */
+.decision-row {
   display: flex;
   align-items: center;
-  gap: var(--space-1, 4px);
-  padding: var(--space-1, 4px) var(--space-3, 12px);
-  border-radius: 20px;
+  gap: var(--space-2, 8px);
+  padding: var(--space-2, 8px);
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: 6px;
   font-size: var(--text-sm, 14px);
-  background: var(--bg-secondary, #f3f4f6);
-  transition: all 0.2s ease;
 }
 
-.convention-item.status-mastered {
+.correctness-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.correctness-icon.optimal {
   background: var(--bg-success-light, #dcfce7);
-}
-
-.convention-item.status-mastered .conv-status {
   color: var(--color-success, #22c55e);
 }
 
-.convention-item.status-in-progress {
+.correctness-icon.acceptable {
   background: var(--bg-info-light, #eff6ff);
+  color: var(--color-info, #06b6d4);
 }
 
-.convention-item.status-in-progress .conv-status {
-  color: var(--color-primary, #2563eb);
+.correctness-icon.suboptimal {
+  background: var(--bg-warning-light, #fef3c7);
+  color: var(--color-warning, #f59e0b);
 }
 
-.convention-item.status-not-started .conv-status {
-  color: var(--text-muted, #9ca3af);
+.correctness-icon.error {
+  background: var(--bg-danger-light, #fef2f2);
+  color: var(--color-danger, #dc2626);
 }
 
-.conv-name {
+.decision-bids {
+  font-weight: 600;
+  color: var(--text-primary-dark, #111);
+  min-width: 60px;
+}
+
+.optimal-bid {
+  font-weight: 400;
+  color: var(--color-success, #22c55e);
+}
+
+.decision-concept {
+  flex: 1;
+  color: var(--text-secondary-dark, #666);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.decision-score {
+  font-weight: 600;
   color: var(--text-primary-dark, #111);
 }
 
-.conv-accuracy {
-  font-weight: 600;
-  color: var(--text-secondary-dark, #666);
-  margin-left: var(--space-1, 4px);
+.review-link {
+  background: none;
+  border: none;
+  color: var(--color-primary, #2563eb);
+  font-size: var(--text-xs, 12px);
+  cursor: pointer;
+  padding: var(--space-1, 4px);
+  white-space: nowrap;
 }
 
-/* Locked Preview */
-.locked-preview {
+.review-link:hover {
+  text-decoration: underline;
+}
+
+/* Hand Row */
+.hand-row {
   display: flex;
   align-items: center;
   gap: var(--space-2, 8px);
-  padding: var(--space-3, 12px);
-  background: var(--bg-secondary, #f3f4f6);
-  border-radius: 8px;
-  color: var(--text-secondary-dark, #666);
+  padding: var(--space-2, 8px);
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: 6px;
   font-size: var(--text-sm, 14px);
 }
 
-.lock-icon {
-  font-size: 16px;
+.contract {
+  font-weight: 700;
+  min-width: 30px;
+}
+
+.contract.s, .contract.spades {
+  color: #1e40af;
+}
+
+.contract.h, .contract.hearts {
+  color: #dc2626;
+}
+
+.contract.d, .contract.diamonds {
+  color: #ea580c;
+}
+
+.contract.c, .contract.clubs {
+  color: #16a34a;
+}
+
+.contract.nt, .contract.notrump {
+  color: #111;
+}
+
+.result {
+  font-weight: 600;
+  min-width: 24px;
+}
+
+.result.made {
+  color: var(--color-success, #22c55e);
+}
+
+.result.down {
+  color: var(--color-danger, #dc2626);
+}
+
+.role {
+  color: var(--text-secondary-dark, #666);
+  min-width: 60px;
+}
+
+.score {
+  font-weight: 600;
+  color: var(--text-primary-dark, #111);
+  min-width: 45px;
+}
+
+.quality {
+  color: var(--color-primary, #2563eb);
+  font-weight: 500;
+}
+
+/* Focus Areas */
+.focus-item {
+  padding: var(--space-2, 8px);
+  background: var(--bg-warning-light, #fef3c7);
+  border-radius: 6px;
+  font-size: var(--text-sm, 14px);
+  color: #92400e;
 }
 
 /* ============================================================================
-   RESPONSIVE ADJUSTMENTS
+   CATEGORIES SECTION (Practice Play)
    ============================================================================ */
 
+.categories-section {
+  background: white;
+  border-radius: 8px;
+  padding: var(--space-3, 12px);
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2, 8px);
+}
+
+.category-card {
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: 8px;
+  padding: var(--space-2, 8px);
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-2px);
+}
+
+.category-card.skill-strong {
+  background: var(--bg-success-light, #dcfce7);
+  border: 1px solid var(--color-success, #22c55e);
+}
+
+.category-card.skill-good {
+  background: var(--bg-info-light, #eff6ff);
+  border: 1px solid var(--color-info, #06b6d4);
+}
+
+.category-card.skill-developing {
+  background: var(--bg-warning-light, #fef3c7);
+  border: 1px solid var(--color-warning, #f59e0b);
+}
+
+.category-card.skill-beginner {
+  background: var(--bg-secondary, #f3f4f6);
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+
+.category-name {
+  font-weight: 600;
+  font-size: var(--text-xs, 12px);
+  color: var(--text-primary-dark, #111);
+  margin-bottom: var(--space-1, 4px);
+}
+
+.category-stats {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-1, 4px);
+}
+
+.category-accuracy {
+  font-weight: 700;
+  font-size: var(--text-sm, 14px);
+  color: var(--text-primary-dark, #111);
+}
+
+.category-dots {
+  display: flex;
+  gap: 2px;
+}
+
+.category-dots .dot {
+  font-size: 8px;
+  color: var(--text-muted, #9ca3af);
+}
+
+.category-dots .dot.filled {
+  color: var(--color-primary, #2563eb);
+}
+
+.skill-strong .category-dots .dot.filled {
+  color: var(--color-success, #22c55e);
+}
+
+.skill-good .category-dots .dot.filled {
+  color: var(--color-info, #06b6d4);
+}
+
+.skill-developing .category-dots .dot.filled {
+  color: var(--color-warning, #f59e0b);
+}
+
+.category-plays {
+  font-size: 10px;
+  color: var(--text-secondary-dark, #666);
+}
+
+/* ============================================================================
+   PERFORMANCE OVERVIEW SECTION
+   ============================================================================ */
+
+.performance-overview-content {
+  padding: 0;
+}
+
+.quadrant-section {
+  background: white;
+  border-radius: 8px;
+  padding: var(--space-3, 12px);
+}
+
+.quadrant-chart {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-3, 12px) 0;
+}
+
+.quadrant-svg {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+}
+
+.axis-label {
+  font-size: 11px;
+  fill: var(--text-secondary-dark, #666);
+}
+
+.scale-marker {
+  font-size: 9px;
+  fill: var(--text-muted, #9ca3af);
+}
+
+.quadrant-label {
+  font-size: 10px;
+  fill: var(--text-secondary-dark, #666);
+  font-weight: 500;
+}
+
+.quadrant-stats {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-6, 24px);
+  margin-bottom: var(--space-3, 12px);
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+
+.stat-name {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary-dark, #666);
+}
+
+.stat-value {
+  font-weight: 700;
+  font-size: var(--text-base, 16px);
+}
+
+.stat-value.good {
+  color: var(--color-success, #22c55e);
+}
+
+.stat-value.needs-work {
+  color: var(--color-warning, #f59e0b);
+}
+
+.recommendation-box {
+  display: flex;
+  gap: var(--space-2, 8px);
+  padding: var(--space-3, 12px);
+  background: var(--bg-info-light, #eff6ff);
+  border-radius: 8px;
+}
+
+.recommendation-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.recommendation-text {
+  flex: 1;
+}
+
+.recommendation-text strong {
+  display: block;
+  color: var(--text-primary-dark, #111);
+  margin-bottom: var(--space-1, 4px);
+}
+
+.recommendation-text p {
+  margin: 0;
+  font-size: var(--text-sm, 14px);
+  color: var(--text-secondary-dark, #666);
+  line-height: 1.4;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+/* Tablet */
 @media (max-width: 768px) {
-  .four-dimension-progress {
+  .my-progress {
     padding: var(--space-3, 12px);
   }
 
-  .progress-ring {
+  .my-progress-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .gamification-stats {
+    width: 100%;
+  }
+
+  .bar-left {
+    min-width: 120px;
+  }
+
+  .bar-title {
+    font-size: var(--text-sm, 14px);
+  }
+
+  .bar-mini-stats {
+    font-size: var(--text-xs, 12px);
+  }
+
+  .bar-action-btn {
+    font-size: var(--text-xs, 12px);
+    padding: var(--space-1, 4px) var(--space-2, 8px);
+  }
+
+  .level-ring {
     width: 70px;
     height: 70px;
+  }
+
+  .ring-level {
+    font-size: 16px;
+  }
+
+  .ring-progress {
+    font-size: 10px;
+  }
+
+  .quality-value {
+    font-size: 28px;
+  }
+
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .quadrant-svg {
+    max-width: 220px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .my-progress {
+    padding: var(--space-2, 8px);
+  }
+
+  .progress-bars-stack {
+    gap: var(--space-2, 8px);
+  }
+
+  .progress-bar-header {
+    flex-wrap: wrap;
+    gap: var(--space-2, 8px);
+  }
+
+  .bar-left {
+    min-width: auto;
+    flex: 0 0 auto;
+  }
+
+  .bar-center {
+    order: 3;
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    padding: 0;
+  }
+
+  .bar-right {
+    margin-left: auto;
+  }
+
+  .bar-action-btn {
+    display: none; /* Hide on mobile, use expanded view */
+  }
+
+  .level-ring {
+    width: 60px;
+    height: 60px;
   }
 
   .ring-level {
@@ -687,44 +1161,10 @@
   }
 
   .ring-progress {
-    font-size: 10px;
-  }
-
-  .roadmap-node {
-    width: 22px;
-    height: 22px;
     font-size: 9px;
   }
 
-  .gauge-value {
-    font-size: 28px;
-  }
-
-  .progress-card .card-title h4 {
-    font-size: var(--text-sm, 14px);
-  }
-
-  .card-action-btn {
-    padding: var(--space-2, 8px);
-    font-size: var(--text-sm, 14px);
-  }
-}
-
-@media (max-width: 480px) {
-  .progress-ring {
-    width: 60px;
-    height: 60px;
-  }
-
-  .ring-level {
-    font-size: 12px;
-  }
-
-  .ring-progress {
-    font-size: 9px;
-  }
-
-  .level-progress-section {
+  .level-header {
     gap: var(--space-2, 8px);
   }
 
@@ -734,16 +1174,97 @@
     font-size: 8px;
   }
 
-  .gauge-value {
+  .quality-value {
     font-size: 24px;
   }
 
-  .quality-stats .stat-value {
-    font-size: var(--text-sm, 14px);
+  .segment-labels {
+    flex-wrap: wrap;
+    gap: var(--space-1, 4px);
   }
 
-  .next-skill {
+  .segment-labels .label {
+    font-size: 10px;
+  }
+
+  .decision-row {
+    flex-wrap: wrap;
+  }
+
+  .decision-concept {
+    flex: 1 1 100%;
+    order: 5;
+    margin-top: var(--space-1, 4px);
+  }
+
+  .hand-row {
+    flex-wrap: wrap;
+  }
+
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .category-name {
+    font-size: 10px;
+  }
+
+  .category-accuracy {
     font-size: var(--text-xs, 12px);
-    padding: var(--space-1, 4px) var(--space-2, 8px);
+  }
+
+  .quadrant-stats {
+    flex-direction: column;
+    gap: var(--space-2, 8px);
+    align-items: center;
+  }
+
+  .quadrant-svg {
+    max-width: 200px;
+  }
+}
+
+/* Extra small phones */
+@media (max-width: 360px) {
+  .bar-icon {
+    font-size: 16px;
+  }
+
+  .bar-title {
+    font-size: var(--text-xs, 12px);
+  }
+
+  .gamification-stats {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .streak-badge,
+  .level-badge,
+  .xp-badge {
+    font-size: var(--text-xs, 12px);
+    padding: 2px var(--space-1, 4px);
+  }
+
+  .level-ring {
+    width: 50px;
+    height: 50px;
+  }
+
+  .ring-level {
+    font-size: 12px;
+  }
+
+  .categories-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-1, 4px);
+  }
+
+  .category-card {
+    padding: var(--space-1, 4px);
+  }
+
+  .quadrant-svg {
+    max-width: 180px;
   }
 }

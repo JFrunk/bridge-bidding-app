@@ -1544,7 +1544,9 @@ def get_four_dimension_progress():
                 'good_rate': round(play_feedback_stats.get('combined_good_rate', 0) * 100, 1),  # Combined: optimal + good
                 'suboptimal_rate': round(play_feedback_stats.get('suboptimal_rate', 0) * 100, 1),  # Needs Work
                 'blunder_rate': round(play_feedback_stats.get('blunder_rate', 0) * 100, 1),  # Errors
-                'recent_trend': play_feedback_stats.get('recent_trend', 'stable')
+                'recent_trend': play_feedback_stats.get('recent_trend', 'stable'),
+                'category_breakdown': play_feedback_stats.get('category_breakdown', {}),
+                'total_tricks_lost': play_feedback_stats.get('total_tricks_lost', 0)
             },
             'recent_trend': 'improving' if gameplay_stats.get('recent_declarer_success_rate', 0) > gameplay_stats.get('declarer_success_rate', 0) + 0.05 else (
                 'declining' if gameplay_stats.get('recent_declarer_success_rate', 0) < gameplay_stats.get('declarer_success_rate', 0) - 0.05 else 'stable'
