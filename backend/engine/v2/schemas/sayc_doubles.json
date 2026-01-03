@@ -7,7 +7,7 @@
     {
       "id": "takeout_double_standard",
       "bid": "X",
-      "priority": 100,
+      "priority": 110,
       "description": "Standard takeout double of 1-level opening",
       "conditions": {
         "is_overcall": true,
@@ -37,7 +37,7 @@
     {
       "id": "takeout_double_light",
       "bid": "X",
-      "priority": 98,
+      "priority": 118,
       "description": "Light takeout double with perfect shape",
       "conditions": {
         "is_overcall": true,
@@ -67,7 +67,7 @@
     {
       "id": "takeout_double_flexible_shape",
       "bid": "X",
-      "priority": 97,
+      "priority": 117,
       "description": "Takeout double with imperfect shape but good values",
       "conditions": {
         "is_overcall": true,
@@ -97,7 +97,7 @@
     {
       "id": "takeout_double_offshape",
       "bid": "X",
-      "priority": 96,
+      "priority": 116,
       "description": "Off-shape takeout double with strong values",
       "conditions": {
         "is_overcall": true,
@@ -124,7 +124,7 @@
     {
       "id": "takeout_double_strong",
       "bid": "X",
-      "priority": 99,
+      "priority": 119,
       "description": "Strong takeout double (17+ HCP)",
       "conditions": {
         "is_overcall": true,
@@ -147,7 +147,7 @@
     {
       "id": "takeout_double_balancing",
       "bid": "X",
-      "priority": 95,
+      "priority": 115,
       "description": "Balancing takeout double",
       "conditions": {
         "is_overcall": true,
@@ -175,7 +175,7 @@
     {
       "id": "negative_double_1_level",
       "bid": "X",
-      "priority": 90,
+      "priority": 795,
       "description": "Negative double at 1-level",
       "conditions": {
         "is_response": true,
@@ -194,7 +194,7 @@
     {
       "id": "negative_double_2_level",
       "bid": "X",
-      "priority": 89,
+      "priority": 804,
       "description": "Negative double at 2-level",
       "conditions": {
         "is_response": true,
@@ -213,7 +213,7 @@
     {
       "id": "negative_double_3_level",
       "bid": "X",
-      "priority": 88,
+      "priority": 803,
       "description": "Negative double at 3-level",
       "conditions": {
         "is_response": true,
@@ -249,7 +249,7 @@
     {
       "id": "support_double",
       "bid": "X",
-      "priority": 75,
+      "priority": 235,
       "description": "Support double showing 3-card support",
       "conditions": {
         "opener_relationship": "Me",

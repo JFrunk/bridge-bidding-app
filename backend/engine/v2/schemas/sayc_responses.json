@@ -7,7 +7,7 @@
     {
       "id": "stayman_2c",
       "bid": "2♣",
-      "priority": 100,
+      "priority": 810,
       "description": "Stayman convention over 1NT (looking for 4-4 major fit)",
       "conditions": {
         "is_response": true,
@@ -43,7 +43,7 @@
     {
       "id": "jacoby_transfer_hearts",
       "bid": "2♦",
-      "priority": 99,
+      "priority": 829,
       "description": "Jacoby transfer to hearts",
       "conditions": {
         "is_response": true,
@@ -60,7 +60,7 @@
     {
       "id": "jacoby_transfer_hearts_invitational",
       "bid": "2♦",
-      "priority": 98,
+      "priority": 828,
       "description": "Jacoby transfer to hearts (invitational with 6+ cards)",
       "conditions": {
         "is_response": true,
@@ -80,7 +80,7 @@
     {
       "id": "jacoby_transfer_spades",
       "bid": "2♥",
-      "priority": 97,
+      "priority": 827,
       "description": "Jacoby transfer to spades",
       "conditions": {
         "is_response": true,
@@ -97,7 +97,7 @@
     {
       "id": "jacoby_transfer_spades_invitational",
       "bid": "2♥",
-      "priority": 96,
+      "priority": 826,
       "description": "Jacoby transfer to spades (invitational with 6+ cards)",
       "conditions": {
         "is_response": true,
@@ -117,7 +117,7 @@
     {
       "id": "texas_transfer_hearts",
       "bid": "4♦",
-      "priority": 95,
+      "priority": 835,
       "description": "Texas transfer to hearts (6+ hearts, game values)",
       "conditions": {
         "is_response": true,
@@ -136,7 +136,7 @@
     {
       "id": "texas_transfer_spades",
       "bid": "4♥",
-      "priority": 94,
+      "priority": 834,
       "description": "Texas transfer to spades (6+ spades, game values)",
       "conditions": {
         "is_response": true,
@@ -155,7 +155,7 @@
     {
       "id": "raise_1nt_to_3nt",
       "bid": "3NT",
-      "priority": 95,
+      "priority": 355,
       "description": "Raise 1NT to game",
       "conditions": {
         "is_response": true,
@@ -174,7 +174,7 @@
     {
       "id": "raise_1nt_invitational",
       "bid": "2NT",
-      "priority": 90,
+      "priority": 450,
       "description": "Invitational raise of 1NT",
       "conditions": {
         "is_response": true,
@@ -227,7 +227,7 @@
     {
       "id": "respond_1nt_no_fit",
       "bid": "1NT",
-      "priority": 70,
+      "priority": 260,
       "description": "1NT response showing 6-10 HCP",
       "conditions": {
         "is_response": true,
@@ -255,7 +255,7 @@
     {
       "id": "single_raise_major",
       "bid": "2{partner_suit}",
-      "priority": 65,
+      "priority": 285,
       "description": "Single raise of partner's major",
       "conditions": {
         "is_response": true,
@@ -280,7 +280,7 @@
     {
       "id": "limit_raise_major",
       "bid": "3{partner_suit}",
-      "priority": 64,
+      "priority": 554,
       "description": "Limit raise of partner's major",
       "conditions": {
         "is_response": true,
@@ -305,7 +305,7 @@
     {
       "id": "game_raise_major",
       "bid": "4{partner_suit}",
-      "priority": 63,
+      "priority": 323,
       "description": "Game raise of partner's major",
       "conditions": {
         "is_response": true,
@@ -342,7 +342,7 @@
     {
       "id": "new_suit_2_level",
       "bid": "2{suit}",
-      "priority": 50,
+      "priority": 600,
       "description": "New suit at 2-level (game forcing in 2/1)",
       "conditions": {
         "is_response": true,
@@ -406,7 +406,7 @@
     {
       "id": "pass_no_values",
       "bid": "Pass",
-      "priority": 5,
+      "priority": 25,
       "description": "Pass with insufficient values to respond",
       "conditions": {
         "is_response": true,
@@ -424,7 +424,7 @@
     {
       "id": "pass_after_nt_minimum",
       "bid": "Pass",
-      "priority": 4,
+      "priority": 174,
       "description": "Pass partner's 1NT with minimum balanced",
       "conditions": {
         "is_response": true,
@@ -442,7 +442,7 @@
     {
       "id": "pass_after_2nt_minimum",
       "bid": "Pass",
-      "priority": 3,
+      "priority": 173,
       "description": "Pass partner's 2NT with minimum",
       "conditions": {
         "is_response": true,
@@ -458,12 +458,20 @@
     {
       "id": "pass_after_preempt",
       "bid": "Pass",
-      "priority": 2,
+      "priority": 82,
       "description": "Pass partner's preemptive opening",
       "conditions": {
         "is_response": true,
         "partner_last_bid": {
-          "in": ["2♦", "2♥", "2♠", "3♣", "3♦", "3♥", "3♠"]
+          "in": [
+            "2♦",
+            "2♥",
+            "2♠",
+            "3♣",
+            "3♦",
+            "3♥",
+            "3♠"
+          ]
         },
         "hcp": {
           "max": 13
@@ -479,12 +487,15 @@
     {
       "id": "pass_after_major_opening_no_fit_weak",
       "bid": "Pass",
-      "priority": 1,
+      "priority": 171,
       "description": "Pass partner's major opening with minimum and no fit",
       "conditions": {
         "is_response": true,
         "partner_last_bid": {
-          "in": ["1♥", "1♠"]
+          "in": [
+            "1♥",
+            "1♠"
+          ]
         },
         "hcp": {
           "max": 5

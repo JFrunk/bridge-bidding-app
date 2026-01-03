@@ -7,7 +7,7 @@
     {
       "id": "jacoby_2nt_over_1h",
       "bid": "2NT",
-      "priority": 250,
+      "priority": 850,
       "description": "Jacoby 2NT: Game-forcing raise of 1♥ with 4+ support",
       "conditions": {
         "is_response": true,
@@ -26,7 +26,7 @@
     {
       "id": "jacoby_2nt_over_1s",
       "bid": "2NT",
-      "priority": 249,
+      "priority": 859,
       "description": "Jacoby 2NT: Game-forcing raise of 1♠ with 4+ support",
       "conditions": {
         "is_response": true,
@@ -45,7 +45,7 @@
     {
       "id": "splinter_4c_over_1h",
       "bid": "4♣",
-      "priority": 260,
+      "priority": 860,
       "description": "Splinter: Club shortness over 1♥",
       "conditions": {
         "is_response": true,
@@ -68,7 +68,7 @@
     {
       "id": "splinter_4d_over_1h",
       "bid": "4♦",
-      "priority": 259,
+      "priority": 869,
       "description": "Splinter: Diamond shortness over 1♥",
       "conditions": {
         "is_response": true,
@@ -91,7 +91,7 @@
     {
       "id": "splinter_4s_over_1h",
       "bid": "4♠",
-      "priority": 258,
+      "priority": 868,
       "description": "Splinter: Spade shortness over 1♥",
       "conditions": {
         "is_response": true,
@@ -114,7 +114,7 @@
     {
       "id": "splinter_4c_over_1s",
       "bid": "4♣",
-      "priority": 257,
+      "priority": 867,
       "description": "Splinter: Club shortness over 1♠",
       "conditions": {
         "is_response": true,
@@ -137,7 +137,7 @@
     {
       "id": "splinter_4d_over_1s",
       "bid": "4♦",
-      "priority": 256,
+      "priority": 866,
       "description": "Splinter: Diamond shortness over 1♠",
       "conditions": {
         "is_response": true,
@@ -160,7 +160,7 @@
     {
       "id": "splinter_4h_over_1s",
       "bid": "4♥",
-      "priority": 255,
+      "priority": 865,
       "description": "Splinter: Heart shortness over 1♠",
       "conditions": {
         "is_response": true,
@@ -183,7 +183,7 @@
     {
       "id": "fourth_suit_forcing_2c",
       "bid": "2♣",
-      "priority": 200,
+      "priority": 800,
       "description": "Fourth Suit Forcing: 2♣ after 1♦-1♥-1♠",
       "conditions": {
         "is_response": true,
@@ -204,7 +204,7 @@
     {
       "id": "fourth_suit_forcing_2d",
       "bid": "2♦",
-      "priority": 199,
+      "priority": 809,
       "description": "Fourth Suit Forcing: 2♦ after 1♣-1♥-1♠",
       "conditions": {
         "is_response": true,
@@ -225,7 +225,7 @@
     {
       "id": "fourth_suit_forcing_2h",
       "bid": "2♥",
-      "priority": 198,
+      "priority": 808,
       "description": "Fourth Suit Forcing: 2♥ after 1♣-1♦-1♠ or 1♦-1♠-2♣",
       "conditions": {
         "is_response": true,
@@ -246,7 +246,7 @@
     {
       "id": "fourth_suit_forcing_2s",
       "bid": "2♠",
-      "priority": 197,
+      "priority": 807,
       "description": "Fourth Suit Forcing: 2♠ after various sequences",
       "conditions": {
         "is_response": true,
@@ -267,7 +267,7 @@
     {
       "id": "jacoby_rebid_void_clubs_over_1h",
       "bid": "3♣",
-      "priority": 510,
+      "priority": 920,
       "description": "After 1♥-2NT: Show club void",
       "conditions": {
         "is_rebid": true,
@@ -284,7 +284,7 @@
     {
       "id": "jacoby_rebid_void_diamonds_over_1h",
       "bid": "3♦",
-      "priority": 509,
+      "priority": 929,
       "description": "After 1♥-2NT: Show diamond void",
       "conditions": {
         "is_rebid": true,
@@ -301,7 +301,7 @@
     {
       "id": "jacoby_rebid_void_spades_over_1h",
       "bid": "3♠",
-      "priority": 508,
+      "priority": 928,
       "description": "After 1♥-2NT: Show spade void",
       "conditions": {
         "is_rebid": true,
@@ -318,7 +318,7 @@
     {
       "id": "jacoby_rebid_void_clubs_over_1s",
       "bid": "3♣",
-      "priority": 507,
+      "priority": 927,
       "description": "After 1♠-2NT: Show club void",
       "conditions": {
         "is_rebid": true,
@@ -335,7 +335,7 @@
     {
       "id": "jacoby_rebid_void_diamonds_over_1s",
       "bid": "3♦",
-      "priority": 506,
+      "priority": 926,
       "description": "After 1♠-2NT: Show diamond void",
       "conditions": {
         "is_rebid": true,
@@ -352,7 +352,7 @@
     {
       "id": "jacoby_rebid_void_hearts_over_1s",
       "bid": "3♥",
-      "priority": 505,
+      "priority": 925,
       "description": "After 1♠-2NT: Show heart void",
       "conditions": {
         "is_rebid": true,
@@ -369,7 +369,7 @@
     {
       "id": "jacoby_rebid_singleton_clubs_over_1h",
       "bid": "3♣",
-      "priority": 500,
+      "priority": 910,
       "description": "After 1♥-2NT: Show club singleton",
       "conditions": {
         "is_rebid": true,
@@ -387,7 +387,7 @@
     {
       "id": "jacoby_rebid_singleton_diamonds_over_1h",
       "bid": "3♦",
-      "priority": 499,
+      "priority": 919,
       "description": "After 1♥-2NT: Show diamond singleton",
       "conditions": {
         "is_rebid": true,
@@ -405,7 +405,7 @@
     {
       "id": "jacoby_rebid_singleton_spades_over_1h",
       "bid": "3♠",
-      "priority": 498,
+      "priority": 918,
       "description": "After 1♥-2NT: Show spade singleton",
       "conditions": {
         "is_rebid": true,
@@ -423,7 +423,7 @@
     {
       "id": "jacoby_rebid_singleton_clubs_over_1s",
       "bid": "3♣",
-      "priority": 497,
+      "priority": 917,
       "description": "After 1♠-2NT: Show club singleton",
       "conditions": {
         "is_rebid": true,
@@ -441,7 +441,7 @@
     {
       "id": "jacoby_rebid_singleton_diamonds_over_1s",
       "bid": "3♦",
-      "priority": 496,
+      "priority": 916,
       "description": "After 1♠-2NT: Show diamond singleton",
       "conditions": {
         "is_rebid": true,
@@ -459,7 +459,7 @@
     {
       "id": "jacoby_rebid_singleton_hearts_over_1s",
       "bid": "3♥",
-      "priority": 495,
+      "priority": 915,
       "description": "After 1♠-2NT: Show heart singleton",
       "conditions": {
         "is_rebid": true,
@@ -477,7 +477,7 @@
     {
       "id": "jacoby_rebid_strong_over_1h",
       "bid": "3♥",
-      "priority": 485,
+      "priority": 890,
       "description": "After 1♥-2NT: Strong hand (18+ HCP), slam interest",
       "conditions": {
         "is_rebid": true,
@@ -494,7 +494,7 @@
     {
       "id": "jacoby_rebid_strong_over_1s",
       "bid": "3♠",
-      "priority": 484,
+      "priority": 889,
       "description": "After 1♠-2NT: Strong hand (18+ HCP), slam interest",
       "conditions": {
         "is_rebid": true,
@@ -511,7 +511,7 @@
     {
       "id": "jacoby_rebid_extra_over_1h",
       "bid": "3NT",
-      "priority": 482,
+      "priority": 882,
       "description": "After 1♥-2NT: Extra values balanced (15-17 HCP)",
       "conditions": {
         "is_rebid": true,
@@ -530,7 +530,7 @@
     {
       "id": "jacoby_rebid_extra_over_1s",
       "bid": "3NT",
-      "priority": 481,
+      "priority": 881,
       "description": "After 1♠-2NT: Extra values balanced (15-17 HCP)",
       "conditions": {
         "is_rebid": true,
@@ -549,7 +549,7 @@
     {
       "id": "jacoby_rebid_minimum_over_1h",
       "bid": "4♥",
-      "priority": 480,
+      "priority": 840,
       "description": "After 1♥-2NT: Fast Arrival - minimum (12-14 HCP)",
       "conditions": {
         "is_rebid": true,
@@ -567,7 +567,7 @@
     {
       "id": "jacoby_rebid_minimum_over_1s",
       "bid": "4♠",
-      "priority": 479,
+      "priority": 849,
       "description": "After 1♠-2NT: Fast Arrival - minimum (12-14 HCP)",
       "conditions": {
         "is_rebid": true,

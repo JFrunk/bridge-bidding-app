@@ -7,7 +7,7 @@
     {
       "id": "opener_complete_texas_hearts",
       "bid": "4♥",
-      "priority": 100,
+      "priority": 830,
       "description": "1NT opener completes Texas transfer to hearts",
       "conditions": {
         "is_rebid": true,
@@ -21,7 +21,7 @@
     {
       "id": "opener_complete_texas_spades",
       "bid": "4♠",
-      "priority": 99,
+      "priority": 839,
       "description": "1NT opener completes Texas transfer to spades",
       "conditions": {
         "is_rebid": true,
@@ -35,7 +35,7 @@
     {
       "id": "responder_smolen_3h",
       "bid": "3♥",
-      "priority": 98,
+      "priority": 813,
       "description": "Smolen: 4 hearts, 5 spades, game values",
       "conditions": {
         "opener_relationship": "Partner",
@@ -62,7 +62,7 @@
     {
       "id": "responder_smolen_3s",
       "bid": "3♠",
-      "priority": 97,
+      "priority": 812,
       "description": "Smolen: 4 spades, 5 hearts, game values",
       "conditions": {
         "opener_relationship": "Partner",
@@ -89,7 +89,7 @@
     {
       "id": "opener_accept_smolen_spades",
       "bid": "4♠",
-      "priority": 96,
+      "priority": 811,
       "description": "Accept Smolen with 3+ spades (partner has 5)",
       "conditions": {
         "is_rebid": true,
@@ -106,7 +106,7 @@
     {
       "id": "opener_reject_smolen_spades",
       "bid": "3NT",
-      "priority": 95,
+      "priority": 810,
       "description": "Reject Smolen - no spade fit",
       "conditions": {
         "is_rebid": true,
@@ -123,7 +123,7 @@
     {
       "id": "opener_accept_smolen_hearts",
       "bid": "4♥",
-      "priority": 94,
+      "priority": 809,
       "description": "Accept Smolen with 3+ hearts (partner has 5)",
       "conditions": {
         "is_rebid": true,
@@ -140,7 +140,7 @@
     {
       "id": "opener_reject_smolen_hearts",
       "bid": "3NT",
-      "priority": 93,
+      "priority": 808,
       "description": "Reject Smolen - no heart fit",
       "conditions": {
         "is_rebid": true,
@@ -157,7 +157,7 @@
     {
       "id": "opener_rebid_1nt",
       "bid": "1NT",
-      "priority": 90,
+      "priority": 250,
       "description": "Opener rebids 1NT with balanced minimum",
       "conditions": {
         "is_rebid": true,
@@ -177,7 +177,7 @@
     {
       "id": "opener_rebid_2nt",
       "bid": "2NT",
-      "priority": 89,
+      "priority": 259,
       "description": "Opener rebids 2NT with balanced 18-19",
       "conditions": {
         "is_rebid": true,
@@ -197,7 +197,7 @@
     {
       "id": "opener_rebid_3nt",
       "bid": "3NT",
-      "priority": 88,
+      "priority": 258,
       "description": "Opener rebids 3NT with balanced 20-21",
       "conditions": {
         "is_rebid": true,
@@ -242,7 +242,7 @@
     {
       "id": "opener_raise_major_4_card",
       "bid": "2{partner_suit}",
-      "priority": 93,
+      "priority": 173,
       "description": "Opener raises partner's major with 4-card support (minimum)",
       "conditions": {
         "is_rebid": true,
@@ -267,7 +267,7 @@
     {
       "id": "opener_jump_raise_major",
       "bid": "3{partner_suit}",
-      "priority": 94,
+      "priority": 454,
       "description": "Opener jump raises partner's major (invitational)",
       "conditions": {
         "is_rebid": true,
@@ -293,7 +293,7 @@
     {
       "id": "opener_game_raise_major",
       "bid": "4{partner_suit}",
-      "priority": 95,
+      "priority": 325,
       "description": "Opener raises to game in partner's major",
       "conditions": {
         "is_rebid": true,
@@ -317,7 +317,7 @@
     {
       "id": "opener_rebid_own_suit",
       "bid": "2{first_suit}",
-      "priority": 75,
+      "priority": 255,
       "description": "Opener rebids own suit showing 6+ cards",
       "conditions": {
         "is_rebid": true,
@@ -339,7 +339,7 @@
     {
       "id": "opener_reverse_strong",
       "bid": "2{higher_suit}",
-      "priority": 72,
+      "priority": 752,
       "description": "Opener reverses showing 17+ HCP (Barrier Principle)",
       "conditions": {
         "is_rebid": true,
@@ -365,7 +365,7 @@
     {
       "id": "opener_reverse_minimum",
       "bid": "2{higher_suit}",
-      "priority": 70,
+      "priority": 750,
       "description": "Opener reverses with minimum reverse values",
       "conditions": {
         "is_rebid": true,
@@ -436,7 +436,7 @@
     {
       "id": "responder_rebid_fourth_suit_forcing",
       "bid": "2{new_suit}",
-      "priority": 60,
+      "priority": 800,
       "description": "Responder bids fourth suit forcing",
       "conditions": {
         "is_response": true,
@@ -467,7 +467,10 @@
         },
         "fit_known": true,
         "agreed_suit": {
-          "in": ["♥", "♠"]
+          "in": [
+            "♥",
+            "♠"
+          ]
         },
         "support_points": {
           "min": 13
@@ -480,7 +483,7 @@
     {
       "id": "responder_rebid_2nt_invitational",
       "bid": "2NT",
-      "priority": 55,
+      "priority": 455,
       "description": "Responder rebids 2NT invitational",
       "conditions": {
         "is_response": true,
@@ -502,7 +505,7 @@
     {
       "id": "responder_rebid_3nt_game",
       "bid": "3NT",
-      "priority": 54,
+      "priority": 244,
       "description": "Responder rebids 3NT",
       "conditions": {
         "is_response": true,
@@ -525,7 +528,7 @@
     {
       "id": "responder_delayed_game_raise",
       "bid": "3{partner_suit}",
-      "priority": 53,
+      "priority": 323,
       "description": "Responder shows delayed game raise",
       "conditions": {
         "is_response": true,
@@ -533,7 +536,12 @@
           "min": 1
         },
         "partner_last_bid": {
-          "in": ["1♥", "1♠", "2♥", "2♠"]
+          "in": [
+            "1♥",
+            "1♠",
+            "2♥",
+            "2♠"
+          ]
         },
         "support_points": {
           "min": 13
@@ -549,7 +557,7 @@
     {
       "id": "responder_preference_to_first_suit",
       "bid": "2{partner_first_suit}",
-      "priority": 50,
+      "priority": 170,
       "description": "Responder gives preference to partner's first suit",
       "conditions": {
         "is_response": true,
@@ -574,7 +582,7 @@
     {
       "id": "responder_jump_preference",
       "bid": "3{partner_first_suit}",
-      "priority": 49,
+      "priority": 459,
       "description": "Responder jump preference showing invitational values",
       "conditions": {
         "is_response": true,
@@ -621,7 +629,7 @@
     {
       "id": "responder_rebid_own_suit_weak",
       "bid": "2{my_suit}",
-      "priority": 42,
+      "priority": 242,
       "description": "Responder rebids own suit showing 6+ cards (weak)",
       "conditions": {
         "is_response": true,
@@ -644,7 +652,7 @@
     {
       "id": "responder_rebid_own_suit_invitational",
       "bid": "3{my_suit}",
-      "priority": 41,
+      "priority": 451,
       "description": "Responder jump rebids own suit (invitational)",
       "conditions": {
         "is_response": true,
@@ -692,7 +700,7 @@
     {
       "id": "responder_support_opener_minimum",
       "bid": "2{partner_suit}",
-      "priority": 38,
+      "priority": 178,
       "description": "Responder supports opener's suit with minimum",
       "conditions": {
         "is_response": true,
@@ -736,7 +744,7 @@
     {
       "id": "opener_pass_after_limit_raise",
       "bid": "Pass",
-      "priority": 15,
+      "priority": 555,
       "description": "Opener passes partner's limit raise with minimum",
       "conditions": {
         "is_rebid": true,
@@ -753,7 +761,7 @@
     {
       "id": "opener_pass_after_2nt_response",
       "bid": "Pass",
-      "priority": 14,
+      "priority": 454,
       "description": "Opener passes 2NT invitational with minimum",
       "conditions": {
         "is_rebid": true,
@@ -771,7 +779,7 @@
     {
       "id": "opener_pass_after_1nt_response",
       "bid": "Pass",
-      "priority": 13,
+      "priority": 173,
       "description": "Opener passes 1NT response with balanced minimum",
       "conditions": {
         "is_rebid": true,
@@ -792,7 +800,7 @@
     {
       "id": "opener_pass_after_single_raise",
       "bid": "Pass",
-      "priority": 12,
+      "priority": 282,
       "description": "Opener passes single raise with minimum",
       "conditions": {
         "is_rebid": true,
@@ -812,7 +820,7 @@
     {
       "id": "responder_pass_opener_minimum_rebid",
       "bid": "Pass",
-      "priority": 10,
+      "priority": 170,
       "description": "Responder passes opener's minimum rebid",
       "conditions": {
         "is_response": true,
@@ -832,7 +840,7 @@
     {
       "id": "pass_in_rebid",
       "bid": "Pass",
-      "priority": 1,
+      "priority": 171,
       "description": "Pass in rebid situation",
       "conditions": {
         "OR": [

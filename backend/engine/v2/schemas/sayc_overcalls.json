@@ -7,7 +7,7 @@
     {
       "id": "takeout_double",
       "bid": "X",
-      "priority": 100,
+      "priority": 110,
       "description": "Takeout double",
       "conditions": {
         "is_overcall": true,
@@ -43,7 +43,7 @@
     {
       "id": "1nt_overcall",
       "bid": "1NT",
-      "priority": 95,
+      "priority": 125,
       "description": "1NT overcall",
       "conditions": {
         "is_overcall": true,
@@ -69,7 +69,7 @@
     {
       "id": "1nt_overcall_balancing",
       "bid": "1NT",
-      "priority": 94,
+      "priority": 124,
       "description": "Balancing 1NT",
       "conditions": {
         "is_overcall": true,
@@ -88,7 +88,7 @@
     {
       "id": "michaels_cuebid_major",
       "bid": "{opponent_suit}",
-      "priority": 90,
+      "priority": 580,
       "description": "Michaels cuebid over major",
       "conditions": {
         "is_overcall": true,
@@ -116,7 +116,7 @@
     {
       "id": "michaels_cuebid_minor",
       "bid": "{opponent_suit}",
-      "priority": 89,
+      "priority": 589,
       "description": "Michaels cuebid over minor",
       "conditions": {
         "is_overcall": true,
@@ -172,7 +172,7 @@
     {
       "id": "simple_overcall_1_level",
       "bid": "1{suit}",
-      "priority": 70,
+      "priority": 140,
       "description": "Simple 1-level overcall",
       "conditions": {
         "is_overcall": true,
@@ -202,7 +202,7 @@
     {
       "id": "simple_overcall_1_level_balancing",
       "bid": "1{suit}",
-      "priority": 69,
+      "priority": 149,
       "description": "Balancing 1-level overcall",
       "conditions": {
         "is_overcall": true,
@@ -226,7 +226,7 @@
     {
       "id": "simple_overcall_2_level",
       "bid": "2{suit}",
-      "priority": 65,
+      "priority": 145,
       "description": "Simple 2-level overcall",
       "conditions": {
         "is_overcall": true,
@@ -250,7 +250,7 @@
     {
       "id": "weak_jump_overcall",
       "bid": "2{suit}",
-      "priority": 60,
+      "priority": 120,
       "description": "Weak jump overcall",
       "conditions": {
         "is_overcall": true,
@@ -280,7 +280,7 @@
     {
       "id": "negative_double",
       "bid": "X",
-      "priority": 55,
+      "priority": 800,
       "description": "Negative double by responder",
       "conditions": {
         "is_response": true,
@@ -297,7 +297,7 @@
     {
       "id": "pass_no_action",
       "bid": "Pass",
-      "priority": 1,
+      "priority": 21,
       "description": "Pass in competitive auction",
       "conditions": {
         "is_overcall": true,

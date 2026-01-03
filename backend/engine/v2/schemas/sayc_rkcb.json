@@ -7,7 +7,7 @@
     {
       "id": "rkcb_5c_1_or_4",
       "bid": "5♣",
-      "priority": 100,
+      "priority": 950,
       "description": "RKCB response showing 1 or 4 key cards",
       "conditions": {
         "partner_last_bid": "4NT",
@@ -32,7 +32,7 @@
     {
       "id": "rkcb_5d_0_or_3",
       "bid": "5♦",
-      "priority": 99,
+      "priority": 959,
       "description": "RKCB response showing 0 or 3 key cards",
       "conditions": {
         "partner_last_bid": "4NT",
@@ -57,7 +57,7 @@
     {
       "id": "rkcb_5h_2_no_queen",
       "bid": "5♥",
-      "priority": 98,
+      "priority": 958,
       "description": "RKCB response showing 2 key cards without trump Queen",
       "conditions": {
         "partner_last_bid": "4NT",
@@ -74,7 +74,7 @@
     {
       "id": "rkcb_5s_2_with_queen",
       "bid": "5♠",
-      "priority": 97,
+      "priority": 957,
       "description": "RKCB response showing 2 key cards with trump Queen",
       "conditions": {
         "partner_last_bid": "4NT",
@@ -91,7 +91,7 @@
     {
       "id": "rkcb_5_all_keys",
       "bid": "5NT",
-      "priority": 96,
+      "priority": 956,
       "description": "RKCB response showing 5 key cards (all of them)",
       "conditions": {
         "partner_last_bid": "4NT",
@@ -107,11 +107,14 @@
     {
       "id": "queen_ask_positive",
       "bid": "6{agreed_suit}",
-      "priority": 90,
+      "priority": 940,
       "description": "Queen Ask response - have trump Queen",
       "conditions": {
         "partner_last_bid": {
-          "in": ["5♣", "5♦"]
+          "in": [
+            "5♣",
+            "5♦"
+          ]
         },
         "fit_known": true,
         "has_trump_queen": true
@@ -123,16 +126,22 @@
     {
       "id": "queen_ask_negative_5h",
       "bid": "5{agreed_suit}",
-      "priority": 85,
+      "priority": 945,
       "description": "Queen Ask response - no trump Queen (sign off)",
       "conditions": {
         "partner_last_bid": {
-          "in": ["5♣", "5♦"]
+          "in": [
+            "5♣",
+            "5♦"
+          ]
         },
         "fit_known": true,
         "has_trump_queen": false,
         "agreed_suit": {
-          "in": ["♥", "♠"]
+          "in": [
+            "♥",
+            "♠"
+          ]
         }
       },
       "forcing": "none",
@@ -142,12 +151,17 @@
     {
       "id": "ask_for_specific_king",
       "bid": "5NT",
-      "priority": 80,
+      "priority": 950,
       "description": "King Ask after RKCB (asking for specific kings)",
       "conditions": {
         "my_last_bid": "4NT",
         "partner_last_bid": {
-          "in": ["5♣", "5♦", "5♥", "5♠"]
+          "in": [
+            "5♣",
+            "5♦",
+            "5♥",
+            "5♠"
+          ]
         },
         "fit_known": true,
         "hcp": {
@@ -196,7 +210,9 @@
         "partner_last_bid": "5NT",
         "fit_known": true,
         "agreed_suit": {
-          "in": ["♠"]
+          "in": [
+            "♠"
+          ]
         },
         "hearts_stopped": true,
         "diamonds_stopped": false,
@@ -222,12 +238,17 @@
     {
       "id": "signoff_6_after_rkcb",
       "bid": "6{agreed_suit}",
-      "priority": 60,
+      "priority": 950,
       "description": "Sign off in small slam after RKCB",
       "conditions": {
         "my_last_bid": "4NT",
         "partner_last_bid": {
-          "in": ["5♣", "5♦", "5♥", "5♠"]
+          "in": [
+            "5♣",
+            "5♦",
+            "5♥",
+            "5♠"
+          ]
         },
         "fit_known": true
       },
@@ -238,12 +259,15 @@
     {
       "id": "grand_slam_after_rkcb",
       "bid": "7{agreed_suit}",
-      "priority": 55,
+      "priority": 955,
       "description": "Grand slam after RKCB with all key cards accounted",
       "conditions": {
         "my_last_bid": "4NT",
         "partner_last_bid": {
-          "in": ["5♠", "5NT"]
+          "in": [
+            "5♠",
+            "5NT"
+          ]
         },
         "fit_known": true,
         "hcp": {

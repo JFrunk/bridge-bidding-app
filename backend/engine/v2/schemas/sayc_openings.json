@@ -91,7 +91,7 @@
     {
       "id": "open_1nt_weak_stoppers",
       "bid": "1NT",
-      "priority": 89,
+      "priority": 79,
       "description": "1NT opening with 2 stoppers but maximum HCP",
       "conditions": {
         "is_opening": true,
@@ -220,7 +220,7 @@
     {
       "id": "open_1c_balanced_no_nt",
       "bid": "1♣",
-      "priority": 55,
+      "priority": 75,
       "description": "Balanced hand outside NT range",
       "conditions": {
         "is_opening": true,
@@ -257,7 +257,7 @@
     {
       "id": "preempt_3_major",
       "bid": "3{longest_suit}",
-      "priority": 40,
+      "priority": 80,
       "description": "Weak three-bid in major",
       "conditions": {
         "is_opening": true,
@@ -285,7 +285,7 @@
     {
       "id": "preempt_3_minor",
       "bid": "3{longest_suit}",
-      "priority": 39,
+      "priority": 89,
       "description": "Weak three-bid in minor",
       "conditions": {
         "is_opening": true,
@@ -313,7 +313,7 @@
     {
       "id": "preempt_2_major",
       "bid": "2{longest_suit}",
-      "priority": 35,
+      "priority": 85,
       "description": "Weak two-bid in major",
       "conditions": {
         "is_opening": true,
@@ -341,7 +341,7 @@
     {
       "id": "preempt_2_diamonds",
       "bid": "2♦",
-      "priority": 34,
+      "priority": 84,
       "description": "Weak two diamonds",
       "conditions": {
         "is_opening": true,
@@ -381,7 +381,7 @@
     {
       "id": "pass_weak",
       "bid": "Pass",
-      "priority": 1,
+      "priority": 71,
       "description": "Pass with insufficient values",
       "conditions": {
         "is_opening": true,

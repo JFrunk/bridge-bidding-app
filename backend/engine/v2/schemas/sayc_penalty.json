@@ -29,7 +29,7 @@
     {
       "id": "forcing_pass_game_level",
       "bid": "Pass",
-      "priority": 195,
+      "priority": 25,
       "description": "Forcing pass at game level - partner must act",
       "conditions": {
         "game_forcing": true,
@@ -45,7 +45,7 @@
     {
       "id": "penalty_pass_convert_double",
       "bid": "Pass",
-      "priority": 190,
+      "priority": 20,
       "description": "Pass to convert partner's takeout double to penalty",
       "conditions": {
         "partner_last_bid": "X",
@@ -61,7 +61,7 @@
     {
       "id": "cooperative_double",
       "bid": "X",
-      "priority": 185,
+      "priority": 25,
       "description": "Cooperative (optional) double at 3+ level - partner can pass or pull",
       "conditions": {
         "is_contested": true,
@@ -132,7 +132,7 @@
     {
       "id": "double_and_bid",
       "bid": "X",
-      "priority": 140,
+      "priority": 120,
       "description": "Double then bid - showing strong hand",
       "conditions": {
         "is_overcall": true,
