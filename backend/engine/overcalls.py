@@ -64,10 +64,16 @@ class OvercallModule(ConventionModule):
             return auction_history[-1] == 'Pass' and auction_history[-2] == 'Pass'
         return False
 
-    def _get_overcall_bid(self, hand: Hand, features: Dict, is_balancing: bool) -> Optional[Tuple[str, str]]:
+    def _get_overcall_bid(self, hand: Hand, features: Dict, is_balancing: bool, hcp_adjustment: int = 0) -> Optional[Tuple[str, str]]:
         """
         Determine the best overcall bid (suit or NT).
         Priority: 1NT overcall, then suit overcalls (majors before minors).
+
+        Args:
+            hand: The hand to evaluate
+            features: Auction features dictionary
+            is_balancing: True if in balancing seat
+            hcp_adjustment: HCP adjustment for balancing seat (typically -3)
         """
         # Need to beat the LAST bid in the auction, not just the opening bid
         auction_history = features.get('auction_history', [])
