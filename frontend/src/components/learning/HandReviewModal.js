@@ -214,7 +214,34 @@ const TrickFeedbackPanel = ({ decision }) => {
     );
   }
 
+  // Handle basic info (when no DDS analysis was recorded)
+  if (decision.is_basic_info) {
+    const positionName = decision.position === 'N' ? 'North' :
+                         decision.position === 'S' ? 'South' :
+                         decision.position === 'E' ? 'East' : 'West';
+    return (
+      <div className="trick-feedback-panel basic-info" style={{
+        borderColor: '#6b7280',
+        backgroundColor: '#f9fafb'
+      }}>
+        <div className="feedback-body">
+          <div className="play-comparison">
+            <span className="played-card">
+              <strong>{positionName} played:</strong> {decision.user_card}
+            </span>
+          </div>
+          <p className="feedback-text" style={{ color: '#6b7280', fontStyle: 'italic' }}>
+            Trick {decision.trick_number} • No detailed analysis recorded
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const config = RATING_CONFIG[decision.rating] || RATING_CONFIG.good;
+  const positionName = decision.position === 'N' ? 'North' :
+                       decision.position === 'S' ? 'South' :
+                       decision.position === 'E' ? 'East' : 'West';
 
   return (
     <div
@@ -224,6 +251,9 @@ const TrickFeedbackPanel = ({ decision }) => {
       <div className="feedback-header">
         <span className="feedback-badge" style={{ backgroundColor: config.color }}>
           {config.icon} {config.label}
+        </span>
+        <span className="position-indicator" style={{ marginLeft: '8px', color: '#6b7280' }}>
+          ({positionName})
         </span>
         {decision.tricks_cost > 0 && (
           <span className="tricks-cost">
@@ -235,7 +265,7 @@ const TrickFeedbackPanel = ({ decision }) => {
       <div className="feedback-body">
         <div className="play-comparison">
           <span className="played-card">
-            <strong>You played:</strong> {decision.user_card}
+            <strong>{positionName} played:</strong> {decision.user_card}
           </span>
           {decision.optimal_card && decision.optimal_card !== decision.user_card && (
             <span className="optimal-card">
@@ -401,6 +431,7 @@ const HandReviewModal = ({
 
   // Get decision for current card being viewed in replay
   // Uses the precise trick_position key to get the correct decision
+  // Shows info for all user-controlled positions (both N and S when NS declares)
   const currentReplayDecision = useMemo(() => {
     if (!handData?.play_history || replayPosition === 0) return null;
 
@@ -412,12 +443,30 @@ const HandReviewModal = ({
     const trickNum = Math.floor(lastPlayedIdx / 4) + 1;
     const position = lastPlay.player || lastPlay.position;
 
-    // Only show decision if this position was controlled by user
+    // Only show decision/info if this position was controlled by user
     if (!userControlledPositions.includes(position)) return null;
 
     // Look up by trick_position key for precise matching
     const key = `${trickNum}_${position}`;
-    return decisionsByTrickAndPosition[key] || null;
+    const storedDecision = decisionsByTrickAndPosition[key];
+
+    // If we have a stored decision, return it
+    if (storedDecision) return storedDecision;
+
+    // If no stored decision but this is a user-controlled position,
+    // create a minimal info object so we can still show the play
+    const cardRank = lastPlay.rank || lastPlay.r;
+    const cardSuit = normalizeSuit(lastPlay.suit || lastPlay.s);
+    return {
+      position: position,
+      trick_number: trickNum,
+      user_card: `${cardRank}${cardSuit}`,
+      // No rating/score since we don't have DDS analysis
+      rating: null,
+      score: null,
+      feedback: `${position === 'N' ? 'North' : 'South'} played ${cardRank}${cardSuit}`,
+      is_basic_info: true  // Flag to indicate this is synthetic, not from DB
+    };
   }, [handData?.play_history, replayPosition, userControlledPositions, decisionsByTrickAndPosition]);
 
   // Total plays for navigation

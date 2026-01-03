@@ -22,6 +22,9 @@ import { RegistrationPrompt } from './components/auth/RegistrationPrompt';
 import DDSStatusIndicator from './components/DDSStatusIndicator';
 import AIDifficultySelector from './components/AIDifficultySelector';
 import { getSessionHeaders } from './utils/sessionHelper';
+import { getRecentLogs } from './utils/consoleCapture';
+import { getRecentActions } from './utils/actionTracker';
+import { captureScreenshot } from './utils/screenshotCapture';
 import { GlossaryDrawer } from './components/glossary';
 import TopNavigation from './components/navigation/TopNavigation';
 import { useDevMode } from './hooks/useDevMode';
@@ -694,6 +697,9 @@ ${otherCommands}`;
   }, []);
 
   const handleFeedbackSubmit = async (feedbackData) => {
+    // Capture screenshot before building context (captures current UI state)
+    const screenshot = await captureScreenshot({ ignoreModals: true });
+
     // Build context data for freeplay mode
     const contextData = {
       game_phase: gamePhase,
@@ -703,6 +709,9 @@ ${otherCommands}`;
       hand: hand,
       hand_points: handPoints,
       all_hands: allHands,
+      console_logs: getRecentLogs(30),
+      user_actions: getRecentActions(20),
+      screenshot: screenshot,
     };
 
     try {
@@ -887,6 +896,12 @@ ${otherCommands}`;
 
       if (!response.ok) {
         const errorData = await response.json();
+        // Handle session state loss (e.g., server restart)
+        if (errorData.error && (errorData.error.includes('No play in progress') || errorData.error.includes('Deal has not been made'))) {
+          setError("Session expired. Please deal a new hand to continue.");
+          setIsPlayingCard(false);
+          return;
+        }
         throw new Error(errorData.error || 'Illegal card play');
       }
 
@@ -1803,6 +1818,18 @@ ${otherCommands}`;
           feedback_level: 'intermediate'
         })
       });
+
+      // Handle session state loss (e.g., server restart)
+      if (feedbackResponse.status === 400) {
+        const errorData = await feedbackResponse.json();
+        if (errorData.error && errorData.error.includes('Deal has not been made')) {
+          console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
+          setError("Session expired. Please deal a new hand to continue.");
+          setIsAiBidding(false);
+          return;
+        }
+      }
+
       const feedbackData = await feedbackResponse.json();
 
       // DEBUG: Log response from evaluate-bid
@@ -1905,6 +1932,16 @@ ${otherCommands}`;
               dealer: dealer
             })
           });
+
+          // Handle session state loss (e.g., server restart)
+          if (response.status === 400) {
+            const errorData = await response.json();
+            if (errorData.error && errorData.error.includes('Deal has not been made')) {
+              console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
+              throw new Error("Session expired. Please deal a new hand to continue.");
+            }
+          }
+
           if (!response.ok) throw new Error("AI failed to get bid.");
           const data = await response.json();
           console.log('✅ AI bid received:', data);
@@ -1983,6 +2020,18 @@ ${otherCommands}`;
         console.log('🎬 AI play loop RUNNING...');
         // Get current play state
         const stateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
+
+        // Handle session state loss (e.g., server restart)
+        if (stateResponse.status === 400) {
+          const errorData = await stateResponse.json();
+          if (errorData.error && (errorData.error.includes('No play in progress') || errorData.error.includes('Deal has not been made'))) {
+            console.warn('⚠️ Server session lost - play state not found. User should deal new hands.');
+            setError("Session expired. Please deal a new hand to continue.");
+            setIsPlayingCard(false);
+            return;
+          }
+        }
+
         if (!stateResponse.ok) throw new Error("Failed to get play state");
 
         const state = await stateResponse.json();
