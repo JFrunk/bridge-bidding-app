@@ -1388,9 +1388,16 @@
 
 /* Chart Text Styles */
 .chart-axis-label {
-  font-size: 10px;
+  font-size: 11px;
   fill: var(--text-secondary-dark, #666);
+  font-weight: 600;
+}
+
+.chart-axis-marker {
+  font-size: 9px;
+  fill: var(--text-tertiary, #999);
   font-weight: 500;
+  font-style: italic;
 }
 
 .chart-quadrant-title {

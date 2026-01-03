@@ -1,25 +1,21 @@
 /**
- * HandReviewModal Component - Unified hand analysis with stacked card layout
+ * HandReviewModal Component - Simplified 2-section hand analysis
  *
- * Features:
- * - Single scrollable view with stacked section cards (always visible)
- * - STRATEGY: Overview of the deal with hand display
- * - YOUR PLAY: Performance summary with accuracy stats
- * - PERFECT PLAY: What optimal play would achieve (replaces "Double Dummy")
- * - PLAY-BY-PLAY: Interactive card-by-card replay with feedback
+ * Sections:
+ * 1. THE DEAL - 4-hand display + key stats (contract, accuracy %, tricks, DD expected)
+ * 2. TRICK REPLAY - Interactive play-by-play with feedback inline
  *
  * Design Philosophy:
- * - Stacked card layout shows all content without clicking
- * - Better visibility on desktop with wider modal
+ * - Minimal sections for focused learning
+ * - Deal section shows the hand + consolidated stats
+ * - Trick replay is the main learning tool
  * - Mobile-friendly with natural scrolling
- * - "Perfect Play" terminology replaces jargon like "Double Dummy"
  *
  * Requires hand_id to be passed as prop.
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlayableCard } from '../play/PlayableCard';
-import { TrickPotentialChart } from '../analysis/TrickPotentialChart';
 import './HandReviewModal.css';
 
 // ===== SECTION CARD COMPONENT =====
@@ -63,178 +59,6 @@ const RATING_CONFIG = {
   suboptimal: { color: '#f59e0b', bgColor: '#fffbeb', icon: '!', label: 'Suboptimal' },
   blunder: { color: '#dc2626', bgColor: '#fef2f2', icon: '✗', label: 'Blunder' },
   error: { color: '#dc2626', bgColor: '#fef2f2', icon: '✗', label: 'Error' }
-};
-
-// ===== PERFORMANCE QUADRANT CHART =====
-// Shows bidding vs play quality as a 2D scatter plot
-const PerformanceQuadrantChart = ({ biddingQuality, playQuality }) => {
-  // Get quality percentages (0-100)
-  const bidPct = biddingQuality?.accuracy_rate || 0;
-  const playPct = playQuality?.accuracy_rate || 0;
-
-  // Determine quadrant label
-  const getQuadrantLabel = () => {
-    if (bidPct >= 50 && playPct >= 50) return "Strong overall performance";
-    if (bidPct >= 50 && playPct < 50) return "Good bidding, work on card play";
-    if (bidPct < 50 && playPct >= 50) return "Good play, work on bidding";
-    return "Room to improve both areas";
-  };
-
-  // No data available
-  if (!biddingQuality?.has_data && !playQuality?.has_data) {
-    return (
-      <div className="quadrant-chart-empty">
-        <p>Performance data not available for this hand</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="quadrant-chart">
-      <div className="quadrant-svg-container">
-        <svg viewBox="0 0 220 220" className="quadrant-svg">
-          {/* Background quadrants */}
-          <rect x="10" y="10" width="100" height="100" fill="#fef2f2" opacity="0.5" />
-          <rect x="110" y="10" width="100" height="100" fill="#fffbeb" opacity="0.5" />
-          <rect x="10" y="110" width="100" height="100" fill="#fffbeb" opacity="0.5" />
-          <rect x="110" y="110" width="100" height="100" fill="#ecfdf5" opacity="0.5" />
-
-          {/* Grid lines */}
-          <line x1="110" y1="10" x2="110" y2="210" stroke="#e5e7eb" strokeWidth="1" />
-          <line x1="10" y1="110" x2="210" y2="110" stroke="#e5e7eb" strokeWidth="1" />
-
-          {/* Axis lines */}
-          <line x1="10" y1="210" x2="210" y2="210" stroke="#9ca3af" strokeWidth="2" />
-          <line x1="10" y1="10" x2="10" y2="210" stroke="#9ca3af" strokeWidth="2" />
-
-          {/* Axis labels */}
-          <text x="110" y="228" textAnchor="middle" className="axis-label">Bidding %</text>
-          <text x="-110" y="5" textAnchor="middle" transform="rotate(-90)" className="axis-label">Play %</text>
-
-          {/* Scale markers */}
-          <text x="10" y="225" textAnchor="middle" className="scale-marker">0</text>
-          <text x="110" y="225" textAnchor="middle" className="scale-marker">50</text>
-          <text x="210" y="225" textAnchor="middle" className="scale-marker">100</text>
-          <text x="5" y="214" textAnchor="end" className="scale-marker">0</text>
-          <text x="5" y="114" textAnchor="end" className="scale-marker">50</text>
-          <text x="5" y="14" textAnchor="end" className="scale-marker">100</text>
-
-          {/* Data point - current hand */}
-          <circle
-            cx={10 + (bidPct * 2)}
-            cy={210 - (playPct * 2)}
-            r="10"
-            fill="#3b82f6"
-            stroke="#1d4ed8"
-            strokeWidth="2"
-          />
-
-          {/* Quadrant labels (subtle) */}
-          <text x="55" y="55" textAnchor="middle" className="quadrant-label">Needs Work</text>
-          <text x="160" y="55" textAnchor="middle" className="quadrant-label">Bid Well</text>
-          <text x="55" y="165" textAnchor="middle" className="quadrant-label">Play Well</text>
-          <text x="160" y="165" textAnchor="middle" className="quadrant-label">Strong</text>
-        </svg>
-      </div>
-
-      <div className="quadrant-stats">
-        <div className="stat-row">
-          <span className="stat-label">Bidding:</span>
-          <span className="stat-value" style={{ color: bidPct >= 50 ? '#059669' : '#f59e0b' }}>
-            {bidPct}%
-          </span>
-          <span className="stat-detail">
-            ({biddingQuality?.optimal_count || 0} optimal, {biddingQuality?.total_bids || 0} total)
-          </span>
-        </div>
-        <div className="stat-row">
-          <span className="stat-label">Play:</span>
-          <span className="stat-value" style={{ color: playPct >= 50 ? '#059669' : '#f59e0b' }}>
-            {playPct}%
-          </span>
-          <span className="stat-detail">
-            ({playQuality?.optimal_count || 0} optimal, {playQuality?.total_plays || 0} total)
-          </span>
-        </div>
-        <div className="quadrant-summary">
-          {getQuadrantLabel()}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ===== CARD IMPACT MATRIX =====
-// Shows ranked card choices with trick potential for a specific play
-const CardImpactMatrix = ({ decision }) => {
-  if (!decision) {
-    return null;
-  }
-
-  const { user_card, optimal_card, rating, tricks_cost, score, feedback, trick_number, position } = decision;
-
-  // Get rating config
-  const ratingConfig = RATING_CONFIG[rating] || RATING_CONFIG.suboptimal;
-
-  // Build card list (user card and optimal card if different)
-  const cards = [];
-
-  if (optimal_card && optimal_card !== user_card) {
-    cards.push({
-      card: optimal_card,
-      isOptimal: true,
-      isUserPlay: false,
-      label: 'Optimal'
-    });
-  }
-
-  cards.push({
-    card: user_card,
-    isOptimal: rating === 'optimal' || rating === 'good',
-    isUserPlay: true,
-    label: rating === 'optimal' ? 'Optimal' : 'You played'
-  });
-
-  return (
-    <div className="card-impact-matrix">
-      <div className="impact-header">
-        <span className="impact-title">Trick {trick_number} • {position}</span>
-        <span
-          className="impact-badge"
-          style={{ backgroundColor: ratingConfig.bgColor, color: ratingConfig.color }}
-        >
-          {ratingConfig.icon} {ratingConfig.label}
-        </span>
-      </div>
-
-      <div className="impact-cards-list">
-        {cards.map((item, idx) => (
-          <div
-            key={idx}
-            className={`impact-card-row ${item.isUserPlay ? 'user-play' : ''} ${item.isOptimal ? 'optimal' : ''}`}
-            style={{ borderLeftColor: item.isOptimal ? '#059669' : (item.isUserPlay ? ratingConfig.color : '#e5e7eb') }}
-          >
-            <span className="impact-icon">{item.isOptimal ? '✓' : (item.isUserPlay ? '→' : '')}</span>
-            <span className="impact-card">{item.card}</span>
-            <span className="impact-label">{item.label}</span>
-            {tricks_cost > 0 && item.isUserPlay && !item.isOptimal && (
-              <span className="impact-cost">-{tricks_cost} trick{tricks_cost > 1 ? 's' : ''}</span>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {feedback && (
-        <div className="impact-feedback">
-          {feedback}
-        </div>
-      )}
-
-      <div className="impact-score">
-        Score: {score?.toFixed(1) || '?'}/10
-      </div>
-    </div>
-  );
 };
 
 // Suit order (trump-aware for replay)
@@ -513,454 +337,6 @@ const TrickFeedbackPanel = ({ decision }) => {
   );
 };
 
-// Play Quality Summary display - shows overall hand performance
-const PlayQualitySummary = ({ summary }) => {
-  if (!summary || !summary.has_data) {
-    return (
-      <div className="play-quality-summary empty">
-        <p className="no-data-message">{summary?.message || 'Play analysis not available for this hand'}</p>
-      </div>
-    );
-  }
-
-  const getRatingColor = (rate) => {
-    if (rate >= 80) return '#059669';
-    if (rate >= 60) return '#3b82f6';
-    if (rate >= 40) return '#f59e0b';
-    return '#dc2626';
-  };
-
-  return (
-    <div className="play-quality-summary">
-      <h4>Your Play Performance</h4>
-
-      {/* Score gauge */}
-      <div className="summary-gauge">
-        <div className="gauge-score" style={{ color: getRatingColor(summary.accuracy_rate) }}>
-          {summary.accuracy_rate}%
-        </div>
-        <div className="gauge-label">Accuracy ({summary.optimal_count + summary.good_count}/{summary.total_plays} plays)</div>
-      </div>
-
-      {/* Stats breakdown */}
-      <div className="summary-stats">
-        <div className="stat-pill optimal">
-          <span className="stat-icon">✓</span>
-          <span className="stat-count">{summary.optimal_count}</span>
-          <span className="stat-label">Optimal</span>
-        </div>
-        <div className="stat-pill good">
-          <span className="stat-icon">○</span>
-          <span className="stat-count">{summary.good_count}</span>
-          <span className="stat-label">Good</span>
-        </div>
-        <div className="stat-pill suboptimal">
-          <span className="stat-icon">!</span>
-          <span className="stat-count">{summary.suboptimal_count}</span>
-          <span className="stat-label">Suboptimal</span>
-        </div>
-        <div className="stat-pill blunder">
-          <span className="stat-icon">✗</span>
-          <span className="stat-count">{summary.blunder_count}</span>
-          <span className="stat-label">Blunder</span>
-        </div>
-      </div>
-
-      {/* Mistakes warning - show count of plays that cost tricks */}
-      {(summary.suboptimal_count + summary.blunder_count) > 0 && (
-        <div className="tricks-lost-warning">
-          <span className="warning-icon">!</span>
-          {summary.suboptimal_count + summary.blunder_count} play{(summary.suboptimal_count + summary.blunder_count) !== 1 ? 's' : ''} could be improved
-        </div>
-      )}
-    </div>
-  );
-};
-
-// DD Table display - shows tricks makeable by each player in each strain
-// Note: "Perfect Play" terminology replaces "Double Dummy" for user clarity
-const DDTableDisplay = ({ ddAnalysis, contractStrain, contractDeclarer }) => {
-  if (!ddAnalysis?.dd_table) {
-    return null;
-  }
-
-  const strains = ['NT', 'S', 'H', 'D', 'C'];
-  const strainSymbols = { 'NT': 'NT', 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣' };
-  const strainColors = { 'NT': '#374151', 'S': '#000', 'H': '#dc2626', 'D': '#dc2626', 'C': '#000' };
-  const positions = ['N', 'S', 'E', 'W'];
-
-  // Normalize contract strain for comparison
-  const normalizeStrain = (s) => {
-    const map = { '♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C' };
-    return map[s] || s;
-  };
-  const activeStrain = normalizeStrain(contractStrain);
-
-  return (
-    <div className="dd-table-display">
-      <h4>Perfect Play Analysis</h4>
-      <p className="dd-table-subtitle">Tricks achievable with optimal play by all</p>
-      <table className="dd-table">
-        <thead>
-          <tr>
-            <th></th>
-            {strains.map(strain => (
-              <th
-                key={strain}
-                className={strain === activeStrain ? 'active-strain' : ''}
-                style={{ color: strainColors[strain] }}
-              >
-                {strainSymbols[strain]}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {positions.map(pos => (
-            <tr key={pos} className={pos === contractDeclarer ? 'active-declarer' : ''}>
-              <td className="position-cell">{pos}</td>
-              {strains.map(strain => {
-                const tricks = ddAnalysis.dd_table[pos]?.[strain] ?? '-';
-                const isActive = strain === activeStrain && pos === contractDeclarer;
-                return (
-                  <td
-                    key={strain}
-                    className={isActive ? 'active-cell' : ''}
-                  >
-                    {tricks}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-// Strategy Summary display - shows high-level strategic guidance for the hand
-const StrategySummaryDisplay = ({ strategy }) => {
-  if (!strategy || strategy.error) {
-    return null;
-  }
-
-  const suitColors = { '♠': '#000', '♥': '#dc2626', '♦': '#dc2626', '♣': '#000' };
-
-  return (
-    <div className="strategy-summary-display">
-      <h4>Hand Strategy</h4>
-      <p className="strategy-main-summary">{strategy.summary}</p>
-
-      {/* NT-specific details */}
-      {strategy.is_nt && (
-        <div className="strategy-details">
-          <div className="strategy-stat">
-            <span className="stat-label">Sure Tricks:</span>
-            <span className="stat-value">{strategy.sure_tricks}</span>
-          </div>
-          <div className="strategy-stat">
-            <span className="stat-label">Tricks Needed:</span>
-            <span className="stat-value">{strategy.tricks_needed}</span>
-          </div>
-          {strategy.tricks_to_develop > 0 && (
-            <div className="strategy-stat">
-              <span className="stat-label">To Develop:</span>
-              <span className="stat-value highlight">{strategy.tricks_to_develop}</span>
-            </div>
-          )}
-          {strategy.establishment_candidates?.length > 0 && (
-            <div className="establishment-candidates">
-              <span className="candidates-label">Best suits to develop:</span>
-              <div className="candidates-list">
-                {strategy.establishment_candidates.map((c, idx) => (
-                  <span key={idx} className="candidate-suit" style={{ color: suitColors[c.suit] }}>
-                    {c.suit} ({c.length} cards)
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Suit contract details */}
-      {!strategy.is_nt && (
-        <div className="strategy-details">
-          <div className="strategy-stat">
-            <span className="stat-label">Losers:</span>
-            <span className="stat-value">{strategy.total_losers}</span>
-          </div>
-          <div className="strategy-stat">
-            <span className="stat-label">Can Afford:</span>
-            <span className="stat-value">{strategy.losers_allowed}</span>
-          </div>
-          {strategy.losers_to_eliminate > 0 && (
-            <div className="strategy-stat">
-              <span className="stat-label">Must Eliminate:</span>
-              <span className="stat-value highlight">{strategy.losers_to_eliminate}</span>
-            </div>
-          )}
-          {strategy.ruffing_opportunities?.length > 0 && (
-            <div className="ruffing-opportunities">
-              <span className="ruff-label">Ruffing opportunities:</span>
-              <div className="ruff-list">
-                {strategy.ruffing_opportunities.map((r, idx) => (
-                  <span key={idx} className="ruff-suit" style={{ color: suitColors[r.suit] }}>
-                    {r.suit} ({r.ruffs_possible} ruff{r.ruffs_possible !== 1 ? 's' : ''})
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Par comparison display - shows how result compares to optimal bidding
-// Uses "Perfect Play" terminology instead of "DD" or "Double Dummy"
-const ParComparisonDisplay = ({ ddAnalysis, parComparison, tricksNeeded, tricksTaken }) => {
-  if (!ddAnalysis?.par || !parComparison?.available) {
-    return null;
-  }
-
-  const { par } = ddAnalysis;
-  const { dd_tricks, optimal_play, score_difference } = parComparison;
-
-  // Determine result quality
-  const getResultQuality = () => {
-    if (optimal_play && tricksTaken >= tricksNeeded) {
-      return { label: 'Perfect', color: '#059669', icon: '✓' };
-    }
-    if (tricksTaken >= dd_tricks) {
-      return { label: 'Good', color: '#3b82f6', icon: '○' };
-    }
-    if (tricksTaken >= tricksNeeded) {
-      return { label: 'Made', color: '#059669', icon: '✓' };
-    }
-    return { label: 'Could improve', color: '#f59e0b', icon: '!' };
-  };
-
-  const quality = getResultQuality();
-
-  return (
-    <div className="par-comparison-display">
-      <h4>Contract Analysis</h4>
-
-      <div className="par-stats">
-        {/* Perfect Play Expected */}
-        <div className="par-stat">
-          <span className="par-stat-label">Perfect Play</span>
-          <span className="par-stat-value">{dd_tricks} tricks</span>
-        </div>
-
-        {/* Actual result */}
-        <div className="par-stat">
-          <span className="par-stat-label">You made</span>
-          <span className="par-stat-value">{tricksTaken} tricks</span>
-        </div>
-
-        {/* Play quality */}
-        <div className="par-stat">
-          <span className="par-stat-label">Play</span>
-          <span className="par-stat-value" style={{ color: quality.color }}>
-            {quality.icon} {quality.label}
-          </span>
-        </div>
-      </div>
-
-      {/* Par score info */}
-      <div className="par-score-info">
-        <div className="par-contracts">
-          <span className="par-label">Par:</span>
-          <span className="par-value">{par.contracts?.join(' or ') || 'Pass'}</span>
-          <span className="par-score">({par.score > 0 ? '+' : ''}{par.score})</span>
-        </div>
-
-        {score_difference !== undefined && score_difference !== 0 && (
-          <div className={`score-impact ${score_difference > 0 ? 'positive' : 'negative'}`}>
-            {score_difference > 0 ? '+' : ''}{score_difference} vs par
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// ===== RESULT SECTION =====
-// Shows contract, score, tricks, role - replaces ScoreModal when coming from MyProgress
-const ResultSection = ({
-  contract,
-  made,
-  tricksNeeded,
-  tricksTaken,
-  score,
-  role,
-  onPlayAnother,
-  onReplay,
-  onViewProgress
-}) => {
-  // Format the result text
-  const getResultText = () => {
-    if (tricksTaken === undefined || tricksNeeded === undefined) return '';
-    const diff = tricksTaken - tricksNeeded;
-    if (diff === 0) return '=';
-    if (diff > 0) return `+${diff}`;
-    return `${diff}`;
-  };
-
-  return (
-    <div className="result-section">
-      <div className="result-main">
-        <div className="result-contract">
-          <span className="contract-value">{contract || 'Unknown'}</span>
-          <span className={`result-badge ${made ? 'made' : 'down'}`}>
-            {made ? 'Made' : 'Down'} {getResultText()}
-          </span>
-        </div>
-        <div className="result-details">
-          <div className="result-stat">
-            <span className="stat-label">Tricks</span>
-            <span className="stat-value">{tricksTaken}/{tricksNeeded}</span>
-          </div>
-          <div className="result-stat">
-            <span className="stat-label">Score</span>
-            <span className="stat-value">{score > 0 ? '+' : ''}{score || 0}</span>
-          </div>
-          <div className="result-stat">
-            <span className="stat-label">Role</span>
-            <span className="stat-value">{role || 'Unknown'}</span>
-          </div>
-        </div>
-      </div>
-      {(onPlayAnother || onReplay || onViewProgress) && (
-        <div className="result-actions">
-          {onPlayAnother && (
-            <button className="action-btn primary" onClick={onPlayAnother}>
-              Play Another
-            </button>
-          )}
-          {onReplay && (
-            <button className="action-btn secondary" onClick={onReplay}>
-              Replay Hand
-            </button>
-          )}
-          {onViewProgress && (
-            <button className="action-btn secondary" onClick={onViewProgress}>
-              My Progress
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ===== BIDDING REVIEW SECTION =====
-// Shows bid-by-bid analysis, equivalent to play-by-play for bidding
-const BiddingReviewSection = ({ biddingSummary, auction }) => {
-  if (!biddingSummary?.has_data) {
-    return (
-      <div className="bidding-review-empty">
-        <p>{biddingSummary?.message || 'No bidding analysis available for this hand'}</p>
-      </div>
-    );
-  }
-
-  const decisions = biddingSummary.all_decisions || [];
-  const getRatingConfig = (correctness) => {
-    return RATING_CONFIG[correctness] || RATING_CONFIG.suboptimal;
-  };
-
-  // Format auction display
-  const formatAuction = () => {
-    if (!auction || auction.length === 0) return 'No auction recorded';
-    return auction.map(b => b.bid || b).join(' - ');
-  };
-
-  return (
-    <div className="bidding-review-section">
-      {/* Full auction display */}
-      <div className="auction-display">
-        <span className="auction-label">Auction:</span>
-        <span className="auction-sequence">{formatAuction()}</span>
-      </div>
-
-      {/* Bid-by-bid analysis */}
-      <div className="bidding-decisions-list">
-        <h5>Your Bids</h5>
-        {decisions.map((decision, idx) => {
-          const config = getRatingConfig(decision.correctness);
-          const showOptimal = decision.optimal_bid && decision.optimal_bid !== decision.user_bid;
-
-          return (
-            <div
-              key={decision.id || idx}
-              className={`bidding-decision-card ${decision.correctness}`}
-              style={{ borderLeftColor: config.color }}
-            >
-              <div className="bid-main">
-                <span
-                  className="bid-badge"
-                  style={{ backgroundColor: config.bgColor, color: config.color }}
-                >
-                  {config.icon} {decision.user_bid}
-                </span>
-                {showOptimal && (
-                  <span className="optimal-indicator">
-                    → {decision.optimal_bid}
-                  </span>
-                )}
-                <span className="bid-score">{decision.score?.toFixed(1) || '?'}/10</span>
-              </div>
-              {decision.helpful_hint && (
-                <div className="bid-feedback">
-                  {decision.helpful_hint}
-                </div>
-              )}
-              {decision.impact && (
-                <div className="bid-impact">
-                  {decision.impact}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Bidding quality summary */}
-      <div className="bidding-quality-summary">
-        <div className="quality-stat">
-          <span className="quality-value">{biddingSummary.accuracy_rate}%</span>
-          <span className="quality-label">Bidding Quality</span>
-        </div>
-        <div className="quality-breakdown">
-          <span className="breakdown-item optimal">
-            {biddingSummary.optimal_count} optimal
-          </span>
-          {biddingSummary.acceptable_count > 0 && (
-            <span className="breakdown-item acceptable">
-              {biddingSummary.acceptable_count} acceptable
-            </span>
-          )}
-          {biddingSummary.suboptimal_count > 0 && (
-            <span className="breakdown-item suboptimal">
-              {biddingSummary.suboptimal_count} suboptimal
-            </span>
-          )}
-          {biddingSummary.error_count > 0 && (
-            <span className="breakdown-item error">
-              {biddingSummary.error_count} error{biddingSummary.error_count !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const HandReviewModal = ({
   handId,
   onClose,
@@ -1181,15 +557,6 @@ const HandReviewModal = ({
 
   const totalTricks = tricks.length;
 
-  // Generate header-right content for section cards
-  const getYourPlayHeaderRight = () => {
-    const summary = handData?.play_quality_summary;
-    if (summary?.has_data) {
-      return <span className="accuracy-badge">{summary.accuracy_rate}% accuracy</span>;
-    }
-    return null;
-  };
-
   return (
     <div className="hand-review-modal-overlay" onClick={onClose}>
       <div className="hand-review-modal stacked-layout" onClick={e => e.stopPropagation()}>
@@ -1210,37 +577,25 @@ const HandReviewModal = ({
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
-        {/* Stacked Section Cards */}
+        {/* Simplified 2-Section Layout */}
         <div className="modal-content stacked-container">
 
-          {/* SECTION 0: RESULT - Score summary (shown when replacing ScoreModal) */}
-          {showResultSection && (
-            <SectionCard
-              id="result"
-              title="Result"
-              subtitle="Hand outcome"
-              icon="🏆"
-            >
-              <ResultSection
-                contract={handData?.contract}
-                made={handData?.made}
-                tricksNeeded={handData?.tricks_needed}
-                tricksTaken={handData?.tricks_taken}
-                score={handData?.hand_score}
-                role={handData?.user_role || (handData?.contract_declarer === userPosition ? 'Declarer' : 'Defender')}
-                onPlayAnother={onPlayAnother}
-                onReplay={onReplay}
-                onViewProgress={onViewProgress}
-              />
-            </SectionCard>
-          )}
-
-          {/* SECTION 1: STRATEGY - Deal overview and strategic guidance */}
+          {/* SECTION 1: THE DEAL - Hand display + consolidated stats */}
           <SectionCard
-            id="strategy"
-            title="Strategy"
-            subtitle="Deal overview and plan"
-            icon="🎯"
+            id="deal"
+            title="The Deal"
+            subtitle={handData?.contract ? `${handData.contract} by ${handData.contract_declarer || 'South'}` : 'Hand overview'}
+            icon="🃏"
+            headerRight={
+              <div className="deal-stats-header">
+                {handData?.play_quality_summary?.has_data && (
+                  <span className="accuracy-badge">{handData.play_quality_summary.accuracy_rate}% play</span>
+                )}
+                {handData?.bidding_quality_summary?.has_data && (
+                  <span className="accuracy-badge bidding">{handData.bidding_quality_summary.accuracy_rate}% bid</span>
+                )}
+              </div>
+            }
           >
             {/* Deal display - 4 hands in compass layout */}
             {handData?.deal && (
@@ -1282,103 +637,73 @@ const HandReviewModal = ({
               </div>
             )}
 
-            {/* Strategy Summary - high-level guidance */}
-            {handData?.strategy_summary && (
-              <StrategySummaryDisplay strategy={handData.strategy_summary} />
-            )}
-
-            {/* Trick Potential Chart - simplified NS/EW view with game/slam indicators */}
-            {handData?.dd_analysis?.dd_table && (
-              <div className="trick-potential-section">
-                <h4>Trick Potential</h4>
-                <TrickPotentialChart
-                  ddTable={{
-                    NS: handData.dd_analysis.dd_table.N || handData.dd_analysis.dd_table.S,
-                    EW: handData.dd_analysis.dd_table.E || handData.dd_analysis.dd_table.W
-                  }}
-                  compact={true}
-                />
-              </div>
-            )}
-          </SectionCard>
-
-          {/* SECTION 1.5: BIDDING REVIEW - Bid-by-bid analysis */}
-          {handData?.bidding_quality_summary?.has_data && (
-            <SectionCard
-              id="biddingReview"
-              title="Bidding Review"
-              subtitle="Bid-by-bid analysis"
-              icon="📋"
-              headerRight={
-                <span className="accuracy-badge">
-                  {handData.bidding_quality_summary.accuracy_rate}% accuracy
+            {/* Consolidated stats row */}
+            <div className="deal-stats-consolidated">
+              {/* Result */}
+              <div className="stat-block">
+                <span className="stat-label">Result</span>
+                <span className={`stat-value ${handData?.made ? 'success' : 'danger'}`}>
+                  {handData?.made ? 'Made' : 'Down'}
+                  {handData?.tricks_taken !== undefined && handData?.tricks_needed !== undefined && (
+                    <> ({handData.tricks_taken}/{handData.tricks_needed})</>
+                  )}
                 </span>
-              }
-            >
-              <BiddingReviewSection
-                biddingSummary={handData.bidding_quality_summary}
-                auction={handData.auction_history}
-              />
-            </SectionCard>
-          )}
+              </div>
 
-          {/* SECTION 2: YOUR PLAY - Performance summary */}
-          <SectionCard
-            id="yourPlay"
-            title="Your Play"
-            subtitle="Performance summary"
-            icon="📊"
-            headerRight={getYourPlayHeaderRight()}
-          >
-            <PlayQualitySummary summary={handData?.play_quality_summary} />
+              {/* DD Expected */}
+              {handData?.par_comparison?.dd_tricks !== undefined && (
+                <div className="stat-block">
+                  <span className="stat-label">Perfect Play</span>
+                  <span className="stat-value">{handData.par_comparison.dd_tricks} tricks</span>
+                </div>
+              )}
+
+              {/* Score */}
+              {handData?.hand_score !== undefined && (
+                <div className="stat-block">
+                  <span className="stat-label">Score</span>
+                  <span className="stat-value">{handData.hand_score > 0 ? '+' : ''}{handData.hand_score}</span>
+                </div>
+              )}
+
+              {/* Role */}
+              <div className="stat-block">
+                <span className="stat-label">Role</span>
+                <span className="stat-value">
+                  {handData?.user_role || (handData?.contract_declarer === userPosition ? 'Declarer' : 'Defender')}
+                </span>
+              </div>
+            </div>
+
+            {/* Action buttons if showing result */}
+            {showResultSection && (onPlayAnother || onReplay || onViewProgress) && (
+              <div className="result-actions">
+                {onPlayAnother && (
+                  <button className="action-btn primary" onClick={onPlayAnother}>
+                    Play Another
+                  </button>
+                )}
+                {onReplay && (
+                  <button className="action-btn secondary" onClick={onReplay}>
+                    Replay Hand
+                  </button>
+                )}
+                {onViewProgress && (
+                  <button className="action-btn secondary" onClick={onViewProgress}>
+                    My Progress
+                  </button>
+                )}
+              </div>
+            )}
           </SectionCard>
 
-          {/* SECTION 2.5: PERFORMANCE ANALYSIS - Bidding vs Play quadrant */}
-          {(handData?.bidding_quality_summary?.has_data || handData?.play_quality_summary?.has_data) && (
-            <SectionCard
-              id="performanceAnalysis"
-              title="Performance Analysis"
-              subtitle="Bidding vs Play quality"
-              icon="📈"
-            >
-              <PerformanceQuadrantChart
-                biddingQuality={handData?.bidding_quality_summary}
-                playQuality={handData?.play_quality_summary}
-              />
-            </SectionCard>
-          )}
-
-          {/* SECTION 3: PERFECT PLAY - DD analysis */}
-          {handData?.dd_analysis && (
-            <SectionCard
-              id="perfectPlay"
-              title="Perfect Play"
-              subtitle="Optimal analysis"
-              icon="✨"
-            >
-              <div className="dd-analysis-section">
-                <DDTableDisplay
-                  ddAnalysis={handData.dd_analysis}
-                  contractStrain={handData.contract_strain}
-                  contractDeclarer={handData.contract_declarer}
-                />
-                <ParComparisonDisplay
-                  ddAnalysis={handData.dd_analysis}
-                  parComparison={handData.par_comparison}
-                  tricksNeeded={handData.tricks_needed}
-                  tricksTaken={handData.tricks_taken}
-                />
-              </div>
-            </SectionCard>
-          )}
-
-          {/* SECTION 4: PLAY-BY-PLAY - Interactive replay */}
+          {/* SECTION 2: TRICK REPLAY - Interactive play-by-play with inline feedback */}
           {tricks.length > 0 && (
             <SectionCard
-              id="playByPlay"
-              title="Play-by-Play"
-              subtitle={`${totalTricks} tricks to review`}
-              icon="🎬"
+              id="trickReplay"
+              title="Trick Replay"
+              subtitle={`${totalTricks} tricks • Use ← → to navigate`}
+              icon="▶️"
             >
               <div className="replay-mode">
                 {/* Replay navigation */}
@@ -1480,13 +805,15 @@ const HandReviewModal = ({
 
                 {/* Feedback for current play if available */}
                 {currentReplayDecision && replayPosition > 0 && (
-                  <div className="play-feedback-container">
-                    <TrickFeedbackPanel decision={currentReplayDecision} />
-                    <CardImpactMatrix decision={currentReplayDecision} />
-                  </div>
+                  <TrickFeedbackPanel decision={currentReplayDecision} />
                 )}
 
-                <p className="navigation-hint">Use ← → keys to step through plays</p>
+                {/* Show hint when no decision available */}
+                {replayPosition === 0 && (
+                  <div className="replay-start-hint">
+                    <p>Click <strong>Next →</strong> to step through each play and see feedback on your decisions.</p>
+                  </div>
+                )}
               </div>
             </SectionCard>
           )}

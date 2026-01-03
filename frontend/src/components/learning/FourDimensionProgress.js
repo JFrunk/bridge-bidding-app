@@ -858,9 +858,15 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
           <rect x="4" y="144" width="152" height="132" rx="8" fill="url(#gradient-review)" />
           <rect x="164" y="144" width="152" height="132" rx="8" fill="url(#gradient-play-focus)" />
 
-          {/* Axis labels */}
-          <text x="160" y="276" textAnchor="middle" className="chart-axis-label">Card Play Quality →</text>
-          <text x="10" y="140" textAnchor="middle" transform="rotate(-90, 10, 140)" className="chart-axis-label">↑ Bidding</text>
+          {/* X-axis: Card Play with Bad/Good labels */}
+          <text x="160" y="290" textAnchor="middle" className="chart-axis-label">Card Play</text>
+          <text x="4" y="290" textAnchor="start" className="chart-axis-marker">Bad</text>
+          <text x="316" y="290" textAnchor="end" className="chart-axis-marker">Good</text>
+
+          {/* Y-axis: Bidding with Bad/Good labels */}
+          <text x="10" y="140" textAnchor="middle" transform="rotate(-90, 10, 140)" className="chart-axis-label">Bidding</text>
+          <text x="10" y="276" textAnchor="middle" transform="rotate(-90, 10, 276)" className="chart-axis-marker">Bad</text>
+          <text x="10" y="16" textAnchor="middle" transform="rotate(-90, 10, 16)" className="chart-axis-marker">Good</text>
 
           {/* Quadrant labels with bridge suit icons */}
           <text x="80" y="20" textAnchor="middle" className="chart-quadrant-title">♥ Focus: Play</text>
