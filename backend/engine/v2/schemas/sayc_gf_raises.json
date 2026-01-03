@@ -265,71 +265,258 @@
       "sets_forcing_level": "GAME_FORCE"
     },
     {
-      "id": "opener_rebid_jacoby_shortness_void",
-      "bid": "3{short_suit}",
-      "priority": 245,
-      "description": "Opener shows void after Jacoby 2NT",
+      "id": "jacoby_rebid_void_clubs_over_1h",
+      "bid": "3♣",
+      "priority": 510,
+      "description": "After 1♥-2NT: Show club void",
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": "2NT",
-        "my_last_bid": {
-          "in": ["1♥", "1♠"]
-        },
-        "has_void": true
+        "my_last_bid": "1♥",
+        "clubs_length": {
+          "max": 0
+        }
       },
       "forcing": "game",
-      "explanation": "Showing void in {short_suit} after Jacoby 2NT",
+      "explanation": "Jacoby rebid: Showing void in clubs (slam interest)",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
-      "id": "opener_rebid_jacoby_shortness_singleton",
-      "bid": "3{short_suit}",
-      "priority": 244,
-      "description": "Opener shows singleton after Jacoby 2NT",
+      "id": "jacoby_rebid_void_diamonds_over_1h",
+      "bid": "3♦",
+      "priority": 509,
+      "description": "After 1♥-2NT: Show diamond void",
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": "2NT",
-        "my_last_bid": {
-          "in": ["1♥", "1♠"]
-        },
-        "has_singleton": true
+        "my_last_bid": "1♥",
+        "diamonds_length": {
+          "max": 0
+        }
       },
       "forcing": "game",
-      "explanation": "Showing singleton in {short_suit} after Jacoby 2NT",
+      "explanation": "Jacoby rebid: Showing void in diamonds (slam interest)",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
-      "id": "opener_rebid_jacoby_minimum",
-      "bid": "4{my_suit}",
-      "priority": 240,
-      "description": "Opener rebids 4M with minimum after Jacoby 2NT",
+      "id": "jacoby_rebid_void_spades_over_1h",
+      "bid": "3♠",
+      "priority": 508,
+      "description": "After 1♥-2NT: Show spade void",
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": "2NT",
-        "my_last_bid": {
-          "in": ["1♥", "1♠"]
-        },
+        "my_last_bid": "1♥",
+        "spades_length": {
+          "max": 0
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby rebid: Showing void in spades (slam interest)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_rebid_void_clubs_over_1s",
+      "bid": "3♣",
+      "priority": 507,
+      "description": "After 1♠-2NT: Show club void",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♠",
+        "clubs_length": {
+          "max": 0
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby rebid: Showing void in clubs (slam interest)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_rebid_void_diamonds_over_1s",
+      "bid": "3♦",
+      "priority": 506,
+      "description": "After 1♠-2NT: Show diamond void",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♠",
+        "diamonds_length": {
+          "max": 0
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby rebid: Showing void in diamonds (slam interest)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_rebid_void_hearts_over_1s",
+      "bid": "3♥",
+      "priority": 505,
+      "description": "After 1♠-2NT: Show heart void",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♠",
+        "hearts_length": {
+          "max": 0
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby rebid: Showing void in hearts (slam interest)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_rebid_singleton_clubs_over_1h",
+      "bid": "3♣",
+      "priority": 500,
+      "description": "After 1♥-2NT: Show club singleton",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♥",
+        "clubs_length": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby rebid: Showing singleton in clubs (slam interest)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_rebid_singleton_diamonds_over_1h",
+      "bid": "3♦",
+      "priority": 499,
+      "description": "After 1♥-2NT: Show diamond singleton",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♥",
+        "diamonds_length": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby rebid: Showing singleton in diamonds (slam interest)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_rebid_singleton_spades_over_1h",
+      "bid": "3♠",
+      "priority": 498,
+      "description": "After 1♥-2NT: Show spade singleton",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♥",
+        "spades_length": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby rebid: Showing singleton in spades (slam interest)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_rebid_singleton_clubs_over_1s",
+      "bid": "3♣",
+      "priority": 497,
+      "description": "After 1♠-2NT: Show club singleton",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♠",
+        "clubs_length": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby rebid: Showing singleton in clubs (slam interest)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_rebid_singleton_diamonds_over_1s",
+      "bid": "3♦",
+      "priority": 496,
+      "description": "After 1♠-2NT: Show diamond singleton",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♠",
+        "diamonds_length": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby rebid: Showing singleton in diamonds (slam interest)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_rebid_singleton_hearts_over_1s",
+      "bid": "3♥",
+      "priority": 495,
+      "description": "After 1♠-2NT: Show heart singleton",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♠",
+        "hearts_length": {
+          "min": 1,
+          "max": 1
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby rebid: Showing singleton in hearts (slam interest)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_rebid_strong_over_1h",
+      "bid": "3♥",
+      "priority": 485,
+      "description": "After 1♥-2NT: Strong hand (18+ HCP), slam interest",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♥",
         "hcp": {
-          "min": 12,
-          "max": 14
-        },
-        "is_balanced": true
+          "min": 18
+        }
       },
-      "forcing": "none",
-      "explanation": "Minimum balanced hand, signing off in game",
-      "sets_forcing_level": "NON_FORCING"
+      "forcing": "game",
+      "explanation": "Jacoby rebid: Strong hand (18+ HCP), serious slam interest",
+      "sets_forcing_level": "GAME_FORCE"
     },
     {
-      "id": "opener_rebid_jacoby_extra_strength",
-      "bid": "3NT",
-      "priority": 242,
-      "description": "Opener shows extra strength balanced after Jacoby 2NT",
+      "id": "jacoby_rebid_strong_over_1s",
+      "bid": "3♠",
+      "priority": 484,
+      "description": "After 1♠-2NT: Strong hand (18+ HCP), slam interest",
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": "2NT",
-        "my_last_bid": {
-          "in": ["1♥", "1♠"]
-        },
+        "my_last_bid": "1♠",
+        "hcp": {
+          "min": 18
+        }
+      },
+      "forcing": "game",
+      "explanation": "Jacoby rebid: Strong hand (18+ HCP), serious slam interest",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_rebid_extra_over_1h",
+      "bid": "3NT",
+      "priority": 482,
+      "description": "After 1♥-2NT: Extra values balanced (15-17 HCP)",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♥",
         "hcp": {
           "min": 15,
           "max": 17
@@ -337,27 +524,63 @@
         "is_balanced": true
       },
       "forcing": "game",
-      "explanation": "Extra values (15-17 HCP), balanced, slam interest",
+      "explanation": "Jacoby rebid: Extra values (15-17 HCP), balanced, mild slam interest",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
-      "id": "opener_rebid_jacoby_strong",
-      "bid": "3{my_suit}",
-      "priority": 243,
-      "description": "Opener rebids 3M with 18+ HCP after Jacoby 2NT",
+      "id": "jacoby_rebid_extra_over_1s",
+      "bid": "3NT",
+      "priority": 481,
+      "description": "After 1♠-2NT: Extra values balanced (15-17 HCP)",
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": "2NT",
-        "my_last_bid": {
-          "in": ["1♥", "1♠"]
-        },
+        "my_last_bid": "1♠",
         "hcp": {
-          "min": 18
-        }
+          "min": 15,
+          "max": 17
+        },
+        "is_balanced": true
       },
       "forcing": "game",
-      "explanation": "Strong hand (18+ HCP), serious slam interest",
+      "explanation": "Jacoby rebid: Extra values (15-17 HCP), balanced, mild slam interest",
       "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "jacoby_rebid_minimum_over_1h",
+      "bid": "4♥",
+      "priority": 480,
+      "description": "After 1♥-2NT: Fast Arrival - minimum (12-14 HCP)",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♥",
+        "hcp": {
+          "min": 12,
+          "max": 14
+        }
+      },
+      "forcing": "none",
+      "explanation": "Fast Arrival: Minimum hand, no shortness, no slam interest",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "jacoby_rebid_minimum_over_1s",
+      "bid": "4♠",
+      "priority": 479,
+      "description": "After 1♠-2NT: Fast Arrival - minimum (12-14 HCP)",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "2NT",
+        "my_last_bid": "1♠",
+        "hcp": {
+          "min": 12,
+          "max": 14
+        }
+      },
+      "forcing": "none",
+      "explanation": "Fast Arrival: Minimum hand, no shortness, no slam interest",
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }
