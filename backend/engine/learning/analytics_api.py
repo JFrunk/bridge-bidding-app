@@ -1683,6 +1683,94 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
         conn.close()
 
 
+def get_hand_bidding_quality_summary(session_id: int, hand_number: int, user_id: int) -> Dict:
+    """
+    Get a summary of bidding quality for a specific hand.
+
+    Returns:
+        - total_bids: Number of bids by the user in this hand
+        - optimal_count, acceptable_count, suboptimal_count, error_count
+        - accuracy_rate: Percentage of optimal+acceptable bids
+        - avg_score: Average bidding score (0-10)
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Get all bidding decisions for this user in this specific hand
+        cursor.execute("""
+            SELECT
+                id,
+                bid_number,
+                position,
+                user_bid,
+                optimal_bid,
+                score,
+                correctness,
+                impact,
+                helpful_hint
+            FROM bidding_decisions
+            WHERE user_id = ?
+              AND session_id = ?
+              AND (hand_number = ? OR hand_number IS NULL)
+            ORDER BY bid_number
+        """, (user_id, str(session_id), hand_number))
+
+        decisions = []
+        for row in cursor.fetchall():
+            decisions.append({
+                'id': row['id'],
+                'bid_number': row['bid_number'],
+                'position': row['position'],
+                'user_bid': row['user_bid'],
+                'optimal_bid': row['optimal_bid'],
+                'score': row['score'],
+                'correctness': row['correctness'],
+                'impact': row['impact'],
+                'helpful_hint': row['helpful_hint']
+            })
+
+        if not decisions:
+            return {
+                'has_data': False,
+                'total_bids': 0,
+                'message': 'No bidding decisions recorded for this hand'
+            }
+
+        # Calculate aggregate stats
+        total = len(decisions)
+        optimal = sum(1 for d in decisions if d['correctness'] == 'optimal')
+        acceptable = sum(1 for d in decisions if d['correctness'] == 'acceptable')
+        suboptimal = sum(1 for d in decisions if d['correctness'] == 'suboptimal')
+        errors = sum(1 for d in decisions if d['correctness'] == 'error')
+
+        avg_score = sum(d['score'] for d in decisions) / total if total > 0 else 0
+
+        return {
+            'has_data': True,
+            'total_bids': total,
+            'optimal_count': optimal,
+            'acceptable_count': acceptable,
+            'suboptimal_count': suboptimal,
+            'error_count': errors,
+            'avg_score': round(avg_score, 1),
+            'optimal_rate': round(optimal / total * 100, 1) if total > 0 else 0,
+            'accuracy_rate': round((optimal + acceptable) / total * 100, 1) if total > 0 else 0,
+            'all_decisions': decisions
+        }
+
+    except Exception as e:
+        print(f"Error getting bidding quality summary: {e}")
+        return {
+            'has_data': False,
+            'total_bids': 0,
+            'message': f'Error loading bidding analysis: {str(e)}'
+        }
+
+    finally:
+        conn.close()
+
+
 def get_hand_history():
     """
     GET /api/hand-history?user_id=<id>&limit=<n>
@@ -2003,6 +2091,13 @@ def get_hand_detail():
             row['user_id']
         )
 
+        # Get bidding quality summary for this hand
+        bidding_quality_summary = get_hand_bidding_quality_summary(
+            row['session_id'],
+            row['hand_number'],
+            row['user_id']
+        )
+
         # Get DD table and par analysis if DDS is available
         dd_analysis = None
         par_comparison = None
@@ -2021,9 +2116,10 @@ def get_hand_detail():
                         for card in deal_data[pos]['hand']:
                             rank = card.get('rank') or card.get('r')
                             suit = card.get('suit') or card.get('s')
-                            # Normalize suit symbols
-                            suit_map = {'♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C'}
-                            suit = suit_map.get(suit, suit)
+                            # Normalize suit to Unicode symbols (Hand class expects ♠♥♦♣)
+                            # Handle both DDS format (S,H,D,C) and Unicode format (♠,♥,♦,♣)
+                            suit_to_unicode = {'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣'}
+                            suit = suit_to_unicode.get(suit, suit)  # Convert if DDS format, keep if already Unicode
                             cards.append(BridgeCard(rank=rank, suit=suit))
                         hands[pos] = Hand(cards=cards)
 
@@ -2095,7 +2191,9 @@ def get_hand_detail():
                         for card in deal_data[pos]['hand']:
                             rank = card.get('rank') or card.get('r')
                             suit = card.get('suit') or card.get('s')
-                            # Keep suit symbols as-is for our analysis (they use ♠♥♦♣)
+                            # Normalize suit to Unicode symbols (Hand class expects ♠♥♦♣)
+                            suit_to_unicode = {'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣'}
+                            suit = suit_to_unicode.get(suit, suit)
                             cards.append(BridgeCard(rank=rank, suit=suit))
                         if pos == declarer_pos:
                             declarer_hand = Hand(cards=cards)
@@ -2160,6 +2258,7 @@ def get_hand_detail():
             'auction': auction_history,
             'play_history': play_history,
             'play_quality_summary': play_quality_summary,
+            'bidding_quality_summary': bidding_quality_summary,
             'dd_analysis': dd_analysis,
             'par_comparison': par_comparison,
             'strategy_summary': strategy_summary
@@ -2324,10 +2423,12 @@ def analyze_play():
 
             # Build Hand objects from remaining cards
             from engine.hand import Hand, Card as BridgeCard
+            suit_to_unicode = {'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣'}
             hand_objects = {}
             for pos, cards in remaining_hands.items():
                 # Convert (rank, suit) tuples to Card objects
-                card_objs = [BridgeCard(rank=r, suit=s) for r, s in cards]
+                # Normalize suit to Unicode symbols (Hand class expects ♠♥♦♣)
+                card_objs = [BridgeCard(rank=r, suit=suit_to_unicode.get(s, s)) for r, s in cards]
                 hand_objects[pos] = Hand(cards=card_objs)
 
             # Get the contract strain for DD analysis
