@@ -191,11 +191,13 @@ class DDSPlayAI(BasePlayAI):
                 suits[suit].sort(key=lambda r: self._rank_value(r), reverse=True)
 
             # Build hand string
+            # NOTE: Use empty string for void suits, NOT '-'
+            # The endplay library expects empty string for voids in PBN format
             hand_str = '.'.join([
-                ''.join(suits['♠']) or '-',
-                ''.join(suits['♥']) or '-',
-                ''.join(suits['♦']) or '-',
-                ''.join(suits['♣']) or '-'
+                ''.join(suits['♠']),
+                ''.join(suits['♥']),
+                ''.join(suits['♦']),
+                ''.join(suits['♣'])
             ])
             hands.append(hand_str)
 

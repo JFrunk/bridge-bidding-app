@@ -14,8 +14,8 @@ PBN_SUITS = ['♠', '♥', '♦', '♣']
 
 class Hand:
     """Represents a 13-card bridge hand and evaluates its properties."""
-    def __init__(self, cards):
-        if len(cards) != 13:
+    def __init__(self, cards, _skip_validation=False):
+        if not _skip_validation and len(cards) != 13:
             raise ValueError("A hand must contain exactly 13 cards.")
 
         suit_order = {'♠': 0, '♥': 1, '♦': 2, '♣': 3}

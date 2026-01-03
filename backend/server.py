@@ -200,10 +200,12 @@ def _reconstruct_play_state(state_dict):
     from engine.hand import Hand, Card
 
     # Reconstruct hands
+    # NOTE: During play, hands may have fewer than 13 cards (cards are played)
+    # Use _skip_validation=True to allow partial hands
     hands = {}
     for pos, hand_data in state_dict['hands'].items():
         cards = [Card(c['rank'], c['suit']) for c in hand_data['cards']]
-        hands[pos] = Hand(cards)
+        hands[pos] = Hand(cards, _skip_validation=True)
 
     # Reconstruct contract
     # Contract uses 'strain' not 'trump_suit', and doubled is int (0/1/2)
@@ -1436,6 +1438,9 @@ def evaluate_bid():
         # Use 'bridge.db' (works from root via symlink to backend/bridge.db)
         feedback_generator = get_feedback_generator('bridge.db')
 
+        # Get hand_number from game session (1-indexed for display)
+        hand_number = state.game_session.hands_completed + 1 if state.game_session else None
+
         feedback = feedback_generator.evaluate_and_store(
             user_id=user_id,
             hand=user_hand,
@@ -1443,7 +1448,8 @@ def evaluate_bid():
             auction_context=auction_context,
             optimal_bid=optimal_bid,
             optimal_explanation=optimal_explanation_obj,
-            session_id=session_id
+            session_id=session_id,
+            hand_number=hand_number
         )
 
         print(f"✅ evaluate-bid: Stored feedback for user {user_id}: {user_bid} ({feedback.correctness.value}, score: {feedback.score})")
