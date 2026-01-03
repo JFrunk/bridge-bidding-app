@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "slam_tries",
+  "description": "Slam try conventions: Quantitative 4NT, Control Bidding, and Slam Acceptance",
+  "rules": [
+    {
+      "id": "quantitative_4nt_accept_max",
+      "bid": "6NT",
+      "priority": 920,
+      "description": "Accept quantitative 4NT with maximum (16-17 HCP)",
+      "trigger": "1NT - Pass - 4NT - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 16
+        }
+      },
+      "forcing": "none",
+      "explanation": "Accepting quantitative 4NT slam invitation with 16-17 HCP (upper range of 1NT)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "quantitative_4nt_decline_min",
+      "bid": "Pass",
+      "priority": 915,
+      "description": "Decline quantitative 4NT with minimum",
+      "trigger": "1NT - Pass - 4NT - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "max": 15
+        }
+      },
+      "forcing": "none",
+      "explanation": "Declining quantitative 4NT slam invitation with minimum (15 HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "control_bid_5_hearts_after_raise",
+      "bid": "5♥",
+      "priority": 850,
+      "description": "Control bid (cue bid) after heart raise showing first-round control",
+      "trigger": "1♥ - Pass - 3♥ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 18
+        },
+        "has_void": true
+      },
+      "forcing": "one_round",
+      "explanation": "Control bid (cue bid) showing first-round control in a side suit, slam interest",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "control_bid_5_hearts_2c_auction",
+      "bid": "5♥",
+      "priority": 855,
+      "description": "Control bid after strong 2C opening and heart agreement",
+      "trigger": "2♣ - Pass - 2NT - Pass - 3♥ - Pass - 4♥ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 18
+        },
+        "has_void": true
+      },
+      "forcing": "one_round",
+      "explanation": "Control bid showing first-round control, slam interest after 2♣ opening",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "accept_control_bid_slam_try",
+      "bid": "6♥",
+      "priority": 860,
+      "description": "Accept partner's control bid slam try",
+      "trigger": "2♣ - Pass - 2NT - Pass - 3♥ - Pass - 4♥ - Pass - 5♥ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10
+        },
+        "hearts_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Accepting slam try with heart support and good values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "control_bid_over_game",
+      "bid": "5{suit}",
+      "priority": 840,
+      "description": "General control bid over game with void and strong hand",
+      "conditions": {
+        "last_bid_was_game": true,
+        "hcp": {
+          "min": 16
+        },
+        "has_void": true
+      },
+      "forcing": "one_round",
+      "explanation": "Control bid showing first-round control (void or ace) and slam interest",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    }
+  ]
+}

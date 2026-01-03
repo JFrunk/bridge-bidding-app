@@ -29,7 +29,7 @@
     {
       "id": "forcing_pass_game_level",
       "bid": "Pass",
-      "priority": 25,
+      "priority": 15,
       "description": "Forcing pass at game level - partner must act",
       "conditions": {
         "game_forcing": true,
@@ -45,7 +45,7 @@
     {
       "id": "penalty_pass_convert_double",
       "bid": "Pass",
-      "priority": 20,
+      "priority": 10,
       "description": "Pass to convert partner's takeout double to penalty",
       "conditions": {
         "partner_last_bid": "X",
@@ -132,7 +132,7 @@
     {
       "id": "double_and_bid",
       "bid": "X",
-      "priority": 120,
+      "priority": 90,
       "description": "Double then bid - showing strong hand",
       "conditions": {
         "is_overcall": true,

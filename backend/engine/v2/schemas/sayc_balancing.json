@@ -7,17 +7,17 @@
     {
       "id": "balancing_double",
       "bid": "X",
-      "priority": 100,
+      "priority": 80,
       "description": "Balancing takeout double (Borrowed King: 9+ instead of 12+)",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -35,17 +35,17 @@
     {
       "id": "balancing_double_strong",
       "bid": "X",
-      "priority": 109,
+      "priority": 89,
       "description": "Strong balancing double",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -59,17 +59,17 @@
     {
       "id": "balancing_double_flexible",
       "bid": "X",
-      "priority": 108,
+      "priority": 88,
       "description": "Balancing double with imperfect shape (Borrowed King)",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -87,17 +87,17 @@
     {
       "id": "balancing_1nt",
       "bid": "1NT",
-      "priority": 125,
+      "priority": 95,
       "description": "Balancing 1NT (Borrowed King: 11-14 instead of 15-18)",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -114,15 +114,15 @@
     {
       "id": "balancing_suit_1_level",
       "bid": "1{longest_suit}",
-      "priority": 100,
+      "priority": 80,
       "description": "Balancing 1-level suit bid",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦"
+            "1\u2663",
+            "1\u2666"
           ]
         },
         "hcp": {
@@ -140,7 +140,7 @@
     {
       "id": "balancing_suit_2_level",
       "bid": "2{longest_suit}",
-      "priority": 105,
+      "priority": 85,
       "description": "Balancing 2-level suit bid",
       "conditions": {
         "is_overcall": true,
@@ -161,17 +161,37 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "balancing_suit_2_level_long",
+      "bid": "2{longest_suit}",
+      "priority": 86,
+      "description": "Balancing 2-level with long suit (6+)",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": true,
+        "hcp": {
+          "min": 5,
+          "max": 14
+        },
+        "longest_suit_length": {
+          "min": 6
+        }
+      },
+      "forcing": "none",
+      "explanation": "Balancing 2-level bid with 6+ card suit and {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "balancing_cuebid",
       "bid": "{opponent_suit}",
-      "priority": 580,
+      "priority": 600,
       "description": "Balancing cuebid (Michaels)",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
         "opening_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -192,7 +212,7 @@
     {
       "id": "advancer_jump_after_balancing_double",
       "bid": "3{suit}",
-      "priority": 105,
+      "priority": 85,
       "description": "Jump response to balancing double",
       "conditions": {
         "partner_last_bid": "X",
@@ -213,7 +233,7 @@
     {
       "id": "advancer_respond_to_balancing_double",
       "bid": "2{suit}",
-      "priority": 100,
+      "priority": 80,
       "description": "Simple response to balancing double",
       "conditions": {
         "partner_last_bid": "X",
@@ -234,7 +254,7 @@
     {
       "id": "advancer_nt_after_balancing_double",
       "bid": "2NT",
-      "priority": 105,
+      "priority": 85,
       "description": "2NT response to balancing double",
       "conditions": {
         "partner_last_bid": "X",
@@ -252,7 +272,7 @@
     {
       "id": "pass_balancing_weak",
       "bid": "Pass",
-      "priority": 105,
+      "priority": 75,
       "description": "Pass in balancing seat with weak hand",
       "conditions": {
         "is_overcall": true,
@@ -268,7 +288,7 @@
     {
       "id": "pass_balancing_no_shape",
       "bid": "Pass",
-      "priority": 104,
+      "priority": 74,
       "description": "Pass in balancing seat without suitable shape",
       "conditions": {
         "is_overcall": true,
@@ -291,7 +311,7 @@
     {
       "id": "pass_balancing_defensive",
       "bid": "Pass",
-      "priority": 103,
+      "priority": 73,
       "description": "Pass in balancing seat with defensive values in opponent's suit",
       "conditions": {
         "is_overcall": true,
@@ -312,7 +332,7 @@
     {
       "id": "pass_balancing_catchall",
       "bid": "Pass",
-      "priority": 101,
+      "priority": 71,
       "description": "Pass in balancing seat - no suitable action",
       "conditions": {
         "is_overcall": true,

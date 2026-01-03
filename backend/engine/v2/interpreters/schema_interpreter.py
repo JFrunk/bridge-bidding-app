@@ -264,27 +264,141 @@ class SchemaInterpreter:
 
     def _evaluate_rule(self, rule: Dict, features: Dict[str, Any]) -> bool:
         """
-        Evaluate a single rule's conditions against features.
+        Evaluate a single rule's conditions and trigger against features.
+
+        Supports two matching modes:
+        1. Condition-based: Traditional conditions dictionary
+        2. Trigger-based: Auction pattern matching like "1[CDHS] - ?" or "1C - Pass - 1H - ?"
 
         Args:
             rule: Rule dictionary from schema
             features: Feature dictionary
 
         Returns:
-            True if all conditions are met
+            True if all conditions are met (and trigger matches if present)
         """
+        # Check trigger pattern first if present
+        trigger = rule.get('trigger')
+        if trigger:
+            if not self._matches_trigger(trigger, features):
+                return False
+
+        # Then check conditions
         conditions = rule.get('conditions', {})
-        return self._evaluate_conditions(conditions, features)
+        if conditions:
+            if not self._evaluate_conditions(conditions, features):
+                return False
+
+        # If we have constraints (alternative to conditions), check those too
+        constraints = rule.get('constraints', {})
+        if constraints:
+            if not self._evaluate_conditions(constraints, features):
+                return False
+
+        return True
+
+    def _matches_trigger(self, trigger: str, features: Dict[str, Any]) -> bool:
+        """
+        Match an auction trigger pattern against the current auction history.
+
+        Trigger format examples:
+        - "1[CDHS] - ?" matches any 1-level opening, we're next to bid
+        - "1C - Pass - 1H - ?" matches specific sequence
+        - "1[CD] - 1[HS] - ?" matches minor opening, major overcall, we're next
+
+        The "?" represents "our turn to bid" (the position we're evaluating for).
+        "-" separates bids in the auction.
+
+        Args:
+            trigger: The trigger pattern string
+            features: Feature dictionary containing auction_history
+
+        Returns:
+            True if the current auction matches the trigger pattern
+        """
+        # Get auction history from features (stored with underscore prefix)
+        auction_history = features.get('_auction_history', features.get('auction_history', []))
+        if not auction_history and not trigger:
+            return True
+
+        # Parse trigger pattern - split by " - " to get bid patterns
+        trigger_parts = [p.strip() for p in trigger.split(' - ')]
+
+        # The last part should be "?" representing our turn
+        if not trigger_parts or trigger_parts[-1] != '?':
+            return False
+
+        # Remove the "?" - we only match the preceding bids
+        bid_patterns = trigger_parts[:-1]
+
+        # Check if auction history length matches (we need exactly as many bids as patterns)
+        if len(auction_history) != len(bid_patterns):
+            return False
+
+        # Match each bid in history against corresponding pattern
+        for i, pattern in enumerate(bid_patterns):
+            actual_bid = auction_history[i]
+            if not self._matches_pattern(pattern, actual_bid):
+                return False
+
+        return True
+
+    def _matches_pattern(self, pattern: str, value: str) -> bool:
+        """
+        Check if a value matches a pattern using exact match first, then regex.
+
+        This enables flexible matching for bid patterns like:
+        - "1[HS]" matches "1♥" or "1♠"
+        - "1[CDHS]" matches any 1-level suit bid
+        - "[12][HS]" matches 1♥, 1♠, 2♥, or 2♠
+
+        The pattern uses a bridge-friendly regex syntax where:
+        - C = ♣ (clubs)
+        - D = ♦ (diamonds)
+        - H = ♥ (hearts)
+        - S = ♠ (spades)
+        - N = NT (notrump)
+
+        Args:
+            pattern: The pattern to match (can be exact string or regex)
+            value: The actual value to match against
+
+        Returns:
+            True if the value matches the pattern
+        """
+        if pattern is None or value is None:
+            return pattern == value
+
+        # 1. Try exact match first (fastest path)
+        if pattern == value:
+            return True
+
+        # 2. Convert value's suit symbols to letters for regex matching
+        # This allows patterns like "1[HS]" to match "1♥" or "1♠"
+        value_normalized = value.replace('♣', 'C').replace('♦', 'D').replace('♥', 'H').replace('♠', 'S').replace('NT', 'N')
+
+        # 3. Try regex match (flexible path)
+        try:
+            # Anchor the pattern to match the entire string
+            regex_pattern = f"^{pattern}$"
+            if re.match(regex_pattern, value_normalized):
+                return True
+        except re.error:
+            # Invalid regex, fall through to return False
+            pass
+
+        return False
 
     def _evaluate_conditions(self, conditions: Dict, features: Dict[str, Any]) -> bool:
         """
         Recursively evaluate conditions dictionary.
 
         Supports:
-        - Simple key: value matching
+        - Simple key: value matching (with regex support for string values)
         - Numeric comparisons: {"min": x, "max": y, "exact": z}
         - Boolean logic: OR, AND, NOT
         - Set membership: {"in": [...]}
+        - Regex patterns: "1[HS]" matches "1♥" or "1♠"
         - Special expert constraints:
           - stoppers_required: minimum number of stopped suits
           - stoppers_in: specific suits that must be stopped
@@ -349,14 +463,27 @@ class SchemaInterpreter:
                 if not self._evaluate_comparison(actual, expected, features):
                     return False
 
-            # Handle list membership
+            # Handle list membership (with regex support for each item)
             elif isinstance(expected, list):
-                if actual not in expected:
+                # Check if actual matches any pattern in the list
+                matched = False
+                for pattern in expected:
+                    if isinstance(pattern, str) and isinstance(actual, str):
+                        if self._matches_pattern(pattern, actual):
+                            matched = True
+                            break
+                    elif actual == pattern:
+                        matched = True
+                        break
+                if not matched:
                     return False
 
-            # Handle direct equality
+            # Handle direct equality (with regex support for string patterns)
             else:
-                if actual != expected:
+                if isinstance(expected, str) and isinstance(actual, str):
+                    if not self._matches_pattern(expected, actual):
+                        return False
+                elif actual != expected:
                     return False
 
         return True

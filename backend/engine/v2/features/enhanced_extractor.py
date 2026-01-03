@@ -422,6 +422,17 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     if agreed['agreed_suit']:
         flat['has_trump_queen'] = any(c.rank == 'Q' and c.suit == agreed['agreed_suit'] for c in hand.cards)
 
+    # RKCB 1430 response booleans (for schema matching)
+    kc = flat['key_cards']
+    flat['key_card_count_is_1_or_4'] = kc in [1, 4]
+    flat['key_card_count_is_0_or_3'] = kc in [0, 3]
+    flat['key_card_count_is_2'] = kc == 2
+    flat['key_card_count_is_5'] = kc == 5
+
+    # Suits bid count (for Fourth Suit Forcing detection)
+    flat['suits_bid_count'] = len(bid_suits_natural)
+    flat['is_fourth_suit_scenario'] = len(bid_suits_natural) == 3
+
     # Keep reference to original structures
     flat['_hand'] = hand
     flat['_auction_history'] = auction_history

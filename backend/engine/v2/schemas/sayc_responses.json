@@ -6,7 +6,7 @@
   "rules": [
     {
       "id": "stayman_2c",
-      "bid": "2♣",
+      "bid": "2\u2663",
       "priority": 810,
       "description": "Stayman convention over 1NT (looking for 4-4 major fit)",
       "conditions": {
@@ -42,7 +42,7 @@
     },
     {
       "id": "jacoby_transfer_hearts",
-      "bid": "2♦",
+      "bid": "2\u2666",
       "priority": 829,
       "description": "Jacoby transfer to hearts",
       "conditions": {
@@ -59,7 +59,7 @@
     },
     {
       "id": "jacoby_transfer_hearts_invitational",
-      "bid": "2♦",
+      "bid": "2\u2666",
       "priority": 828,
       "description": "Jacoby transfer to hearts (invitational with 6+ cards)",
       "conditions": {
@@ -79,7 +79,7 @@
     },
     {
       "id": "jacoby_transfer_spades",
-      "bid": "2♥",
+      "bid": "2\u2665",
       "priority": 827,
       "description": "Jacoby transfer to spades",
       "conditions": {
@@ -96,7 +96,7 @@
     },
     {
       "id": "jacoby_transfer_spades_invitational",
-      "bid": "2♥",
+      "bid": "2\u2665",
       "priority": 826,
       "description": "Jacoby transfer to spades (invitational with 6+ cards)",
       "conditions": {
@@ -116,7 +116,7 @@
     },
     {
       "id": "texas_transfer_hearts",
-      "bid": "4♦",
+      "bid": "4\u2666",
       "priority": 835,
       "description": "Texas transfer to hearts (6+ hearts, game values)",
       "conditions": {
@@ -135,7 +135,7 @@
     },
     {
       "id": "texas_transfer_spades",
-      "bid": "4♥",
+      "bid": "4\u2665",
       "priority": 834,
       "description": "Texas transfer to spades (6+ spades, game values)",
       "conditions": {
@@ -174,7 +174,7 @@
     {
       "id": "raise_1nt_invitational",
       "bid": "2NT",
-      "priority": 450,
+      "priority": 400,
       "description": "Invitational raise of 1NT",
       "conditions": {
         "is_response": true,
@@ -193,14 +193,14 @@
     {
       "id": "new_suit_1_level",
       "bid": "1{suit}",
-      "priority": 80,
+      "priority": 600,
       "description": "New suit at 1-level",
       "conditions": {
         "is_response": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦"
+            "1\u2663",
+            "1\u2666"
           ]
         },
         "hcp": {
@@ -233,10 +233,10 @@
         "is_response": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -261,8 +261,8 @@
         "is_response": true,
         "partner_last_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -280,14 +280,14 @@
     {
       "id": "limit_raise_major",
       "bid": "3{partner_suit}",
-      "priority": 554,
+      "priority": 354,
       "description": "Limit raise of partner's major",
       "conditions": {
         "is_response": true,
         "partner_last_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -311,8 +311,8 @@
         "is_response": true,
         "partner_last_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "OR": [
@@ -348,8 +348,8 @@
         "is_response": true,
         "opening_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -366,29 +366,29 @@
     },
     {
       "id": "respond_2c_positive",
-      "bid": "2♦",
+      "bid": "2\u2666",
       "priority": 45,
-      "description": "Waiting response to 2♣",
+      "description": "Waiting response to 2\u2663",
       "conditions": {
         "is_response": true,
-        "partner_last_bid": "2♣",
+        "partner_last_bid": "2\u2663",
         "hcp": {
           "min": 0,
           "max": 7
         }
       },
       "forcing": "one_round",
-      "explanation": "2♦ waiting response (0-7 HCP)",
+      "explanation": "2\u2666 waiting response (0-7 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "respond_2c_positive_suit",
       "bid": "2{longest_suit}",
       "priority": 44,
-      "description": "Positive response to 2♣ with good suit",
+      "description": "Positive response to 2\u2663 with good suit",
       "conditions": {
         "is_response": true,
-        "partner_last_bid": "2♣",
+        "partner_last_bid": "2\u2663",
         "hcp": {
           "min": 8
         },
@@ -400,13 +400,13 @@
         }
       },
       "forcing": "game",
-      "explanation": "Positive response to 2♣ with good {longest_suit} suit",
+      "explanation": "Positive response to 2\u2663 with good {longest_suit} suit",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "pass_no_values",
       "bid": "Pass",
-      "priority": 25,
+      "priority": 15,
       "description": "Pass with insufficient values to respond",
       "conditions": {
         "is_response": true,
@@ -414,7 +414,7 @@
           "max": 5
         },
         "NOT": {
-          "partner_last_bid": "2♣"
+          "partner_last_bid": "2\u2663"
         }
       },
       "forcing": "none",
@@ -424,7 +424,7 @@
     {
       "id": "pass_after_nt_minimum",
       "bid": "Pass",
-      "priority": 174,
+      "priority": 14,
       "description": "Pass partner's 1NT with minimum balanced",
       "conditions": {
         "is_response": true,
@@ -442,7 +442,7 @@
     {
       "id": "pass_after_2nt_minimum",
       "bid": "Pass",
-      "priority": 173,
+      "priority": 13,
       "description": "Pass partner's 2NT with minimum",
       "conditions": {
         "is_response": true,
@@ -458,19 +458,19 @@
     {
       "id": "pass_after_preempt",
       "bid": "Pass",
-      "priority": 82,
+      "priority": 12,
       "description": "Pass partner's preemptive opening",
       "conditions": {
         "is_response": true,
         "partner_last_bid": {
           "in": [
-            "2♦",
-            "2♥",
-            "2♠",
-            "3♣",
-            "3♦",
-            "3♥",
-            "3♠"
+            "2\u2666",
+            "2\u2665",
+            "2\u2660",
+            "3\u2663",
+            "3\u2666",
+            "3\u2665",
+            "3\u2660"
           ]
         },
         "hcp": {
@@ -487,14 +487,14 @@
     {
       "id": "pass_after_major_opening_no_fit_weak",
       "bid": "Pass",
-      "priority": 171,
+      "priority": 11,
       "description": "Pass partner's major opening with minimum and no fit",
       "conditions": {
         "is_response": true,
         "partner_last_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {

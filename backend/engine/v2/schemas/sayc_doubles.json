@@ -5,59 +5,70 @@
   "description": "Takeout doubles, negative doubles, and penalty doubles",
   "rules": [
     {
-      "id": "takeout_double_standard",
+      "id": "takeout_double_strong",
       "bid": "X",
-      "priority": 110,
-      "description": "Standard takeout double of 1-level opening",
+      "priority": 810,
+      "description": "Strong takeout double (17+ HCP) - start with double, bid suit later",
       "conditions": {
         "is_overcall": true,
-        "opening_bid": {
-          "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
-          ]
-        },
+        "opening_bid": "1[CDHS]",
         "hcp": {
-          "min": 12,
-          "max": 17
-        },
-        "quick_tricks": {
-          "min": 1.5
-        },
-        "unbid_suit_support": {
-          "min": 3
+          "min": 17
         }
       },
       "forcing": "one_round",
-      "explanation": "Takeout double showing {hcp} HCP with {quick_tricks} QT and support for unbid suits",
+      "explanation": "Strong takeout double with {hcp} HCP - too strong for simple overcall, will bid again",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_normal",
+      "bid": "X",
+      "priority": 800,
+      "description": "Normal takeout double (12-16 HCP) - must not have 5-card major",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": "1[CDHS]",
+        "hcp": {
+          "min": 12,
+          "max": 16
+        },
+        "unbid_suit_support": {
+          "min": 3
+        },
+        "spades_length": {
+          "max": 4
+        },
+        "hearts_length": {
+          "max": 4
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Takeout double showing {hcp} HCP with support for unbid suits (no 5-card major)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "takeout_double_light",
       "bid": "X",
-      "priority": 118,
-      "description": "Light takeout double with perfect shape",
+      "priority": 795,
+      "description": "Light takeout double with perfect shape (10-11 HCP)",
       "conditions": {
         "is_overcall": true,
-        "opening_bid": {
-          "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
-          ]
-        },
+        "opening_bid": "1[CDHS]",
         "hcp": {
           "min": 10,
-          "max": 14
+          "max": 11
         },
         "quick_tricks": {
           "min": 1.0
         },
         "unbid_suit_support": {
           "min": 3
+        },
+        "spades_length": {
+          "max": 4
+        },
+        "hearts_length": {
+          "max": 4
         }
       },
       "forcing": "one_round",
@@ -65,118 +76,10 @@
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
-      "id": "takeout_double_flexible_shape",
-      "bid": "X",
-      "priority": 117,
-      "description": "Takeout double with imperfect shape but good values",
-      "conditions": {
-        "is_overcall": true,
-        "opening_bid": {
-          "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
-          ]
-        },
-        "hcp": {
-          "min": 10,
-          "max": 15
-        },
-        "quick_tricks": {
-          "min": 1.5
-        },
-        "unbid_suit_support": {
-          "min": 2
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Takeout double with {hcp} HCP (flexible shape)",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "takeout_double_offshape",
-      "bid": "X",
-      "priority": 116,
-      "description": "Off-shape takeout double with strong values",
-      "conditions": {
-        "is_overcall": true,
-        "opening_bid": {
-          "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
-          ]
-        },
-        "hcp": {
-          "min": 10,
-          "max": 17
-        },
-        "quick_tricks": {
-          "min": 1.5
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Takeout double with {hcp} HCP (off-shape but strong)",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "takeout_double_strong",
-      "bid": "X",
-      "priority": 119,
-      "description": "Strong takeout double (17+ HCP)",
-      "conditions": {
-        "is_overcall": true,
-        "opening_bid": {
-          "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
-          ]
-        },
-        "hcp": {
-          "min": 17
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Strong takeout double showing {hcp} HCP (will bid again)",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "takeout_double_balancing",
-      "bid": "X",
-      "priority": 115,
-      "description": "Balancing takeout double",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "opening_bid": {
-          "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
-          ]
-        },
-        "hcp": {
-          "min": 9,
-          "max": 14
-        },
-        "unbid_suit_support": {
-          "min": 3
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Balancing double showing {hcp} HCP (about 3 less than direct)",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
       "id": "negative_double_1_level",
       "bid": "X",
-      "priority": 795,
-      "description": "Negative double at 1-level",
+      "priority": 800,
+      "description": "Negative double at 1-level - shows 4+ cards in unbid major",
       "conditions": {
         "is_response": true,
         "opener_relationship": "Partner",
@@ -194,7 +97,7 @@
     {
       "id": "negative_double_2_level",
       "bid": "X",
-      "priority": 804,
+      "priority": 800,
       "description": "Negative double at 2-level",
       "conditions": {
         "is_response": true,
@@ -213,7 +116,7 @@
     {
       "id": "negative_double_3_level",
       "bid": "X",
-      "priority": 803,
+      "priority": 800,
       "description": "Negative double at 3-level",
       "conditions": {
         "is_response": true,
@@ -232,7 +135,7 @@
     {
       "id": "responsive_double",
       "bid": "X",
-      "priority": 80,
+      "priority": 800,
       "description": "Responsive double after partner's takeout double",
       "conditions": {
         "partner_last_bid": "X",
@@ -243,14 +146,14 @@
         "has_both_unbid_suits": true
       },
       "forcing": "one_round",
-      "explanation": "Responsive double showing both unbid suits",
+      "explanation": "Responsive double showing values and support for unbid suits",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "support_double",
       "bid": "X",
-      "priority": 235,
-      "description": "Support double showing 3-card support",
+      "priority": 800,
+      "description": "Support double showing exactly 3-card support",
       "conditions": {
         "opener_relationship": "Me",
         "interference_present": true,
@@ -260,7 +163,28 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Support double showing exactly 3-card support",
+      "explanation": "Support double showing exactly 3-card support for partner's major",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_balancing",
+      "bid": "X",
+      "priority": 100,
+      "description": "Balancing takeout double (Borrowed King principle)",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": true,
+        "opening_bid": "1[CDHS]",
+        "hcp": {
+          "min": 8,
+          "max": 14
+        },
+        "unbid_suit_support": {
+          "min": 2
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Balancing double with {hcp} HCP (Borrowed King: partner has ~8-10 HCP)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -303,7 +227,7 @@
       },
       "forcing": "none",
       "explanation": "Penalty double with trump stack",
-      "sets_forcing_level": "FORCING_1_ROUND"
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }

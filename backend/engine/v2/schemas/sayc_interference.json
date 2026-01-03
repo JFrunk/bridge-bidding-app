@@ -7,7 +7,7 @@
     {
       "id": "competitive_limit_raise_cuebid",
       "bid": "{opponent_suit}",
-      "priority": 580,
+      "priority": 600,
       "description": "Cuebid of opponent's suit showing limit raise values",
       "conditions": {
         "is_response": true,
@@ -25,16 +25,16 @@
     },
     {
       "id": "simple_overcall_1_level_spades",
-      "bid": "1♠",
-      "priority": 145,
-      "description": "Simple 1♠ overcall",
+      "bid": "1\u2660",
+      "priority": 95,
+      "description": "Simple 1\u2660 overcall",
       "conditions": {
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665"
           ]
         },
         "hcp": {
@@ -54,15 +54,15 @@
     },
     {
       "id": "simple_overcall_1_level_hearts",
-      "bid": "1♥",
-      "priority": 144,
-      "description": "Simple 1♥ overcall",
+      "bid": "1\u2665",
+      "priority": 94,
+      "description": "Simple 1\u2665 overcall",
       "conditions": {
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦"
+            "1\u2663",
+            "1\u2666"
           ]
         },
         "hcp": {
@@ -83,7 +83,7 @@
     {
       "id": "simple_overcall_2_level",
       "bid": "2{longest_suit}",
-      "priority": 145,
+      "priority": 95,
       "description": "Simple 2-level overcall",
       "conditions": {
         "is_overcall": true,
@@ -105,16 +105,16 @@
     {
       "id": "direct_nt_overcall_1nt",
       "bid": "1NT",
-      "priority": 130,
+      "priority": 90,
       "description": "Direct 1NT overcall with stopper",
       "conditions": {
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -131,16 +131,16 @@
     {
       "id": "direct_nt_overcall_2nt",
       "bid": "2NT",
-      "priority": 135,
+      "priority": 95,
       "description": "Direct 2NT overcall (unusual or strong)",
       "conditions": {
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -163,10 +163,10 @@
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -189,10 +189,10 @@
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -213,7 +213,7 @@
     {
       "id": "negative_double_1_level",
       "bid": "X",
-      "priority": 795,
+      "priority": 805,
       "description": "Negative double at 1-level",
       "conditions": {
         "is_response": true,
@@ -253,7 +253,7 @@
     {
       "id": "free_bid_new_suit",
       "bid": "2{suit}",
-      "priority": 520,
+      "priority": 600,
       "description": "Free bid of new suit after interference",
       "conditions": {
         "is_response": true,
@@ -323,10 +323,10 @@
         "opener_relationship": "Partner",
         "partner_last_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "rho_last_bid": "X",
@@ -341,7 +341,7 @@
     {
       "id": "pass_with_trap",
       "bid": "Pass",
-      "priority": 25,
+      "priority": 15,
       "description": "Trap pass after partner's double - convert to penalty",
       "conditions": {
         "partner_last_bid": "X",
@@ -360,14 +360,14 @@
     {
       "id": "michaels_cuebid_major",
       "bid": "{opponent_suit}",
-      "priority": 580,
+      "priority": 600,
       "description": "Michaels cuebid of opponent's major",
       "conditions": {
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -388,14 +388,14 @@
     {
       "id": "michaels_cuebid_minor",
       "bid": "{opponent_suit}",
-      "priority": 588,
+      "priority": 608,
       "description": "Michaels cuebid of opponent's minor",
       "conditions": {
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦"
+            "1\u2663",
+            "1\u2666"
           ]
         },
         "hcp": {
@@ -422,8 +422,8 @@
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -444,7 +444,7 @@
     {
       "id": "pass_competitive_weak",
       "bid": "Pass",
-      "priority": 75,
+      "priority": 15,
       "description": "Pass in competitive auction with weak hand",
       "conditions": {
         "is_contested": true,
@@ -459,7 +459,7 @@
     {
       "id": "pass_competitive_no_fit",
       "bid": "Pass",
-      "priority": 24,
+      "priority": 14,
       "description": "Pass in competitive auction with no fit",
       "conditions": {
         "is_contested": true,

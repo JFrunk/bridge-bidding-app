@@ -13,10 +13,10 @@
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -43,16 +43,16 @@
     {
       "id": "1nt_overcall",
       "bid": "1NT",
-      "priority": 125,
+      "priority": 95,
       "description": "1NT overcall",
       "conditions": {
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥",
-            "1♠"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -69,7 +69,7 @@
     {
       "id": "1nt_overcall_balancing",
       "bid": "1NT",
-      "priority": 124,
+      "priority": 94,
       "description": "Balancing 1NT",
       "conditions": {
         "is_overcall": true,
@@ -88,14 +88,14 @@
     {
       "id": "michaels_cuebid_major",
       "bid": "{opponent_suit}",
-      "priority": 580,
+      "priority": 600,
       "description": "Michaels cuebid over major",
       "conditions": {
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -116,14 +116,14 @@
     {
       "id": "michaels_cuebid_minor",
       "bid": "{opponent_suit}",
-      "priority": 589,
+      "priority": 609,
       "description": "Michaels cuebid over minor",
       "conditions": {
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦"
+            "1\u2663",
+            "1\u2666"
           ]
         },
         "hcp": {
@@ -150,8 +150,8 @@
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -172,14 +172,14 @@
     {
       "id": "simple_overcall_1_level",
       "bid": "1{suit}",
-      "priority": 140,
+      "priority": 90,
       "description": "Simple 1-level overcall",
       "conditions": {
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦"
+            "1\u2663",
+            "1\u2666"
           ]
         },
         "hcp": {
@@ -202,7 +202,7 @@
     {
       "id": "simple_overcall_1_level_balancing",
       "bid": "1{suit}",
-      "priority": 149,
+      "priority": 99,
       "description": "Balancing 1-level overcall",
       "conditions": {
         "is_overcall": true,
@@ -226,7 +226,7 @@
     {
       "id": "simple_overcall_2_level",
       "bid": "2{suit}",
-      "priority": 145,
+      "priority": 95,
       "description": "Simple 2-level overcall",
       "conditions": {
         "is_overcall": true,
@@ -250,15 +250,15 @@
     {
       "id": "weak_jump_overcall",
       "bid": "2{suit}",
-      "priority": 120,
+      "priority": 90,
       "description": "Weak jump overcall",
       "conditions": {
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1♣",
-            "1♦",
-            "1♥"
+            "1\u2663",
+            "1\u2666",
+            "1\u2665"
           ]
         },
         "hcp": {
@@ -297,7 +297,7 @@
     {
       "id": "pass_no_action",
       "bid": "Pass",
-      "priority": 21,
+      "priority": 11,
       "description": "Pass in competitive auction",
       "conditions": {
         "is_overcall": true,

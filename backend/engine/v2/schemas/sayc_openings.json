@@ -6,7 +6,7 @@
   "rules": [
     {
       "id": "open_2c_strong",
-      "bid": "2♣",
+      "bid": "2\u2663",
       "priority": 100,
       "description": "Strong artificial forcing opening",
       "conditions": {
@@ -28,14 +28,14 @@
         ]
       },
       "forcing": "game",
-      "explanation": "Strong artificial 2♣ opening showing {hcp} HCP",
+      "explanation": "Strong artificial 2\u2663 opening showing {hcp} HCP",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "open_2c_playing_strength",
-      "bid": "2♣",
+      "bid": "2\u2663",
       "priority": 99,
-      "description": "Strong 2♣ with playing strength",
+      "description": "Strong 2\u2663 with playing strength",
       "conditions": {
         "is_opening": true,
         "hcp": {
@@ -50,7 +50,7 @@
         }
       },
       "forcing": "game",
-      "explanation": "Strong 2♣ with {hcp} HCP and {quick_tricks} quick tricks",
+      "explanation": "Strong 2\u2663 with {hcp} HCP and {quick_tricks} quick tricks",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
@@ -111,7 +111,7 @@
     },
     {
       "id": "open_1_spades",
-      "bid": "1♠",
+      "bid": "1\u2660",
       "priority": 80,
       "description": "One spade opening",
       "conditions": {
@@ -125,12 +125,12 @@
         }
       },
       "forcing": "none",
-      "explanation": "1♠ opening showing {hcp} HCP and {spades_length}-card spade suit",
+      "explanation": "1\u2660 opening showing {hcp} HCP and {spades_length}-card spade suit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "open_1_hearts",
-      "bid": "1♥",
+      "bid": "1\u2665",
       "priority": 79,
       "description": "One heart opening",
       "conditions": {
@@ -156,12 +156,12 @@
         ]
       },
       "forcing": "none",
-      "explanation": "1♥ opening showing {hcp} HCP and {hearts_length}-card heart suit",
+      "explanation": "1\u2665 opening showing {hcp} HCP and {hearts_length}-card heart suit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "open_1_diamonds",
-      "bid": "1♦",
+      "bid": "1\u2666",
       "priority": 70,
       "description": "One diamond opening",
       "conditions": {
@@ -191,12 +191,12 @@
         ]
       },
       "forcing": "none",
-      "explanation": "1♦ opening showing {hcp} HCP and {diamonds_length}-card diamond suit",
+      "explanation": "1\u2666 opening showing {hcp} HCP and {diamonds_length}-card diamond suit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "open_1_clubs",
-      "bid": "1♣",
+      "bid": "1\u2663",
       "priority": 60,
       "description": "One club opening",
       "conditions": {
@@ -214,12 +214,12 @@
         }
       },
       "forcing": "none",
-      "explanation": "1♣ opening showing {hcp} HCP and {clubs_length}+ clubs",
+      "explanation": "1\u2663 opening showing {hcp} HCP and {clubs_length}+ clubs",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "open_1c_balanced_no_nt",
-      "bid": "1♣",
+      "bid": "1\u2663",
       "priority": 75,
       "description": "Balanced hand outside NT range",
       "conditions": {
@@ -234,12 +234,12 @@
         }
       },
       "forcing": "none",
-      "explanation": "1♣ opening with balanced {hcp} HCP (too weak for 1NT)",
+      "explanation": "1\u2663 opening with balanced {hcp} HCP (too weak for 1NT)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "open_1c_strong_balanced",
-      "bid": "1♣",
+      "bid": "1\u2663",
       "priority": 54,
       "description": "Strong balanced hand outside NT range",
       "conditions": {
@@ -251,7 +251,7 @@
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "1♣ opening with balanced {hcp} HCP (too strong for 1NT)",
+      "explanation": "1\u2663 opening with balanced {hcp} HCP (too strong for 1NT)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -267,8 +267,8 @@
         },
         "longest_suit": {
           "in": [
-            "♠",
-            "♥"
+            "\u2660",
+            "\u2665"
           ]
         },
         "longest_suit_length": {
@@ -295,8 +295,8 @@
         },
         "longest_suit": {
           "in": [
-            "♦",
-            "♣"
+            "\u2666",
+            "\u2663"
           ]
         },
         "longest_suit_length": {
@@ -323,8 +323,8 @@
         },
         "longest_suit": {
           "in": [
-            "♠",
-            "♥"
+            "\u2660",
+            "\u2665"
           ]
         },
         "longest_suit_length": {
@@ -340,7 +340,7 @@
     },
     {
       "id": "preempt_2_diamonds",
-      "bid": "2♦",
+      "bid": "2\u2666",
       "priority": 84,
       "description": "Weak two diamonds",
       "conditions": {
@@ -358,7 +358,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Weak 2♦ with {hcp} HCP and 6-card diamond suit",
+      "explanation": "Weak 2\u2666 with {hcp} HCP and 6-card diamond suit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -381,7 +381,7 @@
     {
       "id": "pass_weak",
       "bid": "Pass",
-      "priority": 71,
+      "priority": 11,
       "description": "Pass with insufficient values",
       "conditions": {
         "is_opening": true,

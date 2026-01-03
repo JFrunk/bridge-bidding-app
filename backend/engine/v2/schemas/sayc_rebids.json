@@ -6,13 +6,13 @@
   "rules": [
     {
       "id": "opener_complete_texas_hearts",
-      "bid": "4♥",
+      "bid": "4\u2665",
       "priority": 830,
       "description": "1NT opener completes Texas transfer to hearts",
       "conditions": {
         "is_rebid": true,
         "my_last_bid": "1NT",
-        "partner_last_bid": "4♦"
+        "partner_last_bid": "4\u2666"
       },
       "forcing": "none",
       "explanation": "Completing Texas transfer to hearts",
@@ -20,13 +20,13 @@
     },
     {
       "id": "opener_complete_texas_spades",
-      "bid": "4♠",
+      "bid": "4\u2660",
       "priority": 839,
       "description": "1NT opener completes Texas transfer to spades",
       "conditions": {
         "is_rebid": true,
         "my_last_bid": "1NT",
-        "partner_last_bid": "4♥"
+        "partner_last_bid": "4\u2665"
       },
       "forcing": "none",
       "explanation": "Completing Texas transfer to spades",
@@ -34,7 +34,7 @@
     },
     {
       "id": "responder_smolen_3h",
-      "bid": "3♥",
+      "bid": "3\u2665",
       "priority": 813,
       "description": "Smolen: 4 hearts, 5 spades, game values",
       "conditions": {
@@ -42,8 +42,8 @@
         "my_bid_count": {
           "min": 1
         },
-        "my_last_bid": "2♣",
-        "partner_last_bid": "2♦",
+        "my_last_bid": "2\u2663",
+        "partner_last_bid": "2\u2666",
         "hearts_length": {
           "min": 4,
           "max": 4
@@ -61,7 +61,7 @@
     },
     {
       "id": "responder_smolen_3s",
-      "bid": "3♠",
+      "bid": "3\u2660",
       "priority": 812,
       "description": "Smolen: 4 spades, 5 hearts, game values",
       "conditions": {
@@ -69,8 +69,8 @@
         "my_bid_count": {
           "min": 1
         },
-        "my_last_bid": "2♣",
-        "partner_last_bid": "2♦",
+        "my_last_bid": "2\u2663",
+        "partner_last_bid": "2\u2666",
         "spades_length": {
           "min": 4,
           "max": 4
@@ -88,13 +88,13 @@
     },
     {
       "id": "opener_accept_smolen_spades",
-      "bid": "4♠",
+      "bid": "4\u2660",
       "priority": 811,
       "description": "Accept Smolen with 3+ spades (partner has 5)",
       "conditions": {
         "is_rebid": true,
-        "my_last_bid": "2♦",
-        "partner_last_bid": "3♥",
+        "my_last_bid": "2\u2666",
+        "partner_last_bid": "3\u2665",
         "spades_length": {
           "min": 3
         }
@@ -110,8 +110,8 @@
       "description": "Reject Smolen - no spade fit",
       "conditions": {
         "is_rebid": true,
-        "my_last_bid": "2♦",
-        "partner_last_bid": "3♥",
+        "my_last_bid": "2\u2666",
+        "partner_last_bid": "3\u2665",
         "spades_length": {
           "max": 2
         }
@@ -122,13 +122,13 @@
     },
     {
       "id": "opener_accept_smolen_hearts",
-      "bid": "4♥",
+      "bid": "4\u2665",
       "priority": 809,
       "description": "Accept Smolen with 3+ hearts (partner has 5)",
       "conditions": {
         "is_rebid": true,
-        "my_last_bid": "2♦",
-        "partner_last_bid": "3♠",
+        "my_last_bid": "2\u2666",
+        "partner_last_bid": "3\u2660",
         "hearts_length": {
           "min": 3
         }
@@ -144,8 +144,8 @@
       "description": "Reject Smolen - no heart fit",
       "conditions": {
         "is_rebid": true,
-        "my_last_bid": "2♦",
-        "partner_last_bid": "3♠",
+        "my_last_bid": "2\u2666",
+        "partner_last_bid": "3\u2660",
         "hearts_length": {
           "max": 2
         }
@@ -223,8 +223,8 @@
         "is_rebid": true,
         "partner_last_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -248,8 +248,8 @@
         "is_rebid": true,
         "partner_last_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -273,8 +273,8 @@
         "is_rebid": true,
         "partner_last_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "hcp": {
@@ -299,8 +299,8 @@
         "is_rebid": true,
         "partner_last_bid": {
           "in": [
-            "1♥",
-            "1♠"
+            "1\u2665",
+            "1\u2660"
           ]
         },
         "support_points": {
@@ -339,7 +339,7 @@
     {
       "id": "opener_reverse_strong",
       "bid": "2{higher_suit}",
-      "priority": 752,
+      "priority": 702,
       "description": "Opener reverses showing 17+ HCP (Barrier Principle)",
       "conditions": {
         "is_rebid": true,
@@ -365,7 +365,7 @@
     {
       "id": "opener_reverse_minimum",
       "bid": "2{higher_suit}",
-      "priority": 750,
+      "priority": 700,
       "description": "Opener reverses with minimum reverse values",
       "conditions": {
         "is_rebid": true,
@@ -388,7 +388,7 @@
     {
       "id": "opener_new_suit_below_barrier",
       "bid": "2{lower_suit}",
-      "priority": 65,
+      "priority": 605,
       "description": "Opener bids new lower suit (below barrier - no extra strength needed)",
       "conditions": {
         "is_rebid": true,
@@ -411,7 +411,7 @@
     {
       "id": "opener_new_suit_strong",
       "bid": "2{lower_suit}",
-      "priority": 64,
+      "priority": 604,
       "description": "Opener bids new lower suit with extra values",
       "conditions": {
         "is_rebid": true,
@@ -468,8 +468,8 @@
         "fit_known": true,
         "agreed_suit": {
           "in": [
-            "♥",
-            "♠"
+            "\u2665",
+            "\u2660"
           ]
         },
         "support_points": {
@@ -483,7 +483,7 @@
     {
       "id": "responder_rebid_2nt_invitational",
       "bid": "2NT",
-      "priority": 455,
+      "priority": 405,
       "description": "Responder rebids 2NT invitational",
       "conditions": {
         "is_response": true,
@@ -537,10 +537,10 @@
         },
         "partner_last_bid": {
           "in": [
-            "1♥",
-            "1♠",
-            "2♥",
-            "2♠"
+            "1\u2665",
+            "1\u2660",
+            "2\u2665",
+            "2\u2660"
           ]
         },
         "support_points": {
@@ -582,7 +582,7 @@
     {
       "id": "responder_jump_preference",
       "bid": "3{partner_first_suit}",
-      "priority": 459,
+      "priority": 409,
       "description": "Responder jump preference showing invitational values",
       "conditions": {
         "is_response": true,
@@ -652,7 +652,7 @@
     {
       "id": "responder_rebid_own_suit_invitational",
       "bid": "3{my_suit}",
-      "priority": 451,
+      "priority": 401,
       "description": "Responder jump rebids own suit (invitational)",
       "conditions": {
         "is_response": true,
@@ -678,7 +678,7 @@
     {
       "id": "responder_new_suit_at_2_level",
       "bid": "2{new_lower_suit}",
-      "priority": 40,
+      "priority": 600,
       "description": "Responder bids new lower suit",
       "conditions": {
         "is_response": true,
@@ -744,7 +744,7 @@
     {
       "id": "opener_pass_after_limit_raise",
       "bid": "Pass",
-      "priority": 555,
+      "priority": 355,
       "description": "Opener passes partner's limit raise with minimum",
       "conditions": {
         "is_rebid": true,
@@ -761,7 +761,7 @@
     {
       "id": "opener_pass_after_2nt_response",
       "bid": "Pass",
-      "priority": 454,
+      "priority": 14,
       "description": "Opener passes 2NT invitational with minimum",
       "conditions": {
         "is_rebid": true,
@@ -779,7 +779,7 @@
     {
       "id": "opener_pass_after_1nt_response",
       "bid": "Pass",
-      "priority": 173,
+      "priority": 13,
       "description": "Opener passes 1NT response with balanced minimum",
       "conditions": {
         "is_rebid": true,
@@ -800,7 +800,7 @@
     {
       "id": "opener_pass_after_single_raise",
       "bid": "Pass",
-      "priority": 282,
+      "priority": 12,
       "description": "Opener passes single raise with minimum",
       "conditions": {
         "is_rebid": true,
@@ -820,7 +820,7 @@
     {
       "id": "responder_pass_opener_minimum_rebid",
       "bid": "Pass",
-      "priority": 170,
+      "priority": 10,
       "description": "Responder passes opener's minimum rebid",
       "conditions": {
         "is_response": true,
@@ -840,7 +840,7 @@
     {
       "id": "pass_in_rebid",
       "bid": "Pass",
-      "priority": 171,
+      "priority": 11,
       "description": "Pass in rebid situation",
       "conditions": {
         "OR": [
@@ -866,6 +866,80 @@
       },
       "forcing": "none",
       "explanation": "Pass with minimum values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_after_transfer_game_6_card",
+      "bid": "4♥",
+      "priority": 825,
+      "description": "After transfer accepted: Game with 6+ hearts",
+      "trigger": "1NT - Pass - 2♦ - Pass - 2♥ - Pass - ?",
+      "conditions": {
+        "hearts_length": {
+          "min": 6
+        },
+        "hcp": {
+          "min": 8
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in hearts with 6+ card suit and game values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_after_transfer_game_6_card_spades",
+      "bid": "4♠",
+      "priority": 824,
+      "description": "After transfer accepted: Game with 6+ spades",
+      "trigger": "1NT - Pass - 2♥ - Pass - 2♠ - Pass - ?",
+      "conditions": {
+        "spades_length": {
+          "min": 6
+        },
+        "hcp": {
+          "min": 8
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in spades with 6+ card suit and game values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_after_transfer_minor_2_suiter",
+      "bid": "2♠",
+      "priority": 820,
+      "description": "After transfer: Show 5-5 in minors (no heart fit)",
+      "trigger": "1NT - Pass - 2♦ - Pass - 2♥ - Pass - ?",
+      "conditions": {
+        "diamonds_length": {
+          "min": 5
+        },
+        "clubs_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "2♠ relay showing 5-5 in minors, seeking best minor game/partscore",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "responder_after_transfer_invitational",
+      "bid": "2NT",
+      "priority": 815,
+      "description": "After transfer: Invitational with 5-card major",
+      "trigger": "1NT - Pass - 2♦ - Pass - 2♥ - Pass - ?",
+      "conditions": {
+        "hearts_length": {
+          "exact": 5
+        },
+        "hcp": {
+          "min": 8,
+          "max": 9
+        },
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "Invitational after transfer with 5 hearts and 8-9 HCP",
       "sets_forcing_level": "NON_FORCING"
     }
   ]

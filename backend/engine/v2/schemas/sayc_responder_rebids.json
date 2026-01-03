@@ -1,0 +1,345 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "responder_rebids",
+  "description": "Responder's rebids after opener shows their hand - preferences, invitations, and game decisions",
+  "rules": [
+    {
+      "id": "responder_preference_to_opener_first_suit",
+      "bid": "2{partner_first_suit}",
+      "priority": 300,
+      "description": "Simple preference back to opener's first suit",
+      "conditions": {
+        "is_rebid": false,
+        "my_bid_count": 1,
+        "hcp": {
+          "min": 6,
+          "max": 10
+        },
+        "support_for_partner_first": {
+          "min": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Preference: Returning to partner's first suit with minimum hand and tolerance",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_raise_opener_rebid_suit",
+      "bid": "3{partner_last_bid_suit}",
+      "priority": 400,
+      "description": "Invitational raise of opener's rebid suit",
+      "conditions": {
+        "my_bid_count": 1,
+        "hcp": {
+          "min": 10,
+          "max": 12
+        },
+        "support_for_partner": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Limit raise: Inviting game with 10-12 HCP and fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_game_in_major_with_fit",
+      "bid": "4♥",
+      "priority": 500,
+      "description": "Game in hearts with fit and values",
+      "conditions": {
+        "my_bid_count": 1,
+        "hcp": {
+          "min": 10
+        },
+        "hearts_length": {
+          "min": 4
+        },
+        "partner_last_bid": {
+          "in": ["3♥", "2♥", "1♥"]
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game with heart fit and sufficient values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_game_in_spades_with_fit",
+      "bid": "4♠",
+      "priority": 500,
+      "description": "Game in spades with fit and values",
+      "conditions": {
+        "my_bid_count": 1,
+        "hcp": {
+          "min": 10
+        },
+        "spades_length": {
+          "min": 4
+        },
+        "partner_last_bid": {
+          "in": ["3♠", "2♠", "1♠"]
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game with spade fit and sufficient values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_accept_opener_jump_to_game",
+      "bid": "4♥",
+      "priority": 510,
+      "description": "Accept opener's invitational jump",
+      "trigger": "1♥ - Pass - 1♠ - Pass - 3♥ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8
+        },
+        "hearts_length": {
+          "min": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Accepting opener's invitational jump with fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_signoff_pass_minimum",
+      "bid": "Pass",
+      "priority": 100,
+      "description": "Pass with minimum opposite minimum rebid",
+      "conditions": {
+        "my_bid_count": 1,
+        "hcp": {
+          "max": 9
+        },
+        "support_for_partner": {
+          "min": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Sign-off: Minimum hand opposite minimum rebid",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_new_minor_forcing",
+      "bid": "2♣",
+      "priority": 800,
+      "description": "New Minor Forcing (Checkback) after 1NT rebid",
+      "trigger": "1♦ - Pass - 1[HS] - Pass - 1NT - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 11
+        },
+        "clubs_length": {
+          "min": 3
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "New Minor Forcing: Asking opener for 3-card major support or 4-card other major",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "responder_fourth_suit_forcing",
+      "bid": "2♣",
+      "priority": 810,
+      "description": "Fourth Suit Forcing for game-going hands",
+      "conditions": {
+        "my_bid_count": 1,
+        "is_fourth_suit_scenario": true,
+        "hcp": {
+          "min": 11
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Fourth Suit Forcing: Artificial bid asking for more information",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "responder_3nt_balanced",
+      "bid": "3NT",
+      "priority": 450,
+      "description": "Jump to 3NT with balanced game values",
+      "conditions": {
+        "my_bid_count": 1,
+        "hcp": {
+          "min": 13,
+          "max": 15
+        },
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "3NT: Game with balanced values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rebid_own_suit_6_card",
+      "bid": "2{my_suit}",
+      "priority": 350,
+      "description": "Rebid own 6+ card suit with weak hand",
+      "conditions": {
+        "my_bid_count": 1,
+        "hcp": {
+          "min": 6,
+          "max": 10
+        },
+        "longest_suit_length": {
+          "min": 6
+        }
+      },
+      "forcing": "none",
+      "explanation": "Rebidding 6+ card suit - sign-off",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_jump_rebid_own_suit",
+      "bid": "3{my_suit}",
+      "priority": 420,
+      "description": "Jump rebid own 6+ card suit - invitational",
+      "conditions": {
+        "my_bid_count": 1,
+        "hcp": {
+          "min": 10,
+          "max": 12
+        },
+        "longest_suit_length": {
+          "min": 6
+        }
+      },
+      "forcing": "none",
+      "explanation": "Jump rebid showing 6+ card suit and invitational values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_support_opener_clubs",
+      "bid": "3♣",
+      "priority": 380,
+      "description": "Support opener's clubs with invitational values",
+      "trigger": "1♠ - Pass - 1NT - Pass - 2♣ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8,
+          "max": 11
+        },
+        "clubs_length": {
+          "min": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Supporting opener's club suit with invitational values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_preference_after_2c_response",
+      "bid": "2♠",
+      "priority": 310,
+      "description": "Simple preference after 2C response",
+      "trigger": "1♠ - Pass - 2♣ - Pass - 2♥ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10,
+          "max": 12
+        },
+        "spades_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Simple preference back to opener's first suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_raise_to_game_after_3_clubs",
+      "bid": "4♠",
+      "priority": 520,
+      "description": "Raise to game after opener shows extras",
+      "trigger": "1♠ - Pass - 2♣ - Pass - 3♣ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10
+        },
+        "spades_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game with spade fit - opener showed extra values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_pass_after_2_level_rebid",
+      "bid": "Pass",
+      "priority": 90,
+      "description": "Pass minimum hand after opener's 2-level rebid",
+      "trigger": "1♥ - Pass - 2♣ - Pass - 2♥ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "max": 10
+        },
+        "hearts_length": {
+          "max": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass: Minimum hand with no fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_support_diamonds_jump",
+      "bid": "3♦",
+      "priority": 430,
+      "description": "Jump support for diamonds",
+      "trigger": "1♠ - Pass - 2♣ - Pass - 2♦ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10
+        },
+        "diamonds_length": {
+          "min": 4
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Jump support for opener's diamond suit",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "responder_5_minor_game",
+      "bid": "5♦",
+      "priority": 480,
+      "description": "5-level minor game with long diamonds",
+      "conditions": {
+        "my_bid_count": 1,
+        "hcp": {
+          "min": 13
+        },
+        "diamonds_length": {
+          "min": 5
+        },
+        "support_for_partner": {
+          "min": 4
+        },
+        "partner_last_bid": {
+          "in": ["1♦", "2♦", "3♦"]
+        }
+      },
+      "forcing": "none",
+      "explanation": "5♦ game with diamond fit and game values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_pass_partner_2_level_preference",
+      "bid": "Pass",
+      "priority": 85,
+      "description": "Pass opener's preference at 2-level",
+      "trigger": "1♣ - Pass - 1♦ - Pass - 1NT - Pass - 2♦ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "max": 14
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass: Opener showed preference, no game interest",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}
