@@ -13,6 +13,30 @@
  */
 
 /* ============================================================================
+   LIGHT MODE OVERRIDES - Ensure light backgrounds in MyProgress
+   The root CSS defines dark mode colors, but MyProgress should be light
+   ============================================================================ */
+
+.my-progress {
+  /* Backgrounds - Light mode */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f3f5;
+
+  /* Text colors - Dark text on light background */
+  --text-primary: #1f2937;
+  --text-primary-dark: #1f2937;
+  --text-secondary: #6b7280;
+  --text-secondary-dark: #6b7280;
+  --text-muted: #9ca3af;
+
+  /* Borders */
+  --border-color: #e5e7eb;
+}
+
+/* ============================================================================
    CONTAINER & HEADER
    ============================================================================ */
 

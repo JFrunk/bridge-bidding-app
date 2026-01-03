@@ -2170,78 +2170,104 @@
   }
 }
 
-/* ===== RESULT SECTION ===== */
-/* Replaces ScoreModal when coming from MyProgress or post-hand flow */
+/* ===== CONSOLIDATED DEAL STATS ===== */
+/* New simplified layout for deal section */
 
-.result-section {
+.deal-stats-header {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-4, 16px);
+  gap: var(--space-2, 8px);
 }
 
-.result-main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3, 12px);
-  text-align: center;
+.deal-stats-header .accuracy-badge.bidding {
+  background: var(--bg-info-light, #dbeafe);
+  color: #1e40af;
 }
 
-.result-contract {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3, 12px);
-}
-
-.contract-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-primary, #1f2937);
-}
-
-.result-badge {
-  font-size: var(--text-sm, 14px);
-  font-weight: 600;
-  padding: 6px 16px;
-  border-radius: 20px;
-}
-
-.result-badge.made {
-  background: var(--bg-success-light, #dcfce7);
-  color: var(--color-success-dark, #166534);
-}
-
-.result-badge.down {
-  background: var(--bg-danger-light, #fee2e2);
-  color: var(--color-danger-dark, #991b1b);
-}
-
-.result-details {
+.deal-stats-consolidated {
   display: flex;
   justify-content: center;
-  gap: var(--space-6, 24px);
+  gap: var(--space-5, 20px);
+  padding: var(--space-4, 16px);
+  background: var(--bg-tertiary, #f1f5f9);
+  border-radius: var(--radius-md, 8px);
+  margin-top: var(--space-4, 16px);
   flex-wrap: wrap;
 }
 
-.result-stat {
+.stat-block {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
+  min-width: 80px;
 }
 
-.result-stat .stat-label {
+.stat-block .stat-label {
   font-size: var(--text-xs, 12px);
   color: var(--text-secondary, #6b7280);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.result-stat .stat-value {
-  font-size: var(--text-lg, 18px);
+.stat-block .stat-value {
+  font-size: var(--text-base, 16px);
   font-weight: 600;
   color: var(--text-primary, #1f2937);
 }
+
+.stat-block .stat-value.success {
+  color: var(--color-success-dark, #166534);
+}
+
+.stat-block .stat-value.danger {
+  color: var(--color-danger-dark, #991b1b);
+}
+
+/* Replay start hint */
+.replay-start-hint {
+  text-align: center;
+  padding: var(--space-4, 16px);
+  background: var(--bg-tertiary, #f1f5f9);
+  border-radius: var(--radius-md, 8px);
+  color: var(--text-secondary, #6b7280);
+}
+
+.replay-start-hint p {
+  margin: 0;
+  font-size: var(--text-sm, 14px);
+}
+
+.replay-start-hint strong {
+  color: var(--text-primary, #1f2937);
+}
+
+/* Responsive consolidated stats */
+@media (max-width: 480px) {
+  .deal-stats-consolidated {
+    gap: var(--space-3, 12px);
+    padding: var(--space-3, 12px);
+  }
+
+  .stat-block {
+    min-width: 70px;
+  }
+
+  .stat-block .stat-value {
+    font-size: var(--text-sm, 14px);
+  }
+
+  .deal-stats-header {
+    flex-wrap: wrap;
+  }
+
+  .deal-stats-header .accuracy-badge {
+    font-size: var(--text-xs, 12px);
+    padding: 2px 6px;
+  }
+}
+
+/* ===== RESULT SECTION ===== */
+/* Replaces ScoreModal when coming from MyProgress or post-hand flow */
 
 .result-actions {
   display: flex;
