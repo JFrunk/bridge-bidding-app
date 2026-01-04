@@ -76,6 +76,72 @@
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
+      "id": "takeout_double_vs_heart_with_spades",
+      "bid": "X",
+      "priority": 792,
+      "description": "Takeout double over 1♥ with spade suit",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": "1H",
+        "hcp": {
+          "min": 10
+        },
+        "spades_length": {
+          "min": 4
+        },
+        "clubs_length": {
+          "min": 3
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Takeout double with {hcp} HCP showing spades and minor support",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_vs_spade_with_hearts",
+      "bid": "X",
+      "priority": 792,
+      "description": "Takeout double over 1♠ with heart suit",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": "1S",
+        "hcp": {
+          "min": 10
+        },
+        "hearts_length": {
+          "min": 4
+        },
+        "clubs_length": {
+          "min": 3
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Takeout double with {hcp} HCP showing hearts and minor support",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_vs_minor_with_majors",
+      "bid": "X",
+      "priority": 792,
+      "description": "Takeout double over minor with both majors",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": "1[CD]",
+        "hcp": {
+          "min": 10
+        },
+        "spades_length": {
+          "min": 4
+        },
+        "hearts_length": {
+          "min": 4
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Takeout double with {hcp} HCP and 4-4 majors",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
       "id": "negative_double_1_level",
       "bid": "X",
       "priority": 800,

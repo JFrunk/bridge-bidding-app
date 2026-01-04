@@ -288,8 +288,11 @@ class BiddingEngineV2Schema:
         # Check if all unbid suits have support (for takeout doubles)
         opening_bid = features.get('opening_bid')
         if opening_bid and len(opening_bid) >= 2:
-            opening_suit = opening_bid[1] if opening_bid[0].isdigit() else None
-            if opening_suit:
+            opening_suit_letter = opening_bid[1] if opening_bid[0].isdigit() else None
+            if opening_suit_letter:
+                # Convert letter format (C, D, H, S) to symbol format (♣, ♦, ♥, ♠)
+                letter_to_symbol = {'C': '♣', 'D': '♦', 'H': '♥', 'S': '♠'}
+                opening_suit = letter_to_symbol.get(opening_suit_letter, opening_suit_letter)
                 unbid_suits = [s for s in ['♠', '♥', '♦', '♣'] if s != opening_suit]
                 support_counts = [hand.suit_lengths.get(s, 0) for s in unbid_suits]
                 features['support_all_unbid'] = all(c >= 3 for c in support_counts)
@@ -303,8 +306,13 @@ class BiddingEngineV2Schema:
             interference = features.get('_nested_features', {}).get('auction_features', {}).get('interference', {})
             if interference.get('present'):
                 interf_bid = interference.get('bid', '')
-                interf_suit = interf_bid[1] if len(interf_bid) >= 2 and interf_bid[0].isdigit() else None
-                opening_suit = opening_bid[1] if len(opening_bid) >= 2 and opening_bid[0].isdigit() else None
+                interf_suit_letter = interf_bid[1] if len(interf_bid) >= 2 and interf_bid[0].isdigit() else None
+                opening_suit_letter = opening_bid[1] if len(opening_bid) >= 2 and opening_bid[0].isdigit() else None
+
+                # Convert letter format (C, D, H, S) to symbol format (♣, ♦, ♥, ♠)
+                letter_to_symbol = {'C': '♣', 'D': '♦', 'H': '♥', 'S': '♠'}
+                interf_suit = letter_to_symbol.get(interf_suit_letter, interf_suit_letter)
+                opening_suit = letter_to_symbol.get(opening_suit_letter, opening_suit_letter)
 
                 bid_suits = {opening_suit, interf_suit} - {None}
                 unbid_majors = {'♠', '♥'} - bid_suits
