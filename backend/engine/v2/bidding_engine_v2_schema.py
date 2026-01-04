@@ -8,6 +8,7 @@ Python code. This allows for:
 3. Machine-readable rules for analysis and testing
 4. Cleaner separation of bidding knowledge from engine logic
 5. Proper forcing level tracking across the auction
+6. Monte Carlo integration for bid validation (optional)
 """
 
 from typing import Dict, Optional, Tuple, List
@@ -19,6 +20,7 @@ from engine.v2.interpreters.schema_interpreter import (
     BidValidationResult,
     ForcingLevel
 )
+from engine.v2.inference.conflict_resolver import ConflictResolver, PassThroughResolver
 
 
 class BiddingEngineV2Schema:
@@ -32,17 +34,26 @@ class BiddingEngineV2Schema:
     - JSON-based bidding rules
     - Forcing level state tracking (NON_FORCING, FORCING_1_ROUND, GAME_FORCE)
     - Validation of bids against forcing constraints
+    - Optional Monte Carlo integration for slam/competitive validation
     """
 
-    def __init__(self, schema_dir: str = None):
+    def __init__(self, schema_dir: str = None, simulator=None):
         """
         Initialize the schema-driven engine.
 
         Args:
             schema_dir: Path to schema directory. Defaults to engine/v2/schemas/
+            simulator: Optional Monte Carlo simulator for bid validation.
+                      If None, conflict resolver operates in pass-through mode.
         """
         self.interpreter = SchemaInterpreter(schema_dir)
         self._bid_legality_cache = {}
+
+        # Initialize conflict resolver for Monte Carlo integration
+        if simulator is not None:
+            self.conflict_resolver = ConflictResolver(simulator)
+        else:
+            self.conflict_resolver = PassThroughResolver()
 
     def new_deal(self):
         """Reset state for a new deal. Call this before each new hand."""
@@ -104,6 +115,18 @@ class BiddingEngineV2Schema:
                     # Skip this bid if it violates forcing
                     continue
 
+                # Run bid through conflict resolver for Monte Carlo validation
+                # This can veto slams or modify competitive decisions
+                proposed_rule = {
+                    'bid': bid,
+                    'priority': candidate.priority,
+                    'explanation': candidate.explanation,
+                    'rule_id': candidate.rule_id
+                }
+                final_bid, final_explanation = self.conflict_resolver.review_bid(
+                    proposed_rule, hand, auction_history, features
+                )
+
                 # Update forcing state based on this bid's metadata
                 if candidate.sets_forcing_level:
                     self.interpreter._update_forcing_state(
@@ -111,7 +134,7 @@ class BiddingEngineV2Schema:
                         candidate.rule_id
                     )
 
-                return (bid, candidate.explanation)
+                return (final_bid, final_explanation)
 
         # Fallback to Pass (but check forcing constraints first)
         forcing_validation = self.interpreter.validate_bid_against_forcing("Pass")
@@ -271,6 +294,14 @@ class BiddingEngineV2Schema:
     def list_available_rules(self, category: str = None) -> List[Dict]:
         """List all available bidding rules for inspection."""
         return self.interpreter.list_rules(category)
+
+    def get_resolver_stats(self) -> Dict:
+        """Get conflict resolver statistics (vetoes, reviews, etc.)."""
+        return self.conflict_resolver.get_stats()
+
+    def reset_resolver_stats(self):
+        """Reset conflict resolver statistics."""
+        self.conflict_resolver.reset_stats()
 
 
 # Create singleton for easy import
