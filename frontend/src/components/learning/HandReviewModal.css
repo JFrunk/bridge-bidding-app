@@ -1044,15 +1044,18 @@
   border-radius: 12px;
   padding: 16px;
   border-left: 4px solid #e5e7eb;
-  margin-bottom: 12px;
-  /* Fixed minimum height to prevent layout shift when feedback appears/disappears */
-  min-height: 80px;
+  /* No margin-bottom - container handles spacing */
   box-sizing: border-box;
 }
 
-/* Container to reserve space for feedback panel even when empty */
+/* Container with FIXED height to prevent navigation button bounce */
+/* Height accommodates: header (28px) + body (~60px) + padding (32px) + buffer */
 .trick-feedback-container {
-  min-height: 92px; /* 80px panel + 12px margin */
+  height: 140px;
+  min-height: 140px;
+  max-height: 140px;
+  overflow-y: auto;
+  margin-bottom: 12px;
 }
 
 .trick-feedback-panel.no-data {
@@ -1299,6 +1302,9 @@
   justify-content: center;
   align-items: center;
   min-width: 180px;
+  /* Fixed height to prevent layout shift when switching between info box and trick display */
+  height: 200px;
+  min-height: 200px;
 }
 
 /* Replay hand display */
@@ -1606,6 +1612,17 @@
   }
 
   .replay-trick-display {
+    width: 160px;
+    height: 160px;
+  }
+
+  /* Must match .replay-trick-display size to prevent layout shift */
+  .replay-center {
+    height: 160px;
+    min-height: 160px;
+  }
+
+  .center-info-box {
     width: 160px;
     height: 160px;
   }
@@ -2137,6 +2154,7 @@
 }
 
 /* Center info box - shown at position 0 instead of trick display */
+/* Must match .replay-trick-display height (200px) to prevent layout shift */
 .center-info-box {
   display: flex;
   flex-direction: column;
@@ -2147,8 +2165,9 @@
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
   border: 2px solid #7dd3fc;
   border-radius: 12px;
-  min-width: 160px;
-  min-height: 160px;
+  width: 200px;
+  height: 200px;
+  box-sizing: border-box;
 }
 
 .center-contract {
@@ -2168,11 +2187,9 @@
   color: #6b7280;
 }
 
-/* Responsive center info box */
+/* Responsive center info box - font sizes only, dimensions set earlier to match trick display */
 @media (max-width: 480px) {
   .center-info-box {
-    min-width: 120px;
-    min-height: 120px;
     padding: 12px;
   }
 
