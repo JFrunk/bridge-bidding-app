@@ -30,6 +30,8 @@ from engine.bridge_rules_engine import BridgeRulesEngine, GameState as BridgeGam
 from engine.feedback.play_feedback import get_play_feedback_generator
 from engine.play.dds_analysis import get_dds_service, is_dds_available
 
+# Analysis engine for post-game analysis (bidding efficiency, quadrant classification)
+from engine.analysis import get_analysis_engine
 
 # Session state management (fixes global state race conditions)
 from core.session_state import SessionStateManager, get_session_id_from_request
@@ -524,6 +526,134 @@ def log_ai_play(card, position, ai_level, solve_time_ms, used_fallback=False,
 
 
 # ============================================================================
+# POST-GAME ANALYSIS HELPER
+# ============================================================================
+
+import threading
+
+def run_post_game_analysis(
+    session_hand_id: int,
+    hands: dict,
+    contract,
+    play_history: list,
+    actual_tricks: int,
+    actual_score: int,
+    vulnerability: str,
+    dealer: str,
+):
+    """
+    Run post-game analysis in background thread.
+
+    This analyzes the completed hand for:
+    - Bidding efficiency (optimal/underbid/overbid)
+    - Quadrant classification (bidding vs play quality)
+    - Points left on table
+    - Opening lead quality
+
+    The results are stored in the session_hands table for dashboard display.
+
+    Args:
+        session_hand_id: ID of the session_hands row to update
+        hands: Dict of position -> Hand objects (original deal)
+        contract: Contract object
+        play_history: List of plays from the hand
+        actual_tricks: Tricks taken by declarer
+        actual_score: Score achieved
+        vulnerability: Vulnerability string
+        dealer: Dealer position
+    """
+    try:
+        engine = get_analysis_engine()
+
+        # Skip if no DDS available (analysis will be minimal)
+        # We still run it to get basic quadrant based on made/down
+        result = engine.analyze_hand(
+            hands=hands,
+            contract=contract,
+            play_history=play_history,
+            actual_tricks=actual_tricks,
+            actual_score=actual_score,
+            vulnerability=vulnerability,
+            dealer=dealer,
+        )
+
+        # Store results in database
+        success = engine.store_analysis(session_hand_id, result)
+
+        if success:
+            print(f"✅ Post-game analysis stored for hand {session_hand_id}")
+            print(f"   Quadrant: {result.quadrant.value}, Efficiency: {result.bid_efficiency.value}")
+            if result.points_left_on_table > 0:
+                print(f"   Points left on table: {result.points_left_on_table}")
+        else:
+            print(f"⚠️ Failed to store analysis for hand {session_hand_id}")
+
+    except Exception as e:
+        # Never let analysis break the main flow
+        print(f"⚠️ Post-game analysis failed for hand {session_hand_id}: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+def trigger_post_game_analysis(
+    session_hand_id: int,
+    original_deal: dict,
+    contract,
+    play_history: list,
+    actual_tricks: int,
+    actual_score: int,
+    vulnerability: str,
+    dealer: str,
+):
+    """
+    Trigger post-game analysis in a background thread.
+
+    This is called from complete_session_hand after the hand is saved.
+    Running in a thread ensures the API response is not delayed.
+
+    Args:
+        session_hand_id: ID of the session_hands row
+        original_deal: Dict of position -> Hand (from state.original_deal)
+        contract: Contract object
+        play_history: List of plays
+        actual_tricks: Tricks taken
+        actual_score: Score achieved
+        vulnerability: Vulnerability string
+        dealer: Dealer position
+    """
+    # Convert original_deal to the format expected by analysis engine
+    # original_deal uses full names (North, East, etc.)
+    hands = {}
+    name_to_pos = {'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W'}
+
+    if original_deal:
+        for full_name, hand in original_deal.items():
+            pos = name_to_pos.get(full_name, full_name)
+            hands[pos] = hand
+    else:
+        print("⚠️ No original_deal available for analysis")
+        return
+
+    # Start analysis in background thread
+    thread = threading.Thread(
+        target=run_post_game_analysis,
+        args=(
+            session_hand_id,
+            hands,
+            contract,
+            play_history,
+            actual_tricks,
+            actual_score,
+            vulnerability,
+            dealer,
+        ),
+        daemon=True,  # Thread will be killed when main program exits
+    )
+    thread.start()
+    print(f"🔄 Post-game analysis started for hand {session_hand_id} (background)")
+
+
+# ============================================================================
 # SESSION STATE HELPER FUNCTION
 # ============================================================================
 
@@ -803,6 +933,20 @@ def complete_session_hand():
         # Save to database and get hand_id
         hand_id = session_manager.save_hand_result(state.game_session, hand_data)
         print(f"✅ Hand {state.game_session.hands_completed} saved to session_hands table (id={hand_id})")
+
+        # Trigger post-game analysis in background thread
+        # This analyzes bidding efficiency, quadrant classification, points left on table
+        if hand_id and state.original_deal and contract:
+            trigger_post_game_analysis(
+                session_hand_id=hand_id,
+                original_deal=state.original_deal,
+                contract=contract,
+                play_history=play_history,
+                actual_tricks=score_data.get('tricks_taken', 0),
+                actual_score=hand_score,
+                vulnerability=state.vulnerability or 'None',
+                dealer=GameSession.CHICAGO_DEALERS[(state.game_session.hands_completed - 1) % 4],
+            )
 
         # Check if session is complete
         session_complete = state.game_session.is_complete()

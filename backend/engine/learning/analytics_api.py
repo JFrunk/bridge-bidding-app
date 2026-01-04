@@ -754,6 +754,15 @@ def get_dashboard():
         # Get recent play decisions
         recent_play_decisions = get_recent_play_decisions_for_user(user_id, limit=10)
 
+        # Get bidding analysis stats (quadrant/efficiency from AnalysisEngine)
+        bidding_analysis_stats = get_bidding_analysis_stats_for_user(user_id)
+
+        # Get recent analyzed hands for quadrant chart
+        recent_analyzed_hands = get_recent_analyzed_hands_for_user(user_id, limit=20)
+
+        # Get strain accuracy for heatmap
+        strain_accuracy = get_strain_accuracy_for_user(user_id)
+
         # Get insight summary (bidding)
         insights = analyzer.get_insight_summary(user_id)
 
@@ -780,6 +789,10 @@ def get_dashboard():
             'recent_decisions': recent_decisions,  # Phase 1: NEW
             'play_feedback_stats': play_feedback_stats,  # DDS-based play evaluation
             'recent_play_decisions': recent_play_decisions,  # Recent play decisions
+            # Comprehensive analysis (Phase 1 - AnalysisEngine)
+            'bidding_analysis': bidding_analysis_stats,  # Quadrant/efficiency stats
+            'recent_analyzed_hands': recent_analyzed_hands,  # For quadrant chart
+            'strain_accuracy': strain_accuracy,  # For heatmap
             'insights': {
                 'total_patterns': insights.total_patterns,
                 'active_patterns': insights.active_patterns,
@@ -899,6 +912,216 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
 
     finally:
         conn.close()
+
+
+def get_bidding_analysis_stats_for_user(user_id: int) -> Dict:
+    """
+    Get bidding efficiency and quadrant analysis stats from session_hands.
+
+    This uses the new analysis columns populated by the AnalysisEngine:
+    - quadrant: Q1/Q2/Q3/Q4 classification
+    - bid_efficiency: optimal/underbid/overbid
+    - points_left_on_table: Points lost from underbidding
+
+    Returns:
+        - total_analyzed_hands: Hands with analysis data
+        - quadrant_distribution: {Q1: count, Q2: count, ...}
+        - quadrant_percentages: {Q1: pct, Q2: pct, ...}
+        - bidding_efficiency: {optimal: count, underbid: count, overbid: count}
+        - efficiency_percentages: {optimal: pct, ...}
+        - total_points_left: Sum of points left on table
+        - avg_points_left_when_underbid: Average per underbid hand
+        - strain_accuracy: Per-strain bidding accuracy (if available)
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Try to get stats from the v_user_analysis_stats view
+        cursor.execute("""
+            SELECT * FROM v_user_analysis_stats WHERE user_id = ?
+        """, (user_id,))
+
+        row = cursor.fetchone()
+
+        if row:
+            # Convert row to dict using column names
+            columns = [desc[0] for desc in cursor.description]
+            stats = dict(zip(columns, row))
+
+            return {
+                'total_analyzed_hands': stats.get('total_analyzed_hands', 0),
+                'quadrant_distribution': {
+                    'Q1': stats.get('q1_count', 0),
+                    'Q2': stats.get('q2_count', 0),
+                    'Q3': stats.get('q3_count', 0),
+                    'Q4': stats.get('q4_count', 0),
+                },
+                'quadrant_percentages': {
+                    'Q1': stats.get('q1_pct', 0),
+                    'Q2': stats.get('q2_pct', 0),
+                    'Q3': stats.get('q3_pct', 0),
+                    'Q4': stats.get('q4_pct', 0),
+                },
+                'bidding_efficiency': {
+                    'optimal': stats.get('optimal_bids', 0),
+                    'underbid': stats.get('underbids', 0),
+                    'overbid': stats.get('overbids', 0),
+                },
+                'efficiency_percentages': {
+                    'optimal': stats.get('optimal_bid_pct', 0),
+                    'underbid': stats.get('underbid_pct', 0),
+                    'overbid': stats.get('overbid_pct', 0),
+                },
+                'total_points_left': stats.get('total_points_left', 0),
+                'avg_points_left_when_underbid': stats.get('avg_points_left_when_underbid', 0),
+                'avg_tricks_vs_dd': stats.get('avg_tricks_vs_dd', 0),
+                'avg_score_vs_par': stats.get('avg_score_vs_par', 0),
+            }
+
+        # Fallback: No analysis data yet
+        return {
+            'total_analyzed_hands': 0,
+            'quadrant_distribution': {'Q1': 0, 'Q2': 0, 'Q3': 0, 'Q4': 0},
+            'quadrant_percentages': {'Q1': 0, 'Q2': 0, 'Q3': 0, 'Q4': 0},
+            'bidding_efficiency': {'optimal': 0, 'underbid': 0, 'overbid': 0},
+            'efficiency_percentages': {'optimal': 0, 'underbid': 0, 'overbid': 0},
+            'total_points_left': 0,
+            'avg_points_left_when_underbid': 0,
+            'avg_tricks_vs_dd': 0,
+            'avg_score_vs_par': 0,
+        }
+
+    except Exception as e:
+        # View might not exist if migration hasn't run
+        print(f"Could not get bidding analysis stats: {e}")
+        return {
+            'total_analyzed_hands': 0,
+            'quadrant_distribution': {'Q1': 0, 'Q2': 0, 'Q3': 0, 'Q4': 0},
+            'quadrant_percentages': {'Q1': 0, 'Q2': 0, 'Q3': 0, 'Q4': 0},
+            'bidding_efficiency': {'optimal': 0, 'underbid': 0, 'overbid': 0},
+            'efficiency_percentages': {'optimal': 0, 'underbid': 0, 'overbid': 0},
+            'total_points_left': 0,
+            'avg_points_left_when_underbid': 0,
+            'avg_tricks_vs_dd': 0,
+            'avg_score_vs_par': 0,
+        }
+
+    finally:
+        conn.close()
+
+
+def get_recent_analyzed_hands_for_user(user_id: int, limit: int = 20) -> List[Dict]:
+    """
+    Get recent hands with analysis data for quadrant chart display.
+
+    Returns list of hands with quadrant classification and key metrics.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT
+                hand_id, contract_display, quadrant, bid_efficiency,
+                points_left_on_table, user_was_declarer, tricks_taken,
+                dd_tricks, play_delta, bid_delta
+            FROM v_recent_boards_for_quadrant
+            WHERE user_id = ?
+            LIMIT ?
+        """, (user_id, limit))
+
+        hands = []
+        for row in cursor.fetchall():
+            columns = [desc[0] for desc in cursor.description]
+            hand_dict = dict(zip(columns, row))
+            hands.append(hand_dict)
+
+        return hands
+
+    except Exception as e:
+        print(f"Could not get recent analyzed hands: {e}")
+        return []
+
+    finally:
+        conn.close()
+
+
+def get_strain_accuracy_for_user(user_id: int) -> Dict[str, Dict]:
+    """
+    Get bidding accuracy broken down by strain (for heatmap).
+
+    Returns dict mapping strain (NT, S, H, D, C) to accuracy metrics.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT strain, total_contracts, makeable_contracts,
+                   bidding_accuracy_pct, execution_pct
+            FROM v_user_strain_accuracy
+            WHERE user_id = ?
+        """, (user_id,))
+
+        result = {}
+        for row in cursor.fetchall():
+            strain = row[0]
+            if strain:  # Skip NULL strains
+                result[strain] = {
+                    'total': row[1] or 0,
+                    'makeable': row[2] or 0,
+                    'accuracy_pct': row[3] or 0,
+                    'execution_pct': row[4] or 0,
+                }
+
+        return result
+
+    except Exception as e:
+        print(f"Could not get strain accuracy: {e}")
+        return {}
+
+    finally:
+        conn.close()
+
+
+def get_bidding_analysis():
+    """
+    GET /api/analytics/bidding-analysis?user_id=<id>
+    Get comprehensive bidding analysis stats for user.
+
+    Returns:
+        - bidding_analysis: Quadrant/efficiency aggregate stats
+        - recent_analyzed_hands: Recent hands for quadrant chart
+        - strain_accuracy: Per-strain accuracy for heatmap
+
+    This is a focused endpoint for the bidding analysis visualization.
+    The same data is also included in the main /api/analytics/dashboard response.
+    """
+    user_id = request.args.get('user_id', type=int)
+
+    if not user_id:
+        return jsonify({'error': 'user_id required'}), 400
+
+    try:
+        # Get bidding analysis stats
+        bidding_analysis_stats = get_bidding_analysis_stats_for_user(user_id)
+
+        # Get recent analyzed hands for quadrant chart
+        recent_analyzed_hands = get_recent_analyzed_hands_for_user(user_id, limit=20)
+
+        # Get strain accuracy for heatmap
+        strain_accuracy = get_strain_accuracy_for_user(user_id)
+
+        return jsonify({
+            'user_id': user_id,
+            'bidding_analysis': bidding_analysis_stats,
+            'recent_analyzed_hands': recent_analyzed_hands,
+            'strain_accuracy': strain_accuracy,
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 def get_celebrations():
@@ -3171,6 +3394,10 @@ def register_analytics_endpoints(app):
     # Board analysis for Performance Overview chart
     app.route('/api/analytics/board-analysis', methods=['GET'])(get_board_analysis)
 
+    # Bidding analysis (quadrant chart, efficiency, strain accuracy)
+    app.route('/api/analytics/bidding-analysis', methods=['GET'])(get_bidding_analysis)
+
     print("✓ Analytics API endpoints registered")
+    print("✓ Bidding analysis endpoint registered")
     print("✓ Four-dimension progress endpoint registered")
     print("✓ Hand history & DDS analysis endpoints registered")
