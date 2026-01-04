@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { getBiddingHandDetail } from '../../services/analyticsService';
+import BiddingGapAnalysis from './BiddingGapAnalysis';
 import './BidReviewModal.css';
 
 // Rating colors and labels
@@ -265,6 +266,7 @@ const BidReviewModal = ({ handId, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedBidIndex, setSelectedBidIndex] = useState(null);
+  const [showRuleAnalysis, setShowRuleAnalysis] = useState(false);
 
   // Fetch bidding hand details
   useEffect(() => {
@@ -400,6 +402,28 @@ const BidReviewModal = ({ handId, onClose }) => {
               )}
             </div>
             <BidAnalysisPanel decision={selectedDecision} />
+          </div>
+
+          {/* Rule analysis toggle and component */}
+          <div className="section rule-analysis-section">
+            <button
+              className={`rule-analysis-toggle ${showRuleAnalysis ? 'active' : ''}`}
+              onClick={() => setShowRuleAnalysis(!showRuleAnalysis)}
+            >
+              {showRuleAnalysis ? '▼ Hide Rule Analysis' : '▶ Show Rule Analysis'}
+              <span className="toggle-hint">See which bidding rules matched or nearly matched</span>
+            </button>
+
+            {showRuleAnalysis && user_hand?.cards && (
+              <BiddingGapAnalysis
+                handCards={user_hand.cards}
+                auctionHistory={selectedDecision?.auction_before || []}
+                position={user_position}
+                vulnerability={handData?.vulnerability}
+                dealer={dealer}
+                targetBid={null}
+              />
+            )}
           </div>
         </div>
       </div>

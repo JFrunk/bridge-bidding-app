@@ -1,0 +1,236 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "slam_controls",
+  "description": "Control bidding for slam exploration after major fit confirmed",
+  "rules": [
+    {
+      "id": "slam_brake_denied_control",
+      "bid": "4{agreed_suit}",
+      "priority": 950,
+      "description": "Sign off in game when a suit is unprotected",
+      "conditions": {
+        "in_slam_zone": true,
+        "has_denied_control": true,
+        "agreed_suit": {"in": ["♥", "♠"]}
+      },
+      "forcing": "none",
+      "explanation": "Signing off - no control in {denied_control_suit}",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "slam_blackwood_all_controlled",
+      "bid": "4NT",
+      "priority": 940,
+      "description": "RKCB when all suits controlled and slam values",
+      "conditions": {
+        "in_slam_zone": true,
+        "has_denied_control": false,
+        "partnership_has_slam_values": true,
+        "hcp": {"min": 14}
+      },
+      "forcing": "one_round",
+      "explanation": "Blackwood asking for keycards - all suits controlled",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "control_bid_clubs_first_round",
+      "bid": "4♣",
+      "priority": 920,
+      "description": "Control bid showing first-round control in clubs",
+      "conditions": {
+        "in_slam_zone": true,
+        "has_unbid_control": true,
+        "lowest_control_suit": "♣",
+        "clubs_control": 1,
+        "hcp": {"min": 14}
+      },
+      "forcing": "one_round",
+      "explanation": "Control bid showing Ace or void in clubs",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "control_bid_clubs_second_round",
+      "bid": "4♣",
+      "priority": 915,
+      "description": "Control bid showing second-round control in clubs",
+      "conditions": {
+        "in_slam_zone": true,
+        "has_unbid_control": true,
+        "lowest_control_suit": "♣",
+        "clubs_control": 2,
+        "hcp": {"min": 15}
+      },
+      "forcing": "one_round",
+      "explanation": "Control bid showing King or singleton in clubs",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "control_bid_diamonds_first_round",
+      "bid": "4♦",
+      "priority": 910,
+      "description": "Control bid showing first-round control in diamonds",
+      "conditions": {
+        "in_slam_zone": true,
+        "has_unbid_control": true,
+        "lowest_control_suit": "♦",
+        "diamonds_control": 1,
+        "hcp": {"min": 14}
+      },
+      "forcing": "one_round",
+      "explanation": "Control bid showing Ace or void in diamonds",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "control_bid_diamonds_second_round",
+      "bid": "4♦",
+      "priority": 905,
+      "description": "Control bid showing second-round control in diamonds",
+      "conditions": {
+        "in_slam_zone": true,
+        "has_unbid_control": true,
+        "lowest_control_suit": "♦",
+        "diamonds_control": 2,
+        "hcp": {"min": 15}
+      },
+      "forcing": "one_round",
+      "explanation": "Control bid showing King or singleton in diamonds",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "control_bid_hearts_first_round",
+      "bid": "4♥",
+      "priority": 900,
+      "description": "Control bid showing first-round control in hearts (spades trump)",
+      "conditions": {
+        "in_slam_zone": true,
+        "has_unbid_control": true,
+        "lowest_control_suit": "♥",
+        "hearts_control": 1,
+        "agreed_suit": "♠",
+        "hcp": {"min": 14}
+      },
+      "forcing": "one_round",
+      "explanation": "Control bid showing Ace or void in hearts",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "control_bid_hearts_second_round",
+      "bid": "4♥",
+      "priority": 895,
+      "description": "Control bid showing second-round control in hearts (spades trump)",
+      "conditions": {
+        "in_slam_zone": true,
+        "has_unbid_control": true,
+        "lowest_control_suit": "♥",
+        "hearts_control": 2,
+        "agreed_suit": "♠",
+        "hcp": {"min": 15}
+      },
+      "forcing": "one_round",
+      "explanation": "Control bid showing King or singleton in hearts",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "rkcb_response_1_or_4",
+      "bid": "5♣",
+      "priority": 980,
+      "description": "RKCB response showing 1 or 4 keycards",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "fit_known": true,
+        "key_card_count_is_1_or_4": true
+      },
+      "forcing": "none",
+      "explanation": "5♣ showing 1 or 4 keycards (RKCB 1430)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "rkcb_response_0_or_3",
+      "bid": "5♦",
+      "priority": 979,
+      "description": "RKCB response showing 0 or 3 keycards",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "fit_known": true,
+        "key_card_count_is_0_or_3": true
+      },
+      "forcing": "none",
+      "explanation": "5♦ showing 0 or 3 keycards (RKCB 1430)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "rkcb_response_2_no_queen",
+      "bid": "5♥",
+      "priority": 978,
+      "description": "RKCB response showing 2 keycards without trump Queen",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "fit_known": true,
+        "key_card_count_is_2": true,
+        "has_trump_queen": false
+      },
+      "forcing": "none",
+      "explanation": "5♥ showing 2 keycards, no trump Queen (RKCB 1430)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "rkcb_response_2_with_queen",
+      "bid": "5♠",
+      "priority": 977,
+      "description": "RKCB response showing 2 keycards with trump Queen",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "fit_known": true,
+        "key_card_count_is_2": true,
+        "has_trump_queen": true
+      },
+      "forcing": "none",
+      "explanation": "5♠ showing 2 keycards with trump Queen (RKCB 1430)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "bid_slam_all_keycards",
+      "bid": "6{agreed_suit}",
+      "priority": 970,
+      "description": "Bid slam with all keycards",
+      "conditions": {
+        "partner_last_bid": {"in": ["5♣", "5♦", "5♥", "5♠"]},
+        "have_all_keycards": true,
+        "fit_known": true
+      },
+      "forcing": "none",
+      "explanation": "Slam - partnership has all keycards",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "sign_off_missing_keycards",
+      "bid": "5{agreed_suit}",
+      "priority": 965,
+      "description": "Sign off at 5-level missing keycards",
+      "conditions": {
+        "partner_last_bid": {"in": ["5♣", "5♦", "5♥", "5♠"]},
+        "missing_two_keycards": true,
+        "fit_known": true,
+        "agreed_suit": {"in": ["♥", "♠"]}
+      },
+      "forcing": "none",
+      "explanation": "Stopping at 5-level - missing keycards",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "slam_zone_pass_game",
+      "bid": "Pass",
+      "priority": 850,
+      "description": "Pass partner's game bid in slam zone with minimum",
+      "conditions": {
+        "major_fit_gf": true,
+        "partner_last_bid": {"in": ["4♥", "4♠"]},
+        "hcp": {"max": 14}
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's game with minimum",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

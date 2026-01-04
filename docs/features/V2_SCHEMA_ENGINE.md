@@ -1,8 +1,8 @@
 # V2 Schema-Driven Bidding Engine
 
 **Created:** 2026-01-03
-**Updated:** 2026-01-03
-**Status:** Production (86.5% native coverage, V1 fallback enabled)
+**Updated:** 2026-01-04
+**Status:** Production (85-86% native coverage, V1 fallback enabled)
 
 ## Overview
 
@@ -168,18 +168,29 @@ NON_FORCING ←→ FORCING_1_ROUND → GAME_FORCE (sticky)
 
 ## Current Performance
 
-**V2 Native Coverage:** 86.5% (V1 fallback rate: 13.5%)
+**V2 Native Coverage:** 85-86% (V1 fallback rate: 14-15%)
 
-Based on 1000-hand test runs:
+Based on 200-deal test runs with multiple random seeds:
 
 | Category | V2 Native % | Notes |
 |----------|-------------|-------|
 | Opening | 95%+ | Comprehensive coverage |
 | Response | 90%+ | Includes invitational jumps |
 | Rebid | 85%+ | Forcing 1NT rebids implemented |
-| Overcall | 80%+ | Simple/jump overcalls |
-| Advancer | 75%+ | Double responses, overcall raises |
+| Overcall | 80%+ | Simple/jump overcalls, Michaels, Unusual 2NT |
+| Advancer | 100% | Double responses, overcall raises |
 | Responder Rebid | 70%+ | Invitational sequences |
+| Competitive Later | 100% | Pass in later competitive rounds |
+
+### Top V1 Fallback Categories
+
+| Explanation | Count | Notes |
+|-------------|-------|-------|
+| No appropriate bid found | ~77 | Gaps in responses/rebids |
+| No bid found by any module | ~47 | Edge case auctions |
+| Game safety net | ~13 | GF sequences need more rules |
+| Blackwood responses | ~7 | Some RKCB edge cases |
+| Rebid gaps | ~7 | Opener/responder rebid coverage |
 
 ### V1 Fallback
 
@@ -231,40 +242,61 @@ The V2 Schema Engine is independent of the V1 module-based engine. Both can coex
 
 The goal is to expand V2's rule coverage until it can replace V1.
 
-## Recent Updates (2026-01-03)
+## Recent Updates
 
-### Forcing 1NT Rebid Rules
+### 2026-01-04: Control Bidding & Slam Features
+
+**Control Bidding Features (enhanced_extractor.py):**
+- Added `{suit}_control` (1=Ace/void, 2=King/singleton, 0=none) for each suit
+- `major_fit_gf` - True when major fit confirmed in game-force auction
+- `in_slam_zone` - True when at 3+ level with major fit GF
+- `lowest_control_suit` - Cheapest suit where we have a control
+- `has_denied_control` / `denied_control_suit` - Tracks when partner skipped a control
+- `partnership_hcp_min/max` - Estimated combined HCP range
+- `partnership_has_slam_values` - True when combined 31+ HCP
+
+**Slam Control Schema (sayc_slam_controls.json):**
+- Control bids for each suit at 4-level
+- RKCB 1430 responses (5♣=1/4, 5♦=0/3, 5♥=2 no Q, 5♠=2 with Q)
+- Slam brake when control is denied
+- 4NT Blackwood trigger with all controls
+
+**Fourth Suit Forcing (FSF) Detection:**
+- `partner_bid_fsf` / `i_bid_fsf` - Detects FSF artificial bids
+- `fsf_suit` - The fourth (artificial) suit bid
+- `has_stopper_in_fsf_suit` - For 3NT decisions
+
+### 2026-01-03: Initial Schema Engine
+
+**Forcing 1NT Rebid Rules:**
 After partner responds 1NT to our major opening:
 - Rebid 6-card major (minimum)
 - Show second lower suit (2♣/2♦)
 - Bid 2NT with 18-19 balanced
 - Pass 1NT with minimum 12-14
 
-### Advancer Rules (New)
-Added `sayc_advancer.json` for responding to partner's competitive actions:
+**Advancer Rules (sayc_advancer.json):**
 - Responses to takeout doubles (1♠, 1♥, 2♦, 2♣)
 - Jump responses showing values (2♠, 2♥)
 - 1NT with stopper in opponent's suit
 - Raises of partner's overcall
 - Penalty pass conversions
 
-### Responder Rebid Rules
-Added rules for responder's second bid:
+**Responder Rebid Rules:**
 - 2NT invitational (11-12 HCP balanced)
 - 3NT game values (13+ HCP balanced)
 - Support opener's major with 3-card support
 - Game bids with major fit
 
-### Invitational Response Rules
-Added direct invitational jumps:
+**Invitational Response Rules:**
 - 2NT invitational to 1-level opening (11-12 HCP)
 - 3NT to opening with game values
 - Limit raises of minors
 
 ## Future Work
 
-1. Expand competitive bidding (reopening doubles, balancing)
-2. Implement 2/1 GF schema as alternative system
-3. Add slam bidding rules (Blackwood, cuebids)
+1. Reduce "No appropriate bid found" fallbacks (target: 90%+ V2 coverage)
+2. Add more rebid rules for edge cases
+3. Implement 2/1 GF schema as alternative system
 4. Create schema validation tooling
 5. Target 95%+ native V2 coverage

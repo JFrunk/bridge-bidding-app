@@ -597,6 +597,67 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['suits_bid_count'] = len(bid_suits_natural)
     flat['is_fourth_suit_scenario'] = len(bid_suits_natural) == 3
 
+    # Control Bidding Features (for slam exploration)
+    # Control level: 1 = first-round (Ace/Void), 2 = second-round (King/Singleton)
+    for suit in ['♠', '♥', '♦', '♣']:
+        suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}[suit]
+        flat[f'{suit_name}_control'] = _get_suit_control_level(hand, suit)
+
+    # Major fit confirmed at game force level
+    # True if we have an agreed major at 3+ level in a GF auction
+    flat['major_fit_gf'] = False
+    flat['in_slam_zone'] = False
+    if agreed['agreed_suit'] in ['♠', '♥'] and agreed['fit_known']:
+        # Check if we're in a game force
+        if fs['game_forcing_established'] or flat['hcp'] >= 13:
+            flat['major_fit_gf'] = True
+            # Check current bidding level
+            current_level = _get_current_auction_level(auction_history)
+            if current_level >= 3:
+                flat['in_slam_zone'] = True
+
+    # Control bidding: lowest unbid control
+    # Find the cheapest suit where we have a control that hasn't been bid yet
+    flat['lowest_control_suit'] = None
+    flat['has_unbid_control'] = False
+    suit_order = ['♣', '♦', '♥', '♠']
+
+    if flat['in_slam_zone'] and agreed['agreed_suit']:
+        trump_suit = agreed['agreed_suit']
+        suit_name_map = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}
+        for suit in suit_order:
+            if suit == trump_suit:
+                continue  # Skip trump suit
+            if suit not in bid_suits_natural:  # Suit hasn't been bid
+                suit_name = suit_name_map[suit]
+                control_level = flat.get(f'{suit_name}_control', 0)
+                if control_level > 0:
+                    flat['lowest_control_suit'] = suit
+                    flat['has_unbid_control'] = True
+                    break
+
+    # Denied control detection (for slam safety)
+    # True if there's an unbid suit below the trump suit where we have NO control
+    flat['has_denied_control'] = False
+    flat['denied_control_suit'] = None
+
+    if flat['in_slam_zone'] and agreed['agreed_suit']:
+        trump_suit = agreed['agreed_suit']
+        trump_idx = suit_order.index(trump_suit) if trump_suit in suit_order else 4
+
+        for suit in suit_order[:trump_idx]:  # All suits below trump
+            if suit not in bid_suits_natural:  # Unbid suit
+                suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}[suit]
+                if flat.get(f'{suit_name}_control', 0) == 0:
+                    flat['has_denied_control'] = True
+                    flat['denied_control_suit'] = suit
+                    break  # Found a hole
+
+    # Combined partnership HCP estimate (for slam decisions)
+    flat['partnership_hcp_min'] = flat['hcp'] + flat['partner_min_hcp']
+    flat['partnership_hcp_max'] = flat['hcp'] + flat['partner_max_hcp']
+    flat['partnership_has_slam_values'] = flat['partnership_hcp_min'] >= 31
+
     # Gambling 3NT features (solid minor with no outside strength)
     _add_gambling_features(flat, hand)
 
@@ -730,6 +791,60 @@ def _get_rho_bids(auction_history: List[str], my_position: str, dealer: str = 'N
             rho_bids.append(bid)
 
     return rho_bids
+
+
+def _get_suit_control_level(hand: Hand, suit: str) -> int:
+    """
+    Get the control level for a suit.
+
+    Control levels for slam bidding:
+    - 1 = First-round control (Ace or Void)
+    - 2 = Second-round control (King or Singleton)
+    - 0 = No control
+
+    Args:
+        hand: Hand object
+        suit: Suit symbol (♠, ♥, ♦, ♣)
+
+    Returns:
+        Control level (0, 1, or 2)
+    """
+    suit_cards = [c for c in hand.cards if c.suit == suit]
+    suit_length = len(suit_cards)
+
+    # Void = first-round control
+    if suit_length == 0:
+        return 1
+
+    # Ace = first-round control
+    if any(c.rank == 'A' for c in suit_cards):
+        return 1
+
+    # Singleton = second-round control (opponent can cash one trick max)
+    if suit_length == 1:
+        return 2
+
+    # King = second-round control
+    if any(c.rank == 'K' for c in suit_cards):
+        return 2
+
+    return 0
+
+
+def _get_current_auction_level(auction_history: List[str]) -> int:
+    """
+    Get the current bidding level from the auction history.
+
+    Args:
+        auction_history: List of bids
+
+    Returns:
+        Current level (1-7) or 0 if no bids made
+    """
+    for bid in reversed(auction_history):
+        if bid and bid[0].isdigit():
+            return int(bid[0])
+    return 0
 
 
 def _bid_index_is_mine(bid_index: int, my_position: str, dealer: str = 'North') -> bool:

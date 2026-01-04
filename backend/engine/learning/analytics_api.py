@@ -3193,6 +3193,122 @@ def get_bidding_hand_detail():
         return jsonify({'error': str(e)}), 500
 
 
+def get_bidding_gap_analysis():
+    """
+    POST /api/bidding-gap-analysis
+
+    Analyze why specific bidding rules didn't match for a hand.
+    Returns detailed constraint gap information for visual debugging.
+
+    Request body:
+    {
+        "hand_cards": [...],         # List of cards [{suit, rank}, ...]
+        "auction_history": [...],    # List of bids
+        "position": "S",             # Player position
+        "vulnerability": "None",     # Vulnerability
+        "dealer": "N",               # Dealer position
+        "target_bid": "2NT"          # Optional: filter to specific bid
+    }
+
+    Response:
+    {
+        "matched_rules": [...],      # Rules that matched (could bid)
+        "near_misses": [...],        # Rules close to matching with gaps
+        "hand_features": {...}       # Extracted features for debugging
+    }
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'error': 'Request body required'}), 400
+
+        hand_cards = data.get('hand_cards', [])
+        auction_history = data.get('auction_history', [])
+        position = data.get('position', 'S')
+        vulnerability = data.get('vulnerability', 'None')
+        dealer = data.get('dealer', 'N')
+        target_bid = data.get('target_bid')  # Optional filter
+
+        if not hand_cards:
+            return jsonify({'error': 'hand_cards required'}), 400
+
+        # Import V2 engine components
+        from engine.hand import Hand, Card
+        from engine.v2.features.enhanced_extractor import extract_flat_features
+        from engine.v2.interpreters.schema_interpreter import SchemaInterpreter
+
+        # Convert short positions to full names for feature extractor
+        position_map = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West',
+                        'North': 'North', 'East': 'East', 'South': 'South', 'West': 'West'}
+        full_position = position_map.get(position, 'South')
+        full_dealer = position_map.get(dealer, 'North')
+
+        # Convert hand cards to Hand object (use Unicode suits for Hand class)
+        suit_to_unicode = {'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣',
+                          '♠': '♠', '♥': '♥', '♦': '♦', '♣': '♣'}
+        cards = []
+        for card in hand_cards:
+            suit = card.get('suit') or card.get('s', '')
+            rank = card.get('rank') or card.get('r', '')
+            suit_unicode = suit_to_unicode.get(suit, suit)
+            cards.append(Card(rank=rank, suit=suit_unicode))
+
+        hand = Hand(cards)
+
+        # Extract features for the hand
+        features = extract_flat_features(
+            hand, auction_history, full_position, vulnerability, full_dealer
+        )
+
+        # Get gap analysis from schema interpreter
+        interpreter = SchemaInterpreter()
+        gap_analysis = interpreter.get_rule_gap_analysis(
+            features,
+            target_bid=target_bid,
+            max_rules=20
+        )
+
+        # Separate matched rules from near-misses
+        matched_rules = [r for r in gap_analysis if r['matched']]
+        near_misses = [r for r in gap_analysis if not r['matched']]
+
+        # Filter to most interesting near-misses (1-3 gaps only)
+        close_misses = [r for r in near_misses if r['gap_count'] <= 3]
+
+        # Build compact feature summary for debugging
+        feature_summary = {
+            'hcp': features.get('hcp'),
+            'shape': f"{features.get('spades_length', 0)}-{features.get('hearts_length', 0)}-{features.get('diamonds_length', 0)}-{features.get('clubs_length', 0)}",
+            'is_balanced': features.get('is_balanced'),
+            'is_opening': features.get('is_opening'),
+            'is_response': features.get('is_response'),
+            'is_rebid': features.get('is_rebid'),
+            'is_overcall': features.get('is_overcall'),
+            'partner_last_bid': features.get('partner_last_bid'),
+            'opening_bid': features.get('opening_bid'),
+            'longest_suit': features.get('longest_suit'),
+            'support_for_partner': features.get('support_for_partner'),
+            'forcing_level': features.get('forcing_level'),
+            'spades_stopped': features.get('spades_stopped'),
+            'hearts_stopped': features.get('hearts_stopped'),
+            'diamonds_stopped': features.get('diamonds_stopped'),
+            'clubs_stopped': features.get('clubs_stopped'),
+        }
+
+        return jsonify({
+            'matched_rules': matched_rules,
+            'near_misses': close_misses[:10],  # Limit to 10 closest
+            'hand_features': feature_summary,
+            'total_rules_checked': len(gap_analysis)
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 def calculate_hcp(hand_cards: List[Dict]) -> int:
     """Calculate high card points from hand cards"""
     hcp_values = {'A': 4, 'K': 3, 'Q': 2, 'J': 1}
@@ -3390,6 +3506,7 @@ def register_analytics_endpoints(app):
     # Bidding hands history & analysis
     app.route('/api/bidding-hands', methods=['GET'])(get_bidding_hands_history)
     app.route('/api/bidding-hand-detail', methods=['GET'])(get_bidding_hand_detail)
+    app.route('/api/bidding-gap-analysis', methods=['POST'])(get_bidding_gap_analysis)
 
     # Board analysis for Performance Overview chart
     app.route('/api/analytics/board-analysis', methods=['GET'])(get_board_analysis)

@@ -413,6 +413,46 @@ class BiddingEngineV2Schema:
         self._v1_fallback_count = 0
         self._total_bid_count = 0
 
+    def evaluate_user_bid(
+        self,
+        hand: Hand,
+        user_bid: str,
+        auction_history: List[str],
+        my_position: str,
+        vulnerability: str = 'None',
+        dealer: str = 'North'
+    ) -> 'V2BiddingFeedback':
+        """
+        Evaluate a user's bid against V2 schema rules.
+
+        This is the unified method for user bid evaluation, replacing
+        the V1 heuristic-based approach with schema-driven analysis.
+
+        Key advantages:
+        1. Alternatives come from actual schema rules (not heuristics)
+        2. Same rules explain AI bids and evaluate user bids
+        3. Transparent - can show exactly which rules matched
+
+        Args:
+            hand: User's Hand object
+            user_bid: The bid the user made
+            auction_history: List of previous bids
+            my_position: User's position (North/East/South/West)
+            vulnerability: Vulnerability string
+            dealer: Dealer position
+
+        Returns:
+            V2BiddingFeedback object with evaluation results
+        """
+        # Lazy import to avoid circular dependency
+        from engine.v2.feedback.bid_evaluator import V2BidEvaluator
+
+        evaluator = V2BidEvaluator(self)
+        return evaluator.evaluate_bid(
+            hand, user_bid, auction_history,
+            my_position, vulnerability, dealer
+        )
+
 
 # Create singleton for easy import
 _default_engine = None
