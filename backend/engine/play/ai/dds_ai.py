@@ -114,6 +114,9 @@ class DDSPlayAI(BasePlayAI):
             # Convert our state to endplay Deal format
             deal = self._convert_to_endplay_deal(state)
 
+            # Capture PBN for debugging before modifying deal
+            debug_pbn = self._get_pbn_string(state)
+
             # Set the player to move and trump suit
             deal.first = self._convert_position(position)
             deal.trump = self._convert_trump(state.contract.trump_suit)
@@ -129,6 +132,21 @@ class DDSPlayAI(BasePlayAI):
             # The tricks value is the number of tricks the CURRENT SIDE can make
             # if they play optimally from this point
             solved = solve_board(deal)
+
+            # Debug: log DDS analysis for discards (void in led suit)
+            is_discard = False
+            if state.current_trick:
+                led_suit = state.current_trick[0][0].suit
+                has_led_suit = any(c.suit == led_suit for c in state.hands[position].cards)
+                is_discard = not has_led_suit
+
+            if is_discard:
+                trick_num = len(state.trick_history) + 1
+                current_trick_str = ' '.join([f"{p}:{c.rank}{c.suit}" for c, p in state.current_trick])
+                dds_results = [(str(card), tricks) for card, tricks in solved]
+                print(f"[DDS DEBUG T{trick_num}] {position} discards | PBN: {debug_pbn}")
+                print(f"[DDS DEBUG T{trick_num}] Current trick: {current_trick_str}")
+                print(f"[DDS DEBUG T{trick_num}] DDS options: {dds_results}")
 
             # Collect all cards with their trick counts
             card_options = []
@@ -173,8 +191,8 @@ class DDSPlayAI(BasePlayAI):
             print(f"   Falling back to simple heuristic play")
             return self._fallback_choose_card(state, position, legal_cards)
 
-    def _convert_to_endplay_deal(self, state: PlayState) -> Deal:
-        """Convert PlayState to endplay Deal format"""
+    def _get_pbn_string(self, state: PlayState) -> str:
+        """Build PBN string from PlayState for debugging and Deal creation"""
         # Build PBN string: "N:♠ cards.♥ cards.♦ cards.♣ cards ..."
         # Format: "N:AKQ2.KJ3.T98.432 JT98.Q42.KJ4.987 765.AT9.AQ5.KQJ 43.8765.7632.AT6"
 
@@ -202,6 +220,11 @@ class DDSPlayAI(BasePlayAI):
             hands.append(hand_str)
 
         pbn = f"N:{' '.join(hands)}"
+        return pbn
+
+    def _convert_to_endplay_deal(self, state: PlayState) -> Deal:
+        """Convert PlayState to endplay Deal format"""
+        pbn = self._get_pbn_string(state)
 
         # Debug logging to help diagnose issues
         try:
