@@ -1011,15 +1011,12 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
       {/* Summary Stats */}
       <div className="board-analysis-summary">
         <div className="summary-item green">
-          <span className="summary-count">{summary.good_good}</span>
           <span className="summary-label">Both Good</span>
         </div>
         <div className="summary-item yellow">
-          <span className="summary-count">{summary.good_bad + summary.bad_good}</span>
           <span className="summary-label">One Good</span>
         </div>
         <div className="summary-item red">
-          <span className="summary-count">{summary.bad_bad}</span>
           <span className="summary-label">Both Weak</span>
         </div>
       </div>
