@@ -429,6 +429,15 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['key_card_count_is_2'] = kc == 2
     flat['key_card_count_is_5'] = kc == 5
 
+    # Partner's keycard count from RKCB response (for slam decisions)
+    partner_kc = _infer_partner_keycards(auction_history, flat['partner_last_bid'])
+    flat['partner_keycards_min'] = partner_kc['min']
+    flat['partner_keycards_max'] = partner_kc['max']
+    flat['total_keycards_min'] = kc + partner_kc['min']
+    flat['total_keycards_max'] = kc + partner_kc['max']
+    flat['have_all_keycards'] = flat['total_keycards_min'] >= 4
+    flat['missing_two_keycards'] = flat['total_keycards_max'] <= 3
+
     # Suits bid count (for Fourth Suit Forcing detection)
     flat['suits_bid_count'] = len(bid_suits_natural)
     flat['is_fourth_suit_scenario'] = len(bid_suits_natural) == 3
@@ -645,3 +654,35 @@ def _add_gambling_features(flat: Dict[str, Any], hand: Hand) -> None:
 
     # Classic Gambling 3NT: solid minor with NO outside A/K
     flat['is_gambling_3nt_hand'] = flat['is_solid_minor'] and flat['outside_stopper_count'] == 0
+
+
+def _infer_partner_keycards(auction_history: List[str], partner_last_bid: str) -> Dict[str, int]:
+    """
+    Infer partner's keycard count from their RKCB response.
+
+    Uses 1430 responses:
+    - 5♣ = 1 or 4 keycards
+    - 5♦ = 0 or 3 keycards
+    - 5♥ = 2 keycards, no trump Queen
+    - 5♠ = 2 keycards, with trump Queen
+    - 5NT = 5 keycards (all of them)
+
+    Returns dict with 'min' and 'max' keycard count.
+    """
+    # Check if we asked 4NT and partner responded
+    if not partner_last_bid:
+        return {'min': 0, 'max': 0}
+
+    # Only infer if partner's last bid was an RKCB response
+    if partner_last_bid == '5♣':
+        return {'min': 1, 'max': 4}  # 1 or 4 keycards
+    elif partner_last_bid == '5♦':
+        return {'min': 0, 'max': 3}  # 0 or 3 keycards
+    elif partner_last_bid == '5♥':
+        return {'min': 2, 'max': 2}  # 2 keycards, no Queen
+    elif partner_last_bid == '5♠':
+        return {'min': 2, 'max': 2}  # 2 keycards, with Queen
+    elif partner_last_bid == '5NT':
+        return {'min': 5, 'max': 5}  # All 5 keycards
+
+    return {'min': 0, 'max': 0}

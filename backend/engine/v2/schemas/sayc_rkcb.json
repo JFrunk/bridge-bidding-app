@@ -151,26 +151,130 @@
     {
       "id": "ask_for_specific_king",
       "bid": "5NT",
-      "priority": 950,
-      "description": "King Ask after RKCB (asking for specific kings)",
+      "priority": 940,
+      "description": "King Ask after RKCB (asking for specific kings for grand slam)",
+      "conditions": {
+        "my_last_bid": "4NT",
+        "partner_last_bid": {
+          "in": [
+            "5\u2665",
+            "5\u2660",
+            "5NT"
+          ]
+        },
+        "fit_known": true,
+        "have_all_keycards": true,
+        "hcp": {
+          "min": 18
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "King Ask - all keycards accounted, exploring grand slam",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "slam_after_rkcb_5c_spades",
+      "bid": "6\u2660",
+      "priority": 960,
+      "description": "Bid 6S after partner shows 1 or 4 keycards (spades agreed)",
+      "trigger": "2♣ - Pass - 2♠ - Pass - 4NT - Pass - 5♣ - Pass - ?",
+      "conditions": {
+        "key_cards": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Small slam in spades - partnership has enough keycards",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "slam_after_rkcb_5c_hearts",
+      "bid": "6\u2665",
+      "priority": 959,
+      "description": "Bid 6H after partner shows 1 or 4 keycards",
+      "conditions": {
+        "my_last_bid": "4NT",
+        "partner_last_bid": "5\u2663",
+        "agreed_suit": "\u2665",
+        "total_keycards_min": {
+          "min": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Small slam - partnership has enough keycards",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "slam_after_rkcb_5d_spades",
+      "bid": "6\u2660",
+      "priority": 958,
+      "description": "Bid 6S after partner shows 0 or 3 keycards (spades agreed)",
+      "trigger": "2♣ - Pass - 2♠ - Pass - 4NT - Pass - 5♦ - Pass - ?",
+      "conditions": {
+        "key_cards": {
+          "min": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Small slam in spades - partner has 3 keycards, we have enough",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "slam_after_rkcb_5d_hearts",
+      "bid": "6\u2665",
+      "priority": 957,
+      "description": "Bid 6H after partner shows 0 or 3 keycards (with 3)",
+      "conditions": {
+        "my_last_bid": "4NT",
+        "partner_last_bid": "5\u2666",
+        "agreed_suit": "\u2665",
+        "key_cards": {
+          "min": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Small slam - partner has 3 keycards, we have enough",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "signoff_5_spades_missing_keycards",
+      "bid": "5\u2660",
+      "priority": 945,
+      "description": "Sign off at 5S - missing keycards",
       "conditions": {
         "my_last_bid": "4NT",
         "partner_last_bid": {
           "in": [
             "5\u2663",
-            "5\u2666",
-            "5\u2665",
-            "5\u2660"
+            "5\u2666"
           ]
         },
-        "fit_known": true,
-        "hcp": {
-          "min": 15
-        }
+        "agreed_suit": "\u2660",
+        "missing_two_keycards": true
       },
-      "forcing": "one_round",
-      "explanation": "King Ask - asking for specific kings",
-      "sets_forcing_level": "FORCING_1_ROUND"
+      "forcing": "none",
+      "explanation": "Sign off at 5-level - missing too many keycards for slam",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "signoff_5_hearts_missing_keycards",
+      "bid": "5\u2665",
+      "priority": 944,
+      "description": "Sign off at 5H - missing keycards",
+      "conditions": {
+        "my_last_bid": "4NT",
+        "partner_last_bid": {
+          "in": [
+            "5\u2663",
+            "5\u2666"
+          ]
+        },
+        "agreed_suit": "\u2665",
+        "missing_two_keycards": true
+      },
+      "forcing": "none",
+      "explanation": "Sign off at 5-level - missing too many keycards for slam",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "king_response_clubs",
