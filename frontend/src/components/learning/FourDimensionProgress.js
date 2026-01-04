@@ -726,6 +726,42 @@ const PracticePlayExpanded = ({ quality, handHistory, onReviewHand, onShowHandHi
 //     - Hollow (thick border): User was defending
 // ============================================================================
 
+// Helper to convert score from declarer's perspective to NS (user's) perspective
+const getScoreForUser = (board) => {
+  const declarerScore = board.actual_score || 0;
+  const declarer = board.declarer;
+
+  // If declarer is NS (N or S), score is already from user's perspective
+  // If declarer is EW (E or W), negate the score to show user's perspective
+  const isDeclarerNS = declarer === 'N' || declarer === 'S';
+  return isDeclarerNS ? declarerScore : -declarerScore;
+};
+
+// Helper to format tricks display from user's perspective
+const getTricksForUser = (board) => {
+  const actualTricks = board.actual_tricks || 0;
+  const contractLevel = parseInt(board.contract?.match(/\d/)?.[0] || '0', 10);
+  const tricksNeeded = contractLevel + 6;
+
+  if (board.user_was_defender) {
+    // As defender: show how many you set them by, or how many they made over
+    if (actualTricks < tricksNeeded) {
+      return `Set ${tricksNeeded - actualTricks}`;
+    } else {
+      const over = actualTricks - tricksNeeded;
+      return over > 0 ? `Made +${over}` : 'Made exactly';
+    }
+  } else {
+    // As declarer/dummy: show your result
+    if (board.made) {
+      const over = actualTricks - tricksNeeded;
+      return over > 0 ? `Made +${over}` : 'Made';
+    } else {
+      return `Down ${tricksNeeded - actualTricks}`;
+    }
+  }
+};
+
 const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
   const [boards, setBoards] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -1012,32 +1048,41 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
       </div>
 
       {/* Tooltip */}
-      {tooltip && (
-        <div
-          className="board-tooltip"
-          style={{
-            position: 'fixed',
-            left: tooltip.x,
-            top: tooltip.y,
-            transform: 'translate(-50%, -100%)'
-          }}
-        >
-          <div className="tooltip-header">
-            <strong>{tooltip.board.contract || `Board ${tooltip.board.board_id}`}</strong>
-            {tooltip.board.declarer && <span> by {tooltip.board.declarer}</span>}
+      {tooltip && (() => {
+        const userScore = getScoreForUser(tooltip.board);
+        const tricksDisplay = getTricksForUser(tooltip.board);
+        const role = tooltip.board.user_was_declarer ? 'Declarer' : tooltip.board.user_was_dummy ? 'Dummy' : 'Defender';
+        const declarerName = tooltip.board.declarer === 'N' ? 'North' :
+                             tooltip.board.declarer === 'S' ? 'South' :
+                             tooltip.board.declarer === 'E' ? 'East' : 'West';
+
+        return (
+          <div
+            className="board-tooltip"
+            style={{
+              position: 'fixed',
+              left: tooltip.x,
+              top: tooltip.y,
+              transform: 'translate(-50%, -100%)'
+            }}
+          >
+            <div className="tooltip-header">
+              <strong>{tooltip.board.contract || `Board ${tooltip.board.board_id}`}</strong>
+              <span> by {declarerName}</span>
+            </div>
+            <div className="tooltip-row">
+              {tricksDisplay}
+            </div>
+            <div className="tooltip-row" style={{ fontWeight: 600, color: userScore >= 0 ? '#059669' : '#dc2626' }}>
+              You: {userScore >= 0 ? '+' : ''}{userScore}
+            </div>
+            <div className="tooltip-row" style={{ fontSize: '11px', color: '#6b7280' }}>
+              {role}
+            </div>
+            <div className="tooltip-hint">Click to review</div>
           </div>
-          <div className="tooltip-row">
-            Tricks: {tooltip.board.actual_tricks}/{tooltip.board.dd_tricks} (DD)
-          </div>
-          <div className="tooltip-row">
-            Score: {tooltip.board.actual_score} (Par: {tooltip.board.par_score})
-          </div>
-          <div className="tooltip-row">
-            Role: {tooltip.board.user_was_declarer ? 'Declarer' : tooltip.board.user_was_dummy ? 'Dummy' : 'Defender'}
-          </div>
-          <div className="tooltip-hint">Click to review</div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };
