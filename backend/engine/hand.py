@@ -50,12 +50,38 @@ class Hand:
         return suit_points
 
     def _calculate_distribution_points(self):
-        points = 0
+        """
+        Calculate distribution points using BOTH length and shortage.
+
+        Length points (for declaring):
+          - 5-card suit: +1
+          - 6-card suit: +2
+          - 7+ card suit: +3
+
+        Shortage points (for support/competitive):
+          - Void: +3
+          - Singleton: +2
+          - Doubleton: +1
+
+        We use the MAXIMUM of length or shortage for each suit,
+        which correctly values hands for both declaring and supporting.
+        """
+        length_points = 0
+        shortage_points = 0
+
         for length in self.suit_lengths.values():
-            if length == 5: points += 1
-            elif length == 6: points += 2
-            elif length >= 7: points += 3
-        return points
+            # Length points
+            if length == 5: length_points += 1
+            elif length == 6: length_points += 2
+            elif length >= 7: length_points += 3
+
+            # Shortage points
+            if length == 0: shortage_points += 3
+            elif length == 1: shortage_points += 2
+            elif length == 2: shortage_points += 1
+
+        # Use the higher of the two methods
+        return max(length_points, shortage_points)
 
     def _get_suit_lengths(self):
         lengths = {'♠': 0, '♥': 0, '♦': 0, '♣': 0}

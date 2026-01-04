@@ -5,6 +5,26 @@
   "description": "Takeout doubles, negative doubles, and penalty doubles",
   "rules": [
     {
+      "id": "takeout_double_general",
+      "bid": "X",
+      "priority": 815,
+      "description": "General takeout double - opening values + shortness + major support",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": "1[CDHS]",
+        "total_points": {
+          "min": 12
+        },
+        "opponent_suit_length": {
+          "max": 2
+        },
+        "has_4_card_major": true
+      },
+      "forcing": "one_round",
+      "explanation": "Takeout double with {total_points} points, shortness in opponent's suit, and major support",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
       "id": "takeout_double_strong",
       "bid": "X",
       "priority": 810,
