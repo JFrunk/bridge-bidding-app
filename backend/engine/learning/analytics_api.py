@@ -2579,14 +2579,33 @@ def get_board_analysis():
                 strain_display = strain_symbols.get(strain, strain)
                 contract = f"{row['contract_level']}{strain_display}"
 
+            # Determine user's role in this hand
+            user_was_declarer = bool(row['user_was_declarer'])
+            user_was_dummy = bool(row['user_was_dummy'])
+            # If not declarer and not dummy, user was defending
+            user_was_defender = not user_was_declarer and not user_was_dummy
+
             # Determine quality (the "physics" of the chart)
+            # All values from database are from DECLARER's perspective
             actual_tricks = row['actual_tricks'] or 0
             dd_tricks = row['dd_tricks'] or 0
             actual_score = row['actual_score'] or 0
             par_score = row['par_score'] or 0
 
-            play_good = actual_tricks >= dd_tricks
-            bidding_good = actual_score >= par_score
+            # Quality depends on user's role:
+            # - Declarer/Dummy: Good if they beat expectations
+            # - Defender: Good if declarer did WORSE than expected
+            if user_was_defender:
+                # For defenders, fewer tricks for declarer = better defense
+                play_good = actual_tricks <= dd_tricks
+                # For defenders, lower declarer score = better for defenders
+                # (negative score for declarer is GOOD for defender)
+                bidding_good = actual_score <= par_score
+            else:
+                # For declarer/dummy, more tricks = better
+                play_good = actual_tricks >= dd_tricks
+                # For declarer/dummy, higher score = better
+                bidding_good = actual_score >= par_score
 
             # Update summary
             summary['total_boards'] += 1
@@ -2598,12 +2617,6 @@ def get_board_analysis():
                 summary['bad_good'] += 1
             else:
                 summary['bad_bad'] += 1
-
-            # Determine user's role in this hand
-            user_was_declarer = bool(row['user_was_declarer'])
-            user_was_dummy = bool(row['user_was_dummy'])
-            # If not declarer and not dummy, user was defending
-            user_was_defender = not user_was_declarer and not user_was_dummy
 
             boards.append({
                 'hand_id': row['hand_id'],

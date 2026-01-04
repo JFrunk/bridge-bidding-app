@@ -1008,19 +1008,6 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
         </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="board-analysis-summary">
-        <div className="summary-item green">
-          <span className="summary-label">Both Good</span>
-        </div>
-        <div className="summary-item yellow">
-          <span className="summary-label">One Good</span>
-        </div>
-        <div className="summary-item red">
-          <span className="summary-label">Both Weak</span>
-        </div>
-      </div>
-
       {/* Tooltip */}
       {tooltip && (
         <div
