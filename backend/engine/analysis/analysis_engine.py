@@ -54,6 +54,15 @@ except ImportError as e:
     DDTable = None
     DealAnalysis = None
 
+# Import Decay Curve Generator (Phase 3)
+try:
+    from .decay_curve import get_decay_generator, DecayCurveResult
+    DECAY_CURVE_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Decay curve imports failed: {e}")
+    DECAY_CURVE_AVAILABLE = False
+    DecayCurveResult = None
+
 
 class Quadrant(Enum):
     """
@@ -330,6 +339,67 @@ class BridgeAnalysisEngine:
         return self.dds is not None and self.dds.is_available
 
     # ========================================================================
+    # Format Conversion Helpers
+    # ========================================================================
+
+    def _convert_hands_to_card_strings(
+        self, hands: Dict[str, 'Hand']
+    ) -> Dict[str, List[str]]:
+        """
+        Convert Hand objects to card string lists for decay curve generator.
+
+        Args:
+            hands: Dict of position -> Hand objects
+
+        Returns:
+            Dict of position -> list of card strings like ['SA', 'SK', 'HQ', ...]
+        """
+        # Suit symbol to letter mapping
+        SUIT_TO_LETTER = {'♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C'}
+
+        result = {}
+        for pos, hand in hands.items():
+            card_strings = []
+            for card in hand.cards:
+                suit_letter = SUIT_TO_LETTER.get(card.suit, card.suit)
+                card_strings.append(f"{suit_letter}{card.rank}")
+            result[pos] = card_strings
+        return result
+
+    def _convert_play_history_format(
+        self, play_history: List[Dict]
+    ) -> List[Dict]:
+        """
+        Convert server play_history format to decay curve format.
+
+        Server format: {'trick': 1, 'play_index': 0, 'position': 'W', 'rank': 'A', 'suit': '♠'}
+        Decay curve format: {'card': 'SA', 'position': 'W'}
+        """
+        # Suit symbol to letter mapping
+        SUIT_TO_LETTER = {'♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C'}
+
+        result = []
+        for play in play_history:
+            # Handle both formats - some may already have 'card' key
+            if 'card' in play and len(play['card']) == 2:
+                # Already in correct format
+                result.append({
+                    'card': play['card'],
+                    'position': play['position']
+                })
+            else:
+                # Convert from server format
+                suit = play.get('suit', '')
+                rank = play.get('rank', '')
+                suit_letter = SUIT_TO_LETTER.get(suit, suit)
+                card_str = f"{suit_letter}{rank}"
+                result.append({
+                    'card': card_str,
+                    'position': play['position']
+                })
+        return result
+
+    # ========================================================================
     # Main Analysis Entry Point
     # ========================================================================
 
@@ -427,9 +497,52 @@ class BridgeAnalysisEngine:
             hands, contract, play_history, dd_analysis.dd_table
         )
 
-        # 4. Decay curve (Phase 3 - placeholder for now)
+        # 4. Decay curve generation (Phase 3)
+        # Tracks declarer's trick potential at each card played
         decay_curve = []
         major_errors = []
+
+        if DECAY_CURVE_AVAILABLE and play_history:
+            try:
+                decay_gen = get_decay_generator()
+
+                # Only run if DDS is available (required for accurate curves)
+                if decay_gen.is_available:
+                    # Convert formats for decay curve generator
+                    hands_as_strings = self._convert_hands_to_card_strings(hands)
+                    plays_for_decay = self._convert_play_history_format(play_history)
+
+                    # Get trump suit from contract
+                    trump = self._normalize_strain(contract.trump_suit)
+
+                    # Generate decay curve (skip_interval=1 for full resolution)
+                    decay_result = decay_gen.generate(
+                        hands=hands_as_strings,
+                        play_history=plays_for_decay,
+                        declarer=contract.declarer,
+                        trump_suit=trump,
+                        skip_interval=1,
+                    )
+
+                    if decay_result.is_valid:
+                        decay_curve = decay_result.curve
+                        # Convert decay_curve MajorErrors to analysis_engine MajorErrors
+                        for err in decay_result.major_errors:
+                            major_errors.append(MajorError(
+                                card_index=err.card_index,
+                                trick=err.trick_number,
+                                card=err.card,
+                                position=err.position,
+                                loss=err.loss,
+                                optimal_card=err.optimal_card or "",
+                                reasoning=err.reasoning or "",
+                            ))
+                        print(f"   Decay curve: {len(decay_curve)} points, {len(major_errors)} errors")
+                    else:
+                        print(f"   Decay curve generation failed: {decay_result.error_message}")
+            except Exception as e:
+                print(f"   Decay curve error: {e}")
+                # Continue with empty curve - don't fail the whole analysis
 
         # Build result
         return HandAnalysisResult(

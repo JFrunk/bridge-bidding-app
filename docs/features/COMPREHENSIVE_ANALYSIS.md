@@ -1,8 +1,8 @@
 # Comprehensive Analysis System
 
-**Status:** Phase 1 Complete
+**Status:** Phase 3 Complete (Backend)
 **Created:** 2025-01-04
-**Last Updated:** 2025-01-04
+**Last Updated:** 2026-01-04
 
 ## Overview
 
@@ -153,17 +153,26 @@ Dedicated endpoint for bidding analysis visualization.
 - [ ] Frontend quadrant chart (SVG)
 - [ ] Bidding efficiency card visualization
 
-### Phase 3 (Pending)
-- [ ] Decay curve generation
-- [ ] State reconstruction for trick-by-trick analysis
-- [ ] Sparkline visualization
+### Phase 3 (Complete - Backend)
+- [x] Decay curve generation (DecayCurveGenerator)
+- [x] State reconstruction for trick-by-trick analysis (StateReconstructor)
+- [x] Major error detection from curve drops
+- [x] Integration with post-game analysis hook
+- [x] Unit tests (32 tests)
+- [ ] Sparkline visualization (frontend pending)
 
 ## Testing
 
 ```bash
-# Run analysis engine tests
+# Run all analysis tests (57 tests)
 cd backend
+python3 -m pytest tests/analysis/ -v
+
+# Run analysis engine tests only (25 tests)
 python3 -m pytest tests/analysis/test_analysis_engine.py -v
+
+# Run decay curve tests only (32 tests)
+python3 -m pytest tests/analysis/test_decay_curve.py -v
 
 # Test API functions
 python3 -c "
@@ -177,7 +186,29 @@ print(stats)
 
 - `backend/engine/analysis/__init__.py`
 - `backend/engine/analysis/analysis_engine.py`
+- `backend/engine/analysis/decay_curve.py` (Phase 3)
 - `backend/tests/analysis/test_analysis_engine.py`
+- `backend/tests/analysis/test_decay_curve.py` (Phase 3)
 - `backend/migrations/011_add_comprehensive_analysis.sql`
 - `backend/engine/learning/analytics_api.py`
 - `backend/server.py`
+
+## Decay Curve Details (Phase 3)
+
+### How It Works
+
+The decay curve tracks declarer's **trick potential** at each card played:
+- **Serial Mutation**: Cards are consumed in play order
+- **Normalization**: All values from declarer's perspective
+- **Monotonicity**: Potential should stay flat or decrease with optimal play
+
+### Error Detection
+
+- **Declarer Error**: Curve drops = tricks lost by declarer
+- **Defensive Gift**: Curve increases = tricks given by defense
+
+### Performance
+
+- DDS called once per card (52 calls per hand)
+- Runs async in post-game hook (won't block gameplay)
+- Only runs on production (Linux with DDS available)
