@@ -352,9 +352,6 @@ const HandReviewModal = ({
   }, [handData?.play_quality_summary?.all_decisions, userControlledPositions]);
 
 
-  // Get user position
-  const userPosition = handData?.user_position || 'S';
-
   // Get trump strain from contract
   const trumpStrain = useMemo(() => {
     if (!handData?.contract) return 'NT';
@@ -472,6 +469,79 @@ const HandReviewModal = ({
   // Total plays for navigation
   const totalPlays = handData?.play_history?.length || 0;
 
+  // Determine user's role and perspective
+  const userRole = useMemo(() => {
+    if (!handData) return 'Unknown';
+    if (handData.user_role) return handData.user_role;
+    const declarer = handData.contract_declarer;
+    if (declarer === 'S' || declarer === 'N') return 'Declarer';
+    return 'Defender';
+  }, [handData]);
+
+  const isUserDefender = userRole === 'Defender';
+
+  // Get declarer name for display
+  const getDeclarerName = (d) => {
+    if (d === 'N') return 'North';
+    if (d === 'S') return 'South';
+    if (d === 'E') return 'East';
+    if (d === 'W') return 'West';
+    return d;
+  };
+
+  // Convert score from declarer's perspective to NS (user's) perspective
+  const getScoreForUser = () => {
+    const score = handData?.hand_score || 0;
+    const declarer = handData?.contract_declarer;
+    // If declarer is EW, negate the score for NS perspective
+    if (declarer === 'E' || declarer === 'W') {
+      return -score;
+    }
+    return score;
+  };
+
+  // Get result display from user's perspective
+  const getResultForUser = () => {
+    const tricksTaken = handData?.tricks_taken;
+    const tricksNeeded = handData?.tricks_needed;
+    const made = handData?.made;
+
+    if (tricksTaken === undefined || tricksNeeded === undefined) {
+      if (isUserDefender) {
+        // Defender: opponents made/down
+        return made ? { text: 'Opponents Made', isGood: false } : { text: 'Set Contract', isGood: true };
+      } else {
+        return made ? { text: 'Made', isGood: true } : { text: 'Down', isGood: false };
+      }
+    }
+
+    if (isUserDefender) {
+      // As defender: show from defensive perspective
+      if (made) {
+        const over = tricksTaken - tricksNeeded;
+        if (over > 0) {
+          return { text: `Opponents Made +${over}`, detail: `(${tricksTaken}/${tricksNeeded})`, isGood: false };
+        }
+        return { text: 'Opponents Made', detail: `(${tricksTaken}/${tricksNeeded})`, isGood: false };
+      } else {
+        const down = tricksNeeded - tricksTaken;
+        return { text: `Set ${down}`, detail: `(${tricksTaken}/${tricksNeeded})`, isGood: true };
+      }
+    } else {
+      // As declarer/dummy
+      if (made) {
+        const over = tricksTaken - tricksNeeded;
+        if (over > 0) {
+          return { text: `Made +${over}`, detail: `(${tricksTaken}/${tricksNeeded})`, isGood: true };
+        }
+        return { text: 'Made', detail: `(${tricksTaken}/${tricksNeeded})`, isGood: true };
+      } else {
+        const down = tricksNeeded - tricksTaken;
+        return { text: `Down ${down}`, detail: `(${tricksTaken}/${tricksNeeded})`, isGood: false };
+      }
+    }
+  };
+
   // Navigate with keyboard - arrow keys control replay navigation
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
@@ -527,13 +597,18 @@ const HandReviewModal = ({
           <div className="modal-title">
             <h2>Hand Analysis</h2>
             <div className="contract-info">
-              <span className="contract">{handData?.contract || 'Unknown'}</span>
-              <span className={`result ${handData?.made ? 'made' : 'down'}`}>
-                {handData?.made ? 'Made' : 'Down'}
-                {handData?.tricks_taken !== undefined && handData?.tricks_needed !== undefined && (
-                  <> ({handData.tricks_taken}/{handData.tricks_needed})</>
-                )}
+              <span className="contract">
+                {handData?.contract || 'Unknown'} by {getDeclarerName(handData?.contract_declarer)}
               </span>
+              {(() => {
+                const result = getResultForUser();
+                return (
+                  <span className={`result ${result.isGood ? 'made' : 'down'}`}>
+                    {result.text}
+                    {result.detail && <> {result.detail}</>}
+                  </span>
+                );
+              })()}
               {handData?.play_quality_summary?.has_data && (
                 <span className="accuracy-badge">{handData.play_quality_summary.accuracy_rate}% play</span>
               )}
@@ -683,12 +758,15 @@ const HandReviewModal = ({
           <div className="deal-stats-consolidated">
             <div className="stat-block">
               <span className="stat-label">Result</span>
-              <span className={`stat-value ${handData?.made ? 'success' : 'danger'}`}>
-                {handData?.made ? 'Made' : 'Down'}
-                {handData?.tricks_taken !== undefined && handData?.tricks_needed !== undefined && (
-                  <> ({handData.tricks_taken}/{handData.tricks_needed})</>
-                )}
-              </span>
+              {(() => {
+                const result = getResultForUser();
+                return (
+                  <span className={`stat-value ${result.isGood ? 'success' : 'danger'}`}>
+                    {result.text}
+                    {result.detail && <> {result.detail}</>}
+                  </span>
+                );
+              })()}
             </div>
             {handData?.par_comparison?.dd_tricks !== undefined && (
               <div className="stat-block">
@@ -698,14 +776,21 @@ const HandReviewModal = ({
             )}
             {handData?.hand_score !== undefined && (
               <div className="stat-block">
-                <span className="stat-label">Score</span>
-                <span className="stat-value">{handData.hand_score > 0 ? '+' : ''}{handData.hand_score}</span>
+                <span className="stat-label">Your Score</span>
+                {(() => {
+                  const userScore = getScoreForUser();
+                  return (
+                    <span className={`stat-value ${userScore >= 0 ? 'success' : 'danger'}`}>
+                      {userScore > 0 ? '+' : ''}{userScore}
+                    </span>
+                  );
+                })()}
               </div>
             )}
             <div className="stat-block">
               <span className="stat-label">Role</span>
               <span className="stat-value">
-                {handData?.user_role || (handData?.contract_declarer === userPosition ? 'Declarer' : 'Defender')}
+                {userRole}
               </span>
             </div>
           </div>
