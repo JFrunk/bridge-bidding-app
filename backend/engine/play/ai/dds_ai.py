@@ -111,22 +111,27 @@ class DDSPlayAI(BasePlayAI):
             raise ValueError(f"Position {position} has no cards in hand")
 
         try:
-            # Convert our state to endplay Deal format
-            deal = self._convert_to_endplay_deal(state)
+            # Build PBN with current trick cards added back to hands
+            # This is required because endplay needs cards in hands before deal.play()
+            pbn = self._get_pbn_string(state, include_current_trick=True)
+            debug_pbn = pbn  # For debugging output
 
-            # Capture PBN for debugging before modifying deal
-            debug_pbn = self._get_pbn_string(state)
-
-            # Set the player to move and trump suit
-            deal.first = self._convert_position(position)
+            deal = Deal(pbn)
             deal.trump = self._convert_trump(state.contract.trump_suit)
 
-            # If there are cards in the current trick, add them to the deal
-            # endplay Deal tracks the current trick state
+            # Set deal.first to the TRICK LEADER (not current player)
+            # endplay requires us to play cards in order from the leader
             if state.current_trick:
+                trick_leader = state.current_trick[0][1]  # Position of first card played
+                deal.first = self._convert_position(trick_leader)
+
+                # Play all cards already in the current trick
                 for played_card, played_pos in state.current_trick:
                     endplay_card = self._convert_card_to_endplay(played_card)
                     deal.play(endplay_card)
+            else:
+                # No current trick - set first to the position that needs to play
+                deal.first = self._convert_position(position)
 
             # solve_board returns a SolvedBoard with (card, tricks) pairs
             # The tricks value is the number of tricks the CURRENT SIDE can make
@@ -191,17 +196,33 @@ class DDSPlayAI(BasePlayAI):
             print(f"   Falling back to simple heuristic play")
             return self._fallback_choose_card(state, position, legal_cards)
 
-    def _get_pbn_string(self, state: PlayState) -> str:
-        """Build PBN string from PlayState for debugging and Deal creation"""
+    def _get_pbn_string(self, state: PlayState, include_current_trick: bool = False) -> str:
+        """Build PBN string from PlayState for debugging and Deal creation.
+
+        Args:
+            state: Current play state
+            include_current_trick: If True, add cards from current_trick back to hands.
+                                   This is needed for DDS because endplay requires cards
+                                   to be in hands before calling deal.play().
+        """
         # Build PBN string: "N:♠ cards.♥ cards.♦ cards.♣ cards ..."
         # Format: "N:AKQ2.KJ3.T98.432 JT98.Q42.KJ4.987 765.AT9.AQ5.KQJ 43.8765.7632.AT6"
 
+        # Build a copy of hands, optionally including current trick cards
+        hands_copy = {}
+        for pos in ['N', 'E', 'S', 'W']:
+            hands_copy[pos] = list(state.hands[pos].cards)
+
+        # Add back cards from current trick if requested
+        if include_current_trick and state.current_trick:
+            for card, pos in state.current_trick:
+                hands_copy[pos].append(card)
+
         hands = []
         for pos in ['N', 'E', 'S', 'W']:
-            hand = state.hands[pos]
             suits = {'♠': [], '♥': [], '♦': [], '♣': []}
 
-            for card in hand.cards:
+            for card in hands_copy[pos]:
                 suits[card.suit].append(card.rank)
 
             # Sort each suit by rank (high to low)

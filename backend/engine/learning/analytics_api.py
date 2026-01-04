@@ -2544,6 +2544,8 @@ def get_board_analysis():
                 sh.contract_declarer as declarer,
                 sh.made,
                 sh.played_at,
+                sh.user_was_declarer,
+                sh.user_was_dummy,
                 gs.started_at as session_started
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
@@ -2597,6 +2599,12 @@ def get_board_analysis():
             else:
                 summary['bad_bad'] += 1
 
+            # Determine user's role in this hand
+            user_was_declarer = bool(row['user_was_declarer'])
+            user_was_dummy = bool(row['user_was_dummy'])
+            # If not declarer and not dummy, user was defending
+            user_was_defender = not user_was_declarer and not user_was_dummy
+
             boards.append({
                 'hand_id': row['hand_id'],
                 'board_id': row['board_id'],
@@ -2610,7 +2618,10 @@ def get_board_analysis():
                 'made': row['made'],
                 'play_quality': 'good' if play_good else 'bad',
                 'bidding_quality': 'good' if bidding_good else 'bad',
-                'played_at': row['played_at']
+                'played_at': row['played_at'],
+                'user_was_declarer': user_was_declarer,
+                'user_was_dummy': user_was_dummy,
+                'user_was_defender': user_was_defender
             })
 
         # Get available sessions for the dropdown

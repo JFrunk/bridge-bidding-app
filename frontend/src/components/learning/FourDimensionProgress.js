@@ -701,7 +701,26 @@ const PracticePlayExpanded = ({ quality, handHistory, onReviewHand, onShowHandHi
 };
 
 // ============================================================================
-// BOARD ANALYSIS EXPANDED - Pianola-style Performance Chart
+// BOARD ANALYSIS EXPANDED - Redesigned Performance Chart
+// ============================================================================
+// Layout:
+//   X-axis (horizontal): Card Play (Weak left, Good right)
+//   Y-axis (vertical): Bidding (Weak bottom, Good top)
+//
+// Quadrants:
+//   Top-Right: Good Bidding, Good Card Play (GREEN)
+//   Top-Left: Good Bidding, Weak Card Play (YELLOW)
+//   Bottom-Right: Weak Bidding, Good Card Play (YELLOW)
+//   Bottom-Left: Weak Bidding, Weak Card Play (RED)
+//
+// Card Icons:
+//   - Card-shaped rectangles (portrait orientation)
+//   - Show contract inside (e.g., "4♠", "3NT")
+//   - Color based on quadrant (green/yellow/red)
+//   - Fill style based on user's role:
+//     - Solid: User was declarer
+//     - Hollow (thin border): Partner was declarer (user was dummy)
+//     - Hollow (thick border): User was defending
 // ============================================================================
 
 const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
@@ -734,53 +753,85 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
     }
   };
 
-  // Group boards by quadrant
+  // Group boards by quadrant based on NEW axis orientation
+  // X-axis = Card Play (left=weak, right=good)
+  // Y-axis = Bidding (bottom=weak, top=good)
   const quadrants = {
-    'strong': [],      // good bidding + good play (top-right)
-    'bid-focus': [],   // good bidding, bad play (top-left)
-    'play-focus': [],  // bad bidding, good play (bottom-right)
-    'review': []       // bad bidding + bad play (bottom-left)
+    'top-right': [],    // Good Bidding + Good Play (GREEN)
+    'top-left': [],     // Good Bidding + Weak Play (YELLOW)
+    'bottom-right': [], // Weak Bidding + Good Play (YELLOW)
+    'bottom-left': []   // Weak Bidding + Weak Play (RED)
   };
 
   boards.forEach(board => {
     const playGood = board.play_quality === 'good';
     const bidGood = board.bidding_quality === 'good';
 
-    if (bidGood && playGood) quadrants['strong'].push(board);
-    else if (bidGood && !playGood) quadrants['bid-focus'].push(board);
-    else if (!bidGood && playGood) quadrants['play-focus'].push(board);
-    else quadrants['review'].push(board);
+    if (bidGood && playGood) quadrants['top-right'].push(board);
+    else if (bidGood && !playGood) quadrants['top-left'].push(board);
+    else if (!bidGood && playGood) quadrants['bottom-right'].push(board);
+    else quadrants['bottom-left'].push(board);
   });
 
-  // Grid packing: position boards in rows within each quadrant
+  // Color logic based on quadrant
+  const getQuadrantColor = (quadrantKey) => {
+    switch (quadrantKey) {
+      case 'top-right': return '#22c55e';   // Green - both good
+      case 'top-left': return '#eab308';    // Yellow - good bid, weak play
+      case 'bottom-right': return '#eab308'; // Yellow - weak bid, good play
+      case 'bottom-left': return '#ef4444';  // Red - both weak
+      default: return '#9ca3af';
+    }
+  };
+
+  // Get fill style based on user's role
+  const getCardStyle = (board, quadrantKey) => {
+    const color = getQuadrantColor(quadrantKey);
+
+    if (board.user_was_declarer) {
+      // Solid fill - user declared
+      return { fill: color, stroke: color, strokeWidth: 1 };
+    } else if (board.user_was_dummy) {
+      // Hollow with thin border - partner declared
+      return { fill: 'white', stroke: color, strokeWidth: 1.5 };
+    } else {
+      // Hollow with thick border - defending
+      return { fill: 'white', stroke: color, strokeWidth: 3 };
+    }
+  };
+
+  // Grid packing: position cards in rows within each quadrant (4 per row, up to 20)
   const getGridPosition = (quadrantKey, index) => {
-    const cols = 5;
+    const cols = 4;
     const row = Math.floor(index / cols);
     const col = index % cols;
-    const spacingX = 26;
-    const spacingY = 24;
+    const cardWidth = 28;
+    const cardHeight = 36;
+    const spacingX = cardWidth + 4;
+    const spacingY = cardHeight + 4;
 
-    // Quadrant centers (in 320x280 SVG)
-    const centers = {
-      'strong': { x: 240, y: 70 },
-      'bid-focus': { x: 80, y: 70 },
-      'play-focus': { x: 240, y: 210 },
-      'review': { x: 80, y: 210 }
+    // Quadrant starting positions (top-left corner of each quadrant's card area)
+    // Chart is 360x320, quadrants are roughly 175x155 each
+    const startPositions = {
+      'top-right': { x: 200, y: 35 },    // Right side, top
+      'top-left': { x: 25, y: 35 },      // Left side, top
+      'bottom-right': { x: 200, y: 195 }, // Right side, bottom
+      'bottom-left': { x: 25, y: 195 }   // Left side, bottom
     };
 
-    const center = centers[quadrantKey];
+    const start = startPositions[quadrantKey];
     return {
-      x: center.x - 52 + col * spacingX,
-      y: center.y - 24 + row * spacingY
+      x: start.x + col * spacingX,
+      y: start.y + row * spacingY
     };
   };
 
-  // Our distinctive color palette (teal/amber/indigo/rose - NOT green/yellow/red)
-  const quadrantColors = {
-    'strong': { badge: '#0d9488', bg: '#ccfbf1', bgEnd: '#99f6e4' },      // teal
-    'bid-focus': { badge: '#f59e0b', bg: '#fef3c7', bgEnd: '#fde68a' },   // amber
-    'play-focus': { badge: '#6366f1', bg: '#e0e7ff', bgEnd: '#c7d2fe' },  // indigo
-    'review': { badge: '#e11d48', bg: '#ffe4e6', bgEnd: '#fecdd3' }       // rose
+  // Quadrant descriptions
+  const quadrantDescriptions = {
+    'top-right': 'Good Bidding, Good Card Play',
+    'top-left': 'Good Bidding, Weak Card Play',
+    'bottom-right': 'Weak Bidding, Good Card Play',
+    'bottom-left': 'Weak Bidding, Weak Card Play'
   };
 
   const handleBoardClick = (handId) => {
@@ -841,70 +892,69 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
 
       {/* Board Analysis Chart */}
       <div className="board-analysis-chart-container">
-        <svg viewBox="0 0 320 280" className="board-analysis-chart">
-          {/* Gradient definitions */}
-          <defs>
-            {Object.entries(quadrantColors).map(([key, colors]) => (
-              <linearGradient key={key} id={`gradient-${key}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor={colors.bg} />
-                <stop offset="100%" stopColor={colors.bgEnd} />
-              </linearGradient>
-            ))}
-          </defs>
+        <svg viewBox="0 0 360 340" className="board-analysis-chart">
+          {/* Quadrant backgrounds */}
+          <rect x="20" y="20" width="160" height="150" rx="8" fill="#fefce8" /> {/* Top-left: yellow bg */}
+          <rect x="185" y="20" width="160" height="150" rx="8" fill="#dcfce7" /> {/* Top-right: green bg */}
+          <rect x="20" y="175" width="160" height="150" rx="8" fill="#fee2e2" /> {/* Bottom-left: red bg */}
+          <rect x="185" y="175" width="160" height="150" rx="8" fill="#fefce8" /> {/* Bottom-right: yellow bg */}
 
-          {/* Quadrant backgrounds with rounded corners */}
-          <rect x="4" y="4" width="152" height="132" rx="8" fill="url(#gradient-bid-focus)" />
-          <rect x="164" y="4" width="152" height="132" rx="8" fill="url(#gradient-strong)" />
-          <rect x="4" y="144" width="152" height="132" rx="8" fill="url(#gradient-review)" />
-          <rect x="164" y="144" width="152" height="132" rx="8" fill="url(#gradient-play-focus)" />
+          {/* Quadrant divider lines */}
+          <line x1="182" y1="20" x2="182" y2="325" stroke="#d1d5db" strokeWidth="1" strokeDasharray="4,4" />
+          <line x1="20" y1="172" x2="345" y2="172" stroke="#d1d5db" strokeWidth="1" strokeDasharray="4,4" />
 
-          {/* X-axis: Card Play with Bad/Good labels */}
-          <text x="160" y="290" textAnchor="middle" className="chart-axis-label">Card Play</text>
-          <text x="4" y="290" textAnchor="start" className="chart-axis-marker">Bad</text>
-          <text x="316" y="290" textAnchor="end" className="chart-axis-marker">Good</text>
+          {/* Quadrant description labels (centered at top of each quadrant) */}
+          <text x="100" y="35" textAnchor="middle" className="chart-quadrant-desc">{quadrantDescriptions['top-left']}</text>
+          <text x="265" y="35" textAnchor="middle" className="chart-quadrant-desc">{quadrantDescriptions['top-right']}</text>
+          <text x="100" y="190" textAnchor="middle" className="chart-quadrant-desc">{quadrantDescriptions['bottom-left']}</text>
+          <text x="265" y="190" textAnchor="middle" className="chart-quadrant-desc">{quadrantDescriptions['bottom-right']}</text>
 
-          {/* Y-axis: Bidding with Bad/Good labels */}
-          <text x="10" y="140" textAnchor="middle" transform="rotate(-90, 10, 140)" className="chart-axis-label">Bidding</text>
-          <text x="10" y="276" textAnchor="middle" transform="rotate(-90, 10, 276)" className="chart-axis-marker">Bad</text>
-          <text x="10" y="16" textAnchor="middle" transform="rotate(-90, 10, 16)" className="chart-axis-marker">Good</text>
+          {/* X-axis: Card Play */}
+          <text x="182" y="338" textAnchor="middle" className="chart-axis-label">Card Play</text>
+          <text x="25" y="338" textAnchor="start" className="chart-axis-marker">Weak</text>
+          <text x="340" y="338" textAnchor="end" className="chart-axis-marker">Good</text>
 
-          {/* Quadrant labels with bridge suit icons */}
-          <text x="80" y="20" textAnchor="middle" className="chart-quadrant-title">♥ Focus: Play</text>
-          <text x="240" y="20" textAnchor="middle" className="chart-quadrant-title">♠ Strong</text>
-          <text x="80" y="262" textAnchor="middle" className="chart-quadrant-title">♣ Review</text>
-          <text x="240" y="262" textAnchor="middle" className="chart-quadrant-title">♦ Focus: Bidding</text>
+          {/* Y-axis: Bidding */}
+          <text x="8" y="172" textAnchor="middle" transform="rotate(-90, 8, 172)" className="chart-axis-label">Bidding</text>
+          <text x="8" y="320" textAnchor="middle" transform="rotate(-90, 8, 320)" className="chart-axis-marker">Weak</text>
+          <text x="8" y="30" textAnchor="middle" transform="rotate(-90, 8, 30)" className="chart-axis-marker">Good</text>
 
-          {/* Board badges */}
+          {/* Card icons for each quadrant */}
           {Object.entries(quadrants).map(([quadrantKey, quadrantBoards]) =>
             quadrantBoards.slice(0, 20).map((board, index) => {
               const pos = getGridPosition(quadrantKey, index);
-              const colors = quadrantColors[quadrantKey];
+              const style = getCardStyle(board, quadrantKey);
+              const cardWidth = 28;
+              const cardHeight = 36;
 
               return (
                 <g
                   key={board.hand_id}
-                  className="board-badge"
+                  className="board-card"
                   onClick={() => handleBoardClick(board.hand_id)}
                   onMouseEnter={(e) => handleMouseEnter(e, board)}
                   onMouseLeave={handleMouseLeave}
                   style={{ cursor: 'pointer' }}
                 >
-                  {/* Pill-shaped badge */}
+                  {/* Card-shaped rectangle (portrait orientation) */}
                   <rect
-                    x={pos.x - 11}
-                    y={pos.y - 9}
-                    width="22"
-                    height="18"
-                    rx="4"
-                    fill={colors.badge}
-                    className="badge-bg"
-                  />
-                  {/* Contract or board number */}
-                  <text
                     x={pos.x}
-                    y={pos.y + 4}
+                    y={pos.y}
+                    width={cardWidth}
+                    height={cardHeight}
+                    rx="3"
+                    fill={style.fill}
+                    stroke={style.stroke}
+                    strokeWidth={style.strokeWidth}
+                    className="card-shape"
+                  />
+                  {/* Contract text inside card */}
+                  <text
+                    x={pos.x + cardWidth / 2}
+                    y={pos.y + cardHeight / 2 + 4}
                     textAnchor="middle"
-                    className="badge-text"
+                    className="card-contract-text"
+                    fill={style.fill === 'white' ? style.stroke : 'white'}
                   >
                     {board.contract || `#${board.board_id}`}
                   </text>
@@ -918,10 +968,10 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
             if (quadrantBoards.length <= 20) return null;
             const overflow = quadrantBoards.length - 20;
             const positions = {
-              'strong': { x: 308, y: 130 },
-              'bid-focus': { x: 12, y: 130 },
-              'play-focus': { x: 308, y: 270 },
-              'review': { x: 12, y: 270 }
+              'top-right': { x: 340, y: 165 },
+              'top-left': { x: 25, y: 165 },
+              'bottom-right': { x: 340, y: 320 },
+              'bottom-left': { x: 25, y: 320 }
             };
             const pos = positions[quadrantKey];
             return (
@@ -929,33 +979,48 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
                 key={`overflow-${quadrantKey}`}
                 x={pos.x}
                 y={pos.y}
-                textAnchor={pos.x < 160 ? 'start' : 'end'}
+                textAnchor={pos.x < 180 ? 'start' : 'end'}
                 className="overflow-indicator"
               >
-                +{overflow}
+                +{overflow} more
               </text>
             );
           })}
         </svg>
       </div>
 
+      {/* Legend */}
+      <div className="board-analysis-legend">
+        <div className="legend-title">Your Role:</div>
+        <div className="legend-items">
+          <div className="legend-item">
+            <span className="legend-card solid"></span>
+            <span className="legend-label">You declared</span>
+          </div>
+          <div className="legend-item">
+            <span className="legend-card hollow-thin"></span>
+            <span className="legend-label">Partner declared</span>
+          </div>
+          <div className="legend-item">
+            <span className="legend-card hollow-thick"></span>
+            <span className="legend-label">You defended</span>
+          </div>
+        </div>
+      </div>
+
       {/* Summary Stats */}
       <div className="board-analysis-summary">
-        <div className="summary-item strong">
+        <div className="summary-item green">
           <span className="summary-count">{summary.good_good}</span>
-          <span className="summary-label">Strong</span>
+          <span className="summary-label">Both Good</span>
         </div>
-        <div className="summary-item bid-focus">
-          <span className="summary-count">{summary.good_bad}</span>
-          <span className="summary-label">Focus: Play</span>
+        <div className="summary-item yellow">
+          <span className="summary-count">{summary.good_bad + summary.bad_good}</span>
+          <span className="summary-label">One Good</span>
         </div>
-        <div className="summary-item play-focus">
-          <span className="summary-count">{summary.bad_good}</span>
-          <span className="summary-label">Focus: Bid</span>
-        </div>
-        <div className="summary-item review">
+        <div className="summary-item red">
           <span className="summary-count">{summary.bad_bad}</span>
-          <span className="summary-label">Review</span>
+          <span className="summary-label">Both Weak</span>
         </div>
       </div>
 
@@ -979,6 +1044,9 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
           </div>
           <div className="tooltip-row">
             Score: {tooltip.board.actual_score} (Par: {tooltip.board.par_score})
+          </div>
+          <div className="tooltip-row">
+            Role: {tooltip.board.user_was_declarer ? 'Declarer' : tooltip.board.user_was_dummy ? 'Dummy' : 'Defender'}
           </div>
           <div className="tooltip-hint">Click to review</div>
         </div>
