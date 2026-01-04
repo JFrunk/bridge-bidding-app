@@ -1143,17 +1143,55 @@ const DecisionRow = ({ decision, onReview }) => {
 const HandRow = ({ hand, onReview }) => {
   const contract = hand.contract || {};
   const contractStr = `${contract.level || ''}${contract.strain || ''}`;
-  const resultStr = hand.result > 0 ? `+${hand.result}` : hand.result === 0 ? '=' : hand.result;
   const role = hand.was_declarer ? 'Declarer' : hand.was_dummy ? 'Dummy' : 'Defender';
-  const score = hand.score > 0 ? `+${hand.score}` : hand.score;
+  const isDefender = !hand.was_declarer && !hand.was_dummy;
   const quality = Math.round(hand.play_quality || 0);
+
+  // Get result from user's perspective
+  const getResultDisplay = () => {
+    const result = hand.result; // tricks over/under contract
+    if (isDefender) {
+      // As defender: positive result means they made overtricks (bad for us)
+      // negative result means we set them (good for us)
+      if (result < 0) {
+        return { text: `Set ${Math.abs(result)}`, isGood: true };
+      } else if (result > 0) {
+        return { text: `+${result}`, isGood: false };
+      } else {
+        return { text: '=', isGood: false };
+      }
+    } else {
+      // As declarer/dummy: positive result is good
+      if (result > 0) {
+        return { text: `+${result}`, isGood: true };
+      } else if (result < 0) {
+        return { text: `${result}`, isGood: false };
+      } else {
+        return { text: '=', isGood: true };
+      }
+    }
+  };
+
+  // Get score from NS (user's) perspective
+  const getScoreDisplay = () => {
+    let score = hand.score || 0;
+    const declarer = hand.declarer;
+    // If declarer was EW, negate the score for NS perspective
+    if (declarer === 'E' || declarer === 'W') {
+      score = -score;
+    }
+    return score > 0 ? `+${score}` : `${score}`;
+  };
+
+  const resultDisplay = getResultDisplay();
+  const scoreDisplay = getScoreDisplay();
 
   return (
     <div className="hand-row">
       <span className={`contract ${(contract.strain || '').toLowerCase()}`}>{contractStr}</span>
-      <span className={`result ${hand.result >= 0 ? 'made' : 'down'}`}>{resultStr}</span>
+      <span className={`result ${resultDisplay.isGood ? 'made' : 'down'}`}>{resultDisplay.text}</span>
       <span className="role">{role}</span>
-      <span className="score">{score}</span>
+      <span className="score">{scoreDisplay}</span>
       {quality > 0 && <span className="quality">{quality}%</span>}
       {onReview && (
         <button className="review-link" onClick={onReview}>Review →</button>
