@@ -254,7 +254,8 @@ function App() {
   // Dev mode - toggle with Ctrl+Shift+D (or Cmd+Shift+D on Mac)
   // Also available via URL param ?dev=true or console: window.enableDevMode()
   // Controls visibility of: AI Review button, AI Difficulty Selector, AI messages
-  const { isDevMode } = useDevMode();
+  // V2 Schema - toggle with ?v2schema=true or console: window.enableV2Schema()
+  const { isDevMode, useV2Schema, toggleV2Schema } = useDevMode();
 
   const [hand, setHand] = useState([]);
   const [handPoints, setHandPoints] = useState(null);
@@ -1811,7 +1812,8 @@ ${otherCommands}`;
           current_player: 'South',
           user_id: userId || 1,
           session_id: sessionData?.session?.id,
-          feedback_level: 'intermediate'
+          feedback_level: 'intermediate',
+          use_v2_schema: useV2Schema  // Dev mode: test V2 Schema engine
         })
       });
 
@@ -1925,7 +1927,8 @@ ${otherCommands}`;
             body: JSON.stringify({
               auction_history: auction.map(a => a.bid),
               current_player: currentPlayer,
-              dealer: dealer
+              dealer: dealer,
+              use_v2_schema: useV2Schema  // Dev mode: test V2 Schema engine
             })
           });
 
@@ -2916,20 +2919,43 @@ ${otherCommands}`;
             position: 'fixed',
             top: '8px',
             left: '8px',
-            background: 'rgba(139, 92, 246, 0.9)',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            zIndex: 10000,
-            cursor: 'pointer',
-            userSelect: 'none'
+            display: 'flex',
+            gap: '4px',
+            zIndex: 10000
           }}
-          onClick={() => window.disableDevMode?.()}
-          title="Click to disable dev mode (or press Ctrl+Shift+D)"
         >
-          DEV
+          <div
+            style={{
+              background: 'rgba(139, 92, 246, 0.9)',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+            onClick={() => window.disableDevMode?.()}
+            title="Click to disable dev mode (or press Ctrl+Shift+D)"
+          >
+            DEV
+          </div>
+          <div
+            style={{
+              background: useV2Schema ? 'rgba(59, 130, 246, 0.9)' : 'rgba(100, 100, 100, 0.7)',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+            onClick={toggleV2Schema}
+            title={useV2Schema ? 'V2 Schema ACTIVE - Click to disable' : 'Click to enable V2 Schema engine'}
+          >
+            {useV2Schema ? 'V2 ✓' : 'V2'}
+          </div>
         </div>
       )}
     </div>

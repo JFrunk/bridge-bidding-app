@@ -96,6 +96,9 @@
         },
         "quick_tricks": {
           "min": 1.5
+        },
+        "opponent_suit_length": {
+          "max": 3
         }
       },
       "forcing": "none",

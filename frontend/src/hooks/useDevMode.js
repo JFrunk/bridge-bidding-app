@@ -8,10 +8,12 @@ import { useState, useEffect, useCallback } from 'react';
  * Features controlled by dev mode:
  * - AI Review button visibility
  * - AI Difficulty Selector visibility
+ * - V2 Schema toggle (experimental bidding engine)
  * - (Extensible: add more features as needed)
  *
  * The mode persists for the current session (sessionStorage)
  * and can also be activated via URL parameter: ?dev=true
+ * V2 Schema can be activated via URL parameter: ?v2schema=true
  */
 export function useDevMode() {
   const [isDevMode, setIsDevMode] = useState(() => {
@@ -23,6 +25,20 @@ export function useDevMode() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('dev') === 'true') {
       sessionStorage.setItem('bridge-dev-mode', 'true');
+      return true;
+    }
+
+    return false;
+  });
+
+  // V2 Schema toggle - separate from dev mode visibility
+  const [useV2Schema, setUseV2Schema] = useState(() => {
+    const stored = sessionStorage.getItem('bridge-use-v2-schema');
+    if (stored === 'true') return true;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('v2schema') === 'true') {
+      sessionStorage.setItem('bridge-use-v2-schema', 'true');
       return true;
     }
 
@@ -56,6 +72,21 @@ export function useDevMode() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleDevMode]);
 
+  // V2 Schema toggle function
+  const toggleV2Schema = useCallback(() => {
+    setUseV2Schema(prev => {
+      const newValue = !prev;
+      if (newValue) {
+        sessionStorage.setItem('bridge-use-v2-schema', 'true');
+        console.log('🔷 V2 Schema ENABLED - Using experimental bidding engine');
+      } else {
+        sessionStorage.removeItem('bridge-use-v2-schema');
+        console.log('🔶 V2 Schema DISABLED - Using standard bidding engine');
+      }
+      return newValue;
+    });
+  }, []);
+
   // Also expose a global function for console access
   useEffect(() => {
     window.toggleDevMode = toggleDevMode;
@@ -70,16 +101,34 @@ export function useDevMode() {
       console.log('🔧 Dev mode DISABLED');
     };
 
+    // V2 Schema controls
+    window.toggleV2Schema = toggleV2Schema;
+    window.enableV2Schema = () => {
+      sessionStorage.setItem('bridge-use-v2-schema', 'true');
+      setUseV2Schema(true);
+      console.log('🔷 V2 Schema ENABLED');
+    };
+    window.disableV2Schema = () => {
+      sessionStorage.removeItem('bridge-use-v2-schema');
+      setUseV2Schema(false);
+      console.log('🔶 V2 Schema DISABLED');
+    };
+
     return () => {
       delete window.toggleDevMode;
       delete window.enableDevMode;
       delete window.disableDevMode;
+      delete window.toggleV2Schema;
+      delete window.enableV2Schema;
+      delete window.disableV2Schema;
     };
-  }, [toggleDevMode]);
+  }, [toggleDevMode, toggleV2Schema]);
 
   return {
     isDevMode,
-    toggleDevMode
+    toggleDevMode,
+    useV2Schema,
+    toggleV2Schema
   };
 }
 

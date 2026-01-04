@@ -86,6 +86,78 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "stayman_raise_to_4_spades",
+      "bid": "4♠",
+      "priority": 520,
+      "description": "Raise to 4♠ after Stayman finds fit",
+      "trigger": "1NT - Pass - 2♣ - Pass - 2♠ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8
+        },
+        "spades_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in spades after Stayman found 4-3 or 4-4 fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "stayman_raise_to_4_hearts",
+      "bid": "4♥",
+      "priority": 520,
+      "description": "Raise to 4♥ after Stayman finds fit",
+      "trigger": "1NT - Pass - 2♣ - Pass - 2♥ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8
+        },
+        "hearts_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in hearts after Stayman found 4-3 or 4-4 fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "jacoby_transfer_game_spades",
+      "bid": "4♠",
+      "priority": 525,
+      "description": "Raise to 4♠ after Jacoby transfer to spades",
+      "trigger": "1NT - Pass - 2♥ - Pass - 2♠ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8
+        },
+        "spades_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in spades after Jacoby transfer (8+ HCP gives game values)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "jacoby_transfer_game_hearts",
+      "bid": "4♥",
+      "priority": 525,
+      "description": "Raise to 4♥ after Jacoby transfer to hearts",
+      "trigger": "1NT - Pass - 2♦ - Pass - 2♥ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8
+        },
+        "hearts_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in hearts after Jacoby transfer (8+ HCP gives game values)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "responder_accept_opener_jump_to_game",
       "bid": "4♥",
       "priority": 510,

@@ -296,9 +296,11 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
         opponent_suit = get_suit_from_bid(opening_bid)
 
     flat['short_in_opponent_suit'] = False
+    flat['opponent_suit_length'] = 0
     if opponent_suit:
         opponent_length = suit_lengths.get(opponent_suit, 0)
         flat['short_in_opponent_suit'] = opponent_length <= 2
+        flat['opponent_suit_length'] = opponent_length
 
     # Perfect takeout shape: 4+ in all unbid majors, 3+ in all unbid minors, short in their suit
     flat['perfect_takeout_shape'] = False

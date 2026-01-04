@@ -116,22 +116,38 @@ def handle_internal_error(e):
     return response
 
 # =============================================================================
-# BIDDING ENGINE SELECTION (V1 vs V2)
+# BIDDING ENGINE SELECTION
 # =============================================================================
-# V2 engine has explicit state machine and improved SAYC compliance.
-# Enable via environment variable: USE_V2_BIDDING_ENGINE=true
+# V1 (classic): Python module-based - DEFAULT
+# V2 (state machine): Explicit state machine, same modules
+# V2 Schema: JSON schema-driven with V1 fallback - RECOMMENDED for new deploys
 #
-# Comparison mode runs both engines and logs discrepancies for safe migration.
-# Enable via: BIDDING_ENGINE_COMPARISON_MODE=true
+# Environment variables:
+#   USE_V2_BIDDING_ENGINE=true       - Use V2 state machine
+#   USE_V2_SCHEMA_ENGINE=true        - Use V2 Schema (JSON-driven) with V1 fallback
+#   BIDDING_ENGINE_COMPARISON_MODE=true - Run both and log discrepancies
 # =============================================================================
 
 USE_V2_ENGINE = os.getenv('USE_V2_BIDDING_ENGINE', 'false').lower() == 'true'
+USE_V2_SCHEMA = os.getenv('USE_V2_SCHEMA_ENGINE', 'false').lower() == 'true'
 COMPARISON_MODE = os.getenv('BIDDING_ENGINE_COMPARISON_MODE', 'false').lower() == 'true'
 
 # Initialize bidding engines
 engine_v1 = BiddingEngine()
 
-# V2 engine (lazy loaded if enabled)
+# V2 Schema engine (JSON-driven with V1 fallback)
+# Always initialize for per-request switching via dev mode
+engine_v2_schema = None
+try:
+    from engine.v2 import BiddingEngineV2Schema
+    engine_v2_schema = BiddingEngineV2Schema(use_v1_fallback=True)
+    print("✅ BiddingEngineV2Schema initialized (available for dev mode testing)")
+except Exception as e:
+    print(f"⚠️  Failed to initialize BiddingEngineV2Schema: {e}")
+    if USE_V2_SCHEMA:
+        USE_V2_SCHEMA = False
+
+# V2 state machine engine (for comparison mode or explicit enable)
 engine_v2 = None
 if USE_V2_ENGINE or COMPARISON_MODE:
     try:
@@ -142,10 +158,13 @@ if USE_V2_ENGINE or COMPARISON_MODE:
         print(f"⚠️  Failed to initialize BiddingEngineV2: {e}")
         USE_V2_ENGINE = False
 
-# Select active engine
-if USE_V2_ENGINE and engine_v2:
+# Select active engine (priority: V2 Schema > V2 > V1)
+if USE_V2_SCHEMA and engine_v2_schema:
+    engine = engine_v2_schema
+    print("🔷 Using BiddingEngineV2Schema (JSON-driven with V1 fallback)")
+elif USE_V2_ENGINE and engine_v2:
     engine = engine_v2
-    print("🔷 Using BiddingEngineV2 (new state machine)")
+    print("🔷 Using BiddingEngineV2 (state machine)")
 else:
     engine = engine_v1
     print("🔶 Using BiddingEngine V1 (classic)")
@@ -1250,6 +1269,7 @@ def get_next_bid():
         auction_history_raw, current_player = data['auction_history'], data['current_player']
         explanation_level = data.get('explanation_level', 'detailed')  # simple, detailed, or expert
         dealer = data.get('dealer')  # Get dealer from frontend
+        use_v2_schema = data.get('use_v2_schema', False)  # Dev mode flag for V2 Schema testing
 
         # Normalize auction history: frontend may send {bid, explanation} objects or plain strings
         # Backend expects list of bid strings: ["1NT", "Pass", ...]
@@ -1269,9 +1289,21 @@ def get_next_bid():
         if not player_hand:
             return jsonify({'error': "Deal has not been made yet."}), 400
 
-        bid, explanation = engine.get_next_bid(player_hand, auction_history, current_player,
+        # Select engine: V2 Schema if dev mode requests it and it's available
+        active_engine = engine
+        engine_used = "V1"
+        if use_v2_schema and engine_v2_schema:
+            active_engine = engine_v2_schema
+            engine_used = "V2 Schema"
+            print(f"🔷 Dev mode: Using V2 Schema engine for this request")
+
+        bid, explanation = active_engine.get_next_bid(player_hand, auction_history, current_player,
                                                 state.vulnerability, explanation_level, dealer=dealer)
-        return jsonify({'bid': bid, 'explanation': explanation, 'player': current_player})
+
+        response = {'bid': bid, 'explanation': explanation, 'player': current_player}
+        if use_v2_schema:
+            response['engine_used'] = engine_used
+        return jsonify(response)
 
     except Exception as e:
         print("---!!! AN ERROR OCCURRED IN GET_NEXT_BID !!!---")
@@ -1466,8 +1498,9 @@ def evaluate_bid():
         user_id = data.get('user_id', 1)  # Default user
         session_id = data.get('session_id')
         feedback_level = data.get('feedback_level', 'intermediate')  # beginner, intermediate, expert
+        use_v2_schema = data.get('use_v2_schema', False)  # Dev mode flag for V2 Schema testing
 
-        print(f"📊 /api/evaluate-bid called: user_bid={user_bid}, auction_len={len(auction_history)}, player={current_player}, user_id={user_id}")
+        print(f"📊 /api/evaluate-bid called: user_bid={user_bid}, auction_len={len(auction_history)}, player={current_player}, user_id={user_id}, v2_schema={use_v2_schema}")
 
         if not user_bid:
             print("❌ evaluate-bid: Missing user_bid")
@@ -1479,9 +1512,15 @@ def evaluate_bid():
             print(f"❌ evaluate-bid: Hand for {current_player} not available. state.deal keys: {list(state.deal.keys()) if state.deal else 'None'}")
             return jsonify({'error': f'Hand for {current_player} not available'}), 400
 
+        # Select engine: V2 Schema if dev mode requests it and it's available
+        active_engine = engine
+        if use_v2_schema and engine_v2_schema:
+            active_engine = engine_v2_schema
+            print(f"🔷 Dev mode: Using V2 Schema engine for evaluate-bid")
+
         # Get AI's optimal bid and explanation (does NOT modify state)
         # We pass auction_history BEFORE the user's bid to get what AI would have bid
-        optimal_bid, optimal_explanation_str = engine.get_next_bid(
+        optimal_bid, optimal_explanation_str = active_engine.get_next_bid(
             user_hand,
             auction_history,
             current_player,
@@ -1490,7 +1529,7 @@ def evaluate_bid():
         )
 
         # Get structured explanation for better feedback
-        _, optimal_explanation_dict = engine.get_next_bid_structured(
+        _, optimal_explanation_dict = active_engine.get_next_bid_structured(
             user_hand,
             auction_history,
             current_player,

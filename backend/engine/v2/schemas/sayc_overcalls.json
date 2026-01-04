@@ -224,6 +224,33 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "simple_overcall_2_level_strong",
+      "bid": "2{suit}",
+      "priority": 96,
+      "description": "Strong 2-level overcall with excellent suit",
+      "conditions": {
+        "is_overcall": true,
+        "hcp": {
+          "min": 10,
+          "max": 16
+        },
+        "suit_length": {
+          "min": 6
+        },
+        "suit_quality": {
+          "min": "good"
+        },
+        "opponent_suit_length": {
+          "max": 3
+        },
+        "bid_level": 2
+      },
+      "forcing": "none",
+      "suit_selection": "best_5_card_suit",
+      "explanation": "2-level overcall showing 10-16 HCP and good 5+ card suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "simple_overcall_2_level",
       "bid": "2{suit}",
       "priority": 95,
@@ -231,20 +258,23 @@
       "conditions": {
         "is_overcall": true,
         "hcp": {
-          "min": 11,
+          "min": 12,
           "max": 16
         },
         "suit_length": {
           "min": 5
         },
         "suit_quality": {
-          "min": "good"
+          "min": "excellent"
+        },
+        "opponent_suit_length": {
+          "max": 3
         },
         "bid_level": 2
       },
       "forcing": "none",
       "suit_selection": "best_5_card_suit",
-      "explanation": "2-level overcall with {hcp} HCP and good {suit}",
+      "explanation": "2-level overcall with {hcp} HCP and very good {suit}",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -293,6 +323,28 @@
       "forcing": "one_round",
       "explanation": "Negative double showing unbid major(s)",
       "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "pass_trap",
+      "bid": "Pass",
+      "priority": 50,
+      "description": "Trap pass with length in opponent's suit",
+      "conditions": {
+        "is_overcall": true,
+        "hcp": {
+          "min": 10,
+          "max": 14
+        },
+        "opponent_suit_length": {
+          "min": 4
+        },
+        "suit_length": {
+          "max": 5
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass (trap) with 4+ cards in opponent's suit",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "pass_no_action",

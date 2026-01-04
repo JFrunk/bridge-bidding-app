@@ -9,8 +9,10 @@ Python code. This allows for:
 4. Cleaner separation of bidding knowledge from engine logic
 5. Proper forcing level tracking across the auction
 6. Monte Carlo integration for bid validation (optional)
+7. Optional V1 fallback when no schema rule matches
 """
 
+import logging
 from typing import Dict, Optional, Tuple, List
 from engine.hand import Hand
 from engine.v2.features.enhanced_extractor import extract_flat_features
@@ -21,6 +23,8 @@ from engine.v2.interpreters.schema_interpreter import (
     ForcingLevel
 )
 from engine.v2.inference.conflict_resolver import ConflictResolver, PassThroughResolver
+
+logger = logging.getLogger(__name__)
 
 
 class BiddingEngineV2Schema:
@@ -37,7 +41,7 @@ class BiddingEngineV2Schema:
     - Optional Monte Carlo integration for slam/competitive validation
     """
 
-    def __init__(self, schema_dir: str = None, simulator=None):
+    def __init__(self, schema_dir: str = None, simulator=None, use_v1_fallback: bool = True):
         """
         Initialize the schema-driven engine.
 
@@ -45,9 +49,15 @@ class BiddingEngineV2Schema:
             schema_dir: Path to schema directory. Defaults to engine/v2/schemas/
             simulator: Optional Monte Carlo simulator for bid validation.
                       If None, conflict resolver operates in pass-through mode.
+            use_v1_fallback: If True, falls back to V1 engine when no schema rule matches.
+                            This provides better coverage while V2 schemas are incomplete.
         """
         self.interpreter = SchemaInterpreter(schema_dir)
         self._bid_legality_cache = {}
+        self.use_v1_fallback = use_v1_fallback
+        self._v1_engine = None  # Lazy-loaded
+        self._v1_fallback_count = 0
+        self._total_bid_count = 0
 
         # Initialize conflict resolver for Monte Carlo integration
         if simulator is not None:
@@ -84,6 +94,8 @@ class BiddingEngineV2Schema:
         Returns:
             Tuple of (bid, explanation)
         """
+        self._total_bid_count += 1
+
         # Extract features in flat format for schema evaluation
         features = extract_flat_features(
             hand, auction_history, my_position, vulnerability, dealer
@@ -136,6 +148,10 @@ class BiddingEngineV2Schema:
 
                 return (final_bid, final_explanation)
 
+        # No schema rule matched - try V1 fallback if enabled
+        if self.use_v1_fallback:
+            return self._get_v1_fallback_bid(hand, auction_history, my_position, vulnerability)
+
         # Fallback to Pass (but check forcing constraints first)
         forcing_validation = self.interpreter.validate_bid_against_forcing("Pass")
         if not forcing_validation.is_valid:
@@ -143,6 +159,43 @@ class BiddingEngineV2Schema:
             return ('Pass', f'Warning: {forcing_validation.reason}')
 
         return ('Pass', 'No applicable bidding rule found')
+
+    def _get_v1_engine(self):
+        """Lazy-load the V1 engine for fallback."""
+        if self._v1_engine is None:
+            from engine.bidding_engine import BiddingEngine
+            self._v1_engine = BiddingEngine()
+        return self._v1_engine
+
+    def _get_v1_fallback_bid(
+        self,
+        hand: Hand,
+        auction_history: List[str],
+        my_position: str,
+        vulnerability: str
+    ) -> Tuple[str, str]:
+        """
+        Get bid from V1 engine when V2 schema has no matching rule.
+
+        Returns:
+            Tuple of (bid, explanation) with V1 fallback note
+        """
+        self._v1_fallback_count += 1
+
+        try:
+            v1_engine = self._get_v1_engine()
+            bid, explanation = v1_engine.get_next_bid(
+                hand=hand,
+                auction_history=auction_history,
+                my_position=my_position,
+                vulnerability=vulnerability
+            )
+            # Add note that this came from V1 fallback (useful for debugging)
+            logger.debug(f"V2 Schema fallback to V1: {bid} - {explanation}")
+            return (bid, explanation)
+        except Exception as e:
+            logger.warning(f"V1 fallback failed: {e}")
+            return ('Pass', f'Fallback error: {str(e)}')
 
     def get_bid_candidates(
         self,
@@ -302,6 +355,22 @@ class BiddingEngineV2Schema:
     def reset_resolver_stats(self):
         """Reset conflict resolver statistics."""
         self.conflict_resolver.reset_stats()
+
+    def get_fallback_stats(self) -> Dict:
+        """Get V1 fallback usage statistics."""
+        return {
+            'total_bids': self._total_bid_count,
+            'v1_fallbacks': self._v1_fallback_count,
+            'v2_schema_hits': self._total_bid_count - self._v1_fallback_count,
+            'fallback_rate': (
+                self._v1_fallback_count / max(1, self._total_bid_count) * 100
+            )
+        }
+
+    def reset_fallback_stats(self):
+        """Reset V1 fallback statistics."""
+        self._v1_fallback_count = 0
+        self._total_bid_count = 0
 
 
 # Create singleton for easy import
