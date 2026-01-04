@@ -2726,6 +2726,7 @@ def get_board_analysis():
         user_id (required): User ID
         session_id (optional): Filter to specific session
         limit (optional): Max boards to return (default 25)
+        include_decay_curve (optional): Include decay curve data (dev mode)
 
     Returns:
         {
@@ -2735,7 +2736,9 @@ def get_board_analysis():
                 actual_score, par_score,
                 contract, declarer, made,
                 play_quality, bidding_quality,
-                played_at
+                played_at,
+                decay_curve (if include_decay_curve=true),
+                major_errors (if include_decay_curve=true)
             }],
             sessions: [{session_id, started_at, hands_count}],
             summary: {total_boards, good_good, good_bad, bad_good, bad_bad}
@@ -2744,6 +2747,7 @@ def get_board_analysis():
     user_id = request.args.get('user_id')
     session_id = request.args.get('session_id')
     limit = request.args.get('limit', 25, type=int)
+    include_decay_curve = request.args.get('include_decay_curve', 'false').lower() == 'true'
 
     if not user_id:
         return jsonify({'error': 'user_id required'}), 400
@@ -2753,7 +2757,9 @@ def get_board_analysis():
         cursor = conn.cursor()
 
         # Build query with optional session filter
-        query = """
+        # Include decay_curve and major_errors columns if in dev mode
+        decay_columns = ", sh.decay_curve, sh.major_errors" if include_decay_curve else ""
+        query = f"""
             SELECT
                 sh.id as hand_id,
                 sh.hand_number as board_id,
@@ -2769,7 +2775,7 @@ def get_board_analysis():
                 sh.played_at,
                 sh.user_was_declarer,
                 sh.user_was_dummy,
-                gs.started_at as session_started
+                gs.started_at as session_started{decay_columns}
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
             WHERE gs.user_id = ?
@@ -2841,7 +2847,7 @@ def get_board_analysis():
             else:
                 summary['bad_bad'] += 1
 
-            boards.append({
+            board_data = {
                 'hand_id': row['hand_id'],
                 'board_id': row['board_id'],
                 'session_id': row['session_id'],
@@ -2858,7 +2864,16 @@ def get_board_analysis():
                 'user_was_declarer': user_was_declarer,
                 'user_was_dummy': user_was_dummy,
                 'user_was_defender': user_was_defender
-            })
+            }
+
+            # Add decay curve data if in dev mode
+            if include_decay_curve:
+                decay_curve_raw = row.get('decay_curve')
+                major_errors_raw = row.get('major_errors')
+                board_data['decay_curve'] = json.loads(decay_curve_raw) if decay_curve_raw else None
+                board_data['major_errors'] = json.loads(major_errors_raw) if major_errors_raw else None
+
+            boards.append(board_data)
 
         # Get available sessions for the dropdown
         cursor.execute("""
