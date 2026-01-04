@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getFourDimensionProgress, getDashboardData, getHandHistory, getBoardAnalysis } from '../../services/analyticsService';
+import { getFourDimensionProgress, getDashboardData, getHandHistory, getBoardAnalysis, getBiddingHandsHistory } from '../../services/analyticsService';
 import './FourDimensionProgress.css';
 
 // ============================================================================
@@ -30,6 +30,7 @@ const FourDimensionProgress = ({
   const [progressData, setProgressData] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
   const [handHistory, setHandHistory] = useState([]);
+  const [biddingHands, setBiddingHands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedBars, setExpandedBars] = useState({});
@@ -45,15 +46,17 @@ const FourDimensionProgress = ({
       setError(null);
 
       // Load all data in parallel
-      const [progress, dashboard, history] = await Promise.all([
+      const [progress, dashboard, history, biddingHistory] = await Promise.all([
         getFourDimensionProgress(userId),
         getDashboardData(userId).catch(() => null), // Dashboard data is optional
-        getHandHistory(userId, 5).catch(() => ({ hands: [] })) // Hand history is optional
+        getHandHistory(userId, 5).catch(() => ({ hands: [] })), // Hand history is optional
+        getBiddingHandsHistory(userId, 5).catch(() => ({ hands: [] })) // Bidding hands history
       ]);
 
       setProgressData(progress);
       setDashboardData(dashboard);
       setHandHistory(history.hands || []);
+      setBiddingHands(biddingHistory.hands || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -93,7 +96,6 @@ const FourDimensionProgress = ({
 
   const { bid_learning_journey, bid_practice_quality, play_learning_journey, play_practice_quality } = progressData;
   const userStats = dashboardData?.user_stats || {};
-  const recentBidDecisions = dashboardData?.recent_decisions || [];
 
   return (
     <div className="my-progress">
@@ -145,7 +147,7 @@ const FourDimensionProgress = ({
         >
           <PracticeBidExpanded
             quality={bid_practice_quality}
-            recentDecisions={recentBidDecisions}
+            biddingHands={biddingHands}
             onReviewHand={onReviewHand}
           />
         </ProgressBar>
@@ -460,7 +462,7 @@ const ConventionChip = ({ conv }) => {
 // PRACTICE BID EXPANDED
 // ============================================================================
 
-const PracticeBidExpanded = ({ quality, recentDecisions, onReviewHand }) => {
+const PracticeBidExpanded = ({ quality, biddingHands, onReviewHand }) => {
   const goodRate = quality?.good_rate || 0;
   const suboptimalRate = quality?.suboptimal_rate || 0;
   const errorRate = quality?.error_rate || 0;
@@ -472,7 +474,7 @@ const PracticeBidExpanded = ({ quality, recentDecisions, onReviewHand }) => {
       <div className="quality-section">
         <div className="quality-header">
           <span className="quality-value">{avgScore}%</span>
-          <span className="quality-label">Avg Score</span>
+          <span className="quality-label">Bid Quality</span>
         </div>
         <SegmentedQualityBar
           good={goodRate}
@@ -481,18 +483,18 @@ const PracticeBidExpanded = ({ quality, recentDecisions, onReviewHand }) => {
         />
       </div>
 
-      {/* Recent Bidding Decisions */}
-      {recentDecisions.length > 0 && (
-        <div className="recent-decisions-section">
+      {/* Recent Bidding Hands */}
+      {biddingHands && biddingHands.length > 0 && (
+        <div className="recent-hands-section">
           <div className="section-header">
-            <span className="section-title">Recent Bidding Decisions</span>
+            <span className="section-title">Recent Hands</span>
           </div>
-          <div className="decisions-list">
-            {recentDecisions.slice(0, 4).map((decision, idx) => (
-              <DecisionRow
-                key={decision.id || idx}
-                decision={decision}
-                onReview={() => onReviewHand?.(decision.hand_id)}
+          <div className="hands-list">
+            {biddingHands.slice(0, 4).map((hand, idx) => (
+              <BiddingHandRow
+                key={hand.hand_id || idx}
+                hand={hand}
+                onReview={() => onReviewHand?.(hand.hand_id, 'bidding')}
               />
             ))}
           </div>
@@ -507,6 +509,58 @@ const PracticeBidExpanded = ({ quality, recentDecisions, onReviewHand }) => {
             🎯 {quality.weakest_convention.name} - {quality.weakest_convention.accuracy}%
           </div>
         </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// BIDDING HAND ROW - Shows hand summary with HCP, shape, contract, score
+// ============================================================================
+
+const BiddingHandRow = ({ hand, onReview }) => {
+  const userHand = hand.user_hand || {};
+  const hcp = userHand.hcp ?? '?';
+  const shape = userHand.shape || '?-?-?-?';
+  const features = userHand.features || [];
+  const contract = hand.contract || 'Pass';
+  const quality = hand.quality_pct || 0;
+  const role = hand.role || '';
+
+  // Determine quality indicator
+  const getQualityClass = (pct) => {
+    if (pct >= 80) return 'good';
+    if (pct >= 50) return 'suboptimal';
+    return 'error';
+  };
+
+  // Get strain class for contract styling
+  const getStrainClass = (contractStr) => {
+    if (!contractStr) return '';
+    if (contractStr.includes('♠') || contractStr.includes('S')) return 'spades';
+    if (contractStr.includes('♥') || contractStr.includes('H')) return 'hearts';
+    if (contractStr.includes('♦') || contractStr.includes('D')) return 'diamonds';
+    if (contractStr.includes('♣') || contractStr.includes('C')) return 'clubs';
+    if (contractStr.includes('NT') || contractStr.includes('N')) return 'notrump';
+    return '';
+  };
+
+  return (
+    <div className="bidding-hand-row">
+      <div className="hand-info">
+        <span className="hcp-badge">{hcp} HCP</span>
+        <span className="shape-badge">{shape}</span>
+        {features.length > 0 && (
+          <span className="feature-badge" title={features.join(', ')}>
+            {features[0]}
+          </span>
+        )}
+      </div>
+      <span className={`contract ${getStrainClass(contract)}`}>{contract}</span>
+      <span className="role">{role}</span>
+      <span className={`quality ${getQualityClass(quality)}`}>{quality}%</span>
+      {onReview && (
+        <button className="review-link" onClick={onReview}>Review →</button>
       )}
     </div>
   );
@@ -1108,34 +1162,6 @@ const SegmentedQualityBar = ({ good, suboptimal, error, labels = {} }) => {
         <span className="label suboptimal">{suboptimalLabel} {suboptimal}%</span>
         <span className="label error">{errorLabel} {error}%</span>
       </div>
-    </div>
-  );
-};
-
-const DecisionRow = ({ decision, onReview }) => {
-  const correctnessIcon = {
-    'optimal': '✓',
-    'acceptable': '○',
-    'suboptimal': '⚠',
-    'error': '✗'
-  }[decision.correctness] || '?';
-
-  const correctnessClass = decision.correctness || 'unknown';
-
-  return (
-    <div className="decision-row">
-      <span className={`correctness-icon ${correctnessClass}`}>{correctnessIcon}</span>
-      <span className="decision-bids">
-        {decision.user_bid}
-        {decision.user_bid !== decision.optimal_bid && (
-          <span className="optimal-bid"> → {decision.optimal_bid}</span>
-        )}
-      </span>
-      <span className="decision-concept">{decision.key_concept}</span>
-      <span className="decision-score">{decision.score}/10</span>
-      {decision.hand_id && onReview && (
-        <button className="review-link" onClick={onReview}>Review →</button>
-      )}
     </div>
   );
 };

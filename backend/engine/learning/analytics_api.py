@@ -2676,6 +2676,464 @@ def get_board_analysis():
         return jsonify({'error': str(e)}), 500
 
 
+# ============================================================================
+# BIDDING HANDS HISTORY
+# ============================================================================
+
+def get_bidding_hands_history():
+    """
+    GET /api/bidding-hands?user_id=<id>&limit=<n>
+
+    Get recent hands with bidding analysis, grouped by hand.
+    Returns hand-level summaries with HCP, shape, contract, and bid quality.
+
+    This replaces showing individual bids out of context - instead shows
+    hands that can be clicked through to see bid-by-bid analysis.
+    """
+    user_id = request.args.get('user_id', type=int)
+    limit = request.args.get('limit', default=10, type=int)
+    limit = min(limit, 50)
+
+    if not user_id:
+        return jsonify({'error': 'user_id required'}), 400
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Get hands that have bidding decisions, with aggregated stats
+        # Join with session_hands to get contract and deal data
+        cursor.execute("""
+            SELECT
+                sh.id as hand_id,
+                sh.session_id,
+                sh.hand_number,
+                sh.contract_level,
+                sh.contract_strain,
+                sh.contract_declarer,
+                sh.contract_doubled,
+                sh.dealer,
+                sh.vulnerability,
+                sh.deal_data,
+                sh.auction_history,
+                sh.played_at,
+                gs.player_position,
+                COUNT(bd.id) as num_bids,
+                AVG(bd.score) as avg_score,
+                SUM(CASE WHEN bd.correctness = 'optimal' THEN 1 ELSE 0 END) as optimal_count,
+                SUM(CASE WHEN bd.correctness = 'acceptable' THEN 1 ELSE 0 END) as acceptable_count,
+                SUM(CASE WHEN bd.correctness = 'suboptimal' THEN 1 ELSE 0 END) as suboptimal_count,
+                SUM(CASE WHEN bd.correctness = 'error' THEN 1 ELSE 0 END) as error_count
+            FROM session_hands sh
+            JOIN game_sessions gs ON sh.session_id = gs.id
+            JOIN bidding_decisions bd ON bd.session_id = CAST(sh.session_id AS TEXT)
+                AND bd.hand_number = sh.hand_number
+                AND bd.user_id = gs.user_id
+            WHERE gs.user_id = ?
+            GROUP BY sh.id, sh.session_id, sh.hand_number
+            HAVING COUNT(bd.id) > 0
+            ORDER BY sh.played_at DESC
+            LIMIT ?
+        """, (user_id, limit))
+
+        hands = []
+        for row in cursor.fetchall():
+            # Parse deal data to extract user's hand info
+            deal_data = json.loads(row['deal_data']) if row['deal_data'] else None
+            user_position = row['player_position'] or 'S'
+
+            # Extract user's hand analysis
+            user_hand_info = None
+            if deal_data and user_position in deal_data:
+                user_hand_data = deal_data[user_position]
+                hand_cards = user_hand_data.get('hand', [])
+
+                # Calculate HCP and shape
+                hcp = calculate_hcp(hand_cards)
+                shape = calculate_shape(hand_cards)
+                shape_str = '-'.join(map(str, sorted(shape, reverse=True)))
+
+                # Identify key features
+                features = identify_hand_features(hand_cards, shape)
+
+                user_hand_info = {
+                    'hcp': hcp,
+                    'shape': shape_str,
+                    'features': features,
+                    'cards': hand_cards
+                }
+
+            # Format contract display
+            contract_display = None
+            if row['contract_level']:
+                contract_display = f"{row['contract_level']}{row['contract_strain']}"
+                if row['contract_doubled'] == 1:
+                    contract_display += "X"
+                elif row['contract_doubled'] == 2:
+                    contract_display += "XX"
+
+            # Determine user's role
+            declarer = row['contract_declarer']
+            if declarer == user_position:
+                role = 'Declarer'
+            elif declarer and get_partner(declarer) == user_position:
+                role = 'Dummy'
+            else:
+                role = 'Defender'
+
+            # Calculate quality percentage
+            total_bids = row['num_bids'] or 0
+            good_bids = (row['optimal_count'] or 0) + (row['acceptable_count'] or 0)
+            quality_pct = round(good_bids / total_bids * 100) if total_bids > 0 else 0
+
+            hands.append({
+                'hand_id': row['hand_id'],
+                'session_id': row['session_id'],
+                'hand_number': row['hand_number'],
+                'played_at': row['played_at'],
+                'contract': contract_display,
+                'contract_declarer': declarer,
+                'dealer': row['dealer'],
+                'vulnerability': row['vulnerability'],
+                'role': role,
+                'user_position': user_position,
+                'user_hand': user_hand_info,
+                'num_bids': total_bids,
+                'avg_score': round(row['avg_score'] or 0, 1),
+                'quality_pct': quality_pct,
+                'optimal_count': row['optimal_count'] or 0,
+                'acceptable_count': row['acceptable_count'] or 0,
+                'suboptimal_count': row['suboptimal_count'] or 0,
+                'error_count': row['error_count'] or 0,
+                'auction_history': json.loads(row['auction_history']) if row['auction_history'] else []
+            })
+
+        conn.close()
+
+        return jsonify({
+            'user_id': user_id,
+            'hands': hands,
+            'count': len(hands)
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+def get_bidding_hand_detail():
+    """
+    GET /api/bidding-hand-detail?hand_id=<id>
+
+    Get full bidding analysis for a specific hand.
+    Returns all bids with analysis, partner/opponent communication context.
+    """
+    hand_id = request.args.get('hand_id', type=int)
+
+    if not hand_id:
+        return jsonify({'error': 'hand_id required'}), 400
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Get hand details
+        cursor.execute("""
+            SELECT
+                sh.*,
+                gs.user_id,
+                gs.player_position
+            FROM session_hands sh
+            JOIN game_sessions gs ON sh.session_id = gs.id
+            WHERE sh.id = ?
+        """, (hand_id,))
+
+        row = cursor.fetchone()
+        if not row:
+            conn.close()
+            return jsonify({'error': 'Hand not found'}), 404
+
+        user_id = row['user_id']
+        session_id = row['session_id']
+        hand_number = row['hand_number']
+        user_position = row['player_position'] or 'S'
+
+        # Parse stored data
+        deal_data = json.loads(row['deal_data']) if row['deal_data'] else None
+        auction_history = json.loads(row['auction_history']) if row['auction_history'] else []
+
+        # Get all bidding decisions for this hand
+        cursor.execute("""
+            SELECT
+                id,
+                bid_number,
+                position,
+                user_bid,
+                optimal_bid,
+                score,
+                correctness,
+                impact,
+                key_concept,
+                helpful_hint,
+                reasoning,
+                auction_before
+            FROM bidding_decisions
+            WHERE user_id = ?
+              AND session_id = ?
+              AND hand_number = ?
+            ORDER BY bid_number
+        """, (user_id, str(session_id), hand_number))
+
+        decisions = []
+        for d_row in cursor.fetchall():
+            # Parse auction_before to understand context
+            auction_before = json.loads(d_row['auction_before']) if d_row['auction_before'] else []
+
+            # Generate communication context
+            partner_message = generate_partner_message(auction_before, user_position)
+            user_message = generate_bid_meaning(d_row['user_bid'], auction_before, user_position)
+
+            decisions.append({
+                'id': d_row['id'],
+                'bid_number': d_row['bid_number'],
+                'position': d_row['position'],
+                'user_bid': d_row['user_bid'],
+                'optimal_bid': d_row['optimal_bid'],
+                'score': d_row['score'],
+                'correctness': d_row['correctness'],
+                'impact': d_row['impact'],
+                'key_concept': d_row['key_concept'],
+                'helpful_hint': d_row['helpful_hint'],
+                'reasoning': d_row['reasoning'],
+                'auction_before': auction_before,
+                'partner_communicated': partner_message,
+                'you_communicated': user_message
+            })
+
+        conn.close()
+
+        # Extract user's hand analysis
+        user_hand_info = None
+        all_hands = {}
+        if deal_data:
+            for pos in ['N', 'E', 'S', 'W']:
+                if pos in deal_data:
+                    hand_cards = deal_data[pos].get('hand', [])
+                    hcp = calculate_hcp(hand_cards)
+                    shape = calculate_shape(hand_cards)
+                    shape_str = '-'.join(map(str, sorted(shape, reverse=True)))
+                    features = identify_hand_features(hand_cards, shape)
+
+                    hand_info = {
+                        'hcp': hcp,
+                        'shape': shape_str,
+                        'features': features,
+                        'cards': hand_cards,
+                        'distribution_points': calculate_distribution_points(shape)
+                    }
+                    all_hands[pos] = hand_info
+
+                    if pos == user_position:
+                        user_hand_info = hand_info
+
+        # Format contract
+        contract_display = None
+        if row['contract_level']:
+            contract_display = f"{row['contract_level']}{row['contract_strain']}"
+            if row['contract_doubled'] == 1:
+                contract_display += "X"
+            elif row['contract_doubled'] == 2:
+                contract_display += "XX"
+            if row['contract_declarer']:
+                contract_display += f" by {row['contract_declarer']}"
+
+        return jsonify({
+            'hand_id': hand_id,
+            'session_id': session_id,
+            'hand_number': hand_number,
+            'dealer': row['dealer'],
+            'vulnerability': row['vulnerability'],
+            'user_position': user_position,
+            'user_hand': user_hand_info,
+            'all_hands': all_hands,
+            'contract': contract_display,
+            'auction_history': auction_history,
+            'bidding_decisions': decisions,
+            'total_bids': len(decisions),
+            'avg_score': round(sum(d['score'] for d in decisions) / len(decisions), 1) if decisions else 0
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+def calculate_hcp(hand_cards: List[Dict]) -> int:
+    """Calculate high card points from hand cards"""
+    hcp_values = {'A': 4, 'K': 3, 'Q': 2, 'J': 1}
+    total = 0
+    for card in hand_cards:
+        rank = card.get('rank') or card.get('r')
+        total += hcp_values.get(rank, 0)
+    return total
+
+
+def calculate_shape(hand_cards: List[Dict]) -> List[int]:
+    """Calculate suit lengths [spades, hearts, diamonds, clubs]"""
+    suit_map = {'♠': 0, '♥': 1, '♦': 2, '♣': 3, 'S': 0, 'H': 1, 'D': 2, 'C': 3}
+    counts = [0, 0, 0, 0]
+    for card in hand_cards:
+        suit = card.get('suit') or card.get('s')
+        idx = suit_map.get(suit, -1)
+        if idx >= 0:
+            counts[idx] += 1
+    return counts
+
+
+def calculate_distribution_points(shape: List[int]) -> int:
+    """Calculate distribution points (voids=3, singletons=2, doubletons=1)"""
+    points = 0
+    for count in shape:
+        if count == 0:
+            points += 3
+        elif count == 1:
+            points += 2
+        elif count == 2:
+            points += 1
+    return points
+
+
+def identify_hand_features(hand_cards: List[Dict], shape: List[int]) -> List[str]:
+    """Identify notable features of the hand"""
+    features = []
+    suit_names = ['♠', '♥', '♦', '♣']
+
+    # Check for 5+ card majors
+    if shape[0] >= 5:
+        features.append(f'{shape[0]}-card ♠')
+    if shape[1] >= 5:
+        features.append(f'{shape[1]}-card ♥')
+
+    # Check for balanced/unbalanced
+    sorted_shape = sorted(shape, reverse=True)
+    if sorted_shape in [[4,3,3,3], [4,4,3,2], [5,3,3,2]]:
+        features.append('Balanced')
+    elif max(shape) >= 6:
+        features.append('6+ card suit')
+    elif min(shape) == 0:
+        void_suits = [suit_names[i] for i, c in enumerate(shape) if c == 0]
+        features.append(f'Void in {", ".join(void_suits)}')
+    elif min(shape) == 1:
+        singleton_suits = [suit_names[i] for i, c in enumerate(shape) if c == 1]
+        features.append(f'Singleton {", ".join(singleton_suits)}')
+
+    return features
+
+
+def get_partner(position: str) -> str:
+    """Get partner's position"""
+    partners = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
+    return partners.get(position, '')
+
+
+def generate_partner_message(auction_before: List, user_position: str) -> str:
+    """
+    Generate a description of what partner has communicated through the auction.
+    """
+    if not auction_before:
+        return "No bids from partner yet"
+
+    partner_pos = get_partner(user_position)
+    partner_bids = []
+
+    # Find partner's bids in the auction
+    positions = ['N', 'E', 'S', 'W']
+    # Determine starting position (usually dealer, but we'll infer from auction length)
+    for i, bid_info in enumerate(auction_before):
+        bid = bid_info.get('bid') if isinstance(bid_info, dict) else bid_info
+        # Calculate which position made this bid
+        pos_idx = i % 4
+        # We need to know the dealer to map correctly - for now assume standard rotation
+        # This is simplified - in production we'd track the actual dealer
+        if i % 4 == positions.index(partner_pos) if partner_pos in positions else -1:
+            partner_bids.append(bid)
+
+    if not partner_bids:
+        return "Partner hasn't bid yet"
+
+    # Generate message based on partner's bids
+    # This is a simplified version - would be enhanced with convention knowledge
+    messages = []
+    for bid in partner_bids:
+        if bid == 'Pass':
+            messages.append("Partner passed (fewer than 13 points or no suitable bid)")
+        elif bid == '1NT':
+            messages.append("Partner opened 1NT: 15-17 HCP, balanced hand")
+        elif bid == '2NT':
+            messages.append("Partner showed 20-21 HCP, balanced")
+        elif bid and bid[0] == '1' and bid[1] in '♠♥♦♣SHDC':
+            suit = bid[1] if bid[1] in '♠♥♦♣' else {'S':'♠','H':'♥','D':'♦','C':'♣'}.get(bid[1], bid[1])
+            messages.append(f"Partner opened 1{suit}: 13+ points, usually 5+ cards in {suit}")
+        elif bid and bid[0] == '2' and bid[1] in '♠♥♦♣SHDC':
+            suit = bid[1] if bid[1] in '♠♥♦♣' else {'S':'♠','H':'♥','D':'♦','C':'♣'}.get(bid[1], bid[1])
+            if bid == '2♣' or bid == '2C':
+                messages.append("Partner opened 2♣: 22+ HCP or 9+ tricks, forcing")
+            else:
+                messages.append(f"Partner opened 2{suit}: weak, 6+ cards, 5-10 HCP")
+
+    return '; '.join(messages) if messages else "Partner's bidding noted"
+
+
+def generate_bid_meaning(bid: str, auction_before: List, position: str) -> str:
+    """
+    Generate a description of what the user's bid communicates to partner.
+    """
+    if not bid:
+        return ""
+
+    if bid == 'Pass':
+        return "Passing: Nothing more to say, or waiting for more information"
+
+    if bid == 'X' or bid == 'Double':
+        return "Double: Could be takeout (asking partner to bid) or penalty (we can beat this)"
+
+    if bid == 'XX' or bid == 'Redouble':
+        return "Redouble: We have the balance of power, or SOS asking partner to bid"
+
+    # Check if this is a response to 1NT (Stayman/Jacoby)
+    partner_pos = get_partner(position)
+    partner_opened_1nt = any(
+        (b.get('bid') if isinstance(b, dict) else b) == '1NT'
+        for b in auction_before
+    )
+
+    if partner_opened_1nt:
+        if bid == '2♣' or bid == '2C':
+            return "Stayman: Asking partner if they have a 4-card major"
+        elif bid == '2♦' or bid == '2D':
+            return "Jacoby Transfer: Shows 5+ hearts, asking partner to bid 2♥"
+        elif bid == '2♥' or bid == '2H':
+            return "Jacoby Transfer: Shows 5+ spades, asking partner to bid 2♠"
+        elif bid == '3NT':
+            return "3NT: 10-15 HCP, no interest in major suit fit, game values"
+
+    # Generic bid meanings
+    if bid[0] in '1234567' and len(bid) >= 2:
+        level = bid[0]
+        strain = bid[1:]
+
+        if strain == 'NT':
+            return f"{level}NT: Showing a balanced hand with stoppers"
+        else:
+            suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs',
+                        'S': 'spades', 'H': 'hearts', 'D': 'diamonds', 'C': 'clubs'}.get(strain, strain)
+            return f"{bid}: Showing length in {suit_name}"
+
+    return f"Bid: {bid}"
+
+
 def register_analytics_endpoints(app):
     """
     Register all analytics endpoints with Flask app.
@@ -2705,6 +3163,10 @@ def register_analytics_endpoints(app):
     app.route('/api/hand-history', methods=['GET'])(get_hand_history)
     app.route('/api/hand-detail', methods=['GET'])(get_hand_detail)
     app.route('/api/analyze-play', methods=['POST'])(analyze_play)
+
+    # Bidding hands history & analysis
+    app.route('/api/bidding-hands', methods=['GET'])(get_bidding_hands_history)
+    app.route('/api/bidding-hand-detail', methods=['GET'])(get_bidding_hand_detail)
 
     # Board analysis for Performance Overview chart
     app.route('/api/analytics/board-analysis', methods=['GET'])(get_board_analysis)

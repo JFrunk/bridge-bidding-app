@@ -881,6 +881,127 @@
   font-weight: 500;
 }
 
+/* ============================================================================
+   BIDDING HAND ROW - Shows HCP, shape, contract, quality for bidding review
+   ============================================================================ */
+
+.bidding-hand-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  padding: var(--space-2, 8px);
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: 6px;
+  font-size: var(--text-sm, 14px);
+}
+
+.bidding-hand-row .hand-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+  flex: 1;
+  min-width: 0;
+}
+
+.bidding-hand-row .hcp-badge {
+  background: var(--color-primary, #2563eb);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.bidding-hand-row .shape-badge {
+  background: var(--bg-tertiary, #e5e7eb);
+  color: var(--text-secondary-dark, #666);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+.bidding-hand-row .feature-badge {
+  background: var(--bg-info-light, #dbeafe);
+  color: var(--color-info, #2563eb);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.bidding-hand-row .contract {
+  font-weight: 700;
+  min-width: 40px;
+  text-align: center;
+}
+
+.bidding-hand-row .contract.spades {
+  color: #1e40af;
+}
+
+.bidding-hand-row .contract.hearts {
+  color: #dc2626;
+}
+
+.bidding-hand-row .contract.diamonds {
+  color: #ea580c;
+}
+
+.bidding-hand-row .contract.clubs {
+  color: #16a34a;
+}
+
+.bidding-hand-row .contract.notrump {
+  color: #111;
+}
+
+.bidding-hand-row .role {
+  color: var(--text-secondary-dark, #666);
+  min-width: 55px;
+  font-size: 12px;
+}
+
+.bidding-hand-row .quality {
+  font-weight: 600;
+  min-width: 35px;
+  text-align: right;
+}
+
+.bidding-hand-row .quality.good {
+  color: var(--color-success, #22c55e);
+}
+
+.bidding-hand-row .quality.suboptimal {
+  color: var(--color-warning, #f59e0b);
+}
+
+.bidding-hand-row .quality.error {
+  color: var(--color-danger, #dc2626);
+}
+
+/* Responsive adjustments for bidding hand row */
+@media (max-width: 480px) {
+  .bidding-hand-row {
+    flex-wrap: wrap;
+    gap: var(--space-1, 4px);
+  }
+
+  .bidding-hand-row .hand-info {
+    flex-basis: 100%;
+    margin-bottom: var(--space-1, 4px);
+  }
+
+  .bidding-hand-row .feature-badge {
+    display: none;
+  }
+}
+
 /* Focus Areas */
 .focus-item {
   padding: var(--space-2, 8px);

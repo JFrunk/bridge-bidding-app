@@ -1,0 +1,521 @@
+/**
+ * BidReviewModal Styles
+ *
+ * Layout:
+ * - Modal overlay with centered content
+ * - Hand display at top with stats
+ * - Auction table in center
+ * - Bid analysis panel below
+ */
+
+/* ============================================================================
+   MODAL OVERLAY & CONTAINER
+   ============================================================================ */
+
+.bid-review-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.bid-review-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: #1f2937;
+}
+
+.modal-content {
+  padding: 16px 20px 24px;
+}
+
+/* ============================================================================
+   CONTRACT RESULT
+   ============================================================================ */
+
+.contract-result {
+  text-align: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  color: #4b5563;
+}
+
+.contract-result strong {
+  color: #1f2937;
+  font-size: 16px;
+}
+
+/* ============================================================================
+   SECTIONS
+   ============================================================================ */
+
+.section {
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title .nav-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+/* ============================================================================
+   HAND DISPLAY
+   ============================================================================ */
+
+.hand-display {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.hand-stats {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.hand-stats .stat {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hand-stats .hcp {
+  background: #2563eb;
+  color: white;
+}
+
+.hand-stats .shape {
+  background: #e5e7eb;
+  color: #4b5563;
+  font-family: monospace;
+}
+
+.hand-stats .dist {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.hand-features {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.feature-tag {
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.hand-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.suit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.suit-symbol {
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+}
+
+.suit-cards {
+  font-family: monospace;
+  font-size: 15px;
+  color: #374151;
+  letter-spacing: 2px;
+}
+
+/* ============================================================================
+   AUCTION TABLE
+   ============================================================================ */
+
+.auction-table {
+  background: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.auction-header {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #e5e7eb;
+}
+
+.auction-col-header {
+  padding: 8px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.auction-col-header.user-position {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.auction-body {
+  padding: 4px;
+}
+
+.auction-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.auction-bid {
+  padding: 8px;
+  text-align: center;
+  font-size: 15px;
+  color: #374151;
+  border-radius: 4px;
+  margin: 2px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auction-bid.user-bid {
+  cursor: pointer;
+  background: #f0f9ff;
+  border: 2px solid #93c5fd;
+  font-weight: 600;
+}
+
+.auction-bid.user-bid:hover {
+  background: #dbeafe;
+}
+
+.auction-bid.user-bid.selected {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+/* Correctness styling for user bids */
+.auction-bid.correctness-optimal {
+  border-color: #059669;
+  background: #ecfdf5;
+}
+
+.auction-bid.correctness-optimal.selected {
+  background: #059669;
+  border-color: #059669;
+}
+
+.auction-bid.correctness-acceptable {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.auction-bid.correctness-acceptable.selected {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.auction-bid.correctness-suboptimal {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.auction-bid.correctness-suboptimal.selected {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.auction-bid.correctness-error {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.auction-bid.correctness-error.selected {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+/* ============================================================================
+   BID ANALYSIS PANEL
+   ============================================================================ */
+
+.bid-analysis-panel {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  border-left: 4px solid #e5e7eb;
+}
+
+.bid-analysis-panel.empty {
+  text-align: center;
+  color: #6b7280;
+}
+
+.bid-analysis-panel.empty .hint {
+  margin: 0;
+  font-style: italic;
+}
+
+.analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.bid-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.your-bid {
+  font-size: 15px;
+  color: #374151;
+}
+
+.your-bid strong {
+  font-size: 18px;
+  color: #1f2937;
+}
+
+.optimal-bid {
+  font-size: 14px;
+  color: #059669;
+}
+
+.optimal-bid strong {
+  font-size: 16px;
+}
+
+.rating-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.rating-icon {
+  font-weight: 700;
+}
+
+.rating-label {
+  font-weight: 600;
+}
+
+.rating-score {
+  opacity: 0.8;
+  font-size: 13px;
+}
+
+/* Communication sections */
+.communication-section {
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.communication-section.partner {
+  background: #f0fdf4;
+  border-left: 3px solid #22c55e;
+}
+
+.communication-section.you {
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+}
+
+.comm-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.comm-content {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* Reasoning and hints */
+.reasoning-section,
+.hint-section {
+  margin-bottom: 12px;
+}
+
+.reasoning-label,
+.hint-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.reasoning-content,
+.hint-content {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.hint-section {
+  background: #fef3c7;
+  padding: 10px 12px;
+  border-radius: 6px;
+}
+
+.hint-content {
+  color: #92400e;
+}
+
+.concept-tag {
+  display: inline-block;
+  background: #e0e7ff;
+  color: #4338ca;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+/* ============================================================================
+   LOADING & ERROR STATES
+   ============================================================================ */
+
+.loading-state,
+.error-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  margin: 0 auto 12px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-state button {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 480px) {
+  .bid-review-modal {
+    max-height: 95vh;
+    border-radius: 12px 12px 0 0;
+    margin-top: auto;
+  }
+
+  .modal-content {
+    padding: 12px 16px 20px;
+  }
+
+  .analysis-header {
+    flex-direction: column;
+  }
+
+  .rating-badge {
+    align-self: flex-start;
+  }
+
+  .hand-stats .stat {
+    font-size: 12px;
+    padding: 3px 8px;
+  }
+}

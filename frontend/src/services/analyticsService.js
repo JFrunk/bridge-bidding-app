@@ -307,3 +307,50 @@ export async function getBoardAnalysis(userId, sessionId = null, limit = 25) {
 
   return response.json();
 }
+
+/**
+ * Get bidding hands history with aggregated stats
+ * Shows hands grouped with HCP, shape, contract, and bid quality
+ *
+ * @param {number} userId - User ID
+ * @param {number} limit - Maximum number of hands to return (default 10)
+ * @returns {Promise<Object>} Bidding hands data:
+ *   - hands: Array of hand summaries with HCP, shape, contract, quality
+ *   - count: Total number of hands returned
+ */
+export async function getBiddingHandsHistory(userId, limit = 10) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/bidding-hands?user_id=${userId}&limit=${limit}`
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch bidding hands history');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get detailed bidding analysis for a specific hand
+ * Returns all bids with partner/opponent communication context
+ *
+ * @param {number} handId - Hand ID
+ * @returns {Promise<Object>} Bidding hand detail:
+ *   - user_hand: User's hand with HCP, shape, features
+ *   - all_hands: All four hands (for review)
+ *   - auction_history: Full auction
+ *   - bidding_decisions: Each bid with analysis and communication context
+ */
+export async function getBiddingHandDetail(handId) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/bidding-hand-detail?hand_id=${handId}`
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch bidding hand detail');
+  }
+
+  return response.json();
+}

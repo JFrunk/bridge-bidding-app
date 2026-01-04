@@ -11,12 +11,14 @@ import './LearningDashboard.css';
 import { getDashboardData } from '../../services/analyticsService';
 import FourDimensionProgress from './FourDimensionProgress';
 import HandReviewModal from './HandReviewModal';
+import BidReviewModal from './BidReviewModal';
 
 const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedHandId, setSelectedHandId] = useState(null);
+  const [reviewType, setReviewType] = useState(null); // 'play' or 'bidding'
   const [showReviewModal, setShowReviewModal] = useState(false);
 
   const loadDashboardData = useCallback(async () => {
@@ -38,10 +40,12 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
 
   // Handle opening hand review modal
   // Accepts either a hand object with id property, or just the hand ID directly
-  const handleOpenReview = (handOrId) => {
+  // Second parameter specifies type: 'play' (default) or 'bidding'
+  const handleOpenReview = (handOrId, type = 'play') => {
     const handId = typeof handOrId === 'object' ? handOrId.id : handOrId;
     if (handId) {
       setSelectedHandId(handId);
+      setReviewType(type);
       setShowReviewModal(true);
     }
   };
@@ -50,6 +54,7 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
   const handleCloseReview = () => {
     setShowReviewModal(false);
     setSelectedHandId(null);
+    setReviewType(null);
   };
 
   if (loading) {
@@ -123,9 +128,17 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
         </div>
       )}
 
-      {/* Hand Review Modal */}
-      {showReviewModal && selectedHandId && (
+      {/* Hand Review Modal - Play-by-play analysis */}
+      {showReviewModal && selectedHandId && reviewType === 'play' && (
         <HandReviewModal
+          handId={selectedHandId}
+          onClose={handleCloseReview}
+        />
+      )}
+
+      {/* Bid Review Modal - Bid-by-bid analysis */}
+      {showReviewModal && selectedHandId && reviewType === 'bidding' && (
+        <BidReviewModal
           handId={selectedHandId}
           onClose={handleCloseReview}
         />
