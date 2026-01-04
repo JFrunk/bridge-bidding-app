@@ -519,7 +519,7 @@
   padding: var(--space-3, 12px);
 }
 
-.section-title {
+.my-progress .section-title {
   font-weight: 600;
   font-size: var(--text-sm, 14px);
   color: var(--text-primary-dark, #111);
@@ -695,14 +695,14 @@
   padding: var(--space-3, 12px);
 }
 
-.section-header {
+.my-progress .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-2, 8px);
 }
 
-.see-all-btn {
+.my-progress .see-all-btn {
   background: none;
   border: none;
   color: var(--color-primary, #2563eb);
@@ -711,7 +711,7 @@
   padding: 0;
 }
 
-.see-all-btn:hover {
+.my-progress .see-all-btn:hover {
   text-decoration: underline;
 }
 
@@ -803,7 +803,7 @@
   text-decoration: underline;
 }
 
-/* Hand Row */
+/* Hand Row - scoped selectors to avoid conflicts with other components */
 .hand-row {
   display: flex;
   align-items: center;
@@ -814,56 +814,56 @@
   font-size: var(--text-sm, 14px);
 }
 
-.contract {
+.hand-row .contract {
   font-weight: 700;
   min-width: 30px;
 }
 
-.contract.s, .contract.spades {
+.hand-row .contract.s, .hand-row .contract.spades {
   color: #1e40af;
 }
 
-.contract.h, .contract.hearts {
+.hand-row .contract.h, .hand-row .contract.hearts {
   color: #dc2626;
 }
 
-.contract.d, .contract.diamonds {
+.hand-row .contract.d, .hand-row .contract.diamonds {
   color: #ea580c;
 }
 
-.contract.c, .contract.clubs {
+.hand-row .contract.c, .hand-row .contract.clubs {
   color: #16a34a;
 }
 
-.contract.nt, .contract.notrump {
+.hand-row .contract.nt, .hand-row .contract.notrump {
   color: #111;
 }
 
-.result {
+.hand-row .result {
   font-weight: 600;
   min-width: 24px;
 }
 
-.result.made {
+.hand-row .result.made {
   color: var(--color-success, #22c55e);
 }
 
-.result.down {
+.hand-row .result.down {
   color: var(--color-danger, #dc2626);
 }
 
-.role {
+.hand-row .role {
   color: var(--text-secondary-dark, #666);
   min-width: 60px;
 }
 
-.score {
+.hand-row .score {
   font-weight: 600;
   color: var(--text-primary-dark, #111);
   min-width: 45px;
 }
 
-.quality {
+.hand-row .quality {
   color: var(--color-primary, #2563eb);
   font-weight: 500;
 }

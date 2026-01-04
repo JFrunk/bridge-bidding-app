@@ -315,6 +315,22 @@
       "forcing": "none",
       "explanation": "Pass: Not enough to act over partner's preempt",
       "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "gambling_3nt",
+      "bid": "3NT",
+      "priority": 185,
+      "description": "Gambling 3NT - solid 7+ minor with no outside stoppers",
+      "conditions": {
+        "is_opening": true,
+        "is_solid_minor": true,
+        "outside_stopper_count": {
+          "max": 0
+        }
+      },
+      "forcing": "none",
+      "explanation": "Gambling 3NT: Solid 7+ card minor (AKQxxxx+), no outside A or K",
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }

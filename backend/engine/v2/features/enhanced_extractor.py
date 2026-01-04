@@ -433,6 +433,9 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['suits_bid_count'] = len(bid_suits_natural)
     flat['is_fourth_suit_scenario'] = len(bid_suits_natural) == 3
 
+    # Gambling 3NT features (solid minor with no outside strength)
+    _add_gambling_features(flat, hand)
+
     # Keep reference to original structures
     flat['_hand'] = hand
     flat['_auction_history'] = auction_history
@@ -574,3 +577,71 @@ def _get_lho_bids(auction_history: List[str], my_position: str) -> List[str]:
             lho_bids.append(bid)
 
     return lho_bids
+
+
+def _is_solid_suit(hand: Hand, suit: str) -> bool:
+    """
+    Check if a suit is solid (7+ cards headed by AKQ).
+
+    A solid suit runs without losing a trick to opponents.
+
+    Args:
+        hand: Hand object
+        suit: Suit symbol (♣, ♦, ♥, ♠)
+
+    Returns:
+        True if suit is solid (7+ with AKQ)
+    """
+    suit_cards = [c for c in hand.cards if c.suit == suit]
+    if len(suit_cards) < 7:
+        return False
+
+    ranks = {c.rank for c in suit_cards}
+    return 'A' in ranks and 'K' in ranks and 'Q' in ranks
+
+
+def _count_outside_stoppers(hand: Hand, long_suit: str) -> int:
+    """
+    Count stoppers (A or K) in suits other than the long suit.
+
+    For Gambling 3NT, we need to know if hand has outside stoppers.
+
+    Args:
+        hand: Hand object
+        long_suit: The solid suit to exclude
+
+    Returns:
+        Count of A and K in other suits
+    """
+    count = 0
+    for card in hand.cards:
+        if card.suit != long_suit and card.rank in ['A', 'K']:
+            count += 1
+    return count
+
+
+def _add_gambling_features(flat: Dict[str, Any], hand: Hand) -> None:
+    """
+    Add Gambling 3NT detection features to the flat features dict.
+
+    Gambling 3NT shows a solid 7+ card minor with no outside A or K.
+
+    Args:
+        flat: Flat features dictionary to update
+        hand: Hand object
+    """
+    # Check for solid minor
+    flat['is_solid_clubs'] = _is_solid_suit(hand, '♣')
+    flat['is_solid_diamonds'] = _is_solid_suit(hand, '♦')
+    flat['is_solid_minor'] = flat['is_solid_clubs'] or flat['is_solid_diamonds']
+
+    # Count outside stoppers (A or K in side suits)
+    if flat['is_solid_clubs']:
+        flat['outside_stopper_count'] = _count_outside_stoppers(hand, '♣')
+    elif flat['is_solid_diamonds']:
+        flat['outside_stopper_count'] = _count_outside_stoppers(hand, '♦')
+    else:
+        flat['outside_stopper_count'] = 0
+
+    # Classic Gambling 3NT: solid minor with NO outside A/K
+    flat['is_gambling_3nt_hand'] = flat['is_solid_minor'] and flat['outside_stopper_count'] == 0
