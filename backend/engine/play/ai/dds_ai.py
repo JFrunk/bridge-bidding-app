@@ -404,62 +404,320 @@ class DDSPlayAI(BasePlayAI):
         """
         Break ties when multiple cards have the same DDS trick count.
 
-        This is critical for discards where DDS often sees all options as "equal"
-        but in practice some discards are catastrophic (like discarding a stopper).
+        Models expert human play rather than random selection. This teaches
+        good habits and avoids confusing plays that look like bugs.
 
-        Strategy:
-        1. When discarding (void in led suit), prefer low cards from long suits
-        2. Avoid discarding lone high cards (likely stoppers)
-        3. Prefer discarding from suits where we have length
+        Situations handled:
+        1. Opening lead - sequences, 4th best, avoid tenaces
+        2. Following suit - count signals, win cheaply
+        3. Discarding - low from length, protect stoppers
+        4. Trump management - preserve entries and ruffing power
         """
         hand = state.hands[position]
         cards = [card for card, _ in tied_cards]
+        trump_suit = state.contract.trump_suit
 
-        # Check if this is a discard situation (void in led suit)
+        # Determine the situation
+        is_leading = not state.current_trick
+        is_opening_lead = is_leading and len(state.trick_history) == 0
+
         is_discard = False
+        is_following = False
+        led_suit = None
+
         if state.current_trick:
             led_suit = state.current_trick[0][0].suit
             has_led_suit = any(c.suit == led_suit for c in hand.cards)
             is_discard = not has_led_suit
+            is_following = has_led_suit
 
+        # ============================================================
+        # OPENING LEAD TIE-BREAKING
+        # ============================================================
+        if is_opening_lead:
+            return self._break_tie_opening_lead(cards, hand, trump_suit, state, position)
+
+        # ============================================================
+        # DISCARD TIE-BREAKING
+        # ============================================================
         if is_discard:
-            # Discard logic: prefer low cards from long suits, avoid lone stoppers
-            best_card = None
-            best_score = -1000  # Higher is better for discard
+            return self._break_tie_discard(cards, hand, trump_suit)
 
-            # Count cards in each suit
-            suit_counts = {}
-            for c in hand.cards:
-                suit_counts[c.suit] = suit_counts.get(c.suit, 0) + 1
+        # ============================================================
+        # FOLLOWING SUIT TIE-BREAKING
+        # ============================================================
+        if is_following:
+            return self._break_tie_following(cards, hand, state, position, led_suit, trump_suit)
 
-            for card in cards:
-                score = 0
-                suit_count = suit_counts.get(card.suit, 0)
-                rank_value = self._rank_value(card.rank)
+        # ============================================================
+        # MID-HAND LEAD TIE-BREAKING
+        # ============================================================
+        if is_leading and not is_opening_lead:
+            return self._break_tie_midhand_lead(cards, hand, trump_suit, state, position)
 
-                # Prefer discarding from longer suits
-                score += suit_count * 10
+        # Default: lowest card
+        return min(cards, key=lambda c: self._rank_value(c.rank))
 
-                # Prefer discarding low cards
-                score -= rank_value
+    def _break_tie_opening_lead(self, cards: List[Card], hand, trump_suit: Optional[str],
+                                 state: PlayState, position: str) -> Card:
+        """
+        Opening lead tie-breaking - model expert leads.
 
-                # Heavily penalize discarding lone high cards (likely stoppers)
-                if suit_count == 1 and rank_value >= 12:  # K or A
-                    score -= 100  # Strong penalty for discarding lone K or A
+        Priority:
+        1. Top of a sequence (KQJ -> K, QJT -> Q)
+        2. 4th best from length in NT
+        3. Top of nothing from weak suits
+        4. Avoid leading from tenaces (AQ, KJ)
+        5. Prefer unbid suits (if auction info available)
+        """
+        best_card = None
+        best_score = -1000
 
-                # Penalize discarding from short suits with high cards
-                if suit_count <= 2 and rank_value >= 10:  # T or higher
-                    score -= 20
+        # Group cards by suit for analysis
+        suits_in_hand = {}
+        for c in hand.cards:
+            if c.suit not in suits_in_hand:
+                suits_in_hand[c.suit] = []
+            suits_in_hand[c.suit].append(c)
 
-                if score > best_score:
-                    best_score = score
-                    best_card = card
+        for card in cards:
+            score = 0
+            suit = card.suit
+            rank_val = self._rank_value(card.rank)
+            suit_cards = suits_in_hand.get(suit, [])
+            suit_ranks = sorted([self._rank_value(c.rank) for c in suit_cards], reverse=True)
 
-            return best_card if best_card else cards[0]
+            # Check for sequence (3+ touching cards)
+            is_top_of_sequence = self._is_top_of_sequence(card, suit_cards)
+            if is_top_of_sequence:
+                score += 50  # Strong preference for top of sequence
 
-        else:
-            # Not a discard - prefer lowest card (standard play, no preference)
-            return min(cards, key=lambda c: self._rank_value(c.rank))
+            # 4th best from length (4+ cards) in NT
+            if trump_suit is None and len(suit_cards) >= 4:
+                # 4th highest would be suit_ranks[3]
+                if len(suit_ranks) >= 4 and rank_val == suit_ranks[3]:
+                    score += 30  # Good lead
+
+            # Top of nothing from weak suits (no honors)
+            honors_in_suit = sum(1 for r in suit_ranks if r >= 11)  # J or higher
+            if honors_in_suit == 0 and rank_val == max(suit_ranks):
+                score += 20  # Top of nothing
+
+            # Penalize leading from tenaces
+            if self._is_tenace_suit(suit_cards):
+                score -= 40  # Avoid leading from AQ, KJ, etc.
+
+            # Prefer longer suits
+            score += len(suit_cards) * 5
+
+            # Slight preference for lower cards when no other factors
+            score -= rank_val * 0.1
+
+            # Don't lead trump unless necessary
+            if suit == trump_suit:
+                score -= 25
+
+            if score > best_score:
+                best_score = score
+                best_card = card
+
+        return best_card if best_card else cards[0]
+
+    def _break_tie_discard(self, cards: List[Card], hand, trump_suit: Optional[str]) -> Card:
+        """
+        Discard tie-breaking - protect stoppers, discard from length.
+
+        Priority:
+        1. Never discard singleton honors (stoppers)
+        2. Discard low cards from long suits
+        3. Protect trump
+        4. Keep potential winners
+        """
+        best_card = None
+        best_score = -1000
+
+        # Count cards in each suit
+        suit_counts = {}
+        for c in hand.cards:
+            suit_counts[c.suit] = suit_counts.get(c.suit, 0) + 1
+
+        for card in cards:
+            score = 0
+            suit_count = suit_counts.get(card.suit, 0)
+            rank_value = self._rank_value(card.rank)
+
+            # Prefer discarding from longer suits
+            score += suit_count * 10
+
+            # Prefer discarding low cards
+            score -= rank_value
+
+            # Heavily penalize discarding lone high cards (likely stoppers)
+            if suit_count == 1 and rank_value >= 12:  # K or A
+                score -= 100
+
+            # Penalize discarding from short suits with high cards
+            if suit_count <= 2 and rank_value >= 10:  # T or higher
+                score -= 20
+
+            # Never discard trump if possible
+            if card.suit == trump_suit:
+                score -= 80
+
+            # Penalize discarding potential winners
+            if rank_value >= 14:  # Ace
+                score -= 50
+
+            if score > best_score:
+                best_score = score
+                best_card = card
+
+        return best_card if best_card else cards[0]
+
+    def _break_tie_following(self, cards: List[Card], hand, state: PlayState,
+                             position: str, led_suit: str, trump_suit: Optional[str]) -> Card:
+        """
+        Following suit tie-breaking - signals and economy.
+
+        Priority:
+        1. Win with cheapest card possible
+        2. If can't win, give count signal (high-low even, low-high odd)
+        3. Preserve flexibility
+        """
+        best_card = None
+        best_score = -1000
+
+        # Determine if we're winning or losing this trick
+        current_winner_rank = 0
+        for played_card, played_pos in state.current_trick:
+            if played_card.suit == led_suit:
+                current_winner_rank = max(current_winner_rank, self._rank_value(played_card.rank))
+
+        # Count cards in led suit
+        led_suit_cards = [c for c in hand.cards if c.suit == led_suit]
+        suit_length = len(led_suit_cards)
+
+        for card in cards:
+            score = 0
+            rank_val = self._rank_value(card.rank)
+
+            can_win = rank_val > current_winner_rank
+
+            if can_win:
+                # Win with cheapest winner (economy of honors)
+                score += 100  # Base score for winning
+                score -= rank_val  # Prefer lower winners
+            else:
+                # Can't win - give count signal
+                # High-low with even count, low-high with odd
+                sorted_ranks = sorted([self._rank_value(c.rank) for c in led_suit_cards])
+
+                if suit_length % 2 == 0:  # Even count - play high first
+                    if rank_val == max(sorted_ranks):
+                        score += 10
+                else:  # Odd count - play low first
+                    if rank_val == min(sorted_ranks):
+                        score += 10
+
+                # Otherwise just play low
+                score -= rank_val * 0.5
+
+            if score > best_score:
+                best_score = score
+                best_card = card
+
+        return best_card if best_card else cards[0]
+
+    def _break_tie_midhand_lead(self, cards: List[Card], hand, trump_suit: Optional[str],
+                                 state: PlayState, position: str) -> Card:
+        """
+        Mid-hand lead tie-breaking - cash winners, develop suits.
+
+        Priority:
+        1. Cash established winners
+        2. Continue partner's suit
+        3. Lead through strength
+        4. Avoid breaking new suits unnecessarily
+        """
+        best_card = None
+        best_score = -1000
+
+        # Group cards by suit
+        suits_in_hand = {}
+        for c in hand.cards:
+            if c.suit not in suits_in_hand:
+                suits_in_hand[c.suit] = []
+            suits_in_hand[c.suit].append(c)
+
+        for card in cards:
+            score = 0
+            suit = card.suit
+            rank_val = self._rank_value(card.rank)
+            suit_cards = suits_in_hand.get(suit, [])
+
+            # Prefer cashing Aces (established winners)
+            if rank_val == 14:  # Ace
+                score += 40
+
+            # Top of sequence is good
+            if self._is_top_of_sequence(card, suit_cards):
+                score += 30
+
+            # Prefer longer suits for development
+            score += len(suit_cards) * 3
+
+            # Slight preference for higher cards when leading
+            score += rank_val * 0.5
+
+            # Avoid leading from tenaces
+            if self._is_tenace_suit(suit_cards):
+                score -= 20
+
+            if score > best_score:
+                best_score = score
+                best_card = card
+
+        return best_card if best_card else cards[0]
+
+    def _is_top_of_sequence(self, card: Card, suit_cards: List[Card]) -> bool:
+        """Check if card is top of a 3+ card sequence (KQJ, QJT, etc.)"""
+        if len(suit_cards) < 3:
+            return False
+
+        ranks = sorted([self._rank_value(c.rank) for c in suit_cards], reverse=True)
+        card_rank = self._rank_value(card.rank)
+
+        # Must be the highest card
+        if card_rank != ranks[0]:
+            return False
+
+        # Check for sequence (consecutive ranks)
+        sequence_length = 1
+        for i in range(len(ranks) - 1):
+            if ranks[i] - ranks[i + 1] == 1:
+                sequence_length += 1
+            else:
+                break
+
+        return sequence_length >= 3
+
+    def _is_tenace_suit(self, suit_cards: List[Card]) -> bool:
+        """Check if suit contains a tenace (AQ, KJ, etc.) - avoid leading from these"""
+        ranks = [self._rank_value(c.rank) for c in suit_cards]
+
+        # AQ tenace (14 and 12, missing 13)
+        if 14 in ranks and 12 in ranks and 13 not in ranks:
+            return True
+
+        # KJ tenace (13 and 11, missing 12)
+        if 13 in ranks and 11 in ranks and 12 not in ranks:
+            return True
+
+        # QT tenace (12 and 10, missing 11)
+        if 12 in ranks and 10 in ranks and 11 not in ranks:
+            return True
+
+        return False
 
     def _get_legal_cards(self, state: PlayState, position: str) -> List[Card]:
         """Get all legal cards for current position"""
