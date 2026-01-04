@@ -5,39 +5,98 @@
   "description": "Overcalls and competitive bidding",
   "rules": [
     {
-      "id": "takeout_double",
+      "id": "takeout_double_1_level",
       "bid": "X",
       "priority": 110,
-      "description": "Takeout double",
+      "description": "Takeout double of 1-level opening",
       "conditions": {
         "is_overcall": true,
         "opening_bid": {
-          "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665",
-            "1\u2660"
-          ]
+          "in": ["1♣", "1♦", "1♥", "1♠"]
         },
         "hcp": {
           "min": 12
         },
-        "OR": [
-          {
-            "support_all_unbid": true,
-            "hcp": {
-              "min": 12
-            }
-          },
-          {
-            "hcp": {
-              "min": 17
-            }
-          }
-        ]
+        "short_in_opponent_suit": true,
+        "support_all_unbid": true
       },
       "forcing": "one_round",
       "explanation": "Takeout double showing {hcp} HCP with support for unbid suits",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_strong",
+      "bid": "X",
+      "priority": 109,
+      "description": "Takeout double with extra strength",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": ["1♣", "1♦", "1♥", "1♠"]
+        },
+        "hcp": {
+          "min": 17
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Strong takeout double showing {hcp} HCP",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_weak_two",
+      "bid": "X",
+      "priority": 108,
+      "description": "Takeout double of weak two",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": ["2♦", "2♥", "2♠"]
+        },
+        "hcp": {
+          "min": 12
+        },
+        "short_in_opponent_suit": true,
+        "support_all_unbid": true
+      },
+      "forcing": "one_round",
+      "explanation": "Takeout double of weak two showing {hcp} HCP",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_3_level",
+      "bid": "X",
+      "priority": 107,
+      "description": "Takeout double of 3-level preempt",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": {
+          "in": ["3♣", "3♦", "3♥", "3♠"]
+        },
+        "hcp": {
+          "min": 15
+        },
+        "short_in_opponent_suit": true
+      },
+      "forcing": "one_round",
+      "explanation": "Takeout double of preempt showing {hcp} HCP",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "balancing_double",
+      "bid": "X",
+      "priority": 106,
+      "description": "Balancing double",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": true,
+        "hcp": {
+          "min": 9
+        },
+        "short_in_opponent_suit": true,
+        "support_all_unbid": true
+      },
+      "forcing": "one_round",
+      "explanation": "Balancing double showing {hcp} HCP (3 less than direct)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -323,6 +382,69 @@
       "forcing": "one_round",
       "explanation": "Negative double showing unbid major(s)",
       "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "competitive_later_pass_weak",
+      "bid": "Pass",
+      "priority": 15,
+      "description": "Pass in later competitive round with weak hand",
+      "conditions": {
+        "is_competitive_later": true,
+        "hcp": {
+          "max": 11
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with only {hcp} HCP (already acted in competition)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "competitive_later_pass_no_fit",
+      "bid": "Pass",
+      "priority": 14,
+      "description": "Pass in later competitive round with no fit",
+      "conditions": {
+        "is_competitive_later": true,
+        "partner_suit_length": {
+          "max": 2
+        },
+        "hcp": {
+          "max": 14
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with no fit for partner's suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "competitive_later_pass_minimum",
+      "bid": "Pass",
+      "priority": 13,
+      "description": "Pass in later competitive round with minimum values",
+      "conditions": {
+        "is_competitive_later": true,
+        "hcp": {
+          "max": 15
+        },
+        "suit_length": {
+          "max": 5
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with minimum values for further action",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "competitive_later_pass_default",
+      "bid": "Pass",
+      "priority": 10,
+      "description": "Default pass in later competitive rounds",
+      "conditions": {
+        "is_competitive_later": true
+      },
+      "forcing": "none",
+      "explanation": "Pass (already competed, nothing further to show)",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "pass_trap",

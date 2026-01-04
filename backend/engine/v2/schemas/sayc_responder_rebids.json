@@ -490,6 +490,92 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "responder_rebid_2nt_invitational",
+      "bid": "2NT",
+      "priority": 180,
+      "description": "Responder invites game with 11-12 HCP balanced",
+      "conditions": {
+        "is_responder_rebid": true,
+        "hcp": {"min": 11, "max": 12},
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "Invite game with {hcp} HCP balanced",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rebid_3nt_game",
+      "bid": "3NT",
+      "priority": 200,
+      "description": "Responder bids game with 13+ HCP balanced",
+      "conditions": {
+        "is_responder_rebid": true,
+        "hcp": {"min": 13},
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "Game with {hcp} HCP balanced",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rebid_support_opener_major",
+      "bid": "3{partner_suit}",
+      "priority": 175,
+      "description": "Responder gives delayed support for opener's major",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": {"in": ["2♥", "2♠"]},
+        "support_for_partner": {"min": 3},
+        "hcp": {"min": 10, "max": 12}
+      },
+      "forcing": "none",
+      "explanation": "Delayed support with {support_for_partner} cards and {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rebid_game_major_fit",
+      "bid": "4{partner_suit}",
+      "priority": 195,
+      "description": "Responder bids game with major fit",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": {"in": ["2♥", "2♠", "3♥", "3♠"]},
+        "support_for_partner": {"min": 3},
+        "hcp": {"min": 13}
+      },
+      "forcing": "none",
+      "explanation": "Game with fit and {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rebid_pass_2_level",
+      "bid": "Pass",
+      "priority": 90,
+      "description": "Pass opener's 2-level rebid with minimum",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": {"in": ["2♣", "2♦", "2♥", "2♠"]},
+        "hcp": {"max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Pass opener's rebid with minimum ({hcp} HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rebid_pass_1nt",
+      "bid": "Pass",
+      "priority": 88,
+      "description": "Pass opener's 1NT rebid with minimum",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": "1NT",
+        "hcp": {"max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Pass opener's 1NT with minimum ({hcp} HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "responder_pass_partner_2_level_preference",
       "bid": "Pass",
       "priority": 85,
@@ -502,6 +588,51 @@
       },
       "forcing": "none",
       "explanation": "Pass: Opener showed preference, no game interest",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rebid_pass_weak",
+      "bid": "Pass",
+      "priority": 12,
+      "description": "Pass with weak hand as responder rebid",
+      "conditions": {
+        "is_responder_rebid": true,
+        "hcp": {
+          "max": 10
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with minimum response values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rebid_pass_no_fit",
+      "bid": "Pass",
+      "priority": 11,
+      "description": "Pass without fit for partner's suit",
+      "conditions": {
+        "is_responder_rebid": true,
+        "support_for_partner": {
+          "max": 2
+        },
+        "hcp": {
+          "max": 14
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with no fit for partner's suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rebid_pass_default",
+      "bid": "Pass",
+      "priority": 10,
+      "description": "Default pass for responder rebid",
+      "conditions": {
+        "is_responder_rebid": true
+      },
+      "forcing": "none",
+      "explanation": "Pass (no further action to take)",
       "sets_forcing_level": "NON_FORCING"
     }
   ]

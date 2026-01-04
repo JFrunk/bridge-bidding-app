@@ -503,17 +503,32 @@ class SchemaInterpreter:
         if actual is None:
             return False
 
+        # Ordinal mappings for quality comparisons
+        quality_order = {'poor': 0, 'fair': 1, 'good': 2, 'excellent': 3}
+
         for op, value in comparison.items():
             # Resolve reference values (e.g., "spades_length" -> features['spades_length'])
             if isinstance(value, str) and value in features:
                 value = features[value]
 
             if op == 'min':
-                if actual < value:
+                # Handle quality ordinal comparisons
+                if isinstance(value, str) and value in quality_order:
+                    actual_ord = quality_order.get(actual, -1)
+                    value_ord = quality_order.get(value, 0)
+                    if actual_ord < value_ord:
+                        return False
+                elif actual < value:
                     return False
 
             elif op == 'max':
-                if actual > value:
+                # Handle quality ordinal comparisons
+                if isinstance(value, str) and value in quality_order:
+                    actual_ord = quality_order.get(actual, 99)
+                    value_ord = quality_order.get(value, 0)
+                    if actual_ord > value_ord:
+                        return False
+                elif actual > value:
                     return False
 
             elif op == 'exact':
@@ -537,6 +552,9 @@ class SchemaInterpreter:
         Examples:
         - "1{longest_suit}" -> "1♠"
         - "2{partner_suit}" -> "2♥"
+        - "2{lower_suit}" -> "2♣" (my second suit, below barrier)
+        - "2{higher_suit}" -> "2♥" (my second suit, reverse)
+        - "2{first_suit}" -> "2♦" (rebid my first suit)
         """
         # Handle dynamic bid templates
         pattern = r'\{(\w+)\}'
@@ -551,12 +569,50 @@ class SchemaInterpreter:
                     return partner_bid[1:]
                 return ''
 
+            # Special case: partner_first_suit
+            if var_name == 'partner_first_suit':
+                return features.get('partner_first_suit', '')
+
             # Special case: opponent_suit
             if var_name == 'opponent_suit':
                 opening_bid = features.get('opening_bid', '')
                 if opening_bid and len(opening_bid) >= 2:
                     return opening_bid[1:]
                 return ''
+
+            # Special case: lower_suit - my second suit when it's lower ranked
+            if var_name == 'lower_suit':
+                if features.get('second_suit_lower'):
+                    return features.get('second_suit', '')
+                return ''
+
+            # Special case: higher_suit - my second suit when it's higher ranked (reverse)
+            if var_name == 'higher_suit':
+                if features.get('second_suit_higher'):
+                    return features.get('second_suit', '')
+                return ''
+
+            # Special case: first_suit - my first bid suit (for rebidding own suit)
+            if var_name == 'first_suit':
+                return features.get('my_suit', '')
+
+            # Special case: my_suit - same as first_suit
+            if var_name == 'my_suit':
+                return features.get('my_suit', '')
+
+            # Special case: suit - general suit placeholder
+            # For overcalls: use best_suit (best overcallable suit)
+            # Otherwise: try second_suit or longest_suit
+            if var_name == 'suit':
+                if features.get('is_overcall') or features.get('is_competitive_later'):
+                    return features.get('best_suit') or features.get('longest_suit', '')
+                return features.get('second_suit') or features.get('longest_suit', '')
+
+            # Special case: new_suit or new_lower_suit - for responder's new suit
+            if var_name in ['new_suit', 'new_lower_suit']:
+                if features.get('second_suit_lower'):
+                    return features.get('second_suit', '')
+                return features.get('second_suit', '')
 
             # Get from features
             value = features.get(var_name, '')

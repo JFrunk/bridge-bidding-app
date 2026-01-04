@@ -33,6 +33,91 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "opener_stayman_show_spades",
+      "bid": "2\u2660",
+      "priority": 820,
+      "description": "1NT opener shows 4 spades in response to Stayman",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": "1NT",
+        "partner_last_bid": "2\u2663",
+        "spades_length": {
+          "min": 4
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Showing 4 spades in response to Stayman",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "opener_stayman_show_hearts",
+      "bid": "2\u2665",
+      "priority": 819,
+      "description": "1NT opener shows 4 hearts in response to Stayman (no 4 spades)",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": "1NT",
+        "partner_last_bid": "2\u2663",
+        "hearts_length": {
+          "min": 4
+        },
+        "spades_length": {
+          "max": 3
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Showing 4 hearts in response to Stayman (no 4-card spade suit)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "opener_stayman_deny_major",
+      "bid": "2\u2666",
+      "priority": 818,
+      "description": "1NT opener denies 4-card major in response to Stayman",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": "1NT",
+        "partner_last_bid": "2\u2663",
+        "spades_length": {
+          "max": 3
+        },
+        "hearts_length": {
+          "max": 3
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "2\u2666 denying a 4-card major",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "opener_complete_jacoby_hearts",
+      "bid": "2\u2665",
+      "priority": 825,
+      "description": "1NT opener completes Jacoby transfer to hearts",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": "1NT",
+        "partner_last_bid": "2\u2666"
+      },
+      "forcing": "none",
+      "explanation": "Completing Jacoby transfer to hearts",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_complete_jacoby_spades",
+      "bid": "2\u2660",
+      "priority": 824,
+      "description": "1NT opener completes Jacoby transfer to spades",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": "1NT",
+        "partner_last_bid": "2\u2665"
+      },
+      "forcing": "none",
+      "explanation": "Completing Jacoby transfer to spades",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "responder_smolen_3h",
       "bid": "3\u2665",
       "priority": 813,
@@ -815,6 +900,336 @@
       },
       "forcing": "none",
       "explanation": "Pass single raise with minimum {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_pass_after_partner_game",
+      "bid": "Pass",
+      "priority": 360,
+      "description": "Opener passes partner's game bid",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": {
+          "in": ["3NT", "4♥", "4♠", "5♣", "5♦", "6♣", "6♦", "6♥", "6♠", "6NT"]
+        },
+        "hcp": {
+          "max": 17
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's game/slam bid with {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_pass_after_preempt_raised",
+      "bid": "Pass",
+      "priority": 350,
+      "description": "Preempt opener passes partner's raise",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": {
+          "in": ["2♥", "2♠", "3♣", "3♦", "3♥", "3♠"]
+        },
+        "hcp": {
+          "max": 10
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's raise with preempt values ({hcp} HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_pass_doubled_game",
+      "bid": "Pass",
+      "priority": 355,
+      "description": "Pass when opponents double our game contract",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "X",
+        "fit_known": true
+      },
+      "forcing": "none",
+      "explanation": "Pass the double - we're at game level",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_blackwood_after_game_raise",
+      "bid": "4NT",
+      "priority": 410,
+      "description": "Opener explores slam after partner's game raise",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": {
+          "in": ["4♥", "4♠"]
+        },
+        "hcp": {
+          "min": 18
+        },
+        "support_for_partner": {
+          "min": 3
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Blackwood 4NT asking for aces with {hcp} HCP",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "opener_respond_negative_double_spades",
+      "bid": "1♠",
+      "priority": 405,
+      "description": "Opener shows spades after partner's negative double",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "X",
+        "spades_length": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 12,
+          "max": 15
+        }
+      },
+      "forcing": "none",
+      "explanation": "Show {spades_length} spades after partner's negative double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_respond_negative_double_hearts",
+      "bid": "2♥",
+      "priority": 404,
+      "description": "Opener shows hearts after partner's negative double",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "X",
+        "hearts_length": {
+          "min": 4
+        },
+        "hcp": {
+          "min": 12,
+          "max": 15
+        }
+      },
+      "forcing": "none",
+      "explanation": "Show {hearts_length} hearts after partner's negative double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_suit_after_negative_double",
+      "bid": "2{first_suit}",
+      "priority": 400,
+      "description": "Opener rebids own suit after partner's negative double",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "X",
+        "longest_suit_length": {
+          "min": 6
+        },
+        "hcp": {
+          "min": 12,
+          "max": 15
+        }
+      },
+      "forcing": "none",
+      "explanation": "Rebid 6+ card suit after partner's negative double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_1nt_after_negative_double",
+      "bid": "1NT",
+      "priority": 398,
+      "description": "Opener rebids 1NT after partner's negative double",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "X",
+        "is_balanced": true,
+        "hcp": {
+          "min": 15,
+          "max": 17
+        }
+      },
+      "forcing": "none",
+      "explanation": "Balanced hand with {hcp} HCP after partner's negative double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_accept_invitational_raise",
+      "bid": "4{partner_suit}",
+      "priority": 370,
+      "description": "Opener accepts partner's invitational raise",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": {
+          "in": ["3♥", "3♠"]
+        },
+        "hcp": {
+          "min": 15
+        },
+        "support_for_partner": {
+          "min": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Accept invitation with {hcp} HCP and good fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_decline_invitational_raise",
+      "bid": "Pass",
+      "priority": 365,
+      "description": "Opener declines partner's invitational raise",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": {
+          "in": ["3♥", "3♠"]
+        },
+        "hcp": {
+          "max": 14
+        }
+      },
+      "forcing": "none",
+      "explanation": "Decline invitation with minimum ({hcp} HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_6card_major_after_1nt",
+      "bid": "2{my_suit}",
+      "priority": 385,
+      "description": "Opener rebids 6-card major after partner's 1NT response",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "1NT",
+        "my_last_bid": {"in": ["1♥", "1♠"]},
+        "longest_suit_length": {"min": 6},
+        "hcp": {"min": 12, "max": 15}
+      },
+      "forcing": "none",
+      "explanation": "Rebid 6-card {my_suit} with {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_lower_suit_after_1nt",
+      "bid": "2{lower_suit}",
+      "priority": 380,
+      "description": "Opener shows second suit after partner's 1NT response",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "1NT",
+        "my_last_bid": {"in": ["1♥", "1♠"]},
+        "second_suit_lower": true,
+        "hcp": {"min": 12, "max": 17}
+      },
+      "forcing": "none",
+      "explanation": "Show second suit with {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_2c_after_1nt",
+      "bid": "2♣",
+      "priority": 375,
+      "description": "Opener bids 2♣ after partner's 1NT (minimum with clubs)",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "1NT",
+        "my_last_bid": {"in": ["1♥", "1♠"]},
+        "clubs_length": {"min": 3},
+        "hcp": {"min": 12, "max": 15}
+      },
+      "forcing": "none",
+      "explanation": "Show clubs with {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_2d_after_1nt",
+      "bid": "2♦",
+      "priority": 374,
+      "description": "Opener bids 2♦ after partner's 1NT (minimum with diamonds)",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "1NT",
+        "my_last_bid": {"in": ["1♥", "1♠"]},
+        "diamonds_length": {"min": 3},
+        "clubs_length": {"max": 2},
+        "hcp": {"min": 12, "max": 15}
+      },
+      "forcing": "none",
+      "explanation": "Show diamonds with {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_2nt_after_1nt",
+      "bid": "2NT",
+      "priority": 372,
+      "description": "Opener raises 1NT to 2NT with 18-19 balanced",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "1NT",
+        "is_balanced": true,
+        "hcp": {"min": 18, "max": 19}
+      },
+      "forcing": "none",
+      "explanation": "Invite to 3NT with {hcp} HCP balanced",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_3nt_after_1nt",
+      "bid": "3NT",
+      "priority": 371,
+      "description": "Opener jumps to 3NT with 20-21 balanced",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "1NT",
+        "is_balanced": true,
+        "hcp": {"min": 20, "max": 21}
+      },
+      "forcing": "none",
+      "explanation": "Game with {hcp} HCP balanced",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_pass_1nt_response_minimum",
+      "bid": "Pass",
+      "priority": 368,
+      "description": "Opener passes 1NT with minimum balanced hand",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "1NT",
+        "is_balanced": true,
+        "hcp": {"min": 12, "max": 14},
+        "longest_suit_length": {"max": 5}
+      },
+      "forcing": "none",
+      "explanation": "Pass 1NT with minimum balanced ({hcp} HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_pass_3nt_response",
+      "bid": "Pass",
+      "priority": 362,
+      "description": "Opener passes partner's 3NT response",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "3NT",
+        "hcp": {
+          "max": 17
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's 3NT with {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_default_pass",
+      "bid": "Pass",
+      "priority": 9,
+      "description": "Default pass in rebid position",
+      "conditions": {
+        "is_rebid": true,
+        "my_bid_count": {
+          "min": 1
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass (no clear action)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

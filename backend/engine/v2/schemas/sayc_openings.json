@@ -218,6 +218,35 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "open_1c_short_clubs",
+      "bid": "1\u2663",
+      "priority": 55,
+      "description": "One club opening with short clubs (4-4-3-2 shape)",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 12,
+          "max": 21
+        },
+        "clubs_length": {
+          "min": 2
+        },
+        "has_5_card_major": false,
+        "diamonds_length": {
+          "max": 3
+        },
+        "spades_length": {
+          "max": 4
+        },
+        "hearts_length": {
+          "max": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "1\u2663 opening showing {hcp} HCP (short clubs, 4-4-3-2 shape)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "open_1c_balanced_no_nt",
       "bid": "1\u2663",
       "priority": 75,

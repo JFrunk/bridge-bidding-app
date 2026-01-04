@@ -124,11 +124,15 @@ class BiddingEngineV2Schema:
                 if not self._is_bid_legal(bid, auction_history):
                     continue
 
-                # Validate against forcing constraints
-                forcing_validation = self.interpreter.validate_bid_against_forcing(bid)
-                if not forcing_validation.is_valid:
-                    # Skip this bid if it violates forcing
-                    continue
+                # Validate against forcing constraints (only in partnership auctions)
+                # Skip forcing validation in competitive situations - opponents' bids
+                # break forcing sequences between partners
+                is_competitive = features.get('is_overcall') or features.get('is_advancer') or features.get('is_competitive_later')
+                if not is_competitive:
+                    forcing_validation = self.interpreter.validate_bid_against_forcing(bid)
+                    if not forcing_validation.is_valid:
+                        # Skip this bid if it violates forcing
+                        continue
 
                 # Run bid through conflict resolver for Monte Carlo validation
                 # This can veto slams or modify competitive decisions

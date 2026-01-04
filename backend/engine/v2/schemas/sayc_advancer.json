@@ -1,0 +1,263 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "advancer",
+  "description": "Advancer bids - responding to partner's competitive action (overcall or takeout double)",
+  "rules": [
+    {
+      "id": "advancer_respond_to_double_spades",
+      "bid": "1♠",
+      "priority": 92,
+      "description": "Respond to takeout double with spades",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "spades_length": {"min": 4},
+        "hcp": {"max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Respond to partner's takeout double with 4+ spades",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_respond_to_double_hearts",
+      "bid": "1♥",
+      "priority": 91,
+      "description": "Respond to takeout double with hearts",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "hearts_length": {"min": 4},
+        "spades_length": {"max": 3},
+        "hcp": {"max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Respond to partner's takeout double with 4+ hearts",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_respond_to_double_diamonds",
+      "bid": "2♦",
+      "priority": 85,
+      "description": "Respond to takeout double with diamonds",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "diamonds_length": {"min": 4},
+        "has_4_card_major": false,
+        "hcp": {"max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Respond to partner's takeout double with 4+ diamonds",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_respond_to_double_clubs",
+      "bid": "2♣",
+      "priority": 84,
+      "description": "Respond to takeout double with clubs",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "clubs_length": {"min": 4},
+        "has_4_card_major": false,
+        "diamonds_length": {"max": 3},
+        "hcp": {"max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Respond to partner's takeout double with 4+ clubs",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_1nt_to_double",
+      "bid": "1NT",
+      "priority": 88,
+      "description": "1NT in response to takeout double",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "hcp": {"min": 6, "max": 10},
+        "stopper_in_opponent_suit": true,
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "1NT showing stopper in opponent's suit with {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_jump_to_double_spades",
+      "bid": "2♠",
+      "priority": 95,
+      "description": "Jump response showing values with spades",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "hcp": {"min": 9, "max": 11},
+        "spades_length": {"min": 4}
+      },
+      "forcing": "none",
+      "explanation": "Jump showing 9-11 HCP with 4+ spades (invitational)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_jump_to_double_hearts",
+      "bid": "2♥",
+      "priority": 94,
+      "description": "Jump response showing values with hearts",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "hcp": {"min": 9, "max": 11},
+        "hearts_length": {"min": 4},
+        "spades_length": {"max": 3}
+      },
+      "forcing": "none",
+      "explanation": "Jump showing 9-11 HCP with 4+ hearts (invitational)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_raise_overcall_simple",
+      "bid": "2{partner_suit}",
+      "priority": 85,
+      "description": "Simple raise of partner's overcall",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": {"not_in": ["X", "XX", "Pass", "1NT", "2NT"]},
+        "hcp": {"min": 6, "max": 10},
+        "support_for_partner": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Simple raise of partner's overcall with {support_for_partner}-card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_cuebid_limit_raise",
+      "bid": "{opponent_suit}",
+      "priority": 600,
+      "description": "Cuebid showing limit raise for partner's overcall",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": {"not_in": ["X", "XX", "Pass"]},
+        "hcp": {"min": 10},
+        "support_for_partner": {"min": 3}
+      },
+      "forcing": "one_round",
+      "explanation": "Cuebid showing limit raise values with support for partner",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "advancer_pass_penalty",
+      "bid": "Pass",
+      "priority": 97,
+      "description": "Pass for penalty (convert takeout double to penalty)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "opponent_suit_length": {"min": 5},
+        "hcp": {"min": 8}
+      },
+      "forcing": "none",
+      "explanation": "Pass converting partner's double to penalty with 5+ in opponent's suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_pass_weak",
+      "bid": "Pass",
+      "priority": 50,
+      "description": "Pass with weak hand in advancer seat",
+      "conditions": {
+        "is_advancer": true,
+        "hcp": {"max": 5}
+      },
+      "forcing": "none",
+      "explanation": "Pass with weak hand ({hcp} HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_pass_no_fit",
+      "bid": "Pass",
+      "priority": 45,
+      "description": "Pass without good options",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": {"not_in": ["X", "XX"]},
+        "support_for_partner": {"max": 2},
+        "hcp": {"max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Pass without fit for partner's suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_3nt_strong_to_double",
+      "bid": "3NT",
+      "priority": 105,
+      "description": "Jump to 3NT with strong hand after partner's double",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "hcp": {"min": 12},
+        "stopper_in_opponent_suit": true,
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "3NT with {hcp} HCP, balanced with stopper",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_game_spades_to_double",
+      "bid": "4♠",
+      "priority": 100,
+      "description": "Bid game in spades after partner's double",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "hcp": {"min": 12},
+        "spades_length": {"min": 5}
+      },
+      "forcing": "none",
+      "explanation": "Game in spades with {hcp} HCP and 5+ spades",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_game_hearts_to_double",
+      "bid": "4♥",
+      "priority": 99,
+      "description": "Bid game in hearts after partner's double",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "hcp": {"min": 12},
+        "hearts_length": {"min": 5}
+      },
+      "forcing": "none",
+      "explanation": "Game in hearts with {hcp} HCP and 5+ hearts",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_pass_minimum",
+      "bid": "Pass",
+      "priority": 48,
+      "description": "Pass with minimum values as advancer",
+      "conditions": {
+        "is_advancer": true,
+        "hcp": {"max": 7}
+      },
+      "forcing": "none",
+      "explanation": "Pass with minimum ({hcp} HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_pass_default",
+      "bid": "Pass",
+      "priority": 10,
+      "description": "Default pass in advancer seat",
+      "conditions": {
+        "is_advancer": true
+      },
+      "forcing": "none",
+      "explanation": "Pass (no clear action available)",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

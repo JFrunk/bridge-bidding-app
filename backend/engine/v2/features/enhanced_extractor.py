@@ -190,7 +190,27 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['is_opening'] = af['num_bids'] == 0 or all(b == 'Pass' for b in auction_history)
     flat['is_response'] = af['opener_relationship'] == 'Partner' and bc['my_bid_count'] == 0
     flat['is_rebid'] = af['opener_relationship'] == 'Me' and bc['my_bid_count'] >= 1
-    flat['is_overcall'] = af['opener_relationship'] == 'Opponent' and bc['my_bid_count'] == 0
+    flat['is_competitive_later'] = af['opener_relationship'] == 'Opponent' and bc['my_bid_count'] >= 1
+    flat['is_responder_rebid'] = af['opener_relationship'] == 'Partner' and bc['my_bid_count'] >= 1
+
+    # Advancer detection: partner made a competitive action over opponent's opening
+    # This includes overcalls, takeout doubles, and suit bids
+    partner_bids_temp = _get_partner_bids(auction_history, my_position, dealer)
+    partner_made_competitive_action = False
+    for bid in partner_bids_temp:
+        if bid not in ['Pass', 'XX'] and bid != '':
+            partner_made_competitive_action = True
+            break
+
+    # is_advancer: opponent opened, partner made competitive action, I haven't bid yet
+    flat['is_advancer'] = (af['opener_relationship'] == 'Opponent' and
+                           partner_made_competitive_action and
+                           bc['my_bid_count'] == 0)
+
+    # is_overcall: opponent opened, partner hasn't acted competitively, I haven't bid
+    flat['is_overcall'] = (af['opener_relationship'] == 'Opponent' and
+                           not partner_made_competitive_action and
+                           bc['my_bid_count'] == 0)
 
     # Longest suit info
     suit_lengths = hf['suit_lengths']
@@ -198,15 +218,68 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     longest_suits = [s for s, l in suit_lengths.items() if l == longest_length]
     flat['longest_suit_length'] = longest_length
     flat['longest_suit'] = longest_suits[0] if longest_suits else None
+    flat['has_4_card_major'] = suit_lengths.get('♠', 0) >= 4 or suit_lengths.get('♥', 0) >= 4
     flat['has_5_card_major'] = suit_lengths.get('♠', 0) >= 5 or suit_lengths.get('♥', 0) >= 5
     flat['has_6_card_suit'] = longest_length >= 6
     flat['has_7_card_suit'] = longest_length >= 7
+
+    # Longest major suit (for responding to takeout doubles)
+    spades_len = suit_lengths.get('♠', 0)
+    hearts_len = suit_lengths.get('♥', 0)
+    if spades_len >= hearts_len and spades_len >= 4:
+        flat['longest_major'] = '♠'
+        flat['longest_major_length'] = spades_len
+    elif hearts_len >= 4:
+        flat['longest_major'] = '♥'
+        flat['longest_major_length'] = hearts_len
+    else:
+        flat['longest_major'] = None
+        flat['longest_major_length'] = 0
 
     # Major/minor suit lengths
     flat['spades_length'] = suit_lengths.get('♠', 0)
     flat['hearts_length'] = suit_lengths.get('♥', 0)
     flat['diamonds_length'] = suit_lengths.get('♦', 0)
     flat['clubs_length'] = suit_lengths.get('♣', 0)
+
+    # Overcall-specific features
+    # Find the best suit for overcalling (longest 5+ card suit with best quality)
+    suit_ranking = {'♣': 0, '♦': 1, '♥': 2, '♠': 3}
+    best_overcall_suit = None
+    best_overcall_length = 0
+    best_overcall_quality = 'poor'
+    quality_order = {'poor': 0, 'fair': 1, 'good': 2, 'excellent': 3}
+
+    for suit in ['♠', '♥', '♦', '♣']:  # Check in rank order for tie-breaking
+        length = suit_lengths.get(suit, 0)
+        if length >= 5:
+            quality = evaluate_suit_quality(hand, suit)
+            # Prefer longer suits, then better quality, then higher ranking
+            if (length > best_overcall_length or
+                (length == best_overcall_length and quality_order.get(quality, 0) > quality_order.get(best_overcall_quality, 0)) or
+                (length == best_overcall_length and quality == best_overcall_quality and suit_ranking.get(suit, 0) > suit_ranking.get(best_overcall_suit, 0))):
+                best_overcall_suit = suit
+                best_overcall_length = length
+                best_overcall_quality = quality
+
+    flat['suit_length'] = best_overcall_length  # Length of best overcall suit
+    flat['suit_quality'] = best_overcall_quality  # Quality of best overcall suit
+    flat['best_suit'] = best_overcall_suit  # The suit itself
+
+    # Check if we can overcall at 1-level (suit outranks opponent's suit)
+    opening_bid = flat.get('opening_bid', '')
+    opponent_suit = get_suit_from_bid(opening_bid) if opening_bid else None
+    flat['bid_higher_than_opening'] = False
+    if best_overcall_suit and opponent_suit:
+        flat['bid_higher_than_opening'] = suit_ranking.get(best_overcall_suit, 0) > suit_ranking.get(opponent_suit, 0)
+
+    # Minimum bid level needed (1 if we can bid higher at same level, 2 otherwise)
+    if opening_bid and opening_bid.startswith('1') and flat['bid_higher_than_opening']:
+        flat['bid_level'] = 1
+    elif opening_bid and opening_bid.startswith('1'):
+        flat['bid_level'] = 2
+    else:
+        flat['bid_level'] = 2  # Default to 2-level for non-1-level openings
 
     # Support for partner's suit
     if flat['partner_last_bid']:
@@ -222,7 +295,7 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # Scan partner's bids to find their first natural suit bid
     flat['partner_first_suit'] = None
     flat['support_for_partner_first'] = 0
-    partner_bids = _get_partner_bids(auction_history, my_position)
+    partner_bids = _get_partner_bids(auction_history, my_position, dealer)
     for bid in partner_bids:
         suit = get_suit_from_bid(bid)
         if suit:
@@ -233,14 +306,14 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # My first suit (the suit I bid first)
     flat['my_suit'] = None
     flat['my_last_bid'] = None
-    my_bids = _get_my_bids(auction_history, my_position)
+    my_bids = _get_my_bids(auction_history, my_position, dealer)
 
     # Get my last bid (for transfer completion rules)
     if my_bids:
         flat['my_last_bid'] = my_bids[-1]
 
     # RHO's last bid (for redouble after takeout double, etc.)
-    rho_bids = _get_rho_bids(auction_history, my_position)
+    rho_bids = _get_rho_bids(auction_history, my_position, dealer)
     flat['rho_last_bid'] = rho_bids[-1] if rho_bids else None
 
     # Get my first natural suit bid
@@ -288,6 +361,15 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
             bid_suits.add(suit)
     unbid_suits = {'♠', '♥', '♦', '♣'} - bid_suits
     flat['unbid_suit_support'] = sum(1 for s in unbid_suits if suit_lengths.get(s, 0) >= 3)
+
+    # support_all_unbid: True if we have 3+ cards in ALL unbid suits
+    # This is key for takeout double evaluation
+    flat['support_all_unbid'] = all(suit_lengths.get(s, 0) >= 3 for s in unbid_suits) if unbid_suits else False
+
+    # For takeout doubles, also check support for unbid majors specifically
+    unbid_majors = {'♠', '♥'} - bid_suits
+    flat['support_unbid_major'] = any(suit_lengths.get(s, 0) >= 4 for s in unbid_majors) if unbid_majors else False
+    flat['support_both_majors'] = all(suit_lengths.get(s, 0) >= 4 for s in unbid_majors) if len(unbid_majors) == 2 else False
 
     # Enhanced takeout double shape detection
     # "Perfect shape" = 3+ in all unbid suits AND short in opponent's suit
@@ -349,7 +431,7 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['fourth_suit'] = list(unbid_suits_remaining)[0] if flat['is_fourth_suit'] else None
 
     # LHO's last bid (for balancing checks)
-    lho_bids = _get_lho_bids(auction_history, my_position)
+    lho_bids = _get_lho_bids(auction_history, my_position, dealer)
     flat['lho_last_bid'] = lho_bids[-1] if lho_bids else None
 
     # PBN representation
@@ -499,92 +581,108 @@ def evaluate_suit_quality(hand: Hand, suit: str) -> str:
     return 'poor'
 
 
-def _get_partner_bids(auction_history: List[str], my_position: str) -> List[str]:
+def _get_partner_bids(auction_history: List[str], my_position: str, dealer: str = 'North') -> List[str]:
     """
     Extract partner's bids from the auction history.
 
     Args:
         auction_history: List of bids in order
         my_position: My position (North, East, South, West)
+        dealer: Dealer position (determines bid indexing)
 
     Returns:
         List of partner's bids in order
     """
     positions = ['North', 'East', 'South', 'West']
     my_idx = positions.index(my_position) if my_position in positions else 0
+    dealer_idx = positions.index(dealer) if dealer in positions else 0
     partner_idx = (my_idx + 2) % 4  # Partner is across the table
 
     partner_bids = []
     for i, bid in enumerate(auction_history):
-        if i % 4 == partner_idx:
+        # Position of bid i = (dealer_idx + i) % 4
+        bid_position_idx = (dealer_idx + i) % 4
+        if bid_position_idx == partner_idx:
             partner_bids.append(bid)
 
     return partner_bids
 
 
-def _get_my_bids(auction_history: List[str], my_position: str) -> List[str]:
+def _get_my_bids(auction_history: List[str], my_position: str, dealer: str = 'North') -> List[str]:
     """
     Extract my bids from the auction history.
 
     Args:
         auction_history: List of bids in order
         my_position: My position (North, East, South, West)
+        dealer: Dealer position (determines bid indexing)
 
     Returns:
         List of my bids in order
     """
     positions = ['North', 'East', 'South', 'West']
     my_idx = positions.index(my_position) if my_position in positions else 0
+    dealer_idx = positions.index(dealer) if dealer in positions else 0
 
     my_bids = []
     for i, bid in enumerate(auction_history):
-        if i % 4 == my_idx:
+        # Position of bid i = (dealer_idx + i) % 4
+        bid_position_idx = (dealer_idx + i) % 4
+        if bid_position_idx == my_idx:
             my_bids.append(bid)
 
     return my_bids
 
 
-def _get_rho_bids(auction_history: List[str], my_position: str) -> List[str]:
+def _get_rho_bids(auction_history: List[str], my_position: str, dealer: str = 'North') -> List[str]:
     """
     Extract Right Hand Opponent's bids from the auction history.
 
     Args:
         auction_history: List of bids in order
         my_position: My position (North, East, South, West)
+        dealer: Dealer position (determines bid indexing)
 
     Returns:
         List of RHO's bids in order
     """
     positions = ['North', 'East', 'South', 'West']
     my_idx = positions.index(my_position) if my_position in positions else 0
+    dealer_idx = positions.index(dealer) if dealer in positions else 0
     rho_idx = (my_idx - 1) % 4  # RHO is to my right (bid just before me)
 
     rho_bids = []
     for i, bid in enumerate(auction_history):
-        if i % 4 == rho_idx:
+        # Position of bid i = (dealer_idx + i) % 4
+        bid_position_idx = (dealer_idx + i) % 4
+        if bid_position_idx == rho_idx:
             rho_bids.append(bid)
 
     return rho_bids
 
 
-def _get_lho_bids(auction_history: List[str], my_position: str) -> List[str]:
+def _get_lho_bids(auction_history: List[str], my_position: str, dealer: str = 'North') -> List[str]:
     """
     Extract Left Hand Opponent's bids from the auction history.
 
     Args:
         auction_history: List of bids in order
         my_position: My position (North, East, South, West)
+        dealer: Dealer position (determines bid indexing)
 
     Returns:
         List of LHO's bids in order
     """
     positions = ['North', 'East', 'South', 'West']
     my_idx = positions.index(my_position) if my_position in positions else 0
+    dealer_idx = positions.index(dealer) if dealer in positions else 0
     lho_idx = (my_idx + 1) % 4  # LHO is to my left (bids after me)
 
     lho_bids = []
     for i, bid in enumerate(auction_history):
-        if i % 4 == lho_idx:
+        # Position of bid i = (dealer_idx + i) % 4
+        bid_position_idx = (dealer_idx + i) % 4
+        if bid_position_idx == lho_idx:
             lho_bids.append(bid)
 
     return lho_bids

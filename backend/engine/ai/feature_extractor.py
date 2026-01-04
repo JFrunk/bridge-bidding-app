@@ -520,10 +520,12 @@ def count_partnership_bids(auction_history: list, positions: list, my_index: int
         if bidder == my_index:
             if bid == 'Pass':
                 my_passes += 1
-            elif bid not in ['X', 'XX']:
+            else:
+                # Count all bids including X and XX (they're still actions)
                 my_bids += 1
         elif bidder == partner_index:
-            if bid not in ['Pass', 'X', 'XX']:
+            if bid != 'Pass':
+                # Count all non-pass bids including X and XX
                 partner_bids += 1
 
     return {

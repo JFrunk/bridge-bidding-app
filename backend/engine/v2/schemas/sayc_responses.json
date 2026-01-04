@@ -404,6 +404,67 @@
       "sets_forcing_level": "GAME_FORCE"
     },
     {
+      "id": "respond_2nt_invitational",
+      "bid": "2NT",
+      "priority": 350,
+      "description": "2NT response showing 11-12 HCP balanced",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
+        "hcp": {"min": 11, "max": 12},
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "Invitational 2NT with {hcp} HCP balanced",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_3nt_to_1_minor",
+      "bid": "3NT",
+      "priority": 340,
+      "description": "3NT response to 1-minor showing 13-15 HCP balanced",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": {"in": ["1♣", "1♦"]},
+        "hcp": {"min": 13, "max": 15},
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "3NT with {hcp} HCP balanced",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_3nt_to_1_major",
+      "bid": "3NT",
+      "priority": 335,
+      "description": "3NT response to 1-major showing 13-15 HCP balanced, no fit",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": {"in": ["1♥", "1♠"]},
+        "hcp": {"min": 13, "max": 15},
+        "is_balanced": true,
+        "support_for_partner": {"max": 2}
+      },
+      "forcing": "none",
+      "explanation": "3NT with {hcp} HCP balanced, no major fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_limit_raise_minor",
+      "bid": "3{partner_suit}",
+      "priority": 320,
+      "description": "Limit raise of partner's minor",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": {"in": ["1♣", "1♦"]},
+        "hcp": {"min": 10, "max": 12},
+        "support_for_partner": {"min": 4}
+      },
+      "forcing": "none",
+      "explanation": "Limit raise with {hcp} HCP and {support_for_partner}-card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "pass_no_values",
       "bid": "Pass",
       "priority": 15,
@@ -414,7 +475,7 @@
           "max": 5
         },
         "NOT": {
-          "partner_last_bid": "2\u2663"
+          "partner_last_bid": "2♣"
         }
       },
       "forcing": "none",
