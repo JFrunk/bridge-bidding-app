@@ -499,12 +499,12 @@ class SessionManager:
             if dds_service is None:
                 return None
 
-            # Convert deal_data to PBN format for DDS
-            # deal_data format: {'North': Hand, 'East': Hand, 'South': Hand, 'West': Hand}
-            # or {'North': {'spades': [...], ...}, ...}
+            # Convert deal_data to Hand objects for DDS
+            # deal_data format: {'N': {'hand': [{'rank': 'A', 'suit': '♠'}, ...], 'points': X}, ...}
+            # or {'North': Hand, 'East': Hand, 'South': Hand, 'West': Hand}
+            from engine.hand import Hand, Card
 
-            # Build hands in PBN format
-            hands_pbn = []
+            hands = {}
             for pos in ['N', 'E', 'S', 'W']:
                 pos_name = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[pos]
                 hand_data = deal_data.get(pos_name, deal_data.get(pos))
@@ -515,45 +515,34 @@ class SessionManager:
 
                 # Handle different hand data formats
                 if hasattr(hand_data, 'cards'):
-                    # Hand object
-                    suits = {'S': [], 'H': [], 'D': [], 'C': []}
-                    for card in hand_data.cards:
-                        suits[card.suit].append(card.rank)
+                    # Already a Hand object
+                    hands[pos] = hand_data
                 elif isinstance(hand_data, dict):
-                    suits = {'S': [], 'H': [], 'D': [], 'C': []}
-
-                    # Format 1: {'hand': [{'rank': 'A', 'suit': '♠'}, ...], 'points': X}
+                    # Format: {'hand': [{'rank': 'A', 'suit': '♠'}, ...], 'points': X}
                     if 'hand' in hand_data and isinstance(hand_data['hand'], list):
-                        suit_symbol_map = {'♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C',
-                                          'S': 'S', 'H': 'H', 'D': 'D', 'C': 'C'}
+                        cards = []
                         for card in hand_data['hand']:
                             if isinstance(card, dict) and 'rank' in card and 'suit' in card:
-                                suit_letter = suit_symbol_map.get(card['suit'], card['suit'])
-                                suits[suit_letter].append(card['rank'])
-                    # Format 2: {'spades': [...], 'hearts': [...], ...}
+                                # Normalize suit symbol to Unicode
+                                suit = card['suit']
+                                suit_map = {'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣'}
+                                if suit in suit_map:
+                                    suit = suit_map[suit]
+                                cards.append(Card(rank=card['rank'], suit=suit))
+                        if len(cards) == 13:
+                            hands[pos] = Hand(cards)
+                        else:
+                            logger.warning(f"Invalid card count for {pos}: {len(cards)}")
+                            return None
                     else:
-                        suit_map = {'spades': 'S', 'hearts': 'H', 'diamonds': 'D', 'clubs': 'C'}
-                        for suit_name, suit_letter in suit_map.items():
-                            cards = hand_data.get(suit_name, [])
-                            suits[suit_letter] = [c if isinstance(c, str) else str(c) for c in cards]
+                        logger.warning(f"Unknown hand data format for {pos_name}")
+                        return None
                 else:
-                    logger.warning(f"Unknown hand data format for {pos_name}")
+                    logger.warning(f"Unknown hand data type for {pos_name}: {type(hand_data)}")
                     return None
 
-                # Convert to PBN format (SHDC order)
-                hand_pbn = '.'.join([
-                    ''.join(suits['S']),
-                    ''.join(suits['H']),
-                    ''.join(suits['D']),
-                    ''.join(suits['C'])
-                ])
-                hands_pbn.append(hand_pbn)
-
-            # Full PBN deal string: "N:spades.hearts.diamonds.clubs spades.hearts..."
-            deal_pbn = f"N:{' '.join(hands_pbn)}"
-
-            # Perform full analysis
-            analysis = dds_service.analyze_deal(deal_pbn, dealer, vulnerability)
+            # Perform full analysis with Hand objects
+            analysis = dds_service.analyze_deal(hands, dealer, vulnerability)
 
             if analysis is None:
                 return None
@@ -563,20 +552,14 @@ class SessionManager:
             if analysis.dd_table and contract:
                 declarer = contract.declarer
                 strain = contract.strain
-                # DD table is indexed by declarer and strain
-                strain_map = {'C': 0, 'D': 1, 'H': 2, 'S': 3, 'NT': 4}
-                declarer_map = {'N': 0, 'E': 1, 'S': 2, 'W': 3}
-
-                strain_idx = strain_map.get(strain)
-                declarer_idx = declarer_map.get(declarer)
-
-                if strain_idx is not None and declarer_idx is not None:
-                    dd_tricks = analysis.dd_table.tricks[declarer_idx][strain_idx]
+                # DDTable uses .table dictionary with position and strain keys
+                # e.g., dd_table.table['N']['NT'] = 9
+                dd_tricks = analysis.dd_table.get_tricks(declarer, strain)
 
             return {
                 'analysis_json': json.dumps(analysis.to_dict()) if hasattr(analysis, 'to_dict') else None,
                 'par_score': analysis.par_result.score if analysis.par_result else None,
-                'par_contract': analysis.par_result.contract if analysis.par_result else None,
+                'par_contract': analysis.par_result.contracts[0] if analysis.par_result and analysis.par_result.contracts else None,
                 'dd_tricks': dd_tricks
             }
 
