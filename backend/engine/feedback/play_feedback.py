@@ -353,13 +353,20 @@ class PlayFeedbackGenerator:
 
     def _categorize_play(self, state: PlayState, position: str, card: Card) -> PlayCategory:
         """Determine what type of play situation this is"""
-        # Opening lead
+        # Opening lead - only the very first card of the hand
         if not state.trick_history and not state.current_trick:
             return PlayCategory.OPENING_LEAD
 
-        # First to play in a new trick
+        # Leading to a subsequent trick (not opening lead)
         if not state.current_trick:
-            return PlayCategory.OPENING_LEAD  # Same logic for leading
+            # This is a lead, but not the opening lead
+            # Categorize based on what card is being led
+            trump_suit = state.contract.trump_suit if state.contract else None
+            if card.suit == trump_suit:
+                return PlayCategory.TRUMPING  # Leading trump
+            # Could add more specific lead categories later
+            # For now, categorize as following suit (general play)
+            return PlayCategory.FOLLOWING_SUIT
 
         # Following suit
         led_suit = state.current_trick[0][0].suit
