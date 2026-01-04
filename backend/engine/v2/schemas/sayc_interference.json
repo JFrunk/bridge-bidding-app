@@ -477,6 +477,161 @@
       "forcing": "none",
       "explanation": "Pass with {hcp} HCP - no fit and no suit to bid",
       "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "stolen_bid_stayman_double",
+      "bid": "X",
+      "priority": 820,
+      "description": "Stolen Bid: Double is Stayman when opponent bids 2C over 1NT",
+      "trigger": "1NT - 2♣ - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8
+        },
+        "has_4_card_major": true
+      },
+      "forcing": "one_round",
+      "explanation": "Double (Stayman): Showing 4-card major and values for game",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "stolen_bid_transfer_hearts",
+      "bid": "X",
+      "priority": 815,
+      "description": "Stolen Bid: Double is transfer to hearts when opponent bids 2D over 1NT",
+      "trigger": "1NT - 2♦ - ?",
+      "conditions": {
+        "hcp": {
+          "min": 0
+        },
+        "hearts_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Double (Transfer): Showing 5+ hearts",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "stolen_bid_transfer_spades",
+      "bid": "X",
+      "priority": 816,
+      "description": "Stolen Bid: Double is transfer to spades when opponent bids 2H over 1NT",
+      "trigger": "1NT - 2♥ - ?",
+      "conditions": {
+        "hcp": {
+          "min": 0
+        },
+        "spades_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Double (Transfer): Showing 5+ spades",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "opener_complete_transfer_over_interference",
+      "bid": "3♥",
+      "priority": 825,
+      "description": "1NT opener completes transfer to hearts despite interference",
+      "trigger": "1NT - Pass - 2♦ - 2♠ - ?",
+      "conditions": {
+        "hearts_length": {
+          "min": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Completing transfer to hearts at 3-level due to interference",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_complete_transfer_over_interference_spades",
+      "bid": "3♠",
+      "priority": 826,
+      "description": "1NT opener completes transfer to spades despite interference",
+      "trigger": "1NT - Pass - 2♥ - 3♣ - ?",
+      "conditions": {
+        "spades_length": {
+          "min": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Completing transfer to spades at 3-level due to interference",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "systems_on_2c_stayman",
+      "bid": "2♣",
+      "priority": 810,
+      "description": "Systems On: Stayman after opponent doubles 1NT",
+      "trigger": "1NT - X - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8
+        },
+        "has_4_card_major": true
+      },
+      "forcing": "one_round",
+      "explanation": "Stayman: Systems on after opponent's double",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "systems_on_transfer_hearts",
+      "bid": "2♦",
+      "priority": 808,
+      "description": "Systems On: Transfer to hearts after opponent doubles 1NT",
+      "trigger": "1NT - X - ?",
+      "conditions": {
+        "hearts_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Transfer to hearts: Systems on after opponent's double",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "systems_on_transfer_spades",
+      "bid": "2♥",
+      "priority": 809,
+      "description": "Systems On: Transfer to spades after opponent doubles 1NT",
+      "trigger": "1NT - X - ?",
+      "conditions": {
+        "spades_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Transfer to spades: Systems on after opponent's double",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "lebensohl_2nt",
+      "bid": "2NT",
+      "priority": 800,
+      "description": "Lebensohl 2NT over interference - puppet to 3C",
+      "trigger": "1NT - 2[DHSC] - ?",
+      "conditions": {
+        "hcp": {
+          "min": 0,
+          "max": 7
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Lebensohl: Weak hand, puppet to 3♣ to sign off",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "opener_lebensohl_accept",
+      "bid": "3♣",
+      "priority": 805,
+      "description": "1NT opener accepts Lebensohl puppet",
+      "trigger": "1NT - 2[DHSC] - 2NT - Pass - ?",
+      "conditions": {},
+      "forcing": "none",
+      "explanation": "Accepting Lebensohl puppet - partner will place the contract",
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }

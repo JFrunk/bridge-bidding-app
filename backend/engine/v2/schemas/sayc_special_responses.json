@@ -364,6 +364,164 @@
       "forcing": "none",
       "explanation": "Pass: Not enough to compete over 1NT",
       "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_2c_rebid_2nt",
+      "bid": "2NT",
+      "priority": 845,
+      "description": "Strong 2C opener rebid showing 22-24 balanced",
+      "trigger": "2♣ - Pass - 2♦ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 22,
+          "max": 24
+        },
+        "is_balanced": true
+      },
+      "forcing": "game",
+      "explanation": "2NT rebid: 22-24 HCP balanced after Strong 2♣",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "opener_2c_rebid_3nt",
+      "bid": "3NT",
+      "priority": 848,
+      "description": "Strong 2C opener rebid showing 25-27 balanced",
+      "trigger": "2♣ - Pass - 2♦ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 25,
+          "max": 27
+        },
+        "is_balanced": true
+      },
+      "forcing": "game",
+      "explanation": "3NT rebid: 25-27 HCP balanced after Strong 2♣",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "opener_2c_rebid_hearts",
+      "bid": "2♥",
+      "priority": 840,
+      "description": "Strong 2C opener rebid showing hearts",
+      "trigger": "2♣ - Pass - 2♦ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 22
+        },
+        "hearts_length": {
+          "min": 5
+        }
+      },
+      "forcing": "game",
+      "explanation": "2♥ rebid: 22+ HCP with 5+ hearts after Strong 2♣",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "opener_2c_rebid_spades",
+      "bid": "2♠",
+      "priority": 841,
+      "description": "Strong 2C opener rebid showing spades",
+      "trigger": "2♣ - Pass - 2♦ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 22
+        },
+        "spades_length": {
+          "min": 5
+        }
+      },
+      "forcing": "game",
+      "explanation": "2♠ rebid: 22+ HCP with 5+ spades after Strong 2♣",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "opener_2c_rebid_diamonds",
+      "bid": "3♦",
+      "priority": 838,
+      "description": "Strong 2C opener rebid showing diamonds",
+      "trigger": "2♣ - Pass - 2♦ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 22
+        },
+        "diamonds_length": {
+          "min": 5
+        }
+      },
+      "forcing": "game",
+      "explanation": "3♦ rebid: 22+ HCP with 5+ diamonds after Strong 2♣",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "opener_2c_rebid_clubs",
+      "bid": "3♣",
+      "priority": 837,
+      "description": "Strong 2C opener rebid showing clubs",
+      "trigger": "2♣ - Pass - 2♦ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 22
+        },
+        "clubs_length": {
+          "min": 5
+        }
+      },
+      "forcing": "game",
+      "explanation": "3♣ rebid: 22+ HCP with 5+ clubs after Strong 2♣",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "opener_2c_after_positive_rkcb",
+      "bid": "4NT",
+      "priority": 870,
+      "description": "RKCB after positive response to Strong 2C",
+      "trigger": "2♣ - Pass - 2[HS] - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 22
+        },
+        "fit_known": true
+      },
+      "forcing": "one_round",
+      "explanation": "4NT RKCB: Checking for keycards with fit established",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "opener_2c_raise_major",
+      "bid": "4♥",
+      "priority": 865,
+      "description": "Raise partner's positive major response to game",
+      "trigger": "2♣ - Pass - 2♥ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 22
+        },
+        "hearts_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game raise with fit for partner's positive response",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_2c_raise_spades",
+      "bid": "4♠",
+      "priority": 866,
+      "description": "Raise partner's positive spade response to game",
+      "trigger": "2♣ - Pass - 2♠ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 22
+        },
+        "spades_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game raise with fit for partner's positive spade response",
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }
