@@ -430,7 +430,10 @@ class PlayFeedbackGenerator:
             from endplay.dds import solve_board
 
             # Convert state to endplay format
-            deal = self._dds_ai._convert_to_endplay_deal(state)
+            # IMPORTANT: Use include_current_trick=True to add cards back to hands
+            # before calling deal.play(). This prevents "card not in hand" errors.
+            pbn = self._dds_ai._get_pbn_string(state, include_current_trick=True)
+            deal = Deal(pbn)
             deal.trump = self._dds_ai._convert_trump(state.contract.trump_suit)
 
             # Set up the current trick state correctly
@@ -886,8 +889,8 @@ class PlayFeedbackGenerator:
                     tricks_cost, tricks_with_user_card, tricks_with_optimal,
                     contract, is_declarer_side, play_category,
                     key_concept, difficulty, feedback, helpful_hint,
-                    timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    analysis_source, timestamp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (
                 user_id,
                 session_id,
@@ -907,7 +910,8 @@ class PlayFeedbackGenerator:
                 feedback.key_concept,
                 feedback.difficulty,
                 feedback.reasoning,
-                feedback.helpful_hint
+                feedback.helpful_hint,
+                feedback.analysis_source
             ))
 
             conn.commit()
