@@ -548,6 +548,117 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "responder_preference_first_suit_minimum",
+      "bid": "2{partner_first_suit}",
+      "priority": 165,
+      "description": "Simple preference back to opener's first suit with minimum",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_showed_two_suits": true,
+        "prefer_partner_first_suit": true,
+        "hcp": {"min": 6, "max": 10},
+        "support_for_partner_first": {"min": 2}
+      },
+      "forcing": "none",
+      "explanation": "Preference to partner's first suit with {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_preference_first_suit_invitational",
+      "bid": "3{partner_first_suit}",
+      "priority": 170,
+      "description": "Invitational preference back to opener's first suit",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_showed_two_suits": true,
+        "prefer_partner_first_suit": true,
+        "hcp": {"min": 11, "max": 12},
+        "support_for_partner_first": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Invitational preference with {hcp} HCP and {support_for_partner_first}-card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_jump_3_hearts_after_forcing_1nt",
+      "bid": "3♥",
+      "priority": 185,
+      "description": "Jump to 3♥ showing limit raise after Forcing 1NT",
+      "conditions": {
+        "is_responder_rebid": true,
+        "my_last_bid": "1NT",
+        "partner_first_suit": "♥",
+        "hearts_length": {"min": 3},
+        "hcp": {"min": 10, "max": 12}
+      },
+      "forcing": "none",
+      "explanation": "Limit raise with {hcp} HCP and 3-card heart support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_jump_3_spades_after_forcing_1nt",
+      "bid": "3♠",
+      "priority": 184,
+      "description": "Jump to 3♠ showing limit raise after Forcing 1NT",
+      "conditions": {
+        "is_responder_rebid": true,
+        "my_last_bid": "1NT",
+        "partner_first_suit": "♠",
+        "spades_length": {"min": 3},
+        "hcp": {"min": 10, "max": 12}
+      },
+      "forcing": "none",
+      "explanation": "Limit raise with {hcp} HCP and 3-card spade support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_game_4_hearts_after_forcing_1nt",
+      "bid": "4♥",
+      "priority": 190,
+      "description": "Game in hearts after Forcing 1NT",
+      "conditions": {
+        "is_responder_rebid": true,
+        "my_last_bid": "1NT",
+        "partner_first_suit": "♥",
+        "hearts_length": {"min": 3},
+        "hcp": {"min": 13}
+      },
+      "forcing": "none",
+      "explanation": "Game with {hcp} HCP and 3-card heart support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_game_4_spades_after_forcing_1nt",
+      "bid": "4♠",
+      "priority": 189,
+      "description": "Game in spades after Forcing 1NT",
+      "conditions": {
+        "is_responder_rebid": true,
+        "my_last_bid": "1NT",
+        "partner_first_suit": "♠",
+        "spades_length": {"min": 3},
+        "hcp": {"min": 13}
+      },
+      "forcing": "none",
+      "explanation": "Game with {hcp} HCP and 3-card spade support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_stay_in_partner_second_suit",
+      "bid": "Pass",
+      "priority": 95,
+      "description": "Stay in partner's second suit with preference for it",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_showed_two_suits": true,
+        "prefer_partner_second_suit": true,
+        "hcp": {"max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Pass - prefer partner's second suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "responder_rebid_pass_2_level",
       "bid": "Pass",
       "priority": 90,

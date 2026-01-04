@@ -294,14 +294,29 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # Partner's first suit (for preference bids)
     # Scan partner's bids to find their first natural suit bid
     flat['partner_first_suit'] = None
+    flat['partner_second_suit'] = None
     flat['support_for_partner_first'] = 0
+    flat['support_for_partner_second'] = 0
     partner_bids = _get_partner_bids(auction_history, my_position, dealer)
+    partner_suits_found = []
     for bid in partner_bids:
         suit = get_suit_from_bid(bid)
-        if suit:
-            flat['partner_first_suit'] = suit
-            flat['support_for_partner_first'] = suit_lengths.get(suit, 0)
-            break
+        if suit and suit not in partner_suits_found:
+            partner_suits_found.append(suit)
+
+    if len(partner_suits_found) >= 1:
+        flat['partner_first_suit'] = partner_suits_found[0]
+        flat['support_for_partner_first'] = suit_lengths.get(partner_suits_found[0], 0)
+    if len(partner_suits_found) >= 2:
+        flat['partner_second_suit'] = partner_suits_found[1]
+        flat['support_for_partner_second'] = suit_lengths.get(partner_suits_found[1], 0)
+
+    # Suit preference delta: positive means prefer first suit, negative means prefer second
+    # Used for "preference" bids when partner has shown two suits
+    flat['suit_preference_delta'] = flat['support_for_partner_first'] - flat['support_for_partner_second']
+    flat['prefer_partner_first_suit'] = flat['suit_preference_delta'] >= 0 and flat['partner_first_suit'] is not None
+    flat['prefer_partner_second_suit'] = flat['suit_preference_delta'] < 0 and flat['partner_second_suit'] is not None
+    flat['partner_showed_two_suits'] = flat['partner_second_suit'] is not None
 
     # My first suit (the suit I bid first)
     flat['my_suit'] = None
