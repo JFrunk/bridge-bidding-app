@@ -79,6 +79,7 @@ class BiddingEngineV2Schema:
         auction_history: List[str],
         my_position: str,
         vulnerability: str = 'None',
+        explanation_level: str = 'detailed',  # Not used by V2, but kept for V1 API compatibility
         dealer: str = 'North'
     ) -> Tuple[str, str]:
         """
@@ -89,11 +90,13 @@ class BiddingEngineV2Schema:
             auction_history: List of previous bids
             my_position: Position of bidder (North/East/South/West)
             vulnerability: Vulnerability string
+            explanation_level: Explanation level (ignored, for V1 API compatibility)
             dealer: Dealer position
 
         Returns:
             Tuple of (bid, explanation)
         """
+        # Note: explanation_level is ignored - V2 Schema generates its own explanations
         self._total_bid_count += 1
 
         # Extract features in flat format for schema evaluation
@@ -196,6 +199,40 @@ class BiddingEngineV2Schema:
         except Exception as e:
             logger.warning(f"V1 fallback failed: {e}")
             return ('Pass', f'Fallback error: {str(e)}')
+
+    def get_next_bid_structured(
+        self,
+        hand: Hand,
+        auction_history: List[str],
+        my_position: str,
+        vulnerability: str = 'None',
+        dealer: str = 'North'
+    ) -> Tuple[str, Dict]:
+        """
+        Get next bid with structured explanation data (for V1 API compatibility).
+
+        Returns:
+            Tuple of (bid, explanation_dict)
+        """
+        bid, explanation_str = self.get_next_bid(
+            hand, auction_history, my_position, vulnerability, 'detailed', dealer
+        )
+
+        # Create structured explanation similar to V1 format
+        explanation_dict = {
+            'primary_reason': explanation_str,
+            'convention': {
+                'id': None,
+                'name': 'V2 Schema'
+            },
+            'forcing_status': self.interpreter.get_forcing_state().get('forcing_level', 'NON_FORCING'),
+            'hand_evaluation': {
+                'hcp': hand.hcp,
+                'shape': hand.shape_string  # e.g., "5-3-3-2"
+            }
+        }
+
+        return (bid, explanation_dict)
 
     def get_bid_candidates(
         self,
