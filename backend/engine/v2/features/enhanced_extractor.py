@@ -212,6 +212,18 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
                            not partner_made_competitive_action and
                            bc['my_bid_count'] == 0)
 
+    # is_doubler_rebid: I doubled (takeout), partner responded, now I'm rebidding
+    # Key: my_bid_count >= 1, my last bid was X, and partner has bid something
+    my_bids_temp = _get_my_bids(auction_history, my_position, dealer)
+    i_doubled = 'X' in my_bids_temp
+    partner_responded_to_double = (i_doubled and
+                                   partner_made_competitive_action and
+                                   flat['partner_last_bid'] not in ['Pass', 'X', 'XX', None])
+    flat['is_doubler_rebid'] = (af['opener_relationship'] == 'Opponent' and
+                                 i_doubled and
+                                 partner_responded_to_double and
+                                 bc['my_bid_count'] >= 1)
+
     # Longest suit info
     suit_lengths = hf['suit_lengths']
     longest_length = max(suit_lengths.values())
@@ -321,6 +333,8 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # My first suit (the suit I bid first)
     flat['my_suit'] = None
     flat['my_last_bid'] = None
+    flat['first_suit'] = None  # Alias for schema rules
+    flat['first_suit_length'] = None  # Length of first suit I bid
     my_bids = _get_my_bids(auction_history, my_position, dealer)
 
     # Get my last bid (for transfer completion rules)
@@ -336,6 +350,8 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
         suit = get_suit_from_bid(bid)
         if suit:
             flat['my_suit'] = suit
+            flat['first_suit'] = suit  # Alias for opener rebid rules
+            flat['first_suit_length'] = suit_lengths.get(suit, 0)  # Length in that suit
             break
 
     # Second suit features (for Barrier Principle - reverses)
@@ -356,6 +372,21 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
                 flat['second_suit_higher'] = suit_ranking.get(suit, 0) > suit_ranking.get(my_first_suit, 0)
                 flat['second_suit_lower'] = suit_ranking.get(suit, 0) < suit_ranking.get(my_first_suit, 0)
                 break
+
+    # Partner raised my suit (vs bid a new suit)
+    # True when partner's first suit bid is the same as my first suit bid
+    flat['partner_raised_my_suit'] = (
+        flat['my_suit'] is not None and
+        flat['partner_first_suit'] is not None and
+        flat['partner_first_suit'] == flat['my_suit']
+    )
+
+    # Partner bid new suit (not a raise)
+    flat['partner_bid_new_suit'] = (
+        flat['partner_first_suit'] is not None and
+        flat['my_suit'] is not None and
+        flat['partner_first_suit'] != flat['my_suit']
+    )
 
     # Stopper in opponent's suit (for NT overcalls/rebids)
     flat['stopper_in_opponent_suit'] = False

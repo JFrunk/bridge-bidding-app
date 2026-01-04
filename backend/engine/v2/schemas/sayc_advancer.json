@@ -5,6 +5,22 @@
   "description": "Advancer bids - responding to partner's competitive action (overcall or takeout double)",
   "rules": [
     {
+      "id": "advancer_free_bid_spades_after_interference",
+      "bid": "1♠",
+      "priority": 96,
+      "description": "Free bid in spades after RHO interferes (shows values)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "rho_last_bid": {"in": ["1♥"]},
+        "spades_length": {"min": 3},
+        "hcp": {"min": 6}
+      },
+      "forcing": "none",
+      "explanation": "Free bid in spades after interference (shows values)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "advancer_respond_to_double_spades",
       "bid": "1♠",
       "priority": 92,
@@ -12,6 +28,7 @@
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
+        "rho_last_bid": {"not_in": ["1♠", "2♠"]},
         "spades_length": {"min": 4},
         "hcp": {"max": 10}
       },
@@ -27,6 +44,7 @@
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
+        "rho_last_bid": {"not_in": ["1♥", "2♥"]},
         "hearts_length": {"min": 4},
         "spades_length": {"max": 3},
         "hcp": {"max": 10}
@@ -92,6 +110,7 @@
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
+        "rho_last_bid": {"not_in": ["1♠", "2♠"]},
         "hcp": {"min": 9, "max": 11},
         "spades_length": {"min": 4}
       },
@@ -107,6 +126,7 @@
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
+        "rho_last_bid": {"not_in": ["1♥", "2♥"]},
         "hcp": {"min": 9, "max": 11},
         "hearts_length": {"min": 4},
         "spades_length": {"max": 3}

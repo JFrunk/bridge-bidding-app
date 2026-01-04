@@ -500,6 +500,108 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "opener_rebid_major_5_card_forcing",
+      "bid": "2{my_suit}",
+      "priority": 620,
+      "description": "Opener rebids 5-card major after responder's new suit forcing",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": {
+          "in": ["1\u2665", "1\u2660"]
+        },
+        "partner_last_bid": {
+          "in": ["2\u2663", "2\u2666", "2\u2665"]
+        },
+        "hcp": {
+          "min": 12,
+          "max": 15
+        },
+        "my_bid_count": {
+          "exact": 1
+        }
+      },
+      "forcing": "none",
+      "explanation": "Rebid 5-card {my_suit} with minimum opener",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_minor_after_new_suit",
+      "bid": "2{first_suit}",
+      "priority": 615,
+      "description": "Opener rebids minor after responder's new suit forcing (no 4-card major)",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": {
+          "in": ["1\u2666", "1\u2663"]
+        },
+        "partner_last_bid": {
+          "in": ["2\u2663", "2\u2666"]
+        },
+        "hcp": {
+          "min": 12,
+          "max": 15
+        },
+        "has_4_card_major": false,
+        "my_bid_count": {
+          "exact": 1
+        }
+      },
+      "forcing": "none",
+      "explanation": "Rebid {first_suit} with minimum (no 4-card major to show)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_minor_cannot_reverse",
+      "bid": "2{first_suit}",
+      "priority": 613,
+      "description": "Opener rebids minor when has major but too weak to reverse",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": {
+          "in": ["1\u2666", "1\u2663"]
+        },
+        "partner_last_bid": {
+          "in": ["2\u2663", "2\u2666"]
+        },
+        "hcp": {
+          "min": 12,
+          "max": 16
+        },
+        "second_suit_higher": true,
+        "my_bid_count": {
+          "exact": 1
+        }
+      },
+      "forcing": "none",
+      "explanation": "Rebid {first_suit} - too weak to reverse to higher suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_minor_5_card",
+      "bid": "2{first_suit}",
+      "priority": 610,
+      "description": "Opener rebids 5+ card minor after responder's new suit",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": {
+          "in": ["1\u2666", "1\u2663"]
+        },
+        "first_suit_length": {
+          "min": 5
+        },
+        "hcp": {
+          "min": 12,
+          "max": 15
+        },
+        "my_bid_count": {
+          "exact": 1
+        }
+      },
+      "forcing": "none",
+      "explanation": "Rebid 5+ card {first_suit} with minimum opener",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "opener_reverse_strong",
       "bid": "2{higher_suit}",
       "priority": 702,
@@ -1130,6 +1232,81 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "opener_game_after_single_raise_strong",
+      "bid": "4{my_suit}",
+      "priority": 750,
+      "description": "Opener bids game after partner's single raise (16+ HCP, good shape)",
+      "conditions": {
+        "is_rebid": true,
+        "opener_relationship": "Me",
+        "my_last_bid": {
+          "in": ["1\u2665", "1\u2660"]
+        },
+        "partner_last_bid": {
+          "in": ["2\u2665", "2\u2660"]
+        },
+        "partner_raised_my_suit": true,
+        "hcp": {
+          "min": 16
+        },
+        "OR": [
+          {"longest_suit_length": {"min": 6}},
+          {"second_suit_length": {"min": 5}}
+        ]
+      },
+      "forcing": "none",
+      "explanation": "Game with {hcp} HCP and good shape after partner's raise",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_invite_after_single_raise_medium",
+      "bid": "3{my_suit}",
+      "priority": 740,
+      "description": "Opener invites game after partner's single raise (15-17 HCP)",
+      "conditions": {
+        "is_rebid": true,
+        "opener_relationship": "Me",
+        "my_last_bid": {
+          "in": ["1\u2665", "1\u2660"]
+        },
+        "partner_last_bid": {
+          "in": ["2\u2665", "2\u2660"]
+        },
+        "partner_raised_my_suit": true,
+        "hcp": {
+          "min": 15,
+          "max": 17
+        }
+      },
+      "forcing": "none",
+      "explanation": "Invite game with {hcp} HCP after partner's raise",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_pass_after_single_raise_minimum",
+      "bid": "Pass",
+      "priority": 730,
+      "description": "Opener passes after partner's single raise (12-14 HCP minimum)",
+      "conditions": {
+        "is_rebid": true,
+        "opener_relationship": "Me",
+        "my_last_bid": {
+          "in": ["1\u2665", "1\u2660"]
+        },
+        "partner_last_bid": {
+          "in": ["2\u2665", "2\u2660"]
+        },
+        "partner_raised_my_suit": true,
+        "hcp": {
+          "min": 12,
+          "max": 14
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with minimum {hcp} HCP after partner's raise",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "opener_accept_invitational_raise",
       "bid": "4{partner_suit}",
       "priority": 370,
@@ -1166,6 +1343,40 @@
       },
       "forcing": "none",
       "explanation": "Decline invitation with minimum ({hcp} HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_game_6card_major_after_1nt",
+      "bid": "4{my_suit}",
+      "priority": 760,
+      "description": "Opener jumps to game with 6-card major after 1NT (19+ HCP)",
+      "conditions": {
+        "is_rebid": true,
+        "opener_relationship": "Me",
+        "partner_last_bid": "1NT",
+        "my_last_bid": {"in": ["1\u2665", "1\u2660"]},
+        "longest_suit_length": {"min": 6},
+        "hcp": {"min": 19}
+      },
+      "forcing": "none",
+      "explanation": "Game with {hcp} HCP and 6-card {my_suit}",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_jump_6card_major_after_1nt_medium",
+      "bid": "3{my_suit}",
+      "priority": 755,
+      "description": "Opener jump rebids 6-card major after 1NT (16-18 HCP invitational)",
+      "conditions": {
+        "is_rebid": true,
+        "opener_relationship": "Me",
+        "partner_last_bid": "1NT",
+        "my_last_bid": {"in": ["1\u2665", "1\u2660"]},
+        "longest_suit_length": {"min": 6},
+        "hcp": {"min": 16, "max": 18}
+      },
+      "forcing": "none",
+      "explanation": "Invite game with {hcp} HCP and 6-card {my_suit}",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1433,6 +1644,110 @@
       },
       "forcing": "none",
       "explanation": "Invitational after transfer with 5 hearts and 8-9 HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_pass_partner_grand_slam",
+      "bid": "Pass",
+      "priority": 1001,
+      "description": "Opener passes partner's grand slam bid",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": {"in": ["7♣", "7♦", "7♥", "7♠", "7NT"]}
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's grand slam bid",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_pass_partner_slam_any",
+      "bid": "Pass",
+      "priority": 1000,
+      "description": "Opener passes partner's slam bid",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": {"in": ["6♣", "6♦", "6♥", "6♠", "6NT"]}
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's slam bid",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rkcb_response_1_or_4",
+      "bid": "5♣",
+      "priority": 960,
+      "description": "Opener RKCB response showing 1 or 4 keycards",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "4NT",
+        "OR": [
+          {"key_cards": {"exact": 1}},
+          {"key_cards": {"exact": 4}}
+        ]
+      },
+      "forcing": "one_round",
+      "explanation": "5♣: 1 or 4 keycards (RKCB 1430)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "opener_rkcb_response_0_or_3",
+      "bid": "5♦",
+      "priority": 959,
+      "description": "Opener RKCB response showing 0 or 3 keycards",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "4NT",
+        "OR": [
+          {"key_cards": {"exact": 0}},
+          {"key_cards": {"exact": 3}}
+        ]
+      },
+      "forcing": "one_round",
+      "explanation": "5♦: 0 or 3 keycards (RKCB 1430)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "opener_rkcb_response_2_no_queen",
+      "bid": "5♥",
+      "priority": 958,
+      "description": "Opener RKCB response showing 2 keycards without trump Queen",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "4NT",
+        "key_cards": {"exact": 2},
+        "has_trump_queen": false
+      },
+      "forcing": "one_round",
+      "explanation": "5♥: 2 keycards, no trump Queen (RKCB 1430)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "opener_rkcb_response_2_with_queen",
+      "bid": "5♠",
+      "priority": 957,
+      "description": "Opener RKCB response showing 2 keycards with trump Queen",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "4NT",
+        "key_cards": {"exact": 2},
+        "has_trump_queen": true
+      },
+      "forcing": "one_round",
+      "explanation": "5♠: 2 keycards with trump Queen (RKCB 1430)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "opener_pass_5_major_signoff",
+      "bid": "Pass",
+      "priority": 950,
+      "description": "Opener passes 5-major signoff after RKCB",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": "4NT",
+        "partner_last_bid": {"in": ["5♥", "5♠"]}
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's 5-major signoff - missing keycards",
       "sets_forcing_level": "NON_FORCING"
     }
   ]

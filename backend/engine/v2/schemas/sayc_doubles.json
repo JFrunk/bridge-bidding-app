@@ -228,6 +228,108 @@
       "forcing": "none",
       "explanation": "Penalty double with trump stack",
       "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_raise_partner_minimum",
+      "bid": "2{partner_suit}",
+      "priority": 650,
+      "description": "Doubler raises partner's response with minimum (13-15 HCP)",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "hcp": {"min": 13, "max": 15},
+        "support_for_partner": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Raise partner's response with minimum takeout double values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_raise_partner_medium",
+      "bid": "3{partner_suit}",
+      "priority": 660,
+      "description": "Doubler jump raises partner's response (16-18 HCP)",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "hcp": {"min": 16, "max": 18},
+        "support_for_partner": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Jump raise partner's response showing 16-18 HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_raise_partner_game",
+      "bid": "4{partner_suit}",
+      "priority": 670,
+      "description": "Doubler raises to game (19+ HCP)",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "hcp": {"min": 19},
+        "support_for_partner": {"min": 3},
+        "partner_last_bid": {"in": ["1♥", "1♠", "2♥", "2♠"]}
+      },
+      "forcing": "none",
+      "explanation": "Raise to game with {hcp} HCP and support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_bid_own_suit",
+      "bid": "2{longest_suit}",
+      "priority": 655,
+      "description": "Doubler shows own 5+ card suit (17+ HCP - too strong for overcall)",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "hcp": {"min": 17},
+        "longest_suit_length": {"min": 5},
+        "support_for_partner": {"max": 2}
+      },
+      "forcing": "one_round",
+      "explanation": "Show 5+ card suit - too strong for initial overcall",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "doubler_1nt_rebid",
+      "bid": "1NT",
+      "priority": 645,
+      "description": "Doubler rebids 1NT with balanced 18-19 and stoppers",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "hcp": {"min": 18, "max": 19},
+        "is_balanced": true,
+        "stopper_in_opponent_suit": true
+      },
+      "forcing": "none",
+      "explanation": "1NT rebid showing balanced 18-19 with stopper",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_2nt_rebid",
+      "bid": "2NT",
+      "priority": 648,
+      "description": "Doubler rebids 2NT with balanced 20-21 and stoppers",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "hcp": {"min": 20, "max": 21},
+        "is_balanced": true,
+        "stopper_in_opponent_suit": true
+      },
+      "forcing": "none",
+      "explanation": "2NT rebid showing balanced 20-21 with stopper",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_pass_minimum",
+      "bid": "Pass",
+      "priority": 640,
+      "description": "Doubler passes with minimum (12-13 HCP) and poor fit",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "hcp": {"min": 12, "max": 13},
+        "support_for_partner": {"max": 2}
+      },
+      "forcing": "none",
+      "explanation": "Pass with minimum takeout double and no fit",
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }

@@ -1,0 +1,199 @@
+name: V2 Schema Baseline Tests
+
+on:
+  push:
+    branches: [ development, main ]
+    paths:
+      - 'backend/engine/v2/**'
+      - 'backend/tests/sayc_baseline/**'
+      - '.github/workflows/v2_schema_baseline.yml'
+  pull_request:
+    branches: [ development, main ]
+    paths:
+      - 'backend/engine/v2/**'
+      - 'backend/tests/sayc_baseline/**'
+  schedule:
+    # Run daily at 6 AM UTC to track V2 schema progress
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      category:
+        description: 'Test category to run (leave empty for all)'
+        required: false
+        default: ''
+
+jobs:
+  v2-baseline-tests:
+    name: V2 Schema Baseline Compliance
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: [3.13]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+
+    - name: Run V2 Schema Baseline Tests
+      id: baseline_tests
+      run: |
+        cd backend
+
+        # Set environment to use V2 Schema engine
+        export USE_V2_SCHEMA_ENGINE=true
+
+        # Run baseline compliance with V2 engine
+        python3 tests/sayc_baseline/test_baseline_v2.py --output results_v2.json
+
+        # Extract key metrics for summary
+        echo "v2_score=$(python3 -c "import json; d=json.load(open('results_v2.json')); print(f\"{d['summary']['compliance_rate']*100:.1f}\")")" >> $GITHUB_OUTPUT
+
+    - name: Run V1 Baseline Tests (Comparison)
+      id: v1_tests
+      run: |
+        cd backend
+
+        # Run V1 engine baseline for comparison
+        python3 tests/sayc_baseline/test_baseline_compliance.py --output results_v1.json
+
+        # Extract V1 metrics
+        echo "v1_score=$(python3 -c "import json; d=json.load(open('results_v1.json')); print(f\"{d['summary']['compliance_rate']*100:.1f}\")")" >> $GITHUB_OUTPUT
+
+    - name: Compare V1 vs V2 Results
+      run: |
+        cd backend
+        python3 tests/sayc_baseline/compare_baseline_results.py results_v1.json results_v2.json
+
+    - name: Generate Coverage Report
+      run: |
+        cd backend
+        python3 tests/sayc_baseline/generate_coverage_report.py results_v2.json
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: baseline-results
+        path: |
+          backend/results_v1.json
+          backend/results_v2.json
+          backend/coverage_report.md
+        retention-days: 30
+
+    - name: Update PR Comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const v2Score = '${{ steps.baseline_tests.outputs.v2_score }}';
+          const v1Score = '${{ steps.v1_tests.outputs.v1_score }}';
+
+          const diff = (parseFloat(v2Score) - parseFloat(v1Score)).toFixed(1);
+          const emoji = diff >= 0 ? '📈' : '📉';
+
+          const body = `## V2 Schema Baseline Results ${emoji}
+
+          | Engine | Compliance Rate |
+          |--------|----------------|
+          | V1 (Python) | ${v1Score}% |
+          | V2 (Schema) | ${v2Score}% |
+          | **Difference** | **${diff > 0 ? '+' : ''}${diff}%** |
+
+          _Baseline: SAYCBridge z3b failed tests_
+          `;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: body
+          });
+
+    - name: Check for Regressions (Ratchet Mechanism)
+      run: |
+        cd backend
+
+        # The ratchet mechanism prevents "robbing Peter to pay Paul"
+        # Rule: "No new failures on previously passing hands"
+        python3 tests/sayc_baseline/ratchet_tracker.py check results_v2.json
+
+        # Also check the floor threshold
+        V2_SCORE="${{ steps.baseline_tests.outputs.v2_score }}"
+        MINIMUM_SCORE="18"
+
+        if (( $(echo "$V2_SCORE < $MINIMUM_SCORE" | bc -l) )); then
+          echo "::error::V2 Schema floor breach! Score: ${V2_SCORE}% (minimum: ${MINIMUM_SCORE}%)"
+          exit 1
+        fi
+
+        echo "✅ V2 Schema score: ${V2_SCORE}% (above minimum ${MINIMUM_SCORE}%)"
+        echo "✅ No regressions on previously passing tests"
+
+    - name: Update Ratchet Baseline (on main only)
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: |
+        cd backend
+        python3 tests/sayc_baseline/ratchet_tracker.py update results_v2.json
+
+        # Commit updated baseline if changed
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add tests/sayc_baseline/ratchet_baseline.json || true
+        git diff --staged --quiet || git commit -m "chore: Update ratchet baseline [skip ci]"
+        git push || echo "No changes to push"
+
+  category-breakdown:
+    name: Category Analysis
+    runs-on: ubuntu-latest
+    needs: v2-baseline-tests
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+
+    - name: Run Category Tests
+      run: |
+        cd backend
+        export USE_V2_SCHEMA_ENGINE=true
+
+        # Test key categories with detailed output
+        for category in invitational_rebid_by_opener game_forcing_rebid_by_opener minimum_rebid_by_opener balancing doubles; do
+          echo "=== Testing category: $category ==="
+          python3 tests/sayc_baseline/test_baseline_v2.py --category $category --output "category_${category}.json" || true
+        done
+
+    - name: Upload Category Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: category-results
+        path: backend/category_*.json
+        retention-days: 30
