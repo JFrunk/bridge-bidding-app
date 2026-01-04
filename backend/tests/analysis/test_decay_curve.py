@@ -855,5 +855,174 @@ class TestFullHandSimulation:
         assert mock_dds.call_history[1]['cards_remaining'] == 51
 
 
+# =============================================================================
+# Production Code Integration Tests
+# =============================================================================
+
+class TestProductionStateReconstructor:
+    """
+    Tests for the production StateReconstructor class.
+
+    These validate the actual implementation matches our test expectations.
+    """
+
+    def test_production_reconstructor_import(self):
+        """Test that production StateReconstructor can be imported."""
+        from engine.analysis.decay_curve import StateReconstructor as ProdReconstructor
+        assert ProdReconstructor is not None
+
+    def test_production_reconstructor_initialization(self):
+        """Test production reconstructor initializes correctly."""
+        from engine.analysis.decay_curve import StateReconstructor as ProdReconstructor
+
+        hands = {
+            'N': ['SA', 'SK', 'SQ', 'SJ', 'HT', 'H9', 'H8', 'D7', 'D6', 'D5', 'C4', 'C3', 'C2'],
+            'E': ['ST', 'S9', 'S8', 'S7', 'HA', 'HK', 'HQ', 'DJ', 'D9', 'D8', 'C7', 'C6', 'C5'],
+            'S': ['S6', 'S5', 'S4', 'H7', 'H6', 'H5', 'DA', 'DK', 'DQ', 'CJ', 'CT', 'C9', 'C8'],
+            'W': ['S3', 'S2', 'HJ', 'H4', 'H3', 'H2', 'DT', 'D4', 'D3', 'D2', 'CA', 'CK', 'CQ']
+        }
+
+        recon = ProdReconstructor(hands, 'N')
+        assert recon.get_total_cards_remaining() == 52
+        assert recon.get_tricks_remaining() == 13
+        assert recon.declarer == 'N'
+        assert recon.declarer_side == {'N', 'S'}
+
+    def test_production_reconstructor_play_card(self):
+        """Test production reconstructor removes cards correctly."""
+        from engine.analysis.decay_curve import StateReconstructor as ProdReconstructor
+
+        hands = {
+            'N': ['SA', 'SK'],
+            'E': ['ST', 'S9'],
+            'S': ['S6', 'S5'],
+            'W': ['S3', 'S2']
+        }
+
+        recon = ProdReconstructor(hands, 'N')
+        assert recon.get_total_cards_remaining() == 8
+
+        success = recon.play_card('SA', 'N')
+        assert success
+        assert recon.get_total_cards_remaining() == 7
+
+        # Try to play non-existent card
+        success = recon.play_card('SA', 'N')  # Already played
+        assert not success
+
+    def test_production_normalization(self):
+        """Test production normalization matches expected physics."""
+        from engine.analysis.decay_curve import StateReconstructor as ProdReconstructor
+
+        hands = {
+            'N': ['SA', 'SK', 'SQ', 'SJ', 'HT', 'H9', 'H8', 'D7', 'D6', 'D5', 'C4', 'C3', 'C2'],
+            'E': ['ST', 'S9', 'S8', 'S7', 'HA', 'HK', 'HQ', 'DJ', 'D9', 'D8', 'C7', 'C6', 'C5'],
+            'S': ['S6', 'S5', 'S4', 'H7', 'H6', 'H5', 'DA', 'DK', 'DQ', 'CJ', 'CT', 'C9', 'C8'],
+            'W': ['S3', 'S2', 'HJ', 'H4', 'H3', 'H2', 'DT', 'D4', 'D3', 'D2', 'CA', 'CK', 'CQ']
+        }
+
+        recon = ProdReconstructor(hands, 'N')
+
+        # Declarer side leading - use result directly
+        result = recon.normalize_tricks(9, 'N')
+        assert result == 9
+
+        result = recon.normalize_tricks(9, 'S')
+        assert result == 9
+
+        # Defense leading - invert
+        # 13 tricks - 4 defense = 9 declarer
+        result = recon.normalize_tricks(4, 'E')
+        assert result == 9
+
+        result = recon.normalize_tricks(4, 'W')
+        assert result == 9
+
+    def test_production_pbn_generation(self):
+        """Test production PBN string generation."""
+        from engine.analysis.decay_curve import StateReconstructor as ProdReconstructor
+
+        hands = {
+            'N': ['SA', 'SK', 'HT', 'H9'],
+            'E': ['ST', 'S9', 'HA', 'HK'],
+            'S': ['S6', 'S5', 'H7', 'H6'],
+            'W': ['S3', 'S2', 'HJ', 'H4']
+        }
+
+        recon = ProdReconstructor(hands, 'N')
+        pbn = recon.get_pbn_string()
+
+        # Should start with N:
+        assert pbn.startswith('N:')
+        # Should have 4 hands
+        assert len(pbn.split(' ')) == 4
+
+
+class TestProductionDecayCurveGenerator:
+    """
+    Tests for the production DecayCurveGenerator class.
+
+    Note: DDS may not be available on all platforms.
+    """
+
+    def test_production_generator_import(self):
+        """Test that production generator can be imported."""
+        from engine.analysis.decay_curve import get_decay_generator
+        gen = get_decay_generator()
+        assert gen is not None
+
+    def test_production_generator_empty_history(self):
+        """Test generator handles empty play history."""
+        from engine.analysis.decay_curve import get_decay_generator
+
+        gen = get_decay_generator()
+        hands = {
+            'N': ['SA', 'SK'],
+            'E': ['ST', 'S9'],
+            'S': ['S6', 'S5'],
+            'W': ['S3', 'S2']
+        }
+
+        result = gen.generate(hands, [], 'N', 'NT')
+        assert result.curve == []
+        assert result.major_errors == []
+        assert result.is_valid
+
+    def test_production_result_serialization(self):
+        """Test that DecayCurveResult serializes correctly."""
+        from engine.analysis.decay_curve import DecayCurveResult, MajorError
+
+        error = MajorError(
+            card_index=4,
+            trick_number=2,
+            card='SQ',
+            position='S',
+            loss=2,
+            error_type='declarer_error',
+            potential_before=10,
+            potential_after=8,
+        )
+
+        result = DecayCurveResult(
+            curve=[10, 10, 10, 8, 8],
+            major_errors=[error],
+            initial_potential=10,
+            final_potential=8,
+            total_tricks_lost=2,
+            defensive_gifts=0,
+        )
+
+        # Test to_dict
+        d = result.to_dict()
+        assert d['curve'] == [10, 10, 10, 8, 8]
+        assert len(d['major_errors']) == 1
+        assert d['major_errors'][0]['loss'] == 2
+
+        # Test to_json
+        json_str = result.to_json()
+        restored = json.loads(json_str)
+        assert restored['curve'] == [10, 10, 10, 8, 8]
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

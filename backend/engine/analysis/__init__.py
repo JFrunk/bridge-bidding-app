@@ -37,7 +37,16 @@ from .analysis_engine import (
     get_analysis_engine,
 )
 
+from .decay_curve import (
+    DecayCurveGenerator,
+    DecayCurveResult,
+    StateReconstructor,
+    get_decay_generator,
+    MajorError as DecayMajorError,
+)
+
 __all__ = [
+    # Analysis Engine
     'BridgeAnalysisEngine',
     'HandAnalysisResult',
     'Quadrant',
@@ -46,4 +55,9 @@ __all__ = [
     'MajorError',
     'OpeningLeadAnalysis',
     'get_analysis_engine',
+    # Decay Curve
+    'DecayCurveGenerator',
+    'DecayCurveResult',
+    'StateReconstructor',
+    'get_decay_generator',
 ]
