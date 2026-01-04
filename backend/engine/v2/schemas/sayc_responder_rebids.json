@@ -148,12 +148,103 @@
         "my_bid_count": 1,
         "is_fourth_suit_scenario": true,
         "hcp": {
-          "min": 11
+          "min": 10
         }
       },
       "forcing": "one_round",
       "explanation": "Fourth Suit Forcing: Artificial bid asking for more information",
       "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "fsf_continuation_preference_to_diamonds",
+      "bid": "2♦",
+      "priority": 320,
+      "description": "Preference to diamonds after FSF sequence",
+      "trigger": "1♦ - Pass - 1♠ - Pass - 2♣ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 6,
+          "max": 10
+        },
+        "diamonds_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Preference: Returning to opener's first suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "fsf_continuation_3_spades",
+      "bid": "3♠",
+      "priority": 400,
+      "description": "3♠ continuation after FSF",
+      "trigger": "1♦ - Pass - 1♠ - Pass - 2♣ - Pass - 2♥ - Pass - 3♣ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 13
+        },
+        "spades_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Rebid spades showing 5+ card suit in game-forcing auction",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "fsf_continuation_4_clubs",
+      "bid": "4♣",
+      "priority": 410,
+      "description": "4♣ continuation after FSF",
+      "trigger": "1♦ - Pass - 1♠ - Pass - 2♣ - Pass - 2♥ - Pass - 3♣ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10
+        },
+        "clubs_length": {
+          "min": 5
+        }
+      },
+      "forcing": "none",
+      "explanation": "Supporting clubs at 4-level with fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "fsf_continuation_4_diamonds",
+      "bid": "4♦",
+      "priority": 415,
+      "description": "4♦ continuation after FSF showing diamond fit",
+      "trigger": "1♦ - Pass - 1♠ - Pass - 2♣ - Pass - 2♥ - Pass - 3♦ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10
+        },
+        "diamonds_length": {
+          "min": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Supporting diamonds at 4-level with fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "fsf_continuation_4_hearts",
+      "bid": "4♥",
+      "priority": 420,
+      "description": "4♥ after opener shows hearts",
+      "trigger": "1♥ - Pass - 1♠ - Pass - 2♣ - Pass - 2♦ - Pass - 2♥ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10
+        },
+        "hearts_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in hearts with fit found after FSF",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "responder_3nt_balanced",

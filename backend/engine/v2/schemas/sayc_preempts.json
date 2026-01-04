@@ -1,0 +1,320 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "preempts",
+  "description": "Weak opening bids and responses to partner's preempts",
+  "rules": [
+    {
+      "id": "weak_2_diamonds",
+      "bid": "2♦",
+      "priority": 180,
+      "description": "Weak 2♦ opening",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "diamonds_length": {
+          "min": 6
+        },
+        "spades_length": {
+          "max": 4
+        },
+        "hearts_length": {
+          "max": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Weak 2♦: 6+ card suit, 5-10 HCP, destructive opening",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "weak_2_hearts",
+      "bid": "2♥",
+      "priority": 180,
+      "description": "Weak 2♥ opening",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "hearts_length": {
+          "min": 6
+        },
+        "spades_length": {
+          "max": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Weak 2♥: 6+ card suit, 5-10 HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "weak_2_spades",
+      "bid": "2♠",
+      "priority": 180,
+      "description": "Weak 2♠ opening",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "spades_length": {
+          "min": 6
+        }
+      },
+      "forcing": "none",
+      "explanation": "Weak 2♠: 6+ card suit, 5-10 HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "preempt_3_clubs",
+      "bid": "3♣",
+      "priority": 170,
+      "description": "3-level preempt in clubs",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "clubs_length": {
+          "min": 7
+        }
+      },
+      "forcing": "none",
+      "explanation": "3-level preempt: 7+ card club suit, defensive hand",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "preempt_3_diamonds",
+      "bid": "3♦",
+      "priority": 170,
+      "description": "3-level preempt in diamonds",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "diamonds_length": {
+          "min": 7
+        }
+      },
+      "forcing": "none",
+      "explanation": "3-level preempt: 7+ card diamond suit, defensive hand",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "preempt_3_hearts",
+      "bid": "3♥",
+      "priority": 170,
+      "description": "3-level preempt in hearts",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "hearts_length": {
+          "min": 7
+        }
+      },
+      "forcing": "none",
+      "explanation": "3-level preempt: 7+ card heart suit, defensive hand",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "preempt_3_spades",
+      "bid": "3♠",
+      "priority": 170,
+      "description": "3-level preempt in spades",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "spades_length": {
+          "min": 7
+        }
+      },
+      "forcing": "none",
+      "explanation": "3-level preempt: 7+ card spade suit, defensive hand",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "preempt_4_hearts",
+      "bid": "4♥",
+      "priority": 165,
+      "description": "4-level preempt in hearts",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "hearts_length": {
+          "min": 8
+        }
+      },
+      "forcing": "none",
+      "explanation": "4-level preempt: 8+ card heart suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "preempt_4_spades",
+      "bid": "4♠",
+      "priority": 165,
+      "description": "4-level preempt in spades",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "spades_length": {
+          "min": 8
+        }
+      },
+      "forcing": "none",
+      "explanation": "4-level preempt: 8+ card spade suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_3nt_to_partner_preempt",
+      "bid": "3NT",
+      "priority": 450,
+      "description": "3NT response to partner's preempt with stoppers",
+      "conditions": {
+        "partner_last_bid": {
+          "in": ["3♣", "3♦", "3♥", "3♠"]
+        },
+        "hcp": {
+          "min": 14
+        },
+        "stopper_count": {
+          "min": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "3NT: Game with outside stoppers facing partner's preempt",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "raise_partner_preempt_to_game",
+      "bid": "4♥",
+      "priority": 440,
+      "description": "Raise partner's heart preempt to game",
+      "conditions": {
+        "partner_last_bid": {
+          "in": ["2♥", "3♥"]
+        },
+        "hcp": {
+          "min": 14
+        },
+        "hearts_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game raise with fit for partner's preempt",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "raise_partner_spade_preempt_to_game",
+      "bid": "4♠",
+      "priority": 440,
+      "description": "Raise partner's spade preempt to game",
+      "conditions": {
+        "partner_last_bid": {
+          "in": ["2♠", "3♠"]
+        },
+        "hcp": {
+          "min": 14
+        },
+        "spades_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game raise with fit for partner's spade preempt",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "raise_partner_club_preempt_to_5",
+      "bid": "5♣",
+      "priority": 430,
+      "description": "Raise partner's club preempt to 5♣",
+      "conditions": {
+        "partner_last_bid": "3♣",
+        "hcp": {
+          "min": 10
+        },
+        "clubs_length": {
+          "min": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "5♣: Game/sacrifice raise with fit for partner's preempt",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "feature_ask_2nt_over_weak_2",
+      "bid": "2NT",
+      "priority": 500,
+      "description": "Feature ask over partner's weak 2",
+      "conditions": {
+        "partner_last_bid": {
+          "in": ["2♦", "2♥", "2♠"]
+        },
+        "hcp": {
+          "min": 15
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "2NT: Feature ask - asking partner to show an outside feature",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "new_suit_over_preempt",
+      "bid": "3♠",
+      "priority": 460,
+      "description": "New suit forcing over partner's preempt",
+      "conditions": {
+        "partner_last_bid": {
+          "in": ["3♣", "3♦", "3♥"]
+        },
+        "hcp": {
+          "min": 16
+        },
+        "spades_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "New suit: Forcing, showing own suit with game interest",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "pass_over_partner_preempt_weak",
+      "bid": "Pass",
+      "priority": 100,
+      "description": "Pass partner's preempt with weak hand",
+      "conditions": {
+        "partner_last_bid": {
+          "in": ["2♦", "2♥", "2♠", "3♣", "3♦", "3♥", "3♠"]
+        },
+        "hcp": {
+          "max": 12
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass: Not enough to act over partner's preempt",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}
