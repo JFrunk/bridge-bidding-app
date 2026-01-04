@@ -1450,20 +1450,15 @@
 /* Card Icons */
 .board-card {
   cursor: pointer;
-  transition: transform 0.15s ease, filter 0.15s ease;
-}
-
-.board-card:hover {
-  transform: scale(1.1);
-  filter: brightness(1.05);
 }
 
 .board-card:hover .card-shape {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+  stroke-width: 2;
 }
 
 .card-shape {
-  transition: filter 0.15s ease;
+  transition: filter 0.15s ease, stroke-width 0.15s ease;
 }
 
 .card-contract-text {
