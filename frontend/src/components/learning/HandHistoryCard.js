@@ -14,26 +14,6 @@ import React from 'react';
 import './HandHistoryCard.css';
 
 const HandHistoryCard = ({ hand, onClick }) => {
-  // Format the date for display
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = now - date;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) {
-      // Today - show time
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (days === 1) {
-      return 'Yesterday';
-    } else if (days < 7) {
-      return `${days} days ago`;
-    } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    }
-  };
-
   // Get role display
   const getRoleDisplay = () => {
     if (hand.user_was_declarer) {
@@ -45,54 +25,80 @@ const HandHistoryCard = ({ hand, onClick }) => {
     }
   };
 
-  // Get result display with color coding
+  // Get result display from user's perspective
   const getResultDisplay = () => {
-    if (!hand.result) return null;
+    const tricksTaken = hand.tricks_taken;
+    const tricksNeeded = hand.tricks_needed;
 
-    const made = hand.made;
-    let className = 'result-exact';
-
-    if (hand.result.startsWith('+')) {
-      className = 'result-overtrick';
-    } else if (hand.result.startsWith('-')) {
-      className = 'result-undertrick';
+    if (tricksTaken === undefined || tricksNeeded === undefined) {
+      return hand.made ? { text: 'Made', className: 'result-made' } : { text: 'Down', className: 'result-down' };
     }
 
-    return { text: hand.result, className, made };
+    if (hand.made) {
+      const over = tricksTaken - tricksNeeded;
+      if (over > 0) {
+        return { text: `Made +${over}`, className: 'result-made' };
+      }
+      return { text: 'Made', className: 'result-made' };
+    } else {
+      const down = tricksNeeded - tricksTaken;
+      return { text: `Down ${down}`, className: 'result-down' };
+    }
   };
 
-  // Get score display
+  // Get tricks display (X/Y format)
+  const getTricksDisplay = () => {
+    const tricksTaken = hand.tricks_taken;
+    const tricksNeeded = hand.tricks_needed;
+    if (tricksTaken === undefined || tricksNeeded === undefined) return null;
+    return `${tricksTaken}/${tricksNeeded}`;
+  };
+
+  // Get score display from NS perspective
   const getScoreDisplay = () => {
-    const score = hand.score || 0;
+    let score = hand.score || 0;
+
+    // Convert to NS perspective if declarer was EW
+    const declarer = hand.contract_declarer;
+    if (declarer === 'E' || declarer === 'W') {
+      score = -score;
+    }
+
     if (score === 0) return { text: '0', className: 'score-zero' };
     if (score > 0) return { text: `+${score}`, className: 'score-positive' };
     return { text: `${score}`, className: 'score-negative' };
   };
 
+  // Get declarer name
+  const getDeclarerName = () => {
+    const d = hand.contract_declarer;
+    if (d === 'N') return 'North';
+    if (d === 'S') return 'South';
+    if (d === 'E') return 'East';
+    if (d === 'W') return 'West';
+    return d;
+  };
+
   const role = getRoleDisplay();
   const result = getResultDisplay();
+  const tricksDisplay = getTricksDisplay();
   const scoreDisplay = getScoreDisplay();
 
-  // Format suit symbols for contract display
-  // Note: Contract format is "3♦ by S" - the strain is already a symbol,
-  // and the declarer (N/E/S/W) should NOT be converted to a suit symbol
+  // Format contract display (e.g., "3NTX by East")
   const formatContract = (contract) => {
     if (!contract) return 'Passed Out';
-    // The backend already returns strain as symbols (♠♥♦♣), so no conversion needed
-    // Just return as-is to avoid accidentally converting position letters (N/E/S/W) to suits
     return contract;
   };
 
   // Get suit color for contract display
   const getSuitColor = (strain) => {
-    if (!strain) return '#1f2937'; // Dark gray fallback
+    if (!strain) return '#1f2937';
     const s = strain.toUpperCase();
     if (s === 'S' || s === '♠') return '#000000';
     if (s === 'H' || s === '♥') return '#dc2626';
     if (s === 'D' || s === '♦') return '#dc2626';
     if (s === 'C' || s === '♣') return '#000000';
-    if (s === 'NT' || s === 'N') return '#1f2937'; // Dark gray for NT
-    return '#1f2937'; // Dark gray fallback for unknown
+    return '#1f2937';
   };
 
   return (
@@ -100,40 +106,45 @@ const HandHistoryCard = ({ hand, onClick }) => {
       className={`hand-history-card ${hand.can_replay ? 'clickable' : 'no-replay'}`}
       onClick={() => hand.can_replay && onClick && onClick(hand)}
     >
-      {/* Contract & Result Row */}
-      <div className="hand-card-main">
-        <div className="hand-contract" style={{ color: getSuitColor(hand.contract_strain) }}>
+      {/* Main content area */}
+      <div className="hand-card-content">
+        {/* Contract line - e.g., "3NTX by East" */}
+        <div className="hand-contract-line" style={{ color: getSuitColor(hand.contract_strain) }}>
           {formatContract(hand.contract)}
         </div>
 
-        {result && (
-          <div className={`hand-result ${result.className}`}>
-            {result.text}
-          </div>
-        )}
-      </div>
-
-      {/* Details Row */}
-      <div className="hand-card-details">
-        <span className={`hand-role ${role.className}`}>
+        {/* Role badge */}
+        <div className={`hand-role ${role.className}`}>
           {role.text}
-        </span>
+        </div>
 
-        <span className={`hand-score ${scoreDisplay.className}`}>
+        {/* Result with tricks - e.g., "Down 3 (6/9)" */}
+        <div className="hand-result-line">
+          <span className={`hand-result ${result.className}`}>
+            {result.text}
+          </span>
+          {tricksDisplay && (
+            <span className="hand-tricks">({tricksDisplay})</span>
+          )}
+        </div>
+
+        {/* Score from user's perspective */}
+        <div className={`hand-score ${scoreDisplay.className}`}>
           {scoreDisplay.text}
-        </span>
-
-        <span className="hand-date">
-          {formatDate(hand.played_at)}
-        </span>
+        </div>
       </div>
 
-      {/* Replay indicator */}
+      {/* Review button - prominent CTA */}
       {hand.can_replay && (
-        <div className="hand-replay-indicator">
-          <span className="replay-icon">🔍</span>
-          <span className="replay-text">Analyze</span>
-        </div>
+        <button
+          className="hand-review-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick && onClick(hand);
+          }}
+        >
+          Review
+        </button>
       )}
     </div>
   );
