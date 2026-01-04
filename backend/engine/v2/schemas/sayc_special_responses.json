@@ -1,0 +1,369 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "special_responses",
+  "description": "Special responses: Strong 2C responses, Weak 2 responses, and NT defense",
+  "rules": [
+    {
+      "id": "response_2c_waiting",
+      "bid": "2♦",
+      "priority": 850,
+      "description": "2D Waiting response to Strong 2C",
+      "trigger": "2♣ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "max": 7
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "2♦ Waiting: Negative or waiting response to Strong 2♣",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "response_2c_positive_hearts",
+      "bid": "2♥",
+      "priority": 860,
+      "description": "Positive response to 2C showing hearts",
+      "trigger": "2♣ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8
+        },
+        "hearts_length": {
+          "min": 5
+        }
+      },
+      "forcing": "game",
+      "explanation": "Positive response: 8+ HCP with good 5+ card heart suit",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "response_2c_positive_spades",
+      "bid": "2♠",
+      "priority": 860,
+      "description": "Positive response to 2C showing spades",
+      "trigger": "2♣ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8
+        },
+        "spades_length": {
+          "min": 5
+        }
+      },
+      "forcing": "game",
+      "explanation": "Positive response: 8+ HCP with good 5+ card spade suit",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "response_2c_positive_2nt",
+      "bid": "2NT",
+      "priority": 855,
+      "description": "Positive balanced response to 2C",
+      "trigger": "2♣ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8
+        },
+        "is_balanced": true
+      },
+      "forcing": "game",
+      "explanation": "Positive response: 8+ HCP balanced, game forcing",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "response_2c_positive_diamonds",
+      "bid": "3♦",
+      "priority": 858,
+      "description": "Positive response to 2C showing diamonds",
+      "trigger": "2♣ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8
+        },
+        "diamonds_length": {
+          "min": 5
+        }
+      },
+      "forcing": "game",
+      "explanation": "Positive response: 8+ HCP with good 5+ card diamond suit",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "response_2c_positive_clubs",
+      "bid": "3♣",
+      "priority": 857,
+      "description": "Positive response to 2C showing clubs",
+      "trigger": "2♣ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 8
+        },
+        "clubs_length": {
+          "min": 5
+        }
+      },
+      "forcing": "game",
+      "explanation": "Positive response: 8+ HCP with good 5+ card club suit",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "response_weak2_feature_ask",
+      "bid": "2NT",
+      "priority": 600,
+      "description": "2NT Feature Ask over partner's Weak 2",
+      "trigger": "2[DHS] - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 15
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "2NT Feature Ask: Forcing inquiry over Weak 2",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "response_weak2_raise_invitational",
+      "bid": "3♥",
+      "priority": 400,
+      "description": "Invitational raise of partner's Weak 2H",
+      "trigger": "2♥ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10,
+          "max": 14
+        },
+        "hearts_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Invitational raise of partner's Weak 2♥",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "response_weak2_raise_invitational_spades",
+      "bid": "3♠",
+      "priority": 400,
+      "description": "Invitational raise of partner's Weak 2S",
+      "trigger": "2♠ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10,
+          "max": 14
+        },
+        "spades_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Invitational raise of partner's Weak 2♠",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "response_weak2_raise_invitational_diamonds",
+      "bid": "3♦",
+      "priority": 400,
+      "description": "Invitational raise of partner's Weak 2D",
+      "trigger": "2♦ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10,
+          "max": 14
+        },
+        "diamonds_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Invitational raise of partner's Weak 2♦",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "response_weak2_game_hearts",
+      "bid": "4♥",
+      "priority": 500,
+      "description": "Game raise of partner's Weak 2H",
+      "trigger": "2♥ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 15
+        },
+        "hearts_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game raise with fit for partner's Weak 2♥",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "response_weak2_game_spades",
+      "bid": "4♠",
+      "priority": 500,
+      "description": "Game raise of partner's Weak 2S",
+      "trigger": "2♠ - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "min": 15
+        },
+        "spades_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game raise with fit for partner's Weak 2♠",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "response_weak2_pass",
+      "bid": "Pass",
+      "priority": 100,
+      "description": "Pass partner's Weak 2 with weak hand",
+      "trigger": "2[DHS] - Pass - ?",
+      "conditions": {
+        "hcp": {
+          "max": 9
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass: Not enough to act over partner's Weak 2",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "defense_vs_1nt_double",
+      "bid": "X",
+      "priority": 820,
+      "description": "Penalty double of 1NT with strong hand",
+      "trigger": "1NT - ?",
+      "conditions": {
+        "hcp": {
+          "min": 15
+        }
+      },
+      "forcing": "none",
+      "explanation": "Penalty double of 1NT with 15+ HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "defense_vs_1nt_2c_both_majors",
+      "bid": "2♣",
+      "priority": 810,
+      "description": "Cappelletti 2C showing both majors over 1NT",
+      "trigger": "1NT - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10,
+          "max": 14
+        },
+        "hearts_length": {
+          "min": 5
+        },
+        "spades_length": {
+          "min": 5
+        }
+      },
+      "forcing": "none",
+      "explanation": "2♣ Cappelletti: Both majors (5-5 or better)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "defense_vs_1nt_2d_one_major",
+      "bid": "2♦",
+      "priority": 805,
+      "description": "Cappelletti 2D showing one major over 1NT",
+      "trigger": "1NT - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10,
+          "max": 14
+        },
+        "has_5_card_major": true
+      },
+      "forcing": "none",
+      "explanation": "2♦ Cappelletti: One 6+ card major (transfer effect)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "defense_vs_1nt_2h_hearts_minor",
+      "bid": "2♥",
+      "priority": 800,
+      "description": "Cappelletti 2H showing hearts + minor over 1NT",
+      "trigger": "1NT - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10,
+          "max": 14
+        },
+        "hearts_length": {
+          "min": 5
+        },
+        "any_minor_length": {
+          "min": 5
+        }
+      },
+      "forcing": "none",
+      "explanation": "2♥ Cappelletti: Hearts and a minor (5-5)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "defense_vs_1nt_2s_spades_minor",
+      "bid": "2♠",
+      "priority": 800,
+      "description": "Cappelletti 2S showing spades + minor over 1NT",
+      "trigger": "1NT - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10,
+          "max": 14
+        },
+        "spades_length": {
+          "min": 5
+        },
+        "any_minor_length": {
+          "min": 5
+        }
+      },
+      "forcing": "none",
+      "explanation": "2♠ Cappelletti: Spades and a minor (5-5)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "defense_vs_1nt_2nt_minors",
+      "bid": "2NT",
+      "priority": 795,
+      "description": "2NT showing both minors over 1NT",
+      "trigger": "1NT - ?",
+      "conditions": {
+        "hcp": {
+          "min": 10,
+          "max": 14
+        },
+        "clubs_length": {
+          "min": 5
+        },
+        "diamonds_length": {
+          "min": 5
+        }
+      },
+      "forcing": "none",
+      "explanation": "2NT: Both minors (5-5 or better)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "defense_vs_1nt_pass",
+      "bid": "Pass",
+      "priority": 100,
+      "description": "Pass over 1NT with weak hand",
+      "trigger": "1NT - ?",
+      "conditions": {
+        "hcp": {
+          "max": 9
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass: Not enough to compete over 1NT",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}
