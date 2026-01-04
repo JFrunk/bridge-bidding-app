@@ -278,17 +278,6 @@ const ProgressBar = ({
           <span className="bar-mini-stats">{miniStats}</span>
         </div>
         <div className="bar-right">
-          {actionLabel && onAction && (
-            <button
-              className="bar-action-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                onAction();
-              }}
-            >
-              {actionLabel}
-            </button>
-          )}
           <span className={`bar-chevron ${expanded ? 'rotated' : ''}`}>▼</span>
         </div>
       </div>
@@ -296,6 +285,20 @@ const ProgressBar = ({
       {/* Expanded Content */}
       <div className={`expandable-progress-bar-content ${expanded ? 'show' : ''}`}>
         {children}
+        {/* Action button only visible when expanded */}
+        {actionLabel && onAction && (
+          <div className="bar-action-container">
+            <button
+              className="bar-action-btn-muted"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAction();
+              }}
+            >
+              {actionLabel}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

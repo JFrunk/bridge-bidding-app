@@ -660,15 +660,22 @@ const HandReviewModal = ({
             </div>
           )}
 
-          {/* Feedback panel - shows when stepping through plays */}
-          {currentReplayDecision && replayPosition > 0 && (
-            <TrickFeedbackPanel decision={currentReplayDecision} />
-          )}
-
-          {/* Start hint - shows at position 0 */}
-          {replayPosition === 0 && tricks.length > 0 && (
-            <div className="replay-start-hint">
-              <p>Press <strong>Next →</strong> or use arrow keys to step through each play and see feedback.</p>
+          {/* Feedback panel - always reserve space to prevent layout shift */}
+          {tricks.length > 0 && (
+            <div className="trick-feedback-container">
+              {replayPosition === 0 ? (
+                /* Start hint - shows at position 0 */
+                <div className="replay-start-hint">
+                  <p>Press <strong>Next →</strong> or use arrow keys to step through each play and see feedback.</p>
+                </div>
+              ) : currentReplayDecision ? (
+                <TrickFeedbackPanel decision={currentReplayDecision} />
+              ) : (
+                /* Empty state when no feedback for this position */
+                <div className="trick-feedback-panel no-data">
+                  <p>AI play - no feedback recorded</p>
+                </div>
+              )}
             </div>
           )}
 

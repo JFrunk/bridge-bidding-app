@@ -1045,6 +1045,14 @@
   padding: 16px;
   border-left: 4px solid #e5e7eb;
   margin-bottom: 12px;
+  /* Fixed minimum height to prevent layout shift when feedback appears/disappears */
+  min-height: 80px;
+  box-sizing: border-box;
+}
+
+/* Container to reserve space for feedback panel even when empty */
+.trick-feedback-container {
+  min-height: 92px; /* 80px panel + 12px margin */
 }
 
 .trick-feedback-panel.no-data {
@@ -2297,6 +2305,12 @@
   background: var(--bg-tertiary, #f1f5f9);
   border-radius: var(--radius-md, 8px);
   color: var(--text-secondary, #6b7280);
+  /* Match feedback panel height for consistency */
+  min-height: 80px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .replay-start-hint p {

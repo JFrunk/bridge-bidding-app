@@ -251,21 +251,34 @@
   gap: var(--space-2, 8px);
 }
 
-.bar-action-btn {
-  padding: var(--space-2, 8px) var(--space-4, 16px);
-  border-radius: 8px;
-  font-size: var(--text-base, 16px);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  background: var(--color-primary, #2563eb);
-  color: white;
+/* Old bar-action-btn styles removed - buttons now only appear in expanded content */
+
+/* Action button container - appears at bottom of expanded content */
+.bar-action-container {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-3, 12px);
+  margin-top: var(--space-3, 12px);
+  border-top: 1px solid var(--border-color, #e5e7eb);
 }
 
-.bar-action-btn:hover {
-  background: var(--color-primary-dark, #1d4ed8);
-  transform: translateY(-1px);
+/* Muted action button - less prominent, consistent width */
+.bar-action-btn-muted {
+  padding: var(--space-2, 8px) var(--space-4, 16px);
+  min-width: 120px;
+  border-radius: 6px;
+  font-size: var(--text-sm, 14px);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color, #d1d5db);
+  background: var(--bg-secondary, #f8f9fa);
+  color: var(--text-primary-dark, #374151);
+}
+
+.bar-action-btn-muted:hover {
+  background: var(--bg-tertiary, #e5e7eb);
+  border-color: var(--text-muted, #9ca3af);
 }
 
 .bar-chevron {
@@ -1122,9 +1135,9 @@
     font-size: var(--text-sm, 14px);
   }
 
-  .bar-action-btn {
+  .bar-action-btn-muted {
     font-size: var(--text-sm, 14px);
-    padding: var(--space-1, 4px) var(--space-3, 12px);
+    min-width: 100px;
   }
 
   .level-ring {
@@ -1198,8 +1211,10 @@
     margin-left: auto;
   }
 
-  .bar-action-btn {
-    display: none; /* Hide on mobile, use expanded view */
+  .bar-action-btn-muted {
+    font-size: var(--text-xs, 12px);
+    min-width: 90px;
+    padding: var(--space-2, 8px) var(--space-3, 12px);
   }
 
   .level-ring {
