@@ -129,7 +129,7 @@ def handle_internal_error(e):
 # =============================================================================
 
 USE_V2_ENGINE = os.getenv('USE_V2_BIDDING_ENGINE', 'false').lower() == 'true'
-USE_V2_SCHEMA = os.getenv('USE_V2_SCHEMA_ENGINE', 'false').lower() == 'true'
+USE_V2_SCHEMA = os.getenv('USE_V2_SCHEMA_ENGINE', 'true').lower() == 'true'  # Default: V2 Schema with V1 fallback
 COMPARISON_MODE = os.getenv('BIDDING_ENGINE_COMPARISON_MODE', 'false').lower() == 'true'
 
 # Initialize bidding engines

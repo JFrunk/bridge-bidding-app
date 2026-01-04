@@ -212,20 +212,78 @@
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
-      "id": "responder_fourth_suit_forcing",
+      "id": "responder_fourth_suit_forcing_clubs",
       "bid": "2♣",
-      "priority": 810,
-      "description": "Fourth Suit Forcing for game-going hands",
+      "priority": 815,
+      "description": "Fourth Suit Forcing bidding clubs",
       "conditions": {
-        "my_bid_count": 1,
-        "is_fourth_suit_scenario": true,
-        "hcp": {
-          "min": 10
-        }
+        "is_responder_rebid": true,
+        "is_fourth_suit": true,
+        "fourth_suit": "♣",
+        "hcp": {"min": 10}
       },
-      "forcing": "one_round",
-      "explanation": "Fourth Suit Forcing: Artificial bid asking for more information",
-      "sets_forcing_level": "FORCING_1_ROUND"
+      "forcing": "game",
+      "explanation": "Fourth Suit Forcing (2♣) - game force asking for more information",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "responder_fourth_suit_forcing_diamonds",
+      "bid": "2♦",
+      "priority": 814,
+      "description": "Fourth Suit Forcing bidding diamonds",
+      "conditions": {
+        "is_responder_rebid": true,
+        "is_fourth_suit": true,
+        "fourth_suit": "♦",
+        "hcp": {"min": 10}
+      },
+      "forcing": "game",
+      "explanation": "Fourth Suit Forcing (2♦) - game force asking for more information",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "responder_fourth_suit_forcing_hearts",
+      "bid": "2♥",
+      "priority": 813,
+      "description": "Fourth Suit Forcing bidding hearts",
+      "conditions": {
+        "is_responder_rebid": true,
+        "is_fourth_suit": true,
+        "fourth_suit": "♥",
+        "hcp": {"min": 10}
+      },
+      "forcing": "game",
+      "explanation": "Fourth Suit Forcing (2♥) - game force asking for more information",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "responder_fourth_suit_forcing_spades",
+      "bid": "2♠",
+      "priority": 812,
+      "description": "Fourth Suit Forcing bidding spades",
+      "conditions": {
+        "is_responder_rebid": true,
+        "is_fourth_suit": true,
+        "fourth_suit": "♠",
+        "hcp": {"min": 10}
+      },
+      "forcing": "game",
+      "explanation": "Fourth Suit Forcing (2♠) - game force asking for more information",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "responder_fourth_suit_forcing_3_level",
+      "bid": "3{fourth_suit}",
+      "priority": 811,
+      "description": "Fourth Suit Forcing at 3-level",
+      "conditions": {
+        "is_responder_rebid": true,
+        "is_fourth_suit": true,
+        "hcp": {"min": 11}
+      },
+      "forcing": "game",
+      "explanation": "Fourth Suit Forcing at 3-level - game force",
+      "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "fsf_continuation_preference_to_diamonds",

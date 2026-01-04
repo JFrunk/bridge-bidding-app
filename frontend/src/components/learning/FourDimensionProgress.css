@@ -873,12 +873,37 @@
 .hand-row .score {
   font-weight: 600;
   color: var(--text-primary-dark, #111);
-  min-width: 45px;
+  min-width: 50px;
+}
+
+.hand-row .score.positive {
+  color: var(--color-success, #22c55e);
+}
+
+.hand-row .score.negative {
+  color: var(--color-danger, #dc2626);
 }
 
 .hand-row .quality {
-  color: var(--color-primary, #2563eb);
-  font-weight: 500;
+  font-weight: 600;
+  min-width: 35px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.hand-row .quality.good {
+  color: var(--color-success, #22c55e);
+  background: var(--bg-success-light, #dcfce7);
+}
+
+.hand-row .quality.suboptimal {
+  color: var(--color-warning, #f59e0b);
+  background: var(--bg-warning-light, #fef3c7);
+}
+
+.hand-row .quality.error {
+  color: var(--color-danger, #dc2626);
+  background: var(--bg-danger-light, #fee2e2);
 }
 
 /* ============================================================================

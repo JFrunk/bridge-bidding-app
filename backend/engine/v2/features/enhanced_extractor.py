@@ -445,6 +445,62 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['is_fourth_suit'] = len(unbid_suits_remaining) == 1
     flat['fourth_suit'] = list(unbid_suits_remaining)[0] if flat['is_fourth_suit'] else None
 
+    # FSF trigger detection: Did partner bid the fourth suit?
+    # This means three suits were bid before partner's last suit bid, and partner bid the fourth
+    flat['partner_bid_fsf'] = False
+    flat['fsf_suit'] = None
+    if flat['partner_last_bid'] and len(bid_suits_natural) == 4:
+        # Check if partner's last bid introduced the fourth suit
+        partner_bid_suit = get_suit_from_bid(flat['partner_last_bid'])
+        if partner_bid_suit:
+            # Find the index of partner's last suit bid in the auction
+            partner_fsf_index = None
+            for i in range(len(auction_history) - 1, -1, -1):
+                if auction_history[i] == flat['partner_last_bid']:
+                    partner_fsf_index = i
+                    break
+
+            if partner_fsf_index is not None:
+                # Count suits bid BEFORE partner's FSF bid
+                suits_before_partner = set()
+                for i in range(partner_fsf_index):
+                    s = get_suit_from_bid(auction_history[i])
+                    if s:
+                        suits_before_partner.add(s)
+                if len(suits_before_partner) == 3 and partner_bid_suit not in suits_before_partner:
+                    flat['partner_bid_fsf'] = True
+                    flat['fsf_suit'] = partner_bid_suit
+
+    # Did I bid FSF on my last bid?
+    flat['i_bid_fsf'] = False
+    if flat['my_last_bid'] and len(bid_suits_natural) == 4:
+        my_bid_suit = get_suit_from_bid(flat['my_last_bid'])
+        if my_bid_suit:
+            # Count suits bid BEFORE my last bid
+            suits_before_me = set()
+            for i, bid in enumerate(auction_history):
+                if _bid_index_is_mine(i, my_position, dealer) and bid == flat['my_last_bid']:
+                    break
+                s = get_suit_from_bid(bid)
+                if s:
+                    suits_before_me.add(s)
+            if len(suits_before_me) == 3 and my_bid_suit not in suits_before_me:
+                flat['i_bid_fsf'] = True
+
+    # Stopper in fourth suit (for NT decisions after FSF)
+    flat['has_stopper_in_fourth_suit'] = False
+    if flat['fourth_suit']:
+        suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}.get(flat['fourth_suit'])
+        if suit_name:
+            flat['has_stopper_in_fourth_suit'] = flat.get(f'{suit_name}_stopped', False)
+
+    # Stopper in FSF suit (when partner bid FSF, do we have stopper?)
+    flat['has_stopper_in_fsf_suit'] = False
+    if flat['fsf_suit']:
+        suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}.get(flat['fsf_suit'])
+        if suit_name:
+            flat['has_stopper_in_fsf_suit'] = flat.get(f'{suit_name}_stopped', False)
+
     # LHO's last bid (for balancing checks)
     lho_bids = _get_lho_bids(auction_history, my_position, dealer)
     flat['lho_last_bid'] = lho_bids[-1] if lho_bids else None
@@ -674,6 +730,25 @@ def _get_rho_bids(auction_history: List[str], my_position: str, dealer: str = 'N
             rho_bids.append(bid)
 
     return rho_bids
+
+
+def _bid_index_is_mine(bid_index: int, my_position: str, dealer: str = 'North') -> bool:
+    """
+    Check if a bid at a given index was made by me.
+
+    Args:
+        bid_index: Index of the bid in auction history
+        my_position: My position (North, East, South, West)
+        dealer: Dealer position
+
+    Returns:
+        True if this bid was made by me
+    """
+    positions = ['North', 'East', 'South', 'West']
+    my_idx = positions.index(my_position) if my_position in positions else 0
+    dealer_idx = positions.index(dealer) if dealer in positions else 0
+    bid_position_idx = (dealer_idx + bid_index) % 4
+    return bid_position_idx == my_idx
 
 
 def _get_lho_bids(auction_history: List[str], my_position: str, dealer: str = 'North') -> List[str]:

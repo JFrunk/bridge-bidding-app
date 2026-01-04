@@ -321,8 +321,8 @@ function App() {
 
   // Helper function to check if auction is complete
   const isAuctionOver = useCallback((bids) => {
-    if (bids.length < 3) return false;
-    const nonPassBids = bids.filter(b => b.bid !== 'Pass');
+    if (!bids || bids.length < 3) return false;
+    const nonPassBids = bids.filter(b => b?.bid && b.bid !== 'Pass');
 
     // All four players passed out (no one bid)
     if (bids.length >= 4 && nonPassBids.length === 0) return true;
@@ -331,7 +331,7 @@ function App() {
     if (nonPassBids.length === 0) return false;
 
     // Three consecutive passes after at least one non-Pass bid
-    return bids.slice(-3).map(b => b.bid).join(',') === 'Pass,Pass,Pass';
+    return bids.slice(-3).every(b => b?.bid === 'Pass');
   }, []);
 
   // No longer auto-show login - users start as guests and can register later
@@ -2498,7 +2498,7 @@ ${otherCommands}`;
           onNewHand={playRandomHand}
           onPlayLastBid={startPlayPhase}
           onReplayLast={replayCurrentHand}
-          hasLastBidHand={auction.length >= 4 && auction.slice(-3).every(bid => bid.bid === 'Pass')}
+          hasLastBidHand={isAuctionOver(auction)}
           hasLastPlayedHand={!!initialDeal}
           isPlaying={false}
         />
@@ -2542,14 +2542,16 @@ ${otherCommands}`;
                   </div>
                 )}
                 <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(auction)} />
-                {/* Bid feedback panel - shows after each user bid */}
-                <BidFeedbackPanel
-                  feedback={bidFeedback}
-                  userBid={lastUserBid}
-                  isVisible={!!bidFeedback && gamePhase === 'bidding'}
-                  onDismiss={() => setBidFeedback(null)}
-                  onOpenGlossary={(termId) => setShowGlossary(termId || true)}
-                />
+                {/* Bid feedback panel - dev mode only until V2 engine is optimized */}
+                {isDevMode && (
+                  <BidFeedbackPanel
+                    feedback={bidFeedback}
+                    userBid={lastUserBid}
+                    isVisible={!!bidFeedback && gamePhase === 'bidding'}
+                    onDismiss={() => setBidFeedback(null)}
+                    onOpenGlossary={(termId) => setShowGlossary(termId || true)}
+                  />
+                )}
                 {isDevMode && error && <div className="error-message">{error}</div>}
               </div>
             </div>
@@ -2601,14 +2603,16 @@ ${otherCommands}`;
             </div>
           )}
           <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(auction)} />
-          {/* Bid feedback panel - shows after each user bid */}
-          <BidFeedbackPanel
-            feedback={bidFeedback}
-            userBid={lastUserBid}
-            isVisible={!!bidFeedback && gamePhase === 'bidding'}
-            onDismiss={() => setBidFeedback(null)}
-            onOpenGlossary={(termId) => setShowGlossary(termId || true)}
-          />
+          {/* Bid feedback panel - dev mode only until V2 engine is optimized */}
+          {isDevMode && (
+            <BidFeedbackPanel
+              feedback={bidFeedback}
+              userBid={lastUserBid}
+              isVisible={!!bidFeedback && gamePhase === 'bidding'}
+              onDismiss={() => setBidFeedback(null)}
+              onOpenGlossary={(termId) => setShowGlossary(termId || true)}
+            />
+          )}
           {isDevMode && error && <div className="error-message">{error}</div>}
         </div>
       )}
@@ -2742,7 +2746,7 @@ ${otherCommands}`;
                   </div>
                 )}
                 {/* Primary action when bidding is complete */}
-                {auction.length >= 4 && auction.slice(-3).every(bid => bid.bid === 'Pass') && (
+                {isAuctionOver(auction) && (
                   <button className="play-this-hand-button primary-action" data-testid="play-this-hand-button" onClick={startPlayPhase}>
                     ▶ Play This Hand
                   </button>

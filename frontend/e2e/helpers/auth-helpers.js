@@ -25,20 +25,27 @@ export async function loginAsGuest(page) {
   await page.goto('http://localhost:3000');
   await page.waitForLoadState('networkidle');
 
-  // Ensure no modal is blocking
-  await ensureNoModal(page);
+  // Check if login modal is already visible (auto-shows on app load)
+  const loginModal = page.locator('[data-testid="login-modal"]');
+  const modalVisible = await loginModal.isVisible({ timeout: 2000 }).catch(() => false);
 
-  // Click sign in button
-  await page.click('[data-testid="sign-in-button"]');
+  if (!modalVisible) {
+    // Modal not visible, try clicking sign-in button
+    const signInButton = page.locator('[data-testid="sign-in-button"]');
+    const buttonExists = await signInButton.isVisible({ timeout: 2000 }).catch(() => false);
 
-  // Wait for login modal
-  await page.waitForSelector('[data-testid="login-modal"]', { state: 'visible' });
+    if (buttonExists) {
+      await signInButton.click();
+      await page.waitForSelector('[data-testid="login-modal"]', { state: 'visible' });
+    }
+  }
 
-  // Click guest button
-  await page.click('[data-testid="login-guest-button"]');
+  // Click guest button (handles both "Continue as Guest" and "login-guest-button")
+  const guestButton = page.locator('[data-testid="login-guest-button"], button:has-text("Continue as Guest")');
+  await guestButton.click();
 
   // Wait for modal to close
-  await page.waitForSelector('[data-testid="login-modal"]', { state: 'hidden' });
+  await page.waitForSelector('[data-testid="login-modal"]', { state: 'hidden', timeout: 5000 });
 }
 
 /**

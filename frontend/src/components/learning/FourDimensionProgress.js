@@ -1167,41 +1167,58 @@ const SegmentedQualityBar = ({ good, suboptimal, error, labels = {} }) => {
 };
 
 const HandRow = ({ hand, onReview }) => {
-  const contract = hand.contract || {};
-  const contractStr = `${contract.level || ''}${contract.strain || ''}`;
-  const role = hand.was_declarer ? 'Declarer' : hand.was_dummy ? 'Dummy' : 'Defender';
-  const isDefender = !hand.was_declarer && !hand.was_dummy;
+  // Handle both object contract format and string format from different APIs
+  const contractLevel = hand.contract_level || hand.contract?.level || '';
+  const contractStrain = hand.contract_strain || hand.contract?.strain || '';
+  const contractStr = `${contractLevel}${contractStrain}`;
+
+  // Determine role - API uses user_was_declarer/user_was_dummy
+  const wasDeclarer = hand.user_was_declarer || hand.was_declarer;
+  const wasDummy = hand.user_was_dummy || hand.was_dummy;
+  const role = wasDeclarer ? 'Declarer' : wasDummy ? 'Dummy' : 'Defender';
+  const isDefender = !wasDeclarer && !wasDummy;
+
   const quality = Math.round(hand.play_quality || 0);
 
-  // Get result from user's perspective
+  // Result comes as string ("+1", "-3", "=") from API
+  // Parse it to determine display from user's perspective
   const getResultDisplay = () => {
-    const result = hand.result; // tricks over/under contract
+    const resultStr = hand.result || '=';
+    // Parse the result string to get numeric value
+    let resultNum = 0;
+    if (resultStr === '=' || resultStr === '0') {
+      resultNum = 0;
+    } else {
+      resultNum = parseInt(resultStr, 10) || 0;
+    }
+
     if (isDefender) {
       // As defender: positive result means they made overtricks (bad for us)
       // negative result means we set them (good for us)
-      if (result < 0) {
-        return { text: `Set ${Math.abs(result)}`, isGood: true };
-      } else if (result > 0) {
-        return { text: `+${result}`, isGood: false };
+      if (resultNum < 0) {
+        return { text: `Set ${Math.abs(resultNum)}`, isGood: true };
+      } else if (resultNum > 0) {
+        return { text: `+${resultNum}`, isGood: false };
       } else {
-        return { text: '=', isGood: false };
+        return { text: '=', isGood: false }; // Made exactly - not great for defender
       }
     } else {
       // As declarer/dummy: positive result is good
-      if (result > 0) {
-        return { text: `+${result}`, isGood: true };
-      } else if (result < 0) {
-        return { text: `${result}`, isGood: false };
+      if (resultNum > 0) {
+        return { text: `+${resultNum}`, isGood: true };
+      } else if (resultNum < 0) {
+        return { text: `${resultNum}`, isGood: false };
       } else {
-        return { text: '=', isGood: true };
+        return { text: '=', isGood: true }; // Made exactly - good for declarer
       }
     }
   };
 
   // Get score from NS (user's) perspective
+  // User is always NS (South), so negate score when EW declares
   const getScoreDisplay = () => {
     let score = hand.score || 0;
-    const declarer = hand.declarer;
+    const declarer = hand.contract_declarer || hand.declarer;
     // If declarer was EW, negate the score for NS perspective
     if (declarer === 'E' || declarer === 'W') {
       score = -score;
@@ -1209,16 +1226,27 @@ const HandRow = ({ hand, onReview }) => {
     return score > 0 ? `+${score}` : `${score}`;
   };
 
+  // Get strain class for contract styling
+  const getStrainClass = (strain) => {
+    if (!strain) return '';
+    if (strain.includes('♠') || strain === 'S') return 'spades';
+    if (strain.includes('♥') || strain === 'H') return 'hearts';
+    if (strain.includes('♦') || strain === 'D') return 'diamonds';
+    if (strain.includes('♣') || strain === 'C') return 'clubs';
+    if (strain.includes('NT') || strain === 'N') return 'notrump';
+    return '';
+  };
+
   const resultDisplay = getResultDisplay();
   const scoreDisplay = getScoreDisplay();
 
   return (
     <div className="hand-row">
-      <span className={`contract ${(contract.strain || '').toLowerCase()}`}>{contractStr}</span>
+      <span className={`contract ${getStrainClass(contractStrain)}`}>{contractStr}</span>
       <span className={`result ${resultDisplay.isGood ? 'made' : 'down'}`}>{resultDisplay.text}</span>
       <span className="role">{role}</span>
-      <span className="score">{scoreDisplay}</span>
-      {quality > 0 && <span className="quality">{quality}%</span>}
+      <span className={`score ${parseInt(scoreDisplay, 10) >= 0 ? 'positive' : 'negative'}`}>{scoreDisplay}</span>
+      {quality > 0 && <span className={`quality ${quality >= 70 ? 'good' : quality >= 50 ? 'suboptimal' : 'error'}`}>{quality}%</span>}
       {onReview && (
         <button className="review-link" onClick={onReview}>Review →</button>
       )}

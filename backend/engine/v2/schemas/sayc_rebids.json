@@ -5,6 +5,84 @@
   "description": "Opener and responder rebids",
   "rules": [
     {
+      "id": "opener_fsf_response_3nt_stopper",
+      "bid": "3NT",
+      "priority": 850,
+      "description": "Opener bids 3NT after FSF with stopper in fourth suit",
+      "conditions": {
+        "is_rebid": true,
+        "partner_bid_fsf": true,
+        "has_stopper_in_fsf_suit": true,
+        "hcp": {"min": 12, "max": 14},
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "3NT with stopper in fourth suit ({fsf_suit}) and {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_fsf_response_rebid_6card",
+      "bid": "3{my_suit}",
+      "priority": 848,
+      "description": "Opener rebids 6-card suit after FSF (no stopper)",
+      "conditions": {
+        "is_rebid": true,
+        "partner_bid_fsf": true,
+        "has_stopper_in_fsf_suit": false,
+        "longest_suit_length": {"min": 6},
+        "hcp": {"min": 12, "max": 15}
+      },
+      "forcing": "one_round",
+      "explanation": "Rebid 6-card suit (no stopper in fourth suit)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "opener_fsf_response_support_responder",
+      "bid": "3{partner_first_suit}",
+      "priority": 846,
+      "description": "Opener supports responder's suit after FSF",
+      "conditions": {
+        "is_rebid": true,
+        "partner_bid_fsf": true,
+        "support_for_partner_first": {"min": 3},
+        "hcp": {"min": 12, "max": 15}
+      },
+      "forcing": "one_round",
+      "explanation": "Support responder's suit with {support_for_partner_first}-card fit",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "opener_fsf_response_strong_3nt",
+      "bid": "3NT",
+      "priority": 844,
+      "description": "Opener bids 3NT after FSF with extra values",
+      "conditions": {
+        "is_rebid": true,
+        "partner_bid_fsf": true,
+        "has_stopper_in_fsf_suit": true,
+        "hcp": {"min": 15, "max": 17}
+      },
+      "forcing": "none",
+      "explanation": "3NT with stopper and extra values ({hcp} HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_fsf_response_minimum_bid",
+      "bid": "2NT",
+      "priority": 842,
+      "description": "Opener bids 2NT after FSF showing minimum without stopper",
+      "conditions": {
+        "is_rebid": true,
+        "partner_bid_fsf": true,
+        "has_stopper_in_fsf_suit": false,
+        "hcp": {"min": 12, "max": 14},
+        "longest_suit_length": {"max": 5}
+      },
+      "forcing": "one_round",
+      "explanation": "2NT (minimum, no stopper in fourth suit)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
       "id": "opener_complete_texas_hearts",
       "bid": "4\u2665",
       "priority": 830,

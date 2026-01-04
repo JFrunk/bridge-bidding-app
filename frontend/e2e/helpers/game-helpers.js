@@ -8,6 +8,18 @@
  * wait for the auction to come around to South's turn.
  */
 export async function dealNewHand(page) {
+  // Check if mode selector is visible (happens after first login)
+  const modeSelector = page.locator('[data-testid="mode-bid-button"]');
+  const modeSelectorVisible = await modeSelector.isVisible({ timeout: 1000 }).catch(() => false);
+
+  if (modeSelectorVisible) {
+    // Click "Start Bidding" to enter bid mode
+    await modeSelector.click();
+    // Wait for the bidding workspace to load
+    await page.waitForSelector('[data-testid="bidding-box"]', { state: 'visible', timeout: 10000 });
+    return; // Mode selector click already deals a hand
+  }
+
   await page.click('[data-testid="deal-button"]');
 
   // Wait for bidding box to be visible
@@ -44,7 +56,7 @@ export async function dealNewHand(page) {
       const passButtonEnabled = await page.locator('[data-testid="bid-call-Pass"]:not([disabled])')
         .count() > 0;
 
-      const playButtonVisible = await page.locator('[data-testid="play-button"], text=Play This Hand')
+      const playButtonVisible = await page.locator('[data-testid="play-this-hand-button"]')
         .count() > 0;
 
       if (passButtonEnabled || playButtonVisible) {
@@ -147,7 +159,7 @@ export async function waitForAIBid(page) {
         timeout: 20000  // Increased from 10000
       }),
       // Option 2: Auction complete - play button appears
-      page.waitForSelector('[data-testid="play-button"], text=Play This Hand', {
+      page.waitForSelector('[data-testid="play-this-hand-button"]', {
         state: 'visible',
         timeout: 20000  // Increased from 10000
       })
@@ -156,7 +168,7 @@ export async function waitForAIBid(page) {
     // If neither condition is met, the test should fail with a clear message
     // Log additional debug info to help diagnose timeout issues
     const passButtonState = await page.locator('[data-testid="bid-call-Pass"]').getAttribute('disabled').catch(() => 'not found');
-    const playButtonVisible = await page.locator('[data-testid="play-button"]').isVisible().catch(() => false);
+    const playButtonVisible = await page.locator('[data-testid="play-this-hand-button"]').isVisible().catch(() => false);
 
     throw new Error(
       `AI bid timeout: Neither bidding box re-enabled nor play button appeared.\n` +

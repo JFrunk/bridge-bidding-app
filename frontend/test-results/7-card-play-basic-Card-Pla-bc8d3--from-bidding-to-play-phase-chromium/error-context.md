@@ -1,0 +1,175 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation "Main navigation" [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - 'button "Learn: Structured curriculum" [ref=e7] [cursor=pointer]':
+          - generic [ref=e8]: 📚
+          - generic [ref=e9]: Learn
+        - 'button "Bid: Bidding practice" [ref=e10] [cursor=pointer]':
+          - generic [ref=e11]: 🏷️
+          - generic [ref=e12]: Bid
+        - 'button "Play: Card play practice" [ref=e13] [cursor=pointer]':
+          - generic [ref=e14]: ♠
+          - generic [ref=e15]: Play
+        - 'button "Progress: View analytics" [ref=e16] [cursor=pointer]':
+          - generic [ref=e17]: 📊
+          - generic [ref=e18]: Progress
+      - heading "My Bridge Buddy" [level=1] [ref=e20]
+      - generic [ref=e21]:
+        - button "📖 Glossary" [ref=e22] [cursor=pointer]:
+          - text: 📖
+          - generic [ref=e23]: Glossary
+        - button "📝 Feedback" [ref=e24] [cursor=pointer]:
+          - text: 📝
+          - generic [ref=e25]: Feedback
+        - generic [ref=e26]:
+          - generic [ref=e27]: 👤 Guest
+          - button "Sign In" [ref=e28] [cursor=pointer]
+  - generic [ref=e30]:
+    - button "🎲 Random" [ref=e31] [cursor=pointer]:
+      - generic [ref=e32]: 🎲
+      - generic [ref=e33]: Random
+    - button "🎯 Conventions" [ref=e34] [cursor=pointer]:
+      - generic [ref=e35]: 🎯
+      - generic [ref=e36]: Conventions
+    - button "📋 History" [ref=e37] [cursor=pointer]:
+      - generic [ref=e38]: 📋
+      - generic [ref=e39]: History
+  - generic [ref=e41]:
+    - heading "Your Hand (South)" [level=2] [ref=e42]
+    - generic [ref=e43]:
+      - generic "5 of Spades" [ref=e45]:
+        - generic [ref=e46]:
+          - generic [ref=e47]: "5"
+          - generic [ref=e48]: ♠
+      - generic [ref=e49]:
+        - generic "K of Hearts" [ref=e50]:
+          - generic [ref=e51]:
+            - generic [ref=e52]: K
+            - generic [ref=e53]: ♥
+        - generic "10 of Hearts" [ref=e54]:
+          - generic [ref=e55]:
+            - generic [ref=e56]: "10"
+            - generic [ref=e57]: ♥
+        - generic "6 of Hearts" [ref=e58]:
+          - generic [ref=e59]:
+            - generic [ref=e60]: "6"
+            - generic [ref=e61]: ♥
+        - generic "2 of Hearts" [ref=e62]:
+          - generic [ref=e63]:
+            - generic [ref=e64]: "2"
+            - generic [ref=e65]: ♥
+      - generic [ref=e66]:
+        - generic "K of Clubs" [ref=e67]:
+          - generic [ref=e68]:
+            - generic [ref=e69]: K
+            - generic [ref=e70]: ♣
+        - generic "9 of Clubs" [ref=e71]:
+          - generic [ref=e72]:
+            - generic [ref=e73]: "9"
+            - generic [ref=e74]: ♣
+        - generic "8 of Clubs" [ref=e75]:
+          - generic [ref=e76]:
+            - generic [ref=e77]: "8"
+            - generic [ref=e78]: ♣
+        - generic "5 of Clubs" [ref=e79]:
+          - generic [ref=e80]:
+            - generic [ref=e81]: "5"
+            - generic [ref=e82]: ♣
+      - generic [ref=e83]:
+        - generic "7 of Diamonds" [ref=e84]:
+          - generic [ref=e85]:
+            - generic [ref=e86]: "7"
+            - generic [ref=e87]: ♦
+        - generic "4 of Diamonds" [ref=e88]:
+          - generic [ref=e89]:
+            - generic [ref=e90]: "4"
+            - generic [ref=e91]: ♦
+        - generic "3 of Diamonds" [ref=e92]:
+          - generic [ref=e93]:
+            - generic [ref=e94]: "3"
+            - generic [ref=e95]: ♦
+        - generic "2 of Diamonds" [ref=e96]:
+          - generic [ref=e97]:
+            - generic [ref=e98]: "2"
+            - generic [ref=e99]: ♦
+    - generic [ref=e100]:
+      - 'heading "Hand Analysis (Vuln: None)" [level=4] [ref=e102]'
+      - paragraph [ref=e103]:
+        - strong [ref=e104]: "HCP:"
+        - text: 6 +
+        - strong [ref=e105]: "Dist:"
+        - text: 0 =
+        - strong [ref=e106]: "Total: 6"
+      - generic [ref=e107]:
+        - generic [ref=e108]: ♠ 0 pts (1)
+        - generic [ref=e109]: ♥ 3 pts (4)
+        - generic [ref=e110]: ♦ 0 pts (4)
+        - generic [ref=e111]: ♣ 3 pts (4)
+  - generic [ref=e112]:
+    - heading "Bidding" [level=2] [ref=e113]
+    - table [ref=e114]:
+      - rowgroup [ref=e115]:
+        - row "North 🔵 East South West" [ref=e116]:
+          - cell "North 🔵" [ref=e117]
+          - cell "East" [ref=e118]
+          - cell "South" [ref=e119]
+          - cell "West" [ref=e120]
+      - rowgroup [ref=e121]:
+        - row "1♣ Pass Pass Pass" [ref=e122]:
+          - cell "1♣" [ref=e123] [cursor=pointer]
+          - cell "Pass" [ref=e124] [cursor=pointer]
+          - cell "Pass" [ref=e125] [cursor=pointer]
+          - cell "Pass" [ref=e126] [cursor=pointer]
+    - alert [ref=e127]:
+      - generic [ref=e128]:
+        - generic [ref=e129]: △
+        - generic [ref=e130]: Consider
+        - generic [ref=e131]: 1♦
+        - generic [ref=e132]: would be better than Pass.
+        - button "Dismiss feedback" [ref=e133] [cursor=pointer]: ×
+      - generic [ref=e135]:
+        - text: With 6
+        - button "HCP" [ref=e136] [cursor=pointer]
+        - text: ", you're strong enough to bid 1♦."
+      - generic [ref=e137]:
+        - text: "Concept:"
+        - generic [ref=e138]: Bidding judgment
+      - generic [ref=e139]: "Score: 6.0/10"
+  - generic [ref=e140]:
+    - generic [ref=e141]:
+      - heading "Bidding" [level=3] [ref=e142]
+      - generic [ref=e143]:
+        - button "Select level 1" [disabled]: "1"
+        - button "Select level 2" [disabled]: "2"
+        - button "Select level 3" [disabled]: "3"
+        - button "Select level 4" [disabled]: "4"
+        - button "Select level 5" [disabled]: "5"
+        - button "Select level 6" [disabled]: "6"
+        - button "Select level 7" [disabled]: "7"
+      - generic [ref=e144]:
+        - button "Bid ♣" [disabled]:
+          - generic: ♣
+        - button "Bid ♦" [disabled]:
+          - generic: ♦
+        - button "Bid ♥" [disabled]:
+          - generic: ♥
+        - button "Bid ♠" [disabled]:
+          - generic: ♠
+        - button "Bid No Trump" [disabled]: NT
+      - generic [ref=e145]:
+        - button "Pass" [disabled]
+        - button "Double" [disabled]: X
+        - button "Redouble" [disabled]: XX
+    - generic [ref=e147]:
+      - button "▶ Play This Hand" [ref=e148] [cursor=pointer]
+      - generic [ref=e149]:
+        - button "🎲 Deal New Hand" [ref=e150] [cursor=pointer]
+        - button "🔄 Rebid Hand" [ref=e151] [cursor=pointer]
+    - generic [ref=e153] [cursor=pointer]:
+      - checkbox "Show All Hands" [ref=e154]
+      - generic [ref=e155]: Show All Hands
+```

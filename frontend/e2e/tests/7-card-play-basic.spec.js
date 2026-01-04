@@ -54,8 +54,8 @@ test.describe('Card Play - Basic Tests', () => {
     await waitForAIBid(page);
     await makeCall(page, 'Pass');
 
-    // Should see "Play This Hand" button or similar
-    const playButton = page.locator('[data-testid="play-button"], button:has-text("Play")');
+    // Should see "Play This Hand" button
+    const playButton = page.locator('[data-testid="play-this-hand-button"]');
     await expect(playButton).toBeVisible({ timeout: 10000 });
 
     console.log('✅ Transition to play phase verified');
@@ -74,7 +74,7 @@ test.describe('Card Play - Basic Tests', () => {
     await makeCall(page, 'Pass');
 
     // Click play button
-    const playButton = page.locator('[data-testid="play-button"], button:has-text("Play")');
+    const playButton = page.locator('[data-testid="play-this-hand-button"]');
     await playButton.click();
 
     // Wait for play phase
@@ -103,7 +103,7 @@ test.describe('Card Play - Basic Tests', () => {
     await makeCall(page, 'Pass');
 
     // Start play
-    const playButton = page.locator('[data-testid="play-button"], button:has-text("Play")');
+    const playButton = page.locator('[data-testid="play-this-hand-button"]');
     await playButton.click();
 
     // Wait for opening lead
@@ -145,7 +145,7 @@ test.describe('Card Play - Basic Tests', () => {
     await makeCall(page, 'Pass');
 
     // Start play
-    const playButton = page.locator('[data-testid="play-button"], button:has-text("Play")');
+    const playButton = page.locator('[data-testid="play-this-hand-button"]');
     await playButton.click();
 
     // Wait for trick to progress
@@ -176,7 +176,7 @@ test.describe('Card Play - Basic Tests', () => {
     await makeCall(page, 'Pass');
 
     // Start play
-    const playButton = page.locator('[data-testid="play-button"], button:has-text("Play")');
+    const playButton = page.locator('[data-testid="play-this-hand-button"]');
     await playButton.click();
 
     // Wait for play to complete (AI plays most cards)
@@ -223,7 +223,7 @@ test.describe('Card Play - Error Handling', () => {
     await makeCall(page, 'Pass');
 
     // Start play
-    const playButton = page.locator('[data-testid="play-button"], button:has-text("Play")');
+    const playButton = page.locator('[data-testid="play-this-hand-button"]');
     await playButton.click();
 
     await page.waitForTimeout(1000);
@@ -259,7 +259,7 @@ test.describe('Card Play - Error Handling', () => {
     await waitForAIBid(page);
     await makeCall(page, 'Pass');
 
-    const playButton = page.locator('[data-testid="play-button"], button:has-text("Play")');
+    const playButton = page.locator('[data-testid="play-this-hand-button"]');
     await playButton.click();
 
     // Wait for play to start
@@ -289,7 +289,7 @@ test.describe('Card Play - UI Elements', () => {
     await waitForAIBid(page);
     await makeCall(page, 'Pass');
 
-    const playButton = page.locator('[data-testid="play-button"], button:has-text("Play")');
+    const playButton = page.locator('[data-testid="play-this-hand-button"]');
     await playButton.click();
 
     await page.waitForTimeout(2000);
@@ -312,7 +312,7 @@ test.describe('Card Play - UI Elements', () => {
     await waitForAIBid(page);
     await makeCall(page, 'Pass');
 
-    const playButton = page.locator('[data-testid="play-button"], button:has-text("Play")');
+    const playButton = page.locator('[data-testid="play-this-hand-button"]');
     await playButton.click();
 
     await page.waitForTimeout(2000);
@@ -337,7 +337,7 @@ test.describe('Card Play - UI Elements', () => {
     await waitForAIBid(page);
     await makeCall(page, 'Pass');
 
-    const playButton = page.locator('[data-testid="play-button"], button:has-text("Play")');
+    const playButton = page.locator('[data-testid="play-this-hand-button"]');
     await playButton.click();
 
     // Wait for user's turn
@@ -365,7 +365,7 @@ test.describe('Card Play - UI Elements', () => {
     await waitForAIBid(page);
     await makeCall(page, 'Pass');
 
-    const playButton = page.locator('[data-testid="play-button"], button:has-text("Play")');
+    const playButton = page.locator('[data-testid="play-this-hand-button"]');
     await playButton.click();
 
     await page.waitForTimeout(2000);
