@@ -1656,68 +1656,127 @@ def evaluate_bid():
             print(f"❌ evaluate-bid: Hand for {current_player} not available. state.deal keys: {list(state.deal.keys()) if state.deal else 'None'}")
             return jsonify({'error': f'Hand for {current_player} not available'}), 400
 
-        # Select engine: V2 Schema if dev mode requests it and it's available
-        active_engine = engine
-        if use_v2_schema and engine_v2_schema:
-            active_engine = engine_v2_schema
-            print(f"🔷 Dev mode: Using V2 Schema engine for evaluate-bid")
-
-        # Get AI's optimal bid and explanation (does NOT modify state)
-        # We pass auction_history BEFORE the user's bid to get what AI would have bid
-        optimal_bid, optimal_explanation_str = active_engine.get_next_bid(
-            user_hand,
-            auction_history,
-            current_player,
-            state.vulnerability,
-            'detailed'
-        )
-
-        # Get structured explanation for better feedback
-        _, optimal_explanation_dict = active_engine.get_next_bid_structured(
-            user_hand,
-            auction_history,
-            current_player,
-            state.vulnerability
-        )
-
-        # Create BidExplanation object from structured data
-        from engine.ai.bid_explanation import BidExplanation
-        optimal_explanation_obj = BidExplanation(optimal_bid)
-        optimal_explanation_obj.primary_reason = optimal_explanation_dict.get('primary_reason', '')
-        optimal_explanation_obj.convention_reference = optimal_explanation_dict.get('convention', {}).get('id')
-        optimal_explanation_obj.forcing_status = optimal_explanation_dict.get('forcing_status')
-
-        # Build auction context
         # Determine dealer from session or use default
         dealer = 'North'  # Default
         if state.game_session:
             dealer = state.game_session.get_current_dealer()
 
-        auction_context = {
-            'history': auction_history,
-            'current_player': current_player,
-            'dealer': dealer,
-            'vulnerability': state.vulnerability
-        }
+        # Select engine and evaluation method based on dev mode flag
+        if use_v2_schema and engine_v2_schema:
+            # V2 Schema: Use unified evaluation (same rules for AI and feedback)
+            print(f"🔷 Dev mode: Using V2 Schema unified evaluation for evaluate-bid")
 
-        # Generate structured feedback using BiddingFeedbackGenerator
-        from engine.feedback.bidding_feedback import get_feedback_generator
-        # Use 'bridge.db' (works from root via symlink to backend/bridge.db)
-        feedback_generator = get_feedback_generator('bridge.db')
+            v2_feedback = engine_v2_schema.evaluate_user_bid(
+                hand=user_hand,
+                user_bid=user_bid,
+                auction_history=auction_history,
+                my_position=current_player,
+                vulnerability=state.vulnerability,
+                dealer=dealer
+            )
 
-        # Get hand_number from game session (1-indexed for display)
-        hand_number = state.game_session.hands_completed + 1 if state.game_session else None
+            # Store in database for analytics (V2 feedback uses same DB schema)
+            from engine.feedback.bidding_feedback import get_feedback_generator, BiddingFeedback, CorrectnessLevel, ImpactLevel
+            feedback_generator = get_feedback_generator('bridge.db')
 
-        feedback = feedback_generator.evaluate_and_store(
-            user_id=user_id,
-            hand=user_hand,
-            user_bid=user_bid,
-            auction_context=auction_context,
-            optimal_bid=optimal_bid,
-            optimal_explanation=optimal_explanation_obj,
-            session_id=session_id,
-            hand_number=hand_number
-        )
+            # Convert V2 feedback to V1 format for storage compatibility
+            feedback = BiddingFeedback(
+                bid_number=v2_feedback.bid_number,
+                position=v2_feedback.position,
+                user_bid=v2_feedback.user_bid,
+                correctness=CorrectnessLevel(v2_feedback.correctness.value),
+                score=v2_feedback.score,
+                optimal_bid=v2_feedback.optimal_bid,
+                alternative_bids=v2_feedback.alternative_bids,
+                reasoning=v2_feedback.optimal_explanation,
+                explanation_level='detailed',
+                rule_reference=v2_feedback.optimal_rule_id,
+                error_category=v2_feedback.error_category,
+                error_subcategory=v2_feedback.error_subcategory,
+                impact=ImpactLevel(v2_feedback.impact.value),
+                helpful_hint=v2_feedback.helpful_hint,
+                key_concept=v2_feedback.key_concept,
+                difficulty=v2_feedback.difficulty
+            )
+
+            # Build auction context for storage
+            auction_context = {
+                'history': auction_history,
+                'current_player': current_player,
+                'dealer': dealer,
+                'vulnerability': state.vulnerability
+            }
+
+            # Get hand_number from game session (1-indexed for display)
+            hand_number = state.game_session.hands_completed + 1 if state.game_session else None
+
+            # Store feedback
+            feedback_generator._store_feedback(
+                user_id=user_id,
+                feedback=feedback,
+                auction_context=auction_context,
+                session_id=session_id,
+                hand_analysis_id=None,
+                hand_number=hand_number
+            )
+
+            optimal_explanation_str = v2_feedback.optimal_explanation
+
+        else:
+            # V1: Original evaluation path
+            active_engine = engine
+
+            # Get AI's optimal bid and explanation (does NOT modify state)
+            # We pass auction_history BEFORE the user's bid to get what AI would have bid
+            optimal_bid, optimal_explanation_str = active_engine.get_next_bid(
+                user_hand,
+                auction_history,
+                current_player,
+                state.vulnerability,
+                'detailed'
+            )
+
+            # Get structured explanation for better feedback
+            _, optimal_explanation_dict = active_engine.get_next_bid_structured(
+                user_hand,
+                auction_history,
+                current_player,
+                state.vulnerability
+            )
+
+            # Create BidExplanation object from structured data
+            from engine.ai.bid_explanation import BidExplanation
+            optimal_explanation_obj = BidExplanation(optimal_bid)
+            optimal_explanation_obj.primary_reason = optimal_explanation_dict.get('primary_reason', '')
+            optimal_explanation_obj.convention_reference = optimal_explanation_dict.get('convention', {}).get('id')
+            optimal_explanation_obj.forcing_status = optimal_explanation_dict.get('forcing_status')
+
+            # Build auction context
+            auction_context = {
+                'history': auction_history,
+                'current_player': current_player,
+                'dealer': dealer,
+                'vulnerability': state.vulnerability
+            }
+
+            # Generate structured feedback using BiddingFeedbackGenerator
+            from engine.feedback.bidding_feedback import get_feedback_generator
+            # Use 'bridge.db' (works from root via symlink to backend/bridge.db)
+            feedback_generator = get_feedback_generator('bridge.db')
+
+            # Get hand_number from game session (1-indexed for display)
+            hand_number = state.game_session.hands_completed + 1 if state.game_session else None
+
+            feedback = feedback_generator.evaluate_and_store(
+                user_id=user_id,
+                hand=user_hand,
+                user_bid=user_bid,
+                auction_context=auction_context,
+                optimal_bid=optimal_bid,
+                optimal_explanation=optimal_explanation_obj,
+                session_id=session_id,
+                hand_number=hand_number
+            )
 
         print(f"✅ evaluate-bid: Stored feedback for user {user_id}: {user_bid} ({feedback.correctness.value}, score: {feedback.score})")
 
@@ -2124,6 +2183,7 @@ def get_review_requests():
     """
     List all review requests with their content.
     Returns HTML page for browser viewing or JSON for API calls.
+    Supports pagination via ?page=N query parameter (20 items per page).
     """
     try:
         review_dir = 'review_requests'
@@ -2149,15 +2209,31 @@ def get_review_requests():
                     except Exception as e:
                         print(f"Error reading {filename}: {e}")
 
+        # Pagination
+        page = request.args.get('page', 1, type=int)
+        per_page = 20
+        total_count = len(requests_list)
+        total_pages = (total_count + per_page - 1) // per_page if total_count > 0 else 1
+
+        # Clamp page to valid range
+        page = max(1, min(page, total_pages))
+
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_list = requests_list[start_idx:end_idx]
+
         # Check Accept header to determine response format
         accept = request.headers.get('Accept', '')
         if 'text/html' in accept:
-            return _render_review_requests_html(requests_list)
+            return _render_review_requests_html(paginated_list, page, total_pages, total_count)
         else:
             return jsonify({
                 'success': True,
-                'count': len(requests_list),
-                'requests': requests_list
+                'count': len(paginated_list),
+                'total_count': total_count,
+                'page': page,
+                'total_pages': total_pages,
+                'requests': paginated_list
             })
 
     except Exception as e:
@@ -2219,8 +2295,8 @@ def _format_hand_html(hand_data):
     return '<br>'.join(lines) + f'<br><small>({hcp} HCP, {total} total)</small>'
 
 
-def _render_review_requests_html(requests_list):
-    """Render HTML page for review requests list."""
+def _render_review_requests_html(requests_list, page=1, total_pages=1, total_count=0):
+    """Render HTML page for review requests list with pagination."""
     rows = ""
     for req in requests_list:
         concern = req['user_concern'][:100] + '...' if len(req['user_concern']) > 100 else req['user_concern']
@@ -2232,6 +2308,22 @@ def _render_review_requests_html(requests_list):
             <td>{concern}</td>
             <td><a href="/api/admin/review-requests/{req['filename']}">View</a></td>
         </tr>
+        """
+
+    # Build pagination controls
+    pagination_html = ""
+    if total_pages > 1:
+        prev_disabled = 'disabled' if page <= 1 else ''
+        next_disabled = 'disabled' if page >= total_pages else ''
+        prev_link = f'?page={page - 1}' if page > 1 else '#'
+        next_link = f'?page={page + 1}' if page < total_pages else '#'
+
+        pagination_html = f"""
+        <div class="pagination">
+            <a href="{prev_link}" class="page-btn {prev_disabled}">← Previous</a>
+            <span class="page-info">Page {page} of {total_pages}</span>
+            <a href="{next_link}" class="page-btn {next_disabled}">Next →</a>
+        </div>
         """
 
     html = f"""
@@ -2249,11 +2341,17 @@ def _render_review_requests_html(requests_list):
             tr:hover {{ background: #f5f5f5; }}
             .count {{ color: #666; font-size: 14px; }}
             a {{ color: #1a5f2a; }}
+            .pagination {{ display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 20px; padding: 15px 0; }}
+            .page-btn {{ display: inline-block; padding: 10px 20px; background: #1a5f2a; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }}
+            .page-btn:hover {{ background: #145224; }}
+            .page-btn.disabled {{ background: #ccc; color: #666; pointer-events: none; }}
+            .page-info {{ color: #666; font-size: 14px; }}
         </style>
     </head>
     <body>
         <h1>🃏 Review Requests</h1>
-        <p class="count">{len(requests_list)} request(s)</p>
+        <p class="count">{total_count} total request(s) - showing {len(requests_list)} on this page</p>
+        {pagination_html}
         <table>
             <tr>
                 <th>Timestamp</th>
@@ -2264,6 +2362,7 @@ def _render_review_requests_html(requests_list):
             </tr>
             {rows if rows else '<tr><td colspan="5">No review requests yet</td></tr>'}
         </table>
+        {pagination_html}
     </body>
     </html>
     """
