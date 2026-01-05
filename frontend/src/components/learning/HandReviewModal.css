@@ -1319,6 +1319,8 @@
   /* Center the compass layout and constrain width */
   max-width: 700px;
   margin: 0 auto;
+  /* Fixed minimum height to prevent layout shift during navigation */
+  min-height: 420px;
 }
 
 .replay-row {
@@ -1329,6 +1331,9 @@
 .replay-row-north,
 .replay-row-south {
   justify-content: center;
+  /* Fixed height to prevent layout shift as cards are removed */
+  /* Height = label (20px) + card height (56px) + padding (16px) + buffer */
+  min-height: 100px;
 }
 
 .replay-row-middle {
@@ -1343,11 +1348,20 @@
   border-radius: 8px;
   padding: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  /* Ensure content doesn't cause position to shrink */
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .replay-west,
 .replay-east {
   flex-shrink: 0;
+  /* Fixed dimensions to prevent layout shift as cards are removed */
+  /* Width for 2-column layout with overlapping cards */
+  min-width: 100px;
+  /* Height matches center box (200px) for alignment */
+  min-height: 200px;
 }
 
 .replay-center {
@@ -1630,6 +1644,11 @@
     padding: 8px;
   }
 
+  .replay-table-compass {
+    /* Fixed height for mobile to prevent layout shift */
+    min-height: 360px;
+  }
+
   .replay-middle-row {
     flex-direction: column;
     gap: 8px;
@@ -1638,6 +1657,15 @@
   .replay-west,
   .replay-east {
     max-width: 100%;
+    /* Fixed dimensions to prevent layout shift as cards are removed */
+    min-width: 80px;
+    min-height: 140px;
+  }
+
+  .replay-row-north,
+  .replay-row-south {
+    /* Fixed height to prevent layout shift as cards are removed */
+    min-height: 80px;
   }
 
   .hand-review-modal .replay-hand .playable-card,
