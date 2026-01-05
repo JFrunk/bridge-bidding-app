@@ -593,11 +593,12 @@ const HandReviewModal = ({
   return (
     <div className="hand-review-modal-overlay" onClick={onClose}>
       <div className="hand-review-modal unified-layout" onClick={e => e.stopPropagation()}>
-        {/* Header with contract info and accuracy badges */}
+        {/* Consolidated header with all summary info */}
         <div className="modal-header">
           <div className="modal-title">
             <h2>Hand Analysis</h2>
             <div className="contract-info">
+              {/* Contract and result */}
               <span className="contract">
                 {handData?.contract || 'Unknown'} by {getDeclarerName(handData?.contract_declarer)}
               </span>
@@ -610,6 +611,24 @@ const HandReviewModal = ({
                   </span>
                 );
               })()}
+              {/* Role indicator */}
+              <span className="role-badge">{userRole}</span>
+              {/* Perfect play comparison */}
+              {handData?.par_comparison?.dd_tricks !== undefined && (
+                <span className="dd-badge" title="Double-dummy optimal tricks">
+                  DD: {handData.par_comparison.dd_tricks}
+                </span>
+              )}
+              {/* Score */}
+              {handData?.hand_score !== undefined && (() => {
+                const userScore = getScoreForUser();
+                return (
+                  <span className={`score-badge ${userScore >= 0 ? 'positive' : 'negative'}`}>
+                    {userScore > 0 ? '+' : ''}{userScore}
+                  </span>
+                );
+              })()}
+              {/* Accuracy badges */}
               {handData?.play_quality_summary?.has_data && (
                 <span className="accuracy-badge">{handData.play_quality_summary.accuracy_rate}% play</span>
               )}
@@ -763,47 +782,6 @@ const HandReviewModal = ({
               )}
             </div>
           )}
-
-          {/* Compact stats row */}
-          <div className="deal-stats-consolidated">
-            <div className="stat-block">
-              <span className="stat-label">Result</span>
-              {(() => {
-                const result = getResultForUser();
-                return (
-                  <span className={`stat-value ${result.isGood ? 'success' : 'danger'}`}>
-                    {result.text}
-                    {result.detail && <> {result.detail}</>}
-                  </span>
-                );
-              })()}
-            </div>
-            {handData?.par_comparison?.dd_tricks !== undefined && (
-              <div className="stat-block">
-                <span className="stat-label">Perfect Play</span>
-                <span className="stat-value">{handData.par_comparison.dd_tricks} tricks</span>
-              </div>
-            )}
-            {handData?.hand_score !== undefined && (
-              <div className="stat-block">
-                <span className="stat-label">Your Score</span>
-                {(() => {
-                  const userScore = getScoreForUser();
-                  return (
-                    <span className={`stat-value ${userScore >= 0 ? 'success' : 'danger'}`}>
-                      {userScore > 0 ? '+' : ''}{userScore}
-                    </span>
-                  );
-                })()}
-              </div>
-            )}
-            <div className="stat-block">
-              <span className="stat-label">Role</span>
-              <span className="stat-value">
-                {userRole}
-              </span>
-            </div>
-          </div>
 
           {/* Action buttons if showing result section */}
           {showResultSection && (onPlayAnother || onReplay || onViewProgress) && (
