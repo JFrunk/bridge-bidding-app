@@ -24,6 +24,12 @@
   padding: 0 4px;
 }
 
+.decay-chart-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .decay-chart-title {
   font-weight: 600;
   font-size: 14px;

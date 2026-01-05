@@ -1,4 +1,5 @@
 import * as React from "react";
+import ChartHelp from '../help/ChartHelp';
 import "./TrickPotentialChart.css";
 
 /**
@@ -132,14 +133,17 @@ export function TrickPotentialChart({ ddTable, onClose, compact = false }) {
     <div className="trick-potential-overlay" onClick={onClose}>
       <div className="trick-potential-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <span className="modal-title">Trick Potential</span>
+          <div className="modal-title-row">
+            <span className="modal-title">Possible Tricks</span>
+            <ChartHelp chartType="possible-tricks" variant="icon" />
+          </div>
           <button className="modal-close" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
         {tableContent}
         <div className="modal-footer">
-          Double-dummy analysis
+          Perfect play analysis
         </div>
       </div>
     </div>
@@ -156,8 +160,8 @@ export function TrickPotentialButton({ onClick, disabled = false }) {
     <button
       onClick={onClick}
       className="trick-potential-button"
-      title="View trick potential"
-      aria-label="View trick potential chart"
+      title="View possible tricks"
+      aria-label="View possible tricks table"
     >
       📊
     </button>

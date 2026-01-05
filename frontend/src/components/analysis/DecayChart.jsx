@@ -19,6 +19,7 @@
  */
 
 import React, { useMemo, useCallback } from 'react';
+import ChartHelp from '../help/ChartHelp';
 import './DecayChart.css';
 
 /**
@@ -120,7 +121,10 @@ const DecayChart = ({
   return (
     <div className="decay-chart-container">
       <div className="decay-chart-header">
-        <span className="decay-chart-title">Trick Potential</span>
+        <div className="decay-chart-title-row">
+          <span className="decay-chart-title">Trick Timeline</span>
+          <ChartHelp chartType="trick-timeline" variant="icon" />
+        </div>
         <span className="decay-chart-stats">
           Start: {curve[0] || 0} | End: {curve[curve.length - 1] || 0}
           {errorMarkers.length > 0 && (
@@ -259,18 +263,18 @@ const DecayChart = ({
       <div className="decay-chart-legend">
         <div className="legend-item">
           <span className="legend-swatch decay-line-swatch"></span>
-          <span>Trick Potential</span>
+          <span>Your Tricks</span>
         </div>
         {errorMarkers.length > 0 && (
           <div className="legend-item">
             <span className="legend-swatch error-swatch"></span>
-            <span>Errors</span>
+            <span>Tricks Lost</span>
           </div>
         )}
         {giftMarkers.length > 0 && (
           <div className="legend-item">
             <span className="legend-swatch gift-swatch"></span>
-            <span>Defense Gifts</span>
+            <span>Tricks Gained</span>
           </div>
         )}
       </div>

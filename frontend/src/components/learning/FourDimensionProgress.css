@@ -1548,6 +1548,14 @@
   color: var(--text-muted, #999);
 }
 
+/* Board Analysis Header */
+.board-analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2, 8px);
+}
+
 /* Session Filter */
 .session-filter {
   display: flex;

@@ -14,6 +14,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getFourDimensionProgress, getDashboardData, getHandHistory, getBoardAnalysis, getBiddingHandsHistory } from '../../services/analyticsService';
+import ChartHelp from '../help/ChartHelp';
 import './FourDimensionProgress.css';
 
 // ============================================================================
@@ -191,7 +192,7 @@ const FourDimensionProgress = ({
         <ProgressBar
           id="performance-overview"
           icon="📊"
-          title="Board Analysis"
+          title="Success Map"
           miniStats={getPerformanceOverviewMiniStats(bid_practice_quality, play_practice_quality)}
           expanded={expandedBars['performance-overview']}
           onToggle={() => toggleBar('performance-overview')}
@@ -967,20 +968,23 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
 
   return (
     <div className="expanded-content board-analysis-content">
-      {/* Session Filter */}
-      <div className="session-filter">
-        <select
-          value={selectedSession || ''}
-          onChange={e => setSelectedSession(e.target.value || null)}
-          className="session-select"
-        >
-          <option value="">Last 25 hands</option>
-          {sessions.map(s => (
-            <option key={s.session_id} value={s.session_id}>
-              Session ({s.hands_count} hands)
-            </option>
-          ))}
-        </select>
+      {/* Header with Session Filter and Help */}
+      <div className="board-analysis-header">
+        <div className="session-filter">
+          <select
+            value={selectedSession || ''}
+            onChange={e => setSelectedSession(e.target.value || null)}
+            className="session-select"
+          >
+            <option value="">Last 25 hands</option>
+            {sessions.map(s => (
+              <option key={s.session_id} value={s.session_id}>
+                Session ({s.hands_count} hands)
+              </option>
+            ))}
+          </select>
+        </div>
+        <ChartHelp chartType="success-map" variant="icon" />
       </div>
 
       {/* Board Analysis Chart */}
