@@ -41,6 +41,15 @@ export function AuthProvider({ children }) {
 
   // Check for existing session on mount
   useEffect(() => {
+    // Check for demo/review mode via URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('demo') === 'true' || urlParams.get('review') === 'true') {
+      const guestId = getOrCreateGuestId();
+      setUser({ id: guestId, username: 'reviewer', display_name: 'Reviewer', isGuest: true });
+      setLoading(false);
+      return;
+    }
+
     // First check for simple auth user (no token required)
     const storedUser = localStorage.getItem('bridge_user');
     if (storedUser) {
