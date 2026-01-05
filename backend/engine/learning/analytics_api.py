@@ -3127,7 +3127,7 @@ def get_bidding_hands_history():
         cursor = conn.cursor()
 
         # Get unique hands from bidding_decisions grouped by session_id + hand_number
-        # This works without session_hands records (for bidding-only sessions)
+        # Join with session_hands to get deal_data (if available)
         cursor.execute("""
             SELECT
                 bd.session_id,
@@ -3135,7 +3135,7 @@ def get_bidding_hands_history():
                 bd.dealer,
                 bd.vulnerability,
                 bd.position as user_position,
-                MAX(bd.deal_data) as deal_data,
+                sh.deal_data as deal_data,
                 MAX(bd.auction_before) as last_auction,
                 MAX(bd.timestamp) as played_at,
                 COUNT(bd.id) as num_bids,
@@ -3145,6 +3145,7 @@ def get_bidding_hands_history():
                 SUM(CASE WHEN bd.correctness = 'suboptimal' THEN 1 ELSE 0 END) as suboptimal_count,
                 SUM(CASE WHEN bd.correctness = 'error' THEN 1 ELSE 0 END) as error_count
             FROM bidding_decisions bd
+            LEFT JOIN session_hands sh ON bd.session_id = CAST(sh.session_id AS TEXT) AND bd.hand_number = sh.hand_number
             WHERE bd.user_id = ?
             GROUP BY bd.session_id, bd.hand_number
             HAVING COUNT(bd.id) > 0

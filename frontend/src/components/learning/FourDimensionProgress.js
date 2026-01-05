@@ -526,7 +526,7 @@ const BiddingHandRow = ({ hand, onReview }) => {
   const features = userHand.features || [];
   const contract = hand.contract || 'Pass';
   const quality = hand.quality_pct || 0;
-  const role = hand.role || '';
+  const role = hand.role || 'Bidder';
 
   // Determine quality indicator
   const getQualityClass = (pct) => {
@@ -535,7 +535,7 @@ const BiddingHandRow = ({ hand, onReview }) => {
     return 'error';
   };
 
-  // Get strain class for contract styling
+  // Get strain class for contract styling - uses standard red/black colors
   const getStrainClass = (contractStr) => {
     if (!contractStr) return '';
     if (contractStr.includes('♠') || contractStr.includes('S')) return 'spades';
@@ -546,22 +546,21 @@ const BiddingHandRow = ({ hand, onReview }) => {
     return '';
   };
 
+  // Order: Role, Final bid, HCP, Shape, Balanced (feature), Quality%, Review button
   return (
     <div className="bidding-hand-row">
-      <div className="hand-info">
-        <span className="hcp-badge">{hcp} HCP</span>
-        <span className="shape-badge">{shape}</span>
-        {features.length > 0 && (
-          <span className="feature-badge" title={features.join(', ')}>
-            {features[0]}
-          </span>
-        )}
-      </div>
-      <span className={`contract ${getStrainClass(contract)}`}>{contract}</span>
       <span className="role">{role}</span>
+      <span className={`contract ${getStrainClass(contract)}`}>{contract}</span>
+      <span className="hcp-badge">{hcp} HCP</span>
+      <span className="shape-badge">{shape}</span>
+      {features.length > 0 && (
+        <span className="feature-badge" title={features.join(', ')}>
+          {features[0]}
+        </span>
+      )}
       <span className={`quality ${getQualityClass(quality)}`}>{quality}%</span>
       {onReview && (
-        <button className="review-link" onClick={onReview}>Review →</button>
+        <button className="review-btn-primary" onClick={onReview}>Review</button>
       )}
     </div>
   );
@@ -693,13 +692,12 @@ const PracticePlayExpanded = ({ quality, handHistory, onReviewHand, onShowHandHi
 
   // Category data now comes from play_decision_stats in the four-dimension progress API
   const tricksLost = playStats?.total_tricks_lost || 0;
-  const categoryBreakdown = playStats?.category_breakdown || {};
-
-  // Get top 6 categories by attempts
-  const topCategories = Object.entries(categoryBreakdown)
-    .filter(([_, data]) => data.attempts > 0)
-    .sort((a, b) => b[1].attempts - a[1].attempts)
-    .slice(0, 6);
+  // Play Categories section hidden per user request
+  // const categoryBreakdown = playStats?.category_breakdown || {};
+  // const topCategories = Object.entries(categoryBreakdown)
+  //   .filter(([_, data]) => data.attempts > 0)
+  //   .sort((a, b) => b[1].attempts - a[1].attempts)
+  //   .slice(0, 6);
 
   return (
     <div className="expanded-content practice-play-content">
@@ -743,8 +741,8 @@ const PracticePlayExpanded = ({ quality, handHistory, onReviewHand, onShowHandHi
         </div>
       )}
 
-      {/* Play Categories Grid */}
-      {topCategories.length > 0 && (
+      {/* Play Categories Grid - Hidden per user request */}
+      {/* {topCategories.length > 0 && (
         <div className="categories-section">
           <div className="section-title">Play Categories</div>
           <div className="categories-grid">
@@ -753,7 +751,7 @@ const PracticePlayExpanded = ({ quality, handHistory, onReviewHand, onShowHandHi
             ))}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };
@@ -1230,7 +1228,7 @@ const HandRow = ({ hand, onReview }) => {
     return score > 0 ? `+${score}` : `${score}`;
   };
 
-  // Get strain class for contract styling
+  // Get strain class for contract styling - uses standard red/black colors
   const getStrainClass = (strain) => {
     if (!strain) return '';
     if (strain.includes('♠') || strain === 'S') return 'spades';
@@ -1243,55 +1241,58 @@ const HandRow = ({ hand, onReview }) => {
 
   const resultDisplay = getResultDisplay();
   const scoreDisplay = getScoreDisplay();
+  const scoreNum = parseInt(scoreDisplay, 10) || 0;
 
+  // Order: Role, Contract, Result, Score, Quality%, Review button
   return (
     <div className="hand-row">
+      <span className="role">{role}</span>
       <span className={`contract ${getStrainClass(contractStrain)}`}>{contractStr}</span>
       <span className={`result ${resultDisplay.isGood ? 'made' : 'down'}`}>{resultDisplay.text}</span>
-      <span className="role">{role}</span>
-      <span className={`score ${parseInt(scoreDisplay, 10) >= 0 ? 'positive' : 'negative'}`}>{scoreDisplay}</span>
-      {quality > 0 && <span className={`quality ${quality >= 70 ? 'good' : quality >= 50 ? 'suboptimal' : 'error'}`}>{quality}%</span>}
+      <span className={`score ${scoreNum >= 0 ? 'positive' : 'negative'}`}>{scoreDisplay}</span>
+      <span className={`quality ${quality >= 70 ? 'good' : quality >= 50 ? 'suboptimal' : 'error'}`}>{quality}%</span>
       {onReview && (
-        <button className="review-link" onClick={onReview}>Review →</button>
+        <button className="review-btn-primary" onClick={onReview}>Review</button>
       )}
     </div>
   );
 };
 
-const CategoryCard = ({ category, data }) => {
-  const displayName = {
-    'opening_lead': 'Opening Lead',
-    'following_suit': 'Follow Suit',
-    'discarding': 'Discarding',
-    'trumping': 'Trumping',
-    'overruffing': 'Overruffing',
-    'sluffing': 'Sluffing',
-    'finessing': 'Finessing',
-    'cashing': 'Cashing',
-    'hold_up': 'Hold-Up',
-    'ducking': 'Ducking'
-  }[category] || category;
-
-  const accuracy = Math.round(data.accuracy || 0);
-  const skillLevel = data.skill_level || 'developing';
-
-  // Skill indicator dots
-  const dots = skillLevel === 'strong' ? 4 : skillLevel === 'good' ? 3 : skillLevel === 'developing' ? 2 : 1;
-
-  return (
-    <div className={`category-card skill-${skillLevel}`}>
-      <div className="category-name">{displayName}</div>
-      <div className="category-stats">
-        <span className="category-accuracy">{accuracy}%</span>
-        <span className="category-dots">
-          {[1, 2, 3, 4].map(i => (
-            <span key={i} className={`dot ${i <= dots ? 'filled' : ''}`}>●</span>
-          ))}
-        </span>
-      </div>
-      <div className="category-plays">{data.attempts} plays</div>
-    </div>
-  );
-};
+// CategoryCard component - Hidden per user request (Play Categories section disabled)
+// const CategoryCard = ({ category, data }) => {
+//   const displayName = {
+//     'opening_lead': 'Opening Lead',
+//     'following_suit': 'Follow Suit',
+//     'discarding': 'Discarding',
+//     'trumping': 'Trumping',
+//     'overruffing': 'Overruffing',
+//     'sluffing': 'Sluffing',
+//     'finessing': 'Finessing',
+//     'cashing': 'Cashing',
+//     'hold_up': 'Hold-Up',
+//     'ducking': 'Ducking'
+//   }[category] || category;
+//
+//   const accuracy = Math.round(data.accuracy || 0);
+//   const skillLevel = data.skill_level || 'developing';
+//
+//   // Skill indicator dots
+//   const dots = skillLevel === 'strong' ? 4 : skillLevel === 'good' ? 3 : skillLevel === 'developing' ? 2 : 1;
+//
+//   return (
+//     <div className={`category-card skill-${skillLevel}`}>
+//       <div className="category-name">{displayName}</div>
+//       <div className="category-stats">
+//         <span className="category-accuracy">{accuracy}%</span>
+//         <span className="category-dots">
+//           {[1, 2, 3, 4].map(i => (
+//             <span key={i} className={`dot ${i <= dots ? 'filled' : ''}`}>●</span>
+//           ))}
+//         </span>
+//       </div>
+//       <div className="category-plays">{data.attempts} plays</div>
+//     </div>
+//   );
+// };
 
 export default FourDimensionProgress;

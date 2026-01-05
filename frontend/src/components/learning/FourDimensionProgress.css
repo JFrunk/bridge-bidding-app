@@ -802,6 +802,7 @@
   color: var(--text-primary-dark, #111);
 }
 
+/* Legacy review link - kept for backwards compatibility */
 .review-link {
   background: none;
   border: none;
@@ -816,36 +817,67 @@
   text-decoration: underline;
 }
 
+/* Primary Review Button - Green CTA (subtle, smaller) */
+.review-btn-primary {
+  background: var(--color-success, #22c55e);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: var(--text-xs, 12px);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.review-btn-primary:hover {
+  background: #16a34a;
+}
+
+.review-btn-primary:active {
+  background: #15803d;
+}
+
 /* Hand Row - scoped selectors to avoid conflicts with other components */
 .hand-row {
   display: flex;
   align-items: center;
   gap: var(--space-2, 8px);
-  padding: var(--space-2, 8px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
   background: var(--bg-secondary, #f8f9fa);
   border-radius: 6px;
   font-size: var(--text-sm, 14px);
+  width: 100%;
+}
+
+.hand-row .role {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-primary-dark, #333);
+  min-width: 65px;
 }
 
 .hand-row .contract {
-  font-weight: 700;
-  min-width: 30px;
+  font-weight: 500;
+  min-width: 40px;
 }
 
+/* Standard bridge suit colors: Red (Hearts/Diamonds), Black (Spades/Clubs) */
 .hand-row .contract.s, .hand-row .contract.spades {
-  color: #1e40af;
+  color: #000000;
 }
 
 .hand-row .contract.h, .hand-row .contract.hearts {
-  color: #dc2626;
+  color: #d32f2f;
 }
 
 .hand-row .contract.d, .hand-row .contract.diamonds {
-  color: #ea580c;
+  color: #d32f2f;
 }
 
 .hand-row .contract.c, .hand-row .contract.clubs {
-  color: #16a34a;
+  color: #000000;
 }
 
 .hand-row .contract.nt, .hand-row .contract.notrump {
@@ -865,10 +897,7 @@
   color: var(--color-danger, #dc2626);
 }
 
-.hand-row .role {
-  color: var(--text-secondary-dark, #666);
-  min-width: 60px;
-}
+/* .hand-row .role defined above with primary text color */
 
 .hand-row .score {
   font-weight: 600;
@@ -914,18 +943,17 @@
   display: flex;
   align-items: center;
   gap: var(--space-2, 8px);
-  padding: var(--space-2, 8px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
   background: var(--bg-secondary, #f8f9fa);
   border-radius: 6px;
   font-size: var(--text-sm, 14px);
+  width: 100%;
 }
 
-.bidding-hand-row .hand-info {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1, 4px);
-  flex: 1;
-  min-width: 0;
+.bidding-hand-row .role {
+  font-size: var(--text-sm, 14px);
+  color: var(--text-primary-dark, #333);
+  min-width: 50px;
 }
 
 .bidding-hand-row .hcp-badge {
@@ -961,36 +989,32 @@
 }
 
 .bidding-hand-row .contract {
-  font-weight: 700;
+  font-weight: 500;
   min-width: 40px;
-  text-align: center;
 }
 
+/* Standard bridge suit colors: Red (Hearts/Diamonds), Black (Spades/Clubs) */
 .bidding-hand-row .contract.spades {
-  color: #1e40af;
+  color: #000000;
 }
 
 .bidding-hand-row .contract.hearts {
-  color: #dc2626;
+  color: #d32f2f;
 }
 
 .bidding-hand-row .contract.diamonds {
-  color: #ea580c;
+  color: #d32f2f;
 }
 
 .bidding-hand-row .contract.clubs {
-  color: #16a34a;
+  color: #000000;
 }
 
 .bidding-hand-row .contract.notrump {
   color: #111;
 }
 
-.bidding-hand-row .role {
-  color: var(--text-secondary-dark, #666);
-  min-width: 55px;
-  font-size: 12px;
-}
+/* .bidding-hand-row .role defined above with primary text color */
 
 .bidding-hand-row .quality {
   font-weight: 600;
