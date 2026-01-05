@@ -107,7 +107,7 @@
     {
       "id": "queen_ask_positive",
       "bid": "6{agreed_suit}",
-      "priority": 910,
+      "priority": 905,
       "description": "Queen Ask response - have trump Queen",
       "conditions": {
         "partner_last_bid": {
@@ -117,10 +117,16 @@
           ]
         },
         "fit_known": true,
-        "has_trump_queen": true
+        "has_trump_queen": true,
+        "hcp": {
+          "min": 12
+        },
+        "total_keycards_min": {
+          "min": 4
+        }
       },
       "forcing": "none",
-      "explanation": "Have trump Queen - bidding 6 of trumps",
+      "explanation": "Show trump queen with {hcp} HCP - partnership has all keycards",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -142,7 +148,14 @@
             "\u2665",
             "\u2660"
           ]
-        }
+        },
+        "my_last_bid": {
+          "in": [
+            "5\u2663",
+            "5\u2666"
+          ]
+        },
+        "asked_blackwood": false
       },
       "forcing": "none",
       "explanation": "No trump Queen - signing off at 5-level",
@@ -222,18 +235,21 @@
     {
       "id": "slam_after_rkcb_5d_hearts",
       "bid": "6\u2665",
-      "priority": 957,
+      "priority": 910,
       "description": "Bid 6H after partner shows 0 or 3 keycards (with 3)",
       "conditions": {
-        "my_last_bid": "4NT",
         "partner_last_bid": "5\u2666",
+        "asked_blackwood": true,
+        "hcp": {
+          "min": 17
+        },
         "agreed_suit": "\u2665",
-        "key_cards": {
-          "min": 2
+        "total_keycards_min": {
+          "min": 4
         }
       },
       "forcing": "none",
-      "explanation": "Small slam - partner has 3 keycards, we have enough",
+      "explanation": "Bid 6♥ with {hcp} HCP after partner shows keycards",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -354,10 +370,19 @@
             "5\u2660"
           ]
         },
-        "fit_known": true
+        "fit_known": true,
+        "hcp": {
+          "min": 15
+        },
+        "total_keycards_min": {
+          "min": 4
+        },
+        "partnership_hcp_min": {
+          "min": 30
+        }
       },
       "forcing": "none",
-      "explanation": "Small slam in {agreed_suit}",
+      "explanation": "Small slam with {hcp} HCP and sufficient keycards",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -375,14 +400,37 @@
         },
         "fit_known": true,
         "hcp": {
-          "min": 18
+          "min": 20
         },
         "key_cards": {
-          "min": 2
+          "min": 3
+        },
+        "have_all_keycards": true,
+        "partnership_hcp_min": {
+          "min": 35
         }
       },
       "forcing": "none",
-      "explanation": "Grand slam!",
+      "explanation": "Grand slam with all keycards!",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "no_blackwood_after_transfer_signoff",
+      "bid": "Pass",
+      "priority": 950,
+      "description": "Do not continue after partner's transfer signoff",
+      "conditions": {
+        "partner_last_bid": {
+          "in": ["4\u2665", "4\u2660"]
+        },
+        "partner_transferred": true,
+        "fit_known": true,
+        "hcp": {
+          "max": 16
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass - partner's game bid is a signoff",
       "sets_forcing_level": "NON_FORCING"
     }
   ]

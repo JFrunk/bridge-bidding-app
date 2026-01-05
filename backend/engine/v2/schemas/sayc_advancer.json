@@ -23,67 +23,70 @@
     {
       "id": "advancer_respond_to_double_spades",
       "bid": "1♠",
-      "priority": 92,
-      "description": "Respond to takeout double with spades",
+      "priority": 82,
+      "description": "Respond to takeout double with spades (minimum)",
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
         "rho_last_bid": {"not_in": ["1♠", "2♠"]},
-        "spades_length": {"min": 4},
-        "hcp": {"max": 10}
+        "spades_length": {"min": 5},
+        "hcp": {"min": 4, "max": 8},
+        "partnership_hcp_min": {"min": 18}
       },
       "forcing": "none",
-      "explanation": "Respond to partner's takeout double with 4+ spades",
+      "explanation": "Respond to partner's takeout double with 5+ spades (minimum)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "advancer_respond_to_double_hearts",
       "bid": "1♥",
-      "priority": 91,
-      "description": "Respond to takeout double with hearts",
+      "priority": 81,
+      "description": "Respond to takeout double with hearts (minimum)",
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
         "rho_last_bid": {"not_in": ["1♥", "2♥"]},
         "hearts_length": {"min": 4},
         "spades_length": {"max": 3},
-        "hcp": {"max": 10}
+        "hcp": {"min": 0, "max": 8}
       },
       "forcing": "none",
-      "explanation": "Respond to partner's takeout double with 4+ hearts",
+      "explanation": "Respond to partner's takeout double with 4+ hearts (minimum)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "advancer_respond_to_double_diamonds",
       "bid": "2♦",
-      "priority": 85,
-      "description": "Respond to takeout double with diamonds",
+      "priority": 80,
+      "description": "Respond to takeout double with diamonds (minimum hand)",
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
-        "diamonds_length": {"min": 4},
+        "diamonds_length": {"min": 6},
         "has_4_card_major": false,
-        "hcp": {"max": 10}
+        "hcp": {"min": 6, "max": 8},
+        "partnership_hcp_min": {"min": 18}
       },
       "forcing": "none",
-      "explanation": "Respond to partner's takeout double with 4+ diamonds",
+      "explanation": "Respond to partner's takeout double with 6+ diamonds (minimum)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "advancer_respond_to_double_clubs",
       "bid": "2♣",
-      "priority": 84,
-      "description": "Respond to takeout double with clubs",
+      "priority": 79,
+      "description": "Respond to takeout double with clubs (minimum hand)",
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
-        "clubs_length": {"min": 4},
+        "clubs_length": {"min": 6},
         "has_4_card_major": false,
-        "diamonds_length": {"max": 3},
-        "hcp": {"max": 10}
+        "diamonds_length": {"max": 4},
+        "hcp": {"min": 6, "max": 8},
+        "partnership_hcp_min": {"min": 18}
       },
       "forcing": "none",
-      "explanation": "Respond to partner's takeout double with 4+ clubs",
+      "explanation": "Respond to partner's takeout double with 6+ clubs (minimum)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -103,36 +106,110 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "advancer_constructive_spades",
+      "bid": "1♠",
+      "priority": 93,
+      "description": "Constructive response in spades (shows 10-11 HCP with quality)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "rho_last_bid": {"not_in": ["1♠", "2♠"]},
+        "spades_length": {"min": 6},
+        "hcp": {"min": 10, "max": 11},
+        "suit_quality_spades": {"min": "good"},
+        "partnership_hcp_min": {"min": 22}
+      },
+      "forcing": "none",
+      "explanation": "Constructive response with 6+ good spades and 10-11 HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_constructive_hearts",
+      "bid": "1♥",
+      "priority": 92,
+      "description": "Constructive response in hearts (shows 9-11 HCP)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "rho_last_bid": {"not_in": ["1♥", "2♥"]},
+        "hearts_length": {"min": 4},
+        "spades_length": {"max": 3},
+        "hcp": {"min": 9, "max": 11}
+      },
+      "forcing": "none",
+      "explanation": "Constructive response with 4+ hearts and 9-11 HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "advancer_jump_to_double_spades",
       "bid": "2♠",
-      "priority": 95,
+      "priority": 96,
       "description": "Jump response showing values with spades",
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
         "rho_last_bid": {"not_in": ["1♠", "2♠"]},
-        "hcp": {"min": 9, "max": 11},
-        "spades_length": {"min": 4}
+        "hcp": {"min": 10, "max": 11},
+        "spades_length": {"min": 5},
+        "suit_quality_spades": {"min": "good"},
+        "partnership_hcp_min": {"min": 22}
       },
       "forcing": "none",
-      "explanation": "Jump showing 9-11 HCP with 4+ spades (invitational)",
+      "explanation": "Jump showing 10-11 HCP with 5+ good spades (invitational)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "advancer_jump_to_double_hearts",
       "bid": "2♥",
-      "priority": 94,
+      "priority": 95,
       "description": "Jump response showing values with hearts",
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
         "rho_last_bid": {"not_in": ["1♥", "2♥"]},
-        "hcp": {"min": 9, "max": 11},
-        "hearts_length": {"min": 4},
-        "spades_length": {"max": 3}
+        "hcp": {"min": 10, "max": 11},
+        "hearts_length": {"min": 5},
+        "spades_length": {"max": 4},
+        "suit_quality_hearts": {"min": "good"},
+        "partnership_hcp_min": {"min": 22}
       },
       "forcing": "none",
-      "explanation": "Jump showing 9-11 HCP with 4+ hearts (invitational)",
+      "explanation": "Jump showing 10-11 HCP with 5+ good hearts (invitational)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_constructive_diamonds",
+      "bid": "2♦",
+      "priority": 87,
+      "description": "Constructive response in diamonds (shows 9-11 HCP)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "diamonds_length": {"min": 5},
+        "has_4_card_major": false,
+        "hcp": {"min": 9, "max": 11}
+      },
+      "forcing": "none",
+      "explanation": "Constructive response with 5+ diamonds and 9-11 HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_constructive_clubs",
+      "bid": "2♣",
+      "priority": 86,
+      "description": "Constructive response in clubs (shows 10-11 HCP with quality)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "clubs_length": {"min": 6},
+        "has_4_card_major": false,
+        "diamonds_length": {"max": 4},
+        "hcp": {"min": 10, "max": 11},
+        "suit_quality_clubs": {"min": "good"},
+        "partnership_hcp_min": {"min": 22}
+      },
+      "forcing": "none",
+      "explanation": "Constructive response with 6+ good clubs, 10-11 HCP (invitational)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -143,11 +220,12 @@
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": {"not_in": ["X", "XX", "Pass", "1NT", "2NT"]},
-        "hcp": {"min": 6, "max": 10},
-        "support_for_partner": {"min": 3}
+        "hcp": {"min": 8, "max": 10},
+        "support_for_partner": {"min": 3},
+        "partnership_hcp_min": 18
       },
       "forcing": "none",
-      "explanation": "Simple raise of partner's overcall with {support_for_partner}-card support",
+      "explanation": "Simple raise of partner's overcall with {support_for_partner}-card support and {hcp} HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -313,10 +391,11 @@
       "id": "respond_unusual_2nt_game_clubs",
       "bid": "5♣",
       "priority": 610,
-      "description": "Game in clubs after Unusual 2NT with fit and values",
+      "description": "Game in clubs after Unusual 2NT with fit and values (only when not doubled)",
       "conditions": {
         "is_advancer": true,
         "partner_bid_unusual_2nt": true,
+        "is_contested": false,
         "clubs_length": {"min": 4},
         "support_points": {"min": 14},
         "prefer_clubs": true
@@ -329,10 +408,11 @@
       "id": "respond_unusual_2nt_game_diamonds",
       "bid": "5♦",
       "priority": 609,
-      "description": "Game in diamonds after Unusual 2NT with fit and values",
+      "description": "Game in diamonds after Unusual 2NT with fit and values (only when not doubled)",
       "conditions": {
         "is_advancer": true,
         "partner_bid_unusual_2nt": true,
+        "is_contested": false,
         "diamonds_length": {"min": 4},
         "support_points": {"min": 14},
         "prefer_diamonds": true
@@ -345,12 +425,14 @@
       "id": "respond_unusual_2nt_prefer_clubs",
       "bid": "3♣",
       "priority": 608,
-      "description": "Prefer clubs after Unusual 2NT",
+      "description": "Prefer clubs after Unusual 2NT (only when not doubled)",
       "conditions": {
         "is_advancer": true,
         "partner_bid_unusual_2nt": true,
+        "is_contested": false,
         "clubs_length": {"min": 3},
-        "prefer_clubs": true
+        "prefer_clubs": true,
+        "partnership_hcp_min": {"min": 14}
       },
       "forcing": "none",
       "explanation": "Support for clubs - partner shows minors via Unusual 2NT",
@@ -360,12 +442,14 @@
       "id": "respond_unusual_2nt_prefer_diamonds",
       "bid": "3♦",
       "priority": 607,
-      "description": "Prefer diamonds after Unusual 2NT",
+      "description": "Prefer diamonds after Unusual 2NT (only when not doubled)",
       "conditions": {
         "is_advancer": true,
         "partner_bid_unusual_2nt": true,
+        "is_contested": false,
         "diamonds_length": {"min": 3},
-        "prefer_diamonds": true
+        "prefer_diamonds": true,
+        "partnership_hcp_min": {"min": 14}
       },
       "forcing": "none",
       "explanation": "Support for diamonds - partner shows minors via Unusual 2NT",
@@ -384,6 +468,23 @@
       },
       "forcing": "none",
       "explanation": "Pass converting partner's double to penalty with 5+ in opponent's suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_pass_weak_no_good_suit",
+      "bid": "Pass",
+      "priority": 89,
+      "description": "Pass with weak hand and no good suit to show",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "hcp": {"max": 2},
+        "has_4_card_major": false,
+        "clubs_length": {"max": 4},
+        "diamonds_length": {"max": 4}
+      },
+      "forcing": "none",
+      "explanation": "Pass with very weak hand ({hcp} HCP) and no good suit",
       "sets_forcing_level": "NON_FORCING"
     },
     {

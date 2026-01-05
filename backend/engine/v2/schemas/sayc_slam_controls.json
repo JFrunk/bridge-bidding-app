@@ -12,7 +12,9 @@
       "conditions": {
         "in_slam_zone": true,
         "has_denied_control": true,
-        "agreed_suit": {"in": ["♥", "♠"]}
+        "agreed_suit": {"in": ["♥", "♠"]},
+        "hcp": {"min": 15},
+        "partnership_hcp_min": {"min": 28}
       },
       "forcing": "none",
       "explanation": "Signing off - no control in {denied_control_suit}",
@@ -192,15 +194,17 @@
     {
       "id": "bid_slam_all_keycards",
       "bid": "6{agreed_suit}",
-      "priority": 970,
+      "priority": 900,
       "description": "Bid slam with all keycards",
       "conditions": {
         "partner_last_bid": {"in": ["5♣", "5♦", "5♥", "5♠"]},
         "have_all_keycards": true,
-        "fit_known": true
+        "fit_known": true,
+        "hcp": {"min": 15},
+        "partnership_hcp_min": {"min": 33}
       },
       "forcing": "none",
-      "explanation": "Slam - partnership has all keycards",
+      "explanation": "Bid slam with all keycards and {hcp} HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {

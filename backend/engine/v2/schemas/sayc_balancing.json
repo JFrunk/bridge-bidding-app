@@ -115,7 +115,7 @@
       "id": "balancing_suit_1_level",
       "bid": "1{longest_suit}",
       "priority": 80,
-      "description": "Balancing 1-level suit bid",
+      "description": "Balancing 1-level suit bid (need decent hand and suit quality)",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
@@ -126,22 +126,57 @@
           ]
         },
         "hcp": {
-          "min": 5,
+          "min": 8,
           "max": 14
         },
         "longest_suit_length": {
           "min": 5
+        },
+        "suit_quality_longest": {
+          "min": "good"
+        },
+        "longest_suit_hcp": {
+          "min": 3
+        },
+        "partnership_hcp_min": {
+          "min": 18
         }
       },
       "forcing": "none",
-      "explanation": "Balancing bid in {longest_suit} with {hcp} HCP",
+      "explanation": "Balancing bid in {longest_suit} with {hcp} HCP (need values since partner passed)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "balancing_suit_2_level",
       "bid": "2{longest_suit}",
       "priority": 85,
-      "description": "Balancing 2-level suit bid",
+      "description": "Balancing 2-level suit bid (RISKY - need strong suit to protect)",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": true,
+        "hcp": {
+          "min": 10,
+          "max": 14
+        },
+        "longest_suit_length": {
+          "min": 5
+        },
+        "suit_quality_longest": {
+          "min": "excellent"
+        },
+        "longest_suit_hcp": {
+          "min": 6
+        }
+      },
+      "forcing": "none",
+      "explanation": "Balancing 2-level bid with {hcp} HCP and strong suit (risky - partner passed)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "balancing_suit_2_level_long",
+      "bid": "2{longest_suit}",
+      "priority": 86,
+      "description": "Balancing 2-level with long suit (6+) - still need values",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
@@ -150,34 +185,17 @@
           "max": 14
         },
         "longest_suit_length": {
-          "min": 5
+          "min": 6
         },
         "suit_quality_longest": {
-          "min": "fair"
-        }
-      },
-      "forcing": "none",
-      "explanation": "Balancing 2-level bid with {hcp} HCP",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
-      "id": "balancing_suit_2_level_long",
-      "bid": "2{longest_suit}",
-      "priority": 86,
-      "description": "Balancing 2-level with long suit (6+)",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "hcp": {
-          "min": 5,
-          "max": 14
+          "min": "good"
         },
-        "longest_suit_length": {
-          "min": 6
+        "longest_suit_hcp": {
+          "min": 5
         }
       },
       "forcing": "none",
-      "explanation": "Balancing 2-level bid with 6+ card suit and {hcp} HCP",
+      "explanation": "Balancing 2-level bid with 6+ card {longest_suit} and {hcp} HCP (partner passed)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -219,54 +237,64 @@
         "is_balancing": false,
         "partner_balancing": true,
         "hcp": {
-          "min": 10,
-          "max": 12
+          "min": 11,
+          "max": 13
         },
         "suit_length": {
           "min": 5
+        },
+        "suit_quality_longest": {
+          "min": "good"
         }
       },
       "forcing": "none",
-      "explanation": "Jump showing {hcp} HCP (partner may have only 9)",
+      "explanation": "Jump showing {hcp} HCP (partner may have only 9) - need extra for 3-level",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "advancer_respond_to_balancing_double",
       "bid": "2{suit}",
       "priority": 80,
-      "description": "Simple response to balancing double",
+      "description": "Simple response to balancing double - needs extra values since partner may be light (8-14 HCP)",
       "conditions": {
         "partner_last_bid": "X",
         "is_balancing": false,
         "hcp": {
-          "min": 6,
-          "max": 10
+          "min": 10,
+          "max": 12
         },
         "suit_length": {
           "min": 4
+        },
+        "partnership_hcp_min": {
+          "min": 18
         }
       },
       "forcing": "none",
       "suit_selection": "longest_unbid",
-      "explanation": "Respond to partner's balancing double",
+      "explanation": "Respond to partner's balancing double with {hcp} HCP - be conservative (partner may have only 8-10)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "advancer_nt_after_balancing_double",
       "bid": "2NT",
       "priority": 85,
-      "description": "2NT response to balancing double",
+      "description": "2NT response to balancing double - need extra values since partner may be light",
       "conditions": {
         "partner_last_bid": "X",
+        "partner_balancing": true,
         "hcp": {
-          "min": 10,
+          "min": 11,
           "max": 12
         },
         "is_balanced": true,
-        "stopper_in_opponent_suit": true
+        "stopper_in_opponent_suit": true,
+        "partnership_hcp_min": {
+          "min": 22
+        }
       },
       "forcing": "none",
-      "explanation": "2NT showing {hcp} HCP balanced with stopper",
+      "explanation": "2NT showing {hcp} HCP balanced with stopper (conservative - partner may have only 8-10 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

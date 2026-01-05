@@ -11,11 +11,14 @@ Includes Forcing Level state tracking for proper handling of:
 """
 
 import json
+import logging
 import re
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class ForcingLevel(Enum):
@@ -52,6 +55,7 @@ class BidCandidate:
     conditions_met: Dict[str, bool]
     sets_forcing_level: Optional[str] = None  # The forcing level this bid establishes
     is_limit_bid: bool = False  # Whether this bid shows a narrow range (pass or accept)
+    schema_file: Optional[str] = None  # Source schema file for tracking
 
 
 @dataclass
@@ -205,7 +209,7 @@ class SchemaInterpreter:
 
         # Evaluate all schemas
         for category, schema in self.schemas.items():
-            category_candidates = self._evaluate_schema(schema, features)
+            category_candidates = self._evaluate_schema(schema, features, category)
             candidates.extend(category_candidates)
 
         if not candidates:
@@ -233,19 +237,24 @@ class SchemaInterpreter:
         candidates = []
 
         for category, schema in self.schemas.items():
-            category_candidates = self._evaluate_schema(schema, features)
+            category_candidates = self._evaluate_schema(schema, features, category)
             candidates.extend(category_candidates)
 
         candidates.sort(key=lambda c: c.priority, reverse=True)
         return candidates
 
-    def _evaluate_schema(self, schema: Dict, features: Dict[str, Any]) -> List[BidCandidate]:
+    def _evaluate_schema(self, schema: Dict, features: Dict[str, Any], schema_file: str = None) -> List[BidCandidate]:
         """Evaluate all rules in a schema against features."""
         candidates = []
 
         for rule in schema.get('rules', []):
             if self._evaluate_rule(rule, features):
                 bid = self._resolve_bid(rule.get('bid', 'Pass'), features)
+
+                # Skip rules where bid resolution failed (e.g., missing suit)
+                if bid is None:
+                    continue
+
                 explanation = self._format_explanation(rule.get('explanation', ''), features)
 
                 candidate = BidCandidate(
@@ -256,7 +265,8 @@ class SchemaInterpreter:
                     forcing=rule.get('forcing', 'none'),
                     conditions_met={},  # Could populate for debugging
                     sets_forcing_level=rule.get('sets_forcing_level'),  # Track forcing level
-                    is_limit_bid=rule.get('is_limit_bid', False)  # Track limit bids
+                    is_limit_bid=rule.get('is_limit_bid', False),  # Track limit bids
+                    schema_file=schema_file  # Track source schema for analysis
                 )
                 candidates.append(candidate)
 
@@ -648,6 +658,20 @@ class SchemaInterpreter:
             return str(value) if value else ''
 
         resolved = re.sub(pattern, replace_var, bid_template)
+
+        # VALIDATION: Check for malformed bids (e.g., "3" without a suit)
+        # Valid bids are: Pass, X, XX, or level+suit/NT (e.g., "1♠", "3NT", "4♥")
+        if resolved and resolved not in ['Pass', 'X', 'XX']:
+            if len(resolved) == 1 and resolved.isdigit():
+                # Just a level with no suit - this is invalid
+                logger.warning(f"Invalid bid resolved: '{resolved}' from template '{bid_template}' - missing suit")
+                return None  # Signal that bid resolution failed
+            if len(resolved) >= 2 and resolved[0].isdigit():
+                suit_part = resolved[1:]
+                if suit_part not in ['♠', '♥', '♦', '♣', 'NT', '♠', '♥', '♦', '♣']:
+                    logger.warning(f"Invalid bid resolved: '{resolved}' from template '{bid_template}' - invalid suit")
+                    return None  # Signal that bid resolution failed
+
         return resolved
 
     def _format_explanation(self, template: str, features: Dict[str, Any]) -> str:
@@ -719,6 +743,10 @@ class SchemaInterpreter:
         for category, schema in self.schemas.items():
             for rule in schema.get('rules', []):
                 bid = self._resolve_bid(rule.get('bid', 'Pass'), features)
+
+                # Skip rules where bid resolution failed
+                if bid is None:
+                    continue
 
                 # Filter by target bid if specified
                 if target_bid and bid != target_bid:

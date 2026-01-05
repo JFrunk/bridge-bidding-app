@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "fourth_suit_forcing",
+  "description": "Fourth Suit Forcing convention - artificial game force",
+  "rules": [
+    {
+      "id": "fsf_ask",
+      "bid": "{fourth_suit}",
+      "priority": 750,
+      "description": "Fourth Suit Forcing - artificial game force asking for more information",
+      "conditions": {
+        "is_responder_rebid": true,
+        "hcp": {
+          "min": 11
+        },
+        "three_suits_bid": true,
+        "NOT": {
+          "four_suits_bid": true
+        }
+      },
+      "forcing": "game",
+      "explanation": "Fourth Suit Forcing with {hcp} HCP - asking for stopper or support",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "fsf_response_stopper",
+      "bid": "2NT",
+      "priority": 745,
+      "description": "FSF response - showing stopper in fourth suit",
+      "conditions": {
+        "is_rebid": true,
+        "partner_bid_fsf": true,
+        "stopper_in_fourth_suit": true,
+        "hcp": {
+          "min": 12,
+          "max": 14
+        }
+      },
+      "forcing": "game",
+      "explanation": "Showing stopper in the fourth suit",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "fsf_response_stopper_strong",
+      "bid": "3NT",
+      "priority": 746,
+      "description": "FSF response - strong hand with stopper",
+      "conditions": {
+        "is_rebid": true,
+        "partner_bid_fsf": true,
+        "stopper_in_fourth_suit": true,
+        "hcp": {
+          "min": 15
+        }
+      },
+      "forcing": "none",
+      "explanation": "Strong hand with stopper - 3NT to play",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "fsf_response_support_3_card",
+      "bid": "3{responder_first_suit}",
+      "priority": 744,
+      "description": "FSF response - showing 3-card support for responder's first suit",
+      "conditions": {
+        "is_rebid": true,
+        "partner_bid_fsf": true,
+        "support_for_responder_first_suit": {
+          "min": 3
+        },
+        "NOT": {
+          "stopper_in_fourth_suit": true
+        }
+      },
+      "forcing": "game",
+      "explanation": "Showing 3-card support for responder's suit",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    },
+    {
+      "id": "fsf_response_rebid_own_suit",
+      "bid": "3{opener_first_suit}",
+      "priority": 743,
+      "description": "FSF response - rebidding 6+ card suit without stopper or support",
+      "conditions": {
+        "is_rebid": true,
+        "partner_bid_fsf": true,
+        "opener_first_suit_length": {
+          "min": 6
+        },
+        "NOT": {
+          "stopper_in_fourth_suit": true
+        },
+        "NOT": {
+          "support_for_responder_first_suit": {
+            "min": 3
+          }
+        }
+      },
+      "forcing": "game",
+      "explanation": "Rebidding 6-card suit - no stopper or support",
+      "sets_forcing_level": "FORCING_TO_GAME"
+    }
+  ]
+}

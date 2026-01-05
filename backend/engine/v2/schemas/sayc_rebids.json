@@ -299,6 +299,7 @@
       "description": "1NT opener shows 4 spades in response to Stayman",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "my_last_bid": "1NT",
         "partner_last_bid": "2\u2663",
         "spades_length": {
@@ -316,6 +317,7 @@
       "description": "1NT opener shows 4 hearts in response to Stayman (no 4 spades)",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "my_last_bid": "1NT",
         "partner_last_bid": "2\u2663",
         "hearts_length": {
@@ -336,6 +338,7 @@
       "description": "1NT opener denies 4-card major in response to Stayman",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "my_last_bid": "1NT",
         "partner_last_bid": "2\u2663",
         "spades_length": {
@@ -356,6 +359,7 @@
       "description": "1NT opener completes Jacoby transfer to hearts",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "my_last_bid": "1NT",
         "partner_last_bid": "2\u2666"
       },
@@ -370,6 +374,7 @@
       "description": "1NT opener completes Jacoby transfer to spades",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "my_last_bid": "1NT",
         "partner_last_bid": "2\u2665"
       },
@@ -434,29 +439,32 @@
     {
       "id": "opener_accept_smolen_spades",
       "bid": "4\u2660",
-      "priority": 811,
+      "priority": 650,
       "description": "Accept Smolen with 3+ spades (partner has 5)",
       "conditions": {
         "is_rebid": true,
-        "my_last_bid": "2\u2666",
-        "partner_last_bid": "3\u2665",
+        "partner_bid_smolen": true,
+        "opener_opened_1nt": true,
         "spades_length": {
           "min": 3
+        },
+        "hcp": {
+          "min": 15
         }
       },
       "forcing": "none",
-      "explanation": "Game in spades - we have a fit",
+      "explanation": "Accept Smolen transfer with {hcp} HCP and {spades_length} spades",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "opener_reject_smolen_spades",
       "bid": "3NT",
-      "priority": 810,
+      "priority": 648,
       "description": "Reject Smolen - no spade fit",
       "conditions": {
         "is_rebid": true,
-        "my_last_bid": "2\u2666",
-        "partner_last_bid": "3\u2665",
+        "partner_bid_smolen": true,
+        "opener_opened_1nt": true,
         "spades_length": {
           "max": 2
         }
@@ -468,29 +476,32 @@
     {
       "id": "opener_accept_smolen_hearts",
       "bid": "4\u2665",
-      "priority": 809,
+      "priority": 649,
       "description": "Accept Smolen with 3+ hearts (partner has 5)",
       "conditions": {
         "is_rebid": true,
-        "my_last_bid": "2\u2666",
-        "partner_last_bid": "3\u2660",
+        "partner_bid_smolen": true,
+        "opener_opened_1nt": true,
         "hearts_length": {
           "min": 3
+        },
+        "hcp": {
+          "min": 15
         }
       },
       "forcing": "none",
-      "explanation": "Game in hearts - we have a fit",
+      "explanation": "Accept Smolen transfer with {hcp} HCP and {hearts_length} hearts",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "opener_reject_smolen_hearts",
       "bid": "3NT",
-      "priority": 808,
+      "priority": 647,
       "description": "Reject Smolen - no heart fit",
       "conditions": {
         "is_rebid": true,
-        "my_last_bid": "2\u2666",
-        "partner_last_bid": "3\u2660",
+        "partner_bid_smolen": true,
+        "opener_opened_1nt": true,
         "hearts_length": {
           "max": 2
         }
@@ -503,9 +514,10 @@
       "id": "opener_rebid_1nt",
       "bid": "1NT",
       "priority": 250,
-      "description": "Opener rebids 1NT with balanced minimum",
+      "description": "Opener rebids 1NT with balanced minimum (uncontested only)",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "hcp": {
           "min": 12,
           "max": 14
@@ -566,6 +578,7 @@
       "description": "Opener raises partner's major with 3-card support",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "partner_last_bid": {
           "in": [
             "1\u2665",
@@ -574,10 +587,13 @@
         },
         "hcp": {
           "min": 12,
-          "max": 15
+          "max": 14
         },
         "support_for_partner": {
           "min": 3
+        },
+        "partnership_hcp_min": {
+          "min": 18
         }
       },
       "forcing": "none",
@@ -591,6 +607,7 @@
       "description": "Opener raises partner's major with 4-card support (minimum)",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "partner_last_bid": {
           "in": [
             "1\u2665",
@@ -603,6 +620,9 @@
         },
         "support_for_partner": {
           "min": 4
+        },
+        "partnership_hcp_min": {
+          "min": 18
         }
       },
       "forcing": "none",
@@ -616,6 +636,7 @@
       "description": "Opener jump raises partner's major (invitational)",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "partner_last_bid": {
           "in": [
             "1\u2665",
@@ -628,6 +649,9 @@
         },
         "support_for_partner": {
           "min": 4
+        },
+        "partnership_hcp_min": {
+          "min": 21
         }
       },
       "forcing": "none",
@@ -663,9 +687,10 @@
       "id": "opener_rebid_own_suit",
       "bid": "2{first_suit}",
       "priority": 255,
-      "description": "Opener rebids own suit showing 6+ cards",
+      "description": "Opener rebids own suit showing 6+ cards in uncontested auctions",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "hcp": {
           "min": 12,
           "max": 15
@@ -675,10 +700,13 @@
         },
         "my_bid_count": {
           "exact": 1
+        },
+        "partnership_hcp_min": {
+          "min": 18
         }
       },
       "forcing": "none",
-      "explanation": "Rebid own suit showing 6+ card suit minimum",
+      "explanation": "Rebid own 6+ card suit with {hcp} HCP in uncontested auction",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -762,9 +790,10 @@
       "id": "opener_rebid_minor_5_card",
       "bid": "2{first_suit}",
       "priority": 610,
-      "description": "Opener rebids 5+ card minor after responder's new suit",
+      "description": "Opener rebids 5+ card minor after responder's new suit (uncontested)",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "my_last_bid": {
           "in": ["1\u2666", "1\u2663"]
         },
@@ -777,6 +806,9 @@
         },
         "my_bid_count": {
           "exact": 1
+        },
+        "partnership_hcp_min": {
+          "min": 18
         }
       },
       "forcing": "none",
@@ -790,6 +822,7 @@
       "description": "Opener reverses showing 17+ HCP (Barrier Principle)",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "hcp": {
           "min": 17
         },
@@ -802,6 +835,9 @@
         },
         "quick_tricks": {
           "min": 2.0
+        },
+        "partnership_hcp_min": {
+          "min": 23
         }
       },
       "forcing": "one_round",
@@ -816,8 +852,9 @@
       "description": "Opener reverses with minimum reverse values",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "hcp": {
-          "min": 16,
+          "min": 17,
           "max": 18
         },
         "second_suit_length": {
@@ -826,6 +863,9 @@
         "second_suit_higher": true,
         "my_bid_count": {
           "exact": 1
+        },
+        "partnership_hcp_min": {
+          "min": 23
         }
       },
       "forcing": "one_round",
@@ -839,6 +879,7 @@
       "description": "Opener bids new lower suit (below barrier - no extra strength needed)",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "hcp": {
           "min": 12,
           "max": 17
@@ -849,6 +890,9 @@
         "second_suit_lower": true,
         "my_bid_count": {
           "exact": 1
+        },
+        "partnership_hcp_min": {
+          "min": 18
         }
       },
       "forcing": "none",
@@ -976,9 +1020,10 @@
       "id": "responder_delayed_game_raise",
       "bid": "3{partner_suit}",
       "priority": 323,
-      "description": "Responder shows delayed game raise",
+      "description": "Responder shows delayed game raise (not after preempt)",
       "conditions": {
         "is_response": true,
+        "partner_preempted": false,
         "my_bid_count": {
           "min": 1
         },
@@ -995,6 +1040,9 @@
         },
         "support_for_partner": {
           "min": 3
+        },
+        "partnership_hcp_min": {
+          "min": 25
         }
       },
       "forcing": "one_round",
@@ -1321,14 +1369,18 @@
       "description": "Opener explores slam after partner's game raise",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "partner_last_bid": {
           "in": ["4♥", "4♠"]
         },
         "hcp": {
-          "min": 18
+          "min": 19
         },
         "support_for_partner": {
           "min": 3
+        },
+        "partnership_hcp_min": {
+          "min": 32
         }
       },
       "forcing": "one_round",
@@ -1338,7 +1390,7 @@
     {
       "id": "opener_respond_negative_double_spades",
       "bid": "1♠",
-      "priority": 405,
+      "priority": 651,
       "description": "Opener shows spades after partner's negative double",
       "conditions": {
         "is_rebid": true,
@@ -1358,7 +1410,7 @@
     {
       "id": "opener_respond_negative_double_hearts",
       "bid": "2♥",
-      "priority": 404,
+      "priority": 650,
       "description": "Opener shows hearts after partner's negative double",
       "conditions": {
         "is_rebid": true,
@@ -1368,11 +1420,14 @@
         },
         "hcp": {
           "min": 12,
-          "max": 15
+          "max": 16
+        },
+        "partnership_hcp_min": {
+          "min": 18
         }
       },
       "forcing": "none",
-      "explanation": "Show {hearts_length} hearts after partner's negative double",
+      "explanation": "Show {hearts_length} hearts after partner's negative double (minimum response)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1382,17 +1437,21 @@
       "description": "Opener rebids own suit after partner's negative double",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "partner_last_bid": "X",
         "longest_suit_length": {
           "min": 6
         },
         "hcp": {
-          "min": 12,
+          "min": 13,
           "max": 15
+        },
+        "partnership_hcp_min": {
+          "min": 19
         }
       },
       "forcing": "none",
-      "explanation": "Rebid 6+ card suit after partner's negative double",
+      "explanation": "Rebid 6+ card suit after partner's negative double with sufficient partnership strength",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1443,7 +1502,7 @@
     {
       "id": "opener_invite_after_single_raise_medium",
       "bid": "3{my_suit}",
-      "priority": 740,
+      "priority": 540,
       "description": "Opener invites game after partner's single raise (15-17 HCP)",
       "conditions": {
         "is_rebid": true,
@@ -1455,13 +1514,31 @@
           "in": ["2\u2665", "2\u2660"]
         },
         "partner_raised_my_suit": true,
+        "is_contested": false,
         "hcp": {
           "min": 15,
           "max": 17
         }
       },
       "forcing": "none",
-      "explanation": "Invite game with {hcp} HCP after partner's raise",
+      "explanation": "Invite with {hcp} HCP after partner's uncontested raise",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_pass_after_contested_raise",
+      "bid": "Pass",
+      "priority": 200,
+      "description": "Pass after partner's competitive raise",
+      "conditions": {
+        "is_rebid": true,
+        "partner_raised_my_suit": true,
+        "is_contested": true,
+        "hcp": {
+          "max": 16
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass - partner's raise was competitive/preemptive",
       "sets_forcing_level": "NON_FORCING"
     },
     {

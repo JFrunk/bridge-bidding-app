@@ -164,9 +164,10 @@
       "description": "Splinter: Heart shortness over 1\u2660",
       "conditions": {
         "is_response": true,
+        "is_contested": false,
         "partner_last_bid": "1\u2660",
         "hcp": {
-          "min": 11,
+          "min": 12,
           "max": 14
         },
         "spades_length": {
@@ -174,6 +175,9 @@
         },
         "hearts_length": {
           "max": 1
+        },
+        "partnership_hcp_min": {
+          "min": 25
         }
       },
       "forcing": "game",

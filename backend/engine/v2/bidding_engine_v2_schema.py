@@ -59,6 +59,11 @@ class BiddingEngineV2Schema:
         self._v1_fallback_count = 0
         self._total_bid_count = 0
 
+        # Tracking for analysis - stores info about last bid decision
+        self._last_rule_id: Optional[str] = None
+        self._last_schema_file: Optional[str] = None
+        self._last_priority: Optional[int] = None
+
         # Initialize conflict resolver for Monte Carlo integration
         if simulator is not None:
             self.conflict_resolver = ConflictResolver(simulator)
@@ -153,13 +158,24 @@ class BiddingEngineV2Schema:
                         candidate.rule_id
                     )
 
+                # Store rule info for analysis
+                self._last_rule_id = candidate.rule_id
+                self._last_schema_file = getattr(candidate, 'schema_file', None)
+                self._last_priority = candidate.priority
+
                 return (final_bid, final_explanation)
 
         # No schema rule matched - try V1 fallback if enabled
         if self.use_v1_fallback:
+            self._last_rule_id = 'v1_fallback'
+            self._last_schema_file = None
+            self._last_priority = 0
             return self._get_v1_fallback_bid(hand, auction_history, my_position, vulnerability)
 
         # Fallback to Pass (but check forcing constraints first)
+        self._last_rule_id = 'default_pass'
+        self._last_schema_file = None
+        self._last_priority = 0
         forcing_validation = self.interpreter.validate_bid_against_forcing("Pass")
         if not forcing_validation.is_valid:
             # Cannot pass - return a warning explanation
@@ -271,6 +287,15 @@ class BiddingEngineV2Schema:
         """
         Add derived features needed for schema rules that aren't in base extraction.
         """
+        # Seat calculation (1-4)
+        # For opening bids, seat is based on how many passes before you:
+        # - 1st seat (dealer): no passes before
+        # - 2nd seat: 1 pass before
+        # - 3rd seat: 2 passes before
+        # - 4th seat (balancing): 3 passes before
+        pass_count = sum(1 for b in auction_history if b == 'Pass')
+        features['seat'] = min(pass_count + 1, 4)  # Cap at 4
+
         # Rule of 20 check
         longest = features.get('longest_suit_length', 0)
         second_longest = sorted(
@@ -282,8 +307,23 @@ class BiddingEngineV2Schema:
         # Suit quality for longest suit
         longest_suit = features.get('longest_suit')
         if longest_suit:
-            from engine.v2.features.enhanced_extractor import evaluate_suit_quality
+            from engine.v2.features.enhanced_extractor import evaluate_suit_quality, get_suit_hcp
             features['suit_quality_longest'] = evaluate_suit_quality(hand, longest_suit)
+            features['longest_suit_hcp'] = get_suit_hcp(hand, longest_suit)
+
+        # Add suit-specific HCP features (for preempts, overcalls)
+        from engine.v2.features.enhanced_extractor import get_suit_hcp
+        features['spades_hcp'] = get_suit_hcp(hand, '♠')
+        features['hearts_hcp'] = get_suit_hcp(hand, '♥')
+        features['diamonds_hcp'] = get_suit_hcp(hand, '♦')
+        features['clubs_hcp'] = get_suit_hcp(hand, '♣')
+
+        # Add suit-specific quality features (for preempts)
+        from engine.v2.features.enhanced_extractor import evaluate_suit_quality
+        features['suit_quality_spades'] = evaluate_suit_quality(hand, '♠')
+        features['suit_quality_hearts'] = evaluate_suit_quality(hand, '♥')
+        features['suit_quality_diamonds'] = evaluate_suit_quality(hand, '♦')
+        features['suit_quality_clubs'] = evaluate_suit_quality(hand, '♣')
 
         # Check if all unbid suits have support (for takeout doubles)
         opening_bid = features.get('opening_bid')

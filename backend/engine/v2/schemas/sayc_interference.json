@@ -38,18 +38,24 @@
           ]
         },
         "hcp": {
-          "min": 8,
+          "min": 10,
           "max": 16
         },
         "spades_length": {
           "min": 5
+        },
+        "spades_hcp": {
+          "min": 4
+        },
+        "suit_quality": {
+          "min": "good"
         },
         "quick_tricks": {
           "min": 1.0
         }
       },
       "forcing": "none",
-      "explanation": "Simple overcall showing 8-16 HCP and 5+ spades",
+      "explanation": "Simple overcall showing 10-16 HCP and good 5+ spades",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -66,43 +72,58 @@
           ]
         },
         "hcp": {
-          "min": 8,
+          "min": 10,
           "max": 16
         },
         "hearts_length": {
           "min": 5
+        },
+        "hearts_hcp": {
+          "min": 4
+        },
+        "suit_quality_hearts": {
+          "min": "good"
         },
         "quick_tricks": {
           "min": 1.0
         }
       },
       "forcing": "none",
-      "explanation": "Simple overcall showing 8-16 HCP and 5+ hearts",
+      "explanation": "Simple overcall showing 10-16 HCP and good 5+ hearts",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "simple_overcall_2_level",
       "bid": "2{longest_suit}",
       "priority": 95,
-      "description": "Simple 2-level overcall",
+      "description": "Simple 2-level overcall with strong suit",
       "conditions": {
         "is_overcall": true,
         "hcp": {
-          "min": 10,
+          "min": 12,
           "max": 16
         },
         "longest_suit_length": {
           "min": 5
         },
+        "suit_quality_longest": {
+          "min": "good"
+        },
+        "suit_hcp": {
+          "min": 5
+        },
         "quick_tricks": {
           "min": 1.5
+        },
+        "partnership_hcp_min": {
+          "min": 20
         },
         "opponent_suit_length": {
           "max": 3
         }
       },
       "forcing": "none",
-      "explanation": "2-level overcall showing 10-16 HCP and good 5+ card suit",
+      "explanation": "2-level overcall showing 12-16 HCP and good 5+ card suit with honors",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -276,43 +297,157 @@
     {
       "id": "free_raise_after_interference",
       "bid": "2{partner_suit}",
-      "priority": 215,
-      "description": "Free raise after opponent's overcall",
+      "priority": 810,
+      "description": "Free raise after opponent's suit overcall - shows genuine values and real support",
       "conditions": {
         "is_response": true,
         "is_contested": true,
         "opener_relationship": "Partner",
+        "rho_last_bid": {
+          "not_in": ["X", "XX", "Pass"]
+        },
         "hcp": {
           "min": 8,
           "max": 10
         },
         "support_for_partner": {
-          "min": 3
+          "min": 4
+        },
+        "partnership_hcp_min": {
+          "min": 20
         }
       },
       "forcing": "none",
-      "explanation": "Free raise showing 8-10 HCP with support",
+      "explanation": "Free raise showing 8-10 HCP with {support_for_partner}-card support after overcall (genuine interest)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "jump_raise_after_interference",
       "bid": "3{partner_suit}",
       "priority": 220,
-      "description": "Jump raise (preemptive) after interference",
+      "description": "Jump raise (preemptive) after suit overcall - requires shape and support",
       "conditions": {
         "is_response": true,
         "is_contested": true,
         "opener_relationship": "Partner",
+        "rho_last_bid": {
+          "not_in": ["X", "XX", "Pass"]
+        },
         "hcp": {
-          "min": 6,
-          "max": 9
+          "min": 3,
+          "max": 7
+        },
+        "support_for_partner": {
+          "min": 5
+        },
+        "singleton_or_void": true
+      },
+      "forcing": "none",
+      "explanation": "Preemptive jump raise with {support_for_partner}-card support and shape after overcall",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "simple_raise_after_double",
+      "bid": "2{partner_suit}",
+      "priority": 805,
+      "description": "Simple raise after opponent's takeout double - disabled due to support calculation issues",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "rho_last_bid": "X",
+        "hcp": {
+          "min": 7,
+          "max": 10
+        },
+        "support_for_partner": {
+          "min": 5
+        },
+        "partnership_hcp_min": {
+          "min": 22
+        }
+      },
+      "forcing": "none",
+      "explanation": "Simple raise with {hcp} HCP and {support_for_partner}-card support after double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "preemptive_3_level_after_double",
+      "bid": "3{partner_suit}",
+      "priority": 808,
+      "description": "Preemptive jump raise after opponent's takeout double - weak with shape",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "rho_last_bid": "X",
+        "hcp": {
+          "min": 3,
+          "max": 7
+        },
+        "support_for_partner": {
+          "min": 5
+        },
+        "singleton_or_void": true
+      },
+      "forcing": "none",
+      "explanation": "Preemptive jump raise with {support_for_partner}-card support and shape after double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "jordan_2nt_after_double",
+      "bid": "2NT",
+      "priority": 810,
+      "description": "Jordan 2NT showing limit raise or better after opponent's takeout double",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "partner_last_bid": {
+          "in": [
+            "1\u2665",
+            "1\u2660"
+          ]
+        },
+        "rho_last_bid": "X",
+        "hcp": {
+          "min": 10
         },
         "support_for_partner": {
           "min": 4
         }
       },
+      "forcing": "one_round",
+      "explanation": "Jordan 2NT showing {hcp} HCP with {support_for_partner}-card support (limit raise or better)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "preemptive_4M_after_double",
+      "bid": "4{partner_suit}",
+      "priority": 815,
+      "description": "Preemptive game raise after opponent's takeout double - needs fit and shape",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "partner_last_bid": {
+          "in": [
+            "1\u2665",
+            "1\u2660"
+          ]
+        },
+        "rho_last_bid": "X",
+        "hcp": {
+          "min": 5,
+          "max": 9
+        },
+        "support_for_partner": {
+          "min": 5
+        },
+        "singleton_or_void": true
+      },
       "forcing": "none",
-      "explanation": "Preemptive jump raise with 4+ support",
+      "explanation": "Preemptive raise to 4{partner_suit} with {hcp} HCP, {support_for_partner}-card support and distributional shape",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -335,6 +470,9 @@
         "rho_last_bid": "X",
         "hcp": {
           "min": 10
+        },
+        "support_for_partner": {
+          "max": 3
         }
       },
       "forcing": "one_round",
@@ -460,11 +598,72 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "pass_weak_after_partner_opened_doubled",
+      "bid": "Pass",
+      "priority": 795,
+      "description": "Pass with weak hand after partner opens and RHO doubles",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "rho_last_bid": "X",
+        "hcp": {
+          "max": 5
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with {hcp} HCP - too weak to act over double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_minimum_no_fit_after_double",
+      "bid": "Pass",
+      "priority": 785,
+      "description": "Pass with minimum and no fit after RHO doubles",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "rho_last_bid": "X",
+        "hcp": {
+          "min": 6,
+          "max": 9
+        },
+        "support_for_partner": {
+          "max": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with {hcp} HCP and only {support_for_partner} trumps - insufficient for action",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "pass_competitive_no_fit",
       "bid": "Pass",
-      "priority": 14,
-      "description": "Pass in competitive auction with no fit",
+      "priority": 180,
+      "description": "Pass with weak hand, no fit, after opponent interference",
       "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "hcp": {
+          "min": 6,
+          "max": 9
+        },
+        "support_for_partner": {
+          "max": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with {hcp} HCP - no fit for partner's suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_competitive_long_minor",
+      "bid": "Pass",
+      "priority": 175,
+      "description": "Pass with minimum hand and long minor after interference",
+      "conditions": {
+        "is_response": true,
         "is_contested": true,
         "hcp": {
           "min": 6,
@@ -473,12 +672,34 @@
         "support_for_partner": {
           "max": 2
         },
+        "longest_suit": {
+          "in": ["♦", "♣"]
+        },
         "longest_suit_length": {
-          "max": 4
+          "min": 5
         }
       },
       "forcing": "none",
-      "explanation": "Pass with {hcp} HCP - no fit and no suit to bid",
+      "explanation": "Pass with {hcp} HCP - long minor but no major fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_weak_after_preempt_doubled",
+      "bid": "Pass",
+      "priority": 185,
+      "description": "Pass after partner's preempt is doubled with weak hand",
+      "conditions": {
+        "partner_preempted": true,
+        "rho_doubled": true,
+        "hcp": {
+          "max": 9
+        },
+        "support_for_partner": {
+          "max": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with {hcp} HCP - insufficient to act after partner's preempt",
       "sets_forcing_level": "NON_FORCING"
     },
     {

@@ -748,6 +748,52 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
                 flat['partner_min_hcp'] = 12
                 flat['partner_max_hcp'] = 21  # Could be any strength until rebid
 
+    # Partner showed extra values detection (beyond minimum opening)
+    # Extras = values beyond minimum (typically 16+ HCP)
+    flat['partner_showed_extras'] = False
+
+    if partner_bids:
+        opening = af.get('opening_bid', '')
+
+        # Case 1: Partner opened 1NT (15-17 HCP) - extras by definition
+        if af.get('opener_relationship') == 'Partner' and opening == '1NT':
+            flat['partner_showed_extras'] = True
+
+        # Case 2: Partner made a reverse (17+ HCP)
+        # A reverse is when opener bids a higher-ranking suit at the 2-level
+        if len(partner_bids) >= 2 and af.get('opener_relationship') == 'Partner':
+            first_bid = partner_bids[0]
+            second_bid = partner_bids[1]
+            first_suit = None
+            second_suit = None
+
+            # Extract suits from bids
+            for s in ['♠', '♥', '♦', '♣']:
+                if s in first_bid:
+                    first_suit = s
+                if s in second_bid:
+                    second_suit = s
+
+            if first_suit and second_suit:
+                suit_rank = {'♣': 0, '♦': 1, '♥': 2, '♠': 3}
+                # Check if second suit is higher ranking and at 2-level
+                if suit_rank.get(second_suit, 0) > suit_rank.get(first_suit, 0):
+                    if len(second_bid) >= 2 and second_bid[0] == '2':
+                        flat['partner_showed_extras'] = True
+
+        # Case 3: Partner rebid 2NT (18-19) or 3NT (20-21) after opening 1-suit
+        partner_last = flat.get('partner_last_bid', '')
+        if af.get('opener_relationship') == 'Partner':
+            if partner_last in ['2NT', '3NT'] and opening in ['1♣', '1♦', '1♥', '1♠']:
+                flat['partner_showed_extras'] = True
+
+        # Case 4: Partner jumped in a new suit (shows extra values)
+        if len(partner_bids) >= 2 and af.get('opener_relationship') == 'Partner':
+            first_level = int(partner_bids[0][0]) if partner_bids[0][0].isdigit() else 0
+            second_level = int(partner_bids[1][0]) if partner_bids[1][0].isdigit() else 0
+            if first_level and second_level and second_level >= first_level + 2:
+                flat['partner_showed_extras'] = True
+
     # Key cards for RKCB (Roman Key Card Blackwood)
     # Key cards = 4 aces + trump King (if trump suit is known)
     # Count aces held
@@ -845,6 +891,62 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['partnership_hcp_min'] = flat['hcp'] + flat['partner_min_hcp']
     flat['partnership_hcp_max'] = flat['hcp'] + flat['partner_max_hcp']
     flat['partnership_has_slam_values'] = flat['partnership_hcp_min'] >= 31
+
+    # Preempt detection: Did partner preempt?
+    # Weak 2s: 2D, 2H, 2S with 5-10 HCP and 6+ cards
+    # 3-level preempts: 3C, 3D, 3H, 3S with 5-10 HCP and 7+ cards
+    flat['partner_preempted'] = False
+    flat['partner_suit'] = None
+    preempt_bids = ['2♦', '2♥', '2♠', '3♣', '3♦', '3♥', '3♠', '4♥', '4♠']
+    if partner_bids and partner_bids[0] in preempt_bids:
+        # Partner's first bid was a preempt (assuming they opened with it)
+        flat['partner_preempted'] = True
+        flat['partner_suit'] = get_suit_from_bid(partner_bids[0])
+    elif flat.get('partner_last_bid') in preempt_bids and flat.get('opener_relationship') == 'Partner':
+        # Partner opened with a preempt
+        opening = flat.get('opening_bid')
+        if opening in preempt_bids:
+            flat['partner_preempted'] = True
+            flat['partner_suit'] = get_suit_from_bid(opening)
+
+    # RHO doubled? (needed for pass_weak_after_preempt_doubled)
+    flat['rho_doubled'] = False
+    rho_bids = _get_rho_bids(auction_history, my_position, dealer)
+    if rho_bids and rho_bids[-1] == 'X':
+        flat['rho_doubled'] = True
+
+    # Partner transferred? (for no_blackwood_after_transfer_signoff)
+    flat['partner_transferred'] = False
+    jacoby_transfers = ['2♦', '2♥']  # 2D->hearts, 2H->spades
+    if partner_bids:
+        for pb in partner_bids:
+            if pb in jacoby_transfers:
+                flat['partner_transferred'] = True
+                break
+
+    # 1NT opener detection (for Smolen guards)
+    flat['opener_opened_1nt'] = False
+    my_bids_for_1nt = _get_my_bids(auction_history, my_position, dealer)
+    if my_bids_for_1nt and my_bids_for_1nt[0] == '1NT':
+        flat['opener_opened_1nt'] = True
+
+    # Smolen detection: Partner bid 3H or 3S after we denied a major with 2D
+    flat['partner_bid_smolen'] = False
+    if flat['opener_opened_1nt'] and len(my_bids_for_1nt) >= 2:
+        # Check if we responded 2D to Stayman (denying a major)
+        if my_bids_for_1nt[1] == '2♦':
+            # Check if partner then bid 3H or 3S (Smolen)
+            smolen_bids = ['3♥', '3♠']
+            partner_last = flat.get('partner_last_bid')
+            if partner_last in smolen_bids:
+                flat['partner_bid_smolen'] = True
+
+    # Asked Blackwood (for slam bidding decisions)
+    flat['asked_blackwood'] = False
+    for mb in my_bids_for_1nt:
+        if mb == '4NT':
+            flat['asked_blackwood'] = True
+            break
 
     # Gambling 3NT features (solid minor with no outside strength)
     _add_gambling_features(flat, hand)

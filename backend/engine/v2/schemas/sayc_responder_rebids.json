@@ -11,10 +11,11 @@
       "description": "Simple preference back to opener's first suit",
       "conditions": {
         "is_rebid": false,
+        "is_contested": false,
         "my_bid_count": 1,
         "hcp": {
           "min": 6,
-          "max": 10
+          "max": 9
         },
         "support_for_partner_first": {
           "min": 2
@@ -31,16 +32,20 @@
       "description": "Invitational raise of opener's rebid suit",
       "conditions": {
         "my_bid_count": 1,
+        "is_contested": false,
         "hcp": {
           "min": 10,
           "max": 12
         },
         "support_for_partner": {
-          "min": 3
+          "min": 4
+        },
+        "partnership_hcp_min": {
+          "min": 22
         }
       },
       "forcing": "none",
-      "explanation": "Limit raise: Inviting game with 10-12 HCP and fit",
+      "explanation": "Limit raise: Inviting game with 10-12 HCP and 4+ card support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -50,15 +55,25 @@
       "description": "Game in hearts with fit and values",
       "conditions": {
         "my_bid_count": 1,
+        "is_responder_rebid": false,
+        "is_doubler_rebid": false,
+        "is_contested": false,
         "hcp": {
-          "min": 10
+          "min": 12
         },
         "hearts_length": {
           "min": 4
         },
         "partner_last_bid": {
-          "in": ["3♥", "2♥", "1♥"]
-        }
+          "in": ["3♥", "2♥"]
+        },
+        "partnership_hcp_min": {
+          "min": 25
+        },
+        "OR": [
+          {"partner_showed_extras": true},
+          {"hcp": {"min": 14}}
+        ]
       },
       "forcing": "none",
       "explanation": "Game with heart fit and sufficient values",
@@ -71,15 +86,25 @@
       "description": "Game in spades with fit and values",
       "conditions": {
         "my_bid_count": 1,
+        "is_responder_rebid": false,
+        "is_doubler_rebid": false,
+        "is_contested": false,
         "hcp": {
-          "min": 10
+          "min": 12
         },
         "spades_length": {
           "min": 4
         },
         "partner_last_bid": {
-          "in": ["3♠", "2♠", "1♠"]
-        }
+          "in": ["3♠", "2♠"]
+        },
+        "partnership_hcp_min": {
+          "min": 25
+        },
+        "OR": [
+          {"partner_showed_extras": true},
+          {"hcp": {"min": 14}}
+        ]
       },
       "forcing": "none",
       "explanation": "Game with spade fit and sufficient values",
@@ -387,10 +412,13 @@
           "min": 13,
           "max": 15
         },
-        "is_balanced": true
+        "is_balanced": true,
+        "partnership_hcp_min": {
+          "min": 25
+        }
       },
       "forcing": "none",
-      "explanation": "3NT: Game with balanced values",
+      "explanation": "3NT with {hcp} HCP balanced - game values",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -400,16 +428,23 @@
       "description": "Rebid own 6+ card suit with weak hand",
       "conditions": {
         "my_bid_count": 1,
+        "is_contested": false,
         "hcp": {
           "min": 6,
-          "max": 10
+          "max": 9
         },
         "longest_suit_length": {
           "min": 6
+        },
+        "suit_quality_longest": {
+          "min": "fair"
+        },
+        "support_for_partner": {
+          "max": 2
         }
       },
       "forcing": "none",
-      "explanation": "Rebidding 6+ card suit - sign-off",
+      "explanation": "Rebidding 6+ card suit - sign-off with minimum values",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -419,16 +454,23 @@
       "description": "Jump rebid own 6+ card suit - invitational",
       "conditions": {
         "my_bid_count": 1,
+        "is_contested": false,
         "hcp": {
-          "min": 10,
+          "min": 11,
           "max": 12
         },
         "longest_suit_length": {
           "min": 6
+        },
+        "suit_quality_longest": {
+          "min": "good"
+        },
+        "partnership_hcp_min": {
+          "min": 23
         }
       },
       "forcing": "none",
-      "explanation": "Jump rebid showing 6+ card suit and invitational values",
+      "explanation": "Jump rebid showing good 6+ card suit and invitational values",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -530,21 +572,25 @@
       "description": "5-level minor game with long diamonds",
       "conditions": {
         "my_bid_count": 1,
+        "is_contested": false,
         "hcp": {
-          "min": 13
+          "min": 15
         },
         "diamonds_length": {
           "min": 5
         },
         "support_for_partner": {
-          "min": 4
+          "min": 5
         },
         "partner_last_bid": {
-          "in": ["1♦", "2♦", "3♦"]
+          "in": ["2♦", "3♦"]
+        },
+        "partnership_hcp_min": {
+          "min": 29
         }
       },
       "forcing": "none",
-      "explanation": "5♦ game with diamond fit and game values",
+      "explanation": "5♦ game with diamond fit and game values (29+ combined HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -612,9 +658,10 @@
       "description": "Simple preference back to opener's first suit with minimum",
       "conditions": {
         "is_responder_rebid": true,
+        "is_contested": false,
         "partner_showed_two_suits": true,
         "prefer_partner_first_suit": true,
-        "hcp": {"min": 6, "max": 10},
+        "hcp": {"min": 6, "max": 9},
         "support_for_partner_first": {"min": 2}
       },
       "forcing": "none",
@@ -628,10 +675,12 @@
       "description": "Invitational preference back to opener's first suit",
       "conditions": {
         "is_responder_rebid": true,
+        "is_contested": false,
         "partner_showed_two_suits": true,
         "prefer_partner_first_suit": true,
-        "hcp": {"min": 11, "max": 12},
-        "support_for_partner_first": {"min": 3}
+        "hcp": {"min": 10, "max": 12},
+        "support_for_partner_first": {"min": 3},
+        "partnership_hcp_min": {"min": 22}
       },
       "forcing": "none",
       "explanation": "Invitational preference with {hcp} HCP and {support_for_partner_first}-card support",
@@ -757,6 +806,22 @@
       },
       "forcing": "none",
       "explanation": "Pass: Opener showed preference, no game interest",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rebid_pass_partner_limit",
+      "bid": "Pass",
+      "priority": 200,
+      "description": "Pass when partner showed limit values",
+      "conditions": {
+        "is_responder_rebid": true,
+        "hcp": {
+          "max": 11
+        },
+        "partner_showed_limit": true
+      },
+      "forcing": "none",
+      "explanation": "Pass with {hcp} HCP - partner showed minimum",
       "sets_forcing_level": "NON_FORCING"
     },
     {

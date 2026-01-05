@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "defaults",
+  "description": "Universal default rules for when no specific rule matches. These are the V2 fallback - replaces V1 fallback entirely.",
+  "rules": [
+    {
+      "id": "default_pass_doubled_slam",
+      "bid": "Pass",
+      "priority": 999,
+      "description": "Always pass when doubled at slam level - never run",
+      "conditions": {
+        "rho_last_bid": "X",
+        "last_contract_level": {"min": 6}
+      },
+      "forcing": "none",
+      "explanation": "Pass: Never run from a doubled slam",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "default_pass_at_slam_level",
+      "bid": "Pass",
+      "priority": 998,
+      "description": "Pass when already at slam level",
+      "conditions": {
+        "last_contract_level": {"min": 6},
+        "hcp": {"max": 18}
+      },
+      "forcing": "none",
+      "explanation": "Pass: Already at slam level",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "default_pass_no_opening_values",
+      "bid": "Pass",
+      "priority": 5,
+      "description": "Default pass with insufficient opening values",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {"max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Pass: Insufficient values to open ({hcp} HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "default_pass_no_response_values",
+      "bid": "Pass",
+      "priority": 4,
+      "description": "Default pass when responding with insufficient values",
+      "conditions": {
+        "is_response": true,
+        "hcp": {"max": 5},
+        "NOT": {
+          "partner_last_bid": "2♣"
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass: Insufficient values to respond ({hcp} HCP, need 6+)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "default_pass_weak_competitive",
+      "bid": "Pass",
+      "priority": 3,
+      "description": "Default pass in competitive auction with weak hand",
+      "conditions": {
+        "is_competitive_later": true,
+        "hcp": {"max": 8}
+      },
+      "forcing": "none",
+      "explanation": "Pass: Insufficient values for competitive action ({hcp} HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "default_pass_game_reached",
+      "bid": "Pass",
+      "priority": 3,
+      "description": "Default pass when game has been reached",
+      "conditions": {
+        "OR": [
+          {"partner_last_bid": {"in": ["3NT", "4♥", "4♠", "5♣", "5♦"]}},
+          {"last_contract_level": {"min": 4}}
+        ],
+        "hcp": {"max": 15}
+      },
+      "forcing": "none",
+      "explanation": "Pass: Game reached with minimum values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "default_pass_partner_preempt_weak",
+      "bid": "Pass",
+      "priority": 3,
+      "description": "Default pass partner's preempt with weak hand",
+      "conditions": {
+        "partner_preempted": true,
+        "hcp": {"max": 12}
+      },
+      "forcing": "none",
+      "explanation": "Pass: Partner's preempt shows weak hand, no game interest",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "default_pass_auction_complete",
+      "bid": "Pass",
+      "priority": 2,
+      "description": "Default pass when auction appears complete",
+      "conditions": {
+        "auction_length": {"min": 4}
+      },
+      "forcing": "none",
+      "explanation": "Pass: No further bidding action warranted",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "universal_default_pass",
+      "bid": "Pass",
+      "priority": 1,
+      "description": "Universal fallback pass - catches all remaining cases",
+      "conditions": {},
+      "forcing": "none",
+      "explanation": "Pass: No suitable bid found",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

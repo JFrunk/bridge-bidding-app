@@ -157,11 +157,21 @@ def calculate_losing_trick_count(hand: Hand) -> int:
 
 
 def get_suit_from_bid(bid: str) -> str:
-    """Extract suit from a bid string."""
+    """Extract suit from a bid string.
+
+    Handles both Unicode symbols (♠♥♦♣) and ASCII letters (SHDC).
+    """
     if not bid or bid in ['Pass', 'X', 'XX'] or 'NT' in bid:
         return None
-    if len(bid) >= 2 and bid[1] in '♠♥♦♣':
-        return bid[1]
+    if len(bid) >= 2:
+        suit_char = bid[1]
+        # Handle Unicode symbols directly
+        if suit_char in '♠♥♦♣':
+            return suit_char
+        # Handle ASCII letters (convert to Unicode)
+        ascii_to_unicode = {'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣'}
+        if suit_char.upper() in ascii_to_unicode:
+            return ascii_to_unicode[suit_char.upper()]
     return None
 
 

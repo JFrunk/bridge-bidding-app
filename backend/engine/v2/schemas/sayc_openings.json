@@ -131,14 +131,14 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "open_1_spades",
+      "id": "open_1_spades_sound",
       "bid": "1\u2660",
       "priority": 80,
-      "description": "One spade opening",
+      "description": "Sound one spade opening with good values (14+ HCP)",
       "conditions": {
         "is_opening": true,
         "hcp": {
-          "min": 12,
+          "min": 14,
           "max": 21
         },
         "spades_length": {
@@ -150,14 +150,36 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "open_1_hearts",
-      "bid": "1\u2665",
+      "id": "open_1_spades_minimum",
+      "bid": "1\u2660",
       "priority": 79,
-      "description": "One heart opening",
+      "description": "Minimum one spade opening (12-13 HCP) - requires suit quality",
       "conditions": {
         "is_opening": true,
         "hcp": {
           "min": 12,
+          "max": 13
+        },
+        "spades_length": {
+          "min": 5
+        },
+        "suit_quality_spades": {
+          "min": "good"
+        }
+      },
+      "forcing": "none",
+      "explanation": "1\u2660 opening with {hcp} HCP and good {spades_length}-card spade suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "open_1_hearts_sound",
+      "bid": "1\u2665",
+      "priority": 78,
+      "description": "Sound one heart opening with good values (14+ HCP)",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 14,
           "max": 21
         },
         "hearts_length": {
@@ -181,14 +203,48 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "open_1_diamonds",
-      "bid": "1\u2666",
-      "priority": 70,
-      "description": "One diamond opening",
+      "id": "open_1_hearts_minimum",
+      "bid": "1\u2665",
+      "priority": 77,
+      "description": "Minimum one heart opening (12-13 HCP) - requires suit quality",
       "conditions": {
         "is_opening": true,
         "hcp": {
           "min": 12,
+          "max": 13
+        },
+        "hearts_length": {
+          "min": 5
+        },
+        "suit_quality_hearts": {
+          "min": "good"
+        },
+        "OR": [
+          {
+            "spades_length": {
+              "max": 4
+            }
+          },
+          {
+            "hearts_length": {
+              "min": "spades_length"
+            }
+          }
+        ]
+      },
+      "forcing": "none",
+      "explanation": "1\u2665 opening with {hcp} HCP and good {hearts_length}-card heart suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "open_1_diamonds_sound",
+      "bid": "1\u2666",
+      "priority": 71,
+      "description": "Sound one diamond opening with good values",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 13,
           "max": 21
         },
         "diamonds_length": {
@@ -213,6 +269,41 @@
       },
       "forcing": "none",
       "explanation": "1\u2666 opening showing {hcp} HCP and {diamonds_length}-card diamond suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "open_1_diamonds",
+      "bid": "1\u2666",
+      "priority": 70,
+      "description": "One diamond opening with minimum values - requires suit quality",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 12,
+          "max": 12
+        },
+        "diamonds_length": {
+          "min": 5
+        },
+        "has_5_card_major": false,
+        "suit_quality_diamonds": {
+          "min": "good"
+        },
+        "OR": [
+          {
+            "diamonds_length": {
+              "min": "clubs_length"
+            }
+          },
+          {
+            "clubs_length": {
+              "max": 3
+            }
+          }
+        ]
+      },
+      "forcing": "none",
+      "explanation": "1\u2666 opening showing {hcp} HCP and {diamonds_length}-card diamond suit with good quality",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -400,7 +491,7 @@
       "conditions": {
         "is_opening": true,
         "hcp": {
-          "min": 5,
+          "min": 6,
           "max": 10
         },
         "longest_suit": {
@@ -412,12 +503,16 @@
         "longest_suit_length": {
           "exact": 6
         },
+        "longest_suit_hcp": {
+          "min": 7,
+          "max": 9
+        },
         "suit_quality_longest": {
-          "min": "fair"
+          "min": "excellent"
         }
       },
       "forcing": "none",
-      "explanation": "Weak 2-bid with {hcp} HCP and 6-card {longest_suit} suit",
+      "explanation": "Weak 2-bid with {hcp} HCP, excellent 6-card {longest_suit} suit (2+ top honors, 7+ HCP in suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -428,36 +523,49 @@
       "conditions": {
         "is_opening": true,
         "hcp": {
-          "min": 5,
+          "min": 6,
           "max": 10
         },
         "diamonds_length": {
           "exact": 6
         },
+        "diamonds_hcp": {
+          "min": 7,
+          "max": 9
+        },
         "has_5_card_major": false,
         "suit_quality_diamonds": {
-          "min": "fair"
+          "min": "excellent"
         }
       },
       "forcing": "none",
-      "explanation": "Weak 2\u2666 with {hcp} HCP and 6-card diamond suit",
+      "explanation": "Weak 2\u2666 with {hcp} HCP, excellent 6-card diamond suit (2+ top honors, 7+ HCP in suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "rule_of_20",
       "bid": "1{longest_suit}",
       "priority": 25,
-      "description": "Light opening by Rule of 20",
+      "description": "Light opening by Rule of 20 with strict suit quality requirements",
       "conditions": {
         "is_opening": true,
         "hcp": {
           "min": 10,
           "max": 11
         },
-        "rule_of_20": true
+        "rule_of_20": true,
+        "suit_quality_longest": {
+          "min": "excellent"
+        },
+        "longest_suit_hcp": {
+          "min": 5
+        },
+        "seat": {
+          "in": [1, 2]
+        }
       },
       "forcing": "none",
-      "explanation": "Rule of 20 opening with {hcp} HCP and {longest_suit_length}-card suit",
+      "explanation": "Rule of 20 opening with {hcp} HCP and excellent {longest_suit_length}-card {longest_suit} suit (1st/2nd seat only)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

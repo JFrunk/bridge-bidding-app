@@ -102,7 +102,7 @@
     {
       "id": "1nt_overcall",
       "bid": "1NT",
-      "priority": 95,
+      "priority": 850,
       "description": "1NT overcall",
       "conditions": {
         "is_overcall": true,
@@ -242,7 +242,7 @@
           ]
         },
         "hcp": {
-          "min": 8,
+          "min": 10,
           "max": 16
         },
         "suit_length": {
@@ -250,6 +250,9 @@
         },
         "suit_quality": {
           "min": "good"
+        },
+        "suit_hcp": {
+          "min": 4
         },
         "bid_higher_than_opening": true
       },
@@ -267,19 +270,23 @@
         "is_overcall": true,
         "is_balancing": true,
         "hcp": {
-          "min": 5,
+          "min": 8,
           "max": 16
         },
         "suit_length": {
           "min": 5
         },
         "suit_quality": {
-          "min": "fair"
-        }
+          "min": "good"
+        },
+        "suit_hcp": {
+          "min": 3
+        },
+        "partnership_hcp_min": 18
       },
       "forcing": "none",
       "suit_selection": "best_5_card_suit",
-      "explanation": "Balancing overcall with {hcp} HCP",
+      "explanation": "Balancing overcall with {hcp} HCP and good {suit_length}-card {suit}",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -290,23 +297,30 @@
       "conditions": {
         "is_overcall": true,
         "hcp": {
-          "min": 10,
+          "min": 13,
           "max": 16
         },
         "suit_length": {
           "min": 6
         },
         "suit_quality": {
-          "min": "good"
+          "min": "excellent"
         },
+        "suit_hcp": {
+          "min": 6
+        },
+        "quick_tricks": {
+          "min": 2
+        },
+        "partnership_hcp_min": 20,
         "opponent_suit_length": {
-          "max": 3
+          "max": 2
         },
         "bid_level": 2
       },
       "forcing": "none",
-      "suit_selection": "best_5_card_suit",
-      "explanation": "2-level overcall showing 10-16 HCP and good 5+ card suit",
+      "suit_selection": "best_6_card_suit",
+      "explanation": "2-level overcall showing 13-16 HCP with excellent 6+ card suit and 6+ HCP in suit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -326,6 +340,13 @@
         "suit_quality": {
           "min": "excellent"
         },
+        "suit_hcp": {
+          "min": 5
+        },
+        "quick_tricks": {
+          "min": 1.5
+        },
+        "partnership_hcp_min": 20,
         "opponent_suit_length": {
           "max": 3
         },

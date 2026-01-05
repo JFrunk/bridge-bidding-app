@@ -12,21 +12,28 @@
       "conditions": {
         "is_opening": true,
         "hcp": {
-          "min": 5,
+          "min": 6,
           "max": 10
         },
         "diamonds_length": {
           "min": 6
         },
+        "diamonds_hcp": {
+          "min": 7,
+          "max": 9
+        },
+        "suit_quality_diamonds": {
+          "min": "excellent"
+        },
         "spades_length": {
-          "max": 4
+          "max": 3
         },
         "hearts_length": {
-          "max": 4
+          "max": 3
         }
       },
       "forcing": "none",
-      "explanation": "Weak 2♦: 6+ card suit, 5-10 HCP, destructive opening",
+      "explanation": "Weak 2♦: Excellent 6-card suit (2+ top honors, 7+ HCP in suit), 6-10 total HCP, no 4-card major",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -37,18 +44,25 @@
       "conditions": {
         "is_opening": true,
         "hcp": {
-          "min": 5,
+          "min": 6,
           "max": 10
         },
         "hearts_length": {
           "min": 6
         },
+        "hearts_hcp": {
+          "min": 7,
+          "max": 9
+        },
+        "suit_quality_hearts": {
+          "min": "excellent"
+        },
         "spades_length": {
-          "max": 4
+          "max": 3
         }
       },
       "forcing": "none",
-      "explanation": "Weak 2♥: 6+ card suit, 5-10 HCP",
+      "explanation": "Weak 2♥: Excellent 6-card suit (2+ top honors, 7+ HCP in suit), 6-10 total HCP, no 4-card spades",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -59,15 +73,22 @@
       "conditions": {
         "is_opening": true,
         "hcp": {
-          "min": 5,
+          "min": 6,
           "max": 10
         },
         "spades_length": {
           "min": 6
+        },
+        "spades_hcp": {
+          "min": 7,
+          "max": 9
+        },
+        "suit_quality_spades": {
+          "min": "excellent"
         }
       },
       "forcing": "none",
-      "explanation": "Weak 2♠: 6+ card suit, 5-10 HCP",
+      "explanation": "Weak 2♠: Excellent 6-card suit (2+ top honors, 7+ HCP in suit), 6-10 total HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -83,10 +104,16 @@
         },
         "clubs_length": {
           "min": 7
+        },
+        "clubs_hcp": {
+          "min": 7
+        },
+        "suit_quality_clubs": {
+          "min": "excellent"
         }
       },
       "forcing": "none",
-      "explanation": "3-level preempt: 7+ card club suit, defensive hand",
+      "explanation": "3-level preempt: Excellent 7+ card club suit (2+ top honors, 7+ HCP in suit), 5-10 total HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -102,10 +129,16 @@
         },
         "diamonds_length": {
           "min": 7
+        },
+        "diamonds_hcp": {
+          "min": 7
+        },
+        "suit_quality_diamonds": {
+          "min": "excellent"
         }
       },
       "forcing": "none",
-      "explanation": "3-level preempt: 7+ card diamond suit, defensive hand",
+      "explanation": "3-level preempt: Excellent 7+ card diamond suit (2+ top honors, 7+ HCP in suit), 5-10 total HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -121,10 +154,16 @@
         },
         "hearts_length": {
           "min": 7
+        },
+        "hearts_hcp": {
+          "min": 7
+        },
+        "suit_quality_hearts": {
+          "min": "excellent"
         }
       },
       "forcing": "none",
-      "explanation": "3-level preempt: 7+ card heart suit, defensive hand",
+      "explanation": "3-level preempt: Excellent 7+ card heart suit (2+ top honors, 7+ HCP in suit), 5-10 total HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -140,10 +179,16 @@
         },
         "spades_length": {
           "min": 7
+        },
+        "spades_hcp": {
+          "min": 7
+        },
+        "suit_quality_spades": {
+          "min": "excellent"
         }
       },
       "forcing": "none",
-      "explanation": "3-level preempt: 7+ card spade suit, defensive hand",
+      "explanation": "3-level preempt: Excellent 7+ card spade suit (2+ top honors, 7+ HCP in suit), 5-10 total HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -194,72 +239,82 @@
           "in": ["3♣", "3♦", "3♥", "3♠"]
         },
         "hcp": {
-          "min": 14
+          "min": 16
         },
         "stopper_count": {
-          "min": 2
+          "min": 3
         }
       },
       "forcing": "none",
-      "explanation": "3NT: Game with outside stoppers facing partner's preempt",
+      "explanation": "3NT: Game facing partner's preempt with {hcp} HCP and stoppers",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "raise_partner_preempt_to_game",
       "bid": "4♥",
-      "priority": 440,
+      "priority": 340,
       "description": "Raise partner's heart preempt to game",
       "conditions": {
-        "partner_last_bid": {
-          "in": ["2♥", "3♥"]
-        },
-        "hcp": {
-          "min": 14
-        },
-        "hearts_length": {
-          "min": 3
-        }
+        "partner_preempted": true,
+        "partner_suit": "♥",
+        "OR": [
+          {
+            "hcp": {"min": 14},
+            "support_for_partner": {"min": 3}
+          },
+          {
+            "hcp": {"min": 10},
+            "support_for_partner": {"min": 4},
+            "is_contested": false
+          }
+        ]
       },
       "forcing": "none",
-      "explanation": "Game raise with fit for partner's preempt",
+      "explanation": "Game raise with {hcp} HCP and support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "raise_partner_spade_preempt_to_game",
       "bid": "4♠",
-      "priority": 440,
+      "priority": 340,
       "description": "Raise partner's spade preempt to game",
       "conditions": {
-        "partner_last_bid": {
-          "in": ["2♠", "3♠"]
-        },
-        "hcp": {
-          "min": 14
-        },
-        "spades_length": {
-          "min": 3
-        }
+        "partner_preempted": true,
+        "partner_suit": "♠",
+        "OR": [
+          {
+            "hcp": {"min": 14},
+            "support_for_partner": {"min": 3}
+          },
+          {
+            "hcp": {"min": 10},
+            "support_for_partner": {"min": 4},
+            "is_contested": false
+          }
+        ]
       },
       "forcing": "none",
-      "explanation": "Game raise with fit for partner's spade preempt",
+      "explanation": "Game raise with {hcp} HCP and support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "raise_partner_club_preempt_to_5",
       "bid": "5♣",
-      "priority": 430,
+      "priority": 350,
       "description": "Raise partner's club preempt to 5♣",
       "conditions": {
-        "partner_last_bid": "3♣",
+        "partner_preempted": true,
+        "partner_suit": "♣",
         "hcp": {
           "min": 10
         },
-        "clubs_length": {
+        "support_for_partner": {
           "min": 4
-        }
+        },
+        "is_contested": false
       },
       "forcing": "none",
-      "explanation": "5♣: Game/sacrifice raise with fit for partner's preempt",
+      "explanation": "Raise to 5♣ with {hcp} HCP and {support_for_partner} clubs",
       "sets_forcing_level": "NON_FORCING"
     },
     {

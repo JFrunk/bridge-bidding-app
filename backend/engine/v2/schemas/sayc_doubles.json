@@ -319,14 +319,15 @@
       "id": "doubler_raise_partner_minimum",
       "bid": "2{partner_suit}",
       "priority": 650,
-      "description": "Doubler raises partner's response with minimum (13-15 HCP)",
+      "description": "Doubler raises partner's response with minimum (14-16 HCP)",
       "conditions": {
         "is_doubler_rebid": true,
-        "hcp": {"min": 13, "max": 15},
-        "support_for_partner": {"min": 3}
+        "hcp": {"min": 14, "max": 16},
+        "support_for_partner": {"min": 4},
+        "partnership_hcp_min": {"min": 18}
       },
       "forcing": "none",
-      "explanation": "Raise partner's response with minimum takeout double values",
+      "explanation": "Raise partner's response with minimum takeout double values and 4+ support",
       "sets_forcing_level": "NON_FORCING"
     },
     {

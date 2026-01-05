@@ -484,13 +484,55 @@ class AuctionAnalyzer:
             ranges.narrow_hcp('responder', new_min=13, new_max=15)
             ranges.responder_limited = True
 
+        # STAYMAN and JACOBY TRANSFERS over 1NT
+        elif response_type == 'stayman_2c':
+            # Stayman: 8+ HCP with a 4-card major, asking for majors
+            # Can be invitational (8-9) or game-forcing (10+)
+            # We use a wide range since exact values depend on followup
+            ranges.narrow_hcp('responder', new_min=8)
+            ranges.one_round_force = True
+            # Don't set game_forcing yet - depends on the continuation
+
+        elif response_type == 'jacoby_2d':
+            # Transfer to hearts: can be very weak (0 HCP) with 5+ hearts
+            # or strong with 5+ hearts
+            ranges.narrow_suit('responder', '♥', new_min=5)
+            ranges.one_round_force = True
+
+        elif response_type == 'jacoby_2h':
+            # Transfer to spades: can be very weak (0 HCP) with 5+ spades
+            # or strong with 5+ spades
+            ranges.narrow_suit('responder', '♠', new_min=5)
+            ranges.one_round_force = True
+
     def _apply_opener_rebid(self, context: AuctionContext, bid: str, prior_auction: List[str]):
         """Apply opener's rebid meanings."""
         ranges = context.ranges
 
         rebid_type = self._classify_rebid(bid, context.opening_bid, prior_auction)
 
-        if rebid_type == 'minimum_rebid':
+        if rebid_type == 'stayman_response':
+            # Stayman response (2♦/2♥/2♠) doesn't change opener's HCP range
+            # Just shows whether they have a 4-card major
+            # HCP stays at 15-17 for 1NT opener
+            if bid == '2♦':
+                # No 4-card major
+                ranges.narrow_suit('opener', '♥', new_max=3)
+                ranges.narrow_suit('opener', '♠', new_max=3)
+            elif bid == '2♥':
+                # Has 4+ hearts
+                ranges.narrow_suit('opener', '♥', new_min=4)
+            elif bid == '2♠':
+                # Has 4+ spades (and not 4 hearts, or chose spades)
+                ranges.narrow_suit('opener', '♠', new_min=4)
+            return  # Don't apply other rebid logic
+
+        elif rebid_type == 'transfer_completion':
+            # Transfer completion is mandatory - doesn't show extra values
+            # HCP stays unchanged
+            return  # Don't apply other rebid logic
+
+        elif rebid_type == 'minimum_rebid':
             ranges.narrow_hcp('opener', new_max=16)
             ranges.opener_limited = True
 
@@ -521,14 +563,61 @@ class AuctionAnalyzer:
         if ranges.responder_limited:
             return  # Already limited, can't show more
 
-        # Classify the rebid
+        # Check if this is a Stayman continuation
+        is_stayman_continuation = '2♣' in context.responder_bids and context.opening_bid in ['1NT', '2NT']
+
+        if is_stayman_continuation:
+            # After Stayman, responder's rebid reveals their hand type
+            try:
+                bid_level = int(bid[0])
+                bid_suit = bid[1:] if len(bid) > 1 else ''
+            except (ValueError, IndexError):
+                return
+
+            # Get opener's response to Stayman (what did they bid?)
+            opener_stayman_response = None
+            for ob in context.opener_bids:
+                if ob in ['2♦', '2♥', '2♠']:
+                    opener_stayman_response = ob
+                    break
+
+            if opener_stayman_response:
+                opener_suit = opener_stayman_response[1:] if len(opener_stayman_response) > 1 else ''
+
+                # 3-level raise of opener's major = limit raise (8-9 HCP, 4-card support)
+                if bid_level == 3 and bid_suit == opener_suit and bid_suit in ['♥', '♠']:
+                    ranges.narrow_hcp('responder', new_min=8, new_max=9)
+                    ranges.invitational = True
+                    ranges.responder_limited = True
+                    ranges.agreed_suit = bid_suit
+                    return
+
+                # 4-level bid of opener's major = game values (10+ HCP, 4-card support)
+                if bid_level == 4 and bid_suit == opener_suit and bid_suit in ['♥', '♠']:
+                    ranges.narrow_hcp('responder', new_min=10, new_max=15)
+                    ranges.agreed_suit = bid_suit
+                    return
+
+                # 2NT after 2♦ = invitational without a fit (8-9 HCP)
+                if bid == '2NT' and opener_stayman_response == '2♦':
+                    ranges.narrow_hcp('responder', new_min=8, new_max=9)
+                    ranges.invitational = True
+                    ranges.responder_limited = True
+                    return
+
+                # 3NT after any response = game values without a fit (10+ HCP)
+                if bid == '3NT':
+                    ranges.narrow_hcp('responder', new_min=10, new_max=15)
+                    return
+
+        # Standard responder rebids (non-Stayman)
         if bid in ['2NT']:
             ranges.narrow_hcp('responder', new_min=10, new_max=12)
             ranges.invitational = True
         elif bid == '3NT':
             ranges.narrow_hcp('responder', new_min=13)
             ranges.game_forcing = True
-        elif bid.startswith('4') and bid[1] in '♥♠':
+        elif bid.startswith('4') and len(bid) > 1 and bid[1] in '♥♠':
             ranges.narrow_hcp('responder', new_min=13)
             ranges.game_forcing = True
 
@@ -544,6 +633,18 @@ class AuctionAnalyzer:
             bid_suit = bid[1:] if len(bid) > 1 else ''
         except (ValueError, IndexError):
             return 'unknown'
+
+        # SPECIAL CASE: Stayman (2♣ over 1NT/2NT)
+        # Stayman shows 8+ HCP with a 4-card major (invitational+)
+        if opening in ['1NT', '2NT'] and bid == '2♣':
+            return 'stayman_2c'
+
+        # SPECIAL CASE: Jacoby Transfers over 1NT
+        if opening == '1NT' and bid in ['2♦', '2♥']:
+            if bid == '2♦':
+                return 'jacoby_2d'  # Transfer to hearts
+            else:
+                return 'jacoby_2h'  # Transfer to spades
 
         # Same suit = raise
         if bid_suit == open_suit:
@@ -585,6 +686,20 @@ class AuctionAnalyzer:
             bid_suit = bid[1:] if len(bid) > 1 else ''
         except (ValueError, IndexError):
             return 'unknown'
+
+        # SPECIAL CASE: Stayman response (2♦/2♥/2♠ after 1NT-2♣)
+        # These are NOT reverses - they just show 4-card majors within 15-17 range
+        if opening in ['1NT', '2NT'] and '2♣' in prior_auction:
+            if bid in ['2♦', '2♥', '2♠']:
+                return 'stayman_response'
+
+        # SPECIAL CASE: Transfer completion (2♥/2♠ after 1NT-2♦/2♥)
+        # These are mandatory completions, not showing extra values
+        if opening == '1NT':
+            if '2♦' in prior_auction and bid == '2♥':
+                return 'transfer_completion'
+            if '2♥' in prior_auction and bid == '2♠':
+                return 'transfer_completion'
 
         # NT rebid
         if 'NT' in bid:
