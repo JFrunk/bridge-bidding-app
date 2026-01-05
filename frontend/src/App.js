@@ -2684,6 +2684,7 @@ ${otherCommands}`;
               ?? (playState.next_to_play === playState.dummy && (playState.contract.declarer === 'N' || playState.contract.declarer === 'S'))
             }
             auction={auction}
+            dealer={dealer}
             scoreData={scoreData}
             // Last trick feature
             showLastTrick={showLastTrick}

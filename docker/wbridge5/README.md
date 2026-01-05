@@ -1,55 +1,64 @@
-# WBridge5 Docker Integration
+# WBridge5 Oracle Service
 
-This directory contains the Docker setup for running WBridge5 as a reference bidding engine for QA testing.
+This directory contains the Docker setup for running WBridge5 as a reference
+bidding engine (oracle) for QA testing.
 
 ## Overview
 
-WBridge5 is a world-class Windows bridge program that provides high-quality SAYC bidding. We use it as a reference standard for validating our V2 Schema engine.
+WBridge5 is a world-class Windows bridge program that provides high-quality
+SAYC bidding. We use it as a reference standard for validating our V2 Schema
+engine. WBridge5 has won the World Computer Bridge Championship multiple times
+(2005, 2007, 2008, 2016-2018).
 
-## Setup
+## Quick Start
 
 ### 1. Download WBridge5
 
+**Option A: Official Site**
 1. Visit http://wbridge5.com/
 2. Download the Windows installer
-3. Extract the application files
-4. Copy the WBridge5 directory to `docker/wbridge5/wbridge5/`
+3. Extract `WBridge5.exe`
 
-Expected structure:
+**Option B: Software Informer Mirror**
+1. Visit https://wbridge5.software.informer.com/download/
+2. Download and extract
+
+### 2. Place the Binary
+
+Copy `WBridge5.exe` to this directory:
+
 ```
 docker/wbridge5/
 ├── Dockerfile
-├── requirements.txt
-├── wbridge5_service.py
-├── README.md
-└── wbridge5/          # WBridge5 application files
-    ├── WBridge5.exe
-    └── ... (other files)
+├── entrypoint.sh
+├── wrapper_service.py
+├── WBridge5.exe          # <-- Place here
+└── README.md
 ```
 
-### 2. Build the Docker Image
+### 3. Build the Docker Image
 
 ```bash
-cd /path/to/bridge_bidding_app
-docker build -t wbridge5-qa ./docker/wbridge5
+# From project root
+docker build -t wbridge5-oracle ./docker/wbridge5
 ```
 
-### 3. Run the Container
+### 4. Run the Container
 
 ```bash
-docker run -d -p 8081:8081 --name wbridge5-qa wbridge5-qa
+docker run -d -p 5005:5005 --name wbridge5-oracle wbridge5-oracle
 ```
 
-### 4. Test the API
+### 5. Test the API
 
 ```bash
 # Health check
-curl http://localhost:8081/health
+curl http://localhost:5005/health
 
 # Get bid recommendation
-curl -X POST http://localhost:8081/bid \
+curl -X POST http://localhost:5005/bid \
   -H "Content-Type: application/json" \
-  -d '{"hand": "K92.QJT7.KQ4.AJ7", "history": ["1D", "Pass"], "dealer": "N"}'
+  -d '{"hand": "KJ76.AQ84.5.J874", "history": ["1D"], "dealer": "N"}'
 ```
 
 ## API Endpoints

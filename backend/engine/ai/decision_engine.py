@@ -22,17 +22,17 @@ def select_bidding_module(features):
     my_pos_str = features['positions'][features['my_index']]
     my_bids = [bid for i, bid in enumerate(features['auction_history']) if features['positions'][i % 4] == my_pos_str]
 
-    # DEBUG: Log decision engine routing
-    print(f"\n🎯 DECISION ENGINE for {my_pos_str}:")
-    print(f"   Opener: {auction.get('opener')}")
-    print(f"   Opener relationship: {auction.get('opener_relationship')}")
-    print(f"   Partner last bid: {auction.get('partner_last_bid')}")
-    print(f"   My bids so far: {my_bids}")
-    print(f"   Auction: {features['auction_history']}")
+    # DEBUG: Log decision engine routing (disabled for clean test output)
+    # print(f"\n🎯 DECISION ENGINE for {my_pos_str}:")
+    # print(f"   Opener: {auction.get('opener')}")
+    # print(f"   Opener relationship: {auction.get('opener_relationship')}")
+    # print(f"   Partner last bid: {auction.get('partner_last_bid')}")
+    # print(f"   My bids so far: {my_bids}")
+    # print(f"   Auction: {features['auction_history']}")
 
     # --- STATE 1: Is this an OPENING situation? ---
     if not auction['opener']:
-        print(f"   → Routing to: opening_bids (no opener yet)")
+        # print(f"   → Routing to: opening_bids (no opener yet)")
         # Priority for opening is to check for a preempt first.
         preempt_specialist = PreemptConvention()
         if preempt_specialist.evaluate(features['hand'], features):
@@ -41,7 +41,7 @@ def select_bidding_module(features):
 
     # --- STATE 2: Is this a COMPETITIVE situation? ---
     if auction['opener_relationship'] == 'Opponent':
-        print(f"   → Competitive auction (opponent opened)")
+        # print(f"   → Competitive auction (opponent opened)")
 
         # NEW: Check balancing seat using extracted features
         balancing = auction.get('balancing', {})
@@ -49,17 +49,17 @@ def select_bidding_module(features):
         hcp_adjustment = balancing.get('hcp_adjustment', 0)
 
         if is_balancing:
-            print(f"   → BALANCING SEAT detected: {balancing.get('reason')}, HCP adjustment: {hcp_adjustment}")
+            pass  # print(f"   → BALANCING SEAT detected: {balancing.get('reason')}, HCP adjustment: {hcp_adjustment}")
 
         # Check if I'm the advancer (partner made an overcall or double)
         # This can be my first OR subsequent bid
         # Only advance if partner is NOT the opener (i.e., partner overcalled/doubled)
         partner_last_bid = auction['partner_last_bid']
-        print(f"   → Checking advancer: partner_last_bid={partner_last_bid}, not in Pass/XX: {partner_last_bid not in ['Pass', 'XX'] if partner_last_bid else False}")
+        # print(f"   → Checking advancer: partner_last_bid={partner_last_bid}, not in Pass/XX: {partner_last_bid not in ['Pass', 'XX'] if partner_last_bid else False}")
         if (partner_last_bid and partner_last_bid not in ['Pass', 'XX'] and
             auction['opener_relationship'] != 'Partner'):
             # Partner overcalled or doubled - I'm the advancer
-            print(f"   → Routing to: advancer_bids")
+            # print(f"   → Routing to: advancer_bids")
             return 'advancer_bids'
 
         # If it's my first bid after an opponent opened, I can overcall or double.
@@ -82,7 +82,7 @@ def select_bidding_module(features):
 
             # In balancing seat, if no module returned a bid, route to balancing specialist
             if is_balancing:
-                print(f"   → Routing to: balancing (pass-out seat)")
+                # print(f"   → Routing to: balancing (pass-out seat)")
                 return 'balancing'
 
         else: # My second+ bid in a competitive auction (not balancing)
@@ -159,7 +159,7 @@ def select_bidding_module(features):
         return 'responses'
 
     if auction['opener_relationship'] == 'Me': # I opened
-        print(f"   → I am the opener (opener_relationship == 'Me')")
+        # print(f"   → I am the opener (opener_relationship == 'Me')")
 
         # Check for 1NT/2NT/3NT convention responses FIRST (before Blackwood)
         # When I opened NT and partner bids 4♣, that's GERBER asking for aces
@@ -199,8 +199,8 @@ def select_bidding_module(features):
         if gerber.evaluate(features['hand'], features):
             return 'gerber'
         # Fallback to natural rebids
-        print(f"   → Routing to: openers_rebid")
+        # print(f"   → Routing to: openers_rebid")
         return 'openers_rebid'
 
-    print(f"   → No routing found, defaulting to: pass_by_default")
+    # print(f"   → No routing found, defaulting to: pass_by_default")
     return 'pass_by_default'

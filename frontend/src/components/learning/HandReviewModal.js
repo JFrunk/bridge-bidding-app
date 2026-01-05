@@ -17,6 +17,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlayableCard } from '../play/PlayableCard';
+import DecayChart from '../analysis/DecayChart';
 import './HandReviewModal.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE || '';
@@ -666,6 +667,15 @@ const HandReviewModal = ({
                 ⏭
               </button>
             </div>
+          )}
+
+          {/* Decay Chart - shows trick potential over time */}
+          {handData?.decay_curve && (
+            <DecayChart
+              data={handData.decay_curve}
+              replayPosition={replayPosition}
+              onPositionChange={setReplayPosition}
+            />
           )}
 
           {/* Main display area - compass layout with hands */}

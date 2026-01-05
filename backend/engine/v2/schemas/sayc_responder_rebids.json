@@ -26,7 +26,7 @@
     },
     {
       "id": "responder_raise_opener_rebid_suit",
-      "bid": "3{partner_last_bid_suit}",
+      "bid": "3{partner_suit}",
       "priority": 400,
       "description": "Invitational raise of opener's rebid suit",
       "conditions": {
@@ -803,6 +803,148 @@
       "forcing": "none",
       "explanation": "Pass (no further action to take)",
       "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_pass_partner_slam",
+      "bid": "Pass",
+      "priority": 1000,
+      "description": "Pass partner's slam bid - auction complete",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": {"in": ["6♣", "6♦", "6♥", "6♠", "6NT"]}
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's slam bid",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_pass_partner_grand_slam",
+      "bid": "Pass",
+      "priority": 1001,
+      "description": "Pass partner's grand slam bid - auction complete",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": {"in": ["7♣", "7♦", "7♥", "7♠", "7NT"]}
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's grand slam bid",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_pass_partner_game_hearts",
+      "bid": "Pass",
+      "priority": 900,
+      "description": "Pass partner's 4H game bid",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": "4♥"
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's 4♥ game bid",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_pass_partner_game_spades",
+      "bid": "Pass",
+      "priority": 900,
+      "description": "Pass partner's 4S game bid",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": "4♠"
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's 4♠ game bid",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_pass_partner_3nt",
+      "bid": "Pass",
+      "priority": 895,
+      "description": "Pass partner's 3NT game bid",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": "3NT"
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's 3NT game bid",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_pass_partner_5_minor",
+      "bid": "Pass",
+      "priority": 890,
+      "description": "Pass partner's 5-level minor game",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": {"in": ["5♣", "5♦"]}
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's 5-level minor game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_rkcb_response_1_or_4",
+      "bid": "5♣",
+      "priority": 950,
+      "description": "RKCB response showing 1 or 4 keycards",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": "4NT",
+        "OR": [
+          {"key_cards": {"exact": 1}},
+          {"key_cards": {"exact": 4}}
+        ]
+      },
+      "forcing": "one_round",
+      "explanation": "5♣: 1 or 4 keycards (RKCB 1430)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "responder_rkcb_response_0_or_3",
+      "bid": "5♦",
+      "priority": 949,
+      "description": "RKCB response showing 0 or 3 keycards",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": "4NT",
+        "OR": [
+          {"key_cards": {"exact": 0}},
+          {"key_cards": {"exact": 3}}
+        ]
+      },
+      "forcing": "one_round",
+      "explanation": "5♦: 0 or 3 keycards (RKCB 1430)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "responder_rkcb_response_2_no_queen",
+      "bid": "5♥",
+      "priority": 948,
+      "description": "RKCB response showing 2 keycards without trump Queen",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": "4NT",
+        "key_cards": {"exact": 2},
+        "has_trump_queen": false
+      },
+      "forcing": "one_round",
+      "explanation": "5♥: 2 keycards, no trump Queen (RKCB 1430)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "responder_rkcb_response_2_with_queen",
+      "bid": "5♠",
+      "priority": 947,
+      "description": "RKCB response showing 2 keycards with trump Queen",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_last_bid": "4NT",
+        "key_cards": {"exact": 2},
+        "has_trump_queen": true
+      },
+      "forcing": "one_round",
+      "explanation": "5♠: 2 keycards with trump Queen (RKCB 1430)",
+      "sets_forcing_level": "FORCING_1_ROUND"
     }
   ]
 }

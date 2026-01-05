@@ -54,6 +54,27 @@
       "sets_forcing_level": "GAME_FORCE"
     },
     {
+      "id": "open_2c_extreme_shape",
+      "bid": "2\u2663",
+      "priority": 98,
+      "description": "Strong 2\u2663 with extreme playing strength (long suit, very low LTC)",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 12
+        },
+        "losing_trick_count": {
+          "max": 3
+        },
+        "longest_suit_length": {
+          "min": 8
+        }
+      },
+      "forcing": "game",
+      "explanation": "Strong 2\u2663 with {hcp} HCP and extreme playing strength ({longest_suit_length}-card suit, {losing_trick_count} losers)",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
       "id": "open_2nt",
       "bid": "2NT",
       "priority": 95,
@@ -192,6 +213,38 @@
       },
       "forcing": "none",
       "explanation": "1\u2666 opening showing {hcp} HCP and {diamonds_length}-card diamond suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "open_1_clubs_long",
+      "bid": "1\u2663",
+      "priority": 65,
+      "description": "One club opening with 5+ clubs",
+      "conditions": {
+        "is_opening": true,
+        "hcp": {
+          "min": 12,
+          "max": 21
+        },
+        "clubs_length": {
+          "min": 5
+        },
+        "has_5_card_major": false,
+        "OR": [
+          {
+            "clubs_length": {
+              "min": "diamonds_length"
+            }
+          },
+          {
+            "diamonds_length": {
+              "max": 4
+            }
+          }
+        ]
+      },
+      "forcing": "none",
+      "explanation": "1\u2663 opening showing {hcp} HCP and {clubs_length}-card club suit",
       "sets_forcing_level": "NON_FORCING"
     },
     {

@@ -54,42 +54,6 @@ export function getSuitOrder(trumpStrain) {
 }
 
 /**
- * Display the bidding auction history as a compact reference
- */
-export function BiddingSummary({ auction }) {
-  if (!auction || auction.length === 0) return null;
-
-  // Group auction into rows of 4 (North, East, South, West)
-  const rows = [];
-  for (let i = 0; i < auction.length; i += 4) {
-    rows.push(auction.slice(i, i + 4));
-  }
-
-  return (
-    <div className="bidding-summary">
-      <h4>Bidding</h4>
-      <div className="bidding-summary-table">
-        <div className="bidding-summary-header">
-          <span>N</span>
-          <span>E</span>
-          <span>S</span>
-          <span>W</span>
-        </div>
-        {rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="bidding-summary-row">
-            {[0, 1, 2, 3].map(col => (
-              <span key={col} className="bidding-summary-cell">
-                {row[col]?.bid || '-'}
-              </span>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/**
  * Display the contract with level, strain, declarer, and doubled status
  */
 export function ContractDisplay({ contract }) {
@@ -209,6 +173,7 @@ export function PlayTable({
   onCardPlay,
   isUserTurn,
   auction,
+  dealer,
   declarerHand,
   onDeclarerCardPlay,
   isDeclarerTurn,
@@ -287,7 +252,7 @@ export function PlayTable({
   return (
     <div className="play-table">
       {/* Consolidated Contract Header - MIGRATED to ContractHeader component */}
-      <ContractHeader contract={contract} tricksWon={tricks_won} auction={auction} scoreData={scoreData} />
+      <ContractHeader contract={contract} tricksWon={tricks_won} auction={auction} dealer={dealer} scoreData={scoreData} />
 
       <div className="play-area">
         {/* North position */}

@@ -96,8 +96,8 @@ class BiddingEngine:
         t2 = time.time()
         module_selection_time = (t2 - t1) * 1000
 
-        print(f"  ├─ Feature extraction: {feature_time:.1f}ms")
-        print(f"  ├─ Module selection: {module_selection_time:.1f}ms → {module_name}")
+        # print(f"  ├─ Feature extraction: {feature_time:.1f}ms")
+        # print(f"  ├─ Module selection: {module_selection_time:.1f}ms → {module_name}")
 
         if module_name == 'pass_by_default':
             # SAFETY NET: Check if we should override Pass due to game-forcing values
@@ -127,7 +127,7 @@ class BiddingEngine:
         result = specialist.evaluate(hand, features)
         t4 = time.time()
         evaluation_time = (t4 - t3) * 1000
-        print(f"  ├─ Module evaluation ({module_name}): {evaluation_time:.1f}ms")
+        # print(f"  ├─ Module evaluation ({module_name}): {evaluation_time:.1f}ms")
 
         if result:
             bid_to_check = result[0]
@@ -144,7 +144,7 @@ class BiddingEngine:
             )
             t6 = time.time()
             validation_time = (t6 - t5) * 1000
-            print(f"  ├─ Validation: {validation_time:.1f}ms")
+            # print(f"  ├─ Validation: {validation_time:.1f}ms")
 
             if not is_valid:
                 # Validation failed - graceful fallback to Pass
@@ -167,7 +167,7 @@ class BiddingEngine:
             )
             t8 = time.time()
             sanity_time = (t8 - t7) * 1000
-            print(f"  └─ Sanity check: {sanity_time:.1f}ms")
+            # print(f"  └─ Sanity check: {sanity_time:.1f}ms")
 
             if not should_bid:
                 # Sanity check prevented bid - use fallback

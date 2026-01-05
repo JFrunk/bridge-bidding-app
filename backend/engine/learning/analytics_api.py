@@ -2396,6 +2396,19 @@ def get_hand_detail():
             traceback.print_exc()
             dd_analysis = {'error': str(dds_error), 'available': False}
 
+        # Parse decay curve data if available
+        decay_curve_data = None
+        try:
+            decay_curve_raw = row.get('decay_curve')
+            major_errors_raw = row.get('major_errors')
+            if decay_curve_raw:
+                decay_curve_data = {
+                    'curve': json.loads(decay_curve_raw),
+                    'major_errors': json.loads(major_errors_raw) if major_errors_raw else []
+                }
+        except (json.JSONDecodeError, TypeError):
+            pass  # decay_curve not available or malformed
+
         # Generate strategy summary for the hand
         strategy_summary = None
         try:
@@ -2486,7 +2499,8 @@ def get_hand_detail():
             'bidding_quality_summary': bidding_quality_summary,
             'dd_analysis': dd_analysis,
             'par_comparison': par_comparison,
-            'strategy_summary': strategy_summary
+            'strategy_summary': strategy_summary,
+            'decay_curve': decay_curve_data
         })
 
     except Exception as e:
@@ -2923,10 +2937,10 @@ def get_bidding_hands_history():
     GET /api/bidding-hands?user_id=<id>&limit=<n>
 
     Get recent hands with bidding analysis, grouped by hand.
-    Returns hand-level summaries with HCP, shape, contract, and bid quality.
+    Returns hand-level summaries with HCP, shape, and bid quality.
 
-    This replaces showing individual bids out of context - instead shows
-    hands that can be clicked through to see bid-by-bid analysis.
+    This queries bidding_decisions directly (not session_hands) so it works
+    for bidding-only sessions that haven't completed play phase.
     """
     user_id = request.args.get('user_id', type=int)
     limit = request.args.get('limit', default=10, type=int)
@@ -2939,38 +2953,29 @@ def get_bidding_hands_history():
         conn = get_connection()
         cursor = conn.cursor()
 
-        # Get hands that have bidding decisions, with aggregated stats
-        # Join with session_hands to get contract and deal data
+        # Get unique hands from bidding_decisions grouped by session_id + hand_number
+        # This works without session_hands records (for bidding-only sessions)
         cursor.execute("""
             SELECT
-                sh.id as hand_id,
-                sh.session_id,
-                sh.hand_number,
-                sh.contract_level,
-                sh.contract_strain,
-                sh.contract_declarer,
-                sh.contract_doubled,
-                sh.dealer,
-                sh.vulnerability,
-                sh.deal_data,
-                sh.auction_history,
-                sh.played_at,
-                gs.player_position,
+                bd.session_id,
+                bd.hand_number,
+                bd.dealer,
+                bd.vulnerability,
+                bd.position as user_position,
+                MAX(bd.deal_data) as deal_data,
+                MAX(bd.auction_before) as last_auction,
+                MAX(bd.timestamp) as played_at,
                 COUNT(bd.id) as num_bids,
                 AVG(bd.score) as avg_score,
                 SUM(CASE WHEN bd.correctness = 'optimal' THEN 1 ELSE 0 END) as optimal_count,
                 SUM(CASE WHEN bd.correctness = 'acceptable' THEN 1 ELSE 0 END) as acceptable_count,
                 SUM(CASE WHEN bd.correctness = 'suboptimal' THEN 1 ELSE 0 END) as suboptimal_count,
                 SUM(CASE WHEN bd.correctness = 'error' THEN 1 ELSE 0 END) as error_count
-            FROM session_hands sh
-            JOIN game_sessions gs ON sh.session_id = gs.id
-            JOIN bidding_decisions bd ON bd.session_id = CAST(sh.session_id AS TEXT)
-                AND bd.hand_number = sh.hand_number
-                AND bd.user_id = gs.user_id
-            WHERE gs.user_id = ?
-            GROUP BY sh.id, sh.session_id, sh.hand_number
+            FROM bidding_decisions bd
+            WHERE bd.user_id = ?
+            GROUP BY bd.session_id, bd.hand_number
             HAVING COUNT(bd.id) > 0
-            ORDER BY sh.played_at DESC
+            ORDER BY MAX(bd.timestamp) DESC
             LIMIT ?
         """, (user_id, limit))
 
@@ -2978,12 +2983,14 @@ def get_bidding_hands_history():
         for row in cursor.fetchall():
             # Parse deal data to extract user's hand info
             deal_data = json.loads(row['deal_data']) if row['deal_data'] else None
-            user_position = row['player_position'] or 'S'
+            user_position = row['user_position'] or 'S'
+            # Normalize to single letter for deal_data lookup
+            pos_short = user_position[0] if len(user_position) > 1 else user_position
 
             # Extract user's hand analysis
             user_hand_info = None
-            if deal_data and user_position in deal_data:
-                user_hand_data = deal_data[user_position]
+            if deal_data and pos_short in deal_data:
+                user_hand_data = deal_data[pos_short]
                 hand_cards = user_hand_data.get('hand', [])
 
                 # Calculate HCP and shape
@@ -3001,39 +3008,25 @@ def get_bidding_hands_history():
                     'cards': hand_cards
                 }
 
-            # Format contract display
-            contract_display = None
-            if row['contract_level']:
-                contract_display = f"{row['contract_level']}{row['contract_strain']}"
-                if row['contract_doubled'] == 1:
-                    contract_display += "X"
-                elif row['contract_doubled'] == 2:
-                    contract_display += "XX"
-
-            # Determine user's role
-            declarer = row['contract_declarer']
-            if declarer == user_position:
-                role = 'Declarer'
-            elif declarer and get_partner(declarer) == user_position:
-                role = 'Dummy'
-            else:
-                role = 'Defender'
-
             # Calculate quality percentage
             total_bids = row['num_bids'] or 0
             good_bids = (row['optimal_count'] or 0) + (row['acceptable_count'] or 0)
             quality_pct = round(good_bids / total_bids * 100) if total_bids > 0 else 0
 
+            # Parse auction to determine final contract (if bidding completed)
+            auction_history = json.loads(row['last_auction']) if row['last_auction'] else []
+
             hands.append({
-                'hand_id': row['hand_id'],
+                # Use composite key: session_id:hand_number instead of session_hands.id
+                'hand_id': f"{row['session_id']}:{row['hand_number']}",
                 'session_id': row['session_id'],
                 'hand_number': row['hand_number'],
                 'played_at': row['played_at'],
-                'contract': contract_display,
-                'contract_declarer': declarer,
+                'contract': None,  # Not available from bidding_decisions
+                'contract_declarer': None,
                 'dealer': row['dealer'],
                 'vulnerability': row['vulnerability'],
-                'role': role,
+                'role': 'Bidder',  # Default for bidding-only view
                 'user_position': user_position,
                 'user_hand': user_hand_info,
                 'num_bids': total_bids,
@@ -3043,7 +3036,7 @@ def get_bidding_hands_history():
                 'acceptable_count': row['acceptable_count'] or 0,
                 'suboptimal_count': row['suboptimal_count'] or 0,
                 'error_count': row['error_count'] or 0,
-                'auction_history': json.loads(row['auction_history']) if row['auction_history'] else []
+                'auction_history': auction_history
             })
 
         conn.close()
@@ -3062,44 +3055,97 @@ def get_bidding_hands_history():
 
 def get_bidding_hand_detail():
     """
-    GET /api/bidding-hand-detail?hand_id=<id>
+    GET /api/bidding-hand-detail?hand_id=<session_id:hand_number>
 
     Get full bidding analysis for a specific hand.
     Returns all bids with analysis, partner/opponent communication context.
-    """
-    hand_id = request.args.get('hand_id', type=int)
 
-    if not hand_id:
+    hand_id can be:
+    - Composite format: "session_id:hand_number" (e.g., "3:1")
+    - Legacy integer format (session_hands.id) - still supported for backwards compatibility
+    """
+    hand_id_raw = request.args.get('hand_id')
+
+    if not hand_id_raw:
         return jsonify({'error': 'hand_id required'}), 400
 
     try:
         conn = get_connection()
         cursor = conn.cursor()
 
-        # Get hand details
-        cursor.execute("""
-            SELECT
-                sh.*,
-                gs.user_id,
-                gs.player_position
-            FROM session_hands sh
-            JOIN game_sessions gs ON sh.session_id = gs.id
-            WHERE sh.id = ?
-        """, (hand_id,))
+        # Parse hand_id - supports both "session_id:hand_number" and legacy integer formats
+        if ':' in str(hand_id_raw):
+            # New composite format: "session_id:hand_number"
+            parts = hand_id_raw.split(':')
+            if len(parts) != 2:
+                return jsonify({'error': 'Invalid hand_id format. Expected session_id:hand_number'}), 400
+            session_id = parts[0]
+            try:
+                hand_number = int(parts[1])
+            except ValueError:
+                return jsonify({'error': 'Invalid hand_number in hand_id'}), 400
 
-        row = cursor.fetchone()
-        if not row:
-            conn.close()
-            return jsonify({'error': 'Hand not found'}), 404
+            # Get bidding decisions directly (no session_hands needed)
+            cursor.execute("""
+                SELECT
+                    user_id,
+                    session_id,
+                    hand_number,
+                    dealer,
+                    vulnerability,
+                    position as user_position,
+                    deal_data
+                FROM bidding_decisions
+                WHERE session_id = ? AND hand_number = ?
+                ORDER BY bid_number
+                LIMIT 1
+            """, (session_id, hand_number))
 
-        user_id = row['user_id']
-        session_id = row['session_id']
-        hand_number = row['hand_number']
-        user_position = row['player_position'] or 'S'
+            row = cursor.fetchone()
+            if not row:
+                conn.close()
+                return jsonify({'error': 'Hand not found'}), 404
 
-        # Parse stored data
-        deal_data = json.loads(row['deal_data']) if row['deal_data'] else None
-        auction_history = json.loads(row['auction_history']) if row['auction_history'] else []
+            user_id = row['user_id']
+            user_position = row['user_position'] or 'S'
+            deal_data = json.loads(row['deal_data']) if row['deal_data'] else None
+            dealer = row['dealer']
+            vulnerability = row['vulnerability']
+            auction_history = []  # Will be reconstructed from decisions
+
+        else:
+            # Legacy integer format - try session_hands first
+            try:
+                hand_id = int(hand_id_raw)
+            except ValueError:
+                return jsonify({'error': 'Invalid hand_id format'}), 400
+
+            cursor.execute("""
+                SELECT
+                    sh.*,
+                    gs.user_id,
+                    gs.player_position
+                FROM session_hands sh
+                JOIN game_sessions gs ON sh.session_id = gs.id
+                WHERE sh.id = ?
+            """, (hand_id,))
+
+            row = cursor.fetchone()
+            if not row:
+                conn.close()
+                return jsonify({'error': 'Hand not found'}), 404
+
+            user_id = row['user_id']
+            session_id = row['session_id']
+            hand_number = row['hand_number']
+            user_position = row['player_position'] or 'S'
+            deal_data = json.loads(row['deal_data']) if row['deal_data'] else None
+            dealer = row['dealer']
+            vulnerability = row['vulnerability']
+            auction_history = json.loads(row['auction_history']) if row['auction_history'] else []
+
+        # Normalize user_position to single letter for deal_data lookup
+        pos_short = user_position[0] if len(user_position) > 1 else user_position
 
         # Get all bidding decisions for this hand
         cursor.execute("""
@@ -3115,7 +3161,8 @@ def get_bidding_hand_detail():
                 key_concept,
                 helpful_hint,
                 reasoning,
-                auction_before
+                auction_before,
+                deal_data
             FROM bidding_decisions
             WHERE user_id = ?
               AND session_id = ?
@@ -3127,6 +3174,10 @@ def get_bidding_hand_detail():
         for d_row in cursor.fetchall():
             # Parse auction_before to understand context
             auction_before = json.loads(d_row['auction_before']) if d_row['auction_before'] else []
+
+            # If we don't have deal_data yet, try to get it from a decision
+            if not deal_data and d_row['deal_data']:
+                deal_data = json.loads(d_row['deal_data'])
 
             # Generate communication context
             partner_message = generate_partner_message(auction_before, user_position)
@@ -3172,30 +3223,19 @@ def get_bidding_hand_detail():
                     }
                     all_hands[pos] = hand_info
 
-                    if pos == user_position:
+                    if pos == pos_short:
                         user_hand_info = hand_info
 
-        # Format contract
-        contract_display = None
-        if row['contract_level']:
-            contract_display = f"{row['contract_level']}{row['contract_strain']}"
-            if row['contract_doubled'] == 1:
-                contract_display += "X"
-            elif row['contract_doubled'] == 2:
-                contract_display += "XX"
-            if row['contract_declarer']:
-                contract_display += f" by {row['contract_declarer']}"
-
         return jsonify({
-            'hand_id': hand_id,
+            'hand_id': hand_id_raw,
             'session_id': session_id,
             'hand_number': hand_number,
-            'dealer': row['dealer'],
-            'vulnerability': row['vulnerability'],
+            'dealer': dealer,
+            'vulnerability': vulnerability,
             'user_position': user_position,
             'user_hand': user_hand_info,
             'all_hands': all_hands,
-            'contract': contract_display,
+            'contract': None,  # Not available from bidding_decisions
             'auction_history': auction_history,
             'bidding_decisions': decisions,
             'total_bids': len(decisions),

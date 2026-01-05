@@ -17,7 +17,7 @@ import { cn } from "../../lib/utils";
  *   * If EW declares and goes down: show POSITIVE (we set them, so flip sign)
  * - This logic MUST match ScoreModal.jsx to prevent regression bugs
  */
-export function ContractHeader({ contract, tricksWon, auction, scoreData }) {
+export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData }) {
   if (!contract) return null;
 
   const { level, strain, declarer, doubled } = contract;
@@ -80,10 +80,33 @@ export function ContractHeader({ contract, tricksWon, auction, scoreData }) {
   });
 
   // Group auction into rounds (4 bids per round: N, E, S, W)
+  // CRITICAL: Account for dealer position - bids don't always start with North
+  const positions = ['N', 'E', 'S', 'W'];
+  const dealerMap = { 'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W', 'N': 'N', 'E': 'E', 'S': 'S', 'W': 'W' };
+  const dealerPos = dealerMap[dealer] || 'N';
+  const dealerIndex = positions.indexOf(dealerPos);
+
+  // Build a 2D grid where each row has exactly 4 columns (N, E, S, W)
+  // Bids are placed starting from the dealer's column
   const rounds = [];
-  if (auction) {
-    for (let i = 0; i < auction.length; i += 4) {
-      rounds.push(auction.slice(i, i + 4));
+  if (auction && auction.length > 0) {
+    let currentRow = [null, null, null, null];
+    let colIndex = dealerIndex;
+
+    for (let i = 0; i < auction.length; i++) {
+      currentRow[colIndex] = auction[i];
+      colIndex = (colIndex + 1) % 4;
+
+      // When we wrap back to dealer's column, push the row and start a new one
+      if (colIndex === dealerIndex && i < auction.length - 1) {
+        rounds.push(currentRow);
+        currentRow = [null, null, null, null];
+      }
+    }
+
+    // Push the final (possibly incomplete) row
+    if (currentRow.some(cell => cell !== null)) {
+      rounds.push(currentRow);
     }
   }
 
@@ -199,10 +222,10 @@ export function ContractHeader({ contract, tricksWon, auction, scoreData }) {
           <table className="w-full text-base border-collapse">
             <thead>
               <tr className="text-gray-400 border-b border-gray-600">
-                <th className="text-left px-2 py-1 border-r border-gray-600">N</th>
-                <th className="text-left px-2 py-1 border-r border-gray-600">E</th>
-                <th className="text-left px-2 py-1 border-r border-gray-600">S</th>
-                <th className="text-left px-2 py-1">W</th>
+                <th className="text-left px-2 py-1 border-r border-gray-600">N{dealerPos === 'N' ? ' 🔵' : ''}</th>
+                <th className="text-left px-2 py-1 border-r border-gray-600">E{dealerPos === 'E' ? ' 🔵' : ''}</th>
+                <th className="text-left px-2 py-1 border-r border-gray-600">S{dealerPos === 'S' ? ' 🔵' : ''}</th>
+                <th className="text-left px-2 py-1">W{dealerPos === 'W' ? ' 🔵' : ''}</th>
               </tr>
             </thead>
             <tbody>

@@ -1661,6 +1661,19 @@ def evaluate_bid():
         if state.game_session:
             dealer = state.game_session.get_current_dealer()
 
+        # Serialize deal data for storage (enables bidding history review without session_hands)
+        deal_data = None
+        if state.deal:
+            deal_data = {}
+            for pos in ['N', 'E', 'S', 'W']:
+                # state.deal uses full names like 'North', 'East', etc.
+                full_pos = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[pos]
+                hand = state.deal.get(full_pos)
+                if hand:
+                    deal_data[pos] = {
+                        'hand': [{'suit': c.suit, 'rank': c.rank} for c in hand.cards]
+                    }
+
         # Select engine and evaluation method based on dev mode flag
         if use_v2_schema and engine_v2_schema:
             # V2 Schema: Use unified evaluation (same rules for AI and feedback)
@@ -1717,7 +1730,8 @@ def evaluate_bid():
                 auction_context=auction_context,
                 session_id=session_id,
                 hand_analysis_id=None,
-                hand_number=hand_number
+                hand_number=hand_number,
+                deal_data=deal_data
             )
 
             optimal_explanation_str = v2_feedback.optimal_explanation
@@ -1775,7 +1789,8 @@ def evaluate_bid():
                 optimal_bid=optimal_bid,
                 optimal_explanation=optimal_explanation_obj,
                 session_id=session_id,
-                hand_number=hand_number
+                hand_number=hand_number,
+                deal_data=deal_data
             )
 
         print(f"✅ evaluate-bid: Stored feedback for user {user_id}: {user_bid} ({feedback.correctness.value}, score: {feedback.score})")
@@ -2181,33 +2196,53 @@ def submit_feedback():
 @app.route('/api/admin/review-requests', methods=['GET'])
 def get_review_requests():
     """
-    List all review requests with their content.
+    List all review requests AND user feedback with their content.
+    Combines both review_requests/ and user_feedback/ folders.
     Returns HTML page for browser viewing or JSON for API calls.
     Supports pagination via ?page=N query parameter (20 items per page).
     """
     try:
-        review_dir = 'review_requests'
         requests_list = []
 
-        if os.path.exists(review_dir):
-            for filename in sorted(os.listdir(review_dir), reverse=True):
-                if filename.endswith('.json'):
-                    filepath = os.path.join(review_dir, filename)
-                    try:
-                        with open(filepath, 'r') as f:
-                            data = json.load(f)
-                            requests_list.append({
-                                'filename': filename,
-                                'timestamp': data.get('timestamp', ''),
-                                'game_phase': data.get('game_phase', 'unknown'),
-                                'user_concern': data.get('user_concern', ''),
-                                'user_position': data.get('user_position', 'South'),
-                                'vulnerability': data.get('vulnerability', 'None'),
-                                'dealer': data.get('dealer', 'N'),
-                                'data': data
-                            })
-                    except Exception as e:
-                        print(f"Error reading {filename}: {e}")
+        # Read from both directories
+        directories = [
+            ('review_requests', 'review'),
+            ('user_feedback', 'feedback')
+        ]
+
+        for dir_path, source_type in directories:
+            if os.path.exists(dir_path):
+                for filename in os.listdir(dir_path):
+                    if filename.endswith('.json'):
+                        filepath = os.path.join(dir_path, filename)
+                        try:
+                            with open(filepath, 'r') as f:
+                                data = json.load(f)
+                                # Extract concern/feedback text based on source
+                                if source_type == 'feedback':
+                                    concern = data.get('feedback', data.get('user_concern', ''))
+                                    game_phase = data.get('feedback_type', data.get('game_phase', 'feedback'))
+                                else:
+                                    concern = data.get('user_concern', '')
+                                    game_phase = data.get('game_phase', 'unknown')
+
+                                requests_list.append({
+                                    'filename': filename,
+                                    'source_dir': dir_path,
+                                    'source_type': source_type,
+                                    'timestamp': data.get('timestamp', ''),
+                                    'game_phase': game_phase,
+                                    'user_concern': concern,
+                                    'user_position': data.get('user_position', 'South'),
+                                    'vulnerability': data.get('vulnerability', 'None'),
+                                    'dealer': data.get('dealer', 'N'),
+                                    'data': data
+                                })
+                        except Exception as e:
+                            print(f"Error reading {filepath}: {e}")
+
+        # Sort by timestamp descending (most recent first)
+        requests_list.sort(key=lambda x: x['timestamp'] or '', reverse=True)
 
         # Pagination
         page = request.args.get('page', 1, type=int)
@@ -2243,22 +2278,32 @@ def get_review_requests():
 
 @app.route('/api/admin/review-requests/<filename>', methods=['GET'])
 def get_review_request_detail(filename):
-    """Get a single review request by filename."""
+    """Get a single review request or feedback by filename."""
     try:
-        filepath = os.path.join('review_requests', filename)
-        if not os.path.exists(filepath):
-            return jsonify({'error': 'Review request not found'}), 404
+        # Check both directories
+        filepath = None
+        source_dir = None
+        for dir_path in ['review_requests', 'user_feedback']:
+            candidate = os.path.join(dir_path, filename)
+            if os.path.exists(candidate):
+                filepath = candidate
+                source_dir = dir_path
+                break
+
+        if not filepath:
+            return jsonify({'error': 'Request not found'}), 404
 
         with open(filepath, 'r') as f:
             data = json.load(f)
 
         accept = request.headers.get('Accept', '')
         if 'text/html' in accept:
-            return _render_review_request_detail_html(data, filename)
+            return _render_review_request_detail_html(data, filename, source_dir)
         else:
             return jsonify({
                 'success': True,
                 'filename': filename,
+                'source_dir': source_dir,
                 'data': data
             })
 
@@ -2300,11 +2345,13 @@ def _render_review_requests_html(requests_list, page=1, total_pages=1, total_cou
     rows = ""
     for req in requests_list:
         concern = req['user_concern'][:100] + '...' if len(req['user_concern']) > 100 else req['user_concern']
+        source_type = req.get('source_type', 'review')
+        source_badge = '<span class="badge feedback">feedback</span>' if source_type == 'feedback' else '<span class="badge review">review</span>'
         rows += f"""
         <tr onclick="window.location='/api/admin/review-requests/{req['filename']}'" style="cursor:pointer">
             <td>{req['timestamp'][:16] if req['timestamp'] else 'N/A'}</td>
+            <td>{source_badge}</td>
             <td>{req['game_phase']}</td>
-            <td>{req['user_position']}</td>
             <td>{concern}</td>
             <td><a href="/api/admin/review-requests/{req['filename']}">View</a></td>
         </tr>
@@ -2346,21 +2393,24 @@ def _render_review_requests_html(requests_list, page=1, total_pages=1, total_cou
             .page-btn:hover {{ background: #145224; }}
             .page-btn.disabled {{ background: #ccc; color: #666; pointer-events: none; }}
             .page-info {{ color: #666; font-size: 14px; }}
+            .badge {{ display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }}
+            .badge.feedback {{ background: #e3f2fd; color: #1565c0; }}
+            .badge.review {{ background: #fff3e0; color: #e65100; }}
         </style>
     </head>
     <body>
-        <h1>🃏 Review Requests</h1>
-        <p class="count">{total_count} total request(s) - showing {len(requests_list)} on this page</p>
+        <h1>🃏 Review Requests & Feedback</h1>
+        <p class="count">{total_count} total item(s) - showing {len(requests_list)} on this page</p>
         {pagination_html}
         <table>
             <tr>
                 <th>Timestamp</th>
+                <th>Type</th>
                 <th>Phase</th>
-                <th>User Position</th>
-                <th>Concern</th>
+                <th>Message</th>
                 <th>Action</th>
             </tr>
-            {rows if rows else '<tr><td colspan="5">No review requests yet</td></tr>'}
+            {rows if rows else '<tr><td colspan="5">No requests yet</td></tr>'}
         </table>
         {pagination_html}
     </body>
@@ -2369,8 +2419,10 @@ def _render_review_requests_html(requests_list, page=1, total_pages=1, total_cou
     return html
 
 
-def _render_review_request_detail_html(data, filename):
-    """Render HTML page for a single review request."""
+def _render_review_request_detail_html(data, filename, source_dir='review_requests'):
+    """Render HTML page for a single review request or feedback."""
+    is_feedback = source_dir == 'user_feedback'
+
     # Format hands
     all_hands = data.get('all_hands', {})
     hands_html = ""
@@ -2418,12 +2470,24 @@ def _render_review_request_detail_html(data, filename):
         </div>
         """
 
+    # Determine the message/concern text
+    if is_feedback:
+        concern_text = data.get('feedback', data.get('user_concern', 'No feedback text'))
+        concern_title = "💬 User Feedback"
+        page_title = "User Feedback"
+        type_badge = '<span class="badge feedback">FEEDBACK</span>'
+    else:
+        concern_text = data.get('user_concern', 'No specific concern noted')
+        concern_title = "💬 User's Concern"
+        page_title = "Review Request"
+        type_badge = '<span class="badge review">REVIEW</span>'
+
     html = f"""
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="UTF-8">
-        <title>Review Request - {filename}</title>
+        <title>{page_title} - {filename}</title>
         <style>
             body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; }}
             h1 {{ color: #1a5f2a; }}
@@ -2436,26 +2500,29 @@ def _render_review_request_detail_html(data, filename):
             table {{ width: 100%; border-collapse: collapse; }}
             td {{ padding: 8px; border-bottom: 1px solid #eee; }}
             .meta {{ color: #666; font-size: 14px; margin: 10px 0; }}
+            .badge {{ display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-right: 10px; }}
+            .badge.feedback {{ background: #e3f2fd; color: #1565c0; }}
+            .badge.review {{ background: #fff3e0; color: #e65100; }}
         </style>
     </head>
     <body>
         <div class="back"><a href="/api/admin/review-requests">← Back to all requests</a></div>
-        <h1>🃏 Review Request</h1>
+        <h1>🃏 {type_badge} {page_title}</h1>
         <p class="meta">
             <strong>File:</strong> {filename} |
-            <strong>Phase:</strong> {data.get('game_phase', 'unknown')} |
+            <strong>Phase:</strong> {data.get('game_phase', data.get('feedback_type', 'unknown'))} |
             <strong>Dealer:</strong> {data.get('dealer', 'N')} |
             <strong>Vuln:</strong> {data.get('vulnerability', 'None')}
         </p>
 
         <div class="concern">
-            <h3>💬 User's Concern</h3>
-            <p>{data.get('user_concern', 'No specific concern noted')}</p>
+            <h3>{concern_title}</h3>
+            <p>{concern_text}</p>
         </div>
 
         <div class="section">
             <h3>🎴 Hands</h3>
-            <div class="hands">{hands_html}</div>
+            <div class="hands">{hands_html if hands_html else '<p>No hand data available</p>'}</div>
         </div>
 
         <div class="section">

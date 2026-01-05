@@ -1,0 +1,193 @@
+/**
+ * DecayChart Styles - Step-chart for trick potential decay
+ *
+ * Design principles:
+ * - Subtle grid, prominent curve
+ * - Clear error indicators
+ * - Responsive width
+ * - Matches HandReviewModal color scheme
+ */
+
+.decay-chart-container {
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+}
+
+.decay-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.decay-chart-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #374151;
+}
+
+.decay-chart-stats {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.decay-chart-stats .error-count {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+/* SVG Chart */
+.decay-chart {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+}
+
+/* Grid lines */
+.grid-line {
+  stroke: #e5e7eb;
+  stroke-width: 1;
+}
+
+/* Trick boundary markers */
+.trick-boundary {
+  stroke: #d1d5db;
+  stroke-width: 1;
+  stroke-dasharray: 2,4;
+}
+
+/* Axis lines */
+.axis-line {
+  stroke: #9ca3af;
+  stroke-width: 1.5;
+}
+
+/* Axis labels */
+.axis-label {
+  font-size: 10px;
+  fill: #6b7280;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.axis-label.y-label {
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+
+.axis-label.x-label {
+  text-anchor: middle;
+  dominant-baseline: hanging;
+}
+
+/* The decay curve */
+.decay-line {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Error markers */
+.error-marker {
+  fill: #dc2626;
+  stroke: #fef2f2;
+  stroke-width: 2;
+}
+
+/* Gift markers (defensive errors benefiting declarer) */
+.gift-marker {
+  fill: #059669;
+  stroke: #ecfdf5;
+  stroke-width: 2;
+}
+
+/* Position indicator */
+.position-indicator .position-line {
+  stroke: #f59e0b;
+  stroke-width: 1.5;
+  stroke-dasharray: 4,2;
+}
+
+.position-indicator .position-dot {
+  fill: #f59e0b;
+  stroke: white;
+  stroke-width: 2;
+}
+
+/* Legend */
+.decay-chart-legend {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.decay-chart-legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.decay-chart-legend .legend-swatch {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.decay-chart-legend .decay-line-swatch {
+  background: #2563eb;
+}
+
+.decay-chart-legend .error-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #dc2626;
+}
+
+.decay-chart-legend .gift-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #059669;
+}
+
+/* Empty state */
+.decay-chart-empty {
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .decay-chart-container {
+    padding: 8px;
+    margin: 8px 0;
+  }
+
+  .decay-chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .decay-chart-legend {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
