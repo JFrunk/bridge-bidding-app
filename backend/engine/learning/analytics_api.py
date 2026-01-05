@@ -3111,7 +3111,7 @@ def get_bidding_hand_detail():
             deal_data = json.loads(row['deal_data']) if row['deal_data'] else None
             dealer = row['dealer']
             vulnerability = row['vulnerability']
-            auction_history = []  # Will be reconstructed from decisions
+            auction_history = None  # Will be reconstructed from decisions below
 
         else:
             # Legacy integer format - try session_hands first
@@ -3201,6 +3201,30 @@ def get_bidding_hand_detail():
             })
 
         conn.close()
+
+        # Reconstruct auction_history if not available (composite hand_id format)
+        if auction_history is None and decisions:
+            # Find the decision with the longest auction_before
+            max_auction = []
+            last_user_bid = None
+            for d in decisions:
+                ab = d.get('auction_before', [])
+                if len(ab) > len(max_auction):
+                    max_auction = ab
+                last_user_bid = d.get('user_bid')
+
+            # The full auction is: longest auction_before + last user bid
+            # But we need ALL bids including opponent bids after user's last bid
+            # Best approach: use the auction_before from last decision + that user's bid
+            if decisions:
+                last_decision = decisions[-1]
+                auction_history = list(last_decision.get('auction_before', []))
+                if last_decision.get('user_bid'):
+                    auction_history.append(last_decision['user_bid'])
+
+        # Ensure auction_history is a list
+        if auction_history is None:
+            auction_history = []
 
         # Extract user's hand analysis
         user_hand_info = None
