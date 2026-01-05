@@ -75,7 +75,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(55, 65, 81, 0.75); /* Dark grey overlay instead of black */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -2993,5 +2993,106 @@
 
   .card-display {
     font-size: 16px;
+  }
+}
+
+/* =====================================================
+   BID REVIEW MODAL - Auction Center Display
+   Reuses unified layout from HandReviewModal
+   ===================================================== */
+
+/* Auction table shown in center of compass layout */
+.bid-auction-center {
+  background: white;
+  border-radius: var(--radius-md, 8px);
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  min-width: 180px;
+  max-width: 220px;
+}
+
+.bid-auction-header {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  margin-bottom: 8px;
+  border-bottom: 2px solid var(--border-color, #e5e7eb);
+  padding-bottom: 6px;
+}
+
+.bid-auction-col {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  text-align: center;
+  padding: 4px 2px;
+}
+
+.bid-auction-col.user-col {
+  color: var(--color-info-dark, #1e40af);
+  background: var(--bg-info-light, #dbeafe);
+  border-radius: 4px;
+}
+
+.bid-auction-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bid-auction-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+}
+
+.bid-auction-cell {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #1f2937);
+  text-align: center;
+  padding: 4px 2px;
+  border-radius: 4px;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bid-auction-cell.empty {
+  color: transparent;
+}
+
+.bid-auction-cell.user-bid {
+  background: var(--bg-info-light, #dbeafe);
+  color: var(--color-info-dark, #1e40af);
+  font-weight: 600;
+}
+
+/* Bid score display in feedback panel */
+.bid-score {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  margin-left: auto;
+}
+
+/* Mobile adjustments for auction center */
+@media (max-width: 480px) {
+  .bid-auction-center {
+    min-width: 140px;
+    max-width: 160px;
+    padding: 8px;
+  }
+
+  .bid-auction-col {
+    font-size: 10px;
+    padding: 2px 1px;
+  }
+
+  .bid-auction-cell {
+    font-size: 11px;
+    padding: 3px 1px;
+    min-height: 20px;
   }
 }
