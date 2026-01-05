@@ -199,9 +199,18 @@ const BidHandDisplay = ({ cards, position, isVertical = false }) => {
 // Position order constant
 const POSITIONS = ['N', 'E', 'S', 'W'];
 
+// Normalize position from full name ('North') to single letter ('N')
+const normalizePosition = (pos) => {
+  if (!pos) return 'N';
+  const posMap = { 'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W' };
+  return posMap[pos] || pos;
+};
+
 // Center auction display - shows bids up to current position
 const AuctionCenterDisplay = ({ auctionHistory, dealer, currentPosition, userPosition }) => {
-  const dealerIndex = POSITIONS.indexOf(dealer || 'N');
+  // Normalize dealer to single letter format
+  const normalizedDealer = normalizePosition(dealer);
+  const dealerIndex = POSITIONS.indexOf(normalizedDealer);
 
   // Build auction rows showing only bids up to currentPosition
   const rows = useMemo(() => {
@@ -391,7 +400,8 @@ const BidReviewModal = ({ handId, onClose }) => {
     if (!handData?.auction_history || !handData?.dealer) return [];
 
     const positions = ['N', 'E', 'S', 'W'];
-    const dealerIndex = positions.indexOf(handData.dealer);
+    const normalizedDealer = normalizePosition(handData.dealer);
+    const dealerIndex = positions.indexOf(normalizedDealer);
     const userBids = [];
 
     handData.auction_history.forEach((_, idx) => {
@@ -637,7 +647,8 @@ const BidReviewModal = ({ handId, onClose }) => {
                     <p>{(() => {
                       // Determine who made this bid
                       const positions = ['N', 'E', 'S', 'W'];
-                      const dealerIndex = positions.indexOf(handData?.dealer || 'N');
+                      const normalizedDlr = normalizePosition(handData?.dealer);
+                      const dealerIndex = positions.indexOf(normalizedDlr);
                       const bidderPos = positions[(dealerIndex + bidPosition - 1) % 4];
                       const bidderName = bidderPos === 'N' ? 'North (Partner)' : bidderPos === 'E' ? 'East (Opponent)' : bidderPos === 'W' ? 'West (Opponent)' : 'South (You)';
                       return `${bidderName} bid - no analysis recorded`;
@@ -647,34 +658,6 @@ const BidReviewModal = ({ handId, onClose }) => {
               )}
             </div>
           )}
-
-          {/* Stats row */}
-          <div className="deal-stats-consolidated">
-            {handData?.contract && (
-              <div className="stat-block">
-                <span className="stat-label">Contract</span>
-                <span className="stat-value">{handData.contract}</span>
-              </div>
-            )}
-            {biddingStats && (
-              <>
-                <div className="stat-block">
-                  <span className="stat-label">Your Bids</span>
-                  <span className="stat-value">{biddingStats.totalDecisions}</span>
-                </div>
-                <div className="stat-block">
-                  <span className="stat-label">Optimal Rate</span>
-                  <span className={`stat-value ${biddingStats.optimalRate >= 70 ? 'success' : ''}`}>
-                    {biddingStats.optimalRate}%
-                  </span>
-                </div>
-              </>
-            )}
-            <div className="stat-block">
-              <span className="stat-label">Position</span>
-              <span className="stat-value">{userPosition}</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
