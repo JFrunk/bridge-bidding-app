@@ -3400,19 +3400,22 @@ def generate_partner_message(auction_before: List, user_position: str) -> str:
         return "No bids from partner yet"
 
     partner_pos = get_partner(user_position)
+    # Map full position names to single letters
+    pos_map = {'North': 'N', 'South': 'S', 'East': 'E', 'West': 'W', 'N': 'N', 'S': 'S', 'E': 'E', 'W': 'W'}
     partner_bids = []
 
-    # Find partner's bids in the auction
-    positions = ['N', 'E', 'S', 'W']
-    # Determine starting position (usually dealer, but we'll infer from auction length)
-    for i, bid_info in enumerate(auction_before):
-        bid = bid_info.get('bid') if isinstance(bid_info, dict) else bid_info
-        # Calculate which position made this bid
-        pos_idx = i % 4
-        # We need to know the dealer to map correctly - for now assume standard rotation
-        # This is simplified - in production we'd track the actual dealer
-        if i % 4 == positions.index(partner_pos) if partner_pos in positions else -1:
-            partner_bids.append(bid)
+    # Find partner's bids in the auction using the player field in each bid
+    for bid_info in auction_before:
+        if isinstance(bid_info, dict):
+            bid = bid_info.get('bid')
+            player = bid_info.get('player', '')
+            # Normalize player position (could be "North" or "N")
+            player_normalized = pos_map.get(player, player)
+            if player_normalized == partner_pos:
+                partner_bids.append(bid)
+        else:
+            # Legacy format - just a string bid, can't determine player
+            pass
 
     if not partner_bids:
         return "Partner hasn't bid yet"
