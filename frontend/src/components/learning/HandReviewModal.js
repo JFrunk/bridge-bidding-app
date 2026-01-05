@@ -549,15 +549,6 @@ const HandReviewModal = ({
 
   const isUserDefender = userRole === 'Defender';
 
-  // Get declarer name for display
-  const getDeclarerName = (d) => {
-    if (d === 'N') return 'North';
-    if (d === 'S') return 'South';
-    if (d === 'E') return 'East';
-    if (d === 'W') return 'West';
-    return d;
-  };
-
   // Convert score from declarer's perspective to NS (user's) perspective
   const getScoreForUser = () => {
     const score = handData?.hand_score || 0;
@@ -671,7 +662,7 @@ const HandReviewModal = ({
             <div className="contract-info">
               {/* Contract and result */}
               <span className="contract">
-                {handData?.contract || 'Unknown'} by {getDeclarerName(handData?.contract_declarer)}
+                {handData?.contract || 'Unknown'}
               </span>
               {(() => {
                 const result = getResultForUser();
