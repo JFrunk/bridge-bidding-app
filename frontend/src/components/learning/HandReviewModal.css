@@ -3002,42 +3002,57 @@
    ===================================================== */
 
 /* Auction table shown in center of compass layout */
+/* MUST match center-info-box dimensions (200x200) to prevent layout shift */
 .bid-auction-center {
-  background: white;
-  border-radius: var(--radius-md, 8px);
+  /* Match center-info-box styling exactly */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   padding: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  min-width: 180px;
-  max-width: 220px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 2px solid #7dd3fc;
+  border-radius: 12px;
+  /* Fixed dimensions to match center-info-box */
+  width: 200px;
+  height: 200px;
+  min-width: 200px;
+  min-height: 200px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .bid-auction-header {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2px;
-  margin-bottom: 8px;
-  border-bottom: 2px solid var(--border-color, #e5e7eb);
-  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 2px solid #7dd3fc;
+  padding-bottom: 4px;
+  width: 100%;
 }
 
 .bid-auction-col {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text-secondary, #6b7280);
+  color: #0369a1;
   text-align: center;
-  padding: 4px 2px;
+  padding: 2px;
 }
 
 .bid-auction-col.user-col {
-  color: var(--color-info-dark, #1e40af);
-  background: var(--bg-info-light, #dbeafe);
+  color: #1e40af;
+  background: rgba(59, 130, 246, 0.2);
   border-radius: 4px;
 }
 
 .bid-auction-body {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .bid-auction-row {
@@ -3049,11 +3064,11 @@
 .bid-auction-cell {
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-primary, #1f2937);
+  color: #1e3a5f;
   text-align: center;
-  padding: 4px 2px;
+  padding: 3px 2px;
   border-radius: 4px;
-  min-height: 24px;
+  min-height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3064,8 +3079,8 @@
 }
 
 .bid-auction-cell.user-bid {
-  background: var(--bg-info-light, #dbeafe);
-  color: var(--color-info-dark, #1e40af);
+  background: rgba(59, 130, 246, 0.25);
+  color: #1e40af;
   font-weight: 600;
 }
 
@@ -3080,8 +3095,10 @@
 /* Mobile adjustments for auction center */
 @media (max-width: 480px) {
   .bid-auction-center {
-    min-width: 140px;
-    max-width: 160px;
+    width: 160px;
+    height: 160px;
+    min-width: 160px;
+    min-height: 160px;
     padding: 8px;
   }
 
@@ -3092,7 +3109,7 @@
 
   .bid-auction-cell {
     font-size: 11px;
-    padding: 3px 1px;
-    min-height: 20px;
+    padding: 2px 1px;
+    min-height: 18px;
   }
 }
