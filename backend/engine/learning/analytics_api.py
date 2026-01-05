@@ -2399,14 +2399,16 @@ def get_hand_detail():
         # Parse decay curve data if available
         decay_curve_data = None
         try:
-            decay_curve_raw = row.get('decay_curve')
-            major_errors_raw = row.get('major_errors')
+            # sqlite3.Row doesn't have .get(), use bracket access with column check
+            row_keys = row.keys() if hasattr(row, 'keys') else []
+            decay_curve_raw = row['decay_curve'] if 'decay_curve' in row_keys else None
+            major_errors_raw = row['major_errors'] if 'major_errors' in row_keys else None
             if decay_curve_raw:
                 decay_curve_data = {
                     'curve': json.loads(decay_curve_raw),
                     'major_errors': json.loads(major_errors_raw) if major_errors_raw else []
                 }
-        except (json.JSONDecodeError, TypeError):
+        except (json.JSONDecodeError, TypeError, KeyError):
             pass  # decay_curve not available or malformed
 
         # Generate strategy summary for the hand
