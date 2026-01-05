@@ -86,12 +86,16 @@
 .hand-review-modal {
   background: white;
   border-radius: 16px;
-  /* Fit content width instead of stretching to max-width */
-  width: fit-content;
   max-width: min(95vw, 800px);
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Unified layout: tighter width to match content */
+.hand-review-modal.unified-layout {
+  width: auto;
+  max-width: min(95vw, 740px);
 }
 
 /* Header - Uses CSS variables for consistent theming */
