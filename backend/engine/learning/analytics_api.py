@@ -3231,6 +3231,7 @@ def get_bidding_hand_detail():
         # Extract user's hand analysis
         user_hand_info = None
         all_hands = {}
+        hands_for_dds = {}  # For DDS analysis
         if deal_data:
             for pos in ['N', 'E', 'S', 'W']:
                 if pos in deal_data:
@@ -3252,6 +3253,44 @@ def get_bidding_hand_detail():
                     if pos == pos_short:
                         user_hand_info = hand_info
 
+        # Get DD analysis for bidding context (shows which contracts are makeable)
+        dd_analysis = None
+        try:
+            from engine.play.dds_analysis import is_dds_available, get_dds_service
+            from engine.hand import Hand, Card as BridgeCard
+
+            if is_dds_available() and deal_data:
+                dds_service = get_dds_service()
+
+                # Convert deal_data to Hand objects
+                hands = {}
+                for pos in ['N', 'E', 'S', 'W']:
+                    if pos in deal_data and 'hand' in deal_data[pos]:
+                        cards = []
+                        for card in deal_data[pos]['hand']:
+                            rank = card.get('rank') or card.get('r')
+                            suit = card.get('suit') or card.get('s')
+                            # Normalize suit to Unicode symbols
+                            suit_to_unicode = {'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣'}
+                            suit = suit_to_unicode.get(suit, suit)
+                            cards.append(BridgeCard(rank=rank, suit=suit))
+                        hands[pos] = Hand(cards=cards)
+
+                if len(hands) == 4:
+                    analysis = dds_service.analyze_deal(
+                        hands,
+                        dealer=dealer or 'N',
+                        vulnerability=vulnerability or 'None'
+                    )
+
+                    if analysis.is_valid:
+                        dd_analysis = analysis.to_dict()
+
+        except Exception as dds_error:
+            import traceback
+            traceback.print_exc()
+            dd_analysis = {'error': str(dds_error), 'available': False}
+
         return jsonify({
             'hand_id': hand_id_raw,
             'session_id': session_id,
@@ -3265,7 +3304,8 @@ def get_bidding_hand_detail():
             'auction_history': auction_history,
             'bidding_decisions': decisions,
             'total_bids': len(decisions),
-            'avg_score': round(sum(d['score'] for d in decisions) / len(decisions), 1) if decisions else 0
+            'avg_score': round(sum(d['score'] for d in decisions) / len(decisions), 1) if decisions else 0,
+            'dd_analysis': dd_analysis
         })
 
     except Exception as e:

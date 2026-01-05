@@ -28,6 +28,63 @@ const RATING_CONFIG = {
   error: { color: '#dc2626', bgColor: '#fef2f2', icon: '✗', label: 'Error' }
 };
 
+// DD Table Display - Shows trick matrix for all strains/declarers
+// Critical for bidding analysis: shows which contracts are makeable
+const DDTableDisplay = ({ ddAnalysis }) => {
+  if (!ddAnalysis?.dd_table) return null;
+
+  const strains = ['NT', 'S', 'H', 'D', 'C'];
+  const strainSymbols = { NT: 'NT', S: '♠', H: '♥', D: '♦', C: '♣' };
+  const positions = ['N', 'S', 'E', 'W'];
+
+  return (
+    <div className="dd-table-container">
+      <h4>Possible Tricks</h4>
+      <table className="dd-table">
+        <thead>
+          <tr>
+            <th></th>
+            {strains.map(strain => (
+              <th
+                key={strain}
+                className={`strain-header ${
+                  strain === 'H' || strain === 'D' ? 'hearts' : 'spades'
+                }`}
+              >
+                {strainSymbols[strain]}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {positions.map(pos => (
+            <tr key={pos}>
+              <th>{pos}</th>
+              {strains.map(strain => {
+                const tricks = ddAnalysis.dd_table[pos]?.[strain] ?? '-';
+                return (
+                  <td key={strain}>
+                    {tricks}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {ddAnalysis.par && (
+        <div className="par-info">
+          <span className="par-label">Par:</span>
+          <span className="par-value">
+            {ddAnalysis.par.contracts?.join(' / ') || 'Unknown'}
+            {ddAnalysis.par.score !== undefined && ` (${ddAnalysis.par.score >= 0 ? '+' : ''}${ddAnalysis.par.score})`}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Suit order for display
 const SUIT_ORDER = ['♠', '♥', '♦', '♣'];
 
@@ -503,6 +560,11 @@ const BidReviewModal = ({ handId, onClose }) => {
                 ⏭
               </button>
             </div>
+          )}
+
+          {/* DD Table - shows which contracts are makeable */}
+          {handData?.dd_analysis?.dd_table && (
+            <DDTableDisplay ddAnalysis={handData.dd_analysis} />
           )}
 
           {/* Compass layout with all 4 hands */}

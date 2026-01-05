@@ -284,73 +284,6 @@ const TrickFeedbackPanel = ({ decision }) => {
   );
 };
 
-// DD Table Display - Shows trick matrix for all strains/declarers
-const DDTableDisplay = ({ ddAnalysis, contractStrain, contractDeclarer }) => {
-  if (!ddAnalysis?.dd_table) return null;
-
-  const strains = ['NT', 'S', 'H', 'D', 'C'];
-  const strainSymbols = { NT: 'NT', S: '♠', H: '♥', D: '♦', C: '♣' };
-  const positions = ['N', 'S', 'E', 'W'];
-
-  // Determine which cell is the active contract
-  const isActiveCell = (pos, strain) => {
-    if (!contractStrain || !contractDeclarer) return false;
-    const normalizedStrain = contractStrain === 'NT' ? 'NT' :
-      contractStrain.replace('♠', 'S').replace('♥', 'H').replace('♦', 'D').replace('♣', 'C');
-    return pos === contractDeclarer && strain === normalizedStrain;
-  };
-
-  return (
-    <div className="dd-table-container">
-      <h4>Possible Tricks</h4>
-      <table className="dd-table">
-        <thead>
-          <tr>
-            <th></th>
-            {strains.map(strain => (
-              <th
-                key={strain}
-                className={`strain-header ${
-                  strain === 'H' || strain === 'D' ? 'hearts' : 'spades'
-                }`}
-              >
-                {strainSymbols[strain]}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {positions.map(pos => (
-            <tr key={pos}>
-              <th>{pos}</th>
-              {strains.map(strain => {
-                const tricks = ddAnalysis.dd_table[pos]?.[strain] ?? '-';
-                return (
-                  <td
-                    key={strain}
-                    className={isActiveCell(pos, strain) ? 'active-cell' : ''}
-                  >
-                    {tricks}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {ddAnalysis.par && (
-        <div className="par-info">
-          <span className="par-label">Par:</span>
-          <span className="par-value">
-            {ddAnalysis.par.contracts?.join(' / ') || 'Unknown'}
-            {ddAnalysis.par.score !== undefined && ` (${ddAnalysis.par.score >= 0 ? '+' : ''}${ddAnalysis.par.score})`}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-};
-
 const HandReviewModal = ({
   handId,
   onClose,
@@ -756,15 +689,6 @@ const HandReviewModal = ({
               data={handData.decay_curve}
               replayPosition={replayPosition}
               onPositionChange={setReplayPosition}
-            />
-          )}
-
-          {/* DD Table - shows trick matrix for bidding context */}
-          {handData?.dd_analysis?.dd_table && (
-            <DDTableDisplay
-              ddAnalysis={handData.dd_analysis}
-              contractStrain={handData.contract_strain}
-              contractDeclarer={handData.contract_declarer}
             />
           )}
 
