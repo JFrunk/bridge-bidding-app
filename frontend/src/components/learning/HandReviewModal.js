@@ -18,6 +18,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlayableCard } from '../play/PlayableCard';
 import DecayChart from '../analysis/DecayChart';
+import ChartHelp from '../help/ChartHelp';
 import './HandReviewModal.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE || '';
@@ -301,7 +302,7 @@ const DDTableDisplay = ({ ddAnalysis, contractStrain, contractDeclarer }) => {
 
   return (
     <div className="dd-table-container">
-      <h4>Double Dummy Analysis</h4>
+      <h4>Possible Tricks</h4>
       <table className="dd-table">
         <thead>
           <tr>
@@ -663,7 +664,10 @@ const HandReviewModal = ({
         {/* Consolidated header with all summary info */}
         <div className="modal-header">
           <div className="modal-title">
-            <h2>Hand Analysis</h2>
+            <div className="modal-title-row">
+              <h2>Play-by-Play Review</h2>
+              <ChartHelp chartType="play-review" variant="icon" />
+            </div>
             <div className="contract-info">
               {/* Contract and result */}
               <span className="contract">
@@ -682,8 +686,8 @@ const HandReviewModal = ({
               <span className="role-badge">{userRole}</span>
               {/* Perfect play comparison */}
               {handData?.par_comparison?.dd_tricks !== undefined && (
-                <span className="dd-badge" title="Double-dummy optimal tricks">
-                  DD: {handData.par_comparison.dd_tricks}
+                <span className="dd-badge" title="Perfect play tricks possible">
+                  Best: {handData.par_comparison.dd_tricks}
                 </span>
               )}
               {/* Score */}
