@@ -166,6 +166,212 @@
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
+      "id": "respond_michaels_major_game_spades",
+      "bid": "4♠",
+      "priority": 625,
+      "description": "Game response to Michaels showing majors - prefer spades with game values",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_michaels": true,
+        "michaels_shows_majors": true,
+        "spades_length": {"min": 3},
+        "support_points": {"min": 14}
+      },
+      "forcing": "none",
+      "explanation": "Game in spades - partner shows both majors via Michaels",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_michaels_major_game_hearts",
+      "bid": "4♥",
+      "priority": 624,
+      "description": "Game response to Michaels showing majors - prefer hearts with game values",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_michaels": true,
+        "michaels_shows_majors": true,
+        "hearts_length": {"min": 3},
+        "spades_length": {"max": 2},
+        "support_points": {"min": 14}
+      },
+      "forcing": "none",
+      "explanation": "Game in hearts - partner shows both majors via Michaels",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_michaels_major_prefer_spades",
+      "bid": "2♠",
+      "priority": 620,
+      "description": "Simple response to Michaels showing majors - prefer spades",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_michaels": true,
+        "michaels_shows_majors": true,
+        "spades_length": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Support for spades - partner shows both majors via Michaels",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_michaels_major_prefer_hearts",
+      "bid": "2♥",
+      "priority": 618,
+      "description": "Simple response to Michaels showing majors - prefer hearts",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_michaels": true,
+        "michaels_shows_majors": true,
+        "hearts_length": {"min": 3},
+        "spades_length": {"max": 2}
+      },
+      "forcing": "none",
+      "explanation": "Support for hearts - partner shows both majors via Michaels",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_michaels_ask_minor_2nt",
+      "bid": "2NT",
+      "priority": 615,
+      "description": "Ask for partner's minor after Michaels over major",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_michaels": true,
+        "michaels_shows_major_minor": true,
+        "clubs_length": {"min": 3},
+        "diamonds_length": {"min": 3}
+      },
+      "forcing": "one_round",
+      "explanation": "2NT asks partner to bid their minor suit",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "respond_michaels_hearts_over_spades",
+      "bid": "3♥",
+      "priority": 616,
+      "description": "Support hearts after Michaels over 1S (partner shows H+minor)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_michaels": true,
+        "michaels_shows_major_minor": true,
+        "other_major": "♥",
+        "hearts_length": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Support hearts - partner shows hearts + minor via Michaels",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_michaels_spades_over_hearts",
+      "bid": "3♠",
+      "priority": 615,
+      "description": "Support spades after Michaels over 1H (partner shows S+minor)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_michaels": true,
+        "michaels_shows_major_minor": true,
+        "other_major": "♠",
+        "spades_length": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Support spades - partner shows spades + minor via Michaels",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_michaels_prefer_clubs",
+      "bid": "3♣",
+      "priority": 612,
+      "description": "Prefer clubs after Michaels over major (if partner shows minor)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_michaels": true,
+        "michaels_shows_major_minor": true,
+        "clubs_length": {"min": 4},
+        "prefer_clubs": true
+      },
+      "forcing": "none",
+      "explanation": "Prefer clubs for partner's minor suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_michaels_prefer_diamonds",
+      "bid": "3♦",
+      "priority": 611,
+      "description": "Prefer diamonds after Michaels over major (if partner shows minor)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_michaels": true,
+        "michaels_shows_major_minor": true,
+        "diamonds_length": {"min": 4},
+        "prefer_diamonds": true
+      },
+      "forcing": "none",
+      "explanation": "Prefer diamonds for partner's minor suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_unusual_2nt_game_clubs",
+      "bid": "5♣",
+      "priority": 610,
+      "description": "Game in clubs after Unusual 2NT with fit and values",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_unusual_2nt": true,
+        "clubs_length": {"min": 4},
+        "support_points": {"min": 14},
+        "prefer_clubs": true
+      },
+      "forcing": "none",
+      "explanation": "Game in clubs - partner shows minors via Unusual 2NT",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_unusual_2nt_game_diamonds",
+      "bid": "5♦",
+      "priority": 609,
+      "description": "Game in diamonds after Unusual 2NT with fit and values",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_unusual_2nt": true,
+        "diamonds_length": {"min": 4},
+        "support_points": {"min": 14},
+        "prefer_diamonds": true
+      },
+      "forcing": "none",
+      "explanation": "Game in diamonds - partner shows minors via Unusual 2NT",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_unusual_2nt_prefer_clubs",
+      "bid": "3♣",
+      "priority": 608,
+      "description": "Prefer clubs after Unusual 2NT",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_unusual_2nt": true,
+        "clubs_length": {"min": 3},
+        "prefer_clubs": true
+      },
+      "forcing": "none",
+      "explanation": "Support for clubs - partner shows minors via Unusual 2NT",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_unusual_2nt_prefer_diamonds",
+      "bid": "3♦",
+      "priority": 607,
+      "description": "Prefer diamonds after Unusual 2NT",
+      "conditions": {
+        "is_advancer": true,
+        "partner_bid_unusual_2nt": true,
+        "diamonds_length": {"min": 3},
+        "prefer_diamonds": true
+      },
+      "forcing": "none",
+      "explanation": "Support for diamonds - partner shows minors via Unusual 2NT",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "advancer_pass_penalty",
       "bid": "Pass",
       "priority": 97,

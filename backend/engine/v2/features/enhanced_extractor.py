@@ -152,30 +152,60 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['fit_known'] = agreed['fit_known']
     flat['fit_length'] = agreed['fit_length']
 
-    # CRITICAL: Recalculate support points when fit is confirmed
-    # Support points = HCP + shortness points + trump length bonus (Law of Total Tricks)
-    # Only add bonuses when we have a confirmed trump fit
+    # CRITICAL: Calculate support points in two scenarios:
+    # 1. When fit is confirmed (both partners agree on a suit)
+    # 2. When responding with support to partner's suit (we have 3+ cards)
+    #
+    # Support points = HCP + shortness points (void=5, singleton=3, doubleton=1)
+    # These bonuses only apply when we have a fit!
+
+    # First, calculate support_for_partner since we need it for the check
+    # (This gets recalculated later, but we need it now for support_points)
+    partner_suit = None
+    if flat['partner_last_bid']:
+        partner_suit = get_suit_from_bid(flat['partner_last_bid'])
+
+    support_for_partner_temp = 0
+    if partner_suit:
+        support_for_partner_temp = hand.suit_lengths.get(partner_suit, 0)
+
+    # Check if we should calculate support points
+    should_calc_support = False
+    trump_suit = None
+    partner_trump_length = 5  # Default assumption for opener's suit
+
     if agreed['fit_known'] and agreed['agreed_suit']:
-        # Estimate partner's trump length from their bid
-        # If partner opened a major, assume 5; if they raised, assume 3-4
-        partner_trump_length = 5  # Default assumption for opener's suit
+        # Case 1: Fit is already confirmed
+        should_calc_support = True
+        trump_suit = agreed['agreed_suit']
         if flat['partner_last_bid']:
             partner_bid = flat['partner_last_bid']
             # If partner raised our suit, they likely have 3-4
-            # If partner bid their own suit, assume 5
             if partner_bid and partner_bid[0].isdigit():
                 level = int(partner_bid[0])
                 if level >= 2:  # Raise typically shows 3-4 card support
                     partner_trump_length = 4
 
-        # Recalculate with confirmed trump suit and partner length
+    elif support_for_partner_temp >= 3 and partner_suit:
+        # Case 2: We're about to raise with support - calculate support points
+        # This is critical for limit raises and game raises
+        should_calc_support = True
+        trump_suit = partner_suit
+        # Partner opened a suit, assume they have 5 (or 4 for minors)
+        if partner_suit in ['♥', '♠']:
+            partner_trump_length = 5
+        else:
+            partner_trump_length = 4  # Minors could be only 4
+
+    if should_calc_support and trump_suit:
+        # Calculate support points with shortness bonuses
         flat['support_points'] = calculate_support_points(
-            hand, agreed['agreed_suit'], partner_trump_length
+            hand, trump_suit, partner_trump_length
         )
-        flat['support_points_active'] = True  # Flag that bonuses are being counted
-        flat['trump_length_bonus'] = max(0, hand.suit_lengths.get(agreed['agreed_suit'], 0) + partner_trump_length - 8)
+        flat['support_points_active'] = True
+        flat['trump_length_bonus'] = max(0, hand.suit_lengths.get(trump_suit, 0) + partner_trump_length - 8)
     else:
-        # Without confirmed fit, support points = HCP (no bonuses yet)
+        # Without a fit, support points = HCP (no bonuses)
         flat['support_points'] = hf['hcp']
         flat['support_points_active'] = False
         flat['trump_length_bonus'] = 0
@@ -448,6 +478,133 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
 
     # Any minor length (for Michaels over major)
     flat['any_minor_length'] = max(suit_lengths.get('♣', 0), suit_lengths.get('♦', 0))
+
+    # Reverse detection (Barrier Principle)
+    # A reverse is when opener bids a HIGHER-ranking suit at the 2-level
+    # after opening at the 1-level. Requires 16+ points.
+    # Example: 1♦ - 1♠ - 2♥ is a reverse (hearts higher than diamonds)
+    # The "barrier" is rebidding your first suit at 2-level (e.g., 2♦)
+    # Going ABOVE the barrier (2♥ or 2♠) is a reverse
+    flat['is_reverse'] = False
+    flat['can_bid_reverse'] = False  # Has the hand strength for a reverse
+
+    if flat.get('is_rebid', False) and flat.get('first_suit'):
+        first_suit = flat['first_suit']
+        suit_ranking = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+        first_suit_rank = suit_ranking.get(first_suit, 0)
+
+        # Check if we have a second suit that would be a reverse
+        if flat.get('second_suit'):
+            second_suit = flat['second_suit']
+            second_suit_rank = suit_ranking.get(second_suit, 0)
+
+            # Reverse: second suit ranks higher than first suit
+            # E.g., opened 1♦, rebidding 2♥ is a reverse
+            if second_suit_rank > first_suit_rank:
+                flat['is_reverse'] = True
+
+        # Can we afford to reverse? Need 16+ HCP
+        flat['can_bid_reverse'] = flat.get('hcp', 0) >= 16
+
+    # Michaels and Unusual 2NT detection
+    # Detect if partner made a Michaels cuebid or Unusual 2NT
+    flat['partner_bid_michaels'] = False
+    flat['partner_bid_unusual_2nt'] = False
+    flat['michaels_shows_majors'] = False  # Michaels over minor shows both majors
+    flat['michaels_shows_major_minor'] = False  # Michaels over major shows other major + minor
+    flat['prefer_clubs'] = False
+    flat['prefer_diamonds'] = False
+
+    # Check partner's bids for Michaels/Unusual 2NT patterns
+    if partner_bids and len(partner_bids) >= 1:
+        partner_first_bid = partner_bids[0] if partner_bids else None
+
+        # Check for Unusual 2NT (partner bid 2NT directly over opponent's opening)
+        if partner_first_bid == '2NT' and opening_bid:
+            opp_suit = get_suit_from_bid(opening_bid)
+            # Unusual 2NT shows two lowest unbid suits (typically minors)
+            if opp_suit in ['♥', '♠']:
+                flat['partner_bid_unusual_2nt'] = True
+                flat['prefer_clubs'] = suit_lengths.get('♣', 0) >= suit_lengths.get('♦', 0)
+                flat['prefer_diamonds'] = suit_lengths.get('♦', 0) > suit_lengths.get('♣', 0)
+
+        # Check for Michaels cuebid (partner cuebid opponent's suit at 2-level)
+        if partner_first_bid and opening_bid:
+            partner_suit = get_suit_from_bid(partner_first_bid)
+            opp_suit = get_suit_from_bid(opening_bid)
+            partner_level = get_bid_level(partner_first_bid)
+
+            # Michaels: 2♥ over 1♥, 2♠ over 1♠, 2♣ over 1♣, 2♦ over 1♦
+            if partner_suit == opp_suit and partner_level == 2:
+                flat['partner_bid_michaels'] = True
+                if opp_suit in ['♣', '♦']:
+                    # Michaels over minor shows both majors
+                    flat['michaels_shows_majors'] = True
+                else:
+                    # Michaels over major shows other major + unspecified minor
+                    flat['michaels_shows_major_minor'] = True
+                    flat['prefer_clubs'] = suit_lengths.get('♣', 0) >= suit_lengths.get('♦', 0)
+                    flat['prefer_diamonds'] = suit_lengths.get('♦', 0) > suit_lengths.get('♣', 0)
+
+    # Support for other major (used for Michaels over major responses)
+    # When partner bids Michaels over a major, they show the OTHER major
+    flat['support_for_other_major'] = 0
+    flat['other_major'] = None
+    if flat.get('michaels_shows_major_minor'):
+        # Michaels over 1H shows spades + minor; over 1S shows hearts + minor
+        if opening_bid:
+            opp_suit = get_suit_from_bid(opening_bid)
+            if opp_suit == '♥':
+                flat['other_major'] = '♠'
+                flat['support_for_other_major'] = suit_lengths.get('♠', 0)
+            elif opp_suit == '♠':
+                flat['other_major'] = '♥'
+                flat['support_for_other_major'] = suit_lengths.get('♥', 0)
+
+    # Detect if I made a Michaels cuebid (for rebid after partner's 2NT ask)
+    flat['i_made_michaels'] = False
+    flat['i_made_michaels_over_major'] = False
+    flat['partner_asked_for_minor'] = False
+    my_bids = _get_my_bids(auction_history, my_position, dealer)
+    if my_bids and opening_bid:
+        my_first_bid = my_bids[0]
+        my_suit = get_suit_from_bid(my_first_bid)
+        opp_suit = get_suit_from_bid(opening_bid)
+        my_level = get_bid_level(my_first_bid)
+
+        # Check if I made a Michaels cuebid (cuebid of opponent's suit at 2-level)
+        if my_suit == opp_suit and my_level == 2:
+            flat['i_made_michaels'] = True
+            if opp_suit in ['♥', '♠']:
+                flat['i_made_michaels_over_major'] = True
+                # Check if partner asked for my minor with 2NT or 3C
+                # 2NT = Standard ask for minor
+                # 3C = Artificial ask for minor (when 2NT not available or passed)
+                partner_last = flat.get('partner_last_bid')
+                if partner_last == '2NT' or partner_last == '3♣' or partner_last == '3C':
+                    flat['partner_asked_for_minor'] = True
+
+    # Jacoby 2NT detection (responder's game-forcing raise of opener's major)
+    # Partner responds 2NT to opener's 1H or 1S, showing 4+ card support and GF values
+    flat['partner_bid_jacoby_2nt'] = False
+    flat['my_opening_suit'] = None
+    my_bids = _get_my_bids(auction_history, my_position, dealer)
+    if my_bids and len(my_bids) >= 1:
+        my_first_bid = my_bids[0]
+        my_first_suit = get_suit_from_bid(my_first_bid)
+        my_first_level = get_bid_level(my_first_bid)
+
+        # Check if I opened 1H or 1S
+        if my_first_level == 1 and my_first_suit in ['♥', '♠']:
+            flat['my_opening_suit'] = my_first_suit
+
+            # Check if partner responded 2NT (Jacoby 2NT)
+            if partner_bids and len(partner_bids) >= 1:
+                partner_first_bid = partner_bids[0]
+                if partner_first_bid == '2NT':
+                    # Verify partner's 2NT was in response to my opening (not overcall situation)
+                    # Partner's 2NT should be immediately after my 1M opening
+                    flat['partner_bid_jacoby_2nt'] = True
 
     # Shortness detection (for Splinters and Jacoby rebids)
     flat['has_void'] = any(l == 0 for l in suit_lengths.values())

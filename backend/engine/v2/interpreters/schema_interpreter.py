@@ -373,14 +373,22 @@ class SchemaInterpreter:
         if pattern == value:
             return True
 
-        # 2. Convert value's suit symbols to letters for regex matching
-        # This allows patterns like "1[HS]" to match "1♥" or "1♠"
-        value_normalized = value.replace('♣', 'C').replace('♦', 'D').replace('♥', 'H').replace('♠', 'S').replace('NT', 'N')
+        # 2. Normalize BOTH pattern and value to ASCII for consistent comparison
+        # This allows "1♥" in schema to match "1H" in auction history and vice versa
+        def normalize_to_ascii(s: str) -> str:
+            return s.replace('♣', 'C').replace('♦', 'D').replace('♥', 'H').replace('♠', 'S').replace('NT', 'N')
+
+        value_normalized = normalize_to_ascii(value)
+        pattern_normalized = normalize_to_ascii(pattern)
+
+        # 2a. Check if normalized strings match exactly
+        if pattern_normalized == value_normalized:
+            return True
 
         # 3. Try regex match (flexible path)
         try:
             # Anchor the pattern to match the entire string
-            regex_pattern = f"^{pattern}$"
+            regex_pattern = f"^{pattern_normalized}$"
             if re.match(regex_pattern, value_normalized):
                 return True
         except re.error:
@@ -536,11 +544,32 @@ class SchemaInterpreter:
                     return False
 
             elif op == 'in':
-                if actual not in value:
+                # Use pattern matching for string comparisons (handles Unicode/ASCII)
+                if isinstance(value, list):
+                    matched = False
+                    for pattern in value:
+                        if isinstance(pattern, str) and isinstance(actual, str):
+                            if self._matches_pattern(pattern, actual):
+                                matched = True
+                                break
+                        elif actual == pattern:
+                            matched = True
+                            break
+                    if not matched:
+                        return False
+                elif actual not in value:
                     return False
 
             elif op == 'not_in':
-                if actual in value:
+                # Use pattern matching for string comparisons (handles Unicode/ASCII)
+                if isinstance(value, list):
+                    for pattern in value:
+                        if isinstance(pattern, str) and isinstance(actual, str):
+                            if self._matches_pattern(pattern, actual):
+                                return False
+                        elif actual == pattern:
+                            return False
+                elif actual in value:
                     return False
 
         return True

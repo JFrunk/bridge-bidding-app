@@ -44,74 +44,32 @@
       "id": "jacoby_transfer_hearts",
       "bid": "2\u2666",
       "priority": 829,
-      "description": "Jacoby transfer to hearts",
+      "description": "Jacoby transfer to hearts (5+ hearts)",
       "conditions": {
         "is_response": true,
         "partner_last_bid": "1NT",
         "hearts_length": {
-          "min": 5,
-          "max": 5
+          "min": 5
         }
       },
       "forcing": "one_round",
-      "explanation": "Jacoby transfer showing 5 hearts",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "jacoby_transfer_hearts_invitational",
-      "bid": "2\u2666",
-      "priority": 828,
-      "description": "Jacoby transfer to hearts (invitational with 6+ cards)",
-      "conditions": {
-        "is_response": true,
-        "partner_last_bid": "1NT",
-        "hearts_length": {
-          "min": 6
-        },
-        "hcp": {
-          "min": 8,
-          "max": 9
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Jacoby transfer showing 6+ hearts, invitational values",
+      "explanation": "Jacoby transfer showing 5+ hearts",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "jacoby_transfer_spades",
       "bid": "2\u2665",
-      "priority": 827,
-      "description": "Jacoby transfer to spades",
+      "priority": 828,
+      "description": "Jacoby transfer to spades (5+ spades)",
       "conditions": {
         "is_response": true,
         "partner_last_bid": "1NT",
         "spades_length": {
-          "min": 5,
-          "max": 5
+          "min": 5
         }
       },
       "forcing": "one_round",
-      "explanation": "Jacoby transfer showing 5 spades",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "jacoby_transfer_spades_invitational",
-      "bid": "2\u2665",
-      "priority": 826,
-      "description": "Jacoby transfer to spades (invitational with 6+ cards)",
-      "conditions": {
-        "is_response": true,
-        "partner_last_bid": "1NT",
-        "spades_length": {
-          "min": 6
-        },
-        "hcp": {
-          "min": 8,
-          "max": 9
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Jacoby transfer showing 6+ spades, invitational values",
+      "explanation": "Jacoby transfer showing 5+ spades",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -281,7 +239,7 @@
       "id": "limit_raise_major",
       "bid": "3{partner_suit}",
       "priority": 354,
-      "description": "Limit raise of partner's major",
+      "description": "Limit raise of partner's major (invitational)",
       "conditions": {
         "is_response": true,
         "partner_last_bid": {
@@ -290,7 +248,7 @@
             "1\u2660"
           ]
         },
-        "hcp": {
+        "support_points": {
           "min": 10,
           "max": 12
         },
@@ -299,14 +257,14 @@
         }
       },
       "forcing": "none",
-      "explanation": "Limit raise with {hcp} HCP and {support_for_partner}-card support",
+      "explanation": "Limit raise with {support_points} support points and {support_for_partner}-card support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "game_raise_major",
       "bid": "4{partner_suit}",
       "priority": 323,
-      "description": "Game raise of partner's major",
+      "description": "Game raise of partner's major (direct game)",
       "conditions": {
         "is_response": true,
         "partner_last_bid": {
@@ -317,7 +275,7 @@
         },
         "OR": [
           {
-            "hcp": {
+            "support_points": {
               "min": 13
             },
             "support_for_partner": {
@@ -325,7 +283,7 @@
             }
           },
           {
-            "hcp": {
+            "support_points": {
               "min": 6,
               "max": 9
             },
@@ -336,7 +294,7 @@
         ]
       },
       "forcing": "none",
-      "explanation": "Game raise with {support_for_partner}-card support",
+      "explanation": "Game raise with {support_points} support points and {support_for_partner}-card support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -453,15 +411,15 @@
       "id": "respond_limit_raise_minor",
       "bid": "3{partner_suit}",
       "priority": 320,
-      "description": "Limit raise of partner's minor",
+      "description": "Limit raise of partner's minor (invitational)",
       "conditions": {
         "is_response": true,
         "partner_last_bid": {"in": ["1♣", "1♦"]},
-        "hcp": {"min": 10, "max": 12},
+        "support_points": {"min": 10, "max": 12},
         "support_for_partner": {"min": 4}
       },
       "forcing": "none",
-      "explanation": "Limit raise with {hcp} HCP and {support_for_partner}-card support",
+      "explanation": "Limit raise with {support_points} support points and {support_for_partner}-card support",
       "sets_forcing_level": "NON_FORCING"
     },
     {

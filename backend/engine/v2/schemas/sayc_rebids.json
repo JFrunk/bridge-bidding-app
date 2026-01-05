@@ -5,6 +5,188 @@
   "description": "Opener and responder rebids",
   "rules": [
     {
+      "id": "michaels_show_clubs_jump",
+      "bid": "4♣",
+      "priority": 872,
+      "description": "Michaels bidder jumps to show clubs with extras",
+      "conditions": {
+        "i_made_michaels_over_major": true,
+        "partner_asked_for_minor": true,
+        "clubs_length": {"min": 5},
+        "hcp": {"min": 14}
+      },
+      "forcing": "none",
+      "explanation": "Jump showing 5+ clubs with extra values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "michaels_show_diamonds_jump",
+      "bid": "4♦",
+      "priority": 871,
+      "description": "Michaels bidder jumps to show diamonds with extras",
+      "conditions": {
+        "i_made_michaels_over_major": true,
+        "partner_asked_for_minor": true,
+        "diamonds_length": {"min": 5},
+        "hcp": {"min": 14}
+      },
+      "forcing": "none",
+      "explanation": "Jump showing 5+ diamonds with extra values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "michaels_show_clubs",
+      "bid": "3♣",
+      "priority": 870,
+      "description": "Michaels bidder shows clubs after partner's 2NT ask",
+      "conditions": {
+        "i_made_michaels_over_major": true,
+        "partner_asked_for_minor": true,
+        "clubs_length": {"min": 5}
+      },
+      "forcing": "none",
+      "explanation": "Showing 5+ clubs as promised minor",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "michaels_show_diamonds",
+      "bid": "3♦",
+      "priority": 869,
+      "description": "Michaels bidder shows diamonds after partner's 2NT ask",
+      "conditions": {
+        "i_made_michaels_over_major": true,
+        "partner_asked_for_minor": true,
+        "diamonds_length": {"min": 5}
+      },
+      "forcing": "none",
+      "explanation": "Showing 5+ diamonds as promised minor",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "jacoby_2nt_rebid_shortness_spades",
+      "bid": "3♠",
+      "priority": 868,
+      "description": "Jacoby 2NT rebid showing shortness in spades",
+      "conditions": {
+        "partner_bid_jacoby_2nt": true,
+        "my_opening_suit": "♥",
+        "spades_length": {"max": 1}
+      },
+      "forcing": "game",
+      "explanation": "3♠ showing singleton or void in spades",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
+      "id": "jacoby_2nt_rebid_shortness_hearts",
+      "bid": "3♥",
+      "priority": 867,
+      "description": "Jacoby 2NT rebid showing shortness in hearts",
+      "conditions": {
+        "partner_bid_jacoby_2nt": true,
+        "my_opening_suit": "♠",
+        "hearts_length": {"max": 1}
+      },
+      "forcing": "game",
+      "explanation": "3♥ showing singleton or void in hearts",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
+      "id": "jacoby_2nt_rebid_shortness_diamonds",
+      "bid": "3♦",
+      "priority": 866,
+      "description": "Jacoby 2NT rebid showing shortness in diamonds",
+      "conditions": {
+        "partner_bid_jacoby_2nt": true,
+        "diamonds_length": {"max": 1}
+      },
+      "forcing": "game",
+      "explanation": "3♦ showing singleton or void in diamonds",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
+      "id": "jacoby_2nt_rebid_shortness_clubs",
+      "bid": "3♣",
+      "priority": 865,
+      "description": "Jacoby 2NT rebid showing shortness in clubs",
+      "conditions": {
+        "partner_bid_jacoby_2nt": true,
+        "clubs_length": {"max": 1}
+      },
+      "forcing": "game",
+      "explanation": "3♣ showing singleton or void in clubs",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
+      "id": "jacoby_2nt_rebid_strong_4H",
+      "bid": "4♥",
+      "priority": 864,
+      "description": "Jacoby 2NT rebid showing strong hand (18+ HCP) with hearts",
+      "conditions": {
+        "partner_bid_jacoby_2nt": true,
+        "my_opening_suit": "♥",
+        "hcp": {"min": 18}
+      },
+      "forcing": "none",
+      "explanation": "4♥ showing strong hand (18+ HCP) - slam interest",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "jacoby_2nt_rebid_strong_4S",
+      "bid": "4♠",
+      "priority": 863,
+      "description": "Jacoby 2NT rebid showing strong hand (18+ HCP) with spades",
+      "conditions": {
+        "partner_bid_jacoby_2nt": true,
+        "my_opening_suit": "♠",
+        "hcp": {"min": 18}
+      },
+      "forcing": "none",
+      "explanation": "4♠ showing strong hand (18+ HCP) - slam interest",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "jacoby_2nt_rebid_3nt",
+      "bid": "3NT",
+      "priority": 862,
+      "description": "Jacoby 2NT rebid showing 15-17 HCP balanced",
+      "conditions": {
+        "partner_bid_jacoby_2nt": true,
+        "hcp": {"min": 15, "max": 17},
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "3NT showing 15-17 HCP balanced (partner can pass or bid game)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "jacoby_2nt_rebid_minimum_hearts",
+      "bid": "3♥",
+      "priority": 860,
+      "description": "Jacoby 2NT rebid showing minimum opener with hearts",
+      "conditions": {
+        "partner_bid_jacoby_2nt": true,
+        "my_opening_suit": "♥",
+        "hcp": {"min": 12, "max": 14}
+      },
+      "forcing": "game",
+      "explanation": "3♥ showing minimum opener (12-14 HCP)",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
+      "id": "jacoby_2nt_rebid_minimum_spades",
+      "bid": "3♠",
+      "priority": 859,
+      "description": "Jacoby 2NT rebid showing minimum opener with spades",
+      "conditions": {
+        "partner_bid_jacoby_2nt": true,
+        "my_opening_suit": "♠",
+        "hcp": {"min": 12, "max": 14}
+      },
+      "forcing": "game",
+      "explanation": "3♠ showing minimum opener (12-14 HCP)",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
       "id": "opener_fsf_response_3nt_stopper",
       "bid": "3NT",
       "priority": 850,
