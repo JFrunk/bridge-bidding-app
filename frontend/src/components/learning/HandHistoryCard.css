@@ -41,6 +41,13 @@
   letter-spacing: 0.3px;
 }
 
+/* Role and time meta row */
+.hand-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Role badge */
 .hand-role {
   display: inline-block;
@@ -51,6 +58,13 @@
   text-transform: uppercase;
   letter-spacing: 0.3px;
   font-size: 10px;
+}
+
+/* Time display */
+.hand-time {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 400;
 }
 
 .hand-role.role-declarer {

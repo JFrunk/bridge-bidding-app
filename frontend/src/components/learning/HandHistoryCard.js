@@ -14,6 +14,27 @@ import React from 'react';
 import './HandHistoryCard.css';
 
 const HandHistoryCard = ({ hand, onClick }) => {
+  // Format relative time display (e.g., "2 min ago", "1h ago", "Yesterday")
+  const getRelativeTime = () => {
+    if (!hand.played_at) return null;
+
+    const now = new Date();
+    const played = new Date(hand.played_at);
+    const diffMs = now - played;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    // Format as date for older hands
+    return played.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
   // Get role display
   const getRoleDisplay = () => {
     if (hand.user_was_declarer) {
@@ -83,6 +104,7 @@ const HandHistoryCard = ({ hand, onClick }) => {
   const result = getResultDisplay();
   const tricksDisplay = getTricksDisplay();
   const scoreDisplay = getScoreDisplay();
+  const relativeTime = getRelativeTime();
 
   // Format contract display (e.g., "3NTX by East")
   const formatContract = (contract) => {
@@ -113,9 +135,14 @@ const HandHistoryCard = ({ hand, onClick }) => {
           {formatContract(hand.contract)}
         </div>
 
-        {/* Role badge */}
-        <div className={`hand-role ${role.className}`}>
-          {role.text}
+        {/* Role and time badges */}
+        <div className="hand-meta-row">
+          <div className={`hand-role ${role.className}`}>
+            {role.text}
+          </div>
+          {relativeTime && (
+            <span className="hand-time">{relativeTime}</span>
+          )}
         </div>
 
         {/* Result with tricks - e.g., "Down 3 (6/9)" */}
