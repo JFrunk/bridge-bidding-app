@@ -1,21 +1,25 @@
 /**
- * BidReviewModal Component - Bidding analysis with bid-by-bid breakdown
+ * BidReviewModal Component - Unified bid-by-bid analysis
  *
- * Shows:
- * 1. User's hand with HCP, shape, and key features
- * 2. Full auction table (4 columns: N/E/S/W)
- * 3. Clickable user bids that expand to show analysis
- * 4. Communication context (what partner communicated, what you're communicating)
+ * Reuses the same interface pattern as HandReviewModal (play-by-play):
+ * 1. Shows all 4 hands in compass layout
+ * 2. Navigation controls at top (Prev/Next with arrow keys)
+ * 3. Center area shows auction building up progressively
+ * 4. Feedback panel below shows analysis for current user bid
  *
- * Mirrors the play-by-play analysis pattern from HandReviewModal.
+ * Design Philosophy:
+ * - Consistent with play-by-play for user familiarity
+ * - Single pane, single interaction pattern
+ * - Start at position 0 showing all dealt hands with empty auction
+ * - Use arrow keys or buttons to step through bid-by-bid
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { PlayableCard } from '../play/PlayableCard';
 import { getBiddingHandDetail } from '../../services/analyticsService';
-import BiddingGapAnalysis from './BiddingGapAnalysis';
-import './BidReviewModal.css';
+import './HandReviewModal.css'; // Reuse the same CSS
 
-// Rating colors and labels
+// Rating colors and labels (same as HandReviewModal)
 const RATING_CONFIG = {
   optimal: { color: '#059669', bgColor: '#ecfdf5', icon: '✓', label: 'Optimal' },
   acceptable: { color: '#3b82f6', bgColor: '#eff6ff', icon: '○', label: 'Acceptable' },
@@ -23,13 +27,16 @@ const RATING_CONFIG = {
   error: { color: '#dc2626', bgColor: '#fef2f2', icon: '✗', label: 'Error' }
 };
 
-// Suit display helpers
-const SUIT_SYMBOLS = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣', '♠': '♠', '♥': '♥', '♦': '♦', '♣': '♣' };
-const SUIT_COLORS = { '♠': '#1e40af', '♥': '#dc2626', '♦': '#ea580c', '♣': '#16a34a' };
+// Suit order for display
+const SUIT_ORDER = ['♠', '♥', '♦', '♣'];
 
-const normalizeSuit = (suit) => SUIT_SYMBOLS[suit] || suit;
+// Normalize suit to Unicode format
+const normalizeSuit = (suit) => {
+  const map = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣' };
+  return map[suit] || suit;
+};
 
-// Sort cards by rank within a suit
+// Sort cards within a suit by rank (high to low)
 const sortCards = (cards) => {
   const rankOrder = ['A', 'K', 'Q', 'J', 'T', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
   return [...cards].sort((a, b) => {
@@ -39,14 +46,17 @@ const sortCards = (cards) => {
   });
 };
 
-// Hand display component showing cards grouped by suit
-const HandDisplay = ({ cards, hcp, shape, features, distributionPoints }) => {
+// Hand display component - reuses replay-hand styling from HandReviewModal
+const BidHandDisplay = ({ cards, position, isVertical = false }) => {
   const cardsBySuit = useMemo(() => {
     const grouped = { '♠': [], '♥': [], '♦': [], '♣': [] };
-    cards.forEach(card => {
+    (cards || []).forEach(card => {
       const suit = normalizeSuit(card.suit || card.s);
       if (grouped[suit]) {
-        grouped[suit].push({ rank: card.rank || card.r, suit });
+        grouped[suit].push({
+          rank: card.rank || card.r,
+          suit: suit
+        });
       }
     });
     Object.keys(grouped).forEach(suit => {
@@ -55,58 +65,93 @@ const HandDisplay = ({ cards, hcp, shape, features, distributionPoints }) => {
     return grouped;
   }, [cards]);
 
-  const suitOrder = ['♠', '♥', '♦', '♣'];
+  const positionLabels = { N: 'NORTH', E: 'EAST', S: 'SOUTH', W: 'WEST' };
 
-  return (
-    <div className="hand-display">
-      <div className="hand-stats">
-        <span className="stat hcp">{hcp} HCP</span>
-        <span className="stat shape">{shape}</span>
-        {distributionPoints > 0 && (
-          <span className="stat dist">+{distributionPoints} dist</span>
+  // Vertical 2-column layout for E/W
+  if (isVertical) {
+    const col1Suits = SUIT_ORDER.filter(s => s === '♠' || s === '♥');
+    const col2Suits = SUIT_ORDER.filter(s => s === '♦' || s === '♣');
+
+    return (
+      <div className={`replay-hand replay-hand-${position.toLowerCase()} vertical-2col`}>
+        <div className="replay-hand-label">{positionLabels[position]}</div>
+        <div className="replay-hand-2col">
+          <div className="replay-col">
+            {col1Suits.map(suit => {
+              const suitCards = cardsBySuit[suit];
+              return suitCards.map((card) => (
+                <PlayableCard
+                  key={`${card.rank}-${card.suit}`}
+                  card={card}
+                  disabled
+                  compact
+                />
+              ));
+            })}
+          </div>
+          <div className="replay-col">
+            {col2Suits.map(suit => {
+              const suitCards = cardsBySuit[suit];
+              return suitCards.map((card) => (
+                <PlayableCard
+                  key={`${card.rank}-${card.suit}`}
+                  card={card}
+                  disabled
+                  compact
+                />
+              ));
+            })}
+          </div>
+        </div>
+        {(!cards || cards.length === 0) && (
+          <div className="replay-hand-empty">No cards</div>
         )}
       </div>
-      {features && features.length > 0 && (
-        <div className="hand-features">
-          {features.map((f, i) => (
-            <span key={i} className="feature-tag">{f}</span>
-          ))}
-        </div>
-      )}
-      <div className="hand-cards">
-        {suitOrder.map(suit => (
-          <div key={suit} className="suit-row">
-            <span className="suit-symbol" style={{ color: SUIT_COLORS[suit] }}>{suit}</span>
-            <span className="suit-cards">
-              {cardsBySuit[suit].length > 0
-                ? cardsBySuit[suit].map(c => c.rank).join(' ')
-                : '—'}
-            </span>
-          </div>
-        ))}
+    );
+  }
+
+  // Horizontal layout for N/S
+  return (
+    <div className={`replay-hand replay-hand-${position.toLowerCase()} horizontal`}>
+      <div className="replay-hand-label">{positionLabels[position]}</div>
+      <div className="replay-hand-cards">
+        {SUIT_ORDER.map(suit => {
+          const suitCards = cardsBySuit[suit];
+          if (suitCards.length === 0) return null;
+          return (
+            <div key={suit} className="replay-suit-group">
+              {suitCards.map((card) => (
+                <PlayableCard
+                  key={`${card.rank}-${card.suit}`}
+                  card={card}
+                  disabled
+                />
+              ))}
+            </div>
+          );
+        })}
+        {(!cards || cards.length === 0) && (
+          <div className="replay-hand-empty">No cards</div>
+        )}
       </div>
     </div>
   );
 };
 
-// Auction table showing all bids with user bids clickable
-const AuctionTable = ({ auctionHistory, dealer, userPosition, decisions, selectedBidIndex, onSelectBid }) => {
-  const positions = ['N', 'E', 'S', 'W'];
-  const dealerIndex = positions.indexOf(dealer || 'N');
+// Position order constant
+const POSITIONS = ['N', 'E', 'S', 'W'];
 
-  // Create decision lookup by bid position in auction
-  const decisionByBidNumber = useMemo(() => {
-    const map = {};
-    decisions.forEach(d => {
-      map[d.bid_number] = d;
-    });
-    return map;
-  }, [decisions]);
+// Center auction display - shows bids up to current position
+const AuctionCenterDisplay = ({ auctionHistory, dealer, currentPosition, userPosition }) => {
+  const dealerIndex = POSITIONS.indexOf(dealer || 'N');
 
-  // Build auction rows (4 bids per row)
+  // Build auction rows showing only bids up to currentPosition
   const rows = useMemo(() => {
-    if (!auctionHistory || auctionHistory.length === 0) return [];
+    if (!auctionHistory || auctionHistory.length === 0 || currentPosition === 0) {
+      return [];
+    }
 
+    const visibleBids = auctionHistory.slice(0, currentPosition);
     const result = [];
     let currentRow = new Array(4).fill(null);
 
@@ -115,27 +160,20 @@ const AuctionTable = ({ auctionHistory, dealer, userPosition, decisions, selecte
       currentRow[i] = { empty: true };
     }
 
-    let bidIndex = 0;
     let colIndex = dealerIndex;
 
-    auctionHistory.forEach((bidInfo) => {
+    visibleBids.forEach((bidInfo) => {
       const bid = typeof bidInfo === 'string' ? bidInfo : bidInfo.bid;
-      const position = positions[colIndex];
-      const bidNumber = bidIndex + 1;
-      const decision = decisionByBidNumber[bidNumber];
-      const isUserBid = position === userPosition && decision;
+      const position = POSITIONS[colIndex];
+      const isUserBid = position === userPosition;
 
       currentRow[colIndex] = {
         bid,
         position,
-        bidNumber,
-        isUserBid,
-        decision
+        isUserBid
       };
 
       colIndex++;
-      bidIndex++;
-
       if (colIndex >= 4) {
         result.push([...currentRow]);
         currentRow = new Array(4).fill(null);
@@ -149,40 +187,38 @@ const AuctionTable = ({ auctionHistory, dealer, userPosition, decisions, selecte
     }
 
     return result;
-  }, [auctionHistory, dealerIndex, decisionByBidNumber, userPosition]);
+  }, [auctionHistory, dealerIndex, currentPosition, userPosition]);
 
-  const getBidClass = (cell) => {
-    if (!cell || cell.empty) return '';
-    let classes = ['auction-bid'];
-    if (cell.isUserBid) {
-      classes.push('user-bid');
-      if (cell.decision?.correctness) {
-        classes.push(`correctness-${cell.decision.correctness}`);
-      }
-    }
-    if (cell.bidNumber === selectedBidIndex) {
-      classes.push('selected');
-    }
-    return classes.join(' ');
-  };
+  // At position 0, show deal info
+  if (currentPosition === 0) {
+    return (
+      <div className="center-info-box">
+        <div className="center-contract">Bidding Review</div>
+        <div className="center-vulnerability">Dealer: {dealer || 'N'}</div>
+        <div className="center-dealer">Step through to see each bid</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="auction-table">
-      <div className="auction-header">
-        {positions.map(pos => (
-          <div key={pos} className={`auction-col-header ${pos === userPosition ? 'user-position' : ''}`}>
+    <div className="bid-auction-center">
+      <div className="bid-auction-header">
+        {POSITIONS.map(pos => (
+          <div
+            key={pos}
+            className={`bid-auction-col ${pos === userPosition ? 'user-col' : ''}`}
+          >
             {pos}
           </div>
         ))}
       </div>
-      <div className="auction-body">
+      <div className="bid-auction-body">
         {rows.map((row, rowIdx) => (
-          <div key={rowIdx} className="auction-row">
+          <div key={rowIdx} className="bid-auction-row">
             {row.map((cell, colIdx) => (
               <div
                 key={colIdx}
-                className={getBidClass(cell)}
-                onClick={() => cell?.isUserBid && onSelectBid(cell.bidNumber)}
+                className={`bid-auction-cell ${cell?.isUserBid ? 'user-bid' : ''} ${cell?.empty ? 'empty' : ''}`}
               >
                 {cell?.empty ? '' : cell?.bid || ''}
               </div>
@@ -194,68 +230,59 @@ const AuctionTable = ({ auctionHistory, dealer, userPosition, decisions, selecte
   );
 };
 
-// Bid analysis panel showing feedback for selected bid
-const BidAnalysisPanel = ({ decision }) => {
+// Bid feedback panel - shows analysis for current user bid
+const BidFeedbackPanel = ({ decision }) => {
   if (!decision) {
     return (
-      <div className="bid-analysis-panel empty">
-        <p className="hint">Click on any of your bids (highlighted) to see analysis</p>
+      <div className="trick-feedback-panel no-data">
+        <p>No analysis available for this bid</p>
       </div>
     );
   }
 
-  const rating = RATING_CONFIG[decision.correctness] || RATING_CONFIG.suboptimal;
+  const config = RATING_CONFIG[decision.correctness] || RATING_CONFIG.acceptable;
   const isCorrect = decision.user_bid === decision.optimal_bid;
 
   return (
-    <div className="bid-analysis-panel" style={{ borderLeftColor: rating.color }}>
-      <div className="analysis-header">
-        <div className="bid-comparison">
-          <span className="your-bid">Your bid: <strong>{decision.user_bid}</strong></span>
-          {!isCorrect && (
-            <span className="optimal-bid">Optimal: <strong>{decision.optimal_bid}</strong></span>
-          )}
-        </div>
-        <div className="rating-badge" style={{ backgroundColor: rating.bgColor, color: rating.color }}>
-          <span className="rating-icon">{rating.icon}</span>
-          <span className="rating-label">{rating.label}</span>
-          <span className="rating-score">{decision.score}/10</span>
-        </div>
+    <div
+      className={`trick-feedback-panel ${decision.correctness}`}
+      style={{ borderColor: config.color, backgroundColor: config.bgColor }}
+    >
+      <div className="feedback-header">
+        <span className="feedback-badge" style={{ backgroundColor: config.color }}>
+          {config.icon} {config.label}
+        </span>
+        <span className="bid-score">{decision.score}/10</span>
       </div>
 
-      {decision.partner_communicated && (
-        <div className="communication-section partner">
-          <div className="comm-label">What Partner Communicated:</div>
-          <div className="comm-content">{decision.partner_communicated}</div>
+      <div className="feedback-body">
+        <div className="play-comparison">
+          <span className="played-card">
+            <strong>Your bid:</strong> {decision.user_bid}
+          </span>
+          {!isCorrect && decision.optimal_bid && (
+            <span className="optimal-card">
+              <strong>Better:</strong> {decision.optimal_bid}
+            </span>
+          )}
         </div>
-      )}
 
-      {decision.you_communicated && (
-        <div className="communication-section you">
-          <div className="comm-label">What You're Communicating:</div>
-          <div className="comm-content">{decision.you_communicated}</div>
-        </div>
-      )}
+        {decision.partner_communicated && (
+          <p className="feedback-text" style={{ borderTop: 'none', paddingTop: 0 }}>
+            <strong>Partner:</strong> {decision.partner_communicated}
+          </p>
+        )}
 
-      {decision.reasoning && (
-        <div className="reasoning-section">
-          <div className="reasoning-label">Analysis:</div>
-          <div className="reasoning-content">{decision.reasoning}</div>
-        </div>
-      )}
+        {decision.you_communicated && (
+          <p className="feedback-text" style={{ borderTop: 'none', paddingTop: 0 }}>
+            <strong>Your message:</strong> {decision.you_communicated}
+          </p>
+        )}
 
-      {decision.helpful_hint && (
-        <div className="hint-section">
-          <div className="hint-label">Tip:</div>
-          <div className="hint-content">{decision.helpful_hint}</div>
-        </div>
-      )}
-
-      {decision.key_concept && (
-        <div className="concept-tag">
-          Key Concept: {decision.key_concept}
-        </div>
-      )}
+        {decision.reasoning && (
+          <p className="feedback-text">{decision.reasoning}</p>
+        )}
+      </div>
     </div>
   );
 };
@@ -265,8 +292,7 @@ const BidReviewModal = ({ handId, onClose }) => {
   const [handData, setHandData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedBidIndex, setSelectedBidIndex] = useState(null);
-  const [showRuleAnalysis, setShowRuleAnalysis] = useState(false);
+  const [bidPosition, setBidPosition] = useState(0); // 0 to totalBids
 
   // Fetch bidding hand details
   useEffect(() => {
@@ -275,10 +301,6 @@ const BidReviewModal = ({ handId, onClose }) => {
         setLoading(true);
         const data = await getBiddingHandDetail(handId);
         setHandData(data);
-        // Auto-select first user bid if available
-        if (data.bidding_decisions?.length > 0) {
-          setSelectedBidIndex(data.bidding_decisions[0].bid_number);
-        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -291,41 +313,102 @@ const BidReviewModal = ({ handId, onClose }) => {
     }
   }, [handId]);
 
-  // Get selected decision
-  const selectedDecision = useMemo(() => {
-    if (!selectedBidIndex || !handData?.bidding_decisions) return null;
-    return handData.bidding_decisions.find(d => d.bid_number === selectedBidIndex);
-  }, [selectedBidIndex, handData?.bidding_decisions]);
+  // Total bids for navigation
+  const totalBids = handData?.auction_history?.length || 0;
 
-  // Handle keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        if (!handData?.bidding_decisions?.length) return;
-        const decisions = handData.bidding_decisions;
-        const currentIdx = decisions.findIndex(d => d.bid_number === selectedBidIndex);
-        if (e.key === 'ArrowLeft' && currentIdx > 0) {
-          setSelectedBidIndex(decisions[currentIdx - 1].bid_number);
-        } else if (e.key === 'ArrowRight' && currentIdx < decisions.length - 1) {
-          setSelectedBidIndex(decisions[currentIdx + 1].bid_number);
-        }
+  // Get user position
+  const userPosition = handData?.user_position || 'S';
+
+  // Build decision lookup by bid number in auction
+  const decisionsByBidNumber = useMemo(() => {
+    const map = {};
+    (handData?.bidding_decisions || []).forEach(d => {
+      map[d.bid_number] = d;
+    });
+    return map;
+  }, [handData?.bidding_decisions]);
+
+  // Find which bid numbers are user bids
+  const userBidNumbers = useMemo(() => {
+    if (!handData?.auction_history || !handData?.dealer) return [];
+
+    const positions = ['N', 'E', 'S', 'W'];
+    const dealerIndex = positions.indexOf(handData.dealer);
+    const userBids = [];
+
+    handData.auction_history.forEach((_, idx) => {
+      const positionIndex = (dealerIndex + idx) % 4;
+      if (positions[positionIndex] === userPosition) {
+        userBids.push(idx + 1); // 1-indexed
       }
-    };
+    });
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, handData?.bidding_decisions, selectedBidIndex]);
+    return userBids;
+  }, [handData?.auction_history, handData?.dealer, userPosition]);
+
+  // Get decision for current bid if it's a user bid
+  const currentDecision = useMemo(() => {
+    if (bidPosition === 0) return null;
+
+    // Check if current bid position is a user bid
+    if (userBidNumbers.includes(bidPosition)) {
+      return decisionsByBidNumber[bidPosition];
+    }
+
+    // Find the most recent user bid before current position
+    const recentUserBid = userBidNumbers
+      .filter(n => n <= bidPosition)
+      .sort((a, b) => b - a)[0];
+
+    return recentUserBid ? decisionsByBidNumber[recentUserBid] : null;
+  }, [bidPosition, userBidNumbers, decisionsByBidNumber]);
+
+  // Get all hands data
+  const allHands = handData?.all_hands || {};
+
+  // Navigate with keyboard
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Escape') {
+      onClose();
+      return;
+    }
+
+    if (e.key === 'ArrowLeft' && bidPosition > 0) {
+      setBidPosition(p => p - 1);
+    } else if (e.key === 'ArrowRight' && bidPosition < totalBids) {
+      setBidPosition(p => p + 1);
+    } else if (e.key === 'Home') {
+      setBidPosition(0);
+    } else if (e.key === 'End') {
+      setBidPosition(totalBids);
+    }
+  }, [bidPosition, totalBids, onClose]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
+  // Calculate bidding quality stats
+  const biddingStats = useMemo(() => {
+    const decisions = handData?.bidding_decisions || [];
+    if (decisions.length === 0) return null;
+
+    const avgScore = decisions.reduce((sum, d) => sum + (d.score || 0), 0) / decisions.length;
+    const optimalCount = decisions.filter(d => d.correctness === 'optimal').length;
+
+    return {
+      avgScore: Math.round(avgScore * 10) / 10,
+      optimalRate: Math.round((optimalCount / decisions.length) * 100),
+      totalDecisions: decisions.length
+    };
+  }, [handData?.bidding_decisions]);
 
   if (loading) {
     return (
-      <div className="bid-review-modal-overlay" onClick={onClose}>
-        <div className="bid-review-modal" onClick={e => e.stopPropagation()}>
-          <div className="loading-state">
-            <div className="loading-spinner"></div>
-            <p>Loading bidding analysis...</p>
-          </div>
+      <div className="hand-review-modal-overlay" onClick={onClose}>
+        <div className="hand-review-modal" onClick={e => e.stopPropagation()}>
+          <div className="loading-state">Loading bidding analysis...</div>
         </div>
       </div>
     );
@@ -333,8 +416,8 @@ const BidReviewModal = ({ handId, onClose }) => {
 
   if (error) {
     return (
-      <div className="bid-review-modal-overlay" onClick={onClose}>
-        <div className="bid-review-modal" onClick={e => e.stopPropagation()}>
+      <div className="hand-review-modal-overlay" onClick={onClose}>
+        <div className="hand-review-modal" onClick={e => e.stopPropagation()}>
           <div className="error-state">
             <p>Error: {error}</p>
             <button onClick={onClose}>Close</button>
@@ -344,86 +427,176 @@ const BidReviewModal = ({ handId, onClose }) => {
     );
   }
 
-  if (!handData) {
-    return null;
-  }
-
-  const { user_hand, auction_history, bidding_decisions, dealer, contract, user_position } = handData;
-
   return (
-    <div className="bid-review-modal-overlay" onClick={onClose}>
-      <div className="bid-review-modal" onClick={e => e.stopPropagation()}>
+    <div className="hand-review-modal-overlay" onClick={onClose}>
+      <div className="hand-review-modal unified-layout" onClick={e => e.stopPropagation()}>
+        {/* Header with contract info */}
         <div className="modal-header">
-          <h2>Bidding Review</h2>
-          <button className="close-btn" onClick={onClose}>&times;</button>
-        </div>
-
-        <div className="modal-content">
-          {/* Contract result */}
-          {contract && (
-            <div className="contract-result">
-              Final Contract: <strong>{contract}</strong>
-            </div>
-          )}
-
-          {/* User's hand display */}
-          {user_hand && (
-            <div className="section hand-section">
-              <div className="section-title">Your Hand ({user_position})</div>
-              <HandDisplay
-                cards={user_hand.cards || []}
-                hcp={user_hand.hcp}
-                shape={user_hand.shape}
-                features={user_hand.features}
-                distributionPoints={user_hand.distribution_points}
-              />
-            </div>
-          )}
-
-          {/* Auction table */}
-          <div className="section auction-section">
-            <div className="section-title">Auction</div>
-            <AuctionTable
-              auctionHistory={auction_history}
-              dealer={dealer}
-              userPosition={user_position}
-              decisions={bidding_decisions || []}
-              selectedBidIndex={selectedBidIndex}
-              onSelectBid={setSelectedBidIndex}
-            />
-          </div>
-
-          {/* Bid analysis */}
-          <div className="section analysis-section">
-            <div className="section-title">
-              Bid Analysis
-              {bidding_decisions?.length > 0 && (
-                <span className="nav-hint">← → to navigate</span>
+          <div className="modal-title">
+            <h2>Bidding Analysis</h2>
+            <div className="contract-info">
+              {handData?.contract && (
+                <span className="contract">
+                  Final: {handData.contract}
+                </span>
+              )}
+              {biddingStats && (
+                <>
+                  <span className="accuracy-badge bidding">{biddingStats.optimalRate}% optimal</span>
+                  <span className="accuracy-badge">{biddingStats.avgScore}/10 avg</span>
+                </>
               )}
             </div>
-            <BidAnalysisPanel decision={selectedDecision} />
+          </div>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+
+        {/* Content */}
+        <div className="modal-content unified-container">
+          {/* Navigation controls */}
+          {totalBids > 0 && (
+            <div className="replay-navigation">
+              <button
+                disabled={bidPosition <= 0}
+                onClick={() => setBidPosition(0)}
+                aria-label="Go to start"
+                title="Go to start (Home)"
+              >
+                ⏮
+              </button>
+              <button
+                disabled={bidPosition <= 0}
+                onClick={() => setBidPosition(p => p - 1)}
+                aria-label="Previous bid"
+              >
+                ← Prev
+              </button>
+              <span className="replay-counter">
+                {bidPosition === 0 ? (
+                  'Start • All hands dealt'
+                ) : (
+                  <>
+                    Bid {bidPosition} of {totalBids}
+                    {userBidNumbers.includes(bidPosition) && (
+                      <span className="trick-indicator"> (Your bid)</span>
+                    )}
+                  </>
+                )}
+              </span>
+              <button
+                disabled={bidPosition >= totalBids}
+                onClick={() => setBidPosition(p => p + 1)}
+                aria-label="Next bid"
+              >
+                Next →
+              </button>
+              <button
+                disabled={bidPosition >= totalBids}
+                onClick={() => setBidPosition(totalBids)}
+                aria-label="Go to end"
+                title="Go to end (End)"
+              >
+                ⏭
+              </button>
+            </div>
+          )}
+
+          {/* Compass layout with all 4 hands */}
+          <div className="replay-table-compass">
+            {/* North hand */}
+            <div className="replay-row replay-row-north">
+              <div className="replay-position">
+                <BidHandDisplay
+                  cards={allHands.N?.cards || []}
+                  position="N"
+                  isVertical={false}
+                />
+              </div>
+            </div>
+
+            {/* Middle row: West - Auction - East */}
+            <div className="replay-row replay-row-middle">
+              <div className="replay-position replay-west">
+                <BidHandDisplay
+                  cards={allHands.W?.cards || []}
+                  position="W"
+                  isVertical={true}
+                />
+              </div>
+
+              <div className="replay-center">
+                <AuctionCenterDisplay
+                  auctionHistory={handData?.auction_history || []}
+                  dealer={handData?.dealer}
+                  currentPosition={bidPosition}
+                  userPosition={userPosition}
+                />
+              </div>
+
+              <div className="replay-position replay-east">
+                <BidHandDisplay
+                  cards={allHands.E?.cards || []}
+                  position="E"
+                  isVertical={true}
+                />
+              </div>
+            </div>
+
+            {/* South hand */}
+            <div className="replay-row replay-row-south">
+              <div className="replay-position">
+                <BidHandDisplay
+                  cards={allHands.S?.cards || []}
+                  position="S"
+                  isVertical={false}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Rule analysis toggle and component */}
-          <div className="section rule-analysis-section">
-            <button
-              className={`rule-analysis-toggle ${showRuleAnalysis ? 'active' : ''}`}
-              onClick={() => setShowRuleAnalysis(!showRuleAnalysis)}
-            >
-              {showRuleAnalysis ? '▼ Hide Rule Analysis' : '▶ Show Rule Analysis'}
-              <span className="toggle-hint">See which bidding rules matched or nearly matched</span>
-            </button>
+          {/* Feedback panel */}
+          {totalBids > 0 && (
+            <div className="trick-feedback-container">
+              {bidPosition === 0 ? (
+                <div className="replay-start-hint">
+                  <p>Press <strong>Next →</strong> or use arrow keys to step through each bid and see feedback.</p>
+                </div>
+              ) : currentDecision ? (
+                <BidFeedbackPanel decision={currentDecision} />
+              ) : (
+                <div className="trick-feedback-panel no-data">
+                  <p>Opponent bid - no analysis recorded</p>
+                </div>
+              )}
+            </div>
+          )}
 
-            {showRuleAnalysis && user_hand?.cards && (
-              <BiddingGapAnalysis
-                handCards={user_hand.cards}
-                auctionHistory={selectedDecision?.auction_before || []}
-                position={user_position}
-                vulnerability={handData?.vulnerability}
-                dealer={dealer}
-                targetBid={null}
-              />
+          {/* Stats row */}
+          <div className="deal-stats-consolidated">
+            {handData?.contract && (
+              <div className="stat-block">
+                <span className="stat-label">Contract</span>
+                <span className="stat-value">{handData.contract}</span>
+              </div>
             )}
+            {biddingStats && (
+              <>
+                <div className="stat-block">
+                  <span className="stat-label">Your Bids</span>
+                  <span className="stat-value">{biddingStats.totalDecisions}</span>
+                </div>
+                <div className="stat-block">
+                  <span className="stat-label">Optimal Rate</span>
+                  <span className={`stat-value ${biddingStats.optimalRate >= 70 ? 'success' : ''}`}>
+                    {biddingStats.optimalRate}%
+                  </span>
+                </div>
+              </>
+            )}
+            <div className="stat-block">
+              <span className="stat-label">Position</span>
+              <span className="stat-value">{userPosition}</span>
+            </div>
           </div>
         </div>
       </div>
