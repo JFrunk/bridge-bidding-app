@@ -137,13 +137,13 @@ COMPARISON_MODE = os.getenv('BIDDING_ENGINE_COMPARISON_MODE', 'false').lower() =
 # Initialize bidding engines
 engine_v1 = BiddingEngine()
 
-# V2 Schema engine (JSON-driven with V1 fallback)
+# V2 Schema engine (JSON-driven, NO V1 fallback - uses sayc_defaults.json for fallback)
 # Always initialize for per-request switching via dev mode
 engine_v2_schema = None
 try:
     from engine.v2 import BiddingEngineV2Schema
-    engine_v2_schema = BiddingEngineV2Schema(use_v1_fallback=True)
-    print("✅ BiddingEngineV2Schema initialized (available for dev mode testing)")
+    engine_v2_schema = BiddingEngineV2Schema(use_v1_fallback=False)
+    print("✅ BiddingEngineV2Schema initialized (V2-only, no V1 fallback)")
 except Exception as e:
     print(f"⚠️  Failed to initialize BiddingEngineV2Schema: {e}")
     if USE_V2_SCHEMA:
@@ -163,7 +163,7 @@ if USE_V2_ENGINE or COMPARISON_MODE:
 # Select active engine (priority: V2 Schema > V2 > V1)
 if USE_V2_SCHEMA and engine_v2_schema:
     engine = engine_v2_schema
-    print("🔷 Using BiddingEngineV2Schema (JSON-driven with V1 fallback)")
+    print("🔷 Using BiddingEngineV2Schema (JSON-driven, V2-only)")
 elif USE_V2_ENGINE and engine_v2:
     engine = engine_v2
     print("🔷 Using BiddingEngineV2 (state machine)")
