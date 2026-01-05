@@ -572,11 +572,6 @@ const BidReviewModal = ({ handId, onClose }) => {
             </div>
           )}
 
-          {/* DD Table - shows which contracts are makeable */}
-          {handData?.dd_analysis?.dd_table && (
-            <DDTableDisplay ddAnalysis={handData.dd_analysis} />
-          )}
-
           {/* Compass layout with all 4 hands */}
           <div className="replay-table-compass">
             {/* North hand */}
@@ -657,6 +652,11 @@ const BidReviewModal = ({ handId, onClose }) => {
                 </div>
               )}
             </div>
+          )}
+
+          {/* DD Table - static reference for which contracts are makeable */}
+          {handData?.dd_analysis?.dd_table && (
+            <DDTableDisplay ddAnalysis={handData.dd_analysis} />
           )}
         </div>
       </div>

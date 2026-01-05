@@ -3268,7 +3268,27 @@ def get_bidding_hand_detail():
             deal_data = json.loads(row['deal_data']) if row['deal_data'] else None
             dealer = row['dealer']
             vulnerability = row['vulnerability']
-            auction_history = None  # Will be reconstructed from decisions below
+            auction_history = None  # Will try session_hands first, then reconstruct
+
+            # Try to get complete auction from session_hands (has full auction including AI bids)
+            # Note: session_hands.session_id is INTEGER, bidding_decisions.session_id is TEXT
+            sh_row = None
+            try:
+                session_id_int = int(session_id)
+                cursor.execute("""
+                    SELECT auction_history, dealer
+                    FROM session_hands
+                    WHERE session_id = ? AND hand_number = ?
+                """, (session_id_int, hand_number))
+                sh_row = cursor.fetchone()
+            except (ValueError, TypeError):
+                # session_id is not numeric, skip session_hands lookup
+                pass
+            if sh_row and sh_row['auction_history']:
+                auction_history = json.loads(sh_row['auction_history'])
+                # Also use dealer from session_hands as it's more reliable
+                if sh_row['dealer']:
+                    dealer = sh_row['dealer']
 
         else:
             # Legacy integer format - try session_hands first
