@@ -2912,6 +2912,7 @@ def get_board_analysis():
 
         # Build query with optional session filter
         # Include decay_curve and major_errors columns if in dev mode
+        # Also include dds_analysis to compute dd_tricks if it's 0 (legacy data)
         decay_columns = ", sh.decay_curve, sh.major_errors" if include_decay_curve else ""
         query = f"""
             SELECT
@@ -2920,6 +2921,7 @@ def get_board_analysis():
                 sh.session_id,
                 sh.tricks_taken as actual_tricks,
                 sh.dd_tricks,
+                sh.dds_analysis,
                 sh.hand_score as actual_score,
                 sh.par_score,
                 sh.contract_level,
@@ -2933,7 +2935,6 @@ def get_board_analysis():
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
             WHERE gs.user_id = ?
-              AND sh.dd_tricks IS NOT NULL
               AND sh.par_score IS NOT NULL
         """
         params = [user_id]
@@ -2974,6 +2975,22 @@ def get_board_analysis():
             dd_tricks = row['dd_tricks'] or 0
             actual_score = row['actual_score'] or 0
             par_score = row['par_score'] or 0
+
+            # If dd_tricks is 0 but we have DDS analysis, compute it from the analysis
+            # This handles legacy data where dd_tricks wasn't populated correctly
+            if dd_tricks == 0 and row['dds_analysis']:
+                try:
+                    dds_data = json.loads(row['dds_analysis'])
+                    dd_table = dds_data.get('dd_table', {})
+                    declarer = row['declarer']
+                    strain = row['contract_strain']
+                    # Normalize strain from Unicode to letter codes
+                    strain_map = {'♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C', 'NT': 'NT'}
+                    strain_key = strain_map.get(strain, strain)
+                    if declarer and declarer in dd_table and strain_key in dd_table[declarer]:
+                        dd_tricks = dd_table[declarer][strain_key]
+                except (json.JSONDecodeError, KeyError, TypeError):
+                    pass  # Keep dd_tricks as 0 if we can't parse
 
             # Quality depends on user's role:
             # - Declarer/Dummy: Good if they beat expectations

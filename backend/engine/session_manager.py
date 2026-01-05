@@ -551,7 +551,10 @@ class SessionManager:
             dd_tricks = None
             if analysis.dd_table and contract:
                 declarer = contract.declarer
-                strain = contract.strain
+                # Normalize strain from Unicode symbols to letter codes
+                # Contract.strain uses ♣, ♦, ♥, ♠, NT but DDTable uses C, D, H, S, NT
+                strain_map = {'♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C', 'NT': 'NT'}
+                strain = strain_map.get(contract.strain, contract.strain)
                 # DDTable uses .table dictionary with position and strain keys
                 # e.g., dd_table.table['N']['NT'] = 9
                 dd_tricks = analysis.dd_table.get_tricks(declarer, strain)
