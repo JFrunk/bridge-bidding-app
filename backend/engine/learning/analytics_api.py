@@ -2489,7 +2489,7 @@ def get_hand_detail():
             decay_curve_raw = row['decay_curve'] if 'decay_curve' in row_keys else None
             major_errors_raw = row['major_errors'] if 'major_errors' in row_keys else None
             if decay_curve_raw:
-                curve = json.loads(decay_curve_raw)
+                curve_raw = json.loads(decay_curve_raw)
                 major_errors = json.loads(major_errors_raw) if major_errors_raw else []
 
                 # Compute additional NS perspective data
@@ -2504,6 +2504,19 @@ def get_hand_detail():
                     required_tricks = tricks_needed
                 else:
                     required_tricks = 14 - tricks_needed
+
+                # CRITICAL FIX: The stored decay curve is from DECLARER's perspective.
+                # When NS is defending, we need to invert to show NS's trick potential.
+                # At each point, NS potential = tricks_remaining - declarer_potential
+                if ns_is_declarer:
+                    # Curve is already from NS (declarer) perspective
+                    curve = curve_raw
+                else:
+                    # Invert: NS defender potential = remaining_tricks - declarer_potential
+                    # At card index i, there are (52-i)//4 complete tricks remaining
+                    # But simpler: at each point, NS can take (13 - declarer_value) of the original 13
+                    # Since curve tracks from start, we use 13 - value for each point
+                    curve = [13 - val for val in curve_raw]
 
                 # Compute cumulative NS tricks from play history
                 ns_tricks_cumulative = []
