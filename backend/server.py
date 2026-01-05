@@ -14,7 +14,6 @@ from flask_cors import CORS
 # Database abstraction layer (supports SQLite locally, PostgreSQL in production)
 from db import get_connection, is_postgres
 from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
 from engine.ai.conventions.preempts import PreemptConvention
 from engine.ai.conventions.jacoby_transfers import JacobyConvention
@@ -120,24 +119,22 @@ def handle_internal_error(e):
 # =============================================================================
 # BIDDING ENGINE SELECTION
 # =============================================================================
-# V1 (classic): Python module-based - DEFAULT
-# V2 (state machine): Explicit state machine, same modules
-# V2 Schema: JSON schema-driven with V1 fallback - RECOMMENDED for new deploys
+# V2 Schema: JSON schema-driven (DEFAULT) - uses sayc_defaults.json for fallback
+# V2 State Machine: Alternative state machine implementation
+#
+# NOTE: V1 engine has been deprecated and removed (2026-01-05)
 #
 # Environment variables:
-#   USE_V2_BIDDING_ENGINE=true       - Use V2 state machine
-#   USE_V2_SCHEMA_ENGINE=true        - Use V2 Schema (JSON-driven) with V1 fallback
-#   BIDDING_ENGINE_COMPARISON_MODE=true - Run both and log discrepancies
+#   USE_V2_SCHEMA_ENGINE=true (default) - Use V2 Schema (JSON-driven)
+#   USE_V2_BIDDING_ENGINE=true          - Use V2 state machine instead
+#   BIDDING_ENGINE_COMPARISON_MODE=true - Run both V2 engines and log discrepancies
 # =============================================================================
 
 USE_V2_ENGINE = os.getenv('USE_V2_BIDDING_ENGINE', 'false').lower() == 'true'
-USE_V2_SCHEMA = os.getenv('USE_V2_SCHEMA_ENGINE', 'true').lower() == 'true'  # Default: V2 Schema with V1 fallback
+USE_V2_SCHEMA = os.getenv('USE_V2_SCHEMA_ENGINE', 'true').lower() == 'true'  # Default: V2 Schema (V2-only)
 COMPARISON_MODE = os.getenv('BIDDING_ENGINE_COMPARISON_MODE', 'false').lower() == 'true'
 
-# Initialize bidding engines
-engine_v1 = BiddingEngine()
-
-# V2 Schema engine (JSON-driven, NO V1 fallback - uses sayc_defaults.json for fallback)
+# V2 Schema engine (JSON-driven, uses sayc_defaults.json for universal fallback)
 # Always initialize for per-request switching via dev mode
 engine_v2_schema = None
 try:
@@ -160,16 +157,20 @@ if USE_V2_ENGINE or COMPARISON_MODE:
         print(f"⚠️  Failed to initialize BiddingEngineV2: {e}")
         USE_V2_ENGINE = False
 
-# Select active engine (priority: V2 Schema > V2 > V1)
+# Select active engine (priority: V2 Schema > V2 state machine)
+# NOTE: V1 engine has been deprecated and removed
 if USE_V2_SCHEMA and engine_v2_schema:
     engine = engine_v2_schema
     print("🔷 Using BiddingEngineV2Schema (JSON-driven, V2-only)")
 elif USE_V2_ENGINE and engine_v2:
     engine = engine_v2
     print("🔷 Using BiddingEngineV2 (state machine)")
+elif engine_v2_schema:
+    # Fallback to V2 Schema even if not explicitly requested
+    engine = engine_v2_schema
+    print("🔷 Using BiddingEngineV2Schema (fallback)")
 else:
-    engine = engine_v1
-    print("🔶 Using BiddingEngine V1 (classic)")
+    raise RuntimeError("❌ No bidding engine available. V2 Schema failed to initialize.")
 
 play_engine = PlayEngine()
 play_ai = SimplePlayAI()  # Default AI (backward compatibility)

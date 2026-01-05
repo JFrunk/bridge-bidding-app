@@ -39,12 +39,13 @@ from engine.v2.features.enhanced_extractor import extract_flat_features
 
 POWER_BAND_HANDS = [
     # (hand_str, expected_hcp, expected_band, description)
-    ("AK432.QJ5.T98.32", 11, "BELOW_OPENING", "Subminimum - should pass"),
+    # HCP: A=4, K=3, Q=2, J=1
+    ("98765.QJ5.T98.32", 3, "BELOW_OPENING", "Very weak - 3 HCP"),
+    ("KQ432.QJ5.T98.32", 8, "BELOW_OPENING", "Subminimum - 8 HCP"),
     ("AK432.QJ5.K98.32", 13, "MINIMUM", "Minimum opener - 13 HCP"),
-    ("AK432.QJ5.K98.A2", 16, "MEDIUM", "Medium opener - 16 HCP"),
-    ("AK432.AQJ.K98.A2", 18, "MAXIMUM", "Maximum opener - 18 HCP"),
-    ("AKQ32.AQJ.K98.A2", 20, "MAXIMUM", "Strong opener - 20 HCP"),
-    ("AKQJ2.AQJ.AK8.A2", 24, "STRONG_2C", "2♣ opener - 24 HCP"),
+    ("AK432.QJ5.KQ8.32", 15, "MEDIUM", "Medium opener - 15 HCP"),
+    ("AK432.AJ5.KQ8.32", 17, "MEDIUM", "Strong medium - 17 HCP"),  # A+K=7 + A+J=5 + K+Q=5 = 17
+    ("AKQ32.AQJ.KQ8.A2", 25, "STRONG_2C", "2♣ opener - 25 HCP"),  # AKQ=9 + AQJ=7 + KQ=5 + A=4 = 25
 ]
 
 

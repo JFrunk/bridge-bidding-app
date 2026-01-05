@@ -1,4 +1,14 @@
 """
+DEPRECATED: V1 Module Tests (2026-01-05)
+
+These tests directly test V1 ResponderRebidModule which has been deprecated.
+V2 Schema Engine is now the default. These tests are skipped.
+
+For V2 responder rebid tests, see:
+- tests/integration/test_v2_schema_rebids.py
+- tests/acbl_sayc/test_rebids.py (updated for V2)
+
+Original description:
 Comprehensive tests for responder's rebids (second bid by responder).
 
 Tests cover:
@@ -14,6 +24,10 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 import pytest
+
+# Skip entire module - V1 has been deprecated
+pytestmark = pytest.mark.skip(reason="V1 ResponderRebidModule deprecated - use V2 Schema tests")
+
 from engine.hand import Hand, Card
 from engine.responder_rebids import ResponderRebidModule
 from engine.ai.feature_extractor import extract_features as create_features_func

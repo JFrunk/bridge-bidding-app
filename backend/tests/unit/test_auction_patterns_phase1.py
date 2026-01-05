@@ -1,4 +1,10 @@
 """
+DEPRECATED: V1 Module Tests (2026-01-05)
+
+These tests use V1 BiddingEngine and V1 modules (RebidModule, ResponderRebidModule, etc.)
+which have been deprecated. V2 Schema Engine is now the default.
+
+Original description:
 Auction Pattern Detection Tests - Phase 1 Additional Coverage
 
 Phase 1 focuses on high-priority patterns needed before refactoring:
@@ -10,6 +16,10 @@ These tests use deterministic hands for reproducibility and edge case targeting.
 """
 
 import pytest
+
+# Skip entire module - V1 has been deprecated
+pytestmark = pytest.mark.skip(reason="V1 BiddingEngine/Modules deprecated - use V2 Schema tests")
+
 from engine.hand import Hand, Card
 from engine.ai.feature_extractor import extract_features
 from engine.ai.decision_engine import select_bidding_module

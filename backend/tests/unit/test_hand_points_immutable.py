@@ -27,9 +27,10 @@ def test_hand_points_remain_constant_after_card_removal():
     hand = Hand(cards)
 
     # Verify initial point count
+    # Shape is 2-4-3-4, so 1 dist point for the doubleton spade
     assert hand.hcp == 11, f"Expected 11 HCP, got {hand.hcp}"
-    assert hand.dist_points == 0, f"Expected 0 dist points, got {hand.dist_points}"
-    assert hand.total_points == 11, f"Expected 11 total points, got {hand.total_points}"
+    assert hand.dist_points == 1, f"Expected 1 dist point (doubleton), got {hand.dist_points}"
+    assert hand.total_points == 12, f"Expected 12 total points, got {hand.total_points}"
     assert hand.suit_hcp['♠'] == 4, f"Expected 4 spade HCP, got {hand.suit_hcp['♠']}"
     assert hand.suit_hcp['♥'] == 3, f"Expected 3 heart HCP, got {hand.suit_hcp['♥']}"
     assert hand.suit_hcp['♦'] == 4, f"Expected 4 diamond HCP, got {hand.suit_hcp['♦']}"
@@ -44,8 +45,8 @@ def test_hand_points_remain_constant_after_card_removal():
     # Verify that point counts HAVE NOT CHANGED
     # (This is the fix - points should remain as originally calculated)
     assert hand.hcp == 11, f"HCP changed after card removal! Expected 11, got {hand.hcp}"
-    assert hand.dist_points == 0, f"Dist points changed after card removal! Expected 0, got {hand.dist_points}"
-    assert hand.total_points == 11, f"Total points changed after card removal! Expected 11, got {hand.total_points}"
+    assert hand.dist_points == 1, f"Dist points changed after card removal! Expected 1, got {hand.dist_points}"
+    assert hand.total_points == 12, f"Total points changed after card removal! Expected 12, got {hand.total_points}"
     assert hand.suit_hcp['♠'] == 4, f"Spade HCP changed! Expected 4, got {hand.suit_hcp['♠']}"
     assert hand.suit_hcp['♥'] == 3, f"Heart HCP changed! Expected 3, got {hand.suit_hcp['♥']}"
     assert hand.suit_hcp['♦'] == 4, f"Diamond HCP changed! Expected 4, got {hand.suit_hcp['♦']}"
