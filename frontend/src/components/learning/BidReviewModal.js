@@ -17,6 +17,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlayableCard } from '../play/PlayableCard';
 import { getBiddingHandDetail } from '../../services/analyticsService';
+import ChartHelp from '../help/ChartHelp';
 import './HandReviewModal.css'; // Reuse the same CSS
 
 // Rating colors and labels (same as HandReviewModal)
@@ -433,7 +434,10 @@ const BidReviewModal = ({ handId, onClose }) => {
         {/* Header with contract info */}
         <div className="modal-header">
           <div className="modal-title">
-            <h2>Bidding Analysis</h2>
+            <div className="modal-title-row">
+              <h2>Bidding Review</h2>
+              <ChartHelp chartType="bidding-review" variant="icon" />
+            </div>
             <div className="contract-info">
               {handData?.contract && (
                 <span className="contract">
@@ -565,7 +569,18 @@ const BidReviewModal = ({ handId, onClose }) => {
                 <BidFeedbackPanel decision={currentDecision} />
               ) : (
                 <div className="trick-feedback-panel no-data">
-                  <p>Opponent bid - no analysis recorded</p>
+                  {userBidNumbers.includes(bidPosition) ? (
+                    <p>Your bid - no analysis recorded</p>
+                  ) : (
+                    <p>{(() => {
+                      // Determine who made this bid
+                      const positions = ['N', 'E', 'S', 'W'];
+                      const dealerIndex = positions.indexOf(handData?.dealer || 'N');
+                      const bidderPos = positions[(dealerIndex + bidPosition - 1) % 4];
+                      const bidderName = bidderPos === 'N' ? 'North (Partner)' : bidderPos === 'E' ? 'East (Opponent)' : bidderPos === 'W' ? 'West (Opponent)' : 'South (You)';
+                      return `${bidderName} bid - no analysis recorded`;
+                    })()}</p>
+                  )}
                 </div>
               )}
             </div>
