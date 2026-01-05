@@ -46,6 +46,16 @@
   font-weight: 500;
 }
 
+.decay-chart-stats .success-indicator {
+  color: #059669;
+  font-weight: 600;
+}
+
+.decay-chart-stats .failure-indicator {
+  color: #dc2626;
+  font-weight: 600;
+}
+
 /* SVG Chart */
 .decay-chart {
   display: block;
@@ -97,6 +107,42 @@
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* Locked-in tricks bars */
+.locked-tricks-bar {
+  fill: rgba(37, 99, 235, 0.15);
+  stroke: none;
+}
+
+/* DD Optimal line (dotted) */
+.dd-optimal-line {
+  stroke: #059669;
+  stroke-width: 1.5;
+  stroke-dasharray: 4,4;
+}
+
+/* Required tricks line (dashed) */
+.required-line {
+  stroke: #f59e0b;
+  stroke-width: 1.5;
+  stroke-dasharray: 8,4;
+}
+
+/* Reference line labels */
+.reference-label {
+  font-size: 9px;
+  font-weight: 500;
+  dominant-baseline: middle;
+  text-anchor: start;
+}
+
+.dd-label {
+  fill: #059669;
+}
+
+.required-label {
+  fill: #f59e0b;
 }
 
 /* Error markers */
@@ -152,6 +198,14 @@
 
 .decay-chart-legend .decay-line-swatch {
   background: #2563eb;
+}
+
+.decay-chart-legend .locked-bar-swatch {
+  width: 16px;
+  height: 10px;
+  border-radius: 2px;
+  background: rgba(37, 99, 235, 0.3);
+  border: 1px solid rgba(37, 99, 235, 0.5);
 }
 
 .decay-chart-legend .error-swatch {

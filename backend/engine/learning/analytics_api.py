@@ -50,6 +50,90 @@ def parse_hand_from_request(hand_data: Dict) -> Optional[Hand]:
         return None
 
 
+def _compute_ns_tricks_from_play(play_history: List[Dict], trump_suit: str) -> tuple:
+    """
+    Compute cumulative NS tricks and trick winners from play history.
+
+    Args:
+        play_history: List of {'card': 'SA', 'position': 'N'} for each card played
+        trump_suit: Trump suit ('S', 'H', 'D', 'C', 'NT')
+
+    Returns:
+        Tuple of (ns_tricks_cumulative, trick_winners)
+        - ns_tricks_cumulative: List of cumulative NS tricks at each card
+        - trick_winners: List of winner positions for each complete trick
+    """
+    # Card ranking (A=14, K=13, Q=12, J=11, T=10, etc.)
+    rank_values = {
+        'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10,
+        '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2
+    }
+    NS_SIDE = {'N', 'S'}
+
+    ns_tricks_cumulative = []
+    trick_winners = []
+    ns_tricks_count = 0
+    current_trick_cards = []
+
+    for i, play in enumerate(play_history):
+        card = play.get('card', '')
+        position = play.get('position', '')
+
+        # Start of new trick
+        if i % 4 == 0:
+            current_trick_cards = []
+
+        current_trick_cards.append({'card': card, 'position': position})
+
+        # End of trick - determine winner
+        if (i + 1) % 4 == 0 and len(current_trick_cards) == 4:
+            # Get led suit
+            led_card = current_trick_cards[0]['card']
+            led_suit = led_card[0] if len(led_card) >= 2 else None
+
+            winner_idx = 0
+            winner_value = 0
+            is_trump = False
+
+            for idx, trick_play in enumerate(current_trick_cards):
+                trick_card = trick_play['card']
+                if len(trick_card) < 2:
+                    continue
+
+                suit = trick_card[0]
+                rank = trick_card[1:]
+                value = rank_values.get(rank, 0)
+
+                # Check if this card is trump
+                card_is_trump = (suit == trump_suit and trump_suit not in ['NT', 'N'])
+
+                # Determine if this card wins
+                if card_is_trump and not is_trump:
+                    # Trump beats non-trump
+                    winner_idx = idx
+                    winner_value = value
+                    is_trump = True
+                elif card_is_trump and is_trump:
+                    # Higher trump wins
+                    if value > winner_value:
+                        winner_idx = idx
+                        winner_value = value
+                elif not card_is_trump and not is_trump:
+                    # Must follow suit to win
+                    if suit == led_suit and value > winner_value:
+                        winner_idx = idx
+                        winner_value = value
+
+            winner = current_trick_cards[winner_idx]['position']
+            trick_winners.append(winner)
+            if winner in NS_SIDE:
+                ns_tricks_count += 1
+
+        ns_tricks_cumulative.append(ns_tricks_count)
+
+    return ns_tricks_cumulative, trick_winners
+
+
 # ============================================================================
 # PRACTICE RECORDING
 # ============================================================================
@@ -2397,6 +2481,7 @@ def get_hand_detail():
             dd_analysis = {'error': str(dds_error), 'available': False}
 
         # Parse decay curve data if available
+        # Enhanced to compute NS perspective data on-the-fly
         decay_curve_data = None
         try:
             # sqlite3.Row doesn't have .get(), use bracket access with column check
@@ -2404,11 +2489,51 @@ def get_hand_detail():
             decay_curve_raw = row['decay_curve'] if 'decay_curve' in row_keys else None
             major_errors_raw = row['major_errors'] if 'major_errors' in row_keys else None
             if decay_curve_raw:
+                curve = json.loads(decay_curve_raw)
+                major_errors = json.loads(major_errors_raw) if major_errors_raw else []
+
+                # Compute additional NS perspective data
+                declarer = row['contract_declarer'] or 'S'
+                ns_is_declarer = declarer in ['N', 'S']
+                contract_level = row['contract_level'] or 0
+                tricks_needed = contract_level + 6 if contract_level > 0 else 7
+
+                # Required tricks: For NS declarer, need to make contract
+                # For NS defender, need to set (14 - tricks_needed)
+                if ns_is_declarer:
+                    required_tricks = tricks_needed
+                else:
+                    required_tricks = 14 - tricks_needed
+
+                # Compute cumulative NS tricks from play history
+                ns_tricks_cumulative = []
+                trick_winners = []
+                if play_history:
+                    ns_tricks_cumulative, trick_winners = _compute_ns_tricks_from_play(
+                        play_history,
+                        row['contract_strain'] or 'NT'
+                    )
+
+                # Actual tricks NS took
+                tricks_taken = row['tricks_taken'] or 0
+                if ns_is_declarer:
+                    actual_tricks_ns = tricks_taken
+                else:
+                    actual_tricks_ns = 13 - tricks_taken
+
                 decay_curve_data = {
-                    'curve': json.loads(decay_curve_raw),
-                    'major_errors': json.loads(major_errors_raw) if major_errors_raw else []
+                    'curve': curve,
+                    'major_errors': major_errors,
+                    'ns_tricks_cumulative': ns_tricks_cumulative,
+                    'trick_winners': trick_winners,
+                    'dd_optimal_ns': curve[0] if curve else 0,
+                    'actual_tricks_ns': actual_tricks_ns,
+                    'ns_is_declarer': ns_is_declarer,
+                    'required_tricks': required_tricks,
                 }
-        except (json.JSONDecodeError, TypeError, KeyError):
+        except (json.JSONDecodeError, TypeError, KeyError) as e:
+            import traceback
+            traceback.print_exc()
             pass  # decay_curve not available or malformed
 
         # Generate strategy summary for the hand

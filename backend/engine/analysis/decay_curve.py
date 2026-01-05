@@ -1,20 +1,21 @@
 """
 Decay Curve Generator - Track trick potential throughout play.
 
-The decay curve shows declarer's maximum trick potential at each card played.
+The decay curve shows NS (user) maximum trick potential at each card played.
 A flat curve means optimal play; drops indicate mistakes.
 
 Physics:
 - Serial Mutation: Cards are consumed in exact play order
-- Normalization: All values from Declarer's perspective
+- Normalization: All values from NS (user) perspective - NOT declarer
 - Monotonicity: Potential can only decrease (or stay flat) with optimal play
-- Defensive Leaks: Potential increases when defense makes mistakes
+- Defensive Leaks: Potential increases when NS defense makes mistakes
 
 Implementation Notes:
 - Uses DDS solve_board() for each state (52 calls per hand)
 - Runs asynchronously to avoid blocking game flow
 - Results stored in decay_curve column as JSON array
 - Major errors extracted and stored in major_errors column
+- Trick winners tracked for "locked-in tricks" visualization
 """
 
 import json
@@ -42,6 +43,8 @@ except ImportError:
 POSITION_ORDER = ['N', 'E', 'S', 'W']
 PARTNERS = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
 NEXT_PLAYER = {'N': 'E', 'E': 'S', 'S': 'W', 'W': 'N'}
+NS_SIDE = {'N', 'S'}
+EW_SIDE = {'E', 'W'}
 
 
 @dataclass
@@ -65,12 +68,18 @@ class MajorError:
 @dataclass
 class DecayCurveResult:
     """Complete decay curve analysis result."""
-    curve: List[int]                    # Trick potential at each card
+    curve: List[int]                    # NS trick potential at each card
     major_errors: List[MajorError]      # Significant mistakes
-    initial_potential: int              # Starting DD potential
-    final_potential: int                # Ending potential
-    total_tricks_lost: int              # Sum of declarer errors
-    defensive_gifts: int                # Tricks given by defense
+    initial_potential: int              # Starting DD potential for NS
+    final_potential: int                # Ending potential for NS
+    total_tricks_lost: int              # Sum of NS errors
+    defensive_gifts: int                # Tricks given by EW defense
+    trick_winners: List[str]            # Winner of each trick ('N', 'E', 'S', 'W')
+    ns_tricks_cumulative: List[int]     # Cumulative NS tricks at each card (0-52)
+    dd_optimal_ns: int                  # DD optimal tricks for NS
+    actual_tricks_ns: int               # Actual tricks NS took
+    ns_is_declarer: bool                # Whether NS was declaring side
+    required_tricks: int                # Required to make (declarer) or set (defense)
     is_valid: bool = True
     error_message: Optional[str] = None
 
@@ -82,6 +91,12 @@ class DecayCurveResult:
             'final_potential': self.final_potential,
             'total_tricks_lost': self.total_tricks_lost,
             'defensive_gifts': self.defensive_gifts,
+            'trick_winners': self.trick_winners,
+            'ns_tricks_cumulative': self.ns_tricks_cumulative,
+            'dd_optimal_ns': self.dd_optimal_ns,
+            'actual_tricks_ns': self.actual_tricks_ns,
+            'ns_is_declarer': self.ns_is_declarer,
+            'required_tricks': self.required_tricks,
             'is_valid': self.is_valid,
             'error_message': self.error_message,
         }
@@ -96,6 +111,8 @@ class StateReconstructor:
 
     This is the "physics engine" for decay curves - it must perfectly
     track the 52-card state transitions.
+
+    Always normalizes to NS (user) perspective, not declarer.
     """
 
     def __init__(self, hands: Dict[str, List[str]], declarer: str):
@@ -111,6 +128,7 @@ class StateReconstructor:
         self.current_hands = {pos: list(cards) for pos, cards in hands.items()}
         self.declarer = declarer
         self.declarer_side = {declarer, PARTNERS[declarer]}
+        self.ns_is_declarer = declarer in NS_SIDE
         self.cards_played = 0
 
     def get_total_cards_remaining(self) -> int:
@@ -139,29 +157,33 @@ class StateReconstructor:
             return True
         return False
 
+    def is_ns_side(self, position: str) -> bool:
+        """Check if position is on NS side (user's side)."""
+        return position in NS_SIDE
+
     def is_declarer_side(self, position: str) -> bool:
         """Check if position is on declarer's side."""
         return position in self.declarer_side
 
-    def normalize_tricks(self, dds_result: int, leader: str) -> int:
+    def normalize_tricks_to_ns(self, dds_result: int, leader: str) -> int:
         """
-        Normalize DDS result to declarer's perspective.
+        Normalize DDS result to NS (user) perspective.
 
         Args:
             dds_result: Max tricks DDS says leader's side can take
             leader: Position currently on lead
 
         Returns:
-            Max tricks declarer's side can take
+            Max tricks NS can take from this position
         """
         tricks_remaining = self.get_tricks_remaining()
 
-        if self.is_declarer_side(leader):
-            # DDS result is already from declarer's perspective
+        if self.is_ns_side(leader):
+            # DDS result is already from NS perspective
             return dds_result
         else:
-            # DDS result is from defense's perspective
-            # Declarer's potential = Total tricks - Defense's potential
+            # DDS result is from EW's perspective
+            # NS's potential = Total tricks - EW's potential
             return tricks_remaining - dds_result
 
     def get_pbn_string(self) -> str:
@@ -196,8 +218,8 @@ class DecayCurveGenerator:
     """
     Generates decay curves from play history using DDS.
 
-    The decay curve tracks declarer's trick potential at each card played,
-    normalized to always show declarer's perspective.
+    The decay curve tracks NS (user) trick potential at each card played,
+    normalized to always show NS perspective regardless of who declared.
     """
 
     # Minimum trick loss to flag as major error
@@ -222,6 +244,7 @@ class DecayCurveGenerator:
         play_history: List[Dict],
         declarer: str,
         trump_suit: str,
+        contract_level: int = 0,
         skip_interval: int = 1
     ) -> DecayCurveResult:
         """
@@ -232,12 +255,25 @@ class DecayCurveGenerator:
             play_history: List of {'card': 'SA', 'position': 'W'}
             declarer: Declarer's position
             trump_suit: Trump suit ('S', 'H', 'D', 'C', 'NT')
+            contract_level: Contract level (1-7) for calculating required tricks
             skip_interval: Query DDS every N cards (1=all, 4=every trick)
 
         Returns:
-            DecayCurveResult with curve and detected errors
+            DecayCurveResult with curve and detected errors, all from NS perspective
         """
-        if not DDS_AVAILABLE:
+        # Calculate NS-specific values
+        ns_is_declarer = declarer in NS_SIDE
+        tricks_needed = contract_level + 6 if contract_level > 0 else 7
+
+        # Required tricks: For NS declarer, need to make contract
+        # For NS defender, need to set (14 - tricks_needed)
+        if ns_is_declarer:
+            required_tricks = tricks_needed
+        else:
+            required_tricks = 14 - tricks_needed
+
+        # Default empty result for error cases
+        def empty_result(error_msg: Optional[str] = None, is_valid: bool = True) -> DecayCurveResult:
             return DecayCurveResult(
                 curve=[],
                 major_errors=[],
@@ -245,28 +281,44 @@ class DecayCurveGenerator:
                 final_potential=0,
                 total_tricks_lost=0,
                 defensive_gifts=0,
-                is_valid=False,
-                error_message="DDS not available on this platform"
+                trick_winners=[],
+                ns_tricks_cumulative=[],
+                dd_optimal_ns=0,
+                actual_tricks_ns=0,
+                ns_is_declarer=ns_is_declarer,
+                required_tricks=required_tricks,
+                is_valid=is_valid,
+                error_message=error_msg
             )
 
+        if not DDS_AVAILABLE:
+            return empty_result("DDS not available on this platform", is_valid=False)
+
         if not play_history:
-            return DecayCurveResult(
-                curve=[],
-                major_errors=[],
-                initial_potential=0,
-                final_potential=0,
-                total_tricks_lost=0,
-                defensive_gifts=0,
-            )
+            return empty_result()
 
         try:
             reconstructor = StateReconstructor(hands, declarer)
             decay_points = []
             trump_denom = self._convert_trump(trump_suit)
 
+            # Track trick winners and cumulative NS tricks
+            trick_winners = []
+            ns_tricks_cumulative = []
+            current_trick_cards = []
+            current_trick_leader = None
+            ns_tricks_count = 0
+
             for i, play in enumerate(play_history):
                 card = play['card']
                 position = play['position']
+
+                # Track the leader of each trick (first card)
+                if i % 4 == 0:
+                    current_trick_leader = position
+                    current_trick_cards = []
+
+                current_trick_cards.append({'card': card, 'position': position})
 
                 # Optionally skip some positions for performance
                 if i % skip_interval != 0:
@@ -276,6 +328,7 @@ class DecayCurveGenerator:
                     else:
                         decay_points.append(0)
                     reconstructor.play_card(card, position)
+                    ns_tricks_cumulative.append(ns_tricks_count)
                     continue
 
                 # Query DDS BEFORE removing the card
@@ -287,8 +340,8 @@ class DecayCurveGenerator:
                     )
                     self.stats['dds_calls'] += 1
 
-                    # Normalize to declarer's perspective
-                    normalized = reconstructor.normalize_tricks(dds_result, position)
+                    # Normalize to NS perspective (not declarer)
+                    normalized = reconstructor.normalize_tricks_to_ns(dds_result, position)
                     decay_points.append(normalized)
                 except Exception as e:
                     logger.warning(f"DDS query failed at card {i}: {e}")
@@ -303,18 +356,30 @@ class DecayCurveGenerator:
                 if not success:
                     logger.warning(f"Card {card} not found in {position}'s hand at play {i}")
 
-            # Detect errors from the curve
-            major_errors = self._detect_errors(
+                # Determine trick winner when trick is complete
+                if (i + 1) % 4 == 0 and len(current_trick_cards) == 4:
+                    winner = self._determine_trick_winner(
+                        current_trick_cards,
+                        current_trick_leader,
+                        trump_suit
+                    )
+                    trick_winners.append(winner)
+                    if winner in NS_SIDE:
+                        ns_tricks_count += 1
+
+                ns_tricks_cumulative.append(ns_tricks_count)
+
+            # Detect errors from the curve (now from NS perspective)
+            major_errors = self._detect_errors_ns(
                 decay_points,
-                play_history,
-                declarer
+                play_history
             )
 
             # Calculate summary stats
             initial = decay_points[0] if decay_points else 0
             final = decay_points[-1] if decay_points else 0
-            total_lost = sum(e.loss for e in major_errors if e.error_type == 'declarer_error')
-            gifts = sum(e.loss for e in major_errors if e.error_type == 'defensive_gift')
+            total_lost = sum(e.loss for e in major_errors if e.error_type == 'ns_error')
+            gifts = sum(e.loss for e in major_errors if e.error_type == 'ew_gift')
 
             self.stats['curves_generated'] += 1
 
@@ -325,21 +390,18 @@ class DecayCurveGenerator:
                 final_potential=final,
                 total_tricks_lost=total_lost,
                 defensive_gifts=gifts,
+                trick_winners=trick_winners,
+                ns_tricks_cumulative=ns_tricks_cumulative,
+                dd_optimal_ns=initial,  # DD optimal is the initial potential
+                actual_tricks_ns=ns_tricks_count,
+                ns_is_declarer=ns_is_declarer,
+                required_tricks=required_tricks,
             )
 
         except Exception as e:
             self.stats['errors'] += 1
             logger.error(f"Decay curve generation failed: {e}")
-            return DecayCurveResult(
-                curve=[],
-                major_errors=[],
-                initial_potential=0,
-                final_potential=0,
-                total_tricks_lost=0,
-                defensive_gifts=0,
-                is_valid=False,
-                error_message=str(e)
-            )
+            return empty_result(str(e), is_valid=False)
 
     def _query_dds(
         self,
@@ -431,6 +493,119 @@ class DecayCurveGenerator:
                     ))
 
         return errors
+
+    def _detect_errors_ns(
+        self,
+        curve: List[int],
+        play_history: List[Dict]
+    ) -> List[MajorError]:
+        """
+        Detect major errors from the decay curve, from NS perspective.
+
+        An error occurs when NS potential drops (NS made a mistake)
+        or when NS potential increases (EW made a mistake).
+        """
+        errors = []
+
+        for i in range(1, len(curve)):
+            delta = curve[i] - curve[i-1]
+            play = play_history[i]
+            position = play['position']
+            trick_number = (i // 4) + 1
+
+            if delta < -self.ERROR_THRESHOLD:
+                # NS potential dropped - NS made an error
+                # (regardless of who played the card)
+                errors.append(MajorError(
+                    card_index=i,
+                    trick_number=trick_number,
+                    card=play['card'],
+                    position=position,
+                    loss=abs(delta),
+                    error_type='ns_error',
+                    potential_before=curve[i-1],
+                    potential_after=curve[i],
+                ))
+
+            elif delta > 0:
+                # NS potential increased - EW gave away tricks
+                errors.append(MajorError(
+                    card_index=i,
+                    trick_number=trick_number,
+                    card=play['card'],
+                    position=position,
+                    loss=delta,  # Actually a gain for NS
+                    error_type='ew_gift',
+                    potential_before=curve[i-1],
+                    potential_after=curve[i],
+                ))
+
+        return errors
+
+    def _determine_trick_winner(
+        self,
+        trick_cards: List[Dict],
+        leader: str,
+        trump_suit: str
+    ) -> str:
+        """
+        Determine the winner of a trick.
+
+        Args:
+            trick_cards: List of {'card': 'SA', 'position': 'N'} for 4 cards
+            leader: Position who led to the trick
+            trump_suit: Trump suit ('S', 'H', 'D', 'C', 'NT')
+
+        Returns:
+            Position of the winner ('N', 'E', 'S', 'W')
+        """
+        if len(trick_cards) != 4:
+            return leader  # Incomplete trick, return leader
+
+        # Card ranking (A=14, K=13, Q=12, J=11, T=10, etc.)
+        rank_values = {
+            'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10,
+            '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2
+        }
+
+        # Get led suit
+        led_card = trick_cards[0]['card']
+        led_suit = led_card[0] if len(led_card) >= 2 else None
+
+        winner_idx = 0
+        winner_value = 0
+        is_trump = False
+
+        for idx, play in enumerate(trick_cards):
+            card = play['card']
+            if len(card) < 2:
+                continue
+
+            suit = card[0]
+            rank = card[1:]
+            value = rank_values.get(rank, 0)
+
+            # Check if this card is trump
+            card_is_trump = (suit == trump_suit and trump_suit not in ['NT', 'N'])
+
+            # Determine if this card wins
+            if card_is_trump and not is_trump:
+                # Trump beats non-trump
+                winner_idx = idx
+                winner_value = value
+                is_trump = True
+            elif card_is_trump and is_trump:
+                # Higher trump wins
+                if value > winner_value:
+                    winner_idx = idx
+                    winner_value = value
+            elif not card_is_trump and not is_trump:
+                # Must follow suit to win
+                if suit == led_suit and value > winner_value:
+                    winner_idx = idx
+                    winner_value = value
+
+        return trick_cards[winner_idx]['position']
 
     def _convert_trump(self, trump_suit: str) -> Any:
         """Convert trump suit string to endplay Denom."""
