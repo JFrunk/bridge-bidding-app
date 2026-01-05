@@ -2423,27 +2423,47 @@ def _render_review_request_detail_html(data, filename, source_dir='review_reques
     """Render HTML page for a single review request or feedback."""
     is_feedback = source_dir == 'user_feedback'
 
-    # Format hands
-    all_hands = data.get('all_hands', {})
+    # For feedback, data is nested in context_data
+    context_data = data.get('context_data', {}) if is_feedback else {}
+
+    # Format hands - check both top-level and context_data
+    all_hands = data.get('all_hands') or context_data.get('all_hands') or {}
+    user_hand = data.get('hand') or context_data.get('hand')
     hands_html = ""
     user_position = data.get('user_position', 'South')
-    for position in ['North', 'East', 'South', 'West']:
-        hand = all_hands.get(position, {})
-        if hand:
-            marker = " 👤" if position == user_position else ""
-            hands_html += f"""
-            <div class="hand-box">
-                <strong>{position}{marker}</strong><br>
-                {_format_hand_html(hand)}
-            </div>
-            """
 
-    # Format auction
-    auction = data.get('auction', [])
+    if all_hands:
+        # We have all four hands
+        for position in ['North', 'East', 'South', 'West']:
+            hand = all_hands.get(position, {})
+            if hand:
+                marker = " 👤" if position == user_position else ""
+                hands_html += f"""
+                <div class="hand-box">
+                    <strong>{position}{marker}</strong><br>
+                    {_format_hand_html(hand)}
+                </div>
+                """
+    elif user_hand:
+        # Only user's hand available (feedback case)
+        hand_points = data.get('hand_points') or context_data.get('hand_points') or {}
+        hands_html = f"""
+        <div class="hand-box">
+            <strong>{user_position} 👤</strong><br>
+            {_format_hand_html({'cards': user_hand, 'points': hand_points})}
+        </div>
+        """
+
+    # Format auction - check both top-level and context_data
+    auction = data.get('auction') or context_data.get('auction') or []
     auction_html = ""
     positions = ['North', 'East', 'South', 'West']
+    # Get dealer to determine auction start position
+    dealer_map = {'N': 0, 'E': 1, 'S': 2, 'W': 3, 'North': 0, 'East': 1, 'South': 2, 'West': 3}
+    dealer_raw = data.get('dealer') or context_data.get('dealer') or 'N'
+    dealer_idx = dealer_map.get(dealer_raw, 0)
     for i, bid_data in enumerate(auction):
-        pos = positions[i % 4]
+        pos = positions[(dealer_idx + i) % 4]
         bid = bid_data.get('bid', '?')
         explanation = bid_data.get('explanation', '')
         if len(explanation) > 150:
@@ -2472,15 +2492,21 @@ def _render_review_request_detail_html(data, filename, source_dir='review_reques
 
     # Determine the message/concern text
     if is_feedback:
-        concern_text = data.get('feedback', data.get('user_concern', 'No feedback text'))
+        concern_text = data.get('description', data.get('feedback', 'No feedback text'))
         concern_title = "💬 User Feedback"
         page_title = "User Feedback"
         type_badge = '<span class="badge feedback">FEEDBACK</span>'
+        game_phase = context_data.get('game_phase', data.get('feedback_type', 'unknown'))
+        dealer = context_data.get('dealer', 'N')
+        vulnerability = context_data.get('vulnerability', 'None')
     else:
         concern_text = data.get('user_concern', 'No specific concern noted')
         concern_title = "💬 User's Concern"
         page_title = "Review Request"
         type_badge = '<span class="badge review">REVIEW</span>'
+        game_phase = data.get('game_phase', 'unknown')
+        dealer = data.get('dealer', 'N')
+        vulnerability = data.get('vulnerability', 'None')
 
     html = f"""
     <!DOCTYPE html>
@@ -2510,9 +2536,9 @@ def _render_review_request_detail_html(data, filename, source_dir='review_reques
         <h1>🃏 {type_badge} {page_title}</h1>
         <p class="meta">
             <strong>File:</strong> {filename} |
-            <strong>Phase:</strong> {data.get('game_phase', data.get('feedback_type', 'unknown'))} |
-            <strong>Dealer:</strong> {data.get('dealer', 'N')} |
-            <strong>Vuln:</strong> {data.get('vulnerability', 'None')}
+            <strong>Phase:</strong> {game_phase} |
+            <strong>Dealer:</strong> {dealer} |
+            <strong>Vuln:</strong> {vulnerability}
         </p>
 
         <div class="concern">
