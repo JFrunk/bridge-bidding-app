@@ -1,0 +1,429 @@
+/**
+ * ChartHelp Styles
+ *
+ * Collapsible help sections for charts using encouraging "coach" tone.
+ * Designed to match existing app theming (green accents, dark backgrounds).
+ */
+
+/* ============================================================================
+   INLINE VARIANT (Collapsible section below chart)
+   ============================================================================ */
+
+.chart-help-inline {
+  margin-top: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.chart-help-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-radius: 8px;
+  color: #81C784;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chart-help-trigger:hover {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.3);
+}
+
+.chart-help-trigger:focus {
+  outline: 2px solid rgba(76, 175, 80, 0.5);
+  outline-offset: 2px;
+}
+
+.chart-help-inline.open .chart-help-trigger {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: transparent;
+}
+
+.chart-help-trigger-icon {
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.chart-help-trigger-text {
+  font-weight: 500;
+}
+
+.chart-help-content {
+  padding: 12px 14px 14px;
+  background: rgba(76, 175, 80, 0.05);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  animation: helpSlideIn 0.2s ease;
+}
+
+@keyframes helpSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chart-help-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #4CAF50;
+  margin-bottom: 10px;
+}
+
+/* ============================================================================
+   ICON VARIANT (? button with popup)
+   ============================================================================ */
+
+.chart-help-icon-container {
+  position: relative;
+  display: inline-flex;
+}
+
+.chart-help-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 50%;
+  color: #4CAF50;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chart-help-icon:hover {
+  background: rgba(76, 175, 80, 0.3);
+  transform: scale(1.1);
+}
+
+.chart-help-icon:focus {
+  outline: 2px solid rgba(76, 175, 80, 0.5);
+  outline-offset: 2px;
+}
+
+.chart-help-popup {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 1100;
+  width: 320px;
+  max-width: calc(100vw - 40px);
+  background: linear-gradient(145deg, #1e3a1e 0%, #0d2010 100%);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: helpPopupFadeIn 0.2s ease;
+}
+
+@keyframes helpPopupFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chart-help-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.chart-help-popup-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4CAF50;
+}
+
+.chart-help-popup-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chart-help-popup-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.chart-help-popup .chart-help-body {
+  padding: 14px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* ============================================================================
+   SHARED BODY CONTENT STYLES
+   ============================================================================ */
+
+.chart-help-body {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.chart-help-intro {
+  margin: 0 0 12px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.chart-help-section {
+  margin-bottom: 12px;
+}
+
+.chart-help-section:last-child {
+  margin-bottom: 0;
+}
+
+.chart-help-section-heading {
+  font-size: 13px;
+  font-weight: 600;
+  color: #81C784;
+  margin-bottom: 6px;
+}
+
+.chart-help-section-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.chart-help-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.chart-help-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding-left: 4px;
+}
+
+.chart-help-list-item:last-child {
+  margin-bottom: 0;
+}
+
+.chart-help-item-icon {
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.chart-help-item-label {
+  color: #A5D6A7;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.chart-help-item-text {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Pro Tip box */
+.chart-help-pro-tip {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(76, 175, 80, 0.15);
+  border-left: 3px solid #4CAF50;
+  border-radius: 0 6px 6px 0;
+}
+
+.pro-tip-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4CAF50;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.pro-tip-text {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ============================================================================
+   LIGHT MODE (for modals with white backgrounds)
+   ============================================================================ */
+
+.light-mode .chart-help-trigger {
+  background: rgba(76, 175, 80, 0.08);
+  border-color: rgba(76, 175, 80, 0.2);
+  color: #2e7d32;
+}
+
+.light-mode .chart-help-trigger:hover {
+  background: rgba(76, 175, 80, 0.12);
+}
+
+.light-mode .chart-help-content {
+  background: rgba(76, 175, 80, 0.04);
+  border-color: rgba(76, 175, 80, 0.15);
+}
+
+.light-mode .chart-help-title {
+  color: #2e7d32;
+}
+
+.light-mode .chart-help-body {
+  color: #333;
+}
+
+.light-mode .chart-help-intro {
+  color: #444;
+}
+
+.light-mode .chart-help-section-heading {
+  color: #2e7d32;
+}
+
+.light-mode .chart-help-section-text {
+  color: #555;
+}
+
+.light-mode .chart-help-item-label {
+  color: #388e3c;
+}
+
+.light-mode .chart-help-item-text {
+  color: #555;
+}
+
+.light-mode .chart-help-pro-tip {
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.light-mode .pro-tip-text {
+  color: #333;
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================ */
+
+@media (max-width: 480px) {
+  .chart-help-popup {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 70vh;
+  }
+
+  .chart-help-popup .chart-help-body {
+    max-height: calc(70vh - 60px);
+  }
+
+  .chart-help-trigger {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .chart-help-content {
+    padding: 14px 16px 16px;
+  }
+
+  .chart-help-body {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .chart-help-list-item {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .chart-help-item-icon {
+    display: none;
+  }
+}
+
+/* ============================================================================
+   REDUCED MOTION
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-help-content,
+  .chart-help-popup {
+    animation: none;
+  }
+
+  .chart-help-icon:hover {
+    transform: none;
+  }
+}
+
+/* ============================================================================
+   CONTEXT-BASED LIGHT MODE (inside white modals)
+   ============================================================================ */
+
+/* Hand Review Modal (white background) - icon variant */
+.hand-review-modal .chart-help-icon {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.3);
+  color: #2e7d32;
+}
+
+.hand-review-modal .chart-help-icon:hover {
+  background: rgba(76, 175, 80, 0.25);
+}
+
+/* Decay chart (inside white modal) - already has light bg */
+.decay-chart-container .chart-help-icon {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.3);
+  color: #2e7d32;
+}
+
+.decay-chart-container .chart-help-icon:hover {
+  background: rgba(76, 175, 80, 0.25);
+}
+
+/* FourDimensionProgress (expanded content has light bg) */
+.expanded-content .chart-help-icon {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.3);
+  color: #2e7d32;
+}
+
+.expanded-content .chart-help-icon:hover {
+  background: rgba(76, 175, 80, 0.25);
+}
