@@ -55,8 +55,10 @@ def _compute_ns_tricks_from_play(play_history: List[Dict], trump_suit: str) -> t
     Compute cumulative NS tricks and trick winners from play history.
 
     Args:
-        play_history: List of {'card': 'SA', 'position': 'N'} for each card played
-        trump_suit: Trump suit ('S', 'H', 'D', 'C', 'NT')
+        play_history: List of plays, either:
+            - Old format: {'card': 'SA', 'position': 'N'}
+            - New format: {'rank': 'A', 'suit': '♠', 'position': 'N', 'is_winner': True}
+        trump_suit: Trump suit ('S', 'H', 'D', 'C', 'NT', '♠', '♥', '♦', '♣')
 
     Returns:
         Tuple of (ns_tricks_cumulative, trick_winners)
@@ -70,42 +72,56 @@ def _compute_ns_tricks_from_play(play_history: List[Dict], trump_suit: str) -> t
     }
     NS_SIDE = {'N', 'S'}
 
+    # Suit normalization (Unicode to letter)
+    suit_to_letter = {'♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C', 'S': 'S', 'H': 'H', 'D': 'D', 'C': 'C'}
+    trump_normalized = suit_to_letter.get(trump_suit, trump_suit)
+
     ns_tricks_cumulative = []
     trick_winners = []
     ns_tricks_count = 0
     current_trick_cards = []
 
     for i, play in enumerate(play_history):
-        card = play.get('card', '')
         position = play.get('position', '')
+
+        # Handle both old and new play history formats
+        if 'card' in play and play['card']:
+            # Old format: {'card': 'SA', 'position': 'N'}
+            card = play['card']
+            suit = card[0] if len(card) >= 1 else ''
+            rank = card[1:] if len(card) >= 2 else ''
+        elif 'rank' in play and 'suit' in play:
+            # New format: {'rank': 'A', 'suit': '♠', 'position': 'N'}
+            rank = play.get('rank', '')
+            suit_raw = play.get('suit', '')
+            suit = suit_to_letter.get(suit_raw, suit_raw)
+        else:
+            # Unknown format, skip
+            ns_tricks_cumulative.append(ns_tricks_count)
+            continue
 
         # Start of new trick
         if i % 4 == 0:
             current_trick_cards = []
 
-        current_trick_cards.append({'card': card, 'position': position})
+        current_trick_cards.append({'suit': suit, 'rank': rank, 'position': position})
 
         # End of trick - determine winner
         if (i + 1) % 4 == 0 and len(current_trick_cards) == 4:
             # Get led suit
-            led_card = current_trick_cards[0]['card']
-            led_suit = led_card[0] if len(led_card) >= 2 else None
+            led_suit = current_trick_cards[0]['suit']
 
             winner_idx = 0
             winner_value = 0
             is_trump = False
 
             for idx, trick_play in enumerate(current_trick_cards):
-                trick_card = trick_play['card']
-                if len(trick_card) < 2:
-                    continue
+                card_suit = trick_play['suit']
+                card_rank = trick_play['rank']
+                value = rank_values.get(card_rank, 0)
 
-                suit = trick_card[0]
-                rank = trick_card[1:]
-                value = rank_values.get(rank, 0)
-
-                # Check if this card is trump
-                card_is_trump = (suit == trump_suit and trump_suit not in ['NT', 'N'])
+                # Check if this card is trump (use normalized trump)
+                card_is_trump = (card_suit == trump_normalized and trump_normalized not in ['NT', 'N'])
 
                 # Determine if this card wins
                 if card_is_trump and not is_trump:
@@ -120,7 +136,7 @@ def _compute_ns_tricks_from_play(play_history: List[Dict], trump_suit: str) -> t
                         winner_value = value
                 elif not card_is_trump and not is_trump:
                     # Must follow suit to win
-                    if suit == led_suit and value > winner_value:
+                    if card_suit == led_suit and value > winner_value:
                         winner_idx = idx
                         winner_value = value
 
