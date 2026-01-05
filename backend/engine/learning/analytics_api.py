@@ -3259,19 +3259,22 @@ def get_bidding_hand_detail():
             except ValueError:
                 return jsonify({'error': 'Invalid hand_number in hand_id'}), 400
 
-            # Get bidding decisions directly (no session_hands needed)
+            # Get bidding decisions with deal_data from session_hands
             cursor.execute("""
                 SELECT
-                    user_id,
-                    session_id,
-                    hand_number,
-                    dealer,
-                    vulnerability,
-                    position as user_position,
-                    deal_data
-                FROM bidding_decisions
-                WHERE session_id = ? AND hand_number = ?
-                ORDER BY bid_number
+                    bd.user_id,
+                    bd.session_id,
+                    bd.hand_number,
+                    bd.dealer,
+                    bd.vulnerability,
+                    bd.position as user_position,
+                    sh.deal_data as deal_data,
+                    sh.auction_history as auction_history
+                FROM bidding_decisions bd
+                LEFT JOIN session_hands sh ON CAST(bd.session_id AS INTEGER) = sh.session_id
+                    AND bd.hand_number = sh.hand_number
+                WHERE bd.session_id = ? AND bd.hand_number = ?
+                ORDER BY bd.bid_number
                 LIMIT 1
             """, (session_id, hand_number))
 
@@ -3285,27 +3288,7 @@ def get_bidding_hand_detail():
             deal_data = json.loads(row['deal_data']) if row['deal_data'] else None
             dealer = row['dealer']
             vulnerability = row['vulnerability']
-            auction_history = None  # Will try session_hands first, then reconstruct
-
-            # Try to get complete auction from session_hands (has full auction including AI bids)
-            # Note: session_hands.session_id is INTEGER, bidding_decisions.session_id is TEXT
-            sh_row = None
-            try:
-                session_id_int = int(session_id)
-                cursor.execute("""
-                    SELECT auction_history, dealer
-                    FROM session_hands
-                    WHERE session_id = ? AND hand_number = ?
-                """, (session_id_int, hand_number))
-                sh_row = cursor.fetchone()
-            except (ValueError, TypeError):
-                # session_id is not numeric, skip session_hands lookup
-                pass
-            if sh_row and sh_row['auction_history']:
-                auction_history = json.loads(sh_row['auction_history'])
-                # Also use dealer from session_hands as it's more reliable
-                if sh_row['dealer']:
-                    dealer = sh_row['dealer']
+            auction_history = json.loads(row['auction_history']) if row['auction_history'] else None
 
         else:
             # Legacy integer format - try session_hands first
@@ -3355,8 +3338,7 @@ def get_bidding_hand_detail():
                 key_concept,
                 helpful_hint,
                 reasoning,
-                auction_before,
-                deal_data
+                auction_before
             FROM bidding_decisions
             WHERE user_id = ?
               AND session_id = ?
@@ -3368,10 +3350,6 @@ def get_bidding_hand_detail():
         for d_row in cursor.fetchall():
             # Parse auction_before to understand context
             auction_before = json.loads(d_row['auction_before']) if d_row['auction_before'] else []
-
-            # If we don't have deal_data yet, try to get it from a decision
-            if not deal_data and d_row['deal_data']:
-                deal_data = json.loads(d_row['deal_data'])
 
             # Generate communication context
             partner_message = generate_partner_message(auction_before, user_position)
