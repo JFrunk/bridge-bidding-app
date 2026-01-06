@@ -507,3 +507,79 @@ Breakdown:
 2. Success Rate (73% → 75% Minimax target)
 3. Defensive play optimization
 4. Trump management
+
+---
+
+## E2E Play Feedback Tests
+
+### Purpose
+
+End-to-end tests that validate the complete play feedback pipeline:
+1. User plays cards → Backend evaluates → Stores in DB
+2. User opens HandReviewModal → API retrieves feedback
+3. Modal displays correct feedback for user-controlled positions
+
+### Test File
+
+**Location:** `frontend/e2e/tests/9-play-feedback-review.spec.js`
+
+### Test Cases
+
+| Test | What It Validates |
+|------|-------------------|
+| `should show play feedback in review modal` | Complete pipeline: play → store → retrieve → display |
+| `should display feedback badges with correct ratings` | Badge shows Optimal/Good/Suboptimal/Blunder |
+| `should show AI play message for opponent positions` | E/W plays show "AI play - no feedback recorded" |
+| `should handle passed out auction gracefully` | No crashes when hand is passed out |
+| `should show user-controlled positions correctly` | S and N both get feedback when NS declares |
+
+### User-Controlled Positions
+
+When South is declarer:
+- **South (S):** Always controlled by user → feedback recorded
+- **North (N):** Dummy, controlled by user → feedback recorded
+- **East (E):** AI opponent → no feedback (shows "AI play")
+- **West (W):** AI opponent → no feedback (shows "AI play")
+
+### Data-TestID Selectors
+
+The HandReviewModal includes these testing hooks:
+
+| Selector | Purpose |
+|----------|---------|
+| `[data-testid="hand-review-modal"]` | Modal container |
+| `[data-testid="replay-next-btn"]` | Navigation button |
+| `[data-testid="trick-feedback-container"]` | Feedback area root |
+| `[data-testid="trick-feedback-panel"]` | User feedback with rating |
+| `[data-testid="trick-feedback-ai-play"]` | AI play message |
+| `[data-testid="trick-feedback-basic-info"]` | Basic info (no DDS) |
+| `[data-testid="feedback-badge"]` | Rating badge |
+
+### DDS Availability
+
+- **Linux (production):** Full DDS analysis → detailed feedback badges
+- **macOS (development):** No DDS → falls back to `trick-feedback-basic-info`
+
+Tests handle both scenarios gracefully.
+
+### Running E2E Tests
+
+```bash
+cd frontend
+
+# Run play feedback tests only
+npm run test:e2e -- --grep "Play Feedback"
+
+# Run with visible browser
+npm run test:e2e:headed -- --grep "Play Feedback"
+
+# Interactive debugging
+npm run test:e2e:ui -- --grep "Play Feedback"
+```
+
+### Test Timeout
+
+These tests require 3 minutes (180000ms) because they:
+1. Complete a full bidding auction
+2. Play through 13 tricks (52 card plays)
+3. Navigate the HandReviewModal

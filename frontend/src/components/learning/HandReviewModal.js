@@ -211,7 +211,7 @@ const ReplayTrickDisplay = ({ trick, leader }) => {
 const TrickFeedbackPanel = ({ decision }) => {
   if (!decision) {
     return (
-      <div className="trick-feedback-panel no-data">
+      <div className="trick-feedback-panel no-data" data-testid="trick-feedback-no-data">
         <p>No analysis available for this play</p>
       </div>
     );
@@ -226,7 +226,7 @@ const TrickFeedbackPanel = ({ decision }) => {
       <div className="trick-feedback-panel basic-info" style={{
         borderColor: '#6b7280',
         backgroundColor: '#f9fafb'
-      }}>
+      }} data-testid="trick-feedback-basic-info" data-position={decision.position}>
         <div className="feedback-body">
           <div className="play-comparison">
             <span className="played-card">
@@ -276,9 +276,12 @@ const TrickFeedbackPanel = ({ decision }) => {
     <div
       className={`trick-feedback-panel ${effectiveRating}`}
       style={{ borderColor: config.color, backgroundColor: config.bgColor }}
+      data-testid="trick-feedback-panel"
+      data-rating={effectiveRating}
+      data-position={decision.position}
     >
       <div className="feedback-header">
-        <span className="feedback-badge" style={{ backgroundColor: config.color }}>
+        <span className="feedback-badge" style={{ backgroundColor: config.color }} data-testid="feedback-badge">
           {config.icon} {config.label}
         </span>
         <span className="position-indicator" style={{ marginLeft: '8px', color: '#6b7280' }}>
@@ -647,8 +650,8 @@ const HandReviewModal = ({
   }
 
   return (
-    <div className="hand-review-modal-overlay" onClick={onClose}>
-      <div className="hand-review-modal unified-layout" onClick={e => e.stopPropagation()}>
+    <div className="hand-review-modal-overlay" onClick={onClose} data-testid="hand-review-modal-overlay">
+      <div className="hand-review-modal unified-layout" onClick={e => e.stopPropagation()} data-testid="hand-review-modal">
         {/* Consolidated header with all summary info */}
         <div className="modal-header">
           <div className="modal-title">
@@ -759,6 +762,7 @@ const HandReviewModal = ({
                 disabled={replayPosition >= totalPlays}
                 onClick={() => setReplayPosition(p => p + 1)}
                 aria-label="Next card"
+                data-testid="replay-next-btn"
               >
                 Next →
               </button>
@@ -842,17 +846,17 @@ const HandReviewModal = ({
 
           {/* Feedback panel - always reserve space to prevent layout shift */}
           {tricks.length > 0 && (
-            <div className="trick-feedback-container">
+            <div className="trick-feedback-container" data-testid="trick-feedback-container">
               {replayPosition === 0 ? (
                 /* Start hint - shows at position 0 */
-                <div className="replay-start-hint">
+                <div className="replay-start-hint" data-testid="replay-start-hint">
                   <p>Press <strong>Next →</strong> or use arrow keys to step through each play and see feedback.</p>
                 </div>
               ) : currentReplayDecision ? (
                 <TrickFeedbackPanel decision={currentReplayDecision} />
               ) : (
-                /* Empty state when no feedback for this position */
-                <div className="trick-feedback-panel no-data">
+                /* Empty state when no feedback for this position (AI plays) */
+                <div className="trick-feedback-panel no-data" data-testid="trick-feedback-ai-play">
                   <p>AI play - no feedback recorded</p>
                 </div>
               )}
