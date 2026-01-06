@@ -163,6 +163,57 @@
   text-decoration-style: solid;
 }
 
+/* "Why?" button for differential analysis */
+.feedback-why-button {
+  margin-top: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: transparent;
+  border: 1px solid var(--color-info);
+  border-radius: var(--radius-sm);
+  color: var(--color-info);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.feedback-why-button:hover {
+  background: var(--color-info);
+  color: white;
+}
+
+.feedback-why-button[aria-expanded="true"] {
+  background: var(--color-info);
+  color: white;
+}
+
+/* Differential analysis container */
+.feedback-differential-container {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Adjust differential panel for embedded display */
+.feedback-differential-container .differential-panel {
+  max-width: 100%;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+}
+
 /* Responsive adjustments */
 @media (max-width: 480px) {
   .bid-feedback-panel {
@@ -177,5 +228,9 @@
   .feedback-optimal-bid {
     font-size: var(--text-base);
     padding: 1px 6px;
+  }
+
+  .feedback-why-button {
+    width: 100%;
   }
 }

@@ -726,6 +726,10 @@ register_analytics_endpoints(app)
 from engine.auth.simple_auth_api import register_simple_auth_endpoints
 register_simple_auth_endpoints(app)
 
+# Register ACBL PBN import API endpoints (tournament analysis)
+from engine.imports import register_acbl_import_endpoints
+register_acbl_import_endpoints(app)
+
 # ============================================================================
 # SESSION MANAGEMENT ENDPOINTS
 # ============================================================================
@@ -1737,6 +1741,82 @@ def evaluate_bid():
 
             optimal_explanation_str = v2_feedback.optimal_explanation
 
+            # Add differential analysis for enhanced feedback
+            try:
+                from engine.v2.differential_analyzer import get_differential_analyzer
+                diff_analyzer = get_differential_analyzer()
+                diff_result = diff_analyzer.analyze(
+                    user_bid=user_bid,
+                    optimal_bid=v2_feedback.optimal_bid,
+                    hand=user_hand,
+                    auction_history=auction_history,
+                    position=current_player,
+                    vulnerability=state.vulnerability,
+                    dealer=dealer
+                )
+
+                # Attach differential data to feedback for response
+                feedback._differential = {
+                    'factors': [
+                        {
+                            'feature': f.feature,
+                            'label': f.label,
+                            'actual_value': f.actual_value,
+                            'required_value': f.required_value,
+                            'gap': f.gap,
+                            'impact': f.impact,
+                            'status': f.status,
+                            'shortfall': f.shortfall
+                        }
+                        for f in diff_result.differential_factors
+                    ],
+                    'user_bid_rules': [
+                        {
+                            'rule_id': r.rule_id,
+                            'bid': r.bid,
+                            'priority': r.priority,
+                            'description': r.description,
+                            'conditions_met': r.conditions_met,
+                            'conditions_total': r.conditions_total
+                        }
+                        for r in diff_result.user_bid_rules[:3]
+                    ],
+                    'optimal_bid_rules': [
+                        {
+                            'rule_id': r.rule_id,
+                            'bid': r.bid,
+                            'priority': r.priority,
+                            'description': r.description,
+                            'conditions_met': r.conditions_met,
+                            'conditions_total': r.conditions_total
+                        }
+                        for r in diff_result.optimal_bid_rules[:3]
+                    ]
+                }
+                feedback._physics = {
+                    'hcp': diff_result.physics.hcp,
+                    'shape': diff_result.physics.shape,
+                    'lott_safe_level': diff_result.physics.lott_safe_level,
+                    'working_hcp_ratio': diff_result.physics.working_hcp_ratio,
+                    'quick_tricks': diff_result.physics.quick_tricks,
+                    'is_balanced': diff_result.physics.is_balanced,
+                    'is_misfit': diff_result.physics.is_misfit,
+                    'stoppers': diff_result.physics.stoppers
+                }
+                feedback._learning = {
+                    'domain': diff_result.diagnostic_domain.value,
+                    'primary_reason': diff_result.primary_reason,
+                    'learning_point': diff_result.learning_point,
+                    'tutorial_link': diff_result.tutorial_link
+                }
+                feedback._commentary_html = diff_result.commentary_html
+            except Exception as diff_err:
+                print(f"⚠️ Differential analysis failed (non-blocking): {diff_err}")
+                feedback._differential = None
+                feedback._physics = None
+                feedback._learning = None
+                feedback._commentary_html = None
+
         else:
             # V1: Original evaluation path
             active_engine = engine
@@ -1812,6 +1892,13 @@ def evaluate_bid():
             'was_correct': (user_bid == optimal_bid),
             'show_alternative': feedback.correctness.value != 'optimal'
         }
+
+        # Add differential analysis data if available (V2 only)
+        if hasattr(feedback, '_differential') and feedback._differential:
+            response['differential'] = feedback._differential
+            response['physics'] = feedback._physics
+            response['learning'] = feedback._learning
+            response['commentary_html'] = feedback._commentary_html
 
         return jsonify(response)
 

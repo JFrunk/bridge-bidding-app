@@ -9,10 +9,12 @@
  * - Displays optimal bid if user's was incorrect
  * - Links convention/concept terms to glossary
  * - Auto-dismisses after a configurable time or on next bid
+ * - Optional differential analysis expansion for detailed "Why?" view
  */
 
 import React, { useState, useEffect } from 'react';
 import { TermHighlight } from '../glossary/TermTooltip';
+import DifferentialAnalysisPanel from '../learning/DifferentialAnalysisPanel';
 import './BidFeedbackPanel.css';
 
 // Map correctness levels to display info
@@ -46,8 +48,16 @@ const BidFeedbackPanel = ({
   onDismiss,          // Callback when panel is dismissed
   onOpenGlossary,     // Callback to open glossary drawer with a term
   autoDismissMs = 0,  // Auto-dismiss after N milliseconds (0 = never)
+  // New props for differential analysis
+  differentialData = null,  // Pre-loaded differential data from evaluate-bid response
+  handCards = null,   // Hand cards for fetching differential analysis
+  auctionHistory = [], // Auction history for fetching differential analysis
+  position = 'S',
+  vulnerability = 'None',
+  dealer = 'N',
 }) => {
   const [isShowing, setIsShowing] = useState(false);
+  const [showDifferential, setShowDifferential] = useState(false);
 
   // Handle visibility transitions
   useEffect(() => {
@@ -149,6 +159,8 @@ const BidFeedbackPanel = ({
       className={`bid-feedback-panel ${config.className} ${isShowing ? 'showing' : ''}`}
       role="alert"
       aria-live="polite"
+      data-testid="bid-feedback-panel"
+      data-correctness={correctnessLevel}
     >
       <div className="feedback-header">
         {getMessage()}
@@ -171,6 +183,44 @@ const BidFeedbackPanel = ({
       {feedback.score !== undefined && feedback.score < 10 && (
         <div className="feedback-score">
           Score: {feedback.score.toFixed(1)}/10
+        </div>
+      )}
+
+      {/* "Why?" button for differential analysis (only for non-optimal bids) */}
+      {!isCorrect && (differentialData || handCards) && (
+        <button
+          className="feedback-why-button"
+          onClick={() => setShowDifferential(!showDifferential)}
+          aria-expanded={showDifferential}
+          data-testid="feedback-why-button"
+        >
+          {showDifferential ? 'Hide details' : 'Why?'}
+        </button>
+      )}
+
+      {/* Differential Analysis Panel (expanded view) */}
+      {showDifferential && (
+        <div className="feedback-differential-container" data-testid="differential-container">
+          <DifferentialAnalysisPanel
+            userBid={userBid}
+            preloadedData={differentialData ? {
+              user_bid: userBid,
+              optimal_bid: feedback.optimal_bid,
+              rating: correctnessLevel,
+              score: feedback.score ? feedback.score * 10 : 50,
+              differential: differentialData,
+              physics: feedback.physics || differentialData?.physics,
+              learning: feedback.learning || differentialData?.learning,
+              commentary_html: feedback.commentary_html || differentialData?.commentary_html
+            } : null}
+            handCards={handCards}
+            auctionHistory={auctionHistory}
+            position={position}
+            vulnerability={vulnerability}
+            dealer={dealer}
+            compact={true}
+            onClose={() => setShowDifferential(false)}
+          />
         </div>
       )}
     </div>

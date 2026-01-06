@@ -876,9 +876,26 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
     }
   };
 
-  // Get fill style based on user's role
+  // Domain-specific colors for differential analysis
+  // Used when board has diagnostic_domain from bidding feedback
+  const getDomainColor = (domain) => {
+    switch (domain) {
+      case 'safety': return '#8b5cf6';     // Purple - LoTT/safety violations
+      case 'value': return '#eab308';       // Yellow - Working HCP issues
+      case 'control': return '#f97316';     // Orange - Trump control issues
+      case 'tactical': return '#3b82f6';    // Blue - Tactical/preempt issues
+      case 'defensive': return '#22c55e';   // Green - Defensive issues
+      default: return null;
+    }
+  };
+
+  // Get fill style based on user's role and optional domain coloring
   const getCardStyle = (board, quadrantKey) => {
-    const color = getQuadrantColor(quadrantKey);
+    // Use domain color if available on error quadrants (bottom-left, top-left, bottom-right)
+    const domainColor = board.diagnostic_domain ? getDomainColor(board.diagnostic_domain) : null;
+    const usesDomainColor = domainColor && quadrantKey !== 'top-right'; // Don't override green "both good" cards
+
+    const color = usesDomainColor ? domainColor : getQuadrantColor(quadrantKey);
 
     if (board.user_was_declarer) {
       // Solid fill - user declared
@@ -1101,6 +1118,43 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
             <span className="legend-label">You defended</span>
           </div>
         </div>
+
+        {/* Domain legend - shows when any board has diagnostic_domain */}
+        {boards.some(b => b.diagnostic_domain) && (
+          <div className="domain-legend">
+            <div className="legend-title">Learning Domain:</div>
+            {boards.some(b => b.diagnostic_domain === 'safety') && (
+              <div className="domain-legend-item">
+                <span className="domain-dot safety"></span>
+                <span>Safety (LoTT)</span>
+              </div>
+            )}
+            {boards.some(b => b.diagnostic_domain === 'value') && (
+              <div className="domain-legend-item">
+                <span className="domain-dot value"></span>
+                <span>Value</span>
+              </div>
+            )}
+            {boards.some(b => b.diagnostic_domain === 'control') && (
+              <div className="domain-legend-item">
+                <span className="domain-dot control"></span>
+                <span>Control</span>
+              </div>
+            )}
+            {boards.some(b => b.diagnostic_domain === 'tactical') && (
+              <div className="domain-legend-item">
+                <span className="domain-dot tactical"></span>
+                <span>Tactical</span>
+              </div>
+            )}
+            {boards.some(b => b.diagnostic_domain === 'defensive') && (
+              <div className="domain-legend-item">
+                <span className="domain-dot defensive"></span>
+                <span>Defensive</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Tooltip */}
@@ -1111,6 +1165,16 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
         const declarerName = tooltip.board.declarer === 'N' ? 'North' :
                              tooltip.board.declarer === 'S' ? 'South' :
                              tooltip.board.declarer === 'E' ? 'East' : 'West';
+
+        // Domain display for differential analysis
+        const domainDisplay = {
+          safety: { emoji: '⚠️', label: 'Safety (LoTT)' },
+          value: { emoji: '💰', label: 'Value (Working HCP)' },
+          control: { emoji: '🎯', label: 'Control (Trump)' },
+          tactical: { emoji: '♟️', label: 'Tactical' },
+          defensive: { emoji: '🛡️', label: 'Defensive' }
+        };
+        const domain = tooltip.board.diagnostic_domain ? domainDisplay[tooltip.board.diagnostic_domain] : null;
 
         return (
           <div
@@ -1135,6 +1199,11 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
             <div className="tooltip-row" style={{ fontSize: '11px', color: '#6b7280' }}>
               {role}
             </div>
+            {domain && (
+              <div className="tooltip-domain" style={{ fontSize: '11px', marginTop: '4px', padding: '2px 6px', background: '#f3f4f6', borderRadius: '4px' }}>
+                {domain.emoji} {domain.label}
+              </div>
+            )}
             <div className="tooltip-hint">Click to review</div>
           </div>
         );

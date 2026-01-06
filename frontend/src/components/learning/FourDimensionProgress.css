@@ -1725,6 +1725,58 @@
   color: var(--text-secondary-dark, #666);
 }
 
+/* Domain legend for differential analysis */
+.domain-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 8px);
+  justify-content: center;
+  margin-top: var(--space-2, 8px);
+  padding-top: var(--space-2, 8px);
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.domain-legend .legend-title {
+  width: 100%;
+  text-align: center;
+  font-size: var(--text-xs, 11px);
+  color: var(--text-muted, #9ca3af);
+  margin-bottom: var(--space-1, 4px);
+}
+
+.domain-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+  font-size: var(--text-xs, 11px);
+}
+
+.domain-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.domain-dot.safety {
+  background: #8b5cf6;
+}
+
+.domain-dot.value {
+  background: #eab308;
+}
+
+.domain-dot.control {
+  background: #f97316;
+}
+
+.domain-dot.tactical {
+  background: #3b82f6;
+}
+
+.domain-dot.defensive {
+  background: #22c55e;
+}
+
 /* Summary Stats */
 .board-analysis-summary {
   display: flex;

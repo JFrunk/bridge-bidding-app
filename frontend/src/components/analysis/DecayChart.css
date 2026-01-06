@@ -115,6 +115,15 @@
   stroke: none;
 }
 
+/* Bar labels (trick count above bar) */
+.bar-label {
+  font-size: 10px;
+  font-weight: 600;
+  fill: #2563eb;
+  text-anchor: middle;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
 /* DD Optimal line (dotted) */
 .dd-optimal-line {
   stroke: #059669;
@@ -208,18 +217,23 @@
   border: 1px solid rgba(37, 99, 235, 0.5);
 }
 
+.decay-chart-legend .dd-line-swatch {
+  background: transparent;
+  border-top: 2px dotted #059669;
+  height: 0;
+}
+
+.decay-chart-legend .required-line-swatch {
+  background: transparent;
+  border-top: 2px dashed #f59e0b;
+  height: 0;
+}
+
 .decay-chart-legend .error-swatch {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: #dc2626;
-}
-
-.decay-chart-legend .gift-swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #059669;
 }
 
 /* Empty state */
@@ -231,6 +245,80 @@
   text-align: center;
   color: #6b7280;
   font-size: 13px;
+}
+
+/* ============================================================================
+   BIDDING CONTEXT MARKERS - Link bidding features to play failures
+   ============================================================================ */
+
+/* LoTT Ceiling line */
+.lott-ceiling-line {
+  stroke: #8b5cf6;
+  stroke-width: 1.5;
+  stroke-dasharray: 6,3;
+  opacity: 0.8;
+}
+
+/* Bidding context labels */
+.bidding-context-label {
+  font-size: 9px;
+  font-weight: 500;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.lott-label {
+  fill: #8b5cf6;
+}
+
+.overbid-label {
+  fill: #ef4444;
+  font-weight: 600;
+}
+
+/* Domain badge backgrounds */
+.domain-badge {
+  fill: rgba(107, 114, 128, 0.1);
+  stroke: #9ca3af;
+  stroke-width: 1;
+}
+
+.domain-badge.domain-safety {
+  fill: rgba(139, 92, 246, 0.15);
+  stroke: #8b5cf6;
+}
+
+.domain-badge.domain-value {
+  fill: rgba(234, 179, 8, 0.15);
+  stroke: #eab308;
+}
+
+.domain-badge.domain-control {
+  fill: rgba(249, 115, 22, 0.15);
+  stroke: #f97316;
+}
+
+.domain-badge.domain-tactical {
+  fill: rgba(59, 130, 246, 0.15);
+  stroke: #3b82f6;
+}
+
+.domain-badge.domain-defensive {
+  fill: rgba(34, 197, 94, 0.15);
+  stroke: #22c55e;
+}
+
+.domain-text {
+  font-size: 9px;
+  font-weight: 500;
+  fill: #374151;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Legend items for bidding context */
+.decay-chart-legend .lott-swatch {
+  background: transparent;
+  border-top: 2px dashed #8b5cf6;
+  height: 0;
 }
 
 /* Responsive */
