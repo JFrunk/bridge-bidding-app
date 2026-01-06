@@ -2,6 +2,17 @@ from engine.hand import Hand
 from engine.ai.auction_context import analyze_auction_context
 from typing import Dict
 
+# Seat utilities - for partner/opponent calculations
+# This file uses integer indices (0-3) for auction position tracking.
+# We use seat_from_index for relative position calculations (partner = +2, LHO = +1, RHO = +3).
+from utils.seats import seat_index, seat_from_index, SEATS
+
+# Modulo-4 offsets for relative positions (used throughout this file)
+# These match the seats utility: partner=+2, LHO=+1, RHO=+3
+PARTNER_OFFSET = 2
+LHO_OFFSET = 1
+RHO_OFFSET = 3
+
 # =============================================================================
 # FUNDAMENTAL BRIDGE METRICS
 # These are "first principles" calculations that expert players use instinctively.
@@ -259,7 +270,7 @@ def analyze_forcing_status(auction_history: list, positions: list, my_index: int
         return result
 
     # Track bids by partnership
-    partner_index = (my_index + 2) % 4
+    partner_index = (my_index + PARTNER_OFFSET) % 4
 
     # Collect partnership bids
     my_bids = []
@@ -399,7 +410,7 @@ def detect_balancing_seat(auction_history: list, positions: list, my_index: int)
         return result
 
     # Check if opener is opponent
-    partner_index = (my_index + 2) % 4
+    partner_index = (my_index + PARTNER_OFFSET) % 4
     if opener_index == my_index or opener_index == partner_index:
         result['reason'] = 'partnership_opened'
         return result
@@ -458,7 +469,7 @@ def find_agreed_suit(auction_history: list, positions: list, my_index: int) -> d
         'fit_length': 0,
     }
 
-    partner_index = (my_index + 2) % 4
+    partner_index = (my_index + PARTNER_OFFSET) % 4
 
     my_suits = []
     partner_suits = []
@@ -519,7 +530,7 @@ def count_partnership_bids(auction_history: list, positions: list, my_index: int
         - my_pass_count: Number of passes I've made
         - total_auction_rounds: How many complete rounds
     """
-    partner_index = (my_index + 2) % 4
+    partner_index = (my_index + PARTNER_OFFSET) % 4
 
     my_bids = 0
     my_passes = 0
@@ -552,7 +563,7 @@ def extract_features(hand: Hand, auction_history: list, my_position: str, vulner
     dealer_idx = base_positions.index(dealer)
     positions = [base_positions[(dealer_idx + i) % 4] for i in range(4)]
     my_index = positions.index(my_position)
-    partner_position = positions[(my_index + 2) % 4]
+    partner_position = positions[(my_index + PARTNER_OFFSET) % 4]
 
     opening_bid, opener, opener_relationship = None, None, None
     opener_index = -1
@@ -655,8 +666,8 @@ def _detect_interference(auction_history, positions, my_index, opener_relationsh
         return interference
 
     partner_index = opener_index
-    lho_index = (partner_index + 1) % 4
-    rho_index = (partner_index + 3) % 4
+    lho_index = (partner_index + LHO_OFFSET) % 4
+    rho_index = (partner_index + RHO_OFFSET) % 4
 
     for auction_idx in range(opener_index + 1, len(auction_history)):
         bidder_position = auction_idx % 4

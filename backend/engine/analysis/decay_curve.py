@@ -23,6 +23,9 @@ import logging
 from typing import List, Dict, Tuple, Optional, Any
 from dataclasses import dataclass, asdict
 
+# Import seat utilities - single source of truth for position calculations
+from utils.seats import SEATS, PARTNERS, NEXT_PLAYER, NS_SIDE, EW_SIDE, partner
+
 logger = logging.getLogger(__name__)
 
 # Try to import DDS
@@ -39,12 +42,9 @@ except ImportError:
     solve_board = None
 
 
-# Position utilities
-POSITION_ORDER = ['N', 'E', 'S', 'W']
-PARTNERS = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
-NEXT_PLAYER = {'N': 'E', 'E': 'S', 'S': 'W', 'W': 'N'}
-NS_SIDE = {'N', 'S'}
-EW_SIDE = {'E', 'W'}
+# Position utilities - imported from utils.seats
+# Using SEATS as POSITION_ORDER for backward compatibility
+POSITION_ORDER = SEATS
 
 
 @dataclass

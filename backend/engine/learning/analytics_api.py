@@ -1991,6 +1991,27 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
         notable_mistakes.sort(key=lambda x: -(x['tricks_cost'] or 0))
         notable_mistakes = notable_mistakes[:5]  # Limit to top 5
 
+        # Generate signal_warnings for DecayChart - plays that deviate from conventions
+        # but don't necessarily cost tricks (educational feedback)
+        signal_warnings = []
+        for d in decisions:
+            if not d['is_signal_optimal'] and d['signal_reason']:
+                # Calculate card_index for DecayChart positioning
+                # Each trick has 4 cards, so card_index = (trick_number - 1) * 4 + position_in_trick
+                # Since we don't have exact position_in_trick, use middle of trick for visibility
+                trick_num = d['trick_number'] or 1
+                card_index = (trick_num - 1) * 4 + 2  # Middle of the trick
+
+                signal_warnings.append({
+                    'trick': trick_num,
+                    'card_index': card_index,
+                    'position': d['position'],
+                    'card': d['user_card'],
+                    'reason': d['signal_reason'],
+                    'heuristic': d['signal_heuristic'],
+                    'context': d['signal_context']
+                })
+
         return {
             'has_data': True,
             'total_plays': total,
@@ -2004,6 +2025,7 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
             'optimal_rate': round(optimal / total * 100, 1) if total > 0 else 0,
             'accuracy_rate': round((optimal + good) / total * 100, 1) if total > 0 else 0,
             'notable_mistakes': notable_mistakes,
+            'signal_warnings': signal_warnings,
             'all_decisions': decisions
         }
 
@@ -2561,9 +2583,13 @@ def get_hand_detail():
                 else:
                     actual_tricks_ns = 13 - tricks_taken
 
+                # Extract signal_warnings from play quality summary
+                signal_warnings = play_quality_summary.get('signal_warnings', []) if play_quality_summary.get('has_data') else []
+
                 decay_curve_data = {
                     'curve': curve,
                     'major_errors': major_errors,
+                    'signal_warnings': signal_warnings,
                     'ns_tricks_cumulative': ns_tricks_cumulative,
                     'trick_winners': trick_winners,
                     'dd_optimal_ns': curve[0] if curve else 0,

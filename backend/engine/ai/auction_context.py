@@ -23,6 +23,12 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 import logging
 
+# Seat utilities - for partner calculation (uses modulo-4 clock system)
+from utils.seats import SEATS
+
+# Modulo-4 offsets for relative positions (see utils/seats.py)
+PARTNER_OFFSET = 2
+
 logger = logging.getLogger(__name__)
 
 
@@ -326,7 +332,7 @@ class AuctionAnalyzer:
             return context
 
         # Determine responder (opener's partner)
-        responder_index = (opener_index + 2) % 4
+        responder_index = (opener_index + PARTNER_OFFSET) % 4
 
         # Process each bid
         for i, bid in enumerate(auction_history):
