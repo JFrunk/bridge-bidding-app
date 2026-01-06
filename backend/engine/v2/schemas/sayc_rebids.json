@@ -5,6 +5,46 @@
   "description": "Opener and responder rebids",
   "rules": [
     {
+      "id": "opener_pass_partner_3nt_game",
+      "bid": "Pass",
+      "priority": 900,
+      "description": "Opener passes partner's 3NT game bid (responder bid game)",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "3NT"
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's 3NT game bid",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_pass_partner_4M_game",
+      "bid": "Pass",
+      "priority": 898,
+      "description": "Opener passes partner's 4-major game bid",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": {"in": ["4♥", "4♠"]}
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's 4-major game bid",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "preempter_pass_partner_game",
+      "bid": "Pass",
+      "priority": 896,
+      "description": "Preempter passes when partner bids game",
+      "conditions": {
+        "is_rebid": true,
+        "my_last_bid": {"in": ["2♦", "2♥", "2♠", "3♣", "3♦", "3♥", "3♠"]},
+        "partner_last_bid": {"in": ["3NT", "4♥", "4♠", "5♣", "5♦"]}
+      },
+      "forcing": "none",
+      "explanation": "Pass partner's game bid after preempting",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "michaels_show_clubs_jump",
       "bid": "4♣",
       "priority": 872,
@@ -663,9 +703,10 @@
       "id": "opener_game_raise_major",
       "bid": "4{partner_suit}",
       "priority": 325,
-      "description": "Opener raises to game in partner's major",
+      "description": "Opener raises to game in partner's major (uncontested)",
       "conditions": {
         "is_rebid": true,
+        "is_contested": false,
         "partner_last_bid": {
           "in": [
             "1\u2665",
@@ -1349,17 +1390,33 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "opener_pass_doubled_game",
+      "id": "opener_pass_after_we_bid_game_doubled",
       "bid": "Pass",
-      "priority": 355,
-      "description": "Pass when opponents double our game contract",
+      "priority": 950,
+      "description": "Pass when opponents double after we've already bid game",
       "conditions": {
         "is_rebid": true,
-        "partner_last_bid": "X",
-        "fit_known": true
+        "is_doubled": true,
+        "my_last_bid": {"in": ["3NT", "4♥", "4♠", "5♣", "5♦"]},
+        "hcp": {"max": 18}
       },
       "forcing": "none",
-      "explanation": "Pass the double - we're at game level",
+      "explanation": "Pass the double - we've already bid game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_pass_after_game_doubled",
+      "bid": "Pass",
+      "priority": 948,
+      "description": "Responder passes when opponents double after partnership bid game",
+      "conditions": {
+        "is_responder_rebid": true,
+        "is_doubled": true,
+        "partner_last_bid": {"in": ["3NT", "4♥", "4♠", "5♣", "5♦"]},
+        "hcp": {"max": 15}
+      },
+      "forcing": "none",
+      "explanation": "Pass the double - partner already bid game",
       "sets_forcing_level": "NON_FORCING"
     },
     {
