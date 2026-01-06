@@ -107,6 +107,12 @@ class PlayFeedback:
     # Analysis source (added to distinguish DDS vs heuristic evaluation)
     analysis_source: str = "dds"  # "dds" = exact, "heuristic" = Minimax estimation
 
+    # Signal analysis (NEW - for tactical play overlay)
+    signal_reason: Optional[str] = None       # Why this card was chosen from equivalence set
+    signal_heuristic: Optional[str] = None    # Heuristic applied (e.g., "MIN_OF_EQUALS")
+    signal_context: Optional[str] = None      # Context type (e.g., "SECOND_HAND_FOLLOW")
+    is_signal_optimal: bool = True            # True if follows standard conventions
+
     def to_dict(self) -> Dict:
         """Convert to JSON-serializable dict"""
         return {
@@ -1075,8 +1081,9 @@ class PlayFeedbackGenerator:
                     tricks_cost, tricks_with_user_card, tricks_with_optimal,
                     contract, is_declarer_side, play_category,
                     key_concept, difficulty, feedback, helpful_hint,
-                    analysis_source, timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    analysis_source, signal_reason, signal_heuristic,
+                    signal_context, is_signal_optimal, timestamp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (
                 user_id,
                 session_id,
@@ -1097,7 +1104,11 @@ class PlayFeedbackGenerator:
                 feedback.difficulty,
                 feedback.reasoning,
                 feedback.helpful_hint,
-                feedback.analysis_source
+                feedback.analysis_source,
+                feedback.signal_reason,
+                feedback.signal_heuristic,
+                feedback.signal_context,
+                1 if feedback.is_signal_optimal else 0
             ))
 
             conn.commit()

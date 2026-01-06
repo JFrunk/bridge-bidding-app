@@ -24,6 +24,7 @@
 
 import React, { useMemo, useCallback } from 'react';
 import ChartHelp from '../help/ChartHelp';
+import { nsSuccess } from '../../utils/seats';
 import './DecayChart.css';
 
 /**
@@ -33,6 +34,7 @@ import './DecayChart.css';
  * @param {Object} props.data - Decay curve data from API
  * @param {number[]} props.data.curve - Array of NS trick potentials (0-52 entries)
  * @param {Object[]} props.data.major_errors - Array of error objects with card_index
+ * @param {Object[]} props.data.signal_warnings - Array of signal warning objects with card_index
  * @param {number[]} props.data.ns_tricks_cumulative - Cumulative NS tricks at each card
  * @param {number} props.data.dd_optimal_ns - DD optimal tricks for NS
  * @param {number} props.data.actual_tricks_ns - Actual tricks NS took
@@ -42,23 +44,47 @@ import './DecayChart.css';
  * @param {function} props.onPositionChange - Callback when user clicks on chart
  * @param {number} props.width - SVG width (default 560)
  * @param {number} props.height - SVG height (default 180)
+ * @param {Object} props.biddingContext - Optional bidding context for differential analysis
+ * @param {string} props.biddingContext.domain - Diagnostic domain (safety, value, control, tactical, defensive)
+ * @param {number} props.biddingContext.lott_safe_level - LoTT safe level if applicable
+ * @param {number} props.biddingContext.bid_level - Actual bid level
+ * @param {string} props.biddingContext.primary_reason - Primary reason for bidding issue
+ * @param {Array} props.biddingContext.factors - Array of differential factors from bidding
  */
 const DecayChart = ({
   data,
   replayPosition = 0,
   onPositionChange,
   width = 560,
-  height = 180
+  height = 180,
+  biddingContext = null
 }) => {
   // Extract data with defaults (before any conditional returns)
-  const curve = data?.curve || [];
+  const rawCurve = data?.curve || [];
   const major_errors = data?.major_errors || [];
+  const signal_warnings = data?.signal_warnings || [];
   const ns_tricks_cumulative = data?.ns_tricks_cumulative || [];
-  const dd_optimal_ns = data?.dd_optimal_ns ?? curve[0] ?? 0;
+  const dd_optimal_ns = data?.dd_optimal_ns ?? rawCurve[0] ?? 0;
   const actual_tricks_ns = data?.actual_tricks_ns ?? 0;
   const ns_is_declarer = data?.ns_is_declarer ?? true;
   const required_tricks = data?.required_tricks ?? 7;
-  const hasData = curve.length > 0;
+  const hasData = rawCurve.length > 0;
+
+  // Sanitize curve values to prevent illogical display
+  // Each value should be <= (ns_tricks_won_so_far + tricks_remaining)
+  const curve = useMemo(() => {
+    if (rawCurve.length === 0) return [];
+
+    return rawCurve.map((val, i) => {
+      const tricksPlayed = Math.floor((i + 1) / 4);
+      const tricksRemaining = 13 - tricksPlayed;
+      const nsWonSoFar = ns_tricks_cumulative[i] ?? 0;
+      const maxPossible = nsWonSoFar + tricksRemaining;
+
+      // Cap at maximum possible and at initial potential (no gifts above optimal)
+      return Math.min(val, maxPossible, dd_optimal_ns);
+    });
+  }, [rawCurve, ns_tricks_cumulative, dd_optimal_ns]);
 
   // Layout constants
   const padding = useMemo(() => ({ top: 20, right: 20, bottom: 30, left: 35 }), []);
@@ -119,12 +145,16 @@ const DecayChart = ({
     );
   }, [major_errors, curve.length]);
 
-  // EW gift markers (upward steps for NS)
-  const giftMarkers = useMemo(() => {
-    return major_errors.filter(err =>
-      err.error_type === 'ew_gift' && err.card_index < curve.length
+  // Signal warning markers - plays where potential stayed flat but signal was suboptimal
+  // These are educational warnings, not errors
+  const signalMarkers = useMemo(() => {
+    return signal_warnings.filter(warn =>
+      warn.card_index !== undefined && warn.card_index < curve.length
     );
-  }, [major_errors, curve.length]);
+  }, [signal_warnings, curve.length]);
+
+  // Note: We no longer display EW gift markers since the curve is capped at optimal.
+  // The chart now focuses purely on user's errors (drops in potential) and signal warnings.
 
   // Handle click on chart
   const handleChartClick = useCallback((e) => {
@@ -160,10 +190,9 @@ const DecayChart = ({
     ? getY(curve[replayPosition - 1])
     : getY(curve[0] || 0);
 
-  // Determine success/failure
-  const success = ns_is_declarer
-    ? actual_tricks_ns >= required_tricks
-    : actual_tricks_ns >= required_tricks;
+  // Determine success/failure from NS perspective
+  // Uses seats utility to handle both declaring and defending cases correctly
+  const success = nsSuccess(ns_is_declarer, actual_tricks_ns, required_tricks);
 
   // Label for required line
   const requiredLabel = ns_is_declarer ? 'Need' : 'To Set';
@@ -173,7 +202,7 @@ const DecayChart = ({
       <div className="decay-chart-header">
         <div className="decay-chart-title-row">
           <span className="decay-chart-title">
-            {ns_is_declarer ? 'Declarer View' : 'Defense View'}: NS Tricks
+            Your Trick Potential ({ns_is_declarer ? 'Declarer' : 'Defense'})
           </span>
           <ChartHelp chartType="trick-timeline" variant="icon" />
         </div>
@@ -184,6 +213,11 @@ const DecayChart = ({
           </span>
           {errorMarkers.length > 0 && (
             <span className="error-count"> | {errorMarkers.length} error{errorMarkers.length !== 1 ? 's' : ''}</span>
+          )}
+          {signalMarkers.length > 0 && (
+            <span className="signal-warning-count" style={{ color: '#ed8936' }}>
+              {' '}| {signalMarkers.length} signal{signalMarkers.length !== 1 ? 's' : ''}
+            </span>
           )}
         </span>
       </div>
@@ -227,16 +261,24 @@ const DecayChart = ({
           />
         ))}
 
-        {/* Locked-in tricks bars (from bottom) */}
+        {/* Locked-in tricks bars (from bottom) with count labels */}
         {trickBars.map((bar, idx) => (
-          <rect
-            key={`bar-${idx}`}
-            x={bar.startX}
-            y={getY(bar.height)}
-            width={bar.endX - bar.startX - 1}
-            height={getY(0) - getY(bar.height)}
-            className="locked-tricks-bar"
-          />
+          <g key={`bar-${idx}`}>
+            <rect
+              x={bar.startX}
+              y={getY(bar.height)}
+              width={bar.endX - bar.startX - 1}
+              height={getY(0) - getY(bar.height)}
+              className="locked-tricks-bar"
+            />
+            <text
+              x={(bar.startX + bar.endX) / 2}
+              y={getY(bar.height) - 4}
+              className="bar-label"
+            >
+              {bar.height}
+            </text>
+          </g>
         ))}
 
         {/* DD Optimal line (dotted horizontal) */}
@@ -300,18 +342,7 @@ const DecayChart = ({
           className="decay-line"
         />
 
-        {/* EW gift markers (green circles - upward steps) */}
-        {giftMarkers.map((err, idx) => (
-          <circle
-            key={`gift-${idx}`}
-            cx={getX(err.card_index)}
-            cy={getY(curve[err.card_index] || 0)}
-            r="5"
-            className="gift-marker"
-          />
-        ))}
-
-        {/* NS error markers (red circles) */}
+        {/* Error markers (red circles - where user lost tricks) */}
         {errorMarkers.map((err, idx) => (
           <circle
             key={`err-${idx}`}
@@ -321,6 +352,94 @@ const DecayChart = ({
             className="error-marker"
           />
         ))}
+
+        {/* Signal warning markers (yellow/orange diamonds - suboptimal signaling) */}
+        {signalMarkers.map((warn, idx) => (
+          <g key={`signal-${idx}`} className="signal-warning-marker">
+            <polygon
+              points={`
+                ${getX(warn.card_index)},${getY(curve[warn.card_index] || 0) - 6}
+                ${getX(warn.card_index) + 5},${getY(curve[warn.card_index] || 0)}
+                ${getX(warn.card_index)},${getY(curve[warn.card_index] || 0) + 6}
+                ${getX(warn.card_index) - 5},${getY(curve[warn.card_index] || 0)}
+              `}
+              fill="#fffaf0"
+              stroke="#ed8936"
+              strokeWidth="2"
+            />
+          </g>
+        ))}
+
+        {/* Bidding context markers - LoTT ceiling line and domain indicators */}
+        {biddingContext && biddingContext.lott_safe_level && biddingContext.bid_level > biddingContext.lott_safe_level && (
+          <g className="bidding-context-group">
+            {/* LoTT Ceiling line - shows where the safe level was */}
+            <line
+              x1={padding.left}
+              y1={getY(biddingContext.lott_safe_level + 6)}
+              x2={width - padding.right}
+              y2={getY(biddingContext.lott_safe_level + 6)}
+              className="lott-ceiling-line"
+            />
+            <text
+              x={padding.left + 5}
+              y={getY(biddingContext.lott_safe_level + 6) - 4}
+              className="bidding-context-label lott-label"
+            >
+              LoTT Ceiling ({biddingContext.lott_safe_level + 6} tricks)
+            </text>
+
+            {/* Overbid indicator - triangle marker at required tricks showing overbid */}
+            <g className="overbid-marker">
+              <polygon
+                points={`
+                  ${width - padding.right - 10},${getY(required_tricks) - 8}
+                  ${width - padding.right - 2},${getY(required_tricks)}
+                  ${width - padding.right - 10},${getY(required_tricks) + 8}
+                `}
+                fill="rgba(239, 68, 68, 0.2)"
+                stroke="#ef4444"
+                strokeWidth="1.5"
+              />
+              <text
+                x={width - padding.right - 25}
+                y={getY(required_tricks) + 4}
+                className="bidding-context-label overbid-label"
+                textAnchor="end"
+              >
+                Overbid by {biddingContext.bid_level - biddingContext.lott_safe_level}
+              </text>
+            </g>
+          </g>
+        )}
+
+        {/* Domain-specific bidding insight marker (shown at start of chart) */}
+        {biddingContext && biddingContext.domain && biddingContext.primary_reason && (
+          <g className="bidding-domain-marker">
+            <rect
+              x={padding.left + 10}
+              y={padding.top + 5}
+              width={Math.min(chartWidth - 20, 180)}
+              height={22}
+              rx="4"
+              className={`domain-badge domain-${biddingContext.domain}`}
+            />
+            <text
+              x={padding.left + 18}
+              y={padding.top + 20}
+              className="domain-text"
+            >
+              {biddingContext.domain === 'safety' && '⚠️ '}
+              {biddingContext.domain === 'value' && '💰 '}
+              {biddingContext.domain === 'control' && '🎯 '}
+              {biddingContext.domain === 'tactical' && '♟️ '}
+              {biddingContext.domain === 'defensive' && '🛡️ '}
+              {biddingContext.primary_reason.length > 25
+                ? biddingContext.primary_reason.substring(0, 25) + '...'
+                : biddingContext.primary_reason}
+            </text>
+          </g>
+        )}
 
         {/* Current position indicator */}
         {replayPosition > 0 && (
@@ -368,16 +487,24 @@ const DecayChart = ({
           <span className="legend-swatch decay-line-swatch"></span>
           <span>Potential</span>
         </div>
+        <div className="legend-item">
+          <span className="legend-swatch dd-line-swatch"></span>
+          <span>DD Optimal</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-swatch required-line-swatch"></span>
+          <span>{requiredLabel}</span>
+        </div>
         {errorMarkers.length > 0 && (
           <div className="legend-item">
             <span className="legend-swatch error-swatch"></span>
-            <span>NS Error</span>
+            <span>Your Errors</span>
           </div>
         )}
-        {giftMarkers.length > 0 && (
+        {biddingContext && biddingContext.lott_safe_level && (
           <div className="legend-item">
-            <span className="legend-swatch gift-swatch"></span>
-            <span>EW Gift</span>
+            <span className="legend-swatch lott-swatch"></span>
+            <span>LoTT Ceiling</span>
           </div>
         )}
       </div>

@@ -21,7 +21,7 @@ import DecayChart from '../analysis/DecayChart';
 import ChartHelp from '../help/ChartHelp';
 import './HandReviewModal.css';
 
-const API_BASE = process.env.REACT_APP_API_BASE || '';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 // Rating colors and labels
 const RATING_CONFIG = {
@@ -29,6 +29,7 @@ const RATING_CONFIG = {
   good: { color: '#3b82f6', bgColor: '#eff6ff', icon: '○', label: 'Good' },
   acceptable: { color: '#3b82f6', bgColor: '#eff6ff', icon: '○', label: 'Acceptable' },
   suboptimal: { color: '#f59e0b', bgColor: '#fffbeb', icon: '!', label: 'Suboptimal' },
+  suboptimal_signal: { color: '#ed8936', bgColor: '#fffaf0', icon: '⚠', label: 'Suboptimal Signal' },
   blunder: { color: '#dc2626', bgColor: '#fef2f2', icon: '✗', label: 'Blunder' },
   error: { color: '#dc2626', bgColor: '#fef2f2', icon: '✗', label: 'Error' }
 };
@@ -240,14 +241,20 @@ const TrickFeedbackPanel = ({ decision }) => {
     );
   }
 
-  const config = RATING_CONFIG[decision.rating] || RATING_CONFIG.good;
+  // Determine if this is a signal-related feedback (no trick cost but signal reason present)
+  const isSignalFeedback = decision.signal_reason && decision.tricks_cost === 0 && !decision.is_signal_optimal;
+
+  // Use suboptimal_signal config for signal issues that don't cost tricks
+  const effectiveRating = isSignalFeedback ? 'suboptimal_signal' : decision.rating;
+  const config = RATING_CONFIG[effectiveRating] || RATING_CONFIG.good;
+
   const positionName = decision.position === 'N' ? 'North' :
                        decision.position === 'S' ? 'South' :
                        decision.position === 'E' ? 'East' : 'West';
 
   return (
     <div
-      className={`trick-feedback-panel ${decision.rating}`}
+      className={`trick-feedback-panel ${effectiveRating}`}
       style={{ borderColor: config.color, backgroundColor: config.bgColor }}
     >
       <div className="feedback-header">
@@ -260,6 +267,19 @@ const TrickFeedbackPanel = ({ decision }) => {
         {decision.tricks_cost > 0 && (
           <span className="tricks-cost">
             -{decision.tricks_cost} trick{decision.tricks_cost !== 1 ? 's' : ''}
+          </span>
+        )}
+        {isSignalFeedback && (
+          <span className="signal-warning-badge" style={{
+            marginLeft: '8px',
+            padding: '2px 6px',
+            backgroundColor: '#fffaf0',
+            border: '1px solid #fbd38d',
+            borderRadius: '4px',
+            fontSize: '0.75rem',
+            color: '#9c4221'
+          }}>
+            Signal
           </span>
         )}
       </div>
@@ -278,6 +298,25 @@ const TrickFeedbackPanel = ({ decision }) => {
 
         {decision.feedback && (
           <p className="feedback-text">{decision.feedback}</p>
+        )}
+
+        {/* Signal reasoning - educational feedback for equivalence set decisions */}
+        {decision.signal_reason && (
+          <div className="signal-feedback" style={{
+            marginTop: '8px',
+            padding: '8px',
+            backgroundColor: decision.is_signal_optimal ? '#f0fdf4' : '#fffaf0',
+            border: `1px solid ${decision.is_signal_optimal ? '#86efac' : '#fbd38d'}`,
+            borderRadius: '4px',
+            fontSize: '0.875rem'
+          }}>
+            <strong style={{ color: decision.is_signal_optimal ? '#166534' : '#9c4221' }}>
+              {decision.is_signal_optimal ? 'Signal Logic:' : 'Signal Note:'}
+            </strong>
+            <span style={{ marginLeft: '4px', color: '#374151' }}>
+              {decision.signal_reason}
+            </span>
+          </div>
         )}
       </div>
     </div>

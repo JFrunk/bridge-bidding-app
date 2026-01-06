@@ -12,6 +12,12 @@ Accuracy: 100% for perfect information scenarios
 The implementation uses endplay's solve_board() which directly returns
 optimal plays with trick counts, avoiding the need for simulation.
 
+NEW: Tactical Signal Overlay Integration
+- When multiple cards have the same DDS trick count (equivalence set),
+  the TacticalPlayFilter selects the card that follows human signaling conventions
+- Every play now includes a signal_reason explaining WHY the card was chosen
+- This makes DDS play educational rather than appearing random
+
 Dependencies:
 - endplay library (includes DDS bindings)
 - pip install endplay
@@ -24,8 +30,17 @@ Platform Notes:
 from engine.hand import Hand, Card
 from engine.play_engine import PlayState, Contract, PlayEngine
 from engine.play.ai.base_ai import BasePlayAI
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Any
 import time
+
+# Import the tactical signal overlay for human-like card selection
+try:
+    from engine.play.ai.play_signal_overlay import TacticalPlayFilter, SignalResult
+    SIGNAL_OVERLAY_AVAILABLE = True
+except ImportError:
+    SIGNAL_OVERLAY_AVAILABLE = False
+    TacticalPlayFilter = None
+    SignalResult = None
 
 try:
     from endplay.types import Deal, Player as EndplayPlayer, Denom, Card as EndplayCard
@@ -70,6 +85,18 @@ class DDSPlayAI(BasePlayAI):
         self.solves_count = 0
         self.cache_hits = 0
 
+        # Initialize tactical signal overlay for human-like card selection
+        self._tactical_filter = None
+        if SIGNAL_OVERLAY_AVAILABLE:
+            try:
+                self._tactical_filter = TacticalPlayFilter()
+            except Exception as e:
+                print(f"Warning: Could not initialize TacticalPlayFilter: {e}")
+
+        # Store last signal reason for UI feedback
+        self._last_signal_reason: Optional[str] = None
+        self._last_signal_result: Optional[SignalResult] = None
+
     def get_name(self) -> str:
         """Return AI name"""
         return "Double Dummy Solver AI"
@@ -77,6 +104,27 @@ class DDSPlayAI(BasePlayAI):
     def get_difficulty(self) -> str:
         """Return difficulty level"""
         return "expert"
+
+    def get_last_signal_reason(self) -> Optional[str]:
+        """
+        Get the signal reason for the last card selection.
+
+        This enables the UI to display educational feedback explaining
+        WHY a particular card was chosen from an equivalence set.
+
+        Returns:
+            Signal reason string, or None if no signal logic applied
+        """
+        return self._last_signal_reason
+
+    def get_last_signal_result(self) -> Optional[SignalResult]:
+        """
+        Get the full SignalResult for the last card selection.
+
+        Returns:
+            SignalResult object with card, heuristic, reason, and context
+        """
+        return self._last_signal_result
 
     def choose_card(self, state: PlayState, position: str) -> Card:
         """
@@ -404,14 +452,57 @@ class DDSPlayAI(BasePlayAI):
         """
         Break ties when multiple cards have the same DDS trick count.
 
-        Models expert human play rather than random selection. This teaches
-        good habits and avoids confusing plays that look like bugs.
+        Uses the TacticalPlayFilter to select cards based on standard bridge
+        signaling conventions, making AI play educational and human-like.
 
-        Situations handled:
-        1. Opening lead - sequences, 4th best, avoid tenaces
-        2. Following suit - count signals, win cheaply
-        3. Discarding - low from length, protect stoppers
-        4. Trump management - preserve entries and ruffing power
+        The filter applies:
+        1. Opening lead - top of sequence, 4th best, avoid tenaces
+        2. Second hand low - preserve honors
+        3. Third hand high - force declarer's resources
+        4. Bottom of sequence - signal higher honors
+        5. Discarding - attitude/count signals, protect stoppers
+        6. Win cheaply - use lowest winning card
+
+        Each selection includes a signal_reason for educational feedback.
+        """
+        hand = state.hands[position]
+        cards = [card for card, _ in tied_cards]
+        trump_suit = state.contract.trump_suit
+
+        # Reset signal reason
+        self._last_signal_reason = None
+        self._last_signal_result = None
+
+        # Use the tactical filter if available
+        if self._tactical_filter is not None:
+            try:
+                result = self._tactical_filter.select_tactical_card(
+                    equivalence_set=cards,
+                    game_state=state,
+                    position=position,
+                    hand=hand,
+                    trump_suit=trump_suit
+                )
+
+                # Store the signal reason for UI feedback
+                self._last_signal_reason = result.reason
+                self._last_signal_result = result
+
+                return result.card
+
+            except Exception as e:
+                print(f"Warning: TacticalPlayFilter failed: {e}, using fallback")
+                # Fall through to legacy logic
+
+        # Legacy fallback logic (if tactical filter unavailable or fails)
+        return self._break_tie_fallback(tied_cards, state, position, all_legal_cards)
+
+    def _break_tie_fallback(self, tied_cards: List[Tuple[Card, int]], state: PlayState,
+                            position: str, all_legal_cards: List[Card]) -> Card:
+        """
+        Legacy tie-breaking logic - used if TacticalPlayFilter is unavailable.
+
+        This preserves the original behavior for backwards compatibility.
         """
         hand = state.hands[position]
         cards = [card for card, _ in tied_cards]
@@ -431,27 +522,19 @@ class DDSPlayAI(BasePlayAI):
             is_discard = not has_led_suit
             is_following = has_led_suit
 
-        # ============================================================
-        # OPENING LEAD TIE-BREAKING
-        # ============================================================
+        # Opening lead
         if is_opening_lead:
             return self._break_tie_opening_lead(cards, hand, trump_suit, state, position)
 
-        # ============================================================
-        # DISCARD TIE-BREAKING
-        # ============================================================
+        # Discard
         if is_discard:
             return self._break_tie_discard(cards, hand, trump_suit)
 
-        # ============================================================
-        # FOLLOWING SUIT TIE-BREAKING
-        # ============================================================
+        # Following suit
         if is_following:
             return self._break_tie_following(cards, hand, state, position, led_suit, trump_suit)
 
-        # ============================================================
-        # MID-HAND LEAD TIE-BREAKING
-        # ============================================================
+        # Mid-hand lead
         if is_leading and not is_opening_lead:
             return self._break_tie_midhand_lead(cards, hand, trump_suit, state, position)
 

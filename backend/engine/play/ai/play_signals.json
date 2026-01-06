@@ -1,0 +1,123 @@
+{
+  "version": "1.0.0",
+  "description": "Signal logic definitions for tactical card selection from DDS equivalence sets",
+
+  "defense_signals": [
+    {
+      "context": "SECOND_HAND_FOLLOW",
+      "priority": 1,
+      "heuristic": "MIN_OF_EQUALS",
+      "reason": "2nd Hand Low: Preserving higher honors for later rounds.",
+      "first_principle": "Playing low second in hand allows partner to play third hand high, maximizing partnership tricks."
+    },
+    {
+      "context": "THIRD_HAND_FOLLOW",
+      "priority": 1,
+      "heuristic": "MAX_OF_EQUALS",
+      "reason": "3rd Hand High: Forcing declarer to use their highest resources.",
+      "first_principle": "Third hand plays high to win the trick or force declarer to use a high card, which may establish partner's cards."
+    },
+    {
+      "context": "LEAD_FROM_HONOR_SEQUENCE",
+      "priority": 2,
+      "heuristic": "TOP_OF_SEQUENCE",
+      "reason": "Top of Sequence: Leading the top (e.g., K from KQJ) promises the cards below.",
+      "first_principle": "Leading the top of a sequence tells partner you hold the touching cards below, helping them count the suit."
+    },
+    {
+      "context": "FOLLOW_FROM_HONOR_SEQUENCE",
+      "priority": 2,
+      "heuristic": "BOTTOM_OF_SEQUENCE",
+      "reason": "Bottom of Sequence: Playing Q from KQJ signals possession of the K.",
+      "first_principle": "When following suit with touching honors, play the bottom to signal you hold the higher ones. This helps partner read the position."
+    },
+    {
+      "context": "FOURTH_HAND_FOLLOW",
+      "priority": 1,
+      "heuristic": "CHEAPEST_WINNER",
+      "reason": "Win Cheaply: Taking the trick with your lowest winning card.",
+      "first_principle": "Fourth hand sees all cards before playing. Win with the cheapest card that takes the trick to preserve higher cards for later."
+    },
+    {
+      "context": "DISCARD_FIRST",
+      "priority": 3,
+      "heuristic": "ATTITUDE_SIGNAL",
+      "rule": "HIGH_ENCOURAGE_LOW_DISCOURAGE",
+      "reason": "Attitude Signal: High card encourages partner to lead this suit.",
+      "first_principle": "Your first discard tells partner whether you want them to lead this suit. High = please lead here, Low = lead elsewhere."
+    },
+    {
+      "context": "DISCARD_SUBSEQUENT",
+      "priority": 3,
+      "heuristic": "COUNT_SIGNAL",
+      "rule": "HIGH_LOW_EVEN",
+      "reason": "Count Signal: High-low shows even count, low-high shows odd.",
+      "first_principle": "After attitude is established, discards show count to help partner count the hand and know when to cash winners."
+    },
+    {
+      "context": "OPENING_LEAD",
+      "priority": 2,
+      "heuristic": "TOP_OF_SEQUENCE",
+      "reason": "Opening Lead: Top of a sequence establishes winners and signals strength.",
+      "first_principle": "From KQJx, lead the King to promise the Queen and Jack. This helps partner count your honors."
+    },
+    {
+      "context": "OPENING_LEAD_4TH_BEST",
+      "priority": 3,
+      "heuristic": "FOURTH_BEST",
+      "reason": "4th Best Lead: Leading 4th highest from length.",
+      "first_principle": "From a long suit without a sequence, lead 4th highest. Partner uses the Rule of 11 to count your high cards."
+    }
+  ],
+
+  "stopper_protection": {
+    "description": "Rules for protecting high cards that guard suits",
+    "lone_honor_penalty": -100,
+    "short_honor_penalty": -20,
+    "trump_discard_penalty": -80,
+    "ace_discard_penalty": -50
+  },
+
+  "sequence_definitions": {
+    "min_length": 3,
+    "min_honor_rank": 11,
+    "description": "A sequence requires 3+ touching cards with at least one honor (J or higher)"
+  },
+
+  "tenace_definitions": {
+    "AQ": {"high": 14, "low": 12, "missing": 13, "description": "Ace-Queen without King"},
+    "KJ": {"high": 13, "low": 11, "missing": 12, "description": "King-Jack without Queen"},
+    "QT": {"high": 12, "low": 10, "missing": 11, "description": "Queen-Ten without Jack"}
+  },
+
+  "feedback_templates": {
+    "optimal": {
+      "second_hand_low": "Correct! Playing low second in hand preserves your {card} for later.",
+      "third_hand_high": "Good play! Third hand high forces declarer to use resources.",
+      "bottom_of_sequence": "Well played! The {card} from {sequence} tells partner you have the {higher}.",
+      "cheapest_winner": "Perfect! Winning with {card} preserves your higher cards.",
+      "attitude_encourage": "Good signal! The high {card} tells partner you want this suit led.",
+      "attitude_discourage": "Good signal! The low {card} tells partner to lead elsewhere."
+    },
+    "suboptimal": {
+      "wasted_honor": "While {played} didn't lose a trick, standard play is 2nd hand low ({optimal}) to preserve the {played}.",
+      "signal_confusion": "The DDS shows no trick loss, but discarding {played} may confuse partner. Standard is {optimal}.",
+      "sequence_violation": "Playing {played} from {sequence} is unusual. Standard is to play {optimal} (bottom of sequence) to signal the higher honors."
+    }
+  },
+
+  "ui_styling": {
+    "optimal_signal": {
+      "badge_color": "#48bb78",
+      "badge_label": "Optimal"
+    },
+    "suboptimal_signal": {
+      "badge_color": "#ed8936",
+      "badge_label": "Suboptimal Signal"
+    },
+    "technically_correct": {
+      "badge_color": "#4299e1",
+      "badge_label": "Technically Correct"
+    }
+  }
+}

@@ -26,6 +26,9 @@ from engine.learning.mistake_analyzer import get_mistake_analyzer
 from engine.learning.celebration_manager import get_celebration_manager
 from engine.hand import Hand
 
+# Seat utilities - single source of truth for position calculations
+from utils.seats import partner
+
 # Database abstraction layer for SQLite/PostgreSQL compatibility
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from db import get_connection, date_subtract, date_between
@@ -1925,7 +1928,11 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
                 rating,
                 tricks_cost,
                 contract,
-                feedback
+                feedback,
+                signal_reason,
+                signal_heuristic,
+                signal_context,
+                is_signal_optimal
             FROM play_decisions
             WHERE user_id = ?
               AND session_id = ?
@@ -1945,7 +1952,11 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
                 'rating': row['rating'],
                 'tricks_cost': row['tricks_cost'],
                 'contract': row['contract'],
-                'feedback': row['feedback']
+                'feedback': row['feedback'],
+                'signal_reason': row['signal_reason'],
+                'signal_heuristic': row['signal_heuristic'],
+                'signal_context': row['signal_context'],
+                'is_signal_optimal': bool(row['is_signal_optimal']) if row['is_signal_optimal'] is not None else True
             })
 
         if not decisions:
@@ -3600,6 +3611,186 @@ def get_bidding_gap_analysis():
         return jsonify({'error': str(e)}), 500
 
 
+def get_differential_analysis():
+    """
+    POST /api/differential-analysis
+
+    Analyze the differential between a user's bid and the optimal bid.
+    Returns detailed rule matching, feature gaps, and educational content.
+
+    Request body:
+    {
+        "user_bid": "3♠",
+        "hand_cards": [...],
+        "auction_history": [...],
+        "position": "S",
+        "vulnerability": "None",
+        "dealer": "N"
+    }
+
+    Response:
+    {
+        "user_bid": "3♠",
+        "optimal_bid": "Pass",
+        "rating": "suboptimal",
+        "score": 55,
+        "differential": {
+            "factors": [...],
+            "user_bid_rules": [...],
+            "optimal_bid_rules": [...]
+        },
+        "physics": {...},
+        "learning": {
+            "domain": "safety",
+            "primary_reason": "...",
+            "learning_point": "...",
+            "tutorial_link": "/learn/lott"
+        },
+        "commentary_html": "..."
+    }
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'error': 'Request body required'}), 400
+
+        user_bid = data.get('user_bid')
+        hand_cards = data.get('hand_cards', [])
+        auction_history = data.get('auction_history', [])
+        position = data.get('position', 'S')
+        vulnerability = data.get('vulnerability', 'None')
+        dealer = data.get('dealer', 'N')
+
+        if not user_bid:
+            return jsonify({'error': 'user_bid required'}), 400
+
+        if not hand_cards:
+            return jsonify({'error': 'hand_cards required'}), 400
+
+        # Import components
+        from engine.hand import Hand, Card
+        from engine.v2.differential_analyzer import get_differential_analyzer
+        from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
+
+        # Convert positions to full names
+        position_map = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West',
+                        'North': 'North', 'East': 'East', 'South': 'South', 'West': 'West'}
+        full_position = position_map.get(position, 'South')
+        full_dealer = position_map.get(dealer, 'North')
+
+        # Convert hand cards to Hand object
+        suit_to_unicode = {'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣',
+                          '♠': '♠', '♥': '♥', '♦': '♦', '♣': '♣'}
+        cards = []
+        for card in hand_cards:
+            suit = card.get('suit') or card.get('s', '')
+            rank = card.get('rank') or card.get('r', '')
+            suit_unicode = suit_to_unicode.get(suit, suit)
+            cards.append(Card(rank=rank, suit=suit_unicode))
+
+        hand = Hand(cards)
+
+        # Get optimal bid from V2 engine
+        engine = BiddingEngineV2Schema()
+        optimal_bid, explanation, _ = engine.get_bid(
+            hand, auction_history, full_position, vulnerability, full_dealer
+        )
+
+        # Run differential analysis
+        analyzer = get_differential_analyzer()
+        result = analyzer.analyze(
+            user_bid=user_bid,
+            optimal_bid=optimal_bid,
+            hand=hand,
+            auction_history=auction_history,
+            position=full_position,
+            vulnerability=vulnerability,
+            dealer=full_dealer
+        )
+
+        # Convert result to JSON-serializable format
+        response = {
+            'user_bid': result.user_bid,
+            'optimal_bid': result.optimal_bid,
+            'rating': result.rating,
+            'score': result.score,
+
+            'differential': {
+                'factors': [
+                    {
+                        'feature': f.feature,
+                        'label': f.label,
+                        'actual_value': f.actual_value,
+                        'required_value': f.required_value,
+                        'gap': f.gap,
+                        'impact': f.impact,
+                        'status': f.status,
+                        'shortfall': f.shortfall
+                    }
+                    for f in result.differential_factors
+                ],
+                'user_bid_rules': [
+                    {
+                        'rule_id': r.rule_id,
+                        'bid': r.bid,
+                        'priority': r.priority,
+                        'description': r.description,
+                        'category': r.category,
+                        'conditions_met': r.conditions_met,
+                        'conditions_total': r.conditions_total
+                    }
+                    for r in result.user_bid_rules[:5]  # Limit to top 5
+                ],
+                'optimal_bid_rules': [
+                    {
+                        'rule_id': r.rule_id,
+                        'bid': r.bid,
+                        'priority': r.priority,
+                        'description': r.description,
+                        'category': r.category,
+                        'conditions_met': r.conditions_met,
+                        'conditions_total': r.conditions_total
+                    }
+                    for r in result.optimal_bid_rules[:5]  # Limit to top 5
+                ]
+            },
+
+            'physics': {
+                'hcp': result.physics.hcp,
+                'total_points': result.physics.total_points,
+                'shape': result.physics.shape,
+                'lott_safe_level': result.physics.lott_safe_level,
+                'working_hcp_ratio': result.physics.working_hcp_ratio,
+                'quick_tricks': result.physics.quick_tricks,
+                'support_points': result.physics.support_points,
+                'control_multiplier': result.physics.control_multiplier,
+                'is_balanced': result.physics.is_balanced,
+                'is_misfit': result.physics.is_misfit,
+                'is_fragile_ruff': result.physics.is_fragile_ruff,
+                'longest_suit': result.physics.longest_suit,
+                'fit_length': result.physics.fit_length,
+                'stoppers': result.physics.stoppers
+            },
+
+            'learning': {
+                'domain': result.diagnostic_domain.value,
+                'primary_reason': result.primary_reason,
+                'learning_point': result.learning_point,
+                'tutorial_link': result.tutorial_link
+            },
+
+            'commentary_html': result.commentary_html
+        }
+
+        return jsonify(response)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 def calculate_hcp(hand_cards: List[Dict]) -> int:
     """Calculate high card points from hand cards"""
     hcp_values = {'A': 4, 'K': 3, 'Q': 2, 'J': 1}
@@ -3662,12 +3853,6 @@ def identify_hand_features(hand_cards: List[Dict], shape: List[int]) -> List[str
     return features
 
 
-def get_partner(position: str) -> str:
-    """Get partner's position"""
-    partners = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
-    return partners.get(position, '')
-
-
 def generate_partner_message(auction_before: List, user_position: str) -> str:
     """
     Generate a description of what partner has communicated through the auction.
@@ -3675,7 +3860,7 @@ def generate_partner_message(auction_before: List, user_position: str) -> str:
     if not auction_before:
         return "No bids from partner yet"
 
-    partner_pos = get_partner(user_position)
+    partner_pos = partner(user_position)
     # Map full position names to single letters
     pos_map = {'North': 'N', 'South': 'S', 'East': 'E', 'West': 'W', 'N': 'N', 'S': 'S', 'E': 'E', 'W': 'W'}
     partner_bids = []
@@ -3736,7 +3921,7 @@ def generate_bid_meaning(bid: str, auction_before: List, position: str) -> str:
         return "Redouble: We have the balance of power, or SOS asking partner to bid"
 
     # Check if this is a response to 1NT (Stayman/Jacoby)
-    partner_pos = get_partner(position)
+    partner_pos = partner(position)
     partner_opened_1nt = any(
         (b.get('bid') if isinstance(b, dict) else b) == '1NT'
         for b in auction_before
@@ -3801,6 +3986,7 @@ def register_analytics_endpoints(app):
     app.route('/api/bidding-hands', methods=['GET'])(get_bidding_hands_history)
     app.route('/api/bidding-hand-detail', methods=['GET'])(get_bidding_hand_detail)
     app.route('/api/bidding-gap-analysis', methods=['POST'])(get_bidding_gap_analysis)
+    app.route('/api/differential-analysis', methods=['POST'])(get_differential_analysis)
 
     # Board analysis for Performance Overview chart
     app.route('/api/analytics/board-analysis', methods=['GET'])(get_board_analysis)
@@ -3812,3 +3998,4 @@ def register_analytics_endpoints(app):
     print("✓ Bidding analysis endpoint registered")
     print("✓ Four-dimension progress endpoint registered")
     print("✓ Hand history & DDS analysis endpoints registered")
+    print("✓ Differential analysis endpoint registered")
