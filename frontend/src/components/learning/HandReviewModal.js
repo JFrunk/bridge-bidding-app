@@ -244,8 +244,28 @@ const TrickFeedbackPanel = ({ decision }) => {
   // Determine if this is a signal-related feedback (no trick cost but signal reason present)
   const isSignalFeedback = decision.signal_reason && decision.tricks_cost === 0 && !decision.is_signal_optimal;
 
-  // Use suboptimal_signal config for signal issues that don't cost tricks
-  const effectiveRating = isSignalFeedback ? 'suboptimal_signal' : decision.rating;
+  // CONSISTENCY CHECK: Avoid contradictory feedback
+  // Check reasoning text for indicators that the play was correct
+  const reasoning = (decision.reasoning || '').toLowerCase();
+  const correctIndicators = ['correct', 'conserving', 'optimal', 'good', 'right', 'best', 'perfect'];
+  const reasoningSaysCorrect = correctIndicators.some(ind => reasoning.includes(ind));
+
+  let suppressSignalFeedback = false;
+
+  // Case 1: Rating is OPTIMAL but signal says NOT optimal, and reasoning confirms correct
+  // → Suppress the signal feedback (don't downgrade to suboptimal_signal)
+  if (isSignalFeedback && decision.rating === 'optimal' && reasoningSaysCorrect) {
+    suppressSignalFeedback = true;
+  }
+
+  // Case 2: Signal says optimal but isSignalFeedback somehow triggered
+  // → This shouldn't happen given the isSignalFeedback logic, but double-check
+  if (isSignalFeedback && decision.is_signal_optimal) {
+    suppressSignalFeedback = true;
+  }
+
+  // Use suboptimal_signal config for signal issues that don't cost tricks (unless suppressed)
+  const effectiveRating = (isSignalFeedback && !suppressSignalFeedback) ? 'suboptimal_signal' : decision.rating;
   const config = RATING_CONFIG[effectiveRating] || RATING_CONFIG.good;
 
   const positionName = decision.position === 'N' ? 'North' :
@@ -269,7 +289,7 @@ const TrickFeedbackPanel = ({ decision }) => {
             -{decision.tricks_cost} trick{decision.tricks_cost !== 1 ? 's' : ''}
           </span>
         )}
-        {isSignalFeedback && (
+        {isSignalFeedback && !suppressSignalFeedback && (
           <span className="signal-warning-badge" style={{
             marginLeft: '8px',
             padding: '2px 6px',

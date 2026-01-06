@@ -12,6 +12,7 @@ import { getDashboardData } from '../../services/analyticsService';
 import FourDimensionProgress from './FourDimensionProgress';
 import HandReviewModal from './HandReviewModal';
 import BidReviewModal from './BidReviewModal';
+import ACBLImportModal from './ACBLImportModal';
 
 const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -20,6 +21,7 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
   const [selectedHandId, setSelectedHandId] = useState(null);
   const [reviewType, setReviewType] = useState(null); // 'play' or 'bidding'
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -93,10 +95,21 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
     <div className="learning-dashboard" data-testid="dashboard-content">
       {/* Header */}
       <div className="learning-dashboard-header" data-testid="dashboard-header">
-        <h2>Your Learning Journey</h2>
-        <p className="learning-dashboard-subtitle">
-          Track your progress and discover growth opportunities
-        </p>
+        <div className="header-title-row">
+          <div>
+            <h2>Your Learning Journey</h2>
+            <p className="learning-dashboard-subtitle">
+              Track your progress and discover growth opportunities
+            </p>
+          </div>
+          <button
+            className="import-button"
+            onClick={() => setShowImportModal(true)}
+            title="Import tournament hands (PBN/BWS)"
+          >
+            Import Hands
+          </button>
+        </div>
       </div>
 
       {/* Five-Bar Progress Section */}
@@ -141,6 +154,19 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
         <BidReviewModal
           handId={selectedHandId}
           onClose={handleCloseReview}
+        />
+      )}
+
+      {/* ACBL Import Modal - Import PBN/BWS tournament files */}
+      {showImportModal && (
+        <ACBLImportModal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          userId={userId}
+          onHandSelect={(hand) => {
+            setShowImportModal(false);
+            handleOpenReview(hand.id, 'play');
+          }}
         />
       )}
     </div>

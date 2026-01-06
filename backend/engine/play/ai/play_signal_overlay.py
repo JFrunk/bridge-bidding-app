@@ -475,7 +475,39 @@ class TacticalPlayFilter:
 
         - Play high to force declarer's resources
         - Exception: Play bottom of touching honors (Q from KQJ)
+        - Exception: Play low to conserve honors when trick is already won by partner
         """
+        # First check: Is the trick already won and we can't improve?
+        # If the current winner beats our highest card, we should conserve honors
+        current_trick = getattr(game_state, 'current_trick', [])
+
+        if len(current_trick) >= 1:
+            led_card = current_trick[0][0]
+            led_suit = led_card.suit
+
+            # Find the current winner of the trick
+            current_winner_value = 0
+            for played_card, played_pos in current_trick:
+                if played_card.suit == led_suit:
+                    card_val = self._rank_value(played_card.rank)
+                    if card_val > current_winner_value:
+                        current_winner_value = card_val
+
+            # Get the highest card we could play from the equivalence set
+            our_highest = max(equivalence_set, key=lambda c: self._rank_value(c.rank))
+            our_highest_value = self._rank_value(our_highest.rank)
+
+            # If current winner beats everything we have, play low to conserve
+            if current_winner_value > our_highest_value:
+                selected = min(equivalence_set, key=lambda c: self._rank_value(c.rank))
+                return SignalResult(
+                    card=selected,
+                    heuristic=SignalHeuristic.MIN_OF_EQUALS,
+                    reason="Conserving honors: Can't beat the current winner, play low to save higher cards.",
+                    context=PlayContext.THIRD_HAND_FOLLOW,
+                    is_optimal=True
+                )
+
         # Check if equivalence set contains a sequence
         if self._equivalence_is_honor_sequence(equivalence_set):
             # Play bottom of sequence to signal the higher honors
@@ -596,9 +628,18 @@ class TacticalPlayFilter:
             # First discard: Attitude signal
             if context == PlayContext.DISCARD_FIRST:
                 if want_suit:
-                    # Encourage: play high
-                    score += rank_value * 2
-                    reason = "Attitude Signal: Discarding high encourages partner to lead this suit."
+                    # Encourage: play a conspicuously high SPOT card (not your winners)
+                    # Ideal: 7-9 range to signal encouragement without wasting tricks
+                    # Don't discard honors (J+) to encourage - save them to win tricks
+                    if rank_value >= 11:  # J, Q, K, A - too valuable to discard for a signal
+                        score -= 30  # Penalize discarding honors even when encouraging
+                        reason = "Attitude Signal: Prefer signaling with spot cards, not honors."
+                    elif rank_value >= 7:  # 7, 8, 9, T - good encouraging signal
+                        score += 20 + (rank_value - 7)  # Prefer higher spot card (9 > 8 > 7)
+                        reason = "Attitude Signal: High spot card encourages partner to lead this suit."
+                    else:  # 2-6 - too low to clearly encourage
+                        score += rank_value  # Slight preference for higher within low range
+                        reason = "Attitude Signal: Discarding to encourage this suit."
                     heuristic = SignalHeuristic.ATTITUDE_SIGNAL
                 else:
                     # Discourage: play low

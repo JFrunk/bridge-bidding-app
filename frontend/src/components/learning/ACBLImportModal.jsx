@@ -54,10 +54,11 @@ const FileDropZone = ({ onFileSelect, isUploading }) => {
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      if (file.name.endsWith('.pbn') || file.type === 'text/plain') {
+      const filename = file.name.toLowerCase();
+      if (filename.endsWith('.pbn') || filename.endsWith('.bws') || file.type === 'text/plain') {
         onFileSelect(file);
       } else {
-        alert('Please select a PBN file (.pbn)');
+        alert('Please select a PBN (.pbn) or BWS (.bws) file');
       }
     }
   }, [onFileSelect]);
@@ -80,7 +81,7 @@ const FileDropZone = ({ onFileSelect, isUploading }) => {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pbn,text/plain"
+        accept=".pbn,.bws,text/plain"
         onChange={handleFileInput}
         style={{ display: 'none' }}
       />
@@ -92,8 +93,8 @@ const FileDropZone = ({ onFileSelect, isUploading }) => {
       ) : (
         <div className="drop-zone-content">
           <div className="drop-icon">+</div>
-          <p>Drop PBN file here or click to browse</p>
-          <span className="drop-hint">Supports ACBL, BBO, and Common Game formats</span>
+          <p>Drop file here or click to browse</p>
+          <span className="drop-hint">Supports PBN (hand records) and BWS (ACBLscore results)</span>
         </div>
       )}
     </div>
@@ -294,31 +295,63 @@ const ACBLImportModal = ({ isOpen, onClose, userId, onHandSelect }) => {
     setIsUploading(true);
     setError(null);
 
+    const filename = file.name.toLowerCase();
+    const isBwsFile = filename.endsWith('.bws');
+
     try {
-      // Read file content
-      const content = await file.text();
+      let response;
+      let data;
 
-      const response = await fetch(`${API_BASE}/api/import/pbn`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: userId,
-          pbn_content: content,
-          filename: file.name
-        })
-      });
+      if (isBwsFile) {
+        // BWS files are binary - use FormData for upload
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('user_id', userId);
 
-      const data = await response.json();
+        response = await fetch(`${API_BASE}/api/import/bws`, {
+          method: 'POST',
+          body: formData
+        });
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Import failed');
+        data = await response.json();
+
+        if (!response.ok) {
+          // Check for mdbtools not installed
+          if (response.status === 501) {
+            throw new Error(data.message || 'BWS parsing requires mdbtools (server configuration needed)');
+          }
+          throw new Error(data.error || 'BWS import failed');
+        }
+
+        // Show success message for BWS
+        alert(`Imported BWS file: ${data.board_count} boards, ${data.contract_count} contracts from "${file.name}"`);
+
+      } else {
+        // PBN files are text - read and send as JSON
+        const content = await file.text();
+
+        response = await fetch(`${API_BASE}/api/import/pbn`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: userId,
+            pbn_content: content,
+            filename: file.name
+          })
+        });
+
+        data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'PBN import failed');
+        }
+
+        // Show success message for PBN
+        alert(`Imported ${data.valid_hands} hands from "${data.event_name || file.name}"`);
       }
 
       // Refresh tournament list
       await loadTournaments();
-
-      // Show success message
-      alert(`Imported ${data.valid_hands} hands from "${data.event_name || file.name}"`);
 
     } catch (err) {
       setError(err.message);

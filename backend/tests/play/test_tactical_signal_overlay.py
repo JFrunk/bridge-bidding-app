@@ -88,6 +88,57 @@ class TestThirdHandHigh:
         assert result.heuristic == SignalHeuristic.BOTTOM_OF_SEQUENCE
         assert "Bottom of Sequence" in result.reason
 
+    def test_third_hand_conserves_honors_when_trick_won(self, filter):
+        """Third hand plays low to conserve honors when partner already wins"""
+        # Scenario: Partner led Q♦, dummy plays 6♦, we have J♦ and 2♦
+        # Partner's Q wins, so we should play 2♦ to save J♦ for later
+
+        class MockState:
+            def __init__(self):
+                # Partner (N) led Q♦, dummy (E) played 6♦
+                # We (S) are third hand with J♦ and 2♦
+                self.current_trick = [
+                    (Card('Q', '♦'), 'N'),  # Partner's Q leads
+                    (Card('6', '♦'), 'E')   # Dummy plays low
+                ]
+
+        class MockHand:
+            def __init__(self):
+                self.cards = [Card('J', '♦'), Card('2', '♦')]
+
+        # Equivalence set: J♦ and 2♦ both preserve the same tricks (Q wins)
+        cards = [Card('J', '♦'), Card('2', '♦')]
+        result = filter._select_third_hand(cards, MockState(), MockHand())
+
+        assert result.card.rank == '2', "Should play 2 to conserve J"
+        assert result.heuristic == SignalHeuristic.MIN_OF_EQUALS
+        assert "Conserving honors" in result.reason
+        assert result.is_optimal is True
+
+    def test_third_hand_high_when_can_beat_second(self, filter):
+        """Third hand plays high when they can beat second hand's card"""
+        # Scenario: Partner led 6♦, dummy plays Q♦, we have K♦ and 2♦
+        # We should play K♦ to beat dummy's Q
+
+        class MockState:
+            def __init__(self):
+                # Partner (N) led 6♦, dummy (E) played Q♦
+                self.current_trick = [
+                    (Card('6', '♦'), 'N'),
+                    (Card('Q', '♦'), 'E')
+                ]
+
+        class MockHand:
+            def __init__(self):
+                self.cards = [Card('K', '♦'), Card('2', '♦')]
+
+        cards = [Card('K', '♦'), Card('2', '♦')]
+        result = filter._select_third_hand(cards, MockState(), MockHand())
+
+        # K beats Q, so should still play high
+        assert result.card.rank == 'K', "Should play K to beat Q"
+        assert result.heuristic == SignalHeuristic.MAX_OF_EQUALS
+
 
 class TestFourthHand:
     """Tests for 4th hand - win cheaply"""
@@ -133,7 +184,7 @@ class TestDiscards:
     """Tests for discard signaling"""
 
     def test_first_discard_attitude_encourage(self, filter):
-        """First discard uses attitude - high to encourage"""
+        """First discard uses attitude - high spot card to encourage"""
 
         class MockHand:
             def __init__(self):
@@ -148,9 +199,30 @@ class TestDiscards:
             context=PlayContext.DISCARD_FIRST
         )
 
-        assert result.card.rank == '9', "Should discard high to encourage"
+        assert result.card.rank == '9', "Should discard high spot card to encourage"
         assert result.heuristic == SignalHeuristic.ATTITUDE_SIGNAL
         assert "encourages" in result.reason.lower()
+
+    def test_encourage_prefers_spot_cards_over_honors(self, filter):
+        """When encouraging, prefer high spot cards over honors (save honors to win tricks)"""
+
+        class MockHand:
+            def __init__(self):
+                # K-9-7-4 in diamonds - should discard 9 to encourage, not K
+                self.cards = [
+                    Card('K', '♦'), Card('9', '♦'), Card('7', '♦'), Card('4', '♦'),
+                    Card('5', '♣'), Card('3', '♣')
+                ]
+
+        # K and 9 both in equivalence set (DDS says they're equivalent for trick count)
+        cards = [Card('K', '♦'), Card('9', '♦')]
+        result = filter._select_discard(
+            cards, MockHand(), None, want_suit=True,
+            context=PlayContext.DISCARD_FIRST
+        )
+
+        assert result.card.rank == '9', "Should discard 9 to encourage, saving K to win tricks"
+        assert "spot card" in result.reason.lower() or "encourages" in result.reason.lower()
 
     def test_first_discard_attitude_discourage(self, filter):
         """First discard uses attitude - low to discourage"""

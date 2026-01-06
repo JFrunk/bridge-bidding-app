@@ -380,6 +380,21 @@ class PlayFeedbackGenerator:
             play_state, user_card, position, optimal_cards
         )
 
+        # CONSISTENCY CHECK: Avoid contradictory feedback
+        # If correctness is OPTIMAL but is_signal_optimal is False, we need to check for contradictions.
+        # The reasoning text might say the play was correct (e.g., "conserving honors") while
+        # is_signal_optimal=False suggests it wasn't. This confuses users.
+        #
+        # Resolution: If reasoning indicates the play was actually correct/good, align is_signal_optimal.
+        if correctness == Correctness.OPTIMAL and not is_signal_optimal and reasoning:
+            # Check if reasoning says the play was correct
+            reasoning_lower = reasoning.lower()
+            correct_indicators = ["correct", "conserving", "optimal", "good", "right", "best"]
+            if any(indicator in reasoning_lower for indicator in correct_indicators):
+                # Reasoning says correct but signal says not optimal - contradiction!
+                # Suppress the signal deviation to avoid confusing feedback
+                is_signal_optimal = True
+
         # Build feedback object
         return PlayFeedback(
             trick_number=len(play_state.trick_history) + 1,
