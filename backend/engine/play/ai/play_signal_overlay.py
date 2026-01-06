@@ -22,6 +22,7 @@ Signal Categories Implemented:
 5. Attitude Signals - High card encourages, low discourages
 6. Count Signals - High-low shows even count, low-high shows odd
 7. Discard from Length - Protect stoppers, discard from weak suits
+8. Declarer Conservation - Don't overtake partner's winner (prevents Ace-on-King)
 
 Usage:
     from engine.play.ai.play_signal_overlay import TacticalPlayFilter
@@ -59,6 +60,7 @@ class PlayContext(Enum):
     LEAD_FROM_HONOR_SEQUENCE = "lead_from_honor_sequence"
     FOLLOW_FROM_HONOR_SEQUENCE = "follow_from_honor_sequence"
     TRUMP_MANAGEMENT = "trump_management"
+    DECLARER_CONSERVATION = "declarer_conservation"  # Declarer/Dummy already winning - conserve
 
 
 class SignalHeuristic(Enum):
@@ -72,6 +74,7 @@ class SignalHeuristic(Enum):
     CHEAPEST_WINNER = "cheapest_winner"       # Win with lowest card possible
     PROTECT_STOPPERS = "protect_stoppers"     # Don't discard lone honors
     DISCARD_FROM_LENGTH = "discard_from_length"  # Discard low from long suits
+    DECLARER_CONSERVE = "declarer_conserve"   # Conserve winners when partnership winning
 
 
 @dataclass
@@ -231,6 +234,9 @@ class TacticalPlayFilter:
         elif context == PlayContext.FOLLOW_FROM_HONOR_SEQUENCE:
             return self._select_follow_from_sequence(equivalence_set, hand)
 
+        elif context == PlayContext.DECLARER_CONSERVATION:
+            return self._select_declarer_conservation(equivalence_set, game_state)
+
         else:
             # Default: play lowest
             selected = min(equivalence_set, key=lambda c: self._rank_value(c.rank))
@@ -276,6 +282,14 @@ class TacticalPlayFilter:
             if equiv_suit and equiv_suit not in discarded_suits:
                 return PlayContext.DISCARD_FIRST
             return PlayContext.DISCARD_SUBSEQUENT
+
+        # ========================================================================
+        # CRITICAL: Check for Declarer Conservation BEFORE standard defense logic
+        # When declarer controls both hands and partnership is already winning,
+        # conserve winners by playing low - don't overtake your own winner!
+        # ========================================================================
+        if self._should_conserve_declarer_winner(game_state, position, equivalence_set):
+            return PlayContext.DECLARER_CONSERVATION
 
         # Following suit - check for honor sequence
         if self._equivalence_is_honor_sequence(equivalence_set):
@@ -724,6 +738,181 @@ class TacticalPlayFilter:
             context=PlayContext.FOLLOW_FROM_HONOR_SEQUENCE,
             is_optimal=True
         )
+
+    def _select_declarer_conservation(
+        self,
+        equivalence_set: List[Card],
+        game_state: Any
+    ) -> SignalResult:
+        """
+        Conserve winners when declarer/dummy partnership is already winning.
+
+        When declarer controls both hands and one hand has already played a winner,
+        play the lowest card from the other hand to conserve high cards.
+
+        Example: If dummy played A♥ and declarer has K♥, play a low card instead
+        of wasting the K♥ on a trick already won.
+        """
+        # Play lowest card to conserve winners
+        selected = min(equivalence_set, key=lambda c: self._rank_value(c.rank))
+
+        # Build educational reason
+        current_trick = getattr(game_state, 'current_trick', [])
+        if current_trick:
+            winning_card = self._get_current_winner(current_trick, game_state)
+            if winning_card:
+                reason = (
+                    f"Declarer Conservation: Partnership already winning with "
+                    f"{winning_card.rank}{winning_card.suit} - playing low to save "
+                    f"higher cards for future tricks."
+                )
+            else:
+                reason = "Declarer Conservation: Playing low to preserve winners."
+        else:
+            reason = "Declarer Conservation: Playing low to preserve winners."
+
+        return SignalResult(
+            card=selected,
+            heuristic=SignalHeuristic.DECLARER_CONSERVE,
+            reason=reason,
+            context=PlayContext.DECLARER_CONSERVATION,
+            is_optimal=True
+        )
+
+    def _should_conserve_declarer_winner(
+        self,
+        game_state: Any,
+        position: str,
+        equivalence_set: List[Card]
+    ) -> bool:
+        """
+        Determine if declarer should conserve winners (not overtake own winner).
+
+        Returns True when:
+        1. Position is declarer or dummy (one side controls both hands)
+        2. Partner (the other controlled hand) has already played to this trick
+        3. Partner's card is currently winning the trick
+        4. We have cards that could overtake but shouldn't
+
+        This prevents the "Ace on King" problem where DDS plays both high cards
+        to the same trick because they're DDS-equivalent, but a human would
+        recognize this wastes a winner.
+        """
+        current_trick = getattr(game_state, 'current_trick', [])
+        contract = getattr(game_state, 'contract', None)
+
+        # Need at least one card played and contract info
+        if not current_trick or not contract:
+            return False
+
+        declarer = getattr(contract, 'declarer', None)
+        if not declarer:
+            return False
+
+        # Determine if this position is declarer or dummy
+        dummy = self._get_dummy_position(declarer)
+        is_declarer_side = position in [declarer, dummy]
+
+        if not is_declarer_side:
+            return False  # Defenders use normal signaling
+
+        # Check if partner (the other controlled hand) has played
+        partner_pos = dummy if position == declarer else declarer
+        partner_played = None
+
+        for card, pos in current_trick:
+            if pos == partner_pos:
+                partner_played = card
+                break
+
+        if not partner_played:
+            return False  # Partner hasn't played yet
+
+        # Check if partner is currently winning
+        led_suit = current_trick[0][0].suit
+        trump_suit = getattr(contract, 'trump_suit', None)
+        current_winner_card, current_winner_pos = self._get_trick_winner_info(
+            current_trick, led_suit, trump_suit
+        )
+
+        if current_winner_pos != partner_pos:
+            return False  # Partner isn't winning, normal play applies
+
+        # Partner is winning - check if we have cards that could wastefully overtake
+        # Only trigger conservation if we have high cards that could overtake
+        partner_rank = self._rank_value(partner_played.rank)
+
+        # Check if any card in equivalence set would overtake partner
+        can_overtake = any(
+            c.suit == led_suit and self._rank_value(c.rank) > partner_rank
+            for c in equivalence_set
+        )
+
+        if not can_overtake:
+            return False  # No overtaking possible, normal play
+
+        # We have cards that could overtake partner's winner - conserve!
+        return True
+
+    def _get_dummy_position(self, declarer: str) -> str:
+        """Get dummy's position (opposite declarer)"""
+        opposite = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
+        return opposite.get(declarer, 'N')
+
+    def _get_trick_winner_info(
+        self,
+        current_trick: List,
+        led_suit: str,
+        trump_suit: Optional[str]
+    ) -> Tuple[Optional[Card], Optional[str]]:
+        """
+        Determine current trick winner considering trump.
+
+        Returns (winning_card, winning_position) or (None, None) if empty.
+        """
+        if not current_trick:
+            return None, None
+
+        winner_card = None
+        winner_pos = None
+        winner_rank = -1
+
+        for card, pos in current_trick:
+            card_rank = self._rank_value(card.rank)
+
+            # Trump beats non-trump
+            if trump_suit and card.suit == trump_suit:
+                if winner_card is None or winner_card.suit != trump_suit:
+                    # First trump or replacing non-trump winner
+                    winner_card = card
+                    winner_pos = pos
+                    winner_rank = card_rank
+                elif card_rank > winner_rank:
+                    # Higher trump
+                    winner_card = card
+                    winner_pos = pos
+                    winner_rank = card_rank
+            elif card.suit == led_suit:
+                # Following suit (no trump played yet or this isn't trump)
+                if winner_card is None or (winner_card.suit != trump_suit and card_rank > winner_rank):
+                    winner_card = card
+                    winner_pos = pos
+                    winner_rank = card_rank
+            # Off-suit non-trump cards don't win
+
+        return winner_card, winner_pos
+
+    def _get_current_winner(self, current_trick: List, game_state: Any) -> Optional[Card]:
+        """Get the currently winning card in the trick"""
+        if not current_trick:
+            return None
+
+        led_suit = current_trick[0][0].suit
+        contract = getattr(game_state, 'contract', None)
+        trump_suit = getattr(contract, 'trump_suit', None) if contract else None
+
+        winner_card, _ = self._get_trick_winner_info(current_trick, led_suit, trump_suit)
+        return winner_card
 
     # ========== Helper Methods ==========
 
