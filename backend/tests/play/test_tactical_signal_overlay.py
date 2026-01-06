@@ -451,5 +451,230 @@ class TestEdgeCases:
             filter.select_tactical_card([], MockState(), 'N', MockHand())
 
 
+class TestDeferenceAndUnblocking:
+    """
+    Deference & Unblocking Test Suite
+
+    Tests the Physics of Fluidity - ensuring the AI distinguishes between:
+    1. CONSERVATION (Deference): Don't waste honors on partner's winner
+    2. FLUIDITY (Unblocking): Get high cards out of the way to let partner run
+
+    These are the only valid exceptions to standard 3rd Hand High.
+    """
+
+    def test_positional_deference_q_on_j(self, filter):
+        """
+        Scenario 1: Positional Deference (fixes Q-on-J wastage)
+
+        Context: South (Partner) leads J♠. East (Opponent) plays 3♠.
+        AI Hand (North): Q♠, 7♠
+        DDS Equivalence Set: [Q♠, 7♠] (both result in same tricks)
+        Expected: Play 7♠ (defer to partner's J)
+
+        First Principle: Do not overtake partner's winning card to preserve
+        the Queen for positional leverage over opponents.
+        """
+        class MockContract:
+            declarer = 'E'  # East is declarer
+            trump_suit = None  # NT contract
+
+        class MockState:
+            def __init__(self):
+                # South (partner) led J♠, East (declarer) played 3♠
+                # North (defender) to play with Q♠ and 7♠
+                self.current_trick = [
+                    (Card('J', '♠'), 'S'),  # Partner leads J
+                    (Card('3', '♠'), 'E'),  # Declarer plays low
+                ]
+                self.trick_history = []
+                self.contract = MockContract()
+
+        class MockHand:
+            def __init__(self):
+                # North has Q♠ and 7♠ plus other cards
+                self.cards = [
+                    Card('Q', '♠'), Card('7', '♠'),
+                    Card('A', '♥'), Card('5', '♥'),
+                    Card('K', '♦'), Card('4', '♦'),
+                    Card('8', '♣'), Card('3', '♣')
+                ]
+
+        # Q and 7 are DDS-equivalent (both preserve same trick count)
+        equivalence_set = [Card('Q', '♠'), Card('7', '♠')]
+
+        result = filter.select_tactical_card(
+            equivalence_set, MockState(), 'N', MockHand(), trump_suit=None
+        )
+
+        assert result.card.rank == '7', (
+            f"Should play 7♠ to defer to partner's J♠, got {result.card.rank}♠. "
+            f"Q-on-J wastes honors!"
+        )
+        assert result.context == PlayContext.DEFENSIVE_DEFERENCE
+        assert "defer" in result.reason.lower() or "partner" in result.reason.lower()
+
+    def test_unblocking_singleton_ace(self, filter):
+        """
+        Scenario 2: Unblocking Requirement (Fluidity)
+
+        Context: South (Partner) leads K♣. West (Opponent) plays 2♣.
+        AI Hand (North): A♣ (singleton)
+        DDS Equivalence Set: [A♣] (only card)
+        Expected: Play A♣ (unblock for partner)
+
+        First Principle: Even though partner is winning, we MUST play the Ace
+        because it's a singleton. If not played now, North will win the next
+        club trick and "block" South from running their long club suit.
+        """
+        class MockContract:
+            declarer = 'E'
+            trump_suit = None
+
+        class MockState:
+            def __init__(self):
+                # South leads K♣, West plays 2♣, North to play
+                self.current_trick = [
+                    (Card('K', '♣'), 'S'),  # Partner leads K
+                    (Card('2', '♣'), 'W'),  # Opponent plays low
+                ]
+                self.trick_history = []
+                self.contract = MockContract()
+
+        class MockHand:
+            def __init__(self):
+                # North has SINGLETON A♣ - must unblock!
+                self.cards = [
+                    Card('A', '♣'),  # Singleton Ace - blocking card
+                    Card('Q', '♥'), Card('5', '♥'),
+                    Card('8', '♦'), Card('4', '♦'),
+                    Card('7', '♠'), Card('3', '♠')
+                ]
+
+        # Only one card - but the key is the _should_unblock check
+        equivalence_set = [Card('A', '♣')]
+
+        # First verify the unblocking logic recognizes this
+        should_unblock = filter._should_unblock(equivalence_set, MockHand(), '♣')
+        assert should_unblock, "Should recognize singleton Ace as blocking card"
+
+        # Now verify the actual play selection
+        result = filter.select_tactical_card(
+            equivalence_set, MockState(), 'N', MockHand(), trump_suit=None
+        )
+
+        assert result.card.rank == 'A', "Must play singleton Ace to unblock"
+
+    def test_declarer_conservation_a_on_k(self, filter):
+        """
+        Scenario 3: Declarer Unit Coordination (Conservation)
+
+        Context: Declarer (East) leads K♦ from dummy. South plays 5♦.
+        AI is West (declarer's hand): A♦, 7♦
+        DDS Equivalence Set: [A♦, 7♦]
+        Expected: Play 7♦ (conserve the Ace)
+
+        First Principle: Declarer controls both hands. The K♦ and A♦ are a
+        single resource unit. Don't spend two honors on one trick.
+        """
+        class MockContract:
+            declarer = 'W'  # West is declarer
+            trump_suit = None
+
+        class MockState:
+            def __init__(self):
+                # East (dummy) leads K♦, South plays 5♦, West (declarer) to play
+                self.current_trick = [
+                    (Card('K', '♦'), 'E'),  # Dummy leads K
+                    (Card('5', '♦'), 'S'),  # Defender plays low
+                ]
+                self.trick_history = []
+                self.contract = MockContract()
+
+        class MockHand:
+            def __init__(self):
+                # West (declarer) has A♦ and 7♦
+                self.cards = [
+                    Card('A', '♦'), Card('7', '♦'),
+                    Card('Q', '♠'), Card('J', '♠'),
+                    Card('K', '♥'), Card('4', '♥'),
+                    Card('9', '♣'), Card('2', '♣')
+                ]
+
+        equivalence_set = [Card('A', '♦'), Card('7', '♦')]
+
+        result = filter.select_tactical_card(
+            equivalence_set, MockState(), 'W', MockHand(), trump_suit=None
+        )
+
+        assert result.card.rank == '7', (
+            f"Should play 7♦ to conserve A♦, got {result.card.rank}♦. "
+            f"Ace-on-King wastes winners!"
+        )
+        assert result.context == PlayContext.DECLARER_CONSERVATION
+        assert "conserv" in result.reason.lower()
+
+    def test_doubleton_honor_unblock(self, filter):
+        """
+        Test doubleton honor unblocking (Ax situation)
+
+        Context: Partner leads K from KQJxx, we have Ax (doubleton)
+        Expected: Play A to unblock, then return x
+
+        If we play x first, partner wins K then Q then J, then we win A
+        and can't return the suit (we're out!). Better to play A on K.
+        """
+        class MockContract:
+            declarer = 'E'
+            trump_suit = None
+
+        class MockState:
+            def __init__(self):
+                # South leads K♥, West plays 3♥, North to play
+                self.current_trick = [
+                    (Card('K', '♥'), 'S'),  # Partner leads K
+                    (Card('3', '♥'), 'W'),  # Opponent plays low
+                ]
+                self.trick_history = []
+                self.contract = MockContract()
+
+        class MockHand:
+            def __init__(self):
+                # North has doubleton A-5 in hearts
+                self.cards = [
+                    Card('A', '♥'), Card('5', '♥'),  # Doubleton with honor
+                    Card('Q', '♠'), Card('7', '♠'),
+                    Card('8', '♦'), Card('4', '♦'),
+                    Card('6', '♣'), Card('2', '♣')
+                ]
+
+        # Both cards in equivalence set
+        equivalence_set = [Card('A', '♥'), Card('5', '♥')]
+
+        # Verify unblocking is detected
+        should_unblock = filter._should_unblock(equivalence_set, MockHand(), '♥')
+        assert should_unblock, "Should recognize doubleton Ace as requiring unblock"
+
+    def test_no_unblock_with_length(self, filter):
+        """
+        Test that we DON'T unblock when we have 3+ cards
+
+        With 3+ cards, there's no immediate blocking concern - we can
+        follow low and still have cards to return to partner later.
+        """
+        class MockHand:
+            def __init__(self):
+                # North has 3 hearts including the Ace
+                self.cards = [
+                    Card('A', '♥'), Card('8', '♥'), Card('3', '♥'),
+                    Card('Q', '♠'), Card('7', '♠'),
+                    Card('K', '♦'), Card('4', '♦')
+                ]
+
+        equivalence_set = [Card('A', '♥'), Card('8', '♥'), Card('3', '♥')]
+
+        should_unblock = filter._should_unblock(equivalence_set, MockHand(), '♥')
+        assert not should_unblock, "Should NOT unblock with 3+ cards in suit"
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
