@@ -64,8 +64,11 @@ const FileDropZone = ({ onFileSelect, isUploading }) => {
   }, [onFileSelect]);
 
   const handleFileInput = useCallback((e) => {
+    console.log('File input triggered', e.target.files);
     if (e.target.files && e.target.files.length > 0) {
-      onFileSelect(e.target.files[0]);
+      const file = e.target.files[0];
+      console.log('Selected file:', file.name, file.type, file.size);
+      onFileSelect(file);
     }
   }, [onFileSelect]);
 
@@ -301,17 +304,20 @@ const ACBLImportModal = ({ isOpen, onClose, userId, onHandSelect }) => {
   };
 
   const handleFileSelect = async (file) => {
+    console.log('handleFileSelect called with:', file.name);
     setIsUploading(true);
     setError(null);
 
     const filename = file.name.toLowerCase();
     const isBwsFile = filename.endsWith('.bws');
+    console.log('File type detection:', { filename, isBwsFile });
 
     try {
       let response;
       let data;
 
       if (isBwsFile) {
+        console.log('Processing BWS file...');
         // BWS files are binary - use FormData for upload
         const formData = new FormData();
         formData.append('file', file);
