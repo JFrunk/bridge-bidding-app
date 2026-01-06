@@ -19,6 +19,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlayableCard } from '../play/PlayableCard';
 import DecayChart from '../analysis/DecayChart';
 import ChartHelp from '../help/ChartHelp';
+import HeuristicScorecard from './HeuristicScorecard';
 import './HandReviewModal.css';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -212,7 +213,12 @@ const TrickFeedbackPanel = ({ decision }) => {
   if (!decision) {
     return (
       <div className="trick-feedback-panel no-data" data-testid="trick-feedback-no-data">
-        <p>No analysis available for this play</p>
+        <p style={{ margin: 0, color: '#6b7280' }}>
+          No analysis recorded for this play
+        </p>
+        <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#9ca3af' }}>
+          This may occur for AI plays or when detailed analysis was unavailable
+        </p>
       </div>
     );
   }
@@ -323,24 +329,8 @@ const TrickFeedbackPanel = ({ decision }) => {
           <p className="feedback-text">{decision.feedback}</p>
         )}
 
-        {/* Signal reasoning - educational feedback for equivalence set decisions */}
-        {decision.signal_reason && (
-          <div className="signal-feedback" style={{
-            marginTop: '8px',
-            padding: '8px',
-            backgroundColor: decision.is_signal_optimal ? '#f0fdf4' : '#fffaf0',
-            border: `1px solid ${decision.is_signal_optimal ? '#86efac' : '#fbd38d'}`,
-            borderRadius: '4px',
-            fontSize: '0.875rem'
-          }}>
-            <strong style={{ color: decision.is_signal_optimal ? '#166534' : '#9c4221' }}>
-              {decision.is_signal_optimal ? 'Signal Logic:' : 'Signal Note:'}
-            </strong>
-            <span style={{ marginLeft: '4px', color: '#374151' }}>
-              {decision.signal_reason}
-            </span>
-          </div>
-        )}
+        {/* Heuristic Scorecard - Physics-based play analysis */}
+        <HeuristicScorecard decision={decision} />
       </div>
     </div>
   );
