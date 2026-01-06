@@ -1,6 +1,6 @@
 # Tactical Signal Overlay for DDS Play
 
-**Date:** 2025-01-05
+**Date:** 2025-01-05 (Updated 2026-01-05)
 **Status:** Implemented
 **Component:** Play Engine / AI
 
@@ -44,6 +44,52 @@ DDS assumes all equal-rank cards are identical (e.g., discarding ♠2 vs ♠4 fr
 | Fourth Hand | CHEAPEST_WINNER | "Win with lowest winning card." |
 | First Discard | ATTITUDE_SIGNAL | "High encourages, low discourages." |
 | Subsequent Discard | COUNT_SIGNAL | "High-low = even count." |
+| Declarer Conservation | DECLARER_CONSERVE | "Partnership winning - preserve higher cards." |
+| Defensive Deference | DEFENSIVE_DEFER | "Partner winning - don't overtake wastefully." |
+
+## Partnership Card Conservation (2026-01-05)
+
+### Declarer Conservation ("Ace on King" Fix)
+
+When declarer controls both hands and one hand has played a winner, don't waste a winner from the other hand.
+
+**Problem:** DDS treats A♥ and K♥ as equivalent when partner's A♥ is winning. But playing K♥ on partner's A♥ wastes a trick.
+
+**Solution:** `_should_conserve_declarer_winner()` detects when:
+1. Position is declarer or dummy
+2. Partner (other controlled hand) has already played
+3. Partner's card is currently winning
+4. We have cards that could wastefully overtake
+
+### Defensive Deference ("Q on J" Fix)
+
+When defending, don't overtake partner's winning card with a higher honor.
+
+**Problem:** DDS treats Q♥ and 7♥ as equivalent when partner's J♥ is winning. But playing Q♥ wastes a potential trick.
+
+**Solution:** `_should_defer_to_partner()` detects when:
+1. Position is a defender
+2. Partner (other defender) has already played
+3. Partner's card is currently winning
+4. We have cards that could wastefully overtake
+5. We should NOT unblock (see below)
+
+### Unblocking Exception
+
+When we have a doubleton honor (A-x, K-x, Q-x) and partner leads from length, we should UNBLOCK by playing the honor rather than deferring.
+
+**Classic scenario:**
+- Partner leads K from KQJxx
+- We have A-7 (doubleton)
+- If we play 7 (defer), then: K wins → Q wins → J wins → A wins... now we're stuck on lead with no more clubs!
+- Better: Play A (unblock), return 7, partner runs the suit
+
+**Solution:** `_should_unblock()` returns True when:
+1. We have exactly 2 cards in the led suit (doubleton)
+2. One of those is an honor (A, K, Q)
+3. Partner LED the suit (first to play)
+
+**Test file:** `backend/tests/unit/test_deference_unblocking.py`
 
 ## Files
 
@@ -54,6 +100,7 @@ DDS assumes all equal-rank cards are identical (e.g., discarding ♠2 vs ♠4 fr
 | `backend/engine/play/ai/dds_ai.py` | Integration point |
 | `backend/engine/feedback/play_feedback.py` | PlayFeedback dataclass |
 | `backend/migrations/013_add_signal_columns.sql` | Database migration |
+| `backend/tests/unit/test_deference_unblocking.py` | Deference & unblocking tests |
 
 ## API Changes
 

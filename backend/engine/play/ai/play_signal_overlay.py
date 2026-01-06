@@ -299,7 +299,8 @@ class TacticalPlayFilter:
             return PlayContext.DECLARER_CONSERVATION
 
         # Check for Defensive Deference (Defender partnership)
-        if self._should_defer_to_partner(game_state, position, equivalence_set):
+        # Pass hand to check for unblocking situations
+        if self._should_defer_to_partner(game_state, position, equivalence_set, hand):
             return PlayContext.DEFENSIVE_DEFERENCE
 
         # Following suit - check for honor sequence
@@ -909,7 +910,8 @@ class TacticalPlayFilter:
         self,
         game_state: Any,
         position: str,
-        equivalence_set: List[Card]
+        equivalence_set: List[Card],
+        hand: 'Hand' = None
     ) -> bool:
         """
         Determine if defender should defer to partner's winning card.
@@ -919,9 +921,13 @@ class TacticalPlayFilter:
         2. Partner (the other defender) has already played to this trick
         3. Partner's card is currently winning the trick
         4. We have cards that could wastefully overtake
+        5. We should NOT unblock (see _should_unblock)
 
         This prevents the "Queen on Jack" problem where defenders waste
         honors on the same trick.
+
+        EXCEPTION: If we need to unblock (doubleton honor when partner leads),
+        we should NOT defer - we should play the honor to get out of the way.
         """
         current_trick = getattr(game_state, 'current_trick', [])
         contract = getattr(game_state, 'contract', None)
@@ -955,6 +961,15 @@ class TacticalPlayFilter:
 
         if not partner_played:
             return False  # Partner hasn't played yet
+
+        # Check if partner LED the suit (first to play)
+        led_by_partner = current_trick[0][1] == defender_partner
+
+        # Check if we should UNBLOCK instead of defer
+        if led_by_partner and hand is not None:
+            led_suit = current_trick[0][0].suit
+            if self._should_unblock(equivalence_set, hand, led_suit):
+                return False  # Don't defer - need to unblock!
 
         # Check if partner is currently winning
         led_suit = current_trick[0][0].suit
@@ -994,6 +1009,54 @@ class TacticalPlayFilter:
 
         # Return the other defender
         return [d for d in defenders if d != position][0]
+
+    def _should_unblock(
+        self,
+        equivalence_set: List[Card],
+        hand: 'Hand',
+        led_suit: str
+    ) -> bool:
+        """
+        Determine if we should unblock (play high) instead of defer.
+
+        Returns True when:
+        1. We have a doubleton in the led suit (exactly 2 cards)
+        2. One of those cards is an honor (A, K, Q)
+        3. Playing low would "block" partner from running the suit
+
+        The classic unblocking situation:
+        - Partner leads K from KQJxx
+        - We have Ax (doubleton Ace)
+        - If we play x, partner wins with K, then Q, then we win with A
+        - Now we're "stuck" on lead and can't return the suit
+        - Better to unblock: play A on partner's K, then return the x
+
+        This is a heuristic - we can't be certain partner has length,
+        but when partner leads an honor and we have doubleton honor,
+        unblocking is usually correct.
+        """
+        if hand is None:
+            return False
+
+        # Count cards in the led suit
+        suit_cards = [c for c in hand.cards if c.suit == led_suit]
+        suit_length = len(suit_cards)
+
+        # Only consider unblocking with doubleton
+        if suit_length != 2:
+            return False
+
+        # Check if we have an honor in the equivalence set
+        # that's part of a doubleton
+        honor_ranks = ['A', 'K', 'Q']
+        equiv_honors = [c for c in equivalence_set
+                       if c.suit == led_suit and c.rank in honor_ranks]
+
+        if not equiv_honors:
+            return False  # No honor to unblock with
+
+        # We have a doubleton with an honor - should unblock
+        return True
 
     def _get_dummy_position(self, declarer: str) -> str:
         """Get dummy's position (opposite declarer)"""
