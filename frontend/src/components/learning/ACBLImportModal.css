@@ -249,6 +249,11 @@
   color: var(--color-info-dark, #0c5460);
 }
 
+.status-ready {
+  background: var(--color-primary-light, #cce5ff);
+  color: var(--color-primary-dark, #004085);
+}
+
 .status-analyzing {
   background: var(--color-warning-light, #fff3cd);
   color: var(--color-warning-dark, #856404);

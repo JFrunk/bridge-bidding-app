@@ -112,9 +112,17 @@ FileDropZone.propTypes = {
 const TournamentCard = ({ tournament, onSelect, onDelete, onAnalyze }) => {
   const statusColors = {
     complete: 'status-complete',
-    processing: 'status-processing',
+    processing: 'status-ready',
     analyzing: 'status-analyzing',
     failed: 'status-failed'
+  };
+
+  // Map internal status to user-friendly display text
+  const statusDisplay = {
+    complete: 'Analyzed',
+    processing: 'Ready',
+    analyzing: 'Analyzing...',
+    failed: 'Failed'
   };
 
   const formatDate = (dateStr) => {
@@ -131,7 +139,7 @@ const TournamentCard = ({ tournament, onSelect, onDelete, onAnalyze }) => {
       <div className="tournament-header">
         <h4>{tournament.event_name || 'Imported Tournament'}</h4>
         <span className={`status-badge ${statusColors[tournament.import_status] || ''}`}>
-          {tournament.import_status}
+          {statusDisplay[tournament.import_status] || tournament.import_status}
         </span>
       </div>
 
@@ -182,8 +190,9 @@ const TournamentCard = ({ tournament, onSelect, onDelete, onAnalyze }) => {
               e.stopPropagation();
               onAnalyze(tournament.id);
             }}
+            title="Compare tournament bids against V3 engine"
           >
-            Start Analysis
+            Analyze Bids
           </button>
         )}
         <button
