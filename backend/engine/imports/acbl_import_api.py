@@ -378,14 +378,14 @@ def register_acbl_import_endpoints(app: Flask):
     @app.route('/api/import/merge', methods=['POST'])
     def merge_pbn_bws():
         """
-        Merge PBN hand records with BWS contract results.
+        Merge PBN hand records with BWS contract results and save to database.
 
         Request: multipart/form-data with:
         - pbn_file: PBN file with hand records
         - bws_file: BWS file with contract results
         - user_id: User ID
 
-        Returns merged tournament data ready for analysis.
+        Returns merged tournament data with tournament_id for tracking.
         """
         try:
             # Check mdbtools for BWS
@@ -412,49 +412,115 @@ def register_acbl_import_endpoints(app: Flask):
             try:
                 bws = parse_bws_file(temp_path)
 
-                # Create merged data structure
-                merged = {}
+                # Create tournament record in database
+                conn = get_connection()
+                cursor = conn.cursor()
+
+                content_hash = get_content_hash(pbn_content + bws_file.filename)
+
+                cursor.execute("""
+                    INSERT INTO imported_tournaments (
+                        user_id, event_name, event_date, event_site,
+                        scoring_method, source, source_filename, source_content_hash,
+                        import_status, total_hands, hands_analyzed
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    user_id,
+                    pbn.event_name or 'Merged Tournament',
+                    pbn.event_date,
+                    pbn.event_site,
+                    pbn.scoring_method,
+                    f"{pbn.source}+bws",  # Indicate merged source
+                    f"{pbn_file.filename} + {bws_file.filename}",
+                    content_hash,
+                    'processing',
+                    len(pbn.hands),
+                    0
+                ))
+
+                tournament_id = cursor.lastrowid
+
+                # Insert hands with contract data
+                hands_inserted = 0
                 for hand in pbn.hands:
+                    if not hand.is_valid:
+                        continue
+
                     board_num = hand.board_number
                     contracts = bws.get_contracts_for_board(board_num)
 
-                    merged[board_num] = {
-                        'hand': {
-                            'board': board_num,
-                            'dealer': hand.dealer,
-                            'vulnerability': hand.vulnerability,
-                            'hands': hand.hands,
-                            'dds_tricks': hand.dds_tricks,
-                            'optimum_score': hand.optimum_score,
-                            'par_contract': hand.par_contract
-                        },
-                        'contracts': [c.to_dict() for c in contracts],
-                        'contract_count': len(contracts)
-                    }
+                    # Store contract results as JSON
+                    contracts_json = json.dumps([c.to_dict() for c in contracts])
 
-                    # If BWS has bidding data, include auctions
-                    if bws.has_bidding_data:
-                        merged[board_num]['auctions'] = {}
-                        for contract in contracts:
-                            auction = bws.get_auction_for_table(
-                                contract.section, contract.table,
-                                contract.round, contract.board
-                            )
-                            if auction:
-                                key = f"{contract.section}-{contract.table}"
-                                merged[board_num]['auctions'][key] = auction
+                    # Get DDS data
+                    dds_json = json.dumps(hand.dds_tricks) if hand.dds_tricks else None
+
+                    # Build deal JSON
+                    deal_json = json.dumps({
+                        'N': convert_pbn_deal_to_json(hand.hands.get('N', '')),
+                        'E': convert_pbn_deal_to_json(hand.hands.get('E', '')),
+                        'S': convert_pbn_deal_to_json(hand.hands.get('S', '')),
+                        'W': convert_pbn_deal_to_json(hand.hands.get('W', ''))
+                    })
+
+                    cursor.execute("""
+                        INSERT INTO imported_hands (
+                            tournament_id, user_id, board_number,
+                            dealer, vulnerability, deal_pbn, deal_json,
+                            hand_north, hand_east, hand_south, hand_west,
+                            auction_history, auction_raw,
+                            contract_level, contract_strain, contract_doubled,
+                            contract_declarer, tricks_taken,
+                            score_ns, score_ew,
+                            dds_analysis, optimum_score, par_contract,
+                            tournament_contracts,
+                            analysis_status
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        tournament_id,
+                        user_id,
+                        board_num,
+                        hand.dealer,
+                        hand.vulnerability,
+                        f"{hand.dealer}:{' '.join(hand.hands.get(p, '') for p in ['N', 'E', 'S', 'W'])}",
+                        deal_json,
+                        hand.hands.get('N', ''),
+                        hand.hands.get('E', ''),
+                        hand.hands.get('S', ''),
+                        hand.hands.get('W', ''),
+                        json.dumps(hand.auction_history) if hand.auction_history else '[]',
+                        hand.auction_raw,
+                        hand.contract_level,
+                        hand.contract_strain,
+                        hand.contract_doubled,
+                        hand.contract_declarer,
+                        hand.tricks_taken,
+                        hand.score_ns,
+                        hand.score_ew,
+                        dds_json,
+                        hand.optimum_score,
+                        hand.par_contract,
+                        contracts_json,  # Store BWS contract results
+                        'pending'
+                    ))
+                    hands_inserted += 1
+
+                conn.commit()
+                cursor.close()
+                conn.close()
 
                 return jsonify({
                     'success': True,
+                    'tournament_id': tournament_id,
                     'pbn_filename': pbn_file.filename,
                     'bws_filename': bws_file.filename,
                     'boards_in_pbn': len(pbn.hands),
                     'boards_in_bws': bws.board_count,
-                    'boards_merged': len(merged),
+                    'boards_merged': hands_inserted,
                     'total_contracts': len(bws.contracts),
                     'has_dds_data': any(h.dds_tricks for h in pbn.hands),
                     'has_bidding_data': bws.has_bidding_data,
-                    'merged_data': merged
+                    'status': 'processing'
                 })
 
             finally:

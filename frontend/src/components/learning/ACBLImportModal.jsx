@@ -24,7 +24,7 @@ const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 /**
  * File Drop Zone Component
  */
-const FileDropZone = ({ onFileSelect, isUploading }) => {
+const FileDropZone = ({ onFileSelect, isUploading, pendingBwsData, onClearPendingBws }) => {
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -93,6 +93,21 @@ const FileDropZone = ({ onFileSelect, isUploading }) => {
           <div className="spinner"></div>
           <p>Importing...</p>
         </div>
+      ) : pendingBwsData ? (
+        <div className="drop-zone-content pending-merge">
+          <div className="drop-icon">+</div>
+          <p><strong>BWS loaded:</strong> {pendingBwsData.data?.board_count || 0} boards</p>
+          <p>Now drop the matching PBN hand record file</p>
+          <button
+            className="btn-clear-pending"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClearPendingBws();
+            }}
+          >
+            Cancel merge
+          </button>
+        </div>
       ) : (
         <div className="drop-zone-content">
           <div className="drop-icon">+</div>
@@ -106,7 +121,9 @@ const FileDropZone = ({ onFileSelect, isUploading }) => {
 
 FileDropZone.propTypes = {
   onFileSelect: PropTypes.func.isRequired,
-  isUploading: PropTypes.bool
+  isUploading: PropTypes.bool,
+  pendingBwsData: PropTypes.object,
+  onClearPendingBws: PropTypes.func
 };
 
 /**
@@ -276,6 +293,8 @@ const ACBLImportModal = ({ isOpen, onClose, userId, onHandSelect }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  // Track pending BWS data for merging with next PBN import
+  const [pendingBwsData, setPendingBwsData] = useState(null);
 
   // Load tournaments on mount
   useEffect(() => {
@@ -338,31 +357,67 @@ const ACBLImportModal = ({ isOpen, onClose, userId, onHandSelect }) => {
           throw new Error(data.error || 'BWS import failed');
         }
 
-        // Show success message for BWS
-        alert(`Imported BWS file: ${data.board_count} boards, ${data.contract_count} contracts from "${file.name}"`);
+        // Store BWS data for merging with PBN
+        setPendingBwsData({
+          filename: file.name,
+          data: data,
+          file: file  // Keep original file for merge endpoint
+        });
+
+        // Prompt user to also import PBN
+        alert(`BWS file loaded: ${data.board_count} boards, ${data.contract_count} contracts.\n\nNow import the matching PBN hand record file to see full analysis with DDS comparison.`);
 
       } else {
         // PBN files are text - read and send as JSON
         const content = await file.text();
 
-        response = await fetch(`${API_BASE}/api/import/pbn`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userId,
-            pbn_content: content,
-            filename: file.name
-          })
-        });
+        // Check if we have pending BWS data to merge
+        if (pendingBwsData) {
+          console.log('Merging with pending BWS data...');
+          // Use merge endpoint
+          const formData = new FormData();
+          formData.append('pbn_file', new Blob([content], { type: 'text/plain' }), file.name);
+          formData.append('bws_file', pendingBwsData.file);
+          formData.append('user_id', userId);
 
-        data = await response.json();
+          response = await fetch(`${API_BASE}/api/import/merge`, {
+            method: 'POST',
+            body: formData
+          });
 
-        if (!response.ok) {
-          throw new Error(data.error || 'PBN import failed');
+          data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Merge failed');
+          }
+
+          // Clear pending BWS data
+          setPendingBwsData(null);
+
+          // Show merge success
+          alert(`Merged ${data.boards_merged} boards with ${data.total_contracts} contract results.\n\nDDS analysis available: ${data.has_dds_data ? 'Yes' : 'No'}`);
+        } else {
+          // Standard PBN import
+          response = await fetch(`${API_BASE}/api/import/pbn`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: userId,
+              pbn_content: content,
+              filename: file.name
+            })
+          });
+
+          data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'PBN import failed');
+          }
+
+          // Show success message for PBN
+          const hasDds = data.has_dds_data;
+          alert(`Imported ${data.valid_hands} hands from "${data.event_name || file.name}"${hasDds ? ' with DDS analysis' : ''}`);
         }
-
-        // Show success message for PBN
-        alert(`Imported ${data.valid_hands} hands from "${data.event_name || file.name}"`);
       }
 
       // Refresh tournament list
@@ -498,6 +553,8 @@ const ACBLImportModal = ({ isOpen, onClose, userId, onHandSelect }) => {
               <FileDropZone
                 onFileSelect={handleFileSelect}
                 isUploading={isUploading}
+                pendingBwsData={pendingBwsData}
+                onClearPendingBws={() => setPendingBwsData(null)}
               />
 
               <h3>Imported Tournaments</h3>

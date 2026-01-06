@@ -93,11 +93,15 @@ CREATE TABLE IF NOT EXISTS imported_hands (
     survival_status TEXT,         -- 'SAFE', 'SURVIVED', 'FAILED', 'LUCKY'
     rescue_action TEXT,
 
-    -- DDS analysis (populated by background job)
-    dds_analysis TEXT,            -- Full JSON analysis
+    -- DDS analysis (populated from PBN DoubleDummyTricks tag or background job)
+    dds_analysis TEXT,            -- Full JSON analysis of tricks by declarer/strain
     par_score INTEGER,
     par_contract TEXT,
+    optimum_score INTEGER,        -- Best achievable score from DDS
     dd_tricks INTEGER,
+
+    -- BWS contract results (from ACBLscore import)
+    tournament_contracts TEXT,    -- JSON array of all table contracts for this board
 
     -- Comparative audit results
     is_logic_aligned INTEGER DEFAULT 0,  -- Boolean: tournament matched engine

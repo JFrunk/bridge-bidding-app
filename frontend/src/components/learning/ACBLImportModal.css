@@ -162,6 +162,33 @@
   color: var(--text-muted, #868e96);
 }
 
+/* Pending Merge State */
+.drop-zone-content.pending-merge {
+  background: var(--color-success-light, #d4edda);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-3, 12px);
+}
+
+.drop-zone-content.pending-merge .drop-icon {
+  color: var(--color-success, #28a745);
+}
+
+.btn-clear-pending {
+  margin-top: var(--space-2, 8px);
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  background: var(--bg-tertiary, #e9ecef);
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-secondary, #6c757d);
+  cursor: pointer;
+}
+
+.btn-clear-pending:hover {
+  background: var(--color-danger-light, #f8d7da);
+  color: var(--color-danger-dark, #721c24);
+}
+
 /* Spinner */
 .spinner {
   width: 40px;
