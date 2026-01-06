@@ -1938,7 +1938,7 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
               AND session_id = ?
               AND (hand_number = ? OR hand_number IS NULL)
             ORDER BY trick_number, id
-        """, (user_id, str(session_id), hand_number))
+        """, (user_id, str(session_id) if session_id else '', hand_number))
 
         decisions = []
         for row in cursor.fetchall():
