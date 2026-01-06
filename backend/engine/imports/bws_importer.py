@@ -209,18 +209,34 @@ class BWSFile:
         }
 
 
+def _find_mdb_command(cmd: str) -> str:
+    """Find mdbtools command, checking common install locations."""
+    import shutil
+    # Try PATH first
+    path = shutil.which(cmd)
+    if path:
+        return path
+    # Check common locations
+    for prefix in ['/usr/local/bin', '/usr/bin', '/opt/homebrew/bin']:
+        full_path = f'{prefix}/{cmd}'
+        if Path(full_path).exists():
+            return full_path
+    return cmd  # Fall back to bare command
+
+
 def check_mdbtools_available() -> Tuple[bool, str]:
     """Check if mdbtools is installed."""
     try:
+        mdb_tables = _find_mdb_command('mdb-tables')
         result = subprocess.run(
-            ['mdb-tables', '--version'],
+            [mdb_tables, '--version'],
             capture_output=True,
             text=True,
             timeout=5
         )
         return True, ""
     except FileNotFoundError:
-        return False, "mdbtools not installed. Install with: brew install mdbtools"
+        return False, "mdbtools not installed. Install with: brew install mdbtools (macOS) or build from source (Linux)"
     except subprocess.TimeoutExpired:
         return False, "mdbtools check timed out"
     except Exception as e:
@@ -230,8 +246,9 @@ def check_mdbtools_available() -> Tuple[bool, str]:
 def list_tables(bws_path: str) -> List[str]:
     """List all tables in a BWS file."""
     try:
+        mdb_tables = _find_mdb_command('mdb-tables')
         result = subprocess.run(
-            ['mdb-tables', bws_path],
+            [mdb_tables, bws_path],
             capture_output=True,
             text=True,
             timeout=30
@@ -246,8 +263,9 @@ def list_tables(bws_path: str) -> List[str]:
 def export_table(bws_path: str, table_name: str) -> List[Dict[str, str]]:
     """Export a table from BWS file as list of dictionaries."""
     try:
+        mdb_export = _find_mdb_command('mdb-export')
         result = subprocess.run(
-            ['mdb-export', bws_path, table_name],
+            [mdb_export, bws_path, table_name],
             capture_output=True,
             text=True,
             timeout=60
