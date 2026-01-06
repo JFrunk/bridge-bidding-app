@@ -9,7 +9,7 @@
  * - X-axis: 52 play positions (13 tricks x 4 cards)
  * - Y-axis: 0-13 trick potential
  * - Bars from bottom: Locked-in tricks won by NS
- * - Dotted line: DD optimal tricks for NS
+ * - Dotted line: Best possible (optimal) tricks for NS
  * - Dashed line: Required tricks (to make or set)
  * - Red circles mark NS errors
  * - Green circles mark EW gifts
@@ -36,7 +36,7 @@ import './DecayChart.css';
  * @param {Object[]} props.data.major_errors - Array of error objects with card_index
  * @param {Object[]} props.data.signal_warnings - Array of signal warning objects with card_index
  * @param {number[]} props.data.ns_tricks_cumulative - Cumulative NS tricks at each card
- * @param {number} props.data.dd_optimal_ns - DD optimal tricks for NS
+ * @param {number} props.data.dd_optimal_ns - Best possible tricks for NS (from double-dummy analysis)
  * @param {number} props.data.actual_tricks_ns - Actual tricks NS took
  * @param {boolean} props.data.ns_is_declarer - Whether NS was declaring side
  * @param {number} props.data.required_tricks - Tricks required to make/set
@@ -207,7 +207,7 @@ const DecayChart = ({
           <ChartHelp chartType="trick-timeline" variant="icon" />
         </div>
         <span className="decay-chart-stats">
-          DD: {dd_optimal_ns} | Actual: {actual_tricks_ns}
+          Optimal: {dd_optimal_ns} | Actual: {actual_tricks_ns}
           <span className={success ? 'success-indicator' : 'failure-indicator'}>
             {success ? ' ✓' : ' ✗'}
           </span>
@@ -281,7 +281,7 @@ const DecayChart = ({
           </g>
         ))}
 
-        {/* DD Optimal line (dotted horizontal) */}
+        {/* Optimal line (dotted horizontal) - best possible play */}
         <line
           x1={padding.left}
           y1={getY(dd_optimal_ns)}
@@ -294,7 +294,7 @@ const DecayChart = ({
           y={getY(dd_optimal_ns)}
           className="axis-label reference-label dd-label"
         >
-          DD
+          Best
         </text>
 
         {/* Required tricks line (dashed) */}
@@ -489,7 +489,7 @@ const DecayChart = ({
         </div>
         <div className="legend-item">
           <span className="legend-swatch dd-line-swatch"></span>
-          <span>DD Optimal</span>
+          <span>Best Possible</span>
         </div>
         <div className="legend-item">
           <span className="legend-swatch required-line-swatch"></span>
