@@ -1273,22 +1273,22 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
-  padding: 12px;
+  padding: 8px 12px;
   background: #f8fafc;
-  border-radius: 12px;
+  border-radius: 8px;
   /* Center and constrain width to match compass layout */
   max-width: 700px;
   margin: 0 auto;
 }
 
 .replay-navigation button {
-  padding: 8px 16px;
+  padding: 4px 12px;
   background: #e5e7eb;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-  font-size: 14px;
+  font-size: 13px;
   color: #374151;
   transition: all 0.2s;
 }
@@ -1632,10 +1632,11 @@
   .replay-navigation {
     flex-wrap: wrap;
     gap: 6px;
+    padding: 6px 10px;
   }
 
   .replay-navigation button {
-    padding: 6px 12px;
+    padding: 3px 10px;
     font-size: 12px;
   }
 
