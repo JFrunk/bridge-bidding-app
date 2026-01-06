@@ -113,6 +113,9 @@ const FileDropZone = ({ onFileSelect, isUploading, pendingBwsData, onClearPendin
           <div className="drop-icon">+</div>
           <p>Drop file here or click to browse</p>
           <span className="drop-hint">Supports PBN (hand records) and BWS (ACBLscore results)</span>
+          <span className="drop-hint tip">
+            Tip: Import BWS first, then PBN to merge contract results with hand records
+          </span>
         </div>
       )}
     </div>
