@@ -24,14 +24,29 @@ export async function captureScreenshot(options = {}) {
 
   try {
     // Optionally hide modal overlays during capture to show underlying UI
+    // Include all Radix UI portal/overlay elements and common modal patterns
     const modalElements = ignoreModals
-      ? document.querySelectorAll('[role="dialog"], .modal-overlay, [data-radix-portal]')
+      ? document.querySelectorAll(
+          '[role="dialog"], ' +
+          '.modal-overlay, ' +
+          '[data-radix-portal], ' +
+          '[data-radix-overlay], ' +
+          '[class*="DialogOverlay"], ' +
+          '[class*="bg-black/"], ' +  // Tailwind backdrop classes
+          '.fixed.inset-0.bg-black, ' +  // Common backdrop pattern
+          '[style*="background"][style*="rgba(0"]'  // Inline rgba backgrounds
+        )
       : [];
 
-    const originalVisibility = [];
+    const originalStyles = [];
     modalElements.forEach((el, i) => {
-      originalVisibility[i] = el.style.visibility;
+      originalStyles[i] = {
+        visibility: el.style.visibility,
+        display: el.style.display,
+        opacity: el.style.opacity,
+      };
       el.style.visibility = 'hidden';
+      el.style.opacity = '0';
     });
 
     const canvas = await html2canvas(document.body, {
@@ -45,7 +60,8 @@ export async function captureScreenshot(options = {}) {
 
     // Restore modal visibility
     modalElements.forEach((el, i) => {
-      el.style.visibility = originalVisibility[i];
+      el.style.visibility = originalStyles[i].visibility;
+      el.style.opacity = originalStyles[i].opacity;
     });
 
     // Scale down if too large
