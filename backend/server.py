@@ -2581,6 +2581,20 @@ def _render_review_request_detail_html(data, filename, source_dir='review_reques
         </div>
         """
 
+    # Extract user_id and screenshot
+    user_id = data.get('user_id', 'Anonymous')
+    screenshot = context_data.get('screenshot', None)
+
+    # Build screenshot HTML if present
+    screenshot_html = ""
+    if screenshot:
+        screenshot_html = f"""
+        <div class="section">
+            <h3>📸 Screenshot</h3>
+            <img src="{screenshot}" alt="User screenshot" style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px;" />
+        </div>
+        """
+
     # Determine the message/concern text
     if is_feedback:
         concern_text = data.get('description', data.get('feedback', 'No feedback text'))
@@ -2627,6 +2641,7 @@ def _render_review_request_detail_html(data, filename, source_dir='review_reques
         <h1>🃏 {type_badge} {page_title}</h1>
         <p class="meta">
             <strong>File:</strong> {filename} |
+            <strong>User ID:</strong> {user_id} |
             <strong>Phase:</strong> {game_phase} |
             <strong>Dealer:</strong> {dealer} |
             <strong>Vuln:</strong> {vulnerability}
@@ -2636,6 +2651,8 @@ def _render_review_request_detail_html(data, filename, source_dir='review_reques
             <h3>{concern_title}</h3>
             <p>{concern_text}</p>
         </div>
+
+        {screenshot_html}
 
         <div class="section">
             <h3>🎴 Hands</h3>

@@ -265,7 +265,11 @@
       "Bash(pip show:*)",
       "Bash(curl -s https://app.mybridgebuddy.com/api/deal-hands)",
       "Bash(mdb-tables:*)",
-      "Bash(mdb-export:*)"
+      "Bash(mdb-export:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Include user ID and screenshot in feedback emails\n\n- Add X-User-ID header to all API calls via getSessionHeaders\\(\\)\n- Extract user ID from bridge_user or bridge_guest_id localStorage\n- Display user ID prominently in feedback email notifications\n- Embed screenshot as inline base64 image in HTML emails\n- Plain text fallback notes screenshot available in HTML version\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(ssh oracle-bridge \"cd /opt/bridge-bidding-app && git stash && git pull origin main && bash deploy/oracle/maintenance.sh restart\")",
+      "Bash(ssh oracle-bridge \"cd /opt/bridge-bidding-app && sed -i ''s/\\\\r$//'' deploy/oracle/maintenance.sh && bash deploy/oracle/maintenance.sh restart\")",
+      "Bash(ssh oracle-bridge \"sleep 5 && sudo systemctl status bridge-backend --no-pager && curl -s http://localhost:5001/api/health || echo ''Still starting...''\")"
     ],
     "deny": [],
     "ask": []
