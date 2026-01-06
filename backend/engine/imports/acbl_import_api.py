@@ -741,7 +741,7 @@ def register_acbl_import_endpoints(app: Flask):
                        panic_index, survival_status,
                        is_logic_aligned, is_falsified, score_delta,
                        bidding_efficiency, audit_category, educational_feedback,
-                       quadrant, analysis_status
+                       quadrant, analysis_status, tournament_contracts
                 FROM imported_hands
                 WHERE tournament_id = ?
             """

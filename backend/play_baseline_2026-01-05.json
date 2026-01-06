@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-01-05T23:05:42.062193",
+  "scores": {
+    "ai_type": "minimax",
+    "depth": 2,
+    "total_hands": 500,
+    "contracts_played": 398,
+    "passed_out": 102,
+    "contracts_made": 0,
+    "contracts_failed": 398,
+    "overtricks": 0,
+    "undertricks": 4011,
+    "total_cards_played": 398,
+    "scores": {
+      "legality": 100.0,
+      "success_rate": 0.0,
+      "efficiency": 0,
+      "tactical": 100.0,
+      "timing": 100,
+      "composite": 55.0
+    },
+    "error_counts": {
+      "legality": 0,
+      "tactical": 0
+    },
+    "timing": {
+      "avg_time_per_hand": 0.008,
+      "min_time": 0.006,
+      "max_time": 0.017
+    },
+    "grade": "F (Failing)"
+  },
+  "all_errors": {
+    "legality": [],
+    "tactical": []
+  }
+}

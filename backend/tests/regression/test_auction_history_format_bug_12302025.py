@@ -239,7 +239,8 @@ class TestSpecificBugScenarios:
         """
         response = client.post('/api/get-next-bid', json={
             "auction_history": [{"bid": "1NT", "explanation": "North bid 1NT"}],
-            "current_player": "East"
+            "current_player": "East",
+            "dealer": "North"
         })
 
         assert response.status_code == 200, (

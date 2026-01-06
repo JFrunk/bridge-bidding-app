@@ -187,13 +187,18 @@ class BiddingEngine:
                     if should_override:
                         return (game_bid, override_explanation)
 
-                # SLAM EXPLORATION SAFETY NET: Intercept game bids when slam values exist
-                # If about to bid game but combined HCP suggests slam (33+), explore slam instead
-                # This covers 3NT, 4M, and other game bids
-                if self._is_game_bid(bid_to_check) and not self._is_slam_bid(bid_to_check):
-                    should_explore, slam_bid, slam_explanation = self._slam_exploration_safety_net(hand, features, auction_history, bid_to_check)
-                    if should_explore:
-                        return (slam_bid, slam_explanation)
+                # SLAM EXPLORATION SAFETY NET: DISABLED
+                # This safety net was causing more problems than it solved:
+                # - Wildly inflated combined HCP estimates triggering inappropriate Blackwood
+                # - Intercepting quantitative 4NT and converting to Blackwood
+                # - Overriding normal rebid logic
+                # The underlying modules should handle slam bidding directly.
+                # Keeping the code for reference but not executing:
+                #
+                # if self._is_game_bid(bid_to_check) and not self._is_slam_bid(bid_to_check):
+                #     should_explore, slam_bid, slam_explanation = self._slam_exploration_safety_net(hand, features, auction_history, bid_to_check)
+                #     if should_explore:
+                #         return (slam_bid, slam_explanation)
 
                 # Convert BidExplanation to string if needed
                 if isinstance(explanation, BidExplanation):
@@ -507,25 +512,40 @@ class BiddingEngine:
             my_index = features.get('my_index', 0)
             context = analyze_auction_context(auction_history, positions, my_index)
 
-            combined_pts = context.ranges.combined_midpoint
+            # Get context estimate but apply hard ceiling based on actual HCP
+            context_estimate = context.ranges.combined_midpoint
+
+            # HARD CEILING: Calculate max possible combined HCP
+            # Our HCP is known exactly. Partner's max is constrained by their bidding.
+            opener_rel = auction.get('opener_relationship')
+            if opener_rel == 'Me':
+                # I'm opener, partner is responder - use responder's max HCP
+                partner_hcp_max = context.ranges.responder_hcp[1] if context.ranges.responder_hcp else 21
+            else:
+                # I'm responder (or partner opened), partner is opener - use opener's max HCP
+                partner_hcp_max = context.ranges.opener_hcp[1] if context.ranges.opener_hcp else 21
+
+            # Cap partner's estimate at 21 (practical max for non-2C openers)
+            partner_hcp_max = min(partner_hcp_max, 21)
+
+            # Combined = my actual HCP + partner's max estimate
+            hard_ceiling = hand.hcp + partner_hcp_max
+
+            # Use the LOWER of context estimate and hard ceiling
+            combined_pts = min(context_estimate, hard_ceiling)
 
             # SLAM THRESHOLD: 33+ combined HCP suggests slam
             # REQUIREMENT: Hand must have 16+ HCP to trigger slam exploration
             # This prevents overestimated contexts from triggering inappropriate Blackwood
-            # The 16+ threshold balances catching slams vs avoiding overbids
             if combined_pts < 33 or hand.hcp < 16:
                 return (False, None, None)
 
             # SANITY CHECK: If partner showed weak values (6-9 HCP), don't explore slam
             # even if the context estimate is high
-            # Determine if I'm opener or responder to get partner's range
-            opener_rel = auction.get('opener_relationship')
             if opener_rel == 'Me':
-                # I'm opener, partner is responder - check responder's min HCP
-                partner_hcp_min = context.ranges.responder_hcp[0]
+                partner_hcp_min = context.ranges.responder_hcp[0] if context.ranges.responder_hcp else 0
             else:
-                # I'm responder (or partner opened), partner is opener - check opener's min HCP
-                partner_hcp_min = context.ranges.opener_hcp[0]
+                partner_hcp_min = context.ranges.opener_hcp[0] if context.ranges.opener_hcp else 0
 
             if partner_hcp_min < 10:
                 # Partner showed limited values (0-9 HCP) - don't explore slam

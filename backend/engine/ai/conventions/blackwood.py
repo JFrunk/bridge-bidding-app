@@ -146,16 +146,47 @@ class BlackwoodConvention(ConventionModule):
                     if hand.total_points >= 18 and estimated_combined >= 30:
                         return True
 
-        # After partner's jump shift (game-forcing, 17+ pts)
-        # Example: 1♣ - 2♥ shows 17+ pts, if opener has 17+ too, slam is likely
+        # After partner's JUMP SHIFT (game-forcing, 17+ pts)
+        # A jump shift means partner BID A NEW SUIT ONE LEVEL HIGHER than necessary.
+        # Over 1♣: 1♦, 1♥, 1♠ are all 1-level responses (6+ pts)
+        #          2♦ is a NORMAL 2-level response (10+ pts, not a jump)
+        #          2♥, 2♠ are JUMP SHIFTS (could have bid 1♥/1♠)
+        # Over 1♦: 1♥, 1♠ are 1-level responses
+        #          2♣ is a NORMAL 2-level response (lower suit, needs 10+)
+        #          2♥, 2♠ are JUMP SHIFTS (could have bid 1♥/1♠)
+        # Over 1♥: 1♠ is a 1-level response
+        #          2♣, 2♦ are NORMAL 2-level responses
+        #          2♠ is a JUMP SHIFT (could have bid 1♠)
+        # Over 1♠: 2♣, 2♦, 2♥ are all NORMAL 2-level responses (no jump shifts available)
         if len(my_previous_bids) >= 1 and len(partner_last_bid) == 2:
-            # Check if partner's response was a jump shift (game-forcing, 17+ pts)
             partner_level = int(partner_last_bid[0]) if partner_last_bid[0].isdigit() else 0
-            if partner_level == 2 and my_previous_bids[0][0] == '1':
+            my_opening_level = int(my_previous_bids[0][0]) if my_previous_bids[0][0].isdigit() else 0
+
+            if my_opening_level == 1 and partner_level == 2:
                 partner_suit = partner_last_bid[1]
                 my_suit = my_previous_bids[0][1] if len(my_previous_bids[0]) >= 2 else None
-                # Jump shift shows 17+ pts - if we have 17+ too, explore slam
-                if partner_suit != my_suit and hand.total_points >= 17:
+
+                # A jump shift is when partner could have bid their suit at 1-level but chose 2-level
+                # Partner can bid at 1-level if their suit ranks HIGHER than opener's suit
+                # (because bidding goes in order: ♣ → ♦ → ♥ → ♠ → NT → 2♣ → ...)
+                suit_rank = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+                my_suit_rank = suit_rank.get(my_suit, 0)
+                partner_suit_rank = suit_rank.get(partner_suit, 0)
+
+                # Partner could have bid at 1-level ONLY IF their suit ranks higher than opener's
+                # 1♣ - 2♦: ♦(2) > ♣(1)? YES, but 1♦ over 1♣ is illegal (must go up in suit rank)
+                # Actually, 1♦ IS legal over 1♣! So 2♦ is a jump shift... NO WAIT.
+                # I'm confusing myself. Let's be clear:
+                # - After 1♣, you CAN bid 1♦ (it's legal - new suit at same level, higher rank)
+                # - So 2♦ over 1♣ IS technically a jump... but in practice it's used for 10+ hands
+                # - The STRONG jump shifts are 2♥ and 2♠ (majors, 17+ pts)
+                # - 2♦ over 1♣ is often used as a simple 2-over-1 response (10+ pts)
+
+                # For safety, only treat MAJOR SUIT jumps as slam-interest jump shifts
+                # Minor suit 2-level bids (2♣, 2♦) are typically 2-over-1 showing 10+ pts
+                is_major_jump_shift = partner_suit in ['♥', '♠'] and partner_suit_rank > my_suit_rank
+
+                if is_major_jump_shift and partner_suit != my_suit and hand.total_points >= 17:
                     return True
 
         # High combined values warrant slam exploration (33+ combined)

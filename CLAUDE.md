@@ -738,6 +738,10 @@ Deal hands → Bidding → Contract established →
 
 ## Testing Strategy
 
+**Comprehensive Test Suite Documentation:**
+- **[Bidding Test Suite](docs/testing/BIDDING_TEST_SUITE.md)** - Complete bidding testing guide
+- **[Play Test Suite](docs/testing/PLAY_TEST_SUITE.md)** - Complete card play testing guide
+
 ### Fast Feedback Loop
 
 **During Development:**
@@ -1194,6 +1198,8 @@ When trigger detected:
 - **Quick Start:** `.claude/QUICK_START.md` - Quick debugging and validation checklist
 - **Project Context:** `.claude/PROJECT_CONTEXT.md` - Comprehensive project information
 - **Coding Guidelines:** `.claude/CODING_GUIDELINES.md` - Systematic analysis and QA protocols
+- **Bidding Test Suite:** `docs/testing/BIDDING_TEST_SUITE.md` - Comprehensive bidding testing guide
+- **Play Test Suite:** `docs/testing/PLAY_TEST_SUITE.md` - Comprehensive card play testing guide
 - **Documentation Index:** `docs/README.md` - Complete documentation navigation
 - **Production Readiness:** `READY_FOR_PRODUCTION.md` - Production deployment checklist
 - **User Flow:** `USER_FLOW_GUIDE.md` - Complete user journey documentation

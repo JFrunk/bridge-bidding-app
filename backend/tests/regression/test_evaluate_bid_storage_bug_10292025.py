@@ -40,6 +40,7 @@ def test_evaluate_bid_stores_non_pass_bids():
                 hand_analysis_id INTEGER,
                 user_id INTEGER NOT NULL,
                 session_id TEXT,
+                hand_number INTEGER,
                 bid_number INTEGER NOT NULL,
                 position TEXT NOT NULL,
                 dealer TEXT,
@@ -56,6 +57,7 @@ def test_evaluate_bid_stores_non_pass_bids():
                 difficulty TEXT,
                 helpful_hint TEXT,
                 reasoning TEXT,
+                deal_data TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -149,6 +151,7 @@ def test_evaluate_bid_with_various_bids():
                 hand_analysis_id INTEGER,
                 user_id INTEGER NOT NULL,
                 session_id TEXT,
+                hand_number INTEGER,
                 bid_number INTEGER NOT NULL,
                 position TEXT NOT NULL,
                 dealer TEXT,
@@ -165,6 +168,7 @@ def test_evaluate_bid_with_various_bids():
                 difficulty TEXT,
                 helpful_hint TEXT,
                 reasoning TEXT,
+                deal_data TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)

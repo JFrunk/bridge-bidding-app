@@ -250,9 +250,16 @@ const HandListItem = ({ hand, onSelect }) => {
       lucky_overbid: 'category-lucky',
       penalty_trap: 'category-penalty',
       logic_aligned: 'category-aligned',
-      rule_violation: 'category-violation'
+      rule_violation: 'category-violation',
+      no_auction_data: 'category-no-auction'
     };
     return colors[category] || '';
+  };
+
+  // Format category for display
+  const formatCategory = (category) => {
+    if (category === 'no_auction_data') return 'no auction';
+    return category?.replace(/_/g, ' ') || '';
   };
 
   return (
@@ -269,7 +276,7 @@ const HandListItem = ({ hand, onSelect }) => {
       </div>
       {hand.audit_category && (
         <div className={`hand-category ${getCategoryColor(hand.audit_category)}`}>
-          {hand.audit_category.replace('_', ' ')}
+          {formatCategory(hand.audit_category)}
         </div>
       )}
       {hand.is_falsified === 1 && (
@@ -282,6 +289,76 @@ const HandListItem = ({ hand, onSelect }) => {
 HandListItem.propTypes = {
   hand: PropTypes.object.isRequired,
   onSelect: PropTypes.func.isRequired
+};
+
+/**
+ * Contract Distribution Component - Shows how other tables bid this hand
+ */
+const ContractDistribution = ({ contracts }) => {
+  // Parse contracts if it's a string
+  const contractList = typeof contracts === 'string' ? JSON.parse(contracts) : contracts;
+
+  if (!contractList || contractList.length === 0) {
+    return null;
+  }
+
+  // Group contracts by contract string and count
+  const contractCounts = {};
+  contractList.forEach(c => {
+    const key = `${c.level}${c.strain}${c.is_doubled ? 'X' : ''}${c.is_redoubled ? 'XX' : ''} by ${c.declarer}`;
+    if (!contractCounts[key]) {
+      contractCounts[key] = {
+        contract: `${c.level}${c.strain}`,
+        declarer: c.declarer,
+        doubled: c.is_doubled,
+        redoubled: c.is_redoubled,
+        results: [],
+        count: 0
+      };
+    }
+    contractCounts[key].count++;
+    contractCounts[key].results.push(c.result);
+  });
+
+  // Sort by count descending
+  const sorted = Object.values(contractCounts).sort((a, b) => b.count - a.count);
+
+  // Calculate percentages
+  const total = contractList.length;
+
+  return (
+    <div className="contract-distribution">
+      <h4>How Other Tables Bid ({total} tables)</h4>
+      <div className="distribution-bars">
+        {sorted.map((item, idx) => {
+          const pct = Math.round((item.count / total) * 100);
+          const resultsStr = item.results.join(', ');
+          return (
+            <div key={idx} className="distribution-row">
+              <div className="contract-label">
+                {item.contract}
+                {item.doubled && 'X'}
+                {item.redoubled && 'XX'}
+                <span className="declarer">({item.declarer})</span>
+              </div>
+              <div className="bar-container">
+                <div
+                  className="bar-fill"
+                  style={{ width: `${pct}%` }}
+                  title={`Results: ${resultsStr}`}
+                />
+                <span className="bar-label">{item.count} ({pct}%)</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+ContractDistribution.propTypes = {
+  contracts: PropTypes.oneOfType([PropTypes.string, PropTypes.array])
 };
 
 /**
@@ -665,15 +742,18 @@ const ACBLImportModal = ({ isOpen, onClose, userId, onHandSelect }) => {
               )}
 
               {/* Auction history */}
-              {selectedHand.auction_history && (
+              {selectedHand.auction_history && Array.isArray(selectedHand.auction_history) && selectedHand.auction_history.length > 0 && (
                 <div className="auction-display">
                   <h4>Auction</h4>
                   <div className="auction-sequence">
-                    {Array.isArray(selectedHand.auction_history)
-                      ? selectedHand.auction_history.join(' - ')
-                      : selectedHand.auction_history}
+                    {selectedHand.auction_history.join(' - ')}
                   </div>
                 </div>
+              )}
+
+              {/* BWS Contract Distribution - How other tables bid */}
+              {selectedHand.tournament_contracts && (
+                <ContractDistribution contracts={selectedHand.tournament_contracts} />
               )}
 
               {/* View in full analysis button */}

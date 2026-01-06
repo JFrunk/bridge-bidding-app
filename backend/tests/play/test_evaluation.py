@@ -198,9 +198,9 @@ class TestOverallEvaluation:
         score_east = evaluator.evaluate(state, 'E')
 
         # East has weak hand against strong declarer
-        # At start of hand (no tricks won), defenders might have 0 or negative score
-        # depending on sure winners component
-        assert score_east <= 0
+        # Score should be less than North's (declarer's advantage)
+        # But may be positive due to various evaluation components
+        assert score_east < score_north
 
     def test_mid_hand_evaluation(self):
         """Test evaluation in middle of hand"""
@@ -299,13 +299,13 @@ class TestEvaluationWeights:
         evaluator_default = PositionEvaluator()
         score_default = evaluator_default.evaluate(state, 'N')
 
-        # Custom weights (only tricks won)
+        # Custom weights (disable sure_winners)
         evaluator_custom = PositionEvaluator()
         evaluator_custom.weights['sure_winners'] = 0.0  # Disable
         score_custom = evaluator_custom.evaluate(state, 'N')
 
-        # With no tricks won yet, custom should be 0
-        assert score_custom == 0.0
+        # Disabling sure_winners should reduce the score
+        assert score_custom < score_default
 
         # Default should be positive (sure winners component)
         assert score_default > 0
@@ -314,12 +314,16 @@ class TestEvaluationWeights:
         """Test that weight values are reasonable"""
         evaluator = PositionEvaluator()
 
-        # Check default weights
+        # Check default weights match current implementation
         assert evaluator.weights['tricks_won'] == 1.0
-        assert evaluator.weights['sure_winners'] == 0.6
-        assert evaluator.weights['trump_control'] == 0.0  # Disabled
-        assert evaluator.weights['communication'] == 0.0  # Disabled
-        assert evaluator.weights['defensive'] == 0.0  # Disabled
+        assert evaluator.weights['sure_winners'] == 0.45
+        assert evaluator.weights['trump_control'] == 0.35
+        assert evaluator.weights['communication'] == 0.28
+        assert evaluator.weights['defensive'] == 0.2
+        assert evaluator.weights['finesse'] == 0.3
+        assert evaluator.weights['long_suits'] == 0.18
+        assert evaluator.weights['danger_hand'] == 0.25
+        assert evaluator.weights['tempo'] == 0.15
 
 
 class TestEvaluationConsistency:

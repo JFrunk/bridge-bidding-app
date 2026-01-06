@@ -514,6 +514,76 @@
   font-size: var(--text-base, 1rem);
 }
 
+/* Contract Distribution */
+.contract-distribution {
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-3, 12px);
+}
+
+.contract-distribution h4 {
+  margin: 0 0 var(--space-3, 12px) 0;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-secondary, #6c757d);
+}
+
+.distribution-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+}
+
+.distribution-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+}
+
+.contract-label {
+  min-width: 80px;
+  font-family: monospace;
+  font-weight: 600;
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.contract-label .declarer {
+  font-weight: 400;
+  color: var(--text-muted, #868e96);
+  margin-left: 4px;
+}
+
+.bar-container {
+  flex: 1;
+  height: 20px;
+  background: var(--bg-tertiary, #e9ecef);
+  border-radius: var(--radius-sm, 4px);
+  position: relative;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--color-primary, #007bff);
+  border-radius: var(--radius-sm, 4px);
+  transition: width 0.3s ease;
+}
+
+.bar-label {
+  position: absolute;
+  right: var(--space-2, 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--text-primary, #212529);
+}
+
+/* Category styles for no_auction_data */
+.category-no-auction {
+  background: var(--color-info-light, #d1ecf1);
+  color: var(--color-info-dark, #0c5460);
+}
+
 .btn-full-analysis {
   background: var(--color-primary, #007bff);
   color: #fff;

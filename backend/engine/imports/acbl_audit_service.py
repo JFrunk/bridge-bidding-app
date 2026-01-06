@@ -42,6 +42,7 @@ class BiddingEfficiency(Enum):
     UNDERBID = "underbid"
     OVERBID = "overbid"
     PASSED_OUT = "passed_out"
+    NO_AUCTION_DATA = "no_auction_data"  # PBN has no auction sequence
 
 
 class AuditCategory(Enum):
@@ -51,6 +52,7 @@ class AuditCategory(Enum):
     SIGNAL_ERROR = "signal_error"        # Play violated signaling principles
     LOGIC_ALIGNED = "logic_aligned"      # Tournament matched engine
     RULE_VIOLATION = "rule_violation"    # Violated explicit SAYC rule
+    NO_AUCTION_DATA = "no_auction_data"  # PBN file has no auction sequence
 
 
 @dataclass
@@ -357,11 +359,15 @@ def generate_audit_report(
     )
 
     # Determine bidding efficiency
-    result.bidding_efficiency = determine_bidding_efficiency(
-        pbn_data.contract_level,
-        pbn_data.tricks_taken,
-        dds_analysis
-    )
+    # Check for no auction data first (hand records only, no auction sequence)
+    if not pbn_data.auction_history or len(pbn_data.auction_history) == 0:
+        result.bidding_efficiency = BiddingEfficiency.NO_AUCTION_DATA.value
+    else:
+        result.bidding_efficiency = determine_bidding_efficiency(
+            pbn_data.contract_level,
+            pbn_data.tricks_taken,
+            dds_analysis
+        )
 
     # Categorize and generate educational feedback
     result.audit_category, result.educational_feedback = categorize_and_explain(
@@ -447,6 +453,16 @@ def categorize_and_explain(
     Returns:
         Tuple of (category, explanation)
     """
+    # Case 0: No auction data - PBN file is hand records only
+    if result.bidding_efficiency == 'no_auction_data':
+        category = AuditCategory.NO_AUCTION_DATA.value
+        explanation = (
+            "This hand record has no auction data. "
+            "Use the BWS contract distribution to see how other tables bid. "
+            "You can replay this hand to practice your bidding."
+        )
+        return category, explanation
+
     # Case 1: Lucky Overbid
     if result.bidding_efficiency == 'overbid' and result.tournament_score > 0:
         category = AuditCategory.LUCKY_OVERBID.value

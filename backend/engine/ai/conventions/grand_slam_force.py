@@ -90,10 +90,19 @@ class GrandSlamForceConvention(ConventionModule):
             # Jacoby 2NT over major shows 13+ with support - OK for GSF
             # Game bids (4M) show values - OK for GSF
 
-        # Check total points suggest grand slam possibility (33+)
+        # Check total points suggest grand slam possibility (37+ for 7-level)
         # Estimate partner's points based on their bidding
+        # Use HCP only (not total_points) for more conservative estimate
         partner_min_points = self._estimate_partner_points(partner_nonpass, auction_features)
-        if hand.total_points + partner_min_points < 30:
+        combined_estimate = hand.hcp + partner_min_points
+
+        # GSF should only be bid when grand slam is highly likely
+        # Require 35+ combined HCP to even consider GSF (conservative)
+        if combined_estimate < 35:
+            return False
+
+        # Also require at least 18 HCP ourselves to initiate GSF
+        if hand.hcp < 18:
             return False
 
         return True
