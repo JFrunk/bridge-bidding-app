@@ -742,15 +742,6 @@ const HandReviewModal = ({
             </div>
           )}
 
-          {/* Decay Chart - shows trick potential over time */}
-          {handData?.decay_curve && (
-            <DecayChart
-              data={handData.decay_curve}
-              replayPosition={replayPosition}
-              onPositionChange={setReplayPosition}
-            />
-          )}
-
           {/* Main display area - compass layout with hands */}
           {remainingHands && (
             <div className="replay-table-compass">
@@ -835,6 +826,15 @@ const HandReviewModal = ({
                 </div>
               )}
             </div>
+          )}
+
+          {/* Decay Chart - shows trick potential over time (below hands for advanced users) */}
+          {handData?.decay_curve && (
+            <DecayChart
+              data={handData.decay_curve}
+              replayPosition={replayPosition}
+              onPositionChange={setReplayPosition}
+            />
           )}
 
           {/* Action buttons if showing result section */}

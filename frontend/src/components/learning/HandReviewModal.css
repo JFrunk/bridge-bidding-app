@@ -88,8 +88,10 @@
   border-radius: 16px;
   max-width: min(95vw, 800px);
   max-height: 90vh;
-  overflow-y: auto;
+  overflow: hidden; /* Changed to hidden - scrolling in content area */
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Unified layout: tighter width to match content */
@@ -220,9 +222,12 @@
   outline-offset: 2px;
 }
 
-/* Content */
+/* Content - scrollable area */
 .modal-content {
   padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0; /* Needed for flex scroll */
 }
 
 /* Loading/Error states */
@@ -1273,33 +1278,47 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 10px 16px;
   background: #f8fafc;
   border-radius: 8px;
-  /* Center and constrain width to match compass layout */
-  max-width: 700px;
-  margin: 0 auto;
+  /* Sticky positioning - stays at top while scrolling */
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  /* Visual separation from content */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  /* Full width to span modal */
+  margin: 0 0 12px 0;
 }
 
 .replay-navigation button {
-  padding: 4px 12px;
+  padding: 8px 16px;
   background: #e5e7eb;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-weight: 500;
-  font-size: 13px;
+  font-weight: 600;
+  font-size: 14px;
   color: #374151;
   transition: all 0.2s;
+  min-height: 36px;
+  min-width: 44px; /* Touch target compliance */
 }
 
 .replay-navigation button:hover:not(:disabled) {
   background: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.replay-navigation button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .replay-navigation button:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
+  background: #f1f5f9;
 }
 
 .replay-counter {
@@ -1628,22 +1647,29 @@
     font-size: 12px;
   }
 
-  /* Replay mode mobile adjustments */
+  /* Replay mode mobile adjustments - keep sticky */
   .replay-navigation {
     flex-wrap: wrap;
     gap: 6px;
-    padding: 6px 10px;
+    padding: 8px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    background: #f8fafc;
   }
 
   .replay-navigation button {
-    padding: 3px 10px;
-    font-size: 12px;
+    padding: 6px 12px;
+    font-size: 13px;
+    min-height: 40px; /* Larger touch targets on mobile */
+    min-width: 44px;
   }
 
   .replay-counter {
     min-width: 100%;
     order: -1;
     margin-bottom: 4px;
+    font-size: 13px;
   }
 
   .replay-table {
@@ -2261,6 +2287,9 @@
 
 .hand-review-modal.unified-layout .modal-content {
   padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .unified-container {
