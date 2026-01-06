@@ -876,6 +876,12 @@
   width: 100%;
 }
 
+.hand-row .hand-number {
+  font-size: var(--text-xs, 12px);
+  color: var(--text-muted, #666);
+  min-width: 24px;
+}
+
 .hand-row .role {
   font-size: var(--text-sm, 14px);
   color: var(--text-primary-dark, #333);

@@ -475,6 +475,16 @@ body {
   background-color: var(--color-success-dark);
   transform: translateY(-1px);
 }
+.passed-out-message {
+  font-family: inherit;
+  font-size: var(--text-base);
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-weight: var(--font-bold);
+  text-align: center;
+}
 .play-new-hand-button {
   font-family: inherit;
   font-size: var(--text-base);

@@ -1,7 +1,8 @@
 # Slash Commands Guide
 
 **Created:** 2025-10-29
-**Total Commands:** 11 (1 existing + 10 new)
+**Updated:** 2026-01-06
+**Total Commands:** 18 (11 workflow + 7 specialists)
 
 This guide explains all available slash commands in Claude Code for this project.
 
@@ -397,7 +398,182 @@ This guide explains all available slash commands in Claude Code for this project
 
 ---
 
+## Specialist Commands
+
+These commands launch focused specialist sessions for domain-specific work.
+
+### `/project:progress-specialist [issue]`
+
+**Purpose:** My Progress dashboard and analytics visualization
+
+**Domain:**
+- Dashboard components: `FourDimensionProgress`, `LearningDashboard`
+- Review modals: `HandReviewModal` (play-by-play), `BidReviewModal` (bid-by-bid)
+- Visualizations: `DecayChart`, Board Analysis quadrant chart
+- Analytics APIs: `/api/analytics/*`, `/api/bidding-hands`
+
+**When to use:**
+- Dashboard display issues or bugs
+- Hand review modal problems
+- Decay curve visualization issues
+- Board analysis quadrant chart fixes
+- Progress bar or stats display issues
+
+**Example:**
+```
+/project:progress-specialist Decay chart shows wrong perspective when defending
+/project:progress-specialist Board analysis quadrant chart not loading
+```
+
+---
+
+### `/project:learning-specialist [issue]`
+
+**Purpose:** Feedback systems, scoring, and skill progression
+
+**Domain:**
+- Feedback: `bidding_feedback.py`, `play_feedback.py`, `bid_evaluator.py`
+- Skills: `skill_tree.py`, `learning_path_api.py`
+- Mistakes: `mistake_analyzer.py`, `error_categorizer.py`
+- Achievements: `celebration_manager.py`
+
+**When to use:**
+- Bid/play scoring or evaluation issues
+- Skill tree progression bugs
+- Achievement trigger problems
+- Feedback message content issues
+
+**Note:** For dashboard UI issues, use `/progress-specialist` instead.
+
+**Example:**
+```
+/project:learning-specialist Bid feedback shows wrong score for Jacoby Transfer
+/project:learning-specialist Achievement not triggering after 10 optimal bids
+```
+
+---
+
+### `/project:bidding-specialist [issue]`
+
+**Purpose:** SAYC bidding AI engine and conventions
+
+**Domain:**
+- Bidding modules: `opening_bids.py`, `responses.py`, `rebids.py`
+- Conventions: All files in `engine/ai/conventions/`
+- V2 schemas: `engine/v2/schemas/*.json`
+- Validation: `validation_pipeline.py`, `sanity_checker.py`
+
+**When to use:**
+- AI makes wrong bid
+- Convention not triggering correctly
+- V2 schema rule causing overbids
+- Bidding validation errors
+
+**Example:**
+```
+/project:bidding-specialist West passes with 15 HCP
+/project:bidding-specialist V2 rule slam_after_rkcb causes +3 overbid
+```
+
+---
+
+### `/project:play-specialist [issue]`
+
+**Purpose:** Card play engine and AI opponents
+
+**Domain:**
+- Play engine: `play_engine.py`, `bridge_rules_engine.py`
+- AI: `play/ai/simple_ai.py`, `minimax_ai.py`, `dds_ai.py`
+- Evaluation: `play/ai/evaluation.py`
+
+**When to use:**
+- AI plays wrong card
+- Trick evaluation bug
+- DDS analysis issues
+- Play quality problems
+
+**Example:**
+```
+/project:play-specialist AI discards winning Ace instead of low card
+/project:play-specialist Trick winner determined incorrectly
+```
+
+---
+
+### `/project:frontend-specialist [issue]`
+
+**Purpose:** React UI components and styling
+
+**Domain:**
+- Main app: `App.js`, `PlayComponents.js`
+- Bridge components: `components/bridge/*`
+- Session/auth: `components/session/*`, `components/auth/*`
+- Styling: CSS files, responsive design
+
+**When to use:**
+- Visual bugs (overlap, alignment, sizing)
+- Responsive design issues
+- Component behavior bugs
+- Card display problems
+
+**Example:**
+```
+/project:frontend-specialist Cards overlap on mobile 375px
+/project:frontend-specialist Bidding box not scrollable on tablet
+```
+
+---
+
+### `/project:server-specialist [issue]`
+
+**Purpose:** Flask API, database, and infrastructure
+
+**Domain:**
+- API: `server.py` endpoints
+- Session: `core/session_state.py`
+- Database: `database/init_*.py`
+- Auth: `engine/auth/simple_auth_api.py`
+
+**When to use:**
+- API endpoint errors
+- Database issues
+- Session management bugs
+- Performance problems
+
+**Example:**
+```
+/project:server-specialist /api/evaluate-bid returns 500 error
+/project:server-specialist Session data not persisting
+```
+
+---
+
+### `/project:triage-issues [filter]`
+
+**Purpose:** Collect and dispatch issues to specialists in parallel
+
+**What it does:**
+1. Collects issues from: error logs, user feedback, V2 efficiency analysis
+2. Categorizes by domain and severity
+3. Presents triage summary
+4. Dispatches to specialist agents in parallel
+
+**When to use:**
+- Start of session to check for issues
+- After deployment to monitor
+- Regular health checks
+
+**Example:**
+```
+/project:triage-issues
+/project:triage-issues --category bidding
+```
+
+---
+
 ## Command Summary Table
+
+### Workflow Commands
 
 | Command | Primary Use | Time | Enforces |
 |---------|-------------|------|----------|
@@ -412,6 +588,18 @@ This guide explains all available slash commands in Claude Code for this project
 | `/project:analyze-hand` | Hand investigation | 5-10 min | Bidding + play |
 | `/project:deploy-production` | Safe deployment | 60 min | All checks pass |
 | `/project:check-scope` | Scope analysis | 5-10 min | Systematic check |
+
+### Specialist Commands
+
+| Command | Domain | When to Use |
+|---------|--------|-------------|
+| `/project:progress-specialist` | Dashboard, analytics UI, review modals | My Progress page issues |
+| `/project:learning-specialist` | Feedback, scoring, skills, achievements | Evaluation & skill issues |
+| `/project:bidding-specialist` | SAYC AI, conventions, V2 schemas | AI bidding bugs |
+| `/project:play-specialist` | Play engine, AI opponents, DDS | Card play issues |
+| `/project:frontend-specialist` | React components, CSS, responsive | Visual bugs |
+| `/project:server-specialist` | Flask API, database, sessions | API/backend issues |
+| `/project:triage-issues` | Issue collection & dispatch | Health checks |
 
 ---
 

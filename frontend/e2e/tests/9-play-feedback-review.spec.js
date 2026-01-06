@@ -390,16 +390,29 @@ test.describe('Play Feedback - Edge Cases', () => {
   test('should handle passed out auction gracefully', async ({ page }) => {
     await dealNewHand(page);
 
+    // Wait for South's turn before trying to pass
+    await page.waitForSelector('[data-testid="bid-call-Pass"]:not([disabled])', {
+      state: 'visible',
+      timeout: 20000
+    });
+
     // Try to pass out
     await makeCall(page, 'Pass');
     await waitForAIBid(page);
 
-    // Either passed out or auction continues - both are fine
-    const passedOut = page.locator('text=Passed Out');
+    // Either passed out (shows message, no play button) or auction continues with play button
+    const passedOutMessage = page.locator('[data-testid="passed-out-message"]');
     const playButton = page.locator('[data-testid="play-this-hand-button"]');
 
-    await expect(passedOut.or(playButton)).toBeVisible({ timeout: 10000 });
-    console.log('Passed out handling test passed');
+    await expect(passedOutMessage.or(playButton)).toBeVisible({ timeout: 10000 });
+
+    // If passed out, verify play button is NOT shown
+    if (await passedOutMessage.isVisible()) {
+      await expect(playButton).not.toBeVisible();
+      console.log('Hand passed out - play button correctly hidden');
+    } else {
+      console.log('Auction continued - play button shown');
+    }
   });
 
   test('should show user-controlled positions correctly for NS declaring', async ({ page }) => {

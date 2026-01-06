@@ -59,8 +59,11 @@ export async function dealNewHand(page) {
       const playButtonVisible = await page.locator('[data-testid="play-this-hand-button"]')
         .count() > 0;
 
-      if (passButtonEnabled || playButtonVisible) {
-        // Either it's South's turn or auction is complete
+      const passedOutVisible = await page.locator('[data-testid="passed-out-message"]')
+        .count() > 0;
+
+      if (passButtonEnabled || playButtonVisible || passedOutVisible) {
+        // Either it's South's turn or auction is complete (with or without contract)
         break;
       }
 
@@ -149,7 +152,8 @@ export async function getAuction(page) {
 export async function waitForAIBid(page) {
   // Wait for either:
   // 1. Bidding box to be enabled again (AI finished, auction continues)
-  // 2. Play button to appear (auction complete)
+  // 2. Play button to appear (auction complete with contract)
+  // 3. Passed out message to appear (auction complete, no contract)
 
   try {
     await Promise.race([
@@ -162,6 +166,11 @@ export async function waitForAIBid(page) {
       page.waitForSelector('[data-testid="play-this-hand-button"]', {
         state: 'visible',
         timeout: 20000  // Increased from 10000
+      }),
+      // Option 3: Passed out - no contract to play
+      page.waitForSelector('[data-testid="passed-out-message"]', {
+        state: 'visible',
+        timeout: 20000
       })
     ]);
   } catch (error) {
@@ -169,10 +178,11 @@ export async function waitForAIBid(page) {
     // Log additional debug info to help diagnose timeout issues
     const passButtonState = await page.locator('[data-testid="bid-call-Pass"]').getAttribute('disabled').catch(() => 'not found');
     const playButtonVisible = await page.locator('[data-testid="play-this-hand-button"]').isVisible().catch(() => false);
+    const passedOutVisible = await page.locator('[data-testid="passed-out-message"]').isVisible().catch(() => false);
 
     throw new Error(
-      `AI bid timeout: Neither bidding box re-enabled nor play button appeared.\n` +
-      `Debug: Pass button disabled="${passButtonState}", Play button visible=${playButtonVisible}`
+      `AI bid timeout: Neither bidding box re-enabled nor play button nor passed-out message appeared.\n` +
+      `Debug: Pass button disabled="${passButtonState}", Play button visible=${playButtonVisible}, Passed out visible=${passedOutVisible}`
     );
   }
 }

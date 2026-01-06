@@ -60,7 +60,8 @@ After collecting issues, categorize each one:
 | **play** | `/play-specialist` | Card selection, trick evaluation, AI play |
 | **frontend** | `/frontend-specialist` | UI bugs, display issues, UX problems |
 | **server** | `/server-specialist` | API errors, database, performance |
-| **learning** | `/learning-specialist` | Dashboard, analytics, feedback system |
+| **progress** | `/progress-specialist` | Dashboard, analytics charts, hand review modals, decay curves |
+| **learning** | `/learning-specialist` | Bid/play evaluation, feedback scoring, skill trees, achievements |
 
 ## Severity Levels
 
@@ -106,7 +107,11 @@ Use Task tool with:
 | Play AI error | `/play-specialist [issue details]` |
 | UI/UX bug | `/frontend-specialist [issue details]` |
 | API error | `/server-specialist [issue details]` |
-| Dashboard issue | `/learning-specialist [issue details]` |
+| Dashboard/analytics UI | `/progress-specialist [issue details]` |
+| Hand review modal | `/progress-specialist [issue details]` |
+| Decay chart/quadrant | `/progress-specialist [issue details]` |
+| Feedback scoring | `/learning-specialist [issue details]` |
+| Skill tree/achievements | `/learning-specialist [issue details]` |
 | Complex/unclear | `/debug-systematic [issue details]` |
 
 ## Workflow

@@ -214,7 +214,98 @@
   padding: 0;
 }
 
-/* Responsive adjustments */
+/* ============================================
+   CONSULTANT MODE STYLES
+   Pre-move preview with ghosted styling
+   ============================================ */
+
+.bid-feedback-panel.consultant-mode {
+  background-color: rgba(139, 92, 246, 0.1);
+  border-left-color: #8b5cf6;
+  border-style: dashed;
+}
+
+.consultant-tag {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: #8b5cf6;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-2);
+  padding: 2px 8px;
+  background-color: rgba(139, 92, 246, 0.2);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+/* ============================================
+   GOVERNOR WARNING STYLES
+   High-priority alerts for Physics/Resource violations
+   ============================================ */
+
+.bid-feedback-panel.governor-block {
+  border-left-width: 6px;
+  animation: pulse-border 2s infinite;
+}
+
+.governor-warning {
+  background-color: #fff5f5;
+  border: 2px solid #c0392b;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: var(--space-3);
+}
+
+.governor-warning strong {
+  color: #c0392b;
+  display: block;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.governor-warning p {
+  margin: 0;
+  color: #7f1d1d;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+/* Pulsing border animation for critical warnings */
+@keyframes pulse-border {
+  0% { border-left-color: #c0392b; }
+  50% { border-left-color: #e74c3c; }
+  100% { border-left-color: #c0392b; }
+}
+
+/* Badge override for Governor blocks */
+.bid-feedback-panel.governor-block .feedback-badge,
+.bid-feedback-panel.feedback-error.governor-block .feedback-icon {
+  color: #c0392b;
+  text-shadow: 0 0 8px rgba(192, 57, 43, 0.5);
+}
+
+/* Trust Shield icon (future enhancement) */
+.trust-shield {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: rgba(76, 175, 80, 0.2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--color-success);
+  margin-top: var(--space-2);
+}
+
+.trust-shield::before {
+  content: '🛡️';
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
 @media (max-width: 480px) {
   .bid-feedback-panel {
     padding: var(--space-2) var(--space-3);
@@ -232,5 +323,13 @@
 
   .feedback-why-button {
     width: 100%;
+  }
+
+  .governor-warning {
+    padding: 8px;
+  }
+
+  .consultant-tag {
+    font-size: 0.65rem;
   }
 }

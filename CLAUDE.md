@@ -32,6 +32,50 @@ This is a **Bridge Bidding Training Application** that teaches players the Stand
 
 ---
 
+## Conversation & Task Management Standards
+
+### ⚠️ MANDATORY: Always Use Todo Lists for Multi-Step Tasks
+
+**To prevent task loss when the user adds instructions mid-conversation, ALWAYS use the TodoWrite tool proactively.**
+
+**When to Create a Todo List:**
+- Any task with 2+ steps
+- When starting work on a user request
+- Immediately when receiving multiple instructions
+
+**When User Adds Mid-Task Instructions:**
+1. **DO NOT** treat new instructions as replacing current work
+2. **ADD** the new instruction to the existing todo list
+3. **CONTINUE** with all tasks (original + new)
+4. **CONFIRM** by showing the updated todo list
+
+**Example Workflow:**
+```
+User: "Fix the login bug and update the tests"
+Claude: *creates todo list:*
+   ☐ Fix login bug
+   ☐ Update tests
+Claude: *marks "Fix login bug" as in_progress*
+
+User: "Also add error logging"
+Claude: *adds to todo list:*
+   🔄 Fix login bug (in progress)
+   ☐ Update tests
+   ☐ Add error logging    ← new item captured
+Claude: *completes all three tasks*
+```
+
+**Key Rules:**
+- ✅ Create todo list at task start (not after)
+- ✅ Mark items in_progress BEFORE starting work
+- ✅ Mark items complete IMMEDIATELY when done
+- ✅ Add new user instructions to the list (don't replace)
+- ✅ Show updated list when adding items mid-task
+- ❌ NEVER lose track of original tasks when new ones arrive
+- ❌ NEVER have more than one item in_progress at a time
+
+---
+
 ## Development Commands
 
 ### Backend (Python/Flask)

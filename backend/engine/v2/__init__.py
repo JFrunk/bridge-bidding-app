@@ -18,6 +18,7 @@ from .features.enhanced_extractor import (
 )
 from .interpreters.schema_interpreter import SchemaInterpreter, BidCandidate
 from .inference.conflict_resolver import ConflictResolver, PassThroughResolver
+from .sanity_checker import CompetitiveSafetyValidator, validate_competitive_bid
 
 __all__ = [
     'BiddingEngineV2Schema',
@@ -28,5 +29,7 @@ __all__ = [
     'SchemaInterpreter',
     'BidCandidate',
     'ConflictResolver',
-    'PassThroughResolver'
+    'PassThroughResolver',
+    'CompetitiveSafetyValidator',
+    'validate_competitive_bid'
 ]

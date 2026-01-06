@@ -1276,6 +1276,9 @@ const HandRow = ({ hand, onReview }) => {
   const contractStrain = hand.contract_strain || hand.contract?.strain || '';
   const contractStr = `${contractLevel}${contractStrain}`;
 
+  // Get hand number within session for disambiguation
+  const handNumber = hand.hand_number;
+
   // Determine role - API uses user_was_declarer/user_was_dummy
   const wasDeclarer = hand.user_was_declarer || hand.was_declarer;
   const wasDummy = hand.user_was_dummy || hand.was_dummy;
@@ -1345,9 +1348,10 @@ const HandRow = ({ hand, onReview }) => {
   const scoreDisplay = getScoreDisplay();
   const scoreNum = parseInt(scoreDisplay, 10) || 0;
 
-  // Order: Role, Contract, Result, Score, Quality%, Review button
+  // Order: Hand#, Role, Contract, Result, Score, Quality%, Review button
   return (
     <div className="hand-row">
+      {handNumber && <span className="hand-number">#{handNumber}</span>}
       <span className="role">{role}</span>
       <span className={`contract ${getStrainClass(contractStrain)}`}>{contractStr}</span>
       <span className={`result ${resultDisplay.isGood ? 'made' : 'down'}`}>{resultDisplay.text}</span>

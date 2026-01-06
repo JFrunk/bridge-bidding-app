@@ -42,12 +42,13 @@ const CORRECTNESS_CONFIG = {
 };
 
 const BidFeedbackPanel = ({
-  feedback,           // Feedback object from API { correctness, score, optimal_bid, reasoning, key_concept, helpful_hint, ... }
+  feedback,           // Feedback object from API { correctness, score, optimal_bid, reasoning, key_concept, helpful_hint, impact, ... }
   userBid,            // The bid the user made
   isVisible,          // Whether to show the panel
   onDismiss,          // Callback when panel is dismissed
   onOpenGlossary,     // Callback to open glossary drawer with a term
   autoDismissMs = 0,  // Auto-dismiss after N milliseconds (0 = never)
+  mode = 'review',    // 'review' (post-move) or 'consultant' (pre-move preview)
   // New props for differential analysis
   differentialData = null,  // Pre-loaded differential data from evaluate-bid response
   handCards = null,   // Hand cards for fetching differential analysis
@@ -154,14 +155,26 @@ const BidFeedbackPanel = ({
     );
   };
 
+  // Determine if this is a Governor-level warning (critical impact)
+  const isGovernorWarning = feedback.impact === 'critical' || feedback.impact === 'significant';
+  const isConsultantMode = mode === 'consultant';
+
   return (
     <div
-      className={`bid-feedback-panel ${config.className} ${isShowing ? 'showing' : ''}`}
+      className={`bid-feedback-panel ${config.className} ${isShowing ? 'showing' : ''} ${isConsultantMode ? 'consultant-mode' : ''} ${isGovernorWarning ? 'governor-block' : ''}`}
       role="alert"
       aria-live="polite"
       data-testid="bid-feedback-panel"
       data-correctness={correctnessLevel}
+      data-mode={mode}
     >
+      {/* Consultant Mode indicator */}
+      {isConsultantMode && (
+        <div className="consultant-tag" data-testid="consultant-tag">
+          🔮 AI Consultant Preview
+        </div>
+      )}
+
       <div className="feedback-header">
         {getMessage()}
         {onDismiss && (
@@ -175,7 +188,15 @@ const BidFeedbackPanel = ({
         )}
       </div>
 
-      {!isCorrect && getExplanation()}
+      {/* Governor Warning - Physics/Resource violation */}
+      {isGovernorWarning && feedback.reasoning && (
+        <div className="governor-warning" data-testid="governor-warning">
+          <strong>⚠️ Physics Warning:</strong>
+          <p>{feedback.reasoning}</p>
+        </div>
+      )}
+
+      {!isCorrect && !isGovernorWarning && getExplanation()}
 
       {getConcept()}
 

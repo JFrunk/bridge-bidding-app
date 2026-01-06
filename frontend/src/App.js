@@ -304,6 +304,18 @@ function App() {
   const [learningModeTrack, setLearningModeTrack] = useState('bidding'); // 'bidding' or 'play'
   const [showModeSelector, setShowModeSelector] = useState(true); // Landing page - shown by default
 
+  // Hint Mode: When enabled, shows real-time feedback during bidding and play
+  // This replaces the dev-only restriction with a user-controlled toggle
+  const [hintModeEnabled, setHintModeEnabled] = useState(() => {
+    const saved = localStorage.getItem('bridge-hint-mode');
+    return saved !== 'false'; // Default to enabled
+  });
+
+  // Persist hint mode preference
+  useEffect(() => {
+    localStorage.setItem('bridge-hint-mode', hintModeEnabled.toString());
+  }, [hintModeEnabled]);
+
   // Current workspace mode: 'bid' or 'play' (null when on landing page or learning mode)
   const [currentWorkspace, setCurrentWorkspace] = useState(null);
   // Active tab within bidding workspace: 'random', 'conventions', 'history'
@@ -332,6 +344,13 @@ function App() {
 
     // Three consecutive passes after at least one non-Pass bid
     return bids.slice(-3).every(b => b?.bid === 'Pass');
+  }, []);
+
+  // Helper function to check if auction was passed out (all 4 players passed)
+  const isPassedOut = useCallback((bids) => {
+    if (!bids || bids.length < 4) return false;
+    const nonPassBids = bids.filter(b => b?.bid && b.bid !== 'Pass');
+    return bids.length >= 4 && nonPassBids.length === 0;
   }, []);
 
   // No longer auto-show login - users start as guests and can register later
@@ -2542,17 +2561,18 @@ ${otherCommands}`;
                   </div>
                 )}
                 <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(auction)} />
-                {/* Bid feedback panel - dev mode only until V2 engine is optimized */}
-                {isDevMode && (
+                {/* Bid feedback panel - shown when hint mode is enabled */}
+                {hintModeEnabled && (
                   <BidFeedbackPanel
                     feedback={bidFeedback}
                     userBid={lastUserBid}
                     isVisible={!!bidFeedback && gamePhase === 'bidding'}
                     onDismiss={() => setBidFeedback(null)}
                     onOpenGlossary={(termId) => setShowGlossary(termId || true)}
+                    mode="review"
                   />
                 )}
-                {isDevMode && error && <div className="error-message">{error}</div>}
+                {error && <div className="error-message">{error}</div>}
               </div>
             </div>
             <div className="table-east">
@@ -2603,17 +2623,18 @@ ${otherCommands}`;
             </div>
           )}
           <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(auction)} />
-          {/* Bid feedback panel - dev mode only until V2 engine is optimized */}
-          {isDevMode && (
+          {/* Bid feedback panel - shown when hint mode is enabled */}
+          {hintModeEnabled && (
             <BidFeedbackPanel
               feedback={bidFeedback}
               userBid={lastUserBid}
               isVisible={!!bidFeedback && gamePhase === 'bidding'}
               onDismiss={() => setBidFeedback(null)}
               onOpenGlossary={(termId) => setShowGlossary(termId || true)}
+              mode="review"
             />
           )}
-          {isDevMode && error && <div className="error-message">{error}</div>}
+          {error && <div className="error-message">{error}</div>}
         </div>
       )}
 
@@ -2747,10 +2768,16 @@ ${otherCommands}`;
                   </div>
                 )}
                 {/* Primary action when bidding is complete */}
-                {isAuctionOver(auction) && (
+                {isAuctionOver(auction) && !isPassedOut(auction) && (
                   <button className="play-this-hand-button primary-action" data-testid="play-this-hand-button" onClick={startPlayPhase}>
                     ▶ Play This Hand
                   </button>
+                )}
+                {/* Show message when hand is passed out */}
+                {isPassedOut(auction) && (
+                  <div className="passed-out-message" data-testid="passed-out-message">
+                    Passed Out - No contract
+                  </div>
                 )}
                 {/* Secondary actions */}
                 <div className="secondary-actions">
@@ -2807,6 +2834,15 @@ ${otherCommands}`;
                   data-testid="show-all-hands-toggle"
                 />
                 <span>Show All Hands</span>
+              </label>
+              <label className="show-hands-toggle hint-mode-toggle">
+                <input
+                  type="checkbox"
+                  checked={hintModeEnabled}
+                  onChange={() => setHintModeEnabled(!hintModeEnabled)}
+                  data-testid="hint-mode-toggle"
+                />
+                <span>💡 AI Hints</span>
               </label>
             </div>
             <div className="ai-review-controls">

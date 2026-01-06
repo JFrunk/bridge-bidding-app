@@ -36,7 +36,7 @@ test.describe('Card Play - Basic Tests', () => {
 
     // Check if we have a contract or passed out
     // If passed out, deal again and try to get a contract
-    const passedOut = await page.locator('text=Passed Out').count() > 0;
+    const passedOut = await page.locator('[data-testid="passed-out-message"]').count() > 0;
 
     if (passedOut) {
       console.log('Hand passed out - dealing new hand');

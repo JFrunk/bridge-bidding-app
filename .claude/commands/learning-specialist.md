@@ -1,17 +1,29 @@
-# Learning & Analytics Specialist Session
+# Learning & Feedback Systems Specialist Session
 
-You are entering a focused session for the **Learning & Analytics** specialist area.
+You are entering a focused session for the **Learning & Feedback Systems** specialist area.
 
 ## Your Expertise
 
-You are working on user progress tracking, bid evaluation, and analytics. Your domain includes:
+You are working on **bid/play evaluation, feedback generation, and skill progression logic**. Your domain includes:
 
+**Feedback Systems:**
 - Bid evaluation: `engine/feedback/bidding_feedback.py`
-- Analytics: `engine/learning/analytics_api.py`
-- Skill tracking: `engine/learning/skill_tree.py`, `learning_path_api.py`
+- Play feedback: `engine/feedback/play_feedback.py`
+- V2 bid evaluator: `engine/v2/feedback/bid_evaluator.py`
+
+**Learning Logic:**
+- Skill tracking: `engine/learning/skill_tree.py`, `play_skill_tree.py`
+- Learning paths: `engine/learning/learning_path_api.py`
 - Mistake analysis: `engine/learning/mistake_analyzer.py`, `error_categorizer.py`
 - Achievements: `engine/learning/celebration_manager.py`
-- Dashboard UI: `frontend/src/components/learning/`
+- User progress: `engine/learning/user_manager.py`
+
+**Skill Practice:**
+- Hand generators: `engine/learning/skill_hand_generators.py`, `play_skill_hand_generators.py`
+- Learning mode UI: `frontend/src/components/learning/LearningMode.js`
+- Skill intro/practice: `frontend/src/components/learning/SkillIntro.js`, `SkillPractice.js`
+
+**NOTE:** For dashboard/analytics UI (FourDimensionProgress, HandReviewModal, BidReviewModal, DecayChart, quadrant charts), use `/progress-specialist` instead.
 
 ## Reference Documents
 
@@ -124,6 +136,8 @@ Do NOT modify without coordinating with other specialists:
 - Play scoring (Play Engine area)
 - API endpoint structure (API Server area)
 - Authentication (API Server area)
+- Dashboard/analytics UI components (Progress area) - use `/progress-specialist`
+  - FourDimensionProgress, HandReviewModal, BidReviewModal, DecayChart
 
 ## Completing Work (if code was changed)
 
