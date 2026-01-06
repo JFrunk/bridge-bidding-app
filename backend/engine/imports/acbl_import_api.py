@@ -743,7 +743,7 @@ def register_acbl_import_endpoints(app: Flask):
     # GET /api/tournaments/<id>/hands/<hand_id> - Get single hand detail
     # =========================================================================
     @app.route('/api/tournaments/<int:tournament_id>/hands/<int:hand_id>', methods=['GET'])
-    def get_tournament_hand_detail(tournament_id: int, hand_id: int):
+    def get_imported_hand_detail(tournament_id: int, hand_id: int):
         """
         Get full analysis for a single hand.
 
