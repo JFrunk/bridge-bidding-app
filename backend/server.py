@@ -726,9 +726,12 @@ register_analytics_endpoints(app)
 from engine.auth.simple_auth_api import register_simple_auth_endpoints
 register_simple_auth_endpoints(app)
 
-# Register ACBL PBN import API endpoints (tournament analysis)
-from engine.imports import register_acbl_import_endpoints
-register_acbl_import_endpoints(app)
+# Register ACBL PBN import API endpoints (tournament analysis) - optional module
+try:
+    from engine.imports import register_acbl_import_endpoints
+    register_acbl_import_endpoints(app)
+except ImportError:
+    print("ℹ️ ACBL import module not available (optional feature)")
 
 # ============================================================================
 # SESSION MANAGEMENT ENDPOINTS
