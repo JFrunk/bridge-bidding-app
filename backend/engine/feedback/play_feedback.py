@@ -44,6 +44,15 @@ except ImportError:
 # Always have Minimax available as fallback
 from engine.play.ai.minimax_ai import MinimaxPlayAI
 
+# Import tactical signal overlay for user play signal evaluation
+try:
+    from engine.play.ai.play_signal_overlay import TacticalPlayFilter, SignalResult
+    SIGNAL_OVERLAY_AVAILABLE = True
+except ImportError:
+    SIGNAL_OVERLAY_AVAILABLE = False
+    TacticalPlayFilter = None
+    SignalResult = None
+
 
 class PlayCorrectnessLevel(Enum):
     """Classification of play correctness"""
@@ -216,6 +225,82 @@ class PlayFeedbackGenerator:
         # Always have Minimax as fallback
         self._minimax_ai = MinimaxPlayAI(max_depth=3)
 
+        # Initialize tactical signal filter for user play signal evaluation
+        self._tactical_filter = None
+        if SIGNAL_OVERLAY_AVAILABLE:
+            try:
+                self._tactical_filter = TacticalPlayFilter()
+            except Exception as e:
+                print(f"PlayFeedbackGenerator: TacticalPlayFilter init failed ({e})")
+
+    def _evaluate_signal(self,
+                         play_state: PlayState,
+                         user_card: Card,
+                         position: str,
+                         optimal_cards: List[Card]) -> Tuple[Optional[str], Optional[str], Optional[str], bool]:
+        """
+        Evaluate if user's play follows standard bridge signaling conventions.
+
+        When multiple cards have the same DDS value (equivalence set), there's
+        still a "correct" card to play based on signaling conventions:
+        - 2nd hand low
+        - 3rd hand high (or bottom of sequence)
+        - Attitude signals when discarding
+        - Count signals
+
+        Args:
+            play_state: Current play state
+            user_card: Card user played
+            position: Position making the play
+            optimal_cards: Cards with optimal DDS value (equivalence set)
+
+        Returns:
+            Tuple of (signal_reason, signal_heuristic, signal_context, is_signal_optimal)
+        """
+        if self._tactical_filter is None:
+            return (None, None, None, True)
+
+        # Only evaluate signals when user card is in the equivalence set
+        # (i.e., user didn't lose tricks but may have violated conventions)
+        user_in_equiv_set = any(
+            user_card.rank == c.rank and user_card.suit == c.suit
+            for c in optimal_cards
+        )
+
+        if not user_in_equiv_set or len(optimal_cards) <= 1:
+            # User either lost tricks (different issue) or only one optimal card
+            return (None, None, None, True)
+
+        # Get the tactically optimal card from the equivalence set
+        try:
+            hand = play_state.hands[position]
+            trump_suit = play_state.contract.trump_suit if play_state.contract else None
+
+            signal_result = self._tactical_filter.select_tactical_card(
+                equivalence_set=optimal_cards,
+                game_state=play_state,
+                position=position,
+                hand=hand,
+                trump_suit=trump_suit
+            )
+
+            # Check if user played the signal-optimal card
+            user_matches_signal = (
+                user_card.rank == signal_result.card.rank and
+                user_card.suit == signal_result.card.suit
+            )
+
+            return (
+                signal_result.reason,
+                signal_result.heuristic.value if signal_result.heuristic else None,
+                signal_result.context.value if signal_result.context else None,
+                user_matches_signal
+            )
+
+        except Exception as e:
+            # Signal evaluation failed - don't crash, just skip signal feedback
+            return (None, None, None, True)
+
     def evaluate_play(self,
                       play_state: PlayState,
                       user_card: Card,
@@ -290,6 +375,11 @@ class PlayFeedbackGenerator:
         if play_state.current_trick:
             led_suit = play_state.current_trick[0][0].suit
 
+        # Evaluate signal conventions (only when user is in equivalence set)
+        signal_reason, signal_heuristic, signal_context, is_signal_optimal = self._evaluate_signal(
+            play_state, user_card, position, optimal_cards
+        )
+
         # Build feedback object
         return PlayFeedback(
             trick_number=len(play_state.trick_history) + 1,
@@ -309,7 +399,11 @@ class PlayFeedbackGenerator:
             helpful_hint=helpful_hint,
             key_concept=key_concept,
             difficulty=difficulty,
-            analysis_source=analysis_source
+            analysis_source=analysis_source,
+            signal_reason=signal_reason,
+            signal_heuristic=signal_heuristic,
+            signal_context=signal_context,
+            is_signal_optimal=is_signal_optimal
         )
 
     def evaluate_and_store(self,
