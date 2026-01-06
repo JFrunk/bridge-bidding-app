@@ -1024,15 +1024,17 @@ class TacticalPlayFilter:
         high to get out of the way.
 
         Returns True when:
-        1. SINGLETON HONOR: We have exactly 1 card in the suit and it's an honor
+        1. SINGLETON HIGH HONOR: We have exactly 1 card in the suit and it's A or K
            - Must play it now or we'll win the next trick and kill partner's run
            - Example: Partner leads K, we have singleton A - must play A now
-        2. DOUBLETON HONOR: We have exactly 2 cards and one is a high honor
-           - Playing low leaves us winning an awkward later trick
+           - Note: Singleton Q is borderline - usually defer unless partner led A/K
+        2. DOUBLETON ACE: We have Ax where A is a clear blocking card
+           - Playing x leaves us winning the 3rd round when partner may have more
            - Example: Partner leads K from KQJxx, we have Ax - play A, return x
+           - Note: Kx and Qx are NOT typical unblocking situations
 
         This is a heuristic - we can't be certain partner has length,
-        but when partner leads an honor and we have short honor holding,
+        but when partner leads an honor and we have short high honor holding,
         unblocking is usually correct.
         """
         if hand is None:
@@ -1042,25 +1044,27 @@ class TacticalPlayFilter:
         suit_cards = [c for c in hand.cards if c.suit == led_suit]
         suit_length = len(suit_cards)
 
-        honor_ranks = ['A', 'K', 'Q']
+        # HIGH honors that typically require unblocking (A is the clearest case)
+        # K is borderline, Q is rarely an unblock situation
+        blocking_honors = ['A', 'K']  # Only A and K create true blocking situations
 
-        # SINGLETON HONOR: Always unblock - it's the only card we have!
+        # SINGLETON HIGH HONOR: Always unblock with A or K
         if suit_length == 1:
-            # Check if our singleton is an honor
             singleton = suit_cards[0]
-            if singleton.rank in honor_ranks:
+            if singleton.rank in blocking_honors:
                 return True
-            return False  # Singleton spot card - no blocking concern
+            return False  # Singleton Q or lower - don't unblock, defer instead
 
-        # DOUBLETON HONOR: Unblock to avoid being stuck on lead later
+        # DOUBLETON ACE: Classic unblocking situation (Ax)
+        # Note: Kx and Qx are NOT typical unblocks - K and Q can wait
         if suit_length == 2:
-            # Check if we have an honor in the equivalence set
-            equiv_honors = [c for c in equivalence_set
-                           if c.suit == led_suit and c.rank in honor_ranks]
-            if equiv_honors:
-                return True  # Doubleton with honor - should unblock
+            # Only unblock with doubleton ACE specifically
+            equiv_aces = [c for c in equivalence_set
+                         if c.suit == led_suit and c.rank == 'A']
+            if equiv_aces:
+                return True  # Doubleton Ace - should unblock
 
-        # 3+ cards: No immediate blocking concern
+        # 3+ cards or no blocking honor: No unblocking needed
         return False
 
     def _get_dummy_position(self, declarer: str) -> str:

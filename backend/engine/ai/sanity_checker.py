@@ -79,15 +79,30 @@ class SanityChecker:
         # Check if metadata indicates this is a convention bid that should bypass sanity checks
         # Preempts, for example, are intentionally weak hands bidding at high levels
         # Takeout double responses also bypass - partner promises support
+        #
+        # IMPORTANT: Slam bids (6+) can NEVER bypass the Governor HCP check.
+        # The Governor is non-overridable for slam validation.
+        bid_level = int(bid[0]) if bid[0].isdigit() else 0
         if metadata and (metadata.get('bypass_hcp') or metadata.get('bypass_sanity_check')):
             convention = metadata.get('convention', 'unknown')
-            logger.debug(f"Sanity check bypassed for {convention} convention bid '{bid}'")
-            return True, bid, None
+            # GOVERNOR OVERRIDE: Slam bids must always go through HCP validation
+            if bid_level >= 6:
+                logger.debug(f"Governor override: {convention} slam bid '{bid}' must pass HCP validation")
+                # Fall through to Governor check below
+            else:
+                logger.debug(f"Sanity check bypassed for {convention} convention bid '{bid}'")
+                return True, bid, None
 
-        # Check if this is a Blackwood/control bid sequence - allow slam bidding
+        # Check if this is a Blackwood/control bid sequence
+        # NOTE: Even in Blackwood sequences, the Governor MUST validate HCP for slam bids
+        # We only bypass sanity checks for the ACE RESPONSES (5♣/5♦/5♥/5♠ after 4NT)
+        # The slam bidder is still subject to HCP validation
         if self._is_blackwood_sequence(auction):
-            # In Blackwood sequences, allow all bids (the convention module handles appropriateness)
-            return True, bid, None
+            # Allow Blackwood responses (5-level after 4NT) without HCP check
+            # because these are conventional, not natural
+            if self._is_blackwood_response(bid, auction):
+                return True, bid, None
+            # For slam bids (6/7 level), fall through to Governor check below
 
         # Check if this is a Jacoby transfer super-accept sequence - allow game acceptance
         if self._is_jacoby_super_accept_sequence(auction):
@@ -95,8 +110,7 @@ class SanityChecker:
             # Game is appropriate with any hand
             return True, bid, None
 
-        # Extract bid level
-        bid_level = int(bid[0])
+        # bid_level already extracted above for Governor override check
 
         # Check 1: Maximum bid level based on HCP
         max_level = self._get_max_safe_level(hand, features, auction)
@@ -120,19 +134,41 @@ class SanityChecker:
                 logger.warning(f"Sanity check prevented: {reason}")
                 return False, "Pass", reason
 
-        # Check 4: Slam bidding requires combined 32+ HCP (or 30+ with distribution bonus)
+        # Check 4: SLAM SAFETY GOVERNOR - Hard HCP floor validation
+        # The Physics of Resources: Slam requires specific HCP thresholds
+        # - Small Slam (6-level): 33+ combined HCP
+        # - Grand Slam (7-level): 37+ combined HCP
+        # This is the "Governor" - a non-overridable hard limit
         if bid_level >= 6:
+            # Calculate hard ceiling: our HCP + partner's max realistic HCP
+            hard_ceiling = self._calculate_hard_ceiling(hand, features, auction)
+
+            # Also get optimistic estimate for comparison/logging
             estimated_combined = self._estimate_combined_hcp(hand, features, auction)
-            # Allow slightly lower threshold with strong distribution
+
+            # Use the LOWER of the two estimates (conservative)
+            combined = min(hard_ceiling, estimated_combined)
+
+            # Set thresholds based on slam level
+            if bid_level == 7:
+                min_required = 37  # Grand slam needs 37+ HCP
+                slam_type = "Grand slam"
+            else:
+                min_required = 33  # Small slam needs 33+ HCP
+                slam_type = "Small slam"
+
+            # Allow slight distribution bonus ONLY with confirmed fit
             auction_context = features.get('auction_context')
             distribution_bonus = 0
             if auction_context is not None and auction_context.has_fit:
-                # With fit, distribution points count more for slam
-                distribution_bonus = min(hand.total_points - hand.hcp, 3)
+                distribution_bonus = min(hand.total_points - hand.hcp, 2)
 
-            adjusted_combined = estimated_combined + distribution_bonus
-            if adjusted_combined < 32:
-                reason = f"Slam bid with estimated {estimated_combined} combined HCP + {distribution_bonus} distribution (need 32+)"
+            adjusted_combined = combined + distribution_bonus
+
+            if adjusted_combined < min_required:
+                reason = (f"{slam_type} blocked by Governor: "
+                         f"{combined} combined HCP + {distribution_bonus} distribution = "
+                         f"{adjusted_combined} (need {min_required}+)")
                 logger.warning(f"Sanity check prevented: {reason}")
                 return False, "Pass", reason
 
@@ -200,6 +236,98 @@ class SanityChecker:
         # Fall back to legacy estimation
         partner_min_hcp = self._estimate_partner_hcp(features, auction)
         return my_hcp + partner_min_hcp
+
+    def _calculate_hard_ceiling(self, hand: Hand, features: Dict, auction: List) -> int:
+        """
+        Calculate hard ceiling for combined HCP.
+
+        This is a CONSERVATIVE estimate used by the Governor to prevent
+        slam bids with insufficient resources. Unlike _estimate_combined_hcp
+        which uses midpoint (optimistic), this uses realistic maximums.
+
+        Logic:
+        - Our HCP is known exactly
+        - Partner's max is bounded by their bidding:
+          * 1-level opener: max 21 HCP
+          * 1NT opener: max 17 HCP
+          * 2♣ opener: max 25 HCP (but then we have controls)
+          * Simple response: max 12 HCP (forcing) or 10 HCP (non-forcing)
+          * Jump shift response: max 18 HCP
+
+        The key insight: partner's range should be capped at realistic values,
+        not 40 which inflates the midpoint estimate.
+        """
+        my_hcp = hand.hcp
+
+        # Use AuctionContext if available
+        auction_context = features.get('auction_context')
+        if auction_context is not None:
+            ranges = auction_context.ranges
+            auction_features = features.get('auction_features', {})
+            opener_relationship = auction_features.get('opener_relationship')
+
+            if opener_relationship == 'Me':
+                # I opened, partner is responder
+                # Cap partner's max at realistic response values
+                partner_max = ranges.responder_hcp[1] if ranges.responder_hcp else 18
+                # Responses rarely exceed 18 HCP (even jump shifts)
+                partner_max = min(partner_max, 18)
+            elif opener_relationship == 'Partner':
+                # Partner opened, I'm responder
+                partner_max = ranges.opener_hcp[1] if ranges.opener_hcp else 21
+                # Opening bids cap at 21 for 1-level (except 2♣)
+                # Check if partner opened 2♣
+                opening_bid = auction_features.get('opening_bid', '')
+                if opening_bid == '2♣':
+                    partner_max = min(partner_max, 25)
+                elif opening_bid == '2NT':
+                    partner_max = min(partner_max, 22)
+                elif opening_bid == '1NT':
+                    partner_max = min(partner_max, 17)
+                else:
+                    partner_max = min(partner_max, 21)
+            else:
+                # Competitive - very conservative
+                partner_max = 15
+
+            return my_hcp + partner_max
+
+        # Legacy fallback - very conservative
+        partner_max_hcp = self._estimate_partner_max_hcp(features, auction)
+        return my_hcp + partner_max_hcp
+
+    def _estimate_partner_max_hcp(self, features: Dict, auction: List) -> int:
+        """
+        Conservative estimate of partner's maximum HCP.
+
+        Used for hard ceiling calculation when AuctionContext unavailable.
+        """
+        auction_features = features.get('auction_features', features)
+        opener_relationship = auction_features.get('opener_relationship') or auction_features.get('opener')
+
+        # If partner opened
+        if opener_relationship and opener_relationship.lower() == 'partner':
+            for bid in auction:
+                if bid == "Pass":
+                    continue
+                if bid == "1NT":
+                    return 17  # 1NT opening (15-17 HCP)
+                if bid == "2NT":
+                    return 22  # 2NT opening (20-22 HCP)
+                if bid == "2♣":
+                    return 25  # Strong 2♣ (22+ HCP)
+                if bid.startswith("1"):
+                    return 21  # Standard 1-level opening max
+            return 21
+
+        # If I opened and partner responded
+        if opener_relationship and opener_relationship.lower() == 'me':
+            # Simple responses max at 12-15 HCP
+            # Jump shifts max at 18 HCP
+            return 18
+
+        # Competitive - very conservative
+        return 15
 
     def _estimate_partner_hcp(self, features: Dict, auction: List) -> int:
         """
@@ -391,6 +519,32 @@ class SanityChecker:
         # Allow the response to come through
         if has_4nt:
             return True
+
+        return False
+
+    def _is_blackwood_response(self, bid: str, auction: List) -> bool:
+        """
+        Check if the current bid is a Blackwood ace-showing response.
+
+        Returns True for:
+        - 5♣/5♦/5♥/5♠ immediately after 4NT (ace-showing responses)
+        - 5NT (king ask)
+
+        These conventional responses should bypass HCP checks.
+        Slam bids (6/7 level) should NOT bypass - they're subject to Governor.
+        """
+        # 5NT is always a Blackwood continuation (king ask)
+        if bid == "5NT":
+            return True
+
+        # Check for 5-level ace responses after 4NT
+        if len(bid) >= 2 and bid[0] == '5' and bid[1] in '♣♦♥♠':
+            # Only count as Blackwood response if 4NT was bid recently
+            # (within the last few bids, allowing for passes)
+            recent_bids = auction[-6:] if len(auction) >= 6 else auction
+            for past_bid in recent_bids:
+                if past_bid == '4NT':
+                    return True
 
         return False
 
