@@ -53,6 +53,14 @@ except ImportError:
     TacticalPlayFilter = None
     SignalResult = None
 
+# Import heuristic backfill adapter for physics violation analysis
+try:
+    from engine.feedback.heuristic_backfill_adapter import get_heuristic_backfill_adapter
+    HEURISTIC_ADAPTER_AVAILABLE = True
+except ImportError:
+    HEURISTIC_ADAPTER_AVAILABLE = False
+    get_heuristic_backfill_adapter = None
+
 
 class PlayCorrectnessLevel(Enum):
     """Classification of play correctness"""
@@ -121,6 +129,9 @@ class PlayFeedback:
     signal_heuristic: Optional[str] = None    # Heuristic applied (e.g., "MIN_OF_EQUALS")
     signal_context: Optional[str] = None      # Context type (e.g., "SECOND_HAND_FOLLOW")
     is_signal_optimal: bool = True            # True if follows standard conventions
+
+    # Physics violation analysis (for HeuristicScorecard component)
+    physics_violation: Optional[Dict] = None  # Structured physics principle violation data
 
     def to_dict(self) -> Dict:
         """Convert to JSON-serializable dict"""
@@ -232,6 +243,14 @@ class PlayFeedbackGenerator:
                 self._tactical_filter = TacticalPlayFilter()
             except Exception as e:
                 print(f"PlayFeedbackGenerator: TacticalPlayFilter init failed ({e})")
+
+        # Initialize heuristic backfill adapter for physics violation analysis
+        self._heuristic_adapter = None
+        if HEURISTIC_ADAPTER_AVAILABLE:
+            try:
+                self._heuristic_adapter = get_heuristic_backfill_adapter()
+            except Exception as e:
+                print(f"PlayFeedbackGenerator: HeuristicBackfillAdapter init failed ({e})")
 
     def _evaluate_signal(self,
                          play_state: PlayState,
@@ -386,7 +405,7 @@ class PlayFeedbackGenerator:
         # is_signal_optimal=False suggests it wasn't. This confuses users.
         #
         # Resolution: If reasoning indicates the play was actually correct/good, align is_signal_optimal.
-        if correctness == Correctness.OPTIMAL and not is_signal_optimal and reasoning:
+        if correctness == PlayCorrectnessLevel.OPTIMAL and not is_signal_optimal and reasoning:
             # Check if reasoning says the play was correct
             reasoning_lower = reasoning.lower()
             correct_indicators = ["correct", "conserving", "optimal", "good", "right", "best"]
@@ -396,7 +415,7 @@ class PlayFeedbackGenerator:
                 is_signal_optimal = True
 
         # Build feedback object
-        return PlayFeedback(
+        feedback = PlayFeedback(
             trick_number=len(play_state.trick_history) + 1,
             position=position,
             user_card=user_card_str,
@@ -420,6 +439,23 @@ class PlayFeedbackGenerator:
             signal_context=signal_context,
             is_signal_optimal=is_signal_optimal
         )
+
+        # Enrich with physics violation analysis
+        if self._heuristic_adapter:
+            try:
+                feedback = self._heuristic_adapter.enrich(
+                    feedback=feedback,
+                    play_state=play_state,
+                    user_card=user_card,
+                    optimal_cards=optimal_cards,
+                    position=position
+                )
+            except Exception as e:
+                # Don't fail the whole feedback if physics analysis fails
+                print(f"Physics violation analysis failed: {e}")
+                feedback.physics_violation = None
+
+        return feedback
 
     def evaluate_and_store(self,
                            user_id: int,

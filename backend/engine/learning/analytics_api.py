@@ -26,6 +26,9 @@ from engine.learning.mistake_analyzer import get_mistake_analyzer
 from engine.learning.celebration_manager import get_celebration_manager
 from engine.hand import Hand
 
+# Signal integrity auditor for deduction confidence scoring
+from engine.feedback.signal_integrity_auditor import SignalIntegrityAuditor
+
 # Seat utilities - single source of truth for position calculations
 from utils.seats import partner
 
@@ -2012,6 +2015,23 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
                     'context': d['signal_context']
                 })
 
+        # Generate Signal Integrity Report (Deduction Confidence)
+        # This tells users how well they're communicating with their AI partner
+        signal_integrity_report = None
+        try:
+            auditor = SignalIntegrityAuditor()
+            report = auditor.analyze(decisions)
+            signal_integrity_report = report.to_dict()
+        except Exception as sig_err:
+            print(f"Signal integrity analysis failed: {sig_err}")
+            signal_integrity_report = {
+                'signal_integrity_score': 100.0,
+                'deduction_confidence': 'expert',
+                'total_signals': 0,
+                'optimal_signals': 0,
+                'error': str(sig_err)
+            }
+
         return {
             'has_data': True,
             'total_plays': total,
@@ -2026,6 +2046,7 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
             'accuracy_rate': round((optimal + good) / total * 100, 1) if total > 0 else 0,
             'notable_mistakes': notable_mistakes,
             'signal_warnings': signal_warnings,
+            'signal_integrity': signal_integrity_report,
             'all_decisions': decisions
         }
 
