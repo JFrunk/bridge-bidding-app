@@ -338,6 +338,22 @@ def analyze_forcing_status(auction_history: list, positions: list, my_index: int
                 result['must_bid'] = False  # It's my turn, not partner's
             return result
 
+    # CRITICAL: Check if I am opener and partner responded with a new suit
+    # A new suit response by partner is FORCING - opener MUST rebid
+    # This is the reverse perspective: I opened, partner responded in new suit
+    if opener_index == my_index and len(partner_bids) >= 1:
+        partner_response = partner_bids[0][1]  # Partner's first response
+        partner_response_suit = get_suit_from_bid(partner_response)
+        opening_suit = get_suit_from_bid(opening_bid)
+
+        # Partner's new suit response is forcing one round
+        if partner_response_suit and opening_suit and partner_response_suit != opening_suit:
+            # Check it's not just a raise of our suit
+            result['forcing_type'] = 'one_round_forcing'
+            result['forcing_source'] = 'partner_new_suit_response'
+            result['must_bid'] = True
+            return result
+
     # Check if partner's last bid was a new suit (forcing on me)
     if partner_bids:
         last_partner_bid = partner_bids[-1][1]
