@@ -728,6 +728,30 @@
   text-decoration: underline;
 }
 
+/* Show More/Less toggle container */
+.show-more-container {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-2, 8px);
+}
+
+.show-more-btn {
+  background: none;
+  border: 1px solid var(--border-color, #e2e8f0);
+  color: var(--text-secondary, #6b7280);
+  font-size: var(--text-sm, 14px);
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.show-more-btn:hover {
+  background: var(--bg-secondary, #f8f9fa);
+  border-color: var(--color-primary, #2563eb);
+  color: var(--color-primary, #2563eb);
+}
+
 .decisions-list,
 .hands-list {
   display: flex;

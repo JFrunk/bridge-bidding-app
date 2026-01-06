@@ -351,7 +351,12 @@ const HandReviewModal = ({
   onReplay,
   onViewProgress,
   // Whether to show the result section prominently (true when replacing ScoreModal)
-  showResultSection = false
+  showResultSection = false,
+  // Navigation between hands (from hand list)
+  onPrevHand,
+  onNextHand,
+  currentIndex,
+  totalHands
 }) => {
   const [handData, setHandData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -650,6 +655,32 @@ const HandReviewModal = ({
             <div className="modal-title-row">
               <h2>Play-by-Play Review</h2>
               <ChartHelp chartType="play-review" variant="icon" />
+              {/* Hand navigation - prev/next between hands in the list */}
+              {totalHands > 1 && (
+                <div className="hand-navigation">
+                  <button
+                    className="hand-nav-btn"
+                    onClick={onPrevHand}
+                    disabled={!onPrevHand}
+                    aria-label="Previous hand"
+                    title="Previous hand"
+                  >
+                    ◀ Prev
+                  </button>
+                  <span className="hand-nav-counter">
+                    {currentIndex + 1} / {totalHands}
+                  </span>
+                  <button
+                    className="hand-nav-btn"
+                    onClick={onNextHand}
+                    disabled={!onNextHand}
+                    aria-label="Next hand"
+                    title="Next hand"
+                  >
+                    Next ▶
+                  </button>
+                </div>
+              )}
             </div>
             <div className="contract-info">
               {/* Contract and result */}

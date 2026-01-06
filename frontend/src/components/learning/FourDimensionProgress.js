@@ -139,7 +139,7 @@ const FourDimensionProgress = ({
           id="practice-bid"
           icon="🎯"
           title="Practice Bid"
-          miniStats={getPracticeBidMiniStats(bid_practice_quality)}
+          miniStats={getPracticeBidMiniStats(bid_practice_quality, biddingHands.length)}
           actionLabel="Practice →"
           onAction={() => onStartPractice?.('bidding')}
           expanded={expandedBars['practice-bid']}
@@ -150,6 +150,7 @@ const FourDimensionProgress = ({
             quality={bid_practice_quality}
             biddingHands={biddingHands}
             onReviewHand={onReviewHand}
+            onShowBiddingHistory={onShowHandHistory}
           />
         </ProgressBar>
 
@@ -173,7 +174,7 @@ const FourDimensionProgress = ({
           id="practice-play"
           icon="♠"
           title="Practice Play"
-          miniStats={getPracticePlayMiniStats(play_practice_quality)}
+          miniStats={getPracticePlayMiniStats(play_practice_quality, handHistory.length)}
           actionLabel="Practice →"
           onAction={() => onStartPractice?.('play')}
           expanded={expandedBars['practice-play']}
@@ -219,12 +220,16 @@ const getLearnBidMiniStats = (journey) => {
   return `Level ${level} • ${skills} • ${pct}%`;
 };
 
-const getPracticeBidMiniStats = (quality) => {
+const getPracticeBidMiniStats = (quality, recentCount) => {
   const avg = Math.round(quality?.overall_accuracy || 0);
   const trend = quality?.recent_trend || 'stable';
   const trendIcon = trend === 'improving' ? '↗' : trend === 'declining' ? '↘' : '→';
-  const hands = quality?.total_decisions || 0;
-  return `${avg}% avg • ${trendIcon} ${trend} • ${hands} hands`;
+  const totalHands = quality?.total_decisions || 0;
+  // Show "X recent of Y total" when there are more hands than displayed
+  const handsText = recentCount && recentCount < totalHands
+    ? `${recentCount} of ${totalHands} hands`
+    : `${totalHands} hands`;
+  return `${avg}% avg • ${trendIcon} ${trend} • ${handsText}`;
 };
 
 const getLearnPlayMiniStats = (journey) => {
@@ -234,13 +239,17 @@ const getLearnPlayMiniStats = (journey) => {
   return `Level ${level} • ${skills} • ${pct}%`;
 };
 
-const getPracticePlayMiniStats = (quality) => {
+const getPracticePlayMiniStats = (quality, recentCount) => {
   const playStats = quality?.play_decision_stats;
   const avg = Math.round(playStats?.optimal_rate || quality?.declarer_success_rate || 0);
   const trend = quality?.recent_trend || 'stable';
   const trendIcon = trend === 'improving' ? '↗' : trend === 'declining' ? '↘' : '→';
-  const hands = quality?.total_hands_played || 0;
-  return `${avg}% quality • ${trendIcon} ${trend} • ${hands} hands`;
+  const totalHands = quality?.total_hands_played || 0;
+  // Show "X recent of Y total" when there are more hands than displayed
+  const handsText = recentCount && recentCount < totalHands
+    ? `${recentCount} of ${totalHands} hands`
+    : `${totalHands} hands`;
+  return `${avg}% quality • ${trendIcon} ${trend} • ${handsText}`;
 };
 
 const getPerformanceOverviewMiniStats = (bidQuality, playQuality) => {
@@ -463,11 +472,18 @@ const ConventionChip = ({ conv }) => {
 // PRACTICE BID EXPANDED
 // ============================================================================
 
-const PracticeBidExpanded = ({ quality, biddingHands, onReviewHand }) => {
+const PracticeBidExpanded = ({ quality, biddingHands, onReviewHand, onShowBiddingHistory }) => {
+  const [showAll, setShowAll] = useState(false);
   const goodRate = quality?.good_rate || 0;
   const suboptimalRate = quality?.suboptimal_rate || 0;
   const errorRate = quality?.error_rate || 0;
   const avgScore = Math.round(quality?.overall_accuracy || 0);
+
+  // Show 4 hands initially, 10 when expanded
+  const displayCount = showAll ? 10 : 4;
+  const handsToShow = biddingHands?.slice(0, displayCount) || [];
+  const hasMore = biddingHands && biddingHands.length > displayCount;
+  const totalHands = quality?.total_decisions || 0;
 
   return (
     <div className="expanded-content practice-bid-content">
@@ -489,16 +505,32 @@ const PracticeBidExpanded = ({ quality, biddingHands, onReviewHand }) => {
         <div className="recent-hands-section">
           <div className="section-header">
             <span className="section-title">Recent Hands</span>
+            {onShowBiddingHistory && totalHands > 10 && (
+              <button className="see-all-btn" onClick={() => onShowBiddingHistory?.('bidding')}>
+                See All {totalHands} →
+              </button>
+            )}
           </div>
           <div className="hands-list">
-            {biddingHands.slice(0, 4).map((hand, idx) => (
+            {handsToShow.map((hand, idx) => (
               <BiddingHandRow
                 key={hand.hand_id || idx}
                 hand={hand}
-                onReview={() => onReviewHand?.(hand.hand_id, 'bidding')}
+                onReview={() => onReviewHand?.(hand.hand_id, 'bidding', biddingHands)}
               />
             ))}
           </div>
+          {/* Show More / Show Less toggle */}
+          {biddingHands.length > 4 && (
+            <div className="show-more-container">
+              <button
+                className="show-more-btn"
+                onClick={() => setShowAll(!showAll)}
+              >
+                {showAll ? 'Show Less ↑' : `Show More (${Math.min(biddingHands.length, 10) - 4} more) ↓`}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -682,6 +714,7 @@ const LearnPlayExpanded = ({ journey }) => {
 // ============================================================================
 
 const PracticePlayExpanded = ({ quality, handHistory, onReviewHand, onShowHandHistory }) => {
+  const [showAll, setShowAll] = useState(false);
   const playStats = quality?.play_decision_stats || {};
   const hasPlayData = playStats.optimal_rate > 0 || playStats.avg_score > 0;
 
@@ -692,12 +725,11 @@ const PracticePlayExpanded = ({ quality, handHistory, onReviewHand, onShowHandHi
 
   // Category data now comes from play_decision_stats in the four-dimension progress API
   const tricksLost = playStats?.total_tricks_lost || 0;
-  // Play Categories section hidden per user request
-  // const categoryBreakdown = playStats?.category_breakdown || {};
-  // const topCategories = Object.entries(categoryBreakdown)
-  //   .filter(([_, data]) => data.attempts > 0)
-  //   .sort((a, b) => b[1].attempts - a[1].attempts)
-  //   .slice(0, 6);
+  const totalHands = quality?.total_hands_played || 0;
+
+  // Show 4 hands initially, 10 when expanded
+  const displayCount = showAll ? 10 : 4;
+  const handsToShow = handHistory?.slice(0, displayCount) || [];
 
   return (
     <div className="expanded-content practice-play-content">
@@ -725,33 +757,34 @@ const PracticePlayExpanded = ({ quality, handHistory, onReviewHand, onShowHandHi
         <div className="recent-hands-section">
           <div className="section-header">
             <span className="section-title">Recent Hands</span>
-            {onShowHandHistory && (
-              <button className="see-all-btn" onClick={onShowHandHistory}>See All →</button>
+            {onShowHandHistory && totalHands > 10 && (
+              <button className="see-all-btn" onClick={onShowHandHistory}>
+                See All {totalHands} →
+              </button>
             )}
           </div>
           <div className="hands-list">
-            {handHistory.slice(0, 3).map((hand, idx) => (
+            {handsToShow.map((hand, idx) => (
               <HandRow
                 key={hand.id || idx}
                 hand={hand}
-                onReview={() => onReviewHand?.(hand.id)}
+                onReview={() => onReviewHand?.(hand.id, 'play', handHistory)}
               />
             ))}
           </div>
+          {/* Show More / Show Less toggle */}
+          {handHistory.length > 4 && (
+            <div className="show-more-container">
+              <button
+                className="show-more-btn"
+                onClick={() => setShowAll(!showAll)}
+              >
+                {showAll ? 'Show Less ↑' : `Show More (${Math.min(handHistory.length, 10) - 4} more) ↓`}
+              </button>
+            </div>
+          )}
         </div>
       )}
-
-      {/* Play Categories Grid - Hidden per user request */}
-      {/* {topCategories.length > 0 && (
-        <div className="categories-section">
-          <div className="section-title">Play Categories</div>
-          <div className="categories-grid">
-            {topCategories.map(([category, data]) => (
-              <CategoryCard key={category} category={category} data={data} />
-            ))}
-          </div>
-        </div>
-      )} */}
     </div>
   );
 };

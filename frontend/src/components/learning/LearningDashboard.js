@@ -22,6 +22,9 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
   const [reviewType, setReviewType] = useState(null); // 'play' or 'bidding'
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  // Track hand list for prev/next navigation in modals
+  const [handListForNav, setHandListForNav] = useState([]);
+  const [currentHandIndex, setCurrentHandIndex] = useState(-1);
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -43,12 +46,30 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
   // Handle opening hand review modal
   // Accepts either a hand object with id property, or just the hand ID directly
   // Second parameter specifies type: 'play' (default) or 'bidding'
-  const handleOpenReview = (handOrId, type = 'play') => {
+  // Third parameter is optional hand list for prev/next navigation
+  const handleOpenReview = (handOrId, type = 'play', handList = []) => {
     const handId = typeof handOrId === 'object' ? handOrId.id : handOrId;
     if (handId) {
       setSelectedHandId(handId);
       setReviewType(type);
       setShowReviewModal(true);
+      // Store hand list for navigation
+      if (handList.length > 0) {
+        setHandListForNav(handList);
+        const idx = handList.findIndex(h => (h.id || h.hand_id) === handId);
+        setCurrentHandIndex(idx >= 0 ? idx : 0);
+      }
+    }
+  };
+
+  // Navigate to previous/next hand in the list
+  const handleNavigateHand = (direction) => {
+    if (handListForNav.length === 0) return;
+    const newIndex = currentHandIndex + direction;
+    if (newIndex >= 0 && newIndex < handListForNav.length) {
+      setCurrentHandIndex(newIndex);
+      const hand = handListForNav[newIndex];
+      setSelectedHandId(hand.id || hand.hand_id);
     }
   };
 
@@ -57,6 +78,8 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
     setShowReviewModal(false);
     setSelectedHandId(null);
     setReviewType(null);
+    setHandListForNav([]);
+    setCurrentHandIndex(-1);
   };
 
   if (loading) {
@@ -146,6 +169,11 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
         <HandReviewModal
           handId={selectedHandId}
           onClose={handleCloseReview}
+          // Navigation props
+          onPrevHand={currentHandIndex > 0 ? () => handleNavigateHand(-1) : null}
+          onNextHand={currentHandIndex < handListForNav.length - 1 ? () => handleNavigateHand(1) : null}
+          currentIndex={currentHandIndex}
+          totalHands={handListForNav.length}
         />
       )}
 
@@ -154,6 +182,11 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
         <BidReviewModal
           handId={selectedHandId}
           onClose={handleCloseReview}
+          // Navigation props
+          onPrevHand={currentHandIndex > 0 ? () => handleNavigateHand(-1) : null}
+          onNextHand={currentHandIndex < handListForNav.length - 1 ? () => handleNavigateHand(1) : null}
+          currentIndex={currentHandIndex}
+          totalHands={handListForNav.length}
         />
       )}
 

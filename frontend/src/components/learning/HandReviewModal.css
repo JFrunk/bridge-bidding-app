@@ -3312,3 +3312,87 @@
     min-height: 18px;
   }
 }
+
+/* =====================================================
+   HAND NAVIGATION - Prev/Next between hands in list
+   ===================================================== */
+
+.hand-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3, 12px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  background: var(--bg-tertiary, #f1f5f9);
+  border-radius: var(--radius-md, 8px);
+  margin-left: var(--space-4, 16px);
+}
+
+.hand-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--bg-card, white);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-sm, 6px);
+  font-size: var(--text-sm, 14px);
+  font-weight: 500;
+  color: var(--text-primary, #1f2937);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 36px;
+  min-width: 44px;
+}
+
+.hand-nav-btn:hover:not(:disabled) {
+  background: var(--bg-secondary, #f8fafc);
+  border-color: var(--color-info, #3b82f6);
+  color: var(--color-info, #3b82f6);
+}
+
+.hand-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--bg-tertiary, #f1f5f9);
+}
+
+.hand-nav-counter {
+  font-size: var(--text-sm, 14px);
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  min-width: 50px;
+  text-align: center;
+}
+
+/* Responsive hand navigation */
+@media (max-width: 768px) {
+  .hand-navigation {
+    margin-left: 0;
+    margin-top: var(--space-2, 8px);
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal-header {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .hand-navigation {
+    gap: var(--space-2, 8px);
+    padding: var(--space-2, 8px);
+  }
+
+  .hand-nav-btn {
+    padding: 4px 8px;
+    font-size: var(--text-xs, 12px);
+    min-width: 40px;
+  }
+
+  .hand-nav-counter {
+    font-size: var(--text-xs, 12px);
+    min-width: 40px;
+  }
+}
