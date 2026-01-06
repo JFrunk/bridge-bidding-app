@@ -1,0 +1,1774 @@
+% PBN 2.1
+% EXPORT
+%Content-type: text/x-pbn; charset=ISO-8859-1
+%Creator: BridgeComposer Version 5.114
+%Created: Tue Dec 23 13:55:01 2025 -0800
+%BCOptions DDLeads Float STBorder STLabelSx STShade
+%BidAndCardSpacing Thin
+%BoardsPerPage 1
+%CardTableColors #008000,#ffffff,#aaaaaa
+%DDAFormat 0
+%DefaultPagination 0
+%Font:CardTable "Arial",11,400,0
+%Font:Commentary "Times New Roman",12,400,0
+%Font:Diagram "Times New Roman",18,400,0
+%Font:Event "Times New Roman",12,400,0
+%Font:FixedPitch "Courier New",10,400,0
+%Font:HandRecord "Arial",11,400,0
+%GutterSize 500,500
+%HRTitleDate 2025.12.23
+%HRTitleEvent "Alpine Club Championship"
+%HRTitleSetID ""
+%HRTitleSetIDPrefix "pd"
+%HRTitleSite "Palo Alto Bridge Center"
+%HtmlClubs entity,"https://bridgecomposer.com/suitimg/c.gif"
+%HtmlDiamonds entity,"https://bridgecomposer.com/suitimg/d.gif"
+%HtmlHearts entity,"https://bridgecomposer.com/suitimg/h.gif"
+%HtmlNavBar 0.75,#cfe2f3
+%HtmlSpades entity,"https://bridgecomposer.com/suitimg/s.gif"
+%Margins 1000,1000,1000,1000
+%PaperSize 1,2159,2794,14
+%ParaIndent 0
+%PipColors #000000,#ff0000,#ff4200,#000080
+%PipFont "Symbol","Symbol",2,0xAA,0xA9,0xA8,0xA7
+%ScoreTableColors #e6e6e6,#000000
+%SectionSpacing 0,0,0
+%SelectedBoard 0
+%ShowBoardLabels 2
+%ShowCardTable 2
+%TSTCustomSortOrder Default
+%TSTReport List
+%TSTReportOrder ByNumber
+%TSTReportShade Yes
+% Dealer4 ver 4.82
+[Event "Alpine Club Championship"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "1"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:83.A985.J7432.T9 QT.QJ.AK65.AKJ74 AJ976.7642.T.852 K542.KT3.Q98.Q63"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "2563225632b87abb87ab"]
+[OptimumScore "EW 460"]
+[ParContract "EW 3N+2"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\4;H\4;D\5;C"]
+N  H  6 83   985  J7432 T9
+S  S  5 -    7642 T     852
+S  H  6 J976 7642 T     852
+E NT 11 Q    QJ   AK65  AKJ74
+E  H  7 Q    QJ   AK65  AKJ74
+E  D 10 QT   QJ   65    AKJ74
+W NT 11 542  KT3  Q98   Q63
+W  H  7 542  3    Q98   Q63
+W  D 10 K542 KT3  Q     Q63
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  2
+N  S  5
+N  H  6
+N  D  3
+N  C  2
+S NT  2
+S  S  5
+S  H  6
+S  D  3
+S  C  2
+E NT 11
+E  S  8
+E  H  7
+E  D 10
+E  C 11
+W NT 11
+W  S  8
+W  H  7
+W  D 10
+W  C 11
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3L;Declarer;Lead;Result\2R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+B 1 1 3NT E - 10   - 430 - - Ogawa-Arbian        Lu-Whitaker
+A 1 1 3NT W - 11   - 460 - - Hemsley-Dudman      Cervellino-Carr
+A 5 5 3NT E - 11   - 460 - - Sehgal-Budabin      Simmons-Lechner
+A 7 7 3NT W - 11   - 460 - - Wheeler-Yoshikawa   Walker-Resser
+A 3 3 3NT W - 11   - 460 - - Joffe-Somers        Ballard-Cheng
+B 7 7 6C  E - 10 100   - - - Schafer-Epperly     Chen-Holzman
+A 9 8 3NT W - 11   - 460 - - Kurasaki-Green      MacGregor-Mohanram
+B 6 5 3NT E - 11   - 460 - - Stephenson-Hamilton Mo-Rudberg
+B 5 3 3NT E - 11   - 460 - - Riley-Moriconi      Rubin-Gibson
+A 8 4 3NT E - 11   - 460 - - Luo-Davis           Baldwin-Bao
+A 6 2 3NT W - 11   - 460 - - Horowitz-Hashfield  Porter-Friedman
+A 4 9 4NT E - 11   - 460 - - Luttrell-Chen       MacDonald-Boucher
+A 2 6 3NT E - 11   - 460 - - Xie-Chang           Macgregor-Chernick
+B 4 8 3C  E - 10   - 130 - - Lloyd-Dandavati     Alexander-Delegeane
+B 3 6 2D  E - 10   - 130 - - Hoff-Roy            Bhatia-Belani
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "2"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "E"]
+[Vulnerable "NS"]
+[Deal "E:AK5.J.KJ92.AT753 Q8732.KQ32.T.Q98 J.A8754.A764.J64 T964.T96.Q853.K2"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "3742227422a68aba68ab"]
+[OptimumScore "EW 430"]
+[ParContract "EW 3N+1"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\4;H\5;D\4;C"]
+N NT  3 T964 T96   -    -
+N  H  5 T964 -     -    -
+N  D  3 -    T96   -    -
+N  C  2 T964 T96   Q853 -
+S NT  3 Q    KQ32  -    -
+S  S  7 Q    KQ    T    Q98
+S  H  5 Q    -     -    -
+S  D  3 -    KQ    -    -
+S  C  2 Q    KQ32  T    -
+E NT 10 AK   J     J92  -
+E  S  6 AK   J     KJ92 AT753
+E  H  9 -    J     -    -
+E  D 11 AK   -     J92  AT753
+E  C 11 AK5  J     2    AT753
+W NT 11 -    -     764  64
+W  H  9 -    A8754 764  64
+W  D 11 J    -     A764 J64
+W  C 11 J    A     A764 J64
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  3
+N  S  7
+N  H  4
+N  D  2
+N  C  2
+S NT  2
+S  S  7
+S  H  4
+S  D  2
+S  C  2
+E NT 10
+E  S  6
+E  H  8
+E  D 10
+E  C 11
+W NT 10
+W  S  6
+W  H  8
+W  D 10
+W  C 11
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3L;Declarer;Lead;Result\2R;Score_NS\1R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+B 1 1 3D  E - 10 - 130 - - Ogawa-Arbian        Lu-Whitaker
+A 5 5 3NT E -  9 - 400 - - Sehgal-Budabin      Simmons-Lechner
+A 1 1 3NT E - 12 - 490 - - Hemsley-Dudman      Cervellino-Carr
+A 7 7 3NT E - 10 - 430 - - Wheeler-Yoshikawa   Walker-Resser
+A 3 3 2H  W -  9 - 140 - - Joffe-Somers        Ballard-Cheng
+B 7 7 2D  W - 10 - 130 - - Schafer-Epperly     Chen-Holzman
+A 9 8 3D  E - 10 - 130 - - Kurasaki-Green      MacGregor-Mohanram
+B 6 5 3NT E - 10 - 430 - - Stephenson-Hamilton Mo-Rudberg
+B 5 3 3D  W - 11 - 150 - - Riley-Moriconi      Rubin-Gibson
+A 8 4 3NT E -  9 - 400 - - Luo-Davis           Baldwin-Bao
+A 6 2 3C  E - 11 - 150 - - Horowitz-Hashfield  Porter-Friedman
+A 4 9 3NT E - 10 - 430 - - Luttrell-Chen       MacDonald-Boucher
+A 2 6 3NT W - 11 - 460 - - Xie-Chang           Macgregor-Chernick
+B 4 8 1NT E -  9 - 150 - - Lloyd-Dandavati     Alexander-Delegeane
+B 3 6 3NT E - 11 - 460 - - Hoff-Roy            Bhatia-Belani
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "3"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "S"]
+[Vulnerable "EW"]
+[Deal "S:K952.KQJ7.A75.J6 64.T4.KT63.T8754 AQJ3.5.QJ94.AQ32 T87.A98632.82.K9"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "ab8a9ab8a93253432534"]
+[OptimumScore "NS 450"]
+[ParContract "NS 4S+1"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\4;H\6;D\4;C"]
+N  S 11 AQJ3 5      QJ94 A32
+N  C  9 AQJ3 5      QJ   32
+S NT 10 K952 KQJ    A75  J6
+S  S 11 K952 KQJ    A75  J6
+S  H  8 K952 KQJ    A75  J6
+S  D 10 K952 KQJ    A75  J6
+S  C  9 K952 KQJ    75   -
+E NT  3 T87  98632  82   -
+E  S  2 T87  A98632 82   -
+E  H  5 T87  A98632 82   -
+E  D  3 T87  98632  82   -
+W NT  3 64   T4     -    T8754
+W  S  2 64   T4     T63  T8754
+W  H  5 64   T4     -    T8754
+W  D  3 64   T4     T63  T8754
+W  C  4 64   T4     T63  T8754
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT 10
+N  S 11
+N  H  8
+N  D 10
+N  C  9
+S NT 10
+S  S 11
+S  H  8
+S  D 10
+S  C  9
+E NT  3
+E  S  2
+E  H  5
+E  D  3
+E  C  4
+W NT  3
+W  S  2
+W  H  5
+W  D  3
+W  C  4
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3;Declarer;Lead;Result\2R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+A 1 1 4S  N - 11 450   - - - Hemsley-Dudman      Cervellino-Carr
+A 5 5 4S  N - 11 450   - - - Sehgal-Budabin      Simmons-Lechner
+A 7 7 4S  N - 11 450   - - - Wheeler-Yoshikawa   Walker-Resser
+B 1 1 6S  N - 11   -  50 - - Ogawa-Arbian        Lu-Whitaker
+A 3 3 4S  N - 10 420   - - - Joffe-Somers        Ballard-Cheng
+B 7 7 4S  N - 11 450   - - - Schafer-Epperly     Chen-Holzman
+A 9 8 4S  S - 11 450   - - - Kurasaki-Green      MacGregor-Mohanram
+B 6 5 4S  N -  8   - 100 - - Stephenson-Hamilton Mo-Rudberg
+B 5 3 4S  N - 10 420   - - - Riley-Moriconi      Rubin-Gibson
+A 6 2 4S  N - 10 420   - - - Horowitz-Hashfield  Porter-Friedman
+A 8 4 4S  N - 11 450   - - - Luo-Davis           Baldwin-Bao
+A 4 9 3NT N - 11 460   - - - Luttrell-Chen       MacDonald-Boucher
+A 2 6 6S  S - 11   -  50 - - Xie-Chang           Macgregor-Chernick
+B 4 8 4S  N - 10 420   - - - Lloyd-Dandavati     Alexander-Delegeane
+B 3 6 4S  N - 10 420   - - - Hoff-Roy            Bhatia-Belani
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "4"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "W"]
+[Vulnerable "All"]
+[Deal "W:K7.QJ94.KQ.AQJ76 AQ8.K82.854.K842 J642.T3.9762.T95 T953.A765.AJT3.3"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCConfirm "B4"]
+[BCConfirmMod "12/23/25 13:45:12"]
+[BCFlags "1f"]
+[DoubleDummyTricks "89896898965354753547"]
+[OptimumScore "NS 140"]
+[ParContract "NS 1S+2"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\4;H\4;D\4;C"]
+N NT  8 A    K82  854  842
+N  S 10 -    -    854  -
+N  H  8 A8   K82  854  842
+N  D  9 -    82   854  -
+N  C  6 -    K82  854  842
+S  S 10 T953 -    AJT3 3
+S  D  9 T953 A    AJT3 3
+E NT  5 642  T3   9762 T95
+E  S  4 -    T3   -    -
+E  H  5 642  T3   9762 T95
+E  D  4 642  T3   762  T95
+E  C  7 642  T3   9762 T95
+W  S  4 -    QJ94 -    -
+W  H  5 K7   QJ94 KQ   A
+[OptimumResultTable "Declarer;Denomination\2R;Result\1R"]
+N NT 8
+N  S 9
+N  H 8
+N  D 9
+N  C 6
+S NT 8
+S  S 9
+S  H 8
+S  D 9
+S  C 6
+E NT 5
+E  S 3
+E  H 5
+E  D 4
+E  C 7
+W NT 5
+W  S 3
+W  H 5
+W  D 4
+W  C 7
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3L;Declarer;Lead;Result\1R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+B 6 6 1C  W - 7   -  70 - - Stephenson-Hamilton Bhatia-Belani
+B 2 2 2NT N - 6   - 200 - - Brooks-Brooks       Tsai-Wu
+A 1 9 1C  W - 7   -  70 - - Hemsley-Dudman      MacDonald-Boucher
+A 5 4 1NT N - 7  90   - - - Sehgal-Budabin      Baldwin-Bao
+A 7 6 2S  N - 9 140   - - - Wheeler-Yoshikawa   Macgregor-Chernick
+B 5 4 1C  W - 8   -  90 - - Riley-Moriconi      Hom-Abrol
+A 3 2 2NT N - 7   - 100 - - Joffe-Somers        Porter-Friedman
+B 1 8 3NT N - 7   - 200 - - Ogawa-Arbian        Alexander-Delegeane
+A 2 7 2NT N - 8 120   - - - Xie-Chang           Walker-Resser
+A 9 5 1NT W - 6 100   - - - Kurasaki-Green      Simmons-Lechner
+A 6 1 3NT N - 6   - 300 - - Horowitz-Hashfield  Cervellino-Carr
+A 4 8 3D  S - 9 110   - - - Luttrell-Chen       MacGregor-Mohanram
+A 8 3 1NT N - 7  90   - - - Luo-Davis           Ballard-Cheng
+B 8 3 1C  W - 7   -  70 - - Aggarwal-Nagel      Rubin-Gibson
+B 4 7 2H  W - 5 300   - - - Lloyd-Dandavati     Chen-Holzman
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "5"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "N"]
+[Vulnerable "NS"]
+[Deal "N:Q93.J9865.J4.T62 T765.A3.AK983.KQ K84.QT742.T7.A83 AJ2.K.Q652.J9754"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "1361113611ba7bbba7bb"]
+[OptimumScore "EW 460"]
+[ParContract "EW 3N+2"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\4;H\5;D\5;C"]
+N NT  2 Q93  -     -     -
+N  S  3 -    J9865 J4    T62
+N  H  6 -    J9865 J4    T62
+N  D  2 Q93  -     -     -
+N  C  2 Q93  -     -     -
+S NT  2 K84  -     -     -
+S  S  3 -    QT742 T7    A83
+S  H  6 -    QT742 T7    A83
+S  D  2 K84  -     -     -
+S  C  2 K84  -     -     -
+E NT 12 -    3     AK983 KQ
+E  S 10 T765 3     AK983 KQ
+E  H  7 T765 3     AK983 KQ
+E  D 12 -    A3    AK983 KQ
+E  C 12 -    3     AK983 KQ
+W NT 12 -    K     Q652  9754
+W  D 12 -    K     Q652  9754
+W  C 12 -    K     Q652  9754
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  1
+N  S  3
+N  H  6
+N  D  1
+N  C  1
+S NT  1
+S  S  3
+S  H  6
+S  D  1
+S  C  1
+E NT 11
+E  S 10
+E  H  7
+E  D 11
+E  C 11
+W NT 11
+W  S 10
+W  H  7
+W  D 11
+W  C 11
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3L;Declarer;Lead;Result\2R;Score_NS\1R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+B 6 6 3H  S -  6 - 300 - - Stephenson-Hamilton Bhatia-Belani
+B 2 2 3NT E - 12 - 490 - - Brooks-Brooks       Tsai-Wu
+A 1 9 2D  E - 12 - 170 - - Hemsley-Dudman      MacDonald-Boucher
+A 5 4 3NT E - 12 - 490 - - Sehgal-Budabin      Baldwin-Bao
+A 7 6 3NT E - 12 - 490 - - Wheeler-Yoshikawa   Macgregor-Chernick
+A 3 2 3NT E - 12 - 490 - - Joffe-Somers        Porter-Friedman
+B 5 4 3NT E - 12 - 490 - - Riley-Moriconi      Hom-Abrol
+B 1 8 3D  E - 11 - 150 - - Ogawa-Arbian        Alexander-Delegeane
+A 2 7 4D  E - 12 - 170 - - Xie-Chang           Walker-Resser
+A 9 5 3NT E - 12 - 490 - - Kurasaki-Green      Simmons-Lechner
+A 6 1 3NT E - 11 - 460 - - Horowitz-Hashfield  Cervellino-Carr
+A 4 8 3D  E - 12 - 170 - - Luttrell-Chen       MacGregor-Mohanram
+A 8 3 3NT E - 12 - 490 - - Luo-Davis           Ballard-Cheng
+B 8 3 4D  E - 11 - 150 - - Aggarwal-Nagel      Rubin-Gibson
+B 4 7 5D  E - 11 - 400 - - Lloyd-Dandavati     Chen-Holzman
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "6"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "E"]
+[Vulnerable "EW"]
+[Deal "E:J984.J7.AQ4.AQT3 AQ3.A9863.7.KJ42 T62.KQT54.T962.5 K75.2.KJ853.9876"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "67678676787676566764"]
+[OptimumScore "NS 90"]
+[ParContract "NS 2C="]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\1R;S\4;H\5;D\5;C"]
+N NT 7 -    -     -     9876
+N  S 7 K    2     KJ853 9876
+N  C 9 -    -     -     9876
+S  S 7 3    A     7     -
+S  H 6 AQ3  A9863 7     -
+S  D 7 AQ3  A     7     -
+E NT 7 J984 J7    -     -
+E  S 6 J984 J7    -     A
+E  H 7 J984 J7    -     A
+E  D 6 J984 J7    -     A
+E  C 5 J984 J7    -     -
+W NT 7 T62  -     T9    -
+W  D 6 T62  KQT54 T9    5
+W  C 5 T62  KQT54 T9    -
+[OptimumResultTable "Declarer;Denomination\2R;Result\1R"]
+N NT 6
+N  S 7
+N  H 6
+N  D 7
+N  C 8
+S NT 6
+S  S 7
+S  H 6
+S  D 7
+S  C 8
+E NT 7
+E  S 6
+E  H 7
+E  D 6
+E  C 5
+W NT 6
+W  S 6
+W  H 7
+W  D 6
+W  C 4
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3;Declarer;Lead;Result\1R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+B 6 6 1NT N - 6   -  50 - - Stephenson-Hamilton Bhatia-Belani
+B 2 2 2NT S - 6   - 100 - - Brooks-Brooks       Tsai-Wu
+A 1 9 1NT N - 7  90   - - - Hemsley-Dudman      MacDonald-Boucher
+A 5 4 1NT N - 6   -  50 - - Sehgal-Budabin      Baldwin-Bao
+A 7 6 1NT N - 5   - 100 - - Wheeler-Yoshikawa   Macgregor-Chernick
+A 3 2 1NT N - 7  90   - - - Joffe-Somers        Porter-Friedman
+B 5 4 2H  S - 6   - 100 - - Riley-Moriconi      Hom-Abrol
+B 1 8 2C  S - 8  90   - - - Ogawa-Arbian        Alexander-Delegeane
+A 2 7 1H  S - 7  80   - - - Xie-Chang           Walker-Resser
+A 9 5 3S  W - 8 100   - - - Kurasaki-Green      Simmons-Lechner
+A 6 1 2D  N - 7   -  50 - - Horowitz-Hashfield  Cervellino-Carr
+A 4 8 2H  S - 6   - 100 - - Luttrell-Chen       MacGregor-Mohanram
+A 8 3 1H  S - 7  80   - - - Luo-Davis           Ballard-Cheng
+B 8 3 1H  N - 7  80   - - - Aggarwal-Nagel      Rubin-Gibson
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "7"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "S"]
+[Vulnerable "All"]
+[Deal "S:KT82.J98.QJ52.93 AQ95.AKQT72.9.K4 J764.3.T63.JT765 3.654.AK874.AQ82"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "0202202022dadbbd9dbb"]
+[OptimumScore "EW 2220"]
+[ParContract "EW 7N="]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S;H\3;D\4;C"]
+N  S  4 - -   63   -
+S  S  3 - J98 QJ52 -
+E NT 13 3 654 AK   AQ82
+E  S 11 3 -   -    AQ
+E  H 13 3 654 AK   AQ82
+E  C 11 3 654 AK   82
+W NT 13 A AKQ 9    K4
+W  S 11 - -   -    4
+W  H 13 A AKQ 9    K4
+W  D 11 A AKQ 9    K4
+W  C 11 - AKQ 9    K
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  0
+N  S  2
+N  H  0
+N  D  2
+N  C  2
+S NT  0
+S  S  2
+S  H  0
+S  D  2
+S  C  2
+E NT 13
+E  S 10
+E  H 13
+E  D 11
+E  C 11
+W NT 13
+W  S  9
+W  H 13
+W  D 11
+W  C 11
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3;Declarer;Lead;Result\2R;Score_NS\1R;Score_EW\4R;MP_NS\1R;MP_EW\1R;Names_NS\18;Names_EW"]
+B 5 5 4H  W - 13 -  710 - - Riley-Moriconi     Mo-Rudberg
+B 3 3 4H  W - 13 -  710 - - Hoff-Roy           Rubin-Gibson
+B 2 1 6H  W - 13 - 1460 - - Brooks-Brooks      Lu-Whitaker
+A 1 8 6NT W - 13 - 1470 - - Hemsley-Dudman     MacGregor-Mohanram
+A 7 5 6H  W - 13 - 1460 - - Wheeler-Yoshikawa  Simmons-Lechner
+A 3 1 6NT W - 13 - 1470 - - Joffe-Somers       Cervellino-Carr
+A 5 3 7H  W - 13 - 2210 - - Sehgal-Budabin     Ballard-Cheng
+B 1 7 6H  W - 13 - 1460 - - Ogawa-Arbian       Chen-Holzman
+A 9 6 6H  W - 13 - 1460 - - Kurasaki-Green     Macgregor-Chernick
+B 8 4 6H  W - 13 - 1460 - - Aggarwal-Nagel     Hom-Abrol
+A 6 9 4H  W - 13 -  710 - - Horowitz-Hashfield MacDonald-Boucher
+A 8 2 6H  W - 13 - 1460 - - Luo-Davis          Porter-Friedman
+B 7 2 4H  W - 13 -  710 - - Schafer-Epperly    Tsai-Wu
+A 4 7 6H  W - 13 - 1460 - - Luttrell-Chen      Walker-Resser
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "8"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "W"]
+[Vulnerable "None"]
+[Deal "W:KT987.843.AKT6.A J6542.A96.Q72.T5 A3.JT7.J85.98762 Q.KQ52.943.KQJ43"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "65858658585758557585"]
+[OptimumScore "EW -100"]
+[ParContract "EW 2SX-1; EW 3DX-1"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\1R;S\5;H\4;D\4;C"]
+N NT 8 -     A96  -    T5
+N  S 6 6542  A96  -    -
+N  H 8 6542  A96  -    T5
+N  D 5 6542  A96  -    T5
+N  C 8 J6542 A96  -    5
+S NT 8 -     KQ52 -    KQJ43
+S  S 6 Q     KQ52 -    -
+S  H 8 Q     KQ52 943  43
+E NT 7 A3    -    J85  -
+E  S 8 -     -    J85  98762
+E  D 8 A     JT7  J85  98762
+W NT 7 KT987 -    AK   -
+W  S 8 -     -    AKT6 A
+[OptimumResultTable "Declarer;Denomination\2R;Result\1R"]
+N NT 6
+N  S 5
+N  H 8
+N  D 5
+N  C 8
+S NT 6
+S  S 5
+S  H 8
+S  D 5
+S  C 8
+E NT 5
+E  S 7
+E  H 5
+E  D 8
+E  C 5
+W NT 5
+W  S 7
+W  H 5
+W  D 8
+W  C 5
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract;Declarer;Lead;Result\1R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\18;Names_EW"]
+B 3 3 2D W - 7  50   - - - Hoff-Roy           Rubin-Gibson
+B 5 5 2D W - 7  50   - - - Riley-Moriconi     Mo-Rudberg
+B 2 1 2S W - 7  50   - - - Brooks-Brooks      Lu-Whitaker
+A 1 8 2S W - 7  50   - - - Hemsley-Dudman     MacGregor-Mohanram
+A 7 5 2S W - 7  50   - - - Wheeler-Yoshikawa  Simmons-Lechner
+A 3 1 2S W - 7  50   - - - Joffe-Somers       Cervellino-Carr
+A 5 3 2S W - 7  50   - - - Sehgal-Budabin     Ballard-Cheng
+B 1 7 2D W - 6 100   - - - Ogawa-Arbian       Chen-Holzman
+A 9 6 2S W - 7  50   - - - Kurasaki-Green     Macgregor-Chernick
+B 8 4 2S W - 6 100   - - - Aggarwal-Nagel     Hom-Abrol
+A 6 9 4S W - 7 150   - - - Horowitz-Hashfield MacDonald-Boucher
+A 8 2 2S W - 8   - 110 - - Luo-Davis          Porter-Friedman
+A 4 7 4S W - 8 100   - - - Luttrell-Chen      Walker-Resser
+B 7 2 2D W - 6 100   - - - Schafer-Epperly    Tsai-Wu
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "9"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "N"]
+[Vulnerable "EW"]
+[Deal "N:96.AJT9853.QJ7.T 2.62.932.AKQ8742 AQJ87.K4.K654.J9 KT543.Q7.AT8.653"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "58a9458a945523855238"]
+[OptimumScore "NS 420"]
+[ParContract "NS 4H="]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\2;H\7;D\4;C"]
+N NT  8 96 JT9853  -    -
+N  H 11 -  AJT9853 QJ7  -
+N  D 10 -  JT9853  QJ7  -
+N  C  5 -  AJT9853 QJ7  -
+S NT  8 A  K       -    -
+S  H 11 -  K4      K654 -
+S  D 10 -  K       K654 -
+S  C  5 -  K4      K654 -
+E NT  8 -  -       932  AKQ
+E  S  5 2  62      932  AKQ
+E  H  3 2  -       -    AKQ
+E  D  4 2  -       -    AKQ
+E  C  9 2  -       -    AKQ
+W NT  8 -  -       A    653
+W  S  5 -  Q7      AT8  653
+W  H  3 -  -       -    653
+W  D  4 -  -       -    653
+W  C  9 -  -       -    653
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  5
+N  S  8
+N  H 10
+N  D  9
+N  C  4
+S NT  5
+S  S  8
+S  H 10
+S  D  9
+S  C  4
+E NT  5
+E  S  5
+E  H  2
+E  D  3
+E  C  8
+W NT  5
+W  S  5
+W  H  2
+W  D  3
+W  C  8
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract;Declarer;Lead;Result\2R;Score_NS\3R;Score_EW\2R;MP_NS\1R;MP_EW\1R;Names_NS\18;Names_EW"]
+B 3 3 4H N - 10 420  - - - Hoff-Roy           Rubin-Gibson
+B 5 5 3H N -  8   - 50 - - Riley-Moriconi     Mo-Rudberg
+B 2 1 5C E -  9 200  - - - Brooks-Brooks      Lu-Whitaker
+A 1 8 3H N -  8   - 50 - - Hemsley-Dudman     MacGregor-Mohanram
+A 7 5 5C E -  9 200  - - - Wheeler-Yoshikawa  Simmons-Lechner
+A 3 1 3H N - 11 200  - - - Joffe-Somers       Cervellino-Carr
+A 5 3 2H N -  9 140  - - - Sehgal-Budabin     Ballard-Cheng
+B 1 7 5C E -  9 200  - - - Ogawa-Arbian       Chen-Holzman
+A 9 6 4H N - 11 450  - - - Kurasaki-Green     Macgregor-Chernick
+B 8 4 3H N - 10 170  - - - Aggarwal-Nagel     Hom-Abrol
+A 6 9 4H N - 11 450  - - - Horowitz-Hashfield MacDonald-Boucher
+A 8 2 3H N - 10 170  - - - Luo-Davis          Porter-Friedman
+A 4 7 4H N - 11 450  - - - Luttrell-Chen      Walker-Resser
+B 7 2 4H N - 10 420  - - - Schafer-Epperly    Tsai-Wu
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "10"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "E"]
+[Vulnerable "All"]
+[Deal "E:T7.65.AJ732.8765 A6.JT73.K95.A932 J953.A92.QT6.KT4 KQ842.KQ84.84.QJ"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "89a7889a785436554365"]
+[OptimumScore "NS 620"]
+[ParContract "NS 4H="]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\4;H\4;D\5;C"]
+S NT  8 A6   JT73 95    A
+S  S  9 A6   JT73 -     A932
+S  H 10 A6   JT73 -     A932
+S  D  7 A6   JT73 95    32
+S  C  8 A6   JT73 95    32
+E NT  5 T7   65   J732  8765
+E  S  4 -    65   AJ732 8765
+W NT  5 J953 A92  QT6   -
+W  S  4 53   A92  QT6   -
+W  H  3 J953 A92  QT6   -
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  8
+N  S  9
+N  H 10
+N  D  7
+N  C  8
+S NT  8
+S  S  9
+S  H 10
+S  D  7
+S  C  8
+E NT  5
+E  S  4
+E  H  3
+E  D  6
+E  C  5
+W NT  5
+W  S  4
+W  H  3
+W  D  6
+W  C  5
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3;Declarer;Lead;Result\2R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+B 4 4 1H  N - 10 170   - - - Lloyd-Dandavati     Hom-Abrol
+B 3 2 2H  S -  9 140   - - - Hoff-Roy            Tsai-Wu
+B 2 8 4H  N - 10 620   - - - Brooks-Brooks       Alexander-Delegeane
+A 3 9 4H  N - 10 620   - - - Joffe-Somers        MacDonald-Boucher
+A 7 4 4H  N - 11 650   - - - Wheeler-Yoshikawa   Baldwin-Bao
+A 1 7 3NT S -  9 600   - - - Hemsley-Dudman      Walker-Resser
+A 5 2 4S  N -  9   - 100 - - Sehgal-Budabin      Porter-Friedman
+B 1 6 3H  N -  9 140   - - - Ogawa-Arbian        Bhatia-Belani
+B 8 5 3NT S -  9 600   - - - Aggarwal-Nagel      Mo-Rudberg
+B 7 3 1NT S - 10 180   - - - Schafer-Epperly     Rubin-Gibson
+B 6 1 3NT S -  8   - 100 - - Stephenson-Hamilton Lu-Whitaker
+A 2 5 3NT S -  9 600   - - - Xie-Chang           Simmons-Lechner
+A 9 3 2H  S - 11 200   - - - Kurasaki-Green      Ballard-Cheng
+A 6 8 3NT S -  8   - 100 - - Horowitz-Hashfield  MacGregor-Mohanram
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "11"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "S"]
+[Vulnerable "None"]
+[Deal "S:AKT5.9873.85.KJ3 8732.T.K74.T9875 4.AKQJ642.T92.Q4 QJ96.5.AQJ63.A62"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "76a6576a653737737377"]
+[OptimumScore "NS 420"]
+[ParContract "NS 4H="]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\3;H\4;D\5;C"]
+N NT 10 -   AKQJ -     -
+N  S  6 4   AKQJ T92   Q4
+N  H 10 4   AKQJ T92   Q4
+N  D  6 4   AKQJ T92   Q4
+N  C  6 4   AKQJ -     -
+S NT 10 -   9873 -     -
+S  S  6 AK5 9873 85    KJ3
+S  H 10 AK  9873 85    KJ3
+S  D  6 AK  9873 85    KJ3
+S  C  6 AK  9873 -     -
+E NT  6 -   -    AQJ63 A
+E  H  3 QJ  5    AQJ63 A
+E  D  7 QJ  5    AQJ63 A62
+E  C  8 -   -    AQJ63 A
+W NT  6 -   -    K74   T9875
+W  C  8 -   -    K74   T9875
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  7
+N  S  6
+N  H 10
+N  D  6
+N  C  5
+S NT  7
+S  S  6
+S  H 10
+S  D  6
+S  C  5
+E NT  3
+E  S  7
+E  H  3
+E  D  7
+E  C  7
+W NT  3
+W  S  7
+W  H  3
+W  D  7
+W  C  7
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3;Declarer;Lead;Result\2R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+B 4 4 4H  N - 11 450   - - - Lloyd-Dandavati     Hom-Abrol
+B 3 2 4H  N - 10 420   - - - Hoff-Roy            Tsai-Wu
+B 2 8 4H  N - 10 420   - - - Brooks-Brooks       Alexander-Delegeane
+A 3 9 4H  N - 10 420   - - - Joffe-Somers        MacDonald-Boucher
+A 7 4 5H  N - 10   -  50 - - Wheeler-Yoshikawa   Baldwin-Bao
+A 1 7 4H  N - 10 420   - - - Hemsley-Dudman      Walker-Resser
+A 5 2 4H  N - 11 450   - - - Sehgal-Budabin      Porter-Friedman
+B 1 6 4H  N - 10 420   - - - Ogawa-Arbian        Bhatia-Belani
+B 8 5 6HX N - 10   - 300 - - Aggarwal-Nagel      Mo-Rudberg
+B 7 3 4H  N - 10 420   - - - Schafer-Epperly     Rubin-Gibson
+B 6 1 3H  N - 10 170   - - - Stephenson-Hamilton Lu-Whitaker
+A 9 3 4H  N - 10 420   - - - Kurasaki-Green      Ballard-Cheng
+A 2 5 4HX N - 11 690   - - - Xie-Chang           Simmons-Lechner
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "12"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "W"]
+[Vulnerable "NS"]
+[Deal "W:AKJT.Q53.952.A92 Q43.T9.8764.J643 7652.J864.AQ.K87 98.AK72.KJT3.QT5"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "55577555778885678756"]
+[OptimumScore "EW 120"]
+[ParContract "E 1N+1"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\1R;S\4;H\4;D\4;C"]
+N NT 6 -    -    8764 -
+N  S 5 -    T9   8764 J643
+N  H 6 -    -    8764 -
+N  D 8 -    -    8764 643
+N  C 7 -    T9   8764 J643
+S  S 5 98   AK   -    QT5
+S  D 8 -    -    -    QT5
+S  C 7 98   AK   -    QT5
+E NT 8 7652 64   -    87
+E  H 8 7652 64   -    87
+E  D 6 7652 J864 -    -
+W NT 8 AK   -    -    A92
+W  H 8 AK   -    -    A92
+W  D 6 AK   Q53  -    -
+[OptimumResultTable "Declarer;Denomination\2R;Result\1R"]
+N NT 5
+N  S 5
+N  H 5
+N  D 7
+N  C 7
+S NT 5
+S  S 5
+S  H 5
+S  D 7
+S  C 7
+E NT 8
+E  S 8
+E  H 8
+E  D 5
+E  C 6
+W NT 7
+W  S 8
+W  H 7
+W  D 5
+W  C 6
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3;Declarer;Lead;Result\2R;Score_NS\2R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+B 4 4 2S  W -  7 50   - - - Lloyd-Dandavati     Hom-Abrol
+B 3 2 2S  W -  8  - 110 - - Hoff-Roy            Tsai-Wu
+A 3 9 2S  E -  9  - 140 - - Joffe-Somers        MacDonald-Boucher
+B 2 8 2S  W -  8  - 110 - - Brooks-Brooks       Alexander-Delegeane
+A 5 2 1NT W -  6 50   - - - Sehgal-Budabin      Porter-Friedman
+A 7 4 2S  W -  7 50   - - - Wheeler-Yoshikawa   Baldwin-Bao
+A 1 7 4S  W - 10  - 420 - - Hemsley-Dudman      Walker-Resser
+B 1 6 2S  W -  8  - 110 - - Ogawa-Arbian        Bhatia-Belani
+B 8 5 1NT E -  9  - 150 - - Aggarwal-Nagel      Mo-Rudberg
+B 7 3 2S  W -  8  - 110 - - Schafer-Epperly     Rubin-Gibson
+B 6 1 1NT E -  8  - 120 - - Stephenson-Hamilton Lu-Whitaker
+A 9 3 4S  E -  9 50   - - - Kurasaki-Green      Ballard-Cheng
+A 2 5 2S  W -  9  - 140 - - Xie-Chang           Simmons-Lechner
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "13"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "N"]
+[Vulnerable "All"]
+[Deal "N:43.JT82.Q842.T98 KJT62.Q4.KT976.7 Q85.AK53.AJ.Q654 A97.976.53.AKJ32"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "52755637567958779587"]
+[OptimumScore "EW 140"]
+[ParContract "EW 1S+2"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\5;H\4;D\4;C"]
+N NT  6 -     JT82 Q842 T98
+N  S  4 -     JT82 Q842 -
+N  H  8 -     JT82 Q842 -
+N  C  6 -     JT82 Q842 T98
+S NT  6 -     AK   -    Q654
+S  S  4 -     AK   -    -
+S  H  8 -     AK   -    -
+S  D  5 Q85   AK   A    Q654
+S  C  6 -     AK   -    Q654
+E NT  8 JT62  -    -    -
+E  S 11 -     -    -    7
+E  H  6 KJT62 -    -    7
+E  D  8 KJT62 Q4   T976 7
+E  C  8 JT    -    -    -
+W NT  7 -     976  53   AK
+W  S 10 97    -    -    -
+W  H  6 A97   -    -    AK
+W  D  8 A97   976  53   AK
+W  C  7 A     976  53   AK
+[OptimumResultTable "Declarer;Denomination\2R;Result\1R"]
+N NT 5
+N  S 2
+N  H 7
+N  D 5
+N  C 5
+S NT 6
+S  S 3
+S  H 7
+S  D 5
+S  C 6
+E NT 7
+E  S 9
+E  H 5
+E  D 8
+E  C 7
+W NT 7
+W  S 9
+W  H 5
+W  D 8
+W  C 7
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3L;Declarer;Lead;Result\1R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+A 8 8 2S  E - 9   - 140 - - Luo-Davis           MacGregor-Mohanram
+A 4 4 3S  E - 8 100   - - - Luttrell-Chen       Baldwin-Bao
+A 6 6 2S  E - 9   - 140 - - Horowitz-Hashfield  Macgregor-Chernick
+A 2 2 2S  E - 8   - 110 - - Xie-Chang           Porter-Friedman
+A 9 9 1NT S - 7  90   - - - Kurasaki-Green      MacDonald-Boucher
+B 4 3 2C  W - 7 100   - - - Lloyd-Dandavati     Rubin-Gibson
+B 3 1 2S  E - 9   - 140 - - Hoff-Roy            Lu-Whitaker
+B 8 6 1NT S - 7  90   - - - Aggarwal-Nagel      Bhatia-Belani
+B 7 4 1NT S - 7  90   - - - Schafer-Epperly     Hom-Abrol
+A 7 3 2S  E - 9   - 140 - - Wheeler-Yoshikawa   Ballard-Cheng
+A 5 1 2S  E - 9   - 140 - - Sehgal-Budabin      Cervellino-Carr
+B 2 7 2D  E - 7 100   - - - Brooks-Brooks       Chen-Holzman
+B 6 2 2S  E - 8   - 110 - - Stephenson-Hamilton Tsai-Wu
+B 1 5 2S  E - 9   - 140 - - Ogawa-Arbian        Mo-Rudberg
+A 3 7 1NT S - 8 120   - - - Joffe-Somers        Walker-Resser
+A 1 5 1NT S - 7  90   - - - Hemsley-Dudman      Simmons-Lechner
+B 5 8 2C  W - 7 100   - - - Riley-Moriconi      Alexander-Delegeane
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "14"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "E"]
+[Vulnerable "None"]
+[Deal "E:T82.75.AK82.J862 KJ96.KQT8.974.K9 753.96.JT63.QT75 AQ4.AJ432.Q5.A43"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "9bb779bb772215522155"]
+[OptimumScore "NS 450"]
+[ParContract "NS 4H+1; NS 4S+1"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\4;H\5;D\4;C"]
+N NT 11 AQ4  AJ432 -    A43
+N  H 12 AQ4  AJ432 -    A43
+N  D  8 AQ4  AJ432 -    A43
+N  C  8 AQ4  AJ432 Q5   -
+S NT 11 KJ96 KQT8  -    K9
+S  H 12 KJ96 KQT8  -    K9
+S  D  8 KJ96 KQT8  -    K9
+S  C  8 KJ96 KQT8  974  -
+E NT  4 -    -     AK   -
+E  S  2 T82  75    AK   J862
+E  H  2 -    -     AK   -
+E  D  6 -    -     AK   -
+E  C  6 -    -     -    J862
+W NT  4 -    -     JT63 -
+W  H  2 -    -     JT63 -
+W  D  6 -    -     JT63 -
+W  C  6 -    -     -    QT75
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  9
+N  S 11
+N  H 11
+N  D  7
+N  C  7
+S NT  9
+S  S 11
+S  H 11
+S  D  7
+S  C  7
+E NT  2
+E  S  2
+E  H  1
+E  D  5
+E  C  5
+W NT  2
+W  S  2
+W  H  1
+W  D  5
+W  C  5
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract;Declarer;Lead;Result\2R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+A 8 8 2H N - 11 200   - - - Luo-Davis           MacGregor-Mohanram
+A 2 2 4H S - 11 450   - - - Xie-Chang           Porter-Friedman
+A 6 6 4H N - 12 480   - - - Horowitz-Hashfield  Macgregor-Chernick
+A 4 4 4H N - 11 450   - - - Luttrell-Chen       Baldwin-Bao
+A 9 9 6S N - 10   - 100 - - Kurasaki-Green      MacDonald-Boucher
+B 4 3 3H N - 11 200   - - - Lloyd-Dandavati     Rubin-Gibson
+B 3 1 4H N - 11 450   - - - Hoff-Roy            Lu-Whitaker
+B 8 6 4H N - 11 450   - - - Aggarwal-Nagel      Bhatia-Belani
+B 7 4 4H N - 12 480   - - - Schafer-Epperly     Hom-Abrol
+A 7 3 4H N - 12 480   - - - Wheeler-Yoshikawa   Ballard-Cheng
+A 5 1 4H N - 11 450   - - - Sehgal-Budabin      Cervellino-Carr
+B 2 7 4H N - 12 480   - - - Brooks-Brooks       Chen-Holzman
+B 6 2 2H N - 11 200   - - - Stephenson-Hamilton Tsai-Wu
+B 1 5 6H N - 11   -  50 - - Ogawa-Arbian        Mo-Rudberg
+A 3 7 4H N - 12 480   - - - Joffe-Somers        Walker-Resser
+A 1 5 5H N - 11 450   - - - Hemsley-Dudman      Simmons-Lechner
+B 5 8 4H N - 11 450   - - - Riley-Moriconi      Alexander-Delegeane
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "15"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "S"]
+[Vulnerable "NS"]
+[Deal "S:KQJT864.T8.QJT3. A.AQJ763.A87.754 9732.K94.K52.AT9 5.52.964.KQJ8632"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "4a4834a4835383953739"]
+[OptimumScore "EW -300"]
+[ParContract "EW 5CX-2"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\7;H\3;D\4;C"]
+N NT  8 9732    -   -    -
+N  S 10 9732    -   K52  AT9
+N  H  6 -       -   -    T9
+N  D 10 9732    -   K52  -
+N  C  4 -       -   K52  A
+S NT  8 KQJT864 -   -    -
+S  H  5 -       -   QJT3 -
+S  D 10 KQJT864 -   QJT3 -
+S  C  4 -       -   QJT3 -
+E NT  9 -       52  -    KQJ
+E  S  3 5       52  964  KQJ
+E  H  9 5       52  -    -
+E  D  5 -       52  -    -
+E  C 10 5       52  -    -
+W NT  9 -       A   -    754
+W  S  3 A       A   A87  754
+W  H  9 A       A   -    -
+W  D  5 -       AQJ -    -
+W  C 10 A       AQJ -    -
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  4
+N  S 10
+N  H  4
+N  D  8
+N  C  3
+S NT  4
+S  S 10
+S  H  4
+S  D  8
+S  C  3
+E NT  5
+E  S  3
+E  H  8
+E  D  3
+E  C  9
+W NT  5
+W  S  3
+W  H  7
+W  D  3
+W  C  9
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3L;Declarer;Lead;Result\2R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+A 2 2 5SX S - 10   - 200 - - Xie-Chang           Porter-Friedman
+A 8 8 4H  W -  8 100   - - - Luo-Davis           MacGregor-Mohanram
+A 4 4 5H  W -  9 100   - - - Luttrell-Chen       Baldwin-Bao
+A 6 6 5C  E - 10  50   - - - Horowitz-Hashfield  Macgregor-Chernick
+A 9 9 5H  W - 10  50   - - - Kurasaki-Green      MacDonald-Boucher
+B 4 3 4S  S - 10 620   - - - Lloyd-Dandavati     Rubin-Gibson
+B 3 1 4S  S - 10 620   - - - Hoff-Roy            Lu-Whitaker
+B 8 6 4S  S - 11 650   - - - Aggarwal-Nagel      Bhatia-Belani
+A 5 1 4S  S - 10 620   - - - Sehgal-Budabin      Cervellino-Carr
+B 7 4 4H  W -  9  50   - - - Schafer-Epperly     Hom-Abrol
+A 7 3 4H  W -  9  50   - - - Wheeler-Yoshikawa   Ballard-Cheng
+B 2 7 4SX S - 10 790   - - - Brooks-Brooks       Chen-Holzman
+B 6 2 3S  S - 10 170   - - - Stephenson-Hamilton Tsai-Wu
+B 1 5 4SX S - 10 790   - - - Ogawa-Arbian        Mo-Rudberg
+A 3 7 3S  S - 10 170   - - - Joffe-Somers        Walker-Resser
+A 1 5 5S  S - 10   - 100 - - Hemsley-Dudman      Simmons-Lechner
+B 5 8 4S  S - 11 650   - - - Riley-Moriconi      Alexander-Delegeane
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "16"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "W"]
+[Vulnerable "EW"]
+[Deal "W:975.Q32.AQ73.K72 KQJ8.A765.KT2.65 T.KJT.8654.AQT83 A6432.984.J9.J94"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "68744687446469965699"]
+[OptimumScore "NS -100"]
+[ParContract "NS 3SX-1"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\1R;S\4;H\4;D\4;C"]
+N NT 7 KQJ  -    -    -
+N  S 8 KQJ8 A765 -    65
+N  H 7 KQJ8 A765 -    65
+N  D 4 KQJ8 A765 -    65
+N  C 4 KQJ8 A765 -    65
+S NT 7 6432 -    J9   -
+S  S 9 -    -    J9   -
+E NT 7 -    KJT  -    AQT83
+E  S 5 T    KJT  -    AQT83
+E  C 9 T    KJT  8654 AQ
+W NT 7 -    Q32  -    K72
+W  S 5 975  Q32  -    K72
+W  H 6 975  32   AQ73 K72
+W  C 9 975  Q32  Q73  72
+[OptimumResultTable "Declarer;Denomination\2R;Result\1R"]
+N NT 6
+N  S 8
+N  H 7
+N  D 4
+N  C 4
+S NT 6
+S  S 8
+S  H 7
+S  D 4
+S  C 4
+E NT 6
+E  S 4
+E  H 6
+E  D 9
+E  C 9
+W NT 6
+W  S 5
+W  H 6
+W  D 9
+W  C 9
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3L;Declarer;Lead;Result\1R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+A 2 1 2S  N - 9 140   - - - Xie-Chang           Cervellino-Carr
+A 8 7 2S  S - 8 110   - - - Luo-Davis           Walker-Resser
+A 6 5 4CX E - 8 500   - - - Horowitz-Hashfield  Simmons-Lechner
+A 4 3 2S  N - 8 110   - - - Luttrell-Chen       Ballard-Cheng
+B 8 7 2C  E - 9   - 110 - - Aggarwal-Nagel      Chen-Holzman
+B 4 2 3S  S - 7   - 100 - - Lloyd-Dandavati     Tsai-Wu
+B 7 5 3C  E - 8 100   - - - Schafer-Epperly     Mo-Rudberg
+B 3 8 2S  S - 9 140   - - - Hoff-Roy            Alexander-Delegeane
+B 6 3 3S  S - 8   -  50 - - Stephenson-Hamilton Rubin-Gibson
+A 1 6 2NT W - 9   - 150 - - Hemsley-Dudman      Macgregor-Chernick
+A 3 8 2S  S - 8 110   - - - Joffe-Somers        MacGregor-Mohanram
+B 5 1 2S  S - 8 110   - - - Riley-Moriconi      Lu-Whitaker
+A 7 2 3S  N - 8   -  50 - - Wheeler-Yoshikawa   Porter-Friedman
+A 5 9 3S  S - 8   -  50 - - Sehgal-Budabin      MacDonald-Boucher
+B 2 6 2S  S - 8 110   - - - Brooks-Brooks       Bhatia-Belani
+A 9 4 2S  N - 8 110   - - - Kurasaki-Green      Baldwin-Bao
+B 1 4 2S  S - 8 110   - - - Ogawa-Arbian        Hom-Abrol
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "17"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:T9.Q2.AQ963.T654 J63.KT94.K542.32 87.876.JT87.KQ87 AKQ542.AJ53..AJ9"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "2106521065bcd78bcd78"]
+[OptimumScore "EW 1510"]
+[ParContract "EW 7H="]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\6;H\4;D\4;C"]
+N NT  2 T9     Q2   -    T654
+S NT  2 87     876  -    KQ
+S  S  1 87     876  JT87 KQ
+S  D  6 87     876  JT87 KQ
+E NT 11 J63    KT94 542  32
+E  H 13 J63    -    K542 32
+E  D  7 J63    KT94 542  32
+E  C  8 J63    KT94 542  32
+W  H 13 AKQ542 53   -    A
+W  C  8 AKQ542 AJ53 -    A
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  2
+N  S  1
+N  H  0
+N  D  6
+N  C  5
+S NT  2
+S  S  1
+S  H  0
+S  D  6
+S  C  5
+E NT 11
+E  S 12
+E  H 13
+E  D  7
+E  C  8
+W NT 11
+W  S 12
+W  H 13
+W  D  7
+W  C  8
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract;Declarer;Lead;Result\2R;Score_NS\1R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+A 8 7 4S W - 11 - 450 - - Luo-Davis           Walker-Resser
+A 2 1 4S W - 12 - 480 - - Xie-Chang           Cervellino-Carr
+A 6 5 4S W - 11 - 450 - - Horowitz-Hashfield  Simmons-Lechner
+A 4 3 4S W - 12 - 480 - - Luttrell-Chen       Ballard-Cheng
+B 8 7 4S W - 12 - 480 - - Aggarwal-Nagel      Chen-Holzman
+B 4 2 5S W - 11 - 450 - - Lloyd-Dandavati     Tsai-Wu
+B 7 5 4H W - 13 - 510 - - Schafer-Epperly     Mo-Rudberg
+B 3 8 1S W - 10 - 170 - - Hoff-Roy            Alexander-Delegeane
+B 6 3 4S W - 12 - 480 - - Stephenson-Hamilton Rubin-Gibson
+A 1 6 4S W - 12 - 480 - - Hemsley-Dudman      Macgregor-Chernick
+A 3 8 4S W - 12 - 480 - - Joffe-Somers        MacGregor-Mohanram
+B 5 1 4S W - 12 - 480 - - Riley-Moriconi      Lu-Whitaker
+A 7 2 4S W - 11 - 450 - - Wheeler-Yoshikawa   Porter-Friedman
+A 5 9 4S W - 11 - 450 - - Sehgal-Budabin      MacDonald-Boucher
+B 2 6 4S W - 11 - 450 - - Brooks-Brooks       Bhatia-Belani
+A 9 4 4S W - 12 - 480 - - Kurasaki-Green      Baldwin-Bao
+B 1 4 4S W - 12 - 480 - - Ogawa-Arbian        Hom-Abrol
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "18"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "E"]
+[Vulnerable "NS"]
+[Deal "E:K532..KJ6.QT9743 QJ4.AKT95.Q74.KJ AT.J876.982.A862 9876.Q432.AT53.5"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "77863778634646a4646a"]
+[OptimumScore "EW 130"]
+[ParContract "EW 3C+1"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\1R;S\4;H\5;D\4;C"]
+N NT 9 -    432   AT53 -
+N  H 9 -    432   -    -
+N  D 7 -    -     A    -
+S NT 9 -    AKT9  74   -
+S  S 7 QJ   AKT95 Q74  -
+S  H 9 -    AKT9  -    -
+S  D 7 -    -     Q74  -
+S  C 3 QJ   AKT95 74   -
+E NT 6 K    -     -    QT9743
+E  S 6 K532 -     -    QT9743
+E  H 5 532  -     -    QT9743
+E  D 7 K532 -     -    QT9743
+W NT 6 T    -     -    A862
+W  S 6 AT   J876  982  A
+W  H 5 A    -     982  A
+W  D 7 AT   J876  -    A
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  7
+N  S  7
+N  H  8
+N  D  6
+N  C  3
+S NT  7
+S  S  7
+S  H  8
+S  D  6
+S  C  3
+E NT  4
+E  S  6
+E  H  4
+E  D  6
+E  C 10
+W NT  4
+W  S  6
+W  H  4
+W  D  6
+W  C 10
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract;Declarer;Lead;Result\2R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+A 8 7 2H S -  9 140   - - - Luo-Davis           Walker-Resser
+A 2 1 2H S -  8 110   - - - Xie-Chang           Cervellino-Carr
+A 6 5 2H S -  9 140   - - - Horowitz-Hashfield  Simmons-Lechner
+A 4 3 2H S -  8 110   - - - Luttrell-Chen       Ballard-Cheng
+B 8 7 3H S -  7   - 200 - - Aggarwal-Nagel      Chen-Holzman
+B 4 2 2C E - 10   - 130 - - Lloyd-Dandavati     Tsai-Wu
+B 7 5 5C E - 10  50   - - - Schafer-Epperly     Mo-Rudberg
+B 6 3 2H S -  8 110   - - - Stephenson-Hamilton Rubin-Gibson
+A 1 6 4H S -  8   - 200 - - Hemsley-Dudman      Macgregor-Chernick
+B 3 8 3H S -  8   - 100 - - Hoff-Roy            Alexander-Delegeane
+A 3 8 4H S -  8   - 200 - - Joffe-Somers        MacGregor-Mohanram
+B 5 1 3H S -  8   - 100 - - Riley-Moriconi      Lu-Whitaker
+A 7 2 4H S -  8   - 200 - - Wheeler-Yoshikawa   Porter-Friedman
+A 5 9 4H S -  8   - 200 - - Sehgal-Budabin      MacDonald-Boucher
+B 2 6 3H S -  7   - 200 - - Brooks-Brooks       Bhatia-Belani
+A 9 4 3C E - 10   - 130 - - Kurasaki-Green      Baldwin-Bao
+B 1 4 4H S -  8   - 200 - - Ogawa-Arbian        Hom-Abrol
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "19"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "S"]
+[Vulnerable "EW"]
+[Deal "S:T973.QJ873..J764 K542.KT4.J832.K2 QJ86.A965.K5.AT5 A.2.AQT9764.Q983"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "4892638926854b7954b7"]
+[OptimumScore "NS -300"]
+[ParContract "NS 5HX-2"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\4;H\5;D\7;C"]
+N NT  4 QJ86 A     -       -
+N  S  8 QJ86 A965  K5      -
+N  H  9 QJ86 965   K5      -
+N  D  2 QJ86 A     5       A
+N  C  6 QJ86 A965  K5      -
+S NT  5 -    QJ    -       -
+S  S  8 T973 QJ873 -       764
+S  C  6 T973 QJ873 -       764
+E NT  9 A    -     AQT9764 98
+E  D 11 A    2     -       Q983
+E  C  7 A    2     -       Q983
+W NT 10 -    -     J832    -
+W  S  5 542  -     J832    K2
+W  H  4 542  -     J832    K2
+W  C  7 542  -     J832    K2
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  4
+N  S  8
+N  H  9
+N  D  2
+N  C  6
+S NT  3
+S  S  8
+S  H  9
+S  D  2
+S  C  6
+E NT  8
+E  S  5
+E  H  4
+E  D 11
+E  C  7
+W NT  9
+W  S  5
+W  H  4
+W  D 11
+W  C  7
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3;Declarer;Lead;Result\2R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+B 8 8 5D  E - 10 100   - - - Aggarwal-Nagel      Alexander-Delegeane
+B 7 6 2D  E - 12   - 170 - - Schafer-Epperly     Bhatia-Belani
+A 2 9 5DX E - 10 200   - - - Xie-Chang           MacDonald-Boucher
+A 9 7 4D  E - 11   - 150 - - Kurasaki-Green      Walker-Resser
+A 8 6 3D  E - 10   - 130 - - Luo-Davis           Macgregor-Chernick
+A 6 4 4DX E - 11   - 910 - - Horowitz-Hashfield  Baldwin-Bao
+A 4 2 4H  N -  9   -  50 - - Luttrell-Chen       Porter-Friedman
+B 6 4 5D  E - 11   - 600 - - Stephenson-Hamilton Hom-Abrol
+B 4 1 5D  E - 10 100   - - - Lloyd-Dandavati     Lu-Whitaker
+B 5 2 5D  E - 11   - 600 - - Riley-Moriconi      Tsai-Wu
+B 3 7 3D  E - 11   - 150 - - Hoff-Roy            Chen-Holzman
+A 5 8 3D  E - 12   - 170 - - Sehgal-Budabin      MacGregor-Mohanram
+A 7 1 4D  E - 10   - 130 - - Wheeler-Yoshikawa   Cervellino-Carr
+B 2 5 3D  E - 11   - 150 - - Brooks-Brooks       Mo-Rudberg
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "20"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "W"]
+[Vulnerable "All"]
+[Deal "W:T3.KJ.A7532.JT96 Q94.T97.KT94.Q84 A752.Q8642.Q.K75 KJ86.A53.J86.A32"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCConfirm "A4,A8"]
+[BCConfirmMod "12/23/25 12:32:17"]
+[BCFlags "1f"]
+[DoubleDummyTricks "76565765655687856878"]
+[OptimumScore "EW 110"]
+[ParContract "EW 2H="]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\1R;S\4;H\5;D\5;C"]
+N NT 8 Q94  -     K     -
+N  S 7 Q94  -     -     4
+N  D 6 Q94  T97   K     Q84
+N  C 5 Q94  T97   K     Q84
+S NT 8 KJ86 -     J86   -
+S  S 7 KJ86 -     -     A
+S  D 6 KJ86 A     J86   A32
+E NT 6 -    8642  -     -
+E  S 7 -    Q8642 Q     -
+E  H 8 A752 8642  Q     -
+E  D 7 A752 8642  Q     -
+E  C 8 A752 8642  Q     -
+W NT 6 -    KJ    -     JT9
+W  S 7 -    KJ    A     -
+W  H 8 T3   KJ    A     JT9
+W  D 7 T3   KJ    A7532 JT9
+W  C 8 T3   KJ    A7532 JT9
+[OptimumResultTable "Declarer;Denomination\2R;Result\1R"]
+N NT 7
+N  S 6
+N  H 5
+N  D 6
+N  C 5
+S NT 7
+S  S 6
+S  H 5
+S  D 6
+S  C 5
+E NT 5
+E  S 6
+E  H 8
+E  D 7
+E  C 8
+W NT 5
+W  S 6
+W  H 8
+W  D 7
+W  C 8
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3;Declarer;Lead;Result\1R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+B 8 8 1NT E - 5 200   - - - Aggarwal-Nagel      Alexander-Delegeane
+B 7 6 1NT W - 7   -  90 - - Schafer-Epperly     Bhatia-Belani
+A 2 9 1NT S - 5   - 200 - - Xie-Chang           MacDonald-Boucher
+A 6 4 1NT W - 8   - 120 - - Horowitz-Hashfield  Baldwin-Bao
+A 9 7 1NT N - 6   - 100 - - Kurasaki-Green      Walker-Resser
+A 8 6 2D  W - 8   -  90 - - Luo-Davis           Macgregor-Chernick
+A 4 2 2D  N - 6   - 200 - - Luttrell-Chen       Porter-Friedman
+B 6 4 2NT S - 8 120   - - - Stephenson-Hamilton Hom-Abrol
+B 4 1 3H  E - 8 100   - - - Lloyd-Dandavati     Lu-Whitaker
+B 5 2 1NT N - 6   - 100 - - Riley-Moriconi      Tsai-Wu
+B 3 7 2S  S - 7   - 100 - - Hoff-Roy            Chen-Holzman
+A 5 8 1NT N - 4   - 300 - - Sehgal-Budabin      MacGregor-Mohanram
+A 7 1 1NT N - 7  90   - - - Wheeler-Yoshikawa   Cervellino-Carr
+B 2 5 2D  N - 7   - 100 - - Brooks-Brooks       Mo-Rudberg
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "21"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "N"]
+[Vulnerable "NS"]
+[Deal "N:JT654.K54.Q982.8 A732.A6.A6.K7643 8.Q98732.753.J95 KQ9.JT.KJT4.AQT2"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCConfirm "B8"]
+[BCConfirmMod "12/23/25 12:32:42"]
+[BCFlags "1f"]
+[DoubleDummyTricks "0261002610da7bdda7bd"]
+[OptimumScore "EW 1520"]
+[ParContract "EW 7N="]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\2R;S\4;H\6;D\4;C"]
+N  S  3 -    K54    -    -
+N  D  2 -    K54    -    -
+S  S  3 -    Q98732 -    -
+S  D  2 -    Q98732 -    -
+E NT 13 732  A      -    K7643
+E  S 11 A732 -      A    K7643
+E  D 12 A732 -      A6   K7643
+E  C 13 A732 A      A6   K7643
+W NT 13 KQ   JT     JT   AQT2
+W  S 11 KQ9  -      JT4  AQT
+W  D 12 KQ9  -      KJT4 AQT2
+[OptimumResultTable "Declarer;Denomination\2R;Result\2R"]
+N NT  0
+N  S  2
+N  H  6
+N  D  1
+N  C  0
+S NT  0
+S  S  2
+S  H  6
+S  D  1
+S  C  0
+E NT 13
+E  S 10
+E  H  7
+E  D 11
+E  C 13
+W NT 13
+W  S 10
+W  H  7
+W  D 11
+W  C 13
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3;Declarer;Lead;Result\2R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\19;Names_EW"]
+B 8 8 3NT E -  7 100   - - - Aggarwal-Nagel      Alexander-Delegeane
+B 7 6 3NT W - 13   - 520 - - Schafer-Epperly     Bhatia-Belani
+A 2 9 6NT E - 12   - 990 - - Xie-Chang           MacDonald-Boucher
+A 6 4 4NT E - 12   - 490 - - Horowitz-Hashfield  Baldwin-Bao
+A 8 6 4NT E - 12   - 490 - - Luo-Davis           Macgregor-Chernick
+A 9 7 3NT E - 11   - 460 - - Kurasaki-Green      Walker-Resser
+A 4 2 4NT E - 12   - 490 - - Luttrell-Chen       Porter-Friedman
+B 6 4 4NT E - 12   - 490 - - Stephenson-Hamilton Hom-Abrol
+B 4 1 4C  E - 13   - 190 - - Lloyd-Dandavati     Lu-Whitaker
+B 5 2 6NT W - 12   - 990 - - Riley-Moriconi      Tsai-Wu
+B 3 7 7NT W - 12  50   - - - Hoff-Roy            Chen-Holzman
+A 5 8 6NT E - 11  50   - - - Sehgal-Budabin      MacGregor-Mohanram
+B 2 5 3NT E - 11   - 460 - - Brooks-Brooks       Mo-Rudberg
+A 7 1 3NT E - 13   - 520 - - Wheeler-Yoshikawa   Cervellino-Carr
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "22"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "E"]
+[Vulnerable "EW"]
+[Deal "E:Q95.T52.52.AT972 KJ4.Q74.J63.KQ85 A62.AJ63.K9874.J T873.K98.AQT.643"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "88677886775576644655"]
+[OptimumScore "NS 120"]
+[ParContract "NS 1N+1"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\1R;S\3;H\4;D\5;C"]
+N NT 9 T87 -    -     -
+N  S 9 T87 -    -     643
+N  H 7 T87 -    -     643
+N  D 8 T87 -    -     643
+N  C 8 T87 -    -     -
+S NT 8 KJ4 Q74  J63   KQ
+S  S 8 J4  74   J63   KQ
+S  D 7 J4  -    J63   KQ85
+E NT 5 -   -    52    T972
+E  S 5 -   -    52    -
+E  H 7 -   -    52    -
+E  D 6 -   T52  52    -
+E  C 6 -   -    52    72
+W NT 5 -   -    K9874 J
+W  S 5 -   -    K9874 -
+W  H 7 -   -    K9874 -
+W  D 6 -   AJ63 K9874 -
+W  C 6 -   -    K9874 J
+[OptimumResultTable "Declarer;Denomination\2R;Result\1R"]
+N NT 8
+N  S 8
+N  H 6
+N  D 7
+N  C 7
+S NT 8
+S  S 8
+S  H 6
+S  D 7
+S  C 7
+E NT 5
+E  S 5
+E  H 7
+E  D 6
+E  C 6
+W NT 4
+W  S 4
+W  H 6
+W  D 5
+W  C 5
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3L;Declarer;Lead;Result\1R;Score_NS\3R;Score_EW\2R;MP_NS\1R;MP_EW\1R;Names_NS\18;Names_EW"]
+A 2 8 1S  S - 8 110  - - - Xie-Chang          MacGregor-Mohanram
+A 8 5 1NT E - 5 200  - - - Luo-Davis          Simmons-Lechner
+A 4 1 1NT N - 7  90  - - - Luttrell-Chen      Cervellino-Carr
+A 6 3 2S  N - 8 110  - - - Horowitz-Hashfield Ballard-Cheng
+A 3 6 1NT E - 7   - 90 - - Joffe-Somers       Macgregor-Chernick
+A 1 4 1NT N - 9 150  - - - Hemsley-Dudman     Baldwin-Bao
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "23"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "S"]
+[Vulnerable "All"]
+[Deal "S:K753.43.KJ62.754 AJ86.975.A5.QT63 QT9.AQ82.Q74.AK9 42.KJT6.T983.J82"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "78687786875565655656"]
+[OptimumScore "NS 110"]
+[ParContract "NS 1S+1"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\1R;S\4;H\4;D\4;C"]
+N NT 8 T9   -    -    -
+N  S 8 -    AQ82 Q74  AK9
+N  H 7 -    Q82  -    -
+N  D 8 T9   AQ82 Q74  AK9
+N  C 7 -    AQ82 Q74  AK
+S NT 8 K753 -    62   -
+S  S 8 753  43   KJ62 754
+S  H 7 753  43   -    -
+S  C 7 753  43   KJ62 754
+E NT 6 -    -    -    J82
+E  S 5 42   -    T983 J82
+E  H 7 -    -    T983 82
+E  D 5 42   -    T983 J82
+E  C 6 42   -    T983 82
+W NT 6 -    975  -    QT63
+W  H 7 -    -    A5   T63
+[OptimumResultTable "Declarer;Denomination\2R;Result\1R"]
+N NT 7
+N  S 8
+N  H 6
+N  D 8
+N  C 7
+S NT 7
+S  S 8
+S  H 6
+S  D 8
+S  C 7
+E NT 5
+E  S 5
+E  H 6
+E  D 5
+E  C 6
+W NT 5
+W  S 5
+W  H 6
+W  D 5
+W  C 6
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract;Declarer;Lead;Result\1R;Score_NS\3R;Score_EW\1R;MP_NS\1R;MP_EW\1R;Names_NS\18;Names_EW"]
+A 2 8 1NT N - 7  90 - - - Xie-Chang          MacGregor-Mohanram
+A 8 5 1NT N - 8 120 - - - Luo-Davis          Simmons-Lechner
+A 4 1 1NT N - 8 120 - - - Luttrell-Chen      Cervellino-Carr
+A 6 3 1NT N - 7  90 - - - Horowitz-Hashfield Ballard-Cheng
+A 3 6 1NT N - 7  90 - - - Joffe-Somers       Macgregor-Chernick
+A 1 4 1NT N - 7  90 - - - Hemsley-Dudman     Baldwin-Bao
+
+[Event "#"]
+[Site "Palo Alto Bridge Center"]
+[Date "2025.12.23"]
+[Board "24"]
+[West ""]
+[North ""]
+[East ""]
+[South ""]
+[Dealer "W"]
+[Vulnerable "None"]
+[Deal "W:K753.72.AT2.AJ86 96.JT.K9875.Q954 QJT2.AQ84.QJ43.7 A84.K9653.6.KT32"]
+[Scoring "MatchPoints"]
+[Declarer ""]
+[Contract ""]
+[Result ""]
+[BCFlags "1f"]
+[DoubleDummyTricks "54657546578967589675"]
+[OptimumScore "EW 140"]
+[ParContract "EW 2S+1"]
+[OptimumOpeningLeadTable "Leader;Denomination\2R;Result\1R;S\4;H\2;D\4;C"]
+N NT 5 96   JT 9875 954
+N  S 4 96   JT 9875 54
+N  H 7 96   -  -    -
+N  D 6 96   -  -    -
+N  C 8 6    -  -    -
+S NT 5 A84  -  6    KT32
+S  S 4 A84  -  6    KT32
+S  H 7 84   -  6    -
+S  D 6 A84  -  6    -
+S  C 8 A    -  6    -
+E NT 8 QJT2 A  QJ43 7
+E  H 7 -    A  -    7
+E  D 8 -    A  -    7
+E  C 6 -    A  -    7
+W NT 8 K753 72 AT2  -
+W  H 7 -    72 -    AJ86
+W  D 8 -    72 -    A
+W  C 6 -    72 -    AJ86
+[OptimumResultTable "Declarer;Denomination\2R;Result\1R"]
+N NT 5
+N  S 4
+N  H 6
+N  D 5
+N  C 7
+S NT 5
+S  S 4
+S  H 6
+S  D 5
+S  C 7
+E NT 8
+E  S 9
+E  H 6
+E  D 7
+E  C 5
+W NT 8
+W  S 9
+W  H 6
+W  D 7
+W  C 5
+[ScoreTable "Section;PairId_NS\1R;PairId_EW\1R;Contract\3;Declarer;Lead;Result\2R;Score_NS\3R;Score_EW\3R;MP_NS\1R;MP_EW\1R;Names_NS\18;Names_EW"]
+A 2 8 2NT W -  9   - 150 - - Xie-Chang          MacGregor-Mohanram
+A 8 5 4S  W -  9  50   - - - Luo-Davis          Simmons-Lechner
+A 4 1 4S  W -  8 100   - - - Luttrell-Chen      Cervellino-Carr
+A 6 3 4S  W - 10   - 420 - - Horowitz-Hashfield Ballard-Cheng
+A 3 6 4S  W - 10   - 420 - - Joffe-Somers       Macgregor-Chernick
+A 1 4 4S  W -  8 100   - - - Hemsley-Dudman     Baldwin-Bao

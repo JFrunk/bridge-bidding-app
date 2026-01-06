@@ -21,6 +21,39 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "advancer_respond_4_card_spades",
+      "bid": "1♠",
+      "priority": 84,
+      "description": "Respond to takeout double with 4-card spades (6-10 HCP)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "rho_last_bid": {"not_in": ["1♠", "2♠"]},
+        "spades_length": {"min": 4},
+        "hcp": {"min": 6, "max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Respond to partner's takeout double with 4+ spades and {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_respond_4_card_hearts",
+      "bid": "1♥",
+      "priority": 83,
+      "description": "Respond to takeout double with 4-card hearts (6-10 HCP)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "rho_last_bid": {"not_in": ["1♥", "2♥"]},
+        "hearts_length": {"min": 4},
+        "spades_length": {"max": 3},
+        "hcp": {"min": 6, "max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Respond to partner's takeout double with 4+ hearts and {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "advancer_respond_to_double_spades",
       "bid": "1♠",
       "priority": 82,
@@ -64,8 +97,7 @@
         "partner_last_bid": "X",
         "diamonds_length": {"min": 6},
         "has_4_card_major": false,
-        "hcp": {"min": 6, "max": 8},
-        "partnership_hcp_min": {"min": 18}
+        "hcp": {"min": 0, "max": 8}
       },
       "forcing": "none",
       "explanation": "Respond to partner's takeout double with 6+ diamonds (minimum)",
@@ -82,11 +114,43 @@
         "clubs_length": {"min": 6},
         "has_4_card_major": false,
         "diamonds_length": {"max": 4},
-        "hcp": {"min": 6, "max": 8},
-        "partnership_hcp_min": {"min": 18}
+        "hcp": {"min": 0, "max": 8}
       },
       "forcing": "none",
       "explanation": "Respond to partner's takeout double with 6+ clubs (minimum)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_respond_5_card_diamonds",
+      "bid": "2♦",
+      "priority": 77,
+      "description": "Respond to takeout double with 5-card diamonds when no major (6-10 HCP)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "diamonds_length": {"min": 5},
+        "has_4_card_major": false,
+        "hcp": {"min": 6, "max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Respond to partner's takeout double with 5+ diamonds and {hcp} HCP (no 4-card major)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_respond_5_card_clubs",
+      "bid": "2♣",
+      "priority": 76,
+      "description": "Respond to takeout double with 5-card clubs when no major (6-10 HCP)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "clubs_length": {"min": 5},
+        "has_4_card_major": false,
+        "diamonds_length": {"max": 4},
+        "hcp": {"min": 6, "max": 10}
+      },
+      "forcing": "none",
+      "explanation": "Respond to partner's takeout double with 5+ clubs and {hcp} HCP (no 4-card major)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -473,18 +537,32 @@
     {
       "id": "advancer_pass_weak_no_good_suit",
       "bid": "Pass",
-      "priority": 89,
+      "priority": 115,
       "description": "Pass with weak hand and no good suit to show",
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
-        "hcp": {"max": 2},
+        "hcp": {"max": 4},
         "has_4_card_major": false,
         "clubs_length": {"max": 4},
         "diamonds_length": {"max": 4}
       },
       "forcing": "none",
       "explanation": "Pass with very weak hand ({hcp} HCP) and no good suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_weak_pass",
+      "bid": "Pass",
+      "priority": 120,
+      "description": "Pass with very weak hand (max 5 HCP) responding to takeout double",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "hcp": {"max": 5}
+      },
+      "forcing": "none",
+      "explanation": "Pass with very weak hand ({hcp} HCP) - cannot afford to respond",
       "sets_forcing_level": "NON_FORCING"
     },
     {

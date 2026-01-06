@@ -2,81 +2,299 @@
   "schema_version": "1.0",
   "system": "SAYC",
   "category": "penalty",
-  "description": "Penalty doubles and forcing passes in competitive auctions",
+  "description": "Penalty doubles and forcing passes in competitive auctions - Golden Master v1.1 with DAS",
+  "priority_tiers": {
+    "tier_0_survival": "230-250: Doubled Auction Survival (DAS) - escape penalty traps",
+    "tier_1_absolute": "220-229: Strength override, game forcing - highest certainty",
+    "tier_2_safety": "200-219: LoTT safety, misfit detection - mathematically derived",
+    "tier_3_positional": "185-199: Wasteful HCP, trap passes - positional value",
+    "tier_4_quality": "165-184: Fragile ruffs, wasted value - quality adjustments",
+    "tier_5_tactical": "145-164: Sacrifices, volatile compete - situational",
+    "tier_6_default": "1-100: Special cases and defaults"
+  },
   "rules": [
+    {
+      "_comment": "=== TIER 0: DOUBLED AUCTION SURVIVAL (230-250) ===",
+      "id": "last_chance_sos_rescue",
+      "bid": "XX",
+      "priority": 249,
+      "description": "MANDATORY SOS Redouble - last chance to escape penalty trap after Pass-Pass",
+      "conditions": {
+        "is_doubled": true,
+        "is_last_chance_to_rescue": true,
+        "panic_index": {"min": 50},
+        "rescue_candidates": {"min": 1}
+      },
+      "forcing": "one_round",
+      "explanation": "LAST CHANCE SOS - panic index {panic_index}, must redouble to force partner to escape",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "sos_redouble_force",
+      "bid": "XX",
+      "priority": 248,
+      "description": "SOS Redouble when doubled with no fit - forces partner to bid cheapest 4-card suit",
+      "conditions": {
+        "is_doubled": true,
+        "should_rescue": true,
+        "multiple_rescue_suits": true,
+        "panic_index": {"min": 50}
+      },
+      "forcing": "one_round",
+      "explanation": "SOS Redouble - panic index {panic_index}, forcing partner to find a safer suit fit",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "emergency_suit_rescue",
+      "bid": "{rescue_suit}",
+      "priority": 245,
+      "description": "Direct rescue to longest suit when doubled with single escape route",
+      "conditions": {
+        "is_doubled": true,
+        "should_rescue": true,
+        "rescue_action": "BID",
+        "rescue_suit": {"not": null}
+      },
+      "forcing": "none",
+      "explanation": "Escaping to {rescue_suit} - panic index {panic_index}, avoiding penalty",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "partner_sos_response",
+      "bid": "{rescue_response_suit}",
+      "priority": 242,
+      "description": "Partner responds to SOS Redouble by bidding cheapest 4-card suit",
+      "conditions": {
+        "partner_sos_redouble": true,
+        "rescue_response_action": "BID",
+        "rescue_response_suit": {"not": null}
+      },
+      "forcing": "none",
+      "explanation": "Responding to SOS - bidding cheapest 4-card suit ({rescue_response_suit})",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "strength_redouble_power",
+      "bid": "XX",
+      "priority": 240,
+      "description": "Strength Redouble when doubled but we have working HCP and trump control",
+      "conditions": {
+        "is_doubled": true,
+        "can_punish_with_redouble": true
+      },
+      "forcing": "none",
+      "explanation": "Strength Redouble - {working_hcp_ratio:.0%} working HCP, we can make this contract",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "accept_doubled_contract",
+      "bid": "Pass",
+      "priority": 235,
+      "description": "Pass when doubled but panic is low - we can handle this contract",
+      "conditions": {
+        "is_doubled": true,
+        "panic_index": {"max": 40},
+        "should_rescue": false
+      },
+      "forcing": "none",
+      "explanation": "Pass - panic index {panic_index} is manageable, no rescue needed",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "_comment": "=== TIER 1: ABSOLUTE RULES (220-229) ===",
+      "id": "strength_override_bid_game",
+      "bid": "4{agreed_suit}",
+      "priority": 225,
+      "description": "HCP strength overrides LoTT - bid game with combined 25+ HCP and fit",
+      "conditions": {
+        "is_contested": true,
+        "strength_overrides_lott": true,
+        "fit_known": true,
+        "agreed_suit": {"in": ["♥", "♠"]}
+      },
+      "forcing": "none",
+      "explanation": "Bid game - {partnership_hcp_min}+ combined HCP overrides LoTT ceiling",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "_comment": "=== TIER 2: SAFETY RULES (200-219) ===",
+      "id": "misfit_heavy_pass",
+      "bid": "Pass",
+      "priority": 218,
+      "description": "Pass with misfit-heavy hand despite HCP - honors don't produce tricks",
+      "conditions": {
+        "is_contested": true,
+        "is_misfit_heavy": true
+      },
+      "forcing": "none",
+      "explanation": "Pass - misfit-heavy hand ({working_hcp_ratio:.0%} working HCP), declare at own risk",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "misfit_pass_despite_hcp",
+      "bid": "Pass",
+      "priority": 215,
+      "description": "Pass on misfit hands even with HCP - no fit means LoTT applies",
+      "conditions": {
+        "is_contested": true,
+        "is_misfit": true,
+        "hcp": {"min": 10}
+      },
+      "forcing": "none",
+      "explanation": "Pass - misfit detected (only {our_best_fit}-card fit), HCP doesn't help",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "honor_adjusted_lott_ceiling",
+      "bid": "Pass",
+      "priority": 212,
+      "description": "Pass with fragile trumps at high level - honors insufficient",
+      "conditions": {
+        "is_contested": true,
+        "lott_above_safe": true,
+        "trump_quality_fragile": true,
+        "we_are_vulnerable": true,
+        "trump_suit_honors": {"max": 1}
+      },
+      "forcing": "none",
+      "explanation": "Pass - trump quality fragile (SQS={trump_suit_quality_score}, {trump_suit_honors} honors), level exceeds honor-adjusted safe level",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "lott_safety_ceiling_pass",
+      "bid": "Pass",
+      "priority": 210,
+      "description": "LoTT safety - pass when bidding level exceeds safe level (no game values)",
+      "conditions": {
+        "is_contested": true,
+        "lott_says_pass": true,
+        "strength_overrides_lott": false
+      },
+      "forcing": "none",
+      "explanation": "Pass - bidding level exceeds LoTT safe level ({lott_safe_level}), risk too high",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "defensive_powerhouse_double",
+      "bid": "X",
+      "priority": 208,
+      "description": "Penalty double with defensive powerhouse (3.0+ quick tricks)",
+      "conditions": {
+        "is_contested": true,
+        "auction_level": {"min": 2},
+        "is_defensive_powerhouse": true,
+        "is_misfit": true
+      },
+      "forcing": "none",
+      "explanation": "Penalty double - {quick_tricks} quick tricks with no fit, defend don't declare",
+      "sets_forcing_level": "NON_FORCING"
+    },
     {
       "id": "penalty_double_high_level",
       "bid": "X",
-      "priority": 200,
+      "priority": 202,
       "description": "Penalty double at high level (3-level or higher)",
       "conditions": {
         "is_contested": true,
-        "auction_level": {
-          "min": 3
-        },
-        "hcp": {
-          "min": 10
-        },
+        "auction_level": {"min": 3},
+        "hcp": {"min": 10},
         "stopper_in_opponent_suit": true,
-        "support_for_partner": {
-          "max": 2
-        }
+        "support_for_partner": {"max": 2}
       },
       "forcing": "none",
       "explanation": "Penalty double - expecting to defeat contract",
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "forcing_pass_game_level",
+      "_comment": "=== TIER 3: POSITIONAL VALUE RULES (185-199) ===",
+      "id": "trap_pass_vulnerable_contested",
       "bid": "Pass",
-      "priority": 15,
-      "description": "Forcing pass at game level - partner must act",
+      "priority": 195,
+      "description": "Trap pass when vulnerable in contested auction - avoid being doubled",
       "conditions": {
-        "game_forcing": true,
         "is_contested": true,
-        "hcp": {
-          "min": 8
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Forcing pass - partner must double or bid on",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "penalty_pass_convert_double",
-      "bid": "Pass",
-      "priority": 10,
-      "description": "Pass to convert partner's takeout double to penalty",
-      "conditions": {
-        "partner_last_bid": "X",
-        "stopper_in_opponent_suit": true,
-        "hcp": {
-          "min": 8
-        }
+        "we_are_vulnerable": true,
+        "hcp": {"min": 10, "max": 13},
+        "support_for_partner": {"max": 2}
       },
       "forcing": "none",
-      "explanation": "Pass converting double to penalty - strong in their suit",
+      "explanation": "Pass - vulnerable with no fit, risk of being doubled too high",
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "cooperative_double",
-      "bid": "X",
-      "priority": 25,
-      "description": "Cooperative (optional) double at 3+ level - partner can pass or pull",
+      "id": "wasteful_hcp_pass_competitive",
+      "bid": "Pass",
+      "priority": 192,
+      "description": "Pass with wasteful HCP in competition - honors in wrong places",
       "conditions": {
         "is_contested": true,
-        "auction_level": {
-          "min": 3
-        },
-        "hcp": {
-          "min": 12
-        },
-        "quick_tricks": {
-          "min": 2.0
-        }
+        "wasteful_hcp": {"min": 6},
+        "working_hcp_ratio": {"max": 0.5},
+        "we_are_vulnerable": true
       },
       "forcing": "none",
-      "explanation": "Cooperative double - partner decides penalty or pull",
+      "explanation": "Pass - {wasteful_hcp} HCP in short suits, only {working_hcp} working - defensive hand",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "defensive_penalty_candidate_pass",
+      "bid": "Pass",
+      "priority": 188,
+      "description": "Pass with defensive hand instead of competing further",
+      "conditions": {
+        "is_contested": true,
+        "defensive_penalty_candidate": true,
+        "auction_level": {"min": 2},
+        "hcp": {"min": 10}
+      },
+      "forcing": "none",
+      "explanation": "Pass - defensive hand ({quick_tricks} QT, {offense_to_defense_ratio:.2f} O/D ratio), stop competing",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "lott_low_total_tricks_pass",
+      "bid": "Pass",
+      "priority": 185,
+      "description": "LoTT low total tricks - pass with flat hands in competition",
+      "conditions": {
+        "is_contested": true,
+        "total_tricks_index": {"max": 15},
+        "is_balanced": true,
+        "hcp": {"max": 12}
+      },
+      "forcing": "none",
+      "explanation": "Pass - low total tricks ({total_tricks_index}), defend rather than compete",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "_comment": "=== TIER 4: QUALITY-BASED RULES (165-184) ===",
+      "id": "fragile_ruff_brake",
+      "bid": "Pass",
+      "priority": 180,
+      "description": "Pass with fragile ruffs - shortness worthless with hollow trumps",
+      "conditions": {
+        "is_contested": true,
+        "is_fragile_ruff": true,
+        "raw_dummy_points": {"min": 3},
+        "we_are_vulnerable": true
+      },
+      "forcing": "none",
+      "explanation": "Pass - shortness ({raw_dummy_points} pts) discounted to {dummy_points:.0f} due to weak trumps (control={control_multiplier:.1f})",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "wasted_value_brake",
+      "bid": "Pass",
+      "priority": 175,
+      "description": "Pass when HCP is not concentrated in working suits at 3+ level",
+      "conditions": {
+        "is_contested": true,
+        "working_hcp_ratio": {"max": 0.5},
+        "auction_level": {"min": 3},
+        "hcp": {"min": 10}
+      },
+      "forcing": "none",
+      "explanation": "Pass - HCP scattered ({working_hcp_ratio:.0%} working), offensive potential overestimated",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -87,9 +305,7 @@
       "conditions": {
         "is_contested": true,
         "opponent_bid_artificial": true,
-        "hcp": {
-          "min": 6
-        }
+        "hcp": {"min": 6}
       },
       "forcing": "none",
       "explanation": "Lead-directing double - requesting this suit lead",
@@ -102,50 +318,119 @@
       "description": "Lightner double of slam - unusual lead requested",
       "conditions": {
         "is_contested": true,
-        "auction_level": {
-          "min": 6
-        }
+        "auction_level": {"min": 6}
       },
       "forcing": "none",
       "explanation": "Lightner double - do NOT lead a trump or our suit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "_comment": "=== TIER 5: TACTICAL RULES (145-164) ===",
+      "id": "sacrifice_bid_favorable",
+      "bid": "5{agreed_suit}",
+      "priority": 155,
+      "description": "Sacrifice bid over opponent's game (favorable vulnerability)",
+      "conditions": {
+        "is_contested": true,
+        "favorable_vulnerability": true,
+        "fit_known": true,
+        "hcp": {"max": 10},
+        "fit_length": {"min": 9}
+      },
+      "forcing": "none",
+      "explanation": "Sacrifice at favorable vulnerability - cheaper to go down",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "sacrifice_bid",
       "bid": "5{agreed_suit}",
       "priority": 150,
-      "description": "Sacrifice bid over opponent's game",
+      "description": "Sacrifice bid over opponent's game (not vulnerable)",
       "conditions": {
         "is_contested": true,
+        "we_are_vulnerable": false,
         "fit_known": true,
-        "hcp": {
-          "max": 10
-        },
-        "fit_length": {
-          "min": 9
-        }
+        "hcp": {"max": 10},
+        "fit_length": {"min": 9}
       },
       "forcing": "none",
       "explanation": "Sacrifice - cheaper to go down than let them make",
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "lott_volatile_compete",
+      "bid": "{lott_safe_level}{agreed_suit}",
+      "priority": 145,
+      "description": "LoTT volatile board - compete to safe level on distributional hands",
+      "conditions": {
+        "is_contested": true,
+        "is_volatile_board": true,
+        "fit_known": true,
+        "our_best_fit": {"min": 9},
+        "hcp": {"max": 10},
+        "is_fragile_ruff": false
+      },
+      "forcing": "none",
+      "explanation": "Compete to {lott_safe_level}-level - volatile board with {our_best_fit}-card fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "_comment": "=== TIER 6: DEFAULT AND SPECIAL CASES (1-100) ===",
       "id": "double_and_bid",
       "bid": "X",
       "priority": 90,
       "description": "Double then bid - showing strong hand",
       "conditions": {
         "is_overcall": true,
-        "hcp": {
-          "min": 17
-        },
-        "longest_suit_length": {
-          "min": 5
-        }
+        "hcp": {"min": 17},
+        "longest_suit_length": {"min": 5}
       },
       "forcing": "one_round",
       "explanation": "Double then bid - too strong for simple overcall",
       "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "cooperative_double",
+      "bid": "X",
+      "priority": 28,
+      "description": "Cooperative (optional) double at 3+ level - partner can pass or pull",
+      "conditions": {
+        "is_contested": true,
+        "auction_level": {"min": 3},
+        "hcp": {"min": 12},
+        "quick_tricks": {"min": 2.0}
+      },
+      "forcing": "none",
+      "explanation": "Cooperative double - partner decides penalty or pull",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "forcing_pass_game_level",
+      "bid": "Pass",
+      "priority": 15,
+      "description": "Forcing pass at game level - partner must act",
+      "conditions": {
+        "game_forcing": true,
+        "is_contested": true,
+        "hcp": {"min": 8}
+      },
+      "forcing": "one_round",
+      "explanation": "Forcing pass - partner must double or bid on",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "penalty_pass_convert_double",
+      "bid": "Pass",
+      "priority": 12,
+      "description": "Pass to convert partner's takeout double to penalty",
+      "conditions": {
+        "partner_last_bid": "X",
+        "stopper_in_opponent_suit": true,
+        "hcp": {"min": 8}
+      },
+      "forcing": "none",
+      "explanation": "Pass converting double to penalty - strong in their suit",
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }

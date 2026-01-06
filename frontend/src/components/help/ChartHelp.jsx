@@ -129,26 +129,29 @@ const HelpBody = ({ content }) => {
  */
 const CHART_HELP_CONTENT = {
   'trick-timeline': {
-    title: 'See How the Hand Unfolded',
-    intro: 'This chart shows a "live tracker" of your trick potential. It compares your play to a perfect computer model to help you find the turning points in every hand.',
+    title: 'Track Your Trick Potential',
+    intro: 'This chart shows how many tricks you could still win at each point in the hand. Drops in the line show where tricks were lost.',
     sections: [
       {
-        heading: 'Reading the line:',
+        heading: 'Reading the chart:',
         items: [
-          { icon: '—', label: 'Flat line', text: "You're playing perfectly! Holding onto every trick possible." },
-          { icon: '↘', label: 'Downward step', text: 'A moment where a trick got away. These are your best "Aha!" moments for learning.' },
-          { icon: '↗', label: 'Upward step', text: 'Great job! The defense made a mistake, and you pounced on it to gain an extra trick.' }
+          { icon: '—', label: 'Flat line', text: 'Perfect play - no tricks lost during this stretch.' },
+          { icon: '↘', label: 'Drops', text: 'A trick was lost here. Red dots mark your mistakes - these are your learning moments.' }
         ]
       },
       {
-        heading: 'The markers:',
+        heading: 'The reference lines:',
         items: [
-          { icon: '🔴', label: 'Red dots', text: 'Where you might have missed a trick' },
-          { icon: '🟢', label: 'Green dots', text: 'Where you gained one back from the opponents' }
+          { icon: '---', label: 'DD line', text: 'Double-dummy optimal - the best possible result with perfect play.' },
+          { icon: '- -', label: 'Need/Set line', text: 'Tricks required to make your contract (or set theirs).' }
         ]
+      },
+      {
+        heading: 'The bars:',
+        text: 'Green bars show tricks you have already locked in. The line shows what you could still achieve.'
       }
     ],
-    proTip: 'Click any point on the line to jump straight to that card. Focus on the red dots—they are the keys to leveling up your game!'
+    proTip: 'Click any point on the chart to jump to that card in the replay. Focus on the drops - each one is a chance to improve!'
   },
 
   'bidding-review': {

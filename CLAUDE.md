@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-**Last Updated:** 2026-01-01
+**Last Updated:** 2026-01-05
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -231,6 +231,59 @@ python3 compare_play_scores.py play_baseline_before.json play_after.json
 - Use Level 8 (Minimax) for development testing
 
 **See:** `.claude/CODING_GUIDELINES.md` (lines 667-1027) for complete play protocol
+
+#### V2 Schema Engine Bidding Efficiency Test
+
+**When to Run:**
+- Before modifying V2 schema rules (`backend/engine/v2/schemas/*.json`)
+- Before changing feature extractor (`backend/engine/v2/features/enhanced_extractor.py`)
+- Before updating schema interpreter (`backend/engine/v2/interpreters/schema_interpreter.py`)
+- After implementing bidding rule fixes
+
+**How to Run:**
+```bash
+# From backend/ directory
+source venv/bin/activate
+
+# Quick test (50 hands, ~2 minutes) - during development
+USE_V2_SCHEMA_ENGINE=true python3 analyze_bidding_efficiency.py --hands 50 --seed 42
+
+# Comprehensive test (200 hands, ~5 minutes) - before commits
+USE_V2_SCHEMA_ENGINE=true python3 analyze_bidding_efficiency.py --hands 200 --seed 42 --output efficiency_results.json
+```
+
+**What This Test Does:**
+1. Generates random hands locally
+2. Runs V2 schema bidding engine locally
+3. SSHs to production server for DDS (Double Dummy Solver) analysis (Linux only)
+4. Computes efficiency gap: `Tricks_Required - DDS_Max_Tricks`
+5. Generates rule falsification reports showing which rules cause overbids
+6. Creates visualization charts (`bidding_efficiency.png`)
+
+**Key Metrics:**
+- **Accuracy Rate (Gap=0):** Percentage of contracts at exactly makeable level
+- **Overbid Rate (Gap>0):** Percentage of contracts bid too high
+- **Mean Gap:** Average tricks overbid (target: < +1.5)
+- **Critical Failures (Gap≥3):** Severe overbids needing immediate attention
+
+**Quality Requirements:**
+- ✅ **Accuracy: ≥ 25%** (target)
+- ✅ **Overbid Rate: < 50%** (target)
+- ✅ **Mean Gap: < +1.5 tricks** (target)
+- ✅ **Critical Failures: < 40** per 200 hands (target)
+
+**Rule Falsification Audit:**
+The test output includes a falsification report showing which specific rules are causing overbids:
+```
+Rules with Critical Overbids (Gap ≥ 2):
+------------------------------------------------------------
+Rule ID                               Uses  Fails     Rate  Mean Gap
+------------------------------------------------------------
+v1_fallback                             68     48    70.6%    +2.72
+slam_after_rkcb_5d_hearts                2      2   100.0%    +3.50
+```
+
+**⚠️ Note:** This test requires SSH access to the production server for DDS analysis. DDS only works on Linux (crashes on macOS M1/M2).
 
 ---
 
@@ -837,6 +890,59 @@ def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
 
 ---
 
+## Seat Position Utilities
+
+**CRITICAL: Use the seats utility module for ALL seat/position calculations.**
+
+The application uses a modulo-4 clock system for seat positions:
+- `NORTH = 0`, `EAST = 1`, `SOUTH = 2`, `WEST = 3`
+- Partner is always `+2` (opposite)
+- LHO (Left Hand Opponent) is always `+1` (clockwise)
+- RHO (Right Hand Opponent) is always `+3`
+
+**Backend (Python):**
+```python
+from utils.seats import partner, lho, rho, relative_position, display_name, bidder_role
+
+# Get partner of a seat
+partner('S')  # Returns 'N'
+
+# Get relative position (0=Self, 1=LHO, 2=Partner, 3=RHO)
+relative_position('N', hero='S')  # Returns 2 (Partner)
+
+# Get display name for UI
+display_name('E', hero='S')  # Returns 'RHO'
+bidder_role('N', user='S')   # Returns 'North (Partner)'
+```
+
+**Frontend (JavaScript):**
+```javascript
+import { partner, lho, rho, relativePosition, displayName, bidderRole, nsSuccess } from '../utils/seats';
+
+// Same functions with camelCase naming
+partner('S')  // Returns 'N'
+relativePosition('N', 'S')  // Returns 2
+displayName('E', 'S')  // Returns 'RHO'
+bidderRole('N', 'S')   // Returns 'North (Partner)'
+
+// NS success calculation for both declaring and defending
+nsSuccess(nsIsDeclarer, actualTricksNs, requiredTricks)
+```
+
+**Rules:**
+- ✅ ALWAYS import from `utils/seats` for seat calculations
+- ✅ Use integer indices (0-3) in storage/logic, strings ('N','E','S','W') in display
+- ✅ Use `normalize()` to convert full names ('North') to single letters ('N')
+- ❌ NEVER hardcode seat relationships (e.g., `if player == 'South'`)
+- ❌ NEVER duplicate seat math inline - use the utility functions
+
+**Files:**
+- Backend: `backend/utils/seats.py`
+- Frontend: `frontend/src/utils/seats.js`
+- Tests: `backend/tests/unit/test_seats.py`, `frontend/src/utils/seats.test.js`
+
+---
+
 ## Adding New Conventions
 
 1. Create convention file in `backend/engine/ai/conventions/`
@@ -858,6 +964,7 @@ def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
 - **Hand generation**: Scenarios consume cards from deck, so order matters
 - **Auction indexing**: Position in auction determined by `index % 4` mapping to player positions
 - **DDS crashes on macOS**: Always use Level 8 (Minimax) for development, Level 10 (DDS) only on Linux production
+- **DDS debugging requires production**: DDS-related features (decay curves, play analysis) cannot be tested locally on macOS. To debug DDS issues, deploy to production or SSH to Oracle server and run tests there. Never attempt to verify DDS results locally.
 - **Quality score regression**: Always compare before/after scores to catch performance degradation
 
 ---

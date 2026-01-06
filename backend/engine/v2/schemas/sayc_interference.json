@@ -856,6 +856,58 @@
       "forcing": "none",
       "explanation": "Accepting Lebensohl puppet - partner will place the contract",
       "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_competitive_weak_late",
+      "bid": "Pass",
+      "priority": 12,
+      "description": "Pass with weak hand in late competitive auction",
+      "conditions": {
+        "is_competitive_later": true,
+        "is_contested": true,
+        "hcp": {
+          "max": 8
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with {hcp} HCP - too weak to continue competing in late auction",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_opponent_game",
+      "bid": "Pass",
+      "priority": 10,
+      "description": "Pass when opponent bids game",
+      "conditions": {
+        "is_contested": true,
+        "rho_last_bid": {
+          "in": ["3NT", "4♥", "4♠", "5♣", "5♦"]
+        },
+        "hcp": {
+          "max": 15
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass - opponent has bid game, not enough to compete further",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "pass_after_late_auction",
+      "bid": "Pass",
+      "priority": 8,
+      "description": "Pass in late auction with minimum values",
+      "conditions": {
+        "auction_length": {
+          "min": 8
+        },
+        "is_contested": true,
+        "hcp": {
+          "max": 11
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with {hcp} HCP - late auction, minimum values to continue",
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }

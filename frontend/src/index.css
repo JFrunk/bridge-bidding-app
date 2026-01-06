@@ -163,8 +163,10 @@
   --z-base: 1;
   --z-dropdown: 100;
   --z-sticky: 200;
-  --z-modal: 1000;
-  --z-tooltip: 1100;
+  --z-modal: 2000;        /* Modals should be above everything else */
+  --z-modal-overlay: 2000;
+  --z-modal-content: 2001;
+  --z-tooltip: 2100;      /* Tooltips above modals */
 }
 
 /* ===================

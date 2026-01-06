@@ -41,7 +41,7 @@ class BiddingEngineV2Schema:
     - Optional Monte Carlo integration for slam/competitive validation
     """
 
-    def __init__(self, schema_dir: str = None, simulator=None, use_v1_fallback: bool = True):
+    def __init__(self, schema_dir: str = None, simulator=None, use_v1_fallback: bool = False):
         """
         Initialize the schema-driven engine.
 
@@ -50,7 +50,7 @@ class BiddingEngineV2Schema:
             simulator: Optional Monte Carlo simulator for bid validation.
                       If None, conflict resolver operates in pass-through mode.
             use_v1_fallback: If True, falls back to V1 engine when no schema rule matches.
-                            This provides better coverage while V2 schemas are incomplete.
+                            Defaults to False - V2 uses Pass when no rule matches.
         """
         self.interpreter = SchemaInterpreter(schema_dir)
         self._bid_legality_cache = {}

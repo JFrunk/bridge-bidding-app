@@ -85,7 +85,7 @@ class V2BaselineComplianceRunner:
     """
 
     def __init__(self, verbose: bool = False):
-        self.engine = BiddingEngineV2Schema(use_v1_fallback=True)
+        self.engine = BiddingEngineV2Schema(use_v1_fallback=False)
         self.results: List[V2ComplianceResult] = []
         self.category_stats: Dict[str, Dict] = {}
         self.verbose = verbose

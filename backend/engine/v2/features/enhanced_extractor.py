@@ -135,6 +135,17 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['is_contested'] = af['is_contested']
     flat['vulnerability'] = af['vulnerability']
 
+    # Compute vulnerability booleans for rule conditions
+    # my_position is 'North', 'East', 'South', or 'West'
+    # NS are vulnerable if vulnerability is 'NS' or 'Both'
+    # EW are vulnerable if vulnerability is 'EW' or 'Both'
+    vuln = af['vulnerability']
+    is_ns = my_position in ['North', 'South']
+    flat['we_are_vulnerable'] = (vuln in ['NS', 'Both'] and is_ns) or (vuln in ['EW', 'Both'] and not is_ns)
+    flat['they_are_vulnerable'] = (vuln in ['EW', 'Both'] and is_ns) or (vuln in ['NS', 'Both'] and not is_ns)
+    flat['favorable_vulnerability'] = flat['they_are_vulnerable'] and not flat['we_are_vulnerable']
+    flat['unfavorable_vulnerability'] = flat['we_are_vulnerable'] and not flat['they_are_vulnerable']
+
     # Forcing status
     fs = af['forcing_status']
     flat['forcing_type'] = fs['forcing_type']
@@ -951,6 +962,14 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # Gambling 3NT features (solid minor with no outside strength)
     _add_gambling_features(flat, hand)
 
+    # Law of Total Tricks (LoTT) features for competitive auction safety
+    # LoTT states: Total tricks available = Our fit + Their fit
+    # Safe bidding level = Our fit length - 6 (at equal vulnerability)
+    lott_features = _calculate_lott_features(
+        hand, flat, partner_bids, auction_history, my_position, dealer
+    )
+    flat.update(lott_features)
+
     # Keep reference to original structures
     flat['_hand'] = hand
     flat['_auction_history'] = auction_history
@@ -1249,6 +1268,960 @@ def _add_gambling_features(flat: Dict[str, Any], hand: Hand) -> None:
 
     # Classic Gambling 3NT: solid minor with NO outside A/K
     flat['is_gambling_3nt_hand'] = flat['is_solid_minor'] and flat['outside_stopper_count'] == 0
+
+
+def _calculate_lott_features(hand: Hand, flat: Dict[str, Any], partner_bids: List[str],
+                             auction_history: List[str], my_position: str, dealer: str) -> Dict[str, Any]:
+    """
+    Calculate Law of Total Tricks (LoTT) features for competitive auction safety.
+
+    The Law of Total Tricks states that the total number of tricks available
+    on a deal equals the sum of both sides' best fits. This guides competitive
+    bidding decisions:
+    - Safe level = Our best fit - 6
+    - Volatile boards (high total tricks) favor aggressive bidding
+    - Low total tricks favor defense
+
+    Args:
+        hand: Hand object
+        flat: Flat features dict (for agreed_suit, fit_length, support_for_partner)
+        partner_bids: List of partner's bids
+        auction_history: Full auction history
+        my_position: My position
+        dealer: Dealer position
+
+    Returns:
+        Dict with LoTT features:
+        - our_best_fit: Maximum combined fit length (our cards + partner's inferred)
+        - lott_safe_level: Safe level to bid (our_best_fit - 6)
+        - their_best_fit: Estimated opponent fit length
+        - total_tricks_index: our_best_fit + their_best_fit
+        - is_volatile_board: True if total_tricks_index >= 18
+        - lott_above_safe: True if current auction level exceeds lott_safe_level
+    """
+    result = {
+        'our_best_fit': 0,
+        'lott_safe_level': 2,
+        'their_best_fit': 8,  # Default assumption: 8-card fit
+        'total_tricks_index': 16,
+        'is_volatile_board': False,
+        'lott_above_safe': False,
+    }
+
+    # Get our suit lengths
+    suit_lengths = {
+        '♠': flat.get('spades_length', 0),
+        '♥': flat.get('hearts_length', 0),
+        '♦': flat.get('diamonds_length', 0),
+        '♣': flat.get('clubs_length', 0),
+    }
+
+    # Infer partner's suit lengths from their bids
+    partner_inferred_suits = _infer_partner_suit_lengths(partner_bids)
+
+    # Calculate our fit length for each suit
+    our_fit_lengths = {}
+    for suit in ['♠', '♥', '♦', '♣']:
+        our_fit_lengths[suit] = suit_lengths[suit] + partner_inferred_suits.get(suit, 0)
+
+    # If we have an agreed suit, use that fit
+    if flat.get('fit_known') and flat.get('agreed_suit'):
+        agreed_suit = flat['agreed_suit']
+        fit_length = flat.get('fit_length', 0)
+        if fit_length > 0:
+            our_fit_lengths[agreed_suit] = fit_length
+
+    # If partner bid a suit and we have support, estimate fit
+    partner_suit = flat.get('partner_suit')  # From preempts or partner_first_suit
+    if not partner_suit:
+        partner_suit = flat.get('partner_first_suit')
+    if partner_suit:
+        support = flat.get('support_for_partner', 0)
+        # Partner's suit bid implies minimum length
+        partner_min_length = partner_inferred_suits.get(partner_suit, 5)
+        estimated_fit = support + partner_min_length
+        our_fit_lengths[partner_suit] = max(our_fit_lengths.get(partner_suit, 0), estimated_fit)
+
+    # Our best fit is the maximum
+    result['our_best_fit'] = max(our_fit_lengths.values()) if our_fit_lengths else 0
+
+    # LoTT safe level = Our best fit - 6
+    # Minimum safe level is 2 (can't bid below 2-level in competition)
+    result['lott_safe_level'] = max(2, result['our_best_fit'] - 6)
+
+    # Infer opponent's fit length from their bids
+    opponent_inferred_suits = _infer_opponent_suit_lengths(
+        auction_history, my_position, dealer, flat.get('opening_bid', '')
+    )
+    result['their_best_fit'] = max(opponent_inferred_suits.values()) if opponent_inferred_suits else 8
+
+    # Total tricks index = sum of both sides' best fits
+    result['total_tricks_index'] = result['our_best_fit'] + result['their_best_fit']
+
+    # Volatile boards (high total tricks) favor aggressive bidding
+    # 18+ total tricks means both sides have good fits
+    result['is_volatile_board'] = result['total_tricks_index'] >= 18
+
+    # Check if current auction level exceeds our safe level
+    current_level = _get_current_auction_level(auction_history)
+    result['lott_above_safe'] = current_level > result['lott_safe_level']
+
+    # Strength-Based Override: HCP should override LoTT when game values exist
+    # If combined partnership HCP >= 25, we have game values and LoTT ceiling
+    # should not prevent us from bidding game
+    partnership_min_hcp = flat.get('partnership_hcp_min', flat.get('hcp', 0))
+    result['hcp_overrides_lott'] = partnership_min_hcp >= 25
+
+    # Misfit detection: When fit is 6 or less, we have a misfit
+    # Even with HCP, misfits are dangerous - LoTT still applies
+    result['is_misfit'] = result['our_best_fit'] <= 6
+
+    # Combined decision: Should we compete based on LoTT?
+    # Yes if: (above safe level AND vulnerable AND not game values) OR misfit
+    result['lott_says_pass'] = (
+        (result['lott_above_safe'] and flat.get('we_are_vulnerable', False) and not result['hcp_overrides_lott'])
+        or result['is_misfit']
+    )
+
+    # Should we bid game despite LoTT ceiling?
+    # Yes if: game values AND fit exists (not misfit)
+    result['strength_overrides_lott'] = result['hcp_overrides_lott'] and not result['is_misfit']
+
+    # Suit Quality Score (SQS) for the trump suit
+    # SQS = Length + Number of Top 3 Honors (A, K, Q)
+    # An SQS of 10+ is "Safe" for 3-level, 8 or less is "Fragile"
+    trump_suit = flat.get('agreed_suit') or flat.get('partner_first_suit')
+    if trump_suit:
+        trump_sqs = _calculate_suit_quality_score(hand, trump_suit, partner_inferred_suits.get(trump_suit, 0))
+        result['trump_suit_quality_score'] = trump_sqs['sqs']
+        result['trump_suit_honors'] = trump_sqs['honors']
+        result['trump_quality_safe'] = trump_sqs['sqs'] >= 10
+        result['trump_quality_fragile'] = trump_sqs['sqs'] <= 8
+    else:
+        result['trump_suit_quality_score'] = 0
+        result['trump_suit_honors'] = 0
+        result['trump_quality_safe'] = False
+        result['trump_quality_fragile'] = True
+
+    # Honor-adjusted LoTT: If trumps are fragile AND vulnerable, reduce safe level
+    if result['trump_quality_fragile'] and flat.get('we_are_vulnerable', False):
+        result['honor_adjusted_safe_level'] = max(2, result['lott_safe_level'] - 1)
+    else:
+        result['honor_adjusted_safe_level'] = result['lott_safe_level']
+
+    # Working HCP vs Wasteful HCP
+    # Working HCP = honors in our long suits (offensive power)
+    # Wasteful HCP = honors in short suits or opponent's suits (defensive power)
+    working_hcp, wasteful_hcp, wasted_in_opp_suits = _calculate_working_hcp(
+        hand, suit_lengths, trump_suit, opponent_inferred_suits
+    )
+    result['working_hcp'] = working_hcp
+    result['wasteful_hcp'] = wasteful_hcp
+    result['wasted_in_opponent_suits'] = wasted_in_opp_suits
+
+    # Working HCP Ratio - key metric for positional value
+    total_hcp = flat.get('hcp', 0)
+    result['working_hcp_ratio'] = working_hcp / max(1, total_hcp)
+    result['hcp_efficiency'] = result['working_hcp_ratio']  # Alias
+
+    # Adjusted HCP: Reduce value of wasted points
+    # Q/J in short suits bid by opponents are worth ~50% of face value
+    result['adjusted_hcp'] = total_hcp - (wasted_in_opp_suits * 0.5)
+
+    # Misfit-heavy detection: High HCP but low working ratio
+    # These hands should pass or double, not declare
+    result['is_misfit_heavy'] = (
+        result['working_hcp_ratio'] < 0.5 and
+        total_hcp >= 12 and
+        result['our_best_fit'] <= 7
+    )
+
+    # Distributional Value (Dummy Points) - only applies with a fit
+    # Adds value for shortness when supporting partner
+    if trump_suit and result['our_best_fit'] >= 8:
+        raw_dummy_points = _calculate_dummy_points(hand, suit_lengths, trump_suit)
+
+        # Ruffing Control Check: Scale dummy points by trump quality
+        # A void with hollow trumps (2,3,4,5) is nearly worthless - you'll be over-ruffed
+        ruff_control = _calculate_ruffing_control(hand, trump_suit, raw_dummy_points)
+        result['raw_dummy_points'] = raw_dummy_points
+        result['dummy_points'] = ruff_control['adjusted_ssp']
+        result['control_multiplier'] = ruff_control['control_multiplier']
+        result['is_fragile_ruff'] = ruff_control['is_fragile_ruff']
+
+        # Total playing strength with controlled dummy points
+        result['total_playing_strength'] = total_hcp + result['dummy_points']
+
+        # "Thin game" detection: Low HCP but high playing strength
+        result['is_thin_game_candidate'] = (
+            total_hcp >= 10 and total_hcp <= 14 and
+            result['total_playing_strength'] >= 14 and
+            result['our_best_fit'] >= 9 and
+            not result['is_fragile_ruff']
+        )
+    else:
+        result['raw_dummy_points'] = 0
+        result['dummy_points'] = 0
+        result['control_multiplier'] = 1.0
+        result['is_fragile_ruff'] = False
+        result['total_playing_strength'] = total_hcp
+        result['is_thin_game_candidate'] = False
+
+    # Composite Strength: The final evaluation formula
+    # Final Strength = (Raw HCP - Wasted Points) + (SSP × Control Multiplier)
+    result['composite_strength'] = (
+        result['adjusted_hcp'] + result['dummy_points']
+    )
+
+    # Preemptive Aggression Score - for tactical obstruction
+    # For preempts, use honors in our longest suit (not partner's suit)
+    longest_suit = flat.get('longest_suit')
+    if longest_suit:
+        preempt_honors = sum(1 for c in hand.cards if c.suit == longest_suit and c.rank in ['A', 'K', 'Q'])
+    else:
+        preempt_honors = result['trump_suit_honors']
+
+    preempt_data = _calculate_preemptive_aggression(
+        suit_lengths, flat.get('we_are_vulnerable', False),
+        flat.get('they_are_vulnerable', False), preempt_honors
+    )
+    result['aggression_score'] = preempt_data['aggression_score']
+    result['is_prime_preempt_target'] = preempt_data['is_prime_preempt_target']
+    result['safety_margin'] = preempt_data['safety_margin']
+    result['preempt_suit_honors'] = preempt_honors
+
+    # Defensive Value Calculator - determines when to double vs bid
+    # Uses quick_tricks from base features and is_misfit computed above
+    quick_tricks = flat.get('quick_tricks', 0)
+    defensive_data = _calculate_defensive_value(hand, quick_tricks, result['is_misfit'])
+    result['is_defensive_powerhouse'] = defensive_data['is_defensive_powerhouse']
+    result['offense_to_defense_ratio'] = defensive_data['offense_to_defense_ratio']
+    result['defensive_penalty_candidate'] = defensive_data['defensive_penalty_candidate']
+
+    # Doubled Auction Survival (DAS) - determines rescue actions when doubled
+    # Detect if we are doubled - check BOTH RHO and LHO for doubles
+    # Penalty doubles can come from either opponent
+    rho_doubled = flat.get('rho_doubled', False)
+
+    # Also check if LHO doubled
+    lho_bids = _get_lho_bids(auction_history, my_position, dealer)
+    lho_doubled = lho_bids and lho_bids[-1] == 'X'
+
+    # We're doubled if either opponent doubled (and it wasn't redoubled away)
+    is_doubled = rho_doubled or lho_doubled
+
+    partner_sos_redouble = False
+
+    # Check if partner issued an SOS redouble (XX after we were doubled)
+    if partner_bids and partner_bids[-1] == 'XX':
+        partner_sos_redouble = True
+
+    # Determine what suit we're doubled in
+    doubled_suit = None
+    if is_doubled:
+        # Find our side's last suit bid (could be ours or partner's)
+        my_bids = _get_my_bids(auction_history, my_position, dealer)
+        for bid in reversed(my_bids):
+            suit = get_suit_from_bid(bid)
+            if suit:
+                doubled_suit = suit
+                break
+        # If we haven't bid a suit, check partner's bids
+        if not doubled_suit and partner_bids:
+            for bid in reversed(partner_bids):
+                suit = get_suit_from_bid(bid)
+                if suit:
+                    doubled_suit = suit
+                    break
+
+    result['is_doubled'] = is_doubled
+    result['partner_sos_redouble'] = partner_sos_redouble
+    result['doubled_suit'] = doubled_suit
+
+    # Detect "Last Chance to Rescue" scenario
+    # This is when: Double → Pass → Pass → (we're now the last to act)
+    # The auction pattern is: [X, Pass, Pass] as the last 3 bids before us
+    is_last_chance_to_rescue = False
+    if is_doubled and len(auction_history) >= 3:
+        # Check if the last 3 bids before our turn are: X, Pass, Pass
+        # This means partner passed after the double, and RHO also passed
+        last_three = auction_history[-3:]
+        if last_three == ['X', 'Pass', 'Pass']:
+            is_last_chance_to_rescue = True
+        # Also check for pattern where we bid, got doubled, partner passed, RHO passed
+        # Pattern: [our_bid, X, Pass, Pass] where we're now to act again
+        elif len(auction_history) >= 4:
+            last_four = auction_history[-4:]
+            if last_four[1] == 'X' and last_four[2] == 'Pass' and last_four[3] == 'Pass':
+                # Our bid was doubled, then two passes - we're the "last chance"
+                is_last_chance_to_rescue = True
+
+    result['is_last_chance_to_rescue'] = is_last_chance_to_rescue
+
+    # Calculate DAS features
+    das_data = _calculate_doubled_status(
+        hand, suit_lengths, doubled_suit,
+        result['working_hcp_ratio'], flat.get('we_are_vulnerable', False),
+        flat.get('hcp', 0)
+    )
+    result['panic_index'] = das_data['panic_index']
+    result['should_rescue'] = das_data['should_rescue']
+    result['can_punish_with_redouble'] = das_data['can_punish_with_redouble']
+    result['rescue_suit'] = das_data['rescue_suit']
+    result['rescue_action'] = das_data['rescue_action']
+    result['multiple_rescue_suits'] = das_data['multiple_rescue_suits']
+    result['rescue_candidates'] = das_data.get('rescue_candidates', 0)
+
+    # Partner rescue response (when partner needs to respond to our SOS)
+    if partner_sos_redouble:
+        rescue_response = _calculate_partner_rescue_response(hand, suit_lengths, doubled_suit)
+        result['rescue_response_suit'] = rescue_response['rescue_response_suit']
+        result['rescue_response_action'] = rescue_response['rescue_response_action']
+    else:
+        result['rescue_response_suit'] = None
+        result['rescue_response_action'] = None
+
+    return result
+
+
+def _calculate_suit_quality_score(hand: Hand, suit: str, partner_inferred_length: int) -> Dict[str, Any]:
+    """
+    Calculate Suit Quality Score (SQS) for competitive bidding decisions.
+
+    SQS = Combined Length + Number of Top 3 Honors (A, K, Q) we hold
+
+    The SQS determines if the trump suit is "safe" for competitive bidding:
+    - SQS 10+ = Safe for 3-level
+    - SQS 8-9 = Marginal
+    - SQS ≤ 7 = Fragile (avoid competing vulnerable)
+
+    Args:
+        hand: Hand object
+        suit: Trump suit symbol
+        partner_inferred_length: Partner's inferred length in this suit
+
+    Returns:
+        Dict with 'sqs' (score), 'honors' (count of A/K/Q), 'length' (our length)
+    """
+    suit_cards = [c for c in hand.cards if c.suit == suit]
+    our_length = len(suit_cards)
+
+    # Count top 3 honors (A, K, Q)
+    top_honors = sum(1 for c in suit_cards if c.rank in ['A', 'K', 'Q'])
+
+    # Combined fit length
+    combined_length = our_length + partner_inferred_length
+
+    # SQS = Combined length + our top honors
+    sqs = combined_length + top_honors
+
+    return {
+        'sqs': sqs,
+        'honors': top_honors,
+        'length': our_length,
+        'combined_length': combined_length
+    }
+
+
+def _calculate_working_hcp(hand: Hand, suit_lengths: Dict[str, int], trump_suit: str,
+                           opponent_suits: Dict[str, int] = None) -> tuple:
+    """
+    Calculate Working HCP vs Wasteful HCP for positional evaluation.
+
+    Working HCP = honors in our long suits (4+ cards) - these generate tricks
+    Wasteful HCP = honors in short suits (≤2 cards) - often captured or wasted
+    Wasted in Opponent Suits = Q/J in short suits where opponents have length
+
+    This distinction is critical in competitive auctions where:
+    - Working HCP supports offensive bidding
+    - Wasteful HCP suggests defensive potential (pass/double)
+    - Wasted in opponent suits = likely captured, worst case
+
+    Args:
+        hand: Hand object
+        suit_lengths: Dict of suit lengths {suit: length}
+        trump_suit: The agreed/potential trump suit
+        opponent_suits: Dict of opponent's inferred suit lengths
+
+    Returns:
+        Tuple of (working_hcp, wasteful_hcp, wasted_in_opponent_suits)
+    """
+    hcp_values = {'A': 4, 'K': 3, 'Q': 2, 'J': 1}
+    working_hcp = 0
+    wasteful_hcp = 0
+    wasted_in_opp = 0
+
+    if opponent_suits is None:
+        opponent_suits = {}
+
+    for suit in ['♠', '♥', '♦', '♣']:
+        length = suit_lengths.get(suit, 0)
+        suit_cards = [c for c in hand.cards if c.suit == suit]
+        suit_hcp = sum(hcp_values.get(c.rank, 0) for c in suit_cards)
+
+        # Check if this is an opponent's suit (they bid it)
+        is_opponent_suit = suit in opponent_suits and opponent_suits[suit] >= 5
+
+        if length >= 4 or suit == trump_suit:
+            # Long suits and trump suit = working HCP
+            working_hcp += suit_hcp
+        elif length <= 2:
+            # Short suits = wasteful HCP (honors may be captured)
+            wasteful_hcp += suit_hcp
+
+            # Extra penalty: Q/J in short suits where opponents have length
+            # These are almost certainly going to be captured
+            if is_opponent_suit:
+                qj_waste = sum(hcp_values.get(c.rank, 0) for c in suit_cards if c.rank in ['Q', 'J'])
+                wasted_in_opp += qj_waste
+        else:
+            # 3-card suits: split the difference
+            working_hcp += suit_hcp // 2
+            wasteful_hcp += suit_hcp - (suit_hcp // 2)
+
+    return working_hcp, wasteful_hcp, wasted_in_opp
+
+
+def _calculate_dummy_points(hand: Hand, suit_lengths: Dict[str, int], trump_suit: str) -> int:
+    """
+    Calculate Dummy Points (distributional value) for supporting partner.
+
+    Dummy Points add value for shortness when we're raising partner's suit:
+    - Void: +5 points (can ruff from the start)
+    - Singleton: +3 points (can ruff after one round)
+    - Doubleton: +1 point (can ruff after two rounds)
+
+    These points are ONLY valid when:
+    1. We have a fit (8+ cards combined)
+    2. The shortness is NOT in the trump suit
+    3. We have adequate trumps to ruff (3+ in support)
+
+    Args:
+        hand: Hand object
+        suit_lengths: Dict of suit lengths {suit: length}
+        trump_suit: The agreed trump suit
+
+    Returns:
+        Dummy points to add to hand evaluation
+    """
+    dummy_pts = 0
+    trump_length = suit_lengths.get(trump_suit, 0)
+
+    # Need at least 3 trumps to count dummy points
+    if trump_length < 3:
+        return 0
+
+    for suit in ['♠', '♥', '♦', '♣']:
+        if suit == trump_suit:
+            continue  # Don't count shortness in trump suit
+
+        length = suit_lengths.get(suit, 0)
+
+        if length == 0:
+            dummy_pts += 5  # Void
+        elif length == 1:
+            dummy_pts += 3  # Singleton
+        elif length == 2:
+            dummy_pts += 1  # Doubleton
+
+    return dummy_pts
+
+
+def _calculate_ruffing_control(hand: Hand, trump_suit: str, raw_ssp: int) -> Dict[str, Any]:
+    """
+    Adjust Short Suit Points (SSP) based on trump quality.
+
+    The physics: A void is only valuable if your trumps are high enough
+    to prevent over-ruffs. Ruffing with the 2 when opponent has the 9
+    gives them the trick.
+
+    Trump Quality Scale:
+    - 2+ honors (A,K,Q): Full control (multiplier 1.0)
+    - 1 honor: Partial control (multiplier 0.7)
+    - 0 honors: Weak control (multiplier 0.3)
+
+    Args:
+        hand: Hand object
+        trump_suit: The trump suit symbol
+        raw_ssp: Raw short suit points before adjustment
+
+    Returns:
+        Dict with adjusted_ssp, control_multiplier, is_fragile_ruff
+    """
+    trump_cards = [c for c in hand.cards if c.suit == trump_suit]
+    honors = sum(1 for c in trump_cards if c.rank in ['A', 'K', 'Q'])
+
+    if honors >= 2:
+        multiplier = 1.0  # Full control
+    elif honors == 1:
+        multiplier = 0.7  # Partial control
+    else:
+        multiplier = 0.3  # Weak control - ruffs will likely be over-ruffed
+
+    adjusted_ssp = raw_ssp * multiplier
+
+    return {
+        'adjusted_ssp': adjusted_ssp,
+        'control_multiplier': multiplier,
+        'is_fragile_ruff': multiplier < 0.7 and raw_ssp > 0
+    }
+
+
+def _calculate_preemptive_aggression(suit_lengths: Dict[str, int], we_vul: bool,
+                                      they_vul: bool, trump_honors: int) -> Dict[str, Any]:
+    """
+    Calculate aggression score for preemptive bidding opportunities.
+
+    The physics of preemption is the Vulnerability Delta:
+    - Favorable (They V, We NV): -500 is a "win" vs their +620 game
+    - Unfavorable (We V, They NV): -500 is disaster vs their +420 game
+
+    The Rule of 2-3-4:
+    - NV vs NV: Overbid by 3 (down 3 undoubled = -150)
+    - NV vs V: Overbid by 4 (favorable, maximum obstruction)
+    - V vs V: Overbid by 2 (conservative)
+    - V vs NV: Overbid by 2 (unfavorable, cautious)
+
+    Args:
+        suit_lengths: Dict of suit lengths
+        we_vul: Are we vulnerable?
+        they_vul: Are they vulnerable?
+        trump_honors: Number of A/K/Q in our long suit
+
+    Returns:
+        Dict with aggression_score, is_prime_preempt_target, safety_margin
+    """
+    max_length = max(suit_lengths.values()) if suit_lengths else 0
+
+    # Vulnerability modifier
+    if not we_vul and they_vul:
+        vul_modifier = 2.0  # Favorable: Maximum aggression
+        safety_margin = 4  # Rule of 4
+    elif not we_vul and not they_vul:
+        vul_modifier = 1.0  # Equal: Moderate aggression
+        safety_margin = 3  # Rule of 3
+    elif we_vul and they_vul:
+        vul_modifier = 0.7  # Both V: Conservative
+        safety_margin = 2  # Rule of 2
+    else:
+        vul_modifier = 0.4  # Unfavorable: Extreme caution
+        safety_margin = 2  # Rule of 2
+
+    # Trump quality modifier: Don't preempt with hollow suits
+    if trump_honors >= 2:
+        quality_modifier = 1.0
+    elif trump_honors == 1:
+        quality_modifier = 0.8
+    else:
+        quality_modifier = 0.5  # Dangerous to preempt with Jxxxx or worse
+
+    # Aggression score: Weighted by length squared, adjusted by vulnerability and quality
+    aggression_score = (max_length ** 2) * vul_modifier * quality_modifier
+
+    # Prime preempt target: High aggression, long suit, decent quality
+    is_prime_target = (
+        aggression_score > 30 and
+        max_length >= 7 and
+        trump_honors >= 1
+    )
+
+    return {
+        'aggression_score': aggression_score,
+        'is_prime_preempt_target': is_prime_target,
+        'safety_margin': safety_margin
+    }
+
+
+def _calculate_defensive_value(hand: Hand, quick_tricks: float, is_misfit: bool) -> Dict[str, Any]:
+    """
+    Calculate defensive value to determine when to double vs bid.
+
+    The Dual Nature of High Cards: An Ace can be a "Trick Taker" (Offense)
+    or an "Entry Stopper" (Defense). This calculator identifies when your
+    strength is better utilized by defending rather than declaring.
+
+    Quick Trick Reference:
+        A-K in a suit: 2.0 QT (guaranteed two defensive stops)
+        A-Q in a suit: 1.5 QT (likely one and a half stops)
+        Ace or K-Q:    1.0 QT (one stop)
+        King-x:        0.5 QT (fragile; requires Ace position)
+
+    First Principle of Defense: If hand contains 3.0+ Quick Tricks but
+    no fit with partner, Offensive Potential is low but Defensive Potential
+    is massive. Bidding is a "Logic Failure"; doubling is the correct move.
+
+    Args:
+        hand: Hand object
+        quick_tricks: Pre-calculated quick tricks value
+        is_misfit: Whether we have a misfit with partner
+
+    Returns:
+        Dict with:
+        - is_defensive_powerhouse: True if 3.0+ QT (should double, not bid)
+        - offense_to_defense_ratio: Lower = more defensive (< 0.6 means defend)
+        - defensive_penalty_candidate: True if should consider penalty double
+    """
+    hcp = hand.hcp
+
+    # Defensive powerhouse: 3.0+ quick tricks is massive defensive strength
+    is_defensive_powerhouse = quick_tricks >= 3.0
+
+    # Offense to defense ratio: HCP / (QT * 4)
+    # Lower ratio means honors are concentrated (defensive)
+    # Higher ratio means scattered HCP (less defensive)
+    if quick_tricks > 0:
+        offense_to_defense_ratio = hcp / (quick_tricks * 4)
+    else:
+        offense_to_defense_ratio = float('inf')  # All HCP with no QT (very unusual)
+
+    # Penalty double candidate: High QT, misfit, or low offense ratio
+    # This triggers when we should stop competing and start defending
+    defensive_penalty_candidate = (
+        (is_defensive_powerhouse and is_misfit) or  # QT + no fit = defend
+        (quick_tricks >= 2.5 and offense_to_defense_ratio < 0.6) or  # Concentrated honors
+        (is_misfit and quick_tricks >= 2.0 and hcp >= 10)  # Decent values, no fit
+    )
+
+    return {
+        'is_defensive_powerhouse': is_defensive_powerhouse,
+        'offense_to_defense_ratio': round(offense_to_defense_ratio, 2) if offense_to_defense_ratio != float('inf') else 99.0,
+        'defensive_penalty_candidate': defensive_penalty_candidate
+    }
+
+
+def _calculate_doubled_status(hand: Hand, suit_lengths: Dict[str, int],
+                               doubled_suit: str, working_hcp_ratio: float,
+                               we_vulnerable: bool, hcp: int) -> Dict[str, Any]:
+    """
+    Calculate Doubled Auction Survival (DAS) status.
+
+    When doubled for penalty, determines if we're in a "Penalty Trap" or
+    if we can "Hold" the contract. Also identifies rescue options.
+
+    Physics of Being Doubled:
+    - Panic Index increases with: short trumps, wasted HCP, vulnerability
+    - Rescue needed when panic_index >= 50
+    - Strength redouble when working_hcp_ratio > 0.8 and hcp > 15
+
+    Args:
+        hand: Hand object
+        suit_lengths: Dict of suit lengths
+        doubled_suit: The suit we're doubled in (or None)
+        working_hcp_ratio: Ratio of working to total HCP
+        we_vulnerable: Vulnerability status
+        hcp: Total HCP
+
+    Returns:
+        Dict with panic_index, should_rescue, can_punish_with_redouble,
+        rescue_suit, rescue_action, multiple_rescue_suits
+    """
+    if not doubled_suit:
+        return {
+            'panic_index': 0,
+            'should_rescue': False,
+            'can_punish_with_redouble': False,
+            'rescue_suit': None,
+            'rescue_action': 'HOLD',
+            'multiple_rescue_suits': False
+        }
+
+    # Calculate panic index based on trump length and HCP quality
+    trump_length = suit_lengths.get(doubled_suit, 0)
+    panic_index = 0
+
+    # Physics: Short trumps = high panic
+    if trump_length <= 1:
+        panic_index += 50
+    elif trump_length == 2:
+        panic_index += 30
+    elif trump_length == 3:
+        panic_index += 10
+
+    # Physics: Wasted HCP = higher panic
+    if working_hcp_ratio < 0.4:
+        panic_index += 30
+    elif working_hcp_ratio < 0.5:
+        panic_index += 15
+
+    # Physics: Vulnerability increases penalty
+    if we_vulnerable:
+        panic_index += 20
+
+    # Find rescue suits (4+ cards, not the doubled suit)
+    rescue_candidates = []
+    for suit in ['♣', '♦', '♥', '♠']:
+        if suit != doubled_suit and suit_lengths.get(suit, 0) >= 4:
+            rescue_candidates.append((suit, suit_lengths.get(suit, 0)))
+
+    # Sort by length (descending), then by rank (ascending for cheapest)
+    rescue_candidates.sort(key=lambda x: (-x[1], ['♣', '♦', '♥', '♠'].index(x[0])))
+
+    # Determine rescue action
+    multiple_rescue_suits = len(rescue_candidates) >= 2
+    should_rescue = panic_index >= 50
+
+    if len(rescue_candidates) == 0:
+        rescue_action = 'PASS'  # No safe harbor
+        rescue_suit = None
+    elif multiple_rescue_suits and should_rescue:
+        rescue_action = 'REDOUBLE'  # SOS: Partner picks cheapest 4-card suit
+        rescue_suit = None
+    elif len(rescue_candidates) >= 1 and should_rescue:
+        rescue_action = 'BID'  # Direct rescue to longest suit
+        rescue_suit = rescue_candidates[0][0]
+    else:
+        rescue_action = 'HOLD'  # Panic not high enough
+        rescue_suit = rescue_candidates[0][0] if rescue_candidates else None
+
+    # Strength redouble: Good working HCP and strong hand
+    can_punish = working_hcp_ratio > 0.8 and hcp >= 15 and trump_length >= 3
+
+    return {
+        'panic_index': panic_index,
+        'should_rescue': should_rescue,
+        'can_punish_with_redouble': can_punish,
+        'rescue_suit': rescue_suit,
+        'rescue_action': rescue_action,
+        'multiple_rescue_suits': multiple_rescue_suits,
+        'rescue_candidates': len(rescue_candidates)
+    }
+
+
+def _calculate_partner_rescue_response(hand: Hand, suit_lengths: Dict[str, int],
+                                        doubled_suit: str) -> Dict[str, Any]:
+    """
+    Partner's response logic after an SOS Redouble.
+
+    The partner must bid their cheapest 4-card suit to find a safe harbor.
+    This is a command, not an invitation.
+
+    Priority:
+    1. Cheapest 4-card suit (excluding doubled suit)
+    2. Best 3-card suit if no 4-card suit
+    3. Lowest rank available if flat
+
+    Args:
+        hand: Partner's hand
+        suit_lengths: Partner's suit lengths
+        doubled_suit: The suit the partnership is doubled in
+
+    Returns:
+        Dict with rescue_response_suit, rescue_response_action
+    """
+    suits_order = ['♣', '♦', '♥', '♠']  # Cheapest first
+
+    # Priority 1: Find cheapest 4-card suit
+    for suit in suits_order:
+        if suit != doubled_suit and suit_lengths.get(suit, 0) >= 4:
+            return {
+                'rescue_response_suit': suit,
+                'rescue_response_action': 'BID',
+                'rescue_response_reason': 'SOS_RESCUE_RESPONSE'
+            }
+
+    # Priority 2: Find any 3-card suit
+    for suit in suits_order:
+        if suit != doubled_suit and suit_lengths.get(suit, 0) >= 3:
+            return {
+                'rescue_response_suit': suit,
+                'rescue_response_action': 'BID',
+                'rescue_response_reason': 'EMERGENCY_EXIT'
+            }
+
+    # Priority 3: No escape possible
+    return {
+        'rescue_response_suit': None,
+        'rescue_response_action': 'PASS',
+        'rescue_response_reason': 'NO_ESCAPE_POSSIBLE'
+    }
+
+
+def interpret_redouble(hand: Hand, auction_history: List[str],
+                       suit_lengths: Dict[str, int], hcp: int,
+                       doubled_suit: str, panic_index: int) -> Dict[str, Any]:
+    """
+    Interpret partner's redouble as either Power (Sit) or SOS (Pull).
+
+    At low levels (1-2), a redouble is usually SOS if there's a misfit.
+    At high levels (3+), it's usually Power (we can make it).
+    With 12+ HCP, partner may convert SOS to Power.
+
+    Args:
+        hand: Our hand
+        auction_history: Current auction
+        suit_lengths: Our suit lengths
+        hcp: Our HCP
+        doubled_suit: Suit we're doubled in
+        panic_index: Current panic level
+
+    Returns:
+        Dict with interpretation mode and expected action
+    """
+    # Get current auction level
+    current_level = 1
+    for bid in reversed(auction_history):
+        if bid not in ['Pass', 'X', 'XX'] and len(bid) >= 2:
+            try:
+                current_level = int(bid[0])
+                break
+            except ValueError:
+                continue
+
+    # At low levels, assume SOS if panic is high
+    if current_level <= 2:
+        if panic_index >= 60:
+            # Check if we can convert to Power with strong defense
+            defensive_hcp = sum(1 for card in hand.cards if card.rank in ['A', 'K', 'Q', 'J'])
+            if hcp >= 12 and defensive_hcp >= 4:
+                return {
+                    'interpretation_mode': 'POWER_CONVERSION',
+                    'action': 'PASS',
+                    'reason': 'Converting SOS to Power with strong defense',
+                    'expected_response': None
+                }
+            # SOS - must pull to cheapest 4-card suit
+            rescue = _calculate_partner_rescue_response(hand, suit_lengths, doubled_suit)
+            return {
+                'interpretation_mode': 'SOS_PULL',
+                'action': 'BID',
+                'reason': f'Low level ({current_level}-level) and high panic ({panic_index})',
+                'expected_response': rescue['rescue_response_suit']
+            }
+
+    # At high levels (3+), assume Power - stay put
+    return {
+        'interpretation_mode': 'POWER_EXPECTATION',
+        'action': 'PASS',
+        'reason': f'High level ({current_level}-level) implies strength',
+        'expected_response': None
+    }
+
+
+def _infer_partner_suit_lengths(partner_bids: List[str]) -> Dict[str, int]:
+    """
+    Infer partner's suit lengths from their bids.
+
+    Bridge bidding rules imply minimum suit lengths:
+    - 1-level major opening: 5+ cards
+    - 1-level minor opening: 3+ cards (could be only 3)
+    - 2-level weak bid: 6+ cards
+    - 3-level preempt: 7+ cards
+    - 4-level preempt: 8+ cards
+    - Overcall: 5+ cards
+    - Raise of partner's suit: 3+ cards
+    - New suit at 2-level: 4+ cards
+
+    Args:
+        partner_bids: List of partner's bids
+
+    Returns:
+        Dict mapping suit symbols to minimum inferred lengths
+    """
+    inferred = {}
+
+    for bid in partner_bids:
+        if not bid or bid in ['Pass', 'X', 'XX']:
+            continue
+
+        suit = get_suit_from_bid(bid)
+        level = get_bid_level(bid)
+
+        if not suit or not level:
+            continue
+
+        # Infer minimum length based on bid
+        min_length = 0
+
+        if level == 1:
+            # 1-level openings
+            if suit in ['♥', '♠']:
+                min_length = 5  # 5-card majors
+            else:
+                min_length = 3  # 3+ card minors
+        elif level == 2:
+            # Could be weak 2 (6+ cards) or 2-over-1 (4+ cards)
+            # Assume weak 2 for preemptive suits
+            if suit in ['♥', '♠', '♦']:
+                min_length = 6  # Weak 2
+            else:
+                min_length = 4
+        elif level == 3:
+            min_length = 7  # 3-level preempt
+        elif level == 4:
+            min_length = 8  # 4-level preempt
+        elif level >= 5:
+            min_length = 8  # Very distributional
+
+        # Update if this implies longer suit
+        if suit and min_length > inferred.get(suit, 0):
+            inferred[suit] = min_length
+
+    return inferred
+
+
+def _infer_opponent_suit_lengths(auction_history: List[str], my_position: str,
+                                  dealer: str, opening_bid: str) -> Dict[str, int]:
+    """
+    Infer opponent's suit lengths from their bids.
+
+    This helps estimate their best fit for LoTT calculations.
+
+    Args:
+        auction_history: Full auction history
+        my_position: My position
+        dealer: Dealer position
+        opening_bid: The opening bid (if any)
+
+    Returns:
+        Dict mapping suit symbols to minimum inferred opponent fit lengths
+    """
+    inferred = {}
+
+    # Get opponent bids (LHO and RHO)
+    lho_bids = _get_lho_bids(auction_history, my_position, dealer)
+    rho_bids = _get_rho_bids(auction_history, my_position, dealer)
+
+    # Combine to infer opponent suit distribution
+    for bid in lho_bids + rho_bids:
+        if not bid or bid in ['Pass', 'X', 'XX']:
+            continue
+
+        suit = get_suit_from_bid(bid)
+        level = get_bid_level(bid)
+
+        if not suit or not level:
+            continue
+
+        # Infer minimum length
+        min_length = 0
+        if level == 1:
+            if suit in ['♥', '♠']:
+                min_length = 5
+            else:
+                min_length = 3
+        elif level == 2:
+            min_length = 6
+        elif level >= 3:
+            min_length = 7
+
+        if suit and min_length > inferred.get(suit, 0):
+            inferred[suit] = min_length
+
+    # Check if opponents found a fit (both bid same suit)
+    for suit in ['♠', '♥', '♦', '♣']:
+        lho_bid_suit = any(get_suit_from_bid(b) == suit for b in lho_bids if b not in ['Pass', 'X', 'XX'])
+        rho_bid_suit = any(get_suit_from_bid(b) == suit for b in rho_bids if b not in ['Pass', 'X', 'XX'])
+
+        # If both opponents bid the same suit, they likely have a fit
+        if lho_bid_suit and rho_bid_suit:
+            # Assume at least 8-card fit when both bid
+            inferred[suit] = max(inferred.get(suit, 0), 8)
+
+    # Default: assume opponents have 8-card fit in their best suit if they bid at all
+    if not inferred and (lho_bids or rho_bids):
+        inferred['?'] = 8  # Unknown but assume 8-card fit
+
+    return inferred
 
 
 def _infer_partner_keycards(auction_history: List[str], partner_last_bid: str) -> Dict[str, int]:

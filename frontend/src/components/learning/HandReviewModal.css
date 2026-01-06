@@ -79,7 +79,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: var(--z-modal, 2000); /* Higher z-index to appear above game elements */
   padding: 20px;
 }
 

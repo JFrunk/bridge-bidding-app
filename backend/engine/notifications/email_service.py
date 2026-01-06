@@ -521,6 +521,24 @@ def send_feedback_notification(feedback_data: Dict[str, Any], filename: str) -> 
         description = feedback_data.get('description', 'No description')
         context = feedback_data.get('context', 'unknown')
         timestamp = feedback_data.get('timestamp', '')
+        user_id = feedback_data.get('user_id', 'Anonymous')
+        context_data = feedback_data.get('context_data', {})
+
+        # Extract screenshot from context_data if present
+        screenshot = context_data.get('screenshot', None)
+
+        # Build screenshot HTML section
+        screenshot_html = ""
+        screenshot_text = ""
+        if screenshot:
+            # Screenshot is a base64 data URL (e.g., "data:image/jpeg;base64,...")
+            screenshot_html = f"""
+                <div style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 10px; color: #0077be;">📸 Screenshot</h3>
+                    <img src="{screenshot}" alt="User screenshot" style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px;" />
+                </div>
+            """
+            screenshot_text = "\n[Screenshot attached - view HTML version]\n"
 
         # Build email
         subject = f"📝 Bridge Feedback ({feedback_type}) - {context}"
@@ -535,11 +553,15 @@ def send_feedback_notification(feedback_data: Dict[str, Any], filename: str) -> 
                 <p style="margin: 5px 0 0 0; opacity: 0.9;">Type: {feedback_type} | Context: {context}</p>
             </div>
             <div style="border: 1px solid #ddd; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+                <div style="background: #f0f4f8; padding: 10px 15px; border-radius: 6px; margin-bottom: 15px;">
+                    <strong>👤 User ID:</strong> {user_id}
+                </div>
                 <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                     <h3 style="margin-top: 0; color: #0077be;">💬 Feedback</h3>
                     <p style="margin-bottom: 0; font-size: 16px;">{description or 'No description provided'}</p>
                 </div>
-                <p style="color: #666; font-size: 12px;">
+                {screenshot_html}
+                <p style="color: #666; font-size: 12px; margin-top: 20px;">
                     Timestamp: {timestamp}<br>
                     File: {filename}
                 </p>
@@ -557,13 +579,14 @@ def send_feedback_notification(feedback_data: Dict[str, Any], filename: str) -> 
         text_body = f"""
 USER FEEDBACK
 =============
+User ID: {user_id}
 Type: {feedback_type}
 Context: {context}
 Timestamp: {timestamp}
 
 Description:
 {description}
-
+{screenshot_text}
 File: {filename}
 """
 

@@ -1,0 +1,351 @@
+/**
+ * TournamentComparisonTable.css
+ *
+ * Styles for the Physics Audit component showing tournament vs. engine comparison.
+ * Uses CSS variables from the design system for consistency.
+ */
+
+/* Container */
+.audit-container {
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-4, 16px);
+  margin: var(--space-3, 12px) 0;
+  border: 1px solid var(--border-color, #dee2e6);
+}
+
+.audit-container.audit-loading {
+  text-align: center;
+  color: var(--text-secondary, #6c757d);
+  padding: var(--space-6, 24px);
+}
+
+/* Header */
+.audit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 var(--space-3, 12px) 0;
+  font-size: var(--text-lg, 1.125rem);
+  color: var(--text-primary, #212529);
+}
+
+/* Quadrant Badge */
+.quadrant-badge {
+  font-size: var(--text-sm, 0.875rem);
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border-radius: var(--radius-sm, 4px);
+  font-weight: 600;
+}
+
+.quadrant-q1 {
+  background: var(--color-success-light, #d4edda);
+  color: var(--color-success-dark, #155724);
+}
+
+.quadrant-q2 {
+  background: var(--color-info-light, #d1ecf1);
+  color: var(--color-info-dark, #0c5460);
+}
+
+.quadrant-q3 {
+  background: var(--color-warning-light, #fff3cd);
+  color: var(--color-warning-dark, #856404);
+}
+
+.quadrant-q4 {
+  background: var(--color-danger-light, #f8d7da);
+  color: var(--color-danger-dark, #721c24);
+}
+
+/* Comparison Table */
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--space-3, 12px);
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color-light, #e9ecef);
+}
+
+.comparison-table th {
+  background: var(--bg-tertiary, #e9ecef);
+  font-weight: 600;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-secondary, #6c757d);
+}
+
+.comparison-table td:first-child {
+  width: 30%;
+  color: var(--text-secondary, #6c757d);
+}
+
+/* Optimal Cell - Green highlight for engine recommendation */
+.optimal-cell {
+  background: var(--color-success-light, #d4edda);
+  color: var(--color-success-dark, #155724);
+  font-weight: 600;
+}
+
+/* Mismatch Cell - Highlight when tournament differs from optimal */
+.mismatch-cell {
+  background: var(--color-warning-light, #fff3cd);
+  color: var(--color-warning-dark, #856404);
+}
+
+/* Rule Tag */
+.rule-tag {
+  display: inline-block;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #868e96);
+  margin-left: var(--space-2, 8px);
+  font-weight: normal;
+}
+
+/* Survival Badges */
+.survival-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.survival-safe {
+  background: var(--color-success-light, #d4edda);
+  color: var(--color-success-dark, #155724);
+}
+
+.survival-survived {
+  background: var(--color-info-light, #d1ecf1);
+  color: var(--color-info-dark, #0c5460);
+}
+
+.survival-failed {
+  background: var(--color-danger-light, #f8d7da);
+  color: var(--color-danger-dark, #721c24);
+}
+
+.survival-lucky {
+  background: var(--color-warning-light, #fff3cd);
+  color: var(--color-warning-dark, #856404);
+}
+
+.panic-indicator {
+  font-size: var(--text-xs, 0.75rem);
+  opacity: 0.8;
+  margin-left: var(--space-1, 4px);
+}
+
+/* Rescue Action */
+.rescue-action {
+  color: var(--color-info, #17a2b8);
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.no-rescue {
+  color: var(--text-muted, #868e96);
+  font-size: var(--text-sm, 0.875rem);
+}
+
+/* Score Display */
+.score-value {
+  font-size: var(--text-base, 1rem);
+  font-weight: 600;
+}
+
+.score-value.theoretical {
+  color: var(--color-success, #28a745);
+}
+
+.tricks-info {
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-muted, #868e96);
+  margin-left: var(--space-2, 8px);
+}
+
+/* Score Delta */
+.score-delta {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--space-2, 8px);
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.score-delta.positive {
+  background: var(--color-success-light, #d4edda);
+  color: var(--color-success-dark, #155724);
+}
+
+.score-delta.negative {
+  background: var(--color-danger-light, #f8d7da);
+  color: var(--color-danger-dark, #721c24);
+}
+
+.score-delta.neutral {
+  background: var(--bg-tertiary, #e9ecef);
+  color: var(--text-secondary, #6c757d);
+}
+
+/* DDS Row */
+.dds-row {
+  background: var(--bg-tertiary, #e9ecef);
+}
+
+.dds-contract {
+  font-weight: 600;
+  margin-right: var(--space-3, 12px);
+}
+
+.dds-score {
+  color: var(--text-secondary, #6c757d);
+}
+
+/* Audit Category Badges */
+.audit-category-badge {
+  display: inline-block;
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 500;
+}
+
+.category-lucky {
+  background: var(--color-warning-light, #fff3cd);
+  color: var(--color-warning-dark, #856404);
+}
+
+.category-penalty {
+  background: var(--color-danger-light, #f8d7da);
+  color: var(--color-danger-dark, #721c24);
+}
+
+.category-signal {
+  background: var(--color-info-light, #d1ecf1);
+  color: var(--color-info-dark, #0c5460);
+}
+
+.category-aligned {
+  background: var(--color-success-light, #d4edda);
+  color: var(--color-success-dark, #155724);
+}
+
+.category-violation {
+  background: var(--color-danger-light, #f8d7da);
+  color: var(--color-danger-dark, #721c24);
+}
+
+/* Logic Delta / Reasoning Gap */
+.logic-delta {
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color-light, #e9ecef);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-3, 12px);
+  margin-top: var(--space-3, 12px);
+}
+
+.logic-delta h4 {
+  margin: 0 0 var(--space-2, 8px) 0;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-secondary, #6c757d);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.feedback-text {
+  margin: 0;
+  font-size: var(--text-base, 1rem);
+  color: var(--text-primary, #212529);
+  line-height: 1.5;
+}
+
+/* Danger Meter */
+.danger-meter-container {
+  margin-top: var(--space-3, 12px);
+}
+
+.danger-meter {
+  position: relative;
+  height: 24px;
+  background: var(--bg-tertiary, #e9ecef);
+  border-radius: var(--radius-md, 8px);
+  overflow: hidden;
+}
+
+.danger-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-warning, #ffc107) 0%,
+    var(--color-danger, #dc3545) 100%
+  );
+  transition: width 0.3s ease;
+}
+
+.danger-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--text-primary, #212529);
+  text-shadow: 0 0 2px var(--bg-primary, #fff);
+}
+
+/* Audit Actions */
+.audit-actions {
+  margin-top: var(--space-3, 12px);
+  text-align: right;
+}
+
+.view-details-btn {
+  background: var(--color-primary, #007bff);
+  color: var(--text-on-primary, #fff);
+  border: none;
+  padding: var(--space-2, 8px) var(--space-4, 16px);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.view-details-btn:hover {
+  background: var(--color-primary-dark, #0056b3);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .audit-container {
+    padding: var(--space-3, 12px);
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: var(--space-2, 8px);
+    font-size: var(--text-sm, 0.875rem);
+  }
+
+  .comparison-table td:first-child {
+    width: 25%;
+  }
+
+  .audit-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2, 8px);
+  }
+}

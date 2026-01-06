@@ -331,6 +331,22 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "doubler_raise_partner_3_card_support",
+      "bid": "2{partner_suit}",
+      "priority": 648,
+      "description": "Doubler raises partner's major with 3-card support (15-17 HCP)",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "hcp": {"min": 15, "max": 17},
+        "support_for_partner": {"min": 3, "max": 3},
+        "partner_last_bid": {"in": ["1♥", "1♠"]},
+        "partnership_hcp_min": {"min": 20}
+      },
+      "forcing": "none",
+      "explanation": "Raise partner's major with 3-card support and {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "doubler_raise_partner_medium",
       "bid": "3{partner_suit}",
       "priority": 660,

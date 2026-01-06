@@ -15,7 +15,7 @@
 import React, { useState, useEffect } from 'react';
 import './BiddingGapAnalysis.css';
 
-const API_BASE = process.env.REACT_APP_API_BASE || '';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 // Format a bid for display (handle special characters)
 const formatBid = (bid) => {

@@ -80,6 +80,40 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "thin_game_hearts_distributional",
+      "bid": "4♥",
+      "priority": 495,
+      "description": "Thin game in hearts - low HCP but high playing strength with distribution",
+      "conditions": {
+        "is_contested": false,
+        "hearts_length": {"min": 4},
+        "partner_last_bid": {"in": ["2♥", "1♥"]},
+        "is_thin_game_candidate": true,
+        "our_best_fit": {"min": 9},
+        "dummy_points": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Thin game - {hcp} HCP but {total_playing_strength} playing strength with {our_best_fit}-card fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "thin_game_spades_distributional",
+      "bid": "4♠",
+      "priority": 495,
+      "description": "Thin game in spades - low HCP but high playing strength with distribution",
+      "conditions": {
+        "is_contested": false,
+        "spades_length": {"min": 4},
+        "partner_last_bid": {"in": ["2♠", "1♠"]},
+        "is_thin_game_candidate": true,
+        "our_best_fit": {"min": 9},
+        "dummy_points": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Thin game - {hcp} HCP but {total_playing_strength} playing strength with {our_best_fit}-card fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "responder_game_in_spades_with_fit",
       "bid": "4♠",
       "priority": 500,

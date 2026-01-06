@@ -1013,15 +1013,31 @@ class SchemaInterpreter:
                 value = resolved_value
 
             if op == 'min':
-                if actual < value:
-                    failures.append(f"min {value} (have {actual}, need +{value - actual})")
-                    details['min_shortfall'] = value - actual
+                try:
+                    if actual < value:
+                        # Only calculate numeric difference if both are numbers
+                        if isinstance(actual, (int, float)) and isinstance(value, (int, float)):
+                            failures.append(f"min {value} (have {actual}, need +{value - actual})")
+                            details['min_shortfall'] = value - actual
+                        else:
+                            failures.append(f"min {value} (have {actual})")
+                except TypeError:
+                    # Can't compare these types (e.g., string quality levels)
+                    failures.append(f"min {value} (have {actual})")
                 details['min'] = value
 
             elif op == 'max':
-                if actual > value:
-                    failures.append(f"max {value} (have {actual}, excess {actual - value})")
-                    details['max_excess'] = actual - value
+                try:
+                    if actual > value:
+                        # Only calculate numeric difference if both are numbers
+                        if isinstance(actual, (int, float)) and isinstance(value, (int, float)):
+                            failures.append(f"max {value} (have {actual}, excess {actual - value})")
+                            details['max_excess'] = actual - value
+                        else:
+                            failures.append(f"max {value} (have {actual})")
+                except TypeError:
+                    # Can't compare these types
+                    failures.append(f"max {value} (have {actual})")
                 details['max'] = value
 
             elif op == 'exact':

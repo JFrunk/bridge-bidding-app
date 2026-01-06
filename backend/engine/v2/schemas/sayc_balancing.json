@@ -73,7 +73,7 @@
           ]
         },
         "hcp": {
-          "min": 8,
+          "min": 9,
           "max": 14
         },
         "unbid_suit_support": {
@@ -101,7 +101,7 @@
           ]
         },
         "hcp": {
-          "min": 11,
+          "min": 12,
           "max": 15
         },
         "is_balanced": true,

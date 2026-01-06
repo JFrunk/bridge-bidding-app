@@ -158,6 +158,9 @@
         "hearts_hcp": {
           "min": 7
         },
+        "hearts_top_honors": {
+          "min": 2
+        },
         "suit_quality_hearts": {
           "min": "excellent"
         }
@@ -182,6 +185,9 @@
         },
         "spades_hcp": {
           "min": 7
+        },
+        "spades_top_honors": {
+          "min": 2
         },
         "suit_quality_spades": {
           "min": "excellent"

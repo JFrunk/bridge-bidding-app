@@ -40,12 +40,36 @@ export function getSessionId() {
 
 /**
  * Get session headers to include in fetch requests
- * @returns {Object} Headers object with X-Session-ID
+ * @returns {Object} Headers object with X-Session-ID and X-User-ID
  */
 export function getSessionHeaders() {
-  return {
+  const headers = {
     'X-Session-ID': getSessionId()
   };
+
+  // Include user ID if available (from AuthContext storage)
+  // AuthContext stores user as JSON in 'bridge_user'
+  const storedUser = localStorage.getItem('bridge_user');
+  if (storedUser) {
+    try {
+      const userData = JSON.parse(storedUser);
+      if (userData?.id) {
+        headers['X-User-ID'] = String(userData.id);
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
+  }
+
+  // Fallback: check for guest ID
+  if (!headers['X-User-ID']) {
+    const guestId = localStorage.getItem('bridge_guest_id');
+    if (guestId) {
+      headers['X-User-ID'] = guestId;
+    }
+  }
+
+  return headers;
 }
 
 /**

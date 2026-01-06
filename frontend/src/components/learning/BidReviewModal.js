@@ -18,6 +18,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlayableCard } from '../play/PlayableCard';
 import { getBiddingHandDetail } from '../../services/analyticsService';
 import ChartHelp from '../help/ChartHelp';
+import { bidderRole, normalize, seatIndex, seatFromIndex } from '../../utils/seats';
 import './HandReviewModal.css'; // Reuse the same CSS
 
 // Rating colors and labels (same as HandReviewModal)
@@ -640,12 +641,11 @@ const BidReviewModal = ({ handId, onClose }) => {
                     <p>Your bid - no analysis recorded</p>
                   ) : (
                     <p>{(() => {
-                      // Determine who made this bid
-                      const positions = ['N', 'E', 'S', 'W'];
-                      const normalizedDlr = normalizePosition(handData?.dealer);
-                      const dealerIndex = positions.indexOf(normalizedDlr);
-                      const bidderPos = positions[(dealerIndex + bidPosition - 1) % 4];
-                      const bidderName = bidderPos === 'N' ? 'North (Partner)' : bidderPos === 'E' ? 'East (Opponent)' : bidderPos === 'W' ? 'West (Opponent)' : 'South (You)';
+                      // Determine who made this bid using seats utility
+                      const normalizedDlr = normalize(handData?.dealer);
+                      const dealerIdx = seatIndex(normalizedDlr);
+                      const bidderPos = seatFromIndex(dealerIdx + bidPosition - 1);
+                      const bidderName = bidderRole(bidderPos, userPosition);
                       return `${bidderName} bid - no analysis recorded`;
                     })()}</p>
                   )}
