@@ -29,6 +29,23 @@ const RATING_CONFIG = {
   error: { color: '#dc2626', bgColor: '#fef2f2', icon: '✗', label: 'Error' }
 };
 
+// Determine contract level based on tricks - for color coding
+const getContractLevel = (tricks, strain) => {
+  if (typeof tricks !== 'number') return 'partscore';
+  if (tricks >= 13) return 'grand';
+  if (tricks >= 12) return 'slam';
+
+  // Game thresholds vary by strain
+  const isMinor = strain === 'C' || strain === 'D';
+  const isMajor = strain === 'S' || strain === 'H';
+
+  if (strain === 'NT' && tricks >= 9) return 'game';
+  if (isMajor && tricks >= 10) return 'game';
+  if (isMinor && tricks >= 11) return 'game';
+
+  return 'partscore';
+};
+
 // DD Table Display - Shows trick matrix for all strains/declarers
 // Critical for bidding analysis: shows which contracts are makeable
 const DDTableDisplay = ({ ddAnalysis }) => {
@@ -63,9 +80,12 @@ const DDTableDisplay = ({ ddAnalysis }) => {
               <th>{pos}</th>
               {strains.map(strain => {
                 const tricks = ddAnalysis.dd_table[pos]?.[strain] ?? '-';
+                const level = getContractLevel(tricks, strain);
                 return (
-                  <td key={strain}>
-                    {tricks}
+                  <td key={strain} className={`trick-cell ${level}`}>
+                    <span className={`trick-value ${level}`}>
+                      {tricks}
+                    </span>
                   </td>
                 );
               })}
@@ -73,6 +93,21 @@ const DDTableDisplay = ({ ddAnalysis }) => {
           ))}
         </tbody>
       </table>
+      {/* Legend for game/slam/grand indicators */}
+      <div className="dd-legend">
+        <div className="legend-item">
+          <span className="legend-swatch game"></span>
+          <span>Game</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-swatch slam"></span>
+          <span>Slam</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-swatch grand"></span>
+          <span>Grand</span>
+        </div>
+      </div>
       {ddAnalysis.par && (
         <div className="par-info">
           <span className="par-label">Par:</span>

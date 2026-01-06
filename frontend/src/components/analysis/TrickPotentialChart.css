@@ -115,7 +115,7 @@
   color: var(--tpc-text-primary);
 }
 
-/* Overlay mode (popup) */
+/* Overlay mode (popup) - Light mode for readability */
 .trick-potential-overlay {
   position: fixed;
   inset: 0;
@@ -123,55 +123,72 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(55, 65, 81, 0.75);
   backdrop-filter: blur(2px);
 }
 
 .trick-potential-overlay .trick-potential-modal {
-  background: #1e293b;
+  /* Light background for better readability */
+  background: #ffffff;
   border-radius: 12px;
-  padding: 16px;
-  max-width: 320px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  min-width: 280px;
+  max-width: 360px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Override to light mode inside overlay */
+.trick-potential-overlay .trick-potential-chart {
+  --tpc-text-primary: #1f2937;
+  --tpc-text-secondary: #6b7280;
+  --tpc-text-muted: #9ca3af;
+  --tpc-bg: transparent;
 }
 
 .trick-potential-overlay .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .trick-potential-overlay .modal-title-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .trick-potential-overlay .modal-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
-  color: #e5e7eb;
+  color: #1f2937;
 }
 
 .trick-potential-overlay .modal-close {
   background: none;
   border: none;
-  color: #9ca3af;
-  font-size: 20px;
+  color: #6b7280;
+  font-size: 24px;
   cursor: pointer;
-  padding: 0;
+  padding: 4px;
   line-height: 1;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
 }
 
 .trick-potential-overlay .modal-close:hover {
-  color: #fff;
+  color: #1f2937;
+  background: #f3f4f6;
 }
 
 .trick-potential-overlay .modal-footer {
-  margin-top: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;
   color: #6b7280;
 }
 
