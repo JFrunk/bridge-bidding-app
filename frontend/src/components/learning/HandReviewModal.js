@@ -648,33 +648,36 @@ const HandReviewModal = ({
             <div className="modal-title-row">
               <h2>Play-by-Play Review</h2>
               <ChartHelp chartType="play-review" variant="icon" />
-              {/* Hand navigation - prev/next between hands in the list */}
-              {totalHands > 1 && (
-                <div className="hand-navigation">
-                  <button
-                    className="hand-nav-btn"
-                    onClick={onPrevHand}
-                    disabled={!onPrevHand}
-                    aria-label="Previous hand"
-                    title="Previous hand"
-                  >
-                    ◀ Prev
-                  </button>
-                  <span className="hand-nav-counter">
-                    {currentIndex + 1} / {totalHands}
-                  </span>
-                  <button
-                    className="hand-nav-btn"
-                    onClick={onNextHand}
-                    disabled={!onNextHand}
-                    aria-label="Next hand"
-                    title="Next hand"
-                  >
-                    Next ▶
-                  </button>
-                </div>
-              )}
+              {/* Close button - embedded in title row */}
+              <button className="close-btn-inline" onClick={onClose} aria-label="Close modal">×</button>
             </div>
+            {/* Hand navigation - prev/next between hands in the list */}
+            {totalHands > 1 && (
+              <div className="hand-navigation">
+                <button
+                  className="hand-nav-btn"
+                  onClick={onPrevHand}
+                  disabled={!onPrevHand}
+                  aria-label="Previous hand"
+                  title="Previous hand"
+                >
+                  ◀ Prev
+                </button>
+                <div className="hand-nav-counter">
+                  <span className="hand-nav-label">Hand</span>
+                  <span className="hand-nav-value">{currentIndex + 1} / {totalHands}</span>
+                </div>
+                <button
+                  className="hand-nav-btn"
+                  onClick={onNextHand}
+                  disabled={!onNextHand}
+                  aria-label="Next hand"
+                  title="Next hand"
+                >
+                  Next ▶
+                </button>
+              </div>
+            )}
             <div className="contract-info">
               {/* Contract and result */}
               <span className="contract">
@@ -715,7 +718,6 @@ const HandReviewModal = ({
               )}
             </div>
           </div>
-          <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
         {/* Unified content - single pane with play-by-play navigation */}

@@ -70,12 +70,14 @@ const DecayChart = ({
   const required_tricks = data?.required_tricks ?? 7;
   const hasData = rawCurve.length > 0;
 
-  // Sanitize curve values to prevent illogical display
-  // Each value should be <= (ns_tricks_won_so_far + tricks_remaining)
+  // Sanitize curve values and implement "persistence until falsification" logic
+  // The potential line stays at its previous value until a play mathematically
+  // seals that the previous potential is unreachable
   const curve = useMemo(() => {
     if (rawCurve.length === 0) return [];
 
-    return rawCurve.map((val, i) => {
+    // First pass: sanitize values
+    const sanitized = rawCurve.map((val, i) => {
       const tricksPlayed = Math.floor((i + 1) / 4);
       const tricksRemaining = 13 - tricksPlayed;
       const nsWonSoFar = ns_tricks_cumulative[i] ?? 0;
@@ -84,6 +86,25 @@ const DecayChart = ({
       // Cap at maximum possible and at initial potential (no gifts above optimal)
       return Math.min(val, maxPossible, dd_optimal_ns);
     });
+
+    // Second pass: implement persistence - only drop when truly falsified
+    // A drop is "falsified" when the new value is lower AND represents a real constraint
+    const persistent = [];
+    let currentPotential = sanitized[0] ?? dd_optimal_ns;
+
+    for (let i = 0; i < sanitized.length; i++) {
+      const newValue = sanitized[i];
+
+      // Only update potential if it's a genuine drop (falsification event)
+      // The backend DDS analysis determines when potential actually drops
+      if (newValue < currentPotential) {
+        currentPotential = newValue;
+      }
+
+      persistent.push(currentPotential);
+    }
+
+    return persistent;
   }, [rawCurve, ns_tricks_cumulative, dd_optimal_ns]);
 
   // Layout constants
@@ -261,25 +282,33 @@ const DecayChart = ({
           />
         ))}
 
-        {/* Locked-in tricks bars (from bottom) with count labels */}
-        {trickBars.map((bar, idx) => (
-          <g key={`bar-${idx}`}>
-            <rect
-              x={bar.startX}
-              y={getY(bar.height)}
-              width={bar.endX - bar.startX - 1}
-              height={getY(0) - getY(bar.height)}
-              className="locked-tricks-bar"
-            />
-            <text
-              x={(bar.startX + bar.endX) / 2}
-              y={getY(bar.height) - 4}
-              className="bar-label"
-            >
-              {bar.height}
-            </text>
-          </g>
-        ))}
+        {/* Locked-in tricks bars (from bottom) with count labels positioned just above */}
+        {trickBars.map((bar, idx) => {
+          const barTop = getY(bar.height);
+          const barHeight = getY(0) - barTop;
+          // Position label just above bar (3px gap), but ensure it's visible
+          const labelY = Math.max(barTop - 3, padding.top + 12);
+
+          return (
+            <g key={`bar-${idx}`}>
+              <rect
+                x={bar.startX}
+                y={barTop}
+                width={bar.endX - bar.startX - 1}
+                height={barHeight}
+                className="locked-tricks-bar"
+              />
+              <text
+                x={(bar.startX + bar.endX) / 2}
+                y={labelY}
+                className="bar-label"
+                dominantBaseline="auto"
+              >
+                {bar.height}
+              </text>
+            </g>
+          );
+        })}
 
         {/* Optimal line (dotted horizontal) - best possible play */}
         <line
@@ -313,28 +342,17 @@ const DecayChart = ({
           {requiredLabel}
         </text>
 
-        {/* X-axis labels */}
-        <text
-          x={padding.left}
-          y={height - 8}
-          className="axis-label x-label"
-        >
-          T1
-        </text>
-        <text
-          x={getX(24)}
-          y={height - 8}
-          className="axis-label x-label"
-        >
-          T7
-        </text>
-        <text
-          x={width - padding.right}
-          y={height - 8}
-          className="axis-label x-label"
-        >
-          T13
-        </text>
+        {/* X-axis labels - show all 13 tricks */}
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map(trick => (
+          <text
+            key={`trick-${trick}`}
+            x={getX((trick - 1) * 4 + 2)}
+            y={height - 8}
+            className="axis-label x-label"
+          >
+            {trick}
+          </text>
+        ))}
 
         {/* The decay curve line */}
         <path

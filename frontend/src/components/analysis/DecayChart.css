@@ -115,12 +115,13 @@
   stroke: none;
 }
 
-/* Bar labels (trick count above bar) */
+/* Bar labels (trick count just above bar) */
 .bar-label {
   font-size: 10px;
   font-weight: 600;
   fill: #2563eb;
   text-anchor: middle;
+  dominant-baseline: auto;
   font-family: system-ui, -apple-system, sans-serif;
 }
 

@@ -113,6 +113,14 @@
   z-index: 10;
 }
 
+/* Modal title takes full width since close button is inline */
+.modal-title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 .modal-title-row {
   display: flex;
   align-items: center;
@@ -124,6 +132,35 @@
   font-size: var(--text-xl);
   font-weight: var(--font-semibold);
   color: var(--text-primary);
+}
+
+/* Inline close button - embedded in title row */
+.close-btn-inline {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.close-btn-inline:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.close-btn-inline:focus {
+  outline: 2px solid var(--color-info);
+  outline-offset: 2px;
 }
 
 .contract-info {
@@ -1339,11 +1376,12 @@
   flex-direction: column;
   gap: 8px;
   padding: 12px;
+  padding-bottom: 16px;
   background: #f0f9ff;
   border-radius: 12px;
   /* Center the compass layout and constrain width */
   max-width: 700px;
-  margin: 0 auto;
+  margin: 0 auto 16px auto;
   /* Fixed minimum height to prevent layout shift during navigation */
   min-height: 420px;
 }
@@ -1353,12 +1391,22 @@
   justify-content: center;
 }
 
-.replay-row-north,
-.replay-row-south {
+.replay-row-north {
   justify-content: center;
   /* Fixed height to prevent layout shift as cards are removed */
   /* Height = label (20px) + card height (56px) + padding (16px) + buffer */
   min-height: 100px;
+}
+
+.replay-row-south {
+  justify-content: center;
+  /* Fixed height to prevent layout shift as cards are removed */
+  min-height: 100px;
+  /* Ensure South's cards have clear separation from commentary below */
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 5;
 }
 
 .replay-row-middle {
@@ -1695,10 +1743,16 @@
     min-height: 140px;
   }
 
-  .replay-row-north,
+  .replay-row-north {
+    /* Fixed height to prevent layout shift as cards are removed */
+    min-height: 80px;
+  }
+
   .replay-row-south {
     /* Fixed height to prevent layout shift as cards are removed */
     min-height: 80px;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
   }
 
   .hand-review-modal .replay-hand .playable-card,
@@ -3317,59 +3371,75 @@
    HAND NAVIGATION - Prev/Next between hands in list
    ===================================================== */
 
+/* Hand navigation - matches trick navigation styling */
 .hand-navigation {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3, 12px);
-  padding: var(--space-2, 8px) var(--space-3, 12px);
-  background: var(--bg-tertiary, #f1f5f9);
-  border-radius: var(--radius-md, 8px);
-  margin-left: var(--space-4, 16px);
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  /* Visual separation matching replay-navigation */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  margin-top: var(--space-2, 8px);
 }
 
 .hand-nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  background: var(--bg-card, white);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: var(--radius-sm, 6px);
-  font-size: var(--text-sm, 14px);
-  font-weight: 500;
-  color: var(--text-primary, #1f2937);
+  padding: 8px 16px;
+  background: #e5e7eb;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  font-size: 14px;
+  color: #374151;
+  transition: all 0.2s;
   min-height: 36px;
   min-width: 44px;
 }
 
 .hand-nav-btn:hover:not(:disabled) {
-  background: var(--bg-secondary, #f8fafc);
-  border-color: var(--color-info, #3b82f6);
-  color: var(--color-info, #3b82f6);
+  background: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.hand-nav-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .hand-nav-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
-  background: var(--bg-tertiary, #f1f5f9);
+  background: #f1f5f9;
 }
 
 .hand-nav-counter {
-  font-size: var(--text-sm, 14px);
-  font-weight: 600;
-  color: var(--text-secondary, #6b7280);
-  min-width: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
   text-align: center;
+}
+
+.hand-nav-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hand-nav-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
 }
 
 /* Responsive hand navigation */
 @media (max-width: 768px) {
   .hand-navigation {
-    margin-left: 0;
-    margin-top: var(--space-2, 8px);
     width: 100%;
     justify-content: center;
   }
@@ -3381,18 +3451,21 @@
 
 @media (max-width: 480px) {
   .hand-navigation {
-    gap: var(--space-2, 8px);
-    padding: var(--space-2, 8px);
+    gap: 6px;
+    padding: 8px;
   }
 
   .hand-nav-btn {
-    padding: 4px 8px;
-    font-size: var(--text-xs, 12px);
+    padding: 6px 10px;
+    font-size: 12px;
     min-width: 40px;
   }
 
-  .hand-nav-counter {
-    font-size: var(--text-xs, 12px);
-    min-width: 40px;
+  .hand-nav-label {
+    font-size: 9px;
+  }
+
+  .hand-nav-value {
+    font-size: 12px;
   }
 }
