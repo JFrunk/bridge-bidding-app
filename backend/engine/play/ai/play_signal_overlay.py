@@ -23,6 +23,7 @@ Signal Categories Implemented:
 6. Count Signals - High-low shows even count, low-high shows odd
 7. Discard from Length - Protect stoppers, discard from weak suits
 8. Declarer Conservation - Don't overtake partner's winner (prevents Ace-on-King)
+9. Defensive Deference - Defenders don't overtake partner's winner (prevents Q-on-J)
 
 Usage:
     from engine.play.ai.play_signal_overlay import TacticalPlayFilter
@@ -61,6 +62,7 @@ class PlayContext(Enum):
     FOLLOW_FROM_HONOR_SEQUENCE = "follow_from_honor_sequence"
     TRUMP_MANAGEMENT = "trump_management"
     DECLARER_CONSERVATION = "declarer_conservation"  # Declarer/Dummy already winning - conserve
+    DEFENSIVE_DEFERENCE = "defensive_deference"  # Defender's partner already winning - defer
 
 
 class SignalHeuristic(Enum):
@@ -75,6 +77,7 @@ class SignalHeuristic(Enum):
     PROTECT_STOPPERS = "protect_stoppers"     # Don't discard lone honors
     DISCARD_FROM_LENGTH = "discard_from_length"  # Discard low from long suits
     DECLARER_CONSERVE = "declarer_conserve"   # Conserve winners when partnership winning
+    DEFENSIVE_DEFER = "defensive_defer"       # Defer to partner's winning card
 
 
 @dataclass
@@ -237,6 +240,9 @@ class TacticalPlayFilter:
         elif context == PlayContext.DECLARER_CONSERVATION:
             return self._select_declarer_conservation(equivalence_set, game_state)
 
+        elif context == PlayContext.DEFENSIVE_DEFERENCE:
+            return self._select_defensive_deference(equivalence_set, game_state)
+
         else:
             # Default: play lowest
             selected = min(equivalence_set, key=lambda c: self._rank_value(c.rank))
@@ -284,12 +290,17 @@ class TacticalPlayFilter:
             return PlayContext.DISCARD_SUBSEQUENT
 
         # ========================================================================
-        # CRITICAL: Check for Declarer Conservation BEFORE standard defense logic
-        # When declarer controls both hands and partnership is already winning,
-        # conserve winners by playing low - don't overtake your own winner!
+        # CRITICAL: Check for Partnership Coordination BEFORE standard play logic
+        # Both declarer and defenders should not overtake their partner's winner!
         # ========================================================================
+
+        # Check for Declarer Conservation (Declarer/Dummy partnership)
         if self._should_conserve_declarer_winner(game_state, position, equivalence_set):
             return PlayContext.DECLARER_CONSERVATION
+
+        # Check for Defensive Deference (Defender partnership)
+        if self._should_defer_to_partner(game_state, position, equivalence_set):
+            return PlayContext.DEFENSIVE_DEFERENCE
 
         # Following suit - check for honor sequence
         if self._equivalence_is_honor_sequence(equivalence_set):
@@ -853,6 +864,136 @@ class TacticalPlayFilter:
 
         # We have cards that could overtake partner's winner - conserve!
         return True
+
+    def _select_defensive_deference(
+        self,
+        equivalence_set: List[Card],
+        game_state: Any
+    ) -> SignalResult:
+        """
+        Defer to partner's winning card when defending.
+
+        When partner has already played a card that's winning the trick,
+        play low to preserve your higher cards for future tricks.
+
+        Example: Partner led J♥, you have Q♥ and 7♥ - play 7♥ to keep Q♥
+        for later when you might need it to capture declarer's King.
+        """
+        # Play lowest card to defer to partner
+        selected = min(equivalence_set, key=lambda c: self._rank_value(c.rank))
+
+        # Build educational reason
+        current_trick = getattr(game_state, 'current_trick', [])
+        if current_trick:
+            winning_card = self._get_current_winner(current_trick, game_state)
+            if winning_card:
+                reason = (
+                    f"Defensive Deference: Partner is winning with "
+                    f"{winning_card.rank}{winning_card.suit} - playing low to preserve "
+                    f"higher cards for future tricks."
+                )
+            else:
+                reason = "Defensive Deference: Playing low to support partner's winner."
+        else:
+            reason = "Defensive Deference: Playing low to support partner's winner."
+
+        return SignalResult(
+            card=selected,
+            heuristic=SignalHeuristic.DEFENSIVE_DEFER,
+            reason=reason,
+            context=PlayContext.DEFENSIVE_DEFERENCE,
+            is_optimal=True
+        )
+
+    def _should_defer_to_partner(
+        self,
+        game_state: Any,
+        position: str,
+        equivalence_set: List[Card]
+    ) -> bool:
+        """
+        Determine if defender should defer to partner's winning card.
+
+        Returns True when:
+        1. Position is a defender (not declarer or dummy)
+        2. Partner (the other defender) has already played to this trick
+        3. Partner's card is currently winning the trick
+        4. We have cards that could wastefully overtake
+
+        This prevents the "Queen on Jack" problem where defenders waste
+        honors on the same trick.
+        """
+        current_trick = getattr(game_state, 'current_trick', [])
+        contract = getattr(game_state, 'contract', None)
+
+        # Need at least one card played and contract info
+        if not current_trick or not contract:
+            return False
+
+        declarer = getattr(contract, 'declarer', None)
+        if not declarer:
+            return False
+
+        # Determine if this position is a defender
+        dummy = self._get_dummy_position(declarer)
+        is_defender = position not in [declarer, dummy]
+
+        if not is_defender:
+            return False  # Declarer/Dummy use conservation logic instead
+
+        # Get defender's partner position
+        defender_partner = self._get_defender_partner(position, declarer)
+        if not defender_partner:
+            return False
+
+        # Check if partner has played
+        partner_played = None
+        for card, pos in current_trick:
+            if pos == defender_partner:
+                partner_played = card
+                break
+
+        if not partner_played:
+            return False  # Partner hasn't played yet
+
+        # Check if partner is currently winning
+        led_suit = current_trick[0][0].suit
+        trump_suit = getattr(contract, 'trump_suit', None)
+        current_winner_card, current_winner_pos = self._get_trick_winner_info(
+            current_trick, led_suit, trump_suit
+        )
+
+        if current_winner_pos != defender_partner:
+            return False  # Partner isn't winning, normal play applies
+
+        # Partner is winning - check if we have cards that could wastefully overtake
+        partner_rank = self._rank_value(partner_played.rank)
+
+        # Check if any card in equivalence set would overtake partner
+        can_overtake = any(
+            c.suit == led_suit and self._rank_value(c.rank) > partner_rank
+            for c in equivalence_set
+        )
+
+        if not can_overtake:
+            return False  # No overtaking possible, normal play
+
+        # We have cards that could overtake partner's winner - defer!
+        return True
+
+    def _get_defender_partner(self, position: str, declarer: str) -> Optional[str]:
+        """Get the partner position for a defender."""
+        dummy = self._get_dummy_position(declarer)
+
+        # The two defenders are the positions that are NOT declarer or dummy
+        all_positions = ['N', 'E', 'S', 'W']
+        defenders = [p for p in all_positions if p not in [declarer, dummy]]
+
+        if position not in defenders:
+            return None  # Not a defender
+
+        # Return the other defender
+        return [d for d in defenders if d != position][0]
 
     def _get_dummy_position(self, declarer: str) -> str:
         """Get dummy's position (opposite declarer)"""
