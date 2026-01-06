@@ -3156,7 +3156,8 @@ def get_bidding_hands_history():
         cursor = conn.cursor()
 
         # Get unique hands from bidding_decisions grouped by session_id + hand_number
-        # Join with session_hands to get deal_data (if available)
+        # For hands without session_id (NULL), group by deal_data hash or timestamp window
+        # Use deal_data from bidding_decisions directly (stored with each bid)
         cursor.execute("""
             SELECT
                 bd.session_id,
@@ -3164,9 +3165,17 @@ def get_bidding_hands_history():
                 bd.dealer,
                 bd.vulnerability,
                 bd.position as user_position,
-                sh.deal_data as deal_data,
+                -- Get deal_data from bidding_decisions (first bid of hand has it)
+                -- Use subquery to get the first bid's deal_data for this hand
+                (SELECT bd2.deal_data FROM bidding_decisions bd2
+                 WHERE bd2.user_id = bd.user_id
+                 AND COALESCE(bd2.session_id, '') = COALESCE(bd.session_id, '')
+                 AND COALESCE(bd2.hand_number, -1) = COALESCE(bd.hand_number, -1)
+                 AND bd2.deal_data IS NOT NULL
+                 ORDER BY bd2.id ASC LIMIT 1) as deal_data,
                 MAX(bd.auction_before) as last_auction,
                 MAX(bd.timestamp) as played_at,
+                MIN(bd.id) as first_bid_id,
                 COUNT(bd.id) as num_bids,
                 AVG(bd.score) as avg_score,
                 SUM(CASE WHEN bd.correctness = 'optimal' THEN 1 ELSE 0 END) as optimal_count,
@@ -3174,9 +3183,8 @@ def get_bidding_hands_history():
                 SUM(CASE WHEN bd.correctness = 'suboptimal' THEN 1 ELSE 0 END) as suboptimal_count,
                 SUM(CASE WHEN bd.correctness = 'error' THEN 1 ELSE 0 END) as error_count
             FROM bidding_decisions bd
-            LEFT JOIN session_hands sh ON bd.session_id = CAST(sh.session_id AS TEXT) AND bd.hand_number = sh.hand_number
             WHERE bd.user_id = ?
-            GROUP BY bd.session_id, bd.hand_number
+            GROUP BY COALESCE(bd.session_id, ''), COALESCE(bd.hand_number, -1)
             HAVING COUNT(bd.id) > 0
             ORDER BY MAX(bd.timestamp) DESC
             LIMIT ?
@@ -3219,11 +3227,21 @@ def get_bidding_hands_history():
             # Parse auction to determine final contract (if bidding completed)
             auction_history = json.loads(row['last_auction']) if row['last_auction'] else []
 
+            # Generate hand_id: prefer session_id:hand_number, fall back to bid_<first_bid_id>
+            session_id = row['session_id']
+            hand_number = row['hand_number']
+            first_bid_id = row['first_bid_id']
+
+            if session_id and hand_number is not None:
+                hand_id = f"{session_id}:{hand_number}"
+            else:
+                # Use first bid ID as unique identifier for hands without session
+                hand_id = f"bid_{first_bid_id}"
+
             hands.append({
-                # Use composite key: session_id:hand_number instead of session_hands.id
-                'hand_id': f"{row['session_id']}:{row['hand_number']}",
-                'session_id': row['session_id'],
-                'hand_number': row['hand_number'],
+                'hand_id': hand_id,
+                'session_id': session_id,
+                'hand_number': hand_number,
                 'played_at': row['played_at'],
                 'contract': None,  # Not available from bidding_decisions
                 'contract_declarer': None,
@@ -3265,6 +3283,7 @@ def get_bidding_hand_detail():
 
     hand_id can be:
     - Composite format: "session_id:hand_number" (e.g., "3:1")
+    - Bid ID format: "bid_<id>" (e.g., "bid_123") - for hands without session
     - Legacy integer format (session_hands.id) - still supported for backwards compatibility
     """
     hand_id_raw = request.args.get('hand_id')
@@ -3276,9 +3295,38 @@ def get_bidding_hand_detail():
         conn = get_connection()
         cursor = conn.cursor()
 
-        # Parse hand_id - supports both "session_id:hand_number" and legacy integer formats
-        if ':' in str(hand_id_raw):
-            # New composite format: "session_id:hand_number"
+        # Check if this is a bid_<id> format (for hands without session)
+        if str(hand_id_raw).startswith('bid_'):
+            # Extract bid ID from "bid_123" format
+            try:
+                first_bid_id = int(hand_id_raw[4:])
+            except ValueError:
+                return jsonify({'error': 'Invalid bid_id format'}), 400
+
+            # Get the first bid to find session_id and hand_number (may be NULL)
+            cursor.execute("""
+                SELECT session_id, hand_number, user_id, dealer, vulnerability,
+                       position as user_position, deal_data
+                FROM bidding_decisions
+                WHERE id = ?
+            """, (first_bid_id,))
+
+            row = cursor.fetchone()
+            if not row:
+                conn.close()
+                return jsonify({'error': 'Hand not found'}), 404
+
+            session_id = row['session_id']
+            hand_number = row['hand_number']
+            user_id = row['user_id']
+            user_position = row['user_position'] or 'S'
+            deal_data = json.loads(row['deal_data']) if row['deal_data'] else None
+            dealer = row['dealer']
+            vulnerability = row['vulnerability']
+            auction_history = None
+
+        elif ':' in str(hand_id_raw):
+            # Composite format: "session_id:hand_number"
             parts = hand_id_raw.split(':')
             if len(parts) != 2:
                 return jsonify({'error': 'Invalid hand_id format. Expected session_id:hand_number'}), 400
@@ -3288,7 +3336,7 @@ def get_bidding_hand_detail():
             except ValueError:
                 return jsonify({'error': 'Invalid hand_number in hand_id'}), 400
 
-            # Get bidding decisions with deal_data from session_hands
+            # Get bidding decisions with deal_data from bidding_decisions (primary) or session_hands (fallback)
             cursor.execute("""
                 SELECT
                     bd.user_id,
@@ -3297,7 +3345,7 @@ def get_bidding_hand_detail():
                     bd.dealer,
                     bd.vulnerability,
                     bd.position as user_position,
-                    sh.deal_data as deal_data,
+                    COALESCE(bd.deal_data, sh.deal_data) as deal_data,
                     sh.auction_history as auction_history
                 FROM bidding_decisions bd
                 LEFT JOIN session_hands sh ON CAST(bd.session_id AS INTEGER) = sh.session_id
@@ -3354,26 +3402,50 @@ def get_bidding_hand_detail():
         pos_short = user_position[0] if len(user_position) > 1 else user_position
 
         # Get all bidding decisions for this hand
-        cursor.execute("""
-            SELECT
-                id,
-                bid_number,
-                position,
-                user_bid,
-                optimal_bid,
-                score,
-                correctness,
-                impact,
-                key_concept,
-                helpful_hint,
-                reasoning,
-                auction_before
-            FROM bidding_decisions
-            WHERE user_id = ?
-              AND session_id = ?
-              AND hand_number = ?
-            ORDER BY bid_number
-        """, (user_id, str(session_id), hand_number))
+        # Handle cases where session_id or hand_number might be NULL
+        if session_id is not None and hand_number is not None:
+            cursor.execute("""
+                SELECT
+                    id,
+                    bid_number,
+                    position,
+                    user_bid,
+                    optimal_bid,
+                    score,
+                    correctness,
+                    impact,
+                    key_concept,
+                    helpful_hint,
+                    reasoning,
+                    auction_before
+                FROM bidding_decisions
+                WHERE user_id = ?
+                  AND session_id = ?
+                  AND hand_number = ?
+                ORDER BY bid_number
+            """, (user_id, str(session_id), hand_number))
+        else:
+            # For hands without session, group by empty session_id and hand_number
+            cursor.execute("""
+                SELECT
+                    id,
+                    bid_number,
+                    position,
+                    user_bid,
+                    optimal_bid,
+                    score,
+                    correctness,
+                    impact,
+                    key_concept,
+                    helpful_hint,
+                    reasoning,
+                    auction_before
+                FROM bidding_decisions
+                WHERE user_id = ?
+                  AND COALESCE(session_id, '') = COALESCE(?, '')
+                  AND COALESCE(hand_number, -1) = COALESCE(?, -1)
+                ORDER BY bid_number
+            """, (user_id, session_id, hand_number))
 
         decisions = []
         for d_row in cursor.fetchall():
