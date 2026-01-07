@@ -876,10 +876,10 @@
   width: 100%;
 }
 
-.hand-row .hand-number {
+.hand-row .hand-time {
   font-size: var(--text-xs, 12px);
   color: var(--text-muted, #666);
-  min-width: 24px;
+  min-width: 65px;
 }
 
 .hand-row .role {

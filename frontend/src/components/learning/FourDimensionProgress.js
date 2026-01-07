@@ -1270,6 +1270,27 @@ const SegmentedQualityBar = ({ good, suboptimal, error, labels = {} }) => {
   );
 };
 
+// Helper to format relative time for disambiguation
+const formatRelativeTime = (timestamp) => {
+  if (!timestamp) return null;
+
+  const now = new Date();
+  const played = new Date(timestamp);
+  const diffMs = now - played;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 5) return 'now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  // For older hands, show short date
+  return played.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
 const HandRow = ({ hand, onReview }) => {
   // Handle both object contract format and string format from different APIs
   const contractLevel = hand.contract_level || hand.contract?.level || '';
@@ -1278,6 +1299,7 @@ const HandRow = ({ hand, onReview }) => {
 
   // Get hand number within session for disambiguation
   const handNumber = hand.hand_number;
+  const relativeTime = formatRelativeTime(hand.played_at);
 
   // Determine role - API uses user_was_declarer/user_was_dummy
   const wasDeclarer = hand.user_was_declarer || hand.was_declarer;
@@ -1348,10 +1370,14 @@ const HandRow = ({ hand, onReview }) => {
   const scoreDisplay = getScoreDisplay();
   const scoreNum = parseInt(scoreDisplay, 10) || 0;
 
-  // Order: Hand#, Role, Contract, Result, Score, Quality%, Review button
+  // Order: Time, Role, Contract, Result, Score, Quality%, Review button
   return (
     <div className="hand-row">
-      {handNumber && <span className="hand-number">#{handNumber}</span>}
+      {relativeTime && (
+        <span className="hand-time" title={hand.played_at ? new Date(hand.played_at).toLocaleString() : ''}>
+          {relativeTime}
+        </span>
+      )}
       <span className="role">{role}</span>
       <span className={`contract ${getStrainClass(contractStrain)}`}>{contractStr}</span>
       <span className={`result ${resultDisplay.isGood ? 'made' : 'down'}`}>{resultDisplay.text}</span>
