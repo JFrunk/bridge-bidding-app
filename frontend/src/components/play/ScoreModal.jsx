@@ -55,7 +55,7 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-[420px] sm:max-w-[480px] p-4 sm:p-6">
+      <DialogContent className="w-full max-w-[360px] sm:max-w-[440px] p-4 sm:p-6 overflow-visible">
         <DialogHeader>
           <DialogTitle className="text-2xl text-center">
             Hand Complete!
@@ -64,41 +64,41 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
 
         <div className="flex flex-col gap-4 py-4">
           {/* Contract row */}
-          <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-md bg-gray-50">
-            <span className="text-base font-medium text-gray-700 shrink-0">Contract:</span>
-            <span className="text-lg font-bold text-gray-900 text-right">
-              {contract.level}{contract.strain}
+          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-50">
+            <span className="text-sm font-medium text-gray-700 shrink-0">Contract:</span>
+            <span className="text-base font-bold text-gray-900">
+              {contract?.level || '?'}{contract?.strain || '?'}
               {doubledText}
-              {' by '}{contract.declarer}
+              {contract?.declarer ? ` by ${contract.declarer}` : ''}
             </span>
           </div>
 
           {/* Tricks taken row */}
-          <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-md bg-gray-50">
-            <span className="text-base font-medium text-gray-700 shrink-0">Tricks Taken:</span>
-            <span className="text-lg font-bold text-gray-900 text-right">{tricks_taken}</span>
+          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-50">
+            <span className="text-sm font-medium text-gray-700 shrink-0">Tricks Taken:</span>
+            <span className="text-base font-bold text-gray-900">{tricks_taken ?? '?'} of {tricks_needed ?? '?'}</span>
           </div>
 
           {/* Result row */}
-          <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-md bg-gray-50">
-            <span className="text-base font-medium text-gray-700 shrink-0">Result:</span>
+          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-50">
+            <span className="text-sm font-medium text-gray-700 shrink-0">Result:</span>
             <span className={cn(
-              "text-lg font-bold text-right",
-              made ? "text-success" : "text-danger"
+              "text-base font-bold",
+              made ? "text-green-600" : "text-red-600"
             )}>
-              {result}
+              {result || (made ? 'Made' : 'Down')}
             </span>
           </div>
 
           {/* Score row (larger, highlighted) - Shows score from user's (NS) perspective */}
           <div className={cn(
-            "flex items-center justify-between gap-4 px-4 sm:px-6 py-4 rounded-lg border-2",
-            userScore >= 0 ? "bg-green-50 border-success" : "bg-red-50 border-danger"
+            "flex items-center justify-between gap-2 px-3 py-3 rounded-lg border-2",
+            userScore >= 0 ? "bg-green-50 border-green-500" : "bg-red-50 border-red-500"
           )}>
-            <span className="text-lg sm:text-xl font-bold text-gray-900 shrink-0">Your Score:</span>
+            <span className="text-base font-bold text-gray-900 shrink-0">Your Score:</span>
             <span className={cn(
-              "text-2xl sm:text-3xl font-bold text-right",
-              userScore >= 0 ? "text-success" : "text-danger"
+              "text-xl font-bold",
+              userScore >= 0 ? "text-green-600" : "text-red-600"
             )}>
               {userScore >= 0 ? '+' : ''}{userScore}
             </span>
@@ -140,34 +140,32 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
 
           {/* Session Summary (if in session) */}
           {hasSession && (
-            <div className="mt-4 p-3 sm:p-4 rounded-lg bg-blue-50 border-2 border-blue-200">
-              <div className="text-center mb-3">
-                <h3 className="text-base sm:text-lg font-bold text-blue-900">
-                  Session Standings
-                </h3>
-                <p className="text-xs sm:text-sm text-blue-700">
+            <div className="mt-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
+              <div className="text-center mb-2">
+                <h3 className="text-sm font-bold text-blue-900">Session Standings</h3>
+                <p className="text-xs text-blue-700">
                   Hand {session.hands_completed} of {session.max_hands} complete
                 </p>
               </div>
 
-              <div className="flex justify-around items-center gap-2 sm:gap-4">
+              <div className="flex justify-center items-center gap-4">
                 <div className="text-center">
-                  <div className="text-xs sm:text-sm font-medium text-gray-700">North-South</div>
+                  <div className="text-xs font-medium text-gray-600">N-S</div>
                   <div className={cn(
-                    "text-xl sm:text-2xl font-bold",
-                    session.ns_score > session.ew_score ? "text-success" : "text-gray-900"
+                    "text-lg font-bold",
+                    session.ns_score > session.ew_score ? "text-green-600" : "text-gray-900"
                   )}>
                     {session.ns_score}
                   </div>
                 </div>
 
-                <div className="text-gray-400 font-bold text-base sm:text-xl">vs</div>
+                <div className="text-gray-400 font-bold text-sm">vs</div>
 
                 <div className="text-center">
-                  <div className="text-xs sm:text-sm font-medium text-gray-700">East-West</div>
+                  <div className="text-xs font-medium text-gray-600">E-W</div>
                   <div className={cn(
-                    "text-xl sm:text-2xl font-bold",
-                    session.ew_score > session.ns_score ? "text-success" : "text-gray-900"
+                    "text-lg font-bold",
+                    session.ew_score > session.ns_score ? "text-green-600" : "text-gray-900"
                   )}>
                     {session.ew_score}
                   </div>
@@ -175,12 +173,10 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
               </div>
 
               {session.is_complete && (
-                <div className="mt-3 text-center p-2 sm:p-3 bg-yellow-100 rounded-md">
-                  <p className="text-base sm:text-lg font-bold text-yellow-900">
-                    🎉 Session Complete!
-                  </p>
-                  <p className="text-sm sm:text-base text-yellow-800">
-                    Winner: {session.winner === 'Tied' ? 'Tied Game' : session.winner}
+                <div className="mt-2 text-center p-2 bg-yellow-100 rounded-md">
+                  <p className="text-sm font-bold text-yellow-900">🎉 Session Complete!</p>
+                  <p className="text-xs text-yellow-800">
+                    Winner: {session.winner === 'Tied' ? 'Tied' : session.winner}
                   </p>
                 </div>
               )}
@@ -188,7 +184,7 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
           )}
         </div>
 
-        <DialogFooter className="flex flex-col gap-2 sm:gap-3">
+        <DialogFooter className="flex flex-col gap-2 pt-2">
           {/* Primary action: Play Another Hand */}
           {onPlayAnotherHand && (
             <Button
@@ -196,37 +192,50 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
                 onPlayAnotherHand();
                 onClose();
               }}
-              className="w-full"
-              size="default"
+              className="w-full h-9 text-sm"
               variant="default"
             >
               Play Another Hand
             </Button>
           )}
 
-          {/* Secondary actions row - wraps on very small screens */}
-          <div className="flex flex-wrap gap-2 sm:gap-3 w-full">
+          {/* Secondary actions row */}
+          <div className="flex flex-wrap gap-2 w-full">
             {onReviewHand && (
               <Button
                 onClick={() => {
                   onReviewHand();
                   onClose();
                 }}
-                className="flex-1 min-w-[100px]"
-                size="default"
+                className="flex-1 h-8 text-xs min-w-[80px]"
                 variant="outline"
               >
                 Review Hand
               </Button>
             )}
+            {onShowLearningDashboard && (
+              <Button
+                onClick={() => {
+                  onShowLearningDashboard();
+                  onClose();
+                }}
+                className="flex-1 h-8 text-xs min-w-[80px]"
+                variant="outline"
+              >
+                📊 My Progress
+              </Button>
+            )}
+          </div>
+
+          {/* Tertiary actions row */}
+          <div className="flex flex-wrap gap-2 w-full">
             {onReplayHand && (
               <Button
                 onClick={() => {
                   onReplayHand();
                   onClose();
                 }}
-                className="flex-1 min-w-[100px]"
-                size="default"
+                className="flex-1 h-8 text-xs min-w-[80px]"
                 variant="outline"
               >
                 Replay Hand
@@ -237,38 +246,12 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
                 onDealNewHand();
                 onClose();
               }}
-              className="flex-1 min-w-[100px]"
-              size="default"
+              className="flex-1 h-8 text-xs min-w-[80px]"
               variant="outline"
             >
               Bid New Hand
             </Button>
           </div>
-
-          {/* Learning Dashboard button (if available) */}
-          {onShowLearningDashboard && (
-            <Button
-              onClick={() => {
-                onShowLearningDashboard();
-                onClose();
-              }}
-              className="w-full"
-              size="default"
-              variant="outline"
-            >
-              📊 My Progress
-            </Button>
-          )}
-
-          {/* Close button */}
-          <Button
-            onClick={onClose}
-            className="w-full"
-            size="default"
-            variant="ghost"
-          >
-            Close
-          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
