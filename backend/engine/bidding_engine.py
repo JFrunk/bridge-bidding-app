@@ -15,6 +15,7 @@ from engine.responder_rebids import ResponderRebidModule
 from engine.rebids import RebidModule
 from engine.advancer_bids import AdvancerBidsModule
 from engine.overcalls import OvercallModule
+from engine.balancing import BalancingModule
 from engine.ai.conventions.stayman import StaymanConvention
 from engine.ai.conventions.jacoby_transfers import JacobyConvention
 from engine.ai.conventions.preempts import PreemptConvention
@@ -44,7 +45,7 @@ class BiddingEngine:
         # Verify all expected modules are registered
         expected_modules = [
             'opening_bids', 'responses', 'openers_rebid', 'responder_rebid',
-            'advancer_bids', 'overcalls', 'stayman', 'jacoby', 'preempts',
+            'advancer_bids', 'overcalls', 'balancing', 'stayman', 'jacoby', 'preempts',
             'blackwood', 'gerber', 'grand_slam_force', 'minor_suit_bust',
             'takeout_doubles', 'negative_doubles',
             'michaels_cuebid', 'unusual_2nt', 'splinter_bids', 'fourth_suit_forcing'
