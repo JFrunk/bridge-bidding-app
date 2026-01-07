@@ -9,6 +9,7 @@ import { ReviewModal } from './components/bridge/ReviewModal';
 import { FeedbackModal } from './components/bridge/FeedbackModal';
 import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
 import BidFeedbackPanel from './components/bridge/BidFeedbackPanel';
+import { GovernorConfirmDialog } from './components/bridge/GovernorConfirmDialog';
 import LearningDashboard from './components/learning/LearningDashboard';
 import LearningMode from './components/learning/LearningMode';
 import HandReviewModal from './components/learning/HandReviewModal';
@@ -281,6 +282,12 @@ function App() {
   const [displayedMessage, setDisplayedMessage] = useState('');
   const [bidFeedback, setBidFeedback] = useState(null);  // Structured feedback from evaluate-bid
   const [lastUserBid, setLastUserBid] = useState(null);  // Track last user bid for feedback display
+
+  // Governor Safety Guard state - blocks critical/significant impact bids when hints are enabled
+  const [pendingBid, setPendingBid] = useState(null);  // Bid waiting for governor confirmation
+  const [pendingBidFeedback, setPendingBidFeedback] = useState(null);  // Feedback for pending bid
+  const [showGovernorDialog, setShowGovernorDialog] = useState(false);  // Governor confirmation dialog visibility
+
   const [scenarioList, setScenarioList] = useState([]);
   const [scenariosByLevel, setScenariosByLevel] = useState(null);
   const [initialDeal, setInitialDeal] = useState(null);
@@ -647,17 +654,27 @@ ${otherCommands}`;
         }
         break;
 
-      case 'play':
+      case 'play': {
         // Open Play workspace and immediately start a random hand
         setCurrentWorkspace('play');
 
-        // Always deal new hand when coming from landing page (showModeSelector is true)
-        // But preserve state when navigating within session via top nav
-        if (showModeSelector || gamePhase !== 'playing') {
+        // Determine if we should start a fresh hand or resume current game
+        // Start fresh if:
+        // - Coming from landing page (showModeSelector is true)
+        // - Not currently in play phase
+        // - Game is complete (scoreData exists from finished hand)
+        // - No active play state exists
+        const shouldStartFresh = showModeSelector ||
+                                 gamePhase !== 'playing' ||
+                                 scoreData !== null ||
+                                 !playState;
+
+        if (shouldStartFresh) {
           playRandomHand();  // Deal fresh hand
         }
-        // If navigating via top nav while already playing, keep current state intact
+        // If navigating via top nav while actively playing (in-progress game), keep state intact
         break;
+      }
 
       case 'progress':
         // Open Progress dashboard
@@ -1772,6 +1789,73 @@ ${otherCommands}`;
     return players[(dealerIndex + auctionLength) % 4];
   };
 
+  // Helper function to commit a bid after all validations/confirmations
+  const commitBid = async (bid, feedbackData = null) => {
+    // DEBUG: Log bid submission
+    console.log('🎯 COMMITTING USER BID:', {
+      bid: bid,
+      userId: userId,
+      auctionLength: auction.length,
+      timestamp: new Date().toISOString()
+    });
+
+    setDisplayedMessage('...');
+    const newAuction = [...auction, { bid: bid, explanation: 'Your bid.', player: 'South' }];
+
+    // CRITICAL FIX: Use flushSync to force immediate render before AI bidding starts
+    // This ensures user's bid appears in the table before subsequent AI bids
+    flushSync(() => {
+      setAuction(newAuction);
+    });
+
+    // Enable AI bidding after user's bid is rendered
+    setIsAiBidding(true);
+
+    // If we already have feedback data (from pre-evaluation), use it
+    if (feedbackData) {
+      setLastUserBid(bid);
+      setBidFeedback(feedbackData.feedback || null);
+      setDisplayedMessage(feedbackData.user_message || feedbackData.explanation || 'Bid recorded.');
+      return;
+    }
+
+    // Otherwise, fetch feedback (this path is used when governor is bypassed or disabled)
+    try {
+      const feedbackResponse = await fetch(`${API_URL}/api/evaluate-bid`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+        body: JSON.stringify({
+          user_bid: bid,
+          auction_history: auction.map(a => a.bid),
+          current_player: 'South',
+          user_id: userId || 1,
+          session_id: sessionData?.session?.id,
+          feedback_level: 'intermediate',
+          use_v2_schema: useV2Schema
+        })
+      });
+
+      if (feedbackResponse.status === 400) {
+        const errorData = await feedbackResponse.json();
+        if (errorData.error && errorData.error.includes('Deal has not been made')) {
+          console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
+          setError("Session expired. Please deal a new hand to continue.");
+          setIsAiBidding(false);
+          return;
+        }
+      }
+
+      const data = await feedbackResponse.json();
+      setLastUserBid(bid);
+      setBidFeedback(data.feedback || null);
+      setDisplayedMessage(data.user_message || data.explanation || 'Bid recorded.');
+    } catch (err) {
+      console.error('❌ Error evaluating bid:', err);
+      setBidFeedback(null);
+      setDisplayedMessage('Could not get feedback from the server.');
+    }
+  };
+
   const handleUserBid = async (bid) => {
     // CRITICAL VALIDATION: Check if auction is already complete
     if (isAuctionOver(auction)) {
@@ -1800,73 +1884,91 @@ ${otherCommands}`;
 
     if (players[nextPlayerIndex] !== 'South' || isAiBidding) return;
 
-    // DEBUG: Log bid submission
-    console.log('🎯 SUBMITTING USER BID:', {
-      bid: bid,
-      userId: userId,
-      auctionLength: auction.length,
-      timestamp: new Date().toISOString()
-    });
+    // Governor Safety Guard: When hints are enabled, pre-evaluate bid to check for critical issues
+    if (hintModeEnabled) {
+      setDisplayedMessage('Evaluating bid...');
 
-    setDisplayedMessage('...');
-    const newAuction = [...auction, { bid: bid, explanation: 'Your bid.', player: 'South' }];
+      try {
+        // Pre-evaluate the bid BEFORE committing it
+        const feedbackResponse = await fetch(`${API_URL}/api/evaluate-bid`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+          body: JSON.stringify({
+            user_bid: bid,
+            auction_history: auction.map(a => a.bid),
+            current_player: 'South',
+            user_id: userId || 1,
+            session_id: sessionData?.session?.id,
+            feedback_level: 'intermediate',
+            use_v2_schema: useV2Schema
+          })
+        });
 
-    // CRITICAL FIX: Use flushSync to force immediate render before AI bidding starts
-    // This ensures user's bid appears in the table before subsequent AI bids
-    flushSync(() => {
-      setAuction(newAuction);
-    });
-
-    // Enable AI bidding after user's bid is rendered
-    setIsAiBidding(true);
-
-    try {
-      // Call evaluate-bid endpoint which stores decision in database for dashboard analytics
-      const feedbackResponse = await fetch(`${API_URL}/api/evaluate-bid`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-        body: JSON.stringify({
-          user_bid: bid,
-          auction_history: auction.map(a => a.bid), // Auction BEFORE user's bid
-          current_player: 'South',
-          user_id: userId || 1,
-          session_id: sessionData?.session?.id,
-          feedback_level: 'intermediate',
-          use_v2_schema: useV2Schema  // Dev mode: test V2 Schema engine
-        })
-      });
-
-      // Handle session state loss (e.g., server restart)
-      if (feedbackResponse.status === 400) {
-        const errorData = await feedbackResponse.json();
-        if (errorData.error && errorData.error.includes('Deal has not been made')) {
-          console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
-          setError("Session expired. Please deal a new hand to continue.");
-          setIsAiBidding(false);
-          return;
+        // Handle session state loss (e.g., server restart)
+        if (feedbackResponse.status === 400) {
+          const errorData = await feedbackResponse.json();
+          if (errorData.error && errorData.error.includes('Deal has not been made')) {
+            console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
+            setError("Session expired. Please deal a new hand to continue.");
+            return;
+          }
         }
+
+        const feedbackData = await feedbackResponse.json();
+
+        // DEBUG: Log response from evaluate-bid
+        console.log('✅ EVALUATE-BID RESPONSE:', {
+          user_bid: bid,
+          feedback: feedbackData,
+          impact: feedbackData.feedback?.impact,
+          stored: feedbackData.decision_id ? 'YES' : 'UNKNOWN'
+        });
+
+        // Check if this is a Governor-blocked bid (critical or significant impact)
+        const impact = feedbackData.feedback?.impact;
+        if (impact === 'critical' || impact === 'significant') {
+          console.log('🛡️ Governor blocking bid:', bid, 'Impact:', impact);
+          // Store pending bid and show confirmation dialog
+          setPendingBid(bid);
+          setPendingBidFeedback(feedbackData);
+          setShowGovernorDialog(true);
+          setDisplayedMessage('');
+          return; // Don't commit yet - wait for user confirmation
+        }
+
+        // No blocking needed - commit the bid with the feedback we already have
+        await commitBid(bid, feedbackData);
+
+      } catch (err) {
+        console.error('❌ Error pre-evaluating bid:', err);
+        // On error, fall through and commit the bid anyway
+        await commitBid(bid);
       }
-
-      const feedbackData = await feedbackResponse.json();
-
-      // DEBUG: Log response from evaluate-bid
-      console.log('✅ EVALUATE-BID RESPONSE:', {
-        user_bid: bid,
-        feedback: feedbackData,
-        stored: feedbackData.decision_id ? 'YES' : 'UNKNOWN'
-      });
-
-      // Store structured feedback for the BidFeedbackPanel
-      setLastUserBid(bid);
-      setBidFeedback(feedbackData.feedback || null);
-      setDisplayedMessage(feedbackData.user_message || feedbackData.explanation || 'Bid recorded.');
-    } catch (err) {
-      console.error('❌ Error evaluating bid:', err);
-      setBidFeedback(null);
-      setDisplayedMessage('Could not get feedback from the server.');
+    } else {
+      // Hint mode disabled - commit bid directly (original flow)
+      await commitBid(bid);
     }
-    // NOTE: nextPlayerIndex is now derived - no need to manually increment
-    // NOTE: setIsAiBidding(true) is called BEFORE the fetch (see above) to ensure proper state batching
+  };
+
+  // Handler for when user confirms proceeding with a Governor-blocked bid
+  const handleGovernorProceed = async () => {
+    if (pendingBid) {
+      console.log('🛡️ Governor override: User proceeding with blocked bid:', pendingBid);
+      await commitBid(pendingBid, pendingBidFeedback);
+    }
+    // Clear the pending state
+    setPendingBid(null);
+    setPendingBidFeedback(null);
+    setShowGovernorDialog(false);
+  };
+
+  // Handler for when user cancels a Governor-blocked bid
+  const handleGovernorCancel = () => {
+    console.log('🛡️ Governor: User chose different bid');
+    setPendingBid(null);
+    setPendingBidFeedback(null);
+    setShowGovernorDialog(false);
+    setDisplayedMessage('Choose a different bid.');
   };
   
   const handleBidClick = (bidObject) => { setDisplayedMessage(`[${bidObject.bid}] ${bidObject.explanation}`); };
@@ -2886,6 +2988,17 @@ ${otherCommands}`;
           auction: auction,
           hand: hand,
         }}
+      />
+
+      {/* Governor Safety Guard Dialog - blocks critical/significant impact bids when hints are enabled */}
+      <GovernorConfirmDialog
+        isOpen={showGovernorDialog}
+        onClose={handleGovernorCancel}
+        onProceed={handleGovernorProceed}
+        bid={pendingBid}
+        impact={pendingBidFeedback?.feedback?.impact}
+        reasoning={pendingBidFeedback?.feedback?.reasoning}
+        optimalBid={pendingBidFeedback?.feedback?.optimal_bid}
       />
 
       {scoreData && (

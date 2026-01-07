@@ -8,6 +8,7 @@ import traceback
 import os
 import time
 from datetime import datetime
+from typing import Optional
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -4082,6 +4083,274 @@ def evaluate_play():
             "feedback": f"Evaluation error: {str(e)}",
             "error": str(e)
         })
+
+
+@app.route("/api/evaluate-play-intent", methods=["POST"])
+def evaluate_play_intent():
+    """
+    Evaluate a card before committing to play it.
+    Returns feedback for the "Shadow Play" preview mechanism.
+
+    This endpoint provides pre-play feedback to help users learn before committing
+    to a card. It uses the same evaluation logic as /api/evaluate-play but:
+    - Does NOT store results in the database
+    - Does NOT modify any game state
+    - Returns additional "partner deduction" warnings
+
+    Request body:
+    {
+        "user_id": str,
+        "intended_card": {"rank": str, "suit": str},
+        "play_state": {...current play state...},  # Optional - uses session state if not provided
+        "position": str  # N/E/S/W
+    }
+
+    Response:
+    {
+        "is_optimal": bool,
+        "equivalence_set": [...cards that are equally good...],
+        "physics_violation": {...if any...},
+        "partner_deduction_warning": str or null,
+        "recommendation": str,
+        "score": float (0-10),
+        "correctness": str,
+        "optimal_cards": [...],
+        "tricks_cost": int
+    }
+    """
+    from engine.feedback.play_feedback import get_play_feedback_generator
+    from engine.feedback.heuristic_backfill_adapter import get_heuristic_backfill_adapter
+
+    # Get session state
+    state = get_state()
+
+    data = request.get_json()
+    if not data or 'intended_card' not in data:
+        return jsonify({"error": "intended_card data required"}), 400
+
+    # Get position from request or default to next_to_play
+    position = data.get('position')
+
+    # Get play state from request or session
+    play_state = None
+    if 'play_state' in data:
+        # TODO: Reconstruct PlayState from JSON if needed
+        # For now, we use session state
+        pass
+
+    if state.play_state:
+        play_state = state.play_state
+        if not position:
+            position = state.play_state.next_to_play
+    else:
+        return jsonify({"error": "No play in progress"}), 400
+
+    try:
+        # Parse intended card
+        card_data = data['intended_card']
+        intended_card = Card(card_data['rank'], card_data['suit'])
+
+        # Get feedback generator (uses DDS if available, Minimax otherwise)
+        feedback_generator = get_play_feedback_generator(use_dds=True)
+
+        # Evaluate the intended play (but don't store it)
+        feedback = feedback_generator.evaluate_play(
+            play_state=play_state,
+            user_card=intended_card,
+            position=position
+        )
+
+        # Determine if the intended card is optimal
+        is_optimal = feedback.correctness.value == "optimal"
+
+        # Build equivalence set (cards that are equally good)
+        equivalence_set = feedback.optimal_cards if feedback.optimal_cards else []
+
+        # Check if user's card is in equivalence set
+        intended_card_str = f"{intended_card.rank}{intended_card.suit}"
+        user_in_equivalence = intended_card_str in equivalence_set
+
+        # Generate partner deduction warning
+        partner_deduction_warning = _generate_partner_deduction_warning(
+            feedback=feedback,
+            play_state=play_state,
+            intended_card=intended_card,
+            position=position,
+            is_optimal=is_optimal,
+            user_in_equivalence=user_in_equivalence
+        )
+
+        # Generate recommendation
+        recommendation = _generate_shadow_play_recommendation(
+            feedback=feedback,
+            is_optimal=is_optimal,
+            user_in_equivalence=user_in_equivalence
+        )
+
+        return jsonify({
+            "is_optimal": is_optimal,
+            "user_in_equivalence": user_in_equivalence,
+            "equivalence_set": equivalence_set,
+            "physics_violation": feedback.physics_violation,
+            "partner_deduction_warning": partner_deduction_warning,
+            "recommendation": recommendation,
+            "score": feedback.score,
+            "correctness": feedback.correctness.value,
+            "optimal_cards": feedback.optimal_cards,
+            "tricks_cost": feedback.tricks_cost,
+            "tricks_with_intended": feedback.tricks_with_user_card,
+            "tricks_with_optimal": feedback.tricks_with_optimal,
+            "play_category": feedback.play_category.value,
+            "key_concept": feedback.key_concept,
+            "signal_heuristic": feedback.signal_heuristic,
+            "is_signal_optimal": feedback.is_signal_optimal,
+            "dds_available": feedback_generator.dds_available
+        })
+
+    except Exception as e:
+        import traceback
+        print(f"Play intent evaluation error: {e}")
+        traceback.print_exc()
+        return jsonify({
+            "error": str(e),
+            "is_optimal": False,
+            "equivalence_set": [],
+            "physics_violation": None,
+            "partner_deduction_warning": None,
+            "recommendation": "Unable to evaluate play intent."
+        })
+
+
+def _generate_partner_deduction_warning(
+    feedback,
+    play_state,
+    intended_card: Card,
+    position: str,
+    is_optimal: bool,
+    user_in_equivalence: bool
+) -> Optional[str]:
+    """
+    Generate a warning about what partner will deduce from this play.
+
+    Partner deduction warnings help users understand the signaling implications
+    of their card choices. Even when a card doesn't lose tricks, it may send
+    the wrong message to partner.
+
+    Returns:
+        Warning string, or None if no warning needed.
+    """
+    # No warning needed if play is optimal AND follows signaling conventions
+    if is_optimal and feedback.is_signal_optimal:
+        return None
+
+    # Check for signaling violations that would mislead partner
+    if not feedback.is_signal_optimal and feedback.signal_heuristic:
+        heuristic = feedback.signal_heuristic.upper() if feedback.signal_heuristic else ""
+
+        if heuristic in ['MIN_OF_EQUALS', 'DECLARER_CONSERVE', 'DEFENSIVE_DEFER']:
+            # User played higher than convention says
+            return (
+                f"Partner may think you're showing interest in this suit. "
+                f"Playing a higher card signals strength."
+            )
+
+        if heuristic == 'TOP_OF_SEQUENCE':
+            # User didn't lead top of sequence
+            return (
+                f"Partner won't know you have a sequence. "
+                f"Lead the top to show touching honors below."
+            )
+
+        if heuristic == 'BOTTOM_OF_SEQUENCE':
+            # User didn't play bottom of sequence
+            return (
+                f"Partner may miscount your holding. "
+                f"Play the bottom of touching cards to signal the higher ones."
+            )
+
+        if heuristic == 'ATTITUDE_SIGNAL':
+            return (
+                f"Your card sends an ambiguous attitude signal. "
+                f"High = encouraging, low = discouraging."
+            )
+
+        if heuristic == 'COUNT_SIGNAL':
+            return (
+                f"Your card may give partner wrong count information. "
+                f"High-low = even count, low-high = odd count."
+            )
+
+    # Check for physics violations that affect partnership
+    if feedback.physics_violation:
+        violation = feedback.physics_violation
+        principle = violation.get('principle', '')
+
+        if principle == 'conservation':
+            return (
+                f"Wasting this honor may confuse partner about your strength. "
+                f"Save high cards for when they're truly needed."
+            )
+
+        if principle == 'signaling':
+            return (
+                f"This play violates signaling conventions. "
+                f"{violation.get('explanation', '')}"
+            )
+
+    # Generic warning for suboptimal plays
+    if not is_optimal and not user_in_equivalence:
+        if feedback.tricks_cost > 0:
+            return (
+                f"This play costs {feedback.tricks_cost} trick(s). "
+                f"Partner will adjust their defense based on your card."
+            )
+
+    return None
+
+
+def _generate_shadow_play_recommendation(
+    feedback,
+    is_optimal: bool,
+    user_in_equivalence: bool
+) -> str:
+    """
+    Generate a recommendation for the shadow play preview.
+
+    Returns:
+        Recommendation string for the user.
+    """
+    if is_optimal:
+        if feedback.is_signal_optimal:
+            return "This is the optimal play - both in terms of tricks and signaling."
+        else:
+            return (
+                f"This play achieves the same trick count, but consider: "
+                f"{feedback.signal_reason or 'following standard conventions.'}"
+            )
+
+    if user_in_equivalence:
+        # User's card is in equivalence set but not marked optimal
+        # This can happen with signal violations
+        if not feedback.is_signal_optimal:
+            return (
+                f"This card achieves the same trick count, but violates "
+                f"signaling conventions. Consider playing one of: "
+                f"{', '.join(feedback.optimal_cards[:3])}"
+            )
+        return "This play is acceptable but there may be a better choice."
+
+    # Not optimal - give a clear recommendation
+    if feedback.optimal_cards:
+        optimal_str = ', '.join(feedback.optimal_cards[:2])
+        if feedback.tricks_cost > 0:
+            return f"Consider {optimal_str} instead (saves {feedback.tricks_cost} trick(s))."
+        elif feedback.tricks_cost == -1:
+            # Heuristic mode
+            return f"Consider {optimal_str} instead for a better result."
+        else:
+            return f"Consider {optimal_str} for optimal play."
+
+    return "Consider your options carefully."
 
 
 def log_play_decision(user_id, position, user_card, score, rating, contract, trick_number):
