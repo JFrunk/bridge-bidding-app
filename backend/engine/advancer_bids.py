@@ -210,12 +210,26 @@ class AdvancerBidsModule(ConventionModule):
             elif hand.hcp >= 13:
                 return ("3NT", f"3NT showing {hand.hcp} HCP, balanced, with stopper (game bid).")
 
-        # 6. Pass with weak hand (< 8 points) or no clear action
+        # 6. Pass with weak hand (< 8 points)
         if hand.total_points < 8:
             return ("Pass", f"Weak hand ({hand.total_points} pts), passing partner's overcall.")
 
-        # No clear action - pass
-        return ("Pass", "No clear action to advance partner's overcall.")
+        # 7. Marginal hands (8-10 HCP) with no clear fit/suit - "Least Bad Option" heuristic
+        # SAYC principle: With balanced values, 1NT describes hand better than passing
+        # This avoids "Signal Fracture" where partnership values are under-represented
+        if 8 <= hand.hcp <= 10:
+            # With balanced hand, 1NT is most descriptive even without perfect stopper
+            if hand.is_balanced and overcall_level == 1:
+                return ("1NT", f"1NT showing {hand.hcp} HCP balanced (best available bid without fit or long suit).")
+
+            # With semi-balanced hand (no singleton/void), still consider 1NT at 1-level
+            has_short_suit = any(length <= 1 for length in hand.suit_lengths.values())
+            if not has_short_suit and overcall_level == 1:
+                return ("1NT", f"1NT showing {hand.hcp} HCP semi-balanced (no clear alternative).")
+
+        # No clear action - pass (now only reached with unbalanced 8-10 HCP hands
+        # or hands where overcall was at 2-level making 1NT unavailable)
+        return ("Pass", "No clear action to advance partner's overcall (unbalanced or auction too high).")
 
     def _respond_to_takeout_double(self, hand: Hand, opener_bid: str, features: Dict) -> Optional[Tuple[str, str]]:
         """
