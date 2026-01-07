@@ -94,15 +94,26 @@ class SanityChecker:
                 return True, bid, None
 
         # Check if this is a Blackwood/control bid sequence
-        # NOTE: Even in Blackwood sequences, the Governor MUST validate HCP for slam bids
-        # We only bypass sanity checks for the ACE RESPONSES (5♣/5♦/5♥/5♠ after 4NT)
-        # The slam bidder is still subject to HCP validation
+        # UPDATED: Allow bypass for:
+        # 1. Ace responses (5♣/5♦/5♥/5♠ after 4NT)
+        # 2. King responses (6♣/6♦/6♥/6♠ after 5NT)
+        # 3. Slam signoff by the ASKER after receiving a Blackwood response
+        # The "Physics of Information" principle: conventional responses provide
+        # control information that supersedes raw HCP calculations
         if self._is_blackwood_sequence(auction):
-            # Allow Blackwood responses (5-level after 4NT) without HCP check
-            # because these are conventional, not natural
+            # Allow Blackwood ace responses (5-level after 4NT)
             if self._is_blackwood_response(bid, auction):
                 return True, bid, None
-            # For slam bids (6/7 level), fall through to Governor check below
+            # Allow King-ask responses (6-level after 5NT)
+            if self._is_king_ask_response(bid, auction):
+                logger.debug(f"Allowing king-ask response '{bid}' - conventional bid bypasses Governor")
+                return True, bid, None
+            # Allow slam signoff by the ASKER after receiving response
+            # This is the critical fix: the person who asked for aces can bid slam
+            if self._is_slam_signoff_after_blackwood(bid, auction):
+                logger.debug(f"Allowing slam signoff '{bid}' after Blackwood response - asker's decision")
+                return True, bid, None
+            # For other slam bids, fall through to Governor check below
 
         # Check if this is a Jacoby transfer super-accept sequence - allow game acceptance
         if self._is_jacoby_super_accept_sequence(auction):
@@ -545,6 +556,76 @@ class SanityChecker:
             for past_bid in recent_bids:
                 if past_bid == '4NT':
                     return True
+
+        return False
+
+    def _is_king_ask_response(self, bid: str, auction: List) -> bool:
+        """
+        Check if the current bid is a response to the 5NT King-ask.
+
+        Returns True for:
+        - 6♣ = 0 kings
+        - 6♦ = 1 king
+        - 6♥ = 2 kings
+        - 6♠ = 3 kings
+
+        These are conventional responses and should bypass the HCP Governor.
+        """
+        # Must be 6-level suit bid
+        if len(bid) < 2 or bid[0] != '6' or bid[1] not in '♣♦♥♠':
+            return False
+
+        # Check if 5NT (king ask) was bid earlier in the auction
+        for past_bid in auction:
+            if past_bid == '5NT':
+                return True
+
+        return False
+
+    def _is_slam_signoff_after_blackwood(self, bid: str, auction: List) -> bool:
+        """
+        Check if this is the Blackwood ASKER bidding slam after receiving a response.
+
+        This is critical: the person who bid 4NT (asking for aces) should be
+        allowed to bid slam (6-level) based on the information received,
+        regardless of the raw HCP calculation.
+
+        Pattern detection:
+        - 4NT was bid
+        - A 5-level response was given (5♣/5♦/5♥/5♠)
+        - Current bid is 6-level (slam)
+        - The current bidder is the same seat as the 4NT bidder (the asker)
+
+        We approximate this by checking if:
+        1. 4NT was bid
+        2. A Blackwood response was given
+        3. Current bid is 6-level
+        """
+        # Must be 6 or 7 level bid
+        if len(bid) < 1 or bid[0] not in '67':
+            return False
+
+        has_4nt = False
+        has_blackwood_response = False
+        nt_4_index = -1
+
+        for i, past_bid in enumerate(auction):
+            if past_bid == '4NT':
+                has_4nt = True
+                nt_4_index = i
+            # Check for Blackwood response (5♣/5♦/5♥/5♠)
+            if len(past_bid) >= 2 and past_bid[0] == '5' and past_bid[1] in '♣♦♥♠':
+                if has_4nt:
+                    has_blackwood_response = True
+
+        # If we have 4NT followed by a response, allow the slam bid
+        # The engine is the asker making a decision based on ace count
+        if has_4nt and has_blackwood_response:
+            return True
+
+        # Also allow if 5NT king ask was made (implies all aces held)
+        if '5NT' in auction:
+            return True
 
         return False
 
