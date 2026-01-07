@@ -1,7 +1,9 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  background-color: var(--bg-app);
-  color: var(--text-primary);
+  /* Light gradient background matching My Progress / Learn screens */
+  background: var(--bg-app);
+  min-height: 100vh;
+  color: var(--text-primary-dark);
   padding: var(--space-5);
   /* Safe area handling for notched devices (iPhone X+) */
   padding-left: max(var(--space-5), env(safe-area-inset-left));

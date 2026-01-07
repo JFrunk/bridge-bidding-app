@@ -43,7 +43,8 @@
   --bg-primary: #1a1a1a;
   --bg-secondary: #2a2a2a;
   --bg-tertiary: #3a3a3a;
-  --bg-app: #3d6b52;
+  /* Light gradient matching My Progress / Learn screens */
+  --bg-app: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   --bg-learning: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   --bg-card: rgba(255, 255, 255, 0.95);
   --bg-card-dark: rgba(0, 0, 0, 0.2);
