@@ -85,19 +85,25 @@
 
 .hand-review-modal {
   background: white;
-  border-radius: 16px;
+  border-radius: 12px;
   max-width: min(95vw, 800px);
   max-height: 90vh;
   overflow: hidden; /* Changed to hidden - scrolling in content area */
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  /* Match ScoreModal shadow and border styling */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color, #e5e7eb);
   display: flex;
   flex-direction: column;
+  /* Positioning context for absolute close button */
+  position: relative;
 }
 
 /* Unified layout: tighter width to match content */
 .hand-review-modal.unified-layout {
   width: auto;
   max-width: min(95vw, 740px);
+  /* Consistent rounded corners with ScoreModal */
+  border-radius: 12px;
 }
 
 /* Header - Uses CSS variables for consistent theming */
@@ -136,12 +142,24 @@
 
 /* Inline close button - embedded in title row */
 .close-btn-inline {
-  margin-left: auto;
-  background: none;
-  border: none;
-  font-size: 24px;
+  /* Absolute positioning in top-right corner of modal */
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 20;
+  /* Styling */
+  background: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  font-size: 20px;
   color: var(--text-secondary);
   cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
   padding: 4px 8px;
   line-height: 1;
   min-width: 36px;
@@ -156,6 +174,8 @@
 .close-btn-inline:hover {
   color: var(--text-primary);
   background: var(--bg-tertiary);
+  border-color: var(--text-secondary);
+  transform: scale(1.05);
 }
 
 .close-btn-inline:focus {
@@ -1152,6 +1172,9 @@
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
+  /* Z-index below South's cards to prevent overlap */
+  position: relative;
+  z-index: 1;
 }
 
 .trick-feedback-panel.no-data {
@@ -1402,9 +1425,10 @@
   justify-content: center;
   /* Fixed height to prevent layout shift as cards are removed */
   min-height: 100px;
-  /* Ensure South's cards have clear separation from commentary below */
-  padding-bottom: 8px;
-  margin-bottom: 8px;
+  /* CRITICAL: Clear separation from Commentary Box below */
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  /* Z-index to prevent overlap with commentary */
   position: relative;
   z-index: 5;
 }
@@ -1751,8 +1775,9 @@
   .replay-row-south {
     /* Fixed height to prevent layout shift as cards are removed */
     min-height: 80px;
-    padding-bottom: 6px;
-    margin-bottom: 6px;
+    /* CRITICAL: Clear separation from Commentary Box below (mobile) */
+    padding-bottom: 12px;
+    margin-bottom: 12px;
   }
 
   .hand-review-modal .replay-hand .playable-card,

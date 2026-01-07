@@ -73,32 +73,39 @@ const DecayChart = ({
   // Sanitize curve values and implement "persistence until falsification" logic
   // The potential line stays at its previous value until a play mathematically
   // seals that the previous potential is unreachable
+  //
+  // PHYSICS RULE: The Potential line can ONLY stay flat or drop.
+  // It NEVER increases. Once potential is lost, it cannot be regained.
   const curve = useMemo(() => {
     if (rawCurve.length === 0) return [];
 
-    // First pass: sanitize values
-    const sanitized = rawCurve.map((val, i) => {
+    // Starting potential is capped at dd_optimal_ns (best possible for NS)
+    const initialPotential = Math.min(rawCurve[0] ?? dd_optimal_ns, dd_optimal_ns);
+
+    // Build the curve with strict persistence - monotonically decreasing only
+    const persistent = [];
+    let currentPotential = initialPotential;
+
+    for (let i = 0; i < rawCurve.length; i++) {
+      const rawValue = rawCurve[i];
+
+      // Calculate physical maximum possible at this point
       const tricksPlayed = Math.floor((i + 1) / 4);
       const tricksRemaining = 13 - tricksPlayed;
       const nsWonSoFar = ns_tricks_cumulative[i] ?? 0;
       const maxPossible = nsWonSoFar + tricksRemaining;
 
-      // Cap at maximum possible and at initial potential (no gifts above optimal)
-      return Math.min(val, maxPossible, dd_optimal_ns);
-    });
+      // The new potential is capped at:
+      // 1. The raw DDS value from backend
+      // 2. The physical maximum possible
+      // 3. The dd_optimal_ns (never show above optimal)
+      // 4. CRITICALLY: The current potential (can never increase)
+      const cappedValue = Math.min(rawValue, maxPossible, dd_optimal_ns, currentPotential);
 
-    // Second pass: implement persistence - only drop when truly falsified
-    // A drop is "falsified" when the new value is lower AND represents a real constraint
-    const persistent = [];
-    let currentPotential = sanitized[0] ?? dd_optimal_ns;
-
-    for (let i = 0; i < sanitized.length; i++) {
-      const newValue = sanitized[i];
-
-      // Only update potential if it's a genuine drop (falsification event)
-      // The backend DDS analysis determines when potential actually drops
-      if (newValue < currentPotential) {
-        currentPotential = newValue;
+      // Only update if this represents a true drop (falsification)
+      // The line stays flat otherwise
+      if (cappedValue < currentPotential) {
+        currentPotential = cappedValue;
       }
 
       persistent.push(currentPotential);
