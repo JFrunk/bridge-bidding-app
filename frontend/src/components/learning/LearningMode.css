@@ -1,10 +1,35 @@
 /**
  * Learning Mode Styles
+ *
+ * Light theme to match My Progress interface
  */
 
+/* ============================================================================
+   LIGHT MODE OVERRIDES - Match My Progress theme
+   ============================================================================ */
+
 .learning-mode {
+  /* Backgrounds - Light mode */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f3f5;
+
+  /* Text colors - Dark text on light background */
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+
+  /* Borders */
+  --border-color: #e5e7eb;
+
+  /* Subtle backgrounds for cards/sections */
+  --bg-subtle: rgba(0, 0, 0, 0.03);
+  --bg-subtle-hover: rgba(0, 0, 0, 0.05);
+
   min-height: 100%;
-  background: var(--bg-learning);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   color: var(--text-primary);
   padding: var(--space-5);
   /* Overlay already positioned below TopNavigation, just add safe area padding */
@@ -24,7 +49,7 @@
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 4px solid rgba(255, 255, 255, 0.1);
+  border: 4px solid rgba(0, 0, 0, 0.1);
   border-top-color: var(--color-success);
   border-radius: var(--radius-full);
   animation: spin 1s linear infinite;
@@ -67,7 +92,7 @@
 /* Header - Simplified since TopNavigation provides main nav */
 .learning-mode-header {
   padding: var(--space-4) 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color);
   margin-bottom: var(--space-6);
   text-align: center;
 }
@@ -76,39 +101,42 @@
   margin: 0;
   font-size: var(--text-3xl);
   font-weight: var(--font-semibold);
+  color: var(--text-primary);
 }
 
 .subtitle {
   margin: var(--space-1) 0 0;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
 .close-button {
   width: 40px;
   height: 40px;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font-size: var(--text-2xl);
   cursor: pointer;
   transition: background var(--duration-fast);
 }
 
 .close-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--bg-subtle-hover);
+  color: var(--text-primary);
 }
 
 /* Track Selector Tabs */
 .track-selector {
   display: flex;
   gap: var(--space-2);
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--bg-secondary);
   padding: var(--space-2);
   border-radius: var(--radius-lg);
   width: fit-content;
   margin: 0 auto var(--space-6);
+  border: 1px solid var(--border-color);
 }
 
 .track-tab {
@@ -119,7 +147,7 @@
   background: transparent;
   border: none;
   border-radius: var(--radius-md);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
   font-size: var(--text-base);
   font-weight: var(--font-medium);
   cursor: pointer;
@@ -127,13 +155,13 @@
 }
 
 .track-tab:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.9);
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .track-tab.active {
   background: var(--color-success);
-  color: var(--text-primary);
+  color: #ffffff;
   font-weight: var(--font-semibold);
   box-shadow: 0 2px 8px rgba(64, 192, 87, 0.3);
 }
@@ -161,10 +189,12 @@
 
 /* Overall Progress Bar */
 .overall-progress-bar {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-card);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   margin-bottom: var(--space-8);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .progress-info {
@@ -175,15 +205,16 @@
 
 .progress-label {
   font-weight: var(--font-medium);
+  color: var(--text-primary);
 }
 
 .progress-value {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
 }
 
 .progress-track {
   height: 12px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-tertiary);
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
@@ -200,7 +231,7 @@
   text-align: right;
   margin-top: var(--space-2);
   font-size: var(--text-sm);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
 }
 
 /* Level Grid */
@@ -212,22 +243,24 @@
 
 /* Level Card */
 .level-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid transparent;
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   cursor: pointer;
   transition: all var(--duration-fast);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .level-card:hover:not(.locked) {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-hover);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .level-card.selected {
   border-color: var(--color-success);
-  background: rgba(76, 175, 80, 0.1);
+  background: rgba(76, 175, 80, 0.08);
 }
 
 .level-card.locked {
@@ -254,7 +287,7 @@
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 }
 
 .level-status-icon {
@@ -265,6 +298,7 @@
   margin: 0 0 var(--space-4);
   font-size: var(--text-lg);
   font-weight: var(--font-medium);
+  color: var(--text-primary);
 }
 
 .level-progress {
@@ -280,7 +314,7 @@
 
 .progress-text {
   font-size: var(--text-sm);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
   min-width: 40px;
   text-align: right;
 }
@@ -289,7 +323,7 @@
 .level-skills {
   margin-top: var(--space-5);
   padding-top: var(--space-5);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-color);
 }
 
 .skill-list,
@@ -304,7 +338,7 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-3);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-tertiary);
   border-radius: var(--radius-md);
   border-left: 4px solid transparent;
   transition: all var(--duration-fast);
@@ -325,42 +359,42 @@
 
 /* Not Started - unfilled circle */
 .skill-item.status-not-started {
-  border-left-color: rgba(255, 255, 255, 0.2);
+  border-left-color: var(--border-color);
 }
 
 .skill-item.status-not-started .skill-status-indicator {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted);
   background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--border-color);
 }
 
 /* In Progress - half-filled, blue accent */
 .skill-item.status-in-progress {
   border-left-color: var(--color-accent-blue);
-  background: rgba(33, 150, 243, 0.1);
+  background: rgba(33, 150, 243, 0.08);
 }
 
 .skill-item.status-in-progress .skill-status-indicator {
   color: var(--color-accent-blue);
-  background: rgba(33, 150, 243, 0.2);
+  background: rgba(33, 150, 243, 0.15);
   border: 2px solid var(--color-accent-blue);
 }
 
 /* Mastered - filled green checkmark */
 .skill-item.status-mastered {
   border-left-color: var(--color-success);
-  background: rgba(76, 175, 80, 0.1);
+  background: rgba(76, 175, 80, 0.08);
 }
 
 .skill-item.status-mastered .skill-status-indicator {
-  color: var(--text-primary);
+  color: #ffffff;
   background: var(--color-success);
   border: 2px solid var(--color-success);
   font-weight: var(--font-bold);
 }
 
 .skill-item.status-mastered .skill-name {
-  color: var(--color-success-light);
+  color: var(--color-success-dark);
 }
 
 .skill-info {
@@ -372,11 +406,12 @@
 
 .skill-name {
   font-weight: var(--font-medium);
+  color: var(--text-primary);
 }
 
 .skill-meta {
   font-size: var(--text-xs);
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 }
 
 .practice-button {
@@ -384,7 +419,7 @@
   background: var(--color-success);
   border: none;
   border-radius: var(--radius-sm);
-  color: var(--text-primary);
+  color: #ffffff;
   font-size: var(--text-sm);
   cursor: pointer;
   transition: background var(--duration-fast);
