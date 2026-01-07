@@ -976,6 +976,12 @@
   width: 100%;
 }
 
+.bidding-hand-row .hand-time {
+  font-size: var(--text-xs, 12px);
+  color: var(--text-muted, #666);
+  min-width: 65px;
+}
+
 .bidding-hand-row .role {
   font-size: var(--text-sm, 14px);
   color: var(--text-primary-dark, #333);
@@ -1007,7 +1013,7 @@
 
 .bidding-hand-row .contract {
   font-weight: 500;
-  min-width: 40px;
+  min-width: 70px;  /* Wider to accommodate "3NT by S" format */
 }
 
 /* Standard bridge suit colors: Red (Hearts/Diamonds), Black (Spades/Clubs) */

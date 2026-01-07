@@ -548,17 +548,56 @@ const PracticeBidExpanded = ({ quality, biddingHands, onReviewHand, onShowBiddin
 };
 
 // ============================================================================
-// BIDDING HAND ROW - Shows hand summary with HCP, shape, contract, score
+// BIDDING HAND ROW - Shows hand summary with time, HCP, shape, contract, score
 // ============================================================================
+
+// Helper to derive final contract from auction history
+const deriveContractFromAuction = (auctionHistory) => {
+  if (!auctionHistory || auctionHistory.length === 0) return null;
+
+  // Find the last non-Pass bid (the contract)
+  // Auction format: array of {bid, explanation} or just bid strings
+  let lastBid = null;
+  let lastBidder = null;
+  const positions = ['N', 'E', 'S', 'W']; // Assuming North deals first by default
+
+  for (let i = auctionHistory.length - 1; i >= 0; i--) {
+    const entry = auctionHistory[i];
+    const bid = typeof entry === 'string' ? entry : entry.bid;
+
+    if (bid && bid !== 'Pass' && bid !== 'X' && bid !== 'XX') {
+      lastBid = bid;
+      lastBidder = positions[i % 4];
+      break;
+    }
+  }
+
+  if (!lastBid) {
+    // All passes - no contract
+    return { contract: 'Passed Out', declarer: null };
+  }
+
+  return { contract: lastBid, declarer: lastBidder };
+};
 
 const BiddingHandRow = ({ hand, onReview }) => {
   const userHand = hand.user_hand || {};
   const hcp = userHand.hcp ?? '?';
   const shape = userHand.shape || '?-?-?-?';
   const features = userHand.features || [];
-  const contract = hand.contract || 'Pass';
   const quality = hand.quality_pct || 0;
   const role = hand.role || 'Bidder';
+
+  // Get timing information
+  const relativeTime = formatRelativeTime(hand.played_at);
+
+  // Derive contract from auction history if not provided directly
+  const contractInfo = hand.contract
+    ? { contract: hand.contract, declarer: hand.contract_declarer }
+    : deriveContractFromAuction(hand.auction_history);
+
+  const contract = contractInfo?.contract || 'In Progress';
+  const declarer = contractInfo?.declarer;
 
   // Determine quality indicator
   const getQualityClass = (pct) => {
@@ -578,11 +617,24 @@ const BiddingHandRow = ({ hand, onReview }) => {
     return '';
   };
 
-  // Order: Role, Final bid, HCP, Shape, Balanced (feature), Quality%, Review button
+  // Format contract with declarer
+  const formatContract = () => {
+    if (contract === 'Passed Out' || contract === 'In Progress') {
+      return contract;
+    }
+    return declarer ? `${contract} by ${declarer}` : contract;
+  };
+
+  // Order: Time, Role, Contract (with declarer), HCP, Shape, Feature, Quality%, Review button
   return (
     <div className="bidding-hand-row">
+      {relativeTime && (
+        <span className="hand-time" title={hand.played_at ? new Date(hand.played_at).toLocaleString() : ''}>
+          {relativeTime}
+        </span>
+      )}
       <span className="role">{role}</span>
-      <span className={`contract ${getStrainClass(contract)}`}>{contract}</span>
+      <span className={`contract ${getStrainClass(contract)}`}>{formatContract()}</span>
       <span className="hcp-badge">{hcp} HCP</span>
       <span className="shape-badge">{shape}</span>
       {features.length > 0 && (
