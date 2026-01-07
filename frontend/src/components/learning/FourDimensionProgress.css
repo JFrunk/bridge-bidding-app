@@ -946,23 +946,19 @@
 .hand-row .quality {
   font-weight: 600;
   min-width: 35px;
-  padding: 2px 6px;
-  border-radius: 4px;
+  text-align: right;
 }
 
 .hand-row .quality.good {
   color: var(--color-success, #22c55e);
-  background: var(--bg-success-light, #dcfce7);
 }
 
 .hand-row .quality.suboptimal {
   color: var(--color-warning, #f59e0b);
-  background: var(--bg-warning-light, #fef3c7);
 }
 
 .hand-row .quality.error {
   color: var(--color-danger, #dc2626);
-  background: var(--bg-danger-light, #fee2e2);
 }
 
 /* ============================================================================
@@ -987,31 +983,22 @@
 }
 
 .bidding-hand-row .hcp-badge {
-  background: var(--color-primary, #2563eb);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 4px;
+  color: var(--text-primary-dark, #333);
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--text-sm, 14px);
   white-space: nowrap;
 }
 
 .bidding-hand-row .shape-badge {
-  background: var(--bg-tertiary, #e5e7eb);
   color: var(--text-secondary-dark, #666);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
+  font-size: var(--text-sm, 14px);
   font-family: monospace;
   white-space: nowrap;
 }
 
 .bidding-hand-row .feature-badge {
-  background: var(--bg-info-light, #dbeafe);
-  color: var(--color-info, #2563eb);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 11px;
+  color: var(--text-secondary-dark, #666);
+  font-size: var(--text-sm, 14px);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
