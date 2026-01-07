@@ -482,91 +482,87 @@ class RebidModule(ConventionModule):
                 my_opening_level = int(my_opening_bid[0])
 
                 if partner_level == my_opening_level + 1:  # Simple raise (e.g., 1♠-2♠)
-                    # Use AuctionContext to make smarter game decision
-                    # Simple raise shows 6-10 pts, combined range is 19-25
-                    # With maximum minimum (15) and good shape, consider game
-                    auction_context = features.get('auction_context')
+                    # Simple raise shows 6-10 pts - use partner's MIDPOINT (8 pts)
+                    # With minimum opening (13-15 pts), combined is only 21-23
+                    # Game needs 25 pts - DO NOT bid game with minimum opener after simple raise
+                    #
+                    # CRITICAL FIX: Use ACTUAL hand points, not AuctionContext midpoint
+                    # AuctionContext uses opener range (13-21) midpoint (17), which inflates estimate
                     my_suit = my_opening_bid[1:]
 
-                    # Calculate if game is reasonable based on combined strength
+                    # Calculate realistic combined points using actual hand HCP
+                    # Partner's simple raise shows 6-10 support points (midpoint 8)
+                    partner_midpoint = 8  # (6+10)/2 = 8 support points
+                    realistic_combined = hand.total_points + partner_midpoint
+
                     should_bid_game = False
                     should_invite = False
 
-                    if auction_context is not None:
-                        # Use expert-level range tracking
-                        combined_mid = auction_context.ranges.combined_midpoint
-                        combined_min = auction_context.ranges.combined_minimum
-
-                        # Major suit game needs ~25 combined points
-                        # With fit already established, be aggressive
-                        if combined_mid >= 25:
-                            should_bid_game = True
-                        elif combined_mid >= 23 and hand.total_points >= 14:
-                            # Close to game, invite with extras
+                    # Game in major needs ~25 combined points with fit
+                    # With 13-15 opener + 8 (partner midpoint) = 21-23 combined
+                    # This is NOT enough for game - only invite with maximum (15 pts)
+                    if realistic_combined >= 25:
+                        # This requires opener to have 17+ pts, which is medium/strong hand
+                        # But we're in 13-15 range, so this shouldn't trigger
+                        should_bid_game = True
+                    elif realistic_combined >= 23 and hand.total_points >= 15:
+                        # Maximum minimum (15 pts) + partner's 8 = 23 combined
+                        # Close to game, invite with good shape
+                        has_long_suit = hand.suit_lengths.get(my_suit, 0) >= 6
+                        has_good_suit = hand.suit_hcp.get(my_suit, 0) >= 6  # 2+ honors
+                        if has_long_suit or has_good_suit:
                             should_invite = True
-                    else:
-                        # Fallback: Use traditional logic with more aggressive thresholds
-                        # Partner shows 6-10, we have 13-15
-                        # Combined: 19-25 (midpoint ~22)
-                        if hand.total_points >= 15:
-                            # Maximum minimum + simple raise = consider game with shape
-                            has_long_suit = hand.suit_lengths.get(my_suit, 0) >= 6
-                            has_good_suit = hand.suit_hcp.get(my_suit, 0) >= 6  # 2+ honors
-                            if has_long_suit or has_good_suit:
-                                should_invite = True
 
                     if should_bid_game and my_suit in ['♥', '♠']:
-                        return (f"4{my_suit}", f"Bidding game with maximum minimum ({hand.total_points} pts) and good combined values.")
+                        return (f"4{my_suit}", f"Bidding game with {hand.total_points} pts + partner's ~8 = {realistic_combined} combined.")
                     elif should_invite and my_suit in ['♥', '♠']:
                         return (f"3{my_suit}", f"Inviting game with {hand.total_points} pts and good shape (partner can pass or bid 4).")
                     else:
-                        return ("Pass", "Minimum hand (13-15 pts), passing partner's simple raise.")
+                        return ("Pass", f"Minimum hand ({hand.total_points} pts), passing partner's simple raise (combined ~{realistic_combined}).")
 
                 elif partner_level == my_opening_level + 2:  # Invitational raise (e.g., 1♠-3♠)
-                    # Partner is inviting game (10-12 points). Accept with maximum or good shape
+                    # Partner is inviting game (10-12 support points).
                     # SAYC: With minimum opening (13 HCP), PASS. Accept with 14+ HCP or good extras.
+                    #
+                    # CRITICAL FIX: Use ACTUAL hand HCP, not AuctionContext midpoint
+                    # Also be conservative - use HCP (not total points) for threshold calculation
                     my_suit = my_opening_bid[1:]
 
-                    # Use AuctionContext for smarter game decision
-                    auction_context = features.get('auction_context')
+                    # Calculate realistic combined using actual HCP (more conservative)
+                    # Partner's invitational raise shows 10-12 support points (midpoint 11)
+                    # But support points include distribution, so use midpoint 10 HCP for conservative estimate
+                    partner_hcp_midpoint = 10  # Conservative HCP estimate (they have 10-12 support pts)
+                    realistic_combined_hcp = hand.hcp + partner_hcp_midpoint
+
                     should_bid_game = False
 
-                    # IMPORTANT: With pure minimum (13 HCP), always pass the limit raise
-                    # Only accept with 14+ HCP or extra distribution
-                    if hand.hcp <= 13:
-                        # Check for exceptional shape that might justify game
+                    # Game in major needs ~25 combined HCP with fit
+                    # With 13 HCP opener + 10 (partner midpoint) = 23 combined - decline
+                    # With 14 HCP opener + 10 = 24 combined - borderline, accept with good shape
+                    # With 15 HCP opener + 10 = 25 combined - accept
+                    if realistic_combined_hcp >= 25:
+                        # 15+ HCP + 10 = 25+ combined - clearly accept
+                        should_bid_game = True
+                    elif realistic_combined_hcp >= 24:
+                        # 14 HCP + 10 = 24 combined - borderline, accept with good shape
+                        has_long_suit = hand.suit_lengths.get(my_suit, 0) >= 6
+                        has_quality_suit = hand.suit_hcp.get(my_suit, 0) >= 6  # 2+ honors
+                        if has_long_suit or has_quality_suit:
+                            should_bid_game = True
+                    elif hand.hcp == 13:
+                        # Pure minimum - only accept with EXCEPTIONAL shape
                         has_long_suit = hand.suit_lengths.get(my_suit, 0) >= 6
                         has_quality_suit = hand.suit_hcp.get(my_suit, 0) >= 8  # Strong honors (AKQ or similar)
                         if has_long_suit and has_quality_suit:
                             should_bid_game = True
-                        # Otherwise pass with minimum
-                    elif auction_context is not None:
-                        # Expert-level range tracking for 14+ HCP hands
-                        combined_mid = auction_context.ranges.combined_midpoint
-                        # Invitational raise shows 10-12, opener has 14-15
-                        # Combined midpoint should be ~25-26
-                        if combined_mid >= 25:
-                            should_bid_game = True
-                        elif combined_mid >= 24 and hand.total_points >= 15:
-                            should_bid_game = True
-                    else:
-                        # Fallback: Accept invitation if:
-                        # 1. Maximum minimum (15 points), OR
-                        # 2. Good 6+ card suit with quality, OR
-                        # 3. 14+ points with quality suit (2+ honors)
-                        has_long_suit = hand.suit_lengths.get(my_suit, 0) >= 6
-                        has_quality_suit = hand.suit_hcp.get(my_suit, 0) >= 6  # 2+ honors
-
-                        if hand.total_points >= 15 or (has_long_suit and hand.total_points >= 14) or (hand.total_points >= 14 and has_quality_suit):
-                            should_bid_game = True
 
                     if should_bid_game:
                         if my_suit in ['♥', '♠']:
-                            return (f"4{my_suit}", f"Accepting invitation to game with {hand.total_points} points and combined values.")
+                            return (f"4{my_suit}", f"Accepting invitation with {hand.hcp} HCP + partner's ~10 = {realistic_combined_hcp} combined.")
                         else:
-                            return ("3NT", f"Accepting invitation to game with {hand.total_points} points.")
+                            return ("3NT", f"Accepting invitation with {hand.hcp} HCP + partner's ~10 = {realistic_combined_hcp} combined.")
                     else:
-                        return ("Pass", f"Declining invitation with minimum ({hand.hcp} HCP).")
+                        return ("Pass", f"Declining invitation with {hand.hcp} HCP (combined ~{realistic_combined_hcp}, need 24+ with shape or 25+).")
             if partner_response == "1NT":
                 # CRITICAL FIX: 1NT is a SEMI-FORCING response showing 6-10 HCP
                 # With minimum opening (12-14 HCP), opener should PASS unless:
