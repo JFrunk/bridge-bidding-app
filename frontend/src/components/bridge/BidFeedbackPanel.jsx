@@ -96,7 +96,7 @@ const BidFeedbackPanel = ({
           <span className="feedback-icon">{config.icon}</span>
           <span className="feedback-label">{config.label}</span>
           <span className="feedback-bid">{userBid}</span>
-          <span className="feedback-text">is perfect here.</span>
+          <span className="feedback-text">is appropriate here.</span>
         </>
       );
     }

@@ -152,7 +152,7 @@ class PlayFeedback:
         is_heuristic = self.analysis_source == "heuristic" or self.tricks_cost < 0
 
         if self.correctness == PlayCorrectnessLevel.OPTIMAL:
-            msg = f"Excellent! {self.user_card} is perfect here."
+            msg = f"Excellent! {self.user_card} is great here."
             if verbosity != "minimal" and self.reasoning:
                 msg += f" {self.reasoning}"
             return msg

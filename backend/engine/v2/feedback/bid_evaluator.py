@@ -99,7 +99,7 @@ class V2BiddingFeedback:
     def to_user_message(self, verbosity: str = "normal") -> str:
         """Generate user-friendly message"""
         if self.correctness == CorrectnessLevel.OPTIMAL:
-            msg = f"✓ Excellent! {self.user_bid} is perfect here."
+            msg = f"✓ Excellent! {self.user_bid} is appropriate here."
             if verbosity != "minimal":
                 msg += f" {self.optimal_explanation}"
             return msg

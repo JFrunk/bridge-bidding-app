@@ -382,7 +382,7 @@ const BidComparison = ({ decision }) => {
           <span>{isCorrect ? '○' : '✗'}</span> You bid: {user_bid}
         </div>
         <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>
-          {correctness === 'optimal' ? 'Perfect choice!' :
+          {correctness === 'optimal' ? 'Great choice!' :
            correctness === 'acceptable' ? 'Reasonable alternative' :
            correctness === 'suboptimal' ? 'Works but not ideal' :
            'Significant error'}
@@ -694,7 +694,7 @@ const BiddingGovernorPanel = ({ biddingQualitySummary }) => {
           data-testid="all-optimal-celebration"
         >
           <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>
-            Perfect Bidding!
+            Good Bidding!
           </div>
           <p style={{ margin: 0, color: '#059669' }}>
             All {userDecisions.length} bid{userDecisions.length !== 1 ? 's' : ''} were optimal.

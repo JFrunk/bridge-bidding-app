@@ -112,7 +112,7 @@ class BiddingFeedback:
             verbosity: "minimal", "normal", or "detailed"
         """
         if self.correctness == CorrectnessLevel.OPTIMAL:
-            msg = f"✓ Excellent! {self.user_bid} is perfect here."
+            msg = f"✓ Excellent! {self.user_bid} is appropriate here."
             if verbosity != "minimal":
                 msg += f" {self.reasoning}"
             return msg
