@@ -49,6 +49,12 @@
   --bg-card-dark: rgba(0, 0, 0, 0.2);
   --bg-overlay: rgba(0, 0, 0, 0.7);
 
+  /* Bridge Table Green Felt - consistent play surface */
+  --bg-table-felt: #1a5c2e;           /* Deep green felt for main play area */
+  --bg-table-felt-light: #237a3d;     /* Lighter green for highlights */
+  --bg-table-felt-dark: #0f3d1c;      /* Darker green for borders/shadows */
+  --bg-table-border: #0a3015;         /* Border color for table edges */
+
   /* Text Colors */
   --text-primary: #ffffff;
   --text-primary-dark: #1a1a1a;

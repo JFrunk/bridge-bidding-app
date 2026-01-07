@@ -58,7 +58,8 @@ body {
 }
 .bidding-area {
   width: 100%;
-  background-color: var(--bg-card-dark);
+  background-color: var(--bg-table-felt);
+  border: 3px solid var(--bg-table-border);
   padding: var(--space-2);
   border-radius: var(--radius-md);
 }
@@ -216,7 +217,8 @@ body {
 .hand-analysis {
   margin-top: var(--space-5);
   padding: var(--space-3);
-  background-color: var(--bg-card-dark);
+  background-color: rgba(15, 61, 28, 0.6);  /* Semi-transparent dark green */
+  border: 1px solid rgba(35, 122, 61, 0.3);
   border-radius: var(--radius-md);
 }
 .hand-analysis-header {
@@ -301,7 +303,8 @@ body {
   50% { opacity: 0.85; transform: scale(1.02); }
 }
 .action-area {
-  background-color: var(--bg-card-dark);
+  background-color: var(--bg-table-felt);
+  border: 3px solid var(--bg-table-border);
   padding: var(--space-3);
   border-radius: var(--radius-md);
   display: flex;
@@ -616,10 +619,10 @@ body {
 }
 
 .player-hand {
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(15, 61, 28, 0.5);  /* Semi-transparent dark green */
   padding: var(--space-3);
   border-radius: var(--radius-md);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(35, 122, 61, 0.4); /* Subtle green border */
 }
 
 /* ========================================
@@ -687,7 +690,8 @@ body {
   flex-shrink: 0;
   width: 140px;
   padding: var(--space-3);
-  background-color: var(--bg-card-dark);
+  background-color: rgba(15, 61, 28, 0.6);  /* Semi-transparent dark green */
+  border: 1px solid rgba(35, 122, 61, 0.3);
   border-radius: var(--radius-md);
   font-size: var(--text-base);
   line-height: 1.5;

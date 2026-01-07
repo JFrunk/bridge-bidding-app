@@ -19,6 +19,12 @@
   --bg-secondary: #2a2a2a;         /* Card backgrounds, panels */
   --bg-tertiary: #3a3a3a;          /* Hover states */
 
+  /* Bridge Table Green Felt - consistent play surface */
+  --bg-table-felt: #1a5c2e;           /* Deep green felt for main play area */
+  --bg-table-felt-light: #237a3d;     /* Lighter green for highlights */
+  --bg-table-felt-dark: #0f3d1c;      /* Darker green for borders/shadows */
+  --bg-table-border: #0a3015;         /* Border color for table edges */
+
   /* Text */
   --text-primary: #ffffff;          /* Main text */
   --text-secondary: #aaaaaa;        /* Secondary text, labels */
@@ -369,7 +375,8 @@
   grid-template-rows: auto 300px auto;
   gap: 15px;
   padding: 15px;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-table-felt);
+  border: 3px solid var(--bg-table-border);
   border-radius: 12px;
   overflow: visible;
 }
@@ -458,8 +465,8 @@
   grid-template-rows: 1fr auto 1fr;
   gap: 0;
   padding: 20px;
-  background-color: #0d4d0d;
-  border: 3px solid #0a3d0a;
+  background-color: var(--bg-table-felt-dark);
+  border: 3px solid var(--bg-table-border);
   border-radius: 10px;
   min-height: 250px;
   align-items: center;
@@ -468,9 +475,9 @@
 
 .current-trick.empty {
   display: flex;
-  background-color: var(--bg-secondary);
-  border: 2px dashed var(--bg-tertiary);
-  color: #888;
+  background-color: var(--bg-table-felt-dark);
+  border: 2px dashed var(--bg-table-felt-light);
+  color: rgba(255, 255, 255, 0.5);
   justify-content: center;
   align-items: center;
 }
@@ -721,9 +728,9 @@
   width: 100%;
   margin: 0 auto;
   padding: 10px;
-  background-color: rgba(97, 218, 251, 0.1);
+  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
   border-radius: 8px;
-  border: 2px solid rgba(97, 218, 251, 0.3);
+  border: 2px solid rgba(35, 122, 61, 0.4);
   overflow: visible;
   justify-content: center;
 }
@@ -741,9 +748,9 @@
   width: 100%;
   margin: 0 auto;
   padding: 10px;
-  background-color: rgba(97, 218, 251, 0.1);
+  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
   border-radius: 8px;
-  border: 2px solid rgba(97, 218, 251, 0.3);
+  border: 2px solid rgba(35, 122, 61, 0.4);
   overflow: visible;
   justify-content: center;
 }
@@ -757,9 +764,9 @@
   width: auto;
   max-width: 100px; /* Accommodate full-width cards (~70px) */
   padding: 10px;
-  background-color: rgba(97, 218, 251, 0.1);
+  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
   border-radius: 8px;
-  border: 2px solid rgba(97, 218, 251, 0.3);
+  border: 2px solid rgba(35, 122, 61, 0.4);
   overflow: visible;
   align-items: center;
 }
@@ -840,9 +847,9 @@
   width: 100%;
   margin: 0 auto;
   padding: 10px;
-  background-color: rgba(97, 218, 251, 0.1);
+  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
   border-radius: 8px;
-  border: 2px solid rgba(97, 218, 251, 0.3);
+  border: 2px solid rgba(35, 122, 61, 0.4);
   overflow: visible;
   justify-content: center;
 }
@@ -872,9 +879,9 @@
   width: auto;
   max-width: 100px;
   padding: 10px;
-  background-color: rgba(97, 218, 251, 0.1);
+  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
   border-radius: 8px;
-  border: 2px solid rgba(97, 218, 251, 0.3);
+  border: 2px solid rgba(35, 122, 61, 0.4);
   overflow: visible;
   align-items: center;
 }
