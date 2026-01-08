@@ -25,11 +25,23 @@ import {
 } from '../../services/learningService';
 import SkillPractice from './SkillPractice';
 import SkillIntro from './SkillIntro';
+import { useUser } from '../../contexts/UserContext';
+import WelcomeWizard from '../onboarding/WelcomeWizard';
+import ExperienceSettings from '../settings/ExperienceSettings';
 
 const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   // Track selector: 'bidding' or 'play'
   const [selectedTrack, setSelectedTrack] = useState(initialTrack);
   const containerRef = useRef(null);
+
+  // Get user experience level settings from context
+  const { shouldShowWelcomeWizard, setExperienceLevel, isLevelUnlocked } = useUser();
+
+  // Toast state for locked level clicks
+  const [lockedToast, setLockedToast] = useState(null);
+
+  // Settings modal state
+  const [showSettings, setShowSettings] = useState(false);
 
   const [learningStatus, setLearningStatus] = useState(null);
   const [skillTree, setSkillTree] = useState(null);
@@ -358,6 +370,18 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
     });
   };
 
+  // Handle locked level click - show toast message
+  // Must be defined before early returns to satisfy React hooks rules
+  const handleLockedLevelClick = useCallback((levelNumber) => {
+    const prevLevel = levelNumber - 1;
+    setLockedToast({
+      message: `Complete Level ${prevLevel} to unlock, or adjust your Experience Level in settings.`,
+      key: Date.now()
+    });
+    // Auto-dismiss after 4 seconds
+    setTimeout(() => setLockedToast(null), 4000);
+  }, []);
+
   if (loading) {
     return (
       <div className="learning-mode">
@@ -411,84 +435,138 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   const overallProgress = learningStatus?.overall_progress || { completed: 0, total: 0, percentage: 0 };
 
   return (
-    <div className="learning-mode" ref={containerRef}>
-      {/* Header - simplified since TopNavigation provides main navigation */}
-      <div className="learning-mode-header">
-        <div className="header-content">
-          <h1>Learning Mode</h1>
-          <p className="subtitle">
-            {selectedTrack === 'bidding'
-              ? 'Master bridge bidding step by step'
-              : 'Master declarer play techniques'}
-          </p>
+    <>
+      {/* Welcome Wizard - shown only on first visit */}
+      <WelcomeWizard
+        isOpen={shouldShowWelcomeWizard}
+        onSelectExperience={setExperienceLevel}
+      />
+
+      {/* Experience Settings Modal */}
+      <ExperienceSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
+
+      {/* Toast notification for locked levels */}
+      {lockedToast && (
+        <div className="locked-toast" key={lockedToast.key}>
+          <span className="locked-toast-icon">🔒</span>
+          <span className="locked-toast-message">{lockedToast.message}</span>
+          <button
+            className="locked-toast-close"
+            onClick={() => setLockedToast(null)}
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      <div className="learning-mode" ref={containerRef}>
+        {/* Header - simplified since TopNavigation provides main navigation */}
+        <div className="learning-mode-header">
+          <div className="header-content">
+            <h1>Learning Mode</h1>
+            <p className="subtitle">
+              {selectedTrack === 'bidding'
+                ? 'Master bridge bidding step by step'
+                : 'Master declarer play techniques'}
+            </p>
+          </div>
+          <button
+            className="settings-button"
+            onClick={() => setShowSettings(true)}
+            aria-label="Learning Settings"
+            title="Learning Settings"
+          >
+            <span className="settings-icon">⚙️</span>
+          </button>
+        </div>
+
+        {/* Track Selector Tabs */}
+        <div className="track-selector">
+          <button
+            className={`track-tab ${selectedTrack === 'bidding' ? 'active' : ''}`}
+            onClick={() => handleTrackChange('bidding')}
+            data-testid="track-bidding"
+          >
+            <span className="track-icon">🎯</span>
+            <span className="track-label">Bidding</span>
+          </button>
+          <button
+            className={`track-tab ${selectedTrack === 'play' ? 'active' : ''}`}
+            onClick={() => handleTrackChange('play')}
+            data-testid="track-play"
+          >
+            <span className="track-icon">♠</span>
+            <span className="track-label">Card Play</span>
+          </button>
+        </div>
+
+        {/* Overall Progress */}
+        <div className="overall-progress-bar">
+          <div className="progress-info">
+            <span className="progress-label">Overall Progress</span>
+            <span className="progress-value">{overallProgress.completed} / {overallProgress.total} skills</span>
+          </div>
+          <div className="progress-track">
+            <div
+              className="progress-fill"
+              style={{ width: `${overallProgress.percentage}%` }}
+            ></div>
+          </div>
+          <span className="progress-percentage">{overallProgress.percentage.toFixed(1)}%</span>
+        </div>
+
+        {/* Level Grid */}
+        <div className="level-grid">
+          {Object.entries(levels).map(([levelId, levelData]) => (
+            <LevelCard
+              key={levelId}
+              levelId={levelId}
+              levelData={levelData}
+              skillTree={skillTree}
+              skillProgress={skillProgress}
+              isSelected={selectedLevel === levelId}
+              onSelect={() => setSelectedLevel(levelId)}
+              onStartSkill={handleStartSkill}
+              isLevelUnlocked={isLevelUnlocked}
+              onLockedClick={handleLockedLevelClick}
+            />
+          ))}
         </div>
       </div>
-
-      {/* Track Selector Tabs */}
-      <div className="track-selector">
-        <button
-          className={`track-tab ${selectedTrack === 'bidding' ? 'active' : ''}`}
-          onClick={() => handleTrackChange('bidding')}
-          data-testid="track-bidding"
-        >
-          <span className="track-icon">🎯</span>
-          <span className="track-label">Bidding</span>
-        </button>
-        <button
-          className={`track-tab ${selectedTrack === 'play' ? 'active' : ''}`}
-          onClick={() => handleTrackChange('play')}
-          data-testid="track-play"
-        >
-          <span className="track-icon">♠</span>
-          <span className="track-label">Card Play</span>
-        </button>
-      </div>
-
-      {/* Overall Progress */}
-      <div className="overall-progress-bar">
-        <div className="progress-info">
-          <span className="progress-label">Overall Progress</span>
-          <span className="progress-value">{overallProgress.completed} / {overallProgress.total} skills</span>
-        </div>
-        <div className="progress-track">
-          <div
-            className="progress-fill"
-            style={{ width: `${overallProgress.percentage}%` }}
-          ></div>
-        </div>
-        <span className="progress-percentage">{overallProgress.percentage.toFixed(1)}%</span>
-      </div>
-
-      {/* Level Grid */}
-      <div className="level-grid">
-        {Object.entries(levels).map(([levelId, levelData]) => (
-          <LevelCard
-            key={levelId}
-            levelId={levelId}
-            levelData={levelData}
-            skillTree={skillTree}
-            skillProgress={skillProgress}
-            isSelected={selectedLevel === levelId}
-            onSelect={() => setSelectedLevel(levelId)}
-            onStartSkill={handleStartSkill}
-          />
-        ))}
-      </div>
-    </div>
+    </>
   );
 };
 
 /**
  * Level Card Component
+ *
+ * Locking logic combines:
+ * 1. User's experience level (from WelcomeWizard/Settings)
+ * 2. Whether previous level is completed
+ * 3. Whether areAllLevelsUnlocked is true
  */
-const LevelCard = ({ levelId, levelData, skillTree, skillProgress, isSelected, onSelect, onStartSkill }) => {
+const LevelCard = ({
+  levelId,
+  levelData,
+  skillTree,
+  skillProgress,
+  isSelected,
+  onSelect,
+  onStartSkill,
+  isLevelUnlocked,
+  onLockedClick
+}) => {
   const {
     name,
     level_number,
     completed,
     total,
     percentage,
-    unlocked,
+    unlocked: backendUnlocked, // Backend's unlock status (based on progress)
     is_convention_group,
   } = levelData;
 
@@ -497,21 +575,39 @@ const LevelCard = ({ levelId, levelData, skillTree, skillProgress, isSelected, o
   const skills = levelInfo.skills || [];
   const conventions = levelInfo.conventions || [];
 
+  // NEW: Combined unlock logic
+  // A level is unlocked if:
+  // 1. User's experience level allows it (isLevelUnlocked from context), OR
+  // 2. Backend says it's unlocked (completed previous level)
+  const isUnlocked = isLevelUnlocked(level_number) || backendUnlocked;
+
   const getStatusClass = () => {
-    if (!unlocked) return 'locked';
+    if (!isUnlocked) return 'locked';
     if (completed === total) return 'completed';
     if (completed > 0) return 'in-progress';
     return '';
   };
 
+  // Handle click - either select or show locked message
+  const handleClick = () => {
+    if (isUnlocked) {
+      onSelect();
+    } else {
+      onLockedClick(level_number);
+    }
+  };
+
   return (
     <div
       className={`level-card ${getStatusClass()} ${isSelected ? 'selected' : ''}`}
-      onClick={unlocked ? onSelect : undefined}
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && handleClick()}
     >
       <div className="level-card-header">
         <div className="level-number">Level {level_number}</div>
-        {!unlocked && <div className="level-status-icon">🔒</div>}
+        {!isUnlocked && <div className="level-status-icon">🔒</div>}
       </div>
 
       <h3 className="level-name">{name}</h3>
@@ -527,7 +623,7 @@ const LevelCard = ({ levelId, levelData, skillTree, skillProgress, isSelected, o
       </div>
 
       {/* Always show skills for unlocked levels so users can see progress and retry */}
-      {unlocked && (
+      {isUnlocked && (
         <div className="level-skills">
           {is_convention_group ? (
             <div className="convention-list">

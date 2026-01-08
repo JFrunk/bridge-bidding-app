@@ -5,6 +5,64 @@
  */
 
 /* ============================================================================
+   LOCKED LEVEL TOAST - Notification for clicking locked content
+   ============================================================================ */
+
+.locked-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: #1f2937;
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  z-index: 9999;
+  animation: toast-slide-up 0.3s ease-out;
+  max-width: calc(100vw - 32px);
+}
+
+@keyframes toast-slide-up {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.locked-toast-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.locked-toast-message {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.locked-toast-close {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 4px;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.locked-toast-close:hover {
+  color: white;
+}
+
+/* ============================================================================
    LIGHT MODE OVERRIDES - Match My Progress theme
    ============================================================================ */
 
@@ -91,10 +149,52 @@
 
 /* Header - Simplified since TopNavigation provides main nav */
 .learning-mode-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: var(--space-4) 0;
   border-bottom: 1px solid var(--border-color);
   margin-bottom: var(--space-6);
+}
+
+.header-content {
   text-align: center;
+  flex: 1;
+}
+
+/* Settings Button in Header */
+.settings-button {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  background: var(--bg-subtle, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.settings-button:hover {
+  background: var(--bg-subtle-hover, rgba(0, 0, 0, 0.05));
+}
+
+.settings-button:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.settings-icon {
+  font-size: 20px;
+}
+
+/* Make header relative for absolute positioning of settings button */
+.learning-mode-header {
+  position: relative;
 }
 
 .header-content h1 {
