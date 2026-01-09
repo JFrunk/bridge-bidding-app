@@ -1,16 +1,21 @@
 """
 Skill Tree for Structured Bridge Learning
 
-Defines the complete learning path from beginner to expert (Levels 0-8):
+Defines the complete learning path from beginner to expert (Levels 0-9):
 - Level 0: Foundations (hand evaluation, suit quality, bidding language)
-- Level 1: Opening Bids
-- Level 2: Responding to Openings
-- Level 3: Opener's Rebids
-- Level 4: Responder's Rebids
-- Level 5: Essential Conventions (Stayman, Jacoby, Weak Two, Takeout Double)
-- Level 6: Competitive Bidding
-- Level 7: Intermediate Conventions (Blackwood, Michaels, Unusual 2NT, etc.)
-- Level 8: Advanced Conventions (Fourth Suit Forcing, Splinters, etc.)
+- Level 1: Basic Bidding Actions (pass, major/minor openings, raises, responses)
+- Level 2: Opening Bids (Advanced) - 2C strong, 2NT
+- Level 3: Responding to Openings
+- Level 4: Opener's Rebids
+- Level 5: Responder's Rebids
+- Level 6: Essential Conventions (Stayman, Jacoby, Weak Two, Takeout Double)
+- Level 7: Competitive Bidding
+- Level 8: Intermediate Conventions (Blackwood, Michaels, Unusual 2NT, etc.)
+- Level 9: Advanced Conventions (Fourth Suit Forcing, Splinters, etc.)
+
+Level 1 ("Basic Bidding Actions") references foundational modules in ConventionRegistry,
+treating basic bidding elements (pass, raises, responses) as convention-like modules
+for structured learning.
 
 Works with ConventionRegistry for convention metadata.
 """
@@ -111,21 +116,49 @@ SKILL_TREE = {
     },
 
     # ========================================================================
-    # LEVEL 1: OPENING BIDS
+    # LEVEL 1: BASIC BIDDING ACTIONS
+    # "The primary directives - when and what to bid"
+    # Links to ConventionRegistry foundational modules
+    # ========================================================================
+    'level_1_basic_bidding': {
+        'name': 'Level 1: Basic Bidding Actions',
+        'description': 'Master the fundamental bidding actions before conventions',
+        'level': 1,
+        'type': SkillType.CONVENTION_GROUP,
+        'unlock_requirement': 'Complete Level 0 Foundations',
+        'completion_requirement': 'Master all 10 basic bidding modules with 80%+ accuracy',
+        'conventions': [
+            # These reference ConventionRegistry foundational modules
+            'when_to_pass',
+            'opening_one_major',
+            'opening_one_minor',
+            'opening_1nt',
+            'single_raise',
+            'limit_raise',
+            'new_suit_response',
+            'dustbin_1nt_response',
+            'game_raise',
+            'two_over_one_response'
+        ],
+        'unlock_message': 'Level 1 Unlocked! Master the basic bidding actions that form the foundation of SAYC.'
+    },
+
+    # ========================================================================
+    # LEVEL 2: OPENING BIDS (Advanced)
     # "Should I open? What should I open?"
     # ========================================================================
-    'level_1_opening_bids': {
-        'name': 'Level 1: Opening Bids',
-        'description': 'Learn when and what to open',
-        'level': 1,
-        'unlock_requirement': 'Complete Level 0 Foundations',
+    'level_2_opening_bids': {
+        'name': 'Level 2: Opening Bids (Advanced)',
+        'description': 'Learn advanced opening strategies and special openings',
+        'level': 2,
+        'unlock_requirement': 'Complete Level 1 Basic Bidding Actions',
         'completion_requirement': 'Complete all topics with 80%+ accuracy',
         'skills': [
             SkillNode(
                 id='when_to_open',
                 name='When to Open',
                 skill_type=SkillType.BASIC_SKILL,
-                level=1,
+                level=2,
                 description='Rule of 20, minimum 12-13 HCP requirement for opening.',
                 prerequisites=['hand_evaluation_basics'],
                 passing_accuracy=0.80,
@@ -135,7 +168,7 @@ SKILL_TREE = {
                 id='opening_one_suit',
                 name='Opening 1 of a Suit',
                 skill_type=SkillType.BASIC_SKILL,
-                level=1,
+                level=2,
                 description='5-card major requirement, minor suit openings '
                            '(1D with 4+, 1C with 3+), choosing between suits.',
                 prerequisites=['when_to_open'],
@@ -143,10 +176,10 @@ SKILL_TREE = {
                 practice_hands_required=8
             ),
             SkillNode(
-                id='opening_1nt',
-                name='Opening 1NT',
+                id='opening_1nt_advanced',
+                name='Opening 1NT (Advanced)',
                 skill_type=SkillType.BASIC_SKILL,
-                level=1,
+                level=2,
                 description='15-17 HCP balanced hand requirement.',
                 prerequisites=['when_to_open'],
                 passing_accuracy=0.80,
@@ -156,7 +189,7 @@ SKILL_TREE = {
                 id='opening_2c_strong',
                 name='Opening 2C (Strong)',
                 skill_type=SkillType.BASIC_SKILL,
-                level=1,
+                level=2,
                 description='22+ HCP or game-forcing hand.',
                 prerequisites=['when_to_open'],
                 passing_accuracy=0.80,
@@ -166,32 +199,32 @@ SKILL_TREE = {
                 id='opening_2nt',
                 name='Opening 2NT',
                 skill_type=SkillType.BASIC_SKILL,
-                level=1,
+                level=2,
                 description='20-21 HCP balanced hand.',
-                prerequisites=['opening_1nt'],
+                prerequisites=['opening_1nt_advanced'],
                 passing_accuracy=0.80,
                 practice_hands_required=3
             ),
         ],
-        'unlock_message': 'Level 1 Unlocked! Now learn when and how to open the bidding.'
+        'unlock_message': 'Level 2 Unlocked! Now learn advanced opening strategies.'
     },
 
     # ========================================================================
-    # LEVEL 2: RESPONDING TO OPENING BIDS
+    # LEVEL 3: RESPONDING TO OPENING BIDS
     # "Partner opened - what do I say?"
     # ========================================================================
-    'level_2_responding': {
-        'name': 'Level 2: Responding to Openings',
+    'level_3_responding': {
+        'name': 'Level 3: Responding to Openings',
         'description': 'Learn how to respond to partner\'s opening bid',
-        'level': 2,
-        'unlock_requirement': 'Complete Level 1 Opening Bids',
+        'level': 3,
+        'unlock_requirement': 'Complete Level 2 Opening Bids (Advanced)',
         'completion_requirement': 'Complete all topics with 80%+ accuracy',
         'skills': [
             SkillNode(
                 id='responding_to_major',
                 name='Responding to 1 of a Major',
                 skill_type=SkillType.BASIC_SKILL,
-                level=2,
+                level=3,
                 description='Single raises, limit raises, game raises, new suit responses, '
                            'NT responses.',
                 prerequisites=['opening_one_suit'],
@@ -202,7 +235,7 @@ SKILL_TREE = {
                 id='responding_to_minor',
                 name='Responding to 1 of a Minor',
                 skill_type=SkillType.BASIC_SKILL,
-                level=2,
+                level=3,
                 description='Priority: bid 4-card major first. Raising minors, NT bids.',
                 prerequisites=['opening_one_suit'],
                 passing_accuracy=0.80,
@@ -212,9 +245,9 @@ SKILL_TREE = {
                 id='responding_to_1nt',
                 name='Responding to 1NT',
                 skill_type=SkillType.BASIC_SKILL,
-                level=2,
+                level=3,
                 description='Pass, raises to 2NT/3NT, when conventions apply (learned later).',
-                prerequisites=['opening_1nt'],
+                prerequisites=['opening_1nt_advanced'],
                 passing_accuracy=0.80,
                 practice_hands_required=6
             ),
@@ -222,7 +255,7 @@ SKILL_TREE = {
                 id='responding_to_2c',
                 name='Responding to 2C',
                 skill_type=SkillType.BASIC_SKILL,
-                level=2,
+                level=3,
                 description='2D waiting response, positive responses with 8+ HCP.',
                 prerequisites=['opening_2c_strong'],
                 passing_accuracy=0.80,
@@ -232,32 +265,32 @@ SKILL_TREE = {
                 id='responding_to_2nt',
                 name='Responding to 2NT',
                 skill_type=SkillType.BASIC_SKILL,
-                level=2,
+                level=3,
                 description='Similar to 1NT responses but adjusted for 20-21 HCP range.',
                 prerequisites=['opening_2nt'],
                 passing_accuracy=0.80,
                 practice_hands_required=5
             ),
         ],
-        'unlock_message': 'Level 2 Unlocked! Learn how to respond when partner opens.'
+        'unlock_message': 'Level 3 Unlocked! Learn how to respond when partner opens.'
     },
 
     # ========================================================================
-    # LEVEL 3: OPENER'S REBIDS
+    # LEVEL 4: OPENER'S REBIDS
     # "Partner responded - how do I describe my hand further?"
     # ========================================================================
-    'level_3_openers_rebids': {
-        'name': 'Level 3: Opener\'s Rebids',
+    'level_4_openers_rebids': {
+        'name': 'Level 4: Opener\'s Rebids',
         'description': 'Learn opener\'s second bid to further describe hand',
-        'level': 3,
-        'unlock_requirement': 'Complete Level 2 Responding',
+        'level': 4,
+        'unlock_requirement': 'Complete Level 3 Responding',
         'completion_requirement': 'Complete all topics with 80%+ accuracy',
         'skills': [
             SkillNode(
                 id='rebid_after_1_level',
                 name='Rebids After 1-Level Response',
                 skill_type=SkillType.BASIC_SKILL,
-                level=3,
+                level=4,
                 description='Supporting partner, rebidding your suit, new suit, '
                            'reverse, jump shift, NT rebids.',
                 prerequisites=['responding_to_major', 'responding_to_minor'],
@@ -268,7 +301,7 @@ SKILL_TREE = {
                 id='rebid_after_2_level',
                 name='Rebids After 2-Level Response',
                 skill_type=SkillType.BASIC_SKILL,
-                level=3,
+                level=4,
                 description='Game is likely, show extra strength appropriately.',
                 prerequisites=['rebid_after_1_level'],
                 passing_accuracy=0.80,
@@ -278,7 +311,7 @@ SKILL_TREE = {
                 id='rebid_after_raise',
                 name='Rebids After a Raise',
                 skill_type=SkillType.BASIC_SKILL,
-                level=3,
+                level=4,
                 description='Accepting invites, passing minimum, exploring slam.',
                 prerequisites=['rebid_after_1_level'],
                 passing_accuracy=0.80,
@@ -288,32 +321,32 @@ SKILL_TREE = {
                 id='rebid_after_1nt_response',
                 name='Rebids After 1NT Response',
                 skill_type=SkillType.BASIC_SKILL,
-                level=3,
+                level=4,
                 description='Pass with minimum, rebid suit, show new suit, raise to 2NT.',
                 prerequisites=['responding_to_major'],
                 passing_accuracy=0.80,
                 practice_hands_required=5
             ),
         ],
-        'unlock_message': 'Level 3 Unlocked! Master opener\'s rebidding strategy.'
+        'unlock_message': 'Level 4 Unlocked! Master opener\'s rebidding strategy.'
     },
 
     # ========================================================================
-    # LEVEL 4: RESPONDER'S REBIDS
+    # LEVEL 5: RESPONDER'S REBIDS
     # "Opener rebid - where do we land?"
     # ========================================================================
-    'level_4_responders_rebids': {
-        'name': 'Level 4: Responder\'s Rebids',
+    'level_5_responders_rebids': {
+        'name': 'Level 5: Responder\'s Rebids',
         'description': 'Learn responder\'s second bid to find the best contract',
-        'level': 4,
-        'unlock_requirement': 'Complete Level 3 Opener\'s Rebids',
+        'level': 5,
+        'unlock_requirement': 'Complete Level 4 Opener\'s Rebids',
         'completion_requirement': 'Complete all topics with 80%+ accuracy',
         'skills': [
             SkillNode(
                 id='after_opener_raises',
                 name='After Opener Raises Your Suit',
                 skill_type=SkillType.BASIC_SKILL,
-                level=4,
+                level=5,
                 description='Sign off, invite game, bid game with fit confirmed.',
                 prerequisites=['rebid_after_raise'],
                 passing_accuracy=0.80,
@@ -323,7 +356,7 @@ SKILL_TREE = {
                 id='after_opener_rebids_suit',
                 name='After Opener Rebids Their Suit',
                 skill_type=SkillType.BASIC_SKILL,
-                level=4,
+                level=5,
                 description='Finding a fit or choosing alternative contract.',
                 prerequisites=['rebid_after_1_level'],
                 passing_accuracy=0.80,
@@ -333,7 +366,7 @@ SKILL_TREE = {
                 id='after_opener_new_suit',
                 name='After Opener Bids New Suit',
                 skill_type=SkillType.BASIC_SKILL,
-                level=4,
+                level=5,
                 description='Preference, support new suit, rebid your suit.',
                 prerequisites=['rebid_after_1_level'],
                 passing_accuracy=0.80,
@@ -343,7 +376,7 @@ SKILL_TREE = {
                 id='after_opener_rebids_nt',
                 name='After Opener Rebids NT',
                 skill_type=SkillType.BASIC_SKILL,
-                level=4,
+                level=5,
                 description='Calculate combined points, bid game or invite.',
                 prerequisites=['rebid_after_1_level'],
                 passing_accuracy=0.80,
@@ -353,26 +386,26 @@ SKILL_TREE = {
                 id='preference_bids',
                 name='Preference Bids',
                 skill_type=SkillType.BASIC_SKILL,
-                level=4,
+                level=5,
                 description='Return to opener\'s first suit when second doesn\'t fit.',
                 prerequisites=['after_opener_new_suit'],
                 passing_accuracy=0.80,
                 practice_hands_required=2
             ),
         ],
-        'unlock_message': 'Level 4 Unlocked! Complete the bidding conversation as responder.'
+        'unlock_message': 'Level 5 Unlocked! Complete the bidding conversation as responder.'
     },
 
     # ========================================================================
-    # LEVEL 5: ESSENTIAL CONVENTIONS
+    # LEVEL 6: ESSENTIAL CONVENTIONS
     # "Special agreements that improve accuracy"
     # ========================================================================
-    'level_5_essential_conventions': {
-        'name': 'Level 5: Essential Conventions',
+    'level_6_essential_conventions': {
+        'name': 'Level 6: Essential Conventions',
         'description': 'Must-learn conventions for every bridge player',
-        'level': 5,
+        'level': 6,
         'type': SkillType.CONVENTION_GROUP,
-        'unlock_requirement': 'Complete Level 4 Responder\'s Rebids',
+        'unlock_requirement': 'Complete Level 5 Responder\'s Rebids',
         'completion_requirement': 'Master all 4 conventions with 80%+ accuracy',
         'conventions': [
             'stayman',            # References ConventionRegistry
@@ -380,25 +413,25 @@ SKILL_TREE = {
             'weak_two',
             'takeout_double'
         ],
-        'unlock_message': 'Level 5 Unlocked! Learn the essential conventions every player uses.'
+        'unlock_message': 'Level 6 Unlocked! Learn the essential conventions every player uses.'
     },
 
     # ========================================================================
-    # LEVEL 6: COMPETITIVE BIDDING
+    # LEVEL 7: COMPETITIVE BIDDING
     # "What changes when opponents bid?"
     # ========================================================================
-    'level_6_competitive_bidding': {
-        'name': 'Level 6: Competitive Bidding',
+    'level_7_competitive_bidding': {
+        'name': 'Level 7: Competitive Bidding',
         'description': 'Bidding when opponents interfere',
-        'level': 6,
-        'unlock_requirement': 'Complete Level 5 Essential Conventions',
+        'level': 7,
+        'unlock_requirement': 'Complete Level 6 Essential Conventions',
         'completion_requirement': 'Complete all topics with 80%+ accuracy',
         'skills': [
             SkillNode(
                 id='overcalls',
                 name='Overcalls',
                 skill_type=SkillType.BASIC_SKILL,
-                level=6,
+                level=7,
                 description='Simple overcalls, jump overcalls (weak), 1NT overcall.',
                 prerequisites=['takeout_double'],
                 passing_accuracy=0.80,
@@ -408,7 +441,7 @@ SKILL_TREE = {
                 id='responding_to_overcalls',
                 name='Responding to Overcalls',
                 skill_type=SkillType.BASIC_SKILL,
-                level=6,
+                level=7,
                 description='Raising partner\'s overcall, new suit, cue-bid, NT.',
                 prerequisites=['overcalls'],
                 passing_accuracy=0.80,
@@ -418,7 +451,7 @@ SKILL_TREE = {
                 id='negative_doubles',
                 name='Negative Doubles',
                 skill_type=SkillType.BASIC_SKILL,
-                level=6,
+                level=7,
                 description='When partner opens and RHO overcalls, double for takeout.',
                 prerequisites=['takeout_double'],
                 passing_accuracy=0.80,
@@ -428,7 +461,7 @@ SKILL_TREE = {
                 id='over_opponent_double',
                 name='Over Opponent\'s Takeout Double',
                 skill_type=SkillType.BASIC_SKILL,
-                level=6,
+                level=7,
                 description='Redouble with 10+, raises, Jordan 2NT.',
                 prerequisites=['takeout_double'],
                 passing_accuracy=0.80,
@@ -438,26 +471,26 @@ SKILL_TREE = {
                 id='balancing',
                 name='Balancing',
                 skill_type=SkillType.BASIC_SKILL,
-                level=6,
+                level=7,
                 description='Reopening light when opponents stop low.',
                 prerequisites=['overcalls'],
                 passing_accuracy=0.80,
                 practice_hands_required=5
             ),
         ],
-        'unlock_message': 'Level 6 Unlocked! Master competitive bidding situations.'
+        'unlock_message': 'Level 7 Unlocked! Master competitive bidding situations.'
     },
 
     # ========================================================================
-    # LEVEL 7: INTERMEDIATE CONVENTIONS
+    # LEVEL 8: INTERMEDIATE CONVENTIONS
     # "More tools for specific situations"
     # ========================================================================
-    'level_7_intermediate_conventions': {
-        'name': 'Level 7: Intermediate Conventions',
+    'level_8_intermediate_conventions': {
+        'name': 'Level 8: Intermediate Conventions',
         'description': 'Important conventions for competitive and slam bidding',
-        'level': 7,
+        'level': 8,
         'type': SkillType.CONVENTION_GROUP,
-        'unlock_requirement': 'Complete Level 6 Competitive Bidding',
+        'unlock_requirement': 'Complete Level 7 Competitive Bidding',
         'completion_requirement': 'Master all 5 conventions with 80%+ accuracy',
         'conventions': [
             'blackwood',
@@ -466,19 +499,19 @@ SKILL_TREE = {
             'preempts',          # 3-level and 4-level openings
             'strong_2c'          # Strong 2C sequences
         ],
-        'unlock_message': 'Level 7 Unlocked! Add powerful intermediate conventions to your toolkit.'
+        'unlock_message': 'Level 8 Unlocked! Add powerful intermediate conventions to your toolkit.'
     },
 
     # ========================================================================
-    # LEVEL 8: ADVANCED CONVENTIONS
+    # LEVEL 9: ADVANCED CONVENTIONS
     # "Expert tools for nuanced situations"
     # ========================================================================
-    'level_8_advanced_conventions': {
-        'name': 'Level 8: Advanced Conventions',
+    'level_9_advanced_conventions': {
+        'name': 'Level 9: Advanced Conventions',
         'description': 'Expert-level conventions for sophisticated bidding',
-        'level': 8,
+        'level': 9,
         'type': SkillType.CONVENTION_GROUP,
-        'unlock_requirement': 'Complete Level 7 Intermediate Conventions',
+        'unlock_requirement': 'Complete Level 8 Intermediate Conventions',
         'completion_requirement': 'Master all 7 conventions with 85%+ accuracy',
         'conventions': [
             'fourth_suit_forcing',
@@ -489,7 +522,7 @@ SKILL_TREE = {
             'gerber',
             'control_cuebidding'  # Slam exploration
         ],
-        'unlock_message': 'Level 8 Unlocked! Master advanced conventions to complete your SAYC education.'
+        'unlock_message': 'Level 9 Unlocked! Master advanced conventions to complete your SAYC education.'
     },
 }
 
@@ -665,8 +698,8 @@ class SkillTreeManager:
         Returns:
             Level ID or None if all complete
         """
-        # Check levels in order (0-8)
-        for level_num in range(9):
+        # Check levels in order (0-9)
+        for level_num in range(10):
             level_id = self.get_level_id_by_number(level_num)
             if not level_id:
                 continue

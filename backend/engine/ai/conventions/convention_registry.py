@@ -17,6 +17,7 @@ from dataclasses import dataclass
 
 class ConventionLevel(Enum):
     """Convention difficulty levels for structured learning"""
+    FOUNDATIONAL = 0   # Basic bidding elements - learn first
     ESSENTIAL = 1      # Must learn - fundamental conventions
     INTERMEDIATE = 2   # Should learn - important competitive tools
     ADVANCED = 3       # Expert tools - sophisticated techniques
@@ -24,6 +25,7 @@ class ConventionLevel(Enum):
 
 class ConventionCategory(Enum):
     """Convention categories for organization"""
+    BASIC = "Basic Bidding"           # Foundational elements for beginners
     NT_SYSTEM = "1NT System"
     COMPETITIVE = "Competitive Bidding"
     SLAM = "Slam Bidding"
@@ -71,6 +73,219 @@ class ConventionMetadata:
 # ============================================================================
 
 CONVENTION_REGISTRY = {
+    # ========================================================================
+    # LEVEL 0: FOUNDATIONAL BIDDING (Learn First)
+    # Basic bidding elements that precede conventions
+    # ========================================================================
+
+    'when_to_pass': ConventionMetadata(
+        id='when_to_pass',
+        name='When to Pass',
+        level=ConventionLevel.FOUNDATIONAL,
+        category=ConventionCategory.BASIC,
+        frequency='Very High',
+        complexity='Low',
+        prerequisites=[],
+        practice_hands_required=8,
+        passing_accuracy=0.80,
+        description='Knowing when NOT to bid is as important as knowing what to bid. '
+                   'Pass with fewer than 12 HCP in 1st/2nd seat as opener, '
+                   'or fewer than 6 HCP as responder. Discipline prevents overbidding disasters.',
+        short_description='The discipline of not bidding',
+        learning_time_minutes=10
+    ),
+
+    'opening_one_major': ConventionMetadata(
+        id='opening_one_major',
+        name='Opening 1 of a Major',
+        level=ConventionLevel.FOUNDATIONAL,
+        category=ConventionCategory.BASIC,
+        frequency='Very High',
+        complexity='Low',
+        prerequisites=['when_to_pass'],
+        practice_hands_required=10,
+        passing_accuracy=0.80,
+        description='Open 1♥ or 1♠ with 12-21 HCP and a 5+ card major suit. '
+                   'Majors are prioritized because game in a major (4♥/4♠) requires only 10 tricks. '
+                   'With two 5-card majors, open the higher-ranking (spades) first.',
+        short_description='1♥/1♠ = 12-21 HCP, 5+ cards',
+        learning_time_minutes=12
+    ),
+
+    'opening_one_minor': ConventionMetadata(
+        id='opening_one_minor',
+        name='Opening 1 of a Minor',
+        level=ConventionLevel.FOUNDATIONAL,
+        category=ConventionCategory.BASIC,
+        frequency='Very High',
+        complexity='Low',
+        prerequisites=['opening_one_major'],
+        practice_hands_required=10,
+        passing_accuracy=0.80,
+        description='Open 1♣ or 1♦ with 12-21 HCP when no 5-card major exists. '
+                   '"Better Minor" rule: bid longer minor; with equal length, '
+                   'bid 1♦ with 4-4 or 1♣ with 3-3. Minor openings search for major fits.',
+        short_description='1♣/1♦ = 12-21 HCP, no 5-card major',
+        learning_time_minutes=12
+    ),
+
+    'opening_1nt': ConventionMetadata(
+        id='opening_1nt',
+        name='Opening 1NT',
+        level=ConventionLevel.FOUNDATIONAL,
+        category=ConventionCategory.BASIC,
+        frequency='High',
+        complexity='Low',
+        prerequisites=['opening_one_minor'],
+        practice_hands_required=8,
+        passing_accuracy=0.80,
+        description='Open 1NT with exactly 15-17 HCP and balanced distribution '
+                   '(4-3-3-3, 4-4-3-2, or 5-3-3-2 with 5-card minor). '
+                   'This precise range enables partner to calculate combined strength accurately.',
+        short_description='1NT = 15-17 HCP, balanced',
+        learning_time_minutes=10
+    ),
+
+    'single_raise': ConventionMetadata(
+        id='single_raise',
+        name='The Single Raise',
+        level=ConventionLevel.FOUNDATIONAL,
+        category=ConventionCategory.BASIC,
+        frequency='Very High',
+        complexity='Low',
+        prerequisites=['opening_one_major'],
+        practice_hands_required=10,
+        passing_accuracy=0.80,
+        description='Raise partner\'s major suit opening (1♥-2♥ or 1♠-2♠) with 6-10 support points '
+                   'and 3+ card support. This immediately establishes the 8+ card trump fit '
+                   'and shows a minimum responding hand.',
+        short_description='1M-2M = 6-10 pts, 3+ support',
+        learning_time_minutes=10
+    ),
+
+    'limit_raise': ConventionMetadata(
+        id='limit_raise',
+        name='The Limit Raise',
+        level=ConventionLevel.FOUNDATIONAL,
+        category=ConventionCategory.BASIC,
+        frequency='High',
+        complexity='Low',
+        prerequisites=['single_raise'],
+        practice_hands_required=8,
+        passing_accuracy=0.80,
+        description='Jump raise partner\'s major (1♥-3♥ or 1♠-3♠) with 10-12 support points '
+                   'and 4+ card support. This invites game - opener passes with minimum (12-14) '
+                   'or bids game with extra values (15+).',
+        short_description='1M-3M = 10-12 pts, 4+ support (invitational)',
+        learning_time_minutes=10
+    ),
+
+    'new_suit_response': ConventionMetadata(
+        id='new_suit_response',
+        name='New Suit Response (1-Level)',
+        level=ConventionLevel.FOUNDATIONAL,
+        category=ConventionCategory.BASIC,
+        frequency='Very High',
+        complexity='Low',
+        prerequisites=['opening_one_major'],
+        practice_hands_required=10,
+        passing_accuracy=0.80,
+        description='Bid a new suit at the 1-level (e.g., 1♦-1♥ or 1♣-1♠) with 6+ HCP '
+                   'and 4+ cards in the suit. This is FORCING - opener must bid again. '
+                   'Priority: bid 4-card majors "up the line" to find major fits.',
+        short_description='New suit at 1-level = 6+ HCP, 4+ cards, forcing',
+        learning_time_minutes=12
+    ),
+
+    'dustbin_1nt_response': ConventionMetadata(
+        id='dustbin_1nt_response',
+        name='The 1NT Response',
+        level=ConventionLevel.FOUNDATIONAL,
+        category=ConventionCategory.BASIC,
+        frequency='High',
+        complexity='Low',
+        prerequisites=['new_suit_response'],
+        practice_hands_required=8,
+        passing_accuracy=0.80,
+        description='Respond 1NT to partner\'s 1-level opening with 6-10 HCP when you cannot: '
+                   '(1) support partner\'s suit, (2) bid a new suit at 1-level, or (3) bid 2-level. '
+                   'Called the "dustbin" because it catches all hands that don\'t fit elsewhere.',
+        short_description='1NT response = 6-10 HCP, no fit, no suit to bid',
+        learning_time_minutes=10
+    ),
+
+    'game_raise': ConventionMetadata(
+        id='game_raise',
+        name='The Direct Game Raise',
+        level=ConventionLevel.FOUNDATIONAL,
+        category=ConventionCategory.BASIC,
+        frequency='Medium',
+        complexity='Low',
+        prerequisites=['limit_raise'],
+        practice_hands_required=6,
+        passing_accuracy=0.80,
+        description='Jump directly to game (1♥-4♥ or 1♠-4♠) with 13-16 support points '
+                   'and 5+ card support. This is NOT invitational - it\'s a sign-off showing '
+                   'game values but denying slam interest.',
+        short_description='1M-4M = 13-16 pts, 5+ support, sign-off',
+        learning_time_minutes=8
+    ),
+
+    'two_over_one_response': ConventionMetadata(
+        id='two_over_one_response',
+        name='Two-Over-One Response',
+        level=ConventionLevel.FOUNDATIONAL,
+        category=ConventionCategory.BASIC,
+        frequency='Medium',
+        complexity='Medium',
+        prerequisites=['new_suit_response'],
+        practice_hands_required=10,
+        passing_accuracy=0.80,
+        description='Bid a new suit at the 2-level (e.g., 1♠-2♣ or 1♠-2♦) showing 10+ HCP '
+                   '(or game-forcing in modern 2/1). Requires 5+ cards in the bid suit. '
+                   'This commits the partnership to game unless opener shows a minimum.',
+        short_description='2-level new suit = 10+ HCP, 5+ cards',
+        learning_time_minutes=15
+    ),
+
+    'opener_rebid': ConventionMetadata(
+        id='opener_rebid',
+        name="Opener's Rebid",
+        level=ConventionLevel.FOUNDATIONAL,
+        category=ConventionCategory.BASIC,
+        frequency='Very High',
+        complexity='Medium',
+        prerequisites=['opening_one_major', 'opening_one_minor', 'single_raise', 'limit_raise'],
+        practice_hands_required=15,
+        passing_accuracy=0.75,
+        description="After opening and receiving a response, opener must rebid to describe their hand: "
+                   "Minimum (12-14 HCP): Rebid suit, raise partner, or bid 1NT. "
+                   "Medium (15-17 HCP): Jump rebid or raise. "
+                   "Maximum (18-21 HCP): Jump to game, reverse, or jump shift. "
+                   "Use ACTUAL HCP - not midpoint estimates.",
+        short_description="Opener's second bid based on hand strength",
+        learning_time_minutes=20
+    ),
+
+    'responder_rebid': ConventionMetadata(
+        id='responder_rebid',
+        name="Responder's Rebid",
+        level=ConventionLevel.FOUNDATIONAL,
+        category=ConventionCategory.BASIC,
+        frequency='Very High',
+        complexity='Medium',
+        prerequisites=['opener_rebid'],
+        practice_hands_required=15,
+        passing_accuracy=0.75,
+        description="After opener's rebid, responder makes their second bid: "
+                   "With 6-9 HCP: Sign off, give preference, or pass. "
+                   "With 10-12 HCP: Invite game. "
+                   "With 13+ HCP: Force to game. "
+                   "Key skill: Recognizing when to stop vs when to push.",
+        short_description="Responder's second bid to place the contract",
+        learning_time_minutes=20
+    ),
+
     # ========================================================================
     # LEVEL 1: ESSENTIAL CONVENTIONS (Must Learn)
     # ========================================================================
@@ -371,6 +586,10 @@ class ConventionRegistry:
         """Get all conventions at a specific level"""
         return [c for c in self.conventions.values() if c.level == level]
 
+    def get_foundational_conventions(self) -> List[ConventionMetadata]:
+        """Get all foundational (basic bidding) conventions - learn first"""
+        return self.get_by_level(ConventionLevel.FOUNDATIONAL)
+
     def get_essential_conventions(self) -> List[ConventionMetadata]:
         """Get all essential (must-learn) conventions"""
         return self.get_by_level(ConventionLevel.ESSENTIAL)
@@ -423,7 +642,8 @@ class ConventionRegistry:
         A convention is unlocked if:
         1. All its skill/convention prerequisites are met
         2. Level prerequisites are met:
-           - Essential: Always available (if prereqs met)
+           - Foundational: Always available (if prereqs met) - start here!
+           - Essential: All Foundational conventions mastered
            - Intermediate: All Essential conventions mastered
            - Advanced: All Intermediate conventions mastered
 
@@ -436,7 +656,8 @@ class ConventionRegistry:
         """
         unlocked = []
 
-        # Get IDs of essential and intermediate conventions
+        # Get IDs of conventions at each level
+        foundational_ids = [c.id for c in self.get_foundational_conventions()]
         essential_ids = [c.id for c in self.get_essential_conventions()]
         intermediate_ids = [c.id for c in self.get_intermediate_conventions()]
 
@@ -451,7 +672,12 @@ class ConventionRegistry:
                 continue
 
             # Check level prerequisites
-            if convention.level == ConventionLevel.INTERMEDIATE:
+            if convention.level == ConventionLevel.ESSENTIAL:
+                # Must master all foundational conventions first
+                if not all(fid in mastered_conventions for fid in foundational_ids):
+                    continue
+
+            elif convention.level == ConventionLevel.INTERMEDIATE:
                 # Must master all essential conventions first
                 if not all(eid in mastered_conventions for eid in essential_ids):
                     continue
@@ -488,6 +714,7 @@ class ConventionRegistry:
 
         # Priority mappings
         level_priority = {
+            ConventionLevel.FOUNDATIONAL: 0,
             ConventionLevel.ESSENTIAL: 1,
             ConventionLevel.INTERMEDIATE: 2,
             ConventionLevel.ADVANCED: 3
@@ -518,11 +745,17 @@ class ConventionRegistry:
         Returns:
             Dictionary with progress for each level
         """
+        foundational = self.get_foundational_conventions()
         essential = self.get_essential_conventions()
         intermediate = self.get_intermediate_conventions()
         advanced = self.get_advanced_conventions()
 
         return {
+            'foundational': {
+                'total': len(foundational),
+                'mastered': sum(1 for c in foundational if c.id in mastered_conventions),
+                'ids': [c.id for c in foundational]
+            },
             'essential': {
                 'total': len(essential),
                 'mastered': sum(1 for c in essential if c.id in mastered_conventions),
