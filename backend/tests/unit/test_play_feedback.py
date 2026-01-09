@@ -321,5 +321,342 @@ class TestRatingToScoreMapping:
         assert min_score <= score <= max_score + 1, f"Blunder score {score} not in range"
 
 
+class TestFeedbackMessageAccuracy:
+    """
+    Test that feedback messages are situationally accurate.
+
+    These tests verify that:
+    - "Ruffing" is only used when actually ruffing (playing trump while void)
+    - "Wins this trick" is only claimed when we know it will win
+    - Leading trump is not called a "ruff"
+    - Messages match the actual play situation
+    """
+
+    @pytest.fixture
+    def generator(self):
+        """Create feedback generator (DDS disabled for unit tests)"""
+        return PlayFeedbackGenerator(use_dds=False)
+
+    @pytest.fixture
+    def spade_contract(self):
+        """Create a spade contract for testing trump plays"""
+        return Contract(level=4, strain='♠', declarer='S')
+
+    @pytest.fixture
+    def nt_contract(self):
+        """Create a NT contract for testing non-trump plays"""
+        return Contract(level=3, strain='NT', declarer='S')
+
+    def create_play_state(self, contract, hands_dict, current_trick=None, trick_history=None):
+        """Helper to create a PlayState for testing
+
+        Note: Uses _skip_validation=True for Hand to allow partial hands in tests.
+        In real play, hands start with 13 cards but diminish as cards are played.
+        """
+        hands = {}
+        for pos, cards in hands_dict.items():
+            hand_cards = [Card(rank=c[0], suit=c[1]) for c in cards]
+            # Skip validation to allow partial hands for testing mid-play scenarios
+            hands[pos] = Hand(cards=hand_cards, _skip_validation=True)
+
+        return PlayState(
+            contract=contract,
+            hands=hands,
+            current_trick=current_trick or [],
+            tricks_won={'N': 0, 'E': 0, 'S': 0, 'W': 0},
+            trick_history=trick_history or [],
+            next_to_play='S'
+        )
+
+    # === LEADING TRUMP TESTS ===
+
+    def test_leading_trump_not_called_ruff(self, generator, spade_contract):
+        """Leading trump should NOT be called a 'ruff'"""
+        # Set up state where South is leading (no current trick)
+        state = self.create_play_state(
+            spade_contract,
+            hands_dict={
+                'N': [('A', '♥'), ('K', '♥')],
+                'E': [('Q', '♥'), ('J', '♥')],
+                'S': [('A', '♠'), ('K', '♠')],  # Has trumps
+                'W': [('T', '♥'), ('9', '♥')]
+            },
+            current_trick=[]  # No cards played yet - South is leading
+        )
+
+        # South leads the Ace of spades (trump)
+        user_card = Card('A', '♠')
+        message = generator._explain_optimal_play("A♠", PlayCategory.TRUMPING, state, 'S')
+
+        # Should NOT say "ruff" - leading trump is not a ruff
+        assert "ruff" not in message.lower(), f"Leading trump incorrectly called a ruff: {message}"
+        assert "leading" in message.lower() or "correct" in message.lower(), f"Message should mention leading: {message}"
+
+    # === ACTUAL RUFF TESTS ===
+
+    def test_ruff_second_hand_no_win_claim(self, generator, spade_contract):
+        """Ruffing in 2nd seat should NOT claim 'wins this trick' (could be overruffed)"""
+        # West led a heart, East (2nd hand) is void and ruffs
+        state = self.create_play_state(
+            spade_contract,
+            hands_dict={
+                'N': [('A', '♥'), ('K', '♥')],
+                'E': [('5', '♠'), ('3', '♠')],  # Void in hearts, has trumps
+                'S': [('Q', '♥'), ('J', '♥')],
+                'W': [('T', '♥'), ('9', '♥')]
+            },
+            current_trick=[
+                (Card('T', '♥'), 'W')  # West led 10 of hearts
+            ]
+        )
+
+        # East ruffs with 5 of spades (2nd hand)
+        message = generator._explain_optimal_play("5♠", PlayCategory.TRUMPING, state, 'E')
+
+        # Should NOT claim "wins this trick" - South or North might overruff
+        assert "wins this trick" not in message.lower(), f"2nd hand ruff incorrectly claims win: {message}"
+        # Should say ruff since actually ruffing (void in led suit)
+        assert "ruff" in message.lower(), f"Should mention ruffing: {message}"
+
+    def test_ruff_third_hand_no_win_claim(self, generator, spade_contract):
+        """Ruffing in 3rd seat should NOT claim 'wins this trick' (4th hand could overruff)"""
+        # West led heart, East followed, South (3rd hand) is void and ruffs
+        state = self.create_play_state(
+            spade_contract,
+            hands_dict={
+                'N': [('A', '♥'), ('K', '♥')],
+                'E': [('Q', '♥'), ('J', '♥')],
+                'S': [('5', '♠'), ('3', '♠')],  # Void in hearts, has trumps
+                'W': [('T', '♥'), ('9', '♥')]
+            },
+            current_trick=[
+                (Card('T', '♥'), 'W'),  # West led
+                (Card('Q', '♥'), 'E')   # East followed
+            ]
+        )
+
+        # South ruffs with 5 of spades (3rd hand)
+        message = generator._explain_optimal_play("5♠", PlayCategory.TRUMPING, state, 'S')
+
+        # Should NOT claim "wins this trick" - North might overruff
+        assert "wins this trick" not in message.lower(), f"3rd hand ruff incorrectly claims win: {message}"
+
+    def test_ruff_fourth_hand_can_claim_win(self, generator, spade_contract):
+        """Ruffing in 4th seat CAN claim 'wins' since no one else can play"""
+        # West led heart, East/South followed, North (4th hand) is void and ruffs
+        state = self.create_play_state(
+            spade_contract,
+            hands_dict={
+                'N': [('5', '♠'), ('3', '♠')],  # Void in hearts, has trumps
+                'E': [('Q', '♥'), ('J', '♥')],
+                'S': [('K', '♥'), ('9', '♥')],
+                'W': [('T', '♥'), ('8', '♥')]
+            },
+            current_trick=[
+                (Card('T', '♥'), 'W'),  # West led
+                (Card('Q', '♥'), 'E'),  # East followed
+                (Card('K', '♥'), 'S')   # South followed
+            ]
+        )
+
+        # North ruffs with 5 of spades (4th hand) - this WILL win
+        message = generator._explain_optimal_play("5♠", PlayCategory.TRUMPING, state, 'N')
+
+        # CAN claim "wins" since 4th hand and no higher trump played
+        assert "wins" in message.lower(), f"4th hand ruff should claim win: {message}"
+
+    def test_ruff_fourth_hand_higher_trump_already_played(self, generator, spade_contract):
+        """4th hand ruff with lower trump should NOT claim 'wins'"""
+        # Someone already trumped higher
+        state = self.create_play_state(
+            spade_contract,
+            hands_dict={
+                'N': [('3', '♠'), ('2', '♠')],  # Only low trumps
+                'E': [('Q', '♥'), ('J', '♥')],
+                'S': [('K', '♥'), ('9', '♥')],
+                'W': [('T', '♥'), ('8', '♥')]
+            },
+            current_trick=[
+                (Card('T', '♥'), 'W'),  # West led heart
+                (Card('A', '♠'), 'E'),  # East ruffed with Ace of spades!
+                (Card('K', '♥'), 'S')   # South followed
+            ]
+        )
+
+        # North plays 3 of spades (4th hand) - can't beat East's Ace
+        message = generator._explain_optimal_play("3♠", PlayCategory.TRUMPING, state, 'N')
+
+        # Should NOT claim "wins" since East's Ace of spades beats our 3
+        assert "wins this trick" not in message.lower(), f"Should not claim win when outtrumped: {message}"
+
+    # === OVERRUFF TESTS ===
+
+    def test_overruff_message(self, generator, spade_contract):
+        """Overruffing should be identified correctly"""
+        # West led heart, East ruffed, South overruffs
+        state = self.create_play_state(
+            spade_contract,
+            hands_dict={
+                'N': [('A', '♥'), ('K', '♥')],
+                'E': [('5', '♠')],  # East ruffed
+                'S': [('K', '♠'), ('Q', '♠')],  # South has higher trumps
+                'W': [('T', '♥'), ('9', '♥')]
+            },
+            current_trick=[
+                (Card('T', '♥'), 'W'),  # West led
+                (Card('5', '♠'), 'E')   # East ruffed with 5♠
+            ]
+        )
+
+        # South overruffs - categorize should return OVERRUFFING
+        category = generator._categorize_play(state, 'S', Card('K', '♠'))
+        assert category == PlayCategory.OVERRUFFING, f"Should categorize as overruffing: {category}"
+
+    # === CATEGORIZATION TESTS ===
+
+    def test_categorize_opening_lead(self, generator, spade_contract):
+        """Opening lead should be categorized correctly"""
+        state = self.create_play_state(
+            spade_contract,
+            hands_dict={
+                'N': [('A', '♥'), ('K', '♥')],
+                'E': [('Q', '♥'), ('J', '♥')],
+                'S': [('T', '♥'), ('9', '♥')],
+                'W': [('8', '♥'), ('7', '♥')]
+            },
+            current_trick=[],
+            trick_history=[]  # No tricks played yet
+        )
+
+        category = generator._categorize_play(state, 'W', Card('8', '♥'))
+        assert category == PlayCategory.OPENING_LEAD
+
+    def test_categorize_subsequent_lead_not_opening(self, generator, spade_contract):
+        """Leading to 2nd+ trick should NOT be opening lead"""
+        # Create a completed trick in history
+        from engine.play_engine import Trick
+        completed_trick = Trick(
+            cards=[(Card('A', '♥'), 'W'), (Card('K', '♥'), 'N'),
+                   (Card('Q', '♥'), 'E'), (Card('J', '♥'), 'S')],
+            leader='W',
+            winner='W'
+        )
+
+        state = self.create_play_state(
+            spade_contract,
+            hands_dict={
+                'N': [('T', '♥')],
+                'E': [('9', '♥')],
+                'S': [('8', '♥')],
+                'W': [('7', '♥')]
+            },
+            current_trick=[],  # Leading to new trick
+            trick_history=[completed_trick]  # But not first trick
+        )
+
+        category = generator._categorize_play(state, 'W', Card('7', '♥'))
+        # Should NOT be OPENING_LEAD since we have trick history
+        assert category != PlayCategory.OPENING_LEAD, f"2nd trick lead incorrectly categorized as opening: {category}"
+
+    def test_categorize_following_suit(self, generator, spade_contract):
+        """Following suit should be categorized correctly"""
+        state = self.create_play_state(
+            spade_contract,
+            hands_dict={
+                'N': [('A', '♥'), ('K', '♥')],
+                'E': [('Q', '♥'), ('J', '♥')],
+                'S': [('T', '♥'), ('9', '♥')],
+                'W': [('8', '♥'), ('7', '♥')]
+            },
+            current_trick=[
+                (Card('A', '♥'), 'W')  # West led heart
+            ]
+        )
+
+        # East follows with heart
+        category = generator._categorize_play(state, 'E', Card('Q', '♥'))
+        assert category == PlayCategory.FOLLOWING_SUIT
+
+    def test_categorize_discarding_no_trump(self, generator, nt_contract):
+        """Discarding in NT (no trump) when void"""
+        state = self.create_play_state(
+            nt_contract,
+            hands_dict={
+                'N': [('A', '♣'), ('K', '♣')],  # Only clubs
+                'E': [('Q', '♥'), ('J', '♥')],
+                'S': [('T', '♥'), ('9', '♥')],
+                'W': [('8', '♥'), ('7', '♥')]
+            },
+            current_trick=[
+                (Card('Q', '♥'), 'W')  # West led heart
+            ]
+        )
+
+        # North is void in hearts, discards a club (NT so no trump)
+        category = generator._categorize_play(state, 'N', Card('K', '♣'))
+        assert category == PlayCategory.DISCARDING
+
+    def test_categorize_sluffing_could_trump(self, generator, spade_contract):
+        """Sluffing (discarding when could trump) should be categorized correctly"""
+        state = self.create_play_state(
+            spade_contract,
+            hands_dict={
+                'N': [('A', '♠'), ('K', '♣')],  # Has trump but discards club
+                'E': [('Q', '♥'), ('J', '♥')],
+                'S': [('T', '♥'), ('9', '♥')],
+                'W': [('8', '♥'), ('7', '♥')]
+            },
+            current_trick=[
+                (Card('Q', '♥'), 'W')  # West led heart
+            ]
+        )
+
+        # North is void in hearts, has trump but discards club instead
+        category = generator._categorize_play(state, 'N', Card('K', '♣'))
+        assert category == PlayCategory.SLUFFING
+
+    # === HINT ACCURACY TESTS ===
+
+    def test_hint_for_leading_trump(self, generator, spade_contract):
+        """Hint for leading trump should be about trump management, not ruffing"""
+        state = self.create_play_state(
+            spade_contract,
+            hands_dict={
+                'N': [('A', '♥')],
+                'E': [('Q', '♥')],
+                'S': [('A', '♠')],
+                'W': [('T', '♥')]
+            },
+            current_trick=[]  # Leading
+        )
+
+        hint = generator._generate_hint(PlayCategory.TRUMPING, PlayCorrectnessLevel.SUBOPTIMAL,
+                                        Card('A', '♠'), [Card('A', '♠')], state, 'S')
+
+        # Should mention trump management, not ruffing
+        assert "ruff" not in hint.lower() or "trump" in hint.lower(), f"Lead trump hint wrong: {hint}"
+
+    def test_hint_for_ruffing(self, generator, spade_contract):
+        """Hint for ruffing should mention ruffing"""
+        state = self.create_play_state(
+            spade_contract,
+            hands_dict={
+                'N': [('A', '♥')],
+                'E': [('Q', '♥')],
+                'S': [('5', '♠')],  # Void in hearts
+                'W': [('T', '♥')]
+            },
+            current_trick=[
+                (Card('T', '♥'), 'W')  # West led heart
+            ]
+        )
+
+        hint = generator._generate_hint(PlayCategory.TRUMPING, PlayCorrectnessLevel.SUBOPTIMAL,
+                                        Card('5', '♠'), [Card('5', '♠')], state, 'S')
+
+        # Should mention ruffing
+        assert "ruff" in hint.lower(), f"Ruff hint should mention ruffing: {hint}"
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
