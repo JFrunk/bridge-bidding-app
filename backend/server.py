@@ -1421,8 +1421,16 @@ def get_next_bid():
         print(f"🔍 DEBUG: Keys in data: {list(data.keys()) if data else 'None'}")
         auction_history_raw, current_player = data['auction_history'], data['current_player']
         explanation_level = data.get('explanation_level', 'detailed')  # simple, detailed, or expert
-        dealer = data.get('dealer')  # Get dealer from frontend
         use_v2_schema = data.get('use_v2_schema', False)  # Dev mode flag for V2 Schema testing
+
+        # Get dealer from frontend, fallback to session, or default to North
+        # Fixes ValueError "None is not in list" when frontend doesn't send dealer
+        dealer = data.get('dealer')
+        if not dealer:
+            if state.game_session:
+                dealer = state.game_session.get_current_dealer()
+            else:
+                dealer = 'North'
 
         # Normalize auction history: frontend may send {bid, explanation} objects or plain strings
         # Backend expects list of bid strings: ["1NT", "Pass", ...]
