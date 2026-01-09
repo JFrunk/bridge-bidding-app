@@ -18,6 +18,7 @@ import { BiddingWorkspace } from './components/workspaces/BiddingWorkspace';
 import { PlayWorkspace } from './components/workspaces/PlayWorkspace';
 import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { UserProvider } from './contexts/UserContext';
 import { SimpleLogin } from './components/auth/SimpleLogin';
 import { RegistrationPrompt } from './components/auth/RegistrationPrompt';
 import DDSStatusIndicator from './components/DDSStatusIndicator';
@@ -3115,11 +3116,13 @@ ${otherCommands}`;
     </div>
   );
 }
-// Wrap App with AuthProvider
+// Wrap App with AuthProvider and UserProvider
 function AppWithAuth() {
   return (
     <AuthProvider>
-      <App />
+      <UserProvider>
+        <App />
+      </UserProvider>
     </AuthProvider>
   );
 }

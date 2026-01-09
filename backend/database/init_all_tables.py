@@ -78,6 +78,7 @@ def init_all_tables(db_path='bridge.db'):
             'migrations/010_add_analysis_source.sql',
             'migrations/011_add_comprehensive_analysis.sql',
             'migrations/012_add_deal_data_to_bidding_decisions.sql',
+            'migrations/015_add_experience_level.sql',
         ]
 
         print("📋 Applying schema files...")

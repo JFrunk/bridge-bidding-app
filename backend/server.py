@@ -4570,13 +4570,23 @@ def simple_login():
             existing_user = cursor.fetchone()
 
             if existing_user:
-                # User exists - return their info
+                # User exists - get their experience level too
+                cursor.execute('''
+                    SELECT experience_level, unlock_all_content, experience_id, experience_set_at
+                    FROM users WHERE id = ?
+                ''', (existing_user[0],))
+                exp_row = cursor.fetchone()
+
                 return jsonify({
                     "user_id": existing_user[0],
                     "email": existing_user[1],
                     "phone": existing_user[2],
                     "display_name": existing_user[3],
-                    "created": False
+                    "created": False,
+                    "experience_level": exp_row[0] if exp_row else None,
+                    "unlock_all_content": bool(exp_row[1]) if exp_row and exp_row[1] is not None else False,
+                    "experience_id": exp_row[2] if exp_row else None,
+                    "experience_set_at": exp_row[3] if exp_row else None
                 })
 
             # User doesn't exist
@@ -4629,12 +4639,167 @@ def simple_login():
                 "email": email,
                 "phone": phone,
                 "display_name": email or phone,
-                "created": True
+                "created": True,
+                "experience_level": None,  # New user - wizard not completed
+                "unlock_all_content": False,
+                "experience_id": None,
+                "experience_set_at": None
             })
 
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": f"Login failed: {str(e)}"}), 500
+
+
+@app.route('/api/user/experience-level', methods=['GET'])
+def get_experience_level():
+    """
+    Get user's experience level settings.
+
+    Query params:
+        user_id: The user's ID
+
+    Returns:
+        {
+            "experience_level": 0,  // 0=beginner, 1=rusty, 99=expert, null=not set
+            "unlock_all_content": false,
+            "experience_id": "beginner",  // wizard option selected
+            "experience_set_at": "2026-01-07T12:00:00Z"
+        }
+    """
+    try:
+        user_id = request.args.get('user_id')
+
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+
+        # Validate user_id is numeric
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            return jsonify({"error": "Invalid user_id format"}), 400
+
+        # Skip for guest users (negative IDs)
+        if user_id < 0:
+            return jsonify({
+                "experience_level": None,
+                "unlock_all_content": False,
+                "experience_id": None,
+                "experience_set_at": None
+            })
+
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT experience_level, unlock_all_content, experience_id, experience_set_at
+                FROM users WHERE id = ?
+            ''', (user_id,))
+
+            row = cursor.fetchone()
+
+            if not row:
+                return jsonify({"error": "User not found"}), 404
+
+            return jsonify({
+                "experience_level": row[0],
+                "unlock_all_content": bool(row[1]) if row[1] is not None else False,
+                "experience_id": row[2],
+                "experience_set_at": row[3]
+            })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Failed to get experience level: {str(e)}"}), 500
+
+
+@app.route('/api/user/experience-level', methods=['PUT'])
+def set_experience_level():
+    """
+    Set user's experience level settings.
+
+    Expected JSON:
+        {
+            "user_id": 123,
+            "experience_level": 0,  // 0=beginner, 1=rusty, 99=expert
+            "unlock_all_content": false,
+            "experience_id": "beginner"  // wizard option selected
+        }
+
+    Returns:
+        {
+            "success": true,
+            "experience_level": 0,
+            "unlock_all_content": false,
+            "experience_id": "beginner",
+            "experience_set_at": "2026-01-07T12:00:00Z"
+        }
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        user_id = data.get('user_id')
+        experience_level = data.get('experience_level')
+        unlock_all_content = data.get('unlock_all_content', False)
+        experience_id = data.get('experience_id')
+
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+
+        # Validate user_id is numeric
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            return jsonify({"error": "Invalid user_id format"}), 400
+
+        # Skip for guest users (negative IDs) - just return success
+        if user_id < 0:
+            return jsonify({
+                "success": True,
+                "experience_level": experience_level,
+                "unlock_all_content": unlock_all_content,
+                "experience_id": experience_id,
+                "experience_set_at": datetime.now().isoformat(),
+                "note": "Guest user - not persisted to database"
+            })
+
+        # Validate experience_level
+        if experience_level is not None and experience_level not in [0, 1, 99]:
+            return jsonify({"error": "experience_level must be 0, 1, or 99"}), 400
+
+        experience_set_at = datetime.now().isoformat()
+
+        with get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Check user exists
+            cursor.execute('SELECT id FROM users WHERE id = ?', (user_id,))
+            if not cursor.fetchone():
+                return jsonify({"error": "User not found"}), 404
+
+            # Update experience level
+            cursor.execute('''
+                UPDATE users
+                SET experience_level = ?,
+                    unlock_all_content = ?,
+                    experience_id = ?,
+                    experience_set_at = ?
+                WHERE id = ?
+            ''', (experience_level, unlock_all_content, experience_id, experience_set_at, user_id))
+
+            return jsonify({
+                "success": True,
+                "experience_level": experience_level,
+                "unlock_all_content": unlock_all_content,
+                "experience_id": experience_id,
+                "experience_set_at": experience_set_at
+            })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Failed to set experience level: {str(e)}"}), 500
 
 
 if __name__ == '__main__':
