@@ -1,3 +1,11 @@
+---
+description: API Server & Infrastructure Specialist Session
+---
+
+---
+description: API Server & Infrastructure Specialist Session
+---
+
 # API Server & Infrastructure Specialist Session
 
 You are entering a focused session for the **API Server & Infrastructure** specialist area.

@@ -1,3 +1,11 @@
+---
+description: Plan feature implementation before coding
+---
+
+---
+description: Plan feature implementation before coding
+---
+
 Plan feature implementation before coding: $ARGUMENTS
 
 Feature description: $ARGUMENTS

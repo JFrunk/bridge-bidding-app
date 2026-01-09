@@ -1,3 +1,11 @@
+---
+description: Play Engine Specialist Session
+---
+
+---
+description: Play Engine Specialist Session
+---
+
 # Play Engine Specialist Session
 
 You are entering a focused session for the **Play Engine & AI** specialist area.

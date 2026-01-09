@@ -1,3 +1,11 @@
+---
+description: Bidding AI Specialist Session
+---
+
+---
+description: Bidding AI Specialist Session
+---
+
 # Bidding AI Specialist Session
 
 You are entering a focused session for the **Bidding AI Engine** specialist area.

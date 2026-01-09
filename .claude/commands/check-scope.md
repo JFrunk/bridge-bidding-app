@@ -1,3 +1,11 @@
+---
+description: Check if an issue affects other parts of the codebase
+---
+
+---
+description: Check if an issue affects other parts of the codebase
+---
+
 # Check Scope
 
 After identifying the root cause of an issue, systematically check if it affects other parts of the codebase: $ARGUMENTS

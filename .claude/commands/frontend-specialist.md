@@ -1,3 +1,11 @@
+---
+description: Frontend UI/UX Specialist Session
+---
+
+---
+description: Frontend UI/UX Specialist Session
+---
+
 # Frontend UI/UX Specialist Session
 
 You are entering a focused session for the **Frontend UI/UX** specialist area.

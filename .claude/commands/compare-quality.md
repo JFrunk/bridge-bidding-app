@@ -1,3 +1,11 @@
+---
+description: Compare quality scores before and after changes
+---
+
+---
+description: Compare quality scores before and after changes
+---
+
 Compare quality scores before and after changes: $ARGUMENTS
 
 Usage: /project:compare-quality [baseline_file] [new_file]

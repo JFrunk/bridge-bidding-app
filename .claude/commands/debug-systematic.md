@@ -1,3 +1,11 @@
+---
+description: Debug complex issue using systematic analysis
+---
+
+---
+description: Debug complex issue using systematic analysis
+---
+
 Debug complex issue using systematic analysis: $ARGUMENTS
 
 Issue description: $ARGUMENTS
