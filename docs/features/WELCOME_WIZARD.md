@@ -51,6 +51,8 @@ const isUnlocked = isLevelUnlocked(level_number) || backendUnlocked;
 
 ## Storage
 
+### Frontend (localStorage)
+
 Experience settings stored in localStorage under key `bridge_experience_level`:
 ```json
 {
@@ -60,6 +62,26 @@ Experience settings stored in localStorage under key `bridge_experience_level`:
   "setAt": "2026-01-07T12:00:00.000Z"
 }
 ```
+
+### Backend (Database)
+
+For authenticated users, experience level is persisted to the database for cross-device sync:
+
+**Database columns (users table):**
+- `experience_level`: INTEGER (0, 1, or 99)
+- `unlock_all_content`: BOOLEAN
+- `experience_id`: TEXT ('beginner', 'rusty', 'expert')
+- `experience_set_at`: TIMESTAMP
+
+**API Endpoints:**
+- `GET /api/user/experience-level?user_id={id}` - Get user's experience settings
+- `PUT /api/user/experience-level` - Set user's experience settings
+
+**Sync Behavior:**
+1. On login, frontend fetches experience level from backend
+2. Backend is source of truth for authenticated users
+3. If backend has no level but localStorage does, pushes local settings to backend
+4. Guest users only use localStorage (no backend sync)
 
 ## Toast Notifications
 
@@ -74,3 +96,4 @@ Toast auto-dismisses after 4 seconds.
 2. **Kept on logout**: Experience level persists even when logging out
 3. **Backend unlock preserved**: If user completes levels naturally, they stay unlocked
 4. **Non-blocking design**: Wizard only appears in Learning Mode context
+5. **Cross-device sync**: For authenticated users, experience level syncs via backend
