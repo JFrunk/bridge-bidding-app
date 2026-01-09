@@ -759,7 +759,33 @@ class PlayFeedbackGenerator:
             else:
                 return f"Playing {user_str} is correct."
         elif category == PlayCategory.TRUMPING:
-            return f"Ruffing with {user_str} wins this trick optimally."
+            # Determine if this is leading trump vs ruffing (playing trump while void)
+            if not state.current_trick:
+                # Leading trump - not a ruff
+                return f"Leading {user_str} is the correct play."
+
+            # Playing trump while void in led suit - this is a ruff
+            trick_pos = len(state.current_trick)
+            trump_suit = state.contract.trump_suit if state.contract else None
+
+            # Check if we can determine the ruff will win
+            # A ruff wins if: no higher trump has been played AND we're 4th hand (no one else can overruff)
+            existing_trumps = [(c, pos) for c, pos in state.current_trick if c.suit == trump_suit]
+            user_trump_value = self._rank_value(user_str[0]) if user_str else 0
+
+            if trick_pos == 3:
+                # 4th hand - we know if the ruff wins
+                higher_trump_played = any(self._rank_value(c.rank) > user_trump_value for c, _ in existing_trumps)
+                if not higher_trump_played:
+                    return f"Ruffing with {user_str} wins this trick."
+                else:
+                    return f"Playing {user_str} is correct here."
+            else:
+                # 2nd or 3rd hand - can't guarantee the ruff wins (could be overruffed)
+                if existing_trumps:
+                    return f"Overruffing with {user_str} is the right play."
+                else:
+                    return f"Ruffing with {user_str} is the right play here."
         elif category == PlayCategory.DISCARDING:
             return f"{user_str} is the right discard - it preserves your winners."
         else:
@@ -1044,7 +1070,10 @@ class PlayFeedbackGenerator:
 
         # === TRUMPING ===
         if category == PlayCategory.TRUMPING:
-            return "Ruff with your lowest trump that wins."
+            # Check if leading trump vs ruffing
+            if not state or not state.current_trick:
+                return "Consider when to draw trumps vs when to preserve them."
+            return "Ruff with your lowest trump that can win."
 
         # === DISCARDING ===
         if category == PlayCategory.DISCARDING:
