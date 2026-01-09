@@ -343,7 +343,603 @@ class BiddingLanguageGenerator(SkillHandGenerator):
 
 
 # ============================================================================
-# LEVEL 1: OPENING BIDS
+# LEVEL 1: BASIC BIDDING ACTIONS (Foundational Conventions)
+# These generators support the ConventionRegistry foundational modules
+# ============================================================================
+
+class WhenToPassGenerator(SkillHandGenerator):
+    """Generate hands for learning when NOT to bid.
+
+    This foundational skill teaches discipline - knowing when to pass
+    is as important as knowing what to bid.
+    """
+
+    skill_id = 'when_to_pass'
+    skill_level = 1
+    description = 'Practice recognizing when to Pass'
+
+    VARIANT_WEIGHTS = {
+        'opener_pass': 0.40,      # Not enough to open (< 12 HCP)
+        'responder_pass': 0.35,   # Not enough to respond (< 6 HCP)
+        'borderline_pass': 0.25,  # Borderline hands that should pass
+    }
+
+    def __init__(self, variant: str = None):
+        if variant is None:
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+
+    def _select_variant(self) -> str:
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'opener_pass'
+
+    def get_constraints(self) -> Dict:
+        if self.variant == 'opener_pass':
+            return {'hcp_range': (5, 11)}  # Below opening strength
+        elif self.variant == 'responder_pass':
+            return {'hcp_range': (0, 5)}   # Below responding strength
+        else:  # borderline_pass
+            return {'hcp_range': (10, 11), 'max_suit_length': 4}  # Fails Rule of 20
+
+    def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        suit_lengths = sorted(hand.suit_lengths.values(), reverse=True)
+        rule_of_20 = hand.hcp + suit_lengths[0] + suit_lengths[1]
+
+        if self.variant == 'opener_pass':
+            explanation = f'{hand.hcp} HCP is below opening strength (need 12+). Pass!'
+        elif self.variant == 'responder_pass':
+            explanation = f'{hand.hcp} HCP is too weak to respond (need 6+). Pass!'
+        else:
+            explanation = f'{hand.hcp} HCP, Rule of 20 = {rule_of_20} (need 20). Not worth opening. Pass!'
+
+        return {
+            'bid': 'Pass',
+            'should_pass': True,
+            'hcp': hand.hcp,
+            'explanation': explanation
+        }
+
+
+class OpeningOneMajorGenerator(SkillHandGenerator):
+    """Generate hands for 1♥ or 1♠ opening decisions.
+
+    Teaches the 5-card major requirement and when to choose between majors.
+    """
+
+    skill_id = 'opening_one_major'
+    skill_level = 1
+    description = 'Practice opening 1♥ or 1♠ with 5+ card major'
+
+    VARIANT_WEIGHTS = {
+        'five_hearts': 0.35,
+        'five_spades': 0.35,
+        'both_majors': 0.20,
+        'no_major': 0.10,  # Boundary: no 5-card major -> open minor
+    }
+
+    def __init__(self, variant: str = None):
+        if variant is None:
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+
+    def _select_variant(self) -> str:
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'five_hearts'
+
+    def get_constraints(self) -> Dict:
+        if self.variant == 'five_hearts':
+            return {
+                'hcp_range': (12, 21),
+                'suit_length_req': (['♥'], 5, 'any_of'),
+            }
+        elif self.variant == 'five_spades':
+            return {
+                'hcp_range': (12, 21),
+                'suit_length_req': (['♠'], 5, 'any_of'),
+            }
+        elif self.variant == 'both_majors':
+            return {
+                'hcp_range': (12, 21),
+                'suit_length_req': (['♠', '♥'], 5, 'all_of'),
+            }
+        else:  # no_major - boundary case
+            return {
+                'hcp_range': (12, 21),
+                'max_suit_length': 4,  # No 5-card suit
+            }
+
+    def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        spades = hand.suit_lengths['♠']
+        hearts = hand.suit_lengths['♥']
+
+        if spades >= 5 and spades >= hearts:
+            bid = '1♠'
+            explanation = f'Open 1♠ with {spades}-card spade suit ({hand.hcp} HCP). With equal length majors, bid the higher-ranking suit first.'
+        elif hearts >= 5:
+            bid = '1♥'
+            explanation = f'Open 1♥ with {hearts}-card heart suit ({hand.hcp} HCP).'
+        else:
+            # No 5-card major - boundary case
+            bid = '1♦' if hand.suit_lengths['♦'] >= 4 else '1♣'
+            explanation = f'No 5-card major. Open {bid} and search for a major fit through the auction.'
+
+        return {
+            'bid': bid,
+            'explanation': explanation
+        }
+
+
+class OpeningOneMinorGenerator(SkillHandGenerator):
+    """Generate hands for 1♣ or 1♦ opening decisions.
+
+    Teaches the "better minor" concept when no 5-card major exists.
+    """
+
+    skill_id = 'opening_one_minor'
+    skill_level = 1
+    description = 'Practice opening 1♣ or 1♦ with no 5-card major'
+
+    VARIANT_WEIGHTS = {
+        'longer_diamonds': 0.35,
+        'longer_clubs': 0.35,
+        'equal_minors': 0.30,
+    }
+
+    def __init__(self, variant: str = None):
+        if variant is None:
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+
+    def _select_variant(self) -> str:
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'longer_diamonds'
+
+    def get_constraints(self) -> Dict:
+        base = {'hcp_range': (12, 21), 'max_suit_length': 4}  # No 5-card major
+        if self.variant == 'longer_diamonds':
+            base['suit_length_req'] = (['♦'], 4, 'any_of')
+        elif self.variant == 'longer_clubs':
+            base['suit_length_req'] = (['♣'], 4, 'any_of')
+        # equal_minors: no additional constraint
+        return base
+
+    def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        diamonds = hand.suit_lengths['♦']
+        clubs = hand.suit_lengths['♣']
+
+        if diamonds > clubs:
+            bid = '1♦'
+            explanation = f'Open 1♦ with {diamonds} diamonds (longer minor). No 5-card major.'
+        elif clubs > diamonds:
+            bid = '1♣'
+            explanation = f'Open 1♣ with {clubs} clubs (longer minor). No 5-card major.'
+        elif diamonds == 4 and clubs == 4:
+            bid = '1♦'
+            explanation = f'Open 1♦ with 4-4 in the minors (SAYC convention).'
+        else:  # 3-3 minors
+            bid = '1♣'
+            explanation = f'Open 1♣ with 3-3 in the minors (SAYC convention).'
+
+        return {
+            'bid': bid,
+            'explanation': explanation
+        }
+
+
+class SingleRaiseGenerator(SkillHandGenerator):
+    """Generate hands for single raise of partner's major (1M-2M).
+
+    Teaches the 6-10 point range with 3+ card support.
+    """
+
+    skill_id = 'single_raise'
+    skill_level = 1
+    description = 'Practice raising partner\'s major with minimum values'
+
+    VARIANT_WEIGHTS = {
+        'raise_hearts': 0.40,
+        'raise_spades': 0.40,
+        'no_support': 0.20,  # Boundary: no fit
+    }
+
+    def __init__(self, variant: str = None):
+        if variant is None:
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+        self.partner_opened = '1♥' if self.variant == 'raise_hearts' else '1♠'
+
+    def _select_variant(self) -> str:
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'raise_hearts'
+
+    def get_constraints(self) -> Dict:
+        if self.variant == 'raise_hearts':
+            return {
+                'hcp_range': (6, 10),
+                'suit_length_req': (['♥'], 3, 'any_of'),
+            }
+        elif self.variant == 'raise_spades':
+            return {
+                'hcp_range': (6, 10),
+                'suit_length_req': (['♠'], 3, 'any_of'),
+            }
+        else:  # no_support
+            return {
+                'hcp_range': (6, 10),
+                'max_suit_length': 2,  # No 3+ card support
+            }
+
+    def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        if self.variant == 'raise_hearts':
+            support = hand.suit_lengths['♥']
+            if support >= 3:
+                bid = '2♥'
+                explanation = f'Raise 1♥ to 2♥ with {support}-card support and {hand.hcp} HCP (6-10 points).'
+            else:
+                bid = '1NT'
+                explanation = f'No heart support. Bid 1NT as a "dustbin" response.'
+        elif self.variant == 'raise_spades':
+            support = hand.suit_lengths['♠']
+            if support >= 3:
+                bid = '2♠'
+                explanation = f'Raise 1♠ to 2♠ with {support}-card support and {hand.hcp} HCP (6-10 points).'
+            else:
+                bid = '1NT'
+                explanation = f'No spade support. Bid 1NT as a "dustbin" response.'
+        else:
+            bid = '1NT'
+            explanation = f'No 3-card support for partner\'s major. Bid 1NT.'
+
+        return {
+            'bid': bid,
+            'explanation': explanation,
+            'partner_opened': self.partner_opened
+        }
+
+
+class LimitRaiseGenerator(SkillHandGenerator):
+    """Generate hands for limit raise (1M-3M).
+
+    Teaches the invitational 10-12 point range with 4+ card support.
+    """
+
+    skill_id = 'limit_raise'
+    skill_level = 1
+    description = 'Practice the invitational limit raise'
+
+    VARIANT_WEIGHTS = {
+        'limit_hearts': 0.40,
+        'limit_spades': 0.40,
+        'too_weak': 0.20,  # Boundary: only single raise strength
+    }
+
+    def __init__(self, variant: str = None):
+        if variant is None:
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+        self.partner_opened = '1♥' if 'hearts' in self.variant or self.variant == 'too_weak' else '1♠'
+
+    def _select_variant(self) -> str:
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'limit_hearts'
+
+    def get_constraints(self) -> Dict:
+        if self.variant == 'limit_hearts':
+            return {
+                'hcp_range': (10, 12),
+                'suit_length_req': (['♥'], 4, 'any_of'),
+            }
+        elif self.variant == 'limit_spades':
+            return {
+                'hcp_range': (10, 12),
+                'suit_length_req': (['♠'], 4, 'any_of'),
+            }
+        else:  # too_weak
+            return {
+                'hcp_range': (6, 9),
+                'suit_length_req': (['♥'], 4, 'any_of'),
+            }
+
+    def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        if self.variant == 'limit_hearts':
+            bid = '3♥'
+            explanation = f'Limit raise to 3♥ with {hand.suit_lengths["♥"]}-card support and {hand.hcp} HCP (10-12). Invites game!'
+        elif self.variant == 'limit_spades':
+            bid = '3♠'
+            explanation = f'Limit raise to 3♠ with {hand.suit_lengths["♠"]}-card support and {hand.hcp} HCP (10-12). Invites game!'
+        else:  # too_weak
+            bid = '2♥'
+            explanation = f'Only {hand.hcp} HCP - not enough for limit raise (need 10-12). Simple raise to 2♥.'
+
+        return {
+            'bid': bid,
+            'explanation': explanation,
+            'partner_opened': self.partner_opened
+        }
+
+
+class NewSuitResponseGenerator(SkillHandGenerator):
+    """Generate hands for new suit response at 1-level.
+
+    Teaches the 6+ HCP requirement with 4+ cards in the suit.
+    """
+
+    skill_id = 'new_suit_response'
+    skill_level = 1
+    description = 'Practice bidding a new suit at the 1-level'
+
+    VARIANT_WEIGHTS = {
+        'one_heart_over_minor': 0.35,
+        'one_spade_over_minor': 0.35,
+        'one_spade_over_heart': 0.20,
+        'too_weak': 0.10,  # Boundary
+    }
+
+    def __init__(self, variant: str = None):
+        if variant is None:
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+
+        if self.variant == 'one_spade_over_heart':
+            self.partner_opened = '1♥'
+        else:
+            self.partner_opened = '1♦'
+
+    def _select_variant(self) -> str:
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'one_heart_over_minor'
+
+    def get_constraints(self) -> Dict:
+        if self.variant == 'one_heart_over_minor':
+            return {
+                'hcp_range': (6, 15),
+                'suit_length_req': (['♥'], 4, 'any_of'),
+            }
+        elif self.variant == 'one_spade_over_minor':
+            return {
+                'hcp_range': (6, 15),
+                'suit_length_req': (['♠'], 4, 'any_of'),
+            }
+        elif self.variant == 'one_spade_over_heart':
+            return {
+                'hcp_range': (6, 15),
+                'suit_length_req': (['♠'], 4, 'any_of'),
+            }
+        else:  # too_weak
+            return {'hcp_range': (3, 5)}
+
+    def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        if hand.hcp < 6:
+            bid = 'Pass'
+            explanation = f'{hand.hcp} HCP is too weak to respond (need 6+).'
+        elif self.variant == 'one_heart_over_minor':
+            bid = '1♥'
+            explanation = f'Bid 1♥ with {hand.suit_lengths["♥"]} hearts and {hand.hcp} HCP. New suit at 1-level is forcing!'
+        elif self.variant == 'one_spade_over_minor':
+            bid = '1♠'
+            explanation = f'Bid 1♠ with {hand.suit_lengths["♠"]} spades and {hand.hcp} HCP. New suit at 1-level is forcing!'
+        elif self.variant == 'one_spade_over_heart':
+            bid = '1♠'
+            explanation = f'Bid 1♠ with {hand.suit_lengths["♠"]} spades over partner\'s 1♥. Looking for major fit!'
+        else:
+            bid = 'Pass'
+            explanation = f'{hand.hcp} HCP - too weak to respond.'
+
+        return {
+            'bid': bid,
+            'explanation': explanation,
+            'partner_opened': self.partner_opened
+        }
+
+
+class DustbinNTResponseGenerator(SkillHandGenerator):
+    """Generate hands for the "dustbin" 1NT response.
+
+    The 1NT response catches hands that don't fit elsewhere:
+    - 6-10 HCP
+    - No support for partner's major
+    - No suit to bid at the 1-level
+    """
+
+    skill_id = 'dustbin_1nt_response'
+    skill_level = 1
+    description = 'Practice the "dustbin" 1NT response'
+
+    def __init__(self, variant: str = None):
+        self.variant = variant or 'standard'
+        self.partner_opened = '1♠'
+
+    def get_constraints(self) -> Dict:
+        return {
+            'hcp_range': (6, 10),
+            'is_balanced': True,
+            'max_suit_length': 3,  # No 4+ card suit
+        }
+
+    def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        bid = '1NT'
+        explanation = f'{hand.hcp} HCP with no fit for partner\'s spades and no suit to bid at 1-level. The "dustbin" 1NT catches these hands.'
+
+        return {
+            'bid': bid,
+            'explanation': explanation,
+            'partner_opened': self.partner_opened
+        }
+
+
+class GameRaiseGenerator(SkillHandGenerator):
+    """Generate hands for direct game raise (1M-4M).
+
+    Teaches the 13-16 point range with 5+ card support - sign-off.
+    """
+
+    skill_id = 'game_raise'
+    skill_level = 1
+    description = 'Practice the direct game raise'
+
+    VARIANT_WEIGHTS = {
+        'game_hearts': 0.40,
+        'game_spades': 0.40,
+        'too_strong': 0.20,  # Boundary: slam interest
+    }
+
+    def __init__(self, variant: str = None):
+        if variant is None:
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+        self.partner_opened = '1♥' if 'hearts' in self.variant else '1♠'
+
+    def _select_variant(self) -> str:
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'game_hearts'
+
+    def get_constraints(self) -> Dict:
+        if self.variant == 'game_hearts':
+            return {
+                'hcp_range': (13, 16),
+                'suit_length_req': (['♥'], 5, 'any_of'),
+            }
+        elif self.variant == 'game_spades':
+            return {
+                'hcp_range': (13, 16),
+                'suit_length_req': (['♠'], 5, 'any_of'),
+            }
+        else:  # too_strong
+            return {
+                'hcp_range': (17, 19),
+                'suit_length_req': (['♠'], 5, 'any_of'),
+            }
+
+    def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        if self.variant == 'game_hearts':
+            bid = '4♥'
+            explanation = f'Direct game raise to 4♥ with {hand.suit_lengths["♥"]}-card support and {hand.hcp} HCP. Sign-off - no slam interest.'
+        elif self.variant == 'game_spades':
+            bid = '4♠'
+            explanation = f'Direct game raise to 4♠ with {hand.suit_lengths["♠"]}-card support and {hand.hcp} HCP. Sign-off - no slam interest.'
+        else:  # too_strong
+            bid = '2♣'  # or other forcing bid
+            explanation = f'{hand.hcp} HCP with great support - too strong for 4♠ (denies slam interest). Start with forcing bid.'
+
+        return {
+            'bid': bid,
+            'explanation': explanation,
+            'partner_opened': self.partner_opened
+        }
+
+
+class TwoOverOneResponseGenerator(SkillHandGenerator):
+    """Generate hands for 2-level new suit response.
+
+    Teaches the 10+ HCP requirement with 5+ cards in the suit.
+    """
+
+    skill_id = 'two_over_one_response'
+    skill_level = 1
+    description = 'Practice 2-level new suit responses'
+
+    VARIANT_WEIGHTS = {
+        'two_clubs': 0.35,
+        'two_diamonds': 0.35,
+        'too_weak': 0.30,  # Boundary: should bid 1NT instead
+    }
+
+    def __init__(self, variant: str = None):
+        if variant is None:
+            self.variant = self._select_variant()
+        else:
+            self.variant = variant
+        self.partner_opened = '1♠'
+
+    def _select_variant(self) -> str:
+        r = random.random()
+        cumulative = 0
+        for variant, weight in self.VARIANT_WEIGHTS.items():
+            cumulative += weight
+            if r < cumulative:
+                return variant
+        return 'two_clubs'
+
+    def get_constraints(self) -> Dict:
+        if self.variant == 'two_clubs':
+            return {
+                'hcp_range': (10, 15),
+                'suit_length_req': (['♣'], 5, 'any_of'),
+            }
+        elif self.variant == 'two_diamonds':
+            return {
+                'hcp_range': (10, 15),
+                'suit_length_req': (['♦'], 5, 'any_of'),
+            }
+        else:  # too_weak
+            return {
+                'hcp_range': (6, 9),
+                'suit_length_req': (['♣'], 5, 'any_of'),
+            }
+
+    def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        if hand.hcp >= 10:
+            if self.variant == 'two_clubs':
+                bid = '2♣'
+                explanation = f'Bid 2♣ with {hand.suit_lengths["♣"]} clubs and {hand.hcp} HCP. Two-over-one = 10+ HCP, game forcing!'
+            else:
+                bid = '2♦'
+                explanation = f'Bid 2♦ with {hand.suit_lengths["♦"]} diamonds and {hand.hcp} HCP. Two-over-one = 10+ HCP, game forcing!'
+        else:  # too_weak
+            bid = '1NT'
+            explanation = f'{hand.hcp} HCP is not enough for 2-level (need 10+). Bid 1NT instead.'
+
+        return {
+            'bid': bid,
+            'explanation': explanation,
+            'partner_opened': self.partner_opened
+        }
+
+
+# ============================================================================
+# LEVEL 1 CONTINUED: OPENING BIDS (Original generators)
 # ============================================================================
 
 class WhenToOpenGenerator(SkillHandGenerator):
@@ -1372,39 +1968,55 @@ class BalancingGenerator(SkillHandGenerator):
 # ============================================================================
 
 SKILL_GENERATORS = {
-    # Level 0
+    # Level 0: Foundations
     'hand_evaluation_basics': HandEvaluationBasicsGenerator,
     'suit_quality': SuitQualityGenerator,
     'bidding_language': BiddingLanguageGenerator,
 
-    # Level 1
+    # Level 1: Basic Bidding Actions (Foundational Conventions)
+    'when_to_pass': WhenToPassGenerator,
+    'opening_one_major': OpeningOneMajorGenerator,
+    'opening_one_minor': OpeningOneMinorGenerator,
+    'single_raise': SingleRaiseGenerator,
+    'limit_raise': LimitRaiseGenerator,
+    'new_suit_response': NewSuitResponseGenerator,
+    'dustbin_1nt_response': DustbinNTResponseGenerator,
+    'game_raise': GameRaiseGenerator,
+    'two_over_one_response': TwoOverOneResponseGenerator,
+
+    # Level 2: Rebids (Foundational - V3 Logic Stack)
+    # These map foundational convention IDs to existing generators
+    'opener_rebid': RebidAfter1LevelGenerator,  # Primary opener rebid generator
+    'responder_rebid': AfterOpenerRaisesGenerator,  # Primary responder rebid generator
+
+    # Level 2: Opening Bids (Advanced)
     'when_to_open': WhenToOpenGenerator,
     'opening_one_suit': OpeningOneSuitGenerator,
     'opening_1nt': Opening1NTGenerator,
     'opening_2c_strong': Opening2CStrongGenerator,
     'opening_2nt': Opening2NTGenerator,
 
-    # Level 2
+    # Level 3: Responding to Openings
     'responding_to_major': RespondingToMajorGenerator,
     'responding_to_minor': RespondingToMinorGenerator,
     'responding_to_1nt': RespondingTo1NTGenerator,
     'responding_to_2c': RespondingTo2CGenerator,
     'responding_to_2nt': RespondingTo2NTGenerator,
 
-    # Level 3
+    # Level 4: Opener's Rebids (Detailed)
     'rebid_after_1_level': RebidAfter1LevelGenerator,
     'rebid_after_2_level': RebidAfter2LevelGenerator,
     'rebid_after_raise': RebidAfterRaiseGenerator,
     'rebid_after_1nt_response': RebidAfter1NTResponseGenerator,
 
-    # Level 4
+    # Level 5: Responder's Rebids (Detailed)
     'after_opener_raises': AfterOpenerRaisesGenerator,
     'after_opener_rebids_suit': AfterOpenerRebidsSuitGenerator,
     'after_opener_new_suit': AfterOpenerNewSuitGenerator,
     'after_opener_rebids_nt': AfterOpenerRebidsNTGenerator,
     'preference_bids': PreferenceBidsGenerator,
 
-    # Level 6
+    # Level 7: Competitive Bidding
     'overcalls': OvercallsGenerator,
     'responding_to_overcalls': RespondingToOvercallsGenerator,
     'negative_doubles': NegativeDoublesGenerator,
