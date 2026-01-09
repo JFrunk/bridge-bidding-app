@@ -741,7 +741,25 @@ class PlayFeedbackGenerator:
         elif category == PlayCategory.FOLLOWING_SUIT:
             trick_pos = len(state.current_trick) if state and state.current_trick else 0
             if trick_pos == 1:
-                return f"Playing {user_str} second hand low is correct."
+                # Check what card was played to provide accurate feedback
+                user_rank_val = self._rank_value(user_str[0]) if user_str else 0
+                led_card = state.current_trick[0][0] if state.current_trick else None
+                led_rank_val = self._rank_value(led_card.rank) if led_card else 0
+
+                # Honor cards are J (11), Q (12), K (13), A (14)
+                is_honor = user_rank_val >= 11
+
+                # Check if covering an opponent's honor (e.g., Ace over King)
+                is_covering = is_honor and led_rank_val >= 11 and user_rank_val > led_rank_val
+
+                if is_covering:
+                    return f"Playing {user_str} to cover the opponent's honor is correct."
+                elif is_honor:
+                    # User played a high card in second seat - might be correct for other reasons
+                    return f"Playing {user_str} is the correct play here."
+                else:
+                    # User played a low card - "second hand low" applies
+                    return f"Playing {user_str} second hand low is correct."
             elif trick_pos == 2:
                 # Check context before saying "third hand high"
                 led_card = state.current_trick[0][0] if state.current_trick else None

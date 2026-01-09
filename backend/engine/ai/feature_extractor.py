@@ -338,6 +338,33 @@ def analyze_forcing_status(auction_history: list, positions: list, my_index: int
                 result['must_bid'] = False  # It's my turn, not partner's
             return result
 
+    # Check if I opened and partner responded in a new suit (forcing me to bid)
+    # This handles: 1♣ - Pass - 1♥ - Pass - ? (North must bid)
+    if opener_index == my_index and len(my_bids) >= 1 and len(partner_bids) >= 1:
+        my_opening_suit = get_suit_from_bid(my_bids[0][1])
+        partner_response = partner_bids[0][1]
+        partner_response_suit = get_suit_from_bid(partner_response)
+        partner_response_level = get_bid_level(partner_response)
+
+        # New suit response is forcing for one round in SAYC
+        # 1-level new suit: forcing one round
+        # 2-level new suit (2/1): game forcing
+        if partner_response_suit and my_opening_suit and partner_response_suit != my_opening_suit:
+            if partner_response_level == 2:
+                # 2/1 game forcing response
+                result['forcing_type'] = 'game_forcing'
+                result['forcing_source'] = '2_over_1_response'
+                result['game_forcing_established'] = True
+                result['minimum_level'] = 4
+                result['must_bid'] = True
+                return result
+            elif partner_response_level == 1:
+                # 1-level new suit is forcing one round
+                result['forcing_type'] = 'one_round_forcing'
+                result['forcing_source'] = 'new_suit_response_by_partner'
+                result['must_bid'] = True
+                return result
+
     # Check if partner's last bid was a new suit (forcing on me)
     if partner_bids:
         last_partner_bid = partner_bids[-1][1]
@@ -560,6 +587,9 @@ def count_partnership_bids(auction_history: list, positions: list, my_index: int
 def extract_features(hand: Hand, auction_history: list, my_position: str, vulnerability: str, dealer: str = 'North'):
     """Extract features from a hand and auction for bidding decision."""
     base_positions = ['North', 'East', 'South', 'West']
+    # Handle None dealer (when frontend doesn't send it) - default to North
+    if dealer is None:
+        dealer = 'North'
     dealer_idx = base_positions.index(dealer)
     positions = [base_positions[(dealer_idx + i) % 4] for i in range(4)]
     my_index = positions.index(my_position)
