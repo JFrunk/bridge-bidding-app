@@ -1,32 +1,33 @@
-/* Session Score Panel - Display current session progress and scores */
+/* Session Score Panel - Optional running score display */
 
 .session-score-panel {
   position: relative;
   background: linear-gradient(135deg, #1e3a5f 0%, #2a5a8f 100%);
   color: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  margin-bottom: 20px;
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  margin-bottom: 16px;
 }
 
-/* Collapsed state */
+/* Collapsed state - minimal footprint */
 .session-score-panel-collapsed {
   padding: 0;
+  background: rgba(30, 58, 95, 0.9);
 }
 
 /* Collapse toggle button */
 .session-collapse-toggle {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   background: transparent;
   border: none;
   color: white;
   cursor: pointer;
-  padding: 12px 16px;
+  padding: 10px 14px;
   width: 100%;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   transition: background 0.2s ease;
 }
 
@@ -36,221 +37,121 @@
 
 .session-collapse-expanded {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 6px;
+  right: 6px;
   width: auto;
-  padding: 8px;
-  border-radius: 6px;
+  padding: 6px;
+  border-radius: 4px;
 }
 
 .collapse-badge {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 4px 10px;
-  border-radius: 10px;
   font-weight: 500;
-}
-
-.collapse-score {
-  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .collapse-icon {
   margin-left: auto;
   opacity: 0.7;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
+/* Header */
 .session-header {
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-right: 30px; /* Space for collapse button */
 }
 
 .session-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.session-title h3 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: 600;
 }
 
-.session-type-badge {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 500;
+.hands-played-badge {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 3px 10px;
+  border-radius: 10px;
 }
 
-.session-progress {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.progress-label {
-  font-size: 0.95rem;
-  opacity: 0.9;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #4CAF50 0%, #81C784 100%);
-  transition: width 0.5s ease;
-  border-radius: 4px;
-}
-
+/* Scores */
 .session-scores {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 24px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 16px 0;
 }
 
 .partnership-score {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  min-width: 150px;
-  padding: 12px;
+  gap: 4px;
+  min-width: 100px;
+  padding: 10px;
   border-radius: 8px;
   transition: all 0.3s ease;
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .partnership-score.leading {
   background: rgba(76, 175, 80, 0.2);
-  border: 2px solid rgba(76, 175, 80, 0.5);
-}
-
-.user-score {
-  border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.opponent-score {
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-color: rgba(76, 175, 80, 0.5);
 }
 
 .score-label {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   opacity: 0.9;
   text-align: center;
 }
 
 .score-value {
-  font-size: 2.5rem;
+  font-size: 1.8rem;
   font-weight: bold;
   font-variant-numeric: tabular-nums;
 }
 
 .leader-badge {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: #81C784;
   font-weight: 600;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
 }
 
 .score-divider {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 0 20px;
+  padding: 0 12px;
 }
 
 .vs-label {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 600;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
-.score-difference {
-  font-size: 0.9rem;
-  opacity: 0.8;
-  font-variant-numeric: tabular-nums;
-}
-
-.current-hand-info {
+/* Actions */
+.panel-actions {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 24px;
-  margin-top: 20px;
-  padding-top: 16px;
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.info-label {
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
-
-.info-value {
-  font-weight: 600;
-  font-size: 1rem;
-  padding: 4px 12px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
-}
-
-.info-value.vuln-none {
-  background: rgba(76, 175, 80, 0.2);
-  color: #81C784;
-}
-
-.info-value.vuln-ns {
-  background: rgba(244, 67, 54, 0.2);
-  color: #EF5350;
-}
-
-.info-value.vuln-ew {
-  background: rgba(244, 67, 54, 0.2);
-  color: #EF5350;
-}
-
-.info-value.vuln-both {
-  background: rgba(244, 67, 54, 0.3);
-  color: #FF6B6B;
-  font-weight: 700;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 12px;
 }
 
 .view-history-btn {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
-  padding: 6px 16px;
+  padding: 6px 14px;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .view-history-btn:hover {
@@ -259,23 +160,25 @@
 }
 
 /* Responsive design */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
+  .session-score-panel {
+    padding: 12px;
+  }
+
   .session-scores {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .score-divider {
-    transform: rotate(90deg);
-    margin: 8px 0;
-  }
-
-  .current-hand-info {
-    flex-wrap: wrap;
-    gap: 12px;
+    padding: 12px 0;
   }
 
   .partnership-score {
-    min-width: 200px;
+    min-width: 80px;
+    padding: 8px;
+  }
+
+  .score-value {
+    font-size: 1.5rem;
+  }
+
+  .score-label {
+    font-size: 0.75rem;
   }
 }

@@ -20,9 +20,9 @@ import { ChevronDown, ChevronUp } from "lucide-react";
  * ScoreModal - Display final score after 13 tricks
  * Follows "Rule of Three" and senior-friendly UX principles
  * Designed as SECONDARY visual hierarchy (celebratory but not overwhelming)
- * Enhanced with session scoring context
+ * Focused on the hand result only (no session/cumulative score display)
  */
-export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionData, onShowLearningDashboard, onPlayAnotherHand, onReplayHand, onReviewHand }) {
+export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, onShowLearningDashboard, onPlayAnotherHand, onReplayHand, onReviewHand }) {
   // State for collapsible breakdown (must be before any early returns)
   const [isBreakdownOpen, setIsBreakdownOpen] = React.useState(false);
 
@@ -48,10 +48,6 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
     // Note: breakdown is from declarer's perspective, so no change needed
     // The display will show "EW made their contract" with negative score for NS
   };
-
-  // Session context
-  const hasSession = sessionData && sessionData.active;
-  const session = sessionData?.session;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -138,50 +134,6 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
             </Collapsible>
           )}
 
-          {/* Session Summary (if in session) */}
-          {hasSession && (
-            <div className="mt-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
-              <div className="text-center mb-2">
-                <h3 className="text-sm font-bold text-blue-900">Session Standings</h3>
-                <p className="text-xs text-blue-700">
-                  Hand {session.hands_completed} of {session.max_hands} complete
-                </p>
-              </div>
-
-              <div className="flex justify-center items-center gap-4">
-                <div className="text-center">
-                  <div className="text-xs font-medium text-gray-600">N-S</div>
-                  <div className={cn(
-                    "text-lg font-bold",
-                    session.ns_score > session.ew_score ? "text-green-600" : "text-gray-900"
-                  )}>
-                    {session.ns_score}
-                  </div>
-                </div>
-
-                <div className="text-gray-400 font-bold text-sm">vs</div>
-
-                <div className="text-center">
-                  <div className="text-xs font-medium text-gray-600">E-W</div>
-                  <div className={cn(
-                    "text-lg font-bold",
-                    session.ew_score > session.ns_score ? "text-green-600" : "text-gray-900"
-                  )}>
-                    {session.ew_score}
-                  </div>
-                </div>
-              </div>
-
-              {session.is_complete && (
-                <div className="mt-2 text-center p-2 bg-yellow-100 rounded-md">
-                  <p className="text-sm font-bold text-yellow-900">🎉 Session Complete!</p>
-                  <p className="text-xs text-yellow-800">
-                    Winner: {session.winner === 'Tied' ? 'Tied' : session.winner}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         <DialogFooter className="flex flex-col gap-2 pt-2">

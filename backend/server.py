@@ -924,7 +924,7 @@ def complete_session_hand():
         # Prepare hand data for database
         hand_data = {
             'hand_number': state.game_session.hands_completed,  # Already incremented by add_hand_score
-            'dealer': GameSession.CHICAGO_DEALERS[(state.game_session.hands_completed - 1) % 4],
+            'dealer': GameSession.DEALERS[(state.game_session.hands_completed - 1) % 4],
             'vulnerability': state.vulnerability or 'None',
             'contract': contract,
             'tricks_taken': score_data.get('tricks_taken', 0),
@@ -954,7 +954,7 @@ def complete_session_hand():
                 actual_tricks=score_data.get('tricks_taken', 0),
                 actual_score=hand_score,
                 vulnerability=state.vulnerability or 'None',
-                dealer=GameSession.CHICAGO_DEALERS[(state.game_session.hands_completed - 1) % 4],
+                dealer=GameSession.DEALERS[(state.game_session.hands_completed - 1) % 4],
             )
 
         # Check if session is complete
@@ -1336,6 +1336,11 @@ def load_scenario():
 def deal_hands():
     # Get session state for this request
     state = get_state()
+
+    # CRITICAL: Reset V2 engine state for new deal
+    # This prevents forcing level from persisting across deals (bug fix)
+    if engine_v2_schema:
+        engine_v2_schema.new_deal()
 
     # Use Chicago rotation for dealer and vulnerability
     dealer = 'North'  # Default for non-session mode
@@ -4531,6 +4536,7 @@ def simple_login():
         email = data.get('email')
         phone = data.get('phone')
         create_if_not_exists = data.get('create_if_not_exists', True)
+        guest_id = data.get('guest_id')  # Guest ID for data migration
 
         # Must provide either email or phone
         if not email and not phone:
@@ -4633,6 +4639,52 @@ def simple_login():
 
             new_user_id = cursor.lastrowid
 
+            # CRITICAL: Migrate guest data to new registered user
+            # This ensures users don't lose progress when registering
+            migrated_data = {'sessions': 0, 'decisions': 0, 'analyses': 0, 'hands': 0}
+            if guest_id and isinstance(guest_id, int) and guest_id < 0:
+                try:
+                    # Migrate game_sessions
+                    cursor.execute(
+                        'UPDATE game_sessions SET user_id = ? WHERE user_id = ?',
+                        (new_user_id, guest_id)
+                    )
+                    migrated_data['sessions'] = cursor.rowcount
+
+                    # Migrate bidding_decisions
+                    cursor.execute(
+                        'UPDATE bidding_decisions SET user_id = ? WHERE user_id = ?',
+                        (new_user_id, guest_id)
+                    )
+                    migrated_data['decisions'] = cursor.rowcount
+
+                    # Migrate hand_analyses
+                    cursor.execute(
+                        'UPDATE hand_analyses SET user_id = ? WHERE user_id = ?',
+                        (new_user_id, guest_id)
+                    )
+                    migrated_data['analyses'] = cursor.rowcount
+
+                    # Migrate session_hands (via session_id foreign key relationship)
+                    # First get all session IDs that were just migrated
+                    cursor.execute(
+                        'SELECT id FROM game_sessions WHERE user_id = ?',
+                        (new_user_id,)
+                    )
+                    # session_hands are already linked via session_id, no migration needed
+
+                    # Migrate user_convention_progress if exists
+                    cursor.execute(
+                        'UPDATE user_convention_progress SET user_id = ? WHERE user_id = ?',
+                        (new_user_id, guest_id)
+                    )
+
+                    conn.commit()
+                    print(f"✅ Migrated guest data from {guest_id} to user {new_user_id}: {migrated_data}")
+                except Exception as migration_error:
+                    print(f"⚠️ Guest data migration failed (non-blocking): {migration_error}")
+                    # Don't fail registration if migration fails - user can still use the app
+
             # Send welcome email to new users (only for email signups)
             if email:
                 try:
@@ -4651,7 +4703,9 @@ def simple_login():
                 "experience_level": None,  # New user - wizard not completed
                 "unlock_all_content": False,
                 "experience_id": None,
-                "experience_set_at": None
+                "experience_set_at": None,
+                "migrated_from_guest": guest_id is not None,
+                "migrated_data": migrated_data if guest_id else None
             })
 
     except Exception as e:

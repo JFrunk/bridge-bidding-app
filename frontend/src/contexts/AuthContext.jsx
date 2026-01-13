@@ -142,12 +142,16 @@ export function AuthProvider({ children }) {
   // Simple login using email/phone (no password)
   const simpleLogin = async (identifier, type = 'email') => {
     try {
+      // If user is currently a guest, pass their guest_id so backend can migrate their data
+      const currentGuestId = user?.isGuest ? user.id : null;
+
       const response = await fetch(`${API_URL}/api/auth/simple-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           [type]: identifier,
-          create_if_not_exists: true
+          create_if_not_exists: true,
+          guest_id: currentGuestId  // Pass guest ID for data migration
         })
       });
 

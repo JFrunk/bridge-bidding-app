@@ -1442,12 +1442,8 @@ ${otherCommands}`;
               setLastSavedHandId(result.hand_id);
             }
 
-            if (result.session_complete) {
-              setDisplayedMessage(`Session complete! Winner: ${result.winner}`);
-            } else {
-              // Update dealer and vulnerability for next hand
-              setVulnerability(result.session.vulnerability);
-            }
+            // Update vulnerability for next hand (dealer/vuln rotation continues)
+            setVulnerability(result.session.vulnerability);
             return true;
           } else {
             const errorText = await response.text();
@@ -1459,7 +1455,7 @@ ${otherCommands}`;
           const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-            body: JSON.stringify({ user_id: userId || 1, session_type: 'chicago' })
+            body: JSON.stringify({ user_id: userId || 1, session_type: 'continuous' })
           });
           if (sessionResponse.ok) {
             const newSession = await sessionResponse.json();
@@ -1766,7 +1762,7 @@ ${otherCommands}`;
         const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-          body: JSON.stringify({ user_id: sessionUserId, session_type: 'chicago' })
+          body: JSON.stringify({ user_id: sessionUserId, session_type: 'continuous' })
         });
         const sessionData = await sessionResponse.json();
         setSessionData(sessionData);
