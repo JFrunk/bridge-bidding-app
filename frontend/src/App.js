@@ -18,7 +18,8 @@ import { BiddingWorkspace } from './components/workspaces/BiddingWorkspace';
 import { PlayWorkspace } from './components/workspaces/PlayWorkspace';
 import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { UserProvider } from './contexts/UserContext';
+import { UserProvider, useUser } from './contexts/UserContext';
+import WelcomeWizard from './components/onboarding/WelcomeWizard';
 import { SimpleLogin } from './components/auth/SimpleLogin';
 import { RegistrationPrompt } from './components/auth/RegistrationPrompt';
 import DDSStatusIndicator from './components/DDSStatusIndicator';
@@ -251,6 +252,10 @@ function App() {
     recordHandCompleted,
     promptForRegistration
   } = useAuth();
+
+  // User experience level for onboarding wizard
+  const { shouldShowWelcomeWizard, setExperienceLevel } = useUser();
+
   const [showLogin, setShowLogin] = useState(false);
 
   // Dev mode - toggle with Ctrl+Shift+D (or Cmd+Shift+D on Mac)
@@ -2579,6 +2584,14 @@ ${otherCommands}`;
           </button>
           <UserMenu />
         </TopNavigation>
+      )}
+
+      {/* Welcome Wizard - shown on first visit before any other content */}
+      {isAuthenticated && (
+        <WelcomeWizard
+          isOpen={shouldShowWelcomeWizard}
+          onSelectExperience={setExperienceLevel}
+        />
       )}
 
       {/* Mode Selector - Landing Page */}

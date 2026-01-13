@@ -26,7 +26,6 @@ import {
 import SkillPractice from './SkillPractice';
 import SkillIntro from './SkillIntro';
 import { useUser } from '../../contexts/UserContext';
-import WelcomeWizard from '../onboarding/WelcomeWizard';
 import ExperienceSettings from '../settings/ExperienceSettings';
 
 const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
@@ -35,7 +34,7 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   const containerRef = useRef(null);
 
   // Get user experience level settings from context
-  const { shouldShowWelcomeWizard, setExperienceLevel, isLevelUnlocked } = useUser();
+  const { isLevelUnlocked } = useUser();
 
   // Toast state for locked level clicks
   const [lockedToast, setLockedToast] = useState(null);
@@ -436,12 +435,6 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
 
   return (
     <>
-      {/* Welcome Wizard - shown only on first visit */}
-      <WelcomeWizard
-        isOpen={shouldShowWelcomeWizard}
-        onSelectExperience={setExperienceLevel}
-      />
-
       {/* Experience Settings Modal */}
       <ExperienceSettings
         isOpen={showSettings}
