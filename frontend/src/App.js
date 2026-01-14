@@ -29,6 +29,7 @@ import { getRecentLogs } from './utils/consoleCapture';
 import { getRecentActions } from './utils/actionTracker';
 import { GlossaryDrawer } from './components/glossary';
 import TopNavigation from './components/navigation/TopNavigation';
+import UserMenu from './components/navigation/UserMenu';
 import { useDevMode } from './hooks/useDevMode';
 import { TrickPotentialChart, TrickPotentialButton } from './components/analysis/TrickPotentialChart';
 
@@ -242,7 +243,6 @@ function App() {
   // Auth state - now includes registration prompt features
   const {
     user,
-    logout,
     isAuthenticated,
     loading: authLoading,
     userId,
@@ -253,7 +253,7 @@ function App() {
     promptForRegistration
   } = useAuth();
 
-  // User experience level for onboarding wizard
+  // User experience state - for first-time onboarding
   const { shouldShowWelcomeWizard, setExperienceLevel } = useUser();
 
   const [showLogin, setShowLogin] = useState(false);
@@ -635,6 +635,37 @@ ${otherCommands}`;
     setUserConcern('');
     setReviewPrompt('');
     setReviewFilename('');
+  };
+
+  // Welcome wizard handler - saves experience level and routes to appropriate starting point
+  const handleExperienceSelect = (data) => {
+    // Save the experience level (this closes the wizard)
+    setExperienceLevel(data);
+
+    // Route based on selection
+    switch (data.route) {
+      case 'learning':
+        // Beginner: Go to Learning Mode for guided lessons
+        setShowModeSelector(false);
+        setShowLearningMode(true);
+        setCurrentWorkspace(null);
+        break;
+
+      case 'bid':
+        // Rusty: Jump straight into bidding practice
+        setShowModeSelector(false);
+        setCurrentWorkspace('bid');
+        setBiddingTab('random');
+        setGamePhase('bidding');
+        dealNewHand();
+        break;
+
+      case 'modeSelector':
+      default:
+        // Experienced: Show full mode selector to choose their path
+        setShowModeSelector(true);
+        break;
+    }
   };
 
   // Mode selection handler - routes user to appropriate mode from landing page
@@ -2495,40 +2526,6 @@ ${otherCommands}`;
     });
   }, [shouldShowHands, showAllHands, allHands]);
 
-  // User menu component
-  const UserMenu = () => {
-    if (!isAuthenticated) {
-      return (
-        <button onClick={() => setShowLogin(true)} className="auth-button" data-testid="sign-in-button">
-          Sign In
-        </button>
-      );
-    }
-
-    // Show email/phone or display name, with preference for showing what they registered with
-    const displayText = user.email || user.phone || user.display_name || 'User';
-    const isGuest = user.isGuest;
-
-    const handleUserAction = () => {
-      if (isGuest) {
-        setShowLogin(true);
-      } else {
-        logout();
-      }
-    };
-
-    return (
-      <div className="user-menu" data-testid="user-menu">
-        <span className="user-display" data-testid="user-display-name">
-          {isGuest ? '👤 Guest' : `👤 ${displayText}`}
-        </span>
-        <button onClick={handleUserAction} className="logout-button" data-testid="logout-button">
-          {isGuest ? 'Sign In' : 'Logout'}
-        </button>
-      </div>
-    );
-  };
-
   // Determine current active module for navigation
   const getCurrentModule = () => {
     if (showLearningMode) return 'learning';
@@ -2578,20 +2575,19 @@ ${otherCommands}`;
           >
             📝 <span className="nav-utility-label">Feedback</span>
           </button>
-          <UserMenu />
+          <UserMenu onSignInClick={() => setShowLogin(true)} />
         </TopNavigation>
       )}
 
-      {/* Welcome Wizard - shown on first visit before any other content */}
-      {isAuthenticated && (
-        <WelcomeWizard
-          isOpen={shouldShowWelcomeWizard}
-          onSelectExperience={setExperienceLevel}
-        />
-      )}
+      {/* Welcome Wizard - First-time user experience selection */}
+      {/* Shows BEFORE ModeSelector for new users, routes them to appropriate starting point */}
+      <WelcomeWizard
+        isOpen={isAuthenticated && shouldShowWelcomeWizard}
+        onSelectExperience={handleExperienceSelect}
+      />
 
-      {/* Mode Selector - Landing Page */}
-      {showModeSelector && isAuthenticated && (
+      {/* Mode Selector - Landing Page (shown for returning users or after wizard) */}
+      {showModeSelector && isAuthenticated && !shouldShowWelcomeWizard && (
         <ModeSelector
           onSelectMode={handleModeSelect}
           userName={user?.display_name}
