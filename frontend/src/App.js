@@ -18,7 +18,8 @@ import { BiddingWorkspace } from './components/workspaces/BiddingWorkspace';
 import { PlayWorkspace } from './components/workspaces/PlayWorkspace';
 import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { UserProvider } from './contexts/UserContext';
+import { UserProvider, useUser } from './contexts/UserContext';
+import WelcomeWizard from './components/onboarding/WelcomeWizard';
 import { SimpleLogin } from './components/auth/SimpleLogin';
 import { RegistrationPrompt } from './components/auth/RegistrationPrompt';
 import DDSStatusIndicator from './components/DDSStatusIndicator';
@@ -251,6 +252,10 @@ function App() {
     recordHandCompleted,
     promptForRegistration
   } = useAuth();
+
+  // User experience state - for first-time onboarding
+  const { shouldShowWelcomeWizard, setExperienceLevel } = useUser();
+
   const [showLogin, setShowLogin] = useState(false);
 
   // Dev mode - toggle with Ctrl+Shift+D (or Cmd+Shift+D on Mac)
@@ -630,6 +635,37 @@ ${otherCommands}`;
     setUserConcern('');
     setReviewPrompt('');
     setReviewFilename('');
+  };
+
+  // Welcome wizard handler - saves experience level and routes to appropriate starting point
+  const handleExperienceSelect = (data) => {
+    // Save the experience level (this closes the wizard)
+    setExperienceLevel(data);
+
+    // Route based on selection
+    switch (data.route) {
+      case 'learning':
+        // Beginner: Go to Learning Mode for guided lessons
+        setShowModeSelector(false);
+        setShowLearningMode(true);
+        setCurrentWorkspace(null);
+        break;
+
+      case 'bid':
+        // Rusty: Jump straight into bidding practice
+        setShowModeSelector(false);
+        setCurrentWorkspace('bid');
+        setBiddingTab('random');
+        setGamePhase('bidding');
+        dealNewHand();
+        break;
+
+      case 'modeSelector':
+      default:
+        // Experienced: Show full mode selector to choose their path
+        setShowModeSelector(true);
+        break;
+    }
   };
 
   // Mode selection handler - routes user to appropriate mode from landing page
@@ -2547,8 +2583,15 @@ ${otherCommands}`;
         </TopNavigation>
       )}
 
-      {/* Mode Selector - Landing Page */}
-      {showModeSelector && isAuthenticated && (
+      {/* Welcome Wizard - First-time user experience selection */}
+      {/* Shows BEFORE ModeSelector for new users, routes them to appropriate starting point */}
+      <WelcomeWizard
+        isOpen={isAuthenticated && shouldShowWelcomeWizard}
+        onSelectExperience={handleExperienceSelect}
+      />
+
+      {/* Mode Selector - Landing Page (shown for returning users or after wizard) */}
+      {showModeSelector && isAuthenticated && !shouldShowWelcomeWizard && (
         <ModeSelector
           onSelectMode={handleModeSelect}
           userName={user?.display_name}

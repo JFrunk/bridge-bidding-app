@@ -2,13 +2,15 @@
  * WelcomeWizard - First-run experience level selection
  *
  * Shows only on first visit (no experienceLevel set).
- * Allows users to self-select their bridge experience level
- * which determines which Learning Mode levels are unlocked.
+ * Routes users to appropriate starting point based on selection:
+ * - Beginner → Learning Mode (guided lessons)
+ * - Rusty → Bidding practice (jump into random hands)
+ * - Experienced → Mode Selector (full access, choose their path)
  *
  * Experience Levels:
- * - Beginner (level 0): Only Level 0 unlocked
- * - Rusty (level 1): Levels 0-1 unlocked
- * - Expert (level 99): All levels unlocked
+ * - Beginner (level 0): Only Level 0 unlocked, starts in Learning Mode
+ * - Rusty (level 1): Levels 0-1 unlocked, starts in Bidding practice
+ * - Expert (level 99): All levels unlocked, goes to Mode Selector
  */
 
 import React from 'react';
@@ -26,28 +28,31 @@ const EXPERIENCE_OPTIONS = [
     id: 'beginner',
     level: 0,
     unlockAll: false,
+    route: 'learning',  // Go to Learning Mode
     emoji: '🌱',
     title: 'New to Bridge',
     description: 'I\'m just starting to learn bridge and want to build my skills from the ground up.',
-    benefit: 'Start with the basics and unlock content as you progress'
+    benefit: 'Start with guided lessons on the basics'
   },
   {
     id: 'rusty',
     level: 1,
     unlockAll: false,
+    route: 'bid',  // Go directly to bidding practice
     emoji: '🔄',
     title: 'Rusty Player',
     description: 'I know the basics but haven\'t played in a while. I need a refresher.',
-    benefit: 'Skip the fundamentals and start with opening bids'
+    benefit: 'Jump straight into bidding practice'
   },
   {
     id: 'expert',
     level: 99,
     unlockAll: true,
+    route: 'modeSelector',  // Go to Mode Selector (full access)
     emoji: '🎯',
     title: 'Experienced Player',
     description: 'I\'m comfortable with bridge and want access to all content.',
-    benefit: 'All learning content unlocked immediately'
+    benefit: 'Choose your own path with full access'
   }
 ];
 
@@ -56,7 +61,8 @@ export const WelcomeWizard = ({ isOpen, onSelectExperience }) => {
     onSelectExperience({
       experienceLevel: option.level,
       areAllLevelsUnlocked: option.unlockAll,
-      experienceId: option.id
+      experienceId: option.id,
+      route: option.route  // Include routing destination
     });
   };
 
@@ -69,10 +75,10 @@ export const WelcomeWizard = ({ isOpen, onSelectExperience }) => {
       >
         <DialogHeader className="text-center mb-6">
           <DialogTitle className="text-2xl font-bold text-gray-900">
-            Welcome to Bridge Buddy!
+            Welcome to My Bridge Buddy!
           </DialogTitle>
           <DialogDescription className="text-base text-gray-600 mt-2">
-            Customize your learning path by telling us about your experience.
+            Tell us about your bridge experience so we can personalize your journey.
           </DialogDescription>
         </DialogHeader>
 
