@@ -3194,7 +3194,18 @@ def get_bidding_hands_history():
                  AND COALESCE(bd2.hand_number, -1) = COALESCE(bd.hand_number, -1)
                  AND bd2.deal_data IS NOT NULL
                  ORDER BY bd2.id ASC LIMIT 1) as deal_data,
-                MAX(bd.auction_before) as last_auction,
+                -- Get the auction_before from the LAST bid (highest id) plus user's bid
+                (SELECT bd3.auction_before FROM bidding_decisions bd3
+                 WHERE bd3.user_id = bd.user_id
+                 AND COALESCE(bd3.session_id, '') = COALESCE(bd.session_id, '')
+                 AND COALESCE(bd3.hand_number, -1) = COALESCE(bd.hand_number, -1)
+                 ORDER BY bd3.id DESC LIMIT 1) as last_auction,
+                -- Get the user's last bid to append to auction
+                (SELECT bd4.user_bid FROM bidding_decisions bd4
+                 WHERE bd4.user_id = bd.user_id
+                 AND COALESCE(bd4.session_id, '') = COALESCE(bd.session_id, '')
+                 AND COALESCE(bd4.hand_number, -1) = COALESCE(bd.hand_number, -1)
+                 ORDER BY bd4.id DESC LIMIT 1) as last_user_bid,
                 MAX(bd.timestamp) as played_at,
                 MIN(bd.id) as first_bid_id,
                 COUNT(bd.id) as num_bids,
@@ -3245,8 +3256,35 @@ def get_bidding_hands_history():
             good_bids = (row['optimal_count'] or 0) + (row['acceptable_count'] or 0)
             quality_pct = round(good_bids / total_bids * 100) if total_bids > 0 else 0
 
-            # Parse auction to determine final contract (if bidding completed)
+            # Parse auction and append user's last bid to get complete picture
             auction_history = json.loads(row['last_auction']) if row['last_auction'] else []
+            last_user_bid = row['last_user_bid']
+
+            # Append user's last bid to auction_history if not already there
+            # auction_before contains bids BEFORE user's bid, so we need to add it
+            if last_user_bid and (not auction_history or auction_history[-1] != last_user_bid):
+                auction_history = auction_history + [last_user_bid]
+
+            # Derive contract from complete auction
+            contract = None
+            contract_declarer = None
+            dealer = row['dealer'] or 'N'
+
+            # Find the last non-Pass bid (the contract)
+            positions = ['N', 'E', 'S', 'W']
+            try:
+                dealer_idx = positions.index(dealer[0].upper()) if dealer else 0
+            except ValueError:
+                dealer_idx = 0
+
+            for i in range(len(auction_history) - 1, -1, -1):
+                bid = auction_history[i]
+                if bid and bid not in ('Pass', 'X', 'XX'):
+                    contract = bid
+                    # Calculate who made this bid based on position in auction
+                    bidder_idx = (dealer_idx + i) % 4
+                    contract_declarer = positions[bidder_idx]
+                    break
 
             # Generate hand_id: prefer session_id:hand_number, fall back to bid_<first_bid_id>
             session_id = row['session_id']
@@ -3264,8 +3302,8 @@ def get_bidding_hands_history():
                 'session_id': session_id,
                 'hand_number': hand_number,
                 'played_at': row['played_at'],
-                'contract': None,  # Not available from bidding_decisions
-                'contract_declarer': None,
+                'contract': contract,  # Derived from auction history
+                'contract_declarer': contract_declarer,
                 'dealer': row['dealer'],
                 'vulnerability': row['vulnerability'],
                 'role': 'Bidder',  # Default for bidding-only view
