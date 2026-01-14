@@ -2472,28 +2472,47 @@ ${otherCommands}`;
             // CRITICAL FIX: Check if next player is user-controlled before restarting AI loop
             // User controls BOTH N and S when NS is declaring (declarer is N or S)
             // This fixes the bug where user couldn't play from North after first trick
-            const nsDeclaringAI = clearedState.contract.declarer === 'N' || clearedState.contract.declarer === 'S';
+            const nsIsDeclaring = clearedState.contract.declarer === 'N' || clearedState.contract.declarer === 'S';
             const nextIsUserControlled = clearedState.next_to_play === 'S' ||
-              (clearedState.next_to_play === 'N' && nsDeclaringAI);
+              (clearedState.next_to_play === 'N' && nsIsDeclaring);
+
+            console.log('🎯 Next player control check after trick clear:', {
+              next_to_play: clearedState.next_to_play,
+              declarer: clearedState.contract.declarer,
+              nsIsDeclaring,
+              nextIsUserControlled
+            });
 
             if (nextIsUserControlled) {
               console.log('⏸️ STOPPING - Next player after trick clear is user-controlled');
               setIsPlayingCard(false);
               return;
             }
+
+            // CRITICAL: If E or W should play next (AI positions), explicitly continue
+            if (clearedState.next_to_play === 'E' || clearedState.next_to_play === 'W') {
+              console.log(`🤖 AI position ${clearedState.next_to_play} should lead - ensuring AI loop continues`);
+            }
           }
 
           console.log('🔁 Continuing to next trick...');
-          // Continue to next trick after small delay
+          // Continue to next trick after delay
           // Reset flag first to ensure useEffect triggers
+          // Use 200ms delay to ensure React state updates have propagated
           setIsPlayingCard(false);
-          aiPlayTimeoutRef.current = setTimeout(() => setIsPlayingCard(true), 100);
+          aiPlayTimeoutRef.current = setTimeout(() => {
+            console.log('⏰ Timeout fired - restarting AI play loop');
+            setIsPlayingCard(true);
+          }, 200);
         } else {
           console.log('🔁 Continuing AI play loop (trick not complete)...');
           // Trick not complete - continue playing quickly
           // Reset flag first to ensure useEffect triggers
           setIsPlayingCard(false);
-          aiPlayTimeoutRef.current = setTimeout(() => setIsPlayingCard(true), 100);
+          aiPlayTimeoutRef.current = setTimeout(() => {
+            console.log('⏰ Timeout fired - continuing AI play (mid-trick)');
+            setIsPlayingCard(true);
+          }, 150);
         }
 
       } catch (err) {
@@ -2504,6 +2523,14 @@ ${otherCommands}`;
     };
 
     runAiPlay();
+
+    // Cleanup function to clear pending timeouts when effect re-runs or component unmounts
+    return () => {
+      if (aiPlayTimeoutRef.current) {
+        clearTimeout(aiPlayTimeoutRef.current);
+        aiPlayTimeoutRef.current = null;
+      }
+    };
   }, [gamePhase, isPlayingCard, vulnerability]);
 
   // Show all hands during bidding phase only when toggle is enabled
