@@ -683,7 +683,12 @@ def get_state():
     if not session_id:
         # Backward compatibility: use user_id as session identifier
         data = request.get_json(silent=True) or {}
-        user_id = data.get('user_id') or request.args.get('user_id') or 1
+        user_id = (
+            data.get('user_id') or
+            request.args.get('user_id') or
+            request.headers.get('X-User-ID') or
+            1
+        )
         session_id = f"user_{user_id}_default"
 
     # Get or create session state
@@ -693,9 +698,14 @@ def get_state():
     # This ensures gameplay tracking persists across requests
     # BUG FIX: Only load if user_id is EXPLICITLY provided to prevent cross-user contamination
     if not state.game_session:
-        # Extract user_id from request - DO NOT default to 1
+        # Extract user_id from request - check body, query params, AND headers
+        # Headers are used by frontend's getSessionHeaders() for all requests
         data = request.get_json(silent=True) or {}
-        user_id = data.get('user_id') or request.args.get('user_id')
+        user_id = (
+            data.get('user_id') or
+            request.args.get('user_id') or
+            request.headers.get('X-User-ID')  # Frontend sends this in all requests
+        )
 
         # Only load session if user_id was explicitly provided
         # This prevents loading user 1's session for other users when user_id is missing
