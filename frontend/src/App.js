@@ -13,6 +13,8 @@ import { GovernorConfirmDialog } from './components/bridge/GovernorConfirmDialog
 import LearningDashboard from './components/learning/LearningDashboard';
 import LearningMode from './components/learning/LearningMode';
 import HandReviewModal from './components/learning/HandReviewModal';
+import HandReviewPage from './components/learning/HandReviewPage';
+import BidReviewPage from './components/learning/BidReviewPage';
 import { ModeSelector } from './components/ModeSelector';
 import { BiddingWorkspace } from './components/workspaces/BiddingWorkspace';
 import { PlayWorkspace } from './components/workspaces/PlayWorkspace';
@@ -317,6 +319,19 @@ function App() {
   const [learningModeTrack, setLearningModeTrack] = useState('bidding'); // 'bidding' or 'play'
   const [showModeSelector, setShowModeSelector] = useState(true); // Landing page - shown by default
 
+  // Hand review - modal (keeping for post-game flow) and full-screen pages (new approach from dashboard)
+  const [showHandReviewModal, setShowHandReviewModal] = useState(false);
+  const [lastSavedHandId, setLastSavedHandId] = useState(null);
+
+  // Full-screen review pages (new approach from LearningDashboard)
+  const [showHandReviewPage, setShowHandReviewPage] = useState(false);
+  const [showBidReviewPage, setShowBidReviewPage] = useState(false);
+  const [reviewPageHandId, setReviewPageHandId] = useState(null);
+  const [reviewPageType, setReviewPageType] = useState('play'); // 'play' or 'bidding'
+  // Navigation data for review pages
+  const [reviewHandList, setReviewHandList] = useState([]);
+  const [reviewCurrentIndex, setReviewCurrentIndex] = useState(0);
+
   // Hint Mode: When enabled, shows real-time feedback during bidding and play
   // This replaces the dev-only restriction with a user-controlled toggle
   const [hintModeEnabled, setHintModeEnabled] = useState(() => {
@@ -396,9 +411,6 @@ function App() {
   const [isPlayingCard, setIsPlayingCard] = useState(false);
   const [scoreData, setScoreData] = useState(null);
 
-  // Hand review state
-  const [lastSavedHandId, setLastSavedHandId] = useState(null);
-  const [showHandReviewModal, setShowHandReviewModal] = useState(false);
 
   // Last trick display state
   const [showLastTrick, setShowLastTrick] = useState(false);
@@ -434,6 +446,10 @@ function App() {
   // Ref to track if we've triggered initial AI bidding after initialization
   // Prevents duplicate triggers while avoiding infinite loops
   const hasTriggeredInitialBid = useRef(false);
+
+  // Ref to track if AI loop should be kept alive during state transitions
+  // Prevents cleanup function from killing the loop when we just want to restart it
+  const keepAiLoopAlive = useRef(false);
 
   const resetAuction = (dealData, skipInitialAiBidding = false) => {
     setInitialDeal(dealData);
@@ -702,9 +718,9 @@ ${otherCommands}`;
         // - Game is complete (scoreData exists from finished hand)
         // - No active play state exists
         const shouldStartFresh = showModeSelector ||
-                                 gamePhase !== 'playing' ||
-                                 scoreData !== null ||
-                                 !playState;
+          gamePhase !== 'playing' ||
+          scoreData !== null ||
+          !playState;
 
         if (shouldStartFresh) {
           playRandomHand();  // Deal fresh hand
@@ -1053,7 +1069,7 @@ ${otherCommands}`;
           // This fixes the bug where user couldn't play from North after first trick
           const nsDeclaringAfterTrick = nextState.contract.declarer === 'N' || nextState.contract.declarer === 'S';
           const nextIsUserTurn = nextState.next_to_play === 'S' ||
-                                (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
+            (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
           if (!nextIsUserTurn) {
             // Reset flag first to ensure useEffect triggers, then set it back to true
             setIsPlayingCard(false);
@@ -1070,7 +1086,7 @@ ${otherCommands}`;
         // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
         const nsDeclaringInProgress = updatedState.contract.declarer === 'N' || updatedState.contract.declarer === 'S';
         const nextIsUserTurn = updatedState.next_to_play === 'S' ||
-                              (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
+          (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
         if (!nextIsUserTurn) {
           // Reset flag first to ensure useEffect triggers, then set it back to true
           setIsPlayingCard(false);
@@ -1210,7 +1226,7 @@ ${otherCommands}`;
           // This fixes the bug where user couldn't play from North after first trick
           const nsDeclaringAfterTrick = nextState.contract.declarer === 'N' || nextState.contract.declarer === 'S';
           const nextIsUserTurn = nextState.next_to_play === 'S' ||
-                                (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
+            (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
           if (!nextIsUserTurn) {
             // Reset flag first to ensure useEffect triggers, then set it back to true
             setIsPlayingCard(false);
@@ -1227,7 +1243,7 @@ ${otherCommands}`;
         // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
         const nsDeclaringInProgress = updatedState.contract.declarer === 'N' || updatedState.contract.declarer === 'S';
         const nextIsUserTurn = updatedState.next_to_play === 'S' ||
-                              (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
+          (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
         if (!nextIsUserTurn) {
           // Reset flag first to ensure useEffect triggers, then set it back to true
           setIsPlayingCard(false);
@@ -1373,7 +1389,7 @@ ${otherCommands}`;
           // This fixes the bug where user couldn't play from North after first trick
           const nsDeclaringAfterTrick = nextState.contract.declarer === 'N' || nextState.contract.declarer === 'S';
           const nextIsUserTurn = nextState.next_to_play === 'S' ||
-                                (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
+            (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
           if (!nextIsUserTurn) {
             // Reset flag first to ensure useEffect triggers, then set it back to true
             setIsPlayingCard(false);
@@ -1390,7 +1406,7 @@ ${otherCommands}`;
         // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
         const nsDeclaringInProgress = updatedState.contract.declarer === 'N' || updatedState.contract.declarer === 'S';
         const nextIsUserTurn = updatedState.next_to_play === 'S' ||
-                              (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
+          (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
         if (!nextIsUserTurn) {
           // Reset flag first to ensure useEffect triggers, then set it back to true
           setIsPlayingCard(false);
@@ -1515,6 +1531,49 @@ ${otherCommands}`;
       await saveHandToDatabase(scoreData, auction, playState?.contract);
     }
     setScoreData(null);
+  };
+
+  // Review page handlers - for full-screen play/bid analysis
+  const handleOpenReviewPage = (handId, type = 'play', handList = []) => {
+    setReviewPageHandId(handId);
+    setReviewPageType(type);
+
+    // Setup navigation if hand list provided
+    if (handList.length > 0) {
+      setReviewHandList(handList);
+      const idx = handList.findIndex(h => (h.id || h.hand_id) === handId);
+      setReviewCurrentIndex(idx >= 0 ? idx : 0);
+    } else {
+      setReviewHandList([]);
+      setReviewCurrentIndex(0);
+    }
+
+    // Show appropriate page
+    if (type === 'play') {
+      setShowHandReviewPage(true);
+      setShowBidReviewPage(false);
+    } else {
+      setShowBidReviewPage(true);
+      setShowHandReviewPage(false);
+    }
+  };
+
+  const handleCloseReviewPage = () => {
+    setShowHandReviewPage(false);
+    setShowBidReviewPage(false);
+    setReviewPageHandId(null);
+    setReviewHandList([]);
+    setReviewCurrentIndex(0);
+  };
+
+  const handleNavigateReviewHand = (direction) => {
+    if (reviewHandList.length === 0) return;
+    const newIndex = reviewCurrentIndex + direction;
+    if (newIndex >= 0 && newIndex < reviewHandList.length) {
+      setReviewCurrentIndex(newIndex);
+      const hand = reviewHandList[newIndex];
+      setReviewPageHandId(hand.id || hand.hand_id);
+    }
   };
 
   // ========== END CARD PLAY FUNCTIONS ==========
@@ -1765,7 +1824,7 @@ ${otherCommands}`;
     if (!initialDeal) return;
     resetAuction(initialDeal, true); // Skip initial AI bidding - wait for proper turn
   };
-  
+
   // Fetch scenarios (only once on mount)
   useEffect(() => {
     const fetchScenarios = async () => {
@@ -2003,9 +2062,9 @@ ${otherCommands}`;
     setShowGovernorDialog(false);
     setDisplayedMessage('Choose a different bid.');
   };
-  
+
   const handleBidClick = (bidObject) => { setDisplayedMessage(`[${bidObject.bid}] ${bidObject.explanation}`); };
-  
+
   useEffect(() => {
     console.log('🤖 AI BIDDING USEEFFECT TRIGGERED:', {
       isInitializing,
@@ -2380,8 +2439,8 @@ ${otherCommands}`;
             const turnMsg = nextPlayer === 'S'
               ? "Your turn (South)"
               : nextPlayer === 'N' && (declarerPos === 'N' || declarerPos === 'S')
-              ? `Your turn (${responseData.user_role === 'dummy' ? 'Dummy' : 'North'})`
-              : `Your turn to play from ${nextPlayer}`;
+                ? `Your turn (${responseData.user_role === 'dummy' ? 'Dummy' : 'North'})`
+                : `Your turn to play from ${nextPlayer}`;
             setDisplayedMessage(turnMsg);
             return; // Exit gracefully without throwing error
           }
@@ -2499,18 +2558,22 @@ ${otherCommands}`;
           // Continue to next trick after delay
           // Reset flag first to ensure useEffect triggers
           // Use 200ms delay to ensure React state updates have propagated
+          keepAiLoopAlive.current = true; // Signal cleanup to NOT cancel timeout
           setIsPlayingCard(false);
           aiPlayTimeoutRef.current = setTimeout(() => {
             console.log('⏰ Timeout fired - restarting AI play loop');
+            keepAiLoopAlive.current = false; // Reset flag
             setIsPlayingCard(true);
           }, 200);
         } else {
           console.log('🔁 Continuing AI play loop (trick not complete)...');
           // Trick not complete - continue playing quickly
           // Reset flag first to ensure useEffect triggers
+          keepAiLoopAlive.current = true; // Signal cleanup to NOT cancel timeout
           setIsPlayingCard(false);
           aiPlayTimeoutRef.current = setTimeout(() => {
             console.log('⏰ Timeout fired - continuing AI play (mid-trick)');
+            keepAiLoopAlive.current = false; // Reset flag
             setIsPlayingCard(true);
           }, 150);
         }
@@ -2526,9 +2589,18 @@ ${otherCommands}`;
 
     // Cleanup function to clear pending timeouts when effect re-runs or component unmounts
     return () => {
-      if (aiPlayTimeoutRef.current) {
-        clearTimeout(aiPlayTimeoutRef.current);
-        aiPlayTimeoutRef.current = null;
+      // Only clear timeout if we're NOT intentionally keeping the loop alive
+      // This allows us to toggle isPlayingCard (false -> true) without killing the pending timeout
+      if (keepAiLoopAlive.current) {
+        console.log('🧘 Keeping AI loop alive during effect cleanup');
+        // Reset flag for next time, but DON'T clear timeout
+        keepAiLoopAlive.current = false;
+      } else {
+        if (aiPlayTimeoutRef.current) {
+          console.log('🧹 Clearing AI loop timeout');
+          clearTimeout(aiPlayTimeoutRef.current);
+          aiPlayTimeoutRef.current = null;
+        }
       }
     };
   }, [gamePhase, isPlayingCard, vulnerability]);
@@ -2723,7 +2795,7 @@ ${otherCommands}`;
           <div className="my-hand">
             <h2>Your Hand (South)</h2>
             <div className="hand-display">
-              {hand && hand.length > 0 ? getSuitOrder(null).map(suit => ( <div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => ( <BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p>{isInitializing ? 'System Initiating...' : 'Dealing...'}</p>}
+              {hand && hand.length > 0 ? getSuitOrder(null).map(suit => (<div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => (<BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p>{isInitializing ? 'System Initiating...' : 'Dealing...'}</p>}
             </div>
             <HandAnalysis
               points={handPoints}
@@ -3085,8 +3157,33 @@ ${otherCommands}`;
                 dealNewHand();
               }
             }}
+            onReviewHand={handleOpenReviewPage}
           />
         </div>
+      )}
+
+      {/* Full-screen play review page (new approach) */}
+      {showHandReviewPage && reviewPageHandId && (
+        <HandReviewPage
+          handId={reviewPageHandId}
+          onBack={handleCloseReviewPage}
+          onPrevHand={reviewCurrentIndex > 0 ? () => handleNavigateReviewHand(-1) : null}
+          onNextHand={reviewCurrentIndex < reviewHandList.length - 1 ? () => handleNavigateReviewHand(1) : null}
+          currentIndex={reviewCurrentIndex}
+          totalHands={reviewHandList.length}
+        />
+      )}
+
+      {/* Full-screen bidding review page (new approach) */}
+      {showBidReviewPage && reviewPageHandId && (
+        <BidReviewPage
+          handId={reviewPageHandId}
+          onBack={handleCloseReviewPage}
+          onPrevHand={reviewCurrentIndex > 0 ? () => handleNavigateReviewHand(-1) : null}
+          onNextHand={reviewCurrentIndex < reviewHandList.length - 1 ? () => handleNavigateReviewHand(1) : null}
+          currentIndex={reviewCurrentIndex}
+          totalHands={reviewHandList.length}
+        />
       )}
 
       {/* Learning Mode - Full-screen guided learning */}

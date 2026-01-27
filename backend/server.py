@@ -76,7 +76,7 @@ CORS(app, resources={
     r"/api/*": {
         "origins": "*",
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "X-Session-ID", "Authorization"],
+        "allow_headers": "*",
         "expose_headers": ["Content-Type"],
         "supports_credentials": False
     }
@@ -758,6 +758,43 @@ except ImportError:
 # SESSION MANAGEMENT ENDPOINTS
 # ============================================================================
 
+def perform_new_deal(state):
+    """
+    Generate a new deal for the current state.
+    Handles dealer/vulnerability rotation based on session status.
+    """
+    # CRITICAL: Reset V2 engine state for new deal
+    if engine_v2_schema:
+        engine_v2_schema.new_deal()
+
+    # Determine dealer and vulnerability
+    if state.game_session:
+        # Session mode: use session rules
+        dealer = state.game_session.get_current_dealer()
+        state.vulnerability = state.game_session.get_current_vulnerability()
+    else:
+        # Non-session mode: rotate vulnerability manually
+        vulnerabilities = ["None", "NS", "EW", "Both"]
+        try:
+            current_idx = vulnerabilities.index(state.vulnerability)
+            state.vulnerability = vulnerabilities[(current_idx + 1) % len(vulnerabilities)]
+        except ValueError:
+            state.vulnerability = "None"
+        dealer = 'North'  # Default for non-session mode
+
+    # Create and shuffle deck
+    ranks = '23456789TJQKA'
+    suits = ['♠', '♥', '♦', '♣']
+    deck = [Card(rank, suit) for rank in ranks for suit in suits]
+    random.shuffle(deck)
+
+    print(f"🃏 Dealt new hand. Dealer: {dealer}, Vul: {state.vulnerability}")
+
+    state.deal['North'] = Hand(deck[0:13])
+    state.deal['East'] = Hand(deck[13:26])
+    state.deal['South'] = Hand(deck[26:39])
+    state.deal['West'] = Hand(deck[39:52])
+
 @app.route('/api/session/start', methods=['POST'])
 def start_session():
     """
@@ -791,6 +828,12 @@ def start_session():
             state.ai_difficulty = existing.ai_difficulty
             state.hand_start_time = datetime.now()
             print(f"✅ Resumed session {existing.id} with ai_difficulty={existing.ai_difficulty}")
+            
+            # Ensure deal exists (crucial for server restarts)
+            if not state.deal['North']:
+                print(f"🃏 Restoring deal for resumed session #{existing.id}...")
+                perform_new_deal(state)
+                
             return jsonify({
                 'session': existing.to_dict(),
                 'resumed': True,
@@ -1357,36 +1400,13 @@ def deal_hands():
     # Get session state for this request
     state = get_state()
 
-    # CRITICAL: Reset V2 engine state for new deal
-    # This prevents forcing level from persisting across deals (bug fix)
-    if engine_v2_schema:
-        engine_v2_schema.new_deal()
-
-    # Use Chicago rotation for dealer and vulnerability
-    dealer = 'North'  # Default for non-session mode
+    # Use shared logic to perform deal
+    perform_new_deal(state)
+    
+    # Prepare response data
+    dealer = 'North'
     if state.game_session:
         dealer = state.game_session.get_current_dealer()
-        state.vulnerability = state.game_session.get_current_vulnerability()
-    else:
-        # Non-session mode: rotate vulnerability manually
-        vulnerabilities = ["None", "NS", "EW", "Both"]
-        try:
-            current_idx = vulnerabilities.index(state.vulnerability)
-            state.vulnerability = vulnerabilities[(current_idx + 1) % len(vulnerabilities)]
-        except ValueError:
-            state.vulnerability = "None"
-
-    ranks = '23456789TJQKA'
-    suits = ['♠', '♥', '♦', '♣']
-    deck = [Card(rank, suit) for rank in ranks for suit in suits]
-    random.shuffle(deck)
-
-    print(f"🃏 Deck size: {len(deck)} cards (should be 52)")
-
-    state.deal['North'] = Hand(deck[0:13])
-    state.deal['East'] = Hand(deck[13:26])
-    state.deal['South'] = Hand(deck[26:39])
-    state.deal['West'] = Hand(deck[39:52])
 
     print(f"🃏 North: {len(state.deal['North'].cards)} cards")
     print(f"🃏 East: {len(state.deal['East'].cards)} cards")
@@ -1485,6 +1505,15 @@ def get_next_bid():
 
         bid, explanation = active_engine.get_next_bid(player_hand, auction_history, current_player,
                                                 state.vulnerability, explanation_level, dealer=dealer)
+
+        # Fix for TypeError: Object of type BidExplanation is not JSON serializable
+        # If explanation is an object (from V2 or updated V1), convert it to string or dict
+        if hasattr(explanation, 'description'):
+            explanation = explanation.description
+        elif hasattr(explanation, 'to_dict'):
+            explanation = explanation.to_dict()
+        elif not isinstance(explanation, str) and explanation is not None:
+            explanation = str(explanation)
 
         response = {'bid': bid, 'explanation': explanation, 'player': current_player}
         if use_v2_schema:
