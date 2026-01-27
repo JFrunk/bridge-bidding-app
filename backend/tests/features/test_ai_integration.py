@@ -21,7 +21,7 @@ def test_get_difficulties():
         print(f"  - {diff['id']}: {diff['description']} (Level: {diff['level']})")
     return response.status_code == 200
 
-def test_set_difficulty(difficulty):
+def _test_set_difficulty(difficulty):
     """Test POST /api/set-ai-difficulty"""
     print(f"\n=== Test: Set AI Difficulty to '{difficulty}' ===")
     response = requests.post(
@@ -77,13 +77,13 @@ def main():
 
     tests = [
         ("Get AI Difficulties", test_get_difficulties),
-        ("Set Difficulty to 'beginner'", lambda: test_set_difficulty("beginner")),
+        ("Set Difficulty to 'beginner'", lambda: _test_set_difficulty("beginner")),
         ("Get Statistics (beginner - no stats)", test_get_statistics),
-        ("Set Difficulty to 'advanced'", lambda: test_set_difficulty("advanced")),
+        ("Set Difficulty to 'advanced'", lambda: _test_set_difficulty("advanced")),
         ("Get Statistics (advanced - has stats)", test_get_statistics),
-        ("Set Difficulty to 'expert'", lambda: test_set_difficulty("expert")),
+        ("Set Difficulty to 'expert'", lambda: _test_set_difficulty("expert")),
         ("Set Invalid Difficulty", test_invalid_difficulty),
-        ("Set Difficulty back to 'advanced'", lambda: test_set_difficulty("advanced")),
+        ("Set Difficulty back to 'advanced'", lambda: _test_set_difficulty("advanced")),
     ]
 
     results = []

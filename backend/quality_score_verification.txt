@@ -1,0 +1,295 @@
+🎯 Running Bidding Quality Score on 50 hands...
+⏰ Started at 2026-01-27 10:07:51
+
+
+[GAME MISSED] Hand 3 (NS): 26 pts
+Contract: 1♣
+Hand 1 (13 HCP): AK64.Q973.K94.JT
+Hand 2 (12 HCP): T82.852.QJ74.AKQ
+Auction:
+  North: 1♣
+  East: X
+  South: XX
+  West: Pass
+  North: Pass
+  East: Pass
+
+[GAME MISSED] Hand 6 (NS): 26 pts
+Contract: 1NT
+Hand 1 (13 HCP): QT5.9764.KQ3.AQ3
+Hand 2 (11 HCP): 52.AK62.AT973.87
+Auction:
+  West: 1♣
+  North: 1NT
+  East: Pass
+  South: X
+  West: Pass
+  North: Pass
+  East: Pass
+
+[GAME MISSED] Hand 8 (EW): 26 pts
+Contract: 2NT
+Hand 1 (6 HCP): QT7542.J853.K64.
+Hand 2 (15 HCP): AJ9543.5.AJ9.KQT
+Auction:
+  West: 1♠
+  North: 2♦
+  East: Pass
+  South: Pass
+  West: 2NT
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 14 (NS): 26 pts
+Contract: 2NT
+Hand 1 (3 HCP): QT92.J2.T75.T653
+Hand 2 (21 HCP): AQ5.AKT8.A4.KJ85
+Auction:
+  South: 2NT
+  West: Pass
+  North: Pass
+  East: Pass
+
+[GAME MISSED] Hand 15 (NS): 31 pts
+Contract: 2NT
+Hand 1 (11 HCP): T97.7.A73.AK8643
+Hand 2 (16 HCP): K6.KQ952.J7.AK87
+Auction:
+  South: 1♥
+  West: X
+  North: Pass
+  East: Pass
+  South: 2NT
+  West: Pass
+  North: Pass
+  East: Pass
+
+[GAME MISSED] Hand 16 (EW): 25 pts
+Contract: 1♣
+Hand 1 (9 HCP): 53.Q8.K873.KJ843
+Hand 2 (13 HCP): KQT.K86.KT.Q9653
+Auction:
+  East: Pass
+  South: Pass
+  West: 1♣
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 17 (NS): 28 pts
+Contract: 2♣
+Hand 1 (8 HCP): 8.K743.KQ975.653
+Hand 2 (16 HCP): K4.KJ52.87.AKQ85
+Auction:
+  South: 1♣
+  West: Pass
+  North: Pass
+  East: X
+  South: 2♣
+  West: Pass
+  North: Pass
+  East: Pass
+
+[GAME MISSED] Hand 20 (NS): 25 pts
+Contract: 1♥
+Hand 1 (12 HCP): K95.T8.Q9.AQJ764
+Hand 2 (9 HCP): AJ32.98542.42.A8
+Auction:
+  West: 1♣
+  North: Pass
+  East: Pass
+  South: 1♥
+  West: Pass
+  North: Pass
+  East: Pass
+
+[GAME MISSED] Hand 24 (NS): 30 pts
+Contract: 2♦
+Hand 1 (9 HCP): Q9753.QJT6.A.532
+Hand 2 (18 HCP): Q82.A54.AKT72.KQ
+Auction:
+  South: 1♦
+  West: Pass
+  North: Pass
+  East: X
+  South: 2♦
+  West: Pass
+  North: Pass
+  East: Pass
+
+[GAME MISSED] Hand 27 (NS): 29 pts
+Contract: 1♥
+Hand 1 (16 HCP): Q.Q8642.AKQ4.K75
+Hand 2 (9 HCP): AT943.T.KJ5.J987
+Auction:
+  East: Pass
+  South: Pass
+  West: 1♦
+  North: 1♥
+  East: Pass
+  South: Pass
+  West: Pass
+
+[GAME MISSED] Hand 28 (NS): 27 pts
+Contract: 1♦
+Hand 1 (13 HCP): 874.KQ5.KQJT9.Q5
+Hand 2 (11 HCP): 4.QT32.J863.AKJ2
+Auction:
+  North: 1♦
+  East: X
+  South: Pass
+  West: Pass
+  North: Pass
+
+[GAME MISSED] Hand 29 (EW): 29 pts
+Contract: 3♦
+Hand 1 (10 HCP): A.8.AQT98642.T76
+Hand 2 (14 HCP): Q754.AT7.Q872.AQ
+Auction:
+  North: Pass
+  East: 3♦
+  South: Pass
+  West: Pass
+  North: Pass
+
+[GAME MISSED] Hand 33 (EW): 26 pts
+Contract: 1NT
+Hand 1 (15 HCP): AQ3.QT653.95.AK6
+Hand 2 (8 HCP): A64.J3.T98732.QJ
+Auction:
+  North: Pass
+  East: 1NT
+  South: Pass
+  West: Pass
+  North: Pass
+
+[GAME MISSED] Hand 34 (NS): 29 pts
+Contract: 3♠
+Hand 1 (12 HCP): 6.Q95.J43.AKQ952
+Hand 2 (13 HCP): K.KQ42.KQ765.T43
+Auction:
+  East: 1♠
+  South: 2♦
+  West: 2NT
+  North: 3♠
+  East: Pass
+  South: Pass
+  West: Pass
+
+[GAME MISSED] Hand 36 (NS): 28 pts
+Contract: 1♦
+Hand 1 (14 HCP): .J83.KQJ9852.AK8
+Hand 2 (10 HCP): A65.874.AJ865.J2
+Auction:
+  South: Pass
+  West: Pass
+  North: 1♦
+  East: Pass
+  South: Pass
+  West: Pass
+
+[GAME MISSED] Hand 43 (NS): 25 pts
+Contract: 1♦
+Hand 1 (14 HCP): AK63.Q8.KQ653.T9
+Hand 2 (9 HCP): J63.J64.AQ6.J982
+Auction:
+  West: Pass
+  North: 1♦
+  East: Pass
+  South: Pass
+  West: Pass
+
+[GAME MISSED] Hand 45 (NS): 27 pts
+Contract: 3♥
+Hand 1 (8 HCP): 4.J74.AQ94.JT542
+Hand 2 (15 HCP): KQJ96.AQ7.J754.Q
+Auction:
+  East: Pass
+  South: 1♠
+  West: 2♠
+  North: 3♥
+  East: Pass
+  South: Pass
+  West: Pass
+
+[GAME MISSED] Hand 46 (NS): 30 pts
+Contract: 1♠
+Hand 1 (13 HCP): KQ64.K874.2.AJT6
+Hand 2 (13 HCP): AQ842.K8.J3.K872
+Auction:
+  North: 1♣
+  East: Pass
+  South: 1♠
+  West: X
+  North: Pass
+  East: Pass
+  South: Pass
+   Progress: 50/50 hands tested...
+
+[GAME MISSED] Hand 49 (NS): 26 pts
+Contract: 1♣
+Hand 1 (12 HCP): A94.A965.A7.T874
+Hand 2 (12 HCP): AT95.A2.KJ63.762
+Auction:
+  North: 1♣
+  East: X
+  South: XX
+  West: Pass
+  North: Pass
+  East: Pass
+
+✅ Testing complete. Calculating scores...
+
+================================================================================
+BIDDING QUALITY SCORE REPORT
+================================================================================
+
+Hands Tested:      50
+Total Bids:        283
+Non-Pass Bids:     85
+
+--------------------------------------------------------------------------------
+INDIVIDUAL SCORES:
+--------------------------------------------------------------------------------
+  1. Legality:        100.0% ✅ (0 errors)
+  2. Appropriateness:  95.3% ✅ (4 errors)
+  3. Conventions:     100.0% ✅ (0 errors)
+  4. Consistency:     100.0% ✅ (not implemented)
+  5. Reasonableness:   92.9% ✅
+  6. Game/Slam:         0.0% ❌ (27 errors)
+
+     GAME/SLAM BREAKDOWN:
+     - Game (25-32 pts):   0.0% (19 missed / 19 situations)
+     - Slam (33+ pts):     0.0% (8 missed / 8 situations)
+
+--------------------------------------------------------------------------------
+COMPOSITE SCORE: 92.8%
+GRADE:           B (Good, minor issues)
+--------------------------------------------------------------------------------
+
+REASONABLENESS BREAKDOWN:
+  Excellent:      31
+  Good:           48
+  Questionable:    0
+  Poor:            4
+  Terrible:        2
+
+⚠️  APPROPRIATENESS ERRORS (sample):
+   Hand 3: North bid 1♣
+      Bid ♣ with only 2 cards
+      Hand: 13 HCP, 14 total, shape 4432
+   Hand 32: North bid 2♦
+      Bid ♦ with only 3 cards
+      Hand: 10 HCP, 11 total, shape 3532
+   Hand 45: North bid 3♥
+      Bid ♥ with only 3 cards
+      Hand: 8 HCP, 10 total, shape 1345
+   Hand 48: East bid 2♦
+      Bid ♦ with only 2 cards
+      Hand: 10 HCP, 12 total, shape 4522
+
+================================================================================
+📄 Detailed report saved to: bidding_quality_report_20260127_100751.json
+
+✅ Quality score acceptable

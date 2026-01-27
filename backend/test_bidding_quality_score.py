@@ -38,12 +38,16 @@ def generate_random_hand() -> Hand:
     return Hand(cards)
 
 
+# from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
+from engine.bidding_engine_v2 import BiddingEngineV2
+
 class BiddingQualityScorer:
     """Comprehensive bidding quality testing."""
 
     def __init__(self, num_hands: int = 500):
         self.num_hands = num_hands
-        self.engine = BiddingEngine()
+        # self.engine = BiddingEngineV2Schema(use_v1_fallback=False)
+        self.engine = BiddingEngineV2()
         self.results = {
             'total_hands': 0,
             'total_bids': 0,
@@ -435,11 +439,11 @@ class BiddingQualityScorer:
         # Check both partnerships for game/slam potential
         self._check_partnership_game_slam(
             ns_points, 'NS', declarer in ['North', 'South'],
-            final_contract, hand_number, hands['North'], hands['South']
+            final_contract, hand_number, hands['North'], hands['South'], auction
         )
         self._check_partnership_game_slam(
             ew_points, 'EW', declarer in ['East', 'West'],
-            final_contract, hand_number, hands['East'], hands['West']
+            final_contract, hand_number, hands['East'], hands['West'], auction
         )
 
     def _check_partnership_game_slam(
@@ -450,7 +454,8 @@ class BiddingQualityScorer:
         final_contract: str,
         hand_number: int,
         hand1: Hand,
-        hand2: Hand
+        hand2: Hand,
+        auction: List[Dict] = []
     ):
         """Check if a specific partnership reached correct level."""
         try:
@@ -491,8 +496,16 @@ class BiddingQualityScorer:
                         'hand2_hcp': hand2.hcp
                     }
                     self.results['game_errors'].append(error_detail)
-                    # Also add to combined list for backward compatibility
                     self.results['game_slam_errors'].append(error_detail)
+                    
+                    print(f"\n[GAME MISSED] Hand {hand_number} ({partnership}): {combined_points} pts")
+                    print(f"Contract: {final_contract}")
+                    print(f"Hand 1 ({hand1.hcp} HCP): {hand1.to_pbn()}")
+                    print(f"Hand 2 ({hand2.hcp} HCP): {hand2.to_pbn()}")
+                    print("Auction:")
+                    for entry in auction:
+                        print(f"  {entry['position']}: {entry['bid']}")
+                    pass
 
         if is_slam_situation:
             # Only count this as a "slam situation" if this partnership is declaring

@@ -1,0 +1,191 @@
+🎯 Running Bidding Quality Score on 50 hands...
+⏰ Started at 2026-01-27 10:09:12
+
+
+[GAME MISSED] Hand 3 (EW): 28 pts
+Contract: 1♦
+Hand 1 (7 HCP): AQT765.65.854.J6
+Hand 2 (17 HCP): QJ7.63.AKT954.AK
+Auction:
+  East: Pass
+  South: Pass
+  West: 1♦
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 15 (NS): 31 pts
+Contract: 1♥
+Hand 1 (10 HCP): T4.AT96.K.KT9832
+Hand 2 (15 HCP): KQ2.J65..AKQ9643
+Auction:
+  North: Pass
+  East: Pass
+  South: 1♣
+  West: Pass
+  North: 1♥
+  East: Pass
+  South: Pass
+  West: X
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 17 (NS): 30 pts
+Contract: 2♣
+Hand 1 (16 HCP): AJ93.A.AJ5.Q8762
+Hand 2 (10 HCP): AQT97.9.KT95.J52
+Auction:
+  East: Pass
+  South: Pass
+  West: 1♥
+  North: 2♣
+  East: Pass
+  South: Pass
+  West: Pass
+
+[GAME MISSED] Hand 20 (EW): 25 pts
+Contract: 1♣
+Hand 1 (17 HCP): AK65..AKQT.JT862
+Hand 2 (4 HCP): QJ84.64.T52.J832
+Auction:
+  North: Pass
+  East: 1♣
+  South: Pass
+  West: Pass
+  North: Pass
+
+[GAME MISSED] Hand 24 (NS): 27 pts
+Contract: 2♣
+Hand 1 (8 HCP): 52.9.J865.AK9742
+Hand 2 (14 HCP): 8.AK65.AJT8.Q875
+Auction:
+  North: Pass
+  East: 1NT
+  South: Pass
+  West: Pass
+  North: 2♣
+  East: Pass
+  South: Pass
+  West: X
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 26 (EW): 29 pts
+Contract: 1NT
+Hand 1 (9 HCP): J5.3.J832.AKT432
+Hand 2 (16 HCP): AQ863.53.AQ6.A76
+Auction:
+  South: Pass
+  West: 1NT
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 29 (NS): 29 pts
+Contract: 1♦
+Hand 1 (13 HCP): A9874.J5.7.AKJ85
+Hand 2 (12 HCP): 976.J8.AK754.AT2
+Auction:
+  South: 1♣
+  West: Pass
+  North: Pass
+  East: X
+  South: 1♦
+  West: Pass
+  North: Pass
+  East: Pass
+
+[GAME MISSED] Hand 42 (EW): 26 pts
+Contract: 2♣
+Hand 1 (6 HCP): 842.J8.J4.A87654
+Hand 2 (16 HCP): KT.A7.KT5.AQ8754
+Auction:
+  East: Pass
+  South: 1♠
+  West: 2♣
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 45 (EW): 29 pts
+Contract: 1NT
+Hand 1 (10 HCP): AT43.Q6.63.AT842
+Hand 2 (16 HCP): Q532.K8.AQ95.AJ6
+Auction:
+  South: Pass
+  West: 1NT
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 46 (EW): 25 pts
+Contract: 1NT
+Hand 1 (13 HCP): KQ32.AT82.K74.JT
+Hand 2 (10 HCP): AJ6.A9743.T52.J5
+Auction:
+  West: Pass
+  North: 1♦
+  East: 1NT
+  South: Pass
+  West: X
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 47 (NS): 32 pts
+Contract: 3♣
+Hand 1 (17 HCP): AQJ8.AKQJ98.75.3
+Hand 2 (12 HCP): KT9.AQ93.974.KT5
+Auction:
+  North: 1♥
+  East: X
+  South: 2NT
+  West: Pass
+  North: 3♣
+  East: Pass
+  South: Pass
+  West: Pass
+   Progress: 50/50 hands tested...
+
+✅ Testing complete. Calculating scores...
+
+================================================================================
+BIDDING QUALITY SCORE REPORT
+================================================================================
+
+Hands Tested:      50
+Total Bids:        301
+Non-Pass Bids:     79
+
+--------------------------------------------------------------------------------
+INDIVIDUAL SCORES:
+--------------------------------------------------------------------------------
+  1. Legality:        100.0% ✅ (0 errors)
+  2. Appropriateness: 100.0% ✅ (0 errors)
+  3. Conventions:     100.0% ✅ (0 errors)
+  4. Consistency:     100.0% ✅ (not implemented)
+  5. Reasonableness:  100.0% ✅
+  6. Game/Slam:         0.0% ❌ (17 errors)
+
+     GAME/SLAM BREAKDOWN:
+     - Game (25-32 pts):   0.0% (11 missed / 11 situations)
+     - Slam (33+ pts):     0.0% (6 missed / 6 situations)
+
+--------------------------------------------------------------------------------
+COMPOSITE SCORE: 95.0%
+GRADE:           A (Production Ready)
+--------------------------------------------------------------------------------
+
+REASONABLENESS BREAKDOWN:
+  Excellent:      29
+  Good:           50
+  Questionable:    0
+  Poor:            0
+  Terrible:        0
+
+================================================================================
+📄 Detailed report saved to: bidding_quality_report_20260127_100912.json
+
+✅ Quality score acceptable

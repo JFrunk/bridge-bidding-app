@@ -1,0 +1,102 @@
+🎯 Running Bidding Quality Score on 50 hands...
+⏰ Started at 2026-01-27 10:09:44
+
+
+[GAME MISSED] Hand 5 (EW): 32 pts
+Contract: 2♦
+Hand 1 (13 HCP): A976.T.AQT76.QJ5
+Hand 2 (14 HCP): K97.AQ982..KQT92
+Auction:
+  North: Pass
+  East: 1♦
+  South: Pass
+  West: 1♥
+  North: Pass
+  East: 2♦
+  South: Pass
+  West: Pass
+  North: Pass
+
+[GAME MISSED] Hand 24 (NS): 27 pts
+Contract: 1♥
+Hand 1 (16 HCP): QJ.KQJ98.KQ74.Q9
+Hand 2 (6 HCP): KJ2..J9853.J7653
+Auction:
+  South: Pass
+  West: Pass
+  North: 1♥
+  East: Pass
+  South: Pass
+  West: Pass
+
+[GAME MISSED] Hand 45 (NS): 27 pts
+Contract: 3♠
+Hand 1 (12 HCP): AQ9854..KQ4.J652
+Hand 2 (11 HCP): AK742.87.752.A95
+Auction:
+  West: Pass
+  North: 1♠
+  East: Pass
+  South: 3♠
+  West: Pass
+  North: Pass
+  East: Pass
+   Progress: 50/50 hands tested...
+
+✅ Testing complete. Calculating scores...
+
+================================================================================
+BIDDING QUALITY SCORE REPORT
+================================================================================
+
+Hands Tested:      50
+Total Bids:        528
+Non-Pass Bids:     223
+
+--------------------------------------------------------------------------------
+INDIVIDUAL SCORES:
+--------------------------------------------------------------------------------
+  1. Legality:        100.0% ✅ (0 errors)
+  2. Appropriateness:  85.2% ⚠️  (33 errors)
+  3. Conventions:     100.0% ✅ (0 errors)
+  4. Consistency:     100.0% ✅ (not implemented)
+  5. Reasonableness:   91.5% ✅
+  6. Game/Slam:        76.7% ⚠️  (5 errors)
+
+     GAME/SLAM BREAKDOWN:
+     - Game (25-32 pts):  87.5% (3 missed / 24 situations)
+     - Slam (33+ pts):    33.3% (2 missed / 3 situations)
+
+--------------------------------------------------------------------------------
+COMPOSITE SCORE: 93.9%
+GRADE:           B (Good, minor issues)
+--------------------------------------------------------------------------------
+
+REASONABLENESS BREAKDOWN:
+  Excellent:      82
+  Good:          116
+  Questionable:    6
+  Poor:           16
+  Terrible:        3
+
+⚠️  APPROPRIATENESS ERRORS (sample):
+   Hand 2: North bid 3NT
+      3-level bid with only 7 points and 0 cards
+      Hand: 5 HCP, 7 total, shape 2425
+   Hand 2: North bid 5NT
+      5-level bid with only 7 points and 0 cards
+      Hand: 5 HCP, 7 total, shape 2425
+   Hand 2: North bid 5NT
+      4-level bid with 7 points and 0 cards
+      Hand: 5 HCP, 7 total, shape 2425
+   Hand 4: South bid 3♦
+      3-level bid with 9 points and only 4 cards
+      Hand: 8 HCP, 9 total, shape 4243
+   Hand 4: South bid 5NT
+      4-level bid with 9 points and 0 cards
+      Hand: 8 HCP, 9 total, shape 4243
+
+================================================================================
+📄 Detailed report saved to: bidding_quality_report_20260127_100944.json
+
+✅ Quality score acceptable

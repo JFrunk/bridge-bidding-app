@@ -552,32 +552,42 @@ const PracticeBidExpanded = ({ quality, biddingHands, onReviewHand, onShowBiddin
 // ============================================================================
 
 // Helper to derive final contract from auction history
-const deriveContractFromAuction = (auctionHistory) => {
-  if (!auctionHistory || auctionHistory.length === 0) return null;
+// NOTE: In bridge, the declarer is the first player on the winning partnership
+// to have bid the final strain (suit/NT), not necessarily the one who made the final bid.
+// For simplicity in this display context, we show the final bidder since we don't
+// track which partnership first bid the strain.
+const deriveContractFromAuction = (auctionHistory, dealer = 'N') => {
+  if (\!auctionHistory || auctionHistory.length === 0) return null;
 
   // Find the last non-Pass bid (the contract)
   // Auction format: array of {bid, explanation} or just bid strings
   let lastBid = null;
-  let lastBidder = null;
-  const positions = ['N', 'E', 'S', 'W']; // Assuming North deals first by default
+  let lastBidderIndex = null;
+  const positions = ['N', 'E', 'S', 'W'];
+
+  // Normalize dealer to single letter and get index
+  const dealerNormalized = dealer ? dealer[0].toUpperCase() : 'N';
+  const dealerIdx = positions.indexOf(dealerNormalized);
+  const effectiveDealerIdx = dealerIdx >= 0 ? dealerIdx : 0;
 
   for (let i = auctionHistory.length - 1; i >= 0; i--) {
     const entry = auctionHistory[i];
     const bid = typeof entry === 'string' ? entry : entry.bid;
 
-    if (bid && bid !== 'Pass' && bid !== 'X' && bid !== 'XX') {
+    if (bid && bid \!== 'Pass' && bid \!== 'X' && bid \!== 'XX') {
       lastBid = bid;
-      lastBidder = positions[i % 4];
+      // Calculate who made this bid based on dealer + position in auction
+      lastBidderIndex = (effectiveDealerIdx + i) % 4;
       break;
     }
   }
 
-  if (!lastBid) {
+  if (\!lastBid) {
     // All passes - no contract
     return { contract: 'Passed Out', declarer: null };
   }
 
-  return { contract: lastBid, declarer: lastBidder };
+  return { contract: lastBid, declarer: positions[lastBidderIndex] };
 };
 
 const BiddingHandRow = ({ hand, onReview }) => {
@@ -594,7 +604,7 @@ const BiddingHandRow = ({ hand, onReview }) => {
   // Derive contract from auction history if not provided directly
   const contractInfo = hand.contract
     ? { contract: hand.contract, declarer: hand.contract_declarer }
-    : deriveContractFromAuction(hand.auction_history);
+    : deriveContractFromAuction(hand.auction_history, hand.dealer);
 
   const contract = contractInfo?.contract || 'In Progress';
   const declarer = contractInfo?.declarer;

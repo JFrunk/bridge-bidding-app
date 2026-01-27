@@ -173,6 +173,32 @@ class BiddingEngineV2:
         """
         # Import V1 modules for initial compatibility
         from engine.ai.module_registry import ModuleRegistry
+        
+        # Explicitly import modules to trigger auto-registration
+        import engine.opening_bids
+        import engine.responses
+        import engine.rebids
+        import engine.responder_rebids
+        import engine.overcalls
+        import engine.advancer_bids
+        import engine.balancing
+        import engine.bid_safety
+
+        # Import Conventions
+        import engine.ai.conventions.blackwood
+        import engine.ai.conventions.stayman
+        import engine.ai.conventions.jacoby_transfers
+        import engine.ai.conventions.preempts
+        import engine.ai.conventions.michaels_cuebid
+        import engine.ai.conventions.unusual_2nt
+        import engine.ai.conventions.takeout_doubles
+        import engine.ai.conventions.fourth_suit_forcing
+        import engine.ai.conventions.gerber
+        import engine.ai.conventions.grand_slam_force
+        import engine.ai.conventions.minor_suit_bust
+        import engine.ai.conventions.negative_doubles
+        import engine.ai.conventions.splinter_bids
+        
         self.modules = ModuleRegistry.get_all()
 
         logger.info(f"BiddingEngineV2 initialized with {len(self.modules)} modules")
@@ -375,12 +401,12 @@ class BiddingEngineV2:
         STATE_MODULE_MAP = {
             BiddingState.OPENING: self._select_opening_module,
             BiddingState.RESPONDING: self._select_response_module,
-            BiddingState.RESPONDER_REBID: lambda s, h: 'responder_rebid',
-            BiddingState.OPENER_REBID: lambda s, h: 'openers_rebid',
-            BiddingState.OPENER_THIRD_BID: lambda s, h: 'openers_rebid',
+            BiddingState.RESPONDER_REBID: self._select_responder_rebid_module,
+            BiddingState.OPENER_REBID: self._select_opener_rebid_module,
+            BiddingState.OPENER_THIRD_BID: self._select_opener_rebid_module,
             BiddingState.DIRECT_SEAT: self._select_competitive_module,
             BiddingState.BALANCING_SEAT: self._select_balancing_module,
-            BiddingState.ADVANCING: lambda s, h: 'advancer_bids',
+            BiddingState.ADVANCING: self._select_advancer_module,
             BiddingState.GAME_FORCING: self._select_game_forcing_module,
         }
 
@@ -438,6 +464,34 @@ class BiddingEngineV2:
             return 'takeout_doubles'
 
         return 'pass_by_default'
+
+    def _select_responder_rebid_module(self, state: AuctionState, hand: Hand) -> str:
+        """Select module for responder's rebid."""
+        # Check for Blackwood response
+        if state.partner_last_bid == '4NT':
+            return 'blackwood'
+        if state.partner_last_bid == '5NT': # King ask or GSF
+             return 'blackwood'
+             
+        return 'responder_rebid'
+
+    def _select_opener_rebid_module(self, state: AuctionState, hand: Hand) -> str:
+        """Select module for opener's rebid."""
+        # Check for Blackwood response
+        if state.partner_last_bid == '4NT':
+            return 'blackwood'
+        if state.partner_last_bid == '5NT':
+             return 'blackwood'
+             
+        return 'openers_rebid'
+
+    def _select_advancer_module(self, state: AuctionState, hand: Hand) -> str:
+        """Select module for advancer (partner of overcaller)."""
+        # Check for Blackwood response
+        if state.partner_last_bid == '4NT':
+            return 'blackwood'
+            
+        return 'advancer_bids'
 
     def _select_balancing_module(self, state: AuctionState, hand: Hand) -> str:
         """Select module for balancing seat."""

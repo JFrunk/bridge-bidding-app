@@ -474,7 +474,8 @@ class RebidModule(ConventionModule):
             return ("3NT", f"Game in NT after partner's jump shift (game forcing).", jump_shift_metadata)
 
         # Logic for rebids after a 1-level opening
-        if 13 <= hand.total_points <= 15: # Minimum Hand
+        # Adjusted thresholds to account for total_points including distribution
+        if 13 <= hand.total_points <= 16: # Minimum Hand
             # Check if partner raised our suit
             if partner_response.endswith(my_opening_bid[1:]):
                 # Distinguish between simple raise (2-level) and invitational raise (3-level)
@@ -634,8 +635,11 @@ class RebidModule(ConventionModule):
                 # With only a 5-card suit and no second suit, rebid it anyway
                 return (f"2{my_suit}", f"Minimum hand (13-15 pts) rebidding a 5-card {my_suit} suit.")
 
-        elif 16 <= hand.total_points <= 18: # Medium Hand
+        elif 17 <= hand.total_points <= 19: # Medium Hand
             if partner_response.endswith(my_opening_bid[1]):
+                # Upgrade to Game if HCP is strong (18+)
+                if hand.hcp >= 18:
+                    return (f"4{my_opening_bid[1]}", f"Bidding game with strong hand ({hand.hcp} HCP) after partner's raise.")
                 return (f"3{my_opening_bid[1]}", "Invitational (16-18 pts), raising partner's simple raise.")
             if partner_response[0] == '1' and len(partner_response) == 2:
                 partner_suit = partner_response[1]
@@ -694,7 +698,7 @@ class RebidModule(ConventionModule):
                 return ("2NT", "Shows a balanced medium hand (16-17 HCP) with no obvious fit.")
             return ("2NT", "Shows a strong hand (16-18 pts) with no obvious fit.")
 
-        elif hand.total_points >= 19: # Strong Hand
+        elif hand.total_points >= 20: # Strong Hand
             # Check for slam potential using AuctionContext
             # Expert recommendation: Combined_Points >= 33 AND Fit_Found = slam investigation
             auction_context = features.get('auction_context')

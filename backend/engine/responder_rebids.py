@@ -342,7 +342,7 @@ class ResponderRebidModule(ConventionModule):
                 return (f"2{my_first_suit}", f"Minimum hand rebidding 6+ card {my_first_suit} suit.")
 
             # Give preference between opener's suits
-            return self._give_preference(hand, opener_first_suit, opener_second_suit, strength='minimum')
+            return self._give_preference(hand, opener_first_suit, opener_second_suit, strength='minimum', context=context)
 
         # Case 4: Opener made jump rebid (invitational)
         if opener_rebid_type == 'jump_rebid':
@@ -375,7 +375,7 @@ class ResponderRebidModule(ConventionModule):
         # Bid 2NT as weakness signal
         return ("2NT", "Forced to bid after partner's reverse, showing minimum values.")
 
-    def _give_preference(self, hand: Hand, suit1: str, suit2: str, strength: str) -> Tuple[str, str]:
+    def _give_preference(self, hand: Hand, suit1: str, suit2: str, strength: str, context: Dict = None) -> Tuple[str, str]:
         """
         Give preference between two suits shown by opener.
 
@@ -415,7 +415,16 @@ class ResponderRebidModule(ConventionModule):
                 level = '5' if card_count >= 4 else '3'
                 explanation = f"Preference to {preferred_suit} with game-forcing values."
 
-        return (f"{level}{preferred_suit}", explanation)
+        bid = f"{level}{preferred_suit}"
+        
+        # FIX: If our preference is exactly what partner just bid, we should Pass
+        # unless we are raising (invitational/game forcing)
+        if strength == 'minimum' and context:
+             opener_rebid = context.get('opener_rebid')
+             if opener_rebid == bid:
+                 return ("Pass", f"Minimum hand, preferring {preferred_suit} (already bid by partner).")
+
+        return (bid, explanation)
 
     def _invitational_rebid(self, hand: Hand, context: Dict, features: Dict) -> Optional[Tuple[str, str]]:
         """
@@ -593,6 +602,7 @@ class ResponderRebidModule(ConventionModule):
 
         # Expert recommendation: Force slam investigation with 33+ combined and fit
         # With 32+ combined, make a slam try first (3-level)
+        # NOTE: Lowering to 32/14 made slam finding WORSE (tested 2026-01-27)
         should_bid_blackwood = estimated_combined >= 33 and has_fit and hand.hcp >= 16
         should_explore_slam = estimated_combined >= 32 and hand.total_points >= 16
 

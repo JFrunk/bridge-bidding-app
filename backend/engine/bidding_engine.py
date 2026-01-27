@@ -307,7 +307,7 @@ class BiddingEngine:
 
         auction = features.get('auction_features', {})
         opener_rel = auction.get('opener_relationship')
-
+        
         # Only applies to partnership auctions (I opened or partner opened)
         if opener_rel not in ['Partner', 'Me']:
             return (False, None, None)
@@ -323,29 +323,38 @@ class BiddingEngine:
             my_index = features.get('my_index', 0)
             context = analyze_auction_context(auction_history, positions, my_index)
 
-            combined_pts = context.ranges.combined_midpoint
+            # CORRECT CALCULATION: Use my ACTUAL HCP instead of my range midpoint
+            my_hcp = hand.hcp
+            
+            # Get partner's estimated HCP
+            if opener_rel == 'Me':
+                # I am opener, partner is responder
+                partner_min, partner_max = context.ranges.responder_hcp
+            else:
+                # I am responder, partner is opener
+                partner_min, partner_max = context.ranges.opener_hcp
+                
+            # Cap partner's specific max for estimation purposes if they are unlimited
+            # (Prevent assuming 23 HCP just because range is 6-40)
+            calc_partner_max = min(partner_max, 22)  # Cap at 22 for estimation
+            
+            partner_midpoint = (partner_min + calc_partner_max) / 2
+            combined_pts = int(my_hcp + partner_midpoint)
+            
             game_forcing = context.ranges.game_forcing
             opening_bid = auction.get('opening_bid', '')
 
-            # SPECIAL CASE: 2♣ opening is ALWAYS game-forcing
-            # If I opened 2♣ and partner responded, I MUST continue to game
+            # SPECIAL CASE: 2♣ opening is ALWAYS game-forcing until game is reached (usually)
             if opener_rel == 'Me' and opening_bid == '2♣':
-                partner_responded = any(bid != 'Pass' for i, bid in enumerate(auction_history)
-                                       if i % 2 == 1)  # Partner's bids are at odd indices
+                partner_responded = any(bid != 'Pass' for i, bid in enumerate(auction_history) 
+                                       if i % 2 == 1)
                 if partner_responded:
                     game_forcing = True
-                    logger.info("GAME SAFETY NET: 2♣ opener must continue to game")
-
+            
             # SPECIAL CASE: Partner's 2NT response shows 11-12 HCP
-            # With my opening (13-21), combined is 24-33, usually game
-            if opener_rel == 'Me':
-                partner_last = auction.get('partner_last_bid', '')
-                if partner_last == '2NT':
-                    # Partner showed 11-12 HCP, I have 13+ (opened)
-                    # Combined is 24+, probably game
-                    if hand.hcp >= 14:  # With 14+, combined is 25+
-                        combined_pts = max(combined_pts, 25)
-                        logger.info(f"GAME SAFETY NET: Partner's 2NT + my {hand.hcp} HCP = game")
+            if opener_rel == 'Me' and auction.get('partner_last_bid') == '2NT':
+                if my_hcp >= 14:  # 14 + 11 = 25
+                    combined_pts = max(combined_pts, 25)
 
             # Only intervene if game values are present
             if not game_forcing and combined_pts < 25:
@@ -357,7 +366,7 @@ class BiddingEngine:
             game_bid = self._find_best_game_bid(hand, features, auction_history, context)
 
             if game_bid and self._is_bid_legal(game_bid, auction_history):
-                explanation = f"Game safety net: Partnership has {combined_pts} combined points, must reach game."
+                explanation = f"Game safety net: Partnership has ~{combined_pts} combined points, must reach game."
                 logger.info(f"GAME SAFETY NET: Overriding Pass with {game_bid}")
                 return (True, game_bid, explanation)
 

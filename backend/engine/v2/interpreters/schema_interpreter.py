@@ -249,7 +249,7 @@ class SchemaInterpreter:
 
         for rule in schema.get('rules', []):
             if self._evaluate_rule(rule, features):
-                bid = self._resolve_bid(rule.get('bid', 'Pass'), features)
+                bid = self._resolve_bid(rule.get('bid', 'Pass'), features, rule)
 
                 # Skip rules where bid resolution failed (e.g., missing suit)
                 if bid is None:
@@ -584,7 +584,7 @@ class SchemaInterpreter:
 
         return True
 
-    def _resolve_bid(self, bid_template: str, features: Dict[str, Any]) -> str:
+    def _resolve_bid(self, bid_template: str, features: Dict[str, Any], rule: Dict = None) -> str:
         """
         Resolve bid template with feature values.
 
@@ -640,9 +640,23 @@ class SchemaInterpreter:
                 return features.get('my_suit', '')
 
             # Special case: suit - general suit placeholder
-            # For overcalls: use best_suit (best overcallable suit)
-            # Otherwise: try second_suit or longest_suit
+            # Check if rule specifies a selection strategy
             if var_name == 'suit':
+                if rule and rule.get('suit_selection') == 'longest_major_first':
+                    # Explicitly look for majors
+                    s_len = features.get('spades_length', 0)
+                    h_len = features.get('hearts_length', 0)
+                    if s_len >= 4 or h_len >= 4:
+                        # If meaningful length in majors
+                        if s_len > h_len:
+                            return '♠'
+                        elif h_len > s_len:
+                            return '♥'
+                        else:
+                            # 4-4 or 5-5: Standard practice is usually up the line (H before S) for response
+                            return '♥'
+                    # checking failed, fallback to standard logic
+
                 if features.get('is_overcall') or features.get('is_competitive_later'):
                     return features.get('best_suit') or features.get('longest_suit', '')
                 return features.get('second_suit') or features.get('longest_suit', '')
@@ -742,7 +756,7 @@ class SchemaInterpreter:
 
         for category, schema in self.schemas.items():
             for rule in schema.get('rules', []):
-                bid = self._resolve_bid(rule.get('bid', 'Pass'), features)
+                bid = self._resolve_bid(rule.get('bid', 'Pass'), features, rule)
 
                 # Skip rules where bid resolution failed
                 if bid is None:
@@ -779,7 +793,7 @@ class SchemaInterpreter:
         - A human-readable gap description
         """
         rule_id = rule.get('id', 'unknown')
-        bid = self._resolve_bid(rule.get('bid', 'Pass'), features)
+        bid = self._resolve_bid(rule.get('bid', 'Pass'), features, rule)
         priority = rule.get('priority', 0)
         description = rule.get('description', rule.get('explanation', ''))
 

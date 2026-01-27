@@ -88,12 +88,19 @@ When using Claude to debug or develop:
 ### Current Features
 - Interactive bridge bidding practice
 - Standard American Yellow Card (SAYC) conventions
-- AI-powered bidding suggestions
+- **AI-powered bidding with BiddingEngineV2 (95.6% quality score)**
 - Detailed bid explanations
 - Multiple bidding scenarios
 - Gameplay review with AI analysis
 - Card play engine
 - Responsive design for mobile/tablet
+
+### Bidding Engine (Production)
+**BiddingEngineV2** (Python State Machine) - Deployed 2026-01-27
+- **Quality Score**: 95.6% (Grade A - Production Ready)
+- **Performance**: 4,000+ hands/second, 0.03ms per bid
+- **Features**: Full SAYC conventions, Blackwood, Stayman, Transfers
+- See `backend/QUALITY_SCORECARD.md` for detailed metrics
 
 See [docs/project-overview/FEATURES_SUMMARY.md](docs/project-overview/FEATURES_SUMMARY.md) for complete feature list.
 

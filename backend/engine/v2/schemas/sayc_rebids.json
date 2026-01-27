@@ -24,7 +24,12 @@
       "description": "Opener passes partner's 4-major game bid",
       "conditions": {
         "is_rebid": true,
-        "partner_last_bid": {"in": ["4♥", "4♠"]}
+        "partner_last_bid": {
+          "in": [
+            "4♥",
+            "4♠"
+          ]
+        }
       },
       "forcing": "none",
       "explanation": "Pass partner's 4-major game bid",
@@ -37,8 +42,26 @@
       "description": "Preempter passes when partner bids game",
       "conditions": {
         "is_rebid": true,
-        "my_last_bid": {"in": ["2♦", "2♥", "2♠", "3♣", "3♦", "3♥", "3♠"]},
-        "partner_last_bid": {"in": ["3NT", "4♥", "4♠", "5♣", "5♦"]}
+        "my_last_bid": {
+          "in": [
+            "2♦",
+            "2♥",
+            "2♠",
+            "3♣",
+            "3♦",
+            "3♥",
+            "3♠"
+          ]
+        },
+        "partner_last_bid": {
+          "in": [
+            "3NT",
+            "4♥",
+            "4♠",
+            "5♣",
+            "5♦"
+          ]
+        }
       },
       "forcing": "none",
       "explanation": "Pass partner's game bid after preempting",
@@ -52,8 +75,12 @@
       "conditions": {
         "i_made_michaels_over_major": true,
         "partner_asked_for_minor": true,
-        "clubs_length": {"min": 5},
-        "hcp": {"min": 14}
+        "clubs_length": {
+          "min": 5
+        },
+        "hcp": {
+          "min": 14
+        }
       },
       "forcing": "none",
       "explanation": "Jump showing 5+ clubs with extra values",
@@ -67,8 +94,12 @@
       "conditions": {
         "i_made_michaels_over_major": true,
         "partner_asked_for_minor": true,
-        "diamonds_length": {"min": 5},
-        "hcp": {"min": 14}
+        "diamonds_length": {
+          "min": 5
+        },
+        "hcp": {
+          "min": 14
+        }
       },
       "forcing": "none",
       "explanation": "Jump showing 5+ diamonds with extra values",
@@ -82,7 +113,9 @@
       "conditions": {
         "i_made_michaels_over_major": true,
         "partner_asked_for_minor": true,
-        "clubs_length": {"min": 5}
+        "clubs_length": {
+          "min": 5
+        }
       },
       "forcing": "none",
       "explanation": "Showing 5+ clubs as promised minor",
@@ -96,7 +129,9 @@
       "conditions": {
         "i_made_michaels_over_major": true,
         "partner_asked_for_minor": true,
-        "diamonds_length": {"min": 5}
+        "diamonds_length": {
+          "min": 5
+        }
       },
       "forcing": "none",
       "explanation": "Showing 5+ diamonds as promised minor",
@@ -110,7 +145,9 @@
       "conditions": {
         "partner_bid_jacoby_2nt": true,
         "my_opening_suit": "♥",
-        "spades_length": {"max": 1}
+        "spades_length": {
+          "max": 1
+        }
       },
       "forcing": "game",
       "explanation": "3♠ showing singleton or void in spades",
@@ -124,7 +161,9 @@
       "conditions": {
         "partner_bid_jacoby_2nt": true,
         "my_opening_suit": "♠",
-        "hearts_length": {"max": 1}
+        "hearts_length": {
+          "max": 1
+        }
       },
       "forcing": "game",
       "explanation": "3♥ showing singleton or void in hearts",
@@ -137,7 +176,9 @@
       "description": "Jacoby 2NT rebid showing shortness in diamonds",
       "conditions": {
         "partner_bid_jacoby_2nt": true,
-        "diamonds_length": {"max": 1}
+        "diamonds_length": {
+          "max": 1
+        }
       },
       "forcing": "game",
       "explanation": "3♦ showing singleton or void in diamonds",
@@ -150,7 +191,9 @@
       "description": "Jacoby 2NT rebid showing shortness in clubs",
       "conditions": {
         "partner_bid_jacoby_2nt": true,
-        "clubs_length": {"max": 1}
+        "clubs_length": {
+          "max": 1
+        }
       },
       "forcing": "game",
       "explanation": "3♣ showing singleton or void in clubs",
@@ -164,7 +207,9 @@
       "conditions": {
         "partner_bid_jacoby_2nt": true,
         "my_opening_suit": "♥",
-        "hcp": {"min": 18}
+        "hcp": {
+          "min": 18
+        }
       },
       "forcing": "none",
       "explanation": "4♥ showing strong hand (18+ HCP) - slam interest",
@@ -178,7 +223,9 @@
       "conditions": {
         "partner_bid_jacoby_2nt": true,
         "my_opening_suit": "♠",
-        "hcp": {"min": 18}
+        "hcp": {
+          "min": 18
+        }
       },
       "forcing": "none",
       "explanation": "4♠ showing strong hand (18+ HCP) - slam interest",
@@ -191,7 +238,10 @@
       "description": "Jacoby 2NT rebid showing 15-17 HCP balanced",
       "conditions": {
         "partner_bid_jacoby_2nt": true,
-        "hcp": {"min": 15, "max": 17},
+        "hcp": {
+          "min": 15,
+          "max": 17
+        },
         "is_balanced": true
       },
       "forcing": "none",
@@ -206,7 +256,10 @@
       "conditions": {
         "partner_bid_jacoby_2nt": true,
         "my_opening_suit": "♥",
-        "hcp": {"min": 12, "max": 14}
+        "hcp": {
+          "min": 12,
+          "max": 14
+        }
       },
       "forcing": "game",
       "explanation": "3♥ showing minimum opener (12-14 HCP)",
@@ -220,7 +273,10 @@
       "conditions": {
         "partner_bid_jacoby_2nt": true,
         "my_opening_suit": "♠",
-        "hcp": {"min": 12, "max": 14}
+        "hcp": {
+          "min": 12,
+          "max": 14
+        }
       },
       "forcing": "game",
       "explanation": "3♠ showing minimum opener (12-14 HCP)",
@@ -235,7 +291,10 @@
         "is_rebid": true,
         "partner_bid_fsf": true,
         "has_stopper_in_fsf_suit": true,
-        "hcp": {"min": 12, "max": 14},
+        "hcp": {
+          "min": 12,
+          "max": 14
+        },
         "is_balanced": true
       },
       "forcing": "none",
@@ -251,8 +310,13 @@
         "is_rebid": true,
         "partner_bid_fsf": true,
         "has_stopper_in_fsf_suit": false,
-        "longest_suit_length": {"min": 6},
-        "hcp": {"min": 12, "max": 15}
+        "longest_suit_length": {
+          "min": 6
+        },
+        "hcp": {
+          "min": 12,
+          "max": 15
+        }
       },
       "forcing": "one_round",
       "explanation": "Rebid 6-card suit (no stopper in fourth suit)",
@@ -266,8 +330,13 @@
       "conditions": {
         "is_rebid": true,
         "partner_bid_fsf": true,
-        "support_for_partner_first": {"min": 3},
-        "hcp": {"min": 12, "max": 15}
+        "support_for_partner_first": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 12,
+          "max": 15
+        }
       },
       "forcing": "one_round",
       "explanation": "Support responder's suit with {support_for_partner_first}-card fit",
@@ -282,7 +351,10 @@
         "is_rebid": true,
         "partner_bid_fsf": true,
         "has_stopper_in_fsf_suit": true,
-        "hcp": {"min": 15, "max": 17}
+        "hcp": {
+          "min": 15,
+          "max": 17
+        }
       },
       "forcing": "none",
       "explanation": "3NT with stopper and extra values ({hcp} HCP)",
@@ -297,8 +369,13 @@
         "is_rebid": true,
         "partner_bid_fsf": true,
         "has_stopper_in_fsf_suit": false,
-        "hcp": {"min": 12, "max": 14},
-        "longest_suit_length": {"max": 5}
+        "hcp": {
+          "min": 12,
+          "max": 14
+        },
+        "longest_suit_length": {
+          "max": 5
+        }
       },
       "forcing": "one_round",
       "explanation": "2NT (minimum, no stopper in fourth suit)",
@@ -618,7 +695,6 @@
       "description": "Opener raises partner's major with 3-card support",
       "conditions": {
         "is_rebid": true,
-        "is_contested": false,
         "partner_last_bid": {
           "in": [
             "1\u2665",
@@ -631,9 +707,6 @@
         },
         "support_for_partner": {
           "min": 3
-        },
-        "partnership_hcp_min": {
-          "min": 18
         }
       },
       "forcing": "none",
@@ -647,7 +720,6 @@
       "description": "Opener raises partner's major with 4-card support (minimum)",
       "conditions": {
         "is_rebid": true,
-        "is_contested": false,
         "partner_last_bid": {
           "in": [
             "1\u2665",
@@ -660,9 +732,6 @@
         },
         "support_for_partner": {
           "min": 4
-        },
-        "partnership_hcp_min": {
-          "min": 18
         }
       },
       "forcing": "none",
@@ -676,7 +745,6 @@
       "description": "Opener jump raises partner's major (invitational)",
       "conditions": {
         "is_rebid": true,
-        "is_contested": false,
         "partner_last_bid": {
           "in": [
             "1\u2665",
@@ -685,13 +753,10 @@
         },
         "hcp": {
           "min": 15,
-          "max": 17
+          "max": 18
         },
         "support_for_partner": {
           "min": 4
-        },
-        "partnership_hcp_min": {
-          "min": 21
         }
       },
       "forcing": "none",
@@ -758,10 +823,17 @@
       "conditions": {
         "is_rebid": true,
         "my_last_bid": {
-          "in": ["1\u2665", "1\u2660"]
+          "in": [
+            "1\u2665",
+            "1\u2660"
+          ]
         },
         "partner_last_bid": {
-          "in": ["2\u2663", "2\u2666", "2\u2665"]
+          "in": [
+            "2\u2663",
+            "2\u2666",
+            "2\u2665"
+          ]
         },
         "hcp": {
           "min": 12,
@@ -783,10 +855,16 @@
       "conditions": {
         "is_rebid": true,
         "my_last_bid": {
-          "in": ["1\u2666", "1\u2663"]
+          "in": [
+            "1\u2666",
+            "1\u2663"
+          ]
         },
         "partner_last_bid": {
-          "in": ["2\u2663", "2\u2666"]
+          "in": [
+            "2\u2663",
+            "2\u2666"
+          ]
         },
         "hcp": {
           "min": 12,
@@ -809,10 +887,16 @@
       "conditions": {
         "is_rebid": true,
         "my_last_bid": {
-          "in": ["1\u2666", "1\u2663"]
+          "in": [
+            "1\u2666",
+            "1\u2663"
+          ]
         },
         "partner_last_bid": {
-          "in": ["2\u2663", "2\u2666"]
+          "in": [
+            "2\u2663",
+            "2\u2666"
+          ]
         },
         "hcp": {
           "min": 12,
@@ -836,7 +920,10 @@
         "is_rebid": true,
         "is_contested": false,
         "my_last_bid": {
-          "in": ["1\u2666", "1\u2663"]
+          "in": [
+            "1\u2666",
+            "1\u2663"
+          ]
         },
         "first_suit_length": {
           "min": 5
@@ -1361,7 +1448,18 @@
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": {
-          "in": ["3NT", "4♥", "4♠", "5♣", "5♦", "6♣", "6♦", "6♥", "6♠", "6NT"]
+          "in": [
+            "3NT",
+            "4♥",
+            "4♠",
+            "5♣",
+            "5♦",
+            "6♣",
+            "6♦",
+            "6♥",
+            "6♠",
+            "6NT"
+          ]
         },
         "hcp": {
           "max": 17
@@ -1379,7 +1477,14 @@
       "conditions": {
         "is_rebid": true,
         "my_last_bid": {
-          "in": ["2♥", "2♠", "3♣", "3♦", "3♥", "3♠"]
+          "in": [
+            "2♥",
+            "2♠",
+            "3♣",
+            "3♦",
+            "3♥",
+            "3♠"
+          ]
         },
         "hcp": {
           "max": 10
@@ -1397,8 +1502,18 @@
       "conditions": {
         "is_rebid": true,
         "is_doubled": true,
-        "my_last_bid": {"in": ["3NT", "4♥", "4♠", "5♣", "5♦"]},
-        "hcp": {"max": 18}
+        "my_last_bid": {
+          "in": [
+            "3NT",
+            "4♥",
+            "4♠",
+            "5♣",
+            "5♦"
+          ]
+        },
+        "hcp": {
+          "max": 18
+        }
       },
       "forcing": "none",
       "explanation": "Pass the double - we've already bid game",
@@ -1412,8 +1527,18 @@
       "conditions": {
         "is_responder_rebid": true,
         "is_doubled": true,
-        "partner_last_bid": {"in": ["3NT", "4♥", "4♠", "5♣", "5♦"]},
-        "hcp": {"max": 15}
+        "partner_last_bid": {
+          "in": [
+            "3NT",
+            "4♥",
+            "4♠",
+            "5♣",
+            "5♦"
+          ]
+        },
+        "hcp": {
+          "max": 15
+        }
       },
       "forcing": "none",
       "explanation": "Pass the double - partner already bid game",
@@ -1428,7 +1553,10 @@
         "is_rebid": true,
         "is_contested": false,
         "partner_last_bid": {
-          "in": ["4♥", "4♠"]
+          "in": [
+            "4♥",
+            "4♠"
+          ]
         },
         "hcp": {
           "min": 19
@@ -1538,18 +1666,32 @@
         "is_rebid": true,
         "opener_relationship": "Me",
         "my_last_bid": {
-          "in": ["1\u2665", "1\u2660"]
+          "in": [
+            "1\u2665",
+            "1\u2660"
+          ]
         },
         "partner_last_bid": {
-          "in": ["2\u2665", "2\u2660"]
+          "in": [
+            "2\u2665",
+            "2\u2660"
+          ]
         },
         "partner_raised_my_suit": true,
         "hcp": {
           "min": 16
         },
         "OR": [
-          {"longest_suit_length": {"min": 6}},
-          {"second_suit_length": {"min": 5}}
+          {
+            "longest_suit_length": {
+              "min": 6
+            }
+          },
+          {
+            "second_suit_length": {
+              "min": 5
+            }
+          }
         ]
       },
       "forcing": "none",
@@ -1565,10 +1707,16 @@
         "is_rebid": true,
         "opener_relationship": "Me",
         "my_last_bid": {
-          "in": ["1\u2665", "1\u2660"]
+          "in": [
+            "1\u2665",
+            "1\u2660"
+          ]
         },
         "partner_last_bid": {
-          "in": ["2\u2665", "2\u2660"]
+          "in": [
+            "2\u2665",
+            "2\u2660"
+          ]
         },
         "partner_raised_my_suit": true,
         "is_contested": false,
@@ -1607,10 +1755,16 @@
         "is_rebid": true,
         "opener_relationship": "Me",
         "my_last_bid": {
-          "in": ["1\u2665", "1\u2660"]
+          "in": [
+            "1\u2665",
+            "1\u2660"
+          ]
         },
         "partner_last_bid": {
-          "in": ["2\u2665", "2\u2660"]
+          "in": [
+            "2\u2665",
+            "2\u2660"
+          ]
         },
         "partner_raised_my_suit": true,
         "hcp": {
@@ -1630,7 +1784,10 @@
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": {
-          "in": ["3♥", "3♠"]
+          "in": [
+            "3♥",
+            "3♠"
+          ]
         },
         "hcp": {
           "min": 15
@@ -1651,7 +1808,10 @@
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": {
-          "in": ["3♥", "3♠"]
+          "in": [
+            "3♥",
+            "3♠"
+          ]
         },
         "hcp": {
           "max": 14
@@ -1670,9 +1830,18 @@
         "is_rebid": true,
         "opener_relationship": "Me",
         "partner_last_bid": "1NT",
-        "my_last_bid": {"in": ["1\u2665", "1\u2660"]},
-        "longest_suit_length": {"min": 6},
-        "hcp": {"min": 19}
+        "my_last_bid": {
+          "in": [
+            "1\u2665",
+            "1\u2660"
+          ]
+        },
+        "longest_suit_length": {
+          "min": 6
+        },
+        "hcp": {
+          "min": 19
+        }
       },
       "forcing": "none",
       "explanation": "Game with {hcp} HCP and 6-card {my_suit}",
@@ -1687,9 +1856,19 @@
         "is_rebid": true,
         "opener_relationship": "Me",
         "partner_last_bid": "1NT",
-        "my_last_bid": {"in": ["1\u2665", "1\u2660"]},
-        "longest_suit_length": {"min": 6},
-        "hcp": {"min": 16, "max": 18}
+        "my_last_bid": {
+          "in": [
+            "1\u2665",
+            "1\u2660"
+          ]
+        },
+        "longest_suit_length": {
+          "min": 6
+        },
+        "hcp": {
+          "min": 16,
+          "max": 18
+        }
       },
       "forcing": "none",
       "explanation": "Invite game with {hcp} HCP and 6-card {my_suit}",
@@ -1703,9 +1882,19 @@
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": "1NT",
-        "my_last_bid": {"in": ["1♥", "1♠"]},
-        "longest_suit_length": {"min": 6},
-        "hcp": {"min": 12, "max": 15}
+        "my_last_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
+        "longest_suit_length": {
+          "min": 6
+        },
+        "hcp": {
+          "min": 12,
+          "max": 15
+        }
       },
       "forcing": "none",
       "explanation": "Rebid 6-card {my_suit} with {hcp} HCP",
@@ -1719,9 +1908,17 @@
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": "1NT",
-        "my_last_bid": {"in": ["1♥", "1♠"]},
+        "my_last_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
         "second_suit_lower": true,
-        "hcp": {"min": 12, "max": 17}
+        "hcp": {
+          "min": 12,
+          "max": 17
+        }
       },
       "forcing": "none",
       "explanation": "Show second suit with {hcp} HCP",
@@ -1735,9 +1932,19 @@
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": "1NT",
-        "my_last_bid": {"in": ["1♥", "1♠"]},
-        "clubs_length": {"min": 3},
-        "hcp": {"min": 12, "max": 15}
+        "my_last_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
+        "clubs_length": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 12,
+          "max": 15
+        }
       },
       "forcing": "none",
       "explanation": "Show clubs with {hcp} HCP",
@@ -1751,10 +1958,22 @@
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": "1NT",
-        "my_last_bid": {"in": ["1♥", "1♠"]},
-        "diamonds_length": {"min": 3},
-        "clubs_length": {"max": 2},
-        "hcp": {"min": 12, "max": 15}
+        "my_last_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
+        "diamonds_length": {
+          "min": 3
+        },
+        "clubs_length": {
+          "max": 2
+        },
+        "hcp": {
+          "min": 12,
+          "max": 15
+        }
       },
       "forcing": "none",
       "explanation": "Show diamonds with {hcp} HCP",
@@ -1769,7 +1988,10 @@
         "is_rebid": true,
         "partner_last_bid": "1NT",
         "is_balanced": true,
-        "hcp": {"min": 18, "max": 19}
+        "hcp": {
+          "min": 18,
+          "max": 19
+        }
       },
       "forcing": "none",
       "explanation": "Invite to 3NT with {hcp} HCP balanced",
@@ -1784,7 +2006,10 @@
         "is_rebid": true,
         "partner_last_bid": "1NT",
         "is_balanced": true,
-        "hcp": {"min": 20, "max": 21}
+        "hcp": {
+          "min": 20,
+          "max": 21
+        }
       },
       "forcing": "none",
       "explanation": "Game with {hcp} HCP balanced",
@@ -1799,8 +2024,13 @@
         "is_rebid": true,
         "partner_last_bid": "1NT",
         "is_balanced": true,
-        "hcp": {"min": 12, "max": 14},
-        "longest_suit_length": {"max": 5}
+        "hcp": {
+          "min": 12,
+          "max": 14
+        },
+        "longest_suit_length": {
+          "max": 5
+        }
       },
       "forcing": "none",
       "explanation": "Pass 1NT with minimum balanced ({hcp} HCP)",
@@ -1969,7 +2199,15 @@
       "description": "Opener passes partner's grand slam bid",
       "conditions": {
         "is_rebid": true,
-        "partner_last_bid": {"in": ["7♣", "7♦", "7♥", "7♠", "7NT"]}
+        "partner_last_bid": {
+          "in": [
+            "7♣",
+            "7♦",
+            "7♥",
+            "7♠",
+            "7NT"
+          ]
+        }
       },
       "forcing": "none",
       "explanation": "Pass partner's grand slam bid",
@@ -1982,7 +2220,15 @@
       "description": "Opener passes partner's slam bid",
       "conditions": {
         "is_rebid": true,
-        "partner_last_bid": {"in": ["6♣", "6♦", "6♥", "6♠", "6NT"]}
+        "partner_last_bid": {
+          "in": [
+            "6♣",
+            "6♦",
+            "6♥",
+            "6♠",
+            "6NT"
+          ]
+        }
       },
       "forcing": "none",
       "explanation": "Pass partner's slam bid",
@@ -1997,8 +2243,16 @@
         "is_rebid": true,
         "partner_last_bid": "4NT",
         "OR": [
-          {"key_cards": {"exact": 1}},
-          {"key_cards": {"exact": 4}}
+          {
+            "key_cards": {
+              "exact": 1
+            }
+          },
+          {
+            "key_cards": {
+              "exact": 4
+            }
+          }
         ]
       },
       "forcing": "one_round",
@@ -2014,8 +2268,16 @@
         "is_rebid": true,
         "partner_last_bid": "4NT",
         "OR": [
-          {"key_cards": {"exact": 0}},
-          {"key_cards": {"exact": 3}}
+          {
+            "key_cards": {
+              "exact": 0
+            }
+          },
+          {
+            "key_cards": {
+              "exact": 3
+            }
+          }
         ]
       },
       "forcing": "one_round",
@@ -2030,7 +2292,9 @@
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": "4NT",
-        "key_cards": {"exact": 2},
+        "key_cards": {
+          "exact": 2
+        },
         "has_trump_queen": false
       },
       "forcing": "one_round",
@@ -2045,7 +2309,9 @@
       "conditions": {
         "is_rebid": true,
         "partner_last_bid": "4NT",
-        "key_cards": {"exact": 2},
+        "key_cards": {
+          "exact": 2
+        },
         "has_trump_queen": true
       },
       "forcing": "one_round",
@@ -2060,7 +2326,12 @@
       "conditions": {
         "is_rebid": true,
         "my_last_bid": "4NT",
-        "partner_last_bid": {"in": ["5♥", "5♠"]}
+        "partner_last_bid": {
+          "in": [
+            "5♥",
+            "5♠"
+          ]
+        }
       },
       "forcing": "none",
       "explanation": "Pass partner's 5-major signoff - missing keycards",
