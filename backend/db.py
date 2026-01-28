@@ -433,6 +433,25 @@ def init_database():
             with get_connection() as conn:
                 cursor = conn.cursor()
                 _execute_script(cursor, sql)
+            
+            # Apply all migrations from migrations/ folder
+            print(f"Checking for pending migrations...")
+            migrations_dir = schema_dir.parent / 'migrations'
+            if migrations_dir.exists():
+                migration_files = sorted([f for f in migrations_dir.iterdir() if f.suffix == '.sql'])
+                
+                with get_connection() as conn:
+                    cursor = conn.cursor()
+                    for migration_file in migration_files:
+                        print(f"Applying migration: {migration_file.name}")
+                        with open(migration_file, 'r') as f:
+                            sql = f.read()
+                            try:
+                                _execute_script(cursor, sql)
+                            except Exception as e:
+                                # Log error but continue - migration might be partially applied or duplicate
+                                # In a real system we'd track applied migrations in a table
+                                print(f"Warning skipping {migration_file.name}: {e}")
 
             # Verify critical tables exist
             print("\nVerifying critical tables...")

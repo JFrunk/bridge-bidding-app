@@ -13,7 +13,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 # Database abstraction layer (supports SQLite locally, PostgreSQL in production)
-from db import get_connection, is_postgres
+from db import get_connection, is_postgres, init_database
 from engine.hand import Hand, Card
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
 from engine.ai.conventions.preempts import PreemptConvention
@@ -67,6 +67,15 @@ except ImportError:
     DDS_AVAILABLE = False
     PLATFORM_ALLOWS_DDS = False
     print("⚠️  DDS AI not available - install endplay for expert play")
+
+# Initialize database (run migrations)
+print("🔄 Initializing database schema...")
+try:
+    init_database()
+    print("✅ Database initialized successfully")
+except Exception as e:
+    print(f"❌ Database initialization failed: {e}")
+    traceback.print_exc()
 
 app = Flask(__name__)
 
