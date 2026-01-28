@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
@@ -56,7 +57,11 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, onShowLe
           <DialogTitle className="text-2xl text-center">
             Hand Complete!
           </DialogTitle>
+          <DialogDescription className="text-center text-gray-500">
+            Review your performance and improved score based on contract results.
+          </DialogDescription>
         </DialogHeader>
+
 
         <div className="flex flex-col gap-4 py-4">
           {/* Contract row */}

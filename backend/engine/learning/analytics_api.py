@@ -393,7 +393,8 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
                 SUM(CASE WHEN correctness = 'acceptable' THEN 1 ELSE 0 END) as acceptable_count,
                 SUM(CASE WHEN correctness = 'suboptimal' THEN 1 ELSE 0 END) as suboptimal_count,
                 SUM(CASE WHEN correctness = 'error' THEN 1 ELSE 0 END) as error_count,
-                SUM(CASE WHEN impact = 'critical' THEN 1 ELSE 0 END) as critical_errors
+                SUM(CASE WHEN impact = 'critical' THEN 1 ELSE 0 END) as critical_errors,
+                COUNT(DISTINCT COALESCE(session_id, '') || '_' || COALESCE(hand_number, -1)) as total_hands
             FROM bidding_decisions
             WHERE user_id = ?
               AND timestamp >= {date_subtract(30)}
@@ -405,6 +406,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
             return {
                 'avg_score': 0,
                 'total_decisions': 0,
+                'total_hands': 0,
                 'optimal_rate': 0,
                 'acceptable_rate': 0,
                 'good_rate': 0,
@@ -463,6 +465,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
         return {
             'avg_score': round(avg_score, 1),
             'total_decisions': total,
+            'total_hands': overall_row['total_hands'],
             'optimal_rate': round(optimal_rate, 3),
             'acceptable_rate': round(acceptable_rate, 3),
             'good_rate': round(good_rate, 3),  # Combined: optimal + acceptable
@@ -2561,6 +2564,40 @@ def get_hand_detail():
             if decay_curve_raw:
                 curve_raw = json.loads(decay_curve_raw)
                 major_errors = json.loads(major_errors_raw) if major_errors_raw else []
+            else:
+                # Generate synthetic decay curve if DDS missing (e.g. on Mac)
+                # Curve should represent "remaining tricks possible"
+                # Fallback: Assume perfect play leads to actual result
+                tricks_total = row['tricks_taken'] or 0
+                declarer = row['contract_declarer'] or 'S'
+                ns_is_declarer = declarer in ['N', 'S']
+                
+                # Normalize to NS perspective
+                # If NS is declarer, tricks_total is NS tricks.
+                # If EW is declarer, tricks_total is EW tricks => NS took 13 - tricks_total
+                ns_tricks_total = tricks_total if ns_is_declarer else (13 - tricks_total)
+                
+                # Synthetic curve: Start with total made, decrement as NS wins tricks?
+                # Actually decay curve is "max potential tricks for NS from this point"
+                # Without DDS, we can't know the true max.
+                # Heuristic: Start at final result, and just have it flat? 
+                # Better: Start at final result. When NS wins a trick, potential stays same (1 in bag, N-1 remaining).
+                # When EW wins a trick, potential drops by 1.
+                # This perfectly models "playing to the result".
+                
+                curve_raw = []
+                major_errors = []
+                
+                # We need to compute the curve based on who won each trick
+                # Reuse the trick computation logic below
+                pass # Logic continues below to compute ns_tricks_cumulative and can populate curve there
+
+            if decay_curve_raw or play_history:
+                # Common variable setup
+                if not decay_curve_raw:
+                    curve = [] # Will populate in loop
+                else:
+                    curve = curve_raw
 
                 # Compute additional NS perspective data
                 declarer = row['contract_declarer'] or 'S'
@@ -2595,6 +2632,12 @@ def get_hand_detail():
                     actual_tricks_ns = tricks_taken
                 else:
                     actual_tricks_ns = 13 - tricks_taken
+
+                # If falling back, generate flat curve matching actual result
+                if not decay_curve_raw:
+                    # 53 data points: Start (0) + 52 plays
+                    for _ in range(53):
+                        curve.append(actual_tricks_ns)
 
                 # Extract signal_warnings from play quality summary
                 signal_warnings = play_quality_summary.get('signal_warnings', []) if play_quality_summary.get('has_data') else []
@@ -3001,7 +3044,7 @@ def get_board_analysis():
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
             WHERE gs.user_id = ?
-              AND sh.par_score IS NOT NULL
+              AND sh.contract_level IS NOT NULL
         """
         params = [user_id]
 
@@ -3121,8 +3164,7 @@ def get_board_analysis():
             FROM game_sessions gs
             JOIN session_hands sh ON sh.session_id = gs.id
             WHERE gs.user_id = ?
-              AND sh.dd_tricks IS NOT NULL
-              AND sh.par_score IS NOT NULL
+              AND sh.contract_level IS NOT NULL
             GROUP BY gs.id
             HAVING hands_count > 0
             ORDER BY gs.started_at DESC

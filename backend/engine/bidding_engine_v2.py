@@ -36,6 +36,7 @@ from typing import Optional, Tuple, List, Dict, Any
 
 from engine.hand import Hand
 from engine.ai.feature_extractor import extract_features
+from engine.ai.bid_explanation import BidExplanation
 
 logger = logging.getLogger(__name__)
 
@@ -273,6 +274,66 @@ class BiddingEngineV2:
         self._update_stats(auction_state, elapsed_ms)
 
         return (bid, explanation)
+
+    def get_next_bid_structured(
+        self,
+        hand: Hand,
+        auction_history: list,
+        my_position: str,
+        vulnerability: str,
+        dealer: str = None
+    ) -> Tuple[str, Dict]:
+        """
+        Get the next bid with structured explanation data (for JSON API).
+
+        Returns:
+            Tuple of (bid, explanation_dict)
+        """
+        # Infer dealer if not provided
+        if dealer is None:
+            dealer = self._infer_dealer(my_position, len(auction_history))
+
+        # Steps 1-3: Features, State, Module Selection
+        features = extract_features(hand, auction_history, my_position, vulnerability, dealer)
+        auction_state = self._compute_auction_state(hand, features)
+        module_name = self._select_module_for_state(auction_state, hand)
+
+        # Step 4: Get bid from module
+        bid = "Pass"
+        explanation_obj = "No appropriate bid found."
+        
+        if module_name != 'pass_by_default':
+            module = self.modules.get(module_name)
+            if module:
+                try:
+                    result = module.evaluate(hand, features)
+                    if result:
+                        bid = result[0]
+                        explanation_obj = result[1]
+                except Exception as e:
+                    logger.error(f"Error in module {module_name}: {e}")
+
+        # Step 5: Apply safety nets
+        bid, explanation_final = self._apply_safety_nets(bid, explanation_obj, hand, auction_state, auction_history)
+
+        # Step 6: Validate
+        if not self._is_bid_legal(bid, auction_history):
+             bid = "Pass"
+             explanation_final = "No legal bid found (illegal bid was suggested)."
+
+        # Format explanation for return
+        explanation_dict = {}
+        if isinstance(explanation_final, BidExplanation):
+            explanation_dict = explanation_final.to_dict()
+        elif isinstance(explanation_final, dict):
+             explanation_dict = explanation_final
+        else:
+            explanation_dict = {
+                "bid": bid,
+                "primary_reason": str(explanation_final)
+            }
+            
+        return (bid, explanation_dict)
 
     def _infer_dealer(self, my_position: str, auction_length: int) -> str:
         """Infer dealer from position and auction length."""

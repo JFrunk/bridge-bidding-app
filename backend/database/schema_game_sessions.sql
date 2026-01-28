@@ -8,7 +8,7 @@
 CREATE TABLE IF NOT EXISTS game_sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,  -- Required: links to users table
-    session_type TEXT DEFAULT 'chicago',  -- 'chicago', 'rubber', 'practice'
+    session_type TEXT DEFAULT 'continuous',  -- 'chicago', 'rubber', 'practice', 'continuous'
 
     -- Session state
     hands_completed INTEGER DEFAULT 0,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS game_sessions (
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT valid_status CHECK(status IN ('active', 'completed', 'abandoned')),
-    CONSTRAINT valid_session_type CHECK(session_type IN ('chicago', 'rubber', 'practice')),
+    CONSTRAINT valid_session_type CHECK(session_type IN ('chicago', 'rubber', 'practice', 'continuous')),
     CONSTRAINT valid_player_position CHECK(player_position IN ('N', 'E', 'S', 'W'))
 );
 

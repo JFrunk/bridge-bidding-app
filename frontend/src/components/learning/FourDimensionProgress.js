@@ -224,11 +224,12 @@ const getPracticeBidMiniStats = (quality, recentCount) => {
   const avg = Math.round(quality?.overall_accuracy || 0);
   const trend = quality?.recent_trend || 'stable';
   const trendIcon = trend === 'improving' ? '↗' : trend === 'declining' ? '↘' : '→';
-  const totalHands = quality?.total_decisions || 0;
-  // Show "X recent of Y total" when there are more hands than displayed
-  const handsText = recentCount && recentCount < totalHands
-    ? `${recentCount} of ${totalHands} hands`
-    : `${totalHands} hands`;
+  const totalHands = quality?.total_hands || quality?.total_decisions || 0;
+  // Show "X recent of Y total" only when there are more hands than displayed
+  // AND the recent count is actually less than the total
+  const handsText = (recentCount && totalHands > recentCount)
+    ? `${recentCount} recent of ${totalHands} hands`
+    : `${totalHands} hand${totalHands !== 1 ? 's' : ''}`;
   return `${avg}% avg • ${trendIcon} ${trend} • ${handsText}`;
 };
 
@@ -245,10 +246,11 @@ const getPracticePlayMiniStats = (quality, recentCount) => {
   const trend = quality?.recent_trend || 'stable';
   const trendIcon = trend === 'improving' ? '↗' : trend === 'declining' ? '↘' : '→';
   const totalHands = quality?.total_hands_played || 0;
-  // Show "X recent of Y total" when there are more hands than displayed
-  const handsText = recentCount && recentCount < totalHands
-    ? `${recentCount} of ${totalHands} hands`
-    : `${totalHands} hands`;
+  // Show "X recent of Y total" only when there are more hands than displayed
+  // AND the recent count is actually less than the total
+  const handsText = (recentCount && totalHands > recentCount)
+    ? `${recentCount} recent of ${totalHands} hands`
+    : `${totalHands} hand${totalHands !== 1 ? 's' : ''}`;
   return `${avg}% quality • ${trendIcon} ${trend} • ${handsText}`;
 };
 
@@ -557,7 +559,7 @@ const PracticeBidExpanded = ({ quality, biddingHands, onReviewHand, onShowBiddin
 // For simplicity in this display context, we show the final bidder since we don't
 // track which partnership first bid the strain.
 const deriveContractFromAuction = (auctionHistory, dealer = 'N') => {
-  if (\!auctionHistory || auctionHistory.length === 0) return null;
+  if (!auctionHistory || auctionHistory.length === 0) return null;
 
   // Find the last non-Pass bid (the contract)
   // Auction format: array of {bid, explanation} or just bid strings
@@ -574,7 +576,7 @@ const deriveContractFromAuction = (auctionHistory, dealer = 'N') => {
     const entry = auctionHistory[i];
     const bid = typeof entry === 'string' ? entry : entry.bid;
 
-    if (bid && bid \!== 'Pass' && bid \!== 'X' && bid \!== 'XX') {
+    if (bid && bid !== 'Pass' && bid !== 'X' && bid !== 'XX') {
       lastBid = bid;
       // Calculate who made this bid based on dealer + position in auction
       lastBidderIndex = (effectiveDealerIdx + i) % 4;
@@ -582,7 +584,7 @@ const deriveContractFromAuction = (auctionHistory, dealer = 'N') => {
     }
   }
 
-  if (\!lastBid) {
+  if (!lastBid) {
     // All passes - no contract
     return { contract: 'Passed Out', declarer: null };
   }
@@ -1258,8 +1260,8 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
         const tricksDisplay = getTricksForUser(tooltip.board);
         const role = tooltip.board.user_was_declarer ? 'Declarer' : tooltip.board.user_was_dummy ? 'Dummy' : 'Defender';
         const declarerName = tooltip.board.declarer === 'N' ? 'North' :
-                             tooltip.board.declarer === 'S' ? 'South' :
-                             tooltip.board.declarer === 'E' ? 'East' : 'West';
+          tooltip.board.declarer === 'S' ? 'South' :
+            tooltip.board.declarer === 'E' ? 'East' : 'West';
 
         // Domain display for differential analysis
         const domainDisplay = {
