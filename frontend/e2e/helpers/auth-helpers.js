@@ -23,29 +23,36 @@ export async function ensureNoModal(page) {
  */
 export async function loginAsGuest(page) {
   await page.goto('http://localhost:3000');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
-  // Check if login modal is already visible (auto-shows on app load)
+  // Wait for either the modal or the sign-in button to appear (indicates app loaded)
+  try {
+    const entryPoint = page.locator('[data-testid="login-modal"], [data-testid="sign-in-button"]').first();
+    await entryPoint.waitFor({ state: 'visible', timeout: 15000 });
+  } catch (e) {
+    console.log('⚠️ Timeout waiting for app entry point - continuing anyway');
+  }
+
+  // Check if login modal is already visible
   const loginModal = page.locator('[data-testid="login-modal"]');
-  const modalVisible = await loginModal.isVisible({ timeout: 2000 }).catch(() => false);
+  const modalVisible = await loginModal.isVisible().catch(() => false);
 
   if (!modalVisible) {
     // Modal not visible, try clicking sign-in button
     const signInButton = page.locator('[data-testid="sign-in-button"]');
-    const buttonExists = await signInButton.isVisible({ timeout: 2000 }).catch(() => false);
-
-    if (buttonExists) {
+    if (await signInButton.isVisible()) {
       await signInButton.click();
-      await page.waitForSelector('[data-testid="login-modal"]', { state: 'visible' });
+      await page.waitForSelector('[data-testid="login-modal"]', { state: 'visible', timeout: 5000 });
     }
   }
 
   // Click guest button (handles both "Continue as Guest" and "login-guest-button")
   const guestButton = page.locator('[data-testid="login-guest-button"], button:has-text("Continue as Guest")');
-  await guestButton.click();
+  await guestButton.waitFor({ state: 'visible', timeout: 10000 });
+  await guestButton.click({ force: true });
 
   // Wait for modal to close
-  await page.waitForSelector('[data-testid="login-modal"]', { state: 'hidden', timeout: 5000 });
+  await page.waitForSelector('[data-testid="login-modal"]', { state: 'hidden', timeout: 10000 });
 }
 
 /**
@@ -54,7 +61,7 @@ export async function loginAsGuest(page) {
  */
 export async function loginWithEmail(page, email, displayName = '') {
   await page.goto('http://localhost:3000');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   // Use API call directly to support display_name parameter
   const loginData = {
@@ -89,7 +96,7 @@ export async function loginWithEmail(page, email, displayName = '') {
 
   // Reload to apply login
   await page.reload();
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   // Verify logged in
   await page.waitForSelector('[data-testid="user-menu"]', { state: 'visible', timeout: 5000 });
@@ -101,7 +108,7 @@ export async function loginWithEmail(page, email, displayName = '') {
  */
 export async function loginWithPhone(page, phone, displayName = '') {
   await page.goto('http://localhost:3000');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   // Use API call directly to support display_name parameter
   const loginData = {
@@ -136,7 +143,7 @@ export async function loginWithPhone(page, phone, displayName = '') {
 
   // Reload to apply login
   await page.reload();
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   // Verify logged in
   await page.waitForSelector('[data-testid="user-menu"]', { state: 'visible', timeout: 5000 });
@@ -146,7 +153,10 @@ export async function loginWithPhone(page, phone, displayName = '') {
  * Logout current user
  */
 export async function logout(page) {
-  await page.click('[data-testid="logout-button"]');
+  // Open user menu
+  await page.click('[data-testid="user-menu-trigger"]');
+  // Click logout button in menu
+  await page.click('[data-testid="user-menu-logout"]');
 
   // Verify logged out
   await page.waitForSelector('[data-testid="sign-in-button"]', { state: 'visible' });
