@@ -381,6 +381,25 @@ function App() {
     return bids.length >= 4 && nonPassBids.length === 0;
   }, []);
 
+  // Helper: Check if next player is user-controlled using BridgeRulesEngine data
+  // This replaces inconsistent inline checks with a single source of truth.
+  // Uses controllable_positions from backend when available, with comprehensive fallback.
+  const isNextPlayerUserControlled = useCallback((state) => {
+    if (!state || !state.next_to_play || !state.contract) return false;
+
+    // Prefer backend BridgeRulesEngine data (single-player mode aware)
+    if (state.controllable_positions) {
+      return state.controllable_positions.includes(state.next_to_play);
+    }
+
+    // Fallback: match AI loop's comprehensive single-player logic
+    const nsIsDeclaring = state.contract.declarer === 'N' || state.contract.declarer === 'S';
+    if (nsIsDeclaring) {
+      return state.next_to_play === 'N' || state.next_to_play === 'S';
+    }
+    return state.next_to_play === 'S';
+  }, []);
+
   // No longer auto-show login - users start as guests and can register later
   // The RegistrationPrompt will appear after they've played a few hands
 
@@ -887,8 +906,11 @@ ${otherCommands}`;
 
         // === BUG FIX: Use visible_hands from backend to populate declarer hand ===
         // Backend's BridgeRulesEngine determines which hands should be visible
+        // IMPORTANT: Only set declarerHand when declarer is NOT South (user).
+        // When S is declarer, the user's own hand is managed by the `hand` state.
+        // Setting declarerHand to S's cards causes duplication and stale-state bugs.
         const declarerPos = state.contract.declarer;
-        if (state.visible_hands && state.visible_hands[declarerPos]) {
+        if (declarerPos !== 'S' && state.visible_hands && state.visible_hands[declarerPos]) {
           const declarerCards = state.visible_hands[declarerPos].cards || [];
           console.log('👁️ Setting declarer hand from visible_hands (startPlayPhase):', {
             declarerPos,
@@ -896,7 +918,7 @@ ${otherCommands}`;
             visible_hands_keys: Object.keys(state.visible_hands)
           });
           setDeclarerHand(declarerCards);
-        } else if (state.dummy === 'S') {
+        } else if (declarerPos !== 'S' && state.dummy === 'S') {
           // FALLBACK: If visible_hands not available, use old method
           console.log('⚠️ visible_hands not available, falling back to /api/get-all-hands');
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
@@ -1065,12 +1087,7 @@ ${otherCommands}`;
           }
 
           // Start AI loop only if it's not the user's turn
-          // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
-          // This fixes the bug where user couldn't play from North after first trick
-          const nsDeclaringAfterTrick = nextState.contract.declarer === 'N' || nextState.contract.declarer === 'S';
-          const nextIsUserTurn = nextState.next_to_play === 'S' ||
-            (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
-          if (!nextIsUserTurn) {
+          if (!isNextPlayerUserControlled(nextState)) {
             // Reset flag first to ensure useEffect triggers, then set it back to true
             setIsPlayingCard(false);
             setTimeout(() => setIsPlayingCard(true), 100);
@@ -1083,11 +1100,7 @@ ${otherCommands}`;
         const updatedState = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } }).then(r => r.json());
         setPlayState(updatedState);
 
-        // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
-        const nsDeclaringInProgress = updatedState.contract.declarer === 'N' || updatedState.contract.declarer === 'S';
-        const nextIsUserTurn = updatedState.next_to_play === 'S' ||
-          (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
-        if (!nextIsUserTurn) {
+        if (!isNextPlayerUserControlled(updatedState)) {
           // Reset flag first to ensure useEffect triggers, then set it back to true
           setIsPlayingCard(false);
           setTimeout(() => setIsPlayingCard(true), 100);
@@ -1222,12 +1235,7 @@ ${otherCommands}`;
           }
 
           // Start AI loop only if it's not the user's turn
-          // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
-          // This fixes the bug where user couldn't play from North after first trick
-          const nsDeclaringAfterTrick = nextState.contract.declarer === 'N' || nextState.contract.declarer === 'S';
-          const nextIsUserTurn = nextState.next_to_play === 'S' ||
-            (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
-          if (!nextIsUserTurn) {
+          if (!isNextPlayerUserControlled(nextState)) {
             // Reset flag first to ensure useEffect triggers, then set it back to true
             setIsPlayingCard(false);
             setTimeout(() => setIsPlayingCard(true), 100);
@@ -1240,11 +1248,7 @@ ${otherCommands}`;
         const updatedState = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } }).then(r => r.json());
         setPlayState(updatedState);
 
-        // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
-        const nsDeclaringInProgress = updatedState.contract.declarer === 'N' || updatedState.contract.declarer === 'S';
-        const nextIsUserTurn = updatedState.next_to_play === 'S' ||
-          (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
-        if (!nextIsUserTurn) {
+        if (!isNextPlayerUserControlled(updatedState)) {
           // Reset flag first to ensure useEffect triggers, then set it back to true
           setIsPlayingCard(false);
           setTimeout(() => setIsPlayingCard(true), 100);
@@ -1385,12 +1389,7 @@ ${otherCommands}`;
           }
 
           // Start AI loop only if it's not the user's turn
-          // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
-          // This fixes the bug where user couldn't play from North after first trick
-          const nsDeclaringAfterTrick = nextState.contract.declarer === 'N' || nextState.contract.declarer === 'S';
-          const nextIsUserTurn = nextState.next_to_play === 'S' ||
-            (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
-          if (!nextIsUserTurn) {
+          if (!isNextPlayerUserControlled(nextState)) {
             // Reset flag first to ensure useEffect triggers, then set it back to true
             setIsPlayingCard(false);
             setTimeout(() => setIsPlayingCard(true), 100);
@@ -1403,11 +1402,7 @@ ${otherCommands}`;
         const updatedState = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } }).then(r => r.json());
         setPlayState(updatedState);
 
-        // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
-        const nsDeclaringInProgress = updatedState.contract.declarer === 'N' || updatedState.contract.declarer === 'S';
-        const nextIsUserTurn = updatedState.next_to_play === 'S' ||
-          (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
-        if (!nextIsUserTurn) {
+        if (!isNextPlayerUserControlled(updatedState)) {
           // Reset flag first to ensure useEffect triggers, then set it back to true
           setIsPlayingCard(false);
           setTimeout(() => setIsPlayingCard(true), 100);
@@ -1654,15 +1649,16 @@ ${otherCommands}`;
         setPlayState(state);
 
         // === BUG FIX: Use visible_hands from backend ===
+        // Only set declarerHand when declarer is NOT South to avoid duplication
         const declarerPos = state.contract.declarer;
-        if (state.visible_hands && state.visible_hands[declarerPos]) {
+        if (declarerPos !== 'S' && state.visible_hands && state.visible_hands[declarerPos]) {
           const declarerCards = state.visible_hands[declarerPos].cards || [];
           console.log('👁️ Setting declarer hand from visible_hands (playRandomHand):', {
             declarerPos,
             cardCount: declarerCards.length
           });
           setDeclarerHand(declarerCards);
-        } else if (state.dummy === 'S') {
+        } else if (declarerPos !== 'S' && state.dummy === 'S') {
           // FALLBACK: Old method
           console.log('⚠️ visible_hands not available, falling back to /api/get-all-hands');
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
@@ -1724,15 +1720,16 @@ ${otherCommands}`;
         setPlayState(state);
 
         // === BUG FIX: Use visible_hands from backend ===
+        // Only set declarerHand when declarer is NOT South to avoid duplication
         const declarerPos = state.contract.declarer;
-        if (state.visible_hands && state.visible_hands[declarerPos]) {
+        if (declarerPos !== 'S' && state.visible_hands && state.visible_hands[declarerPos]) {
           const declarerCards = state.visible_hands[declarerPos].cards || [];
           console.log('👁️ Setting declarer hand from visible_hands (replayCurrentHand):', {
             declarerPos,
             cardCount: declarerCards.length
           });
           setDeclarerHand(declarerCards);
-        } else if (state.dummy === 'S') {
+        } else if (declarerPos !== 'S' && state.dummy === 'S') {
           // FALLBACK: Old method
           console.log('⚠️ visible_hands not available, falling back to /api/get-all-hands');
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
@@ -2227,10 +2224,16 @@ ${otherCommands}`;
       return;
     }
 
+    // AbortController prevents stale invocations from racing with fresh ones
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+
     const runAiPlay = async () => {
       try {
+        if (signal.aborted) return;
         console.log('🎬 AI play loop RUNNING...');
         // Get current play state
+        if (signal.aborted) return;
         const stateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
 
         // Handle session state loss (e.g., server restart)
@@ -2277,8 +2280,9 @@ ${otherCommands}`;
 
         // === BUG FIX: Use visible_hands from backend to populate declarer hand ===
         // Backend's BridgeRulesEngine already determines which hands should be visible
-        // Use this data instead of making a separate API call
-        if (state.visible_hands && state.visible_hands[declarerPos]) {
+        // IMPORTANT: Only set declarerHand when declarer is NOT South to avoid duplication.
+        // When S is declarer, the user's own hand is managed by the `hand` state.
+        if (declarerPos !== 'S' && state.visible_hands && state.visible_hands[declarerPos]) {
           const visibleDeclarerCards = state.visible_hands[declarerPos].cards || [];
           console.log('👁️ Setting declarer hand from visible_hands:', {
             declarerPos,
@@ -2318,6 +2322,7 @@ ${otherCommands}`;
         if (totalTricks === 13) {
           console.log('🏁 All 13 tricks complete! Fetching final score...');
           // Play complete - calculate score
+          if (signal.aborted) return;
           const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
@@ -2415,6 +2420,7 @@ ${otherCommands}`;
         // AI player's turn
         await new Promise(resolve => setTimeout(resolve, 1000)); // Delay for visibility
 
+        if (signal.aborted) return;
         const playResponse = await fetch(`${API_URL}/api/get-ai-play`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
@@ -2460,6 +2466,7 @@ ${otherCommands}`;
         console.log('AI played:', playData);
 
         // Fetch updated play state to show the card that was just played
+        if (signal.aborted) return;
         const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
         if (updatedStateResponse.ok) {
           const updatedState = await updatedStateResponse.json();
@@ -2484,12 +2491,14 @@ ${otherCommands}`;
           trickClearTimeoutRef.current = null;
 
           // Clear the trick
+          if (signal.aborted) return;
           await fetch(`${API_URL}/api/clear-trick`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...getSessionHeaders() }
           });
 
           // Fetch updated play state to show empty trick
+          if (signal.aborted) return;
           const clearedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
           if (clearedStateResponse.ok) {
             const clearedState = await clearedStateResponse.json();
@@ -2504,6 +2513,7 @@ ${otherCommands}`;
             if (totalTricksAfterClear === 13) {
               console.log('🏁 All 13 tricks complete after AI play! Fetching final score...');
               // Play complete - calculate score
+              if (signal.aborted) return;
               const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
@@ -2529,20 +2539,7 @@ ${otherCommands}`;
             }
 
             // CRITICAL FIX: Check if next player is user-controlled before restarting AI loop
-            // User controls BOTH N and S when NS is declaring (declarer is N or S)
-            // This fixes the bug where user couldn't play from North after first trick
-            const nsIsDeclaring = clearedState.contract.declarer === 'N' || clearedState.contract.declarer === 'S';
-            const nextIsUserControlled = clearedState.next_to_play === 'S' ||
-              (clearedState.next_to_play === 'N' && nsIsDeclaring);
-
-            console.log('🎯 Next player control check after trick clear:', {
-              next_to_play: clearedState.next_to_play,
-              declarer: clearedState.contract.declarer,
-              nsIsDeclaring,
-              nextIsUserControlled
-            });
-
-            if (nextIsUserControlled) {
+            if (isNextPlayerUserControlled(clearedState)) {
               console.log('⏸️ STOPPING - Next player after trick clear is user-controlled');
               setIsPlayingCard(false);
               return;

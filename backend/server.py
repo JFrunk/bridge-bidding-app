@@ -198,6 +198,52 @@ session_manager = SessionManager('bridge.db')  # Session management
 
 # Initialize session state manager (replaces global variables)
 state_manager = SessionStateManager()
+
+
+def ensure_bidding_tables():
+    """Ensure bidding_decisions table exists (safe to call repeatedly)."""
+    try:
+        conn = sqlite3.connect('bridge.db')
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS bidding_decisions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hand_analysis_id INTEGER,
+                user_id INTEGER NOT NULL,
+                session_id TEXT,
+                bid_number INTEGER NOT NULL,
+                position TEXT NOT NULL,
+                dealer TEXT,
+                vulnerability TEXT,
+                user_bid TEXT NOT NULL,
+                optimal_bid TEXT NOT NULL,
+                auction_before TEXT,
+                correctness TEXT NOT NULL,
+                score REAL NOT NULL,
+                impact TEXT,
+                error_category TEXT,
+                error_subcategory TEXT,
+                key_concept TEXT,
+                difficulty TEXT,
+                helpful_hint TEXT,
+                reasoning TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_bidding_decisions_user_time
+                ON bidding_decisions(user_id, timestamp DESC)
+        """)
+        conn.commit()
+        conn.close()
+        print("✅ bidding_decisions table ready")
+    except Exception as e:
+        print(f"⚠️ Could not ensure bidding tables: {e}")
+
+
+# Ensure bidding tables exist on import (covers both gunicorn and __main__)
+ensure_bidding_tables()
 app.config['STATE_MANAGER'] = state_manager
 
 # REMOVED: Global state variables are now per-session
@@ -3596,6 +3642,17 @@ def clear_trick():
         return jsonify({"error": "No play in progress"}), 400
 
     try:
+        # SAFETY GUARD: Only clear if trick is complete (4 cards played)
+        # Clearing a mid-trick state would permanently destroy cards that were
+        # already removed from player hands — causing unrecoverable state corruption.
+        trick_size = len(state.play_state.current_trick)
+        if trick_size > 0 and trick_size < 4:
+            print(f"⚠️  clear-trick BLOCKED: trick has {trick_size} cards (not complete)")
+            return jsonify({
+                "error": f"Cannot clear incomplete trick ({trick_size}/4 cards played)",
+                "trick_size": trick_size
+            }), 400
+
         # Clear the current trick and reset leader
         state.play_state.current_trick = []
         state.play_state.current_trick_leader = None

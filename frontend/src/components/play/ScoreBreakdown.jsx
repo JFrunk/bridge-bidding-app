@@ -38,24 +38,24 @@ export function ScoreBreakdown({
   // Helper to format score items
   const ScoreItem = ({ label, value, explanation, isTotal = false }) => (
     <div className={cn(
-      "flex justify-between items-start gap-4 py-2",
+      "flex justify-between items-start gap-4 py-2 min-w-0",
       isTotal && "border-t-2 border-gray-300 mt-2 pt-3 font-bold"
     )}>
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <div className={cn(
-          "text-base",
+          "text-base break-words",
           isTotal ? "text-lg font-bold text-gray-900" : "font-medium text-gray-800"
         )}>
           {label}
         </div>
         {explanation && (
-          <div className="text-sm text-gray-600 mt-0.5 leading-tight">
+          <div className="text-sm text-gray-600 mt-0.5 leading-tight break-words">
             {explanation}
           </div>
         )}
       </div>
       <div className={cn(
-        "text-right",
+        "text-right shrink-0",
         isTotal ? "text-2xl font-bold" : "text-lg font-semibold",
         value > 0 ? "text-success" : value < 0 ? "text-danger" : "text-gray-500"
       )}>
