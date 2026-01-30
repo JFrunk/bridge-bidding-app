@@ -73,6 +73,11 @@ export function AuthProvider({ children }) {
       // Setting user to null will trigger login screen
       setUser(null);
       setLoading(false);
+
+      // Clear stale experience level so the Welcome Wizard shows on next login.
+      // Without this, a hard reset (backend DB cleared but localStorage persists)
+      // would skip the onboarding questionnaire.
+      localStorage.removeItem('bridge_experience_level');
     }
 
     // Load hands completed from localStorage
@@ -199,6 +204,7 @@ export function AuthProvider({ children }) {
 
     localStorage.removeItem('session_token');
     localStorage.removeItem('bridge_user');
+    localStorage.removeItem('bridge_experience_level');
     // Clear user state - this will show login screen (isAuthenticated becomes false)
     setUser(null);
     setLoading(false);

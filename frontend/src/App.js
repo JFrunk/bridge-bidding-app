@@ -1848,11 +1848,9 @@ ${otherCommands}`;
     if (authLoading) return;
 
     // Don't start a session until we have a real userId (from login or guest)
-    // Without this guard, userId defaults to 1 which causes 500 errors
-    if (!userId) {
-      setIsInitializing(false);
-      return;
-    }
+    // Without this guard, userId defaults to 1 which causes 500 errors.
+    // Keep isInitializing=true so AI bidding stays blocked until session starts.
+    if (!userId) return;
 
     const startSession = async () => {
       try {
@@ -2206,6 +2204,10 @@ ${otherCommands}`;
   // Trigger AI bidding after initialization completes (if dealer is not South)
   // Uses ref to prevent duplicate triggers and avoid infinite loops
   useEffect(() => {
+    // Don't start AI bidding while on the landing page (mode selector)
+    // gamePhase defaults to 'bidding' even before user enters a workspace
+    if (showModeSelector) return;
+
     if (!isInitializing && gamePhase === 'bidding' && auction.length === 0 && !hasTriggeredInitialBid.current) {
       const currentPlayer = players[nextPlayerIndex];
       console.log('🎬 Post-initialization check:', {
@@ -2223,7 +2225,7 @@ ${otherCommands}`;
         setIsAiBidding(true);
       }
     }
-  }, [isInitializing, gamePhase, auction.length, players, nextPlayerIndex]);
+  }, [isInitializing, gamePhase, auction.length, players, nextPlayerIndex, showModeSelector]);
 
   // AI play loop - runs during play phase
   useEffect(() => {
