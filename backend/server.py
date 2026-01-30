@@ -1479,6 +1479,9 @@ def deal_hands():
     if state.game_session:
         dealer = state.game_session.get_current_dealer()
 
+    # Normalize dealer to full name (get_current_dealer() returns short form 'N','E','S','W')
+    dealer = BridgeRulesEngine.SHORT_TO_FULL.get(dealer, dealer)
+
     # Store dealer & reset auction on session (backend is source of truth)
     state.dealer = dealer
     state.auction_history = []
@@ -1543,7 +1546,7 @@ def get_next_bid():
         explanation_level = data.get('explanation_level', 'detailed')
 
         # ── Authoritative turn calculation from session state ──
-        dealer = state.dealer or 'North'
+        dealer = BridgeRulesEngine.SHORT_TO_FULL.get(state.dealer, state.dealer) if state.dealer else 'North'
         auction_length = len(state.auction_history)
         expected_bidder = BridgeRulesEngine.get_current_bidder(dealer, auction_length)
 
@@ -1822,7 +1825,7 @@ def evaluate_bid():
             return jsonify({'error': f'Hand for {current_player} not available'}), 400
 
         # Use authoritative dealer from session state
-        dealer = state.dealer or 'North'
+        dealer = BridgeRulesEngine.SHORT_TO_FULL.get(state.dealer, state.dealer) if state.dealer else 'North'
 
         # Serialize deal data for storage (enables bidding history review without session_hands)
         deal_data = None
