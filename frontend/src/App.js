@@ -467,6 +467,15 @@ function App() {
   // Prevents duplicate triggers while avoiding infinite loops
   const hasTriggeredInitialBid = useRef(false);
 
+  // Track hand completion once when scoreData is set (avoids multiple code paths double-counting)
+  const lastRecordedScoreRef = useRef(null);
+  useEffect(() => {
+    if (scoreData && scoreData !== lastRecordedScoreRef.current) {
+      lastRecordedScoreRef.current = scoreData;
+      recordHandCompleted();
+    }
+  }, [scoreData, recordHandCompleted]);
+
   // Ref to track if AI loop should be kept alive during state transitions
   // Prevents cleanup function from killing the loop when we just want to restart it
   const keepAiLoopAlive = useRef(false);
@@ -1076,7 +1085,6 @@ ${otherCommands}`;
               const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
               if (saved) scoreData._saved = true;
               setScoreData(scoreData);
-              recordHandCompleted();
             } else {
               const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
               console.error('❌ Failed to get score:', errorData);
@@ -1224,7 +1232,6 @@ ${otherCommands}`;
               const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
               if (saved) scoreData._saved = true;
               setScoreData(scoreData);
-              recordHandCompleted();
             } else {
               const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
               console.error('❌ Failed to get score:', errorData);
@@ -1378,7 +1385,6 @@ ${otherCommands}`;
               const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
               if (saved) scoreData._saved = true;
               setScoreData(scoreData);
-              recordHandCompleted();
             } else {
               const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
               console.error('❌ Failed to get score:', errorData);
@@ -1887,14 +1893,15 @@ ${otherCommands}`;
   }, [authLoading, userId]);
 
   // Helper function to calculate whose turn it is based on dealer and auction length
-  const calculateExpectedBidder = (currentDealer, auctionLength) => {
+  // Memoized to prevent the AI bidding useEffect from firing on every render
+  const calculateExpectedBidder = useCallback((currentDealer, auctionLength) => {
     const dealerIndex = players.indexOf(currentDealer);
     if (dealerIndex === -1) {
       console.error('❌ Invalid dealer for turn calculation:', currentDealer);
       return 'North'; // Fallback
     }
     return players[(dealerIndex + auctionLength) % 4];
-  };
+  }, [players]);
 
   // Helper function to commit a bid after all validations/confirmations
   const commitBid = async (bid, feedbackData = null) => {
@@ -2128,7 +2135,10 @@ ${otherCommands}`;
         return;
       }
 
-      console.log('✅ Starting AI turn for:', currentPlayer);
+      // Capture auction length at the time this effect fires.
+      // Used inside runAiTurn to detect if auction changed during the delay.
+      const expectedAuctionLength = auction.length;
+      console.log('✅ Starting AI turn for:', currentPlayer, 'at auctionLength:', expectedAuctionLength);
 
       const runAiTurn = async () => {
         isAiBiddingInProgress.current = true;
@@ -2138,7 +2148,15 @@ ${otherCommands}`;
         try {
           // Calculate current player from auction length and dealer
           const currentPlayer = calculateExpectedBidder(dealer, auction.length);
-          console.log('🎯 AI making bid for:', currentPlayer);
+          console.log('🎯 AI making bid for:', currentPlayer, 'auctionLength:', auction.length);
+
+          // Defense-in-depth: if auction length changed since effect fired,
+          // another effect will handle the new state — abort this stale one.
+          if (auction.length !== expectedAuctionLength) {
+            console.log('⚠️ Stale runAiTurn detected: auction changed from', expectedAuctionLength, 'to', auction.length);
+            isAiBiddingInProgress.current = false;
+            return;
+          }
 
           // Double-check it's not South's turn
           if (currentPlayer === 'South') {
@@ -2173,17 +2191,19 @@ ${otherCommands}`;
           const data = await response.json();
           console.log('✅ AI bid received:', data);
 
-          // CRITICAL: Release guard BEFORE updating auction
-          // This prevents race condition where flushSync triggers useEffect before guard is released
-          isAiBiddingInProgress.current = false;
-          console.log('🔓 AI bid guard released (before auction update)');
-
           // Update auction with flushSync to force immediate render
           // This ensures each AI bid appears before the next one starts
           flushSync(() => {
             setAuction(prevAuction => [...prevAuction, data]);
           });
-          console.log('✅ Auction updated with AI bid');
+
+          // CRITICAL: Release guard AFTER flushSync so any pending effects
+          // flushed during flushSync still see the guard as held.
+          // Previously, releasing before flushSync allowed pending effects
+          // (triggered by unmemoized deps) to start a duplicate runAiTurn
+          // for the same player with stale auction state.
+          isAiBiddingInProgress.current = false;
+          console.log('✅ Auction updated with AI bid, guard released');
         } catch (err) {
           console.error('❌ AI bidding error:', err);
           setError("AI bidding failed. Is the server running?");
@@ -2358,7 +2378,6 @@ ${otherCommands}`;
             const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
             if (saved) scoreData._saved = true;
             setScoreData(scoreData);
-            recordHandCompleted();
           } else {
             // Handle error response
             const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
@@ -2549,7 +2568,6 @@ ${otherCommands}`;
                 const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
                 if (saved) scoreData._saved = true;
                 setScoreData(scoreData);
-                recordHandCompleted();
               } else {
                 const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
                 console.error('❌ Failed to get score after AI play:', errorData);
