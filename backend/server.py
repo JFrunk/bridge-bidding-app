@@ -2047,15 +2047,15 @@ def evaluate_bid():
 
         # ── Record user's bid in session state and compute next bidder ──
         # Governor pre-evaluation sends record_bid=False to avoid recording
-        # a bid that might be blocked and changed.
+        # a bid that might be blocked and changed.  Don't send next_bidder
+        # for pre-eval to avoid desyncing frontend state.
         if record_bid:
             state.auction_history.append(user_bid)
             auction_len_after = len(state.auction_history)
+            next_bidder = BridgeRulesEngine.get_current_bidder(
+                dealer, auction_len_after)
         else:
-            # Pre-evaluation: compute as if the bid were recorded
-            auction_len_after = len(state.auction_history) + 1
-        next_bidder = BridgeRulesEngine.get_current_bidder(
-            dealer, auction_len_after)
+            next_bidder = None
 
         # Build response
         response = {

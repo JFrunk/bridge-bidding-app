@@ -416,8 +416,8 @@ class BiddingEngineV2:
 
         This is the STATE MACHINE - clear, testable logic.
         """
-        # Game forcing overrides other states
-        if forcing == ForcingStatus.GAME_FORCING:
+        # Game forcing overrides other states — but only for the opening partnership
+        if forcing == ForcingStatus.GAME_FORCING and opener_relationship in ('Me', 'Partner'):
             return BiddingState.GAME_FORCING
 
         # No opener yet = opening position
@@ -679,6 +679,10 @@ class BiddingEngineV2:
         auction_history: list
     ) -> Tuple[str, str]:
         """Apply safety nets for game-forcing and slam exploration."""
+
+        # Safety nets only apply to partnership auctions (I opened or partner opened)
+        if state.opener_relationship not in ('Me', 'Partner'):
+            return (bid, explanation)
 
         # Safety net 1: Game-forcing must not pass below game
         if state.forcing == ForcingStatus.GAME_FORCING and bid == 'Pass':
