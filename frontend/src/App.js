@@ -274,16 +274,17 @@ function App() {
   const [players] = useState(['North', 'East', 'South', 'West']);
   const [dealer, setDealer] = useState('North');
 
-  // DERIVED STATE: Calculate nextPlayerIndex from auction length and dealer
-  // This prevents state synchronization bugs between auction and nextPlayerIndex
+  // Backend-authoritative bidder: set from API responses (/api/deal-hands,
+  // /api/get-next-bid, /api/evaluate-bid).  The backend is the single source
+  // of truth for whose turn it is to bid.
+  const [nextBidder, setNextBidder] = useState(null);
+
+  // Derive the numeric index for UI display (BiddingTable highlight, etc.)
   const nextPlayerIndex = useMemo(() => {
-    const dealerIndex = players.indexOf(dealer);
-    if (dealerIndex === -1) {
-      console.error('❌ Invalid dealer:', dealer);
-      return 0; // Fallback to North
-    }
-    return (dealerIndex + auction.length) % 4;
-  }, [auction.length, dealer, players]);
+    if (!nextBidder) return 0;
+    const idx = players.indexOf(nextBidder);
+    return idx >= 0 ? idx : 0;
+  }, [nextBidder, players]);
 
   const [isAiBidding, setIsAiBidding] = useState(false);
   const [error, setError] = useState('');
@@ -494,21 +495,23 @@ function App() {
     const dealerMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
     const currentDealer = dealerMap[dealerFromBackend] || dealerFromBackend;
 
+    // Set next bidder from backend response (source of truth)
+    const backendNextBidder = dealData.next_bidder || currentDealer;
     console.log('🎲 resetAuction:', {
       dealerFromBackend,
       currentDealer,
+      nextBidder: backendNextBidder,
       players
     });
 
     setDealer(currentDealer);
+    setNextBidder(backendNextBidder);
 
     setAuction([]);
 
     // Reset the AI bidding guards when auction is reset
     isAiBiddingInProgress.current = false;
     hasTriggeredInitialBid.current = false;
-    // NOTE: nextPlayerIndex is now derived from dealer + auction.length
-    // No need to manually set it - it will auto-calculate on next render
 
     setDisplayedMessage('');
     setError('');
@@ -1595,17 +1598,13 @@ ${otherCommands}`;
       if (!response.ok) throw new Error("Failed to deal hands.");
       const data = await response.json();
 
-      // FIX: Map abbreviated dealer names to full names
-      const dealerMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
-      const dealerFromBackend = data.dealer || 'North';
-      const currentDealer = dealerMap[dealerFromBackend] || dealerFromBackend;
-
-      const shouldAiBid = players.indexOf(currentDealer) !== 2; // Dealer is not South
+      // Backend returns next_bidder — use it to decide if AI should start bidding
+      const shouldAiBid = data.next_bidder && data.next_bidder !== 'South';
 
       // Store DD table if provided (production only)
       setDdTable(data.dd_table || null);
 
-      resetAuction(data, !shouldAiBid); // Pass correct skipInitialAiBidding value
+      resetAuction(data, !shouldAiBid);
       setIsInitializing(false); // Ensure we're not in initializing state for manual deals
       setActiveConvention(null); // Exit convention mode when dealing random hand
     } catch (err) { setError("Could not connect to server to deal."); }
@@ -1892,16 +1891,8 @@ ${otherCommands}`;
     startSession();
   }, [authLoading, userId]);
 
-  // Helper function to calculate whose turn it is based on dealer and auction length
-  // Memoized to prevent the AI bidding useEffect from firing on every render
-  const calculateExpectedBidder = useCallback((currentDealer, auctionLength) => {
-    const dealerIndex = players.indexOf(currentDealer);
-    if (dealerIndex === -1) {
-      console.error('❌ Invalid dealer for turn calculation:', currentDealer);
-      return 'North'; // Fallback
-    }
-    return players[(dealerIndex + auctionLength) % 4];
-  }, [players]);
+  // calculateExpectedBidder removed — backend is now the single source of
+  // truth for whose turn it is to bid (via next_bidder in API responses).
 
   // Helper function to commit a bid after all validations/confirmations
   const commitBid = async (bid, feedbackData = null) => {
@@ -1916,10 +1907,15 @@ ${otherCommands}`;
     setDisplayedMessage('...');
     const newAuction = [...auction, { bid: bid, explanation: 'Your bid.', player: 'South' }];
 
-    // CRITICAL FIX: Use flushSync to force immediate render before AI bidding starts
-    // This ensures user's bid appears in the table before subsequent AI bids
+    // Optimistic next-bidder: clockwise from current position.
+    // The evaluate-bid response will carry the authoritative value.
+    const dealerIdx = players.indexOf(dealer);
+    const optimisticNextBidder = players[(dealerIdx + newAuction.length) % 4];
+
+    // Use flushSync to ensure user's bid and next bidder render together
     flushSync(() => {
       setAuction(newAuction);
+      setNextBidder(optimisticNextBidder);
     });
 
     // Enable AI bidding after user's bid is rendered
@@ -1927,6 +1923,10 @@ ${otherCommands}`;
 
     // If we already have feedback data (from pre-evaluation), use it
     if (feedbackData) {
+      // Update nextBidder from backend if available
+      if (feedbackData.next_bidder) {
+        setNextBidder(feedbackData.next_bidder);
+      }
       setLastUserBid(bid);
       setBidFeedback(feedbackData.feedback || null);
       setDisplayedMessage(feedbackData.user_message || feedbackData.explanation || 'Bid recorded.');
@@ -1960,6 +1960,10 @@ ${otherCommands}`;
       }
 
       const data = await feedbackResponse.json();
+      // Update nextBidder from authoritative backend response
+      if (data.next_bidder) {
+        setNextBidder(data.next_bidder);
+      }
       setLastUserBid(bid);
       setBidFeedback(data.feedback || null);
       setDisplayedMessage(data.user_message || data.explanation || 'Bid recorded.');
@@ -1977,33 +1981,27 @@ ${otherCommands}`;
       return;
     }
 
-    // CRITICAL VALIDATION: Check if it's actually South's turn based on dealer rotation
-    const expectedBidder = calculateExpectedBidder(dealer, auction.length);
-    if (expectedBidder !== 'South') {
-      const errorMsg = `⚠️ Not your turn! Waiting for ${expectedBidder} to bid.`;
+    // CRITICAL VALIDATION: Check if it's actually South's turn (backend-authoritative)
+    if (nextBidder !== 'South') {
+      const errorMsg = `⚠️ Not your turn! Waiting for ${nextBidder} to bid.`;
       setError(errorMsg);
       setDisplayedMessage(errorMsg);
-      console.warn('🚫 User tried to bid out of turn:', {
-        dealer,
-        auctionLength: auction.length,
-        expectedBidder,
-        nextPlayerIndex,
-        players
-      });
+      console.warn('🚫 User tried to bid out of turn:', { nextBidder });
       return;
     }
 
     // Clear any previous errors
     setError('');
 
-    if (players[nextPlayerIndex] !== 'South' || isAiBidding) return;
+    if (nextBidder !== 'South' || isAiBidding) return;
 
     // Governor Safety Guard: When hints are enabled, pre-evaluate bid to check for critical issues
     if (hintModeEnabled) {
       setDisplayedMessage('Evaluating bid...');
 
       try {
-        // Pre-evaluate the bid BEFORE committing it
+        // Pre-evaluate the bid BEFORE committing it.
+        // record_bid: false so governor-blocked bids aren't recorded in session state.
         const feedbackResponse = await fetch(`${API_URL}/api/evaluate-bid`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
@@ -2014,7 +2012,8 @@ ${otherCommands}`;
             user_id: userId,
             session_id: sessionData?.session?.id,
             feedback_level: 'intermediate',
-            use_v2_schema: useV2Schema
+            use_v2_schema: useV2Schema,
+            record_bid: false
           })
         });
 
@@ -2087,165 +2086,106 @@ ${otherCommands}`;
 
   const handleBidClick = (bidObject) => { setDisplayedMessage(`[${bidObject.bid}] ${bidObject.explanation}`); };
 
+  // ── AI BIDDING LOOP ──
+  // Driven by `nextBidder` (set from backend API responses).
+  // When nextBidder is an AI player and isAiBidding is true, this effect
+  // calls /api/get-next-bid.  The response includes `next_bidder` which
+  // is written into state, re-triggering this effect for the next turn.
   useEffect(() => {
-    console.log('🤖 AI BIDDING USEEFFECT TRIGGERED:', {
-      isInitializing,
-      isAiBidding,
-      auctionLength: auction.length,
-      dealer,
-      gamePhase
+    console.log('🤖 AI BIDDING USEEFFECT:', {
+      isInitializing, isAiBidding, nextBidder, auctionLength: auction.length, gamePhase
     });
 
-    // Don't start AI bidding during initialization
-    if (isInitializing) {
-      console.log('⏸️ AI bidding blocked: isInitializing = true');
-      return;
-    }
+    if (isInitializing) return;
 
-    // Check if auction is over
     if (isAuctionOver(auction)) {
-      console.log('🏁 Auction is over');
-      if (isAiBidding) {
-        setIsAiBidding(false);
-      }
+      if (isAiBidding) setIsAiBidding(false);
       return;
     }
 
-    // Determine whose turn it is
-    const currentPlayer = calculateExpectedBidder(dealer, auction.length);
-    console.log('👤 Current player calculated:', currentPlayer);
+    // Backend tells us whose turn it is
+    if (!nextBidder) return;
 
-    // If it's South's turn, stop AI bidding
-    if (currentPlayer === 'South') {
-      console.log('👤 South\'s turn - stopping AI bidding');
-      if (isAiBidding) {
-        setIsAiBidding(false);
-      }
-      return; // Don't make AI bid for South
+    if (nextBidder === 'South') {
+      if (isAiBidding) setIsAiBidding(false);
+      return;
     }
 
-    // It's an AI player's turn (North/East/West)
-    console.log('🤖 AI player turn:', currentPlayer, '| isAiBidding:', isAiBidding);
+    // It's an AI player's turn
+    if (!isAiBidding) return;
 
-    // If AI bidding is enabled, make the bid
-    if (isAiBidding) {
-      // Prevent concurrent AI bids using a ref guard
-      if (isAiBiddingInProgress.current) {
-        console.log('⏸️ AI bid already in progress - skipping');
-        return;
-      }
+    // Prevent concurrent AI bids
+    if (isAiBiddingInProgress.current) return;
 
-      // Capture auction length at the time this effect fires.
-      // Used inside runAiTurn to detect if auction changed during the delay.
-      const expectedAuctionLength = auction.length;
-      console.log('✅ Starting AI turn for:', currentPlayer, 'at auctionLength:', expectedAuctionLength);
+    // Snapshot nextBidder at effect time for stale-check
+    const expectedBidder = nextBidder;
+    console.log('✅ Starting AI turn for:', expectedBidder);
 
-      const runAiTurn = async () => {
-        isAiBiddingInProgress.current = true;
-        console.log('⏱️ Waiting 500ms before AI bid...');
+    const runAiTurn = async () => {
+      isAiBiddingInProgress.current = true;
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-        await new Promise(resolve => setTimeout(resolve, 500));
-        try {
-          // Calculate current player from auction length and dealer
-          const currentPlayer = calculateExpectedBidder(dealer, auction.length);
-          console.log('🎯 AI making bid for:', currentPlayer, 'auctionLength:', auction.length);
-
-          // Defense-in-depth: if auction length changed since effect fired,
-          // another effect will handle the new state — abort this stale one.
-          if (auction.length !== expectedAuctionLength) {
-            console.log('⚠️ Stale runAiTurn detected: auction changed from', expectedAuctionLength, 'to', auction.length);
-            isAiBiddingInProgress.current = false;
-            return;
-          }
-
-          // Double-check it's not South's turn
-          if (currentPlayer === 'South') {
-            console.log('❌ Safety check failed - South\'s turn detected');
-            setIsAiBidding(false);
-            isAiBiddingInProgress.current = false;
-            return;
-          }
-
-          console.log('📡 Fetching AI bid from server...');
-          const response = await fetch(`${API_URL}/api/get-next-bid`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-            body: JSON.stringify({
-              auction_history: auction.map(a => a.bid),
-              current_player: currentPlayer,
-              dealer: dealer,
-              use_v2_schema: useV2Schema  // Dev mode: test V2 Schema engine
-            })
-          });
-
-          // Handle session state loss (e.g., server restart)
-          if (response.status === 400) {
-            const errorData = await response.json();
-            if (errorData.error && errorData.error.includes('Deal has not been made')) {
-              console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
-              throw new Error("Session expired. Please deal a new hand to continue.");
-            }
-          }
-
-          if (!response.ok) throw new Error("AI failed to get bid.");
-          const data = await response.json();
-          console.log('✅ AI bid received:', data);
-
-          // Update auction with flushSync to force immediate render
-          // This ensures each AI bid appears before the next one starts
-          flushSync(() => {
-            setAuction(prevAuction => [...prevAuction, data]);
-          });
-
-          // CRITICAL: Release guard AFTER flushSync so any pending effects
-          // flushed during flushSync still see the guard as held.
-          // Previously, releasing before flushSync allowed pending effects
-          // (triggered by unmemoized deps) to start a duplicate runAiTurn
-          // for the same player with stale auction state.
+      try {
+        // Stale-check: if nextBidder changed during delay, abort
+        // (nextBidder is captured via closure — this check uses the value
+        //  from the render that scheduled this effect)
+        if (nextBidder !== expectedBidder) {
           isAiBiddingInProgress.current = false;
-          console.log('✅ Auction updated with AI bid, guard released');
-        } catch (err) {
-          console.error('❌ AI bidding error:', err);
-          setError("AI bidding failed. Is the server running?");
-          setIsAiBidding(false);
-          // Release guard on error
-          isAiBiddingInProgress.current = false;
-          console.log('🔓 AI bid guard released (error path)');
+          return;
         }
-      };
-      runAiTurn();
-    } else {
-      console.log('❌ AI bidding NOT enabled for', currentPlayer, '- waiting for isAiBidding to be true');
-    }
-    // Note: If isAiBidding is false but it's an AI player's turn, we do nothing
-    // This allows the user or other code to manually trigger AI bidding by calling setIsAiBidding(true)
-  }, [auction, nextPlayerIndex, isAiBidding, players, isInitializing, dealer, calculateExpectedBidder]);
 
-  // Trigger AI bidding after initialization completes (if dealer is not South)
-  // Uses ref to prevent duplicate triggers and avoid infinite loops
-  useEffect(() => {
-    // Don't start AI bidding while on the landing page (mode selector)
-    // gamePhase defaults to 'bidding' even before user enters a workspace
-    if (showModeSelector) return;
+        console.log('📡 Fetching AI bid for:', expectedBidder);
+        const response = await fetch(`${API_URL}/api/get-next-bid`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+          body: JSON.stringify({
+            auction_history: auction.map(a => a.bid),
+            current_player: expectedBidder,
+            dealer: dealer,
+            use_v2_schema: useV2Schema
+          })
+        });
 
-    if (!isInitializing && gamePhase === 'bidding' && auction.length === 0 && !hasTriggeredInitialBid.current) {
-      const currentPlayer = players[nextPlayerIndex];
-      console.log('🎬 Post-initialization check:', {
-        isInitializing,
-        currentPlayer,
-        nextPlayerIndex,
-        shouldStartAI: currentPlayer !== 'South',
-        hasTriggered: hasTriggeredInitialBid.current
-      });
+        if (response.status === 400) {
+          const errorData = await response.json();
+          if (errorData.error?.includes('Deal has not been made')) {
+            throw new Error("Session expired. Please deal a new hand to continue.");
+          }
+        }
+        if (!response.ok) throw new Error("AI failed to get bid.");
 
-      // Only start AI if it's not South's turn
-      if (currentPlayer !== 'South') {
-        console.log('▶️ Starting AI bidding after initialization');
-        hasTriggeredInitialBid.current = true;  // Set ref BEFORE state to prevent race
-        setIsAiBidding(true);
+        const data = await response.json();
+        console.log('✅ AI bid received:', data);
+
+        // Atomic update: auction + next bidder from backend response
+        flushSync(() => {
+          setAuction(prev => [...prev, data]);
+          setNextBidder(data.next_bidder || null);
+        });
+
+        isAiBiddingInProgress.current = false;
+        console.log('✅ Auction updated, next_bidder:', data.next_bidder);
+      } catch (err) {
+        console.error('❌ AI bidding error:', err);
+        setError("AI bidding failed. Is the server running?");
+        setIsAiBidding(false);
+        isAiBiddingInProgress.current = false;
       }
+    };
+
+    runAiTurn();
+  }, [nextBidder, isAiBidding, auction, isInitializing, dealer, gamePhase]);
+
+  // Trigger AI bidding after initialization completes (if it's not South's turn)
+  useEffect(() => {
+    if (showModeSelector) return;
+    if (!isInitializing && gamePhase === 'bidding' && auction.length === 0
+        && !hasTriggeredInitialBid.current && nextBidder && nextBidder !== 'South') {
+      console.log('▶️ Starting AI bidding after init, nextBidder:', nextBidder);
+      hasTriggeredInitialBid.current = true;
+      setIsAiBidding(true);
     }
-  }, [isInitializing, gamePhase, auction.length, players, nextPlayerIndex, showModeSelector]);
+  }, [isInitializing, gamePhase, auction.length, nextBidder, showModeSelector]);
 
   // AI play loop - runs during play phase
   useEffect(() => {
@@ -2979,7 +2919,7 @@ ${otherCommands}`;
 
       <div className="action-area">
         {gamePhase === 'bidding' && (
-          <BiddingBoxComponent onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding || isAuctionOver(auction)} auction={auction} />
+          <BiddingBoxComponent onBid={handleUserBid} disabled={nextBidder !== 'South' || isAiBidding || isAuctionOver(auction)} auction={auction} />
         )}
         <div className="controls-section">
           {/* Game controls - Context-aware based on game phase AND workspace */}

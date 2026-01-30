@@ -1448,10 +1448,16 @@ def load_scenario():
                 state.deal[position] = Hand(remaining_cards[:13])
                 remaining_cards = remaining_cards[13:]
 
+        # Determine dealer for scenario
+        scenario_dealer = target_scenario.get('dealer', 'North')
+        state.dealer = scenario_dealer
+        state.auction_history = []
+        next_bidder = BridgeRulesEngine.get_current_bidder(scenario_dealer, 0)
+
         south_hand = state.deal['South']
         hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
         points_for_json = { 'hcp': south_hand.hcp, 'dist_points': south_hand.dist_points, 'total_points': south_hand.total_points, 'suit_hcp': south_hand.suit_hcp, 'suit_lengths': south_hand.suit_lengths }
-        return jsonify({'hand': hand_for_json, 'points': points_for_json, 'vulnerability': state.vulnerability})
+        return jsonify({'hand': hand_for_json, 'points': points_for_json, 'vulnerability': state.vulnerability, 'dealer': scenario_dealer, 'next_bidder': next_bidder})
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': f'Could not load scenario: {e}'}), 500
@@ -1463,11 +1469,15 @@ def deal_hands():
 
     # Use shared logic to perform deal
     perform_new_deal(state)
-    
+
     # Prepare response data
     dealer = 'North'
     if state.game_session:
         dealer = state.game_session.get_current_dealer()
+
+    # Store dealer & reset auction on session (backend is source of truth)
+    state.dealer = dealer
+    state.auction_history = []
 
     print(f"🃏 North: {len(state.deal['North'].cards)} cards")
     print(f"🃏 East: {len(state.deal['East'].cards)} cards")
@@ -1503,12 +1513,14 @@ def deal_hands():
             print(f"⚠️ DD table calculation failed: {e}")
             # Non-fatal - just don't include dd_table
 
-    # Include dealer in response for frontend
+    # Include dealer and next_bidder in response for frontend
+    next_bidder = BridgeRulesEngine.get_current_bidder(dealer, 0)
     response_data = {
         'hand': hand_for_json,
         'points': points_for_json,
         'vulnerability': state.vulnerability,
-        'dealer': dealer
+        'dealer': dealer,
+        'next_bidder': next_bidder
     }
 
     # Only include dd_table if calculated (production only)
@@ -1523,30 +1535,32 @@ def get_next_bid():
     state = get_state()
     try:
         data = request.get_json()
-        print(f"🔍 DEBUG: Received data: {data}")
-        print(f"🔍 DEBUG: Keys in data: {list(data.keys()) if data else 'None'}")
-        auction_history_raw, current_player = data['auction_history'], data['current_player']
-        explanation_level = data.get('explanation_level', 'detailed')  # simple, detailed, or expert
-        use_v2_schema = data.get('use_v2_schema', False)  # Dev mode flag for V2 Schema testing
+        use_v2_schema = data.get('use_v2_schema', False)
+        explanation_level = data.get('explanation_level', 'detailed')
 
-        # Get dealer from frontend, fallback to session, or default to North
-        # Fixes ValueError "None is not in list" when frontend doesn't send dealer
-        dealer = data.get('dealer')
-        if not dealer:
-            if state.game_session:
-                dealer = state.game_session.get_current_dealer()
-            else:
-                dealer = 'North'
+        # ── Authoritative turn calculation from session state ──
+        dealer = state.dealer or 'North'
+        auction_length = len(state.auction_history)
+        expected_bidder = BridgeRulesEngine.get_current_bidder(dealer, auction_length)
 
-        # Normalize auction history: frontend may send {bid, explanation} objects or plain strings
-        # Backend expects list of bid strings: ["1NT", "Pass", ...]
+        # Accept frontend's current_player but validate it
+        current_player = data.get('current_player', expected_bidder)
+        is_valid, _ = BridgeRulesEngine.validate_bidder(dealer, auction_length, current_player)
+        if not is_valid:
+            print(f"⚠️ Bidder mismatch: frontend sent '{current_player}', expected '{expected_bidder}'. Using expected.")
+            current_player = expected_bidder
+
+        print(f"🔍 get-next-bid: player={current_player}, auction_len={auction_length}, dealer={dealer}")
+
+        # Normalize auction history from frontend (used for engine call)
+        auction_history_raw = data.get('auction_history', [])
         auction_history = []
         for item in auction_history_raw:
             if isinstance(item, dict):
                 bid = item.get('bid')
-                auction_history.append(bid if bid else 'Pass')  # Handle None/missing
+                auction_history.append(bid if bid else 'Pass')
             else:
-                auction_history.append(item if item else 'Pass')  # Handle None strings
+                auction_history.append(item if item else 'Pass')
 
         # For non-South players (hidden hands), use convention_only to avoid revealing hand specifics
         if current_player != 'South':
@@ -1568,7 +1582,6 @@ def get_next_bid():
                                                 state.vulnerability, explanation_level, dealer=dealer)
 
         # Fix for TypeError: Object of type BidExplanation is not JSON serializable
-        # If explanation is an object (from V2 or updated V1), convert it to string or dict
         if hasattr(explanation, 'description'):
             explanation = explanation.description
         elif hasattr(explanation, 'to_dict'):
@@ -1576,7 +1589,16 @@ def get_next_bid():
         elif not isinstance(explanation, str) and explanation is not None:
             explanation = str(explanation)
 
-        response = {'bid': bid, 'explanation': explanation, 'player': current_player}
+        # ── Record bid in session state and compute next bidder ──
+        state.auction_history.append(bid)
+        next_bidder = BridgeRulesEngine.get_current_bidder(dealer, len(state.auction_history))
+
+        response = {
+            'bid': bid,
+            'explanation': explanation,
+            'player': current_player,
+            'next_bidder': next_bidder
+        }
         if use_v2_schema:
             response['engine_used'] = engine_used
         return jsonify(response)
@@ -1749,8 +1771,8 @@ def evaluate_bid():
     4. Stores feedback in database for analytics
     5. Returns structured feedback for UI display
 
-    IMPORTANT: This endpoint does NOT modify bidding state or sequences.
-    It only evaluates decisions that have already been made.
+    This endpoint records the user's bid in backend auction state and
+    returns next_bidder so the frontend can continue the auction.
     """
     state = get_state()
 
@@ -1775,6 +1797,9 @@ def evaluate_bid():
         session_id = data.get('session_id')
         feedback_level = data.get('feedback_level', 'intermediate')  # beginner, intermediate, expert
         use_v2_schema = data.get('use_v2_schema', False)  # Dev mode flag for V2 Schema testing
+        # When True, record the bid in session auction state.
+        # Governor pre-evaluation sends False so a blocked bid isn't recorded.
+        record_bid = data.get('record_bid', True)
 
         print(f"📊 /api/evaluate-bid called: user_bid={user_bid}, auction_len={len(auction_history)}, player={current_player}, user_id={user_id}, v2_schema={use_v2_schema}")
 
@@ -1792,10 +1817,8 @@ def evaluate_bid():
             print(f"❌ evaluate-bid: Hand for {current_player} not available. state.deal keys: {list(state.deal.keys()) if state.deal else 'None'}")
             return jsonify({'error': f'Hand for {current_player} not available'}), 400
 
-        # Determine dealer from session or use default
-        dealer = 'North'  # Default
-        if state.game_session:
-            dealer = state.game_session.get_current_dealer()
+        # Use authoritative dealer from session state
+        dealer = state.dealer or 'North'
 
         # Serialize deal data for storage (enables bidding history review without session_hands)
         deal_data = None
@@ -2015,13 +2038,22 @@ def evaluate_bid():
         }
         verbosity = verbosity_map.get(feedback_level, 'normal')
 
+        # ── Record user's bid in session state and compute next bidder ──
+        # Governor pre-evaluation sends record_bid=False to avoid recording
+        # a bid that might be blocked and changed.
+        if record_bid:
+            state.auction_history.append(user_bid)
+        next_bidder = BridgeRulesEngine.get_current_bidder(
+            dealer, len(state.auction_history))
+
         # Build response
         response = {
             'feedback': feedback.to_dict(),
             'user_message': feedback.to_user_message(verbosity=verbosity),
             'explanation': optimal_explanation_str,
             'was_correct': (user_bid == optimal_bid),
-            'show_alternative': feedback.correctness.value != 'optimal'
+            'show_alternative': feedback.correctness.value != 'optimal',
+            'next_bidder': next_bidder
         }
 
         # Add differential analysis data if available (V2 only)

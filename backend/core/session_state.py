@@ -111,6 +111,10 @@ class SessionState:
     ai_difficulty: str = field(default_factory=lambda: DEFAULT_AI_DIFFICULTY)
     hand_start_time: Optional[datetime] = None
 
+    # Bidding state — backend is source of truth for whose turn it is
+    dealer: str = 'North'
+    auction_history: list = field(default_factory=list)  # List of bid strings
+
     def touch(self):
         """Update last accessed time"""
         self.last_accessed = datetime.now()
@@ -121,6 +125,7 @@ class SessionState:
         self.original_deal = None
         self.play_state = None
         self.hand_start_time = None
+        self.auction_history = []
 
     def to_dict(self) -> dict:
         """Serialize state for debugging"""

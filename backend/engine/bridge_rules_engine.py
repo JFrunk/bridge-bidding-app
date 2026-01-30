@@ -393,3 +393,78 @@ class BridgeRulesEngine:
                 return "Your turn to play!"
         else:
             return f"Waiting for {state.next_to_play} to play..."
+
+    # ──────────────────────────────────────────────────────────────────
+    # BIDDING PHASE - Turn Determination
+    # ──────────────────────────────────────────────────────────────────
+
+    POSITION_ORDER = ['North', 'East', 'South', 'West']
+    SHORT_TO_FULL = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
+    FULL_TO_SHORT = {'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W'}
+
+    @staticmethod
+    def get_current_bidder(dealer: str, auction_length: int) -> str:
+        """
+        Calculate whose turn it is to bid based on dealer and number of
+        bids already made.
+
+        Bidding proceeds clockwise from the dealer:
+          dealer bids first (auction_length=0),
+          then LHO, partner, RHO, back to dealer, etc.
+
+        Args:
+            dealer: Full position name ('North', 'East', 'South', 'West')
+                    or short form ('N', 'E', 'S', 'W')
+            auction_length: Number of bids already placed in the auction
+
+        Returns:
+            Full position name of the player who should bid next
+        """
+        # Normalise to full name
+        full_dealer = BridgeRulesEngine.SHORT_TO_FULL.get(dealer, dealer)
+        order = BridgeRulesEngine.POSITION_ORDER
+        try:
+            dealer_idx = order.index(full_dealer)
+        except ValueError:
+            dealer_idx = 0  # Fallback to North
+        return order[(dealer_idx + auction_length) % 4]
+
+    @staticmethod
+    def is_user_bid_turn(dealer: str, auction_length: int,
+                         user_position: str = 'South') -> bool:
+        """
+        Determine whether it is the human player's turn to bid.
+
+        Args:
+            dealer: Dealer position (full or short name)
+            auction_length: Number of bids already in the auction
+            user_position: Human player's seat (default 'South')
+
+        Returns:
+            True if it is the human player's turn
+        """
+        current = BridgeRulesEngine.get_current_bidder(dealer, auction_length)
+        full_user = BridgeRulesEngine.SHORT_TO_FULL.get(user_position,
+                                                         user_position)
+        return current == full_user
+
+    @staticmethod
+    def validate_bidder(dealer: str, auction_length: int,
+                        claimed_player: str) -> tuple:
+        """
+        Validate that the claimed bidder matches the expected position.
+
+        Args:
+            dealer: Dealer position
+            auction_length: Current auction length
+            claimed_player: Position claiming to bid
+
+        Returns:
+            (is_valid, expected_player)  – is_valid is True when
+            claimed_player matches the expected bidder.
+        """
+        expected = BridgeRulesEngine.get_current_bidder(dealer,
+                                                         auction_length)
+        full_claimed = BridgeRulesEngine.SHORT_TO_FULL.get(claimed_player,
+                                                            claimed_player)
+        return (full_claimed == expected, expected)
