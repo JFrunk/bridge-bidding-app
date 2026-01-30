@@ -130,18 +130,29 @@ function UserMenu({ onSignInClick }) {
             <div className="user-menu-divider" />
 
             {isGuest ? (
-              <button
-                className="user-menu-item user-menu-item-primary"
-                onClick={() => {
-                  setIsOpen(false);
-                  onSignInClick?.();
-                }}
-                role="menuitem"
-                data-testid="user-menu-sign-in"
-              >
-                <span className="user-menu-item-icon">🔑</span>
-                <span className="user-menu-item-label">Sign In to Save Progress</span>
-              </button>
+              <>
+                <button
+                  className="user-menu-item user-menu-item-primary"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onSignInClick?.();
+                  }}
+                  role="menuitem"
+                  data-testid="user-menu-sign-in"
+                >
+                  <span className="user-menu-item-icon">🔑</span>
+                  <span className="user-menu-item-label">Sign In to Save Progress</span>
+                </button>
+                <button
+                  className="user-menu-item user-menu-item-danger"
+                  onClick={handleSignOut}
+                  role="menuitem"
+                  data-testid="user-menu-logout"
+                >
+                  <span className="user-menu-item-icon">🚪</span>
+                  <span className="user-menu-item-label">Log Out</span>
+                </button>
+              </>
             ) : (
               <button
                 className="user-menu-item user-menu-item-danger"

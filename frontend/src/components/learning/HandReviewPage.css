@@ -23,13 +23,18 @@
    ===================================================== */
 
 .hand-review-page .page-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
   padding: 16px 24px;
   border-bottom: 1px solid #e5e7eb;
   background: #ffffff;
   flex-shrink: 0;
+}
+
+.hand-review-page .page-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 700px;
+  margin: 0 auto;
 }
 
 .hand-review-page .back-button {
@@ -126,14 +131,19 @@
    ===================================================== */
 
 .hand-review-page .contract-info-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   padding: 12px 24px;
   background: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
-  flex-wrap: wrap;
   flex-shrink: 0;
+}
+
+.hand-review-page .contract-info-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 700px;
+  margin: 0 auto;
 }
 
 .hand-review-page .contract {
@@ -225,10 +235,10 @@
 /* Replay table, hands, tricks, feedback panels, etc. */
 /* These use the same class names so they'll be styled correctly */
 
-/* Override modal-specific constraints */
-.hand-review-page .replay-table-compass {
-  max-width: 100%;
-  margin: 0 auto 24px;
+/* Content inner wrapper - aligns all content to 700px column */
+.hand-review-page .page-content-inner {
+  max-width: 700px;
+  margin: 0 auto;
 }
 
 /* Improve spacing for full-screen layout */
@@ -275,6 +285,9 @@
 @media (max-width: 768px) {
   .hand-review-page .page-header {
     padding: 12px 16px;
+  }
+
+  .hand-review-page .page-header-inner {
     flex-wrap: wrap;
   }
 

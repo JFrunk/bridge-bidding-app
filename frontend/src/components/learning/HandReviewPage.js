@@ -562,78 +562,83 @@ const HandReviewPage = ({
         <div className="hand-review-page">
             {/* Page Header */}
             <div className="page-header">
-                <button className="back-button" onClick={onBack} aria-label="Go back">
-                    ← Back
-                </button>
-                <div className="page-title">
-                    <h1>Play-by-Play Review</h1>
-                    <ChartHelp chartType="play-review" variant="icon" />
-                </div>
-                {/* Hand navigation */}
-                {totalHands > 1 && (
-                    <div className="hand-navigation">
-                        <button
-                            className="hand-nav-btn"
-                            onClick={onPrevHand}
-                            disabled={!onPrevHand}
-                            aria-label="Previous hand"
-                        >
-                            ◀ Prev
-                        </button>
-                        <div className="hand-nav-counter">
-                            <span className="hand-nav-label">Hand</span>
-                            <span className="hand-nav-value">{currentIndex + 1} / {totalHands}</span>
-                        </div>
-                        <button
-                            className="hand-nav-btn"
-                            onClick={onNextHand}
-                            disabled={!onNextHand}
-                            aria-label="Next hand"
-                        >
-                            Next ▶
-                        </button>
+                <div className="page-header-inner">
+                    <button className="back-button" onClick={onBack} aria-label="Go back">
+                        ← Back
+                    </button>
+                    <div className="page-title">
+                        <h1>Play-by-Play Review</h1>
+                        <ChartHelp chartType="play-review" variant="icon" />
                     </div>
-                )}
+                    {/* Hand navigation */}
+                    {totalHands > 1 && (
+                        <div className="hand-navigation">
+                            <button
+                                className="hand-nav-btn"
+                                onClick={onPrevHand}
+                                disabled={!onPrevHand}
+                                aria-label="Previous hand"
+                            >
+                                ◀ Prev
+                            </button>
+                            <div className="hand-nav-counter">
+                                <span className="hand-nav-label">Hand</span>
+                                <span className="hand-nav-value">{currentIndex + 1} / {totalHands}</span>
+                            </div>
+                            <button
+                                className="hand-nav-btn"
+                                onClick={onNextHand}
+                                disabled={!onNextHand}
+                                aria-label="Next hand"
+                            >
+                                Next ▶
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Contract Info Bar */}
             <div className="contract-info-bar">
-                <span className="contract">
-                    {handData?.contract || 'Unknown'}
-                </span>
-                {(() => {
-                    const result = getResultForUser();
-                    return (
-                        <span className={`result ${result.isGood ? 'made' : 'down'}`}>
-                            {result.text}
-                            {result.detail && <> {result.detail}</>}
-                        </span>
-                    );
-                })()}
-                <span className="role-badge">{userRole}</span>
-                {handData?.par_comparison?.dd_tricks !== undefined && (
-                    <span className="dd-badge" title="Perfect play tricks possible">
-                        Best: {handData.par_comparison.dd_tricks}
+                <div className="contract-info-bar-inner">
+                    <span className="contract">
+                        {handData?.contract || 'Unknown'}
                     </span>
-                )}
-                {handData?.hand_score !== undefined && (() => {
-                    const userScore = getScoreForUser();
-                    return (
-                        <span className={`score-badge ${userScore >= 0 ? 'positive' : 'negative'}`}>
-                            {userScore > 0 ? '+' : ''}{userScore}
+                    {(() => {
+                        const result = getResultForUser();
+                        return (
+                            <span className={`result ${result.isGood ? 'made' : 'down'}`}>
+                                {result.text}
+                                {result.detail && <> {result.detail}</>}
+                            </span>
+                        );
+                    })()}
+                    <span className="role-badge">{userRole}</span>
+                    {handData?.par_comparison?.dd_tricks !== undefined && (
+                        <span className="dd-badge" title="Perfect play tricks possible">
+                            Best: {handData.par_comparison.dd_tricks}
                         </span>
-                    );
-                })()}
-                {handData?.play_quality_summary?.has_data && (
-                    <span className="accuracy-badge">{handData.play_quality_summary.accuracy_rate}% play</span>
-                )}
-                {handData?.bidding_quality_summary?.has_data && (
-                    <span className="accuracy-badge bidding">{handData.bidding_quality_summary.accuracy_rate}% bid</span>
-                )}
+                    )}
+                    {handData?.hand_score !== undefined && (() => {
+                        const userScore = getScoreForUser();
+                        return (
+                            <span className={`score-badge ${userScore >= 0 ? 'positive' : 'negative'}`}>
+                                {userScore > 0 ? '+' : ''}{userScore}
+                            </span>
+                        );
+                    })()}
+                    {handData?.play_quality_summary?.has_data && (
+                        <span className="accuracy-badge">{handData.play_quality_summary.accuracy_rate}% play</span>
+                    )}
+                    {handData?.bidding_quality_summary?.has_data && (
+                        <span className="accuracy-badge bidding">{handData.bidding_quality_summary.accuracy_rate}% bid</span>
+                    )}
+                </div>
             </div>
 
             {/* Content Area */}
             <div className="page-content">
+              <div className="page-content-inner">
                 {/* Navigation controls */}
                 {tricks.length > 0 && (
                     <div className="replay-navigation">
@@ -771,6 +776,7 @@ const HandReviewPage = ({
                         onPositionChange={setReplayPosition}
                     />
                 )}
+              </div>
             </div>
         </div>
     );

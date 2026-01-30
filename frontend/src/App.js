@@ -331,6 +331,7 @@ function App() {
   // Navigation data for review pages
   const [reviewHandList, setReviewHandList] = useState([]);
   const [reviewCurrentIndex, setReviewCurrentIndex] = useState(0);
+  const savedScrollPositionRef = useRef(0);
 
   // Hint Mode: When enabled, shows real-time feedback during bidding and play
   // This replaces the dev-only restriction with a user-controlled toggle
@@ -1530,6 +1531,7 @@ ${otherCommands}`;
 
   // Review page handlers - for full-screen play/bid analysis
   const handleOpenReviewPage = (handId, type = 'play', handList = []) => {
+    savedScrollPositionRef.current = window.scrollY;
     setReviewPageHandId(handId);
     setReviewPageType(type);
 
@@ -1554,11 +1556,16 @@ ${otherCommands}`;
   };
 
   const handleCloseReviewPage = () => {
+    const scrollY = savedScrollPositionRef.current;
     setShowHandReviewPage(false);
     setShowBidReviewPage(false);
     setReviewPageHandId(null);
     setReviewHandList([]);
     setReviewCurrentIndex(0);
+    // Restore scroll position after React re-renders the previous view
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollY);
+    });
   };
 
   const handleNavigateReviewHand = (direction) => {

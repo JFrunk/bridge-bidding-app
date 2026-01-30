@@ -506,57 +506,62 @@ const BidReviewPage = ({
         <div className="hand-review-page">
             {/* Page Header */}
             <div className="page-header">
-                <button className="back-button" onClick={onBack} aria-label="Go back">
-                    ← Back
-                </button>
-                <div className="page-title">
-                    <h1>Bidding Review</h1>
-                    <ChartHelp chartType="bidding-review" variant="icon" />
-                </div>
-                {/* Hand navigation */}
-                {totalHands > 1 && (
-                    <div className="hand-navigation">
-                        <button
-                            className="hand-nav-btn"
-                            onClick={onPrevHand}
-                            disabled={!onPrevHand}
-                            aria-label="Previous hand"
-                        >
-                            ◀ Prev
-                        </button>
-                        <div className="hand-nav-counter">
-                            <span className="hand-nav-label">Hand</span>
-                            <span className="hand-nav-value">{currentIndex + 1} / {totalHands}</span>
-                        </div>
-                        <button
-                            className="hand-nav-btn"
-                            onClick={onNextHand}
-                            disabled={!onNextHand}
-                            aria-label="Next hand"
-                        >
-                            Next ▶
-                        </button>
+                <div className="page-header-inner">
+                    <button className="back-button" onClick={onBack} aria-label="Go back">
+                        ← Back
+                    </button>
+                    <div className="page-title">
+                        <h1>Bidding Review</h1>
+                        <ChartHelp chartType="bidding-review" variant="icon" />
                     </div>
-                )}
+                    {/* Hand navigation */}
+                    {totalHands > 1 && (
+                        <div className="hand-navigation">
+                            <button
+                                className="hand-nav-btn"
+                                onClick={onPrevHand}
+                                disabled={!onPrevHand}
+                                aria-label="Previous hand"
+                            >
+                                ◀ Prev
+                            </button>
+                            <div className="hand-nav-counter">
+                                <span className="hand-nav-label">Hand</span>
+                                <span className="hand-nav-value">{currentIndex + 1} / {totalHands}</span>
+                            </div>
+                            <button
+                                className="hand-nav-btn"
+                                onClick={onNextHand}
+                                disabled={!onNextHand}
+                                aria-label="Next hand"
+                            >
+                                Next ▶
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Contract Info Bar */}
             <div className="contract-info-bar">
-                {handData?.contract && (
-                    <span className="contract">
-                        Final: {handData.contract}
-                    </span>
-                )}
-                {biddingStats && (
-                    <>
-                        <span className="accuracy-badge bidding">{biddingStats.optimalRate}% optimal</span>
-                        <span className="accuracy-badge">{biddingStats.avgScore}/10 avg</span>
-                    </>
-                )}
+                <div className="contract-info-bar-inner">
+                    {handData?.contract && (
+                        <span className="contract">
+                            Final: {handData.contract}
+                        </span>
+                    )}
+                    {biddingStats && (
+                        <>
+                            <span className="accuracy-badge bidding">{biddingStats.optimalRate}% optimal</span>
+                            <span className="accuracy-badge">{biddingStats.avgScore}/10 avg</span>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Page Content */}
             <div className="page-content">
+              <div className="page-content-inner">
                 {/* Navigation controls */}
                 {totalBids > 0 && (
                     <div className="replay-navigation">
@@ -686,6 +691,7 @@ const BidReviewPage = ({
                 {handData?.dd_analysis?.dd_table && (
                     <DDTableDisplay ddAnalysis={handData.dd_analysis} />
                 )}
+              </div>
             </div>
         </div>
     );
