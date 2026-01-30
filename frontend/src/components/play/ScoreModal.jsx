@@ -67,7 +67,7 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, onShowLe
           {/* Contract row */}
           <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-50">
             <span className="text-sm font-medium text-gray-700 shrink-0">Contract:</span>
-            <span className="text-base font-bold text-gray-900">
+            <span className="text-base font-bold text-gray-900 text-right break-words">
               {contract?.level || '?'}{contract?.strain || '?'}
               {doubledText}
               {contract?.declarer ? ` by ${contract.declarer}` : ''}
@@ -77,7 +77,7 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, onShowLe
           {/* Tricks taken row */}
           <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-50">
             <span className="text-sm font-medium text-gray-700 shrink-0">Tricks Taken:</span>
-            <span className="text-base font-bold text-gray-900">{tricks_taken ?? '?'} of {tricks_needed ?? '?'}</span>
+            <span className="text-base font-bold text-gray-900 text-right">{tricks_taken ?? '?'} of {tricks_needed ?? '?'}</span>
           </div>
 
           {/* Result row */}
@@ -98,7 +98,7 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, onShowLe
           )}>
             <span className="text-base font-bold text-gray-900 shrink-0">Your Score:</span>
             <span className={cn(
-              "text-xl font-bold",
+              "text-xl font-bold text-right",
               userScore >= 0 ? "text-green-600" : "text-red-600"
             )}>
               {userScore >= 0 ? '+' : ''}{userScore}

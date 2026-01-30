@@ -20,7 +20,33 @@ export async function dealNewHand(page) {
     return; // Mode selector click already deals a hand
   }
 
-  await page.click('[data-testid="deal-button"]');
+  // Check for onboarding/welcome overlay and dismiss it
+  const onboardingOverlay = page.locator('p.experience-benefit').first();
+  if (await onboardingOverlay.isVisible().catch(() => false)) {
+    // Click outside to dismiss basic onboarding
+    await page.mouse.click(10, 10);
+    await onboardingOverlay.waitFor({ state: 'hidden', timeout: 2000 }).catch(() => { });
+  }
+
+  // Check for Learning Mode / Level Selection overlay
+  const learningOverlay = page.locator('.learning-mode-overlay').first();
+  if (await learningOverlay.isVisible().catch(() => false)) {
+    // Try to find a close button or "Free Play" button
+    const closeButton = page.locator('[data-testid="close-learning-mode"], button:has-text("Close"), button:has-text("Free Play")').first();
+    if (await closeButton.isVisible().catch(() => false)) {
+      await closeButton.click();
+    } else {
+      // If no obvious close button, try clicking outside or force hiding
+      await page.evaluate(() => {
+        const overlay = document.querySelector('.learning-mode-overlay');
+        if (overlay) overlay.style.display = 'none';
+      });
+    }
+    await learningOverlay.waitFor({ state: 'hidden', timeout: 2000 }).catch(() => { });
+  }
+
+  // Use force click to bypass any remaining invisible overlays if standard click fails
+  await page.click('[data-testid="deal-button"]', { force: true });
 
   // Wait for bidding box to be visible
   await page.waitForSelector('[data-testid="bidding-box"]', { state: 'visible' });

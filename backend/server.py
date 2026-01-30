@@ -885,6 +885,8 @@ def start_session():
             # Without this, DDS won't be used even when session was created with 'expert'
             state.ai_difficulty = existing.ai_difficulty
             state.hand_start_time = datetime.now()
+            # CRITICAL: Initialize vulnerability for resumed session
+            state.vulnerability = existing.get_current_vulnerability()
             print(f"✅ Resumed session {existing.id} with ai_difficulty={existing.ai_difficulty}")
             
             # Ensure deal exists (crucial for server restarts)
@@ -908,6 +910,8 @@ def start_session():
         # Sync state.ai_difficulty with new session's difficulty
         state.ai_difficulty = ai_difficulty
         state.hand_start_time = datetime.now()
+        # CRITICAL: Initialize vulnerability to prevent "Cannot read properties of undefined" errors
+        state.vulnerability = state.game_session.get_current_vulnerability()
         print(f"✅ Created new session {state.game_session.id} with ai_difficulty={ai_difficulty}")
 
         return jsonify({
