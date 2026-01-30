@@ -2050,8 +2050,12 @@ def evaluate_bid():
         # a bid that might be blocked and changed.
         if record_bid:
             state.auction_history.append(user_bid)
+            auction_len_after = len(state.auction_history)
+        else:
+            # Pre-evaluation: compute as if the bid were recorded
+            auction_len_after = len(state.auction_history) + 1
         next_bidder = BridgeRulesEngine.get_current_bidder(
-            dealer, len(state.auction_history))
+            dealer, auction_len_after)
 
         # Build response
         response = {
