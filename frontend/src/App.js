@@ -2157,12 +2157,14 @@ ${otherCommands}`;
         const data = await response.json();
         console.log('✅ AI bid received:', data);
 
-        // Atomic update: auction + next bidder from backend response
-        flushSync(() => {
-          setAuction(prev => [...prev, data]);
-          setNextBidder(data.next_bidder || null);
-        });
-
+        // Update auction + next bidder from backend response
+        // NOTE: Do NOT use flushSync here. flushSync synchronously re-renders
+        // and fires the useEffect for the new nextBidder while
+        // isAiBiddingInProgress is still true, causing the next AI turn to
+        // be skipped. Regular setState batches updates; the guard is released
+        // before the next render cycle runs effects.
+        setAuction(prev => [...prev, data]);
+        setNextBidder(data.next_bidder || null);
         isAiBiddingInProgress.current = false;
         console.log('✅ Auction updated, next_bidder:', data.next_bidder);
       } catch (err) {
