@@ -209,6 +209,15 @@ class SessionManager:
         # Use infinite hands for continuous play (default)
         max_hands = DEFAULT_MAX_HANDS
 
+        # Ensure guest users (negative IDs) exist in users table for FK constraint
+        if user_id and int(user_id) < 0:
+            cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
+            if not cursor.fetchone():
+                cursor.execute("""
+                    INSERT INTO users (id, username, display_name)
+                    VALUES (?, ?, ?)
+                """, (user_id, f'guest_{abs(user_id)}', 'Guest'))
+
         cursor.execute("""
             INSERT INTO game_sessions
             (user_id, session_type, max_hands, player_position, ai_difficulty)

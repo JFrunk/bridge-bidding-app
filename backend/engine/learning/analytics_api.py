@@ -3166,7 +3166,7 @@ def get_board_analysis():
             WHERE gs.user_id = ?
               AND sh.contract_level IS NOT NULL
             GROUP BY gs.id
-            HAVING hands_count > 0
+            HAVING COUNT(sh.id) > 0
             ORDER BY gs.started_at DESC
             LIMIT 10
         """, (user_id,))

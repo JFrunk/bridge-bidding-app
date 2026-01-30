@@ -998,7 +998,7 @@ ${otherCommands}`;
         body: JSON.stringify({
           position: 'S',
           card: { rank: card.rank, suit: card.suit },
-          user_id: userId || 1,
+          user_id: userId,
           session_id: sessionData?.session?.id
         })
       });
@@ -1152,7 +1152,7 @@ ${otherCommands}`;
         body: JSON.stringify({
           position: declarerPosition,
           card: { rank: card.rank, suit: card.suit },
-          user_id: userId || 1,
+          user_id: userId,
           session_id: sessionData?.session?.id
         })
       });
@@ -1306,7 +1306,7 @@ ${otherCommands}`;
         body: JSON.stringify({
           position: dummyPosition,
           card: { rank: card.rank, suit: card.suit },
-          user_id: userId || 1,
+          user_id: userId,
           session_id: sessionData?.session?.id
         })
       });
@@ -1498,7 +1498,7 @@ ${otherCommands}`;
           const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-            body: JSON.stringify({ user_id: userId || 1, session_type: 'continuous' })
+            body: JSON.stringify({ user_id: userId, session_type: 'continuous' })
           });
           if (sessionResponse.ok) {
             const newSession = await sessionResponse.json();
@@ -1842,30 +1842,43 @@ ${otherCommands}`;
     fetchScenarios();
   }, []);
 
-  // Start or resume session AFTER auth is loaded (when userId is available)
+  // Start or resume session AFTER auth is loaded AND userId is available
   useEffect(() => {
     // Wait for auth to finish loading before starting session
     if (authLoading) return;
 
+    // Don't start a session until we have a real userId (from login or guest)
+    // Without this guard, userId defaults to 1 which causes 500 errors
+    if (!userId) {
+      setIsInitializing(false);
+      return;
+    }
+
     const startSession = async () => {
       try {
-        // Use the actual userId or fallback to 1 for guests
-        const sessionUserId = userId || 1;
-        console.log(`🔄 Starting session for user_id: ${sessionUserId}`);
+        console.log(`🔄 Starting session for user_id: ${userId}`);
 
         const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-          body: JSON.stringify({ user_id: sessionUserId, session_type: 'continuous' })
+          body: JSON.stringify({ user_id: userId, session_type: 'continuous' })
         });
+
+        if (!sessionResponse.ok) {
+          console.error(`❌ Session start failed with status ${sessionResponse.status}`);
+          setIsInitializing(false);
+          return;
+        }
+
         const sessionData = await sessionResponse.json();
         setSessionData(sessionData);
 
         // Use dealer and vulnerability from session
-        const sessionVuln = sessionData.session.vulnerability;
-        setVulnerability(sessionVuln);
+        if (sessionData.session?.vulnerability) {
+          setVulnerability(sessionData.session.vulnerability);
+        }
 
-        console.log(`✅ Session ${sessionData.resumed ? 'resumed' : 'started'} for user ${sessionUserId}: ${sessionData.message}`);
+        console.log(`✅ Session ${sessionData.resumed ? 'resumed' : 'started'} for user ${userId}: ${sessionData.message}`);
       } catch (err) {
         console.error("Could not start session", err);
       }
@@ -1924,7 +1937,7 @@ ${otherCommands}`;
           user_bid: bid,
           auction_history: auction.map(a => a.bid),
           current_player: 'South',
-          user_id: userId || 1,
+          user_id: userId,
           session_id: sessionData?.session?.id,
           feedback_level: 'intermediate',
           use_v2_schema: useV2Schema
@@ -1993,7 +2006,7 @@ ${otherCommands}`;
             user_bid: bid,
             auction_history: auction.map(a => a.bid),
             current_player: 'South',
-            user_id: userId || 1,
+            user_id: userId,
             session_id: sessionData?.session?.id,
             feedback_level: 'intermediate',
             use_v2_schema: useV2Schema
@@ -3137,7 +3150,7 @@ ${otherCommands}`;
           {/* Force remount on each open to refresh data */}
           <LearningDashboard
             key={Date.now()}
-            userId={userId || 1}
+            userId={userId}
             onPracticeClick={(rec) => {
               console.log('Practice recommendation:', rec);
               setShowLearningDashboard(false);
@@ -3193,7 +3206,7 @@ ${otherCommands}`;
       {/* Learning Mode - Full-screen guided learning */}
       {showLearningMode && (
         <div className="learning-mode-overlay">
-          <LearningMode userId={userId || 1} initialTrack={learningModeTrack} />
+          <LearningMode userId={userId} initialTrack={learningModeTrack} />
         </div>
       )}
 

@@ -868,10 +868,13 @@ def start_session():
     state = get_state()
 
     data = request.get_json() or {}
-    user_id = data.get('user_id', 1)
+    user_id = data.get('user_id')
     session_type = data.get('session_type', 'chicago')
     player_position = data.get('player_position', 'S')
     ai_difficulty = data.get('ai_difficulty', DEFAULT_AI_DIFFICULTY)  # Uses smart default from session_state
+
+    if not user_id:
+        return jsonify({'error': 'user_id is required'}), 400
 
     try:
         # Check for existing active session
@@ -1249,7 +1252,10 @@ def get_session_stats():
     Returns:
         User statistics across all sessions
     """
-    user_id = request.args.get('user_id', 1, type=int)
+    user_id = request.args.get('user_id', type=int)
+
+    if not user_id:
+        return jsonify({'error': 'user_id is required'}), 400
 
     try:
         stats = session_manager.get_user_session_stats(user_id)
@@ -1765,12 +1771,16 @@ def evaluate_bid():
         auction_history = [normalize_bid(item) for item in auction_history_raw]
 
         # Optional parameters
-        user_id = data.get('user_id', 1)  # Default user
+        user_id = data.get('user_id')
         session_id = data.get('session_id')
         feedback_level = data.get('feedback_level', 'intermediate')  # beginner, intermediate, expert
         use_v2_schema = data.get('use_v2_schema', False)  # Dev mode flag for V2 Schema testing
 
         print(f"📊 /api/evaluate-bid called: user_bid={user_bid}, auction_len={len(auction_history)}, player={current_player}, user_id={user_id}, v2_schema={use_v2_schema}")
+
+        if not user_id:
+            print("❌ evaluate-bid: Missing user_id")
+            return jsonify({'error': 'user_id is required'}), 400
 
         if not user_bid:
             print("❌ evaluate-bid: Missing user_bid")
@@ -4149,7 +4159,7 @@ def evaluate_play():
         card_data = data['card']
         user_card = Card(card_data['rank'], card_data['suit'])
         position = data.get('position', state.play_state.next_to_play)
-        user_id = data.get('user_id', 1)
+        user_id = data.get('user_id')
         session_id = data.get('session_id')
         # Get hand_number from game session (1-indexed for display)
         hand_number = state.game_session.hands_completed + 1 if state.game_session else None
