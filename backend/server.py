@@ -1810,10 +1810,6 @@ def evaluate_bid():
 
         print(f"📊 /api/evaluate-bid called: user_bid={user_bid}, auction_len={len(auction_history)}, player={current_player}, user_id={user_id}, v2_schema={use_v2_schema}")
 
-        if not user_id:
-            print("❌ evaluate-bid: Missing user_id")
-            return jsonify({'error': 'user_id is required'}), 400
-
         if not user_bid:
             print("❌ evaluate-bid: Missing user_bid")
             return jsonify({'error': 'user_bid is required'}), 400

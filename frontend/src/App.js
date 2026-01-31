@@ -1949,17 +1949,17 @@ ${otherCommands}`;
         })
       });
 
+      const data = await feedbackResponse.json();
+
       if (feedbackResponse.status === 400) {
-        const errorData = await feedbackResponse.json();
-        if (errorData.error && errorData.error.includes('Deal has not been made')) {
+        if (data.error && data.error.includes('Deal has not been made')) {
           console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
           setError("Session expired. Please deal a new hand to continue.");
           setIsAiBidding(false);
           return;
         }
+        console.warn('⚠️ evaluate-bid returned 400:', data.error);
       }
-
-      const data = await feedbackResponse.json();
       // Update nextBidder from authoritative backend response
       if (data.next_bidder) {
         setNextBidder(data.next_bidder);
@@ -2017,17 +2017,19 @@ ${otherCommands}`;
           })
         });
 
+        const feedbackData = await feedbackResponse.json();
+
         // Handle session state loss (e.g., server restart)
         if (feedbackResponse.status === 400) {
-          const errorData = await feedbackResponse.json();
-          if (errorData.error && errorData.error.includes('Deal has not been made')) {
+          if (feedbackData.error && feedbackData.error.includes('Deal has not been made')) {
             console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
             setError("Session expired. Please deal a new hand to continue.");
             return;
           }
+          // Other 400 errors - log but fall through to commitBid
+          console.warn('⚠️ Pre-evaluation returned 400:', feedbackData.error);
+          throw new Error(feedbackData.error || 'Pre-evaluation failed');
         }
-
-        const feedbackData = await feedbackResponse.json();
 
         // DEBUG: Log response from evaluate-bid
         console.log('✅ EVALUATE-BID RESPONSE:', {
