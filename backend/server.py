@@ -2077,6 +2077,10 @@ def evaluate_bid():
         else:
             next_bidder = None
 
+        # Ensure explanation is a plain string (modules may return BidExplanation objects)
+        if not isinstance(optimal_explanation_str, str):
+            optimal_explanation_str = str(optimal_explanation_str)
+
         # Build response
         response = {
             'feedback': feedback.to_dict(),

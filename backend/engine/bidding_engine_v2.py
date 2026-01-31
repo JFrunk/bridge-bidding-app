@@ -664,7 +664,15 @@ class BiddingEngineV2:
         try:
             result = module.evaluate(hand, features)
             if result:
-                return (result[0], result[1] if len(result) > 1 else '')
+                bid = result[0]
+                explanation = result[1] if len(result) > 1 else ''
+                # Modules may return BidExplanation objects — convert to string
+                if hasattr(explanation, 'format') and not isinstance(explanation, str):
+                    try:
+                        explanation = explanation.format()
+                    except Exception:
+                        explanation = str(explanation)
+                return (bid, explanation)
         except Exception as e:
             logger.error(f"Error in module {module_name}: {e}")
 
