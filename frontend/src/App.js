@@ -1922,10 +1922,25 @@ ${otherCommands}`;
     setIsAiBidding(true);
 
     // If we already have feedback data (from pre-evaluation), use it
+    // BUT we must still record the bid on the backend — pre-evaluation used
+    // record_bid=false so state.auction_history is missing this bid.
     if (feedbackData) {
-      // Update nextBidder from backend if available
-      if (feedbackData.next_bidder) {
-        setNextBidder(feedbackData.next_bidder);
+      try {
+        const recordResponse = await fetch(`${API_URL}/api/evaluate-bid`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+          body: JSON.stringify({
+            user_bid: bid,
+            record_only: true
+          })
+        });
+        const recordData = await recordResponse.json();
+        if (recordData.next_bidder) {
+          setNextBidder(recordData.next_bidder);
+        }
+      } catch (err) {
+        console.error('❌ Failed to record bid on backend:', err);
+        // Fall through — optimistic nextBidder is already set
       }
       setLastUserBid(bid);
       setBidFeedback(feedbackData.feedback || null);

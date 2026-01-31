@@ -1820,12 +1820,23 @@ def evaluate_bid():
         # When True, record the bid in session auction state.
         # Governor pre-evaluation sends False so a blocked bid isn't recorded.
         record_bid = data.get('record_bid', True)
+        record_only = data.get('record_only', False)
 
-        print(f"📊 /api/evaluate-bid called: user_bid={user_bid}, auction_len={len(auction_history)}, player={current_player}, user_id={user_id}, v2_schema={use_v2_schema}")
+        print(f"📊 /api/evaluate-bid called: user_bid={user_bid}, auction_len={len(auction_history)}, player={current_player}, user_id={user_id}, v2_schema={use_v2_schema}, record_only={record_only}")
 
         if not user_bid:
             print("❌ evaluate-bid: Missing user_bid")
             return jsonify({'error': 'user_bid is required'}), 400
+
+        # Record-only mode: just append to auction_history and return next_bidder.
+        # Used by commitBid after pre-evaluation (which used record_bid=false).
+        if record_only:
+            state.auction_history.append(user_bid)
+            auction_len_after = len(state.auction_history)
+            dealer = BridgeRulesEngine.SHORT_TO_FULL.get(state.dealer, state.dealer) if state.dealer else 'North'
+            next_bidder = BridgeRulesEngine.get_current_bidder(dealer, auction_len_after)
+            print(f"✅ record_only: appended '{user_bid}', auction_len={auction_len_after}, next_bidder={next_bidder}")
+            return jsonify({'next_bidder': next_bidder, 'recorded': True})
 
         # Get user's hand from session state (does NOT modify state)
         user_hand = state.deal.get(current_player)
