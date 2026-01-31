@@ -352,8 +352,17 @@ class SessionManager:
         contract = hand_data.get('contract')
 
         # Check if DDS columns exist (migration 007)
-        cursor.execute("PRAGMA table_info(session_hands)")
-        columns = {row['name'] for row in cursor.fetchall()}
+        # Use information_schema for PostgreSQL, PRAGMA for SQLite
+        from db import USE_POSTGRES
+        if USE_POSTGRES:
+            cursor.execute(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'session_hands'"
+            )
+            columns = {row['column_name'] for row in cursor.fetchall()}
+        else:
+            cursor.execute("PRAGMA table_info(session_hands)")
+            columns = {row['name'] for row in cursor.fetchall()}
         has_dds_columns = 'dds_analysis' in columns
 
         # Perform DDS analysis if available (non-blocking)
