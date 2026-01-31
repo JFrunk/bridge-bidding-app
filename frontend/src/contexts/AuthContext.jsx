@@ -213,7 +213,12 @@ export function AuthProvider({ children }) {
   const continueAsGuest = () => {
     // Each browser gets a unique guest ID to prevent data collision
     const guestId = getOrCreateGuestId();
-    setUser({ id: guestId, username: 'guest', display_name: 'Guest', isGuest: true });
+    const guestUser = { id: guestId, username: 'guest', display_name: 'Guest', isGuest: true };
+    setUser(guestUser);
+    // Persist to bridge_user so userId survives page refresh.
+    // Without this, AuthContext mount finds no stored user → user=null → userId=null
+    // → session/start fails, hand saving fails, evaluate-bid fails.
+    localStorage.setItem('bridge_user', JSON.stringify(guestUser));
     setLoading(false);
   };
 

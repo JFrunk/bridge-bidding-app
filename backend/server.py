@@ -751,10 +751,14 @@ def get_state():
         user_id = (
             data.get('user_id') or
             request.args.get('user_id') or
-            request.headers.get('X-User-ID') or
-            1
+            request.headers.get('X-User-ID')
         )
-        session_id = f"user_{user_id}_default"
+        if not user_id:
+            # No user identification at all - use a fallback session
+            # that won't contaminate real user data
+            session_id = "anonymous_fallback"
+        else:
+            session_id = f"user_{user_id}_default"
 
     # Get or create session state
     state = state_manager.get_or_create(session_id)
@@ -868,13 +872,22 @@ def start_session():
     state = get_state()
 
     data = request.get_json() or {}
-    user_id = data.get('user_id')
+    user_id = (
+        data.get('user_id')
+        or request.headers.get('X-User-ID')
+    )
     session_type = data.get('session_type', 'chicago')
     player_position = data.get('player_position', 'S')
     ai_difficulty = data.get('ai_difficulty', DEFAULT_AI_DIFFICULTY)  # Uses smart default from session_state
 
     if not user_id:
-        return jsonify({'error': 'user_id is required'}), 400
+        return jsonify({'error': 'user_id is required (body or X-User-ID header)'}), 400
+
+    # Normalize to int (X-User-ID header is a string)
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': f'Invalid user_id: {user_id}'}), 400
 
     try:
         # Check for existing active session
