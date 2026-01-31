@@ -294,8 +294,9 @@ class BiddingFeedbackGenerator:
             optimal_bid, optimal_explanation
         )
 
-        # Store in database
-        self._store_feedback(user_id, feedback, auction_context, session_id, hand_analysis_id, hand_number, deal_data)
+        # Store in database (skip if no user_id — guest with null userId)
+        if user_id:
+            self._store_feedback(user_id, feedback, auction_context, session_id, hand_analysis_id, hand_number, deal_data)
 
         return feedback
 

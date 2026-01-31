@@ -2019,15 +2019,14 @@ ${otherCommands}`;
 
         const feedbackData = await feedbackResponse.json();
 
-        // Handle session state loss (e.g., server restart)
-        if (feedbackResponse.status === 400) {
-          if (feedbackData.error && feedbackData.error.includes('Deal has not been made')) {
+        // Handle non-200 responses (400, 500, etc.)
+        if (!feedbackResponse.ok) {
+          if (feedbackData.error?.includes('Deal has not been made')) {
             console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
             setError("Session expired. Please deal a new hand to continue.");
             return;
           }
-          // Other 400 errors - log but fall through to commitBid
-          console.warn('⚠️ Pre-evaluation returned 400:', feedbackData.error);
+          console.warn(`⚠️ Pre-evaluation returned ${feedbackResponse.status}:`, feedbackData.error);
           throw new Error(feedbackData.error || 'Pre-evaluation failed');
         }
 
