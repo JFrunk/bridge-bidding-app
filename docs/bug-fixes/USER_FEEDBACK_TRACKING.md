@@ -2,25 +2,26 @@
 
 This document tracks active user-reported issues from the feedback form and review requests.
 
-**Last Updated:** 2026-01-01
-**Focus:** Last 3 days (Dec 28, 2025 - Jan 1, 2026)
+**Last Updated:** 2026-02-01
+**Focus:** Dec 28, 2025 - Jan 27, 2026
 
 ---
 
 ## 📋 Summary
 
-### Active Issues (Last 3 Days)
+### Active Issues
 | Severity | Open | Fixed | Total |
 |----------|------|-------|-------|
-| 🔴 Critical | 0 | 1 | 1 |
+| 🔴 Critical | 1 | 1 | 2 |
 | 🟡 Moderate | 0 | 0 | 0 |
 | 🟢 Minor/Education | 1 | 0 | 1 |
-| **Total** | **1** | **1** | **2** |
+| **Total** | **2** | **1** | **3** |
 
 ### By Application Area
 | Area | Open | Fixed | Type |
 |------|------|-------|------|
 | Blackwood Convention | 0 | 1 | Bug (Fixed) |
+| Opening Bid Routing | 1 | 0 | Bug |
 | Bidding Logic | 1 | 0 | User Education |
 
 ---
@@ -96,11 +97,47 @@ pytest tests/regression/test_blackwood_after_1nt_transfer.py -v
 # 4 passed
 ```
 
+### Issue #3: Opening Bid Routing Bug — 11 HCP with 6-Card Suit Routed to Preempts
+
+**Status:** Open
+**Severity:** 🔴 Critical
+**Area:** Opening Bid Routing
+**Reported:** 2026-01-05
+**Evidence:** `hand_2026-01-05_23-18-41.json`
+
+**User Concern:**
+> "Is North's opening bid correct? What about East's response?"
+
+**Hand Context:**
+- North: ♠AKQ742 ♥Q5 ♦942 ♣43 (11 HCP + 2 dist = 13 total points, 6-card spade suit)
+- Vulnerability: EW, Dealer: North
+- Engine bid: **Pass** (incorrect — should be **1♠**)
+
+**Root Cause:**
+Routing mismatch between `_should_preempt()` in `bidding_engine_v2.py:589-597` and the preempt module's actual HCP range.
+
+1. `_should_preempt()` checks `hand.hcp >= 12` → **False** (11 HCP), continues
+2. Finds 6-card spade suit → returns **True**, routes to preempts module
+3. Preempts module checks HCP range `(6, 10)` at `preempts.py:43` → **11 HCP is outside range** → returns `None`
+4. `_get_bid_from_module()` receives `None` → falls through to `('Pass', 'Module returned no bid.')`
+
+The hand falls into a **gap**: too strong for preempts (>10 HCP) but the router's threshold (`hcp < 12`) doesn't match the preempts module's range (`6-10 HCP`). Hands with 11 HCP and a 6+ card suit are routed to preempts, which rejects them, and no fallback to `opening_bids` exists.
+
+**Proposed Fix (choose one):**
+- **Option A:** Change `_should_preempt()` threshold from `hand.hcp >= 12` to `hand.hcp > 10` to match the preempts module's actual range
+- **Option B:** Add fallback logic in `_get_bid_from_module()` — if preempts returns None for an opening hand, try `opening_bids`
+- **Option C:** Both — fix the threshold AND add fallback for robustness
+
+**Files to Modify:**
+- `backend/engine/bidding_engine_v2.py:592` (`_should_preempt` method)
+
+**Impact:** Any opening hand with 11 HCP and a 6+ card suit silently passes instead of opening. This affects hands like AKQxxx with a side queen — a clear 1-level opening per SAYC.
+
 ---
 
 ## 📊 Recent Feedback Summary
 
-### Last 3 Days (Dec 28 - Jan 1)
+### Dec 28, 2025 - Jan 27, 2026
 
 **Review Requests:**
 | Date | Concern | Type | Status |
@@ -108,6 +145,11 @@ pytest tests/regression/test_blackwood_after_1nt_transfer.py -v
 | 2025-12-28 | 1NT vs Double question | Education | Open |
 | 2025-12-28 | Blackwood response question | Bug | ✅ Fixed |
 | 2025-12-30 | Template question | N/A | Skip |
+| 2026-01-02 | Opening lead / declarer plan (x6) | Play review | No bidding issue |
+| 2026-01-05 | North's opening bid correct? (Hand A) | Education | No bug (7 HCP, Pass correct) |
+| 2026-01-05 | North's opening bid correct? (Hand B) | Education | No bug (4 HCP, Pass correct) |
+| 2026-01-05 | North's opening bid correct? (Hand C) | **Bug** | 🔴 Open — Issue #3 |
+| 2026-01-27 | Opening lead / declarer plan | Play review | No bidding issue |
 
 **Feedback Form Submissions:**
 | Date | Type | Description | Status |
@@ -120,17 +162,23 @@ pytest tests/regression/test_blackwood_after_1nt_transfer.py -v
 
 ## 📝 Action Items
 
+### 🔴 High Priority
+1. **Fix Issue #3 - Opening Bid Routing Bug** (reported 2026-01-05)
+   - Align `_should_preempt()` threshold with preempt module HCP range
+   - File: `backend/engine/bidding_engine_v2.py:592`
+   - Add regression test for 11 HCP + 6-card suit opening
+
 ### ✅ Completed
-1. **Fixed Issue #2 - Blackwood Response Bug** (2026-01-01)
+2. **Fixed Issue #2 - Blackwood Response Bug** (2026-01-01)
    - Modified `backend/engine/ai/conventions/blackwood.py`
    - Added regression test `test_blackwood_after_1nt_transfer.py`
    - All tests passing
 
 ### Medium Priority
-2. Consider adding "Why" explanations to bid feedback for user education
+3. Consider adding "Why" explanations to bid feedback for user education
 
 ### Low Priority
-3. Continue monitoring for new user feedback
+4. Continue monitoring for new user feedback
 
 ---
 
@@ -149,4 +197,4 @@ For historical reference, see:
 
 ---
 
-*Last Updated: 2026-01-01*
+*Last Updated: 2026-02-01*

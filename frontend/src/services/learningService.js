@@ -18,6 +18,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
  * @returns {Promise<Object>} Session info with first hand
  */
 export async function startLearningSession(userId, topicId, topicType = 'skill') {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/learning/start-session`, {
     method: 'POST',
     headers: {
@@ -66,7 +67,7 @@ export async function submitLearningAnswer(answerData) {
  * @returns {Promise<Object>} Learning status with levels and progress
  */
 export async function getLearningStatus(userId) {
-  if (!userId) throw new Error('user_id required');
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/learning/status?user_id=${userId}`);
 
   if (!response.ok) {
@@ -85,6 +86,7 @@ export async function getLearningStatus(userId) {
  * @returns {Promise<Object>} Review session with mixed hands
  */
 export async function getInterleavedReview(userId, level, count = 10) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(
     `${API_BASE_URL}/api/learning/review?user_id=${userId}&level=${level}&count=${count}`
   );
@@ -104,6 +106,7 @@ export async function getInterleavedReview(userId, level, count = 10) {
  * @returns {Promise<Object>} Assessment with 20 mixed hands
  */
 export async function getLevelAssessment(userId, level) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(
     `${API_BASE_URL}/api/learning/level-assessment?user_id=${userId}&level=${level}`
   );
@@ -137,6 +140,7 @@ export async function getSkillTree() {
  * @returns {Promise<Object>} User progress with level details
  */
 export async function getSkillTreeProgress(userId) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/skill-tree/progress?user_id=${userId}`);
 
   if (!response.ok) {
@@ -168,7 +172,7 @@ export async function getCurriculumSummary() {
  * @returns {Promise<Object>} Skills with their status (not_started, in_progress, mastered)
  */
 export async function getUserSkillProgress(userId) {
-  if (!userId) throw new Error('user_id required');
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/user/skill-progress?user_id=${userId}`);
 
   if (!response.ok) {
@@ -215,7 +219,7 @@ export async function submitFeedback(feedbackData) {
  * @returns {Promise<Object>} Play learning status with levels and progress
  */
 export async function getPlayLearningStatus(userId) {
-  if (!userId) throw new Error('user_id required');
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/learning/play-status?user_id=${userId}`);
 
   if (!response.ok) {
@@ -247,6 +251,7 @@ export async function getPlaySkillTree() {
  * @returns {Promise<Object>} User play progress with level details
  */
 export async function getPlaySkillTreeProgress(userId) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/play-skill-tree/progress?user_id=${userId}`);
 
   if (!response.ok) {
@@ -263,7 +268,7 @@ export async function getPlaySkillTreeProgress(userId) {
  * @returns {Promise<Object>} Play skills with their status (not_started, in_progress, mastered)
  */
 export async function getUserPlayProgress(userId) {
-  if (!userId) throw new Error('user_id required');
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/user/play-progress?user_id=${userId}`);
 
   if (!response.ok) {

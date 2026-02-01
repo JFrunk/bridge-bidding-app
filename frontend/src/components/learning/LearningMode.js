@@ -49,7 +49,7 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   const [showingIntro, setShowingIntro] = useState(null); // { skillId, skillName, track }
 
   const loadData = useCallback(async () => {
-    if (!userId) return;
+    if (!userId || userId === 'null' || userId === 'undefined') return;
     try {
       setLoading(true);
       setError(null);
