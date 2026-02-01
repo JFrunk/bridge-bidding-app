@@ -3123,7 +3123,7 @@ ${otherCommands}`;
       )}
 
       {/* Progress/Dashboard - Full-screen page */}
-      {showLearningDashboard && userId && (
+      {showLearningDashboard && (
         <div className="learning-dashboard-overlay" data-testid="dashboard-overlay">
           {/* Force remount on each open to refresh data */}
           <LearningDashboard
@@ -3182,7 +3182,7 @@ ${otherCommands}`;
       )}
 
       {/* Learning Mode - Full-screen guided learning */}
-      {showLearningMode && userId && (
+      {showLearningMode && (
         <div className="learning-mode-overlay">
           <LearningMode userId={userId} initialTrack={learningModeTrack} />
         </div>
