@@ -588,8 +588,10 @@ class BiddingEngineV2:
 
     def _should_preempt(self, hand: Hand) -> bool:
         """Check if hand qualifies for preempt."""
-        # Basic preempt criteria: 6+ card suit, < 12 HCP
-        if hand.hcp >= 12:
+        # Basic preempt criteria: 6+ card suit, 6-10 HCP
+        # Must match the preempt module's actual HCP range (6-10).
+        # Hands with 11+ HCP should go to opening_bids, not preempts.
+        if hand.hcp > 10:
             return False
         for suit in ['♠', '♥', '♦', '♣']:
             if hand.suit_lengths.get(suit, 0) >= 6:
@@ -732,15 +734,20 @@ class BiddingEngineV2:
         return None
 
     def _find_any_legal_bid(self, hand: Hand, state: AuctionState, auction_history: list) -> Optional[str]:
-        """Find any legal bid when we must bid."""
-        # Try cheapest NT
-        for level in range(1, 8):
+        """Find any legal bid when we must bid, with level caps based on HCP."""
+        hcp = hand.hcp
+        # Cap levels to prevent weak hands from bidding slam
+        max_nt_level = 3 if hcp < 16 else 6
+        max_suit_level = 4 if hcp < 16 else 6
+
+        # Try cheapest NT up to cap
+        for level in range(1, max_nt_level + 1):
             if self._is_bid_legal(f'{level}NT', auction_history):
                 return f'{level}NT'
 
-        # Try longest suit
+        # Try longest suit up to cap
         longest_suit = max(hand.suit_lengths, key=hand.suit_lengths.get)
-        for level in range(1, 8):
+        for level in range(1, max_suit_level + 1):
             bid = f'{level}{longest_suit}'
             if self._is_bid_legal(bid, auction_history):
                 return bid

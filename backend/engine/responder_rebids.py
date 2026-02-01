@@ -55,16 +55,15 @@ class ResponderRebidModule(ConventionModule):
         if BidValidator.is_legal_bid(bid, auction_history):
             return result
 
-        # Bid is illegal - try to find next legal bid of same strain
-        next_legal = get_next_legal_bid(bid, auction_history)
+        # Bid is illegal - try to find next legal bid of same strain (max 1 level jump)
+        next_legal = get_next_legal_bid(bid, auction_history, max_level_jump=1)
         if next_legal:
-            # SANITY CHECK: If adjustment is more than 2 levels, something is wrong
-            # This prevents runaway bid escalation (e.g., 2NT→7NT)
+            # SANITY CHECK: If adjustment is more than 1 level, something is wrong
             try:
                 original_level = int(bid[0])
                 adjusted_level = int(next_legal[0])
 
-                if adjusted_level - original_level > 2:
+                if adjusted_level - original_level > 1:
                     # The suggested bid is way off - pass instead of making unreasonable bid
                     return ("Pass", f"Cannot make reasonable rebid at current auction level (suggested {bid}, would need {next_legal}).")
             except (ValueError, IndexError):
@@ -98,6 +97,13 @@ class ResponderRebidModule(ConventionModule):
             # (Need ~33+ combined for slam, so if partner has 15-20 and we have < 18, not enough)
             if max_level >= 5 and hand.hcp < 18:
                 return ("Pass", f"Auction already at {max_level}-level, insufficient values for slam (have {hand.hcp} HCP).")
+
+            # Bail out at 4-level+ without game-forcing values (unless in a game-forcing auction)
+            if max_level >= 4 and hand.hcp < 13:
+                auction_ctx = features.get('auction_context')
+                is_game_forcing = auction_ctx.ranges.game_forcing if auction_ctx else False
+                if not is_game_forcing:
+                    return ("Pass", f"Auction at {max_level}-level, insufficient for game ({hand.hcp} HCP).")
 
         # Check if partner is the opener
         if auction_features.get('opener_relationship') != 'Partner':
@@ -160,22 +166,26 @@ class ResponderRebidModule(ConventionModule):
                 return transfer_result
 
         # Classify the auction context
-        auction_context = self._analyze_auction_context(
-            opening_bid, my_first_response, opener_rebid, hand
+        rebid_context = self._analyze_auction_context(
+            opening_bid, my_first_response, opener_rebid, hand,
+            my_previous_bids=my_bids_after_opening
         )
+        # Stash previous bids for downstream FSF fix
+        rebid_context['my_bids_after_opening'] = my_bids_after_opening
 
         # Route to appropriate rebid handler based on strength
         if 6 <= hand.total_points <= 9:
-            return self._minimum_rebid(hand, auction_context, features)
+            return self._minimum_rebid(hand, rebid_context, features)
         elif 10 <= hand.total_points <= 12:
-            return self._invitational_rebid(hand, auction_context, features)
+            return self._invitational_rebid(hand, rebid_context, features)
         elif hand.total_points >= 13:
-            return self._game_forcing_rebid(hand, auction_context, features)
+            return self._game_forcing_rebid(hand, rebid_context, features)
 
         return None
 
     def _analyze_auction_context(self, opening_bid: str, my_first_response: str,
-                                 opener_rebid: str, hand: Hand) -> Dict:
+                                 opener_rebid: str, hand: Hand,
+                                 my_previous_bids: list = None) -> Dict:
         """
         Analyze the auction to understand what's happening.
 
@@ -222,7 +232,7 @@ class ResponderRebidModule(ConventionModule):
         else:
             context['opener_rebid_type'] = 'unknown'
 
-        # Track all suits bid
+        # Track all suits bid (including ALL of responder's previous bids)
         suits_bid = []
         if opener_first_suit:
             suits_bid.append(opener_first_suit)
@@ -230,6 +240,13 @@ class ResponderRebidModule(ConventionModule):
             suits_bid.append(opener_rebid_suit)
         if my_first_suit:
             suits_bid.append(my_first_suit)
+        # Include suits from all of responder's previous bids (not just first)
+        if my_previous_bids:
+            for prev_bid in my_previous_bids:
+                if len(prev_bid) >= 2 and prev_bid[1] in '♣♦♥♠':
+                    prev_suit = prev_bid[1]
+                    if prev_suit not in suits_bid:
+                        suits_bid.append(prev_suit)
 
         context['suits_bid'] = suits_bid
 
@@ -275,6 +292,39 @@ class ResponderRebidModule(ConventionModule):
         # New suit must rank higher than opening suit
         return self.SUIT_RANK.get(rebid_suit, 0) > self.SUIT_RANK.get(opening_suit, 0)
 
+    # Combined HCP → max safe bid level (same thresholds as SanityChecker)
+    MAX_BID_LEVELS = {
+        (0, 19): 2, (20, 23): 3, (24, 32): 4,
+        (33, 36): 5, (37, 40): 6, (41, 100): 7
+    }
+
+    def _get_max_safe_level(self, hand: Hand, features: Dict) -> int:
+        """Compute max safe bid level from actual HCP + partner's estimated range."""
+        combined = self._get_combined_estimate(hand, features)
+        for (lo, hi), level in self.MAX_BID_LEVELS.items():
+            if lo <= combined <= hi:
+                return level
+        return 2
+
+    def _get_combined_estimate(self, hand: Hand, features: Dict) -> int:
+        """
+        Estimate combined HCP using actual hand + partner's range midpoint.
+
+        Uses my REAL HCP (not the range estimate) + partner's midpoint from
+        AuctionContext. This avoids the inflated combined_midpoint that occurs
+        when one side's range is wide (e.g., responder 6-40 → midpoint 23).
+        """
+        ctx = features.get('auction_context')
+        if ctx is None:
+            return hand.hcp + 14  # Fallback: assume average opener
+
+        # I am responder, partner is opener → use opener's range
+        opener_min, opener_max = ctx.ranges.opener_hcp
+        # Cap partner max to avoid overestimation from wide ranges
+        capped_max = min(opener_max, 20)
+        partner_mid = (opener_min + capped_max) / 2
+        return int(hand.hcp + partner_mid)
+
     def _minimum_rebid(self, hand: Hand, context: Dict, features: Dict) -> Optional[Tuple[str, str]]:
         """
         Handle minimum strength rebids (6-9 points).
@@ -291,6 +341,8 @@ class ResponderRebidModule(ConventionModule):
         opener_first_suit = context['opener_first_suit']
         opener_second_suit = context['opener_second_suit']
         my_first_suit = context['my_first_suit']
+        max_safe_level = self._get_max_safe_level(hand, features)
+        combined_midpoint = self._get_combined_estimate(hand, features)
 
         # Special case: Forced to bid after reverse (reverse is forcing)
         if context['is_forcing']:
@@ -304,6 +356,8 @@ class ResponderRebidModule(ConventionModule):
 
             # Rebid own 6+ card suit if available
             if my_first_suit and hand.suit_lengths.get(my_first_suit, 0) >= 6:
+                if 2 > max_safe_level:
+                    return ("Pass", f"Minimum hand, cannot safely rebid at 2-level (max safe: {max_safe_level}).")
                 return (f"2{my_first_suit}", f"Minimum hand rebidding 6+ card {my_first_suit} suit.")
 
             # Otherwise pass (no better option)
@@ -330,6 +384,8 @@ class ResponderRebidModule(ConventionModule):
 
             # Rebid 6+ card suit (not forcing after 1NT rebid)
             if my_first_suit and hand.suit_lengths.get(my_first_suit, 0) >= 6:
+                if 2 > max_safe_level:
+                    return ("Pass", f"Minimum hand, cannot safely rebid at 2-level (max safe: {max_safe_level}).")
                 return (f"2{my_first_suit}", f"Minimum hand with 6+ card {my_first_suit} suit, to play.")
 
             return ("Pass", "Minimum hand, passing 1NT.")
@@ -339,13 +395,20 @@ class ResponderRebidModule(ConventionModule):
             # Priority: Rebid own 6+ card suit before giving preference
             # With 6-card suit and minimum, we want to play in our suit rather than opener's
             if my_first_suit and hand.suit_lengths.get(my_first_suit, 0) >= 6:
+                if 2 > max_safe_level:
+                    return ("Pass", f"Minimum hand, cannot safely rebid at 2-level (max safe: {max_safe_level}).")
                 return (f"2{my_first_suit}", f"Minimum hand rebidding 6+ card {my_first_suit} suit.")
 
             # Give preference between opener's suits
             return self._give_preference(hand, opener_first_suit, opener_second_suit, strength='minimum', context=context)
 
-        # Case 4: Opener made jump rebid (invitational)
+        # Case 4: Opener made jump rebid (invitational, 16-18 HCP)
         if opener_rebid_type == 'jump_rebid':
+            # Accept if combined midpoint reaches game (24+) with fit
+            if combined_midpoint >= 24 and hand.suit_lengths.get(opener_first_suit, 0) >= 3:
+                if opener_first_suit in ['♥', '♠']:
+                    return (f"4{opener_first_suit}", f"Accepting game invitation with {opener_first_suit} fit (combined ~{combined_midpoint}).")
+                return ("3NT", f"Accepting game invitation (combined ~{combined_midpoint}).")
             # Decline invitation with minimum
             return ("Pass", "Minimum hand, declining partner's game invitation.")
 
@@ -407,13 +470,15 @@ class ResponderRebidModule(ConventionModule):
             level = '3'
             explanation = f"Jump preference to {preferred_suit} with {card_count}+ cards (invitational, 10-12 pts)."
         else:  # game-forcing
-            # With game-forcing values, bid game if major, otherwise 3-level
+            # With game-forcing values, bid game if major, otherwise 3NT preferred over 5m
             if preferred_suit in ['♥', '♠']:
                 level = '4'
                 explanation = f"Game in {preferred_suit} with {card_count}+ card fit."
             else:
-                level = '5' if card_count >= 4 else '3'
-                explanation = f"Preference to {preferred_suit} with game-forcing values."
+                # Prefer 3NT over 5m (9 tricks easier than 11)
+                level = '3'
+                preferred_suit = 'NT'
+                explanation = f"Game in NT preferred over 5-minor with game-forcing values."
 
         bid = f"{level}{preferred_suit}"
         
@@ -445,43 +510,37 @@ class ResponderRebidModule(ConventionModule):
         my_first_suit = context['my_first_suit']
         opener_rebid = context['opener_rebid']
 
-        # For invitational rebids (10-12 HCP), we should INVITE, not bid game
-        # The AuctionContext may have wide ranges that overestimate combined values
-        # With 10-12 HCP after opener's 1NT rebid (12-14), combined is 22-26
-        # This is invitational, NOT game. Let opener decide with 2NT.
-        #
-        # Only bid game directly if we have 12 HCP AND opener showed extras (2NT rebid)
-        should_bid_game = False
-        opener_rebid = context.get('opener_rebid', '')
+        # Use partnership-wide combined HCP from AuctionContext
+        combined_midpoint = self._get_combined_estimate(hand, features)
+        max_safe_level = self._get_max_safe_level(hand, features)
 
-        # Only consider game with top of invitational range (12 HCP) and extra evidence
-        if hand.hcp >= 12:
-            # After 2NT rebid (18-19 HCP), combined is 30-31 - game for sure
-            if opener_rebid == '2NT':
-                should_bid_game = True
-            # After 1NT rebid (12-14 HCP) with 12 HCP, combined is 24-26 - still invitational
-            # Let opener decide by bidding 2NT
+        # Bid game when combined partnership values reach 25+
+        should_bid_game = combined_midpoint >= 25
 
         # Case 1: Opener rebid same suit - jump raise with fit
         if opener_rebid_type == 'same_suit':
             if hand.suit_lengths.get(opener_first_suit, 0) >= 3:
                 # With AuctionContext showing game values, bid game directly
-                if should_bid_game and opener_first_suit in ['♥', '♠']:
-                    return (f"4{opener_first_suit}", f"Game with {opener_first_suit} fit - combined values justify game.")
-                elif should_bid_game:
-                    return ("3NT", f"Game in NT - combined values justify game with {opener_first_suit} fit.")
-                return (f"3{opener_first_suit}", f"Invitational raise (10-12 pts) with 3+ {opener_first_suit}.")
+                if should_bid_game and max_safe_level >= 4 and opener_first_suit in ['♥', '♠']:
+                    return (f"4{opener_first_suit}", f"Game with {opener_first_suit} fit (combined ~{combined_midpoint}).")
+                elif should_bid_game and max_safe_level >= 3:
+                    return ("3NT", f"Game in NT (combined ~{combined_midpoint}) with {opener_first_suit} fit.")
+                if max_safe_level >= 3:
+                    return (f"3{opener_first_suit}", f"Invitational raise (10-12 pts) with 3+ {opener_first_suit}.")
+                return ("Pass", f"Cannot safely invite at 3-level (combined ~{combined_midpoint}).")
 
             # Jump rebid own suit with 6+ cards
             if my_first_suit and hand.suit_lengths.get(my_first_suit, 0) >= 6:
-                if should_bid_game and my_first_suit in ['♥', '♠']:
-                    return (f"4{my_first_suit}", f"Game with 6+ {my_first_suit} - combined values justify game.")
-                return (f"3{my_first_suit}", f"Invitational jump showing 6+ {my_first_suit} and 10-12 pts.")
+                if should_bid_game and max_safe_level >= 4 and my_first_suit in ['♥', '♠']:
+                    return (f"4{my_first_suit}", f"Game with 6+ {my_first_suit} (combined ~{combined_midpoint}).")
+                if max_safe_level >= 3:
+                    return (f"3{my_first_suit}", f"Invitational jump showing 6+ {my_first_suit} and 10-12 pts.")
+                return ("Pass", f"Cannot safely invite at 3-level (combined ~{combined_midpoint}).")
 
             # Bid 2NT or 3NT with balanced hand
             if hand.is_balanced and hand.hcp >= 10:
-                if should_bid_game:
-                    return ("3NT", "Game in NT - combined values justify game.")
+                if should_bid_game and max_safe_level >= 3:
+                    return ("3NT", f"Game in NT (combined ~{combined_midpoint}).")
                 return ("2NT", "Invitational with 10-12 HCP, balanced.")
 
         # Case 2: Opener bid notrump - respond appropriately
@@ -499,14 +558,16 @@ class ResponderRebidModule(ConventionModule):
             if opener_rebid == '1NT':
                 # With 6+ card major, jump to game if combined values support it
                 if my_first_suit in ['♥', '♠'] and hand.suit_lengths.get(my_first_suit, 0) >= 6:
-                    if should_bid_game:
-                        return (f"4{my_first_suit}", f"Game with 6+ {my_first_suit} - combined values justify game.")
-                    return (f"3{my_first_suit}", f"Invitational with 6+ {my_first_suit} and 10-12 pts.")
+                    if should_bid_game and max_safe_level >= 4:
+                        return (f"4{my_first_suit}", f"Game with 6+ {my_first_suit} (combined ~{combined_midpoint}).")
+                    if max_safe_level >= 3:
+                        return (f"3{my_first_suit}", f"Invitational with 6+ {my_first_suit} and 10-12 pts.")
+                    return ("Pass", f"Cannot safely invite at 3-level (combined ~{combined_midpoint}).")
 
                 # With balanced hand, decide between 2NT and 3NT based on combined values
                 if hand.is_balanced:
-                    if should_bid_game:
-                        return ("3NT", "Game in NT - combined values justify game.")
+                    if should_bid_game and max_safe_level >= 3:
+                        return ("3NT", f"Game in NT (combined ~{combined_midpoint}).")
                     return ("2NT", "Invitational with 10-12 HCP, asking partner to bid 3NT with maximum.")
 
             # If opener bid 2NT, raise to 3NT with 11+ pts (opener shows extras)
@@ -515,28 +576,30 @@ class ResponderRebidModule(ConventionModule):
 
         # Case 3: Opener showed two suits - jump preference (or bid game if combined values support)
         if opener_rebid_type == 'new_suit' and opener_second_suit:
-            if should_bid_game:
+            if should_bid_game and max_safe_level >= 4:
                 # Bid game with fit in major
                 fit1 = hand.suit_lengths.get(opener_first_suit, 0)
                 fit2 = hand.suit_lengths.get(opener_second_suit, 0)
                 if fit1 >= 3 and opener_first_suit in ['♥', '♠']:
-                    return (f"4{opener_first_suit}", f"Game with {opener_first_suit} fit - combined values justify game.")
+                    return (f"4{opener_first_suit}", f"Game with {opener_first_suit} fit (combined ~{combined_midpoint}).")
                 if fit2 >= 3 and opener_second_suit in ['♥', '♠']:
-                    return (f"4{opener_second_suit}", f"Game with {opener_second_suit} fit - combined values justify game.")
+                    return (f"4{opener_second_suit}", f"Game with {opener_second_suit} fit (combined ~{combined_midpoint}).")
                 if hand.is_balanced:
-                    return ("3NT", "Game in NT - combined values justify game.")
+                    return ("3NT", f"Game in NT (combined ~{combined_midpoint}).")
             return self._give_preference(hand, opener_first_suit, opener_second_suit, strength='invitational')
 
         # Case 4: Opener made jump rebid (already invitational) - accept with 10+ pts
         if opener_rebid_type == 'jump_rebid':
             # Accept invitation with 10+ pts (jump rebid shows extras from opener)
-            if hand.total_points >= 10:
+            if hand.total_points >= 10 and max_safe_level >= 4:
                 # Accept invitation by bidding game
                 if opener_first_suit in ['♥', '♠'] and hand.suit_lengths.get(opener_first_suit, 0) >= 2:
-                    return (f"4{opener_first_suit}", f"Accepting game invitation with {hand.total_points} pts.")
-                return ("3NT", f"Accepting game invitation with {hand.total_points} pts.")
+                    return (f"4{opener_first_suit}", f"Accepting game invitation with {hand.total_points} pts (combined ~{combined_midpoint}).")
+                return ("3NT", f"Accepting game invitation with {hand.total_points} pts (combined ~{combined_midpoint}).")
+            elif hand.total_points >= 10 and max_safe_level >= 3:
+                return ("3NT", f"Accepting game invitation with {hand.total_points} pts (combined ~{combined_midpoint}).")
             else:
-                # Decline with less than 10 pts (rare case)
+                # Decline with less than 10 pts or insufficient combined values
                 return ("Pass", f"Declining partner's invitation with {hand.total_points} pts.")
 
         # Case 5: After reverse (forcing) - show invitational values or bid game
@@ -559,8 +622,8 @@ class ResponderRebidModule(ConventionModule):
 
         # Default: Bid 2NT or 3NT based on combined values
         if hand.is_balanced:
-            if should_bid_game:
-                return ("3NT", "Game in NT - combined values justify game.")
+            if should_bid_game and max_safe_level >= 3:
+                return ("3NT", f"Game in NT (combined ~{combined_midpoint}).")
             return ("2NT", "Invitational with 10-12 HCP, balanced.")
 
         return None
@@ -585,16 +648,18 @@ class ResponderRebidModule(ConventionModule):
         my_first_suit = context['my_first_suit']
         opener_rebid = context['opener_rebid']
         unbid_suit = context['unbid_suit']
+        my_bids_after_opening = context.get('my_bids_after_opening', [])
+        max_safe_level = self._get_max_safe_level(hand, features)
 
         # SLAM AGGREGATION LOGIC (per expert analysis):
         # If Combined_Points >= 33 AND Fit_Found = True THEN Force_Slam_Investigation
-        auction_context = features.get('auction_context')
+        global_ctx = features.get('auction_context')
         estimated_combined = 0
         has_fit = False
 
-        if auction_context is not None:
-            estimated_combined = auction_context.ranges.combined_midpoint
-            has_fit = auction_context.has_fit
+        if global_ctx is not None:
+            estimated_combined = global_ctx.ranges.combined_midpoint
+            has_fit = global_ctx.has_fit
         else:
             # Fallback estimate: opener shows 13-15 after minimum rebid, 16-18 after jump
             opener_estimated = 14 if opener_rebid_type in ['same_suit', 'new_suit', 'notrump'] else 17
@@ -625,7 +690,10 @@ class ResponderRebidModule(ConventionModule):
                         return (f"3{opener_first_suit}", f"Slam try in {opener_first_suit} with {hand.total_points} pts.")
                     if hand.is_balanced:
                         return ("3NT", f"Game in NT with {opener_first_suit} fit but balanced hand.")
-                    return (f"5{opener_first_suit}", f"Game in {opener_first_suit} (13+ pts).")
+                    # 5m needs ~29 combined (11 tricks); prefer 3NT if insufficient
+                    if estimated_combined >= 29 and max_safe_level >= 5:
+                        return (f"5{opener_first_suit}", f"Game in {opener_first_suit} (combined ~{estimated_combined}).")
+                    return ("3NT", f"Game in NT preferred over 5{opener_first_suit} (combined ~{estimated_combined}).")
 
             # No fit - bid 3NT if balanced
             if hand.is_balanced and hand.hcp >= 13:
@@ -665,7 +733,12 @@ class ResponderRebidModule(ConventionModule):
                 return (f"4{opener_second_suit}", f"Game with {opener_second_suit} fit.")
 
             # No major fit - check for Fourth Suit Forcing
-            if unbid_suit and hand.hcp >= 12:
+            # Ensure the "unbid" suit wasn't already bid by responder in a previous round
+            my_rebid_suits = set()
+            for prev_bid in my_bids_after_opening:
+                if len(prev_bid) >= 2 and prev_bid[1] in '♣♦♥♠':
+                    my_rebid_suits.add(prev_bid[1])
+            if unbid_suit and unbid_suit not in my_rebid_suits and hand.hcp >= 12:
                 # Fourth Suit Forcing - ask for more info
                 return (f"2{unbid_suit}", f"Fourth Suit Forcing, asking for more information (game-forcing).")
 

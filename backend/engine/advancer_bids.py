@@ -41,15 +41,15 @@ class AdvancerBidsModule(ConventionModule):
             return (bid, explanation, metadata) if metadata else (bid, explanation)
 
         # Bid is illegal - try to find next legal bid of same strain
-        next_legal = get_next_legal_bid(bid, auction_history)
+        next_legal = get_next_legal_bid(bid, auction_history, max_level_jump=1)
         if next_legal:
-            # SANITY CHECK: If adjustment is more than 2 levels, something is wrong
+            # SANITY CHECK: If adjustment is more than 1 level, something is wrong
             # This prevents runaway bid escalation in competitive auctions
             try:
                 original_level = int(bid[0])
                 adjusted_level = int(next_legal[0])
 
-                if adjusted_level - original_level > 2:
+                if adjusted_level - original_level > 1:
                     # The suggested bid is way off - pass instead of making unreasonable bid
                     return ("Pass", f"Cannot make reasonable bid at current auction level (suggested {bid}, would need {next_legal}).")
             except (ValueError, IndexError):

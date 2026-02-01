@@ -46,12 +46,12 @@ class GerberConvention(ConventionModule):
             return result
 
         # Bid is illegal - try to find next legal bid
-        next_legal = get_next_legal_bid(bid, auction_history)
+        next_legal = get_next_legal_bid(bid, auction_history, max_level_jump=1)
         if next_legal:
             try:
                 original_level = int(bid[0])
                 adjusted_level = int(next_legal[0])
-                if adjusted_level - original_level > 2:
+                if adjusted_level - original_level > 1:
                     return ("Pass", f"Cannot make reasonable Gerber bid (suggested {bid}, would need {next_legal}).")
             except (ValueError, IndexError):
                 pass

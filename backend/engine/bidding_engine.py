@@ -336,7 +336,7 @@ class BiddingEngine:
                 
             # Cap partner's specific max for estimation purposes if they are unlimited
             # (Prevent assuming 23 HCP just because range is 6-40)
-            calc_partner_max = min(partner_max, 22)  # Cap at 22 for estimation
+            calc_partner_max = min(partner_max, 20)  # Cap at 20 for estimation
             
             partner_midpoint = (partner_min + calc_partner_max) / 2
             combined_pts = int(my_hcp + partner_midpoint)
@@ -366,6 +366,15 @@ class BiddingEngine:
             game_bid = self._find_best_game_bid(hand, features, auction_history, context)
 
             if game_bid and self._is_bid_legal(game_bid, auction_history):
+                # Suppress high-level bids without slam values
+                game_bid_level = int(game_bid[0]) if game_bid[0].isdigit() else 0
+                if game_bid_level >= 5 and combined_pts < 33:
+                    logger.info(f"GAME SAFETY NET: Suppressed {game_bid} (5+ level needs 33, have {combined_pts})")
+                    return (False, None, None)
+                if game_bid == '4NT' and combined_pts < 33:
+                    logger.info(f"GAME SAFETY NET: Suppressed 4NT (slam exploration needs 33, have {combined_pts})")
+                    return (False, None, None)
+
                 explanation = f"Game safety net: Partnership has ~{combined_pts} combined points, must reach game."
                 logger.info(f"GAME SAFETY NET: Overriding Pass with {game_bid}")
                 return (True, game_bid, explanation)
