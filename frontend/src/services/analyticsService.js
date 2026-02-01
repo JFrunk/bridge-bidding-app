@@ -38,6 +38,7 @@ export async function recordPractice(practiceData) {
  * @returns {Promise<Object>} Dashboard data with stats, insights, celebrations, recommendations
  */
 export async function getDashboardData(userId) {
+  if (!userId) throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/analytics/dashboard?user_id=${userId}`);
 
   if (!response.ok) {

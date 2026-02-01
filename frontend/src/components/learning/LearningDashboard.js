@@ -20,6 +20,7 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay, onReviewH
   const [showImportModal, setShowImportModal] = useState(false);
 
   const loadDashboardData = useCallback(async () => {
+    if (!userId) return;
     try {
       setLoading(true);
       setError(null);

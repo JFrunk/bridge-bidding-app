@@ -66,6 +66,7 @@ export async function submitLearningAnswer(answerData) {
  * @returns {Promise<Object>} Learning status with levels and progress
  */
 export async function getLearningStatus(userId) {
+  if (!userId) throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/learning/status?user_id=${userId}`);
 
   if (!response.ok) {
@@ -167,6 +168,7 @@ export async function getCurriculumSummary() {
  * @returns {Promise<Object>} Skills with their status (not_started, in_progress, mastered)
  */
 export async function getUserSkillProgress(userId) {
+  if (!userId) throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/user/skill-progress?user_id=${userId}`);
 
   if (!response.ok) {
@@ -213,6 +215,7 @@ export async function submitFeedback(feedbackData) {
  * @returns {Promise<Object>} Play learning status with levels and progress
  */
 export async function getPlayLearningStatus(userId) {
+  if (!userId) throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/learning/play-status?user_id=${userId}`);
 
   if (!response.ok) {
@@ -260,6 +263,7 @@ export async function getPlaySkillTreeProgress(userId) {
  * @returns {Promise<Object>} Play skills with their status (not_started, in_progress, mastered)
  */
 export async function getUserPlayProgress(userId) {
+  if (!userId) throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/user/play-progress?user_id=${userId}`);
 
   if (!response.ok) {
