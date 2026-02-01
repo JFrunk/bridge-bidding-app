@@ -210,14 +210,34 @@ class SanityChecker:
 
         return 2  # Conservative default
 
+    def _get_my_seat(self, features: Dict) -> str:
+        """Extract my seat (short form) from features for BiddingState lookup."""
+        positions = features.get('positions', [])
+        my_index = features.get('my_index')
+        if positions and my_index is not None:
+            from utils.seats import normalize
+            return normalize(positions[my_index])
+        return None
+
     def _estimate_combined_hcp(self, hand: Hand, features: Dict, auction: List) -> int:
         """
         Estimate combined partnership HCP.
 
-        Uses AuctionContext for accurate range tracking when available,
-        falls back to legacy estimation otherwise.
+        Uses BiddingState (per-seat beliefs) when available, then
+        AuctionContext for range tracking, falls back to legacy estimation.
         """
         my_hcp = hand.hcp
+
+        # Use BiddingState if available and partner's range is meaningfully narrowed
+        bidding_state = features.get('bidding_state')
+        if bidding_state is not None:
+            my_seat = self._get_my_seat(features)
+            if my_seat:
+                partner_belief = bidding_state.partner_of(my_seat)
+                spread = partner_belief.hcp[1] - partner_belief.hcp[0]
+                if spread <= 25:  # Range has been narrowed from default (0,40)
+                    partner_estimate = (partner_belief.hcp[0] + partner_belief.hcp[1]) // 2
+                    return my_hcp + partner_estimate
 
         # Use AuctionContext if available (expert-level range tracking)
         auction_context = features.get('auction_context')
@@ -269,6 +289,17 @@ class SanityChecker:
         not 40 which inflates the midpoint estimate.
         """
         my_hcp = hand.hcp
+
+        # Use BiddingState if available and partner's range is meaningfully narrowed
+        bidding_state = features.get('bidding_state')
+        if bidding_state is not None:
+            my_seat = self._get_my_seat(features)
+            if my_seat:
+                partner_belief = bidding_state.partner_of(my_seat)
+                spread = partner_belief.hcp[1] - partner_belief.hcp[0]
+                if spread <= 25:  # Range has been narrowed from default (0,40)
+                    partner_max = partner_belief.hcp[1]
+                    return my_hcp + partner_max
 
         # Use AuctionContext if available
         auction_context = features.get('auction_context')

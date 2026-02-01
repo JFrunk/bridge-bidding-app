@@ -254,3 +254,129 @@ class TestSanityCheckerControl:
         hand = create_test_hand(5, {'♠': 2, '♥': 2, '♦': 5, '♣': 4})
         should_bid, final_bid, reason = checker.check("7NT", hand, {}, [])
         assert should_bid is False
+
+
+class TestBiddingStateIntegration:
+    """Test governor's use of BiddingState for HCP estimation."""
+
+    def _make_features_with_bidding_state(self, auction, dealer='North', my_position='South'):
+        """Build features dict with bidding_state included."""
+        from engine.ai.bidding_state import BiddingStateBuilder
+        positions = ['North', 'East', 'South', 'West']
+        my_index = positions.index(my_position)
+        bidding_state = BiddingStateBuilder().build(auction, dealer)
+        return {
+            'bidding_state': bidding_state,
+            'positions': positions,
+            'my_index': my_index,
+            'auction_features': {
+                'opener_relationship': 'Partner' if dealer == 'North' else 'Me',
+                'opening_bid': auction[0] if auction else '',
+            },
+        }
+
+    def test_combined_hcp_with_1nt_opening(self):
+        """BiddingState knows 1NT opener is 15-17, so partner estimate = 16."""
+        checker = SanityChecker()
+        # I have 10 HCP as South, partner (North) opened 1NT
+        hand = create_test_hand(10, {'♠': 4, '♥': 3, '♦': 3, '♣': 3})
+        auction = ['1NT', 'Pass']
+        features = self._make_features_with_bidding_state(auction, dealer='North', my_position='South')
+
+        combined = checker._estimate_combined_hcp(hand, features, auction)
+        # Partner belief: (15, 17), midpoint = 16. Combined = 10 + 16 = 26
+        assert combined == 26
+
+    def test_combined_hcp_with_weak_two(self):
+        """Weak two opener is 6-10, midpoint = 8."""
+        checker = SanityChecker()
+        hand = create_test_hand(12, {'♠': 3, '♥': 3, '♦': 4, '♣': 3})
+        auction = ['2♥', 'Pass']
+        features = self._make_features_with_bidding_state(auction, dealer='North', my_position='South')
+
+        combined = checker._estimate_combined_hcp(hand, features, auction)
+        # Partner belief: (6, 10), midpoint = 8. Combined = 12 + 8 = 20
+        assert combined == 20
+
+    def test_hard_ceiling_with_1nt_opening(self):
+        """Hard ceiling uses partner max: 1NT opener max = 17."""
+        checker = SanityChecker()
+        hand = create_test_hand(16, {'♠': 4, '♥': 3, '♦': 3, '♣': 3})
+        auction = ['1NT', 'Pass']
+        features = self._make_features_with_bidding_state(auction, dealer='North', my_position='South')
+
+        ceiling = checker._calculate_hard_ceiling(hand, features, auction)
+        # Partner max = 17. Ceiling = 16 + 17 = 33
+        assert ceiling == 33
+
+    def test_hard_ceiling_with_1_level_opening(self):
+        """1-level suit opener max = 21."""
+        checker = SanityChecker()
+        hand = create_test_hand(14, {'♠': 5, '♥': 3, '♦': 3, '♣': 2})
+        auction = ['1♠', 'Pass']
+        features = self._make_features_with_bidding_state(auction, dealer='North', my_position='South')
+
+        ceiling = checker._calculate_hard_ceiling(hand, features, auction)
+        # Partner max = 21. Ceiling = 14 + 21 = 35
+        assert ceiling == 35
+
+    def test_blocks_game_when_partner_passed_opening(self):
+        """Partner passed in 1st seat (max 11 HCP), blocks game with weak hand."""
+        checker = SanityChecker()
+        # I have 10 HCP, partner passed (max 11)
+        hand = create_test_hand(10, {'♠': 5, '♥': 3, '♦': 3, '♣': 2})
+        auction = ['Pass', 'Pass', '1♠', 'Pass']  # N passes, E passes, S opens
+        features = self._make_features_with_bidding_state(auction, dealer='North', my_position='South')
+
+        combined = checker._estimate_combined_hcp(hand, features, auction)
+        # North passed: (0, 11), midpoint = 5. Combined = 10 + 5 = 15
+        assert combined == 15
+
+        # 4♠ should be blocked (combined 15, max level 2)
+        should_bid, final_bid, reason = checker.check("4♠", hand, features, auction)
+        assert should_bid is False
+
+    def test_allows_game_when_partner_opened(self):
+        """Partner opened 1♥ (12-21 HCP), game allowed with 13 HCP."""
+        checker = SanityChecker()
+        hand = create_test_hand(13, {'♠': 3, '♥': 4, '♦': 3, '♣': 3})
+        auction = ['1♥', 'Pass']
+        features = self._make_features_with_bidding_state(auction, dealer='North', my_position='South')
+
+        combined = checker._estimate_combined_hcp(hand, features, auction)
+        # Partner belief: (12, 21), midpoint = 16. Combined = 13 + 16 = 29
+        assert combined == 29
+
+        # 4♥ should be allowed
+        should_bid, final_bid, reason = checker.check("4♥", hand, features, auction)
+        assert should_bid is True
+
+    def test_blocks_slam_when_partner_limited(self):
+        """Partner made a simple raise (6-10 HCP), blocks slam."""
+        checker = SanityChecker()
+        hand = create_test_hand(18, {'♠': 5, '♥': 3, '♦': 3, '♣': 2})
+        auction = ['1♠', 'Pass', '2♠', 'Pass']
+        features = self._make_features_with_bidding_state(auction, dealer='North', my_position='North')
+        # Override my_position to North (the opener rebidding)
+        features['my_index'] = 0
+
+        ceiling = checker._calculate_hard_ceiling(hand, features, auction)
+        # Hand helper caps at 16 HCP (4 aces). South raised simply: max = 10.
+        # Ceiling = 16 + 10 = 26
+        assert ceiling == 26
+
+        # 6♠ should be blocked (ceiling 26, need 33)
+        should_bid, final_bid, reason = checker.check("6♠", hand, features, auction)
+        assert should_bid is False
+
+    def test_competitive_opponent_overcall_awareness(self):
+        """BiddingState narrows opponent overcall, helps estimate correctly."""
+        checker = SanityChecker()
+        hand = create_test_hand(14, {'♠': 5, '♥': 3, '♦': 3, '♣': 2})
+        # N opens 1♠, E overcalls 2♣
+        auction = ['1♠', '2♣']
+        features = self._make_features_with_bidding_state(auction, dealer='North', my_position='South')
+
+        combined = checker._estimate_combined_hcp(hand, features, auction)
+        # Partner (North) opened 1♠: (12, 21), midpoint = 16. Combined = 14 + 16 = 30
+        assert combined == 30
