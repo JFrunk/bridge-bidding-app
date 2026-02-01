@@ -235,6 +235,118 @@ Please test:
 
 ---
 
+### BUG-C004: 12-Card Hand — Stale play_state Causes Wrong Hands After New Deal
+**Status:** 🔴 Active
+**Severity:** CRITICAL - Corrupted game state, missing card, potentially all hands wrong
+**Discovered:** 2026-02-01
+**Area:** State Management / Deal Lifecycle / Play State Isolation
+
+#### Problem
+After playing a hand (or starting play phase) and then dealing a new hand, the `get-all-hands` endpoint returns hands from the **previous game's play state** instead of the fresh deal. This causes one or more positions to show fewer than 13 cards (observed: East with 12 cards), and ALL displayed hands may be from the wrong game entirely.
+
+#### Symptoms
+- East (or another position) shows only 12 cards after a new deal
+- Console shows: `East hand length: 12` from `get-all-hands` response
+- Other positions may show 13 cards but from the WRONG deal (stale data)
+- Bidding happened on the correct new hand, but "Show All Hands" displays old hand data
+
+#### Root Cause (Three Interconnected Bugs)
+
+**Bug 1: `perform_new_deal()` does not reset `play_state` (server.py:820-855)**
+When a new hand is dealt, `perform_new_deal()` creates new Hand objects for `state.deal` but never clears `state.play_state` from the previous hand. The existing `state.reset_hand()` method (session_state.py:122-128) correctly resets `play_state = None`, but `perform_new_deal()` doesn't call it.
+
+**Bug 2: Play state shares Hand object references with deal (server.py:2951, 3097)**
+When play begins, `hands[pos] = state.deal[full_name]` assigns the **same Hand object** (not a deep copy) to the play state. During play, `hand.cards.remove(card)` (server.py:3268, 3526) mutates the shared object, reducing card count in both `play_state.hands` AND `state.deal`.
+
+**Bug 3: `get-all-hands` prioritizes stale play_state (server.py:2153)**
+The endpoint checks `if state.play_state and state.play_state.hands` first, and if truthy, returns play state hands. After a new deal, this condition is still true (play_state was never cleared), so it returns old/mutated hands instead of the fresh deal.
+
+#### Evidence
+
+**Console capture (frontend):**
+```
+📡 Fetching from: https://app.mybridgebuddy.com/api/get-all-hands
+🔍 Detailed check - North hand length: 13
+🔍 Detailed check - East hand length: 12    ← MISSING CARD
+🔍 Detailed check - South hand length: 13
+🔍 Detailed check - West hand length: 13
+
+East ♠: 3 cards A 7 2
+East ♥: 3 cards Q 6 5
+East ♣: 3 cards J 7 5
+East ♦: 3 cards K J 4
+East total: 12 (should be 13)
+```
+
+**Production server logs (bridge-backend journal):**
+```
+✅ Preserved original_deal with 52 total cards    ← play_state set on hand N
+🃏 Dealt new hand. Dealer: E, Vul: NS             ← new deal (play_state NOT cleared)
+🃏 East: 13 cards                                  ← backend dealt 13 correctly
+... bidding proceeds on new hand ...
+← get-all-hands called → reads stale play_state → returns 12-card East
+```
+
+#### Scenario That Triggers Bug
+1. Play a hand (or click "Play This Hand" to start play phase)
+2. Opening leader plays one card (e.g., East leads — East now has 12 cards in shared Hand object)
+3. Deal a new hand (click "Deal New Hand")
+4. Bidding happens on the new hand (correctly, using fresh `state.deal`)
+5. Click "Show All Hands" → `get-all-hands` finds stale `play_state` → returns old East hand with 12 cards
+
+#### Fix Required (Three-Part)
+
+1. **Reset play_state in `perform_new_deal()`** — Add `state.play_state = None` and `state.original_deal = None` so stale play data doesn't persist across deals.
+
+2. **Deep-copy Hand objects when initializing play state** — At server.py:2951 and 3097, use `copy.deepcopy(state.deal[full_name])` instead of direct reference assignment. This prevents card removal during play from mutating `state.deal`.
+
+3. **Add defensive card count validation in `get-all-hands`** — Log a warning if any hand has fewer than 13 cards during bidding phase, to catch similar issues early.
+
+#### Files Involved
+- `backend/server.py` (line 820-855) — `perform_new_deal()` missing play_state reset
+- `backend/server.py` (line 2951) — `start_play_phase()` shared Hand reference
+- `backend/server.py` (line 3097) — `play_random_hand()` shared Hand reference
+- `backend/server.py` (line 2153) — `get_all_hands()` stale play_state check
+- `backend/server.py` (lines 3268, 3526) — `hand.cards.remove(card)` mutates shared object
+- `backend/core/session_state.py` (line 122-128) — `reset_hand()` exists but not called
+
+#### How to Test if Bug is Fixed
+```bash
+# 1. Start app
+cd backend && source venv/bin/activate && python server.py
+cd frontend && npm start
+
+# 2. Deal a hand and start play phase
+# Click "Deal New Hand" → Complete bidding → Click "Play This Hand"
+# Play at least 1 trick (opening lead + 3 more cards)
+
+# 3. Deal a NEW hand without finishing the previous one
+# Click "Deal New Hand" again
+
+# 4. After bidding completes on new hand, click "Show All Hands"
+# ✅ PASS: All 4 positions show exactly 13 cards
+# ✅ PASS: Hands match the current deal (not previous game)
+# ❌ FAIL: Any position has fewer than 13 cards
+# ❌ FAIL: Hands are from the previous game
+
+# 5. Repeat 5 times with different play/redeal patterns
+# - Play 1 trick then redeal
+# - Start play but redeal before opening lead
+# - Play full hand, then deal next hand
+# ✅ PASS: All scenarios show 13 cards per position
+```
+
+#### User Verification Needed
+Please test:
+1. [ ] Play a hand partway through, then deal a new hand
+2. [ ] After bidding on new hand, click "Show All Hands"
+3. [ ] Verify all 4 positions show exactly 13 cards
+4. [ ] Verify the hands are from the CURRENT deal (not previous)
+5. [ ] Repeat with different play/redeal patterns
+6. [ ] Mark as ✔️ VERIFIED if all tests pass
+
+---
+
 ## 🟡 HIGH PRIORITY BUGS (Fix Before Launch)
 
 ### BUG-H001: AI Level Display Mismatch (Selected vs Active)
@@ -787,13 +899,13 @@ Updated `add_hand_score()` to correctly assign points:
 ## 📊 Bug Summary Statistics
 
 ### By Status
-- 🔴 Active: 5 bugs
+- 🔴 Active: 6 bugs (includes **BUG-C004** ⬅️ NEW)
 - 🔄 In Progress: 1 bug (BUG-H002)
-- ✅ Fixed (awaiting verification): 3 bugs (BUG-M001, BUG-M002, **BUG-C002** ⬅️ NEW FIX)
+- ✅ Fixed (awaiting verification): 3 bugs (BUG-M001, BUG-M002, BUG-C002)
 - ✔️ Verified (user confirmed): 6 bugs (includes BUG-V006 Scoring)
 
 ### By Severity
-- 🔴 CRITICAL: 2 bugs (BUG-C001, **BUG-C002** ⬅️ NEW)
+- 🔴 CRITICAL: 3 bugs (BUG-C001, BUG-C002, **BUG-C004** ⬅️ NEW)
 - 🟡 HIGH: 3 bugs (BUG-H001, H002, H003)
 - 🟢 MEDIUM: 3 bugs (BUG-M001, M002, M003)
 - 🟢 LOW: 2 bugs (BUG-L001, L002)
@@ -801,10 +913,10 @@ Updated `add_hand_score()` to correctly assign points:
 ### By Area
 - **Authentication:** 1 bug
 - **AI Selection/Display:** 2 bugs
-- **Card Play AI / DDS:** 3 bugs (**+1 NEW**: BUG-C002)
+- **Card Play AI / DDS:** 3 bugs
 - **Bidding Engine:** 1 bug
 - **Display/UI:** 3 bugs
-- **State Management:** 2 bugs
+- **State Management:** 3 bugs (**+1 NEW**: BUG-C004 stale play_state)
 - **Scoring System:** 1 bug (BUG-V006 - Verified Fixed)
 - **Test Infrastructure:** 1 bug
 
@@ -858,8 +970,8 @@ When you report a bug in chat, I will:
 
 ---
 
-**Last Updated:** 2026-01-29
-**Total Bugs Tracked:** 16 (14 original + BUG-C002 DDS Crash + BUG-V006 Scoring + BUG-C003 Last Trick Freeze)
-**Critical Blockers:** 2 (BUG-C001, BUG-C002) — BUG-C003 fixed, awaiting verification
+**Last Updated:** 2026-02-01
+**Total Bugs Tracked:** 17 (14 original + BUG-C002 DDS Crash + BUG-V006 Scoring + BUG-C003 Last Trick Freeze + BUG-C004 Stale Play State)
+**Critical Blockers:** 3 (BUG-C001, BUG-C002, BUG-C004) — BUG-C003 fixed, awaiting verification
 **Verified Fixed:** 6 bugs (including BUG-V006 Scoring)
-**Production Ready:** ⚠️ After BUG-C001 and BUG-C002 fixed, BUG-C003 verification pending
+**Production Ready:** ⚠️ After BUG-C001, BUG-C002, and BUG-C004 fixed, BUG-C003 verification pending

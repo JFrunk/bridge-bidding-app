@@ -822,6 +822,12 @@ def perform_new_deal(state):
     Generate a new deal for the current state.
     Handles dealer/vulnerability rotation based on session status.
     """
+    # CRITICAL: Clear stale play state from previous hand (BUG-C004 fix)
+    # Without this, get-all-hands reads from old play_state instead of fresh deal
+    state.play_state = None
+    state.original_deal = None
+    state.auction_history = []
+
     # CRITICAL: Reset V2 engine state for new deal
     if engine_v2_schema:
         engine_v2_schema.new_deal()
@@ -2192,6 +2198,12 @@ def get_all_hands():
                     'points': points_for_json
                 }
 
+        # BUG-C004 defensive check: warn if any hand has unexpected card count
+        for pos_name, hand_data in all_hands.items():
+            card_count = len(hand_data.get('hand', []))
+            if card_count != 13 and not (state.play_state and state.play_state.hands):
+                print(f"⚠️ BUG-C004 WARNING: {pos_name} has {card_count} cards during bidding phase (expected 13)")
+
         print(f"✅ get_all_hands: Successfully returning {len(all_hands)} hands")
         return jsonify({
             'hands': all_hands,
@@ -2944,17 +2956,18 @@ def start_play():
                     else:
                         return jsonify({"error": f"Original hand data not found for {full_name}. Cannot replay."}), 400
             else:
-                # First play: use current deal from bidding phase
+                # First play: use deep copies from bidding phase (BUG-C004 fix)
+                # Deep copy prevents card removal during play from mutating state.deal
+                import copy
                 for pos in ["N", "E", "S", "W"]:
                     full_name = pos_map[pos]
                     if state.deal.get(full_name):
-                        hands[pos] = state.deal[full_name]
+                        hands[pos] = copy.deepcopy(state.deal[full_name])
                     else:
                         return jsonify({"error": f"Hand data not found for {full_name}. Please deal a new hand."}), 400
 
                 # CRITICAL: Preserve original deal before play begins
                 # Make deep copies of Hand objects to preserve original 13-card state
-                import copy
                 state.original_deal = {}
                 for pos in ["N", "E", "S", "W"]:
                     full_name = pos_map[pos]
@@ -3089,15 +3102,15 @@ def play_random_hand():
             print("All players passed - dealing new hand")
             return play_random_hand()  # Recursive retry
 
-        # Convert hands for play state
+        # Convert hands for play state — deep copy to prevent mutation of state.deal (BUG-C004 fix)
+        import copy
         pos_map = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
         hands = {}
         for pos in ["N", "E", "S", "W"]:
             full_name = pos_map[pos]
-            hands[pos] = state.deal[full_name]
+            hands[pos] = copy.deepcopy(state.deal[full_name])
 
         # CRITICAL: Preserve original deal before play begins (for replay functionality)
-        import copy
         state.original_deal = {}
         for pos in ["N", "E", "S", "W"]:
             full_name = pos_map[pos]
