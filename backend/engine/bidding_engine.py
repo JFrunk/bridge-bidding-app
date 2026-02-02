@@ -42,6 +42,9 @@ class BiddingEngine:
         # ADR-0002 Phase 3: Initialize sanity checker
         self.sanity_checker = SanityChecker()
 
+        # Last-computed features from get_next_bid (for belief serialization)
+        self.last_features = None
+
         # Verify all expected modules are registered
         expected_modules = [
             'opening_bids', 'responses', 'openers_rebid', 'responder_rebid',
@@ -89,6 +92,7 @@ class BiddingEngine:
         # Time feature extraction
         t0 = time.time()
         features = extract_features(hand, auction_history, my_position, vulnerability, dealer)
+        self.last_features = features
         t1 = time.time()
         feature_time = (t1 - t0) * 1000
 

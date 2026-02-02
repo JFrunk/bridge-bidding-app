@@ -12,7 +12,7 @@ Tests narrowing rules for:
 """
 
 import pytest
-from engine.ai.bidding_state import SeatBelief, BiddingState, BiddingStateBuilder
+from engine.ai.bidding_state import SeatBelief, BiddingState, BiddingStateBuilder, ReasoningStep
 
 
 # ──────────────────────────────────────────────────────────────
@@ -555,3 +555,167 @@ class TestFullAuctions:
         assert n.suits['♥'][0] >= 4
         assert s.has_tag('stayman_asked')
         assert n.has_tag('stayman_hearts')
+
+
+# ──────────────────────────────────────────────────────────────
+# Reasoning history
+# ──────────────────────────────────────────────────────────────
+
+class TestReasoningHistory:
+    """Test that narrowing calls produce reasoning steps."""
+
+    def test_reasoning_recorded_on_narrow(self):
+        """SeatBelief.narrow_hcp with reason= records a ReasoningStep."""
+        b = SeatBelief(seat='N')
+        b.narrow_hcp(new_min=15, new_max=17, reason='1NT opening → 15-17 HCP', bid='1NT')
+        assert len(b.reasoning) == 1
+        step = b.reasoning[0]
+        assert step.bid == '1NT'
+        assert step.field == 'hcp'
+        assert step.before == (0, 40)
+        assert step.after == (15, 17)
+        assert '15-17' in step.reason
+
+    def test_reasoning_not_recorded_without_reason(self):
+        """Without reason=, no ReasoningStep is added (backward compat)."""
+        b = SeatBelief(seat='N')
+        b.narrow_hcp(new_min=12)
+        assert len(b.reasoning) == 0
+
+    def test_reasoning_not_recorded_when_no_change(self):
+        """If narrowing doesn't change the range, no step is recorded."""
+        b = SeatBelief(seat='N')
+        b.narrow_hcp(new_min=15, new_max=17, reason='1NT', bid='1NT')
+        b.narrow_hcp(new_min=10, new_max=20, reason='wider range', bid='?')
+        # Second call doesn't change (15,17) so no step added
+        assert len(b.reasoning) == 1
+
+    def test_suit_reasoning_recorded(self):
+        """narrow_suit with reason= records field as 'suit:♠' etc."""
+        b = SeatBelief(seat='N')
+        b.narrow_suit('♠', new_min=5, reason='1♠ opening → 5+ ♠', bid='1♠')
+        assert len(b.reasoning) == 1
+        step = b.reasoning[0]
+        assert step.field == 'suit:♠'
+        assert step.before == (0, 13)
+        assert step.after == (5, 13)
+
+    def test_multiple_reasoning_steps(self):
+        """Multiple narrowings produce multiple steps in order."""
+        b = SeatBelief(seat='N')
+        b.narrow_hcp(new_min=15, new_max=17, reason='1NT opening', bid='1NT')
+        b.narrow_suit('♥', new_max=4, reason='no 5-card major', bid='1NT')
+        b.narrow_suit('♠', new_max=4, reason='no 5-card major', bid='1NT')
+        assert len(b.reasoning) == 3
+        assert b.reasoning[0].field == 'hcp'
+        assert b.reasoning[1].field == 'suit:♥'
+        assert b.reasoning[2].field == 'suit:♠'
+
+    def test_builder_produces_reasoning(self):
+        """BiddingStateBuilder populates reasoning on each seat."""
+        state = build(['1NT'], dealer='N')
+        n = state.seat('N')
+        # 1NT opening should produce HCP + 2 suit narrowings
+        assert len(n.reasoning) >= 1
+        hcp_steps = [s for s in n.reasoning if s.field == 'hcp']
+        assert len(hcp_steps) == 1
+        assert hcp_steps[0].after == (15, 17)
+        assert '1NT' in hcp_steps[0].reason
+
+    def test_builder_stayman_reasoning_chain(self):
+        """Full Stayman sequence produces reasoning on both seats."""
+        state = build(['1NT', 'Pass', '2♣', 'Pass', '2♦'], dealer='N')
+        n = state.seat('N')
+        s = state.seat('S')
+
+        # North: 1NT opening (HCP + suits) + Stayman denial (♥ ≤3, ♠ ≤3)
+        n_reasons = [r.reason for r in n.reasoning]
+        assert any('15-17' in r for r in n_reasons)
+        assert any('Stayman' in r or 'denial' in r.lower() for r in n_reasons)
+
+        # South: 2♣ processed as new suit (10+ HCP) before Stayman convention
+        # The Stayman 8+ HCP narrowing doesn't change range (already 10+)
+        # so only the response reasoning is recorded
+        assert len(s.reasoning) >= 1
+        assert s.has_tag('stayman_asked')
+
+    def test_builder_overcall_reasoning(self):
+        """Overcall produces reasoning with bid and HCP range."""
+        state = build(['1♣', '1♠'], dealer='N')
+        e = state.seat('E')
+        assert len(e.reasoning) >= 1
+        hcp_step = next(s for s in e.reasoning if s.field == 'hcp')
+        assert hcp_step.after == (8, 16)
+        assert 'overcall' in hcp_step.reason.lower()
+
+    def test_builder_pass_reasoning(self):
+        """Pass in opening seat produces reasoning."""
+        state = build(['Pass', '1♠'], dealer='N')
+        n = state.seat('N')
+        assert len(n.reasoning) >= 1
+        assert n.reasoning[0].field == 'hcp'
+        assert n.reasoning[0].after[1] <= 11
+        assert 'Pass' in n.reasoning[0].reason or 'pass' in n.reasoning[0].reason.lower()
+
+
+# ──────────────────────────────────────────────────────────────
+# Serialization: to_dict()
+# ──────────────────────────────────────────────────────────────
+
+class TestSerialization:
+    """Test to_dict() on SeatBelief and BiddingState."""
+
+    def test_seat_belief_to_dict_basic(self):
+        b = SeatBelief(seat='N')
+        b.narrow_hcp(new_min=15, new_max=17, reason='1NT opening', bid='1NT')
+        b.add_tag('opened_1nt')
+        d = b.to_dict()
+
+        assert d['seat'] == 'N'
+        assert d['hcp'] == {'min': 15, 'max': 17}
+        assert d['suits']['♠'] == {'min': 0, 'max': 13}
+        assert 'opened_1nt' in d['tags']
+        assert len(d['reasoning']) == 1
+        assert d['reasoning'][0]['bid'] == '1NT'
+        assert d['reasoning'][0]['reason'] == '1NT opening'
+        assert d['reasoning'][0]['after'] == {'min': 15, 'max': 17}
+
+    def test_seat_belief_to_dict_empty(self):
+        """Default belief serializes cleanly."""
+        b = SeatBelief(seat='E')
+        d = b.to_dict()
+        assert d['hcp'] == {'min': 0, 'max': 40}
+        assert d['tags'] == []
+        assert d['reasoning'] == []
+
+    def test_bidding_state_to_dict(self):
+        """BiddingState.to_dict(my_seat) returns partner/lho/rho."""
+        state = build(['1NT', 'Pass', '2♣', 'Pass', '2♦'], dealer='N')
+        d = state.to_dict('S')
+
+        assert 'partner' in d
+        assert 'lho' in d
+        assert 'rho' in d
+        # Partner is North (opened 1NT)
+        assert d['partner']['seat'] == 'N'
+        assert d['partner']['hcp'] == {'min': 15, 'max': 17}
+        # LHO is West, RHO is East
+        assert d['lho']['seat'] == 'W'
+        assert d['rho']['seat'] == 'E'
+        assert d['agreed_suit'] is None  # No suit agreement in this auction
+
+    def test_bidding_state_to_dict_with_agreement(self):
+        """to_dict includes agreed suit when present."""
+        state = build(['1♠', 'Pass', '2♠'], dealer='N')
+        d = state.to_dict('S')
+        assert d['agreed_suit'] == '♠'
+
+    def test_to_dict_reasoning_chain(self):
+        """Reasoning steps survive serialization."""
+        state = build(['1NT', 'Pass', '2♣', 'Pass', '2♦'], dealer='N')
+        d = state.to_dict('S')
+        partner_reasoning = d['partner']['reasoning']
+        # North had 1NT opening (HCP + suits) + Stayman denial
+        assert len(partner_reasoning) >= 3
+        fields = [r['field'] for r in partner_reasoning]
+        assert 'hcp' in fields

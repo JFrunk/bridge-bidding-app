@@ -105,16 +105,6 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay, onReviewH
         </div>
       </div>
 
-      {/* Five-Bar Progress Section */}
-      <div className="four-dimension-section">
-        <FourDimensionProgress
-          userId={userId}
-          onStartLearning={onStartLearning}
-          onStartPractice={onStartFreeplay}
-          onReviewHand={handleOpenReview}
-        />
-      </div>
-
       {/* Welcome message for new players - shown when no data exists */}
       {!hasAnyData && (
         <div className="empty-dashboard-state" data-testid="dashboard-empty-state">
@@ -133,6 +123,16 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay, onReviewH
           </div>
         </div>
       )}
+
+      {/* Five-Bar Progress Section */}
+      <div className="four-dimension-section">
+        <FourDimensionProgress
+          userId={userId}
+          onStartLearning={onStartLearning}
+          onStartPractice={onStartFreeplay}
+          onReviewHand={handleOpenReview}
+        />
+      </div>
 
 
 

@@ -9,6 +9,7 @@ import { ReviewModal } from './components/bridge/ReviewModal';
 import { FeedbackModal } from './components/bridge/FeedbackModal';
 import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
 import BidFeedbackPanel from './components/bridge/BidFeedbackPanel';
+import BeliefPanel from './components/bridge/BeliefPanel';
 import { GovernorConfirmDialog } from './components/bridge/GovernorConfirmDialog';
 import LearningDashboard from './components/learning/LearningDashboard';
 import LearningMode from './components/learning/LearningMode';
@@ -292,6 +293,7 @@ function App() {
   const [displayedMessage, setDisplayedMessage] = useState('');
   const [bidFeedback, setBidFeedback] = useState(null);  // Structured feedback from evaluate-bid
   const [lastUserBid, setLastUserBid] = useState(null);  // Track last user bid for feedback display
+  const [beliefs, setBeliefs] = useState(null);  // BiddingState beliefs (partner + opponents)
 
   // Governor Safety Guard state - blocks critical/significant impact bids when hints are enabled
   const [pendingBid, setPendingBid] = useState(null);  // Bid waiting for governor confirmation
@@ -509,6 +511,7 @@ function App() {
     setNextBidder(backendNextBidder);
 
     setAuction([]);
+    setBeliefs(null);
 
     // Reset the AI bidding guards when auction is reset
     isAiBiddingInProgress.current = false;
@@ -1951,6 +1954,7 @@ ${otherCommands}`;
         if (recordData.next_bidder) {
           setNextBidder(recordData.next_bidder);
         }
+        if (recordData.beliefs) setBeliefs(recordData.beliefs);
       } catch (err) {
         console.error('❌ Failed to record bid on backend:', err);
         // Fall through — optimistic nextBidder is already set
@@ -1992,6 +1996,7 @@ ${otherCommands}`;
       if (data.next_bidder) {
         setNextBidder(data.next_bidder);
       }
+      if (data.beliefs) setBeliefs(data.beliefs);
       setLastUserBid(bid);
       setBidFeedback(data.feedback || null);
       setDisplayedMessage(data.user_message || data.explanation || 'Bid recorded.');
@@ -2194,6 +2199,7 @@ ${otherCommands}`;
         // before the next render cycle runs effects.
         setAuction(prev => [...prev, data]);
         setNextBidder(data.next_bidder || null);
+        if (data.beliefs) setBeliefs(data.beliefs);
         isAiBiddingInProgress.current = false;
         console.log('✅ Auction updated, next_bidder:', data.next_bidder);
       } catch (err) {
@@ -2793,6 +2799,7 @@ ${otherCommands}`;
                     mode="review"
                   />
                 )}
+                <BeliefPanel beliefs={beliefs} myHcp={handPoints?.hcp} />
                 {error && <div className="error-message">{error}</div>}
               </div>
             </div>
@@ -2855,6 +2862,7 @@ ${otherCommands}`;
               mode="review"
             />
           )}
+          <BeliefPanel beliefs={beliefs} myHcp={handPoints?.hcp} />
           {error && <div className="error-message">{error}</div>}
         </div>
       )}

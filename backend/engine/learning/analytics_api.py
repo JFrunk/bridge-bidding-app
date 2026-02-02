@@ -403,7 +403,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
 
         # Count distinct hands (not individual decisions)
         cursor.execute(f"""
-            SELECT COUNT(DISTINCT COALESCE(session_id, '') || ':' || COALESCE(hand_number, -1)) as total_hands
+            SELECT COUNT(DISTINCT COALESCE(CAST(session_id AS TEXT), '') || ':' || CAST(COALESCE(hand_number, -1) AS TEXT)) as total_hands
             FROM bidding_decisions
             WHERE user_id = ?
               AND timestamp >= {date_subtract(30)}
@@ -3151,7 +3151,7 @@ def get_board_analysis():
               AND sh.dd_tricks IS NOT NULL
               AND sh.par_score IS NOT NULL
             GROUP BY gs.id
-            HAVING hands_count > 0
+            HAVING COUNT(sh.id) > 0
             ORDER BY gs.started_at DESC
             LIMIT 10
         """, (user_id,))
@@ -3210,27 +3210,23 @@ def get_bidding_hands_history():
             SELECT
                 bd.session_id,
                 bd.hand_number,
-                bd.dealer,
-                bd.vulnerability,
-                bd.position as user_position,
-                -- Get deal_data from bidding_decisions (first bid of hand has it)
-                -- Use subquery to get the first bid's deal_data for this hand
+                MIN(bd.dealer) as dealer,
+                MIN(bd.vulnerability) as vulnerability,
+                MIN(bd.position) as user_position,
                 (SELECT bd2.deal_data FROM bidding_decisions bd2
                  WHERE bd2.user_id = bd.user_id
-                 AND COALESCE(bd2.session_id, '') = COALESCE(bd.session_id, '')
+                 AND (bd2.session_id = bd.session_id OR (bd2.session_id IS NULL AND bd.session_id IS NULL))
                  AND COALESCE(bd2.hand_number, -1) = COALESCE(bd.hand_number, -1)
                  AND bd2.deal_data IS NOT NULL
                  ORDER BY bd2.id ASC LIMIT 1) as deal_data,
-                -- Get the auction_before from the LAST bid (highest id) plus user's bid
                 (SELECT bd3.auction_before FROM bidding_decisions bd3
                  WHERE bd3.user_id = bd.user_id
-                 AND COALESCE(bd3.session_id, '') = COALESCE(bd.session_id, '')
+                 AND (bd3.session_id = bd.session_id OR (bd3.session_id IS NULL AND bd.session_id IS NULL))
                  AND COALESCE(bd3.hand_number, -1) = COALESCE(bd.hand_number, -1)
                  ORDER BY bd3.id DESC LIMIT 1) as last_auction,
-                -- Get the user's last bid to append to auction
                 (SELECT bd4.user_bid FROM bidding_decisions bd4
                  WHERE bd4.user_id = bd.user_id
-                 AND COALESCE(bd4.session_id, '') = COALESCE(bd.session_id, '')
+                 AND (bd4.session_id = bd.session_id OR (bd4.session_id IS NULL AND bd.session_id IS NULL))
                  AND COALESCE(bd4.hand_number, -1) = COALESCE(bd.hand_number, -1)
                  ORDER BY bd4.id DESC LIMIT 1) as last_user_bid,
                 MAX(bd.timestamp) as played_at,
@@ -3243,7 +3239,7 @@ def get_bidding_hands_history():
                 SUM(CASE WHEN bd.correctness = 'error' THEN 1 ELSE 0 END) as error_count
             FROM bidding_decisions bd
             WHERE bd.user_id = ?
-            GROUP BY COALESCE(bd.session_id, ''), COALESCE(bd.hand_number, -1)
+            GROUP BY bd.user_id, bd.session_id, bd.hand_number
             HAVING COUNT(bd.id) > 0
             ORDER BY MAX(bd.timestamp) DESC
             LIMIT ?
@@ -3528,10 +3524,10 @@ def get_bidding_hand_detail():
                     auction_before
                 FROM bidding_decisions
                 WHERE user_id = ?
-                  AND COALESCE(session_id, '') = COALESCE(?, '')
+                  AND (session_id = ? OR (session_id IS NULL AND ? IS NULL))
                   AND COALESCE(hand_number, -1) = COALESCE(?, -1)
                 ORDER BY bid_number
-            """, (user_id, session_id, hand_number))
+            """, (user_id, session_id, session_id, hand_number))
 
         decisions = []
         for d_row in cursor.fetchall():

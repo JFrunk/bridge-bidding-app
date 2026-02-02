@@ -28,6 +28,7 @@ from engine.play.ai.simple_ai import SimplePlayAI as SimplePlayAINew
 from engine.play.ai.minimax_ai import MinimaxPlayAI
 from engine.learning.learning_path_api import register_learning_endpoints
 from engine.session_manager import SessionManager, GameSession
+from engine.ai.bidding_state import BiddingStateBuilder
 from engine.bridge_rules_engine import BridgeRulesEngine, GameState as BridgeGameState
 from engine.feedback.play_feedback import get_play_feedback_generator
 from engine.play.dds_analysis import get_dds_service, is_dds_available
@@ -748,6 +749,22 @@ def trigger_post_game_analysis(
 # ============================================================================
 # SESSION STATE HELPER FUNCTION
 # ============================================================================
+
+def _get_user_seat(state):
+    """Get the user's seat abbreviation from session state.
+
+    Uses game_session.player_position if available, defaults to 'S'.
+    Returns a single-char seat ('N', 'E', 'S', 'W').
+    """
+    if state.game_session and getattr(state.game_session, 'player_position', None):
+        pos = state.game_session.player_position
+        # Already abbreviated
+        if pos in ('N', 'E', 'S', 'W'):
+            return pos
+        # Full name → abbreviate
+        return {'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W'}.get(pos, 'S')
+    return 'S'
+
 
 def get_state():
     """
@@ -1644,12 +1661,23 @@ def get_next_bid():
         state.auction_history.append(bid)
         next_bidder = BridgeRulesEngine.get_current_bidder(dealer, len(state.auction_history))
 
+        # Build beliefs from the complete auction (including the bid just made).
+        # Uses the same BiddingStateBuilder as the engine's feature_extractor.
+        user_seat = _get_user_seat(state)
+        try:
+            bidding_state = BiddingStateBuilder().build(list(state.auction_history), dealer)
+            beliefs = bidding_state.to_dict(user_seat)
+        except Exception:
+            beliefs = None
+
         response = {
             'bid': bid,
             'explanation': explanation,
             'player': current_player,
-            'next_bidder': next_bidder
+            'next_bidder': next_bidder,
         }
+        if beliefs is not None:
+            response['beliefs'] = beliefs
         if use_v2_schema:
             response['engine_used'] = engine_used
         return jsonify(response)
@@ -1867,7 +1895,14 @@ def evaluate_bid():
             dealer = BridgeRulesEngine.SHORT_TO_FULL.get(state.dealer, state.dealer) if state.dealer else 'North'
             next_bidder = BridgeRulesEngine.get_current_bidder(dealer, auction_len_after)
             print(f"✅ record_only: appended '{user_bid}', auction_len={auction_len_after}, next_bidder={next_bidder}")
-            return jsonify({'next_bidder': next_bidder, 'recorded': True})
+            user_seat = _get_user_seat(state)
+            resp = {'next_bidder': next_bidder, 'recorded': True}
+            try:
+                bidding_state = BiddingStateBuilder().build(list(state.auction_history), dealer)
+                resp['beliefs'] = bidding_state.to_dict(user_seat)
+            except Exception:
+                pass
+            return jsonify(resp)
 
         # Get user's hand from session state (does NOT modify state)
         user_hand = state.deal.get(current_player)
@@ -2112,6 +2147,16 @@ def evaluate_bid():
         if not isinstance(optimal_explanation_str, str):
             optimal_explanation_str = str(optimal_explanation_str)
 
+        # Build beliefs from the updated auction (if bid was recorded)
+        beliefs = None
+        if record_bid:
+            user_seat = _get_user_seat(state)
+            try:
+                bidding_state = BiddingStateBuilder().build(list(state.auction_history), dealer)
+                beliefs = bidding_state.to_dict(user_seat)
+            except Exception:
+                pass
+
         # Build response
         response = {
             'feedback': feedback.to_dict(),
@@ -2121,6 +2166,8 @@ def evaluate_bid():
             'show_alternative': feedback.correctness.value != 'optimal',
             'next_bidder': next_bidder
         }
+        if beliefs is not None:
+            response['beliefs'] = beliefs
 
         # Add differential analysis data if available (V2 only)
         if hasattr(feedback, '_differential') and feedback._differential:

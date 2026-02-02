@@ -31,6 +31,16 @@ SUITS = ['♠', '♥', '♦', '♣']
 
 
 @dataclass
+class ReasoningStep:
+    """One step in the reasoning chain that built a seat's belief."""
+    bid: str           # The bid that triggered this inference
+    field: str         # 'hcp', 'suit:♠', 'suit:♥', etc.
+    before: Tuple[int, int]
+    after: Tuple[int, int]
+    reason: str        # Human-readable explanation
+
+
+@dataclass
 class SeatBelief:
     """What we believe about one seat's hand based on their bidding."""
 
@@ -42,9 +52,12 @@ class SeatBelief:
     limited: bool = False
     passed_opening: bool = False
     tags: List[str] = field(default_factory=list)
+    reasoning: List[ReasoningStep] = field(default_factory=list)
 
-    def narrow_hcp(self, new_min: Optional[int] = None, new_max: Optional[int] = None):
+    def narrow_hcp(self, new_min: Optional[int] = None, new_max: Optional[int] = None,
+                   *, reason: str = '', bid: str = ''):
         """Narrow HCP range. Takes intersection of current and new bounds."""
+        before = self.hcp
         cur_min, cur_max = self.hcp
         if new_min is not None:
             cur_min = max(cur_min, new_min)
@@ -54,11 +67,17 @@ class SeatBelief:
             logger.debug(f"SeatBelief {self.seat}: HCP range inverted ({cur_min}, {cur_max}), capping")
             cur_min = cur_max
         self.hcp = (cur_min, cur_max)
+        if reason and self.hcp != before:
+            self.reasoning.append(ReasoningStep(
+                bid=bid, field='hcp', before=before, after=self.hcp, reason=reason
+            ))
 
-    def narrow_suit(self, suit: str, new_min: Optional[int] = None, new_max: Optional[int] = None):
+    def narrow_suit(self, suit: str, new_min: Optional[int] = None, new_max: Optional[int] = None,
+                    *, reason: str = '', bid: str = ''):
         """Narrow suit length range."""
         if suit not in self.suits:
             return
+        before = self.suits[suit]
         cur_min, cur_max = self.suits[suit]
         if new_min is not None:
             cur_min = max(cur_min, new_min)
@@ -68,6 +87,10 @@ class SeatBelief:
             logger.debug(f"SeatBelief {self.seat}: {suit} range inverted ({cur_min}, {cur_max}), capping")
             cur_min = cur_max
         self.suits[suit] = (cur_min, cur_max)
+        if reason and self.suits[suit] != before:
+            self.reasoning.append(ReasoningStep(
+                bid=bid, field=f'suit:{suit}', before=before, after=self.suits[suit], reason=reason
+            ))
 
     def add_tag(self, tag: str):
         if tag not in self.tags:
@@ -79,6 +102,29 @@ class SeatBelief:
     @property
     def hcp_midpoint(self) -> float:
         return (self.hcp[0] + self.hcp[1]) / 2
+
+    def to_dict(self) -> dict:
+        """Serialize belief for API/frontend consumption."""
+        return {
+            'seat': self.seat,
+            'hcp': {'min': self.hcp[0], 'max': self.hcp[1]},
+            'suits': {
+                suit: {'min': r[0], 'max': r[1]}
+                for suit, r in self.suits.items()
+            },
+            'limited': self.limited,
+            'tags': list(self.tags),
+            'reasoning': [
+                {
+                    'bid': step.bid,
+                    'field': step.field,
+                    'before': {'min': step.before[0], 'max': step.before[1]},
+                    'after': {'min': step.after[0], 'max': step.after[1]},
+                    'reason': step.reason,
+                }
+                for step in self.reasoning
+            ],
+        }
 
 
 @dataclass
@@ -117,6 +163,25 @@ class BiddingState:
     def partnership_hcp(self, s: str) -> Tuple[int, int]:
         """Combined HCP for the partnership containing seat s."""
         return self.combined_hcp(s, partner(s))
+
+    def to_dict(self, my_seat: str) -> dict:
+        """Serialize beliefs relative to a player's perspective.
+
+        Returns partner, LHO, and RHO beliefs (not the player's own seat).
+        """
+        s = normalize(my_seat)
+        partner_belief = self.partner_of(s)
+        lho_belief = self.lho_of(s)
+        rho_belief = self.rho_of(s)
+        pship = partnership_str(s)
+
+        return {
+            'partner': partner_belief.to_dict(),
+            'lho': lho_belief.to_dict(),
+            'rho': rho_belief.to_dict(),
+            'agreed_suit': self.agreed_suits.get(pship),
+            'forcing': self.forcing.get(pship, 'none'),
+        }
 
 
 class BiddingStateBuilder:
@@ -218,35 +283,27 @@ class BiddingStateBuilder:
 
         if not opening_found:
             # Pass before anyone has opened
-            # 1st and 2nd seat pass = couldn't open (< 12 HCP typically)
-            # 3rd seat pass after two passes = could be lighter opening, so < 13
             passes_before = sum(1 for b in prior if b == 'Pass')
             if passes_before <= 1:
-                # 1st or 2nd seat
-                belief.narrow_hcp(new_max=11)
+                belief.narrow_hcp(new_max=11, reason='Passed in opening seat → max 11 HCP', bid='Pass')
                 belief.passed_opening = True
                 belief.add_tag('passed_opening')
             else:
-                # 3rd or 4th seat
-                belief.narrow_hcp(new_max=13)
+                belief.narrow_hcp(new_max=13, reason='Passed in 3rd/4th seat → max 13 HCP', bid='Pass')
                 belief.passed_opening = True
                 belief.add_tag('passed_late')
         elif opener_seat is not None and partner(seat) == opener_seat:
-            # Pass as responder to partner's opening
-            # Could have 0-5 HCP (truly weak), but also could be trapping
-            # with interference. Check if there was interference.
             has_interference = any(
                 prior[j] not in ('Pass', 'X', 'XX') and not is_partner(active_seat_bidding(state.dealer, j), opener_seat)
                 for j in range(len(prior))
-                if j > 0  # skip opener's own bid
+                if j > 0
             )
             if not has_interference:
-                belief.narrow_hcp(new_max=5)
+                belief.narrow_hcp(new_max=5, reason="Passed partner's opening → max 5 HCP", bid='Pass')
                 belief.limited = True
                 belief.add_tag('passed_response')
             else:
-                # With interference, pass could be up to ~8 HCP (trapping)
-                belief.narrow_hcp(new_max=8)
+                belief.narrow_hcp(new_max=8, reason='Passed over interference → max 8 HCP (may be trapping)', bid='Pass')
                 belief.add_tag('passed_over_interference')
 
     # ──────────────────────────────────────────────────────────────
@@ -261,47 +318,42 @@ class BiddingStateBuilder:
             return
 
         if bid == '1NT':
-            belief.narrow_hcp(new_min=15, new_max=17)
-            belief.narrow_suit('♥', new_max=4)
-            belief.narrow_suit('♠', new_max=4)
+            belief.narrow_hcp(new_min=15, new_max=17, reason='1NT opening → 15-17 HCP', bid=bid)
+            belief.narrow_suit('♥', new_max=4, reason='1NT opening → no 5-card major', bid=bid)
+            belief.narrow_suit('♠', new_max=4, reason='1NT opening → no 5-card major', bid=bid)
             belief.add_tag('opened_1nt')
             belief.add_tag('balanced')
         elif bid == '2NT':
-            belief.narrow_hcp(new_min=20, new_max=21)
-            belief.narrow_suit('♥', new_max=4)
-            belief.narrow_suit('♠', new_max=4)
+            belief.narrow_hcp(new_min=20, new_max=21, reason='2NT opening → 20-21 HCP', bid=bid)
+            belief.narrow_suit('♥', new_max=4, reason='2NT opening → balanced, no 5-card major', bid=bid)
+            belief.narrow_suit('♠', new_max=4, reason='2NT opening → balanced, no 5-card major', bid=bid)
             belief.add_tag('opened_2nt')
             belief.add_tag('balanced')
         elif bid == '2♣':
-            belief.narrow_hcp(new_min=22)
+            belief.narrow_hcp(new_min=22, reason='2♣ opening → 22+ HCP (strong)', bid=bid)
             belief.add_tag('strong_2c')
             state.forcing[partnership_str(seat)] = 'game'
         elif level == 2 and strain in self.SUIT_CHARS:
-            # Weak two
-            belief.narrow_hcp(new_min=6, new_max=10)
-            belief.narrow_suit(strain, new_min=6, new_max=6)
+            belief.narrow_hcp(new_min=6, new_max=10, reason=f'Weak 2{strain} → 6-10 HCP', bid=bid)
+            belief.narrow_suit(strain, new_min=6, new_max=6, reason=f'Weak 2{strain} → exactly 6 cards', bid=bid)
             belief.limited = True
             belief.add_tag('weak_two')
         elif level == 1 and strain in ('♥', '♠'):
-            # 1-major opening
-            belief.narrow_hcp(new_min=12, new_max=21)
-            belief.narrow_suit(strain, new_min=5)
+            belief.narrow_hcp(new_min=12, new_max=21, reason=f'1{strain} opening → 12-21 HCP', bid=bid)
+            belief.narrow_suit(strain, new_min=5, reason=f'1{strain} opening → 5+ {strain}', bid=bid)
             belief.add_tag('opened_major')
         elif level == 1 and strain in ('♣', '♦'):
-            # 1-minor opening
-            belief.narrow_hcp(new_min=12, new_max=21)
-            belief.narrow_suit(strain, new_min=3)
+            belief.narrow_hcp(new_min=12, new_max=21, reason=f'1{strain} opening → 12-21 HCP', bid=bid)
+            belief.narrow_suit(strain, new_min=3, reason=f'1{strain} opening → 3+ {strain}', bid=bid)
             belief.add_tag('opened_minor')
         elif level == 3 and strain in self.SUIT_CHARS:
-            # Preempt
-            belief.narrow_hcp(new_min=6, new_max=10)
-            belief.narrow_suit(strain, new_min=7)
+            belief.narrow_hcp(new_min=6, new_max=10, reason=f'3{strain} preempt → 6-10 HCP', bid=bid)
+            belief.narrow_suit(strain, new_min=7, reason=f'3{strain} preempt → 7+ {strain}', bid=bid)
             belief.limited = True
             belief.add_tag('preempt')
         elif level >= 4 and strain in self.SUIT_CHARS:
-            # Higher preempt
-            belief.narrow_hcp(new_min=6, new_max=10)
-            belief.narrow_suit(strain, new_min=7)
+            belief.narrow_hcp(new_min=6, new_max=10, reason=f'{bid} preempt → 6-10 HCP', bid=bid)
+            belief.narrow_suit(strain, new_min=7, reason=f'{bid} preempt → 7+ {strain}', bid=bid)
             belief.limited = True
             belief.add_tag('preempt')
 
@@ -325,56 +377,47 @@ class BiddingStateBuilder:
         is_raise = (suit is not None and suit == opener_suit)
 
         if bid == '1NT':
-            # 1NT response: 6-10, denies 4-card major (over 1m)
-            belief.narrow_hcp(new_min=6, new_max=10)
+            belief.narrow_hcp(new_min=6, new_max=10, reason=f'1NT response to {opener_bid} → 6-10 HCP', bid=bid)
             belief.limited = True
             belief.add_tag('responded_1nt')
         elif bid == '2NT':
-            # 2NT response: 13-15 (or 11-12 invitational depending on context)
-            belief.narrow_hcp(new_min=13, new_max=15)
+            belief.narrow_hcp(new_min=13, new_max=15, reason=f'2NT response to {opener_bid} → 13-15 HCP', bid=bid)
             belief.add_tag('responded_2nt')
         elif bid == '3NT':
-            # 3NT response: 16-18 balanced
-            belief.narrow_hcp(new_min=16, new_max=18)
+            belief.narrow_hcp(new_min=16, new_max=18, reason=f'3NT response to {opener_bid} → 16-18 HCP balanced', bid=bid)
             belief.add_tag('responded_3nt')
         elif is_raise and level == o_level + 1:
-            # Simple raise: 6-10 with 3+ support
-            belief.narrow_hcp(new_min=6, new_max=10)
+            belief.narrow_hcp(new_min=6, new_max=10, reason=f'Simple raise ({bid}) → 6-10 HCP', bid=bid)
             if suit:
-                belief.narrow_suit(suit, new_min=3)
+                belief.narrow_suit(suit, new_min=3, reason=f'Simple raise → 3+ {suit} support', bid=bid)
             belief.limited = True
             belief.add_tag('simple_raise')
             if suit:
                 state.agreed_suits[partnership_str(seat)] = suit
         elif is_raise and level == o_level + 2:
-            # Limit raise (SAYC): invitational 10-12 with 3+ support
-            belief.narrow_hcp(new_min=10, new_max=12)
+            belief.narrow_hcp(new_min=10, new_max=12, reason=f'Limit raise ({bid}) → 10-12 HCP invitational', bid=bid)
             if suit:
-                belief.narrow_suit(suit, new_min=3)
+                belief.narrow_suit(suit, new_min=3, reason=f'Limit raise → 3+ {suit} support', bid=bid)
             belief.limited = True
             belief.add_tag('limit_raise')
             if suit:
                 state.agreed_suits[partnership_str(seat)] = suit
         elif is_raise and level >= o_level + 3:
-            # Preemptive raise: 6-10 with 5+ support (double+ jump)
-            belief.narrow_hcp(new_min=6, new_max=10)
+            belief.narrow_hcp(new_min=6, new_max=10, reason=f'Preemptive raise ({bid}) → 6-10 HCP', bid=bid)
             if suit:
-                belief.narrow_suit(suit, new_min=5)
+                belief.narrow_suit(suit, new_min=5, reason=f'Preemptive raise → 5+ {suit} support', bid=bid)
             belief.limited = True
             belief.add_tag('preemptive_raise')
             if suit:
                 state.agreed_suits[partnership_str(seat)] = suit
         elif level == 1 and suit:
-            # 1-level new suit: 6+ HCP, 4+ cards
-            belief.narrow_hcp(new_min=6)
-            belief.narrow_suit(suit, new_min=4)
+            belief.narrow_hcp(new_min=6, reason=f'New suit at 1 level ({bid}) → 6+ HCP', bid=bid)
+            belief.narrow_suit(suit, new_min=4, reason=f'{bid} response → 4+ {suit}', bid=bid)
             belief.add_tag('new_suit_1_level')
         elif level == 2 and suit and not is_raise:
-            # 2-level new suit: 10+ HCP, 5+ cards (2/1 game forcing over 1M)
-            belief.narrow_hcp(new_min=10)
-            belief.narrow_suit(suit, new_min=5)
+            belief.narrow_hcp(new_min=10, reason=f'New suit at 2 level ({bid}) → 10+ HCP', bid=bid)
+            belief.narrow_suit(suit, new_min=5, reason=f'{bid} response → 5+ {suit}', bid=bid)
             belief.add_tag('new_suit_2_level')
-            # Check if 2/1 game forcing (2-level new suit over 1M opening)
             if o_level == 1 and o_strain in ('♥', '♠'):
                 state.forcing[partnership_str(seat)] = 'game'
                 belief.add_tag('two_over_one_gf')
@@ -394,28 +437,26 @@ class BiddingStateBuilder:
 
         # If rebidding own suit, shows extra length
         if suit:
-            # Check if they bid this suit before
             for j, prev_bid in enumerate(prior):
                 prev_seat = active_seat_bidding(state.dealer, j)
                 if prev_seat == seat:
                     prev_suit = self._bid_suit(prev_bid)
                     if prev_suit == suit:
-                        # Rebidding same suit → 6+ cards
-                        belief.narrow_suit(suit, new_min=6)
+                        belief.narrow_suit(suit, new_min=6, reason=f'Rebid {suit} → 6+ cards in {suit}', bid=bid)
                         belief.add_tag('rebid_own_suit')
                         break
 
         # NT rebid shows balanced-ish and limits
         if strain == 'NT':
             if level == 1:
-                belief.narrow_hcp(new_min=12, new_max=14)
+                belief.narrow_hcp(new_min=12, new_max=14, reason='1NT rebid → 12-14 HCP balanced', bid=bid)
                 belief.limited = True
                 belief.add_tag('rebid_1nt')
             elif level == 2:
-                belief.narrow_hcp(new_min=18, new_max=19)
+                belief.narrow_hcp(new_min=18, new_max=19, reason='2NT rebid → 18-19 HCP', bid=bid)
                 belief.add_tag('rebid_2nt')
             elif level == 3:
-                belief.narrow_hcp(new_min=18, new_max=19)
+                belief.narrow_hcp(new_min=18, new_max=19, reason='3NT rebid → 18-19 HCP', bid=bid)
                 belief.add_tag('rebid_3nt')
 
     # ──────────────────────────────────────────────────────────────
@@ -429,20 +470,16 @@ class BiddingStateBuilder:
         suit = self._bid_suit(bid)
 
         if bid == 'X':
-            # Takeout double
-            belief.narrow_hcp(new_min=12)
+            belief.narrow_hcp(new_min=12, reason='Takeout double → 12+ HCP', bid='X')
             belief.add_tag('takeout_double')
-            # Short in opponent's (opener's) suit
             opener_belief = state.seat(opener_seat)
             for tag in opener_belief.tags:
                 if tag.startswith('opened_') or tag == 'weak_two' or tag == 'preempt':
-                    # Find opener's primary suit
                     for s in SUITS:
                         if opener_belief.suits[s][0] >= 5:
-                            belief.narrow_suit(s, new_max=2)
+                            belief.narrow_suit(s, new_max=2, reason=f'Takeout double → short in opponents\' {s}', bid='X')
                             break
                     break
-            # Support for unbid suits
             bid_suits = set()
             for j, prev_bid in enumerate(prior):
                 ps = self._bid_suit(prev_bid)
@@ -450,7 +487,7 @@ class BiddingStateBuilder:
                     bid_suits.add(ps)
             for s in SUITS:
                 if s not in bid_suits:
-                    belief.narrow_suit(s, new_min=3)
+                    belief.narrow_suit(s, new_min=3, reason=f'Takeout double → 3+ in unbid {s}', bid='X')
             return
 
         if level is None:
@@ -481,24 +518,20 @@ class BiddingStateBuilder:
                 is_jump = True
 
             if is_jump:
-                # Weak jump overcall
-                belief.narrow_hcp(new_min=6, new_max=10)
-                belief.narrow_suit(suit, new_min=6)
+                belief.narrow_hcp(new_min=6, new_max=10, reason=f'Weak jump overcall ({bid}) → 6-10 HCP', bid=bid)
+                belief.narrow_suit(suit, new_min=6, reason=f'Weak jump overcall → 6+ {suit}', bid=bid)
                 belief.limited = True
                 belief.add_tag('weak_jump_overcall')
             elif level == 1:
-                # Simple 1-level overcall
-                belief.narrow_hcp(new_min=8, new_max=16)
-                belief.narrow_suit(suit, new_min=5)
+                belief.narrow_hcp(new_min=8, new_max=16, reason=f'1-level overcall ({bid}) → 8-16 HCP', bid=bid)
+                belief.narrow_suit(suit, new_min=5, reason=f'1-level overcall → 5+ {suit}', bid=bid)
                 belief.add_tag('overcall_1_level')
             elif level == 2:
-                # 2-level overcall
-                belief.narrow_hcp(new_min=11, new_max=16)
-                belief.narrow_suit(suit, new_min=5)
+                belief.narrow_hcp(new_min=11, new_max=16, reason=f'2-level overcall ({bid}) → 11-16 HCP', bid=bid)
+                belief.narrow_suit(suit, new_min=5, reason=f'2-level overcall → 5+ {suit}', bid=bid)
                 belief.add_tag('overcall_2_level')
             else:
-                # Higher level overcall (competitive)
-                belief.narrow_suit(suit, new_min=5)
+                belief.narrow_suit(suit, new_min=5, reason=f'High-level overcall ({bid}) → 5+ {suit}', bid=bid)
                 belief.add_tag('overcall_high')
 
     # ──────────────────────────────────────────────────────────────
@@ -527,7 +560,7 @@ class BiddingStateBuilder:
         # ── Stayman: 2♣ over partner's 1NT ──
         if bid == '2♣' and partner_last_bid == '1NT':
             belief = state.seat(seat)
-            belief.narrow_hcp(new_min=8)
+            belief.narrow_hcp(new_min=8, reason='Stayman (2♣) → 8+ HCP', bid=bid)
             belief.add_tag('stayman_asked')
 
         # ── Stayman responses: partner bid 2♣ (Stayman) over our 1NT ──
@@ -535,24 +568,24 @@ class BiddingStateBuilder:
         if partner_belief.has_tag('stayman_asked') and state.seat(seat).has_tag('opened_1nt'):
             belief = state.seat(seat)
             if bid == '2♦':
-                belief.narrow_suit('♥', new_max=3)
-                belief.narrow_suit('♠', new_max=3)
+                belief.narrow_suit('♥', new_max=3, reason='2♦ Stayman denial → no 4-card ♥', bid=bid)
+                belief.narrow_suit('♠', new_max=3, reason='2♦ Stayman denial → no 4-card ♠', bid=bid)
                 belief.add_tag('stayman_no_major')
             elif bid == '2♥':
-                belief.narrow_suit('♥', new_min=4)
+                belief.narrow_suit('♥', new_min=4, reason='2♥ Stayman response → 4+ ♥', bid=bid)
                 belief.add_tag('stayman_hearts')
             elif bid == '2♠':
-                belief.narrow_suit('♠', new_min=4)
+                belief.narrow_suit('♠', new_min=4, reason='2♠ Stayman response → 4+ ♠', bid=bid)
                 belief.add_tag('stayman_spades')
 
         # ── Jacoby Transfer: 2♦ or 2♥ over partner's 1NT ──
         if partner_last_bid == '1NT':
             belief = state.seat(seat)
             if bid == '2♦':
-                belief.narrow_suit('♥', new_min=5)
+                belief.narrow_suit('♥', new_min=5, reason='Jacoby transfer (2♦) → 5+ ♥', bid=bid)
                 belief.add_tag('jacoby_hearts')
             elif bid == '2♥':
-                belief.narrow_suit('♠', new_min=5)
+                belief.narrow_suit('♠', new_min=5, reason='Jacoby transfer (2♥) → 5+ ♠', bid=bid)
                 belief.add_tag('jacoby_spades')
 
         # ── Transfer completion: partner asked for transfer, we complete ──

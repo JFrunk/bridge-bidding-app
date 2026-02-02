@@ -163,27 +163,32 @@ python3 analyze_errors.py --category bidding_logic  # Filter by category
 
 ### User Feedback (Production)
 
-**⚠️ User feedback from the app is stored on the PRODUCTION server, not locally**
+**⚠️ IMPORTANT: When asked to review user feedback, check the PRODUCTION server — feedback is NOT stored locally.**
 
-User feedback submitted via the in-app feedback button is saved to:
-- **Production:** `/opt/bridge-bidding-app/backend/user_feedback/` on Oracle Cloud server
-- **Local (dev only):** `backend/user_feedback/` (only captures local testing)
+User feedback submitted via the in-app feedback button is saved as JSON files on the Oracle Cloud production server.
 
-**To review user feedback:**
+**Location:** `/opt/bridge-bidding-app/backend/user_feedback/` on the production server (accessible via `ssh oracle-bridge`)
+
+**How to retrieve user feedback:**
 ```bash
-# List all feedback files on production
-ssh oracle-bridge "ls -la /opt/bridge-bidding-app/backend/user_feedback/"
+# List recent feedback files (most recent first)
+ssh oracle-bridge "ls -t /opt/bridge-bidding-app/backend/user_feedback/feedback_*.json 2>/dev/null | head -15"
 
-# Read specific feedback file
-ssh oracle-bridge "cat /opt/bridge-bidding-app/backend/user_feedback/feedback_YYYY-MM-DD_HH-MM-SS.json"
+# Read a specific feedback file
+ssh oracle-bridge "cat /opt/bridge-bidding-app/backend/user_feedback/feedback_freeplay_YYYY-MM-DD_HH-MM-SS.json"
 
-# Read all recent feedback (last 3 days)
+# Read ALL recent feedback content (last 3 days)
 ssh oracle-bridge "find /opt/bridge-bidding-app/backend/user_feedback/ -mtime -3 -name '*.json' -exec cat {} \;"
+
+# Read ALL recent feedback content (last 7 days)
+ssh oracle-bridge "find /opt/bridge-bidding-app/backend/user_feedback/ -mtime -7 -name '*.json' -exec cat {} \;"
 ```
 
-**Feedback File Format:**
-- `feedback_freeplay_YYYY-MM-DD_HH-MM-SS.json` - General feedback from freeplay
-- `feedback_YYYY-MM-DD_HH-MM-SS.json` - Feedback with full context
+**Feedback File Naming Convention:**
+- `feedback_freeplay_YYYY-MM-DD_HH-MM-SS.json` — General feedback from freeplay mode
+- `feedback_YYYY-MM-DD_HH-MM-SS.json` — Feedback with full game context
+
+**Local (dev only):** `backend/user_feedback/` — only captures feedback from local testing, not real users
 
 **Email Notifications:** Feedback also triggers email notifications if configured (see `backend/engine/notifications/email_service.py`)
 

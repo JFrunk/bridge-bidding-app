@@ -62,17 +62,25 @@ def _convert_placeholders(query):
     if not USE_POSTGRES:
         return query
 
-    # Replace ? with %s, but not inside quoted strings
-    # This regex handles single-quoted strings
+    # Replace ? with %s, but not inside quoted strings or SQL comments
     result = []
     in_string = False
+    in_comment = False
     i = 0
     while i < len(query):
         char = query[i]
-        if char == "'" and (i == 0 or query[i-1] != '\\'):
+
+        # Handle single-line SQL comments (-- to end of line)
+        if not in_string and not in_comment and char == '-' and i + 1 < len(query) and query[i + 1] == '-':
+            in_comment = True
+            result.append(char)
+        elif in_comment and char == '\n':
+            in_comment = False
+            result.append(char)
+        elif not in_comment and char == "'" and (i == 0 or query[i-1] != '\\'):
             in_string = not in_string
             result.append(char)
-        elif char == '?' and not in_string:
+        elif char == '?' and not in_string and not in_comment:
             result.append('%s')
         else:
             result.append(char)
