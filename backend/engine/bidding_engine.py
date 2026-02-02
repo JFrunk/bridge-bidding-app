@@ -352,7 +352,10 @@ class BiddingEngine:
                     game_forcing = True
             
             # SPECIAL CASE: Partner's 2NT response shows 11-12 HCP
-            if opener_rel == 'Me' and auction.get('partner_last_bid') == '2NT':
+            # Only after suit openings (1♣/1♦/1♥/1♠) — NOT after 1NT/2NT openings
+            # where 2NT is an invitation (8-9 HCP), not a game-force
+            if (opener_rel == 'Me' and auction.get('partner_last_bid') == '2NT'
+                    and opening_bid not in ['1NT', '2NT', '3NT']):
                 if my_hcp >= 14:  # 14 + 11 = 25
                     combined_pts = max(combined_pts, 25)
 
@@ -434,18 +437,9 @@ class BiddingEngine:
         if self._is_bid_legal('3NT', auction_history):
             return '3NT'
 
-        # If 3NT isn't legal (auction is higher), try 4NT or 5-minor
-        if self._is_bid_legal('4NT', auction_history):
-            return '4NT'
-
-        # Last resort: 5 of a minor
-        if hand.suit_lengths.get('♦', 0) >= 5:
-            if self._is_bid_legal('5♦', auction_history):
-                return '5♦'
-        if hand.suit_lengths.get('♣', 0) >= 5:
-            if self._is_bid_legal('5♣', auction_history):
-                return '5♣'
-
+        # If 3NT isn't legal (auction is higher), DON'T escalate to 4NT/5m
+        # from the safety net — those levels require slam values which are
+        # checked separately. The safety net's job is to reach game, not push past it.
         return None
 
     def _is_game_bid(self, bid: str) -> bool:

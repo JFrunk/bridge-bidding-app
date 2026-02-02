@@ -105,6 +105,15 @@ class ResponderRebidModule(ConventionModule):
                 if not is_game_forcing:
                     return ("Pass", f"Auction at {max_level}-level, insufficient for game ({hand.hcp} HCP).")
 
+            # SAFETY CHECK: If partnership has already reached game (3NT, 4M, 5m),
+            # don't keep bidding unless we have slam values (33+ combined).
+            # This prevents runaway auctions where modules generate stale bids
+            # that get legality-adjusted upward past game.
+            if self._partnership_reached_game(auction_history, features):
+                combined = self._get_combined_estimate(hand, features)
+                if combined < 33:
+                    return ("Pass", f"Game already reached, insufficient for slam ({hand.hcp} HCP, combined ~{combined}).")
+
         # Check if partner is the opener
         if auction_features.get('opener_relationship') != 'Partner':
             return None
@@ -344,6 +353,34 @@ class ResponderRebidModule(ConventionModule):
         capped_max = min(opener_max, 20)
         partner_mid = (opener_min + capped_max) / 2
         return int(hand.hcp + partner_mid)
+
+    def _partnership_reached_game(self, auction_history: list, features: Dict) -> bool:
+        """Check if any bid by me or partner is at game level (3NT, 4M, 5m+)."""
+        positions = features.get('positions', [])
+        my_index = features.get('my_index', 0)
+        my_pos = positions[my_index] if positions else None
+        partner_index = (my_index + 2) % 4
+        partner_pos = positions[partner_index] if positions else None
+
+        game_levels = {
+            'NT': 3, '♥': 4, '♠': 4, '♦': 5, '♣': 5
+        }
+
+        for i, bid in enumerate(auction_history):
+            if bid in ['Pass', 'X', 'XX']:
+                continue
+            bidder = positions[i % 4] if positions else None
+            if bidder not in [my_pos, partner_pos]:
+                continue
+            try:
+                level = int(bid[0])
+                strain = bid[1:]
+                game_threshold = game_levels.get(strain, 5)
+                if level >= game_threshold:
+                    return True
+            except (ValueError, IndexError):
+                continue
+        return False
 
     def _minimum_rebid(self, hand: Hand, context: Dict, features: Dict) -> Optional[Tuple[str, str]]:
         """

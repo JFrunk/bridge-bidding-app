@@ -61,6 +61,10 @@ class RebidModule(ConventionModule):
         response_suit = response[1]
         opening_suit = opening_bid[1]
 
+        # NT openings cannot have jump shifts — only suit openings
+        if opening_suit not in '♣♦♥♠':
+            return False
+
         # Response must be in a different suit (it's a shift)
         if response_suit == opening_suit:
             return False
@@ -163,6 +167,34 @@ class RebidModule(ConventionModule):
         # No legal bid possible - pass
         return None
 
+    def _partnership_reached_game(self, auction_history: list, features: Dict) -> bool:
+        """Check if any bid by me or partner is at game level (3NT, 4M, 5m+)."""
+        positions = features.get('positions', [])
+        my_index = features.get('my_index', 0)
+        my_pos = positions[my_index] if positions else None
+        partner_index = (my_index + 2) % 4
+        partner_pos = positions[partner_index] if positions else None
+
+        game_levels = {
+            'NT': 3, '♥': 4, '♠': 4, '♦': 5, '♣': 5
+        }
+
+        for i, bid in enumerate(auction_history):
+            if bid in ['Pass', 'X', 'XX']:
+                continue
+            bidder = positions[i % 4] if positions else None
+            if bidder not in [my_pos, partner_pos]:
+                continue
+            try:
+                level = int(bid[0])
+                strain = bid[1:]
+                game_threshold = game_levels.get(strain, 5)
+                if level >= game_threshold:
+                    return True
+            except (ValueError, IndexError):
+                continue
+        return False
+
     def _evaluate_rebid(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
         """Internal method that calculates rebid without validation."""
         auction_history = features['auction_history']
@@ -171,6 +203,16 @@ class RebidModule(ConventionModule):
 
         if not partner_response or not my_opening_bid:
             return ("Pass", "Cannot determine auction context for rebid.")
+
+        # SAFETY CHECK: If partnership has already reached game (3NT, 4M, 5m),
+        # don't keep bidding unless we have slam values.
+        # This prevents runaway auctions past game.
+        if self._partnership_reached_game(auction_history, features):
+            combined = self._estimate_combined_with_partner(hand, features)
+            if combined is None:
+                combined = hand.hcp + 14  # fallback estimate
+            if combined < 33:
+                return ("Pass", f"Game already reached, insufficient for slam ({hand.hcp} HCP, combined ~{combined}).")
 
         # Check if I previously bid 1NT and partner is now inviting
         # Extract my previous bids (excluding Pass, X, XX)
