@@ -120,22 +120,52 @@ const DecayChart = ({
   const getY = useCallback((val) => padding.top + chartHeight - (val / 13) * chartHeight, [padding.top, chartHeight]);
 
   // Ascending potential: "how many tricks should NS have won by now?"
-  // Formula: dd_optimal - curve[i] + ns_tricks_cumulative[i]
+  //
+  // Uses: cum[i] + errors_through_i
+  //   cum = tricks NS actually won
+  //   errors = tricks NS should have won but lost (from DDS error markers)
+  //
+  // This avoids the double-counting bug of the old formula (dd_optimal - curve + cum),
+  // which jumped by 2 per trick instead of 1 because both -curve and +cum change
+  // when NS wins a trick.
+  //
+  // Behavior:
   // - Starts at 0 (no tricks played yet)
-  // - When NS wins a trick: goes up by 1 (same as bars → no gap change)
-  // - When an error occurs: jumps up by 1 but bars don't → gap widens
-  // - Ends at dd_optimal_ns (total optimal tricks)
-  // The gap between this line and the bars = tricks lost to errors
+  // - When NS wins a trick: goes up by 1 (cum +1), bar also +1 → no gap change
+  // - When NS error (should win but doesn't): goes up by 1 (error +1), bar flat → gap widens
+  // - When EW wins expected trick: stays flat (no cum change, no error) → no gap change
+  // - Capped at trick number (can't exceed tricks played) and dd_optimal_ns
   const ascendingPotential = useMemo(() => {
-    if (curve.length === 0) return [];
-    return curve.map((val, i) => {
+    const len = ns_tricks_cumulative.length || curve.length;
+    if (len === 0) return [];
+
+    // Pre-sort NS errors by card index for efficient counting
+    const nsErrors = major_errors
+      .filter(e => e.error_type === 'ns_error')
+      .map(e => e.card_index)
+      .sort((a, b) => a - b);
+
+    const result = [];
+    let errorCount = 0;
+    let errorIdx = 0;
+
+    for (let i = 0; i < len; i++) {
+      // Count errors up to and including this position
+      while (errorIdx < nsErrors.length && nsErrors[errorIdx] <= i) {
+        errorCount++;
+        errorIdx++;
+      }
+
       const cum = ns_tricks_cumulative[i] ?? 0;
-      // Cap at dd_optimal_ns — when EW makes errors (gifts), cum can outpace
-      // the curve drop, pushing the raw formula above optimal. The potential
-      // line must never exceed the Best Possible line.
-      return Math.min(dd_optimal_ns, dd_optimal_ns - val + cum);
-    });
-  }, [curve, ns_tricks_cumulative, dd_optimal_ns]);
+      const tricksCompleted = Math.floor((i + 1) / 4);
+
+      // Ascending = tricks won + tricks lost to errors
+      // Capped at: trick number (can't win more than played) and dd_optimal
+      result.push(Math.min(tricksCompleted, dd_optimal_ns, cum + errorCount));
+    }
+
+    return result;
+  }, [ns_tricks_cumulative, curve.length, major_errors, dd_optimal_ns]);
 
   // Generate step path for the ascending potential line
   // Steps only at trick boundaries (every 4 cards), not mid-trick.

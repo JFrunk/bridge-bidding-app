@@ -373,10 +373,20 @@
       }
       const requiredLabel = nsIsDeclarer ? 'Need' : 'To Set';
 
-      // Ascending potential: how many tricks should NS have won by now
-      // ascending[i] = ddOptimal - curve[i] + nsTricksCum[i]
-      // Starts at 0, ends at ddOptimal. Gap vs bars = tricks lost.
-      const ascending = curve.map((val, i) => Math.min(ddOptimal, ddOptimal - val + (nsTricksCum[i] ?? 0)));
+      // Ascending potential: cum + error_count (tricks won + tricks lost to errors)
+      // Capped at trick number and ddOptimal. Gap vs bars = tricks lost.
+      const nsErrors = majorErrors
+        .filter(e => e.error_type === 'ns_error')
+        .map(e => e.card_index)
+        .sort((a, b) => a - b);
+      const ascending = [];
+      let errCount = 0, errIdx = 0;
+      for (let i = 0; i < curve.length; i++) {
+        while (errIdx < nsErrors.length && nsErrors[errIdx] <= i) { errCount++; errIdx++; }
+        const cum = nsTricksCum[i] ?? 0;
+        const tricksCompleted = Math.floor((i + 1) / 4);
+        ascending.push(Math.min(tricksCompleted, ddOptimal, cum + errCount));
+      }
 
       // Step path for ascending potential - steps only at trick boundaries
       let pathD = `M ${getX(0)} ${getY(0)}`;
