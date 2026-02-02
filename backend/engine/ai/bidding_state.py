@@ -450,15 +450,25 @@ class BiddingStateBuilder:
         # Check if this is a jump overcall (weak) vs simple overcall
         # Simple overcall: bid at cheapest legal level
         if suit:
-            # Determine if it's a jump
+            # Determine cheapest legal level for this suit
+            suit_rank = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
             is_jump = False
             last_real_level = 0
+            last_real_suit = None
             for prev_bid in reversed(prior):
                 pl, ps = self._parse_bid(prev_bid)
                 if pl is not None:
                     last_real_level = pl
+                    last_real_suit = self._bid_suit(prev_bid)
                     break
-            if level >= last_real_level + 2:
+            # Cheapest legal level: same level if our suit outranks, else +1
+            if last_real_level > 0:
+                last_suit_rank = suit_rank.get(last_real_suit, 0)
+                my_suit_rank = suit_rank.get(suit, 0)
+                min_level = last_real_level if my_suit_rank > last_suit_rank else last_real_level + 1
+            else:
+                min_level = 1
+            if level > min_level:
                 is_jump = True
 
             if is_jump:
