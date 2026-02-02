@@ -166,6 +166,39 @@ class TestPassInferences:
         assert s.hcp[1] <= 8
         assert s.has_tag('passed_over_interference')
 
+    def test_pass_after_partner_overcall(self):
+        """Pass after partner overcalled → limited (couldn't raise)."""
+        # E opens 1♠, S overcalls 2♥, W passes, N passes
+        state = build(['1♠', '2♥', 'Pass', 'Pass'], dealer='E')
+        n = state.seat('N')
+        assert n.hcp[1] <= 8
+        assert n.has_tag('passed_overcall')
+
+    def test_pass_after_partner_double(self):
+        """Pass after partner made takeout double → limited."""
+        # E opens 1♠, S doubles, W passes, N passes
+        state = build(['1♠', 'X', 'Pass', 'Pass'], dealer='E')
+        n = state.seat('N')
+        assert n.hcp[1] <= 8
+        assert n.has_tag('passed_overcall')
+
+    def test_pass_over_opening_by_opponent(self):
+        """Pass when opponent opened and couldn't overcall."""
+        # E opens 1♠, S passes
+        state = build(['1♠', 'Pass'], dealer='E')
+        s = state.seat('S')
+        assert s.hcp[1] <= 16
+        assert s.has_tag('passed_over_opening')
+
+    def test_opener_pass_after_auction_settled(self):
+        """Opener passing later doesn't re-narrow their HCP."""
+        # N opens 1NT (15-17), E passes, S bids 3NT, W passes, N passes, E passes
+        state = build(['1NT', 'Pass', '3NT', 'Pass', 'Pass', 'Pass'], dealer='N')
+        n = state.seat('N')
+        # Opener's pass at end should NOT narrow HCP below opening range
+        assert n.hcp[0] >= 15
+        assert n.hcp[1] <= 17
+
 
 # ──────────────────────────────────────────────────────────────
 # Opening bids

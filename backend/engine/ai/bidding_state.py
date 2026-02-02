@@ -273,6 +273,13 @@ class BiddingStateBuilder:
                 return True
         return False
 
+    def _has_acted_before(self, seat: str, prior_history: List[str], dealer: str) -> bool:
+        """Check if this seat has taken any action (bid or double) in prior history."""
+        for j, prior_bid in enumerate(prior_history):
+            if active_seat_bidding(dealer, j) == seat and prior_bid != 'Pass':
+                return True
+        return False
+
     def _parse_bid(self, bid: str) -> Tuple[Optional[int], Optional[str]]:
         """Parse a bid into (level, strain). Returns (None, None) for Pass/X/XX."""
         if bid in ('Pass', 'X', 'XX') or not bid:
@@ -315,6 +322,7 @@ class BiddingStateBuilder:
                 belief.passed_opening = True
                 belief.add_tag('passed_late')
         elif opener_seat is not None and partner(seat) == opener_seat:
+            # Responder passes partner's opening
             has_interference = any(
                 prior[j] not in ('Pass', 'X', 'XX') and not is_partner(active_seat_bidding(state.dealer, j), opener_seat)
                 for j in range(len(prior))
@@ -327,6 +335,28 @@ class BiddingStateBuilder:
             else:
                 belief.narrow_hcp(new_max=8, reason='Passed over interference → max 8 HCP (may be trapping)', bid='Pass')
                 belief.add_tag('passed_over_interference')
+        elif opener_seat is not None and seat != opener_seat:
+            # Pass by someone other than the opener — check relationships
+            partner_seat = partner(seat)
+            partner_has_bid = self._has_acted_before(partner_seat, prior, state.dealer)
+            is_on_opening_side = is_partner(seat, opener_seat)
+
+            if partner_has_bid and not is_on_opening_side:
+                # Partner overcalled/bid, this player passes → limited hand
+                # Can't raise or support partner's competitive action
+                belief.narrow_hcp(new_max=8, reason="Passed partner's overcall → max 8 HCP (couldn't raise)", bid='Pass')
+                belief.limited = True
+                belief.add_tag('passed_overcall')
+            elif not partner_has_bid and is_on_opening_side:
+                # Opener's partner passes after opponent interference
+                # Already handled above (partner(seat) == opener_seat case)
+                pass
+            elif not partner_has_bid and not is_on_opening_side:
+                # Opponent side: this player couldn't overcall or act
+                # Only infer if they haven't bid yet (first pass after opening)
+                if not self._has_bid_before(seat, prior, state.dealer):
+                    belief.narrow_hcp(new_max=16, reason="Passed over opening → couldn't overcall (likely ≤16 HCP)", bid='Pass')
+                    belief.add_tag('passed_over_opening')
 
     # ──────────────────────────────────────────────────────────────
     # OPENING BIDS
