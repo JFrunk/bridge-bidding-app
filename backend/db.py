@@ -142,10 +142,7 @@ class PostgresCursorWrapper:
             query_to_run = converted_query
             if converted_query.strip().upper().startswith('INSERT') and 'RETURNING' not in converted_query.upper():
                 # Add RETURNING id to get the inserted row's ID
-                # This is a heuristic - assuming 'id' exists if 'id' or 'serial' text is present
-                # Use regex to match 'id' as a whole word to avoid matching 'category_id' etc.
-                if re.search(r'\bid\b', converted_query.lower()) or 'SERIAL' in converted_query.upper():
-                    query_to_run = converted_query.rstrip(';') + ' RETURNING id'
+                query_to_run = converted_query.rstrip(';') + ' RETURNING id'
 
             if params:
                 self._cursor.execute(query_to_run, params)
@@ -167,7 +164,7 @@ class PostgresCursorWrapper:
                 raise e
 
         # Try to get lastrowid from RETURNING clause
-        if converted_query.strip().upper().startswith('INSERT') and 'RETURNING' in converted_query.upper():
+        if converted_query.strip().upper().startswith('INSERT') and 'RETURNING' in query_to_run.upper():
             try:
                 result = self._cursor.fetchone()
                 if result:
