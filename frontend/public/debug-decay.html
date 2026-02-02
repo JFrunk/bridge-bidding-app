@@ -376,7 +376,7 @@
       // Ascending potential: how many tricks should NS have won by now
       // ascending[i] = ddOptimal - curve[i] + nsTricksCum[i]
       // Starts at 0, ends at ddOptimal. Gap vs bars = tricks lost.
-      const ascending = curve.map((val, i) => ddOptimal - val + (nsTricksCum[i] ?? 0));
+      const ascending = curve.map((val, i) => Math.min(ddOptimal, ddOptimal - val + (nsTricksCum[i] ?? 0)));
 
       // Step path for ascending potential - steps only at trick boundaries
       let pathD = `M ${getX(0)} ${getY(0)}`;

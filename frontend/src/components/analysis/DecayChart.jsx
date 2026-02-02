@@ -130,7 +130,10 @@ const DecayChart = ({
     if (curve.length === 0) return [];
     return curve.map((val, i) => {
       const cum = ns_tricks_cumulative[i] ?? 0;
-      return dd_optimal_ns - val + cum;
+      // Cap at dd_optimal_ns — when EW makes errors (gifts), cum can outpace
+      // the curve drop, pushing the raw formula above optimal. The potential
+      // line must never exceed the Best Possible line.
+      return Math.min(dd_optimal_ns, dd_optimal_ns - val + cum);
     });
   }, [curve, ns_tricks_cumulative, dd_optimal_ns]);
 
