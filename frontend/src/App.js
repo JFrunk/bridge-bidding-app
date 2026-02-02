@@ -252,7 +252,8 @@ function App() {
     showRegistrationPrompt,
     dismissRegistrationPrompt,
     recordHandCompleted,
-    promptForRegistration
+    promptForRegistration,
+    requiresRegistration
   } = useAuth();
 
   // User experience state - for first-time onboarding
@@ -695,8 +696,12 @@ ${otherCommands}`;
       case 'learning':
         // Beginner: Go to Learning Mode for guided lessons
         setShowModeSelector(false);
-        setShowLearningMode(true);
-        setCurrentWorkspace(null);
+        if (isGuest && requiresRegistration('learning')) {
+          promptForRegistration();
+        } else {
+          setShowLearningMode(true);
+          setCurrentWorkspace(null);
+        }
         break;
 
       case 'bid':
@@ -722,9 +727,13 @@ ${otherCommands}`;
 
     switch (modeId) {
       case 'learning':
-        // Open Learning Mode overlay
-        setShowLearningMode(true);
-        setCurrentWorkspace(null);
+        // Open Learning Mode overlay (guard for guest users)
+        if (isGuest && requiresRegistration('learning')) {
+          promptForRegistration();
+        } else {
+          setShowLearningMode(true);
+          setCurrentWorkspace(null);
+        }
         break;
 
       case 'bid':
@@ -762,8 +771,12 @@ ${otherCommands}`;
       }
 
       case 'progress':
-        // Open Progress dashboard
-        setShowLearningDashboard(true);
+        // Open Progress dashboard (guard for guest users)
+        if (isGuest && requiresRegistration('progress')) {
+          promptForRegistration();
+        } else {
+          setShowLearningDashboard(true);
+        }
         break;
 
       default:
@@ -2634,6 +2647,12 @@ ${otherCommands}`;
 
   // Handle navigation from TopNavigation
   const handleNavModuleSelect = (modeId) => {
+    // Guard: protected features require registration for guests
+    if (isGuest && requiresRegistration(modeId)) {
+      promptForRegistration();
+      return;
+    }
+
     // Close any open overlays first
     setShowLearningMode(false);
     setShowLearningDashboard(false);
@@ -3107,7 +3126,13 @@ ${otherCommands}`;
           onClose={handleCloseScore}
           onDealNewHand={dealNewHand}
           sessionData={sessionData}
-          onShowLearningDashboard={() => setShowLearningDashboard(true)}
+          onShowLearningDashboard={() => {
+            if (isGuest && requiresRegistration('progress')) {
+              promptForRegistration();
+            } else {
+              setShowLearningDashboard(true);
+            }
+          }}
           onPlayAnotherHand={playRandomHand}
           onReplayHand={replayCurrentHand}
           onReviewHand={lastSavedHandId ? () => setShowHandReviewModal(true) : null}

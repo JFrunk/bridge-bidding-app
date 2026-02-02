@@ -248,7 +248,7 @@ export function AuthProvider({ children }) {
   // Check if registration is required for a feature
   const requiresRegistration = useCallback((feature) => {
     // Features that require registration
-    const protectedFeatures = ['progress', 'dashboard', 'history'];
+    const protectedFeatures = ['progress', 'dashboard', 'history', 'learning'];
     return user?.isGuest && protectedFeatures.includes(feature);
   }, [user]);
 
