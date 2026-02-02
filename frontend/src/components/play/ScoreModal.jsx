@@ -62,11 +62,11 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-4">
+        <div className="flex flex-col gap-4 py-4 overflow-hidden">
           {/* Contract row */}
-          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-50">
+          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-50 overflow-hidden">
             <span className="text-sm font-medium text-gray-700 shrink-0">Contract:</span>
-            <span className="text-base font-bold text-gray-900">
+            <span className="text-base font-bold text-gray-900 text-right truncate min-w-0">
               {contract?.level || '?'}{contract?.strain || '?'}
               {doubledText}
               {contract?.declarer ? ` by ${contract.declarer}` : ''}
@@ -74,16 +74,16 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
           </div>
 
           {/* Tricks taken row */}
-          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-50">
+          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-50 overflow-hidden">
             <span className="text-sm font-medium text-gray-700 shrink-0">Tricks Taken:</span>
-            <span className="text-base font-bold text-gray-900">{tricks_taken ?? '?'} of {tricks_needed ?? '?'}</span>
+            <span className="text-base font-bold text-gray-900 text-right truncate min-w-0">{tricks_taken ?? '?'} of {tricks_needed ?? '?'}</span>
           </div>
 
           {/* Result row */}
-          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-50">
+          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-gray-50 overflow-hidden">
             <span className="text-sm font-medium text-gray-700 shrink-0">Result:</span>
             <span className={cn(
-              "text-base font-bold",
+              "text-base font-bold text-right truncate min-w-0",
               made ? "text-green-600" : "text-red-600"
             )}>
               {result || (made ? 'Made' : 'Down')}
@@ -92,12 +92,12 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, sessionD
 
           {/* Score row (larger, highlighted) - Shows score from user's (NS) perspective */}
           <div className={cn(
-            "flex items-center justify-between gap-2 px-3 py-3 rounded-lg border-2",
+            "flex items-center justify-between gap-2 px-3 py-3 rounded-lg border-2 overflow-hidden",
             userScore >= 0 ? "bg-green-50 border-green-500" : "bg-red-50 border-red-500"
           )}>
             <span className="text-base font-bold text-gray-900 shrink-0">Your Score:</span>
             <span className={cn(
-              "text-xl font-bold",
+              "text-xl font-bold text-right truncate min-w-0",
               userScore >= 0 ? "text-green-600" : "text-red-600"
             )}>
               {userScore >= 0 ? '+' : ''}{userScore}
