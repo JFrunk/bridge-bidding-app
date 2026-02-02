@@ -1,6 +1,8 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "My Bridge Buddy",
+  "name": "My Bridge Buddy - Learn Bridge Bidding",
+  "description": "Practice bridge bidding conventions with AI opponents. Master Stayman, Blackwood, Jacoby Transfers, and more.",
+  "categories": ["education", "games"],
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +22,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
+  "theme_color": "#2c5282",
   "background_color": "#ffffff"
 }

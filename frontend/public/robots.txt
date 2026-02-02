@@ -1,3 +1,10 @@
-# https://www.robotstxt.org/robotstxt.html
+# My Bridge Buddy - app.mybridgebuddy.com
+# Interactive app: do not index (lesson content lives on mybridgebuddy.com)
+
 User-agent: *
-Disallow:
+Disallow: /api/
+Disallow: /static/js/
+Disallow: /static/css/
+
+# Point crawlers to the public site's sitemap
+Sitemap: https://mybridgebuddy.com/sitemap.xml

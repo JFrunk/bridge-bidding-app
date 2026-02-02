@@ -11,6 +11,8 @@ from datetime import datetime
 from typing import Optional
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # Database abstraction layer (supports SQLite locally, PostgreSQL in production)
 from db import get_connection, is_postgres, init_database
@@ -79,17 +81,40 @@ except Exception as e:
 
 app = Flask(__name__)
 
-# CORS configuration - allow all origins with explicit settings
-# This ensures CORS headers are sent even on error responses
+# CORS configuration - restrict origins in production, allow all in development
+CORS_ORIGINS = os.environ.get(
+    'CORS_ORIGINS',
+    'http://localhost:3000'  # Default: local dev only
+).split(',')
+
 CORS(app, resources={
     r"/api/*": {
-        "origins": "*",
+        "origins": CORS_ORIGINS,
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": "*",
+        "allow_headers": ["Content-Type", "X-Session-ID"],
         "expose_headers": ["Content-Type"],
         "supports_credentials": False
     }
 })
+
+# Rate limiter - uses in-memory storage by default, no external dependencies
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[],  # No global limit; apply per-endpoint
+    storage_uri="memory://",
+)
+
+# Security headers on all responses
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    if not app.debug:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
 
 # Global error handler to ensure CORS headers are always sent
 @app.errorhandler(Exception)
@@ -4712,6 +4737,7 @@ def generate_quality_recommendations(all_time, daily_trends):
 
 
 @app.route('/api/auth/simple-login', methods=['POST'])
+@limiter.limit("5 per minute")
 def simple_login():
     """
     Simple login endpoint - authenticate user by email or phone
