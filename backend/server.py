@@ -775,6 +775,17 @@ def _get_user_hcp(state):
     return hand.hcp if hand and hasattr(hand, 'hcp') else None
 
 
+def _get_user_suit_lengths(state):
+    """Get the user's suit lengths from their dealt hand, or None if unavailable."""
+    seat_to_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
+    seat = _get_user_seat(state)
+    full_name = seat_to_full.get(seat, 'South')
+    hand = state.deal.get(full_name) if state.deal else None
+    if hand and hasattr(hand, 'suit_lengths'):
+        return hand.suit_lengths
+    return None
+
+
 def get_state():
     """
     Get session state for current request
@@ -1674,9 +1685,10 @@ def get_next_bid():
         # Uses the same BiddingStateBuilder as the engine's feature_extractor.
         user_seat = _get_user_seat(state)
         user_hcp = _get_user_hcp(state)
+        user_suit_lengths = _get_user_suit_lengths(state)
         try:
             bidding_state = BiddingStateBuilder().build(list(state.auction_history), dealer)
-            beliefs = bidding_state.to_dict(user_seat, my_hcp=user_hcp)
+            beliefs = bidding_state.to_dict(user_seat, my_hcp=user_hcp, my_suit_lengths=user_suit_lengths)
         except Exception:
             beliefs = None
 
@@ -1907,10 +1919,11 @@ def evaluate_bid():
             print(f"✅ record_only: appended '{user_bid}', auction_len={auction_len_after}, next_bidder={next_bidder}")
             user_seat = _get_user_seat(state)
             user_hcp = _get_user_hcp(state)
+            user_suit_lengths = _get_user_suit_lengths(state)
             resp = {'next_bidder': next_bidder, 'recorded': True}
             try:
                 bidding_state = BiddingStateBuilder().build(list(state.auction_history), dealer)
-                resp['beliefs'] = bidding_state.to_dict(user_seat, my_hcp=user_hcp)
+                resp['beliefs'] = bidding_state.to_dict(user_seat, my_hcp=user_hcp, my_suit_lengths=user_suit_lengths)
             except Exception:
                 pass
             return jsonify(resp)
@@ -2163,9 +2176,10 @@ def evaluate_bid():
         if record_bid:
             user_seat = _get_user_seat(state)
             user_hcp = _get_user_hcp(state)
+            user_suit_lengths = _get_user_suit_lengths(state)
             try:
                 bidding_state = BiddingStateBuilder().build(list(state.auction_history), dealer)
-                beliefs = bidding_state.to_dict(user_seat, my_hcp=user_hcp)
+                beliefs = bidding_state.to_dict(user_seat, my_hcp=user_hcp, my_suit_lengths=user_suit_lengths)
             except Exception:
                 pass
 

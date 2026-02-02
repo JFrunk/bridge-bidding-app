@@ -103,24 +103,32 @@ class SeatBelief:
     def hcp_midpoint(self) -> float:
         return (self.hcp[0] + self.hcp[1]) / 2
 
-    def to_dict(self, hcp_cap: int = None) -> dict:
+    def to_dict(self, hcp_cap: int = None, suit_caps: Dict[str, int] = None) -> dict:
         """Serialize belief for API/frontend consumption.
 
         Args:
             hcp_cap: If provided, caps max HCP at this value (derived from
                      the 40-point constraint minus user's known HCP and
                      other seats' minimum HCP).
+            suit_caps: If provided, dict mapping suit → max length cap
+                       (derived from 13-card constraint minus user's own
+                       suit lengths and other seats' minimum lengths).
         """
         hcp_max = self.hcp[1]
         if hcp_cap is not None:
             hcp_max = min(hcp_max, max(self.hcp[0], hcp_cap))
+
+        suits_out = {}
+        for suit, r in self.suits.items():
+            s_min, s_max = r
+            if suit_caps and suit in suit_caps:
+                s_max = min(s_max, max(s_min, suit_caps[suit]))
+            suits_out[suit] = {'min': s_min, 'max': s_max}
+
         return {
             'seat': self.seat,
             'hcp': {'min': self.hcp[0], 'max': hcp_max},
-            'suits': {
-                suit: {'min': r[0], 'max': r[1]}
-                for suit, r in self.suits.items()
-            },
+            'suits': suits_out,
             'limited': self.limited,
             'tags': list(self.tags),
             'reasoning': [
@@ -173,13 +181,17 @@ class BiddingState:
         """Combined HCP for the partnership containing seat s."""
         return self.combined_hcp(s, partner(s))
 
-    def to_dict(self, my_seat: str, my_hcp: int = None) -> dict:
+    def to_dict(self, my_seat: str, my_hcp: int = None,
+                my_suit_lengths: Dict[str, int] = None) -> dict:
         """Serialize beliefs relative to a player's perspective.
 
         Returns partner, LHO, and RHO beliefs (not the player's own seat).
         When my_hcp is provided, each seat's max HCP is capped based on
         the known HCP total of 40 minus the user's HCP and the other
         seats' minimum HCP.
+        When my_suit_lengths is provided, each seat's max suit length is
+        capped based on the 13-card constraint minus the user's own suit
+        lengths and other seats' minimum lengths.
         """
         s = normalize(my_seat)
         partner_belief = self.partner_of(s)
@@ -193,14 +205,33 @@ class BiddingState:
         hcp_caps = {}
         if my_hcp is not None:
             for belief in others:
-                # Max this seat can have = 40 - my HCP - other two seats' minimums
                 other_mins = sum(b.hcp[0] for b in others if b is not belief)
                 hcp_caps[belief.seat] = 40 - my_hcp - other_mins
 
+        # Compute per-seat suit length caps from the 13-card constraint
+        suit_caps_per_seat = {}
+        if my_suit_lengths is not None:
+            for belief in others:
+                caps = {}
+                for suit in SUITS:
+                    my_len = my_suit_lengths.get(suit, 0)
+                    # Other two seats' minimum lengths in this suit
+                    other_mins = sum(
+                        b.suits[suit][0] for b in others if b is not belief
+                    )
+                    caps[suit] = 13 - my_len - other_mins
+                suit_caps_per_seat[belief.seat] = caps
+
         return {
-            'partner': partner_belief.to_dict(hcp_cap=hcp_caps.get(partner_belief.seat)),
-            'lho': lho_belief.to_dict(hcp_cap=hcp_caps.get(lho_belief.seat)),
-            'rho': rho_belief.to_dict(hcp_cap=hcp_caps.get(rho_belief.seat)),
+            'partner': partner_belief.to_dict(
+                hcp_cap=hcp_caps.get(partner_belief.seat),
+                suit_caps=suit_caps_per_seat.get(partner_belief.seat)),
+            'lho': lho_belief.to_dict(
+                hcp_cap=hcp_caps.get(lho_belief.seat),
+                suit_caps=suit_caps_per_seat.get(lho_belief.seat)),
+            'rho': rho_belief.to_dict(
+                hcp_cap=hcp_caps.get(rho_belief.seat),
+                suit_caps=suit_caps_per_seat.get(rho_belief.seat)),
             'agreed_suit': self.agreed_suits.get(pship),
             'forcing': self.forcing.get(pship, 'none'),
         }
@@ -434,14 +465,22 @@ class BiddingStateBuilder:
 
         if bid == '1NT':
             belief.narrow_hcp(new_min=15, new_max=17, reason='1NT opening → 15-17 HCP', bid=bid)
+            for s in SUITS:
+                belief.narrow_suit(s, new_min=2, reason='1NT opening → balanced, 2+ in every suit', bid=bid)
             belief.narrow_suit('♥', new_max=4, reason='1NT opening → no 5-card major', bid=bid)
             belief.narrow_suit('♠', new_max=4, reason='1NT opening → no 5-card major', bid=bid)
+            belief.narrow_suit('♣', new_max=5, reason='1NT opening → balanced, max 5 in minor', bid=bid)
+            belief.narrow_suit('♦', new_max=5, reason='1NT opening → balanced, max 5 in minor', bid=bid)
             belief.add_tag('opened_1nt')
             belief.add_tag('balanced')
         elif bid == '2NT':
             belief.narrow_hcp(new_min=20, new_max=21, reason='2NT opening → 20-21 HCP', bid=bid)
+            for s in SUITS:
+                belief.narrow_suit(s, new_min=2, reason='2NT opening → balanced, 2+ in every suit', bid=bid)
             belief.narrow_suit('♥', new_max=4, reason='2NT opening → balanced, no 5-card major', bid=bid)
             belief.narrow_suit('♠', new_max=4, reason='2NT opening → balanced, no 5-card major', bid=bid)
+            belief.narrow_suit('♣', new_max=5, reason='2NT opening → balanced, max 5 in minor', bid=bid)
+            belief.narrow_suit('♦', new_max=5, reason='2NT opening → balanced, max 5 in minor', bid=bid)
             belief.add_tag('opened_2nt')
             belief.add_tag('balanced')
         elif bid == '2♣':
@@ -529,13 +568,28 @@ class BiddingStateBuilder:
             belief.narrow_hcp(new_min=6, reason=f'New suit at 1 level ({bid}) → 6+ HCP', bid=bid)
             belief.narrow_suit(suit, new_min=4, reason=f'{bid} response → 4+ {suit}', bid=bid)
             belief.add_tag('new_suit_1_level')
+        elif opener_bid in ('1NT', '2NT') and level == 2 and suit in ('♣', '♦', '♥'):
+            # Convention responses to NT opening (Stayman, Jacoby transfers)
+            # HCP/suit narrowing handled by _apply_convention_narrowing
+            # Don't apply standard new-suit 10+ HCP rules
+            pass
         elif level == 2 and suit and not is_raise:
-            belief.narrow_hcp(new_min=10, reason=f'New suit at 2 level ({bid}) → 10+ HCP', bid=bid)
-            belief.narrow_suit(suit, new_min=5, reason=f'{bid} response → 5+ {suit}', bid=bid)
-            belief.add_tag('new_suit_2_level')
-            if o_level == 1 and o_strain in ('♥', '♠'):
-                state.forcing[partnership_str(seat)] = 'game'
-                belief.add_tag('two_over_one_gf')
+            # Check if there was opponent interference between opening and this response
+            has_interference = self._has_opponent_interference(opener_seat, prior, state.dealer)
+            if has_interference:
+                # Competitive: new suit after interference is just showing suit, not 2/1 GF
+                belief.narrow_hcp(new_min=6, reason=f'New suit at 2 level after interference ({bid}) → 6+ HCP (competitive)', bid=bid)
+                belief.narrow_suit(suit, new_min=5, reason=f'{bid} response → 5+ {suit}', bid=bid)
+                belief.add_tag('new_suit_2_level')
+                belief.add_tag('competitive_response')
+            else:
+                # Standard 2/1: 10+ HCP, potentially game forcing over major
+                belief.narrow_hcp(new_min=10, reason=f'New suit at 2 level ({bid}) → 10+ HCP', bid=bid)
+                belief.narrow_suit(suit, new_min=5, reason=f'{bid} response → 5+ {suit}', bid=bid)
+                belief.add_tag('new_suit_2_level')
+                if o_level == 1 and o_strain in ('♥', '♠'):
+                    state.forcing[partnership_str(seat)] = 'game'
+                    belief.add_tag('two_over_one_gf')
 
     # ──────────────────────────────────────────────────────────────
     # REBIDS (opener or responder rebidding)

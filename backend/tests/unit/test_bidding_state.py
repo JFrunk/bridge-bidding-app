@@ -289,8 +289,10 @@ class TestOpeningBids:
         state = build(['1NT'], dealer='N')
         n = state.seat('N')
         assert n.hcp == (15, 17)
-        assert n.suits['♥'][1] <= 4
-        assert n.suits['♠'][1] <= 4
+        assert n.suits['♥'] == (2, 4)
+        assert n.suits['♠'] == (2, 4)
+        assert n.suits['♦'] == (2, 5)
+        assert n.suits['♣'] == (2, 5)
         assert n.has_tag('opened_1nt')
         assert n.has_tag('balanced')
 
@@ -298,6 +300,10 @@ class TestOpeningBids:
         state = build(['2NT'], dealer='N')
         n = state.seat('N')
         assert n.hcp == (20, 21)
+        assert n.suits['♥'] == (2, 4)
+        assert n.suits['♠'] == (2, 4)
+        assert n.suits['♦'] == (2, 5)
+        assert n.suits['♣'] == (2, 5)
         assert n.has_tag('opened_2nt')
 
     def test_1_major_opening(self):
@@ -411,6 +417,42 @@ class TestResponses:
         s = state.seat('S')
         assert s.has_tag('two_over_one_gf')
         assert state.forcing['NS'] == 'game'
+
+    def test_2_level_after_interference_is_competitive(self):
+        """2-level new suit after interference is competitive, not 2/1 GF."""
+        # E opens 1♦, S overcalls 1NT, W bids 2♥ — competitive, not 10+
+        state = build(['1♦', '1NT', '2♥'], dealer='E')
+        w = state.seat('W')
+        assert w.hcp[0] == 6  # Only 6+ (competitive), not 10+
+        assert w.suits['♥'][0] >= 5
+        assert w.has_tag('competitive_response')
+        assert not w.has_tag('two_over_one_gf')
+        assert state.forcing.get('EW') != 'game'
+
+    def test_2_level_without_interference_is_standard(self):
+        """2-level new suit without interference is standard 10+ HCP."""
+        state = build(['1♦', 'Pass', '2♥'], dealer='E')
+        w = state.seat('W')
+        assert w.hcp[0] == 10  # Standard 10+
+        assert w.has_tag('new_suit_2_level')
+        assert not w.has_tag('competitive_response')
+
+    def test_stayman_not_classified_as_new_suit(self):
+        """2♣ Stayman over 1NT should NOT get new_suit_2_level (10+ HCP) tag."""
+        state = build(['1NT', 'Pass', '2♣'], dealer='N')
+        s = state.seat('S')
+        assert s.hcp[0] == 8  # Stayman: 8+, not 10+
+        assert s.has_tag('stayman_asked')
+        assert not s.has_tag('new_suit_2_level')
+
+    def test_jacoby_not_classified_as_new_suit(self):
+        """2♦ Jacoby transfer over 1NT should NOT get new_suit_2_level tag."""
+        state = build(['1NT', 'Pass', '2♦'], dealer='N')
+        s = state.seat('S')
+        assert s.hcp[0] == 0  # Jacoby: no HCP requirement
+        assert s.suits['♥'][0] >= 5  # Shows 5+ hearts
+        assert s.has_tag('jacoby_hearts')
+        assert not s.has_tag('new_suit_2_level')
 
     def test_simple_raise(self):
         state = build(['1♠', 'Pass', '2♠'], dealer='N')
@@ -869,3 +911,34 @@ class TestSerialization:
         # Cap = 40 - 25 - 12 - 0 = 3, but min is 8 → max capped at 8
         assert d2['rho']['hcp']['min'] == 8
         assert d2['rho']['hcp']['max'] == 8
+
+    def test_to_dict_suit_length_cap_from_own_hand(self):
+        """my_suit_lengths caps other seats' suit maxes based on 13-card constraint."""
+        # 1NT opening: partner shows ♠(2,4) ♥(2,4) ♦(2,5) ♣(2,5)
+        # User has ♠:4, ♥:2, ♦:3, ♣:4
+        state = build(['1NT'], dealer='N')
+        d = state.to_dict('S', my_suit_lengths={'♠': 4, '♥': 2, '♦': 3, '♣': 4})
+
+        # LHO (W): unconstrained beliefs. Cap = 13 - user_len - partner_min - rho_min
+        # ♠: 13 - 4 - 2(partner) - 0(rho) = 7
+        assert d['lho']['suits']['♠']['max'] == 7
+        # ♣: 13 - 4 - 2(partner) - 0(rho) = 7
+        assert d['lho']['suits']['♣']['max'] == 7
+        # ♥: 13 - 2 - 2(partner) - 0(rho) = 9
+        assert d['lho']['suits']['♥']['max'] == 9
+
+    def test_to_dict_suit_length_cap_never_below_min(self):
+        """Suit cap never pushes max below the belief's min."""
+        state = build(['1NT'], dealer='N')
+        # User has 8 spades → partner cap = 13 - 8 - 0 - 0 = 5, but partner min is 2
+        d = state.to_dict('S', my_suit_lengths={'♠': 8, '♥': 2, '♦': 2, '♣': 1})
+        # Partner ♠ max = min(4, 5) = 4 (cap doesn't constrain further here)
+        assert d['partner']['suits']['♠']['max'] == 4
+        assert d['partner']['suits']['♠']['min'] == 2
+
+    def test_to_dict_no_suit_cap_when_not_provided(self):
+        """Without my_suit_lengths, suit maxes are not capped (backward compat)."""
+        state = build(['1NT'], dealer='N')
+        d = state.to_dict('S')
+        # LHO has unconstrained ♣: still 0-13
+        assert d['lho']['suits']['♣'] == {'min': 0, 'max': 13}
