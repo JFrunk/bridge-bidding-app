@@ -528,7 +528,10 @@ class BiddingEngine:
         from utils.seats import normalize
         my_seat = normalize(positions[my_index])
         partner_belief = bidding_state.partner_of(my_seat)
-        partner_mid = (partner_belief.hcp[0] + partner_belief.hcp[1]) // 2
+        # Cap partner max at 20 for estimation (same as game-forcing safety net)
+        # Prevents wide ranges like (10, 40) from producing inflated midpoints
+        partner_max_capped = min(partner_belief.hcp[1], 20)
+        partner_mid = (partner_belief.hcp[0] + partner_max_capped) // 2
         combined_hcp = hand.hcp + partner_mid
 
         # Must have 16+ own HCP to trigger slam exploration

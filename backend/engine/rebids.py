@@ -498,7 +498,7 @@ class RebidModule(ConventionModule):
         # Opener MUST continue bidding to game - never pass!
         if self._is_jump_shift_response(my_opening_bid, partner_response):
             # Game forcing metadata - bypass HCP validation
-            jump_shift_metadata = {'bypass_hcp': True, 'game_forcing': True, 'forcing_sequence': 'jump_shift'}
+            jump_shift_metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'game_forcing': True, 'forcing_sequence': 'jump_shift'}
 
             # Partner has 16+ HCP, combined is at least 29+ (game forcing to slam consideration)
             partner_suit = partner_response[1] if len(partner_response) >= 2 and partner_response[1] in '♠♥♦♣' else None
@@ -513,22 +513,22 @@ class RebidModule(ConventionModule):
                     else:
                         return ("3NT", f"Game in NT with minor suit support after jump shift.", jump_shift_metadata)
 
+            # With a good second suit, show it FIRST (game forcing, no rush to game)
+            # Prefer showing a new suit cheaply to let partner choose the best game
+            for suit in ['♠', '♥', '♦', '♣']:
+                if suit != my_suit and suit != partner_suit and hand.suit_lengths.get(suit, 0) >= 4:
+                    # Bid cheapest level available for this suit
+                    for level in range(2, 5):
+                        candidate = f"{level}{suit}"
+                        if BidValidator.is_legal_bid(candidate, features.get('auction_history', [])):
+                            return (candidate, f"Showing 4+ {suit} in game forcing sequence (jump shift).", jump_shift_metadata)
+
             # With 6+ card suit, rebid it
             if my_suit and hand.suit_lengths.get(my_suit, 0) >= 6:
                 level = '3' if int(partner_response[0]) <= 2 else '4'
                 return (f"{level}{my_suit}", f"Rebidding 6+ card suit in game forcing sequence.", jump_shift_metadata)
 
-            # With balanced hand, bid 3NT
-            if hand.is_balanced:
-                return ("3NT", f"Game in NT after partner's jump shift.", jump_shift_metadata)
-
-            # With good second suit, show it
-            for suit in ['♠', '♥', '♦', '♣']:
-                if suit != my_suit and suit != partner_suit and hand.suit_lengths.get(suit, 0) >= 4:
-                    level = '3' if suit in ['♣', '♦'] or int(partner_response[0]) >= 3 else '2'
-                    return (f"{level}{suit}", f"Showing second suit in game forcing sequence.", jump_shift_metadata)
-
-            # Default: bid 3NT
+            # Default: bid 3NT with balanced/semi-balanced hand
             return ("3NT", f"Game in NT after partner's jump shift (game forcing).", jump_shift_metadata)
 
         # Logic for rebids after a 1-level opening
@@ -704,9 +704,25 @@ class RebidModule(ConventionModule):
 
         elif 17 <= hand.total_points <= 19: # Medium Hand
             if partner_response.endswith(my_opening_bid[1]):
-                # Upgrade to Game if HCP is strong (18+)
-                if hand.hcp >= 18:
-                    return (f"4{my_opening_bid[1]}", f"Bidding game with strong hand ({hand.hcp} HCP) after partner's raise.")
+                my_suit = my_opening_bid[1:]
+
+                # Priority: With 17+ HCP and a 4+ card higher-ranking suit,
+                # bid a reverse FIRST to show shape (especially over minor raises)
+                if hand.hcp >= 17:
+                    reverse_metadata = {'bypass_suit_length': True, 'convention': 'reverse_bid'}
+                    for suit in ['♠', '♥', '♦', '♣']:
+                        if suit != my_suit and hand.suit_lengths.get(suit, 0) >= 4:
+                            if self._is_reverse_bid(my_opening_bid, suit):
+                                return (f"2{suit}", f"Reverse bid showing 17+ HCP and 4+ {suit} (forcing).", reverse_metadata)
+
+                # No reverse available — raise partner's suit
+                if hand.hcp >= 18 and my_suit in ['♥', '♠']:
+                    return (f"4{my_suit}", f"Bidding game with strong hand ({hand.hcp} HCP) after partner's raise.")
+                elif hand.hcp >= 18 and my_suit in ['♣', '♦']:
+                    # Minor game is 5-level; invite with 3NT try or raise to 3
+                    if hand.is_balanced:
+                        return ("3NT", f"Strong balanced hand ({hand.hcp} HCP) after minor raise, bidding 3NT.")
+                    return (f"3{my_suit}", f"Strong hand ({hand.hcp} HCP), raising partner's minor (game in minor needs 29+ pts).")
                 return (f"3{my_opening_bid[1]}", "Invitational (16-18 pts), raising partner's simple raise.")
             if partner_response[0] == '1' and len(partner_response) == 2:
                 partner_suit = partner_response[1]
@@ -736,6 +752,12 @@ class RebidModule(ConventionModule):
             # Show distribution or jump rebid
             if partner_response == "1NT":
                 my_suit = my_opening_bid[1:]
+
+                # SAYC: With 18-19 HCP balanced, rebid 2NT (invitational)
+                # Partner passes with 6-7 HCP, raises to 3NT with 8-10
+                if hand.is_balanced and 18 <= hand.hcp <= 19:
+                    return ("2NT", f"Balanced rebid showing 18-19 HCP (invitational to 3NT).")
+
                 # With 6+ card suit and medium hand, jump rebid to show extras
                 if hand.suit_lengths.get(my_suit, 0) >= 6:
                     return (f"3{my_suit}", f"Medium hand (16-18 pts) jump rebidding 6+ card {my_suit} suit.")

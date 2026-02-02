@@ -500,6 +500,22 @@ class ResponseModule(ConventionModule):
         """
         opening_suit = opening_bid[1]
 
+        # PRIORITY: Jump shift with 17+ HCP and 5+ card suit (game-forcing, shows very strong hand)
+        # Must check before 1-level responses since jump shifts skip the 1-level
+        if hand.hcp >= 17:
+            jump_shift_metadata = {'bypass_suit_length': True, 'game_forcing': True, 'forcing_sequence': 'jump_shift'}
+            # Find best 5+ card suit for jump shift
+            for suit in ['♠', '♥', '♦', '♣']:
+                if suit != opening_suit and hand.suit_lengths.get(suit, 0) >= 5:
+                    # Jump shift = one level higher than necessary
+                    suit_rank = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+                    if suit_rank.get(suit, 0) > suit_rank.get(opening_suit, 0):
+                        # Could bid at 1-level, so jump to 2-level
+                        return (f"2{suit}", f"Jump shift showing 17+ HCP and 5+ {suit} (game-forcing).", jump_shift_metadata)
+                    else:
+                        # Would need 2-level anyway, so jump to 3-level
+                        return (f"3{suit}", f"Jump shift showing 17+ HCP and 5+ {suit} (game-forcing).", jump_shift_metadata)
+
         # PRIORITY: Show 4+ card suits at 1-level BEFORE raising partner's minor with only 3-card support
         # This is standard SAYC - bid up the line at the 1-level
         if opening_suit == '♣':  # Partner opened 1♣
