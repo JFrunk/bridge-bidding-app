@@ -224,11 +224,12 @@ const getPracticeBidMiniStats = (quality, recentCount) => {
   const avg = Math.round(quality?.overall_accuracy || 0);
   const trend = quality?.recent_trend || 'stable';
   const trendIcon = trend === 'improving' ? '↗' : trend === 'declining' ? '↘' : '→';
-  const totalHands = quality?.total_decisions || 0;
-  // Show "X recent of Y total" when there are more hands than displayed
-  const handsText = recentCount && recentCount < totalHands
-    ? `${recentCount} of ${totalHands} hands`
-    : `${totalHands} hands`;
+  const totalHands = quality?.total_hands_bid || quality?.total_decisions || 0;
+  // Use the larger of recentCount and totalHands to avoid showing fewer than displayed
+  const effectiveTotal = Math.max(recentCount || 0, totalHands);
+  const handsText = recentCount && recentCount < effectiveTotal
+    ? `${recentCount} of ${effectiveTotal} hands`
+    : `${effectiveTotal} hand${effectiveTotal !== 1 ? 's' : ''}`;
   return `${avg}% avg • ${trendIcon} ${trend} • ${handsText}`;
 };
 
@@ -245,10 +246,11 @@ const getPracticePlayMiniStats = (quality, recentCount) => {
   const trend = quality?.recent_trend || 'stable';
   const trendIcon = trend === 'improving' ? '↗' : trend === 'declining' ? '↘' : '→';
   const totalHands = quality?.total_hands_played || 0;
-  // Show "X recent of Y total" when there are more hands than displayed
-  const handsText = recentCount && recentCount < totalHands
-    ? `${recentCount} of ${totalHands} hands`
-    : `${totalHands} hands`;
+  // Use the larger of recentCount and totalHands to avoid showing fewer than displayed
+  const effectiveTotal = Math.max(recentCount || 0, totalHands);
+  const handsText = recentCount && recentCount < effectiveTotal
+    ? `${recentCount} of ${effectiveTotal} hands`
+    : `${effectiveTotal} hand${effectiveTotal !== 1 ? 's' : ''}`;
   return `${avg}% quality • ${trendIcon} ${trend} • ${handsText}`;
 };
 

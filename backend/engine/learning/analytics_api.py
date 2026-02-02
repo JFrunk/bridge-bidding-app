@@ -401,10 +401,21 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
 
         overall_row = cursor.fetchone()
 
+        # Count distinct hands (not individual decisions)
+        cursor.execute(f"""
+            SELECT COUNT(DISTINCT COALESCE(session_id, '') || ':' || COALESCE(hand_number, -1)) as total_hands
+            FROM bidding_decisions
+            WHERE user_id = ?
+              AND timestamp >= {date_subtract(30)}
+        """, (user_id,))
+        hands_row = cursor.fetchone()
+        total_hands_bid = hands_row['total_hands'] or 0 if hands_row else 0
+
         if not overall_row or overall_row['total_decisions'] == 0:
             return {
                 'avg_score': 0,
                 'total_decisions': 0,
+                'total_hands_bid': 0,
                 'optimal_rate': 0,
                 'acceptable_rate': 0,
                 'good_rate': 0,
@@ -463,6 +474,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
         return {
             'avg_score': round(avg_score, 1),
             'total_decisions': total,
+            'total_hands_bid': total_hands_bid,
             'optimal_rate': round(optimal_rate, 3),
             'acceptable_rate': round(acceptable_rate, 3),
             'good_rate': round(good_rate, 3),  # Combined: optimal + acceptable
@@ -994,6 +1006,18 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
 
         defender_row = cursor.fetchone()
 
+        # Get dummy statistics (user was dummy)
+        cursor.execute("""
+            SELECT COUNT(*) as dummy_hands
+            FROM session_hands sh
+            JOIN game_sessions gs ON sh.session_id = gs.id
+            WHERE gs.user_id = ?
+              AND sh.user_was_dummy = TRUE
+              AND sh.contract_level IS NOT NULL
+        """, (user_id,))
+
+        dummy_row = cursor.fetchone()
+
         # Build stats object
         total_declarer = declarer_row['total_declarer_hands'] or 0
         contracts_made = declarer_row['contracts_made'] or 0
@@ -1002,13 +1026,15 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
         success_rate = declarer_row['success_rate'] or 0.0
         recent_success = recent_row['recent_success_rate'] or 0.0
         defender_hands = defender_row['defender_hands'] or 0
+        dummy_hands = dummy_row['dummy_hands'] or 0
 
-        total_hands = total_declarer + defender_hands
+        total_hands = total_declarer + defender_hands + dummy_hands
 
         return {
             'total_hands_played': total_hands,
             'hands_as_declarer': total_declarer,
             'hands_as_defender': defender_hands,
+            'hands_as_dummy': dummy_hands,
             'contracts_made': contracts_made,
             'contracts_failed': contracts_failed,
             'declarer_success_rate': success_rate,
@@ -1691,6 +1717,7 @@ def get_four_dimension_progress():
             'overall_accuracy': round(bidding_feedback_stats.get('avg_score', 0) / 10 * 100, 1),
             'avg_score': bidding_feedback_stats.get('avg_score', 0),
             'total_decisions': bidding_feedback_stats.get('total_decisions', 0),
+            'total_hands_bid': bidding_feedback_stats.get('total_hands_bid', 0),
             'optimal_rate': round(optimal_rate * 100, 1),
             'acceptable_rate': round(acceptable_rate * 100, 1),
             'good_rate': round(good_rate * 100, 1),  # Combined: optimal + acceptable
