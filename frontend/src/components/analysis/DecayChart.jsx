@@ -1,25 +1,21 @@
 /**
- * DecayChart - Step-chart visualization of trick potential decay
+ * DecayChart - Step-chart visualization of NS trick accumulation
  *
- * Shows NS (user) maximum trick potential at each card played.
+ * Shows NS (user) cumulative tricks won, building up from 0.
  * Always from user's perspective regardless of who declared.
  *
  * Design:
  * - Step-chart (not smooth line) because tricks are discrete
  * - X-axis: 52 play positions (13 tricks x 4 cards)
- * - Y-axis: 0-13 trick potential
- * - Bars from bottom: Locked-in tricks won by NS
+ * - Y-axis: 0-13 tricks
+ * - Bars from bottom: Cumulative NS tricks won (continuous, stay flat when EW wins)
  * - Dotted line: Best possible (optimal) tricks for NS
  * - Dashed line: Required tricks (to make or set)
- * - Red circles mark NS errors
- * - Green circles mark EW gifts
+ * - Blue line: Ascending potential (how many tricks NS should have won by now)
+ *   Builds from 0 to dd_optimal. When an error occurs the line jumps up
+ *   but bars don't, creating a visible gap = tricks lost.
+ * - Red circles mark NS errors (where the gap widens)
  * - Hover/click synchronizes with HandReviewModal replay position
- *
- * Physics:
- * - Horizontal steps: No decision made (waiting for next card)
- * - Downward steps: NS mistake (potential lost)
- * - Upward steps: EW error (gift to NS)
- * - Flat line: Perfect play
  */
 
 import React, { useMemo, useCallback } from 'react';
@@ -68,7 +64,7 @@ const DecayChart = ({
   const actual_tricks_ns = data?.actual_tricks_ns ?? 0;
   const ns_is_declarer = data?.ns_is_declarer ?? true;
   const required_tricks = data?.required_tricks ?? 7;
-  const hasData = rawCurve.length > 0;
+  const hasData = rawCurve.length > 0 || ns_tricks_cumulative.length > 0;
 
   // Sanitize curve values and implement "persistence until falsification" logic
   // The potential line stays at its previous value until a play mathematically
@@ -114,8 +110,8 @@ const DecayChart = ({
     return persistent;
   }, [rawCurve, ns_tricks_cumulative, dd_optimal_ns]);
 
-  // Layout constants
-  const padding = useMemo(() => ({ top: 20, right: 20, bottom: 30, left: 35 }), []);
+  // Layout constants - right padding accommodates reference line labels
+  const padding = useMemo(() => ({ top: 20, right: 75, bottom: 30, left: 35 }), []);
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
 
@@ -123,43 +119,73 @@ const DecayChart = ({
   const getX = useCallback((i) => padding.left + (i / 52) * chartWidth, [padding.left, chartWidth]);
   const getY = useCallback((val) => padding.top + chartHeight - (val / 13) * chartHeight, [padding.top, chartHeight]);
 
-  // Generate step path for the decay curve
-  const pathData = useMemo(() => {
-    if (curve.length === 0) return '';
-
-    let d = `M ${getX(0)} ${getY(curve[0])}`;
-    curve.forEach((val, i) => {
-      if (i === 0) return;
-      d += ` H ${getX(i)} V ${getY(val)}`;
+  // Ascending potential: "how many tricks should NS have won by now?"
+  // Formula: dd_optimal - curve[i] + ns_tricks_cumulative[i]
+  // - Starts at 0 (no tricks played yet)
+  // - When NS wins a trick: goes up by 1 (same as bars → no gap change)
+  // - When an error occurs: jumps up by 1 but bars don't → gap widens
+  // - Ends at dd_optimal_ns (total optimal tricks)
+  // The gap between this line and the bars = tricks lost to errors
+  const ascendingPotential = useMemo(() => {
+    if (curve.length === 0) return [];
+    return curve.map((val, i) => {
+      const cum = ns_tricks_cumulative[i] ?? 0;
+      return dd_optimal_ns - val + cum;
     });
-    if (curve.length < 52) {
+  }, [curve, ns_tricks_cumulative, dd_optimal_ns]);
+
+  // Generate step path for the ascending potential line
+  // Steps only at trick boundaries (every 4 cards), not mid-trick.
+  // Uses the value at the END of each trick (last card of the 4).
+  const pathData = useMemo(() => {
+    if (ascendingPotential.length === 0) return '';
+
+    // Start at 0 (before any tricks played)
+    let d = `M ${getX(0)} ${getY(0)}`;
+
+    for (let trick = 0; trick < 13; trick++) {
+      const trickEnd = (trick + 1) * 4 - 1; // Last card index of this trick
+      if (trickEnd >= ascendingPotential.length) break;
+
+      const val = ascendingPotential[trickEnd];
+      const trickStartX = getX(trick * 4);
+      const trickEndX = getX((trick + 1) * 4);
+
+      // At trick boundary: jump up to new value, then hold flat across trick
+      d += ` H ${trickStartX} V ${getY(val)} H ${trickEndX}`;
+    }
+
+    // Extend to end if needed
+    if (ascendingPotential.length < 52) {
       d += ` H ${getX(52)}`;
     }
     return d;
-  }, [curve, getX, getY]);
+  }, [ascendingPotential, getX, getY]);
 
-  // Generate bars for locked-in NS tricks
+  // Generate bars for locked-in NS tricks - continuous bars for every trick
+  // Bars stay flat when NS doesn't win (no drop to zero)
   const trickBars = useMemo(() => {
     if (ns_tricks_cumulative.length === 0) return [];
 
     const bars = [];
     let lastTrickCount = 0;
 
-    // Group by complete tricks (every 4 cards)
+    // Add a bar for EVERY trick, maintaining cumulative level
     for (let trick = 0; trick < 13; trick++) {
       const cardIndex = (trick + 1) * 4 - 1; // Last card of trick
       if (cardIndex >= ns_tricks_cumulative.length) break;
 
       const nsTricksAtEnd = ns_tricks_cumulative[cardIndex];
-      if (nsTricksAtEnd > lastTrickCount) {
-        // NS won this trick - add bar
+      lastTrickCount = nsTricksAtEnd;
+
+      // Always add a bar (even if 0 height, it keeps visual continuity)
+      if (nsTricksAtEnd > 0) {
         bars.push({
           trickNumber: trick + 1,
           startX: getX(trick * 4),
           endX: getX((trick + 1) * 4),
           height: nsTricksAtEnd,
         });
-        lastTrickCount = nsTricksAtEnd;
       }
     }
 
@@ -169,17 +195,17 @@ const DecayChart = ({
   // Error markers - filter to NS errors only
   const errorMarkers = useMemo(() => {
     return major_errors.filter(err =>
-      err.error_type === 'ns_error' && err.card_index < curve.length
+      err.error_type === 'ns_error' && err.card_index < ascendingPotential.length
     );
-  }, [major_errors, curve.length]);
+  }, [major_errors, ascendingPotential.length]);
 
   // Signal warning markers - plays where potential stayed flat but signal was suboptimal
   // These are educational warnings, not errors
   const signalMarkers = useMemo(() => {
     return signal_warnings.filter(warn =>
-      warn.card_index !== undefined && warn.card_index < curve.length
+      warn.card_index !== undefined && warn.card_index < ascendingPotential.length
     );
-  }, [signal_warnings, curve.length]);
+  }, [signal_warnings, ascendingPotential.length]);
 
   // Note: We no longer display EW gift markers since the curve is capped at optimal.
   // The chart now focuses purely on user's errors (drops in potential) and signal warnings.
@@ -212,11 +238,11 @@ const DecayChart = ({
   // Trick markers along X-axis (every 4 cards = 1 trick)
   const trickMarkers = [0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52];
 
-  // Current position indicator
+  // Current position indicator - tracks the ascending potential line
   const currentX = getX(replayPosition);
-  const currentY = replayPosition > 0 && replayPosition <= curve.length
-    ? getY(curve[replayPosition - 1])
-    : getY(curve[0] || 0);
+  const currentY = replayPosition > 0 && replayPosition <= ascendingPotential.length
+    ? getY(ascendingPotential[replayPosition - 1])
+    : getY(ascendingPotential[0] || 0);
 
   // Determine success/failure from NS perspective
   // Uses seats utility to handle both declaring and defending cases correctly
@@ -289,12 +315,13 @@ const DecayChart = ({
           />
         ))}
 
-        {/* Locked-in tricks bars (from bottom) with count labels positioned just above */}
+        {/* Locked-in tricks bars (from bottom) with count labels just above bar tops */}
         {trickBars.map((bar, idx) => {
           const barTop = getY(bar.height);
           const barHeight = getY(0) - barTop;
-          // Position label just above bar (3px gap), but ensure it's visible
-          const labelY = Math.max(barTop - 3, padding.top + 12);
+          // Only show label when height changes from previous bar
+          const prevHeight = idx > 0 ? trickBars[idx - 1].height : 0;
+          const showLabel = bar.height > prevHeight;
 
           return (
             <g key={`bar-${idx}`}>
@@ -305,14 +332,15 @@ const DecayChart = ({
                 height={barHeight}
                 className="locked-tricks-bar"
               />
-              <text
-                x={(bar.startX + bar.endX) / 2}
-                y={labelY}
-                className="bar-label"
-                dominantBaseline="auto"
-              >
-                {bar.height}
-              </text>
+              {showLabel && (
+                <text
+                  x={(bar.startX + bar.endX) / 2}
+                  y={barTop - 2}
+                  className="bar-label"
+                >
+                  {bar.height}
+                </text>
+              )}
             </g>
           );
         })}
@@ -330,7 +358,7 @@ const DecayChart = ({
           y={getY(dd_optimal_ns)}
           className="axis-label reference-label dd-label"
         >
-          Best
+          Best - {dd_optimal_ns}
         </text>
 
         {/* Required tricks line (dashed) */}
@@ -346,7 +374,7 @@ const DecayChart = ({
           y={getY(required_tricks)}
           className="axis-label reference-label required-label"
         >
-          {requiredLabel}
+          {requiredLabel} - {required_tricks}
         </text>
 
         {/* X-axis labels - show all 13 tricks */}
@@ -372,28 +400,31 @@ const DecayChart = ({
           <circle
             key={`err-${idx}`}
             cx={getX(err.card_index)}
-            cy={getY(curve[err.card_index] || 0)}
+            cy={getY(ascendingPotential[err.card_index] || 0)}
             r="5"
             className="error-marker"
           />
         ))}
 
         {/* Signal warning markers (yellow/orange diamonds - suboptimal signaling) */}
-        {signalMarkers.map((warn, idx) => (
-          <g key={`signal-${idx}`} className="signal-warning-marker">
-            <polygon
-              points={`
-                ${getX(warn.card_index)},${getY(curve[warn.card_index] || 0) - 6}
-                ${getX(warn.card_index) + 5},${getY(curve[warn.card_index] || 0)}
-                ${getX(warn.card_index)},${getY(curve[warn.card_index] || 0) + 6}
-                ${getX(warn.card_index) - 5},${getY(curve[warn.card_index] || 0)}
-              `}
-              fill="#fffaf0"
-              stroke="#ed8936"
-              strokeWidth="2"
-            />
-          </g>
-        ))}
+        {signalMarkers.map((warn, idx) => {
+          const yPos = getY(ascendingPotential[warn.card_index] || 0);
+          return (
+            <g key={`signal-${idx}`} className="signal-warning-marker">
+              <polygon
+                points={`
+                  ${getX(warn.card_index)},${yPos - 6}
+                  ${getX(warn.card_index) + 5},${yPos}
+                  ${getX(warn.card_index)},${yPos + 6}
+                  ${getX(warn.card_index) - 5},${yPos}
+                `}
+                fill="#fffaf0"
+                stroke="#ed8936"
+                strokeWidth="2"
+              />
+            </g>
+          );
+        })}
 
         {/* Bidding context markers - LoTT ceiling line and domain indicators */}
         {biddingContext && biddingContext.lott_safe_level && biddingContext.bid_level > biddingContext.lott_safe_level && (
