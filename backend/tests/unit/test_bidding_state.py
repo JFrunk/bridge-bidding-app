@@ -199,6 +199,86 @@ class TestPassInferences:
         assert n.hcp[0] >= 15
         assert n.hcp[1] <= 17
 
+    # ── Opener pass narrowing ──
+
+    def test_opener_passes_simple_raise(self):
+        """Opener passing simple raise → minimum opener (12-14)."""
+        state = build(['1♥', 'Pass', '2♥', 'Pass', 'Pass'], dealer='N')
+        n = state.seat('N')
+        assert n.hcp == (12, 14)
+        assert n.limited
+        assert n.has_tag('minimum_opener')
+
+    def test_opener_declines_limit_raise(self):
+        """Opener passing limit raise → declining invite (12-14)."""
+        state = build(['1♥', 'Pass', '3♥', 'Pass', 'Pass'], dealer='N')
+        n = state.seat('N')
+        assert n.hcp == (12, 14)
+        assert n.limited
+        assert n.has_tag('declined_invite')
+
+    def test_opener_passes_1nt_response(self):
+        """Opener passing 1NT response → minimum opener (12-14)."""
+        state = build(['1♥', 'Pass', '1NT', 'Pass', 'Pass'], dealer='N')
+        n = state.seat('N')
+        assert n.hcp == (12, 14)
+        assert n.limited
+        assert n.has_tag('minimum_opener')
+
+    def test_opener_passes_new_suit_response(self):
+        """Opener passing a forcing new suit → minimum opener (12-14)."""
+        state = build(['1♥', 'Pass', '1♠', 'Pass', 'Pass'], dealer='N')
+        n = state.seat('N')
+        assert n.hcp == (12, 14)
+        assert n.limited
+        assert n.has_tag('minimum_opener')
+
+    def test_weak_two_opener_pass_not_re_narrowed(self):
+        """Weak two opener already limited → no further narrowing."""
+        state = build(['2♥', 'Pass', 'Pass', 'Pass'], dealer='N')
+        n = state.seat('N')
+        assert n.hcp == (6, 10)
+        assert n.limited
+        assert n.has_tag('weak_two')
+        assert not n.has_tag('minimum_opener')
+
+    # ── Responder subsequent pass narrowing ──
+
+    def test_responder_passes_after_rebid(self):
+        """Responder who bid new suit at 1-level, then passes rebid → 6-9."""
+        state = build(['1♥', 'Pass', '1♠', 'Pass', '2♥', 'Pass', 'Pass'], dealer='N')
+        s = state.seat('S')
+        assert s.hcp == (6, 9)
+        assert s.limited
+        assert s.has_tag('minimum_response')
+        # Should NOT have the old buggy tag
+        assert not s.has_tag('passed_over_interference')
+
+    def test_responder_limited_no_re_narrow(self):
+        """Responder already limited (simple raise) → pass doesn't re-narrow."""
+        state = build(['1♥', 'Pass', '2♥', 'Pass', 'Pass', 'Pass'], dealer='N')
+        s = state.seat('S')
+        # Simple raise sets 6-10 and limited. Subsequent pass shouldn't change.
+        assert s.hcp == (6, 10)
+        assert s.limited
+        assert s.has_tag('simple_raise')
+
+    def test_responder_2nd_pass_doesnt_wrongly_narrow(self):
+        """Bug fix: responder's pass after bidding must NOT re-apply max=5."""
+        state = build(['1♥', 'Pass', '1♠', 'Pass', '2♥', 'Pass', 'Pass', 'Pass'], dealer='N')
+        s = state.seat('S')
+        # S responded 1♠ (6+ HCP). Later pass should give 6-9, NOT 5-5.
+        assert s.hcp[0] == 6
+        assert s.hcp[1] >= 6  # Must not go below min
+
+    def test_interference_check_excludes_opener_rebid(self):
+        """Bug fix: opener's rebid should NOT count as 'interference'."""
+        state = build(['1♥', 'Pass', '1♠', 'Pass', '2♥', 'Pass', 'Pass'], dealer='N')
+        s = state.seat('S')
+        # S's pass should NOT get 'passed_over_interference' tag
+        # (opener's 2♥ rebid is not interference)
+        assert not s.has_tag('passed_over_interference')
+
 
 # ──────────────────────────────────────────────────────────────
 # Opening bids

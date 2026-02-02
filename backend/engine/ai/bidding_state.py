@@ -302,6 +302,20 @@ class BiddingStateBuilder:
     # PASS INFERENCES
     # ──────────────────────────────────────────────────────────────
 
+    def _is_on_opening_side(self, seat: str, opener_seat: str) -> bool:
+        """Check if seat is the opener or opener's partner."""
+        return seat == opener_seat or is_partner(seat, opener_seat)
+
+    def _has_opponent_interference(self, opener_seat: str, prior: List[str], dealer: str) -> bool:
+        """Check if any opponent (non-opening-side) made a real bid in prior history."""
+        for j, prev_bid in enumerate(prior):
+            if prev_bid in ('Pass', 'X', 'XX'):
+                continue
+            bidder = active_seat_bidding(dealer, j)
+            if not self._is_on_opening_side(bidder, opener_seat):
+                return True
+        return False
+
     def _process_pass(self, state: BiddingState, seat: str, bid: str,
                       bid_index: int, opening_found: bool, opener_seat: Optional[str],
                       prior: List[str]):
@@ -321,13 +335,19 @@ class BiddingStateBuilder:
                 belief.narrow_hcp(new_max=13, reason='Passed in 3rd/4th seat → max 13 HCP', bid='Pass')
                 belief.passed_opening = True
                 belief.add_tag('passed_late')
-        elif opener_seat is not None and partner(seat) == opener_seat:
-            # Responder passes partner's opening
-            has_interference = any(
-                prior[j] not in ('Pass', 'X', 'XX') and not is_partner(active_seat_bidding(state.dealer, j), opener_seat)
-                for j in range(len(prior))
-                if j > 0
-            )
+            return
+
+        if opener_seat is None:
+            return
+
+        is_opener = (seat == opener_seat)
+        is_responder = (partner(seat) == opener_seat)
+        on_opening_side = is_opener or is_responder
+        has_bid = self._has_bid_before(seat, prior, state.dealer)
+
+        # ── Case 1: Responder's FIRST pass (hasn't bid yet) ──
+        if is_responder and not has_bid:
+            has_interference = self._has_opponent_interference(opener_seat, prior, state.dealer)
             if not has_interference:
                 belief.narrow_hcp(new_max=5, reason="Passed partner's opening → max 5 HCP", bid='Pass')
                 belief.limited = True
@@ -335,28 +355,71 @@ class BiddingStateBuilder:
             else:
                 belief.narrow_hcp(new_max=8, reason='Passed over interference → max 8 HCP (may be trapping)', bid='Pass')
                 belief.add_tag('passed_over_interference')
-        elif opener_seat is not None and seat != opener_seat:
-            # Pass by someone other than the opener — check relationships
-            partner_seat = partner(seat)
-            partner_has_bid = self._has_acted_before(partner_seat, prior, state.dealer)
-            is_on_opening_side = is_partner(seat, opener_seat)
 
-            if partner_has_bid and not is_on_opening_side:
-                # Partner overcalled/bid, this player passes → limited hand
-                # Can't raise or support partner's competitive action
-                belief.narrow_hcp(new_max=8, reason="Passed partner's overcall → max 8 HCP (couldn't raise)", bid='Pass')
-                belief.limited = True
-                belief.add_tag('passed_overcall')
-            elif not partner_has_bid and is_on_opening_side:
-                # Opener's partner passes after opponent interference
-                # Already handled above (partner(seat) == opener_seat case)
-                pass
-            elif not partner_has_bid and not is_on_opening_side:
-                # Opponent side: this player couldn't overcall or act
-                # Only infer if they haven't bid yet (first pass after opening)
-                if not self._has_bid_before(seat, prior, state.dealer):
-                    belief.narrow_hcp(new_max=16, reason="Passed over opening → couldn't overcall (likely ≤16 HCP)", bid='Pass')
-                    belief.add_tag('passed_over_opening')
+        # ── Case 2: Responder passes AFTER having already bid ──
+        elif is_responder and has_bid:
+            # If already limited, no further narrowing needed
+            if not belief.limited:
+                # Responder passing a non-forcing rebid → minimum for what they showed
+                # new_suit_1_level: was 6+, now 6-9 (couldn't push to game)
+                if belief.has_tag('new_suit_1_level'):
+                    belief.narrow_hcp(new_max=9, reason="Passed opener's rebid → minimum (6-9 HCP)", bid='Pass')
+                    belief.limited = True
+                    belief.add_tag('minimum_response')
+                elif belief.has_tag('new_suit_2_level') and not belief.has_tag('two_over_one_gf'):
+                    belief.narrow_hcp(new_max=12, reason="Passed opener's rebid → minimum 2-level response (10-12 HCP)", bid='Pass')
+                    belief.limited = True
+                    belief.add_tag('minimum_response')
+
+        # ── Case 3: Opener passes AFTER having bid ──
+        elif is_opener and has_bid:
+            if not belief.limited:
+                # Opener passing = minimum, no extras
+                # Check what responder showed to determine context
+                partner_belief = state.seat(partner(seat))
+
+                if partner_belief.has_tag('limit_raise'):
+                    # Declined limit raise invitation → minimum opener (12-14)
+                    belief.narrow_hcp(new_max=14, reason='Declined limit raise → minimum opener (12-14 HCP)', bid='Pass')
+                    belief.limited = True
+                    belief.add_tag('declined_invite')
+                elif partner_belief.has_tag('simple_raise'):
+                    # Passed simple raise → minimum opener (12-14)
+                    belief.narrow_hcp(new_max=14, reason='Passed simple raise → minimum opener (12-14 HCP)', bid='Pass')
+                    belief.limited = True
+                    belief.add_tag('minimum_opener')
+                elif partner_belief.has_tag('responded_1nt'):
+                    # Passed 1NT response → minimum opener (12-14)
+                    belief.narrow_hcp(new_max=14, reason='Passed 1NT response → minimum opener (12-14 HCP)', bid='Pass')
+                    belief.limited = True
+                    belief.add_tag('minimum_opener')
+                elif partner_belief.has_tag('new_suit_1_level') or partner_belief.has_tag('new_suit_2_level'):
+                    # Passed a new suit response (forcing) → unusual, but implies minimum
+                    belief.narrow_hcp(new_max=14, reason='Passed forcing response → minimum opener (12-14 HCP)', bid='Pass')
+                    belief.limited = True
+                    belief.add_tag('minimum_opener')
+                elif belief.hcp[1] - belief.hcp[0] > 5:
+                    # Wide range and passing → likely minimum
+                    belief.narrow_hcp(new_max=belief.hcp[0] + 3,
+                                      reason=f'Passed → near-minimum ({belief.hcp[0]}-{belief.hcp[0]+3} HCP)', bid='Pass')
+                    belief.limited = True
+                    belief.add_tag('minimum_opener')
+
+        # ── Case 4: Opponent side passes ──
+        elif not on_opening_side:
+            partner_seat = partner(seat)
+            partner_has_acted = self._has_acted_before(partner_seat, prior, state.dealer)
+
+            if partner_has_acted:
+                # Partner overcalled/doubled, this player passes → limited hand
+                if not has_bid:
+                    belief.narrow_hcp(new_max=8, reason="Passed partner's overcall → max 8 HCP (couldn't raise)", bid='Pass')
+                    belief.limited = True
+                    belief.add_tag('passed_overcall')
+            elif not has_bid:
+                # Opponent side: couldn't overcall or act
+                belief.narrow_hcp(new_max=16, reason="Passed over opening → couldn't overcall (likely ≤16 HCP)", bid='Pass')
+                belief.add_tag('passed_over_opening')
 
     # ──────────────────────────────────────────────────────────────
     # OPENING BIDS
