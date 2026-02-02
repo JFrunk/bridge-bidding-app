@@ -157,6 +157,13 @@ class ResponderRebidModule(ConventionModule):
             if stayman_result:
                 return stayman_result
 
+        # SPECIAL CASE: 2NT Stayman continuation
+        # Pattern: 2NT - 3♣ - 3♦/3♥/3♠ - ?
+        if opening_bid == '2NT' and my_first_response == '3♣':
+            stayman_2nt_result = self._handle_post_stayman_2nt(hand, opener_rebid)
+            if stayman_2nt_result:
+                return stayman_2nt_result
+
         # SPECIAL CASE: Check for Jacoby Transfer completion
         # Pattern: 1NT - 2♦ - 2♥ or 1NT - 2♥ - 2♠
         # After transfer completion, responder must decide based on strength
@@ -854,9 +861,9 @@ class ResponderRebidModule(ConventionModule):
             # No 5-card major - bid NT based on strength
             if 8 <= hcp <= 9:
                 return ("2NT", f"Invitational after Stayman ({hcp} HCP). Combined {combined_min}+ HCP.", stayman_metadata)
-            elif 10 <= hcp <= 14:
+            elif 10 <= hcp <= 15:
                 return ("3NT", f"Game after Stayman denial ({hcp} HCP). Combined {combined_min}+ HCP.", stayman_metadata)
-            elif hcp >= 15:
+            elif hcp >= 16:
                 return ("4NT", f"Quantitative slam invite ({hcp} HCP). Partner bids 6NT with 17 HCP.", stayman_metadata)
 
         # Case 2: Opener bid 2♥ (has 4+ hearts)
@@ -880,6 +887,11 @@ class ResponderRebidModule(ConventionModule):
                 # With 4 spades, bid NT (opener showed hearts first, so prefers hearts)
                 if 8 <= hcp <= 9:
                     return ("2NT", f"Invitational, no heart fit ({hcp} HCP). Have 4 spades but partner bid hearts.", stayman_metadata)
+                elif hcp >= 16:
+                    # Slam interest with 4 spades — check for spade fit first
+                    if spade_length >= 4:
+                        return ("3♠", f"Slam try, showing 4 spades ({hcp} HCP). Partner bids 4♠/4NT with fit.", stayman_metadata)
+                    return ("4NT", f"Quantitative slam invite, no heart fit ({hcp} HCP). Combined {combined_min}+ HCP.", stayman_metadata)
                 elif hcp >= 10:
                     # With game values, we can bid 3♠ to check for 4-4 spade fit
                     # (opener might have both majors)
@@ -907,10 +919,49 @@ class ResponderRebidModule(ConventionModule):
 
                 if 8 <= hcp <= 9:
                     return ("2NT", f"Invitational, no spade fit ({hcp} HCP). Have 4 hearts but partner denied.", stayman_metadata)
+                elif hcp >= 16:
+                    # Slam invite: 16+ opposite 15-17 = 31-34 combined
+                    return ("4NT", f"Quantitative slam invite, no spade fit ({hcp} HCP). Combined {combined_min}+ HCP.", stayman_metadata)
                 elif hcp >= 10:
                     return ("3NT", f"Game, no spade fit ({hcp} HCP). Combined {combined_min}+ HCP.", stayman_metadata)
 
         return None  # Unexpected Stayman response
+
+    def _handle_post_stayman_2nt(self, hand: Hand, opener_rebid: str) -> Optional[Tuple[str, str]]:
+        """Handle responder's rebid after Stayman over 2NT opening.
+
+        Sequences: 2NT - 3♣ - 3♦/3♥/3♠ - ?
+        Partner opened 2NT (20-21 HCP).
+        """
+        hcp = hand.hcp
+        spade_length = hand.suit_lengths.get('♠', 0)
+        heart_length = hand.suit_lengths.get('♥', 0)
+        metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'stayman_continuation'}
+
+        # Check for fit
+        fit_suit = None
+        if opener_rebid in ('3♥',) and heart_length >= 4:
+            fit_suit = '♥'
+        elif opener_rebid in ('3♠',) and spade_length >= 4:
+            fit_suit = '♠'
+
+        if fit_suit:
+            # Fit found with 20-21 HCP partner
+            if hcp >= 13:
+                # Slam zone: 13+ opposite 20-21 = 33+ combined
+                return ("4NT", f"Blackwood with {fit_suit} fit ({hcp} HCP). Combined {hcp + 20}+ HCP.", metadata)
+            elif hcp >= 5:
+                return (f"4{fit_suit}", f"Game with {fit_suit} fit ({hcp} HCP). Combined {hcp + 20}+ HCP.", metadata)
+            else:
+                return (f"4{fit_suit}", f"Game with {fit_suit} fit ({hcp} HCP).", metadata)
+        else:
+            # No fit
+            if hcp >= 13:
+                return ("4NT", f"Quantitative slam invite ({hcp} HCP). Combined {hcp + 20}+ HCP.", metadata)
+            elif hcp >= 5:
+                return ("3NT", f"Game, no major fit ({hcp} HCP). Combined {hcp + 20}+ HCP.", metadata)
+            else:
+                return ("3NT", f"Game ({hcp} HCP).", metadata)
 
     def _handle_post_jacoby_transfer(self, hand: Hand, my_first_response: str,
                                      opener_rebid: str) -> Optional[Tuple[str, str]]:

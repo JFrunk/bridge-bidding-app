@@ -155,12 +155,12 @@ class TestSuitOpeningRaiseBiddingState:
     def test_slam_explore_with_combined_33(self):
         """Partner opened 1♠ (12-21), I have 18 HCP with 4-card support.
 
-        BiddingState: partner (12, 21) midpoint=16. Combined = 18+16 = 34 → slam explore.
-        Support points = 18 + distribution.
+        BiddingState: partner (12, 21) midpoint=16. Combined = 18+16 = 34.
+        But partner range is wide (spread=9), so Blackwood is blocked —
+        midpoint is unreliable when partner could have 12 or 21.
+        Should bid game (4♠) instead, letting further bidding narrow the range.
         """
         module = ResponseModule()
-        # ♠ KQ93 ♥ AK2 ♦ AJ54 ♣ 32 = 5+7+5+0 = 17... need 18
-        # ♠ KQ93 ♥ AK2 ♦ AQ54 ♣ 32 = 5+7+6+0 = 18
         hand = make_hand("KQ93", "AK2", "AQ54", "32")
         assert hand.hcp == 18
 
@@ -170,8 +170,8 @@ class TestSuitOpeningRaiseBiddingState:
         result = module.evaluate(hand, features)
         assert result is not None
         bid = result[0]
-        # Combined 34 with 16+ support points in major → Blackwood
-        assert bid == '4NT', f"With combined 34 HCP, should explore slam, got {bid}"
+        # Wide partner range → conservative: game bid, not Blackwood
+        assert bid in ('4♠', '3♠'), f"With wide partner range, should bid game/slam try, got {bid}"
 
     def test_fallback_without_bidding_state(self):
         """Without BiddingState, falls back to support-point-based logic."""

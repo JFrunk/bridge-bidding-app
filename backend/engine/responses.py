@@ -230,14 +230,15 @@ class ResponseModule(ConventionModule):
                 else:
                     return ("4NT", "Quantitative slam invitation with 18-19 HCP (non-Blackwood).")
 
-            if hand.hcp >= 15:
-                # Quantitative slam invitation
-                return ("4NT", "Quantitative slam invitation with 15-17 HCP (non-Blackwood).")
+            if hand.hcp >= 16:
+                # Quantitative slam invitation (16-17 HCP opposite 15-17 = 31-34 combined)
+                # 15 HCP gives only 30-32 combined — not reliable enough for slam invite
+                return ("4NT", "Quantitative slam invitation with 16-17 HCP (non-Blackwood).")
 
             if hand.hcp >= 10:
                 # Game values - bid 3NT directly
                 # Note: Stayman/Jacoby will intercept if there's a major suit fit
-                return ("3NT", "Game bid with 10-14 HCP opposite partner's 15-17 HCP (combined 25+).")
+                return ("3NT", "Game bid with 10-15 HCP opposite partner's 15-17 HCP (combined 25+).")
 
             if hand.hcp >= 8:
                 # Invitational range
@@ -526,8 +527,25 @@ class ResponseModule(ConventionModule):
             if features is not None:
                 combined = self._estimate_combined_with_partner(hand, features)
                 if combined is not None:
+                    # Blackwood requires: midpoint combined 33+, support 16+, major fit,
+                    # AND partner range must be narrow (spread <= 7) so midpoint is reliable,
+                    # AND conservative floor: my HCP + partner's minimum >= 30
                     if combined >= 33 and support_points >= 16 and opening_suit in '♥♠':
-                        return ("4NT", f"Blackwood: {combined} combined HCP with {support_points} support points.")
+                        bidding_state = features.get('bidding_state')
+                        partner_min_hcp = 0
+                        partner_spread = 40
+                        if bidding_state is not None:
+                            positions = features.get('positions', [])
+                            my_index = features.get('my_index')
+                            if positions and my_index is not None:
+                                from utils.seats import normalize
+                                my_seat = normalize(positions[my_index])
+                                partner_belief = bidding_state.partner_of(my_seat)
+                                partner_min_hcp = partner_belief.hcp[0]
+                                partner_spread = partner_belief.hcp[1] - partner_belief.hcp[0]
+                        conservative_combined = hand.hcp + partner_min_hcp
+                        if conservative_combined >= 30 and partner_spread <= 7:
+                            return ("4NT", f"Blackwood: {combined} combined HCP with {support_points} support points.")
                     if combined >= 25 and support_points >= 13:
                         if opening_suit in '♥♠':
                             return (f"4{opening_suit}", f"Game raise: {combined} combined HCP with {support_points} support points.")
@@ -539,8 +557,8 @@ class ResponseModule(ConventionModule):
             if support_points >= 17 and opening_suit in '♥♠':
                 # With 17+ support points and major fit, explore slam
                 # Jump to 4-level to show strong support, partner can ask Blackwood
-                # Or with 20+ support points, we can ask Blackwood ourselves
-                if support_points >= 20:
+                # Or with 20+ support points AND HCP justification, ask Blackwood
+                if support_points >= 20 and hand.hcp >= 16:
                     return ("4NT", f"Blackwood asking for aces with excellent {opening_suit} support ({support_points} support points).")
                 # 17-19 support points - show strong support at 3-level (slam try)
                 return (f"3{opening_suit}", f"Slam try with excellent {opening_suit} support ({support_points} support points).")

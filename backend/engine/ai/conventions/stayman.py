@@ -169,8 +169,11 @@ class StaymanConvention(ConventionModule):
             # Combined points: 20-21 + responder's HCP
             if fit_found:
                 # With fit, bid game or explore slam
-                if hand.hcp >= 11:
-                    # Slam interest (31-32+ combined)
+                if hand.hcp >= 13:
+                    # Slam zone: 13+ HCP opposite 20-21 = 33+ combined
+                    return ("4NT", f"Blackwood with {hand.hcp} HCP and 4-card {fit_suit} fit (combined 33+).", metadata)
+                elif hand.hcp >= 11:
+                    # Slam invite zone (31-32 combined)
                     return (f"4{fit_suit}", f"Game in {fit_suit} with {hand.hcp} HCP and 4-card fit. Slam possible.", metadata)
                 else:
                     # Game values
@@ -190,6 +193,10 @@ class StaymanConvention(ConventionModule):
                     return ("Pass", f"Minimum Stayman ({hand.hcp} HCP), passing with {fit_suit} fit.")
                 elif 8 <= hand.hcp <= 9:
                     return (f"3{fit_suit}", f"Invitational ({hand.hcp} HCP) with 4-card {fit_suit} fit.", metadata)
+                elif hand.hcp >= 15:
+                    # Slam interest: 15+ HCP opposite 15-17 = 30-32+ combined
+                    # Use quantitative 4NT to let opener decide with maximum
+                    return ("4NT", f"Slam invite with {hand.hcp} HCP and 4-card {fit_suit} fit (combined 30+).", metadata)
                 else:
                     return (f"4{fit_suit}", f"Game-forcing ({hand.hcp} HCP) with 4-card {fit_suit} fit.", metadata)
             else:
@@ -207,6 +214,9 @@ class StaymanConvention(ConventionModule):
                             return ("Pass", f"Weak hand ({hand.hcp} HCP), no fit found, passing 2♦.")
                     elif 8 <= hand.hcp <= 9:
                         return ("2NT", f"Invitational ({hand.hcp} HCP), no major fit found.", metadata)
+                    elif hand.hcp >= 16:
+                        # Slam invite: 16+ opposite 15-17 = 31-34 combined
+                        return ("4NT", f"Quantitative slam invite ({hand.hcp} HCP), no major fit.", metadata)
                     else:
                         return ("3NT", f"Game-forcing ({hand.hcp} HCP), no major fit, bidding 3NT.", game_metadata)
                 else:
@@ -214,6 +224,9 @@ class StaymanConvention(ConventionModule):
                         return ("Pass", f"Minimum ({hand.hcp} HCP), no fit for partner's {partner_suit}.")
                     elif 8 <= hand.hcp <= 9:
                         return ("2NT", f"Invitational ({hand.hcp} HCP), no fit for partner's {partner_suit}.", metadata)
+                    elif hand.hcp >= 16:
+                        # Slam invite: 16+ opposite 15-17 = 31-34 combined
+                        return ("4NT", f"Quantitative slam invite ({hand.hcp} HCP), no fit for partner's {partner_suit}.", metadata)
                     else:
                         return ("3NT", f"Game-forcing ({hand.hcp} HCP), bidding 3NT with no major fit.", game_metadata)
 # ADR-0002 Phase 1: Auto-register this module on import

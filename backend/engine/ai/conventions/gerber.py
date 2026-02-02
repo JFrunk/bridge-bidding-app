@@ -128,8 +128,8 @@ class GerberConvention(ConventionModule):
         # - 2NT (20-21) + 14 = 34+, guaranteed slam if aces are there
         if partner_last_bid == '1NT' and hand.hcp < 18:
             return False  # Use 4NT quantitative with 16-17 HCP instead
-        if partner_last_bid == '2NT' and hand.hcp < 14:
-            return False  # Use 4NT quantitative with 12-13 HCP instead
+        if partner_last_bid == '2NT' and hand.hcp < 15:
+            return False  # With 13-14 HCP opposite 2NT, bid 6NT directly
         if partner_last_bid == '3NT' and hand.hcp < 12:
             return False
 

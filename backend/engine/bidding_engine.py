@@ -537,12 +537,23 @@ class BiddingEngine:
         if hand.hcp < 16:
             return (False, None, None)
 
-        # Combined HCP midpoint must be 33+ for slam zone
-        if combined_hcp < 33:
-            return (False, None, None)
-
         # Partner must have shown 10+ HCP minimum (prevents triggering over weak responses)
         if partner_belief.hcp[0] < 10:
+            return (False, None, None)
+
+        # When partner range is wide, use a higher threshold
+        # because the midpoint is unreliable — partner could easily be near minimum
+        # spread 0-5: reliable, use 33; spread 6-7: use 34; spread 8+: use 35
+        partner_spread = partner_belief.hcp[1] - partner_belief.hcp[0]
+        if partner_spread >= 8:
+            slam_threshold = 35
+        elif partner_spread >= 6:
+            slam_threshold = 34
+        else:
+            slam_threshold = 33
+
+        # Combined HCP midpoint must meet slam threshold
+        if combined_hcp < slam_threshold:
             return (False, None, None)
 
         # Check if 4NT is legal → explore via Blackwood
