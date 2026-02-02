@@ -52,7 +52,7 @@ export function ScoreModal({ isOpen, onClose, scoreData, onDealNewHand, onShowLe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-[360px] sm:max-w-[440px] p-4 sm:p-6 overflow-visible">
+      <DialogContent className="w-full max-w-[360px] sm:max-w-[440px] p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-2xl text-center">
             Hand Complete!
