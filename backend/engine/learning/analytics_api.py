@@ -393,8 +393,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
                 SUM(CASE WHEN correctness = 'acceptable' THEN 1 ELSE 0 END) as acceptable_count,
                 SUM(CASE WHEN correctness = 'suboptimal' THEN 1 ELSE 0 END) as suboptimal_count,
                 SUM(CASE WHEN correctness = 'error' THEN 1 ELSE 0 END) as error_count,
-                SUM(CASE WHEN impact = 'critical' THEN 1 ELSE 0 END) as critical_errors,
-                COUNT(DISTINCT COALESCE(session_id, '') || '_' || COALESCE(hand_number, -1)) as total_hands
+                SUM(CASE WHEN impact = 'critical' THEN 1 ELSE 0 END) as critical_errors
             FROM bidding_decisions
             WHERE user_id = ?
               AND timestamp >= {date_subtract(30)}
@@ -402,11 +401,21 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
 
         overall_row = cursor.fetchone()
 
+        # Count distinct hands (not individual decisions)
+        cursor.execute(f"""
+            SELECT COUNT(DISTINCT COALESCE(session_id, '') || ':' || COALESCE(hand_number, -1)) as total_hands
+            FROM bidding_decisions
+            WHERE user_id = ?
+              AND timestamp >= {date_subtract(30)}
+        """, (user_id,))
+        hands_row = cursor.fetchone()
+        total_hands_bid = hands_row['total_hands'] or 0 if hands_row else 0
+
         if not overall_row or overall_row['total_decisions'] == 0:
             return {
                 'avg_score': 0,
                 'total_decisions': 0,
-                'total_hands': 0,
+                'total_hands_bid': 0,
                 'optimal_rate': 0,
                 'acceptable_rate': 0,
                 'good_rate': 0,
@@ -465,7 +474,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
         return {
             'avg_score': round(avg_score, 1),
             'total_decisions': total,
-            'total_hands': overall_row['total_hands'],
+            'total_hands_bid': total_hands_bid,
             'optimal_rate': round(optimal_rate, 3),
             'acceptable_rate': round(acceptable_rate, 3),
             'good_rate': round(good_rate, 3),  # Combined: optimal + acceptable
@@ -997,6 +1006,18 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
 
         defender_row = cursor.fetchone()
 
+        # Get dummy statistics (user was dummy)
+        cursor.execute("""
+            SELECT COUNT(*) as dummy_hands
+            FROM session_hands sh
+            JOIN game_sessions gs ON sh.session_id = gs.id
+            WHERE gs.user_id = ?
+              AND sh.user_was_dummy = TRUE
+              AND sh.contract_level IS NOT NULL
+        """, (user_id,))
+
+        dummy_row = cursor.fetchone()
+
         # Build stats object
         total_declarer = declarer_row['total_declarer_hands'] or 0
         contracts_made = declarer_row['contracts_made'] or 0
@@ -1005,13 +1026,15 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
         success_rate = declarer_row['success_rate'] or 0.0
         recent_success = recent_row['recent_success_rate'] or 0.0
         defender_hands = defender_row['defender_hands'] or 0
+        dummy_hands = dummy_row['dummy_hands'] or 0
 
-        total_hands = total_declarer + defender_hands
+        total_hands = total_declarer + defender_hands + dummy_hands
 
         return {
             'total_hands_played': total_hands,
             'hands_as_declarer': total_declarer,
             'hands_as_defender': defender_hands,
+            'hands_as_dummy': dummy_hands,
             'contracts_made': contracts_made,
             'contracts_failed': contracts_failed,
             'declarer_success_rate': success_rate,
@@ -1694,6 +1717,7 @@ def get_four_dimension_progress():
             'overall_accuracy': round(bidding_feedback_stats.get('avg_score', 0) / 10 * 100, 1),
             'avg_score': bidding_feedback_stats.get('avg_score', 0),
             'total_decisions': bidding_feedback_stats.get('total_decisions', 0),
+            'total_hands_bid': bidding_feedback_stats.get('total_hands_bid', 0),
             'optimal_rate': round(optimal_rate * 100, 1),
             'acceptable_rate': round(acceptable_rate * 100, 1),
             'good_rate': round(good_rate * 100, 1),  # Combined: optimal + acceptable
@@ -2564,40 +2588,6 @@ def get_hand_detail():
             if decay_curve_raw:
                 curve_raw = json.loads(decay_curve_raw)
                 major_errors = json.loads(major_errors_raw) if major_errors_raw else []
-            else:
-                # Generate synthetic decay curve if DDS missing (e.g. on Mac)
-                # Curve should represent "remaining tricks possible"
-                # Fallback: Assume perfect play leads to actual result
-                tricks_total = row['tricks_taken'] or 0
-                declarer = row['contract_declarer'] or 'S'
-                ns_is_declarer = declarer in ['N', 'S']
-                
-                # Normalize to NS perspective
-                # If NS is declarer, tricks_total is NS tricks.
-                # If EW is declarer, tricks_total is EW tricks => NS took 13 - tricks_total
-                ns_tricks_total = tricks_total if ns_is_declarer else (13 - tricks_total)
-                
-                # Synthetic curve: Start with total made, decrement as NS wins tricks?
-                # Actually decay curve is "max potential tricks for NS from this point"
-                # Without DDS, we can't know the true max.
-                # Heuristic: Start at final result, and just have it flat? 
-                # Better: Start at final result. When NS wins a trick, potential stays same (1 in bag, N-1 remaining).
-                # When EW wins a trick, potential drops by 1.
-                # This perfectly models "playing to the result".
-                
-                curve_raw = []
-                major_errors = []
-                
-                # We need to compute the curve based on who won each trick
-                # Reuse the trick computation logic below
-                pass # Logic continues below to compute ns_tricks_cumulative and can populate curve there
-
-            if decay_curve_raw or play_history:
-                # Common variable setup
-                if not decay_curve_raw:
-                    curve = [] # Will populate in loop
-                else:
-                    curve = curve_raw
 
                 # Compute additional NS perspective data
                 declarer = row['contract_declarer'] or 'S'
@@ -2632,12 +2622,6 @@ def get_hand_detail():
                     actual_tricks_ns = tricks_taken
                 else:
                     actual_tricks_ns = 13 - tricks_taken
-
-                # If falling back, generate flat curve matching actual result
-                if not decay_curve_raw:
-                    # 53 data points: Start (0) + 52 plays
-                    for _ in range(53):
-                        curve.append(actual_tricks_ns)
 
                 # Extract signal_warnings from play quality summary
                 signal_warnings = play_quality_summary.get('signal_warnings', []) if play_quality_summary.get('has_data') else []
@@ -3044,7 +3028,7 @@ def get_board_analysis():
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
             WHERE gs.user_id = ?
-              AND sh.contract_level IS NOT NULL
+              AND sh.par_score IS NOT NULL
         """
         params = [user_id]
 
@@ -3164,9 +3148,10 @@ def get_board_analysis():
             FROM game_sessions gs
             JOIN session_hands sh ON sh.session_id = gs.id
             WHERE gs.user_id = ?
-              AND sh.contract_level IS NOT NULL
+              AND sh.dd_tricks IS NOT NULL
+              AND sh.par_score IS NOT NULL
             GROUP BY gs.id
-            HAVING COUNT(sh.id) > 0
+            HAVING hands_count > 0
             ORDER BY gs.started_at DESC
             LIMIT 10
         """, (user_id,))
@@ -3248,22 +3233,6 @@ def get_bidding_hands_history():
                  AND COALESCE(bd4.session_id, '') = COALESCE(bd.session_id, '')
                  AND COALESCE(bd4.hand_number, -1) = COALESCE(bd.hand_number, -1)
                  ORDER BY bd4.id DESC LIMIT 1) as last_user_bid,
-                -- Get complete auction_history from session_hands if available
-                -- This contains the full auction including AI bids after user's last bid
-                (SELECT sh.auction_history FROM session_hands sh
-                 WHERE sh.session_id = CAST(bd.session_id AS INTEGER)
-                 AND sh.hand_number = bd.hand_number
-                 LIMIT 1) as complete_auction,
-                -- Also get contract directly from session_hands when available
-                (SELECT sh.contract_level || sh.contract_strain FROM session_hands sh
-                 WHERE sh.session_id = CAST(bd.session_id AS INTEGER)
-                 AND sh.hand_number = bd.hand_number
-                 AND sh.contract_level IS NOT NULL
-                 LIMIT 1) as sh_contract,
-                (SELECT sh.contract_declarer FROM session_hands sh
-                 WHERE sh.session_id = CAST(bd.session_id AS INTEGER)
-                 AND sh.hand_number = bd.hand_number
-                 LIMIT 1) as sh_contract_declarer,
                 MAX(bd.timestamp) as played_at,
                 MIN(bd.id) as first_bid_id,
                 COUNT(bd.id) as num_bids,
@@ -3314,46 +3283,35 @@ def get_bidding_hands_history():
             good_bids = (row['optimal_count'] or 0) + (row['acceptable_count'] or 0)
             quality_pct = round(good_bids / total_bids * 100) if total_bids > 0 else 0
 
-            # Try to use complete auction from session_hands first (contains AI bids after user's last)
-            complete_auction = row['complete_auction']
-            if complete_auction:
-                auction_history = json.loads(complete_auction)
-            else:
-                # Fall back to reconstructing from bidding_decisions
-                auction_history = json.loads(row['last_auction']) if row['last_auction'] else []
-                last_user_bid = row['last_user_bid']
-                # Append user's last bid to auction_history if not already there
-                if last_user_bid and (not auction_history or auction_history[-1] != last_user_bid):
-                    auction_history = auction_history + [last_user_bid]
+            # Parse auction and append user's last bid to get complete picture
+            auction_history = json.loads(row['last_auction']) if row['last_auction'] else []
+            last_user_bid = row['last_user_bid']
 
-            # Use contract from session_hands if available (authoritative source)
-            sh_contract = row['sh_contract']
-            sh_contract_declarer = row['sh_contract_declarer']
-            
-            if sh_contract:
-                contract = sh_contract
-                contract_declarer = sh_contract_declarer
-            else:
-                # Derive contract from auction history
-                contract = None
-                contract_declarer = None
-                dealer = row['dealer'] or 'N'
+            # Append user's last bid to auction_history if not already there
+            # auction_before contains bids BEFORE user's bid, so we need to add it
+            if last_user_bid and (not auction_history or auction_history[-1] != last_user_bid):
+                auction_history = auction_history + [last_user_bid]
 
-                # Find the last non-Pass bid (the contract)
-                positions = ['N', 'E', 'S', 'W']
-                try:
-                    dealer_idx = positions.index(dealer[0].upper()) if dealer else 0
-                except ValueError:
-                    dealer_idx = 0
+            # Derive contract from complete auction
+            contract = None
+            contract_declarer = None
+            dealer = row['dealer'] or 'N'
 
-                for i in range(len(auction_history) - 1, -1, -1):
-                    bid = auction_history[i]
-                    if bid and bid not in ('Pass', 'X', 'XX'):
-                        contract = bid
-                        # Calculate who made this bid based on position in auction
-                        bidder_idx = (dealer_idx + i) % 4
-                        contract_declarer = positions[bidder_idx]
-                        break
+            # Find the last non-Pass bid (the contract)
+            positions = ['N', 'E', 'S', 'W']
+            try:
+                dealer_idx = positions.index(dealer[0].upper()) if dealer else 0
+            except ValueError:
+                dealer_idx = 0
+
+            for i in range(len(auction_history) - 1, -1, -1):
+                bid = auction_history[i]
+                if bid and bid not in ('Pass', 'X', 'XX'):
+                    contract = bid
+                    # Calculate who made this bid based on position in auction
+                    bidder_idx = (dealer_idx + i) % 4
+                    contract_declarer = positions[bidder_idx]
+                    break
 
             # Generate hand_id: prefer session_id:hand_number, fall back to bid_<first_bid_id>
             session_id = row['session_id']
