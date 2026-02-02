@@ -188,18 +188,14 @@ class BiddingEngine:
                     if should_override:
                         return (game_bid, override_explanation)
 
-                # SLAM EXPLORATION SAFETY NET: DISABLED
-                # This safety net was causing more problems than it solved:
-                # - Wildly inflated combined HCP estimates triggering inappropriate Blackwood
-                # - Intercepting quantitative 4NT and converting to Blackwood
-                # - Overriding normal rebid logic
-                # The underlying modules should handle slam bidding directly.
-                # Keeping the code for reference but not executing:
-                #
-                # if self._is_game_bid(bid_to_check) and not self._is_slam_bid(bid_to_check):
-                #     should_explore, slam_bid, slam_explanation = self._slam_exploration_safety_net(hand, features, auction_history, bid_to_check)
-                #     if should_explore:
-                #         return (slam_bid, slam_explanation)
+                # SLAM EXPLORATION SAFETY NET (re-enabled with BiddingState)
+                # Uses per-seat beliefs for accurate combined HCP — guards prevent
+                # the old AuctionContext inflation issues (requires BiddingState,
+                # 16+ own HCP, partner 10+ min, 33+ combined midpoint).
+                if self._is_game_bid(bid_to_check) and not self._is_slam_bid(bid_to_check):
+                    should_explore, slam_bid, slam_explanation = self._slam_exploration_safety_net(hand, features, auction_history, bid_to_check)
+                    if should_explore:
+                        return (slam_bid, slam_explanation)
 
                 # Convert BidExplanation to string if needed
                 if isinstance(explanation, BidExplanation):
@@ -479,21 +475,17 @@ class BiddingEngine:
         """
         SLAM EXPLORATION SAFETY NET: Intercept game bids when slam values exist.
 
-        When a module suggests a game bid (3NT, 4M, 5m) but combined HCP is 33+ (slam zone),
-        we should explore slam via Blackwood (4NT) instead of settling for game.
-
-        This catches auctions like:
-        - 1♦ - 1♠ - 3♦ - 3NT (with 34 combined HCP)
-        - 1♦ - 1♥ - 2NT - 3NT (with 35 combined HCP)
-        - 1♥ - 1♠ - 2♥ - 4♥ (with 34 combined HCP)
-
-        Where the responder has enough for slam but bids game directly.
+        Uses BiddingState per-seat beliefs for accurate combined HCP estimation.
+        Only triggers when BiddingState is available — no fallback to AuctionContext
+        (which had inflated estimates causing inappropriate Blackwood).
 
         Requirements for slam exploration:
-        1. Combined HCP estimate >= 33
-        2. Blackwood hasn't already been used
-        3. 4NT is a legal bid
-        4. Hand has 15+ HCP (significant contribution to slam)
+        1. BiddingState available with per-seat beliefs
+        2. Combined HCP midpoint >= 33
+        3. Own hand has 16+ HCP
+        4. Partner has shown 10+ HCP minimum
+        5. Blackwood hasn't already been used
+        6. 4NT is a legal bid (or direct slam with 2+ aces)
 
         Args:
             original_bid: The game bid that was about to be made
@@ -513,7 +505,7 @@ class BiddingEngine:
 
         # Check if Blackwood has already been used
         if '4NT' in auction_history:
-            return (False, None, None)  # Already explored slam
+            return (False, None, None)
 
         # Check if slam has already been reached
         for bid in auction_history:
@@ -521,76 +513,55 @@ class BiddingEngine:
                 try:
                     level = int(bid[0])
                     if level >= 6:
-                        return (False, None, None)  # Already at slam
+                        return (False, None, None)
                 except ValueError:
                     pass
 
-        # Analyze auction context for slam potential
-        try:
-            positions = features.get('positions', ['North', 'East', 'South', 'West'])
-            my_index = features.get('my_index', 0)
-            context = analyze_auction_context(auction_history, positions, my_index)
+        # Require BiddingState for accurate estimation (no AuctionContext fallback)
+        bidding_state = features.get('bidding_state')
+        if bidding_state is None:
+            return (False, None, None)
 
-            # Get context estimate but apply hard ceiling based on actual HCP
-            context_estimate = context.ranges.combined_midpoint
+        positions = features.get('positions', [])
+        my_index = features.get('my_index')
+        if not positions or my_index is None:
+            return (False, None, None)
 
-            # HARD CEILING: Calculate max possible combined HCP
-            # Our HCP is known exactly. Partner's max is constrained by their bidding.
-            opener_rel = auction.get('opener_relationship')
-            if opener_rel == 'Me':
-                # I'm opener, partner is responder - use responder's max HCP
-                partner_hcp_max = context.ranges.responder_hcp[1] if context.ranges.responder_hcp else 21
-            else:
-                # I'm responder (or partner opened), partner is opener - use opener's max HCP
-                partner_hcp_max = context.ranges.opener_hcp[1] if context.ranges.opener_hcp else 21
+        from utils.seats import normalize
+        my_seat = normalize(positions[my_index])
+        partner_belief = bidding_state.partner_of(my_seat)
+        partner_mid = (partner_belief.hcp[0] + partner_belief.hcp[1]) // 2
+        combined_hcp = hand.hcp + partner_mid
 
-            # Cap partner's estimate at 21 (practical max for non-2C openers)
-            partner_hcp_max = min(partner_hcp_max, 21)
+        # Must have 16+ own HCP to trigger slam exploration
+        if hand.hcp < 16:
+            return (False, None, None)
 
-            # Combined = my actual HCP + partner's max estimate
-            hard_ceiling = hand.hcp + partner_hcp_max
+        # Combined HCP midpoint must be 33+ for slam zone
+        if combined_hcp < 33:
+            return (False, None, None)
 
-            # Use the LOWER of context estimate and hard ceiling
-            combined_pts = min(context_estimate, hard_ceiling)
+        # Partner must have shown 10+ HCP minimum (prevents triggering over weak responses)
+        if partner_belief.hcp[0] < 10:
+            return (False, None, None)
 
-            # SLAM THRESHOLD: 33+ combined HCP suggests slam
-            # REQUIREMENT: Hand must have 16+ HCP to trigger slam exploration
-            # This prevents overestimated contexts from triggering inappropriate Blackwood
-            if combined_pts < 33 or hand.hcp < 16:
-                return (False, None, None)
-
-            # SANITY CHECK: If partner showed weak values (6-9 HCP), don't explore slam
-            # even if the context estimate is high
-            if opener_rel == 'Me':
-                partner_hcp_min = context.ranges.responder_hcp[0] if context.ranges.responder_hcp else 0
-            else:
-                partner_hcp_min = context.ranges.opener_hcp[0] if context.ranges.opener_hcp else 0
-
-            if partner_hcp_min < 10:
-                # Partner showed limited values (0-9 HCP) - don't explore slam
-                return (False, None, None)
-
-            # Check if 4NT is legal
-            if not self._is_bid_legal('4NT', auction_history):
-                # If 4NT isn't legal (we're already past that level), try to bid 6-level directly
-                # Extract trump suit from original bid
-                trump_suit = original_bid[1:] if len(original_bid) > 1 else 'NT'
-                slam_bid = f"6{trump_suit}"
-                if self._is_bid_legal(slam_bid, auction_history):
-                    # Only bid slam directly if we have 3+ aces between us (estimated)
-                    my_aces = sum(1 for card in hand.cards if card.rank == 'A')
-                    if my_aces >= 2:  # With 15+ HCP and 2+ aces, slam is likely safe
-                        logger.info(f"SLAM SAFETY NET: combined={combined_pts}, my_hcp={hand.hcp}, {my_aces} aces - bidding {slam_bid} directly")
-                        explanation = f"Slam safety net: Partnership has {combined_pts} estimated combined points. Bidding slam directly with {my_aces} aces."
-                        return (True, slam_bid, explanation)
-                return (False, None, None)
-
-            logger.info(f"SLAM SAFETY NET: combined={combined_pts}, my_hcp={hand.hcp}, exploring slam instead of {original_bid}")
-
-            explanation = f"Slam safety net: Partnership has {combined_pts} estimated combined points (33+ = slam zone). Exploring slam with Blackwood instead of {original_bid}."
+        # Check if 4NT is legal → explore via Blackwood
+        if self._is_bid_legal('4NT', auction_history):
+            logger.info(f"SLAM SAFETY NET: combined={combined_hcp}, my_hcp={hand.hcp}, partner~{partner_mid} - exploring slam instead of {original_bid}")
+            explanation = (f"Slam safety net: {combined_hcp} combined HCP "
+                          f"(my {hand.hcp} + partner ~{partner_mid}). "
+                          f"Exploring slam with Blackwood instead of {original_bid}.")
             return (True, '4NT', explanation)
 
-        except Exception as e:
-            logger.debug(f"Error in slam safety net: {e}")
+        # Past 4NT → bid 6-level directly if we have 2+ aces
+        trump_suit = original_bid[1:] if len(original_bid) > 1 else 'NT'
+        slam_bid = f"6{trump_suit}"
+        if self._is_bid_legal(slam_bid, auction_history):
+            my_aces = sum(1 for card in hand.cards if card.rank == 'A')
+            if my_aces >= 2:
+                logger.info(f"SLAM SAFETY NET: combined={combined_hcp}, my_hcp={hand.hcp}, {my_aces} aces - bidding {slam_bid} directly")
+                explanation = (f"Slam safety net: {combined_hcp} combined HCP "
+                              f"with {my_aces} aces. Bidding {slam_bid} directly.")
+                return (True, slam_bid, explanation)
 
         return (False, None, None)

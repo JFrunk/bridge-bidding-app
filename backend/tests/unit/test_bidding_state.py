@@ -308,11 +308,21 @@ class TestResponses:
         assert s.has_tag('simple_raise')
         assert state.agreed_suits['NS'] == '♠'
 
-    def test_jump_raise(self):
+    def test_jump_raise_limit(self):
+        """SAYC: 1♠-3♠ is a limit raise (10-12, invitational)."""
         state = build(['1♠', 'Pass', '3♠'], dealer='N')
         s = state.seat('S')
+        assert s.hcp == (10, 12)
+        assert s.suits['♠'][0] >= 3
+        assert s.has_tag('limit_raise')
+        assert state.agreed_suits['NS'] == '♠'
+
+    def test_preemptive_raise_double_jump(self):
+        """SAYC: 1♠-4♠ is preemptive (6-10, weak with support)."""
+        state = build(['1♠', 'Pass', '4♠'], dealer='N')
+        s = state.seat('S')
         assert s.hcp == (6, 10)
-        assert s.suits['♠'][0] >= 4
+        assert s.suits['♠'][0] >= 5
         assert s.has_tag('preemptive_raise')
         assert state.agreed_suits['NS'] == '♠'
 

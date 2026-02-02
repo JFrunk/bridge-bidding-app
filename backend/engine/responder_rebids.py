@@ -295,7 +295,7 @@ class ResponderRebidModule(ConventionModule):
     # Combined HCP → max safe bid level (same thresholds as SanityChecker)
     MAX_BID_LEVELS = {
         (0, 19): 2, (20, 23): 3, (24, 32): 4,
-        (33, 36): 5, (37, 40): 6, (41, 100): 7
+        (33, 36): 6, (37, 40): 7, (41, 100): 7
     }
 
     def _get_max_safe_level(self, hand: Hand, features: Dict) -> int:
@@ -310,10 +310,23 @@ class ResponderRebidModule(ConventionModule):
         """
         Estimate combined HCP using actual hand + partner's range midpoint.
 
-        Uses my REAL HCP (not the range estimate) + partner's midpoint from
-        AuctionContext. This avoids the inflated combined_midpoint that occurs
-        when one side's range is wide (e.g., responder 6-40 → midpoint 23).
+        Priority: BiddingState > AuctionContext > fallback.
         """
+        # Use BiddingState if available (most accurate)
+        bidding_state = features.get('bidding_state')
+        if bidding_state is not None:
+            positions = features.get('positions', [])
+            my_index = features.get('my_index')
+            if positions and my_index is not None:
+                from utils.seats import normalize
+                my_seat = normalize(positions[my_index])
+                partner_belief = bidding_state.partner_of(my_seat)
+                spread = partner_belief.hcp[1] - partner_belief.hcp[0]
+                if spread <= 25:
+                    partner_mid = (partner_belief.hcp[0] + partner_belief.hcp[1]) // 2
+                    return hand.hcp + partner_mid
+
+        # Existing AuctionContext path
         ctx = features.get('auction_context')
         if ctx is None:
             return hand.hcp + 14  # Fallback: assume average opener

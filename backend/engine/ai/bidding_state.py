@@ -347,10 +347,19 @@ class BiddingStateBuilder:
             if suit:
                 state.agreed_suits[partnership_str(seat)] = suit
         elif is_raise and level == o_level + 2:
-            # Jump raise: preemptive 6-10 with 4+ support
+            # Limit raise (SAYC): invitational 10-12 with 3+ support
+            belief.narrow_hcp(new_min=10, new_max=12)
+            if suit:
+                belief.narrow_suit(suit, new_min=3)
+            belief.limited = True
+            belief.add_tag('limit_raise')
+            if suit:
+                state.agreed_suits[partnership_str(seat)] = suit
+        elif is_raise and level >= o_level + 3:
+            # Preemptive raise: 6-10 with 5+ support (double+ jump)
             belief.narrow_hcp(new_min=6, new_max=10)
             if suit:
-                belief.narrow_suit(suit, new_min=4)
+                belief.narrow_suit(suit, new_min=5)
             belief.limited = True
             belief.add_tag('preemptive_raise')
             if suit:
