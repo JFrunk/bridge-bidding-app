@@ -103,11 +103,20 @@ class SeatBelief:
     def hcp_midpoint(self) -> float:
         return (self.hcp[0] + self.hcp[1]) / 2
 
-    def to_dict(self) -> dict:
-        """Serialize belief for API/frontend consumption."""
+    def to_dict(self, hcp_cap: int = None) -> dict:
+        """Serialize belief for API/frontend consumption.
+
+        Args:
+            hcp_cap: If provided, caps max HCP at this value (derived from
+                     the 40-point constraint minus user's known HCP and
+                     other seats' minimum HCP).
+        """
+        hcp_max = self.hcp[1]
+        if hcp_cap is not None:
+            hcp_max = min(hcp_max, max(self.hcp[0], hcp_cap))
         return {
             'seat': self.seat,
-            'hcp': {'min': self.hcp[0], 'max': self.hcp[1]},
+            'hcp': {'min': self.hcp[0], 'max': hcp_max},
             'suits': {
                 suit: {'min': r[0], 'max': r[1]}
                 for suit, r in self.suits.items()
@@ -164,10 +173,13 @@ class BiddingState:
         """Combined HCP for the partnership containing seat s."""
         return self.combined_hcp(s, partner(s))
 
-    def to_dict(self, my_seat: str) -> dict:
+    def to_dict(self, my_seat: str, my_hcp: int = None) -> dict:
         """Serialize beliefs relative to a player's perspective.
 
         Returns partner, LHO, and RHO beliefs (not the player's own seat).
+        When my_hcp is provided, each seat's max HCP is capped based on
+        the known HCP total of 40 minus the user's HCP and the other
+        seats' minimum HCP.
         """
         s = normalize(my_seat)
         partner_belief = self.partner_of(s)
@@ -175,10 +187,20 @@ class BiddingState:
         rho_belief = self.rho_of(s)
         pship = partnership_str(s)
 
+        others = [partner_belief, lho_belief, rho_belief]
+
+        # Compute per-seat HCP caps from the 40-point constraint
+        hcp_caps = {}
+        if my_hcp is not None:
+            for belief in others:
+                # Max this seat can have = 40 - my HCP - other two seats' minimums
+                other_mins = sum(b.hcp[0] for b in others if b is not belief)
+                hcp_caps[belief.seat] = 40 - my_hcp - other_mins
+
         return {
-            'partner': partner_belief.to_dict(),
-            'lho': lho_belief.to_dict(),
-            'rho': rho_belief.to_dict(),
+            'partner': partner_belief.to_dict(hcp_cap=hcp_caps.get(partner_belief.seat)),
+            'lho': lho_belief.to_dict(hcp_cap=hcp_caps.get(lho_belief.seat)),
+            'rho': rho_belief.to_dict(hcp_cap=hcp_caps.get(rho_belief.seat)),
             'agreed_suit': self.agreed_suits.get(pship),
             'forcing': self.forcing.get(pship, 'none'),
         }

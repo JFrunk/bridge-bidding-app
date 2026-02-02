@@ -719,3 +719,40 @@ class TestSerialization:
         assert len(partner_reasoning) >= 3
         fields = [r['field'] for r in partner_reasoning]
         assert 'hcp' in fields
+
+    def test_to_dict_hcp_cap_from_user_hand(self):
+        """my_hcp caps other seats' max HCP based on 40-point constraint."""
+        # 1NT opening: partner shows 15-17.  LHO/RHO unconstrained (0-40).
+        # User has 16 HCP → max any single opponent can have is
+        # 40 - 16 - partner_min(15) - other_opp_min(0) = 9
+        state = build(['1NT'], dealer='N')
+        d = state.to_dict('S', my_hcp=16)
+
+        # Partner: 40 - 16 - lho_min(0) - rho_min(0) = 24, but belief says 17 → stays 17
+        assert d['partner']['hcp'] == {'min': 15, 'max': 17}
+        # LHO: 40 - 16 - partner_min(15) - rho_min(0) = 9
+        assert d['lho']['hcp']['max'] == 9
+        # RHO: 40 - 16 - partner_min(15) - lho_min(0) = 9
+        assert d['rho']['hcp']['max'] == 9
+
+    def test_to_dict_hcp_cap_no_user_hcp(self):
+        """Without my_hcp, max HCP is uncapped (backward compat)."""
+        state = build(['1NT'], dealer='N')
+        d = state.to_dict('S')
+        # LHO/RHO still show default 0-40 when no user HCP provided
+        assert d['lho']['hcp'] == {'min': 0, 'max': 40}
+
+    def test_to_dict_hcp_cap_never_below_min(self):
+        """HCP cap never pushes max below the belief's min."""
+        # Partner opened 1♥ (12-21), opponent overcalled 1♠ (8-16)
+        state = build(['1♥', '1♠'], dealer='N')
+        # User has 18 HCP — very strong hand
+        d = state.to_dict('S', my_hcp=18)
+        # RHO (East) overcalled 1♠: 8-16. Cap = 40 - 18 - 12(N min) - 0(W min) = 10
+        assert d['rho']['hcp']['min'] == 8
+        assert d['rho']['hcp']['max'] == 10
+        # Now with even more HCP to force cap below min
+        d2 = state.to_dict('S', my_hcp=25)
+        # Cap = 40 - 25 - 12 - 0 = 3, but min is 8 → max capped at 8
+        assert d2['rho']['hcp']['min'] == 8
+        assert d2['rho']['hcp']['max'] == 8
