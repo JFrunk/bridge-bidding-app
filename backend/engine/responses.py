@@ -81,6 +81,22 @@ class ResponseModule(ConventionModule):
         else:
             return self._get_responder_rebid(hand, features, my_bids_after_opening)
 
+    def _estimate_combined_with_partner(self, hand: Hand, features: Dict):
+        """Use BiddingState for combined HCP, fall back to None."""
+        bidding_state = features.get('bidding_state')
+        if bidding_state is not None:
+            positions = features.get('positions', [])
+            my_index = features.get('my_index')
+            if positions and my_index is not None:
+                from utils.seats import normalize
+                my_seat = normalize(positions[my_index])
+                partner_belief = bidding_state.partner_of(my_seat)
+                spread = partner_belief.hcp[1] - partner_belief.hcp[0]
+                if spread <= 25:
+                    partner_mid = (partner_belief.hcp[0] + partner_belief.hcp[1]) // 2
+                    return hand.hcp + partner_mid
+        return None
+
     def _calculate_support_points(self, hand: Hand, trump_suit: str) -> int:
         """Calculate support points for raising partner's suit.
 
@@ -162,7 +178,7 @@ class ResponseModule(ConventionModule):
         # Special case: Weak two opening (2♦/2♥/2♠)
         # Partner shows 5-11 HCP with a good 6-card suit
         if opening_bid in ['2♦', '2♥', '2♠']:
-            return self._respond_to_weak_two(hand, opening_bid, interference)
+            return self._respond_to_weak_two(hand, opening_bid, interference, features)
 
         # For other openings, minimum 6 points needed
         if hand.total_points < 6: return ("Pass", "Less than 6 total points.")
@@ -172,7 +188,7 @@ class ResponseModule(ConventionModule):
             # Other NT bids (3NT, etc.) - pass is usually correct
             return ("Pass", f"Partner opened {opening_bid}, accepting as final contract.")
         else:
-            return self._respond_to_suit_opening(hand, opening_bid, interference)
+            return self._respond_to_suit_opening(hand, opening_bid, interference, features)
 
     def _respond_to_1nt(self, hand: Hand, opening_bid: str, interference: Dict):
         """
@@ -292,7 +308,7 @@ class ResponseModule(ConventionModule):
         # 0-3 HCP - pass (combined 20-24, not enough)
         return ("Pass", f"Insufficient strength for game opposite 2NT ({hand.hcp} HCP, combined ~23).")
 
-    def _respond_to_weak_two(self, hand: Hand, opening_bid: str, interference: Dict):
+    def _respond_to_weak_two(self, hand: Hand, opening_bid: str, interference: Dict, features: Dict = None):
         """
         Respond to weak two opening (2♦/2♥/2♠).
 
@@ -324,7 +340,16 @@ class ResponseModule(ConventionModule):
         if support >= 3:
             support_points = self._calculate_support_points(hand, opening_suit)
 
-            # Game values with fit:
+            # BiddingState-aware game decision: use combined HCP when available
+            if features is not None:
+                combined = self._estimate_combined_with_partner(hand, features)
+                if combined is not None and combined >= 25 and support >= 3:
+                    if opening_suit in ['♥', '♠']:
+                        return (f"4{opening_suit}", f"Game raise: {combined} combined HCP with {support}-card support.", metadata)
+                    elif combined >= 28:
+                        return ("5♦", f"Game in diamonds: {combined} combined HCP with {support}-card support.", metadata)
+
+            # Legacy game values with fit:
             # Partner has 5-11 HCP (avg ~8), so for game (~25 pts) we need ~14-20 HCP
             # But with a 10-card fit (4+ support), game plays well even with fewer HCP
             # SAYC: Raise to game with 12+ HCP and 4+ card support, or 14+ support points
@@ -458,7 +483,7 @@ class ResponseModule(ConventionModule):
         # Too weak for game
         return ("Pass", f"Pass with {hand.hcp} HCP - game unlikely (need ~4+ to reach 25 combined).")
 
-    def _respond_to_suit_opening(self, hand: Hand, opening_bid: str, interference: Dict):
+    def _respond_to_suit_opening(self, hand: Hand, opening_bid: str, interference: Dict, features: Dict = None):
         """
         Respond to suit opening (1♣/1♦/1♥/1♠), handling interference.
 
@@ -496,6 +521,18 @@ class ResponseModule(ConventionModule):
         # Raise partner's suit with 3+ card support
         if opening_suit in hand.suit_lengths and hand.suit_lengths[opening_suit] >= 3:
             support_points = self._calculate_support_points(hand, opening_suit)
+
+            # BiddingState-aware slam/game decisions
+            if features is not None:
+                combined = self._estimate_combined_with_partner(hand, features)
+                if combined is not None:
+                    if combined >= 33 and support_points >= 16 and opening_suit in '♥♠':
+                        return ("4NT", f"Blackwood: {combined} combined HCP with {support_points} support points.")
+                    if combined >= 25 and support_points >= 13:
+                        if opening_suit in '♥♠':
+                            return (f"4{opening_suit}", f"Game raise: {combined} combined HCP with {support_points} support points.")
+                        else:
+                            return ("3NT", f"Game in NT: {combined} combined HCP.")
 
             # Slam exploration with very strong support (17+ support points)
             # Opener shows 13-21 pts, combined could be 30-38 (slam zone)

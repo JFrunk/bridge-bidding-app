@@ -40,8 +40,8 @@ class SanityChecker:
         (0, 19): 2,     # Part score only (< 20 HCP)
         (20, 23): 3,    # Low invitational (20-23 HCP)
         (24, 32): 4,    # Game level (24+ HCP with fit, 26+ without)
-        (33, 36): 5,    # Small slam possible (33-36 HCP)
-        (37, 40): 6,    # Small slam (37+ HCP)
+        (33, 36): 6,    # Small slam (33-36 HCP)
+        (37, 40): 7,    # Grand slam (37+ HCP)
         (41, 100): 7,   # Grand slam (very rare)
     }
 

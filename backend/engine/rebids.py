@@ -11,6 +11,22 @@ class RebidModule(ConventionModule):
     # Suit ranking for reverse bid detection (higher number = higher ranking)
     SUIT_RANK = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
 
+    def _estimate_combined_with_partner(self, hand, features):
+        """Use BiddingState for combined HCP, fall back to None."""
+        bidding_state = features.get('bidding_state')
+        if bidding_state is not None:
+            positions = features.get('positions', [])
+            my_index = features.get('my_index')
+            if positions and my_index is not None:
+                from utils.seats import normalize
+                my_seat = normalize(positions[my_index])
+                partner_belief = bidding_state.partner_of(my_seat)
+                spread = partner_belief.hcp[1] - partner_belief.hcp[0]
+                if spread <= 25:
+                    partner_mid = (partner_belief.hcp[0] + partner_belief.hcp[1]) // 2
+                    return hand.hcp + partner_mid
+        return None
+
     def _is_jump_shift_response(self, opening_bid: str, response: str) -> bool:
         """
         Check if responder's bid is a jump shift (GAME FORCING).
@@ -491,10 +507,15 @@ class RebidModule(ConventionModule):
                     # AuctionContext uses opener range (13-21) midpoint (17), which inflates estimate
                     my_suit = my_opening_bid[1:]
 
-                    # Calculate realistic combined points using actual hand HCP
-                    # Partner's simple raise shows 6-10 support points (midpoint 8)
-                    partner_midpoint = 8  # (6+10)/2 = 8 support points
-                    realistic_combined = hand.total_points + partner_midpoint
+                    # Calculate realistic combined points
+                    # Use BiddingState when available, fall back to hardcoded midpoint
+                    combined_bs = self._estimate_combined_with_partner(hand, features)
+                    if combined_bs is not None:
+                        realistic_combined = combined_bs
+                    else:
+                        # Partner's simple raise shows 6-10 support points (midpoint 8)
+                        partner_midpoint = 8  # (6+10)/2 = 8 support points
+                        realistic_combined = hand.total_points + partner_midpoint
 
                     should_bid_game = False
                     should_invite = False
@@ -529,11 +550,15 @@ class RebidModule(ConventionModule):
                     # Also be conservative - use HCP (not total points) for threshold calculation
                     my_suit = my_opening_bid[1:]
 
-                    # Calculate realistic combined using actual HCP (more conservative)
-                    # Partner's invitational raise shows 10-12 support points (midpoint 11)
-                    # But support points include distribution, so use midpoint 10 HCP for conservative estimate
-                    partner_hcp_midpoint = 10  # Conservative HCP estimate (they have 10-12 support pts)
-                    realistic_combined_hcp = hand.hcp + partner_hcp_midpoint
+                    # Calculate realistic combined using BiddingState or fallback
+                    combined_bs = self._estimate_combined_with_partner(hand, features)
+                    if combined_bs is not None:
+                        realistic_combined_hcp = combined_bs
+                    else:
+                        # Partner's invitational raise shows 10-12 support points (midpoint 11)
+                        # But support points include distribution, so use midpoint 10 HCP for conservative estimate
+                        partner_hcp_midpoint = 10  # Conservative HCP estimate (they have 10-12 support pts)
+                        realistic_combined_hcp = hand.hcp + partner_hcp_midpoint
 
                     should_bid_game = False
 

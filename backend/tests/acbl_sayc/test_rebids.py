@@ -252,16 +252,27 @@ class TestOpenerRebidAfterRaise:
         bid, _ = get_opener_rebid(hand, auction)
         assert bid == "4♠", f"18 HCP should bid game 4♠, got {bid}"
 
-    def test_accept_limit_raise_minimum(self):
-        """SAYC: Pass limit raise with minimum."""
-        # Opened 1♠, partner limit raised to 3♠
-        # ♠ AKJ32 ♥ Q32 ♦ K32 ♣ 32
-        # HCP: 13
+    def test_accept_limit_raise_minimum_with_quality_suit(self):
+        """SAYC: Accept limit raise with minimum but quality trumps (AKJ32).
+
+        Limit raise shows 10-12 HCP. With 13 HCP and AKJ32 (7 HCP in suit),
+        combined ~24 with excellent trumps is a reasonable accept.
+        """
+        # ♠ AKJ32 ♥ Q32 ♦ K32 ♣ 32 = 13 HCP
         hand = make_hand("AKJ32", "Q32", "K32", "32")
         assert hand.hcp == 13
         auction = ["1♠", "Pass", "3♠", "Pass"]
         bid, _ = get_opener_rebid(hand, auction)
-        assert bid == "Pass", f"Minimum opener should pass limit raise, got {bid}"
+        assert bid == "4♠", f"13 HCP with quality AKJ32 trumps should accept limit raise, got {bid}"
+
+    def test_decline_limit_raise_weak_minimum(self):
+        """SAYC: Decline limit raise with weak minimum (12 HCP, poor suit)."""
+        # ♠ Q9832 ♥ KJ2 ♦ AQ4 ♣ 32 = 2+4+6+0 = 12 HCP, poor trumps
+        hand = make_hand("Q9832", "KJ2", "AQ4", "32")
+        assert hand.hcp == 12
+        auction = ["1♠", "Pass", "3♠", "Pass"]
+        bid, _ = get_opener_rebid(hand, auction)
+        assert bid == "Pass", f"12 HCP with poor trumps should decline limit raise, got {bid}"
 
     def test_accept_limit_raise_maximum(self):
         """SAYC: Accept limit raise (bid 4♠) with 15+."""
