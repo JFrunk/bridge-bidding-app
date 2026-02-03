@@ -1983,6 +1983,7 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
                 'tricks_cost': row['tricks_cost'],
                 'contract': row['contract'],
                 'feedback': row['feedback'],
+                'reasoning': row['feedback'],  # Alias for frontend consistency checks
                 'signal_reason': row['signal_reason'],
                 'signal_heuristic': row['signal_heuristic'],
                 'signal_context': row['signal_context'],

@@ -3360,13 +3360,16 @@ def play_card():
         if user_id and is_user_controlled:
             try:
                 feedback_gen = get_play_feedback_generator(use_dds=PLATFORM_ALLOWS_DDS)
-                # Get hand_number from game session (1-indexed for display)
-                hand_number = state.game_session.hands_completed + 1 if state.game_session else None
+                # Get session_id: prefer request body, fall back to game_session
                 feedback_session_id = data.get('session_id')
+                if feedback_session_id is None and state.game_session:
+                    feedback_session_id = state.game_session.id
                 # Ensure session_id is stored as string for consistent DB lookups
                 if feedback_session_id is not None:
                     feedback_session_id = str(feedback_session_id)
-                print(f"[PLAY-FEEDBACK] user_id={user_id}, session_id={feedback_session_id}, hand_number={hand_number}, game_session={'YES' if state.game_session else 'NO'}, position={position}")
+                # Get hand_number from game session (1-indexed for display)
+                hand_number = state.game_session.hands_completed + 1 if state.game_session else None
+                print(f"[PLAY-FEEDBACK] user_id={user_id}, session_id={feedback_session_id}, hand_number={hand_number}, game_session={state.game_session.id if state.game_session else 'NO'}, position={position}")
                 play_feedback = feedback_gen.evaluate_and_store(
                     user_id=user_id,
                     play_state=state.play_state,
