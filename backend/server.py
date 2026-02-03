@@ -155,66 +155,67 @@ def handle_internal_error(e):
 # =============================================================================
 # BIDDING ENGINE SELECTION
 # =============================================================================
-# V2 State Machine (BiddingEngineV2): PRODUCTION DEFAULT - Python-based engine
-# V2 Schema: Alternative JSON schema-driven implementation
+# V2 Schema (BiddingEngineV2Schema): PRODUCTION DEFAULT - JSON-driven engine
+# V2 State Machine (BiddingEngineV2): Legacy Python-based engine (fallback)
 #
-# PRODUCTION ENGINE: BiddingEngineV2 (state machine) as of 2026-01-27
-# - Quality Score: 95.6% (Grade A - Production Ready)
-# - Performance: 4,000+ hands/second, 0.03ms per bid
-# - Stability: All modules loaded, conventions working correctly
+# PRODUCTION ENGINE: BiddingEngineV2Schema (JSON-driven) as of 2026-02-02
+# - Quality Score: 97.3% (Grade A - Production Ready)
+# - Appropriateness: 96.8% | Game Detection: 78.0% | Slam Detection: 25.0%
+# - Architecture: Declarative JSON rules, 500+ rules, 150+ features
 #
-# NOTE: V1 engine has been deprecated and removed (2026-01-05)
+# NOTE: V1 engine deprecated 2026-01-05. V2 State Machine demoted 2026-02-02.
 #
 # Environment variables:
-#   USE_V2_BIDDING_ENGINE=true (NEW DEFAULT) - Use V2 state machine (PRODUCTION)
-#   USE_V2_SCHEMA_ENGINE=true                - Use V2 Schema (JSON-driven) instead
+#   USE_V2_SCHEMA_ENGINE=true (DEFAULT)      - Use V2 Schema (PRODUCTION)
+#   USE_V2_BIDDING_ENGINE=true               - Use V2 state machine (legacy)
 #   BIDDING_ENGINE_COMPARISON_MODE=true      - Run both V2 engines and log discrepancies
 # =============================================================================
 
-USE_V2_ENGINE = os.getenv('USE_V2_BIDDING_ENGINE', 'true').lower() == 'true'  # NEW DEFAULT
-USE_V2_SCHEMA = os.getenv('USE_V2_SCHEMA_ENGINE', 'false').lower() == 'true'
+USE_V2_ENGINE = os.getenv('USE_V2_BIDDING_ENGINE', 'false').lower() == 'true'  # Legacy
+USE_V2_SCHEMA = os.getenv('USE_V2_SCHEMA_ENGINE', 'true').lower() == 'true'  # PRODUCTION DEFAULT
 COMPARISON_MODE = os.getenv('BIDDING_ENGINE_COMPARISON_MODE', 'false').lower() == 'true'
 
-# V2 state machine engine (PRODUCTION DEFAULT as of 2026-01-27)
-engine_v2 = None
-if USE_V2_ENGINE or COMPARISON_MODE:
-    try:
-        from engine.bidding_engine_v2 import BiddingEngineV2
-        engine_v2 = BiddingEngineV2(comparison_mode=COMPARISON_MODE)
-        print(f"✅ BiddingEngineV2 initialized (comparison_mode={COMPARISON_MODE})")
-        print("   Quality: 95.6% | Performance: 4000+ hands/sec | Status: Production")
-    except Exception as e:
-        print(f"⚠️  Failed to initialize BiddingEngineV2: {e}")
-        USE_V2_ENGINE = False
-
-# V2 Schema engine (JSON-driven alternative)
+# V2 Schema engine (JSON-driven) — PRODUCTION DEFAULT as of 2026-02-02
 engine_v2_schema = None
 if USE_V2_SCHEMA or COMPARISON_MODE:
     try:
         from engine.v2 import BiddingEngineV2Schema
         engine_v2_schema = BiddingEngineV2Schema(use_v1_fallback=False)
         print("✅ BiddingEngineV2Schema initialized (V2-only, no V1 fallback)")
+        print("   Quality: 97.3% | Game: 78.0% | Slam: 25.0% | Status: Production")
     except Exception as e:
         print(f"⚠️  Failed to initialize BiddingEngineV2Schema: {e}")
         if USE_V2_SCHEMA:
             USE_V2_SCHEMA = False
 
-# Select active engine (priority: V2 state machine > V2 Schema)
-# PRODUCTION DEFAULT: BiddingEngineV2 (state machine) as of 2026-01-27
-if USE_V2_ENGINE and engine_v2:
-    engine = engine_v2
-    print("🔷 Using BiddingEngineV2 (state machine) [PRODUCTION]")
-elif USE_V2_SCHEMA and engine_v2_schema:
+# V2 state machine engine (legacy fallback)
+engine_v2 = None
+if USE_V2_ENGINE or COMPARISON_MODE:
+    try:
+        from engine.bidding_engine_v2 import BiddingEngineV2
+        engine_v2 = BiddingEngineV2(comparison_mode=COMPARISON_MODE)
+        print(f"✅ BiddingEngineV2 initialized (comparison_mode={COMPARISON_MODE})")
+        print("   Status: Legacy fallback")
+    except Exception as e:
+        print(f"⚠️  Failed to initialize BiddingEngineV2: {e}")
+        USE_V2_ENGINE = False
+
+# Select active engine (priority: V2 Schema > V2 state machine)
+# PRODUCTION DEFAULT: BiddingEngineV2Schema (JSON-driven) as of 2026-02-02
+if USE_V2_SCHEMA and engine_v2_schema:
     engine = engine_v2_schema
-    print("🔷 Using BiddingEngineV2Schema (JSON-driven)")
-elif engine_v2:
-    # Fallback to V2 state machine even if not explicitly requested
+    print("🔷 Using BiddingEngineV2Schema (JSON-driven) [PRODUCTION]")
+elif USE_V2_ENGINE and engine_v2:
     engine = engine_v2
-    print("🔷 Using BiddingEngineV2 (state machine) [fallback]")
+    print("🔷 Using BiddingEngineV2 (state machine) [legacy]")
 elif engine_v2_schema:
-    # Final fallback to V2 Schema
+    # Fallback to V2 Schema even if not explicitly requested
     engine = engine_v2_schema
     print("🔷 Using BiddingEngineV2Schema (fallback)")
+elif engine_v2:
+    # Final fallback to V2 state machine
+    engine = engine_v2
+    print("🔷 Using BiddingEngineV2 (state machine) [fallback]")
 else:
     raise RuntimeError("❌ No bidding engine available. Both V2 engines failed to initialize.")
 
@@ -890,8 +891,11 @@ def perform_new_deal(state):
     state.original_deal = None
     state.auction_history = []
 
-    # CRITICAL: Reset V2 engine state for new deal
-    if engine_v2_schema:
+    # CRITICAL: Reset engine state for new deal
+    if hasattr(engine, 'new_deal'):
+        engine.new_deal()
+    # Also reset V2 Schema if it exists but isn't the active engine (comparison mode)
+    if engine_v2_schema and engine_v2_schema is not engine and hasattr(engine_v2_schema, 'new_deal'):
         engine_v2_schema.new_deal()
 
     # Determine dealer and vulnerability
@@ -1658,13 +1662,13 @@ def get_next_bid():
         if not player_hand:
             return jsonify({'error': "Deal has not been made yet."}), 400
 
-        # Select engine: V2 Schema if dev mode requests it and it's available
+        # Select engine: use V2 Schema override if explicitly requested (legacy dev flag)
         active_engine = engine
-        engine_used = "V1"
-        if use_v2_schema and engine_v2_schema:
+        engine_used = "V2 Schema" if engine is engine_v2_schema else "V2 State Machine"
+        if use_v2_schema and engine_v2_schema and engine is not engine_v2_schema:
             active_engine = engine_v2_schema
-            engine_used = "V2 Schema"
-            print(f"🔷 Dev mode: Using V2 Schema engine for this request")
+            engine_used = "V2 Schema (override)"
+            print(f"🔷 Override: Using V2 Schema engine for this request")
 
         bid, explanation = active_engine.get_next_bid(player_hand, auction_history, current_player,
                                                 state.vulnerability, explanation_level, dealer=dealer)
@@ -1950,10 +1954,12 @@ def evaluate_bid():
                         'hand': [{'suit': c.suit, 'rank': c.rank} for c in hand.cards]
                     }
 
-        # Select engine and evaluation method based on dev mode flag
-        if use_v2_schema and engine_v2_schema:
+        # Select engine and evaluation method
+        # Use V2 Schema path when it's the active engine OR when explicitly requested
+        use_v2_evaluation = (engine is engine_v2_schema) or (use_v2_schema and engine_v2_schema)
+        if use_v2_evaluation and engine_v2_schema:
             # V2 Schema: Use unified evaluation (same rules for AI and feedback)
-            print(f"🔷 Dev mode: Using V2 Schema unified evaluation for evaluate-bid")
+            print(f"🔷 Using V2 Schema unified evaluation for evaluate-bid")
 
             v2_feedback = engine_v2_schema.evaluate_user_bid(
                 hand=user_hand,
@@ -3356,12 +3362,17 @@ def play_card():
                 feedback_gen = get_play_feedback_generator(use_dds=PLATFORM_ALLOWS_DDS)
                 # Get hand_number from game session (1-indexed for display)
                 hand_number = state.game_session.hands_completed + 1 if state.game_session else None
+                feedback_session_id = data.get('session_id')
+                # Ensure session_id is stored as string for consistent DB lookups
+                if feedback_session_id is not None:
+                    feedback_session_id = str(feedback_session_id)
+                print(f"[PLAY-FEEDBACK] user_id={user_id}, session_id={feedback_session_id}, hand_number={hand_number}, game_session={'YES' if state.game_session else 'NO'}, position={position}")
                 play_feedback = feedback_gen.evaluate_and_store(
                     user_id=user_id,
                     play_state=state.play_state,
                     user_card=card,
                     position=position,
-                    session_id=data.get('session_id'),
+                    session_id=feedback_session_id,
                     hand_number=hand_number
                 )
             except Exception as feedback_err:
