@@ -121,51 +121,31 @@ const DecayChart = ({
 
   // Ascending potential: "how many tricks should NS have won by now?"
   //
-  // Uses: cum[i] + errors_through_i
-  //   cum = tricks NS actually won
-  //   errors = tricks NS should have won but lost (from DDS error markers)
+  // Formula: dd_optimal_ns - curve[i]
   //
-  // This avoids the double-counting bug of the old formula (dd_optimal - curve + cum),
-  // which jumped by 2 per trick instead of 1 because both -curve and +cum change
-  // when NS wins a trick.
+  // The DDS curve starts at dd_optimal_ns and drops as tricks are consumed.
+  // So dd_optimal - curve = "NS tricks that should have been won by position i".
+  // This naturally reaches dd_optimal_ns at the end (since curve ends at 0).
   //
   // Behavior:
-  // - Starts at 0 (no tricks played yet)
-  // - When NS wins a trick: goes up by 1 (cum +1), bar also +1 → no gap change
-  // - When NS error (should win but doesn't): goes up by 1 (error +1), bar flat → gap widens
-  // - When EW wins expected trick: stays flat (no cum change, no error) → no gap change
-  // - Capped at trick number (can't exceed tricks played) and dd_optimal_ns
+  // - Starts at 0 (curve starts at dd_optimal, so dd_optimal - dd_optimal = 0)
+  // - Goes up by 1 when NS wins or should have won a trick (curve drops by 1)
+  // - Stays flat when EW wins an expected trick (curve stays flat)
+  // - Reaches dd_optimal_ns at the end (curve reaches 0)
+  // - Capped at trick number (can't win more tricks than have been played)
   const ascendingPotential = useMemo(() => {
-    const len = ns_tricks_cumulative.length || curve.length;
-    if (len === 0) return [];
-
-    // Pre-sort NS errors by card index for efficient counting
-    const nsErrors = major_errors
-      .filter(e => e.error_type === 'ns_error')
-      .map(e => e.card_index)
-      .sort((a, b) => a - b);
+    if (curve.length === 0) return [];
 
     const result = [];
-    let errorCount = 0;
-    let errorIdx = 0;
-
-    for (let i = 0; i < len; i++) {
-      // Count errors up to and including this position
-      while (errorIdx < nsErrors.length && nsErrors[errorIdx] <= i) {
-        errorCount++;
-        errorIdx++;
-      }
-
-      const cum = ns_tricks_cumulative[i] ?? 0;
+    for (let i = 0; i < curve.length; i++) {
       const tricksCompleted = Math.floor((i + 1) / 4);
-
-      // Ascending = tricks won + tricks lost to errors
-      // Capped at: trick number (can't win more than played) and dd_optimal
-      result.push(Math.min(tricksCompleted, dd_optimal_ns, cum + errorCount));
+      // dd_optimal - curve[i] = tricks NS should have consumed by now
+      // Cap at tricks completed (physical limit) and dd_optimal (logical limit)
+      result.push(Math.min(tricksCompleted, dd_optimal_ns, dd_optimal_ns - curve[i]));
     }
 
     return result;
-  }, [ns_tricks_cumulative, curve.length, major_errors, dd_optimal_ns]);
+  }, [curve, dd_optimal_ns]);
 
   // Generate step path for the ascending potential line
   // Steps only at trick boundaries (every 4 cards), not mid-trick.
@@ -312,6 +292,7 @@ const DecayChart = ({
       <svg
         width={width}
         height={height}
+        viewBox={`0 0 ${width} ${height}`}
         className="decay-chart"
         onClick={handleChartClick}
         style={{ cursor: onPositionChange ? 'crosshair' : 'default' }}
@@ -348,33 +329,43 @@ const DecayChart = ({
           />
         ))}
 
-        {/* Locked-in tricks bars (from bottom) with count labels just above bar tops */}
+        {/* Locked-in tricks bars (from bottom) */}
         {trickBars.map((bar, idx) => {
           const barTop = getY(bar.height);
           const barHeight = getY(0) - barTop;
-          // Only show label when height changes from previous bar
-          const prevHeight = idx > 0 ? trickBars[idx - 1].height : 0;
-          const showLabel = bar.height > prevHeight;
-
           return (
-            <g key={`bar-${idx}`}>
-              <rect
-                x={bar.startX}
-                y={barTop}
-                width={bar.endX - bar.startX - 1}
-                height={barHeight}
-                className="locked-tricks-bar"
-              />
-              {showLabel && (
-                <text
-                  x={(bar.startX + bar.endX) / 2}
-                  y={barTop - 2}
-                  className="bar-label"
-                >
-                  {bar.height}
-                </text>
-              )}
-            </g>
+            <rect
+              key={`bar-${idx}`}
+              x={bar.startX}
+              y={barTop}
+              width={bar.endX - bar.startX - 1}
+              height={barHeight}
+              className="locked-tricks-bar"
+            />
+          );
+        })}
+
+        {/* Bar labels rendered separately - positioned just above bar tops */}
+        {trickBars.map((bar, idx) => {
+          const prevHeight = idx > 0 ? trickBars[idx - 1].height : 0;
+          if (bar.height <= prevHeight) return null;
+          const barTop = getY(bar.height);
+          return (
+            <text
+              key={`barlabel-${idx}`}
+              x={(bar.startX + bar.endX) / 2}
+              y={barTop - 4}
+              style={{
+                fontSize: '10px',
+                fontWeight: 600,
+                fill: '#2563eb',
+                textAnchor: 'middle',
+                dominantBaseline: 'auto',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+              }}
+            >
+              {bar.height}
+            </text>
           );
         })}
 

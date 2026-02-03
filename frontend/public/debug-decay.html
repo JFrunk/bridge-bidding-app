@@ -373,19 +373,14 @@
       }
       const requiredLabel = nsIsDeclarer ? 'Need' : 'To Set';
 
-      // Ascending potential: cum + error_count (tricks won + tricks lost to errors)
-      // Capped at trick number and ddOptimal. Gap vs bars = tricks lost.
-      const nsErrors = majorErrors
-        .filter(e => e.error_type === 'ns_error')
-        .map(e => e.card_index)
-        .sort((a, b) => a - b);
+      // Ascending potential: dd_optimal - curve[i]
+      // curve starts at dd_optimal and drops as tricks are consumed,
+      // so dd_optimal - curve = tricks NS should have won by now.
+      // Naturally reaches dd_optimal at end (curve ends at 0).
       const ascending = [];
-      let errCount = 0, errIdx = 0;
       for (let i = 0; i < curve.length; i++) {
-        while (errIdx < nsErrors.length && nsErrors[errIdx] <= i) { errCount++; errIdx++; }
-        const cum = nsTricksCum[i] ?? 0;
         const tricksCompleted = Math.floor((i + 1) / 4);
-        ascending.push(Math.min(tricksCompleted, ddOptimal, cum + errCount));
+        ascending.push(Math.min(tricksCompleted, ddOptimal, ddOptimal - curve[i]));
       }
 
       // Step path for ascending potential - steps only at trick boundaries
@@ -432,16 +427,20 @@
         svg += `<line x1="${getX(b)}" y1="${pad.top}" x2="${getX(b)}" y2="${H-pad.bottom}" class="trick-boundary"/>`;
       }
 
-      // Bars - only show label when height changes from previous bar
+      // Bars
       for (let bi = 0; bi < bars.length; bi++) {
         const bar = bars[bi];
         const barTop = getY(bar.h);
         const barH = getY(0) - barTop;
-        const prevH = bi > 0 ? bars[bi - 1].h : 0;
-        const showLabel = bar.h > prevH;
         svg += `<rect x="${bar.sx}" y="${barTop}" width="${bar.ex - bar.sx - 1}" height="${barH}" class="locked-tricks-bar"/>`;
-        if (showLabel) {
-          svg += `<text x="${(bar.sx + bar.ex)/2}" y="${barTop - 2}" class="bar-label">${bar.h}</text>`;
+      }
+      // Bar labels rendered separately - positioned just above bar tops
+      for (let bi = 0; bi < bars.length; bi++) {
+        const bar = bars[bi];
+        const prevH = bi > 0 ? bars[bi - 1].h : 0;
+        if (bar.h > prevH) {
+          const barTop = getY(bar.h);
+          svg += `<text x="${(bar.sx + bar.ex)/2}" y="${barTop - 4}" style="font-size:10px;font-weight:600;fill:#2563eb;text-anchor:middle;dominant-baseline:auto;font-family:system-ui,-apple-system,sans-serif">${bar.h}</text>`;
         }
       }
 
