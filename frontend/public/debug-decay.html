@@ -434,13 +434,14 @@
         const barH = getY(0) - barTop;
         svg += `<rect x="${bar.sx}" y="${barTop}" width="${bar.ex - bar.sx - 1}" height="${barH}" class="locked-tricks-bar"/>`;
       }
-      // Bar labels rendered separately - positioned just above bar tops
+      // Bar labels - positioned just above bar tops using transform
       for (let bi = 0; bi < bars.length; bi++) {
         const bar = bars[bi];
         const prevH = bi > 0 ? bars[bi - 1].h : 0;
         if (bar.h > prevH) {
-          const barTop = getY(bar.h);
-          svg += `<text x="${(bar.sx + bar.ex)/2}" y="${barTop - 4}" style="font-size:10px;font-weight:600;fill:#2563eb;text-anchor:middle;dominant-baseline:auto;font-family:system-ui,-apple-system,sans-serif">${bar.h}</text>`;
+          const labelX = (bar.sx + bar.ex) / 2;
+          const labelY = getY(bar.h) - 4;
+          svg += `<text transform="translate(${labelX},${labelY})" text-anchor="middle" font-size="10" font-weight="600" fill="#2563eb">${bar.h}</text>`;
         }
       }
 

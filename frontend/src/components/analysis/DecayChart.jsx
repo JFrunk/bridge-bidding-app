@@ -345,24 +345,20 @@ const DecayChart = ({
           );
         })}
 
-        {/* Bar labels rendered separately - positioned just above bar tops */}
+        {/* Bar labels - positioned just above bar tops using transform */}
         {trickBars.map((bar, idx) => {
           const prevHeight = idx > 0 ? trickBars[idx - 1].height : 0;
           if (bar.height <= prevHeight) return null;
-          const barTop = getY(bar.height);
+          const labelX = (bar.startX + bar.endX) / 2;
+          const labelY = getY(bar.height) - 4;
           return (
             <text
               key={`barlabel-${idx}`}
-              x={(bar.startX + bar.endX) / 2}
-              y={barTop - 4}
-              style={{
-                fontSize: '10px',
-                fontWeight: 600,
-                fill: '#2563eb',
-                textAnchor: 'middle',
-                dominantBaseline: 'auto',
-                fontFamily: 'system-ui, -apple-system, sans-serif',
-              }}
+              transform={`translate(${labelX},${labelY})`}
+              textAnchor="middle"
+              fontSize="10"
+              fontWeight="600"
+              fill="#2563eb"
             >
               {bar.height}
             </text>
