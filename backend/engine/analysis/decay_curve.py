@@ -457,7 +457,7 @@ class DecayCurveGenerator:
             position = play['position']
             trick_number = (i // 4) + 1
 
-            if delta < -self.ERROR_THRESHOLD:
+            if delta <= -self.ERROR_THRESHOLD:
                 # Potential dropped - determine whose error
                 if position in declarer_side:
                     error_type = 'declarer_error'
@@ -513,7 +513,7 @@ class DecayCurveGenerator:
             position = play['position']
             trick_number = (i // 4) + 1
 
-            if delta < -self.ERROR_THRESHOLD:
+            if delta <= -self.ERROR_THRESHOLD:
                 # NS potential dropped - NS made an error
                 # (regardless of who played the card)
                 errors.append(MajorError(
