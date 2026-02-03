@@ -161,7 +161,8 @@ class SchemaInterpreter:
                     self.auction_state.forcing_level = ForcingLevel.NON_FORCING
                     self.auction_state.forcing_source = None
 
-    def validate_bid_against_forcing(self, bid: str) -> BidValidationResult:
+    def validate_bid_against_forcing(self, bid: str, last_contract_level: int = 0,
+                                      last_contract_suit: str = '') -> BidValidationResult:
         """
         Validate a bid against the current forcing state.
 
@@ -170,11 +171,25 @@ class SchemaInterpreter:
 
         Args:
             bid: The bid to validate
+            last_contract_level: Current highest bid level in auction (0-7)
+            last_contract_suit: Suit of the last contract bid (for game-level check)
 
         Returns:
             BidValidationResult indicating if the bid is legal
         """
         if bid != "Pass":
+            return BidValidationResult(is_valid=True)
+
+        # Check if game level has been reached — GF is satisfied
+        # Game = 3NT, 4♥, 4♠, 5♣, 5♦, or any level 6+
+        game_reached = (
+            last_contract_level >= 6 or
+            last_contract_level >= 5 or  # 5-level of any suit is game for minors
+            (last_contract_level == 4 and last_contract_suit in ('♥', '♠', 'NT')) or
+            (last_contract_level == 3 and last_contract_suit == 'NT')
+        )
+        if game_reached:
+            # Game force is satisfied — pass is legal
             return BidValidationResult(is_valid=True)
 
         # Check Game Force violation
