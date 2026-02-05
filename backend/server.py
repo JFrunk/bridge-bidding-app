@@ -2032,6 +2032,7 @@ def evaluate_bid():
                 print(f"⚠️ Skipping feedback storage for anonymous user (feedback still returned)")
 
             optimal_explanation_str = v2_feedback.optimal_explanation
+            optimal_bid = v2_feedback.optimal_bid  # Set for response building below
 
             # Add differential analysis for enhanced feedback
             try:
