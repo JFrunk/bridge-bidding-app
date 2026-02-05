@@ -8,24 +8,12 @@
       "id": "open_2c_strong",
       "bid": "2\u2663",
       "priority": 100,
-      "description": "Strong artificial forcing opening",
+      "description": "Strong artificial forcing opening (22+ HCP)",
       "conditions": {
         "is_opening": true,
         "hcp": {
           "min": 22
-        },
-        "OR": [
-          {
-            "quick_tricks": {
-              "min": 4
-            }
-          },
-          {
-            "hcp": {
-              "min": 24
-            }
-          }
-        ]
+        }
       },
       "forcing": "game",
       "explanation": "Strong artificial 2\u2663 opening showing {hcp} HCP",
