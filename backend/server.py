@@ -1900,6 +1900,17 @@ def evaluate_bid():
         # Optional parameters
         user_id = data.get('user_id')
         session_id = data.get('session_id')
+
+        # Generate anonymous user_id for guests without an ID
+        # Uses negative IDs (consistent with guest user pattern) based on session hash
+        if user_id is None:
+            if session_id:
+                # Hash the session_id to create a consistent negative ID for this session
+                user_id = -abs(hash(session_id)) % (10**9)  # Negative, bounded to avoid overflow
+            else:
+                # Fallback anonymous ID for completely anonymous users
+                user_id = -1
+
         feedback_level = data.get('feedback_level', 'intermediate')  # beginner, intermediate, expert
         use_v2_schema = data.get('use_v2_schema', False)  # Dev mode flag for V2 Schema testing
         # When True, record the bid in session auction state.
