@@ -10,23 +10,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './LearningDashboard.css';
 import { getDashboardData } from '../../services/analyticsService';
 import FourDimensionProgress from './FourDimensionProgress';
-import HandReviewModal from './HandReviewModal';
-import BidReviewModal from './BidReviewModal';
+
 import ACBLImportModal from './ACBLImportModal';
 
-const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
+const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay, onReviewHand }) => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedHandId, setSelectedHandId] = useState(null);
-  const [reviewType, setReviewType] = useState(null); // 'play' or 'bidding'
-  const [showReviewModal, setShowReviewModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  // Track hand list for prev/next navigation in modals
-  const [handListForNav, setHandListForNav] = useState([]);
-  const [currentHandIndex, setCurrentHandIndex] = useState(-1);
 
   const loadDashboardData = useCallback(async () => {
+    if (!userId) return;
     try {
       setLoading(true);
       setError(null);
@@ -43,44 +37,20 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
     loadDashboardData();
   }, [loadDashboardData]);
 
-  // Handle opening hand review modal
+  // Handle opening hand review - delegates to parent App.js
   // Accepts either a hand object with id property, or just the hand ID directly
   // Second parameter specifies type: 'play' (default) or 'bidding'
   // Third parameter is optional hand list for prev/next navigation
   const handleOpenReview = (handOrId, type = 'play', handList = []) => {
     const handId = typeof handOrId === 'object' ? handOrId.id : handOrId;
-    if (handId) {
-      setSelectedHandId(handId);
-      setReviewType(type);
-      setShowReviewModal(true);
-      // Store hand list for navigation
-      if (handList.length > 0) {
-        setHandListForNav(handList);
-        const idx = handList.findIndex(h => (h.id || h.hand_id) === handId);
-        setCurrentHandIndex(idx >= 0 ? idx : 0);
-      }
+    if (handId && onReviewHand) {
+      // Pass hand ID, type, and navigation data to parent
+      onReviewHand(handId, type, handList);
     }
   };
 
-  // Navigate to previous/next hand in the list
-  const handleNavigateHand = (direction) => {
-    if (handListForNav.length === 0) return;
-    const newIndex = currentHandIndex + direction;
-    if (newIndex >= 0 && newIndex < handListForNav.length) {
-      setCurrentHandIndex(newIndex);
-      const hand = handListForNav[newIndex];
-      setSelectedHandId(hand.id || hand.hand_id);
-    }
-  };
 
-  // Handle closing hand review modal
-  const handleCloseReview = () => {
-    setShowReviewModal(false);
-    setSelectedHandId(null);
-    setReviewType(null);
-    setHandListForNav([]);
-    setCurrentHandIndex(-1);
-  };
+
 
   if (loading) {
     return (
@@ -135,16 +105,6 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
         </div>
       </div>
 
-      {/* Five-Bar Progress Section */}
-      <div className="four-dimension-section">
-        <FourDimensionProgress
-          userId={userId}
-          onStartLearning={onStartLearning}
-          onStartPractice={onStartFreeplay}
-          onReviewHand={handleOpenReview}
-        />
-      </div>
-
       {/* Welcome message for new players - shown when no data exists */}
       {!hasAnyData && (
         <div className="empty-dashboard-state" data-testid="dashboard-empty-state">
@@ -164,31 +124,17 @@ const LearningDashboard = ({ userId, onStartLearning, onStartFreeplay }) => {
         </div>
       )}
 
-      {/* Hand Review Modal - Play-by-play analysis */}
-      {showReviewModal && selectedHandId && reviewType === 'play' && (
-        <HandReviewModal
-          handId={selectedHandId}
-          onClose={handleCloseReview}
-          // Navigation props
-          onPrevHand={currentHandIndex > 0 ? () => handleNavigateHand(-1) : null}
-          onNextHand={currentHandIndex < handListForNav.length - 1 ? () => handleNavigateHand(1) : null}
-          currentIndex={currentHandIndex}
-          totalHands={handListForNav.length}
+      {/* Five-Bar Progress Section */}
+      <div className="four-dimension-section">
+        <FourDimensionProgress
+          userId={userId}
+          onStartLearning={onStartLearning}
+          onStartPractice={onStartFreeplay}
+          onReviewHand={handleOpenReview}
         />
-      )}
+      </div>
 
-      {/* Bid Review Modal - Bid-by-bid analysis */}
-      {showReviewModal && selectedHandId && reviewType === 'bidding' && (
-        <BidReviewModal
-          handId={selectedHandId}
-          onClose={handleCloseReview}
-          // Navigation props
-          onPrevHand={currentHandIndex > 0 ? () => handleNavigateHand(-1) : null}
-          onNextHand={currentHandIndex < handListForNav.length - 1 ? () => handleNavigateHand(1) : null}
-          currentIndex={currentHandIndex}
-          totalHands={handListForNav.length}
-        />
-      )}
+
 
       {/* ACBL Import Modal - Import PBN/BWS tournament files */}
       {showImportModal && (

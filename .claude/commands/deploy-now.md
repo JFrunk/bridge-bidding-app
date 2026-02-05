@@ -1,3 +1,11 @@
+---
+description: Quick deploy to Oracle Cloud production
+---
+
+---
+description: Quick deploy to Oracle Cloud production
+---
+
 Quick deploy to Oracle Cloud production:
 
 **Prerequisites verified:** SSH config exists at ~/.ssh/config with alias `oracle-bridge` → 161.153.7.196

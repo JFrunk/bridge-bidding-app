@@ -1,3 +1,11 @@
+---
+description: Deploy current development branch to production
+---
+
+---
+description: Deploy current development branch to production (main)
+---
+
 Deploy current development branch to production (main):
 
 ⚠️  **CRITICAL: This deploys to live production on Oracle Cloud**

@@ -1,0 +1,368 @@
+/* HandReviewPage - Full-screen play-by-play analysis page */
+/* Replaces modal with dedicated page for better mobile and desktop UX */
+
+/* =====================================================
+   PAGE LAYOUT - Full viewport
+   ===================================================== */
+
+.hand-review-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+/* =====================================================
+   PAGE HEADER - Back button and title
+   ===================================================== */
+
+.hand-review-page .page-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.hand-review-page .page-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.hand-review-page .back-button {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hand-review-page .back-button:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.hand-review-page .back-button:active {
+  transform: scale(0.98);
+}
+
+.hand-review-page .page-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.hand-review-page .page-title h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Hand navigation in header */
+.hand-review-page .hand-navigation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.hand-review-page .hand-nav-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hand-review-page .hand-nav-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.hand-review-page .hand-nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hand-review-page .hand-nav-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 60px;
+}
+
+.hand-review-page .hand-nav-label {
+  font-size: 10px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hand-review-page .hand-nav-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* =====================================================
+   CONTRACT INFO BAR - Compact info strip
+   ===================================================== */
+
+.hand-review-page .contract-info-bar {
+  padding: 12px 24px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.hand-review-page .contract-info-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.hand-review-page .contract {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.hand-review-page .result {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.hand-review-page .result.made {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.hand-review-page .result.down {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.hand-review-page .role-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: #e2e8f0;
+  color: #64748b;
+}
+
+.hand-review-page .dd-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.hand-review-page .score-badge {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.hand-review-page .score-badge.positive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.hand-review-page .score-badge.negative {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.hand-review-page .accuracy-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.hand-review-page .accuracy-badge.bidding {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* =====================================================
+   PAGE CONTENT - Scrollable area
+   ===================================================== */
+
+.hand-review-page .page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Import all the existing styles from HandReviewModal.css for content */
+/* Replay table, hands, tricks, feedback panels, etc. */
+/* These use the same class names so they'll be styled correctly */
+
+/* Content inner wrapper - aligns all content to 700px column */
+.hand-review-page .page-content-inner {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Improve spacing for full-screen layout */
+.hand-review-page .replay-navigation {
+  margin-bottom: 24px;
+}
+
+.hand-review-page .trick-feedback-container {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+/* Loading and error states */
+.hand-review-page .loading-state,
+.hand-review-page .error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.hand-review-page .error-state button {
+  margin-top: 16px;
+  padding: 10px 24px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.hand-review-page .error-state button:hover {
+  background: #2563eb;
+}
+
+/* =====================================================
+   MOBILE RESPONSIVE - < 768px
+   ===================================================== */
+
+@media (max-width: 768px) {
+  .hand-review-page .page-header {
+    padding: 12px 16px;
+  }
+
+  .hand-review-page .page-header-inner {
+    flex-wrap: wrap;
+  }
+
+  .hand-review-page .page-title h1 {
+    font-size: 18px;
+  }
+
+  .hand-review-page .back-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .hand-review-page .contract-info-bar {
+    padding: 10px 16px;
+    gap: 8px;
+  }
+
+  .hand-review-page .contract {
+    font-size: 15px;
+  }
+
+  .hand-review-page .page-content {
+    padding: 16px;
+  }
+
+  /* Stack hand navigation vertically on mobile */
+  .hand-review-page .hand-navigation {
+    width: 100%;
+    justify-content: space-between;
+    order: 3;
+    margin-top: 8px;
+    margin-left: 0;
+  }
+
+  .hand-review-page .page-title {
+    order: 2;
+  }
+
+  .hand-review-page .back-button {
+    order: 1;
+  }
+}
+
+/* =====================================================
+   MOBILE SMALL - < 480px
+   ===================================================== */
+
+@media (max-width: 480px) {
+  .hand-review-page .page-header {
+    padding: 10px 12px;
+  }
+
+  .hand-review-page .page-title h1 {
+    font-size: 16px;
+  }
+
+  .hand-review-page .contract-info-bar {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .hand-review-page .page-content {
+    padding: 12px;
+  }
+
+  /* Make badges smaller on small mobile */
+  .hand-review-page .role-badge,
+  .hand-review-page .dd-badge,
+  .hand-review-page .accuracy-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .hand-review-page .result {
+    font-size: 12px;
+    padding: 3px 8px;
+  }
+}

@@ -275,15 +275,16 @@ class TestGovernorEdgeCases:
     """Test Governor edge cases and boundary conditions."""
 
     def test_exactly_33_hcp_small_slam(self):
-        """Test that exactly 33 combined HCP allows small slam."""
+        """Test that exactly 33 combined HCP allows small slam (6-level)."""
         # This is a boundary test - 33 HCP should allow 6-level
         # We test this by ensuring the Governor's threshold is correct
         from engine.ai.sanity_checker import SanityChecker
 
         checker = SanityChecker()
         # Verify the thresholds in MAX_BID_LEVELS
-        assert checker.MAX_BID_LEVELS[(33, 36)] == 5, "33-36 HCP should allow level 5"
-        assert checker.MAX_BID_LEVELS[(37, 40)] == 6, "37-40 HCP should allow level 6"
+        # 33-36 HCP allows 6-level (small slam), 37+ allows 7-level (grand slam)
+        assert checker.MAX_BID_LEVELS[(33, 36)] == 6, "33-36 HCP should allow level 6 (small slam)"
+        assert checker.MAX_BID_LEVELS[(37, 40)] == 7, "37-40 HCP should allow level 7 (grand slam)"
 
     def test_governor_override_flag(self):
         """Test that Governor cannot be bypassed for slam bids."""

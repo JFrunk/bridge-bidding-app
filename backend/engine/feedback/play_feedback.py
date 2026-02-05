@@ -1290,7 +1290,7 @@ class PlayFeedbackGenerator:
                 feedback.tricks_with_user_card,
                 feedback.tricks_with_optimal,
                 feedback.contract,
-                1 if feedback.is_declarer_side else 0,
+                1 if feedback.is_declarer_side else 0,  # INTEGER column in PostgreSQL
                 feedback.play_category.value,
                 feedback.key_concept,
                 feedback.difficulty,
@@ -1300,7 +1300,7 @@ class PlayFeedbackGenerator:
                 feedback.signal_reason,
                 feedback.signal_heuristic,
                 feedback.signal_context,
-                1 if feedback.is_signal_optimal else 0
+                bool(feedback.is_signal_optimal)
             ))
 
             conn.commit()

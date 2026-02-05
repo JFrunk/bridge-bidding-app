@@ -208,7 +208,7 @@ def test_takeout_double_12hcp():
     # East: 12 HCP, 3-1-5-4 shape (shortness in hearts, support for unbid suits)
     # A=4, Q=2, K=3, Q=2, J=1 = 12 HCP
     east_hand = create_hand("♠AQ8 ♥9 ♦KQ752 ♣J865")
-    auction = ['1♥', 'Pass']  # Opponent opened 1♥
+    auction = ['1♥']  # North (opponent) opened 1♥, East's turn
 
     bid, explanation = engine.get_next_bid(east_hand, auction, 'East', 'None')
 
@@ -218,9 +218,9 @@ def test_takeout_double_11hcp():
     """Test no takeout double with 11 HCP (below minimum)."""
     engine = BiddingEngine()
 
-    # East: 11 HCP, 3-3-4-3 shape
+    # East: 8 HCP (Q+K+K=8), 3-3-4-3 shape — not enough for takeout double (needs 12+)
     east_hand = create_hand("♠Q98 ♥K94 ♦K752 ♣865")
-    auction = ['1♥', 'Pass']
+    auction = ['1♥']  # North (opponent) opened 1♥, East's turn
 
     bid, explanation = engine.get_next_bid(east_hand, auction, 'East', 'None')
 

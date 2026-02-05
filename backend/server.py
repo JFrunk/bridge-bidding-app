@@ -11,9 +11,11 @@ from datetime import datetime
 from typing import Optional
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # Database abstraction layer (supports SQLite locally, PostgreSQL in production)
-from db import get_connection, is_postgres
+from db import get_connection, is_postgres, init_database
 from engine.hand import Hand, Card
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
 from engine.ai.conventions.preempts import PreemptConvention
@@ -26,6 +28,7 @@ from engine.play.ai.simple_ai import SimplePlayAI as SimplePlayAINew
 from engine.play.ai.minimax_ai import MinimaxPlayAI
 from engine.learning.learning_path_api import register_learning_endpoints
 from engine.session_manager import SessionManager, GameSession
+from engine.ai.bidding_state import BiddingStateBuilder
 from engine.bridge_rules_engine import BridgeRulesEngine, GameState as BridgeGameState
 from engine.feedback.play_feedback import get_play_feedback_generator
 from engine.play.dds_analysis import get_dds_service, is_dds_available
@@ -68,19 +71,51 @@ except ImportError:
     PLATFORM_ALLOWS_DDS = False
     print("⚠️  DDS AI not available - install endplay for expert play")
 
+# Initialize database (run migrations)
+print("🔄 Initializing database schema...")
+try:
+    init_database()
+    print("✅ Database initialized successfully")
+except Exception as e:
+    print(f"❌ Database initialization failed: {e}")
+    traceback.print_exc()
+
 app = Flask(__name__)
 
-# CORS configuration - allow all origins with explicit settings
-# This ensures CORS headers are sent even on error responses
+# CORS configuration - restrict origins in production, allow all in development
+CORS_ORIGINS = os.environ.get(
+    'CORS_ORIGINS',
+    'http://localhost:3000'  # Default: local dev only
+).split(',')
+
 CORS(app, resources={
     r"/api/*": {
-        "origins": "*",
+        "origins": CORS_ORIGINS,
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "X-Session-ID", "Authorization"],
+        "allow_headers": ["Content-Type", "X-Session-ID"],
         "expose_headers": ["Content-Type"],
         "supports_credentials": False
     }
 })
+
+# Rate limiter - uses in-memory storage by default, no external dependencies
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[],  # No global limit; apply per-endpoint
+    storage_uri="memory://",
+)
+
+# Security headers on all responses
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    if not app.debug:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
 
 # Global error handler to ensure CORS headers are always sent
 @app.errorhandler(Exception)
@@ -120,58 +155,69 @@ def handle_internal_error(e):
 # =============================================================================
 # BIDDING ENGINE SELECTION
 # =============================================================================
-# V2 Schema: JSON schema-driven (DEFAULT) - uses sayc_defaults.json for fallback
-# V2 State Machine: Alternative state machine implementation
+# V2 Schema (BiddingEngineV2Schema): PRODUCTION DEFAULT - JSON-driven engine
+# V2 State Machine (BiddingEngineV2): Legacy Python-based engine (fallback)
 #
-# NOTE: V1 engine has been deprecated and removed (2026-01-05)
+# PRODUCTION ENGINE: BiddingEngineV2Schema (JSON-driven) as of 2026-02-02
+# - Quality Score: 97.3% (Grade A - Production Ready)
+# - Appropriateness: 96.8% | Game Detection: 78.0% | Slam Detection: 25.0%
+# - Architecture: Declarative JSON rules, 500+ rules, 150+ features
+#
+# NOTE: V1 engine deprecated 2026-01-05. V2 State Machine demoted 2026-02-02.
 #
 # Environment variables:
-#   USE_V2_SCHEMA_ENGINE=true (default) - Use V2 Schema (JSON-driven)
-#   USE_V2_BIDDING_ENGINE=true          - Use V2 state machine instead
-#   BIDDING_ENGINE_COMPARISON_MODE=true - Run both V2 engines and log discrepancies
+#   USE_V2_SCHEMA_ENGINE=true (DEFAULT)      - Use V2 Schema (PRODUCTION)
+#   USE_V2_BIDDING_ENGINE=true               - Use V2 state machine (legacy)
+#   BIDDING_ENGINE_COMPARISON_MODE=true      - Run both V2 engines and log discrepancies
 # =============================================================================
 
-USE_V2_ENGINE = os.getenv('USE_V2_BIDDING_ENGINE', 'false').lower() == 'true'
-USE_V2_SCHEMA = os.getenv('USE_V2_SCHEMA_ENGINE', 'true').lower() == 'true'  # Default: V2 Schema (V2-only)
+USE_V2_ENGINE = os.getenv('USE_V2_BIDDING_ENGINE', 'false').lower() == 'true'  # Legacy
+USE_V2_SCHEMA = os.getenv('USE_V2_SCHEMA_ENGINE', 'true').lower() == 'true'  # PRODUCTION DEFAULT
 COMPARISON_MODE = os.getenv('BIDDING_ENGINE_COMPARISON_MODE', 'false').lower() == 'true'
 
-# V2 Schema engine (JSON-driven, uses sayc_defaults.json for universal fallback)
-# Always initialize for per-request switching via dev mode
+# V2 Schema engine (JSON-driven) — PRODUCTION DEFAULT as of 2026-02-02
 engine_v2_schema = None
-try:
-    from engine.v2 import BiddingEngineV2Schema
-    engine_v2_schema = BiddingEngineV2Schema(use_v1_fallback=False)
-    print("✅ BiddingEngineV2Schema initialized (V2-only, no V1 fallback)")
-except Exception as e:
-    print(f"⚠️  Failed to initialize BiddingEngineV2Schema: {e}")
-    if USE_V2_SCHEMA:
-        USE_V2_SCHEMA = False
+if USE_V2_SCHEMA or COMPARISON_MODE:
+    try:
+        from engine.v2 import BiddingEngineV2Schema
+        engine_v2_schema = BiddingEngineV2Schema(use_v1_fallback=False)
+        print("✅ BiddingEngineV2Schema initialized (V2-only, no V1 fallback)")
+        print("   Quality: 97.3% | Game: 78.0% | Slam: 25.0% | Status: Production")
+    except Exception as e:
+        print(f"⚠️  Failed to initialize BiddingEngineV2Schema: {e}")
+        if USE_V2_SCHEMA:
+            USE_V2_SCHEMA = False
 
-# V2 state machine engine (for comparison mode or explicit enable)
+# V2 state machine engine (legacy fallback)
 engine_v2 = None
 if USE_V2_ENGINE or COMPARISON_MODE:
     try:
         from engine.bidding_engine_v2 import BiddingEngineV2
         engine_v2 = BiddingEngineV2(comparison_mode=COMPARISON_MODE)
         print(f"✅ BiddingEngineV2 initialized (comparison_mode={COMPARISON_MODE})")
+        print("   Status: Legacy fallback")
     except Exception as e:
         print(f"⚠️  Failed to initialize BiddingEngineV2: {e}")
         USE_V2_ENGINE = False
 
 # Select active engine (priority: V2 Schema > V2 state machine)
-# NOTE: V1 engine has been deprecated and removed
+# PRODUCTION DEFAULT: BiddingEngineV2Schema (JSON-driven) as of 2026-02-02
 if USE_V2_SCHEMA and engine_v2_schema:
     engine = engine_v2_schema
-    print("🔷 Using BiddingEngineV2Schema (JSON-driven, V2-only)")
+    print("🔷 Using BiddingEngineV2Schema (JSON-driven) [PRODUCTION]")
 elif USE_V2_ENGINE and engine_v2:
     engine = engine_v2
-    print("🔷 Using BiddingEngineV2 (state machine)")
+    print("🔷 Using BiddingEngineV2 (state machine) [legacy]")
 elif engine_v2_schema:
     # Fallback to V2 Schema even if not explicitly requested
     engine = engine_v2_schema
     print("🔷 Using BiddingEngineV2Schema (fallback)")
+elif engine_v2:
+    # Final fallback to V2 state machine
+    engine = engine_v2
+    print("🔷 Using BiddingEngineV2 (state machine) [fallback]")
 else:
-    raise RuntimeError("❌ No bidding engine available. V2 Schema failed to initialize.")
+    raise RuntimeError("❌ No bidding engine available. Both V2 engines failed to initialize.")
 
 play_engine = PlayEngine()
 play_ai = SimplePlayAI()  # Default AI (backward compatibility)
@@ -179,6 +225,52 @@ session_manager = SessionManager('bridge.db')  # Session management
 
 # Initialize session state manager (replaces global variables)
 state_manager = SessionStateManager()
+
+
+def ensure_bidding_tables():
+    """Ensure bidding_decisions table exists (safe to call repeatedly)."""
+    try:
+        conn = sqlite3.connect('bridge.db')
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS bidding_decisions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hand_analysis_id INTEGER,
+                user_id INTEGER NOT NULL,
+                session_id TEXT,
+                bid_number INTEGER NOT NULL,
+                position TEXT NOT NULL,
+                dealer TEXT,
+                vulnerability TEXT,
+                user_bid TEXT NOT NULL,
+                optimal_bid TEXT NOT NULL,
+                auction_before TEXT,
+                correctness TEXT NOT NULL,
+                score REAL NOT NULL,
+                impact TEXT,
+                error_category TEXT,
+                error_subcategory TEXT,
+                key_concept TEXT,
+                difficulty TEXT,
+                helpful_hint TEXT,
+                reasoning TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_bidding_decisions_user_time
+                ON bidding_decisions(user_id, timestamp DESC)
+        """)
+        conn.commit()
+        conn.close()
+        print("✅ bidding_decisions table ready")
+    except Exception as e:
+        print(f"⚠️ Could not ensure bidding tables: {e}")
+
+
+# Ensure bidding tables exist on import (covers both gunicorn and __main__)
+ensure_bidding_tables()
 app.config['STATE_MANAGER'] = state_manager
 
 # REMOVED: Global state variables are now per-session
@@ -659,6 +751,42 @@ def trigger_post_game_analysis(
 # SESSION STATE HELPER FUNCTION
 # ============================================================================
 
+def _get_user_seat(state):
+    """Get the user's seat abbreviation from session state.
+
+    Uses game_session.player_position if available, defaults to 'S'.
+    Returns a single-char seat ('N', 'E', 'S', 'W').
+    """
+    if state.game_session and getattr(state.game_session, 'player_position', None):
+        pos = state.game_session.player_position
+        # Already abbreviated
+        if pos in ('N', 'E', 'S', 'W'):
+            return pos
+        # Full name → abbreviate
+        return {'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W'}.get(pos, 'S')
+    return 'S'
+
+
+def _get_user_hcp(state):
+    """Get the user's HCP from their dealt hand, or None if unavailable."""
+    seat_to_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
+    seat = _get_user_seat(state)
+    full_name = seat_to_full.get(seat, 'South')
+    hand = state.deal.get(full_name) if state.deal else None
+    return hand.hcp if hand and hasattr(hand, 'hcp') else None
+
+
+def _get_user_suit_lengths(state):
+    """Get the user's suit lengths from their dealt hand, or None if unavailable."""
+    seat_to_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
+    seat = _get_user_seat(state)
+    full_name = seat_to_full.get(seat, 'South')
+    hand = state.deal.get(full_name) if state.deal else None
+    if hand and hasattr(hand, 'suit_lengths'):
+        return hand.suit_lengths
+    return None
+
+
 def get_state():
     """
     Get session state for current request
@@ -683,8 +811,17 @@ def get_state():
     if not session_id:
         # Backward compatibility: use user_id as session identifier
         data = request.get_json(silent=True) or {}
-        user_id = data.get('user_id') or request.args.get('user_id') or 1
-        session_id = f"user_{user_id}_default"
+        user_id = (
+            data.get('user_id') or
+            request.args.get('user_id') or
+            request.headers.get('X-User-ID')
+        )
+        if not user_id:
+            # No user identification at all - use a fallback session
+            # that won't contaminate real user data
+            session_id = "anonymous_fallback"
+        else:
+            session_id = f"user_{user_id}_default"
 
     # Get or create session state
     state = state_manager.get_or_create(session_id)
@@ -693,9 +830,14 @@ def get_state():
     # This ensures gameplay tracking persists across requests
     # BUG FIX: Only load if user_id is EXPLICITLY provided to prevent cross-user contamination
     if not state.game_session:
-        # Extract user_id from request - DO NOT default to 1
+        # Extract user_id from request - check body, query params, AND headers
+        # Headers are used by frontend's getSessionHeaders() for all requests
         data = request.get_json(silent=True) or {}
-        user_id = data.get('user_id') or request.args.get('user_id')
+        user_id = (
+            data.get('user_id') or
+            request.args.get('user_id') or
+            request.headers.get('X-User-ID')  # Frontend sends this in all requests
+        )
 
         # Only load session if user_id was explicitly provided
         # This prevents loading user 1's session for other users when user_id is missing
@@ -738,6 +880,52 @@ except ImportError:
 # SESSION MANAGEMENT ENDPOINTS
 # ============================================================================
 
+def perform_new_deal(state):
+    """
+    Generate a new deal for the current state.
+    Handles dealer/vulnerability rotation based on session status.
+    """
+    # CRITICAL: Clear stale play state from previous hand (BUG-C004 fix)
+    # Without this, get-all-hands reads from old play_state instead of fresh deal
+    state.play_state = None
+    state.original_deal = None
+    state.auction_history = []
+
+    # CRITICAL: Reset engine state for new deal
+    if hasattr(engine, 'new_deal'):
+        engine.new_deal()
+    # Also reset V2 Schema if it exists but isn't the active engine (comparison mode)
+    if engine_v2_schema and engine_v2_schema is not engine and hasattr(engine_v2_schema, 'new_deal'):
+        engine_v2_schema.new_deal()
+
+    # Determine dealer and vulnerability
+    if state.game_session:
+        # Session mode: use session rules
+        dealer = state.game_session.get_current_dealer()
+        state.vulnerability = state.game_session.get_current_vulnerability()
+    else:
+        # Non-session mode: rotate vulnerability manually
+        vulnerabilities = ["None", "NS", "EW", "Both"]
+        try:
+            current_idx = vulnerabilities.index(state.vulnerability)
+            state.vulnerability = vulnerabilities[(current_idx + 1) % len(vulnerabilities)]
+        except ValueError:
+            state.vulnerability = "None"
+        dealer = 'North'  # Default for non-session mode
+
+    # Create and shuffle deck
+    ranks = '23456789TJQKA'
+    suits = ['♠', '♥', '♦', '♣']
+    deck = [Card(rank, suit) for rank in ranks for suit in suits]
+    random.shuffle(deck)
+
+    print(f"🃏 Dealt new hand. Dealer: {dealer}, Vul: {state.vulnerability}")
+
+    state.deal['North'] = Hand(deck[0:13])
+    state.deal['East'] = Hand(deck[13:26])
+    state.deal['South'] = Hand(deck[26:39])
+    state.deal['West'] = Hand(deck[39:52])
+
 @app.route('/api/session/start', methods=['POST'])
 def start_session():
     """
@@ -756,10 +944,22 @@ def start_session():
     state = get_state()
 
     data = request.get_json() or {}
-    user_id = data.get('user_id', 1)
+    user_id = (
+        data.get('user_id')
+        or request.headers.get('X-User-ID')
+    )
     session_type = data.get('session_type', 'chicago')
     player_position = data.get('player_position', 'S')
     ai_difficulty = data.get('ai_difficulty', DEFAULT_AI_DIFFICULTY)  # Uses smart default from session_state
+
+    if not user_id:
+        return jsonify({'error': 'user_id is required (body or X-User-ID header)'}), 400
+
+    # Normalize to int (X-User-ID header is a string)
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': f'Invalid user_id: {user_id}'}), 400
 
     try:
         # Check for existing active session
@@ -770,7 +970,15 @@ def start_session():
             # Without this, DDS won't be used even when session was created with 'expert'
             state.ai_difficulty = existing.ai_difficulty
             state.hand_start_time = datetime.now()
+            # CRITICAL: Initialize vulnerability for resumed session
+            state.vulnerability = existing.get_current_vulnerability()
             print(f"✅ Resumed session {existing.id} with ai_difficulty={existing.ai_difficulty}")
+            
+            # Ensure deal exists (crucial for server restarts)
+            if not state.deal['North']:
+                print(f"🃏 Restoring deal for resumed session #{existing.id}...")
+                perform_new_deal(state)
+                
             return jsonify({
                 'session': existing.to_dict(),
                 'resumed': True,
@@ -787,6 +995,8 @@ def start_session():
         # Sync state.ai_difficulty with new session's difficulty
         state.ai_difficulty = ai_difficulty
         state.hand_start_time = datetime.now()
+        # CRITICAL: Initialize vulnerability to prevent "Cannot read properties of undefined" errors
+        state.vulnerability = state.game_session.get_current_vulnerability()
         print(f"✅ Created new session {state.game_session.id} with ai_difficulty={ai_difficulty}")
 
         return jsonify({
@@ -924,7 +1134,7 @@ def complete_session_hand():
         # Prepare hand data for database
         hand_data = {
             'hand_number': state.game_session.hands_completed,  # Already incremented by add_hand_score
-            'dealer': GameSession.CHICAGO_DEALERS[(state.game_session.hands_completed - 1) % 4],
+            'dealer': GameSession.DEALERS[(state.game_session.hands_completed - 1) % 4],
             'vulnerability': state.vulnerability or 'None',
             'contract': contract,
             'tricks_taken': score_data.get('tricks_taken', 0),
@@ -954,7 +1164,7 @@ def complete_session_hand():
                 actual_tricks=score_data.get('tricks_taken', 0),
                 actual_score=hand_score,
                 vulnerability=state.vulnerability or 'None',
-                dealer=GameSession.CHICAGO_DEALERS[(state.game_session.hands_completed - 1) % 4],
+                dealer=GameSession.DEALERS[(state.game_session.hands_completed - 1) % 4],
             )
 
         # Check if session is complete
@@ -1131,7 +1341,10 @@ def get_session_stats():
     Returns:
         User statistics across all sessions
     """
-    user_id = request.args.get('user_id', 1, type=int)
+    user_id = request.args.get('user_id', type=int)
+
+    if not user_id:
+        return jsonify({'error': 'user_id is required'}), 400
 
     try:
         stats = session_manager.get_user_session_stats(user_id)
@@ -1324,10 +1537,16 @@ def load_scenario():
                 state.deal[position] = Hand(remaining_cards[:13])
                 remaining_cards = remaining_cards[13:]
 
+        # Determine dealer for scenario
+        scenario_dealer = target_scenario.get('dealer', 'North')
+        state.dealer = scenario_dealer
+        state.auction_history = []
+        next_bidder = BridgeRulesEngine.get_current_bidder(scenario_dealer, 0)
+
         south_hand = state.deal['South']
         hand_for_json = [{'rank': card.rank, 'suit': card.suit} for card in south_hand.cards]
         points_for_json = { 'hcp': south_hand.hcp, 'dist_points': south_hand.dist_points, 'total_points': south_hand.total_points, 'suit_hcp': south_hand.suit_hcp, 'suit_lengths': south_hand.suit_lengths }
-        return jsonify({'hand': hand_for_json, 'points': points_for_json, 'vulnerability': state.vulnerability})
+        return jsonify({'hand': hand_for_json, 'points': points_for_json, 'vulnerability': state.vulnerability, 'dealer': scenario_dealer, 'next_bidder': next_bidder})
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': f'Could not load scenario: {e}'}), 500
@@ -1337,31 +1556,20 @@ def deal_hands():
     # Get session state for this request
     state = get_state()
 
-    # Use Chicago rotation for dealer and vulnerability
-    dealer = 'North'  # Default for non-session mode
+    # Use shared logic to perform deal
+    perform_new_deal(state)
+
+    # Prepare response data
+    dealer = 'North'
     if state.game_session:
         dealer = state.game_session.get_current_dealer()
-        state.vulnerability = state.game_session.get_current_vulnerability()
-    else:
-        # Non-session mode: rotate vulnerability manually
-        vulnerabilities = ["None", "NS", "EW", "Both"]
-        try:
-            current_idx = vulnerabilities.index(state.vulnerability)
-            state.vulnerability = vulnerabilities[(current_idx + 1) % len(vulnerabilities)]
-        except ValueError:
-            state.vulnerability = "None"
 
-    ranks = '23456789TJQKA'
-    suits = ['♠', '♥', '♦', '♣']
-    deck = [Card(rank, suit) for rank in ranks for suit in suits]
-    random.shuffle(deck)
+    # Normalize dealer to full name (get_current_dealer() returns short form 'N','E','S','W')
+    dealer = BridgeRulesEngine.SHORT_TO_FULL.get(dealer, dealer)
 
-    print(f"🃏 Deck size: {len(deck)} cards (should be 52)")
-
-    state.deal['North'] = Hand(deck[0:13])
-    state.deal['East'] = Hand(deck[13:26])
-    state.deal['South'] = Hand(deck[26:39])
-    state.deal['West'] = Hand(deck[39:52])
+    # Store dealer & reset auction on session (backend is source of truth)
+    state.dealer = dealer
+    state.auction_history = []
 
     print(f"🃏 North: {len(state.deal['North'].cards)} cards")
     print(f"🃏 East: {len(state.deal['East'].cards)} cards")
@@ -1397,12 +1605,14 @@ def deal_hands():
             print(f"⚠️ DD table calculation failed: {e}")
             # Non-fatal - just don't include dd_table
 
-    # Include dealer in response for frontend
+    # Include dealer and next_bidder in response for frontend
+    next_bidder = BridgeRulesEngine.get_current_bidder(dealer, 0)
     response_data = {
         'hand': hand_for_json,
         'points': points_for_json,
         'vulnerability': state.vulnerability,
-        'dealer': dealer
+        'dealer': dealer,
+        'next_bidder': next_bidder
     }
 
     # Only include dd_table if calculated (production only)
@@ -1417,30 +1627,32 @@ def get_next_bid():
     state = get_state()
     try:
         data = request.get_json()
-        print(f"🔍 DEBUG: Received data: {data}")
-        print(f"🔍 DEBUG: Keys in data: {list(data.keys()) if data else 'None'}")
-        auction_history_raw, current_player = data['auction_history'], data['current_player']
-        explanation_level = data.get('explanation_level', 'detailed')  # simple, detailed, or expert
-        use_v2_schema = data.get('use_v2_schema', False)  # Dev mode flag for V2 Schema testing
+        use_v2_schema = data.get('use_v2_schema', False)
+        explanation_level = data.get('explanation_level', 'detailed')
 
-        # Get dealer from frontend, fallback to session, or default to North
-        # Fixes ValueError "None is not in list" when frontend doesn't send dealer
-        dealer = data.get('dealer')
-        if not dealer:
-            if state.game_session:
-                dealer = state.game_session.get_current_dealer()
-            else:
-                dealer = 'North'
+        # ── Authoritative turn calculation from session state ──
+        dealer = BridgeRulesEngine.SHORT_TO_FULL.get(state.dealer, state.dealer) if state.dealer else 'North'
+        auction_length = len(state.auction_history)
+        expected_bidder = BridgeRulesEngine.get_current_bidder(dealer, auction_length)
 
-        # Normalize auction history: frontend may send {bid, explanation} objects or plain strings
-        # Backend expects list of bid strings: ["1NT", "Pass", ...]
+        # Accept frontend's current_player but validate it
+        current_player = data.get('current_player', expected_bidder)
+        is_valid, _ = BridgeRulesEngine.validate_bidder(dealer, auction_length, current_player)
+        if not is_valid:
+            print(f"⚠️ Bidder mismatch: frontend sent '{current_player}', expected '{expected_bidder}'. Using expected.")
+            current_player = expected_bidder
+
+        print(f"🔍 get-next-bid: player={current_player}, auction_len={auction_length}, dealer={dealer}")
+
+        # Normalize auction history from frontend (used for engine call)
+        auction_history_raw = data.get('auction_history', [])
         auction_history = []
         for item in auction_history_raw:
             if isinstance(item, dict):
                 bid = item.get('bid')
-                auction_history.append(bid if bid else 'Pass')  # Handle None/missing
+                auction_history.append(bid if bid else 'Pass')
             else:
-                auction_history.append(item if item else 'Pass')  # Handle None strings
+                auction_history.append(item if item else 'Pass')
 
         # For non-South players (hidden hands), use convention_only to avoid revealing hand specifics
         if current_player != 'South':
@@ -1450,18 +1662,48 @@ def get_next_bid():
         if not player_hand:
             return jsonify({'error': "Deal has not been made yet."}), 400
 
-        # Select engine: V2 Schema if dev mode requests it and it's available
+        # Select engine: use V2 Schema override if explicitly requested (legacy dev flag)
         active_engine = engine
-        engine_used = "V1"
-        if use_v2_schema and engine_v2_schema:
+        engine_used = "V2 Schema" if engine is engine_v2_schema else "V2 State Machine"
+        if use_v2_schema and engine_v2_schema and engine is not engine_v2_schema:
             active_engine = engine_v2_schema
-            engine_used = "V2 Schema"
-            print(f"🔷 Dev mode: Using V2 Schema engine for this request")
+            engine_used = "V2 Schema (override)"
+            print(f"🔷 Override: Using V2 Schema engine for this request")
 
         bid, explanation = active_engine.get_next_bid(player_hand, auction_history, current_player,
                                                 state.vulnerability, explanation_level, dealer=dealer)
 
-        response = {'bid': bid, 'explanation': explanation, 'player': current_player}
+        # Fix for TypeError: Object of type BidExplanation is not JSON serializable
+        if hasattr(explanation, 'description'):
+            explanation = explanation.description
+        elif hasattr(explanation, 'to_dict'):
+            explanation = explanation.to_dict()
+        elif not isinstance(explanation, str) and explanation is not None:
+            explanation = str(explanation)
+
+        # ── Record bid in session state and compute next bidder ──
+        state.auction_history.append(bid)
+        next_bidder = BridgeRulesEngine.get_current_bidder(dealer, len(state.auction_history))
+
+        # Build beliefs from the complete auction (including the bid just made).
+        # Uses the same BiddingStateBuilder as the engine's feature_extractor.
+        user_seat = _get_user_seat(state)
+        user_hcp = _get_user_hcp(state)
+        user_suit_lengths = _get_user_suit_lengths(state)
+        try:
+            bidding_state = BiddingStateBuilder().build(list(state.auction_history), dealer)
+            beliefs = bidding_state.to_dict(user_seat, my_hcp=user_hcp, my_suit_lengths=user_suit_lengths)
+        except Exception:
+            beliefs = None
+
+        response = {
+            'bid': bid,
+            'explanation': explanation,
+            'player': current_player,
+            'next_bidder': next_bidder,
+        }
+        if beliefs is not None:
+            response['beliefs'] = beliefs
         if use_v2_schema:
             response['engine_used'] = engine_used
         return jsonify(response)
@@ -1634,8 +1876,8 @@ def evaluate_bid():
     4. Stores feedback in database for analytics
     5. Returns structured feedback for UI display
 
-    IMPORTANT: This endpoint does NOT modify bidding state or sequences.
-    It only evaluates decisions that have already been made.
+    This endpoint records the user's bid in backend auction state and
+    returns next_bidder so the frontend can continue the auction.
     """
     state = get_state()
 
@@ -1656,16 +1898,39 @@ def evaluate_bid():
         auction_history = [normalize_bid(item) for item in auction_history_raw]
 
         # Optional parameters
-        user_id = data.get('user_id', 1)  # Default user
+        user_id = data.get('user_id')
         session_id = data.get('session_id')
         feedback_level = data.get('feedback_level', 'intermediate')  # beginner, intermediate, expert
         use_v2_schema = data.get('use_v2_schema', False)  # Dev mode flag for V2 Schema testing
+        # When True, record the bid in session auction state.
+        # Governor pre-evaluation sends False so a blocked bid isn't recorded.
+        record_bid = data.get('record_bid', True)
+        record_only = data.get('record_only', False)
 
-        print(f"📊 /api/evaluate-bid called: user_bid={user_bid}, auction_len={len(auction_history)}, player={current_player}, user_id={user_id}, v2_schema={use_v2_schema}")
+        print(f"📊 /api/evaluate-bid called: user_bid={user_bid}, auction_len={len(auction_history)}, player={current_player}, user_id={user_id}, v2_schema={use_v2_schema}, record_only={record_only}")
 
         if not user_bid:
             print("❌ evaluate-bid: Missing user_bid")
             return jsonify({'error': 'user_bid is required'}), 400
+
+        # Record-only mode: just append to auction_history and return next_bidder.
+        # Used by commitBid after pre-evaluation (which used record_bid=false).
+        if record_only:
+            state.auction_history.append(user_bid)
+            auction_len_after = len(state.auction_history)
+            dealer = BridgeRulesEngine.SHORT_TO_FULL.get(state.dealer, state.dealer) if state.dealer else 'North'
+            next_bidder = BridgeRulesEngine.get_current_bidder(dealer, auction_len_after)
+            print(f"✅ record_only: appended '{user_bid}', auction_len={auction_len_after}, next_bidder={next_bidder}")
+            user_seat = _get_user_seat(state)
+            user_hcp = _get_user_hcp(state)
+            user_suit_lengths = _get_user_suit_lengths(state)
+            resp = {'next_bidder': next_bidder, 'recorded': True}
+            try:
+                bidding_state = BiddingStateBuilder().build(list(state.auction_history), dealer)
+                resp['beliefs'] = bidding_state.to_dict(user_seat, my_hcp=user_hcp, my_suit_lengths=user_suit_lengths)
+            except Exception:
+                pass
+            return jsonify(resp)
 
         # Get user's hand from session state (does NOT modify state)
         user_hand = state.deal.get(current_player)
@@ -1673,10 +1938,8 @@ def evaluate_bid():
             print(f"❌ evaluate-bid: Hand for {current_player} not available. state.deal keys: {list(state.deal.keys()) if state.deal else 'None'}")
             return jsonify({'error': f'Hand for {current_player} not available'}), 400
 
-        # Determine dealer from session or use default
-        dealer = 'North'  # Default
-        if state.game_session:
-            dealer = state.game_session.get_current_dealer()
+        # Use authoritative dealer from session state
+        dealer = BridgeRulesEngine.SHORT_TO_FULL.get(state.dealer, state.dealer) if state.dealer else 'North'
 
         # Serialize deal data for storage (enables bidding history review without session_hands)
         deal_data = None
@@ -1691,10 +1954,12 @@ def evaluate_bid():
                         'hand': [{'suit': c.suit, 'rank': c.rank} for c in hand.cards]
                     }
 
-        # Select engine and evaluation method based on dev mode flag
-        if use_v2_schema and engine_v2_schema:
+        # Select engine and evaluation method
+        # Use V2 Schema path when it's the active engine OR when explicitly requested
+        use_v2_evaluation = (engine is engine_v2_schema) or (use_v2_schema and engine_v2_schema)
+        if use_v2_evaluation and engine_v2_schema:
             # V2 Schema: Use unified evaluation (same rules for AI and feedback)
-            print(f"🔷 Dev mode: Using V2 Schema unified evaluation for evaluate-bid")
+            print(f"🔷 Using V2 Schema unified evaluation for evaluate-bid")
 
             v2_feedback = engine_v2_schema.evaluate_user_bid(
                 hand=user_hand,
@@ -1896,14 +2161,45 @@ def evaluate_bid():
         }
         verbosity = verbosity_map.get(feedback_level, 'normal')
 
+        # ── Record user's bid in session state and compute next bidder ──
+        # Governor pre-evaluation sends record_bid=False to avoid recording
+        # a bid that might be blocked and changed.  Don't send next_bidder
+        # for pre-eval to avoid desyncing frontend state.
+        if record_bid:
+            state.auction_history.append(user_bid)
+            auction_len_after = len(state.auction_history)
+            next_bidder = BridgeRulesEngine.get_current_bidder(
+                dealer, auction_len_after)
+        else:
+            next_bidder = None
+
+        # Ensure explanation is a plain string (modules may return BidExplanation objects)
+        if not isinstance(optimal_explanation_str, str):
+            optimal_explanation_str = str(optimal_explanation_str)
+
+        # Build beliefs from the updated auction (if bid was recorded)
+        beliefs = None
+        if record_bid:
+            user_seat = _get_user_seat(state)
+            user_hcp = _get_user_hcp(state)
+            user_suit_lengths = _get_user_suit_lengths(state)
+            try:
+                bidding_state = BiddingStateBuilder().build(list(state.auction_history), dealer)
+                beliefs = bidding_state.to_dict(user_seat, my_hcp=user_hcp, my_suit_lengths=user_suit_lengths)
+            except Exception:
+                pass
+
         # Build response
         response = {
             'feedback': feedback.to_dict(),
             'user_message': feedback.to_user_message(verbosity=verbosity),
             'explanation': optimal_explanation_str,
             'was_correct': (user_bid == optimal_bid),
-            'show_alternative': feedback.correctness.value != 'optimal'
+            'show_alternative': feedback.correctness.value != 'optimal',
+            'next_bidder': next_bidder
         }
+        if beliefs is not None:
+            response['beliefs'] = beliefs
 
         # Add differential analysis data if available (V2 only)
         if hasattr(feedback, '_differential') and feedback._differential:
@@ -2005,6 +2301,12 @@ def get_all_hands():
                     'hand': hand_for_json,
                     'points': points_for_json
                 }
+
+        # BUG-C004 defensive check: warn if any hand has unexpected card count
+        for pos_name, hand_data in all_hands.items():
+            card_count = len(hand_data.get('hand', []))
+            if card_count != 13 and not (state.play_state and state.play_state.hands):
+                print(f"⚠️ BUG-C004 WARNING: {pos_name} has {card_count} cards during bidding phase (expected 13)")
 
         print(f"✅ get_all_hands: Successfully returning {len(all_hands)} hands")
         return jsonify({
@@ -2758,17 +3060,18 @@ def start_play():
                     else:
                         return jsonify({"error": f"Original hand data not found for {full_name}. Cannot replay."}), 400
             else:
-                # First play: use current deal from bidding phase
+                # First play: use deep copies from bidding phase (BUG-C004 fix)
+                # Deep copy prevents card removal during play from mutating state.deal
+                import copy
                 for pos in ["N", "E", "S", "W"]:
                     full_name = pos_map[pos]
                     if state.deal.get(full_name):
-                        hands[pos] = state.deal[full_name]
+                        hands[pos] = copy.deepcopy(state.deal[full_name])
                     else:
                         return jsonify({"error": f"Hand data not found for {full_name}. Please deal a new hand."}), 400
 
                 # CRITICAL: Preserve original deal before play begins
                 # Make deep copies of Hand objects to preserve original 13-card state
-                import copy
                 state.original_deal = {}
                 for pos in ["N", "E", "S", "W"]:
                     full_name = pos_map[pos]
@@ -2903,15 +3206,15 @@ def play_random_hand():
             print("All players passed - dealing new hand")
             return play_random_hand()  # Recursive retry
 
-        # Convert hands for play state
+        # Convert hands for play state — deep copy to prevent mutation of state.deal (BUG-C004 fix)
+        import copy
         pos_map = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
         hands = {}
         for pos in ["N", "E", "S", "W"]:
             full_name = pos_map[pos]
-            hands[pos] = state.deal[full_name]
+            hands[pos] = copy.deepcopy(state.deal[full_name])
 
         # CRITICAL: Preserve original deal before play begins (for replay functionality)
-        import copy
         state.original_deal = {}
         for pos in ["N", "E", "S", "W"]:
             full_name = pos_map[pos]
@@ -3057,14 +3360,22 @@ def play_card():
         if user_id and is_user_controlled:
             try:
                 feedback_gen = get_play_feedback_generator(use_dds=PLATFORM_ALLOWS_DDS)
+                # Get session_id: prefer request body, fall back to game_session
+                feedback_session_id = data.get('session_id')
+                if feedback_session_id is None and state.game_session:
+                    feedback_session_id = state.game_session.id
+                # Ensure session_id is stored as string for consistent DB lookups
+                if feedback_session_id is not None:
+                    feedback_session_id = str(feedback_session_id)
                 # Get hand_number from game session (1-indexed for display)
                 hand_number = state.game_session.hands_completed + 1 if state.game_session else None
+                print(f"[PLAY-FEEDBACK] user_id={user_id}, session_id={feedback_session_id}, hand_number={hand_number}, game_session={state.game_session.id if state.game_session else 'NO'}, position={position}")
                 play_feedback = feedback_gen.evaluate_and_store(
                     user_id=user_id,
                     play_state=state.play_state,
                     user_card=card,
                     position=position,
-                    session_id=data.get('session_id'),
+                    session_id=feedback_session_id,
                     hand_number=hand_number
                 )
             except Exception as feedback_err:
@@ -3533,6 +3844,17 @@ def clear_trick():
         return jsonify({"error": "No play in progress"}), 400
 
     try:
+        # SAFETY GUARD: Only clear if trick is complete (4 cards played)
+        # Clearing a mid-trick state would permanently destroy cards that were
+        # already removed from player hands — causing unrecoverable state corruption.
+        trick_size = len(state.play_state.current_trick)
+        if trick_size > 0 and trick_size < 4:
+            print(f"⚠️  clear-trick BLOCKED: trick has {trick_size} cards (not complete)")
+            return jsonify({
+                "error": f"Cannot clear incomplete trick ({trick_size}/4 cards played)",
+                "trick_size": trick_size
+            }), 400
+
         # Clear the current trick and reset leader
         state.play_state.current_trick = []
         state.play_state.current_trick_leader = None
@@ -4029,7 +4351,7 @@ def evaluate_play():
         card_data = data['card']
         user_card = Card(card_data['rank'], card_data['suit'])
         position = data.get('position', state.play_state.next_to_play)
-        user_id = data.get('user_id', 1)
+        user_id = data.get('user_id')
         session_id = data.get('session_id')
         # Get hand_number from game session (1-indexed for display)
         hand_number = state.game_session.hands_completed + 1 if state.game_session else None
@@ -4502,6 +4824,7 @@ def generate_quality_recommendations(all_time, daily_trends):
 
 
 @app.route('/api/auth/simple-login', methods=['POST'])
+@limiter.limit("5 per minute")
 def simple_login():
     """
     Simple login endpoint - authenticate user by email or phone
@@ -4531,6 +4854,7 @@ def simple_login():
         email = data.get('email')
         phone = data.get('phone')
         create_if_not_exists = data.get('create_if_not_exists', True)
+        guest_id = data.get('guest_id')  # Guest ID for data migration
 
         # Must provide either email or phone
         if not email and not phone:
@@ -4633,6 +4957,52 @@ def simple_login():
 
             new_user_id = cursor.lastrowid
 
+            # CRITICAL: Migrate guest data to new registered user
+            # This ensures users don't lose progress when registering
+            migrated_data = {'sessions': 0, 'decisions': 0, 'analyses': 0, 'hands': 0}
+            if guest_id and isinstance(guest_id, int) and guest_id < 0:
+                try:
+                    # Migrate game_sessions
+                    cursor.execute(
+                        'UPDATE game_sessions SET user_id = ? WHERE user_id = ?',
+                        (new_user_id, guest_id)
+                    )
+                    migrated_data['sessions'] = cursor.rowcount
+
+                    # Migrate bidding_decisions
+                    cursor.execute(
+                        'UPDATE bidding_decisions SET user_id = ? WHERE user_id = ?',
+                        (new_user_id, guest_id)
+                    )
+                    migrated_data['decisions'] = cursor.rowcount
+
+                    # Migrate hand_analyses
+                    cursor.execute(
+                        'UPDATE hand_analyses SET user_id = ? WHERE user_id = ?',
+                        (new_user_id, guest_id)
+                    )
+                    migrated_data['analyses'] = cursor.rowcount
+
+                    # Migrate session_hands (via session_id foreign key relationship)
+                    # First get all session IDs that were just migrated
+                    cursor.execute(
+                        'SELECT id FROM game_sessions WHERE user_id = ?',
+                        (new_user_id,)
+                    )
+                    # session_hands are already linked via session_id, no migration needed
+
+                    # Migrate user_convention_progress if exists
+                    cursor.execute(
+                        'UPDATE user_convention_progress SET user_id = ? WHERE user_id = ?',
+                        (new_user_id, guest_id)
+                    )
+
+                    conn.commit()
+                    print(f"✅ Migrated guest data from {guest_id} to user {new_user_id}: {migrated_data}")
+                except Exception as migration_error:
+                    print(f"⚠️ Guest data migration failed (non-blocking): {migration_error}")
+                    # Don't fail registration if migration fails - user can still use the app
+
             # Send welcome email to new users (only for email signups)
             if email:
                 try:
@@ -4651,7 +5021,9 @@ def simple_login():
                 "experience_level": None,  # New user - wizard not completed
                 "unlock_all_content": False,
                 "experience_id": None,
-                "experience_set_at": None
+                "experience_set_at": None,
+                "migrated_from_guest": guest_id is not None,
+                "migrated_data": migrated_data if guest_id else None
             })
 
     except Exception as e:

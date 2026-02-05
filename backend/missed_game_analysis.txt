@@ -1,0 +1,254 @@
+🎯 Running Bidding Quality Score on 50 hands...
+⏰ Started at 2026-01-27 10:04:13
+
+
+[GAME MISSED] Hand 8 (NS): 32 pts
+Contract: 3♠
+Hand 1 (14 HCP): KT42.AT85.AJ4.Q3
+Hand 2 (15 HCP): A4.AQJT5.T7.AT74
+Auction:
+  East: Pass
+  South: 1♥
+  West: 2♥
+  North: 3♠
+  East: Pass
+  South: Pass
+  West: Pass
+
+[GAME MISSED] Hand 9 (NS): 32 pts
+Contract: 2NT
+Hand 1 (16 HCP): Q8.KT7643.AKQ7.Q
+Hand 2 (12 HCP): K983.AQ7.85.QJ75
+Auction:
+  South: 1♣
+  West: Pass
+  North: Pass
+  East: X
+  South: 2NT
+  West: Pass
+  North: Pass
+  East: Pass
+
+[GAME MISSED] Hand 10 (EW): 30 pts
+Contract: 1♥
+Hand 1 (17 HCP): A4.AQJ9762.Q42.A
+Hand 2 (10 HCP): Q63.Q86.T54.KQJ9
+Auction:
+  West: Pass
+  North: Pass
+  East: 1♥
+  South: Pass
+  West: X
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 12 (EW): 25 pts
+Contract: 1♠
+Hand 1 (15 HCP): AQ764.KQT2.A9.T5
+Hand 2 (7 HCP): QT932.Q73.KT8.93
+Auction:
+  West: Pass
+  North: 1♣
+  East: Pass
+  South: Pass
+  West: 1♠
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 14 (EW): 28 pts
+Contract: 1♦
+Hand 1 (13 HCP): Q7.KT87.AKJ85.52
+Hand 2 (12 HCP): KT2.T75.K4.KQJT7
+Auction:
+  North: Pass
+  East: 1♦
+  South: X
+  West: XX
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 15 (EW): 27 pts
+Contract: 1♥
+Hand 1 (10 HCP): KQJ5.97.Q65.Q953
+Hand 2 (14 HCP): AQJ6.AQ632.T64.J
+Auction:
+  West: 1♥
+  North: Pass
+  East: X
+  South: Pass
+  West: Pass
+  North: Pass
+
+[GAME MISSED] Hand 17 (NS): 25 pts
+Contract: 1♦
+Hand 1 (12 HCP): .AK2.AJ87542.952
+Hand 2 (5 HCP): QJ9875..Q98532.8
+Auction:
+  North: 1♦
+  East: Pass
+  South: Pass
+  West: X
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 20 (EW): 32 pts
+Contract: 2NT
+Hand 1 (18 HCP): KQ.AJ76542.AJ.K2
+Hand 2 (11 HCP): Q632.Q65.J64.KQJ
+Auction:
+  West: Pass
+  North: 1♣
+  East: Pass
+  South: X
+  West: 2NT
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 26 (NS): 27 pts
+Contract: 1♠
+Hand 1 (13 HCP): A8532.7.AKT73.Q4
+Hand 2 (9 HCP): A6.T9732.KQ86.96
+Auction:
+  West: Pass
+  North: 1♠
+  East: Pass
+  South: Pass
+  West: Pass
+
+[GAME MISSED] Hand 35 (NS): 25 pts
+Contract: 1♣
+Hand 1 (13 HCP): A854.AJ4.K93.J98
+Hand 2 (11 HCP): AJ98.AT.763.QT95
+Auction:
+  West: Pass
+  North: 1♣
+  East: Pass
+  South: Pass
+  West: Pass
+
+[GAME MISSED] Hand 36 (EW): 26 pts
+Contract: 3♥
+Hand 1 (11 HCP): Q642.Q653.AK54.6
+Hand 2 (10 HCP): 6.K987542.K63.A7
+Auction:
+  South: Pass
+  West: 3♥
+  North: Pass
+  East: Pass
+  South: Pass
+
+[GAME MISSED] Hand 42 (NS): 25 pts
+Contract: 1NT
+Hand 1 (8 HCP): 762.K95.T7.KQT95
+Hand 2 (15 HCP): QT82.KJ62.KT.AQT
+Auction:
+  South: 1NT
+  West: Pass
+  North: Pass
+  East: Pass
+
+[GAME MISSED] Hand 43 (NS): 25 pts
+Contract: 1♣
+Hand 1 (7 HCP): KT64.JT7.J92.Q32
+Hand 2 (15 HCP): .KQ86.A87.KQJT42
+Auction:
+  South: 1♣
+  West: Pass
+  North: Pass
+  East: Pass
+
+[GAME MISSED] Hand 45 (NS): 32 pts
+Contract: 1♣
+Hand 1 (13 HCP): 952.AQ.95.AQJ974
+Hand 2 (15 HCP): K753.A4.74.AKJ93
+Auction:
+  North: 1♣
+  East: Pass
+  South: Pass
+  West: Pass
+
+[GAME MISSED] Hand 46 (NS): 27 pts
+Contract: 1♣
+Hand 1 (13 HCP): T83.Q.KT5.AKJ842
+Hand 2 (9 HCP): T7.K87652.KT87.K
+Auction:
+  North: 1♣
+  East: X
+  South: XX
+  West: Pass
+  North: Pass
+  East: Pass
+   Progress: 50/50 hands tested...
+
+[GAME MISSED] Hand 49 (EW): 27 pts
+Contract: 2NT
+Hand 1 (16 HCP): KQT83.74.KJT5.AK
+Hand 2 (8 HCP): 54.832.J94.AKT53
+Auction:
+  North: Pass
+  East: 1♠
+  South: Pass
+  West: 1NT
+  North: Pass
+  East: 2♦
+  South: Pass
+  West: 2♠
+  North: Pass
+  East: 2NT
+  South: Pass
+  West: Pass
+  North: Pass
+
+✅ Testing complete. Calculating scores...
+
+================================================================================
+BIDDING QUALITY SCORE REPORT
+================================================================================
+
+Hands Tested:      50
+Total Bids:        300
+Non-Pass Bids:     81
+
+--------------------------------------------------------------------------------
+INDIVIDUAL SCORES:
+--------------------------------------------------------------------------------
+  1. Legality:        100.0% ✅ (0 errors)
+  2. Appropriateness:  97.5% ✅ (2 errors)
+  3. Conventions:     100.0% ✅ (0 errors)
+  4. Consistency:     100.0% ✅ (not implemented)
+  5. Reasonableness:   97.5% ✅
+  6. Game/Slam:         0.0% ❌ (21 errors)
+
+     GAME/SLAM BREAKDOWN:
+     - Game (25-32 pts):   0.0% (16 missed / 16 situations)
+     - Slam (33+ pts):     0.0% (5 missed / 5 situations)
+
+--------------------------------------------------------------------------------
+COMPOSITE SCORE: 94.0%
+GRADE:           B (Good, minor issues)
+--------------------------------------------------------------------------------
+
+REASONABLENESS BREAKDOWN:
+  Excellent:      28
+  Good:           50
+  Questionable:    1
+  Poor:            1
+  Terrible:        1
+
+⚠️  APPROPRIATENESS ERRORS (sample):
+   Hand 27: South bid 4♣
+      Bid ♣ with only 0 cards
+      Hand: 12 HCP, 15 total, shape 4540
+   Hand 33: North bid 4♠
+      4-level bid with 9 points and 5 cards
+      Hand: 8 HCP, 9 total, shape 5332
+
+================================================================================
+📄 Detailed report saved to: bidding_quality_report_20260127_100413.json
+
+✅ Quality score acceptable

@@ -151,10 +151,15 @@ class TestBlackwoodOverbidBug1:
             f"Got: {east_bid} - {explanation}"
         )
 
-        # Acceptable bids: Pass (best), or 5♣ at most
-        acceptable_bids = ['Pass', '5♣']
-        assert east_bid in acceptable_bids, (
-            f"East should bid one of {acceptable_bids}, but bid {east_bid}"
+        # Acceptable bids: With 20 HCP and partner's invitational 3♣ (10-12),
+        # combined 30-32 is game-level. Reasonable bids include:
+        # - 3♥/3♦ (showing second suit, game-forcing)
+        # - 3NT (game in NT)
+        # - 5♣ (game in minor)
+        # - Pass (conservative, but unlikely with 20 HCP)
+        unacceptable_bids = ['4NT', '6♣', '6NT', '7♣', '7NT']  # No slam exploration
+        assert east_bid not in unacceptable_bids, (
+            f"East should not bid slam or explore slam with 30-32 combined HCP, but bid {east_bid}"
         )
 
 

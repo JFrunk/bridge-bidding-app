@@ -87,8 +87,16 @@ class UserManager:
 
         try:
             # Check if phone column exists, if not create it
-            cursor.execute("PRAGMA table_info(users)")
-            columns = [row[1] for row in cursor.fetchall()]
+            from db import USE_POSTGRES
+            if USE_POSTGRES:
+                cursor.execute(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_name = 'users'"
+                )
+                columns = [row['column_name'] for row in cursor.fetchall()]
+            else:
+                cursor.execute("PRAGMA table_info(users)")
+                columns = [row[1] for row in cursor.fetchall()]
             if 'phone' not in columns:
                 cursor.execute("ALTER TABLE users ADD COLUMN phone TEXT")
                 conn.commit()

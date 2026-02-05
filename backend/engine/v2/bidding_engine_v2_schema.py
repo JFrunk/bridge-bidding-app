@@ -122,6 +122,8 @@ class BiddingEngineV2Schema:
 
         if candidates:
             # Find the best legal bid that doesn't violate forcing constraints
+            # Track best forcing-rejected candidate as fallback
+            best_forcing_rejected = None
             for candidate in candidates:
                 bid = candidate.bid
 
@@ -132,11 +134,21 @@ class BiddingEngineV2Schema:
                 # Validate against forcing constraints (only in partnership auctions)
                 # Skip forcing validation in competitive situations - opponents' bids
                 # break forcing sequences between partners
-                is_competitive = features.get('is_overcall') or features.get('is_advancer') or features.get('is_competitive_later')
+                is_competitive = (
+                    features.get('is_overcall') or
+                    features.get('is_advancer') or
+                    features.get('is_competitive_later')
+                )
                 if not is_competitive:
-                    forcing_validation = self.interpreter.validate_bid_against_forcing(bid)
+                    last_level = features.get('last_contract_level', 0)
+                    last_suit = self._get_last_contract_suit(auction_history)
+                    forcing_validation = self.interpreter.validate_bid_against_forcing(
+                        bid, last_contract_level=last_level, last_contract_suit=last_suit
+                    )
                     if not forcing_validation.is_valid:
-                        # Skip this bid if it violates forcing
+                        # Track highest-priority non-Pass bid rejected by forcing
+                        if best_forcing_rejected is None and bid != 'Pass':
+                            best_forcing_rejected = candidate
                         continue
 
                 # Run bid through conflict resolver for Monte Carlo validation
@@ -165,6 +177,20 @@ class BiddingEngineV2Schema:
 
                 return (final_bid, final_explanation)
 
+            # All candidates rejected — if we have a forcing-rejected non-Pass bid,
+            # use it rather than defaulting to Pass in a forced auction
+            if best_forcing_rejected is not None:
+                bid = best_forcing_rejected.bid
+                self._last_rule_id = best_forcing_rejected.rule_id
+                self._last_schema_file = getattr(best_forcing_rejected, 'schema_file', None)
+                self._last_priority = best_forcing_rejected.priority
+                if best_forcing_rejected.sets_forcing_level:
+                    self.interpreter._update_forcing_state(
+                        best_forcing_rejected.sets_forcing_level,
+                        best_forcing_rejected.rule_id
+                    )
+                return (bid, best_forcing_rejected.explanation)
+
         # No schema rule matched - try V1 fallback if enabled
         if self.use_v1_fallback:
             self._last_rule_id = 'v1_fallback'
@@ -176,7 +202,11 @@ class BiddingEngineV2Schema:
         self._last_rule_id = 'default_pass'
         self._last_schema_file = None
         self._last_priority = 0
-        forcing_validation = self.interpreter.validate_bid_against_forcing("Pass")
+        last_level = features.get('last_contract_level', 0)
+        last_suit = self._get_last_contract_suit(auction_history)
+        forcing_validation = self.interpreter.validate_bid_against_forcing(
+            "Pass", last_contract_level=last_level, last_contract_suit=last_suit
+        )
         if not forcing_validation.is_valid:
             # Cannot pass - return a warning explanation
             return ('Pass', f'Warning: {forcing_validation.reason}')
@@ -287,6 +317,14 @@ class BiddingEngineV2Schema:
         """
         Add derived features needed for schema rules that aren't in base extraction.
         """
+        # Auction-level features
+        features['auction_length'] = len(auction_history)
+        features['last_contract_level'] = 0
+        for b in reversed(auction_history):
+            if b and b[0].isdigit():
+                features['last_contract_level'] = int(b[0])
+                break
+
         # Seat calculation (1-4)
         # For opening bids, seat is based on how many passes before you:
         # - 1st seat (dealer): no passes before
@@ -369,6 +407,16 @@ class BiddingEngineV2Schema:
                 features['interference_level'] = 0
 
         return features
+
+    @staticmethod
+    def _get_last_contract_suit(auction_history: List[str]) -> str:
+        """Extract the suit of the last contract bid from the auction."""
+        for b in reversed(auction_history):
+            if b and len(b) >= 2 and b[0].isdigit():
+                suit_part = b[1:]
+                if suit_part in ('NT', '♠', '♥', '♦', '♣'):
+                    return suit_part
+        return ''
 
     def _is_bid_legal(self, bid: str, auction_history: List[str]) -> bool:
         """

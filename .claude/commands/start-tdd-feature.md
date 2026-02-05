@@ -1,3 +1,11 @@
+---
+description: Start new feature using test-driven development
+---
+
+---
+description: Start new feature using test-driven development
+---
+
 Start new feature using test-driven development: $ARGUMENTS
 
 Feature description: $ARGUMENTS

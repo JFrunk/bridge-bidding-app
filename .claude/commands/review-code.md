@@ -1,3 +1,11 @@
+---
+description: Review code for quality and best practices
+---
+
+---
+description: Review code for quality and best practices
+---
+
 Review code for quality and best practices: $ARGUMENTS
 
 Target: $ARGUMENTS (file path, directory, or "recent changes")

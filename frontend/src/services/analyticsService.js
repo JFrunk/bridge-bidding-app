@@ -38,6 +38,7 @@ export async function recordPractice(practiceData) {
  * @returns {Promise<Object>} Dashboard data with stats, insights, celebrations, recommendations
  */
 export async function getDashboardData(userId) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/analytics/dashboard?user_id=${userId}`);
 
   if (!response.ok) {
@@ -55,6 +56,7 @@ export async function getDashboardData(userId) {
  * @returns {Promise<Object>} Mistake patterns
  */
 export async function getMistakePatterns(userId, statusFilter = null) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   let url = `${API_BASE_URL}/api/analytics/mistakes?user_id=${userId}`;
   if (statusFilter) {
     url += `&status=${statusFilter}`;
@@ -77,6 +79,7 @@ export async function getMistakePatterns(userId, statusFilter = null) {
  * @returns {Promise<Object>} Celebrations
  */
 export async function getCelebrations(userId, pendingOnly = true) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(
     `${API_BASE_URL}/api/analytics/celebrations?user_id=${userId}&pending_only=${pendingOnly}`
   );
@@ -118,6 +121,7 @@ export async function acknowledgeCelebration(milestoneId) {
  * @returns {Promise<Object>} Practice recommendations
  */
 export async function getPracticeRecommendations(userId, maxRecommendations = 5) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(
     `${API_BASE_URL}/api/practice/recommended?user_id=${userId}&max=${maxRecommendations}`
   );
@@ -158,6 +162,7 @@ export async function createUser(userData) {
  * @returns {Promise<Object>} User info and stats
  */
 export async function getUserInfo(userId) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/user/info?user_id=${userId}`);
 
   if (!response.ok) {
@@ -174,6 +179,7 @@ export async function getUserInfo(userId) {
  * @returns {Promise<Object>} Analysis results
  */
 export async function runAnalysis(userId) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(`${API_BASE_URL}/api/analytics/run-analysis`, {
     method: 'POST',
     headers: {
@@ -200,6 +206,7 @@ export async function runAnalysis(userId) {
  *   - play_practice_quality: Gameplay performance metrics
  */
 export async function getFourDimensionProgress(userId) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(
     `${API_BASE_URL}/api/analytics/four-dimension-progress?user_id=${userId}`
   );
@@ -219,6 +226,7 @@ export async function getFourDimensionProgress(userId) {
  * @returns {Promise<Object>} Hand history with list of hands
  */
 export async function getHandHistory(userId, limit = 15) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(
     `${API_BASE_URL}/api/hand-history?user_id=${userId}&limit=${limit}`
   );
@@ -293,6 +301,7 @@ export async function analyzePlay(handId, trickNumber, playIndex, openingLead = 
  *   - summary: Count of boards in each quadrant
  */
 export async function getBoardAnalysis(userId, sessionId = null, limit = 25) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   let url = `${API_BASE_URL}/api/analytics/board-analysis?user_id=${userId}&limit=${limit}`;
   if (sessionId) {
     url += `&session_id=${sessionId}`;
@@ -319,6 +328,7 @@ export async function getBoardAnalysis(userId, sessionId = null, limit = 25) {
  *   - count: Total number of hands returned
  */
 export async function getBiddingHandsHistory(userId, limit = 10) {
+  if (!userId || userId === 'null' || userId === 'undefined') throw new Error('user_id required');
   const response = await fetch(
     `${API_BASE_URL}/api/bidding-hands?user_id=${userId}&limit=${limit}`
   );

@@ -1,0 +1,596 @@
+{
+  "schema_version": "3.0",
+  "name": "V3 Logic Stack Test Suite",
+  "description": "Comprehensive test cases for V3 Logic Stack: Foundational Bidding through Essential Conventions",
+  "created": "2026-01-09",
+  "test_categories": {
+    "level_1_basic_bidding": {
+      "name": "Level 1: Basic Bidding Actions",
+      "description": "Tests for foundational bidding modules",
+      "tests": {
+        "when_to_pass": [
+          {
+            "id": "pass_weak_hand",
+            "hand": "♠J32 ♥654 ♦9872 ♣J43",
+            "hcp": 3,
+            "auction": [],
+            "expected_bid": "Pass",
+            "explanation": "Pass with < 12 HCP in opening seat"
+          },
+          {
+            "id": "pass_responder_weak",
+            "hand": "♠J32 ♥654 ♦9872 ♣432",
+            "hcp": 2,
+            "auction": ["1♠", "Pass"],
+            "expected_bid": "Pass",
+            "explanation": "Pass with < 6 HCP as responder"
+          },
+          {
+            "id": "pass_borderline_flat",
+            "hand": "♠QJ4 ♥J75 ♦Q83 ♣J962",
+            "hcp": 10,
+            "auction": [],
+            "expected_bid": "Pass",
+            "explanation": "Pass with 10 HCP but flat 4-3-3-3 shape and no good suit"
+          }
+        ],
+        "opening_one_major": [
+          {
+            "id": "open_1s_12hcp",
+            "hand": "♠AKJ76 ♥Q43 ♦K32 ♣65",
+            "hcp": 14,
+            "auction": [],
+            "expected_bid": "1♠",
+            "explanation": "Open 1♠ with 5+ spades and 12-21 HCP"
+          },
+          {
+            "id": "open_1h_minimum",
+            "hand": "♠K43 ♥AQJ76 ♦432 ♣Q5",
+            "hcp": 12,
+            "auction": [],
+            "expected_bid": "1♥",
+            "explanation": "Open 1♥ with 5+ hearts and 12+ HCP"
+          },
+          {
+            "id": "open_1s_both_majors",
+            "hand": "♠AKJ76 ♥KQJ65 ♦32 ♣5",
+            "hcp": 14,
+            "auction": [],
+            "expected_bid": "1♠",
+            "explanation": "With 5-5 majors, open 1♠ (higher ranking)"
+          }
+        ],
+        "opening_one_minor": [
+          {
+            "id": "open_1d_no_major",
+            "hand": "♠K43 ♥AQ4 ♦KJ765 ♣32",
+            "hcp": 13,
+            "auction": [],
+            "expected_bid": "1♦",
+            "explanation": "Open 1♦ with no 5-card major and longer diamonds"
+          },
+          {
+            "id": "open_1c_33_minors",
+            "hand": "♠AK4 ♥KQ3 ♦J65 ♣Q76",
+            "hcp": 15,
+            "auction": [],
+            "expected_bid": "1♣",
+            "explanation": "Open 1♣ with 3-3 minors (too strong for 1NT)"
+          },
+          {
+            "id": "open_1d_longer_diamonds",
+            "hand": "♠K43 ♥AQ4 ♦KJ976 ♣32",
+            "hcp": 13,
+            "auction": [],
+            "expected_bid": "1♦",
+            "explanation": "Open 1♦ with 5 diamonds vs 2 clubs"
+          }
+        ],
+        "opening_1nt": [
+          {
+            "id": "open_1nt_balanced_15",
+            "hand": "♠KJ4 ♥AQ7 ♦K865 ♣Q32",
+            "hcp": 15,
+            "auction": [],
+            "expected_bid": "1NT",
+            "explanation": "Open 1NT with 15-17 HCP balanced"
+          },
+          {
+            "id": "open_1nt_balanced_17",
+            "hand": "♠AQ4 ♥KJ7 ♦AQ85 ♣K32",
+            "hcp": 17,
+            "auction": [],
+            "expected_bid": "1NT",
+            "explanation": "Open 1NT with 17 HCP balanced"
+          },
+          {
+            "id": "reject_1nt_5card_major",
+            "hand": "♠AQJ76 ♥K7 ♦AQ8 ♣K32",
+            "hcp": 17,
+            "auction": [],
+            "expected_bid": "1♠",
+            "explanation": "Prefer 1♠ over 1NT with 5-card major"
+          }
+        ],
+        "single_raise": [
+          {
+            "id": "raise_1h_to_2h",
+            "hand": "♠K43 ♥QJ76 ♦8654 ♣32",
+            "hcp": 6,
+            "auction": ["1♥", "Pass"],
+            "expected_bid": "2♥",
+            "explanation": "Raise to 2♥ with 6-9 HCP and 4-card support"
+          },
+          {
+            "id": "raise_1s_to_2s_minimum",
+            "hand": "♠Q765 ♥654 ♦K32 ♣654",
+            "hcp": 6,
+            "auction": ["1♠", "Pass"],
+            "expected_bid": "2♠",
+            "explanation": "Single raise with minimum (6 HCP) and 4-card support"
+          }
+        ],
+        "limit_raise": [
+          {
+            "id": "limit_raise_1h_to_3h",
+            "hand": "♠K43 ♥KJ76 ♦A654 ♣32",
+            "hcp": 11,
+            "auction": ["1♥", "Pass"],
+            "expected_bid": "3♥",
+            "explanation": "Limit raise to 3♥ with 10-12 HCP and 4-card support"
+          },
+          {
+            "id": "limit_raise_1s_to_3s",
+            "hand": "♠QJ87 ♥A54 ♦KJ32 ♣65",
+            "hcp": 12,
+            "auction": ["1♠", "Pass"],
+            "expected_bid": "3♠",
+            "explanation": "Limit raise with 12 HCP and 4-card support"
+          }
+        ],
+        "new_suit_response": [
+          {
+            "id": "new_suit_1h_over_1c",
+            "hand": "♠K43 ♥AJ765 ♦654 ♣32",
+            "hcp": 9,
+            "auction": ["1♣", "Pass"],
+            "expected_bid": "1♥",
+            "explanation": "Respond 1♥ with 6+ HCP and 4+ hearts"
+          },
+          {
+            "id": "new_suit_1s_over_1d",
+            "hand": "♠KQJ76 ♥654 ♦K32 ♣54",
+            "hcp": 10,
+            "auction": ["1♦", "Pass"],
+            "expected_bid": "1♠",
+            "explanation": "Respond 1♠ with 6+ HCP and 5+ spades"
+          },
+          {
+            "id": "new_suit_up_the_line",
+            "hand": "♠K765 ♥AJ43 ♦654 ♣32",
+            "hcp": 9,
+            "auction": ["1♣", "Pass"],
+            "expected_bid": "1♥",
+            "explanation": "Bid 4-card suits up the line (1♥ before 1♠)"
+          }
+        ],
+        "dustbin_1nt_response": [
+          {
+            "id": "dustbin_1nt_no_fit",
+            "hand": "♠K43 ♥654 ♦J876 ♣Q32",
+            "hcp": 7,
+            "auction": ["1♠", "Pass"],
+            "expected_bid": "1NT",
+            "explanation": "Dustbin 1NT with 6-10 HCP, no 4-card major, no support"
+          },
+          {
+            "id": "dustbin_1nt_wrong_major",
+            "hand": "♠43 ♥KJ76 ♦J876 ♣Q32",
+            "hcp": 8,
+            "auction": ["1♠", "Pass"],
+            "expected_bid": "1NT",
+            "explanation": "Dustbin 1NT when holding hearts but partner opened spades"
+          }
+        ],
+        "game_raise": [
+          {
+            "id": "game_raise_1h_to_4h",
+            "hand": "♠3 ♥KJ876 ♦AJ654 ♣32",
+            "hcp": 10,
+            "auction": ["1♥", "Pass"],
+            "expected_bid": "4♥",
+            "explanation": "Game raise with 5+ support, weak hand (preemptive)"
+          },
+          {
+            "id": "game_raise_1s_to_4s",
+            "hand": "♠QJ876 ♥3 ♦KJ654 ♣32",
+            "hcp": 9,
+            "auction": ["1♠", "Pass"],
+            "expected_bid": "4♠",
+            "explanation": "Preemptive game raise with shape and weak hand"
+          }
+        ],
+        "two_over_one_response": [
+          {
+            "id": "2c_over_1h_gf",
+            "hand": "♠K43 ♥A5 ♦K32 ♣AQJ76",
+            "hcp": 15,
+            "auction": ["1♥", "Pass"],
+            "expected_bid": "2♣",
+            "explanation": "2♣ response showing 13+ HCP and 5+ clubs (GF)"
+          },
+          {
+            "id": "2d_over_1s_gf",
+            "hand": "♠A5 ♥K43 ♦AKJ76 ♣432",
+            "hcp": 14,
+            "auction": ["1♠", "Pass"],
+            "expected_bid": "2♦",
+            "explanation": "2♦ response showing 13+ HCP and 5+ diamonds (GF)"
+          }
+        ]
+      }
+    },
+    "level_2_openers_rebid": {
+      "name": "Level 2: Opener's Rebid",
+      "description": "Tests for opener's second bid after partner responds",
+      "tests": {
+        "minimum_rebid": [
+          {
+            "id": "rebid_suit_minimum",
+            "hand": "♠AQJ76 ♥K43 ♦Q32 ♣65",
+            "hcp": 13,
+            "auction": ["1♠", "Pass", "1NT", "Pass"],
+            "expected_bid": "2♠",
+            "explanation": "Rebid 6-card major with minimum (12-14 HCP)"
+          },
+          {
+            "id": "rebid_1nt_balanced",
+            "hand": "♠K43 ♥AQ76 ♦KJ3 ♣654",
+            "hcp": 13,
+            "auction": ["1♥", "Pass", "1♠", "Pass"],
+            "expected_bid": "1NT",
+            "explanation": "Rebid 1NT with 12-14 HCP balanced, no spade support"
+          }
+        ],
+        "new_suit_rebid": [
+          {
+            "id": "new_suit_lower",
+            "hand": "♠AKJ76 ♥K432 ♦AQ3 ♣5",
+            "hcp": 16,
+            "auction": ["1♠", "Pass", "2♣", "Pass"],
+            "expected_bid": "2♥",
+            "explanation": "Show second suit at 2-level with reversing strength"
+          },
+          {
+            "id": "reverse_strength",
+            "hand": "♠AQ76 ♥AKJ32 ♦K3 ♣54",
+            "hcp": 16,
+            "auction": ["1♥", "Pass", "1NT", "Pass"],
+            "expected_bid": "2♠",
+            "explanation": "Reverse to 2♠ showing 16+ HCP and longer hearts"
+          }
+        ],
+        "raise_responder": [
+          {
+            "id": "raise_to_2",
+            "hand": "♠KJ76 ♥AQ54 ♦K32 ♣65",
+            "hcp": 13,
+            "auction": ["1♥", "Pass", "1♠", "Pass"],
+            "expected_bid": "2♠",
+            "explanation": "Raise responder's major with 4-card support and minimum"
+          },
+          {
+            "id": "raise_to_3_invitational",
+            "hand": "♠KJ76 ♥AQ543 ♦AK2 ♣5",
+            "hcp": 16,
+            "auction": ["1♥", "Pass", "1♠", "Pass"],
+            "expected_bid": "3♠",
+            "explanation": "Jump raise with 16-18 HCP and 4-card support"
+          },
+          {
+            "id": "raise_to_4_maximum",
+            "hand": "♠KJ76 ♥AKQ54 ♦AK2 ♣5",
+            "hcp": 19,
+            "auction": ["1♥", "Pass", "1♠", "Pass"],
+            "expected_bid": "4♠",
+            "explanation": "Raise to game with 19+ HCP and 4-card support"
+          }
+        ],
+        "jump_rebid": [
+          {
+            "id": "jump_rebid_suit",
+            "hand": "♠AKQ765 ♥K43 ♦AQ ♣65",
+            "hcp": 17,
+            "auction": ["1♠", "Pass", "1NT", "Pass"],
+            "expected_bid": "3♠",
+            "explanation": "Jump rebid showing 16-18 HCP and 6+ card suit"
+          },
+          {
+            "id": "jump_to_2nt",
+            "hand": "♠KJ4 ♥AQ76 ♦AQ3 ♣K54",
+            "hcp": 18,
+            "auction": ["1♥", "Pass", "1♠", "Pass"],
+            "expected_bid": "2NT",
+            "explanation": "Jump to 2NT showing 18-19 HCP balanced"
+          }
+        ]
+      }
+    },
+    "level_3_responder_rebid": {
+      "name": "Level 3: Responder's Rebid",
+      "description": "Tests for responder's second bid",
+      "tests": {
+        "preference": [
+          {
+            "id": "simple_preference",
+            "hand": "♠Q76 ♥K543 ♦8654 ♣32",
+            "hcp": 7,
+            "auction": ["1♥", "Pass", "1♠", "Pass", "2♦", "Pass"],
+            "expected_bid": "2♥",
+            "explanation": "Give preference to opener's first suit with 3-card support"
+          }
+        ],
+        "sign_off": [
+          {
+            "id": "sign_off_2_major",
+            "hand": "♠QJ765 ♥654 ♦K32 ♣54",
+            "hcp": 7,
+            "auction": ["1♦", "Pass", "1♠", "Pass", "2♦", "Pass"],
+            "expected_bid": "2♠",
+            "explanation": "Sign off in 5+ card major with minimum"
+          }
+        ],
+        "invite_game": [
+          {
+            "id": "invite_2nt",
+            "hand": "♠KJ7 ♥Q543 ♦K654 ♣32",
+            "hcp": 10,
+            "auction": ["1♦", "Pass", "1♥", "Pass", "1NT", "Pass"],
+            "expected_bid": "2NT",
+            "explanation": "Invite game with 10-12 HCP balanced"
+          },
+          {
+            "id": "invite_3_major",
+            "hand": "♠KJ76 ♥Q54 ♦K654 ♣32",
+            "hcp": 10,
+            "auction": ["1♠", "Pass", "2♠", "Pass", "Pass", "Pass"],
+            "notes": "After single raise, pass with minimum",
+            "expected_bid": "Pass",
+            "explanation": "Already invited with limit raise would be different auction"
+          }
+        ],
+        "game_force": [
+          {
+            "id": "bid_game",
+            "hand": "♠KJ76 ♥AQ5 ♦K654 ♣Q2",
+            "hcp": 14,
+            "auction": ["1♠", "Pass", "2NT", "Pass", "3♠", "Pass"],
+            "expected_bid": "4♠",
+            "explanation": "Bid game with fit and game values"
+          }
+        ]
+      }
+    },
+    "level_4_competitive": {
+      "name": "Level 4: Competitive Bidding",
+      "description": "Tests for competitive situations (overcalls, doubles)",
+      "tests": {
+        "simple_overcall": [
+          {
+            "id": "overcall_1h",
+            "hand": "♠K43 ♥AQJ76 ♦K32 ♣65",
+            "hcp": 12,
+            "auction": ["1♦", "Pass"],
+            "position": "overcall",
+            "expected_bid": "1♥",
+            "explanation": "Overcall 1♥ with 10+ HCP and good 5-card suit"
+          },
+          {
+            "id": "overcall_1s_strong_suit",
+            "hand": "♠KQJ76 ♥654 ♦A32 ♣54",
+            "hcp": 10,
+            "auction": ["1♣", "Pass"],
+            "position": "overcall",
+            "expected_bid": "1♠",
+            "explanation": "Overcall with minimum HCP but strong 5-card major"
+          }
+        ],
+        "takeout_double": [
+          {
+            "id": "takeout_double_classic",
+            "hand": "♠KJ76 ♥AQ54 ♦3 ♣KJ32",
+            "hcp": 14,
+            "auction": ["1♦", "Pass"],
+            "position": "overcall",
+            "expected_bid": "X",
+            "explanation": "Takeout double with support for unbid suits"
+          },
+          {
+            "id": "takeout_double_strong",
+            "hand": "♠AQ76 ♥AKJ5 ♦A32 ♣54",
+            "hcp": 17,
+            "auction": ["1♣", "Pass"],
+            "position": "overcall",
+            "expected_bid": "X",
+            "explanation": "Strong takeout double with 17+ HCP"
+          }
+        ],
+        "balancing": [
+          {
+            "id": "balancing_1nt",
+            "hand": "♠KJ4 ♥AQ7 ♦K865 ♣Q32",
+            "hcp": 14,
+            "auction": ["1♥", "Pass", "Pass"],
+            "position": "balancing",
+            "expected_bid": "1NT",
+            "explanation": "Balancing 1NT with 11-14 HCP (Borrowed King: vs direct 15-18)"
+          },
+          {
+            "id": "balancing_double",
+            "hand": "♠KJ76 ♥3 ♦AQ54 ♣J932",
+            "hcp": 11,
+            "auction": ["1♥", "Pass", "Pass"],
+            "position": "balancing",
+            "expected_bid": "X",
+            "explanation": "Balancing double with 8+ HCP (Borrowed King: vs direct 12+)"
+          },
+          {
+            "id": "balancing_suit",
+            "hand": "♠KQJ76 ♥43 ♦K32 ♣654",
+            "hcp": 10,
+            "auction": ["1♥", "Pass", "Pass"],
+            "position": "balancing",
+            "expected_bid": "1♠",
+            "explanation": "Balancing suit bid with 8+ HCP and 5+ cards"
+          }
+        ],
+        "advancer_bids": [
+          {
+            "id": "advance_cue_bid",
+            "hand": "♠KJ76 ♥AQ54 ♦K32 ♣65",
+            "hcp": 14,
+            "auction": ["1♦", "1♥", "Pass"],
+            "position": "advancer",
+            "expected_bid": "2♦",
+            "explanation": "Cue bid to show limit raise+ values in partner's suit"
+          },
+          {
+            "id": "advance_new_suit",
+            "hand": "♠KQJ76 ♥654 ♦K32 ♣54",
+            "hcp": 10,
+            "auction": ["1♦", "1♥", "Pass"],
+            "position": "advancer",
+            "expected_bid": "1♠",
+            "explanation": "New suit response to partner's overcall"
+          }
+        ]
+      }
+    },
+    "essential_conventions": {
+      "name": "Essential Conventions",
+      "description": "Tests for standard SAYC conventions",
+      "tests": {
+        "stayman": [
+          {
+            "id": "stayman_both_majors",
+            "hand": "♠KJ76 ♥AQ54 ♦654 ♣32",
+            "hcp": 11,
+            "auction": ["1NT", "Pass"],
+            "expected_bid": "2♣",
+            "explanation": "Use Stayman with 4-4 majors and invitational+ values"
+          },
+          {
+            "id": "stayman_response_hearts",
+            "hand": "♠K43 ♥AQ76 ♦KJ3 ♣A54",
+            "hcp": 16,
+            "auction": ["1NT", "Pass", "2♣", "Pass"],
+            "expected_bid": "2♥",
+            "explanation": "Show 4-card heart suit in response to Stayman"
+          },
+          {
+            "id": "stayman_response_no_major",
+            "hand": "♠K43 ♥A76 ♦KJ32 ♣A54",
+            "hcp": 16,
+            "auction": ["1NT", "Pass", "2♣", "Pass"],
+            "expected_bid": "2♦",
+            "explanation": "Deny 4-card major with 2♦ response"
+          }
+        ],
+        "jacoby_transfers": [
+          {
+            "id": "transfer_hearts",
+            "hand": "♠654 ♥KQJ76 ♦K32 ♣54",
+            "hcp": 9,
+            "auction": ["1NT", "Pass"],
+            "expected_bid": "2♦",
+            "explanation": "Transfer to hearts with 5+ hearts"
+          },
+          {
+            "id": "transfer_spades",
+            "hand": "♠AQJ76 ♥654 ♦K32 ♣54",
+            "hcp": 10,
+            "auction": ["1NT", "Pass"],
+            "expected_bid": "2♥",
+            "explanation": "Transfer to spades with 5+ spades"
+          },
+          {
+            "id": "accept_transfer",
+            "hand": "♠K43 ♥AQ76 ♦KJ3 ♣A54",
+            "hcp": 16,
+            "auction": ["1NT", "Pass", "2♦", "Pass"],
+            "expected_bid": "2♥",
+            "explanation": "Accept transfer to hearts"
+          },
+          {
+            "id": "super_accept",
+            "hand": "♠KJ76 ♥AQ76 ♦KJ ♣A54",
+            "hcp": 17,
+            "auction": ["1NT", "Pass", "2♦", "Pass"],
+            "expected_bid": "3♥",
+            "explanation": "Super-accept with 4-card support and maximum"
+          }
+        ],
+        "blackwood": [
+          {
+            "id": "ask_for_aces",
+            "hand": "♠AKQJ76 ♥A ♦AK32 ♣54",
+            "hcp": 19,
+            "auction": ["1♠", "Pass", "3♠", "Pass"],
+            "expected_bid": "4NT",
+            "explanation": "Ask for aces with slam interest"
+          },
+          {
+            "id": "show_one_ace",
+            "hand": "♠QJ76 ♥A54 ♦K654 ♣32",
+            "hcp": 11,
+            "auction": ["1♠", "Pass", "3♠", "Pass", "4NT", "Pass"],
+            "expected_bid": "5♦",
+            "explanation": "Show one ace with 5♦ (1430 response)"
+          },
+          {
+            "id": "show_no_aces",
+            "hand": "♠QJ76 ♥K54 ♦K654 ♣Q2",
+            "hcp": 11,
+            "auction": ["1♠", "Pass", "3♠", "Pass", "4NT", "Pass"],
+            "expected_bid": "5♣",
+            "explanation": "Show zero aces with 5♣ (0314 response)"
+          }
+        ],
+        "negative_double": [
+          {
+            "id": "negative_double_both_majors",
+            "hand": "♠KJ76 ♥AQ54 ♦654 ♣32",
+            "hcp": 11,
+            "auction": ["1♣", "1♦", "Pass"],
+            "expected_bid": "X",
+            "explanation": "Negative double showing both majors"
+          },
+          {
+            "id": "negative_double_hearts",
+            "hand": "♠654 ♥KQJ7 ♦K32 ♣654",
+            "hcp": 9,
+            "auction": ["1♦", "1♠", "Pass"],
+            "expected_bid": "X",
+            "explanation": "Negative double showing 4 hearts"
+          }
+        ],
+        "fourth_suit_forcing": [
+          {
+            "id": "fsf_artificial",
+            "hand": "♠AKJ76 ♥K54 ♦654 ♣A2",
+            "hcp": 14,
+            "auction": ["1♣", "Pass", "1♠", "Pass", "2♦", "Pass"],
+            "expected_bid": "2♥",
+            "explanation": "Fourth suit forcing (artificial, game forcing)"
+          }
+        ]
+      }
+    }
+  },
+  "validation_rules": {
+    "hcp_calculation": "Count A=4, K=3, Q=2, J=1",
+    "suit_symbols": ["♠", "♥", "♦", "♣"],
+    "bid_format": "[level][suit|NT]",
+    "special_bids": ["Pass", "X", "XX"]
+  }
+}

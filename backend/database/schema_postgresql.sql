@@ -26,7 +26,7 @@ DROP TABLE IF EXISTS users CASCADE;
 
 -- Core Users Table
 CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
     email TEXT UNIQUE,
     phone TEXT UNIQUE,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- User Settings (Privacy & Preferences)
 CREATE TABLE IF NOT EXISTS user_settings (
-    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     tracking_enabled BOOLEAN DEFAULT TRUE,
     share_progress BOOLEAN DEFAULT FALSE,
     show_in_leaderboards BOOLEAN DEFAULT FALSE,
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
 
 -- User Gamification Stats
 CREATE TABLE IF NOT EXISTS user_gamification (
-    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     total_xp INTEGER DEFAULT 0,
     current_level INTEGER DEFAULT 1,
     xp_to_next_level INTEGER DEFAULT 500,
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS user_gamification (
 -- Practice Session Tracking
 CREATE TABLE IF NOT EXISTS practice_sessions (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     session_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     session_end TIMESTAMP,
     hands_practiced INTEGER DEFAULT 0,
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS practice_sessions (
 -- Enhanced Practice History
 CREATE TABLE IF NOT EXISTS practice_history (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     session_id INTEGER REFERENCES practice_sessions(id) ON DELETE SET NULL,
     hand_id TEXT,
     convention_id TEXT,
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS practice_history (
 -- Mistake Patterns (Aggregated Analysis)
 CREATE TABLE IF NOT EXISTS mistake_patterns (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     convention_id TEXT,
     error_category TEXT NOT NULL,
     error_subcategory TEXT,
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS mistake_patterns (
 -- Improvement Milestones
 CREATE TABLE IF NOT EXISTS improvement_milestones (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     milestone_type TEXT NOT NULL,
     milestone_subtype TEXT,
     convention_id TEXT,
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS improvement_milestones (
 -- Streak History
 CREATE TABLE IF NOT EXISTS streak_history (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     streak_start_date DATE NOT NULL,
     streak_end_date DATE,
     streak_length_days INTEGER NOT NULL,
@@ -194,7 +194,7 @@ CREATE TABLE IF NOT EXISTS celebration_templates (
 -- Game Sessions
 CREATE TABLE IF NOT EXISTS game_sessions (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     session_type TEXT DEFAULT 'chicago',
     hands_completed INTEGER DEFAULT 0,
     current_hand_number INTEGER DEFAULT 1,
@@ -274,7 +274,7 @@ CREATE TABLE IF NOT EXISTS convention_prerequisites (
 
 -- User convention progress
 CREATE TABLE IF NOT EXISTS user_convention_progress (
-    user_id INTEGER NOT NULL,
+    user_id BIGINT NOT NULL,
     convention_id TEXT NOT NULL REFERENCES conventions(convention_id),
     status TEXT NOT NULL DEFAULT 'locked' CHECK(status IN ('locked', 'unlocked', 'in_progress', 'mastered')),
     attempts INTEGER DEFAULT 0,
@@ -288,7 +288,7 @@ CREATE TABLE IF NOT EXISTS user_convention_progress (
 
 -- User skill progress (for Learning Mode Levels 0-4, 6)
 CREATE TABLE IF NOT EXISTS user_skill_progress (
-    user_id INTEGER NOT NULL,
+    user_id BIGINT NOT NULL,
     skill_id TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'locked' CHECK(status IN ('locked', 'unlocked', 'in_progress', 'mastered')),
     skill_level INTEGER NOT NULL DEFAULT 0,  -- Curriculum level (0-8)
@@ -304,7 +304,7 @@ CREATE TABLE IF NOT EXISTS user_skill_progress (
 -- Skill practice history
 CREATE TABLE IF NOT EXISTS skill_practice_history (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    user_id BIGINT NOT NULL,
     skill_id TEXT NOT NULL,
     skill_level INTEGER NOT NULL,
     hand_id TEXT,
@@ -319,7 +319,7 @@ CREATE TABLE IF NOT EXISTS skill_practice_history (
 -- Convention practice history
 CREATE TABLE IF NOT EXISTS convention_practice_history (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    user_id BIGINT NOT NULL,
     convention_id TEXT NOT NULL REFERENCES conventions(convention_id),
     hand_id TEXT,
     user_bid TEXT,
@@ -338,7 +338,7 @@ CREATE TABLE IF NOT EXISTS convention_practice_history (
 CREATE TABLE IF NOT EXISTS bidding_decisions (
     id SERIAL PRIMARY KEY,
     hand_analysis_id INTEGER,
-    user_id INTEGER NOT NULL,
+    user_id BIGINT NOT NULL,
     session_id TEXT,
     bid_number INTEGER NOT NULL,
     position TEXT NOT NULL,
@@ -362,7 +362,7 @@ CREATE TABLE IF NOT EXISTS bidding_decisions (
 -- Hand Analyses
 CREATE TABLE IF NOT EXISTS hand_analyses (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    user_id BIGINT NOT NULL,
     session_id TEXT,
     dealer TEXT,
     vulnerability TEXT,
@@ -464,7 +464,7 @@ CREATE INDEX IF NOT EXISTS idx_ai_play_log_fallback ON ai_play_log(used_fallback
 -- Similar to bidding_decisions but for card play evaluation
 CREATE TABLE IF NOT EXISTS play_decisions (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    user_id BIGINT NOT NULL,
     session_id TEXT,
     position TEXT NOT NULL CHECK(position IN ('N', 'E', 'S', 'W')),
     trick_number INTEGER,

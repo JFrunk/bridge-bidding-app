@@ -1,13 +1,14 @@
 """
 Session Manager - Multi-hand game session tracking
 
-Manages Chicago Bridge sessions (4 hands with rotating dealer/vulnerability)
-and other session types. Fully integrated with user management system.
+Manages continuous play sessions with rotating dealer/vulnerability.
+Sessions are effectively infinite (no forced 4-hand boundaries) to simplify UX.
 
 Features:
 - Multi-user session tracking
-- Chicago Bridge format (4 hands, rotating dealer, predetermined vulnerability)
+- Rotating dealer (N → E → S → W) and vulnerability (None → NS → EW → Both)
 - Complete hand history with scoring
+- Cumulative NS vs EW scoring (optional display)
 - Session statistics and analytics
 """
 
@@ -35,15 +36,19 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+# Default to continuous play (effectively infinite hands)
+DEFAULT_MAX_HANDS = 9999
+
+
 @dataclass
 class GameSession:
-    """Manages multi-hand game sessions"""
+    """Manages multi-hand game sessions with continuous play"""
     id: Optional[int] = None
     user_id: int = 1
-    session_type: str = 'chicago'
+    session_type: str = 'continuous'  # Changed from 'chicago' - continuous is now default
     hands_completed: int = 0
     current_hand_number: int = 1
-    max_hands: int = 4
+    max_hands: int = DEFAULT_MAX_HANDS  # Effectively infinite
     ns_score: int = 0
     ew_score: int = 0
     status: str = 'active'
@@ -53,17 +58,17 @@ class GameSession:
     completed_at: Optional[str] = None
     total_time_seconds: int = 0
 
-    # Chicago schedule constants
-    CHICAGO_DEALERS = ['N', 'E', 'S', 'W']
-    CHICAGO_VULNERABILITY = ['None', 'NS', 'EW', 'Both']
+    # Rotation constants (dealer and vulnerability cycle through 4 positions)
+    DEALERS = ['N', 'E', 'S', 'W']
+    VULNERABILITY_ROTATION = ['None', 'NS', 'EW', 'Both']
 
     def get_current_dealer(self) -> str:
-        """Get dealer for current hand based on Chicago rotation"""
-        return self.CHICAGO_DEALERS[(self.current_hand_number - 1) % 4]
+        """Get dealer for current hand based on rotation (N → E → S → W)"""
+        return self.DEALERS[(self.current_hand_number - 1) % 4]
 
     def get_current_vulnerability(self) -> str:
-        """Get vulnerability for current hand based on Chicago schedule"""
-        return self.CHICAGO_VULNERABILITY[(self.current_hand_number - 1) % 4]
+        """Get vulnerability for current hand based on rotation (None → NS → EW → Both)"""
+        return self.VULNERABILITY_ROTATION[(self.current_hand_number - 1) % 4]
 
     def add_hand_score(self, declarer: str, score: int) -> None:
         """
@@ -105,18 +110,17 @@ class GameSession:
         self.hands_completed += 1
         self.current_hand_number += 1
 
+        # Note: With DEFAULT_MAX_HANDS = 9999, sessions effectively never complete
+        # This check is kept for backwards compatibility but won't trigger in normal use
         if self.hands_completed >= self.max_hands:
             self.status = 'completed'
 
     def is_complete(self) -> bool:
-        """Check if session has completed all hands"""
+        """Check if session has completed all hands (effectively always False for continuous play)"""
         return self.hands_completed >= self.max_hands
 
-    def get_winner(self) -> Optional[str]:
-        """Get session winner (NS, EW, or Tied)"""
-        if not self.is_complete():
-            return None
-
+    def get_current_leader(self) -> str:
+        """Get current leader based on cumulative scores (NS, EW, or Tied)"""
         if self.ns_score > self.ew_score:
             return 'NS'
         elif self.ew_score > self.ns_score:
@@ -124,30 +128,33 @@ class GameSession:
         else:
             return 'Tied'
 
-    def get_user_won(self) -> Optional[bool]:
-        """Check if user won the session based on their position"""
+    def get_winner(self) -> Optional[str]:
+        """
+        Get session winner - only meaningful if session is complete.
+        With continuous play, sessions rarely complete so this rarely returns non-None.
+        Kept for backward compatibility.
+        """
         if not self.is_complete():
             return None
+        return self.get_current_leader()
 
-        winner = self.get_winner()
-        if winner == 'Tied':
+    def get_user_won(self) -> Optional[bool]:
+        """
+        Check if user won the session - only meaningful if session is complete.
+        With continuous play, sessions rarely complete so this rarely returns non-None.
+        Kept for backward compatibility.
+        """
+        if not self.is_complete():
             return None
-
+        leader = self.get_current_leader()
+        if leader == 'Tied':
+            return None
         user_on_ns = self.player_position in ['N', 'S']
-        return (winner == 'NS') == user_on_ns
+        return (leader == 'NS') == user_on_ns
 
     def get_score_difference(self) -> int:
         """Get absolute score difference"""
         return abs(self.ns_score - self.ew_score)
-
-    def get_current_leader(self) -> str:
-        """Get current leader (NS, EW, or Tied)"""
-        if self.ns_score > self.ew_score:
-            return 'NS'
-        elif self.ew_score > self.ns_score:
-            return 'EW'
-        else:
-            return 'Tied'
 
     def to_dict(self) -> Dict:
         """Convert to dictionary for JSON serialization"""
@@ -156,15 +163,12 @@ class GameSession:
             'user_id': self.user_id,
             'session_type': self.session_type,
             'hands_completed': self.hands_completed,
-            'current_hand_number': self.current_hand_number,
-            'max_hands': self.max_hands,
+            'hand_number': self.current_hand_number,  # Renamed for clarity
             'ns_score': self.ns_score,
             'ew_score': self.ew_score,
             'status': self.status,
             'dealer': self.get_current_dealer(),
             'vulnerability': self.get_current_vulnerability(),
-            'is_complete': self.is_complete(),
-            'winner': self.get_winner(),
             'current_leader': self.get_current_leader(),
             'score_difference': self.get_score_difference(),
             'player_position': self.player_position,
@@ -184,7 +188,7 @@ class SessionManager:
         return get_connection()
 
     def create_session(self, user_id: int = 1,
-                      session_type: str = 'chicago',
+                      session_type: str = 'continuous',
                       player_position: str = 'S',
                       ai_difficulty: str = 'intermediate') -> GameSession:
         """
@@ -192,7 +196,7 @@ class SessionManager:
 
         Args:
             user_id: User ID (default 1 for backward compatibility)
-            session_type: Type of session ('chicago', 'rubber', 'practice')
+            session_type: Type of session ('continuous' for normal play, 'chicago' for legacy)
             player_position: Which position user plays (default 'S')
             ai_difficulty: AI difficulty level
 
@@ -202,7 +206,17 @@ class SessionManager:
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        max_hands = 4 if session_type == 'chicago' else 100  # Arbitrary large number for practice
+        # Use infinite hands for continuous play (default)
+        max_hands = DEFAULT_MAX_HANDS
+
+        # Ensure guest users (negative IDs) exist in users table for FK constraint
+        if user_id and int(user_id) < 0:
+            cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
+            if not cursor.fetchone():
+                cursor.execute("""
+                    INSERT INTO users (id, username, display_name)
+                    VALUES (?, ?, ?)
+                """, (user_id, f'guest_{abs(user_id)}', 'Guest'))
 
         cursor.execute("""
             INSERT INTO game_sessions
@@ -338,8 +352,17 @@ class SessionManager:
         contract = hand_data.get('contract')
 
         # Check if DDS columns exist (migration 007)
-        cursor.execute("PRAGMA table_info(session_hands)")
-        columns = {row['name'] for row in cursor.fetchall()}
+        # Use information_schema for PostgreSQL, PRAGMA for SQLite
+        from db import USE_POSTGRES
+        if USE_POSTGRES:
+            cursor.execute(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'session_hands'"
+            )
+            columns = {row['column_name'] for row in cursor.fetchall()}
+        else:
+            cursor.execute("PRAGMA table_info(session_hands)")
+            columns = {row['name'] for row in cursor.fetchall()}
         has_dds_columns = 'dds_analysis' in columns
 
         # Perform DDS analysis if available (non-blocking)

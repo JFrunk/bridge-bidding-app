@@ -1,3 +1,15 @@
+---
+description: Analyze error logs for bidding and play issues
+---
+
+---
+description: Analyze error logs for bidding and play issues
+---
+
+---
+description: Analyze error logs for bidding and play issues
+---
+
 Analyze error logs for bidding and play issues: $ARGUMENTS
 
 Optional arguments: --recent N, --patterns, --category NAME

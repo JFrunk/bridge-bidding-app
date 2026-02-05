@@ -46,12 +46,12 @@ class GerberConvention(ConventionModule):
             return result
 
         # Bid is illegal - try to find next legal bid
-        next_legal = get_next_legal_bid(bid, auction_history)
+        next_legal = get_next_legal_bid(bid, auction_history, max_level_jump=1)
         if next_legal:
             try:
                 original_level = int(bid[0])
                 adjusted_level = int(next_legal[0])
-                if adjusted_level - original_level > 2:
+                if adjusted_level - original_level > 1:
                     return ("Pass", f"Cannot make reasonable Gerber bid (suggested {bid}, would need {next_legal}).")
             except (ValueError, IndexError):
                 pass
@@ -128,8 +128,8 @@ class GerberConvention(ConventionModule):
         # - 2NT (20-21) + 14 = 34+, guaranteed slam if aces are there
         if partner_last_bid == '1NT' and hand.hcp < 18:
             return False  # Use 4NT quantitative with 16-17 HCP instead
-        if partner_last_bid == '2NT' and hand.hcp < 14:
-            return False  # Use 4NT quantitative with 12-13 HCP instead
+        if partner_last_bid == '2NT' and hand.hcp < 15:
+            return False  # With 13-14 HCP opposite 2NT, bid 6NT directly
         if partner_last_bid == '3NT' and hand.hcp < 12:
             return False
 

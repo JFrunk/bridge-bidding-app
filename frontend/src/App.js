@@ -9,16 +9,20 @@ import { ReviewModal } from './components/bridge/ReviewModal';
 import { FeedbackModal } from './components/bridge/FeedbackModal';
 import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
 import BidFeedbackPanel from './components/bridge/BidFeedbackPanel';
+import BeliefPanel from './components/bridge/BeliefPanel';
 import { GovernorConfirmDialog } from './components/bridge/GovernorConfirmDialog';
 import LearningDashboard from './components/learning/LearningDashboard';
 import LearningMode from './components/learning/LearningMode';
 import HandReviewModal from './components/learning/HandReviewModal';
+import HandReviewPage from './components/learning/HandReviewPage';
+import BidReviewPage from './components/learning/BidReviewPage';
 import { ModeSelector } from './components/ModeSelector';
 import { BiddingWorkspace } from './components/workspaces/BiddingWorkspace';
 import { PlayWorkspace } from './components/workspaces/PlayWorkspace';
 import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { UserProvider } from './contexts/UserContext';
+import { UserProvider, useUser } from './contexts/UserContext';
+import WelcomeWizard from './components/onboarding/WelcomeWizard';
 import { SimpleLogin } from './components/auth/SimpleLogin';
 import { RegistrationPrompt } from './components/auth/RegistrationPrompt';
 import DDSStatusIndicator from './components/DDSStatusIndicator';
@@ -28,6 +32,7 @@ import { getRecentLogs } from './utils/consoleCapture';
 import { getRecentActions } from './utils/actionTracker';
 import { GlossaryDrawer } from './components/glossary';
 import TopNavigation from './components/navigation/TopNavigation';
+import UserMenu from './components/navigation/UserMenu';
 import { useDevMode } from './hooks/useDevMode';
 import { TrickPotentialChart, TrickPotentialButton } from './components/analysis/TrickPotentialChart';
 
@@ -241,7 +246,6 @@ function App() {
   // Auth state - now includes registration prompt features
   const {
     user,
-    logout,
     isAuthenticated,
     loading: authLoading,
     userId,
@@ -249,8 +253,13 @@ function App() {
     showRegistrationPrompt,
     dismissRegistrationPrompt,
     recordHandCompleted,
-    promptForRegistration
+    promptForRegistration,
+    requiresRegistration
   } = useAuth();
+
+  // User experience state - for first-time onboarding
+  const { shouldShowWelcomeWizard, setExperienceLevel } = useUser();
+
   const [showLogin, setShowLogin] = useState(false);
 
   // Dev mode - toggle with Ctrl+Shift+D (or Cmd+Shift+D on Mac)
@@ -267,22 +276,24 @@ function App() {
   const [players] = useState(['North', 'East', 'South', 'West']);
   const [dealer, setDealer] = useState('North');
 
-  // DERIVED STATE: Calculate nextPlayerIndex from auction length and dealer
-  // This prevents state synchronization bugs between auction and nextPlayerIndex
+  // Backend-authoritative bidder: set from API responses (/api/deal-hands,
+  // /api/get-next-bid, /api/evaluate-bid).  The backend is the single source
+  // of truth for whose turn it is to bid.
+  const [nextBidder, setNextBidder] = useState(null);
+
+  // Derive the numeric index for UI display (BiddingTable highlight, etc.)
   const nextPlayerIndex = useMemo(() => {
-    const dealerIndex = players.indexOf(dealer);
-    if (dealerIndex === -1) {
-      console.error('❌ Invalid dealer:', dealer);
-      return 0; // Fallback to North
-    }
-    return (dealerIndex + auction.length) % 4;
-  }, [auction.length, dealer, players]);
+    if (!nextBidder) return 0;
+    const idx = players.indexOf(nextBidder);
+    return idx >= 0 ? idx : 0;
+  }, [nextBidder, players]);
 
   const [isAiBidding, setIsAiBidding] = useState(false);
   const [error, setError] = useState('');
   const [displayedMessage, setDisplayedMessage] = useState('');
   const [bidFeedback, setBidFeedback] = useState(null);  // Structured feedback from evaluate-bid
   const [lastUserBid, setLastUserBid] = useState(null);  // Track last user bid for feedback display
+  const [beliefs, setBeliefs] = useState(null);  // BiddingState beliefs (partner + opponents)
 
   // Governor Safety Guard state - blocks critical/significant impact bids when hints are enabled
   const [pendingBid, setPendingBid] = useState(null);  // Bid waiting for governor confirmation
@@ -311,6 +322,20 @@ function App() {
   const [showLearningMode, setShowLearningMode] = useState(false);
   const [learningModeTrack, setLearningModeTrack] = useState('bidding'); // 'bidding' or 'play'
   const [showModeSelector, setShowModeSelector] = useState(true); // Landing page - shown by default
+
+  // Hand review - modal (keeping for post-game flow) and full-screen pages (new approach from dashboard)
+  const [showHandReviewModal, setShowHandReviewModal] = useState(false);
+  const [lastSavedHandId, setLastSavedHandId] = useState(null);
+
+  // Full-screen review pages (new approach from LearningDashboard)
+  const [showHandReviewPage, setShowHandReviewPage] = useState(false);
+  const [showBidReviewPage, setShowBidReviewPage] = useState(false);
+  const [reviewPageHandId, setReviewPageHandId] = useState(null);
+  const [reviewPageType, setReviewPageType] = useState('play'); // 'play' or 'bidding'
+  // Navigation data for review pages
+  const [reviewHandList, setReviewHandList] = useState([]);
+  const [reviewCurrentIndex, setReviewCurrentIndex] = useState(0);
+  const savedScrollPositionRef = useRef(0);
 
   // Hint Mode: When enabled, shows real-time feedback during bidding and play
   // This replaces the dev-only restriction with a user-controlled toggle
@@ -361,6 +386,25 @@ function App() {
     return bids.length >= 4 && nonPassBids.length === 0;
   }, []);
 
+  // Helper: Check if next player is user-controlled using BridgeRulesEngine data
+  // This replaces inconsistent inline checks with a single source of truth.
+  // Uses controllable_positions from backend when available, with comprehensive fallback.
+  const isNextPlayerUserControlled = useCallback((state) => {
+    if (!state || !state.next_to_play || !state.contract) return false;
+
+    // Prefer backend BridgeRulesEngine data (single-player mode aware)
+    if (state.controllable_positions) {
+      return state.controllable_positions.includes(state.next_to_play);
+    }
+
+    // Fallback: match AI loop's comprehensive single-player logic
+    const nsIsDeclaring = state.contract.declarer === 'N' || state.contract.declarer === 'S';
+    if (nsIsDeclaring) {
+      return state.next_to_play === 'N' || state.next_to_play === 'S';
+    }
+    return state.next_to_play === 'S';
+  }, []);
+
   // No longer auto-show login - users start as guests and can register later
   // The RegistrationPrompt will appear after they've played a few hands
 
@@ -391,9 +435,6 @@ function App() {
   const [isPlayingCard, setIsPlayingCard] = useState(false);
   const [scoreData, setScoreData] = useState(null);
 
-  // Hand review state
-  const [lastSavedHandId, setLastSavedHandId] = useState(null);
-  const [showHandReviewModal, setShowHandReviewModal] = useState(false);
 
   // Last trick display state
   const [showLastTrick, setShowLastTrick] = useState(false);
@@ -430,6 +471,19 @@ function App() {
   // Prevents duplicate triggers while avoiding infinite loops
   const hasTriggeredInitialBid = useRef(false);
 
+  // Track hand completion once when scoreData is set (avoids multiple code paths double-counting)
+  const lastRecordedScoreRef = useRef(null);
+  useEffect(() => {
+    if (scoreData && scoreData !== lastRecordedScoreRef.current) {
+      lastRecordedScoreRef.current = scoreData;
+      recordHandCompleted();
+    }
+  }, [scoreData, recordHandCompleted]);
+
+  // Ref to track if AI loop should be kept alive during state transitions
+  // Prevents cleanup function from killing the loop when we just want to restart it
+  const keepAiLoopAlive = useRef(false);
+
   const resetAuction = (dealData, skipInitialAiBidding = false) => {
     setInitialDeal(dealData);
     setHand(dealData.hand);
@@ -444,20 +498,25 @@ function App() {
     const dealerMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
     const currentDealer = dealerMap[dealerFromBackend] || dealerFromBackend;
 
+    // Set next bidder from backend response (source of truth)
+    const backendNextBidder = dealData.next_bidder || currentDealer;
     console.log('🎲 resetAuction:', {
       dealerFromBackend,
       currentDealer,
+      nextBidder: backendNextBidder,
       players
     });
 
     setDealer(currentDealer);
+    setNextBidder(backendNextBidder);
 
     setAuction([]);
+    setBeliefs(null);
 
     // Reset the AI bidding guards when auction is reset
     isAiBiddingInProgress.current = false;
     hasTriggeredInitialBid.current = skipInitialAiBidding;
-    // NOTE: nextPlayerIndex is now derived from dealer + auction.length
+// NOTE: nextPlayerIndex is now derived from dealer + auction.length
     // No need to manually set it - it will auto-calculate on next render
 
     setDisplayedMessage('');
@@ -632,15 +691,54 @@ ${otherCommands}`;
     setReviewFilename('');
   };
 
+  // Welcome wizard handler - saves experience level and routes to appropriate starting point
+  const handleExperienceSelect = (data) => {
+    // Save the experience level (this closes the wizard)
+    setExperienceLevel(data);
+
+    // Route based on selection
+    switch (data.route) {
+      case 'learning':
+        // Beginner: Go to Learning Mode for guided lessons
+        setShowModeSelector(false);
+        if (isGuest && requiresRegistration('learning')) {
+          promptForRegistration();
+        } else {
+          setShowLearningMode(true);
+          setCurrentWorkspace(null);
+        }
+        break;
+
+      case 'bid':
+        // Rusty: Jump straight into bidding practice
+        setShowModeSelector(false);
+        setCurrentWorkspace('bid');
+        setBiddingTab('random');
+        setGamePhase('bidding');
+        dealNewHand();
+        break;
+
+      case 'modeSelector':
+      default:
+        // Experienced: Show full mode selector to choose their path
+        setShowModeSelector(true);
+        break;
+    }
+  };
+
   // Mode selection handler - routes user to appropriate mode from landing page
   const handleModeSelect = async (modeId) => {
     setShowModeSelector(false);
 
     switch (modeId) {
       case 'learning':
-        // Open Learning Mode overlay
-        setShowLearningMode(true);
-        setCurrentWorkspace(null);
+        // Open Learning Mode overlay (guard for guest users)
+        if (isGuest && requiresRegistration('learning')) {
+          promptForRegistration();
+        } else {
+          setShowLearningMode(true);
+          setCurrentWorkspace(null);
+        }
         break;
 
       case 'bid':
@@ -666,9 +764,9 @@ ${otherCommands}`;
         // - Game is complete (scoreData exists from finished hand)
         // - No active play state exists
         const shouldStartFresh = showModeSelector ||
-                                 gamePhase !== 'playing' ||
-                                 scoreData !== null ||
-                                 !playState;
+          gamePhase !== 'playing' ||
+          scoreData !== null ||
+          !playState;
 
         if (shouldStartFresh) {
           playRandomHand();  // Deal fresh hand
@@ -678,8 +776,12 @@ ${otherCommands}`;
       }
 
       case 'progress':
-        // Open Progress dashboard
-        setShowLearningDashboard(true);
+        // Open Progress dashboard (guard for guest users)
+        if (isGuest && requiresRegistration('progress')) {
+          promptForRegistration();
+        } else {
+          setShowLearningDashboard(true);
+        }
         break;
 
       default:
@@ -835,8 +937,11 @@ ${otherCommands}`;
 
         // === BUG FIX: Use visible_hands from backend to populate declarer hand ===
         // Backend's BridgeRulesEngine determines which hands should be visible
+        // IMPORTANT: Only set declarerHand when declarer is NOT South (user).
+        // When S is declarer, the user's own hand is managed by the `hand` state.
+        // Setting declarerHand to S's cards causes duplication and stale-state bugs.
         const declarerPos = state.contract.declarer;
-        if (state.visible_hands && state.visible_hands[declarerPos]) {
+        if (declarerPos !== 'S' && state.visible_hands && state.visible_hands[declarerPos]) {
           const declarerCards = state.visible_hands[declarerPos].cards || [];
           console.log('👁️ Setting declarer hand from visible_hands (startPlayPhase):', {
             declarerPos,
@@ -844,7 +949,7 @@ ${otherCommands}`;
             visible_hands_keys: Object.keys(state.visible_hands)
           });
           setDeclarerHand(declarerCards);
-        } else if (state.dummy === 'S') {
+        } else if (declarerPos !== 'S' && state.dummy === 'S') {
           // FALLBACK: If visible_hands not available, use old method
           console.log('⚠️ visible_hands not available, falling back to /api/get-all-hands');
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
@@ -923,7 +1028,7 @@ ${otherCommands}`;
         body: JSON.stringify({
           position: 'S',
           card: { rank: card.rank, suit: card.suit },
-          user_id: userId || 1,
+          user_id: userId,
           session_id: sessionData?.session?.id
         })
       });
@@ -1001,7 +1106,6 @@ ${otherCommands}`;
               const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
               if (saved) scoreData._saved = true;
               setScoreData(scoreData);
-              recordHandCompleted();
             } else {
               const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
               console.error('❌ Failed to get score:', errorData);
@@ -1013,12 +1117,7 @@ ${otherCommands}`;
           }
 
           // Start AI loop only if it's not the user's turn
-          // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
-          // This fixes the bug where user couldn't play from North after first trick
-          const nsDeclaringAfterTrick = nextState.contract.declarer === 'N' || nextState.contract.declarer === 'S';
-          const nextIsUserTurn = nextState.next_to_play === 'S' ||
-                                (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
-          if (!nextIsUserTurn) {
+          if (!isNextPlayerUserControlled(nextState)) {
             // Reset flag first to ensure useEffect triggers, then set it back to true
             setIsPlayingCard(false);
             setTimeout(() => setIsPlayingCard(true), 100);
@@ -1031,11 +1130,7 @@ ${otherCommands}`;
         const updatedState = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } }).then(r => r.json());
         setPlayState(updatedState);
 
-        // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
-        const nsDeclaringInProgress = updatedState.contract.declarer === 'N' || updatedState.contract.declarer === 'S';
-        const nextIsUserTurn = updatedState.next_to_play === 'S' ||
-                              (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
-        if (!nextIsUserTurn) {
+        if (!isNextPlayerUserControlled(updatedState)) {
           // Reset flag first to ensure useEffect triggers, then set it back to true
           setIsPlayingCard(false);
           setTimeout(() => setIsPlayingCard(true), 100);
@@ -1086,7 +1181,7 @@ ${otherCommands}`;
         body: JSON.stringify({
           position: declarerPosition,
           card: { rank: card.rank, suit: card.suit },
-          user_id: userId || 1,
+          user_id: userId,
           session_id: sessionData?.session?.id
         })
       });
@@ -1158,7 +1253,6 @@ ${otherCommands}`;
               const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
               if (saved) scoreData._saved = true;
               setScoreData(scoreData);
-              recordHandCompleted();
             } else {
               const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
               console.error('❌ Failed to get score:', errorData);
@@ -1170,12 +1264,7 @@ ${otherCommands}`;
           }
 
           // Start AI loop only if it's not the user's turn
-          // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
-          // This fixes the bug where user couldn't play from North after first trick
-          const nsDeclaringAfterTrick = nextState.contract.declarer === 'N' || nextState.contract.declarer === 'S';
-          const nextIsUserTurn = nextState.next_to_play === 'S' ||
-                                (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
-          if (!nextIsUserTurn) {
+          if (!isNextPlayerUserControlled(nextState)) {
             // Reset flag first to ensure useEffect triggers, then set it back to true
             setIsPlayingCard(false);
             setTimeout(() => setIsPlayingCard(true), 100);
@@ -1188,11 +1277,7 @@ ${otherCommands}`;
         const updatedState = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } }).then(r => r.json());
         setPlayState(updatedState);
 
-        // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
-        const nsDeclaringInProgress = updatedState.contract.declarer === 'N' || updatedState.contract.declarer === 'S';
-        const nextIsUserTurn = updatedState.next_to_play === 'S' ||
-                              (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
-        if (!nextIsUserTurn) {
+        if (!isNextPlayerUserControlled(updatedState)) {
           // Reset flag first to ensure useEffect triggers, then set it back to true
           setIsPlayingCard(false);
           setTimeout(() => setIsPlayingCard(true), 100);
@@ -1249,7 +1334,7 @@ ${otherCommands}`;
         body: JSON.stringify({
           position: dummyPosition,
           card: { rank: card.rank, suit: card.suit },
-          user_id: userId || 1,
+          user_id: userId,
           session_id: sessionData?.session?.id
         })
       });
@@ -1321,7 +1406,6 @@ ${otherCommands}`;
               const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
               if (saved) scoreData._saved = true;
               setScoreData(scoreData);
-              recordHandCompleted();
             } else {
               const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
               console.error('❌ Failed to get score:', errorData);
@@ -1333,12 +1417,7 @@ ${otherCommands}`;
           }
 
           // Start AI loop only if it's not the user's turn
-          // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
-          // This fixes the bug where user couldn't play from North after first trick
-          const nsDeclaringAfterTrick = nextState.contract.declarer === 'N' || nextState.contract.declarer === 'S';
-          const nextIsUserTurn = nextState.next_to_play === 'S' ||
-                                (nextState.next_to_play === 'N' && nsDeclaringAfterTrick);
-          if (!nextIsUserTurn) {
+          if (!isNextPlayerUserControlled(nextState)) {
             // Reset flag first to ensure useEffect triggers, then set it back to true
             setIsPlayingCard(false);
             setTimeout(() => setIsPlayingCard(true), 100);
@@ -1351,11 +1430,7 @@ ${otherCommands}`;
         const updatedState = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } }).then(r => r.json());
         setPlayState(updatedState);
 
-        // CRITICAL FIX: User controls BOTH N and S when NS is declaring (declarer is N or S)
-        const nsDeclaringInProgress = updatedState.contract.declarer === 'N' || updatedState.contract.declarer === 'S';
-        const nextIsUserTurn = updatedState.next_to_play === 'S' ||
-                              (updatedState.next_to_play === 'N' && nsDeclaringInProgress);
-        if (!nextIsUserTurn) {
+        if (!isNextPlayerUserControlled(updatedState)) {
           // Reset flag first to ensure useEffect triggers, then set it back to true
           setIsPlayingCard(false);
           setTimeout(() => setIsPlayingCard(true), 100);
@@ -1437,12 +1512,8 @@ ${otherCommands}`;
               setLastSavedHandId(result.hand_id);
             }
 
-            if (result.session_complete) {
-              setDisplayedMessage(`Session complete! Winner: ${result.winner}`);
-            } else {
-              // Update dealer and vulnerability for next hand
-              setVulnerability(result.session.vulnerability);
-            }
+            // Update vulnerability for next hand (dealer/vuln rotation continues)
+            setVulnerability(result.session.vulnerability);
             return true;
           } else {
             const errorText = await response.text();
@@ -1454,7 +1525,7 @@ ${otherCommands}`;
           const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-            body: JSON.stringify({ user_id: userId || 1, session_type: 'chicago' })
+            body: JSON.stringify({ user_id: userId, session_type: 'continuous' })
           });
           if (sessionResponse.ok) {
             const newSession = await sessionResponse.json();
@@ -1485,6 +1556,55 @@ ${otherCommands}`;
     setScoreData(null);
   };
 
+  // Review page handlers - for full-screen play/bid analysis
+  const handleOpenReviewPage = (handId, type = 'play', handList = []) => {
+    savedScrollPositionRef.current = window.scrollY;
+    setReviewPageHandId(handId);
+    setReviewPageType(type);
+
+    // Setup navigation if hand list provided
+    if (handList.length > 0) {
+      setReviewHandList(handList);
+      const idx = handList.findIndex(h => (h.id || h.hand_id) === handId);
+      setReviewCurrentIndex(idx >= 0 ? idx : 0);
+    } else {
+      setReviewHandList([]);
+      setReviewCurrentIndex(0);
+    }
+
+    // Show appropriate page
+    if (type === 'play') {
+      setShowHandReviewPage(true);
+      setShowBidReviewPage(false);
+    } else {
+      setShowBidReviewPage(true);
+      setShowHandReviewPage(false);
+    }
+  };
+
+  const handleCloseReviewPage = () => {
+    const scrollY = savedScrollPositionRef.current;
+    setShowHandReviewPage(false);
+    setShowBidReviewPage(false);
+    setReviewPageHandId(null);
+    setReviewHandList([]);
+    setReviewCurrentIndex(0);
+    // Restore scroll position after React re-renders the previous view
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollY);
+    });
+  };
+
+  const handleNavigateReviewHand = (direction) => {
+    if (reviewHandList.length === 0) return;
+    const newIndex = reviewCurrentIndex + direction;
+    if (newIndex >= 0 && newIndex < reviewHandList.length) {
+      setReviewCurrentIndex(newIndex);
+      const hand = reviewHandList[newIndex];
+      setReviewPageHandId(hand.id || hand.hand_id);
+    }
+  };
+
   // ========== END CARD PLAY FUNCTIONS ==========
 
   const dealNewHand = async () => {
@@ -1496,17 +1616,13 @@ ${otherCommands}`;
       if (!response.ok) throw new Error("Failed to deal hands.");
       const data = await response.json();
 
-      // FIX: Map abbreviated dealer names to full names
-      const dealerMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
-      const dealerFromBackend = data.dealer || 'North';
-      const currentDealer = dealerMap[dealerFromBackend] || dealerFromBackend;
-
-      const shouldAiBid = players.indexOf(currentDealer) !== 2; // Dealer is not South
+      // Backend returns next_bidder — use it to decide if AI should start bidding
+      const shouldAiBid = data.next_bidder && data.next_bidder !== 'South';
 
       // Store DD table if provided (production only)
       setDdTable(data.dd_table || null);
 
-      resetAuction(data, !shouldAiBid); // Pass correct skipInitialAiBidding value
+      resetAuction(data, !shouldAiBid);
       setIsInitializing(false); // Ensure we're not in initializing state for manual deals
       setActiveConvention(null); // Exit convention mode when dealing random hand
     } catch (err) { setError("Could not connect to server to deal."); }
@@ -1563,15 +1679,16 @@ ${otherCommands}`;
         setPlayState(state);
 
         // === BUG FIX: Use visible_hands from backend ===
+        // Only set declarerHand when declarer is NOT South to avoid duplication
         const declarerPos = state.contract.declarer;
-        if (state.visible_hands && state.visible_hands[declarerPos]) {
+        if (declarerPos !== 'S' && state.visible_hands && state.visible_hands[declarerPos]) {
           const declarerCards = state.visible_hands[declarerPos].cards || [];
           console.log('👁️ Setting declarer hand from visible_hands (playRandomHand):', {
             declarerPos,
             cardCount: declarerCards.length
           });
           setDeclarerHand(declarerCards);
-        } else if (state.dummy === 'S') {
+        } else if (declarerPos !== 'S' && state.dummy === 'S') {
           // FALLBACK: Old method
           console.log('⚠️ visible_hands not available, falling back to /api/get-all-hands');
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
@@ -1633,15 +1750,16 @@ ${otherCommands}`;
         setPlayState(state);
 
         // === BUG FIX: Use visible_hands from backend ===
+        // Only set declarerHand when declarer is NOT South to avoid duplication
         const declarerPos = state.contract.declarer;
-        if (state.visible_hands && state.visible_hands[declarerPos]) {
+        if (declarerPos !== 'S' && state.visible_hands && state.visible_hands[declarerPos]) {
           const declarerCards = state.visible_hands[declarerPos].cards || [];
           console.log('👁️ Setting declarer hand from visible_hands (replayCurrentHand):', {
             declarerPos,
             cardCount: declarerCards.length
           });
           setDeclarerHand(declarerCards);
-        } else if (state.dummy === 'S') {
+        } else if (declarerPos !== 'S' && state.dummy === 'S') {
           // FALLBACK: Old method
           console.log('⚠️ visible_hands not available, falling back to /api/get-all-hands');
           const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
@@ -1733,7 +1851,7 @@ ${otherCommands}`;
     if (!initialDeal) return;
     resetAuction(initialDeal, true); // Skip initial AI bidding - wait for proper turn
   };
-  
+
   // Fetch scenarios (only once on mount)
   useEffect(() => {
     const fetchScenarios = async () => {
@@ -1747,30 +1865,41 @@ ${otherCommands}`;
     fetchScenarios();
   }, []);
 
-  // Start or resume session AFTER auth is loaded (when userId is available)
+  // Start or resume session AFTER auth is loaded AND userId is available
   useEffect(() => {
     // Wait for auth to finish loading before starting session
     if (authLoading) return;
 
+    // Don't start a session until we have a real userId (from login or guest)
+    // Without this guard, userId defaults to 1 which causes 500 errors.
+    // Keep isInitializing=true so AI bidding stays blocked until session starts.
+    if (!userId) return;
+
     const startSession = async () => {
       try {
-        // Use the actual userId or fallback to 1 for guests
-        const sessionUserId = userId || 1;
-        console.log(`🔄 Starting session for user_id: ${sessionUserId}`);
+        console.log(`🔄 Starting session for user_id: ${userId}`);
 
         const sessionResponse = await fetch(`${API_URL}/api/session/start`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-          body: JSON.stringify({ user_id: sessionUserId, session_type: 'chicago' })
+          body: JSON.stringify({ user_id: userId, session_type: 'continuous' })
         });
+
+        if (!sessionResponse.ok) {
+          console.error(`❌ Session start failed with status ${sessionResponse.status}`);
+          setIsInitializing(false);
+          return;
+        }
+
         const sessionData = await sessionResponse.json();
         setSessionData(sessionData);
 
         // Use dealer and vulnerability from session
-        const sessionVuln = sessionData.session.vulnerability;
-        setVulnerability(sessionVuln);
+        if (sessionData.session?.vulnerability) {
+          setVulnerability(sessionData.session.vulnerability);
+        }
 
-        console.log(`✅ Session ${sessionData.resumed ? 'resumed' : 'started'} for user ${sessionUserId}: ${sessionData.message}`);
+        console.log(`✅ Session ${sessionData.resumed ? 'resumed' : 'started'} for user ${userId}: ${sessionData.message}`);
       } catch (err) {
         console.error("Could not start session", err);
       }
@@ -1780,15 +1909,8 @@ ${otherCommands}`;
     startSession();
   }, [authLoading, userId]);
 
-  // Helper function to calculate whose turn it is based on dealer and auction length
-  const calculateExpectedBidder = (currentDealer, auctionLength) => {
-    const dealerIndex = players.indexOf(currentDealer);
-    if (dealerIndex === -1) {
-      console.error('❌ Invalid dealer for turn calculation:', currentDealer);
-      return 'North'; // Fallback
-    }
-    return players[(dealerIndex + auctionLength) % 4];
-  };
+  // calculateExpectedBidder removed — backend is now the single source of
+  // truth for whose turn it is to bid (via next_bidder in API responses).
 
   // Helper function to commit a bid after all validations/confirmations
   const commitBid = async (bid, feedbackData = null) => {
@@ -1803,17 +1925,42 @@ ${otherCommands}`;
     setDisplayedMessage('...');
     const newAuction = [...auction, { bid: bid, explanation: 'Your bid.', player: 'South' }];
 
-    // CRITICAL FIX: Use flushSync to force immediate render before AI bidding starts
-    // This ensures user's bid appears in the table before subsequent AI bids
+    // Optimistic next-bidder: clockwise from current position.
+    // The evaluate-bid response will carry the authoritative value.
+    const dealerIdx = players.indexOf(dealer);
+    const optimisticNextBidder = players[(dealerIdx + newAuction.length) % 4];
+
+    // Use flushSync to ensure user's bid and next bidder render together
     flushSync(() => {
       setAuction(newAuction);
+      setNextBidder(optimisticNextBidder);
     });
 
     // Enable AI bidding after user's bid is rendered
     setIsAiBidding(true);
 
     // If we already have feedback data (from pre-evaluation), use it
+    // BUT we must still record the bid on the backend — pre-evaluation used
+    // record_bid=false so state.auction_history is missing this bid.
     if (feedbackData) {
+      try {
+        const recordResponse = await fetch(`${API_URL}/api/evaluate-bid`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+          body: JSON.stringify({
+            user_bid: bid,
+            record_only: true
+          })
+        });
+        const recordData = await recordResponse.json();
+        if (recordData.next_bidder) {
+          setNextBidder(recordData.next_bidder);
+        }
+        if (recordData.beliefs) setBeliefs(recordData.beliefs);
+      } catch (err) {
+        console.error('❌ Failed to record bid on backend:', err);
+        // Fall through — optimistic nextBidder is already set
+      }
       setLastUserBid(bid);
       setBidFeedback(feedbackData.feedback || null);
       setDisplayedMessage(feedbackData.user_message || feedbackData.explanation || 'Bid recorded.');
@@ -1829,24 +1976,29 @@ ${otherCommands}`;
           user_bid: bid,
           auction_history: auction.map(a => a.bid),
           current_player: 'South',
-          user_id: userId || 1,
+          user_id: userId,
           session_id: sessionData?.session?.id,
           feedback_level: 'intermediate',
           use_v2_schema: useV2Schema
         })
       });
 
+      const data = await feedbackResponse.json();
+
       if (feedbackResponse.status === 400) {
-        const errorData = await feedbackResponse.json();
-        if (errorData.error && errorData.error.includes('Deal has not been made')) {
+        if (data.error && data.error.includes('Deal has not been made')) {
           console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
           setError("Session expired. Please deal a new hand to continue.");
           setIsAiBidding(false);
           return;
         }
+        console.warn('⚠️ evaluate-bid returned 400:', data.error);
       }
-
-      const data = await feedbackResponse.json();
+      // Update nextBidder from authoritative backend response
+      if (data.next_bidder) {
+        setNextBidder(data.next_bidder);
+      }
+      if (data.beliefs) setBeliefs(data.beliefs);
       setLastUserBid(bid);
       setBidFeedback(data.feedback || null);
       setDisplayedMessage(data.user_message || data.explanation || 'Bid recorded.');
@@ -1864,33 +2016,27 @@ ${otherCommands}`;
       return;
     }
 
-    // CRITICAL VALIDATION: Check if it's actually South's turn based on dealer rotation
-    const expectedBidder = calculateExpectedBidder(dealer, auction.length);
-    if (expectedBidder !== 'South') {
-      const errorMsg = `⚠️ Not your turn! Waiting for ${expectedBidder} to bid.`;
+    // CRITICAL VALIDATION: Check if it's actually South's turn (backend-authoritative)
+    if (nextBidder !== 'South') {
+      const errorMsg = `⚠️ Not your turn! Waiting for ${nextBidder} to bid.`;
       setError(errorMsg);
       setDisplayedMessage(errorMsg);
-      console.warn('🚫 User tried to bid out of turn:', {
-        dealer,
-        auctionLength: auction.length,
-        expectedBidder,
-        nextPlayerIndex,
-        players
-      });
+      console.warn('🚫 User tried to bid out of turn:', { nextBidder });
       return;
     }
 
     // Clear any previous errors
     setError('');
 
-    if (players[nextPlayerIndex] !== 'South' || isAiBidding) return;
+    if (nextBidder !== 'South' || isAiBidding) return;
 
     // Governor Safety Guard: When hints are enabled, pre-evaluate bid to check for critical issues
     if (hintModeEnabled) {
       setDisplayedMessage('Evaluating bid...');
 
       try {
-        // Pre-evaluate the bid BEFORE committing it
+        // Pre-evaluate the bid BEFORE committing it.
+        // record_bid: false so governor-blocked bids aren't recorded in session state.
         const feedbackResponse = await fetch(`${API_URL}/api/evaluate-bid`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
@@ -1898,24 +2044,26 @@ ${otherCommands}`;
             user_bid: bid,
             auction_history: auction.map(a => a.bid),
             current_player: 'South',
-            user_id: userId || 1,
+            user_id: userId,
             session_id: sessionData?.session?.id,
             feedback_level: 'intermediate',
-            use_v2_schema: useV2Schema
+            use_v2_schema: useV2Schema,
+            record_bid: false
           })
         });
 
-        // Handle session state loss (e.g., server restart)
-        if (feedbackResponse.status === 400) {
-          const errorData = await feedbackResponse.json();
-          if (errorData.error && errorData.error.includes('Deal has not been made')) {
+        const feedbackData = await feedbackResponse.json();
+
+        // Handle non-200 responses (400, 500, etc.)
+        if (!feedbackResponse.ok) {
+          if (feedbackData.error?.includes('Deal has not been made')) {
             console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
             setError("Session expired. Please deal a new hand to continue.");
             return;
           }
+          console.warn(`⚠️ Pre-evaluation returned ${feedbackResponse.status}:`, feedbackData.error);
+          throw new Error(feedbackData.error || 'Pre-evaluation failed');
         }
-
-        const feedbackData = await feedbackResponse.json();
 
         // DEBUG: Log response from evaluate-bid
         console.log('✅ EVALUATE-BID RESPONSE:', {
@@ -1971,151 +2119,112 @@ ${otherCommands}`;
     setShowGovernorDialog(false);
     setDisplayedMessage('Choose a different bid.');
   };
-  
+
   const handleBidClick = (bidObject) => { setDisplayedMessage(`[${bidObject.bid}] ${bidObject.explanation}`); };
-  
+
+  // ── AI BIDDING LOOP ──
+  // Driven by `nextBidder` (set from backend API responses).
+  // When nextBidder is an AI player and isAiBidding is true, this effect
+  // calls /api/get-next-bid.  The response includes `next_bidder` which
+  // is written into state, re-triggering this effect for the next turn.
   useEffect(() => {
-    console.log('🤖 AI BIDDING USEEFFECT TRIGGERED:', {
-      isInitializing,
-      isAiBidding,
-      auctionLength: auction.length,
-      dealer,
-      gamePhase
+    console.log('🤖 AI BIDDING USEEFFECT:', {
+      isInitializing, isAiBidding, nextBidder, auctionLength: auction.length, gamePhase
     });
 
-    // Don't start AI bidding during initialization
-    if (isInitializing) {
-      console.log('⏸️ AI bidding blocked: isInitializing = true');
-      return;
-    }
+    if (isInitializing) return;
 
-    // Check if auction is over
     if (isAuctionOver(auction)) {
-      console.log('🏁 Auction is over');
-      if (isAiBidding) {
-        setIsAiBidding(false);
-      }
+      if (isAiBidding) setIsAiBidding(false);
       return;
     }
 
-    // Determine whose turn it is
-    const currentPlayer = calculateExpectedBidder(dealer, auction.length);
-    console.log('👤 Current player calculated:', currentPlayer);
+    // Backend tells us whose turn it is
+    if (!nextBidder) return;
 
-    // If it's South's turn, stop AI bidding
-    if (currentPlayer === 'South') {
-      console.log('👤 South\'s turn - stopping AI bidding');
-      if (isAiBidding) {
-        setIsAiBidding(false);
-      }
-      return; // Don't make AI bid for South
+    if (nextBidder === 'South') {
+      if (isAiBidding) setIsAiBidding(false);
+      return;
     }
 
-    // It's an AI player's turn (North/East/West)
-    console.log('🤖 AI player turn:', currentPlayer, '| isAiBidding:', isAiBidding);
+    // It's an AI player's turn
+    if (!isAiBidding) return;
 
-    // If AI bidding is enabled, make the bid
-    if (isAiBidding) {
-      // Prevent concurrent AI bids using a ref guard
-      if (isAiBiddingInProgress.current) {
-        console.log('⏸️ AI bid already in progress - skipping');
-        return;
-      }
+    // Prevent concurrent AI bids
+    if (isAiBiddingInProgress.current) return;
 
-      console.log('✅ Starting AI turn for:', currentPlayer);
+    // Snapshot nextBidder at effect time for stale-check
+    const expectedBidder = nextBidder;
+    console.log('✅ Starting AI turn for:', expectedBidder);
 
-      const runAiTurn = async () => {
-        isAiBiddingInProgress.current = true;
-        console.log('⏱️ Waiting 500ms before AI bid...');
+    const runAiTurn = async () => {
+      isAiBiddingInProgress.current = true;
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-        await new Promise(resolve => setTimeout(resolve, 500));
-        try {
-          // Calculate current player from auction length and dealer
-          const currentPlayer = calculateExpectedBidder(dealer, auction.length);
-          console.log('🎯 AI making bid for:', currentPlayer);
-
-          // Double-check it's not South's turn
-          if (currentPlayer === 'South') {
-            console.log('❌ Safety check failed - South\'s turn detected');
-            setIsAiBidding(false);
-            isAiBiddingInProgress.current = false;
-            return;
-          }
-
-          console.log('📡 Fetching AI bid from server...');
-          const response = await fetch(`${API_URL}/api/get-next-bid`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-            body: JSON.stringify({
-              auction_history: auction.map(a => a.bid),
-              current_player: currentPlayer,
-              dealer: dealer,
-              use_v2_schema: useV2Schema  // Dev mode: test V2 Schema engine
-            })
-          });
-
-          // Handle session state loss (e.g., server restart)
-          if (response.status === 400) {
-            const errorData = await response.json();
-            if (errorData.error && errorData.error.includes('Deal has not been made')) {
-              console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
-              throw new Error("Session expired. Please deal a new hand to continue.");
-            }
-          }
-
-          if (!response.ok) throw new Error("AI failed to get bid.");
-          const data = await response.json();
-          console.log('✅ AI bid received:', data);
-
-          // CRITICAL: Release guard BEFORE updating auction
-          // This prevents race condition where flushSync triggers useEffect before guard is released
+      try {
+        // Stale-check: if nextBidder changed during delay, abort
+        // (nextBidder is captured via closure — this check uses the value
+        //  from the render that scheduled this effect)
+        if (nextBidder !== expectedBidder) {
           isAiBiddingInProgress.current = false;
-          console.log('🔓 AI bid guard released (before auction update)');
-
-          // Update auction with flushSync to force immediate render
-          // This ensures each AI bid appears before the next one starts
-          flushSync(() => {
-            setAuction(prevAuction => [...prevAuction, data]);
-          });
-          console.log('✅ Auction updated with AI bid');
-        } catch (err) {
-          console.error('❌ AI bidding error:', err);
-          setError("AI bidding failed. Is the server running?");
-          setIsAiBidding(false);
-          // Release guard on error
-          isAiBiddingInProgress.current = false;
-          console.log('🔓 AI bid guard released (error path)');
+          return;
         }
-      };
-      runAiTurn();
-    } else {
-      console.log('❌ AI bidding NOT enabled for', currentPlayer, '- waiting for isAiBidding to be true');
-    }
-    // Note: If isAiBidding is false but it's an AI player's turn, we do nothing
-    // This allows the user or other code to manually trigger AI bidding by calling setIsAiBidding(true)
-  }, [auction, nextPlayerIndex, isAiBidding, players, isInitializing, dealer, calculateExpectedBidder]);
 
-  // Trigger AI bidding after initialization completes (if dealer is not South)
-  // Uses ref to prevent duplicate triggers and avoid infinite loops
-  useEffect(() => {
-    if (!isInitializing && gamePhase === 'bidding' && auction.length === 0 && !hasTriggeredInitialBid.current) {
-      const currentPlayer = players[nextPlayerIndex];
-      console.log('🎬 Post-initialization check:', {
-        isInitializing,
-        currentPlayer,
-        nextPlayerIndex,
-        shouldStartAI: currentPlayer !== 'South',
-        hasTriggered: hasTriggeredInitialBid.current
-      });
+        console.log('📡 Fetching AI bid for:', expectedBidder);
+        const response = await fetch(`${API_URL}/api/get-next-bid`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+          body: JSON.stringify({
+            auction_history: auction.map(a => a.bid),
+            current_player: expectedBidder,
+            dealer: dealer,
+            use_v2_schema: useV2Schema
+          })
+        });
 
-      // Only start AI if it's not South's turn
-      if (currentPlayer !== 'South') {
-        console.log('▶️ Starting AI bidding after initialization');
-        hasTriggeredInitialBid.current = true;  // Set ref BEFORE state to prevent race
-        setIsAiBidding(true);
+        if (response.status === 400) {
+          const errorData = await response.json();
+          if (errorData.error?.includes('Deal has not been made')) {
+            throw new Error("Session expired. Please deal a new hand to continue.");
+          }
+        }
+        if (!response.ok) throw new Error("AI failed to get bid.");
+
+        const data = await response.json();
+        console.log('✅ AI bid received:', data);
+
+        // Update auction + next bidder from backend response
+        // NOTE: Do NOT use flushSync here. flushSync synchronously re-renders
+        // and fires the useEffect for the new nextBidder while
+        // isAiBiddingInProgress is still true, causing the next AI turn to
+        // be skipped. Regular setState batches updates; the guard is released
+        // before the next render cycle runs effects.
+        setAuction(prev => [...prev, data]);
+        setNextBidder(data.next_bidder || null);
+        if (data.beliefs) setBeliefs(data.beliefs);
+        isAiBiddingInProgress.current = false;
+        console.log('✅ Auction updated, next_bidder:', data.next_bidder);
+      } catch (err) {
+        console.error('❌ AI bidding error:', err);
+        setError("AI bidding failed. Is the server running?");
+        setIsAiBidding(false);
+        isAiBiddingInProgress.current = false;
       }
+    };
+
+    runAiTurn();
+  }, [nextBidder, isAiBidding, auction, isInitializing, dealer, gamePhase]);
+
+  // Trigger AI bidding after initialization completes (if it's not South's turn)
+  useEffect(() => {
+    if (showModeSelector) return;
+    if (!isInitializing && gamePhase === 'bidding' && auction.length === 0
+        && !hasTriggeredInitialBid.current && nextBidder && nextBidder !== 'South') {
+      console.log('▶️ Starting AI bidding after init, nextBidder:', nextBidder);
+      hasTriggeredInitialBid.current = true;
+      setIsAiBidding(true);
     }
-  }, [isInitializing, gamePhase, auction.length, players, nextPlayerIndex]);
+  }, [isInitializing, gamePhase, auction.length, nextBidder, showModeSelector]);
 
   // AI play loop - runs during play phase
   useEffect(() => {
@@ -2136,10 +2245,16 @@ ${otherCommands}`;
       return;
     }
 
+    // AbortController prevents stale invocations from racing with fresh ones
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+
     const runAiPlay = async () => {
       try {
+        if (signal.aborted) return;
         console.log('🎬 AI play loop RUNNING...');
         // Get current play state
+        if (signal.aborted) return;
         const stateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
 
         // Handle session state loss (e.g., server restart)
@@ -2186,8 +2301,9 @@ ${otherCommands}`;
 
         // === BUG FIX: Use visible_hands from backend to populate declarer hand ===
         // Backend's BridgeRulesEngine already determines which hands should be visible
-        // Use this data instead of making a separate API call
-        if (state.visible_hands && state.visible_hands[declarerPos]) {
+        // IMPORTANT: Only set declarerHand when declarer is NOT South to avoid duplication.
+        // When S is declarer, the user's own hand is managed by the `hand` state.
+        if (declarerPos !== 'S' && state.visible_hands && state.visible_hands[declarerPos]) {
           const visibleDeclarerCards = state.visible_hands[declarerPos].cards || [];
           console.log('👁️ Setting declarer hand from visible_hands:', {
             declarerPos,
@@ -2227,6 +2343,7 @@ ${otherCommands}`;
         if (totalTricks === 13) {
           console.log('🏁 All 13 tricks complete! Fetching final score...');
           // Play complete - calculate score
+          if (signal.aborted) return;
           const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
@@ -2240,7 +2357,6 @@ ${otherCommands}`;
             const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
             if (saved) scoreData._saved = true;
             setScoreData(scoreData);
-            recordHandCompleted();
           } else {
             // Handle error response
             const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
@@ -2324,6 +2440,7 @@ ${otherCommands}`;
         // AI player's turn
         await new Promise(resolve => setTimeout(resolve, 1000)); // Delay for visibility
 
+        if (signal.aborted) return;
         const playResponse = await fetch(`${API_URL}/api/get-ai-play`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
@@ -2348,8 +2465,8 @@ ${otherCommands}`;
             const turnMsg = nextPlayer === 'S'
               ? "Your turn (South)"
               : nextPlayer === 'N' && (declarerPos === 'N' || declarerPos === 'S')
-              ? `Your turn (${responseData.user_role === 'dummy' ? 'Dummy' : 'North'})`
-              : `Your turn to play from ${nextPlayer}`;
+                ? `Your turn (${responseData.user_role === 'dummy' ? 'Dummy' : 'North'})`
+                : `Your turn to play from ${nextPlayer}`;
             setDisplayedMessage(turnMsg);
             return; // Exit gracefully without throwing error
           }
@@ -2369,6 +2486,7 @@ ${otherCommands}`;
         console.log('AI played:', playData);
 
         // Fetch updated play state to show the card that was just played
+        if (signal.aborted) return;
         const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
         if (updatedStateResponse.ok) {
           const updatedState = await updatedStateResponse.json();
@@ -2393,12 +2511,14 @@ ${otherCommands}`;
           trickClearTimeoutRef.current = null;
 
           // Clear the trick
+          if (signal.aborted) return;
           await fetch(`${API_URL}/api/clear-trick`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...getSessionHeaders() }
           });
 
           // Fetch updated play state to show empty trick
+          if (signal.aborted) return;
           const clearedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
           if (clearedStateResponse.ok) {
             const clearedState = await clearedStateResponse.json();
@@ -2413,6 +2533,7 @@ ${otherCommands}`;
             if (totalTricksAfterClear === 13) {
               console.log('🏁 All 13 tricks complete after AI play! Fetching final score...');
               // Play complete - calculate score
+              if (signal.aborted) return;
               const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
@@ -2426,7 +2547,6 @@ ${otherCommands}`;
                 const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
                 if (saved) scoreData._saved = true;
                 setScoreData(scoreData);
-                recordHandCompleted();
               } else {
                 const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
                 console.error('❌ Failed to get score after AI play:', errorData);
@@ -2438,30 +2558,40 @@ ${otherCommands}`;
             }
 
             // CRITICAL FIX: Check if next player is user-controlled before restarting AI loop
-            // User controls BOTH N and S when NS is declaring (declarer is N or S)
-            // This fixes the bug where user couldn't play from North after first trick
-            const nsDeclaringAI = clearedState.contract.declarer === 'N' || clearedState.contract.declarer === 'S';
-            const nextIsUserControlled = clearedState.next_to_play === 'S' ||
-              (clearedState.next_to_play === 'N' && nsDeclaringAI);
-
-            if (nextIsUserControlled) {
+            if (isNextPlayerUserControlled(clearedState)) {
               console.log('⏸️ STOPPING - Next player after trick clear is user-controlled');
               setIsPlayingCard(false);
               return;
             }
+
+            // CRITICAL: If E or W should play next (AI positions), explicitly continue
+            if (clearedState.next_to_play === 'E' || clearedState.next_to_play === 'W') {
+              console.log(`🤖 AI position ${clearedState.next_to_play} should lead - ensuring AI loop continues`);
+            }
           }
 
           console.log('🔁 Continuing to next trick...');
-          // Continue to next trick after small delay
+          // Continue to next trick after delay
           // Reset flag first to ensure useEffect triggers
+          // Use 200ms delay to ensure React state updates have propagated
+          keepAiLoopAlive.current = true; // Signal cleanup to NOT cancel timeout
           setIsPlayingCard(false);
-          aiPlayTimeoutRef.current = setTimeout(() => setIsPlayingCard(true), 100);
+          aiPlayTimeoutRef.current = setTimeout(() => {
+            console.log('⏰ Timeout fired - restarting AI play loop');
+            keepAiLoopAlive.current = false; // Reset flag
+            setIsPlayingCard(true);
+          }, 200);
         } else {
           console.log('🔁 Continuing AI play loop (trick not complete)...');
           // Trick not complete - continue playing quickly
           // Reset flag first to ensure useEffect triggers
+          keepAiLoopAlive.current = true; // Signal cleanup to NOT cancel timeout
           setIsPlayingCard(false);
-          aiPlayTimeoutRef.current = setTimeout(() => setIsPlayingCard(true), 100);
+          aiPlayTimeoutRef.current = setTimeout(() => {
+            console.log('⏰ Timeout fired - continuing AI play (mid-trick)');
+            keepAiLoopAlive.current = false; // Reset flag
+            setIsPlayingCard(true);
+          }, 150);
         }
 
       } catch (err) {
@@ -2472,6 +2602,23 @@ ${otherCommands}`;
     };
 
     runAiPlay();
+
+    // Cleanup function to clear pending timeouts when effect re-runs or component unmounts
+    return () => {
+      // Only clear timeout if we're NOT intentionally keeping the loop alive
+      // This allows us to toggle isPlayingCard (false -> true) without killing the pending timeout
+      if (keepAiLoopAlive.current) {
+        console.log('🧘 Keeping AI loop alive during effect cleanup');
+        // Reset flag for next time, but DON'T clear timeout
+        keepAiLoopAlive.current = false;
+      } else {
+        if (aiPlayTimeoutRef.current) {
+          console.log('🧹 Clearing AI loop timeout');
+          clearTimeout(aiPlayTimeoutRef.current);
+          aiPlayTimeoutRef.current = null;
+        }
+      }
+    };
   }, [gamePhase, isPlayingCard, vulnerability]);
 
   // Show all hands during bidding phase only when toggle is enabled
@@ -2494,40 +2641,6 @@ ${otherCommands}`;
     });
   }, [shouldShowHands, showAllHands, allHands]);
 
-  // User menu component
-  const UserMenu = () => {
-    if (!isAuthenticated) {
-      return (
-        <button onClick={() => setShowLogin(true)} className="auth-button" data-testid="sign-in-button">
-          Sign In
-        </button>
-      );
-    }
-
-    // Show email/phone or display name, with preference for showing what they registered with
-    const displayText = user.email || user.phone || user.display_name || 'User';
-    const isGuest = user.isGuest;
-
-    const handleUserAction = () => {
-      if (isGuest) {
-        setShowLogin(true);
-      } else {
-        logout();
-      }
-    };
-
-    return (
-      <div className="user-menu" data-testid="user-menu">
-        <span className="user-display" data-testid="user-display-name">
-          {isGuest ? '👤 Guest' : `👤 ${displayText}`}
-        </span>
-        <button onClick={handleUserAction} className="logout-button" data-testid="logout-button">
-          {isGuest ? 'Sign In' : 'Logout'}
-        </button>
-      </div>
-    );
-  };
-
   // Determine current active module for navigation
   const getCurrentModule = () => {
     if (showLearningMode) return 'learning';
@@ -2542,6 +2655,12 @@ ${otherCommands}`;
 
   // Handle navigation from TopNavigation
   const handleNavModuleSelect = (modeId) => {
+    // Guard: protected features require registration for guests
+    if (isGuest && requiresRegistration(modeId)) {
+      promptForRegistration();
+      return;
+    }
+
     // Close any open overlays first
     setShowLearningMode(false);
     setShowLearningDashboard(false);
@@ -2577,12 +2696,19 @@ ${otherCommands}`;
           >
             📝 <span className="nav-utility-label">Feedback</span>
           </button>
-          <UserMenu />
+          <UserMenu onSignInClick={() => setShowLogin(true)} />
         </TopNavigation>
       )}
 
-      {/* Mode Selector - Landing Page */}
-      {showModeSelector && isAuthenticated && (
+      {/* Welcome Wizard - First-time user experience selection */}
+      {/* Shows BEFORE ModeSelector for new users, routes them to appropriate starting point */}
+      <WelcomeWizard
+        isOpen={isAuthenticated && shouldShowWelcomeWizard}
+        onSelectExperience={handleExperienceSelect}
+      />
+
+      {/* Mode Selector - Landing Page (shown for returning users or after wizard) */}
+      {showModeSelector && isAuthenticated && !shouldShowWelcomeWizard && (
         <ModeSelector
           onSelectMode={handleModeSelect}
           userName={user?.display_name}
@@ -2675,6 +2801,7 @@ ${otherCommands}`;
                     mode="review"
                   />
                 )}
+                <BeliefPanel beliefs={beliefs} myHcp={handPoints?.hcp} />
                 {error && <div className="error-message">{error}</div>}
               </div>
             </div>
@@ -2691,7 +2818,7 @@ ${otherCommands}`;
           <div className="my-hand">
             <h2>Your Hand (South)</h2>
             <div className="hand-display">
-              {hand && hand.length > 0 ? getSuitOrder(null).map(suit => ( <div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => ( <BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p>{isInitializing ? 'System Initiating...' : 'Dealing...'}</p>}
+              {hand && hand.length > 0 ? getSuitOrder(null).map(suit => (<div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => (<BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p>{isInitializing ? 'System Initiating...' : 'Dealing...'}</p>}
             </div>
             <HandAnalysis
               points={handPoints}
@@ -2737,6 +2864,7 @@ ${otherCommands}`;
               mode="review"
             />
           )}
+          <BeliefPanel beliefs={beliefs} myHcp={handPoints?.hcp} />
           {error && <div className="error-message">{error}</div>}
         </div>
       )}
@@ -2838,7 +2966,7 @@ ${otherCommands}`;
 
       <div className="action-area">
         {gamePhase === 'bidding' && (
-          <BiddingBoxComponent onBid={handleUserBid} disabled={players[nextPlayerIndex] !== 'South' || isAiBidding || isAuctionOver(auction)} auction={auction} />
+          <BiddingBoxComponent onBid={handleUserBid} disabled={nextBidder !== 'South' || isAiBidding || isAuctionOver(auction)} auction={auction} />
         )}
         <div className="controls-section">
           {/* Game controls - Context-aware based on game phase AND workspace */}
@@ -3008,7 +3136,13 @@ ${otherCommands}`;
           onClose={handleCloseScore}
           onDealNewHand={dealNewHand}
           sessionData={sessionData}
-          onShowLearningDashboard={() => setShowLearningDashboard(true)}
+          onShowLearningDashboard={() => {
+            if (isGuest && requiresRegistration('progress')) {
+              promptForRegistration();
+            } else {
+              setShowLearningDashboard(true);
+            }
+          }}
           onPlayAnotherHand={playRandomHand}
           onReplayHand={replayCurrentHand}
           onReviewHand={lastSavedHandId ? () => setShowHandReviewModal(true) : null}
@@ -3029,7 +3163,7 @@ ${otherCommands}`;
           {/* Force remount on each open to refresh data */}
           <LearningDashboard
             key={Date.now()}
-            userId={userId || 1}
+            userId={userId}
             onPracticeClick={(rec) => {
               console.log('Practice recommendation:', rec);
               setShowLearningDashboard(false);
@@ -3053,14 +3187,39 @@ ${otherCommands}`;
                 dealNewHand();
               }
             }}
+            onReviewHand={handleOpenReviewPage}
           />
         </div>
+      )}
+
+      {/* Full-screen play review page (new approach) */}
+      {showHandReviewPage && reviewPageHandId && (
+        <HandReviewPage
+          handId={reviewPageHandId}
+          onBack={handleCloseReviewPage}
+          onPrevHand={reviewCurrentIndex > 0 ? () => handleNavigateReviewHand(-1) : null}
+          onNextHand={reviewCurrentIndex < reviewHandList.length - 1 ? () => handleNavigateReviewHand(1) : null}
+          currentIndex={reviewCurrentIndex}
+          totalHands={reviewHandList.length}
+        />
+      )}
+
+      {/* Full-screen bidding review page (new approach) */}
+      {showBidReviewPage && reviewPageHandId && (
+        <BidReviewPage
+          handId={reviewPageHandId}
+          onBack={handleCloseReviewPage}
+          onPrevHand={reviewCurrentIndex > 0 ? () => handleNavigateReviewHand(-1) : null}
+          onNextHand={reviewCurrentIndex < reviewHandList.length - 1 ? () => handleNavigateReviewHand(1) : null}
+          currentIndex={reviewCurrentIndex}
+          totalHands={reviewHandList.length}
+        />
       )}
 
       {/* Learning Mode - Full-screen guided learning */}
       {showLearningMode && (
         <div className="learning-mode-overlay">
-          <LearningMode userId={userId || 1} initialTrack={learningModeTrack} />
+          <LearningMode userId={userId} initialTrack={learningModeTrack} />
         </div>
       )}
 

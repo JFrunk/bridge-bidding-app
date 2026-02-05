@@ -1,3 +1,11 @@
+---
+description: Run comprehensive baseline quality score testing
+---
+
+---
+description: Run comprehensive baseline quality score testing workflow
+---
+
 Run comprehensive baseline quality score testing workflow:
 
 1. Check current branch (should be on main/development)

@@ -1,3 +1,7 @@
+---
+description: Analyze a specific hand for bidding or play issues
+---
+
 Analyze a specific hand for bidding or play issues: $ARGUMENTS
 
 Provide hand ID (e.g., hand_2025-10-28_21-46-15.json) or path to hand file.

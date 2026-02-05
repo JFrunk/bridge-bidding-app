@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decay Curve Debug</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f3f4f6;
+      padding: 24px;
+      color: #1f2937;
+    }
+    h1 { font-size: 20px; margin-bottom: 16px; }
+    h2 { font-size: 16px; margin-bottom: 8px; color: #374151; }
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1200px;
+    }
+    @media (max-width: 800px) { .scenario-grid { grid-template-columns: 1fr; } }
+    .scenario {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .scenario-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .contract-info {
+      font-size: 14px;
+      color: #374151;
+      margin-bottom: 12px;
+    }
+    .contract-info span { font-weight: 600; }
+
+    /* === Chart styles (from DecayChart.css) === */
+    .decay-chart-container {
+      background: #fafafa;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 12px 0;
+    }
+    .decay-chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 0 4px;
+    }
+    .decay-chart-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: #374151;
+    }
+    .decay-chart-stats {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .decay-chart-stats .error-count { color: #dc2626; font-weight: 500; }
+    .decay-chart-stats .success-indicator { color: #059669; font-weight: 600; }
+    .decay-chart-stats .failure-indicator { color: #dc2626; font-weight: 600; }
+    .decay-chart svg {
+      display: block;
+      width: 100%;
+      max-width: 560px;
+      height: auto;
+    }
+    .grid-line { stroke: #e5e7eb; stroke-width: 1; }
+    .trick-boundary { stroke: #d1d5db; stroke-width: 1; stroke-dasharray: 2,4; }
+    .axis-line { stroke: #9ca3af; stroke-width: 1.5; }
+    .axis-label { font-size: 10px; fill: #6b7280; font-family: system-ui, -apple-system, sans-serif; }
+    .axis-label.y-label { text-anchor: end; dominant-baseline: middle; }
+    .axis-label.x-label { text-anchor: middle; dominant-baseline: hanging; }
+    .decay-line { fill: none; stroke: #2563eb; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .locked-tricks-bar { fill: rgba(37, 99, 235, 0.15); stroke: none; }
+    .bar-label { font-size: 10px; font-weight: 600; fill: #2563eb; text-anchor: middle; dominant-baseline: auto; font-family: system-ui, -apple-system, sans-serif; }
+    .dd-optimal-line { stroke: #059669; stroke-width: 1.5; stroke-dasharray: 4,4; }
+    .required-line { stroke: #f59e0b; stroke-width: 1.5; stroke-dasharray: 8,4; }
+    .reference-label { font-size: 9px; font-weight: 500; dominant-baseline: middle; text-anchor: start; }
+    .dd-label { fill: #059669; }
+    .required-label { fill: #f59e0b; }
+    .error-marker { fill: #dc2626; stroke: #fef2f2; stroke-width: 2; }
+    .gift-marker { fill: #059669; stroke: #ecfdf5; stroke-width: 2; }
+    .decay-chart-legend {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .decay-chart-legend .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #6b7280;
+    }
+    .decay-chart-legend .legend-swatch { width: 16px; height: 3px; border-radius: 2px; }
+    .decay-chart-legend .decay-line-swatch { background: #2563eb; }
+    .decay-chart-legend .locked-bar-swatch { width: 16px; height: 10px; border-radius: 2px; background: rgba(37, 99, 235, 0.3); border: 1px solid rgba(37, 99, 235, 0.5); }
+    .decay-chart-legend .dd-line-swatch { background: transparent; border-top: 2px dotted #059669; height: 0; }
+    .decay-chart-legend .required-line-swatch { background: transparent; border-top: 2px dashed #f59e0b; height: 0; }
+    .decay-chart-legend .error-swatch { width: 10px; height: 10px; border-radius: 50%; background: #dc2626; }
+
+    /* Data table */
+    .data-table { margin-top: 8px; font-size: 11px; }
+    .data-table table { border-collapse: collapse; width: 100%; }
+    .data-table th, .data-table td { padding: 3px 6px; border: 1px solid #e5e7eb; text-align: center; }
+    .data-table th { background: #f9fafb; font-weight: 600; color: #374151; }
+    .data-table td.drop { background: #fef2f2; color: #dc2626; font-weight: 600; }
+    .data-table td.rise { background: #ecfdf5; color: #059669; font-weight: 600; }
+
+    /* Controls */
+    .controls { margin: 16px 0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .controls label { font-size: 13px; font-weight: 500; }
+    .controls select, .controls input { font-size: 13px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 6px; }
+    .controls button {
+      font-size: 13px; padding: 6px 14px; border: 1px solid #2563eb; background: #2563eb;
+      color: white; border-radius: 6px; cursor: pointer;
+    }
+    .controls button:hover { background: #1d4ed8; }
+
+    /* Live fetch */
+    #fetch-status { font-size: 12px; color: #6b7280; margin-left: 8px; }
+    #fetch-status.error { color: #dc2626; }
+  </style>
+</head>
+<body>
+  <h1>Decay Curve Debug View</h1>
+
+  <div class="controls">
+    <label>Data source:</label>
+    <select id="data-source">
+      <option value="samples">Built-in samples</option>
+      <option value="live">Live from API</option>
+    </select>
+    <span id="live-controls" style="display:none;">
+      <label>Hand ID:</label>
+      <input type="number" id="hand-id" value="3" min="1" style="width:60px;">
+      <button id="fetch-btn">Fetch</button>
+      <span id="fetch-status"></span>
+    </span>
+  </div>
+
+  <div id="charts" class="scenario-grid"></div>
+
+  <script>
+    // === SAMPLE DATA ===
+    const SAMPLES = {
+      ns_declaring_success: {
+        label: 'NS Declaring - Contract Made',
+        contract: '4H by South',
+        data: {
+          // NS declared 4H, needed 10 tricks, took 10. Optimal was 11.
+          curve: [11,11,11,11, 11,11,11,11, 10,10,10,10, 10,10,10,10,
+                  10,10,10,10, 10,10,10,10, 10,10,10,10, 10,10,10,10,
+                  10,10,10,10, 10,10,10,10, 10,10,10,10, 10,10,10,10,
+                  10,10,10,10],
+          major_errors: [
+            { card_index: 8, trick_number: 3, card: 'HT', position: 'S',
+              loss: 1, error_type: 'ns_error', potential_before: 11, potential_after: 10 }
+          ],
+          signal_warnings: [],
+          // NS won tricks: 1(N),2(S),3(EW),4(S),5(N),6(S),7(S),8(N),9(S),10(S),11(EW),12(EW),13(EW)
+          ns_tricks_cumulative: [
+            0,0,0,1, 1,1,1,2, 2,2,2,2, 2,2,2,3,
+            3,3,3,4, 4,4,4,5, 5,5,5,6, 6,6,6,7,
+            7,7,7,8, 8,8,8,9, 9,9,9,10, 10,10,10,10,
+            10,10,10,10
+          ],
+          trick_winners: ['N','S','W','S','N','S','S','N','S','S','E','W','E'],
+          dd_optimal_ns: 11,
+          actual_tricks_ns: 10,
+          ns_is_declarer: true,
+          required_tricks: 10
+        }
+      },
+      ns_declaring_fail: {
+        label: 'NS Declaring - Contract Failed',
+        contract: '3NT by North (down 2)',
+        data: {
+          // NS declared 3NT, needed 9, took only 7. Multiple errors.
+          curve: [9,9,9,9, 9,9,9,9, 8,8,8,8, 8,8,8,8,
+                  7,7,7,7, 7,7,7,7, 7,7,7,7, 7,7,7,7,
+                  7,7,7,7, 7,7,7,7, 7,7,7,7, 7,7,7,7,
+                  7,7,7,7],
+          major_errors: [
+            { card_index: 8, trick_number: 3, card: 'D4', position: 'N',
+              loss: 1, error_type: 'ns_error', potential_before: 9, potential_after: 8 },
+            { card_index: 16, trick_number: 5, card: 'CJ', position: 'S',
+              loss: 1, error_type: 'ns_error', potential_before: 8, potential_after: 7 }
+          ],
+          signal_warnings: [],
+          ns_tricks_cumulative: [
+            0,0,0,1, 1,1,1,2, 2,2,2,2, 2,2,2,3,
+            3,3,3,3, 3,3,3,4, 4,4,4,5, 5,5,5,5,
+            5,5,5,6, 6,6,6,6, 6,6,6,7, 7,7,7,7,
+            7,7,7,7
+          ],
+          trick_winners: ['N','S','E','N','E','S','N','W','S','W','S','W','E'],
+          dd_optimal_ns: 9,
+          actual_tricks_ns: 7,
+          ns_is_declarer: true,
+          required_tricks: 9
+        }
+      },
+      ns_defending_success: {
+        label: 'NS Defending - Contract Set',
+        contract: '4H by West (down 3)',
+        data: {
+          // EW declared 4H (need 10), took only 7. NS took 6 tricks (set by 3).
+          // From NS perspective: dd_optimal_ns = 6, actual_tricks_ns = 6
+          // required_tricks = 14 - 10 = 4 (NS needs 4 to set)
+          curve: [6,6,6,6, 6,6,6,6, 6,6,6,6, 6,6,6,6,
+                  6,6,6,6, 6,6,6,6, 5,5,5,5, 5,5,5,5,
+                  5,5,5,5, 5,5,5,5, 5,5,5,5, 5,5,5,5,
+                  5,5,5,5],
+          major_errors: [
+            { card_index: 24, trick_number: 7, card: 'S3', position: 'N',
+              loss: 1, error_type: 'ns_error', potential_before: 6, potential_after: 5 }
+          ],
+          signal_warnings: [],
+          ns_tricks_cumulative: [
+            0,0,0,1, 1,1,1,1, 1,1,1,2, 2,2,2,3,
+            3,3,3,3, 3,3,3,4, 4,4,4,4, 4,4,4,4,
+            4,4,4,5, 5,5,5,5, 5,5,5,5, 5,5,5,6,
+            6,6,6,6
+          ],
+          trick_winners: ['N','W','N','N','E','N','W','W','N','W','E','W','N'],
+          dd_optimal_ns: 6,
+          actual_tricks_ns: 6,
+          ns_is_declarer: false,
+          required_tricks: 4
+        }
+      },
+      ns_defending_fail: {
+        label: 'NS Defending - Contract Made',
+        contract: '4H by West (made +1)',
+        data: {
+          // EW declared 4H, needed 10, took 11. NS only took 2.
+          // dd_optimal_ns was 3, but NS errors dropped it.
+          // required_tricks = 14 - 10 = 4 (NS needed 4 to set, only got 2)
+          curve: [3,3,3,3, 3,3,3,3, 3,3,3,3, 2,2,2,2,
+                  2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+                  2,2,2,2, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+                  2,2,2,2],
+          major_errors: [
+            { card_index: 12, trick_number: 4, card: 'DQ', position: 'N',
+              loss: 1, error_type: 'ns_error', potential_before: 3, potential_after: 2 }
+          ],
+          signal_warnings: [],
+          ns_tricks_cumulative: [
+            0,0,0,0, 0,0,0,1, 1,1,1,1, 1,1,1,1,
+            1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
+            1,1,1,1, 1,1,1,1, 1,1,1,2, 2,2,2,2,
+            2,2,2,2
+          ],
+          trick_winners: ['W','N','W','W','W','W','W','W','W','W','N','W','W'],
+          dd_optimal_ns: 3,
+          actual_tricks_ns: 2,
+          ns_is_declarer: false,
+          required_tricks: 4
+        }
+      },
+      prod_hand_3: {
+        label: 'Production Hand #3 (NS Defending)',
+        contract: '4H by West (down 3)',
+        data: {
+          curve: [6,6,6,6, 6,6,6,6, 6,6,6,6, 5,5,5,5,
+                  5,5,5,5, 4,4,4,4, 3,3,3,3, 2,2,2,2,
+                  1,1,1,1, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+                  0,0,0,0],
+          major_errors: [],
+          signal_warnings: [],
+          ns_tricks_cumulative: [
+            0,0,0,0, 0,0,0,1, 1,1,1,2, 2,2,2,3,
+            3,3,3,4, 4,4,4,5, 5,5,5,6, 6,6,6,6,
+            6,6,6,6, 6,6,6,6, 6,6,6,6, 6,6,6,6,
+            6,6,6,6
+          ],
+          trick_winners: ['W','N','S','N','S','N','N','W','W','W','W','W','W'],
+          dd_optimal_ns: 6,
+          actual_tricks_ns: 6,
+          ns_is_declarer: false,
+          required_tricks: 4  // 14 - 10
+        }
+      },
+      prod_hand_2: {
+        label: 'Production Hand #2 (NS Defending)',
+        contract: '1NT by West (made)',
+        data: {
+          curve: [5,5,5,5, 4,4,4,4, 5,5,5,5, 4,4,4,4,
+                  3,3,3,3, 2,2,2,2, 2,2,2,2, 2,2,2,2,
+                  2,2,2,2, 1,1,1,1, 0,0,0,0, 0,0,0,0,
+                  0,0,0,0],
+          major_errors: [
+            { card_index: 8, trick_number: 3, card: 'HT', position: 'N',
+              loss: 1, error_type: 'ns_error', potential_before: 5, potential_after: 4 }
+          ],
+          signal_warnings: [],
+          ns_tricks_cumulative: [
+            0,0,0,0, 0,0,0,1, 1,1,1,2, 2,2,2,2,
+            2,2,2,3, 3,3,3,3, 3,3,3,4, 4,4,4,4,
+            4,4,4,5, 5,5,5,5, 5,5,5,6, 6,6,6,6,
+            6,6,6,6
+          ],
+          trick_winners: ['W','N','S','W','N','W','S','W','N','W','N','S','W'],
+          dd_optimal_ns: 5,
+          actual_tricks_ns: 6,
+          ns_is_declarer: false,
+          required_tricks: 7  // 14 - 7
+        }
+      }
+    };
+
+    // === CHART RENDERER (pure JS port of DecayChart.jsx) ===
+    function renderChart(containerId, data) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const rawCurve = data.curve || [];
+      const majorErrors = data.major_errors || [];
+      const signalWarnings = data.signal_warnings || [];
+      const nsTricksCum = data.ns_tricks_cumulative || [];
+      const ddOptimal = data.dd_optimal_ns ?? rawCurve[0] ?? 0;
+      const actualTricks = data.actual_tricks_ns ?? 0;
+      const nsIsDeclarer = data.ns_is_declarer ?? true;
+      const requiredTricks = data.required_tricks ?? 7;
+
+      if (rawCurve.length === 0) {
+        container.innerHTML = '<div class="decay-chart-empty"><p>No curve data</p></div>';
+        return;
+      }
+
+      // Persistence logic (monotonically non-increasing)
+      const initialPotential = Math.min(rawCurve[0] ?? ddOptimal, ddOptimal);
+      const curve = [];
+      let currentPotential = initialPotential;
+      for (let i = 0; i < rawCurve.length; i++) {
+        const tricksPlayed = Math.floor((i + 1) / 4);
+        const tricksRemaining = 13 - tricksPlayed;
+        const nsWon = nsTricksCum[i] ?? 0;
+        const maxPossible = nsWon + tricksRemaining;
+        const capped = Math.min(rawCurve[i], maxPossible, ddOptimal, currentPotential);
+        if (capped < currentPotential) currentPotential = capped;
+        curve.push(currentPotential);
+      }
+
+      // Layout
+      const W = 560, H = 180;
+      const pad = { top: 20, right: 75, bottom: 30, left: 35 };
+      const cw = W - pad.left - pad.right, ch = H - pad.top - pad.bottom;
+      const getX = i => pad.left + (i / 52) * cw;
+      const getY = v => pad.top + ch - (v / 13) * ch;
+
+      // Success check
+      let success;
+      if (nsIsDeclarer) {
+        success = actualTricks >= requiredTricks;
+      } else {
+        success = actualTricks > (13 - requiredTricks);
+      }
+      const requiredLabel = nsIsDeclarer ? 'Need' : 'To Set';
+
+      // Ascending potential: dd_optimal - curve[i]
+      // curve starts at dd_optimal and drops as tricks are consumed,
+      // so dd_optimal - curve = tricks NS should have won by now.
+      // Naturally reaches dd_optimal at end (curve ends at 0).
+      const ascending = [];
+      for (let i = 0; i < curve.length; i++) {
+        const tricksCompleted = Math.floor((i + 1) / 4);
+        ascending.push(Math.min(tricksCompleted, ddOptimal, ddOptimal - curve[i]));
+      }
+
+      // Step path for ascending potential - steps only at trick boundaries
+      let pathD = `M ${getX(0)} ${getY(0)}`;
+      for (let t = 0; t < 13; t++) {
+        const trickEnd = (t + 1) * 4 - 1;
+        if (trickEnd >= ascending.length) break;
+        const val = ascending[trickEnd];
+        const sx = getX(t * 4);
+        const ex = getX((t + 1) * 4);
+        pathD += ` H ${sx} V ${getY(val)} H ${ex}`;
+      }
+      if (ascending.length < 52) pathD += ` H ${getX(52)}`;
+
+      // Trick bars - continuous (bar for every trick, stays flat when NS doesn't win)
+      const bars = [];
+      for (let t = 0; t < 13; t++) {
+        const ci = (t + 1) * 4 - 1;
+        if (ci >= nsTricksCum.length) break;
+        const count = nsTricksCum[ci];
+        if (count > 0) {
+          bars.push({ t: t+1, sx: getX(t*4), ex: getX((t+1)*4), h: count });
+        }
+      }
+
+      // Error markers (NS only)
+      const errors = majorErrors.filter(e => e.error_type === 'ns_error' && e.card_index < ascending.length);
+
+      // Grid lines
+      const gridVals = [0, 3, 6, 9, 13];
+      const trickBoundaries = [12, 24, 36];
+
+      // Build SVG
+      let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+
+      // Grid
+      for (const v of gridVals) {
+        svg += `<line x1="${pad.left}" y1="${getY(v)}" x2="${W-pad.right}" y2="${getY(v)}" class="grid-line"/>`;
+        svg += `<text x="${pad.left-8}" y="${getY(v)}" class="axis-label y-label">${v}</text>`;
+      }
+
+      // Trick boundaries
+      for (const b of trickBoundaries) {
+        svg += `<line x1="${getX(b)}" y1="${pad.top}" x2="${getX(b)}" y2="${H-pad.bottom}" class="trick-boundary"/>`;
+      }
+
+      // Bars
+      for (let bi = 0; bi < bars.length; bi++) {
+        const bar = bars[bi];
+        const barTop = getY(bar.h);
+        const barH = getY(0) - barTop;
+        svg += `<rect x="${bar.sx}" y="${barTop}" width="${bar.ex - bar.sx - 1}" height="${barH}" class="locked-tricks-bar"/>`;
+      }
+      // Bar labels - positioned just above bar tops using transform
+      for (let bi = 0; bi < bars.length; bi++) {
+        const bar = bars[bi];
+        const prevH = bi > 0 ? bars[bi - 1].h : 0;
+        if (bar.h > prevH) {
+          const labelX = (bar.sx + bar.ex) / 2;
+          const labelY = getY(bar.h) - 4;
+          svg += `<text transform="translate(${labelX},${labelY})" text-anchor="middle" font-size="10" font-weight="600" fill="#2563eb">${bar.h}</text>`;
+        }
+      }
+
+      // Optimal line
+      svg += `<line x1="${pad.left}" y1="${getY(ddOptimal)}" x2="${W-pad.right}" y2="${getY(ddOptimal)}" class="dd-optimal-line"/>`;
+      svg += `<text x="${W-pad.right+3}" y="${getY(ddOptimal)}" class="axis-label reference-label dd-label">Best - ${ddOptimal}</text>`;
+
+      // Required line
+      svg += `<line x1="${pad.left}" y1="${getY(requiredTricks)}" x2="${W-pad.right}" y2="${getY(requiredTricks)}" class="required-line"/>`;
+      svg += `<text x="${W-pad.right+3}" y="${getY(requiredTricks)}" class="axis-label reference-label required-label">${requiredLabel} - ${requiredTricks}</text>`;
+
+      // X-axis labels
+      for (let t = 1; t <= 13; t++) {
+        svg += `<text x="${getX((t-1)*4+2)}" y="${H-8}" class="axis-label x-label">${t}</text>`;
+      }
+
+      // Decay line
+      svg += `<path d="${pathD}" class="decay-line"/>`;
+
+      // Error markers - positioned on the ascending potential line
+      for (const err of errors) {
+        svg += `<circle cx="${getX(err.card_index)}" cy="${getY(ascending[err.card_index]||0)}" r="5" class="error-marker"/>`;
+      }
+
+      // Axes
+      svg += `<line x1="${pad.left}" y1="${H-pad.bottom}" x2="${W-pad.right}" y2="${H-pad.bottom}" class="axis-line"/>`;
+      svg += `<line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${H-pad.bottom}" class="axis-line"/>`;
+
+      svg += `</svg>`;
+
+      // Build HTML
+      const errCount = errors.length;
+      let html = `<div class="decay-chart-container">`;
+      html += `<div class="decay-chart-header">`;
+      html += `<span class="decay-chart-title">Your Trick Potential (${nsIsDeclarer ? 'Declarer' : 'Defense'})</span>`;
+      html += `<span class="decay-chart-stats">Optimal: ${ddOptimal} | Actual: ${actualTricks}`;
+      html += `<span class="${success ? 'success-indicator' : 'failure-indicator'}">${success ? ' \u2713' : ' \u2717'}</span>`;
+      if (errCount > 0) html += `<span class="error-count"> | ${errCount} error${errCount !== 1 ? 's' : ''}</span>`;
+      html += `</span></div>`;
+      html += `<div class="decay-chart">${svg}</div>`;
+
+      // Legend
+      html += `<div class="decay-chart-legend">`;
+      html += `<div class="legend-item"><span class="legend-swatch locked-bar-swatch"></span><span>Tricks Won</span></div>`;
+      html += `<div class="legend-item"><span class="legend-swatch decay-line-swatch"></span><span>Potential</span></div>`;
+      html += `<div class="legend-item"><span class="legend-swatch dd-line-swatch"></span><span>Best Possible</span></div>`;
+      html += `<div class="legend-item"><span class="legend-swatch required-line-swatch"></span><span>${requiredLabel}</span></div>`;
+      if (errCount > 0) html += `<div class="legend-item"><span class="legend-swatch error-swatch"></span><span>Your Errors</span></div>`;
+      html += `</div>`;
+      html += `</div>`;
+
+      // Raw data table
+      html += `<details class="data-table"><summary style="cursor:pointer;font-size:12px;color:#6b7280;margin-top:8px;">Raw curve data</summary>`;
+      html += `<table><tr><th>Trick</th>`;
+      for (let c = 1; c <= 4; c++) html += `<th>Card ${c}</th>`;
+      html += `<th>Raw</th><th>Capped</th><th>NS Won</th></tr>`;
+      for (let t = 0; t < 13; t++) {
+        html += `<tr><td><b>${t+1}</b></td>`;
+        for (let c = 0; c < 4; c++) {
+          const idx = t * 4 + c;
+          const raw = rawCurve[idx] ?? '-';
+          const cap = curve[idx] ?? '-';
+          const cls = (typeof raw === 'number' && typeof cap === 'number' && cap < raw) ? ' class="drop"' :
+                      (typeof raw === 'number' && idx > 0 && raw > rawCurve[idx-1]) ? ' class="rise"' : '';
+          html += `<td${cls}>${raw}</td>`;
+        }
+        const lastIdx = t * 4 + 3;
+        html += `<td>${curve[lastIdx] ?? '-'}</td>`;
+        html += `<td>${nsTricksCum[lastIdx] ?? '-'}</td>`;
+        html += `</tr>`;
+      }
+      html += `</table></details>`;
+
+      container.innerHTML = html;
+    }
+
+    // === PAGE LOGIC ===
+    function renderSamples() {
+      const grid = document.getElementById('charts');
+      grid.innerHTML = '';
+      for (const [key, sample] of Object.entries(SAMPLES)) {
+        const div = document.createElement('div');
+        div.className = 'scenario';
+        div.innerHTML = `<div class="scenario-label">${sample.label}</div>
+          <div class="contract-info">Contract: <span>${sample.contract}</span></div>
+          <div id="chart-${key}"></div>`;
+        grid.appendChild(div);
+      }
+      for (const key of Object.keys(SAMPLES)) {
+        renderChart(`chart-${key}`, SAMPLES[key].data);
+      }
+    }
+
+    function renderLiveHand(handData) {
+      const grid = document.getElementById('charts');
+      grid.innerHTML = '';
+      const div = document.createElement('div');
+      div.className = 'scenario';
+      div.style.gridColumn = '1 / -1';
+      const contract = handData.contract || 'Unknown';
+      div.innerHTML = `<div class="scenario-label">Live Hand #${handData.hand_id || '?'}</div>
+        <div class="contract-info">Contract: <span>${contract}</span></div>
+        <div id="chart-live"></div>`;
+      grid.appendChild(div);
+      if (handData.decay_curve) {
+        renderChart('chart-live', handData.decay_curve);
+      } else {
+        document.getElementById('chart-live').innerHTML = '<div class="decay-chart-empty"><p>No decay curve data for this hand</p></div>';
+      }
+    }
+
+    // Controls
+    document.getElementById('data-source').addEventListener('change', function() {
+      const live = this.value === 'live';
+      document.getElementById('live-controls').style.display = live ? 'inline' : 'none';
+      if (!live) renderSamples();
+    });
+
+    document.getElementById('fetch-btn').addEventListener('click', async function() {
+      const handId = document.getElementById('hand-id').value;
+      const status = document.getElementById('fetch-status');
+      status.textContent = 'Fetching...';
+      status.className = '';
+      try {
+        const apiUrl = window.location.origin.includes('localhost')
+          ? 'http://localhost:5001'
+          : window.location.origin;
+        const resp = await fetch(`${apiUrl}/api/hand-history?hand_id=${handId}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        status.textContent = 'OK';
+        renderLiveHand(data);
+      } catch (e) {
+        status.textContent = `Error: ${e.message}`;
+        status.className = 'error';
+      }
+    });
+
+    // Initial render
+    renderSamples();
+  </script>
+</body>
+</html>

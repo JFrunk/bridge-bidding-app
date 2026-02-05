@@ -104,10 +104,11 @@ class TestMinimumOpenerAfterInvitationalRaise:
         """Set up test fixtures."""
         self.engine = BiddingEngine()
 
-    def test_13_hcp_declines_invitation(self):
+    def test_13_hcp_quality_suit_accepts_invitation(self):
         """
-        13 HCP opener should DECLINE invitation (pass).
-        Combined: 13 + 10 (partner midpoint HCP) = 23, not enough.
+        13 HCP opener with quality trumps accepts limit raise.
+        BiddingState: partner limit raise (10-12), midpoint=11.
+        Combined: 13 + 11 = 24, with AQJ53 (7 HCP in suit) → accept.
         """
         # 13 HCP: AQJ (6) + K (3) + Q (2) + J (1) + J (1) = 13
         hand = create_hand("♠AQJ53 ♥K65 ♦Q98 ♣J2")
@@ -115,7 +116,7 @@ class TestMinimumOpenerAfterInvitationalRaise:
         auction = ["1♠", "Pass", "3♠", "Pass"]
         bid, _ = self.engine.get_next_bid_structured(hand, auction, "South", "None")
 
-        assert bid == "Pass", f"13 HCP should decline invitation, got {bid}"
+        assert bid == "4♠", f"13 HCP with quality AQJ53 trumps should accept limit raise, got {bid}"
 
     def test_14_hcp_with_good_suit_accepts_invitation(self):
         """

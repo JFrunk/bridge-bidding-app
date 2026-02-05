@@ -62,17 +62,25 @@ def _convert_placeholders(query):
     if not USE_POSTGRES:
         return query
 
-    # Replace ? with %s, but not inside quoted strings
-    # This regex handles single-quoted strings
+    # Replace ? with %s, but not inside quoted strings or SQL comments
     result = []
     in_string = False
+    in_comment = False
     i = 0
     while i < len(query):
         char = query[i]
-        if char == "'" and (i == 0 or query[i-1] != '\\'):
+
+        # Handle single-line SQL comments (-- to end of line)
+        if not in_string and not in_comment and char == '-' and i + 1 < len(query) and query[i + 1] == '-':
+            in_comment = True
+            result.append(char)
+        elif in_comment and char == '\n':
+            in_comment = False
+            result.append(char)
+        elif not in_comment and char == "'" and (i == 0 or query[i-1] != '\\'):
             in_string = not in_string
             result.append(char)
-        elif char == '?' and not in_string:
+        elif char == '?' and not in_string and not in_comment:
             result.append('%s')
         else:
             result.append(char)
@@ -136,19 +144,35 @@ class PostgresCursorWrapper:
         """Execute a query with automatic placeholder conversion."""
         converted_query = _convert_placeholders(query)
 
-        # Handle INSERT with RETURNING for lastrowid
-        if converted_query.strip().upper().startswith('INSERT') and 'RETURNING' not in converted_query.upper():
-            # Add RETURNING id to get the inserted row's ID
-            if 'id' in converted_query.lower() or 'SERIAL' in converted_query.upper():
-                converted_query = converted_query.rstrip(';') + ' RETURNING id'
+        # Try to execute with RETURNING id first
+        try:
+            # Handle INSERT with RETURNING for lastrowid
+            query_to_run = converted_query
+            if converted_query.strip().upper().startswith('INSERT') and 'RETURNING' not in converted_query.upper():
+                # Add RETURNING id to get the inserted row's ID
+                query_to_run = converted_query.rstrip(';') + ' RETURNING id'
 
-        if params:
-            self._cursor.execute(converted_query, params)
-        else:
-            self._cursor.execute(converted_query)
+            if params:
+                self._cursor.execute(query_to_run, params)
+            else:
+                self._cursor.execute(query_to_run)
+                
+        except Exception as e:
+            # Fallback: if RETURNING id failed (e.g. column "id" doesn't exist), try original query
+            if "column \"id\" does not exist" in str(e).lower() and query_to_run != converted_query:
+                # Rollback current transaction to clear error state if needed
+                if hasattr(self._cursor.connection, 'rollback'):
+                    self._cursor.connection.rollback()
+                
+                if params:
+                    self._cursor.execute(converted_query, params)
+                else:
+                    self._cursor.execute(converted_query)
+            else:
+                raise e
 
         # Try to get lastrowid from RETURNING clause
-        if converted_query.strip().upper().startswith('INSERT') and 'RETURNING' in converted_query.upper():
+        if converted_query.strip().upper().startswith('INSERT') and 'RETURNING' in query_to_run.upper():
             try:
                 result = self._cursor.fetchone()
                 if result:
@@ -414,6 +438,25 @@ def init_database():
             with get_connection() as conn:
                 cursor = conn.cursor()
                 _execute_script(cursor, sql)
+            
+            # Apply all migrations from migrations/ folder
+            print(f"Checking for pending migrations...")
+            migrations_dir = schema_dir.parent / 'migrations'
+            if migrations_dir.exists():
+                migration_files = sorted([f for f in migrations_dir.iterdir() if f.suffix == '.sql'])
+                
+                with get_connection() as conn:
+                    cursor = conn.cursor()
+                    for migration_file in migration_files:
+                        print(f"Applying migration: {migration_file.name}")
+                        with open(migration_file, 'r') as f:
+                            sql = f.read()
+                            try:
+                                _execute_script(cursor, sql)
+                            except Exception as e:
+                                # Log error but continue - migration might be partially applied or duplicate
+                                # In a real system we'd track applied migrations in a table
+                                print(f"Warning skipping {migration_file.name}: {e}")
 
             # Verify critical tables exist
             print("\nVerifying critical tables...")
@@ -427,7 +470,9 @@ def init_database():
                             WHERE table_name = %s
                         )
                     """, (table,))
-                    exists = cursor.fetchone()[0]
+                    result = cursor.fetchone()
+                    # Handle both tuple (SQLite) and dict (Postgres RealDictCursor)
+                    exists = result['exists'] if isinstance(result, dict) else result[0]
                     if exists:
                         print(f"  ✓ {table}")
                     else:

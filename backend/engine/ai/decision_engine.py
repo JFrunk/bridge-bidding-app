@@ -73,12 +73,34 @@ def select_bidding_module(features):
             unusual_2nt = Unusual2NTConvention()
             if unusual_2nt.evaluate(features['hand'], features): return 'unusual_2nt'
 
-            # Overcall module will use balancing HCP adjustment from features
+            # SAYC priority for competitive bids:
+            # - With a good MAJOR suit (5+): overcall to show it immediately
+            # - With support for all unbid suits (double shape): prefer takeout double
+            # - Otherwise: overcall with a good suit
+            hand = features['hand']
             overcall_specialist = OvercallModule()
-            if overcall_specialist.evaluate(features['hand'], features): return 'overcalls'
-
+            overcall_ok = overcall_specialist.evaluate(hand, features)
             takeout_double_specialist = TakeoutDoubleConvention()
-            if takeout_double_specialist.evaluate(features['hand'], features): return 'takeout_doubles'
+            double_ok = takeout_double_specialist.evaluate(hand, features)
+
+            if overcall_ok and double_ok:
+                # Both apply — prefer overcall only if we have a 5+ card MAJOR suit
+                # (majors are more urgent to show; minors can wait after a double)
+                opening_bid = auction.get('opening_bid', '')
+                opp_suit = opening_bid[1:] if len(opening_bid) > 1 else ''
+                has_major_overcall = any(
+                    hand.suit_lengths.get(s, 0) >= 5
+                    for s in ['♥', '♠']
+                    if s != opp_suit
+                )
+                if has_major_overcall:
+                    return 'overcalls'
+                else:
+                    return 'takeout_doubles'
+            elif double_ok:
+                return 'takeout_doubles'
+            elif overcall_ok:
+                return 'overcalls'
 
             # In balancing seat, if no module returned a bid, route to balancing specialist
             if is_balancing:
@@ -106,15 +128,29 @@ def select_bidding_module(features):
         my_index = features['my_index']
         opener_index = auction.get('opener_index', -1)
 
+        has_responded = False
         if opener_index != -1:
             my_bids_after_opening = [
                 bid for i, bid in enumerate(features['auction_history'])
                 if (i % 4) == my_index and i > opener_index and bid not in ['Pass', 'X', 'XX']
             ]
+            has_responded = len(my_bids_after_opening) >= 1
 
-            # If I've already responded, use responder rebid module
-            if len(my_bids_after_opening) >= 1:
-                return 'responder_rebid'
+        # PRIORITY: Check conventions with continuation handling BEFORE responder_rebid
+        # Conventions like Stayman, Jacoby, and Minor suit bust handle their own
+        # multi-round sequences and must be checked before generic responder rebids
+        if auction['opening_bid'] in ['1NT', '2NT']:
+            jacoby = JacobyConvention()
+            if jacoby.evaluate(features['hand'], features): return 'jacoby'
+            stayman = StaymanConvention()
+            if stayman.evaluate(features['hand'], features): return 'stayman'
+            # Minor suit bust (2♠ relay for weak hands with long minor)
+            minor_bust = MinorSuitBustConvention()
+            if minor_bust.evaluate(features['hand'], features): return 'minor_suit_bust'
+
+        # If I've already responded and no convention claimed the auction, use responder rebid
+        if has_responded:
+            return 'responder_rebid'
 
         # Check for slam conventions first
         # Grand Slam Force (5NT) - check before Blackwood
@@ -145,16 +181,6 @@ def select_bidding_module(features):
         negative_double = NegativeDoubleConvention()
         if negative_double.evaluate(features['hand'], features):
             return 'negative_doubles'
-
-        # Check for conventions over 1NT or 2NT
-        if auction['opening_bid'] in ['1NT', '2NT']:
-            jacoby = JacobyConvention()
-            if jacoby.evaluate(features['hand'], features): return 'jacoby'
-            stayman = StaymanConvention()
-            if stayman.evaluate(features['hand'], features): return 'stayman'
-            # Minor suit bust (2♠ relay for weak hands with long minor)
-            minor_bust = MinorSuitBustConvention()
-            if minor_bust.evaluate(features['hand'], features): return 'minor_suit_bust'
         # Fallback to natural responses (first response only)
         return 'responses'
 

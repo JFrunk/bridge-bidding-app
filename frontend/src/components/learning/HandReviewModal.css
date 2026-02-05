@@ -87,6 +87,7 @@
   background: white;
   border-radius: 12px;
   max-width: min(95vw, 800px);
+  width: min(95vw, 800px);
   max-height: 90vh;
   overflow: hidden; /* Changed to hidden - scrolling in content area */
   /* Match ScoreModal shadow and border styling */
@@ -100,7 +101,7 @@
 
 /* Unified layout: tighter width to match content */
 .hand-review-modal.unified-layout {
-  width: auto;
+  width: min(95vw, 740px);
   max-width: min(95vw, 740px);
   /* Consistent rounded corners with ScoreModal */
   border-radius: 12px;
@@ -283,6 +284,7 @@
 .modal-content {
   padding: 24px;
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
   min-height: 0; /* Needed for flex scroll */
 }
@@ -1407,11 +1409,14 @@
   margin: 0 auto 16px auto;
   /* Fixed minimum height to prevent layout shift during navigation */
   min-height: 420px;
+  /* Prevent horizontal overflow from card layouts */
+  overflow-x: hidden;
 }
 
 .replay-row {
   display: flex;
   justify-content: center;
+  overflow: hidden;
 }
 
 .replay-row-north {
@@ -1438,6 +1443,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  overflow: hidden;
 }
 
 .replay-position {
@@ -1449,6 +1455,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  /* Prevent card overflow from breaking layout */
+  overflow: hidden;
 }
 
 .replay-west,

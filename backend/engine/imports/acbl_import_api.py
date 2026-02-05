@@ -60,16 +60,18 @@ logger = logging.getLogger(__name__)
 
 def ensure_acbl_tables_exist():
     """Ensure the ACBL import tables exist in the database."""
+    from db import is_postgres
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Check if tables exist
-    cursor.execute("""
-        SELECT name FROM sqlite_master
-        WHERE type='table' AND name='imported_tournaments'
-    """)
+    # Check if tables exist (database-agnostic)
+    try:
+        cursor.execute("SELECT 1 FROM imported_tournaments LIMIT 1")
+        table_exists = True
+    except Exception:
+        table_exists = False
 
-    if not cursor.fetchone():
+    if not table_exists:
         # Read and execute migration
         migration_path = Path(__file__).parent.parent.parent / 'migrations' / '014_add_acbl_import_tables.sql'
         if migration_path.exists():

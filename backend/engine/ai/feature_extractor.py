@@ -1,5 +1,6 @@
 from engine.hand import Hand
 from engine.ai.auction_context import analyze_auction_context
+from engine.ai.bidding_state import BiddingStateBuilder
 from typing import Dict
 
 # Seat utilities - for partner/opponent calculations
@@ -257,16 +258,21 @@ def analyze_forcing_status(auction_history: list, positions: list, my_index: int
         return result
 
     # Check for 2♣ game-forcing opening
+    # Only game-forcing for the partnership that opened 2♣, not opponents
+    partner_index = (my_index + PARTNER_OFFSET) % 4
     if opening_bid == '2♣':
-        result['forcing_type'] = 'game_forcing'
-        result['forcing_source'] = '2♣ opening'
-        result['game_forcing_established'] = True
-        result['minimum_level'] = 4  # Must reach game
+        if opener_index == my_index or opener_index == partner_index:
+            result['forcing_type'] = 'game_forcing'
+            result['forcing_source'] = '2♣ opening'
+            result['game_forcing_established'] = True
+            result['minimum_level'] = 4  # Must reach game
 
-        # Check if we're past the 2♦ waiting bid
-        non_pass_bids = [b for b in auction_history if b not in ['Pass', 'X', 'XX']]
-        if len(non_pass_bids) >= 2:
-            result['must_bid'] = True
+            # Check if we're past the 2♦ waiting bid
+            non_pass_bids = [b for b in auction_history if b not in ['Pass', 'X', 'XX']]
+            if len(non_pass_bids) >= 2:
+                result['must_bid'] = True
+            return result
+        # Opponent opened 2♣ — not forcing for us
         return result
 
     # Track bids by partnership
@@ -623,6 +629,7 @@ def extract_features(hand: Hand, auction_history: list, my_position: str, vulner
 
     interference = _detect_interference(auction_history, positions, my_index, opener_relationship, opener_index)
     auction_context = analyze_auction_context(auction_history, positions, my_index)
+    bidding_state = BiddingStateBuilder().build(auction_history, dealer)
 
     # Calculate fundamental bridge metrics
     quick_tricks = calculate_quick_tricks(hand)
@@ -678,7 +685,8 @@ def extract_features(hand: Hand, auction_history: list, my_position: str, vulner
         'hand': hand,
         'my_index': my_index,
         'positions': positions,
-        'auction_context': auction_context
+        'auction_context': auction_context,
+        'bidding_state': bidding_state
     }
 
 

@@ -73,6 +73,11 @@ export function AuthProvider({ children }) {
       // Setting user to null will trigger login screen
       setUser(null);
       setLoading(false);
+
+      // Clear stale experience level so the Welcome Wizard shows on next login.
+      // Without this, a hard reset (backend DB cleared but localStorage persists)
+      // would skip the onboarding questionnaire.
+      localStorage.removeItem('bridge_experience_level');
     }
 
     // Load hands completed from localStorage
@@ -142,12 +147,16 @@ export function AuthProvider({ children }) {
   // Simple login using email/phone (no password)
   const simpleLogin = async (identifier, type = 'email') => {
     try {
+      // If user is currently a guest, pass their guest_id so backend can migrate their data
+      const currentGuestId = user?.isGuest ? user.id : null;
+
       const response = await fetch(`${API_URL}/api/auth/simple-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           [type]: identifier,
-          create_if_not_exists: true
+          create_if_not_exists: true,
+          guest_id: currentGuestId  // Pass guest ID for data migration
         })
       });
 
@@ -195,6 +204,7 @@ export function AuthProvider({ children }) {
 
     localStorage.removeItem('session_token');
     localStorage.removeItem('bridge_user');
+    localStorage.removeItem('bridge_experience_level');
     // Clear user state - this will show login screen (isAuthenticated becomes false)
     setUser(null);
     setLoading(false);
@@ -203,7 +213,12 @@ export function AuthProvider({ children }) {
   const continueAsGuest = () => {
     // Each browser gets a unique guest ID to prevent data collision
     const guestId = getOrCreateGuestId();
-    setUser({ id: guestId, username: 'guest', display_name: 'Guest', isGuest: true });
+    const guestUser = { id: guestId, username: 'guest', display_name: 'Guest', isGuest: true };
+    setUser(guestUser);
+    // Persist to bridge_user so userId survives page refresh.
+    // Without this, AuthContext mount finds no stored user → user=null → userId=null
+    // → session/start fails, hand saving fails, evaluate-bid fails.
+    localStorage.setItem('bridge_user', JSON.stringify(guestUser));
     setLoading(false);
   };
 
@@ -233,7 +248,7 @@ export function AuthProvider({ children }) {
   // Check if registration is required for a feature
   const requiresRegistration = useCallback((feature) => {
     // Features that require registration
-    const protectedFeatures = ['progress', 'dashboard', 'history'];
+    const protectedFeatures = ['progress', 'dashboard', 'history', 'learning'];
     return user?.isGuest && protectedFeatures.includes(feature);
   }, [user]);
 

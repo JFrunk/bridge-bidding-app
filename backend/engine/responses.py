@@ -41,15 +41,15 @@ class ResponseModule(ConventionModule):
             return (bid, explanation)
 
         # Bid is illegal - try to find next legal bid of same strain
-        next_legal = get_next_legal_bid(bid, auction_history)
+        next_legal = get_next_legal_bid(bid, auction_history, max_level_jump=1)
         if next_legal:
-            # SANITY CHECK: If adjustment is more than 2 levels, something is wrong
+            # SANITY CHECK: If adjustment is more than 1 level, something is wrong
             # This prevents runaway bid escalation (e.g., 2NT→7NT)
             try:
                 original_level = int(bid[0])
                 adjusted_level = int(next_legal[0])
 
-                if adjusted_level - original_level > 2:
+                if adjusted_level - original_level > 1:
                     # The suggested bid is way off - pass instead of making unreasonable bid
                     return ("Pass", f"Cannot make reasonable bid at current auction level (suggested {bid}, would need {next_legal}).")
             except (ValueError, IndexError):
@@ -80,6 +80,22 @@ class ResponseModule(ConventionModule):
             return self._get_first_response(hand, opening_bid, features)
         else:
             return self._get_responder_rebid(hand, features, my_bids_after_opening)
+
+    def _estimate_combined_with_partner(self, hand: Hand, features: Dict):
+        """Use BiddingState for combined HCP, fall back to None."""
+        bidding_state = features.get('bidding_state')
+        if bidding_state is not None:
+            positions = features.get('positions', [])
+            my_index = features.get('my_index')
+            if positions and my_index is not None:
+                from utils.seats import normalize
+                my_seat = normalize(positions[my_index])
+                partner_belief = bidding_state.partner_of(my_seat)
+                spread = partner_belief.hcp[1] - partner_belief.hcp[0]
+                if spread <= 25:
+                    partner_mid = (partner_belief.hcp[0] + partner_belief.hcp[1]) // 2
+                    return hand.hcp + partner_mid
+        return None
 
     def _calculate_support_points(self, hand: Hand, trump_suit: str) -> int:
         """Calculate support points for raising partner's suit.
@@ -162,7 +178,7 @@ class ResponseModule(ConventionModule):
         # Special case: Weak two opening (2♦/2♥/2♠)
         # Partner shows 5-11 HCP with a good 6-card suit
         if opening_bid in ['2♦', '2♥', '2♠']:
-            return self._respond_to_weak_two(hand, opening_bid, interference)
+            return self._respond_to_weak_two(hand, opening_bid, interference, features)
 
         # For other openings, minimum 6 points needed
         if hand.total_points < 6: return ("Pass", "Less than 6 total points.")
@@ -172,7 +188,7 @@ class ResponseModule(ConventionModule):
             # Other NT bids (3NT, etc.) - pass is usually correct
             return ("Pass", f"Partner opened {opening_bid}, accepting as final contract.")
         else:
-            return self._respond_to_suit_opening(hand, opening_bid, interference)
+            return self._respond_to_suit_opening(hand, opening_bid, interference, features)
 
     def _respond_to_1nt(self, hand: Hand, opening_bid: str, interference: Dict):
         """
@@ -214,14 +230,15 @@ class ResponseModule(ConventionModule):
                 else:
                     return ("4NT", "Quantitative slam invitation with 18-19 HCP (non-Blackwood).")
 
-            if hand.hcp >= 15:
-                # Quantitative slam invitation
-                return ("4NT", "Quantitative slam invitation with 15-17 HCP (non-Blackwood).")
+            if hand.hcp >= 16:
+                # Quantitative slam invitation (16-17 HCP opposite 15-17 = 31-34 combined)
+                # 15 HCP gives only 30-32 combined — not reliable enough for slam invite
+                return ("4NT", "Quantitative slam invitation with 16-17 HCP (non-Blackwood).")
 
             if hand.hcp >= 10:
                 # Game values - bid 3NT directly
                 # Note: Stayman/Jacoby will intercept if there's a major suit fit
-                return ("3NT", "Game bid with 10-14 HCP opposite partner's 15-17 HCP (combined 25+).")
+                return ("3NT", "Game bid with 10-15 HCP opposite partner's 15-17 HCP (combined 25+).")
 
             if hand.hcp >= 8:
                 # Invitational range
@@ -292,7 +309,7 @@ class ResponseModule(ConventionModule):
         # 0-3 HCP - pass (combined 20-24, not enough)
         return ("Pass", f"Insufficient strength for game opposite 2NT ({hand.hcp} HCP, combined ~23).")
 
-    def _respond_to_weak_two(self, hand: Hand, opening_bid: str, interference: Dict):
+    def _respond_to_weak_two(self, hand: Hand, opening_bid: str, interference: Dict, features: Dict = None):
         """
         Respond to weak two opening (2♦/2♥/2♠).
 
@@ -324,7 +341,16 @@ class ResponseModule(ConventionModule):
         if support >= 3:
             support_points = self._calculate_support_points(hand, opening_suit)
 
-            # Game values with fit:
+            # BiddingState-aware game decision: use combined HCP when available
+            if features is not None:
+                combined = self._estimate_combined_with_partner(hand, features)
+                if combined is not None and combined >= 25 and support >= 3:
+                    if opening_suit in ['♥', '♠']:
+                        return (f"4{opening_suit}", f"Game raise: {combined} combined HCP with {support}-card support.", metadata)
+                    elif combined >= 28:
+                        return ("5♦", f"Game in diamonds: {combined} combined HCP with {support}-card support.", metadata)
+
+            # Legacy game values with fit:
             # Partner has 5-11 HCP (avg ~8), so for game (~25 pts) we need ~14-20 HCP
             # But with a 10-card fit (4+ support), game plays well even with fewer HCP
             # SAYC: Raise to game with 12+ HCP and 4+ card support, or 14+ support points
@@ -458,7 +484,7 @@ class ResponseModule(ConventionModule):
         # Too weak for game
         return ("Pass", f"Pass with {hand.hcp} HCP - game unlikely (need ~4+ to reach 25 combined).")
 
-    def _respond_to_suit_opening(self, hand: Hand, opening_bid: str, interference: Dict):
+    def _respond_to_suit_opening(self, hand: Hand, opening_bid: str, interference: Dict, features: Dict = None):
         """
         Respond to suit opening (1♣/1♦/1♥/1♠), handling interference.
 
@@ -473,6 +499,22 @@ class ResponseModule(ConventionModule):
         - Without support: jump shift or 3NT if balanced
         """
         opening_suit = opening_bid[1]
+
+        # PRIORITY: Jump shift with 17+ HCP and 5+ card suit (game-forcing, shows very strong hand)
+        # Must check before 1-level responses since jump shifts skip the 1-level
+        if hand.hcp >= 17:
+            jump_shift_metadata = {'bypass_suit_length': True, 'game_forcing': True, 'forcing_sequence': 'jump_shift'}
+            # Find best 5+ card suit for jump shift
+            for suit in ['♠', '♥', '♦', '♣']:
+                if suit != opening_suit and hand.suit_lengths.get(suit, 0) >= 5:
+                    # Jump shift = one level higher than necessary
+                    suit_rank = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+                    if suit_rank.get(suit, 0) > suit_rank.get(opening_suit, 0):
+                        # Could bid at 1-level, so jump to 2-level
+                        return (f"2{suit}", f"Jump shift showing 17+ HCP and 5+ {suit} (game-forcing).", jump_shift_metadata)
+                    else:
+                        # Would need 2-level anyway, so jump to 3-level
+                        return (f"3{suit}", f"Jump shift showing 17+ HCP and 5+ {suit} (game-forcing).", jump_shift_metadata)
 
         # PRIORITY: Show 4+ card suits at 1-level BEFORE raising partner's minor with only 3-card support
         # This is standard SAYC - bid up the line at the 1-level
@@ -497,13 +539,42 @@ class ResponseModule(ConventionModule):
         if opening_suit in hand.suit_lengths and hand.suit_lengths[opening_suit] >= 3:
             support_points = self._calculate_support_points(hand, opening_suit)
 
+            # BiddingState-aware slam/game decisions
+            if features is not None:
+                combined = self._estimate_combined_with_partner(hand, features)
+                if combined is not None:
+                    # Blackwood requires: midpoint combined 33+, support 16+, major fit,
+                    # AND partner range must be narrow (spread <= 7) so midpoint is reliable,
+                    # AND conservative floor: my HCP + partner's minimum >= 30
+                    if combined >= 33 and support_points >= 16 and opening_suit in '♥♠':
+                        bidding_state = features.get('bidding_state')
+                        partner_min_hcp = 0
+                        partner_spread = 40
+                        if bidding_state is not None:
+                            positions = features.get('positions', [])
+                            my_index = features.get('my_index')
+                            if positions and my_index is not None:
+                                from utils.seats import normalize
+                                my_seat = normalize(positions[my_index])
+                                partner_belief = bidding_state.partner_of(my_seat)
+                                partner_min_hcp = partner_belief.hcp[0]
+                                partner_spread = partner_belief.hcp[1] - partner_belief.hcp[0]
+                        conservative_combined = hand.hcp + partner_min_hcp
+                        if conservative_combined >= 30 and partner_spread <= 7:
+                            return ("4NT", f"Blackwood: {combined} combined HCP with {support_points} support points.")
+                    if combined >= 25 and support_points >= 13:
+                        if opening_suit in '♥♠':
+                            return (f"4{opening_suit}", f"Game raise: {combined} combined HCP with {support_points} support points.")
+                        else:
+                            return ("3NT", f"Game in NT: {combined} combined HCP.")
+
             # Slam exploration with very strong support (17+ support points)
             # Opener shows 13-21 pts, combined could be 30-38 (slam zone)
             if support_points >= 17 and opening_suit in '♥♠':
                 # With 17+ support points and major fit, explore slam
                 # Jump to 4-level to show strong support, partner can ask Blackwood
-                # Or with 20+ support points, we can ask Blackwood ourselves
-                if support_points >= 20:
+                # Or with 20+ support points AND HCP justification, ask Blackwood
+                if support_points >= 20 and hand.hcp >= 16:
                     return ("4NT", f"Blackwood asking for aces with excellent {opening_suit} support ({support_points} support points).")
                 # 17-19 support points - show strong support at 3-level (slam try)
                 return (f"3{opening_suit}", f"Slam try with excellent {opening_suit} support ({support_points} support points).")

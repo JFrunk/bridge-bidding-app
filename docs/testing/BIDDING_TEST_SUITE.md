@@ -112,7 +112,50 @@ pytest tests/regression/ -v
 
 ---
 
-### 4. Scenario Tests (`backend/tests/scenarios/`)
+### 4. V3 Logic Stack Tests (`backend/tests/v3/`)
+
+**Purpose:** Comprehensive tests for V3 bidding logic that uses ACTUAL HCP (not midpoint estimates) and implements the Borrowed King principle for balancing.
+
+**Runtime:** ~30 seconds (quick), ~2 minutes (full)
+
+**Key Files:**
+| File | What It Tests |
+|------|--------------|
+| `v3_logic_test_suite.json` | Test case definitions for all V3 levels |
+| `test_v3_logic.sh` | Shell script runner for automated testing |
+| `test_v3_bidding.py` | Python pytest tests for bidding engine |
+
+**Test Levels Covered:**
+| Level | Category | Tests |
+|-------|----------|-------|
+| Level 1 | Basic Bidding Actions | Pass, Opening bids, Raises, Responses |
+| Level 2 | Opener's Rebid | Minimum rebid, Raise responder |
+| Level 4 | Competitive Bidding | Overcalls, Takeout doubles, Balancing |
+| Conventions | Essential SAYC | Stayman, Jacoby, Blackwood, Negative Double |
+
+**Run:**
+```bash
+# Quick smoke test
+bash tests/v3/test_v3_logic.sh --quick
+
+# Full test suite
+bash tests/v3/test_v3_logic.sh
+
+# Level-specific tests
+bash tests/v3/test_v3_logic.sh --level 1
+
+# Python tests
+pytest tests/v3/test_v3_bidding.py -v
+```
+
+**V3 Principles:**
+1. **ACTUAL HCP:** Uses actual hand HCP, not midpoint estimates from partner's range
+2. **Borrowed King:** +3 Virtual HCP Offset for balancing seat decisions
+3. **Foundational Tier:** Basic bidding elements treated as convention-like modules
+
+---
+
+### 5. Scenario Tests (`backend/tests/scenarios/`)
 
 **Purpose:** Test specific bidding situations and conventions.
 
@@ -131,7 +174,7 @@ pytest tests/scenarios/ -v
 
 ---
 
-### 5. SAYC Baseline Tests (`backend/tests/sayc_baseline/`)
+### 6. SAYC Baseline Tests (`backend/tests/sayc_baseline/`)
 
 **Purpose:** Validate V2 schema engine against SAYC standard.
 

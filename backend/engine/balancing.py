@@ -40,6 +40,32 @@ class BalancingModule(ConventionModule):
             'hcp_max': 14,
         }
 
+    def _estimate_partner_hcp(self, hand: Hand, features: Dict) -> int:
+        """
+        Estimate partner's HCP using BiddingState beliefs about all seats.
+
+        In balancing position (opener bid, responder passed, partner passed),
+        we can compute partner's likely HCP as:
+            40 - my_hcp - opener_midpoint - responder_midpoint
+
+        Falls back to VIRTUAL_OFFSET when BiddingState unavailable.
+        """
+        bidding_state = features.get('bidding_state')
+        if bidding_state is not None:
+            positions = features.get('positions', [])
+            my_index = features.get('my_index')
+            if positions and my_index is not None:
+                from utils.seats import normalize, lho, rho
+                my_seat = normalize(positions[my_index])
+                # In balancing: LHO is opener, RHO is responder who passed
+                lho_belief = bidding_state.seat(lho(my_seat))
+                rho_belief = bidding_state.seat(rho(my_seat))
+                lho_mid = (lho_belief.hcp[0] + lho_belief.hcp[1]) // 2
+                rho_mid = (rho_belief.hcp[0] + rho_belief.hcp[1]) // 2
+                partner_est = max(0, 40 - hand.hcp - lho_mid - rho_mid)
+                return partner_est
+        return self.VIRTUAL_OFFSET
+
     def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
         """
         Evaluate balancing action in pass-out seat.
@@ -57,8 +83,9 @@ class BalancingModule(ConventionModule):
         if not opening_bid or opening_bid in ['Pass', 'X', 'XX']:
             return None
 
-        # Calculate adjusted HCP (with virtual offset)
-        adjusted_hcp = hand.hcp + self.VIRTUAL_OFFSET
+        # Estimate partner's HCP using BiddingState (or fall back to +3 offset)
+        partner_est = self._estimate_partner_hcp(hand, features)
+        adjusted_hcp = hand.hcp + partner_est
 
         # Try each action in priority order
         # Priority: 1NT > Double > Suit bid > Pass

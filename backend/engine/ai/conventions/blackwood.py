@@ -38,15 +38,15 @@ class BlackwoodConvention(ConventionModule):
             return (bid, explanation, metadata) if metadata else (bid, explanation)
 
         # Bid is illegal - try to find next legal bid of same strain
-        next_legal = get_next_legal_bid(bid, auction_history)
+        next_legal = get_next_legal_bid(bid, auction_history, max_level_jump=1)
         if next_legal:
-            # SANITY CHECK: If adjustment is more than 2 levels, something is wrong
+            # SANITY CHECK: If adjustment is more than 1 level, something is wrong
             # This is especially critical for Blackwood where 5NT→7NT could happen
             try:
                 original_level = int(bid[0])
                 adjusted_level = int(next_legal[0])
 
-                if adjusted_level - original_level > 2:
+                if adjusted_level - original_level > 1:
                     # The suggested bid is way off - pass instead of bidding unreasonable slam
                     return ("Pass", f"Cannot make reasonable bid at current auction level (suggested {bid}, would need {next_legal}).")
             except (ValueError, IndexError):
@@ -326,50 +326,57 @@ class BlackwoodConvention(ConventionModule):
         # Slam bids after Blackwood are FORCED based on ace count, not HCP
         signoff_metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'blackwood_signoff'}
 
-        # Decide slam level based on aces
-        if partner_aces[0] == 0 or (len(partner_aces) > 1 and partner_aces[1] == 4):
-            # Partner has 0 or 4 aces - assume 0 for safety
-            missing_aces = 4 - my_aces
+        # Estimate combined HCP for grand slam decision (need 37+ for 7-level)
+        estimated_combined = hand.hcp + 16  # Conservative default for partner
+        bidding_state = features.get('bidding_state')
+        if bidding_state is not None:
+            try:
+                from utils.seats import normalize
+                positions = features.get('positions', [])
+                my_idx = features.get('my_index', 0)
+                my_seat = normalize(positions[my_idx])
+                partner_belief = bidding_state.partner_of(my_seat)
+                partner_max_capped = min(partner_belief.hcp[1], 22)
+                partner_mid = (partner_belief.hcp[0] + partner_max_capped) // 2
+                estimated_combined = hand.hcp + partner_mid
+            except Exception:
+                pass
+
+        def _decide_slam_level(total_aces, missing_aces):
+            """Decide slam bid based on aces and combined HCP."""
             if missing_aces >= 2:
                 # Missing 2+ aces, sign off at 5-level
                 if trump_suit:
                     return (f"5{trump_suit}", f"Signing off at 5-level, missing {missing_aces} aces.", signoff_metadata)
-                else:
-                    return ("5NT", "Signing off (no clear trump suit).", signoff_metadata)
+                return ("5NT", "Signing off (no clear trump suit).", signoff_metadata)
             elif missing_aces == 1:
                 # Missing 1 ace, bid small slam
                 if trump_suit:
-                    return (f"6{trump_suit}", f"Bidding small slam with {my_aces + partner_aces[0]} aces.", signoff_metadata)
-                else:
-                    return ("6NT", "Bidding small slam in NT.", signoff_metadata)
+                    return (f"6{trump_suit}", f"Bidding small slam with {total_aces} aces.", signoff_metadata)
+                return ("6NT", "Bidding small slam in NT.", signoff_metadata)
             else:
-                # All 4 aces present - bid grand slam!
-                if trump_suit:
-                    return (f"7{trump_suit}", f"Bidding grand slam with all 4 aces present!", signoff_metadata)
-                else:
+                # All 4 aces present — grand slam needs ~37 combined HCP
+                # Use 36 threshold to account for estimation imprecision (±1 HCP)
+                if estimated_combined >= 36:
+                    if trump_suit:
+                        return (f"7{trump_suit}", f"Bidding grand slam with all 4 aces and ~{estimated_combined} combined HCP!", signoff_metadata)
                     return ("7NT", "Bidding grand slam in NT with all 4 aces.", signoff_metadata)
+                else:
+                    # All aces but insufficient HCP for grand — settle for small slam
+                    if trump_suit:
+                        return (f"6{trump_suit}", f"Small slam with all aces but ~{estimated_combined} combined HCP (need 37+ for grand).", signoff_metadata)
+                    return ("6NT", f"Small slam in NT with all aces but ~{estimated_combined} combined HCP (need 37+ for grand).", signoff_metadata)
+
+        # Decide slam level based on aces
+        if partner_aces[0] == 0 or (len(partner_aces) > 1 and partner_aces[1] == 4):
+            # Partner has 0 or 4 aces - assume 0 for safety
+            missing_aces = 4 - my_aces
+            return _decide_slam_level(my_aces, missing_aces)
         else:
             # Partner has definite count
             total_aces = my_aces + partner_aces[0]
-
-            if total_aces <= 2:
-                # Missing 2+ aces, sign off at 5-level
-                if trump_suit:
-                    return (f"5{trump_suit}", f"Signing off at 5-level with {total_aces} aces.", signoff_metadata)
-                else:
-                    return ("5NT", "Signing off (no clear trump suit).", signoff_metadata)
-            elif total_aces == 3:
-                # Missing 1 ace, bid small slam
-                if trump_suit:
-                    return (f"6{trump_suit}", f"Bidding small slam with {total_aces} aces.", signoff_metadata)
-                else:
-                    return ("6NT", "Bidding small slam in NT with 3 aces.", signoff_metadata)
-            else:
-                # All 4 aces present - bid grand slam!
-                if trump_suit:
-                    return (f"7{trump_suit}", f"Bidding grand slam with all 4 aces present!", signoff_metadata)
-                else:
-                    return ("7NT", "Bidding grand slam in NT with all 4 aces.", signoff_metadata)
+            missing_aces = 4 - total_aces
+            return _decide_slam_level(total_aces, missing_aces)
 
     def _find_trump_suit(self, features: Dict, auction_history: list) -> Optional[str]:
         """

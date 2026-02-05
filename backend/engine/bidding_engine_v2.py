@@ -36,6 +36,7 @@ from typing import Optional, Tuple, List, Dict, Any
 
 from engine.hand import Hand
 from engine.ai.feature_extractor import extract_features
+from engine.ai.bid_explanation import BidExplanation
 
 logger = logging.getLogger(__name__)
 
@@ -173,6 +174,32 @@ class BiddingEngineV2:
         """
         # Import V1 modules for initial compatibility
         from engine.ai.module_registry import ModuleRegistry
+        
+        # Explicitly import modules to trigger auto-registration
+        import engine.opening_bids
+        import engine.responses
+        import engine.rebids
+        import engine.responder_rebids
+        import engine.overcalls
+        import engine.advancer_bids
+        import engine.balancing
+        import engine.bid_safety
+
+        # Import Conventions
+        import engine.ai.conventions.blackwood
+        import engine.ai.conventions.stayman
+        import engine.ai.conventions.jacoby_transfers
+        import engine.ai.conventions.preempts
+        import engine.ai.conventions.michaels_cuebid
+        import engine.ai.conventions.unusual_2nt
+        import engine.ai.conventions.takeout_doubles
+        import engine.ai.conventions.fourth_suit_forcing
+        import engine.ai.conventions.gerber
+        import engine.ai.conventions.grand_slam_force
+        import engine.ai.conventions.minor_suit_bust
+        import engine.ai.conventions.negative_doubles
+        import engine.ai.conventions.splinter_bids
+        
         self.modules = ModuleRegistry.get_all()
 
         logger.info(f"BiddingEngineV2 initialized with {len(self.modules)} modules")
@@ -247,6 +274,66 @@ class BiddingEngineV2:
         self._update_stats(auction_state, elapsed_ms)
 
         return (bid, explanation)
+
+    def get_next_bid_structured(
+        self,
+        hand: Hand,
+        auction_history: list,
+        my_position: str,
+        vulnerability: str,
+        dealer: str = None
+    ) -> Tuple[str, Dict]:
+        """
+        Get the next bid with structured explanation data (for JSON API).
+
+        Returns:
+            Tuple of (bid, explanation_dict)
+        """
+        # Infer dealer if not provided
+        if dealer is None:
+            dealer = self._infer_dealer(my_position, len(auction_history))
+
+        # Steps 1-3: Features, State, Module Selection
+        features = extract_features(hand, auction_history, my_position, vulnerability, dealer)
+        auction_state = self._compute_auction_state(hand, features)
+        module_name = self._select_module_for_state(auction_state, hand)
+
+        # Step 4: Get bid from module
+        bid = "Pass"
+        explanation_obj = "No appropriate bid found."
+        
+        if module_name != 'pass_by_default':
+            module = self.modules.get(module_name)
+            if module:
+                try:
+                    result = module.evaluate(hand, features)
+                    if result:
+                        bid = result[0]
+                        explanation_obj = result[1]
+                except Exception as e:
+                    logger.error(f"Error in module {module_name}: {e}")
+
+        # Step 5: Apply safety nets
+        bid, explanation_final = self._apply_safety_nets(bid, explanation_obj, hand, auction_state, auction_history)
+
+        # Step 6: Validate
+        if not self._is_bid_legal(bid, auction_history):
+             bid = "Pass"
+             explanation_final = "No legal bid found (illegal bid was suggested)."
+
+        # Format explanation for return
+        explanation_dict = {}
+        if isinstance(explanation_final, BidExplanation):
+            explanation_dict = explanation_final.to_dict()
+        elif isinstance(explanation_final, dict):
+             explanation_dict = explanation_final
+        else:
+            explanation_dict = {
+                "bid": bid,
+                "primary_reason": str(explanation_final)
+            }
+            
+        return (bid, explanation_dict)
 
     def _infer_dealer(self, my_position: str, auction_length: int) -> str:
         """Infer dealer from position and auction length."""
@@ -329,8 +416,8 @@ class BiddingEngineV2:
 
         This is the STATE MACHINE - clear, testable logic.
         """
-        # Game forcing overrides other states
-        if forcing == ForcingStatus.GAME_FORCING:
+        # Game forcing overrides other states — but only for the opening partnership
+        if forcing == ForcingStatus.GAME_FORCING and opener_relationship in ('Me', 'Partner'):
             return BiddingState.GAME_FORCING
 
         # No opener yet = opening position
@@ -375,12 +462,12 @@ class BiddingEngineV2:
         STATE_MODULE_MAP = {
             BiddingState.OPENING: self._select_opening_module,
             BiddingState.RESPONDING: self._select_response_module,
-            BiddingState.RESPONDER_REBID: lambda s, h: 'responder_rebid',
-            BiddingState.OPENER_REBID: lambda s, h: 'openers_rebid',
-            BiddingState.OPENER_THIRD_BID: lambda s, h: 'openers_rebid',
+            BiddingState.RESPONDER_REBID: self._select_responder_rebid_module,
+            BiddingState.OPENER_REBID: self._select_opener_rebid_module,
+            BiddingState.OPENER_THIRD_BID: self._select_opener_rebid_module,
             BiddingState.DIRECT_SEAT: self._select_competitive_module,
             BiddingState.BALANCING_SEAT: self._select_balancing_module,
-            BiddingState.ADVANCING: lambda s, h: 'advancer_bids',
+            BiddingState.ADVANCING: self._select_advancer_module,
             BiddingState.GAME_FORCING: self._select_game_forcing_module,
         }
 
@@ -439,6 +526,34 @@ class BiddingEngineV2:
 
         return 'pass_by_default'
 
+    def _select_responder_rebid_module(self, state: AuctionState, hand: Hand) -> str:
+        """Select module for responder's rebid."""
+        # Check for Blackwood response
+        if state.partner_last_bid == '4NT':
+            return 'blackwood'
+        if state.partner_last_bid == '5NT': # King ask or GSF
+             return 'blackwood'
+             
+        return 'responder_rebid'
+
+    def _select_opener_rebid_module(self, state: AuctionState, hand: Hand) -> str:
+        """Select module for opener's rebid."""
+        # Check for Blackwood response
+        if state.partner_last_bid == '4NT':
+            return 'blackwood'
+        if state.partner_last_bid == '5NT':
+             return 'blackwood'
+             
+        return 'openers_rebid'
+
+    def _select_advancer_module(self, state: AuctionState, hand: Hand) -> str:
+        """Select module for advancer (partner of overcaller)."""
+        # Check for Blackwood response
+        if state.partner_last_bid == '4NT':
+            return 'blackwood'
+            
+        return 'advancer_bids'
+
     def _select_balancing_module(self, state: AuctionState, hand: Hand) -> str:
         """Select module for balancing seat."""
         # In balancing seat, can bid with lighter values
@@ -473,8 +588,10 @@ class BiddingEngineV2:
 
     def _should_preempt(self, hand: Hand) -> bool:
         """Check if hand qualifies for preempt."""
-        # Basic preempt criteria: 6+ card suit, < 12 HCP
-        if hand.hcp >= 12:
+        # Basic preempt criteria: 6+ card suit, 6-10 HCP
+        # Must match the preempt module's actual HCP range (6-10).
+        # Hands with 11+ HCP should go to opening_bids, not preempts.
+        if hand.hcp > 10:
             return False
         for suit in ['♠', '♥', '♦', '♣']:
             if hand.suit_lengths.get(suit, 0) >= 6:
@@ -549,7 +666,15 @@ class BiddingEngineV2:
         try:
             result = module.evaluate(hand, features)
             if result:
-                return (result[0], result[1] if len(result) > 1 else '')
+                bid = result[0]
+                explanation = result[1] if len(result) > 1 else ''
+                # Modules may return BidExplanation objects — convert to string
+                if hasattr(explanation, 'format') and not isinstance(explanation, str):
+                    try:
+                        explanation = explanation.format()
+                    except Exception:
+                        explanation = str(explanation)
+                return (bid, explanation)
         except Exception as e:
             logger.error(f"Error in module {module_name}: {e}")
 
@@ -564,6 +689,10 @@ class BiddingEngineV2:
         auction_history: list
     ) -> Tuple[str, str]:
         """Apply safety nets for game-forcing and slam exploration."""
+
+        # Safety nets only apply to partnership auctions (I opened or partner opened)
+        if state.opener_relationship not in ('Me', 'Partner'):
+            return (bid, explanation)
 
         # Safety net 1: Game-forcing must not pass below game
         if state.forcing == ForcingStatus.GAME_FORCING and bid == 'Pass':
@@ -605,15 +734,20 @@ class BiddingEngineV2:
         return None
 
     def _find_any_legal_bid(self, hand: Hand, state: AuctionState, auction_history: list) -> Optional[str]:
-        """Find any legal bid when we must bid."""
-        # Try cheapest NT
-        for level in range(1, 8):
+        """Find any legal bid when we must bid, with level caps based on HCP."""
+        hcp = hand.hcp
+        # Cap levels to prevent weak hands from bidding slam
+        max_nt_level = 3 if hcp < 16 else 6
+        max_suit_level = 4 if hcp < 16 else 6
+
+        # Try cheapest NT up to cap
+        for level in range(1, max_nt_level + 1):
             if self._is_bid_legal(f'{level}NT', auction_history):
                 return f'{level}NT'
 
-        # Try longest suit
+        # Try longest suit up to cap
         longest_suit = max(hand.suit_lengths, key=hand.suit_lengths.get)
-        for level in range(1, 8):
+        for level in range(1, max_suit_level + 1):
             bid = f'{level}{longest_suit}'
             if self._is_bid_legal(bid, auction_history):
                 return bid

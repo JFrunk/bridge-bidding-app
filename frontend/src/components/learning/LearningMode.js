@@ -26,8 +26,6 @@ import {
 import SkillPractice from './SkillPractice';
 import SkillIntro from './SkillIntro';
 import { useUser } from '../../contexts/UserContext';
-import WelcomeWizard from '../onboarding/WelcomeWizard';
-import ExperienceSettings from '../settings/ExperienceSettings';
 
 const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   // Track selector: 'bidding' or 'play'
@@ -35,13 +33,11 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   const containerRef = useRef(null);
 
   // Get user experience level settings from context
-  const { shouldShowWelcomeWizard, setExperienceLevel, isLevelUnlocked } = useUser();
+  // Note: WelcomeWizard is now shown at app root level (App.js), not here
+  const { isLevelUnlocked } = useUser();
 
   // Toast state for locked level clicks
   const [lockedToast, setLockedToast] = useState(null);
-
-  // Settings modal state
-  const [showSettings, setShowSettings] = useState(false);
 
   const [learningStatus, setLearningStatus] = useState(null);
   const [skillTree, setSkillTree] = useState(null);
@@ -53,6 +49,7 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   const [showingIntro, setShowingIntro] = useState(null); // { skillId, skillName, track }
 
   const loadData = useCallback(async () => {
+    if (!userId) return;
     try {
       setLoading(true);
       setError(null);
@@ -436,18 +433,6 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
 
   return (
     <>
-      {/* Welcome Wizard - shown only on first visit */}
-      <WelcomeWizard
-        isOpen={shouldShowWelcomeWizard}
-        onSelectExperience={setExperienceLevel}
-      />
-
-      {/* Experience Settings Modal */}
-      <ExperienceSettings
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-      />
-
       {/* Toast notification for locked levels */}
       {lockedToast && (
         <div className="locked-toast" key={lockedToast.key}>
@@ -474,14 +459,6 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
                 : 'Master declarer play techniques'}
             </p>
           </div>
-          <button
-            className="settings-button"
-            onClick={() => setShowSettings(true)}
-            aria-label="Learning Settings"
-            title="Learning Settings"
-          >
-            <span className="settings-icon">⚙️</span>
-          </button>
         </div>
 
         {/* Track Selector Tabs */}

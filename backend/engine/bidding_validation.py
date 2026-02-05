@@ -181,16 +181,18 @@ class BidValidator:
             return 0  # Treat as equal if can't parse
 
     @staticmethod
-    def get_next_legal_bid(target_bid: str, auction: List[str]) -> Optional[str]:
+    def get_next_legal_bid(target_bid: str, auction: List[str], max_level_jump: int = None) -> Optional[str]:
         """
         Given a desired bid that might be illegal, find the next legal bid of same strain.
 
         Args:
             target_bid: The desired bid (may be illegal)
             auction: Current auction history
+            max_level_jump: If set, cap search to target_level + max_level_jump.
+                           None = search up to 7 (legacy behavior).
 
         Returns:
-            Next legal bid of same strain, or None if no legal bid exists at reasonable level
+            Next legal bid of same strain, or None if no legal bid exists within range
 
         Example:
             >>> BidValidator.get_next_legal_bid('2NT', ['1♣', '3♥'])
@@ -205,8 +207,9 @@ class BidValidator:
             target_level = int(target_bid[0])
             target_strain = target_bid[1:]
 
-            # Try higher levels of same strain (up to 7)
-            for level in range(target_level + 1, 8):
+            # Cap search range if max_level_jump is set
+            max_search = min(target_level + max_level_jump, 7) if max_level_jump is not None else 7
+            for level in range(target_level + 1, max_search + 1):
                 candidate = f"{level}{target_strain}"
                 if BidValidator.is_legal_bid(candidate, auction):
                     return candidate
@@ -256,6 +259,6 @@ def get_minimum_legal_bid(auction: List[str]) -> Optional[Tuple[int, str]]:
     return BidValidator.get_minimum_legal_bid(auction)
 
 
-def get_next_legal_bid(target_bid: str, auction: List[str]) -> Optional[str]:
+def get_next_legal_bid(target_bid: str, auction: List[str], max_level_jump: int = None) -> Optional[str]:
     """Convenience wrapper for BidValidator.get_next_legal_bid"""
-    return BidValidator.get_next_legal_bid(target_bid, auction)
+    return BidValidator.get_next_legal_bid(target_bid, auction, max_level_jump)

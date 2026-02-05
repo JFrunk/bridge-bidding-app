@@ -181,6 +181,150 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "_comment": "=== STAYMAN FOLLOW-UP: Invitational/signoff after Stayman ===",
+      "id": "stayman_invite_3_spades",
+      "bid": "3♠",
+      "priority": 515,
+      "description": "Invite in spades after Stayman finds fit (8-9 HCP)",
+      "trigger": "1NT - Pass - 2♣ - Pass - 2♠ - Pass - ?",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_has_tag_opened_1nt": true,
+        "hcp": {"min": 8, "max": 9},
+        "spades_length": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Invite: 3♠ with {hcp} HCP and spade fit (partner decides)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "stayman_invite_3_hearts",
+      "bid": "3♥",
+      "priority": 515,
+      "description": "Invite in hearts after Stayman finds fit (8-9 HCP)",
+      "trigger": "1NT - Pass - 2♣ - Pass - 2♥ - Pass - ?",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_has_tag_opened_1nt": true,
+        "hcp": {"min": 8, "max": 9},
+        "hearts_length": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Invite: 3♥ with {hcp} HCP and heart fit (partner decides)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "stayman_signoff_3nt_no_fit",
+      "bid": "3NT",
+      "priority": 510,
+      "description": "3NT after Stayman: game values, no major fit",
+      "trigger": "1NT - Pass - 2♣ - Pass - 2♦ - Pass - ?",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_has_tag_opened_1nt": true,
+        "hcp": {"min": 10}
+      },
+      "forcing": "none",
+      "explanation": "3NT: {hcp} HCP, no major fit found via Stayman",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "stayman_signoff_3nt_wrong_major",
+      "bid": "3NT",
+      "priority": 508,
+      "description": "3NT after Stayman: partner showed wrong major",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_has_tag_opened_1nt": true,
+        "hcp": {"min": 10},
+        "support_for_partner": {"max": 2}
+      },
+      "forcing": "none",
+      "explanation": "3NT: {hcp} HCP, partner's major doesn't fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "stayman_invite_2nt_no_fit",
+      "bid": "2NT",
+      "priority": 505,
+      "description": "2NT invite after Stayman: no fit, 8-9 HCP",
+      "trigger": "1NT - Pass - 2♣ - Pass - 2♦ - Pass - ?",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_has_tag_opened_1nt": true,
+        "hcp": {"min": 8, "max": 9}
+      },
+      "forcing": "none",
+      "explanation": "2NT invite: {hcp} HCP, no major fit (partner decides game)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "_comment": "=== OPENER REBID 2NT (18-19 HCP): Responder raises to game ===",
+      "id": "responder_game_major_after_2nt",
+      "bid": "4{partner_first_suit}",
+      "priority": 525,
+      "description": "Bid game in opener's major after 2NT rebid showing 18-19",
+      "conditions": {
+        "my_bid_count": {"min": 1},
+        "partner_last_bid": "2NT",
+        "hcp": {"min": 5},
+        "opening_bid": {"in": ["1♥", "1♠"]},
+        "support_for_partner_first": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Game in partner's major — partner showed 18-19 HCP, good fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_raise_2nt_to_3nt",
+      "bid": "3NT",
+      "priority": 520,
+      "description": "Raise opener's 2NT rebid to 3NT with values for game",
+      "conditions": {
+        "my_bid_count": {"min": 1},
+        "partner_last_bid": "2NT",
+        "hcp": {"min": 7},
+        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]}
+      },
+      "forcing": "none",
+      "explanation": "Raise to 3NT — partner showed 18-19, combined points sufficient for game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "_comment": "=== STRONG 2C AUCTION: Responder rebids after opener's 2NT ===",
+      "id": "strong_2c_raise_3nt",
+      "bid": "3NT",
+      "priority": 530,
+      "description": "Raise to 3NT after 2C-2D/2H-2NT (opener shows 22-24 balanced)",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_has_tag_strong_2c": true,
+        "partner_last_bid": "2NT"
+      },
+      "forcing": "none",
+      "explanation": "3NT: Accepting opener's 2NT rebid (combined 22+ HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "strong_2c_stayman_3c",
+      "bid": "3♣",
+      "priority": 535,
+      "description": "Stayman over opener's 2NT rebid in 2C auction",
+      "conditions": {
+        "is_responder_rebid": true,
+        "partner_has_tag_strong_2c": true,
+        "partner_last_bid": "2NT",
+        "hcp": {"min": 3},
+        "OR": [
+          {"spades_length": {"min": 4}},
+          {"hearts_length": {"min": 4}}
+        ]
+      },
+      "forcing": "one_round",
+      "explanation": "Stayman over 2NT: looking for 4-card major fit",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
       "id": "jacoby_transfer_game_spades",
       "bid": "4♠",
       "priority": 525,
@@ -846,13 +990,16 @@
       "id": "responder_rebid_pass_partner_limit",
       "bid": "Pass",
       "priority": 200,
-      "description": "Pass when partner showed limit values",
+      "description": "Pass when partner showed limit values and combined not enough for game",
       "conditions": {
         "is_responder_rebid": true,
         "hcp": {
           "max": 11
         },
-        "partner_showed_limit": true
+        "partner_showed_limit": true,
+        "combined_hcp_midpoint": {
+          "max": 24
+        }
       },
       "forcing": "none",
       "explanation": "Pass with {hcp} HCP - partner showed minimum",

@@ -318,7 +318,7 @@ const TrickFeedbackPanel = ({ decision }) => {
           <span className="played-card">
             <strong>{positionName} played:</strong> {decision.user_card}
           </span>
-          {decision.optimal_card && decision.optimal_card !== decision.user_card && (
+          {decision.optimal_card && decision.optimal_card !== decision.user_card && decision.rating !== 'optimal' && (
             <span className="optimal-card">
               <strong>Better:</strong> {decision.optimal_card}
             </span>

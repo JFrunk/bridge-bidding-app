@@ -1,3 +1,11 @@
+---
+description: Run quick tests during development
+---
+
+---
+description: Run quick tests during development
+---
+
 Run quick tests during development: $ARGUMENTS
 
 Optional: Specify test category (unit/integration/regression/all)

@@ -41,15 +41,15 @@ class AdvancerBidsModule(ConventionModule):
             return (bid, explanation, metadata) if metadata else (bid, explanation)
 
         # Bid is illegal - try to find next legal bid of same strain
-        next_legal = get_next_legal_bid(bid, auction_history)
+        next_legal = get_next_legal_bid(bid, auction_history, max_level_jump=1)
         if next_legal:
-            # SANITY CHECK: If adjustment is more than 2 levels, something is wrong
+            # SANITY CHECK: If adjustment is more than 1 level, something is wrong
             # This prevents runaway bid escalation in competitive auctions
             try:
                 original_level = int(bid[0])
                 adjusted_level = int(next_legal[0])
 
-                if adjusted_level - original_level > 2:
+                if adjusted_level - original_level > 1:
                     # The suggested bid is way off - pass instead of making unreasonable bid
                     return ("Pass", f"Cannot make reasonable bid at current auction level (suggested {bid}, would need {next_legal}).")
             except (ValueError, IndexError):
@@ -97,6 +97,28 @@ class AdvancerBidsModule(ConventionModule):
         # First time advancing
         return self._advance_suit_overcall(hand, partner_overcall, opener_bid, features)
 
+    def _estimate_combined_with_partner(self, hand: Hand, features: Dict) -> int:
+        """
+        Estimate combined partnership HCP using BiddingState beliefs.
+
+        Returns combined HCP (my actual + partner midpoint) when BiddingState
+        provides a meaningfully narrowed range, or None to fall back to
+        existing logic.
+        """
+        bidding_state = features.get('bidding_state')
+        if bidding_state is not None:
+            positions = features.get('positions', [])
+            my_index = features.get('my_index')
+            if positions and my_index is not None:
+                from utils.seats import normalize
+                my_seat = normalize(positions[my_index])
+                partner_belief = bidding_state.partner_of(my_seat)
+                spread = partner_belief.hcp[1] - partner_belief.hcp[0]
+                if spread <= 25:  # Range has been narrowed from default (0,40)
+                    partner_mid = (partner_belief.hcp[0] + partner_belief.hcp[1]) // 2
+                    return hand.hcp + partner_mid
+        return None
+
     def _advance_suit_overcall(self, hand: Hand, partner_overcall: str, opener_bid: str, features: Dict) -> Optional[Tuple[str, str]]:
         """
         Advance partner's suit overcall.
@@ -135,30 +157,52 @@ class AdvancerBidsModule(ConventionModule):
         # 2. Logic to continue bidding partner's ORIGINAL suit after cuebid
         # 3. Understanding that cuebid is forcing, not trump establishment
 
-        # 1. Game bid with strong hand (12+ points and fit) - DIRECT APPROACH
-        if hand.total_points >= 12 and support >= 3:
-            # With major suit fit, bid game directly
-            if overcall_suit in ['♥', '♠']:
-                return (f"4{overcall_suit}", f"Game bid with {support_points} support points and {support}-card support.")
-            # With minor suit fit, PREFER 3NT over 5m when we have stopper
-            # 3NT requires 9 tricks, 5m requires 11 tricks
-            elif self._has_stopper(hand, opener_bid):
-                return ("3NT", f"Game in NT with {hand.hcp} HCP and stopper (preferred over 5{overcall_suit}).")
-            elif hand.total_points >= 14:
-                # Only bid 5m without stopper and with very strong hand
-                return (f"5{overcall_suit}", f"Game bid in minor with {support_points} support points and {support}-card support.")
+        # 1. Game decisions — use BiddingState combined HCP when available
+        combined = self._estimate_combined_with_partner(hand, features)
+        if combined is not None:
+            # BiddingState-aware: use combined HCP to decide game vs invite
+            if combined >= 25 and support >= 3:
+                if overcall_suit in ['♥', '♠']:
+                    return (f"4{overcall_suit}", f"Game bid: {combined} combined HCP with {support}-card support.")
+                elif self._has_stopper(hand, opener_bid):
+                    return ("3NT", f"Game in NT: {combined} combined HCP with stopper.")
+                elif combined >= 28:
+                    return (f"5{overcall_suit}", f"Game in minor: {combined} combined HCP with {support}-card support.")
+            elif combined >= 25 and self._has_stopper(hand, opener_bid):
+                return ("3NT", f"Game in NT: {combined} combined HCP with stopper.")
+            elif combined >= 23 and support >= 3:
+                # Invitational
+                invite_level = overcall_level + 2
+                if invite_level <= 3:
+                    return (f"{invite_level}{overcall_suit}", f"Invitational: {combined} combined HCP with {support}-card support.")
+                elif overcall_suit in ['♥', '♠'] and invite_level == 4:
+                    return (f"4{overcall_suit}", f"Game bid: {combined} combined HCP with {support}-card support.")
+            # Fall through to existing raise/new-suit logic for middle range
+        else:
+            # Legacy path: flat thresholds (no BiddingState available)
+            if hand.total_points >= 12 and support >= 3:
+                if overcall_suit in ['♥', '♠']:
+                    return (f"4{overcall_suit}", f"Game bid with {support_points} support points and {support}-card support.")
+                elif self._has_stopper(hand, opener_bid):
+                    return ("3NT", f"Game in NT with {hand.hcp} HCP and stopper (preferred over 5{overcall_suit}).")
+                elif hand.total_points >= 14:
+                    return (f"5{overcall_suit}", f"Game bid in minor with {support_points} support points and {support}-card support.")
 
-        # 1b. Game bid without fit but with game values (13+ HCP)
-        if hand.hcp >= 13 and self._has_stopper(hand, opener_bid):
-            return ("3NT", f"Game in NT with {hand.hcp} HCP and stopper.")
+            if hand.hcp >= 13 and self._has_stopper(hand, opener_bid):
+                return ("3NT", f"Game in NT with {hand.hcp} HCP and stopper.")
+
+        # Cap bid level when BiddingState says combined HCP is insufficient for game
+        max_level = 7  # No cap by default
+        if combined is not None and combined < 25:
+            max_level = 3  # Cap below game when combined HCP is insufficient
 
         # 2. Jump raise (invitational with 11-12 OR preemptive with weak hand and 4+ support)
         if support >= 3:
             # Invitational jump raise: 11-12 support points, 3+ card support
             if 11 <= support_points <= 12:
                 jump_level = overcall_level + 2
-                if jump_level <= 5:  # Don't jump past game
-                    if overcall_suit in ['♥', '♠'] and jump_level >= 4:
+                if jump_level <= 5 and jump_level <= max_level:  # Don't jump past game or BiddingState cap
+                    if overcall_suit in ['♥', '♠'] and jump_level >= 4 and max_level >= 4:
                         # Just bid game
                         return (f"4{overcall_suit}", f"Game bid with {support_points} support points and {support}-card support.")
                     else:
@@ -265,14 +309,22 @@ class AdvancerBidsModule(ConventionModule):
         # Bypass sanity check for game bids - partner's double guarantees support
         takeout_response_metadata = {'bypass_suit_length': True, 'bypass_sanity_check': True, 'convention': 'takeout_double_response'}
 
-        # Game values (12+ HCP) with stopper - bid 3NT or cuebid
-        if hand.hcp >= 12:
+        # Game values — use BiddingState combined HCP when available
+        combined = self._estimate_combined_with_partner(hand, features)
+        if combined is not None and combined >= 25:
+            if has_stopper:
+                return ("3NT", f"Game in NT: {combined} combined HCP with stopper.")
+            if best_suit in ['♥', '♠'] and best_length >= 4:
+                return (f"4{best_suit}", f"Game: {combined} combined HCP with {best_length}-card {best_suit}.", takeout_response_metadata)
+            cuebid_level = opp_level + 1
+            cuebid_metadata = {'bypass_suit_length': True, 'convention': 'cuebid_gf'}
+            return (f"{cuebid_level}{opp_suit}", f"Cuebid: {combined} combined HCP, game-forcing.", cuebid_metadata)
+        elif combined is None and hand.hcp >= 12:
+            # Legacy path (no BiddingState)
             if has_stopper:
                 return ("3NT", f"Game in NT with {hand.hcp} HCP and stopper in opener's suit.")
-            # Could cuebid opponent's suit (game-forcing), but for now bid game in best major
             if best_suit in ['♥', '♠'] and best_length >= 4:
                 return (f"4{best_suit}", f"Game in {best_suit} with {hand.hcp} HCP and {best_length}-card suit.", takeout_response_metadata)
-            # Or cuebid for game-forcing values
             cuebid_level = opp_level + 1
             cuebid_metadata = {'bypass_suit_length': True, 'convention': 'cuebid_gf'}
             return (f"{cuebid_level}{opp_suit}", f"Cuebid showing game-forcing values ({hand.hcp} HCP).", cuebid_metadata)
