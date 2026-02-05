@@ -2016,16 +2016,20 @@ def evaluate_bid():
             # Get hand_number from game session (1-indexed for display)
             hand_number = state.game_session.hands_completed + 1 if state.game_session else None
 
-            # Store feedback
-            feedback_generator._store_feedback(
-                user_id=user_id,
-                feedback=feedback,
-                auction_context=auction_context,
-                session_id=session_id,
-                hand_analysis_id=None,
-                hand_number=hand_number,
-                deal_data=deal_data
-            )
+            # Store feedback (skip for completely anonymous users without valid guest ID)
+            # Guest users have valid negative IDs from frontend; -1 is our fallback for API-only anonymous
+            if user_id != -1:
+                feedback_generator._store_feedback(
+                    user_id=user_id,
+                    feedback=feedback,
+                    auction_context=auction_context,
+                    session_id=session_id,
+                    hand_analysis_id=None,
+                    hand_number=hand_number,
+                    deal_data=deal_data
+                )
+            else:
+                print(f"⚠️ Skipping feedback storage for anonymous user (feedback still returned)")
 
             optimal_explanation_str = v2_feedback.optimal_explanation
 
