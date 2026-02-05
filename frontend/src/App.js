@@ -515,7 +515,7 @@ function App() {
 
     // Reset the AI bidding guards when auction is reset
     isAiBiddingInProgress.current = false;
-    hasTriggeredInitialBid.current = false;
+    hasTriggeredInitialBid.current = skipInitialAiBidding;
 
     setDisplayedMessage('');
     setError('');
