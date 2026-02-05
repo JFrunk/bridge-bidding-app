@@ -1986,13 +1986,20 @@ ${otherCommands}`;
       const data = await feedbackResponse.json();
 
       if (feedbackResponse.status === 400) {
-        if (data.error && data.error.includes('Deal has not been made')) {
-          console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
-          setError("Session expired. Please deal a new hand to continue.");
-          setIsAiBidding(false);
-          return;
-        }
         console.warn('⚠️ evaluate-bid returned 400:', data.error);
+        // Handle all 400 errors - session state is corrupted/missing
+        const errorMsg = data.session_expired
+          ? "Session expired. Please click 'Deal New Hand' to continue."
+          : data.error?.includes('Deal has not been made')
+          ? "Session expired. Please deal a new hand to continue."
+          : data.error?.includes('not available')
+          ? "Session data lost. Please deal a new hand to continue."
+          : `Server error: ${data.error || 'Unknown error'}`;
+        setError(errorMsg);
+        setDisplayedMessage(errorMsg);
+        setBidFeedback(null);
+        setIsAiBidding(false);
+        return;
       }
       // Update nextBidder from authoritative backend response
       if (data.next_bidder) {
@@ -2056,9 +2063,13 @@ ${otherCommands}`;
 
         // Handle non-200 responses (400, 500, etc.)
         if (!feedbackResponse.ok) {
-          if (feedbackData.error?.includes('Deal has not been made')) {
+          const isSessionExpired = feedbackData.session_expired ||
+            feedbackData.error?.includes('Deal has not been made') ||
+            feedbackData.error?.includes('not available');
+
+          if (isSessionExpired) {
             console.warn('⚠️ Server session lost - deal not found. User should deal new hands.');
-            setError("Session expired. Please deal a new hand to continue.");
+            setError("Session expired. Please click 'Deal New Hand' to continue.");
             return;
           }
           console.warn(`⚠️ Pre-evaluation returned ${feedbackResponse.status}:`, feedbackData.error);

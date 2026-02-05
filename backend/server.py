@@ -1946,8 +1946,17 @@ def evaluate_bid():
         # Get user's hand from session state (does NOT modify state)
         user_hand = state.deal.get(current_player)
         if not user_hand:
-            print(f"❌ evaluate-bid: Hand for {current_player} not available. state.deal keys: {list(state.deal.keys()) if state.deal else 'None'}")
-            return jsonify({'error': f'Hand for {current_player} not available'}), 400
+            # Detailed logging for debugging session state issues
+            deal_status = {k: (v is not None) for k, v in state.deal.items()} if state.deal else None
+            print(f"❌ evaluate-bid: Hand for {current_player} not available.")
+            print(f"   Session ID: {state.session_id}")
+            print(f"   Deal status: {deal_status}")
+            print(f"   Created at: {state.created_at}")
+            print(f"   This likely indicates server restart or session expiry.")
+            return jsonify({
+                'error': f'Session expired - hand data not available. Please deal a new hand.',
+                'session_expired': True
+            }), 400
 
         # Use authoritative dealer from session state
         dealer = BridgeRulesEngine.SHORT_TO_FULL.get(state.dealer, state.dealer) if state.dealer else 'North'
