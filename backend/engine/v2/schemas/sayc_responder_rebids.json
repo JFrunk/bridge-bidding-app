@@ -50,7 +50,7 @@
     },
     {
       "id": "responder_game_in_major_with_fit",
-      "bid": "4♥",
+      "bid": "4\u2665",
       "priority": 500,
       "description": "Game in hearts with fit and values",
       "conditions": {
@@ -65,14 +65,23 @@
           "min": 4
         },
         "partner_last_bid": {
-          "in": ["3♥", "2♥"]
+          "in": [
+            "3\u2665",
+            "2\u2665"
+          ]
         },
         "partnership_hcp_min": {
           "min": 25
         },
         "OR": [
-          {"partner_showed_extras": true},
-          {"hcp": {"min": 14}}
+          {
+            "partner_showed_extras": true
+          },
+          {
+            "hcp": {
+              "min": 14
+            }
+          }
         ]
       },
       "forcing": "none",
@@ -81,16 +90,27 @@
     },
     {
       "id": "thin_game_hearts_distributional",
-      "bid": "4♥",
+      "bid": "4\u2665",
       "priority": 495,
       "description": "Thin game in hearts - low HCP but high playing strength with distribution",
       "conditions": {
         "is_contested": false,
-        "hearts_length": {"min": 4},
-        "partner_last_bid": {"in": ["2♥", "1♥"]},
+        "hearts_length": {
+          "min": 4
+        },
+        "partner_last_bid": {
+          "in": [
+            "2\u2665",
+            "1\u2665"
+          ]
+        },
         "is_thin_game_candidate": true,
-        "our_best_fit": {"min": 9},
-        "dummy_points": {"min": 3}
+        "our_best_fit": {
+          "min": 9
+        },
+        "dummy_points": {
+          "min": 3
+        }
       },
       "forcing": "none",
       "explanation": "Thin game - {hcp} HCP but {total_playing_strength} playing strength with {our_best_fit}-card fit",
@@ -98,16 +118,27 @@
     },
     {
       "id": "thin_game_spades_distributional",
-      "bid": "4♠",
+      "bid": "4\u2660",
       "priority": 495,
       "description": "Thin game in spades - low HCP but high playing strength with distribution",
       "conditions": {
         "is_contested": false,
-        "spades_length": {"min": 4},
-        "partner_last_bid": {"in": ["2♠", "1♠"]},
+        "spades_length": {
+          "min": 4
+        },
+        "partner_last_bid": {
+          "in": [
+            "2\u2660",
+            "1\u2660"
+          ]
+        },
         "is_thin_game_candidate": true,
-        "our_best_fit": {"min": 9},
-        "dummy_points": {"min": 3}
+        "our_best_fit": {
+          "min": 9
+        },
+        "dummy_points": {
+          "min": 3
+        }
       },
       "forcing": "none",
       "explanation": "Thin game - {hcp} HCP but {total_playing_strength} playing strength with {our_best_fit}-card fit",
@@ -115,7 +146,7 @@
     },
     {
       "id": "responder_game_in_spades_with_fit",
-      "bid": "4♠",
+      "bid": "4\u2660",
       "priority": 500,
       "description": "Game in spades with fit and values",
       "conditions": {
@@ -130,14 +161,23 @@
           "min": 4
         },
         "partner_last_bid": {
-          "in": ["3♠", "2♠"]
+          "in": [
+            "3\u2660",
+            "2\u2660"
+          ]
         },
         "partnership_hcp_min": {
           "min": 25
         },
         "OR": [
-          {"partner_showed_extras": true},
-          {"hcp": {"min": 14}}
+          {
+            "partner_showed_extras": true
+          },
+          {
+            "hcp": {
+              "min": 14
+            }
+          }
         ]
       },
       "forcing": "none",
@@ -146,10 +186,10 @@
     },
     {
       "id": "stayman_raise_to_4_spades",
-      "bid": "4♠",
+      "bid": "4\u2660",
       "priority": 520,
-      "description": "Raise to 4♠ after Stayman finds fit",
-      "trigger": "1NT - Pass - 2♣ - Pass - 2♠ - Pass - ?",
+      "description": "Raise to 4\u2660 after Stayman finds fit",
+      "trigger": "1NT - Pass - 2\u2663 - Pass - 2\u2660 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 8
@@ -164,10 +204,10 @@
     },
     {
       "id": "stayman_raise_to_4_hearts",
-      "bid": "4♥",
+      "bid": "4\u2665",
       "priority": 520,
-      "description": "Raise to 4♥ after Stayman finds fit",
-      "trigger": "1NT - Pass - 2♣ - Pass - 2♥ - Pass - ?",
+      "description": "Raise to 4\u2665 after Stayman finds fit",
+      "trigger": "1NT - Pass - 2\u2663 - Pass - 2\u2665 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 8
@@ -183,34 +223,44 @@
     {
       "_comment": "=== STAYMAN FOLLOW-UP: Invitational/signoff after Stayman ===",
       "id": "stayman_invite_3_spades",
-      "bid": "3♠",
+      "bid": "3\u2660",
       "priority": 515,
       "description": "Invite in spades after Stayman finds fit (8-9 HCP)",
-      "trigger": "1NT - Pass - 2♣ - Pass - 2♠ - Pass - ?",
+      "trigger": "1NT - Pass - 2\u2663 - Pass - 2\u2660 - Pass - ?",
       "conditions": {
         "is_responder_rebid": true,
         "partner_has_tag_opened_1nt": true,
-        "hcp": {"min": 8, "max": 9},
-        "spades_length": {"min": 3}
+        "hcp": {
+          "min": 8,
+          "max": 9
+        },
+        "spades_length": {
+          "min": 3
+        }
       },
       "forcing": "none",
-      "explanation": "Invite: 3♠ with {hcp} HCP and spade fit (partner decides)",
+      "explanation": "Invite: 3\u2660 with {hcp} HCP and spade fit (partner decides)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "stayman_invite_3_hearts",
-      "bid": "3♥",
+      "bid": "3\u2665",
       "priority": 515,
       "description": "Invite in hearts after Stayman finds fit (8-9 HCP)",
-      "trigger": "1NT - Pass - 2♣ - Pass - 2♥ - Pass - ?",
+      "trigger": "1NT - Pass - 2\u2663 - Pass - 2\u2665 - Pass - ?",
       "conditions": {
         "is_responder_rebid": true,
         "partner_has_tag_opened_1nt": true,
-        "hcp": {"min": 8, "max": 9},
-        "hearts_length": {"min": 3}
+        "hcp": {
+          "min": 8,
+          "max": 9
+        },
+        "hearts_length": {
+          "min": 3
+        }
       },
       "forcing": "none",
-      "explanation": "Invite: 3♥ with {hcp} HCP and heart fit (partner decides)",
+      "explanation": "Invite: 3\u2665 with {hcp} HCP and heart fit (partner decides)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -218,11 +268,13 @@
       "bid": "3NT",
       "priority": 510,
       "description": "3NT after Stayman: game values, no major fit",
-      "trigger": "1NT - Pass - 2♣ - Pass - 2♦ - Pass - ?",
+      "trigger": "1NT - Pass - 2\u2663 - Pass - 2\u2666 - Pass - ?",
       "conditions": {
         "is_responder_rebid": true,
         "partner_has_tag_opened_1nt": true,
-        "hcp": {"min": 10}
+        "hcp": {
+          "min": 10
+        }
       },
       "forcing": "none",
       "explanation": "3NT: {hcp} HCP, no major fit found via Stayman",
@@ -236,8 +288,12 @@
       "conditions": {
         "is_responder_rebid": true,
         "partner_has_tag_opened_1nt": true,
-        "hcp": {"min": 10},
-        "support_for_partner": {"max": 2}
+        "hcp": {
+          "min": 10
+        },
+        "support_for_partner": {
+          "max": 2
+        }
       },
       "forcing": "none",
       "explanation": "3NT: {hcp} HCP, partner's major doesn't fit",
@@ -248,11 +304,14 @@
       "bid": "2NT",
       "priority": 505,
       "description": "2NT invite after Stayman: no fit, 8-9 HCP",
-      "trigger": "1NT - Pass - 2♣ - Pass - 2♦ - Pass - ?",
+      "trigger": "1NT - Pass - 2\u2663 - Pass - 2\u2666 - Pass - ?",
       "conditions": {
         "is_responder_rebid": true,
         "partner_has_tag_opened_1nt": true,
-        "hcp": {"min": 8, "max": 9}
+        "hcp": {
+          "min": 8,
+          "max": 9
+        }
       },
       "forcing": "none",
       "explanation": "2NT invite: {hcp} HCP, no major fit (partner decides game)",
@@ -265,14 +324,25 @@
       "priority": 525,
       "description": "Bid game in opener's major after 2NT rebid showing 18-19",
       "conditions": {
-        "my_bid_count": {"min": 1},
+        "my_bid_count": {
+          "min": 1
+        },
         "partner_last_bid": "2NT",
-        "hcp": {"min": 5},
-        "opening_bid": {"in": ["1♥", "1♠"]},
-        "support_for_partner_first": {"min": 3}
+        "hcp": {
+          "min": 5
+        },
+        "opening_bid": {
+          "in": [
+            "1\u2665",
+            "1\u2660"
+          ]
+        },
+        "support_for_partner_first": {
+          "min": 3
+        }
       },
       "forcing": "none",
-      "explanation": "Game in partner's major — partner showed 18-19 HCP, good fit",
+      "explanation": "Game in partner's major \u2014 partner showed 18-19 HCP, good fit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -281,13 +351,24 @@
       "priority": 520,
       "description": "Raise opener's 2NT rebid to 3NT with values for game",
       "conditions": {
-        "my_bid_count": {"min": 1},
+        "my_bid_count": {
+          "min": 1
+        },
         "partner_last_bid": "2NT",
-        "hcp": {"min": 7},
-        "opening_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]}
+        "hcp": {
+          "min": 7
+        },
+        "opening_bid": {
+          "in": [
+            "1\u2663",
+            "1\u2666",
+            "1\u2665",
+            "1\u2660"
+          ]
+        }
       },
       "forcing": "none",
-      "explanation": "Raise to 3NT — partner showed 18-19, combined points sufficient for game",
+      "explanation": "Raise to 3NT \u2014 partner showed 18-19, combined points sufficient for game",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -307,17 +388,27 @@
     },
     {
       "id": "strong_2c_stayman_3c",
-      "bid": "3♣",
+      "bid": "3\u2663",
       "priority": 535,
       "description": "Stayman over opener's 2NT rebid in 2C auction",
       "conditions": {
         "is_responder_rebid": true,
         "partner_has_tag_strong_2c": true,
         "partner_last_bid": "2NT",
-        "hcp": {"min": 3},
+        "hcp": {
+          "min": 3
+        },
         "OR": [
-          {"spades_length": {"min": 4}},
-          {"hearts_length": {"min": 4}}
+          {
+            "spades_length": {
+              "min": 4
+            }
+          },
+          {
+            "hearts_length": {
+              "min": 4
+            }
+          }
         ]
       },
       "forcing": "one_round",
@@ -326,10 +417,10 @@
     },
     {
       "id": "jacoby_transfer_game_spades",
-      "bid": "4♠",
+      "bid": "4\u2660",
       "priority": 525,
-      "description": "Raise to 4♠ after Jacoby transfer to spades",
-      "trigger": "1NT - Pass - 2♥ - Pass - 2♠ - Pass - ?",
+      "description": "Raise to 4\u2660 after Jacoby transfer to spades",
+      "trigger": "1NT - Pass - 2\u2665 - Pass - 2\u2660 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 8
@@ -344,10 +435,10 @@
     },
     {
       "id": "jacoby_transfer_game_hearts",
-      "bid": "4♥",
+      "bid": "4\u2665",
       "priority": 525,
-      "description": "Raise to 4♥ after Jacoby transfer to hearts",
-      "trigger": "1NT - Pass - 2♦ - Pass - 2♥ - Pass - ?",
+      "description": "Raise to 4\u2665 after Jacoby transfer to hearts",
+      "trigger": "1NT - Pass - 2\u2666 - Pass - 2\u2665 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 8
@@ -362,10 +453,10 @@
     },
     {
       "id": "responder_accept_opener_jump_to_game",
-      "bid": "4♥",
+      "bid": "4\u2665",
       "priority": 510,
       "description": "Accept opener's invitational jump",
-      "trigger": "1♥ - Pass - 1♠ - Pass - 3♥ - Pass - ?",
+      "trigger": "1\u2665 - Pass - 1\u2660 - Pass - 3\u2665 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 8
@@ -398,10 +489,10 @@
     },
     {
       "id": "responder_new_minor_forcing",
-      "bid": "2♣",
+      "bid": "2\u2663",
       "priority": 800,
       "description": "New Minor Forcing (Checkback) after 1NT rebid",
-      "trigger": "1♦ - Pass - 1[HS] - Pass - 1NT - Pass - ?",
+      "trigger": "1\u2666 - Pass - 1[HS] - Pass - 1NT - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 11
@@ -416,62 +507,70 @@
     },
     {
       "id": "responder_fourth_suit_forcing_clubs",
-      "bid": "2♣",
+      "bid": "2\u2663",
       "priority": 815,
       "description": "Fourth Suit Forcing bidding clubs",
       "conditions": {
         "is_responder_rebid": true,
         "is_fourth_suit": true,
-        "fourth_suit": "♣",
-        "hcp": {"min": 10}
+        "fourth_suit": "\u2663",
+        "hcp": {
+          "min": 10
+        }
       },
       "forcing": "game",
-      "explanation": "Fourth Suit Forcing (2♣) - game force asking for more information",
+      "explanation": "Fourth Suit Forcing (2\u2663) - game force asking for more information",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "responder_fourth_suit_forcing_diamonds",
-      "bid": "2♦",
+      "bid": "2\u2666",
       "priority": 814,
       "description": "Fourth Suit Forcing bidding diamonds",
       "conditions": {
         "is_responder_rebid": true,
         "is_fourth_suit": true,
-        "fourth_suit": "♦",
-        "hcp": {"min": 10}
+        "fourth_suit": "\u2666",
+        "hcp": {
+          "min": 10
+        }
       },
       "forcing": "game",
-      "explanation": "Fourth Suit Forcing (2♦) - game force asking for more information",
+      "explanation": "Fourth Suit Forcing (2\u2666) - game force asking for more information",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "responder_fourth_suit_forcing_hearts",
-      "bid": "2♥",
+      "bid": "2\u2665",
       "priority": 813,
       "description": "Fourth Suit Forcing bidding hearts",
       "conditions": {
         "is_responder_rebid": true,
         "is_fourth_suit": true,
-        "fourth_suit": "♥",
-        "hcp": {"min": 10}
+        "fourth_suit": "\u2665",
+        "hcp": {
+          "min": 10
+        }
       },
       "forcing": "game",
-      "explanation": "Fourth Suit Forcing (2♥) - game force asking for more information",
+      "explanation": "Fourth Suit Forcing (2\u2665) - game force asking for more information",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "responder_fourth_suit_forcing_spades",
-      "bid": "2♠",
+      "bid": "2\u2660",
       "priority": 812,
       "description": "Fourth Suit Forcing bidding spades",
       "conditions": {
         "is_responder_rebid": true,
         "is_fourth_suit": true,
-        "fourth_suit": "♠",
-        "hcp": {"min": 10}
+        "fourth_suit": "\u2660",
+        "hcp": {
+          "min": 10
+        }
       },
       "forcing": "game",
-      "explanation": "Fourth Suit Forcing (2♠) - game force asking for more information",
+      "explanation": "Fourth Suit Forcing (2\u2660) - game force asking for more information",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
@@ -482,7 +581,9 @@
       "conditions": {
         "is_responder_rebid": true,
         "is_fourth_suit": true,
-        "hcp": {"min": 11}
+        "hcp": {
+          "min": 11
+        }
       },
       "forcing": "game",
       "explanation": "Fourth Suit Forcing at 3-level - game force",
@@ -490,10 +591,10 @@
     },
     {
       "id": "fsf_continuation_preference_to_diamonds",
-      "bid": "2♦",
+      "bid": "2\u2666",
       "priority": 320,
       "description": "Preference to diamonds after FSF sequence",
-      "trigger": "1♦ - Pass - 1♠ - Pass - 2♣ - Pass - ?",
+      "trigger": "1\u2666 - Pass - 1\u2660 - Pass - 2\u2663 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 6,
@@ -509,10 +610,10 @@
     },
     {
       "id": "fsf_continuation_3_spades",
-      "bid": "3♠",
+      "bid": "3\u2660",
       "priority": 400,
-      "description": "3♠ continuation after FSF",
-      "trigger": "1♦ - Pass - 1♠ - Pass - 2♣ - Pass - 2♥ - Pass - 3♣ - Pass - ?",
+      "description": "3\u2660 continuation after FSF",
+      "trigger": "1\u2666 - Pass - 1\u2660 - Pass - 2\u2663 - Pass - 2\u2665 - Pass - 3\u2663 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 13
@@ -527,10 +628,10 @@
     },
     {
       "id": "fsf_continuation_4_clubs",
-      "bid": "4♣",
+      "bid": "4\u2663",
       "priority": 410,
-      "description": "4♣ continuation after FSF",
-      "trigger": "1♦ - Pass - 1♠ - Pass - 2♣ - Pass - 2♥ - Pass - 3♣ - Pass - ?",
+      "description": "4\u2663 continuation after FSF",
+      "trigger": "1\u2666 - Pass - 1\u2660 - Pass - 2\u2663 - Pass - 2\u2665 - Pass - 3\u2663 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 10
@@ -545,10 +646,10 @@
     },
     {
       "id": "fsf_continuation_4_diamonds",
-      "bid": "4♦",
+      "bid": "4\u2666",
       "priority": 415,
-      "description": "4♦ continuation after FSF showing diamond fit",
-      "trigger": "1♦ - Pass - 1♠ - Pass - 2♣ - Pass - 2♥ - Pass - 3♦ - Pass - ?",
+      "description": "4\u2666 continuation after FSF showing diamond fit",
+      "trigger": "1\u2666 - Pass - 1\u2660 - Pass - 2\u2663 - Pass - 2\u2665 - Pass - 3\u2666 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 10
@@ -563,10 +664,10 @@
     },
     {
       "id": "fsf_continuation_4_hearts",
-      "bid": "4♥",
+      "bid": "4\u2665",
       "priority": 420,
-      "description": "4♥ after opener shows hearts",
-      "trigger": "1♥ - Pass - 1♠ - Pass - 2♣ - Pass - 2♦ - Pass - 2♥ - Pass - ?",
+      "description": "4\u2665 after opener shows hearts",
+      "trigger": "1\u2665 - Pass - 1\u2660 - Pass - 2\u2663 - Pass - 2\u2666 - Pass - 2\u2665 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 10
@@ -653,10 +754,10 @@
     },
     {
       "id": "responder_support_opener_clubs",
-      "bid": "3♣",
+      "bid": "3\u2663",
       "priority": 380,
       "description": "Support opener's clubs with invitational values",
-      "trigger": "1♠ - Pass - 1NT - Pass - 2♣ - Pass - ?",
+      "trigger": "1\u2660 - Pass - 1NT - Pass - 2\u2663 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 8,
@@ -672,10 +773,10 @@
     },
     {
       "id": "responder_preference_after_2c_response",
-      "bid": "2♠",
+      "bid": "2\u2660",
       "priority": 310,
       "description": "Simple preference after 2C response",
-      "trigger": "1♠ - Pass - 2♣ - Pass - 2♥ - Pass - ?",
+      "trigger": "1\u2660 - Pass - 2\u2663 - Pass - 2\u2665 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 10,
@@ -691,10 +792,10 @@
     },
     {
       "id": "responder_raise_to_game_after_3_clubs",
-      "bid": "4♠",
+      "bid": "4\u2660",
       "priority": 520,
       "description": "Raise to game after opener shows extras",
-      "trigger": "1♠ - Pass - 2♣ - Pass - 3♣ - Pass - ?",
+      "trigger": "1\u2660 - Pass - 2\u2663 - Pass - 3\u2663 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 10
@@ -712,7 +813,7 @@
       "bid": "Pass",
       "priority": 90,
       "description": "Pass minimum hand after opener's 2-level rebid",
-      "trigger": "1♥ - Pass - 2♣ - Pass - 2♥ - Pass - ?",
+      "trigger": "1\u2665 - Pass - 2\u2663 - Pass - 2\u2665 - Pass - ?",
       "conditions": {
         "hcp": {
           "max": 10
@@ -727,10 +828,10 @@
     },
     {
       "id": "responder_support_diamonds_jump",
-      "bid": "3♦",
+      "bid": "3\u2666",
       "priority": 430,
       "description": "Jump support for diamonds",
-      "trigger": "1♠ - Pass - 2♣ - Pass - 2♦ - Pass - ?",
+      "trigger": "1\u2660 - Pass - 2\u2663 - Pass - 2\u2666 - Pass - ?",
       "conditions": {
         "hcp": {
           "min": 10
@@ -745,7 +846,7 @@
     },
     {
       "id": "responder_5_minor_game",
-      "bid": "5♦",
+      "bid": "5\u2666",
       "priority": 480,
       "description": "5-level minor game with long diamonds",
       "conditions": {
@@ -761,14 +862,17 @@
           "min": 5
         },
         "partner_last_bid": {
-          "in": ["2♦", "3♦"]
+          "in": [
+            "2\u2666",
+            "3\u2666"
+          ]
         },
         "partnership_hcp_min": {
           "min": 29
         }
       },
       "forcing": "none",
-      "explanation": "5♦ game with diamond fit and game values (29+ combined HCP)",
+      "explanation": "5\u2666 game with diamond fit and game values (29+ combined HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -778,7 +882,10 @@
       "description": "Responder invites game with 11-12 HCP balanced",
       "conditions": {
         "is_responder_rebid": true,
-        "hcp": {"min": 11, "max": 12},
+        "hcp": {
+          "min": 11,
+          "max": 12
+        },
         "is_balanced": true
       },
       "forcing": "none",
@@ -792,7 +899,9 @@
       "description": "Responder bids game with 13+ HCP balanced",
       "conditions": {
         "is_responder_rebid": true,
-        "hcp": {"min": 13},
+        "hcp": {
+          "min": 13
+        },
         "is_balanced": true
       },
       "forcing": "none",
@@ -806,9 +915,19 @@
       "description": "Responder gives delayed support for opener's major",
       "conditions": {
         "is_responder_rebid": true,
-        "partner_last_bid": {"in": ["2♥", "2♠"]},
-        "support_for_partner": {"min": 3},
-        "hcp": {"min": 10, "max": 12}
+        "partner_last_bid": {
+          "in": [
+            "2\u2665",
+            "2\u2660"
+          ]
+        },
+        "support_for_partner": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 10,
+          "max": 12
+        }
       },
       "forcing": "none",
       "explanation": "Delayed support with {support_for_partner} cards and {hcp} HCP",
@@ -821,9 +940,20 @@
       "description": "Responder bids game with major fit",
       "conditions": {
         "is_responder_rebid": true,
-        "partner_last_bid": {"in": ["2♥", "2♠", "3♥", "3♠"]},
-        "support_for_partner": {"min": 3},
-        "hcp": {"min": 13}
+        "partner_last_bid": {
+          "in": [
+            "2\u2665",
+            "2\u2660",
+            "3\u2665",
+            "3\u2660"
+          ]
+        },
+        "support_for_partner": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 13
+        }
       },
       "forcing": "none",
       "explanation": "Game with fit and {hcp} HCP",
@@ -839,8 +969,13 @@
         "is_contested": false,
         "partner_showed_two_suits": true,
         "prefer_partner_first_suit": true,
-        "hcp": {"min": 6, "max": 9},
-        "support_for_partner_first": {"min": 2}
+        "hcp": {
+          "min": 6,
+          "max": 9
+        },
+        "support_for_partner_first": {
+          "min": 2
+        }
       },
       "forcing": "none",
       "explanation": "Preference to partner's first suit with {hcp} HCP",
@@ -856,9 +991,16 @@
         "is_contested": false,
         "partner_showed_two_suits": true,
         "prefer_partner_first_suit": true,
-        "hcp": {"min": 10, "max": 12},
-        "support_for_partner_first": {"min": 3},
-        "partnership_hcp_min": {"min": 22}
+        "hcp": {
+          "min": 10,
+          "max": 12
+        },
+        "support_for_partner_first": {
+          "min": 3
+        },
+        "partnership_hcp_min": {
+          "min": 22
+        }
       },
       "forcing": "none",
       "explanation": "Invitational preference with {hcp} HCP and {support_for_partner_first}-card support",
@@ -866,15 +1008,20 @@
     },
     {
       "id": "responder_jump_3_hearts_after_forcing_1nt",
-      "bid": "3♥",
+      "bid": "3\u2665",
       "priority": 185,
-      "description": "Jump to 3♥ showing limit raise after Forcing 1NT",
+      "description": "Jump to 3\u2665 showing limit raise after Forcing 1NT",
       "conditions": {
         "is_responder_rebid": true,
         "my_last_bid": "1NT",
-        "partner_first_suit": "♥",
-        "hearts_length": {"min": 3},
-        "hcp": {"min": 10, "max": 12}
+        "partner_first_suit": "\u2665",
+        "hearts_length": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 10,
+          "max": 12
+        }
       },
       "forcing": "none",
       "explanation": "Limit raise with {hcp} HCP and 3-card heart support",
@@ -882,15 +1029,20 @@
     },
     {
       "id": "responder_jump_3_spades_after_forcing_1nt",
-      "bid": "3♠",
+      "bid": "3\u2660",
       "priority": 184,
-      "description": "Jump to 3♠ showing limit raise after Forcing 1NT",
+      "description": "Jump to 3\u2660 showing limit raise after Forcing 1NT",
       "conditions": {
         "is_responder_rebid": true,
         "my_last_bid": "1NT",
-        "partner_first_suit": "♠",
-        "spades_length": {"min": 3},
-        "hcp": {"min": 10, "max": 12}
+        "partner_first_suit": "\u2660",
+        "spades_length": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 10,
+          "max": 12
+        }
       },
       "forcing": "none",
       "explanation": "Limit raise with {hcp} HCP and 3-card spade support",
@@ -898,15 +1050,19 @@
     },
     {
       "id": "responder_game_4_hearts_after_forcing_1nt",
-      "bid": "4♥",
+      "bid": "4\u2665",
       "priority": 190,
       "description": "Game in hearts after Forcing 1NT",
       "conditions": {
         "is_responder_rebid": true,
         "my_last_bid": "1NT",
-        "partner_first_suit": "♥",
-        "hearts_length": {"min": 3},
-        "hcp": {"min": 13}
+        "partner_first_suit": "\u2665",
+        "hearts_length": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 13
+        }
       },
       "forcing": "none",
       "explanation": "Game with {hcp} HCP and 3-card heart support",
@@ -914,15 +1070,19 @@
     },
     {
       "id": "responder_game_4_spades_after_forcing_1nt",
-      "bid": "4♠",
+      "bid": "4\u2660",
       "priority": 189,
       "description": "Game in spades after Forcing 1NT",
       "conditions": {
         "is_responder_rebid": true,
         "my_last_bid": "1NT",
-        "partner_first_suit": "♠",
-        "spades_length": {"min": 3},
-        "hcp": {"min": 13}
+        "partner_first_suit": "\u2660",
+        "spades_length": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 13
+        }
       },
       "forcing": "none",
       "explanation": "Game with {hcp} HCP and 3-card spade support",
@@ -937,7 +1097,9 @@
         "is_responder_rebid": true,
         "partner_showed_two_suits": true,
         "prefer_partner_second_suit": true,
-        "hcp": {"max": 10}
+        "hcp": {
+          "max": 10
+        }
       },
       "forcing": "none",
       "explanation": "Pass - prefer partner's second suit",
@@ -950,8 +1112,17 @@
       "description": "Pass opener's 2-level rebid with minimum",
       "conditions": {
         "is_responder_rebid": true,
-        "partner_last_bid": {"in": ["2♣", "2♦", "2♥", "2♠"]},
-        "hcp": {"max": 10}
+        "partner_last_bid": {
+          "in": [
+            "2\u2663",
+            "2\u2666",
+            "2\u2665",
+            "2\u2660"
+          ]
+        },
+        "hcp": {
+          "max": 10
+        }
       },
       "forcing": "none",
       "explanation": "Pass opener's rebid with minimum ({hcp} HCP)",
@@ -965,7 +1136,9 @@
       "conditions": {
         "is_responder_rebid": true,
         "partner_last_bid": "1NT",
-        "hcp": {"max": 10}
+        "hcp": {
+          "max": 10
+        }
       },
       "forcing": "none",
       "explanation": "Pass opener's 1NT with minimum ({hcp} HCP)",
@@ -976,7 +1149,7 @@
       "bid": "Pass",
       "priority": 85,
       "description": "Pass opener's preference at 2-level",
-      "trigger": "1♣ - Pass - 1♦ - Pass - 1NT - Pass - 2♦ - Pass - ?",
+      "trigger": "1\u2663 - Pass - 1\u2666 - Pass - 1NT - Pass - 2\u2666 - Pass - ?",
       "conditions": {
         "hcp": {
           "max": 14
@@ -1057,7 +1230,15 @@
       "description": "Pass partner's slam bid - auction complete",
       "conditions": {
         "is_responder_rebid": true,
-        "partner_last_bid": {"in": ["6♣", "6♦", "6♥", "6♠", "6NT"]}
+        "partner_last_bid": {
+          "in": [
+            "6\u2663",
+            "6\u2666",
+            "6\u2665",
+            "6\u2660",
+            "6NT"
+          ]
+        }
       },
       "forcing": "none",
       "explanation": "Pass partner's slam bid",
@@ -1070,7 +1251,15 @@
       "description": "Pass partner's grand slam bid - auction complete",
       "conditions": {
         "is_responder_rebid": true,
-        "partner_last_bid": {"in": ["7♣", "7♦", "7♥", "7♠", "7NT"]}
+        "partner_last_bid": {
+          "in": [
+            "7\u2663",
+            "7\u2666",
+            "7\u2665",
+            "7\u2660",
+            "7NT"
+          ]
+        }
       },
       "forcing": "none",
       "explanation": "Pass partner's grand slam bid",
@@ -1083,10 +1272,10 @@
       "description": "Pass partner's 4H game bid",
       "conditions": {
         "is_responder_rebid": true,
-        "partner_last_bid": "4♥"
+        "partner_last_bid": "4\u2665"
       },
       "forcing": "none",
-      "explanation": "Pass partner's 4♥ game bid",
+      "explanation": "Pass partner's 4\u2665 game bid",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1096,10 +1285,10 @@
       "description": "Pass partner's 4S game bid",
       "conditions": {
         "is_responder_rebid": true,
-        "partner_last_bid": "4♠"
+        "partner_last_bid": "4\u2660"
       },
       "forcing": "none",
-      "explanation": "Pass partner's 4♠ game bid",
+      "explanation": "Pass partner's 4\u2660 game bid",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1122,7 +1311,12 @@
       "description": "Pass partner's 5-level minor game",
       "conditions": {
         "is_responder_rebid": true,
-        "partner_last_bid": {"in": ["5♣", "5♦"]}
+        "partner_last_bid": {
+          "in": [
+            "5\u2663",
+            "5\u2666"
+          ]
+        }
       },
       "forcing": "none",
       "explanation": "Pass partner's 5-level minor game",
@@ -1130,67 +1324,132 @@
     },
     {
       "id": "responder_rkcb_response_1_or_4",
-      "bid": "5♣",
+      "bid": "5\u2663",
       "priority": 950,
       "description": "RKCB response showing 1 or 4 keycards",
       "conditions": {
         "is_responder_rebid": true,
         "partner_last_bid": "4NT",
         "OR": [
-          {"key_cards": {"exact": 1}},
-          {"key_cards": {"exact": 4}}
+          {
+            "key_cards": {
+              "exact": 1
+            }
+          },
+          {
+            "key_cards": {
+              "exact": 4
+            }
+          }
         ]
       },
       "forcing": "one_round",
-      "explanation": "5♣: 1 or 4 keycards (RKCB 1430)",
+      "explanation": "5\u2663: 1 or 4 keycards (RKCB 1430)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "responder_rkcb_response_0_or_3",
-      "bid": "5♦",
+      "bid": "5\u2666",
       "priority": 949,
       "description": "RKCB response showing 0 or 3 keycards",
       "conditions": {
         "is_responder_rebid": true,
         "partner_last_bid": "4NT",
         "OR": [
-          {"key_cards": {"exact": 0}},
-          {"key_cards": {"exact": 3}}
+          {
+            "key_cards": {
+              "exact": 0
+            }
+          },
+          {
+            "key_cards": {
+              "exact": 3
+            }
+          }
         ]
       },
       "forcing": "one_round",
-      "explanation": "5♦: 0 or 3 keycards (RKCB 1430)",
+      "explanation": "5\u2666: 0 or 3 keycards (RKCB 1430)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "responder_rkcb_response_2_no_queen",
-      "bid": "5♥",
+      "bid": "5\u2665",
       "priority": 948,
       "description": "RKCB response showing 2 keycards without trump Queen",
       "conditions": {
         "is_responder_rebid": true,
         "partner_last_bid": "4NT",
-        "key_cards": {"exact": 2},
+        "key_cards": {
+          "exact": 2
+        },
         "has_trump_queen": false
       },
       "forcing": "one_round",
-      "explanation": "5♥: 2 keycards, no trump Queen (RKCB 1430)",
+      "explanation": "5\u2665: 2 keycards, no trump Queen (RKCB 1430)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "responder_rkcb_response_2_with_queen",
-      "bid": "5♠",
+      "bid": "5\u2660",
       "priority": 947,
       "description": "RKCB response showing 2 keycards with trump Queen",
       "conditions": {
         "is_responder_rebid": true,
         "partner_last_bid": "4NT",
-        "key_cards": {"exact": 2},
+        "key_cards": {
+          "exact": 2
+        },
         "has_trump_queen": true
       },
       "forcing": "one_round",
-      "explanation": "5♠: 2 keycards with trump Queen (RKCB 1430)",
+      "explanation": "5\u2660: 2 keycards with trump Queen (RKCB 1430)",
       "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "auto_subsequent_bidding_by_responder_subsequent_bidding_by_responder_1x_P_1x_P_094521",
+      "bid": "3\u2663",
+      "priority": 50,
+      "description": "Auto-generated rule for subsequent_bidding_by_responder (fixes 12 failures)",
+      "conditions": {
+        "hcp": {
+          "min": 8,
+          "max": 14
+        },
+        "partner_last_bid": "2\u2663"
+      },
+      "forcing": "none",
+      "explanation": "SAYC requires 3\u2663 in this situation"
+    },
+    {
+      "id": "auto_subsequent_bidding_by_responder_subsequent_bidding_by_responder_1x_P_1x_P_094522",
+      "bid": "3\u2663",
+      "priority": 50,
+      "description": "Auto-generated rule for subsequent_bidding_by_responder (fixes 12 failures)",
+      "conditions": {
+        "hcp": {
+          "min": 8,
+          "max": 14
+        },
+        "partner_last_bid": "2\u2663"
+      },
+      "forcing": "none",
+      "explanation": "SAYC requires 3\u2663 in this situation"
+    },
+    {
+      "id": "auto_subsequent_bidding_by_responder_subsequent_bidding_by_responder_1x_P_1x_P_094522_v2",
+      "bid": "3\u2663",
+      "priority": 50,
+      "description": "Auto-generated rule for subsequent_bidding_by_responder (fixes 12 failures)",
+      "conditions": {
+        "hcp": {
+          "min": 8,
+          "max": 14
+        },
+        "partner_last_bid": "2\u2663"
+      },
+      "forcing": "none",
+      "explanation": "SAYC requires 3\u2663 in this situation"
     }
   ]
 }

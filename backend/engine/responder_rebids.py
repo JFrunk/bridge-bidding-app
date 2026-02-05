@@ -724,15 +724,16 @@ class ResponderRebidModule(ConventionModule):
 
         # Expert recommendation: Force slam investigation with 33+ combined and fit
         # With 32+ combined, make a slam try first (3-level)
-        # NOTE: Lowering to 32/14 made slam finding WORSE (tested 2026-01-27)
-        should_bid_blackwood = estimated_combined >= 33 and has_fit and hand.hcp >= 16
-        should_explore_slam = estimated_combined >= 32 and hand.total_points >= 16
+        # Lowered threshold to 13+ when combined clearly shows slam (partner has extras)
+        # The 33+ combined requirement ensures partner's strength compensates
+        should_bid_blackwood = estimated_combined >= 33 and has_fit and hand.hcp >= 13
+        should_explore_slam = estimated_combined >= 32 and hand.total_points >= 13
 
         # Case 1: Opener rebid same suit - raise to game with fit (or explore slam)
         if opener_rebid_type == 'same_suit':
             if hand.suit_lengths.get(opener_first_suit, 0) >= 3:
                 # SLAM AGGREGATION: 33+ combined + fit = Force slam investigation (Blackwood)
-                if should_bid_blackwood or (estimated_combined >= 33 and hand.hcp >= 16):
+                if should_bid_blackwood or (estimated_combined >= 33 and hand.hcp >= 13):
                     return ("4NT", f"Blackwood - slam investigation with {opener_first_suit} fit and {estimated_combined} estimated combined points.")
                 # With slam potential but < 16 HCP, make a slam try at 3-level
                 if should_explore_slam and opener_first_suit in ['♥', '♠']:

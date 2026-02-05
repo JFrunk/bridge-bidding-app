@@ -1,0 +1,212 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "slam",
+  "description": "Slam bidding: Blackwood, Gerber, and direct slam bids",
+  "rules": [
+    {
+      "id": "blackwood_major_fit",
+      "bid": "4NT",
+      "priority": 200,
+      "description": "Blackwood with major fit and slam values",
+      "conditions": {
+        "partnership_has_slam_values": true,
+        "our_best_fit": {"min": 8},
+        "hcp": {"min": 14},
+        "partnership_hcp_min": {"min": 31},
+        "has_major_fit": true,
+        "partner_last_bid": {
+          "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT"]
+        }
+      },
+      "forcing": "game",
+      "explanation": "Blackwood asking for Aces with {partnership_hcp_min}+ combined HCP and major fit",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "blackwood_minor_fit",
+      "bid": "4NT",
+      "priority": 195,
+      "description": "Blackwood with minor fit and strong slam values (need more for minor slam)",
+      "conditions": {
+        "partnership_has_slam_values": true,
+        "our_best_fit": {"min": 8},
+        "hcp": {"min": 15},
+        "partnership_hcp_min": {"min": 33},
+        "has_major_fit": false,
+        "partner_last_bid": {
+          "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT"]
+        }
+      },
+      "forcing": "game",
+      "explanation": "Blackwood asking for Aces with {partnership_hcp_min}+ combined HCP for minor slam",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "blackwood_response_0_aces",
+      "bid": "5♣",
+      "priority": 250,
+      "description": "Blackwood response: 0 or 4 aces",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "aces": {"in": [0, 4]}
+      },
+      "forcing": "none",
+      "explanation": "Blackwood response showing {aces} aces",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "blackwood_response_1_ace",
+      "bid": "5♦",
+      "priority": 250,
+      "description": "Blackwood response: 1 ace",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "aces": 1
+      },
+      "forcing": "none",
+      "explanation": "Blackwood response showing 1 ace",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "blackwood_response_2_aces",
+      "bid": "5♥",
+      "priority": 250,
+      "description": "Blackwood response: 2 aces",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "aces": 2
+      },
+      "forcing": "none",
+      "explanation": "Blackwood response showing 2 aces",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "blackwood_response_3_aces",
+      "bid": "5♠",
+      "priority": 250,
+      "description": "Blackwood response: 3 aces",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "aces": 3
+      },
+      "forcing": "none",
+      "explanation": "Blackwood response showing 3 aces",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "bid_slam_after_blackwood_major",
+      "bid": "6{agreed_major}",
+      "priority": 240,
+      "description": "Bid small slam after Blackwood shows enough aces",
+      "conditions": {
+        "we_bid_blackwood": true,
+        "partnership_aces": {"min": 3},
+        "has_major_fit": true
+      },
+      "forcing": "none",
+      "explanation": "Small slam in {agreed_major} with {partnership_aces} aces",
+      "sets_forcing_level": "NON_FORCING",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "sign_off_after_blackwood_missing_aces",
+      "bid": "5{agreed_major}",
+      "priority": 235,
+      "description": "Sign off at 5-level after Blackwood shows missing aces",
+      "conditions": {
+        "we_bid_blackwood": true,
+        "partnership_aces": {"max": 2},
+        "has_major_fit": true
+      },
+      "forcing": "none",
+      "explanation": "Sign off at 5-level - missing aces for slam",
+      "sets_forcing_level": "NON_FORCING",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "direct_slam_very_strong",
+      "bid": "6NT",
+      "priority": 180,
+      "description": "Direct 6NT with very strong balanced partnership (35+ combined)",
+      "conditions": {
+        "is_balanced": true,
+        "partnership_hcp_min": {"min": 35},
+        "hcp": {"min": 14},
+        "partner_last_bid": {"in": ["1NT", "2NT", "3NT"]}
+      },
+      "forcing": "none",
+      "explanation": "Direct 6NT with {partnership_hcp_min}+ combined HCP balanced",
+      "sets_forcing_level": "NON_FORCING",
+      "metadata": {"bypass_hcp": true}
+    },
+    {
+      "id": "direct_slam_strong",
+      "bid": "6NT",
+      "priority": 178,
+      "description": "Direct 6NT with strong balanced partnership (33-34 combined, we have extras)",
+      "conditions": {
+        "is_balanced": true,
+        "partnership_hcp_min": {"min": 33},
+        "hcp": {"min": 16},
+        "partner_last_bid": {"in": ["1NT", "2NT", "3NT"]}
+      },
+      "forcing": "none",
+      "explanation": "Direct 6NT with {partnership_hcp_min}+ combined HCP and {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING",
+      "metadata": {"bypass_hcp": true}
+    },
+    {
+      "id": "quantitative_4nt",
+      "bid": "4NT",
+      "priority": 175,
+      "description": "Quantitative 4NT (not Blackwood) - inviting 6NT",
+      "conditions": {
+        "is_balanced": true,
+        "partnership_hcp_min": {"min": 31},
+        "partnership_hcp_max": {"max": 34},
+        "hcp": {"min": 13},
+        "partner_last_bid": {"in": ["1NT", "2NT"]}
+      },
+      "forcing": "none",
+      "explanation": "Quantitative 4NT: Partner passes with minimum, bids 6NT with maximum",
+      "sets_forcing_level": "NON_FORCING",
+      "metadata": {"convention": "quantitative", "bypass_hcp": true}
+    },
+    {
+      "id": "accept_quantitative_max",
+      "bid": "6NT",
+      "priority": 170,
+      "description": "Accept quantitative 4NT with maximum",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "my_last_bid": {"in": ["1NT", "2NT"]},
+        "hcp": {"min": 17}
+      },
+      "forcing": "none",
+      "explanation": "Accept slam invitation with maximum {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING",
+      "metadata": {"bypass_hcp": true}
+    },
+    {
+      "id": "reject_quantitative_min",
+      "bid": "Pass",
+      "priority": 165,
+      "description": "Reject quantitative 4NT with minimum",
+      "conditions": {
+        "partner_last_bid": "4NT",
+        "my_last_bid": {"in": ["1NT", "2NT"]},
+        "hcp": {"max": 16}
+      },
+      "forcing": "none",
+      "explanation": "Decline slam invitation with minimum {hcp} HCP",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

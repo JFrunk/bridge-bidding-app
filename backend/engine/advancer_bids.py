@@ -180,7 +180,8 @@ class AdvancerBidsModule(ConventionModule):
             # Fall through to existing raise/new-suit logic for middle range
         else:
             # Legacy path: flat thresholds (no BiddingState available)
-            if hand.total_points >= 12 and support >= 3:
+            # HCP floor prevents game bids with extreme distribution but few high cards
+            if hand.total_points >= 12 and support >= 3 and hand.hcp >= 8:
                 if overcall_suit in ['♥', '♠']:
                     return (f"4{overcall_suit}", f"Game bid with {support_points} support points and {support}-card support.")
                 elif self._has_stopper(hand, opener_bid):
@@ -222,7 +223,8 @@ class AdvancerBidsModule(ConventionModule):
 
         # 4. New suit bid (8+ points, 5+ card suit, constructive but non-forcing)
         # Bid a good suit to show values and suggest alternative contract
-        if hand.total_points >= 8:
+        # HCP floor ensures we have real values, not just shape
+        if hand.total_points >= 8 and hand.hcp >= 6:
             # Try to bid a new suit at cheapest level
             for suit in ['♠', '♥', '♦', '♣']:
                 if suit == overcall_suit:

@@ -88,25 +88,38 @@ class TakeoutDoubleConvention(ConventionModule):
         if not opponent_suit:
             return False
 
-        # SPECIAL CASE: Very strong balanced hand (19+ HCP)
+        # SPECIAL CASE 1: Very strong balanced hand (19+ HCP)
         # These hands are too strong for 1NT overcall (15-18) but too balanced for suit overcall
         # Solution: Double now, bid NT later to show 19-21 HCP
         if hand.hcp >= 19 and hand.is_balanced:
-            # Just need a stopper in opponent's suit (not shortness)
             return True  # Will double and bid NT next round
 
-        # NORMAL TAKEOUT DOUBLE RULES:
-        # Rule 2: Must be short in the opponent's suit (0, 1, or 2 cards).
-        if hand.suit_lengths.get(opponent_suit, 0) > 2:
-            return False
+        # SPECIAL CASE 2: Strong hand in balancing seat (15+ HCP)
+        # In balancing seat, partner may be trapped with length in opponent's suit
+        # With 15+ HCP, we double even with length in their suit to protect partner
+        if is_balancing and hand.hcp >= 15:
+            return True
 
-        # Rule 3: Must have at least 3-card support for all unbid suits.
+        # NORMAL TAKEOUT DOUBLE RULES:
+        opponent_length = hand.suit_lengths.get(opponent_suit, 0)
+
+        # Rule 2: Must be short in the opponent's suit (0, 1, or 2 cards).
+        # Exception: In balancing seat with 12+ HCP, can have 3 cards in their suit
+        if opponent_length > 2:
+            if not (is_balancing and hand.hcp >= 12 and opponent_length == 3):
+                return False
+
+        # Rule 3: Support for unbid suits
+        # Classic shape: 3+ cards in all 3 unbid suits
+        # Relaxed: 3+ cards in at least 2 unbid suits (must include a major if possible)
         all_suits = {'♠', '♥', '♦', '♣'}
         unbid_suits = all_suits - {opponent_suit}
 
-        for suit in unbid_suits:
-            if hand.suit_lengths.get(suit, 0) < 3:
-                return False
+        suits_with_support = sum(1 for suit in unbid_suits if hand.suit_lengths.get(suit, 0) >= 3)
+
+        # Need at least 2 suits with 3+ card support
+        if suits_with_support < 2:
+            return False
 
         return True
 

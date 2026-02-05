@@ -8,9 +8,10 @@
       "id": "takeout_double_1_level",
       "bid": "X",
       "priority": 110,
-      "description": "Takeout double of 1-level opening",
+      "description": "Takeout double of 1-level opening (direct seat)",
       "conditions": {
         "is_overcall": true,
+        "is_balancing": false,
         "opening_bid": {
           "in": ["1♣", "1♦", "1♥", "1♠"]
         },
@@ -28,9 +29,10 @@
       "id": "takeout_double_strong",
       "bid": "X",
       "priority": 109,
-      "description": "Takeout double with extra strength",
+      "description": "Takeout double with extra strength (direct seat)",
       "conditions": {
         "is_overcall": true,
+        "is_balancing": false,
         "opening_bid": {
           "in": ["1♣", "1♦", "1♥", "1♠"]
         },
@@ -242,23 +244,37 @@
           ]
         },
         "hcp": {
-          "min": 10,
+          "min": 9,
           "max": 16
         },
         "suit_length": {
           "min": 5
-        },
-        "suit_quality": {
-          "min": "good"
-        },
-        "suit_hcp": {
-          "min": 4
         },
         "bid_higher_than_opening": true
       },
       "forcing": "none",
       "suit_selection": "best_5_card_suit",
       "explanation": "Simple overcall with {hcp} HCP and {suit_length}-card {suit}",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "simple_overcall_1s_over_1h",
+      "bid": "1\u2660",
+      "priority": 95,
+      "description": "1♠ overcall over 1♥",
+      "conditions": {
+        "is_overcall": true,
+        "opening_bid": "1\u2665",
+        "hcp": {
+          "min": 9,
+          "max": 16
+        },
+        "spades_length": {
+          "min": 5
+        }
+      },
+      "forcing": "none",
+      "explanation": "1♠ overcall showing {hcp} HCP and 5+ spades",
       "sets_forcing_level": "NON_FORCING"
     },
     {

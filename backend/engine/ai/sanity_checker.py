@@ -82,6 +82,16 @@ class SanityChecker:
         #
         # IMPORTANT: Slam bids (6+) can NEVER bypass the Governor HCP check.
         # The Governor is non-overridable for slam validation.
+        #
+        # Whitelist of conventions that can legitimately bypass HCP checks:
+        CONVENTION_BYPASS_WHITELIST = {
+            'stayman', 'jacoby_transfer', 'blackwood', 'gerber',
+            'preempt', 'weak_two', 'strong_2c', '2c_response',
+            'negative_double', 'takeout_double', 'takeout_double_response',
+            'michaels', 'unusual_2nt', 'splinter', 'fourth_suit_forcing',
+            'bergen_raise', 'limit_raise', 'jump_shift',
+        }
+
         bid_level = int(bid[0]) if bid[0].isdigit() else 0
         if metadata and (metadata.get('bypass_hcp') or metadata.get('bypass_sanity_check')):
             convention = metadata.get('convention', 'unknown')
@@ -89,9 +99,12 @@ class SanityChecker:
             if bid_level >= 6:
                 logger.debug(f"Governor override: {convention} slam bid '{bid}' must pass HCP validation")
                 # Fall through to Governor check below
-            else:
-                logger.debug(f"Sanity check bypassed for {convention} convention bid '{bid}'")
+            elif convention in CONVENTION_BYPASS_WHITELIST:
+                logger.debug(f"Sanity check bypassed for whitelisted {convention} convention bid '{bid}'")
                 return True, bid, None
+            else:
+                # Non-whitelisted convention - fall through to MAX_BID_LEVELS check
+                logger.debug(f"Non-whitelisted convention '{convention}' - checking MAX_BID_LEVELS")
 
         # Check if this is a Blackwood/control bid sequence
         # UPDATED: Allow bypass for:

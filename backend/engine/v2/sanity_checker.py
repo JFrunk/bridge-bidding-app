@@ -521,7 +521,21 @@ class CompetitiveSafetyValidator:
 
         # Determine if this is a jump overcall
         opp_level = int(opponent_bid[0]) if opponent_bid and opponent_bid[0].isdigit() else 0
-        is_jump = bid_level > opp_level + 1
+        opp_suit = opponent_bid[1:] if opponent_bid and len(opponent_bid) > 1 else None
+
+        # Suit ranking for determining if 1-level was available
+        suit_ranking = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+        our_rank = suit_ranking.get(bid_suit, 0)
+        opp_rank = suit_ranking.get(opp_suit, 0)
+
+        # A jump overcall occurs when we bid higher than necessary:
+        # 1. Classic jump: bid_level > opp_level + 1 (e.g., 3♠ over 1♦)
+        # 2. Single jump at 2-level: When 1-level was available in our suit
+        #    (e.g., 2♠ over 1♦ - since 1♠ was available, 2♠ is a jump)
+        # Note: After 1NT, no 1-level suit bids are available, so 2-level isn't a jump
+        opp_is_suit = opp_suit in suit_ranking
+        one_level_available = (opp_level == 1 and opp_is_suit and our_rank > opp_rank)
+        is_jump = (bid_level > opp_level + 1) or (bid_level == 2 and one_level_available)
 
         # NT overcall (1NT overcall of 1-level opening)
         if bid.endswith('NT'):

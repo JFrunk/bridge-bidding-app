@@ -112,10 +112,12 @@ class BlackwoodConvention(ConventionModule):
             partner_total_points = features['auction_features'].get('partner_total_points', 0)
             estimated_combined = hand.total_points + partner_total_points
 
-        # MINIMUM HCP requirement for Blackwood - STRICTLY enforce 16+ HCP
-        # Expert analysis showed 15 HCP hands were triggering Blackwood inappropriately
-        # 16+ HCP is required regardless of estimated combined values
-        if hand.hcp < 16:
+        # MINIMUM HCP requirement for Blackwood
+        # Lower threshold when combined strength clearly indicates slam
+        # With 33+ combined, we can trigger with 14+ HCP (partner has extras)
+        if hand.hcp < 14:
+            return False
+        if hand.hcp < 16 and estimated_combined < 33:
             return False
 
         # Strong direct jump raises (e.g., 1♥ - 4♥) indicate slam interest

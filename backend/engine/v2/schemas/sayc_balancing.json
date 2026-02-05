@@ -87,7 +87,7 @@
     {
       "id": "balancing_1nt",
       "bid": "1NT",
-      "priority": 95,
+      "priority": 105,
       "description": "Balancing 1NT (Borrowed King: 11-14 instead of 15-18)",
       "conditions": {
         "is_overcall": true,
@@ -149,53 +149,41 @@
     {
       "id": "balancing_suit_2_level",
       "bid": "2{longest_suit}",
-      "priority": 85,
-      "description": "Balancing 2-level suit bid (RISKY - need strong suit to protect)",
+      "priority": 90,
+      "description": "Balancing 2-level suit bid - with 5+ card suit prefer bidding over doubling",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
         "hcp": {
-          "min": 10,
+          "min": 6,
           "max": 14
         },
         "longest_suit_length": {
           "min": 5
-        },
-        "suit_quality_longest": {
-          "min": "excellent"
-        },
-        "longest_suit_hcp": {
-          "min": 6
         }
       },
       "forcing": "none",
-      "explanation": "Balancing 2-level bid with {hcp} HCP and strong suit (risky - partner passed)",
+      "explanation": "Balancing 2-level bid with {hcp} HCP in {longest_suit} (Borrowed King)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "balancing_suit_2_level_long",
       "bid": "2{longest_suit}",
-      "priority": 86,
-      "description": "Balancing 2-level with long suit (6+) - still need values",
+      "priority": 91,
+      "description": "Balancing 2-level with long suit (6+) - Borrowed King allows light bids",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
         "hcp": {
-          "min": 8,
+          "min": 6,
           "max": 14
         },
         "longest_suit_length": {
           "min": 6
-        },
-        "suit_quality_longest": {
-          "min": "good"
-        },
-        "longest_suit_hcp": {
-          "min": 5
         }
       },
       "forcing": "none",
-      "explanation": "Balancing 2-level bid with 6+ card {longest_suit} and {hcp} HCP (partner passed)",
+      "explanation": "Balancing 2-level bid with 6+ card {longest_suit} and {hcp} HCP (Borrowed King)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -361,16 +349,16 @@
       "id": "pass_balancing_catchall",
       "bid": "Pass",
       "priority": 71,
-      "description": "Pass in balancing seat - no suitable action",
+      "description": "Pass in balancing seat - too weak to act",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
         "hcp": {
-          "max": 7
+          "max": 5
         }
       },
       "forcing": "none",
-      "explanation": "Pass with {hcp} HCP - no suitable balancing action",
+      "explanation": "Pass with only {hcp} HCP - too weak to balance",
       "sets_forcing_level": "NON_FORCING"
     }
   ]

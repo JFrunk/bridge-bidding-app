@@ -8,9 +8,10 @@
       "id": "takeout_double_general",
       "bid": "X",
       "priority": 815,
-      "description": "General takeout double - opening values + shortness + major support",
+      "description": "General takeout double - opening values + shortness + major support (no 5-card major)",
       "conditions": {
         "is_overcall": true,
+        "is_balancing": false,
         "opening_bid": "1[CDHS]",
         "total_points": {
           "min": 12
@@ -18,7 +19,13 @@
         "opponent_suit_length": {
           "max": 2
         },
-        "has_4_card_major": true
+        "has_4_card_major": true,
+        "spades_length": {
+          "max": 4
+        },
+        "hearts_length": {
+          "max": 4
+        }
       },
       "forcing": "one_round",
       "explanation": "Takeout double with {total_points} points, shortness in opponent's suit, and major support",
@@ -31,6 +38,7 @@
       "description": "Strong takeout double (17+ HCP) - start with double, bid suit later",
       "conditions": {
         "is_overcall": true,
+        "is_balancing": false,
         "opening_bid": "1[CDHS]",
         "hcp": {
           "min": 17
@@ -47,6 +55,7 @@
       "description": "Normal takeout double (12-16 HCP) - must not have 5-card major",
       "conditions": {
         "is_overcall": true,
+        "is_balancing": false,
         "opening_bid": "1[CDHS]",
         "hcp": {
           "min": 12,
@@ -73,6 +82,7 @@
       "description": "Light takeout double with perfect shape (10-11 HCP)",
       "conditions": {
         "is_overcall": true,
+        "is_balancing": false,
         "opening_bid": "1[CDHS]",
         "hcp": {
           "min": 10,
@@ -99,15 +109,17 @@
       "id": "takeout_double_vs_heart_with_spades",
       "bid": "X",
       "priority": 792,
-      "description": "Takeout double over 1♥ with spade suit",
+      "description": "Takeout double over 1♥ with 4-card spade suit (5+ spades should overcall)",
       "conditions": {
         "is_overcall": true,
+        "is_balancing": false,
         "opening_bid": "1H",
         "hcp": {
           "min": 10
         },
         "spades_length": {
-          "min": 4
+          "min": 4,
+          "max": 4
         },
         "clubs_length": {
           "min": 3
@@ -121,15 +133,17 @@
       "id": "takeout_double_vs_spade_with_hearts",
       "bid": "X",
       "priority": 792,
-      "description": "Takeout double over 1♠ with heart suit",
+      "description": "Takeout double over 1♠ with 4-card heart suit (5+ hearts should overcall)",
       "conditions": {
         "is_overcall": true,
+        "is_balancing": false,
         "opening_bid": "1S",
         "hcp": {
           "min": 10
         },
         "hearts_length": {
-          "min": 4
+          "min": 4,
+          "max": 4
         },
         "clubs_length": {
           "min": 3
@@ -255,8 +269,8 @@
     {
       "id": "takeout_double_balancing",
       "bid": "X",
-      "priority": 100,
-      "description": "Balancing takeout double (Borrowed King principle)",
+      "priority": 85,
+      "description": "Balancing takeout double (Borrowed King principle) - lower than suit bids",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,

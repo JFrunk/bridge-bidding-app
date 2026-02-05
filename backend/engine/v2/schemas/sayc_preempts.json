@@ -8,87 +8,75 @@
       "id": "weak_2_diamonds",
       "bid": "2♦",
       "priority": 180,
-      "description": "Weak 2♦ opening",
+      "description": "Weak 2♦ opening (standard)",
       "conditions": {
         "is_opening": true,
         "hcp": {
-          "min": 6,
-          "max": 10
+          "min": 5,
+          "max": 11
         },
         "diamonds_length": {
           "min": 6
         },
-        "diamonds_hcp": {
-          "min": 7,
-          "max": 9
-        },
         "suit_quality_diamonds": {
-          "min": "excellent"
+          "min": "fair"
         },
         "spades_length": {
-          "max": 3
+          "max": 4
         },
         "hearts_length": {
-          "max": 3
+          "max": 4
         }
       },
       "forcing": "none",
-      "explanation": "Weak 2♦: Excellent 6-card suit (2+ top honors, 7+ HCP in suit), 6-10 total HCP, no 4-card major",
+      "explanation": "Weak 2♦: 6+ card suit, 5-11 HCP, no 5-card major",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "weak_2_hearts",
       "bid": "2♥",
       "priority": 180,
-      "description": "Weak 2♥ opening",
+      "description": "Weak 2♥ opening (standard)",
       "conditions": {
         "is_opening": true,
         "hcp": {
-          "min": 6,
-          "max": 10
+          "min": 5,
+          "max": 11
         },
         "hearts_length": {
           "min": 6
         },
-        "hearts_hcp": {
-          "min": 7,
-          "max": 9
-        },
         "suit_quality_hearts": {
-          "min": "excellent"
+          "min": "fair"
         },
         "spades_length": {
-          "max": 3
+          "max": 4
         }
       },
       "forcing": "none",
-      "explanation": "Weak 2♥: Excellent 6-card suit (2+ top honors, 7+ HCP in suit), 6-10 total HCP, no 4-card spades",
+      "explanation": "Weak 2♥: 6+ card suit, 5-11 HCP, no 5-card spades",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "weak_2_spades",
       "bid": "2♠",
       "priority": 180,
-      "description": "Weak 2♠ opening",
+      "description": "Weak 2♠ opening (standard)",
       "conditions": {
         "is_opening": true,
         "hcp": {
-          "min": 6,
-          "max": 10
+          "min": 5,
+          "max": 11
         },
         "spades_length": {
           "min": 6
         },
-        "spades_hcp": {
-          "min": 7,
-          "max": 9
-        },
         "suit_quality_spades": {
-          "min": "excellent"
+          "min": "fair"
         }
       },
       "forcing": "none",
-      "explanation": "Weak 2♠: Excellent 6-card suit (2+ top honors, 7+ HCP in suit), 6-10 total HCP",
+      "explanation": "Weak 2♠: 6+ card suit, 5-11 HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {

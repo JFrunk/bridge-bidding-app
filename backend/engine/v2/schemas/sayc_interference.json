@@ -182,9 +182,10 @@
       "id": "takeout_double_standard",
       "bid": "X",
       "priority": 110,
-      "description": "Standard takeout double",
+      "description": "Standard takeout double (direct seat)",
       "conditions": {
         "is_overcall": true,
+        "is_balancing": false,
         "opening_bid": {
           "in": [
             "1\u2663",

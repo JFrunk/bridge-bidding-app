@@ -806,10 +806,10 @@ class RebidModule(ConventionModule):
             # SLAM AGGREGATION LOGIC (per expert analysis):
             # If Combined_Points >= 33 AND Fit_Found = True THEN Force_Slam_Investigation
             # With 33+ combined and established fit, ask Blackwood directly
-            # IMPORTANT: Only consider slam exploration with 21+ HCP opener AND 32+ combined
-            # With 19-20 HCP after 1-level response (6-10), combined is only 25-30 - just bid game
-            should_bid_blackwood = estimated_combined >= 33 and has_fit and hand.hcp >= 21
-            should_explore_slam = estimated_combined >= 32 and hand.hcp >= 21
+            # Lowered threshold to 19+ HCP when combined clearly shows slam values
+            # Partner's extras (showing 33+ combined) compensate for slightly lower opener HCP
+            should_bid_blackwood = estimated_combined >= 33 and has_fit and hand.hcp >= 19
+            should_explore_slam = estimated_combined >= 32 and hand.hcp >= 19
 
             if partner_response.endswith(my_opening_bid[1]):
                 partner_suit = my_opening_bid[1]

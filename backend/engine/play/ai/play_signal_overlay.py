@@ -1055,14 +1055,19 @@ class TacticalPlayFilter:
                 return True
             return False  # Singleton Q or lower - don't unblock, defer instead
 
-        # DOUBLETON ACE: Classic unblocking situation (Ax)
-        # Note: Kx and Qx are NOT typical unblocks - K and Q can wait
+        # DOUBLETON HONOR: Unblocking situations (Ax, Kx, Qx)
+        # When partner leads an honor and we have doubleton high honor,
+        # unblocking lets partner run the suit without us blocking later.
+        # A-x: Classic unblock (partner leads K from KQJxx)
+        # K-x: Unblock when partner leads Q or lower
+        # Q-x: Unblock when partner leads J or lower (partner has KJ10 or similar)
         if suit_length == 2:
-            # Only unblock with doubleton ACE specifically
-            equiv_aces = [c for c in equivalence_set
-                         if c.suit == led_suit and c.rank == 'A']
-            if equiv_aces:
-                return True  # Doubleton Ace - should unblock
+            # Check if we have a high honor in the equivalence set
+            unblock_honors = ['A', 'K', 'Q']
+            equiv_honors = [c for c in equivalence_set
+                           if c.suit == led_suit and c.rank in unblock_honors]
+            if equiv_honors:
+                return True  # Doubleton honor - should unblock
 
         # 3+ cards or no blocking honor: No unblocking needed
         return False

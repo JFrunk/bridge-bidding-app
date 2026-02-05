@@ -254,7 +254,7 @@
       "id": "single_raise_major",
       "bid": "2{partner_suit}",
       "priority": 285,
-      "description": "Single raise of partner's major (minimum support, uncontested)",
+      "description": "Single raise of partner's major (6-10 HCP with support)",
       "conditions": {
         "is_response": true,
         "is_contested": false,
@@ -264,26 +264,23 @@
             "1\u2660"
           ]
         },
-        "support_points": {
+        "hcp": {
           "min": 6,
-          "max": 9
+          "max": 10
         },
         "support_for_partner": {
           "min": 3
-        },
-        "partnership_hcp_min": {
-          "min": 18
         }
       },
       "forcing": "none",
-      "explanation": "Single raise with {support_points} support points and {support_for_partner}-card support",
+      "explanation": "Single raise with {hcp} HCP and {support_for_partner}-card support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "limit_raise_major",
       "bid": "3{partner_suit}",
       "priority": 354,
-      "description": "Limit raise of partner's major (invitational) - uncontested only",
+      "description": "Limit raise of partner's major (invitational, 11-12 HCP)",
       "conditions": {
         "is_response": true,
         "is_contested": false,
@@ -293,19 +290,16 @@
             "1\u2660"
           ]
         },
-        "support_points": {
-          "min": 10,
+        "hcp": {
+          "min": 11,
           "max": 12
         },
         "support_for_partner": {
           "min": 4
-        },
-        "partnership_hcp_min": {
-          "min": 22
         }
       },
       "forcing": "none",
-      "explanation": "Limit raise with {support_points} support points and {support_for_partner}-card support",
+      "explanation": "Limit raise with {hcp} HCP and {support_for_partner}-card support",
       "sets_forcing_level": "NON_FORCING"
     },
     {

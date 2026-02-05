@@ -140,6 +140,7 @@ class PreemptConvention(ConventionModule):
 
         General guidelines:
         - With 15+ HCP and 2-level preempt: 2NT (Ogust asking)
+        - With strong balanced/semi-balanced hand and stoppers: 3NT
         - With 3-card support: Raise based on strength
         - With very strong hand: Bid game or explore slam
         """
@@ -153,8 +154,20 @@ class PreemptConvention(ConventionModule):
         if preempt_level == 2 and hand.total_points >= 15:
             return ("2NT", "Feature-asking inquiry (SAYC). Partner rebids suit with minimum, or shows feature with maximum.")
 
+        # PRIORITY: With strong hand, stoppers in unbid suits, and running tricks, bid 3NT
+        # This is often better than showing a new suit or raising preempt
+        if preempt_level == 3 and hand.hcp >= 14:
+            # Check if we have stoppers in the other suits and running tricks
+            other_suits = [s for s in ['♠', '♥', '♦', '♣'] if s != preempt_suit]
+            stoppers = sum(1 for s in other_suits if self._has_stopper(hand, s))
+
+            # With stoppers in 2+ suits and 14+ HCP, 3NT is often the best contract
+            # Partner's preempt provides running tricks in their suit
+            if stoppers >= 2 and (hand.hcp >= 15 or (hand.hcp >= 14 and hand.is_balanced)):
+                return ("3NT", f"3NT with {hand.hcp} HCP and stoppers - partner's preempt provides tricks.")
+
         # With fit (3+ card support), raise based on strength
-        if hand.suit_lengths[preempt_suit] >= 3:
+        if hand.suit_lengths.get(preempt_suit, 0) >= 3:
             if preempt_level == 2:
                 # Responding to 2-level preempt
                 if hand.total_points >= 17:
@@ -167,11 +180,29 @@ class PreemptConvention(ConventionModule):
                     return (f"4{preempt_suit}", f"Raising to game with {hand.total_points} points.")
             # For 4-level preempts, usually pass unless exploring slam
 
-        # Without fit, need very strong hand to bid
+        # Without fit but with strong balanced hand
         if hand.hcp >= 16 and hand.is_balanced:
             return ("3NT", f"Bidding 3NT with {hand.hcp} HCP, no fit for preempt.")
 
         return ("Pass", f"Passing partner's preempt with {hand.total_points} points.")
+
+    def _has_stopper(self, hand: Hand, suit: str) -> bool:
+        """Check if hand has a stopper in the given suit."""
+        suit_cards = [c for c in hand.cards if c.suit == suit]
+        if not suit_cards:
+            return False
+        ranks = [c.rank for c in suit_cards]
+        length = len(ranks)
+        # Full stoppers: A, Kx, Qxx, Jxxx
+        if 'A' in ranks:
+            return True
+        if 'K' in ranks and length >= 2:
+            return True
+        if 'Q' in ranks and length >= 3:
+            return True
+        if 'J' in ranks and length >= 4:
+            return True
+        return False
 
     def _is_feature_response_applicable(self, features: Dict) -> bool:
         """

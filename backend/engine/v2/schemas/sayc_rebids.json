@@ -1699,10 +1699,40 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "opener_game_after_single_raise_values",
+      "bid": "4{my_suit}",
+      "priority": 745,
+      "description": "Opener bids game after partner's single raise with strong values (17+ HCP)",
+      "conditions": {
+        "is_rebid": true,
+        "opener_relationship": "Me",
+        "my_last_bid": {
+          "in": [
+            "1\u2665",
+            "1\u2660"
+          ]
+        },
+        "partner_last_bid": {
+          "in": [
+            "2\u2665",
+            "2\u2660"
+          ]
+        },
+        "partner_raised_my_suit": true,
+        "is_contested": false,
+        "hcp": {
+          "min": 17
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game with {hcp} HCP - strong values opposite partner's raise (6-9)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "opener_invite_after_single_raise_medium",
       "bid": "3{my_suit}",
       "priority": 540,
-      "description": "Opener invites game after partner's single raise (15-17 HCP)",
+      "description": "Opener invites game after partner's single raise (15-16 HCP)",
       "conditions": {
         "is_rebid": true,
         "opener_relationship": "Me",
@@ -1722,7 +1752,7 @@
         "is_contested": false,
         "hcp": {
           "min": 15,
-          "max": 17
+          "max": 16
         }
       },
       "forcing": "none",

@@ -1018,6 +1018,9 @@ def evaluate_suit_quality(hand: Hand, suit: str) -> str:
         return 'fair'
     if top_honors >= 1:
         return 'fair'
+    # For 6+ card suits, J alone is considered fair (adequate for weak 2)
+    if 'J' in honors and length >= 6:
+        return 'fair'
 
     return 'poor'
 
