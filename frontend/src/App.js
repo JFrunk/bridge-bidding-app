@@ -456,7 +456,7 @@ function App() {
 
     // Reset the AI bidding guards when auction is reset
     isAiBiddingInProgress.current = false;
-    hasTriggeredInitialBid.current = false;
+    hasTriggeredInitialBid.current = skipInitialAiBidding;
     // NOTE: nextPlayerIndex is now derived from dealer + auction.length
     // No need to manually set it - it will auto-calculate on next render
 
