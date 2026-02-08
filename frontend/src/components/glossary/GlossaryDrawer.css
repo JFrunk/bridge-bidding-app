@@ -29,9 +29,9 @@
 .glossary-drawer {
   position: fixed;
   top: 0;
-  right: 0;
+  right: 8px;  /* Slight offset from edge to ensure visibility */
   width: 380px;
-  max-width: 90vw;
+  max-width: calc(100vw - 16px);  /* Safety margin both sides */
   height: 100vh;
   background: linear-gradient(180deg, #1a2a1a 0%, #0d1a0d 100%);
   border-left: 1px solid rgba(76, 175, 80, 0.3);
@@ -44,7 +44,7 @@
 }
 
 @keyframes slideIn {
-  from { transform: translateX(100%); }
+  from { transform: translateX(calc(100% + 8px)); }
   to { transform: translateX(0); }
 }
 
