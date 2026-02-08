@@ -349,24 +349,29 @@
 }
 
 /* Play Table - UI Redesign v2 per play-mockup-v2.html */
+/* VIEWPORT FIX: Must fit entirely within viewport - no scrolling */
 .play-table {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: visible;  /* Allow content to be visible */
-  width: 100% !important; /* CRITICAL: Ensure full width */
+  overflow: hidden;  /* Prevent content overflow */
+  width: 100% !important;
   max-width: 100%;
+  /* Constrain to available viewport height */
+  max-height: 100%;
 }
 
 /* Play Area - Absolute positioning layout for compass positions */
+/* VIEWPORT FIX: Use flexible height instead of fixed 480px */
 .play-area {
   position: relative;
   width: 100%;
-  height: 480px;  /* Taller to accommodate N/S cards within green background */
-  min-height: 480px;
+  flex: 1;  /* Take remaining space after contract header and action bar */
+  min-height: 320px;  /* Minimum for playability */
+  max-height: calc(100vh - 200px);  /* Leave room for header/footer */
   z-index: 2;
-  padding: 0;  /* No padding - use absolute positioning from edges */
+  padding: 0;
   background-color: var(--table-green, #1a6b3c);
   overflow: visible;  /* Allow cards at edges to be visible */
   box-sizing: border-box;
@@ -510,10 +515,11 @@
   pointer-events: auto;
 }
 
-/* Trick Display - Square bridge table per mockup (200×180px) */
+/* Trick Display - Responsive sizing for viewport containment */
+/* VIEWPORT FIX: Use clamp() for responsive trick area */
 .current-trick {
-  width: 200px;
-  height: 180px;
+  width: clamp(160px, 25vw, 200px);
+  height: clamp(140px, 22vh, 180px);
   position: relative;
   background: rgba(0, 0, 0, 0.12);
   border-radius: 8px;
@@ -626,11 +632,12 @@
   font-weight: bold;
 }
 
-/* Trick cards - 48×66px per mockup */
+/* Trick cards - Responsive sizing for viewport containment */
+/* VIEWPORT FIX: Use clamp() for responsive trick card sizes */
 .trick-card {
   position: absolute;
-  width: 48px;
-  height: 66px;
+  width: clamp(38px, 5vw, 48px);
+  height: clamp(52px, 6.5vh, 66px);
   background: white;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06);
@@ -736,10 +743,11 @@
   z-index: 1;
 }
 
-/* Playable Cards - 48×66px per mockup (same size for N and S) */
+/* Playable Cards - Responsive sizing for viewport containment */
+/* VIEWPORT FIX: Use clamp() for responsive card sizes */
 .playable-card {
-  width: 48px;
-  height: 66px;
+  width: clamp(40px, 6vw, 48px);
+  height: clamp(54px, 8vh, 66px);
   background: white;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06);
@@ -1916,7 +1924,7 @@
 
 .play-turn-indicator {
   position: absolute;
-  bottom: 95px;  /* Above South's hand (cards at bottom: 12px + ~66px height + margin) */
+  bottom: 20%;  /* VIEWPORT FIX: Use percentage for flexible positioning above South's hand */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1996,10 +2004,10 @@
   }
 }
 
-/* Turn indicator responsive - adjust for smaller play-area heights */
+/* Turn indicator responsive - VIEWPORT FIX: percentage-based positioning works at all sizes */
 @media (max-width: 768px) {
   .play-turn-indicator {
-    bottom: 75px;  /* Adjust for 360px play-area height */
+    bottom: 18%;  /* Slightly lower on tablets */
     padding: 6px 12px;
     font-size: 12px;
   }
@@ -2007,7 +2015,7 @@
 
 @media (max-width: 480px) {
   .play-turn-indicator {
-    bottom: 65px;  /* Adjust for 320px play-area height */
+    bottom: 16%;  /* Even lower on phones */
     padding: 5px 10px;
   }
 
@@ -2018,11 +2026,5 @@
 
   .play-turn-indicator .turn-text {
     font-size: 11px;
-  }
-}
-
-@media (max-width: 360px) {
-  .play-turn-indicator {
-    bottom: 55px;  /* Adjust for 280px play-area height */
   }
 }
