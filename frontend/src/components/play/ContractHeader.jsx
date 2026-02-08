@@ -4,10 +4,10 @@ import { useState } from "react";
 /**
  * ContractHeader - Compact contract bar per UI Redesign play-mockup-v2.html
  *
- * Layout: Dark charcoal bar with:
- * - Left: Contract badge (e.g., "4♠ by South") + meta info (vulnerability, doubled)
- * - Center: 13-cell trick counter bar (green from left for declarer, red from right for defense)
- * - Right: Trump indicator + trick number + "📋 Bid History" popup button
+ * Layout (HOTFIX 2 - cleaned up, no duplicates):
+ * - Left: Contract badge (e.g., "4♠ by South") + "Vuln: Both"
+ * - Center: NS/EW trick counts + Need X + Trick X/13
+ * - Right: 📋 Bids button only
  *
  * CRITICAL SCORING PERSPECTIVE LOGIC:
  * - Backend returns scores from DECLARER's perspective (positive = made, negative = went down)
@@ -37,11 +37,8 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
     'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'
   }[declarer] || declarer;
 
-  // Calculate tricks for 13-block progress bar
+  // Calculate tricks for text display
   const tricksNeeded = level + 6;
-  const declarerSide = (declarer === 'N' || declarer === 'S') ? 'NS' : 'EW';
-  const playerIsDeclarer = declarerSide === 'NS';
-
   const tricksWonByPlayer = (tricksWon.N || 0) + (tricksWon.S || 0);
   const tricksWonByOpponents = (tricksWon.E || 0) + (tricksWon.W || 0);
   const totalTricksPlayed = Object.values(tricksWon).reduce((sum, tricks) => sum + tricks, 0);
@@ -49,37 +46,6 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
   // Calculate score from user's (NS) perspective
   const declarerIsNS = declarer === 'N' || declarer === 'S';
   const userScore = scoreData ? (declarerIsNS ? scoreData.score : -scoreData.score) : null;
-
-  // Create 13 cells for trick bar
-  // Declarer tricks fill from LEFT (green if player, red if opponent)
-  // Defense tricks fill from RIGHT
-  const cells = Array.from({ length: 13 }, (_, i) => {
-    const cellNum = i + 1;
-    let cellClass = '';
-
-    if (playerIsDeclarer) {
-      // Player is declarer: green from left, red from right
-      if (i < tricksWonByPlayer) {
-        cellClass = 'won-you';
-      } else if (i >= 13 - tricksWonByOpponents) {
-        cellClass = 'won-opp';
-      }
-    } else {
-      // Opponent is declarer: red from left, green from right
-      if (i < tricksWonByOpponents) {
-        cellClass = 'won-opp';
-      } else if (i >= 13 - tricksWonByPlayer) {
-        cellClass = 'won-you';
-      }
-    }
-
-    // Mark target cell (contract level)
-    if (cellNum === tricksNeeded) {
-      cellClass += ' target';
-    }
-
-    return { cellNum, cellClass };
-  });
 
   // Build bidding history rounds
   const positions = ['N', 'E', 'S', 'W'];
@@ -146,15 +112,8 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
           <span className="trick-current">Trick {totalTricksPlayed + 1}/13</span>
         </div>
 
-        {/* Right: Trump + Trick # + Bid History Button */}
+        {/* Right: Bid History Button only (Trump/Trick shown in contract badge and center) */}
         <div className="contract-bar-right">
-          <div className="trump-indicator">
-            <span className="trump-label">Trump:</span>
-            <span className={`trump-suit ${strainClass}`}>{strainSymbol}</span>
-          </div>
-          <div className="trick-number">
-            Trick {totalTricksPlayed + 1}/13
-          </div>
           <button
             className="bid-history-btn"
             onClick={() => setShowBidHistory(true)}

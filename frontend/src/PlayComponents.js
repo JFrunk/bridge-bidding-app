@@ -363,13 +363,14 @@ export function PlayTable({
               })}
             </div>
           ) : !isHandComplete && (
-            /* Show card backs when hand is hidden */
-            <div className="opponent-display">
+            /* HOTFIX 6: Compact card-back display with count */
+            <div className="opponent-display compact">
               <div className="opponent-card-fan">
-                {Array.from({ length: Math.min(6, 13 - totalTricksPlayed) }).map((_, i) => (
+                {Array.from({ length: Math.min(3, 13 - totalTricksPlayed) }).map((_, i) => (
                   <div key={i} className="card-back" />
                 ))}
               </div>
+              <span className="opp-count">{13 - totalTricksPlayed} cards</span>
             </div>
           )}
         </div>
@@ -414,13 +415,14 @@ export function PlayTable({
               })}
             </div>
           ) : !isHandComplete && (
-            /* Show card backs when hand is hidden */
-            <div className="opponent-display">
+            /* HOTFIX 6: Compact card-back display with count */
+            <div className="opponent-display compact">
               <div className="opponent-card-fan">
-                {Array.from({ length: Math.min(6, 13 - totalTricksPlayed) }).map((_, i) => (
+                {Array.from({ length: Math.min(3, 13 - totalTricksPlayed) }).map((_, i) => (
                   <div key={i} className="card-back" />
                 ))}
               </div>
+              <span className="opp-count">{13 - totalTricksPlayed} cards</span>
             </div>
           )}
         </div>

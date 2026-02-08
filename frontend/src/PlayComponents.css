@@ -349,7 +349,7 @@
 }
 
 /* Play Table - UI Redesign v2 per play-mockup-v2.html */
-/* VIEWPORT FIX: Must fit entirely within viewport - no scrolling */
+/* HOTFIX 1: Table must be centered and fill viewport width properly */
 .play-table {
   flex: 1;
   display: flex;
@@ -357,8 +357,8 @@
   min-height: 0;
   overflow: hidden;  /* Prevent content overflow */
   width: 100%;
-  max-width: 100%;
-  margin: 0 auto;    /* Center horizontally */
+  max-width: 1200px;  /* Cap width on very wide monitors */
+  margin: 0 auto;     /* Center horizontally */
   /* Constrain to available viewport height */
   max-height: 100%;
 }
@@ -885,46 +885,49 @@
   font-size: 1.8em;
 }
 
-/* Hand Row - horizontal card row per mockup (NO container border) */
+/* HOTFIX 3 & 4: Hand Row - horizontal card row, no clipping, readable overlap */
 .hand-row,
 .user-play-hand {
   display: flex;
   justify-content: center;
   margin-top: 4px;
-  width: max-content;   /* Grow to fit cards */
-  max-width: 100%;      /* Constrain to parent, not viewport */
+  width: max-content;   /* Grow to fit all cards */
   margin-left: auto;
   margin-right: auto;
-  overflow-x: auto;     /* Scroll if truly huge hand */
+  /* HOTFIX 3: Remove max-width to prevent card clipping - all 13 cards must show */
+  /* Cards will naturally stay within table since table is responsive */
 }
 
-/* South's hand overlap - show minimum 20px per card for readability */
+/* HOTFIX 4: South's hand overlap - show 24px per card for better readability (10 vs 9 distinguishable) */
 .position-south .user-play-hand .suit-group .playable-card {
-  margin-left: -28px;  /* Shows 20px per card (48px - 28px) - readable with long suits */
+  margin-left: -24px;  /* Shows 24px per card (48px - 24px) - every rank clearly visible */
 }
 
 .position-south .user-play-hand .suit-group .playable-card:first-child {
   margin-left: 0;
 }
 
-/* Gap between suits on South hand - first card of each suit after the first needs NO extra overlap */
+/* Gap between suits on South hand - clear visual separation */
 .position-south .user-play-hand .suit-group:not(:first-child) {
-  margin-left: 6px;  /* Small gap between suits */
+  margin-left: 10px;  /* Visible gap between suits for easy counting */
 }
 
-/* South hand responsive - less aggressive overlap on smaller screens for better touch targets */
+/* South hand responsive - maintain readability on smaller screens */
 @media (max-width: 768px) {
   .position-south .user-play-hand .suit-group .playable-card {
-    margin-left: -24px;  /* 24px visible - better for touch (card is 42px on tablet) */
+    margin-left: -20px;  /* 22px visible (42px - 20px) - tablet readable */
+  }
+  .position-south .user-play-hand .suit-group:not(:first-child) {
+    margin-left: 8px;  /* Maintain suit separation */
   }
 }
 
 @media (max-width: 480px) {
   .position-south .user-play-hand .suit-group .playable-card {
-    margin-left: -22px;  /* 18px visible - reasonable for 40px mobile cards */
+    margin-left: -18px;  /* 22px visible (40px - 18px) - mobile readable */
   }
   .position-south .user-play-hand .suit-group:not(:first-child) {
-    margin-left: 4px;  /* Tighter suit gap on mobile */
+    margin-left: 6px;  /* Tighter but still visible suit gap on mobile */
   }
 }
 
@@ -964,12 +967,17 @@
   flex-shrink: 0;
 }
 
-/* East/West Opponent Display - card backs per mockup */
+/* HOTFIX 6: East/West Opponent Display - compact card backs with count */
 .opponent-display {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+}
+
+/* Compact mode - fewer cards, cleaner display */
+.opponent-display.compact {
+  gap: 3px;
 }
 
 .opponent-card-fan {
@@ -979,19 +987,24 @@
   gap: 2px;
 }
 
+.opponent-display.compact .opponent-card-fan {
+  gap: 1px;
+}
+
 .card-back {
-  width: 36px;
-  height: 10px;
+  width: 32px;
+  height: 8px;
   background: linear-gradient(135deg, #b71c1c 0%, #8b1515 50%, #b71c1c 100%);
   border-radius: 2px;
-  opacity: 0.55;
+  opacity: 0.6;
   border: 0.5px solid rgba(0,0,0,0.2);
 }
 
 .opp-count {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-on-green-muted, #a8c4b0);
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: lowercase;
 }
 
 /* ========================================
@@ -1954,12 +1967,13 @@
 }
 
 /* ========================================
-   PLAY TURN INDICATOR - positioned INSIDE play-area to ensure visibility
+   HOTFIX 5: PLAY TURN INDICATOR - positioned below trick area, not overlapping labels
    ======================================== */
 
 .play-turn-indicator {
   position: absolute;
-  bottom: 20%;  /* VIEWPORT FIX: Use percentage for flexible positioning above South's hand */
+  /* Position below center trick area (trick area is ~180px tall, centered) */
+  top: calc(50% + 100px);  /* Below trick area center, with clearance */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1967,10 +1981,12 @@
   justify-content: center;
   gap: 8px;
   padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.5);  /* Slightly darker for better contrast on green felt */
+  background: rgba(45, 80, 22, 0.95);  /* Solid dark green for readability */
   border-radius: 20px;
   width: fit-content;
-  z-index: 10;  /* Above cards and trick area */
+  z-index: 15;  /* Above cards, labels, and trick area */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);  /* Subtle shadow for depth */
+  white-space: nowrap;  /* Prevent text wrapping */
 }
 
 .play-turn-indicator .turn-dot {
@@ -2039,10 +2055,10 @@
   }
 }
 
-/* Turn indicator responsive - VIEWPORT FIX: percentage-based positioning works at all sizes */
+/* Turn indicator responsive - uses top-based positioning to stay below trick area */
 @media (max-width: 768px) {
   .play-turn-indicator {
-    bottom: 18%;  /* Slightly lower on tablets */
+    top: calc(50% + 85px);  /* Closer to trick area on smaller screens */
     padding: 6px 12px;
     font-size: 12px;
   }
@@ -2050,7 +2066,7 @@
 
 @media (max-width: 480px) {
   .play-turn-indicator {
-    bottom: 16%;  /* Even lower on phones */
+    top: calc(50% + 70px);  /* Even closer on phones */
     padding: 5px 10px;
   }
 

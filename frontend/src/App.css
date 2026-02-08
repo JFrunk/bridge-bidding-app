@@ -1853,10 +1853,15 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;  /* Center the play table horizontally */
   min-height: 0;
   overflow: hidden;
   /* Constrain to remaining viewport after header/nav */
   max-height: calc(100vh - 60px);
+  /* Full width container with padding */
+  width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 /* Play phase loading state */
