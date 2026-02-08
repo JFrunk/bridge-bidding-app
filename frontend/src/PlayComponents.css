@@ -399,12 +399,12 @@
   z-index: 3;
 }
 
-/* North - top center */
+/* North - top center - uses left/right: 0 to constrain within parent bounds */
 .position-north {
   position: absolute;
   top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -423,12 +423,12 @@
   z-index: 3;
 }
 
-/* South - bottom center */
+/* South - bottom center - uses left/right: 0 to constrain within parent bounds */
 .position-south {
   position: absolute;
   bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -892,7 +892,7 @@
   justify-content: center;
   margin-top: 4px;
   width: max-content;   /* Grow to fit cards */
-  max-width: 95vw;      /* Safety cap */
+  max-width: 100%;      /* Constrain to parent, not viewport */
   margin-left: auto;
   margin-right: auto;
   overflow-x: auto;     /* Scroll if truly huge hand */
