@@ -8,6 +8,9 @@ Includes Forcing Level state tracking for proper handling of:
 - Non-forcing bids
 - One-round forcing bids (new suit responses in SAYC)
 - Game forcing sequences (2/1, jump shifts, 4th suit forcing)
+
+Phase 2 Enhancement: Uses SoftMatcher for fuzzy matching to enable
+"Best-Match-Wins" selection instead of "First-Match-Wins".
 """
 
 import json
@@ -17,6 +20,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
+
+from engine.v2.soft_matcher import SoftMatcher
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +61,8 @@ class BidCandidate:
     sets_forcing_level: Optional[str] = None  # The forcing level this bid establishes
     is_limit_bid: bool = False  # Whether this bid shows a narrow range (pass or accept)
     schema_file: Optional[str] = None  # Source schema file for tracking
+    match_quality: float = 1.0  # Soft match quality (0.0-1.0) from SoftMatcher
+    weighted_score: float = 0.0  # priority * match_quality for ranking
 
 
 @dataclass
@@ -97,6 +104,9 @@ class SchemaInterpreter:
 
         # Forcing level state tracking
         self.auction_state = AuctionState()
+
+        # SoftMatcher for fuzzy matching (Phase 2: Best-Match-Wins)
+        self.soft_matcher = SoftMatcher()
 
         self._load_schemas()
 
@@ -258,6 +268,118 @@ class SchemaInterpreter:
         candidates.sort(key=lambda c: c.priority, reverse=True)
         return candidates
 
+    def evaluate_all_candidates(self, features: Dict[str, Any]) -> Optional[Tuple[str, str]]:
+        """
+        Evaluate ALL rules using soft matching for Best-Match-Wins selection.
+
+        This is the Phase 2 integration per BRIDGE_ARCH_SPEC.md:
+        1. Loop through every rule
+        2. Calculate match quality using SoftMatcher
+        3. If quality > 0.1: final_score = rule.priority * quality
+        4. Sort by final_score descending
+        5. Return the top candidate
+
+        Args:
+            features: Flat feature dictionary from enhanced_extractor
+
+        Returns:
+            Tuple of (bid, explanation) or None if no candidates found
+        """
+        candidates = []
+
+        # Evaluate all schemas with soft matching
+        for category, schema in self.schemas.items():
+            category_candidates = self._evaluate_schema_soft(schema, features, category)
+            candidates.extend(category_candidates)
+
+        if not candidates:
+            logger.debug("No candidates found with soft matching")
+            return None
+
+        # Sort by weighted_score (priority * match_quality) descending
+        candidates.sort(key=lambda c: c.weighted_score, reverse=True)
+
+        # Log top candidates for debugging
+        if logger.isEnabledFor(logging.DEBUG):
+            for i, c in enumerate(candidates[:5]):
+                logger.debug(
+                    f"Candidate {i+1}: {c.bid} (rule={c.rule_id}, "
+                    f"priority={c.priority}, quality={c.match_quality:.2f}, "
+                    f"weighted={c.weighted_score:.1f})"
+                )
+
+        # Return best match
+        best = candidates[0]
+        return (best.bid, best.explanation)
+
+    def evaluate_all_candidates_with_details(self, features: Dict[str, Any]) -> List[BidCandidate]:
+        """
+        Evaluate ALL rules with soft matching and return full candidate list.
+
+        Useful for debugging and understanding ranking decisions.
+
+        Args:
+            features: Flat feature dictionary
+
+        Returns:
+            List of BidCandidate objects sorted by weighted_score
+        """
+        candidates = []
+
+        for category, schema in self.schemas.items():
+            category_candidates = self._evaluate_schema_soft(schema, features, category)
+            candidates.extend(category_candidates)
+
+        candidates.sort(key=lambda c: c.weighted_score, reverse=True)
+        return candidates
+
+    def _evaluate_schema_soft(self, schema: Dict, features: Dict[str, Any], schema_file: str = None) -> List[BidCandidate]:
+        """
+        Evaluate all rules in a schema using soft matching.
+
+        Unlike _evaluate_schema which uses binary matching, this uses
+        SoftMatcher to calculate match quality and weighted scores.
+
+        Only returns candidates with match_quality > 0.1 (threshold from spec).
+        """
+        candidates = []
+        QUALITY_THRESHOLD = 0.1
+
+        for rule in schema.get('rules', []):
+            # Calculate match quality using SoftMatcher
+            match_result = self.soft_matcher.calculate(rule, features)
+            quality = match_result.score
+
+            # Skip if below threshold
+            if quality <= QUALITY_THRESHOLD:
+                continue
+
+            # Resolve the bid
+            bid = self._resolve_bid(rule.get('bid', 'Pass'), features, rule)
+            if bid is None:
+                continue
+
+            explanation = self._format_explanation(rule.get('explanation', ''), features)
+            priority = rule.get('priority', 0)
+            weighted_score = priority * quality
+
+            candidate = BidCandidate(
+                bid=bid,
+                rule_id=rule.get('id', 'unknown'),
+                priority=priority,
+                explanation=explanation,
+                forcing=rule.get('forcing', 'none'),
+                conditions_met={},
+                sets_forcing_level=rule.get('sets_forcing_level'),
+                is_limit_bid=rule.get('is_limit_bid', False),
+                schema_file=schema_file,
+                match_quality=quality,
+                weighted_score=weighted_score
+            )
+            candidates.append(candidate)
+
+        return candidates
+
     def _evaluate_schema(self, schema: Dict, features: Dict[str, Any], schema_file: str = None) -> List[BidCandidate]:
         """Evaluate all rules in a schema against features."""
         candidates = []
@@ -291,9 +413,10 @@ class SchemaInterpreter:
         """
         Evaluate a single rule's conditions and trigger against features.
 
-        Supports two matching modes:
+        Supports three matching modes:
         1. Condition-based: Traditional conditions dictionary
         2. Trigger-based: Auction pattern matching like "1[CDHS] - ?" or "1C - Pass - 1H - ?"
+        3. Constraint-based: Array format with HARD/SOFT constraint types
 
         Args:
             rule: Rule dictionary from schema
@@ -308,17 +431,81 @@ class SchemaInterpreter:
             if not self._matches_trigger(trigger, features):
                 return False
 
-        # Then check conditions
+        # Then check conditions (dictionary format)
         conditions = rule.get('conditions', {})
         if conditions:
             if not self._evaluate_conditions(conditions, features):
                 return False
 
-        # If we have constraints (alternative to conditions), check those too
-        constraints = rule.get('constraints', {})
+        # Handle constraints (can be array or dictionary format)
+        constraints = rule.get('constraints', [])
         if constraints:
-            if not self._evaluate_conditions(constraints, features):
-                return False
+            if isinstance(constraints, list):
+                # New array-based format: check HARD constraints only for pass/fail
+                if not self._evaluate_array_constraints(constraints, features):
+                    return False
+            else:
+                # Old dictionary format
+                if not self._evaluate_conditions(constraints, features):
+                    return False
+
+        return True
+
+    def _evaluate_array_constraints(self, constraints: list, features: Dict[str, Any]) -> bool:
+        """
+        Evaluate array-based constraints (new format with HARD/SOFT types).
+
+        For binary pass/fail, only HARD constraints are evaluated.
+        SOFT constraints are handled by SoftMatcher for quality scoring.
+
+        Args:
+            constraints: List of constraint dictionaries
+            features: Feature dictionary
+
+        Returns:
+            True if all HARD constraints pass
+        """
+        for constraint in constraints:
+            constraint_type = constraint.get('constraint_type', 'HARD')
+
+            # Only evaluate HARD constraints for pass/fail
+            if constraint_type != 'HARD':
+                continue
+
+            feature_name = constraint.get('feature')
+            if not feature_name:
+                continue
+
+            actual = features.get(feature_name)
+
+            # Handle expected value (boolean match)
+            if 'expected' in constraint:
+                expected = constraint['expected']
+                if actual != expected:
+                    return False
+                continue
+
+            # Handle min/max constraints
+            min_val = constraint.get('min')
+            max_val = constraint.get('max')
+
+            if min_val is not None and actual is not None:
+                if actual < min_val:
+                    return False
+
+            if max_val is not None and actual is not None:
+                if actual > max_val:
+                    return False
+
+            # Handle 'in' constraints (list membership)
+            if 'in' in constraint:
+                if actual not in constraint['in']:
+                    return False
+
+            # Handle 'not_in' constraints
+            if 'not_in' in constraint:
+                if actual in constraint['not_in']:
+                    return False
 
         return True
 

@@ -7,7 +7,7 @@
     {
       "id": "stayman_2c",
       "bid": "2\u2663",
-      "priority": 810,
+      "priority": 750,
       "description": "Stayman convention over 1NT (looking for 4-4 major fit)",
       "conditions": {
         "is_response": true,
@@ -187,7 +187,7 @@
     {
       "id": "new_suit_1_level",
       "bid": "1{suit}",
-      "priority": 600,
+      "priority": 550,
       "description": "New suit at 1-level (major)",
       "conditions": {
         "is_response": true,

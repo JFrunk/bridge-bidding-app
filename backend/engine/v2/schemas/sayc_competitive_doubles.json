@@ -1,0 +1,122 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "competitive_doubles",
+  "description": "Competitive doubles: Negative, Reopening, and Balancing doubles",
+  "rules": [
+    {
+      "id": "negative_double_1_level",
+      "bid": "X",
+      "priority": 700,
+      "description": "Negative double after partner opens and RHO overcalls at 1-level",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Partner", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "rho_last_bid", "not_in": ["Pass", "X", "XX", null], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 6, "constraint_type": "SOFT", "penalty_per_unit": 0.15},
+        {"feature": "short_in_opponent_suit", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.3},
+        {"feature": "has_4_card_major", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
+      ],
+      "forcing": "one_round",
+      "explanation": "Negative double showing {hcp} HCP with support for unbid suits",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "negative_double_2_level",
+      "bid": "X",
+      "priority": 690,
+      "description": "Negative double after partner opens and RHO overcalls at 2-level",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Partner", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "rho_last_bid", "not_in": ["Pass", "X", "XX", null], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "constraint_type": "SOFT", "penalty_per_unit": 0.12},
+        {"feature": "short_in_opponent_suit", "expected": true, "constraint_type": "HARD"},
+        {"feature": "has_4_card_major", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Negative double at 2-level showing {hcp} HCP with 4-card major support",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "reopening_double_partner_opened",
+      "bid": "X",
+      "priority": 680,
+      "description": "Reopening double after partner opens, opponents pass around",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "short_in_opponent_suit", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
+      ],
+      "forcing": "one_round",
+      "explanation": "Reopening double with {hcp} HCP - partner may have a trap pass",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "balancing_double_opponent_opened",
+      "bid": "X",
+      "priority": 700,
+      "description": "Balancing takeout double when opponent's bid passes around",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Opponent", "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "short_in_opponent_suit", "expected": true, "constraint_type": "HARD"},
+        {"feature": "has_4_card_major", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.25}
+      ],
+      "forcing": "one_round",
+      "explanation": "Balancing takeout double with {hcp} HCP (adjusted for position)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "balancing_double_two_level",
+      "bid": "X",
+      "priority": 690,
+      "description": "Balancing takeout double at 2-level",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Opponent", "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "short_in_opponent_suit", "expected": true, "constraint_type": "HARD"},
+        {"feature": "has_4_card_major", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Balancing double at 2-level with {hcp} HCP",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_direct",
+      "bid": "X",
+      "priority": 750,
+      "description": "Direct takeout double of opponent's opening",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Opponent", "constraint_type": "HARD"},
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "opponent_suit_length", "max": 2, "constraint_type": "HARD"},
+        {"feature": "has_4_card_major", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
+      ],
+      "forcing": "one_round",
+      "explanation": "Takeout double showing {hcp} HCP with shortness in opponent's suit",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_strong",
+      "bid": "X",
+      "priority": 760,
+      "description": "Strong takeout double (17+ HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Opponent", "constraint_type": "HARD"},
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.05}
+      ],
+      "forcing": "one_round",
+      "explanation": "Strong takeout double with {hcp} HCP - will bid again to show strength",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    }
+  ]
+}

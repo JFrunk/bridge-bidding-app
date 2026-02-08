@@ -117,8 +117,8 @@ class BiddingEngineV2Schema:
         # Add auction-derived features needed for schema rules
         features = self._enhance_features(features, hand, auction_history)
 
-        # Evaluate schemas and get candidates
-        candidates = self.interpreter.evaluate_with_details(features)
+        # Evaluate schemas using soft matching (Best-Match-Wins)
+        candidates = self.interpreter.evaluate_all_candidates_with_details(features)
 
         if candidates:
             # Find the best legal bid that doesn't violate forcing constraints

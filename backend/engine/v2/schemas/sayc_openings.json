@@ -86,16 +86,13 @@
       "bid": "1NT",
       "priority": 90,
       "description": "Standard 1NT opening (no 5-card major)",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
-          "min": 15,
-          "max": 17
-        },
-        "is_balanced": true,
-        "has_5_card_major": false,
-        "stoppers_required": 3
-      },
+      "constraints": [
+        {"feature": "is_opening", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 15, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
+        {"feature": "has_5_card_major", "expected": false, "constraint_type": "HARD"},
+        {"feature": "stoppers_required", "min": 3, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "1NT opening showing {hcp} HCP, balanced with stoppers in {stopper_count} suits",
       "sets_forcing_level": "NON_FORCING"

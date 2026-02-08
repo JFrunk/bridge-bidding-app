@@ -817,35 +817,67 @@
     },
     {
       "id": "opener_rebid_major_5_card_forcing",
-      "bid": "2{my_suit}",
+      "bid": "2{first_suit}",
       "priority": 620,
       "description": "Opener rebids 5-card major after responder's new suit forcing",
-      "conditions": {
-        "is_rebid": true,
-        "my_last_bid": {
-          "in": [
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "partner_last_bid": {
-          "in": [
-            "2\u2663",
-            "2\u2666",
-            "2\u2665"
-          ]
-        },
-        "hcp": {
-          "min": 12,
-          "max": 15
-        },
-        "my_bid_count": {
-          "exact": 1
-        }
-      },
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "in": ["1♥", "1♠"], "constraint_type": "HARD"},
+        {"feature": "partner_bid_new_suit", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "first_suit_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
-      "explanation": "Rebid 5-card {my_suit} with minimum opener",
+      "explanation": "Rebid 5-card {first_suit} with minimum opener",
       "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_raise_partner_minor_invitational",
+      "bid": "3{partner_suit}",
+      "priority": 550,
+      "description": "Opener raises partner's minor with invitational values and fit",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_bid_new_suit", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 15, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "support_for_partner_first", "min": 4, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Raise partner's minor with {hcp} HCP and 4+ card support - invitational",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_raise_partner_minor_minimum",
+      "bid": "3{partner_suit}",
+      "priority": 500,
+      "description": "Opener raises partner's minor with minimum values and fit",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_bid_new_suit", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "support_for_partner_first", "min": 4, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Raise partner's minor with {hcp} HCP and 4+ card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_gf_jump",
+      "bid": "3{first_suit}",
+      "priority": 650,
+      "description": "Opener jump rebids showing game force strength (18-21 HCP)",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 18, "max": 21, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "first_suit_length", "min": 6, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Jump rebid showing {hcp} HCP with 6+ card suit - game forcing",
+      "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "opener_rebid_minor_after_new_suit",
@@ -946,28 +978,17 @@
     {
       "id": "opener_reverse_strong",
       "bid": "2{higher_suit}",
-      "priority": 702,
+      "priority": 850,
       "description": "Opener reverses showing 17+ HCP (Barrier Principle)",
-      "conditions": {
-        "is_rebid": true,
-        "is_contested": false,
-        "hcp": {
-          "min": 17
-        },
-        "second_suit_length": {
-          "min": 4
-        },
-        "second_suit_higher": true,
-        "my_bid_count": {
-          "exact": 1
-        },
-        "quick_tricks": {
-          "min": 2.0
-        },
-        "partnership_hcp_min": {
-          "min": 23
-        }
-      },
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "first_suit_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "second_suit_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
+      ],
       "forcing": "one_round",
       "explanation": "Reverse showing {hcp} HCP - forcing one round (Barrier Principle)",
       "sets_forcing_level": "FORCING_1_ROUND",
@@ -976,26 +997,17 @@
     {
       "id": "opener_reverse_minimum",
       "bid": "2{higher_suit}",
-      "priority": 700,
-      "description": "Opener reverses with minimum reverse values",
-      "conditions": {
-        "is_rebid": true,
-        "is_contested": false,
-        "hcp": {
-          "min": 17,
-          "max": 18
-        },
-        "second_suit_length": {
-          "min": 4
-        },
-        "second_suit_higher": true,
-        "my_bid_count": {
-          "exact": 1
-        },
-        "partnership_hcp_min": {
-          "min": 23
-        }
-      },
+      "priority": 845,
+      "description": "Opener reverses with minimum reverse values (17-18 HCP)",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 17, "max": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "first_suit_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "second_suit_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
+      ],
       "forcing": "one_round",
       "explanation": "Minimum reverse with {hcp} HCP - partner must bid again",
       "sets_forcing_level": "FORCING_1_ROUND"

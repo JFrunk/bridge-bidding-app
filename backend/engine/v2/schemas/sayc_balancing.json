@@ -7,27 +7,15 @@
     {
       "id": "balancing_double",
       "bid": "X",
-      "priority": 80,
+      "priority": 700,
       "description": "Balancing takeout double (Borrowed King: 9+ instead of 12+)",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "opening_bid": {
-          "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "min": 8,
-          "max": 14
-        },
-        "unbid_suit_support": {
-          "min": 3
-        }
-      },
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "short_in_opponent_suit", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.2},
+        {"feature": "has_4_card_major", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
+      ],
       "forcing": "one_round",
       "explanation": "Balancing double with {hcp} HCP (Borrowed King: partner has 8-10 HCP)",
       "sets_forcing_level": "FORCING_1_ROUND"
@@ -35,23 +23,13 @@
     {
       "id": "balancing_double_strong",
       "bid": "X",
-      "priority": 89,
+      "priority": 720,
       "description": "Strong balancing double",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "opening_bid": {
-          "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "min": 15
-        }
-      },
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+      ],
       "forcing": "one_round",
       "explanation": "Strong balancing double with {hcp} HCP",
       "sets_forcing_level": "FORCING_1_ROUND"
@@ -87,26 +65,15 @@
     {
       "id": "balancing_1nt",
       "bid": "1NT",
-      "priority": 105,
+      "priority": 680,
       "description": "Balancing 1NT (Borrowed King: 11-14 instead of 15-18)",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "opening_bid": {
-          "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "min": 12,
-          "max": 15
-        },
-        "is_balanced": true,
-        "stopper_in_opponent_suit": true
-      },
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 11, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
+        {"feature": "stopper_in_opponent_suit", "expected": true, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Balancing 1NT with {hcp} HCP (Borrowed King: ~3 less than direct 1NT overcall)",
       "sets_forcing_level": "NON_FORCING"
@@ -114,34 +81,14 @@
     {
       "id": "balancing_suit_1_level",
       "bid": "1{longest_suit}",
-      "priority": 80,
-      "description": "Balancing 1-level suit bid (need decent hand and suit quality)",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "opening_bid": {
-          "in": [
-            "1\u2663",
-            "1\u2666"
-          ]
-        },
-        "hcp": {
-          "min": 8,
-          "max": 14
-        },
-        "longest_suit_length": {
-          "min": 5
-        },
-        "suit_quality_longest": {
-          "min": "good"
-        },
-        "longest_suit_hcp": {
-          "min": 3
-        },
-        "partnership_hcp_min": {
-          "min": 18
-        }
-      },
+      "priority": 660,
+      "description": "Balancing 1-level suit bid",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "longest_suit_length", "min": 5, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Balancing bid in {longest_suit} with {hcp} HCP (need values since partner passed)",
       "sets_forcing_level": "NON_FORCING"
@@ -149,19 +96,14 @@
     {
       "id": "balancing_suit_2_level",
       "bid": "2{longest_suit}",
-      "priority": 90,
+      "priority": 640,
       "description": "Balancing 2-level suit bid - with 5+ card suit prefer bidding over doubling",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "hcp": {
-          "min": 6,
-          "max": 14
-        },
-        "longest_suit_length": {
-          "min": 5
-        }
-      },
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 6, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "longest_suit_length", "min": 5, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Balancing 2-level bid with {hcp} HCP in {longest_suit} (Borrowed King)",
       "sets_forcing_level": "NON_FORCING"
@@ -169,19 +111,14 @@
     {
       "id": "balancing_suit_2_level_long",
       "bid": "2{longest_suit}",
-      "priority": 91,
+      "priority": 650,
       "description": "Balancing 2-level with long suit (6+) - Borrowed King allows light bids",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "hcp": {
-          "min": 6,
-          "max": 14
-        },
-        "longest_suit_length": {
-          "min": 6
-        }
-      },
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 6, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "longest_suit_length", "min": 6, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Balancing 2-level bid with 6+ card {longest_suit} and {hcp} HCP (Borrowed King)",
       "sets_forcing_level": "NON_FORCING"
@@ -288,15 +225,13 @@
     {
       "id": "pass_balancing_weak",
       "bid": "Pass",
-      "priority": 75,
+      "priority": 500,
       "description": "Pass in balancing seat with weak hand",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "hcp": {
-          "max": 4
-        }
-      },
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "max": 5, "constraint_type": "SOFT", "penalty_per_unit": 0.15}
+      ],
       "forcing": "none",
       "explanation": "Pass with only {hcp} HCP - too weak to balance",
       "sets_forcing_level": "NON_FORCING"
@@ -304,22 +239,14 @@
     {
       "id": "pass_balancing_no_shape",
       "bid": "Pass",
-      "priority": 74,
+      "priority": 490,
       "description": "Pass in balancing seat without suitable shape",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "hcp": {
-          "min": 5,
-          "max": 7
-        },
-        "longest_suit_length": {
-          "max": 4
-        },
-        "unbid_suit_support": {
-          "max": 1
-        }
-      },
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 5, "max": 7, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "longest_suit_length", "max": 4, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Pass with {hcp} HCP but unsuitable shape for balancing",
       "sets_forcing_level": "NON_FORCING"
@@ -327,38 +254,16 @@
     {
       "id": "pass_balancing_defensive",
       "bid": "Pass",
-      "priority": 73,
+      "priority": 480,
       "description": "Pass in balancing seat with defensive values in opponent's suit",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "hcp": {
-          "min": 8,
-          "max": 10
-        },
-        "stopper_in_opponent_suit": true,
-        "unbid_suit_support": {
-          "max": 1
-        }
-      },
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "max": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "stopper_in_opponent_suit", "expected": true, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Pass with {hcp} HCP - values in opponent's suit, let them play",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
-      "id": "pass_balancing_catchall",
-      "bid": "Pass",
-      "priority": 71,
-      "description": "Pass in balancing seat - too weak to act",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "hcp": {
-          "max": 5
-        }
-      },
-      "forcing": "none",
-      "explanation": "Pass with only {hcp} HCP - too weak to balance",
       "sets_forcing_level": "NON_FORCING"
     }
   ]

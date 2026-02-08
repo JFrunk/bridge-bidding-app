@@ -2,129 +2,91 @@
   "schema_version": "1.0",
   "system": "SAYC",
   "category": "overcalls",
-  "description": "Overcalls and competitive bidding",
+  "description": "Overcalls and competitive bidding - direct seat actions",
   "rules": [
-    {
-      "id": "takeout_double_1_level",
-      "bid": "X",
-      "priority": 110,
-      "description": "Takeout double of 1-level opening (direct seat)",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": false,
-        "opening_bid": {
-          "in": ["1♣", "1♦", "1♥", "1♠"]
-        },
-        "hcp": {
-          "min": 12
-        },
-        "short_in_opponent_suit": true,
-        "support_all_unbid": true
-      },
-      "forcing": "one_round",
-      "explanation": "Takeout double showing {hcp} HCP with support for unbid suits",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "takeout_double_strong",
-      "bid": "X",
-      "priority": 109,
-      "description": "Takeout double with extra strength (direct seat)",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": false,
-        "opening_bid": {
-          "in": ["1♣", "1♦", "1♥", "1♠"]
-        },
-        "hcp": {
-          "min": 17
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Strong takeout double showing {hcp} HCP",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "takeout_double_weak_two",
-      "bid": "X",
-      "priority": 108,
-      "description": "Takeout double of weak two",
-      "conditions": {
-        "is_overcall": true,
-        "opening_bid": {
-          "in": ["2♦", "2♥", "2♠"]
-        },
-        "hcp": {
-          "min": 12
-        },
-        "short_in_opponent_suit": true,
-        "support_all_unbid": true
-      },
-      "forcing": "one_round",
-      "explanation": "Takeout double of weak two showing {hcp} HCP",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "takeout_double_3_level",
-      "bid": "X",
-      "priority": 107,
-      "description": "Takeout double of 3-level preempt",
-      "conditions": {
-        "is_overcall": true,
-        "opening_bid": {
-          "in": ["3♣", "3♦", "3♥", "3♠"]
-        },
-        "hcp": {
-          "min": 15
-        },
-        "short_in_opponent_suit": true
-      },
-      "forcing": "one_round",
-      "explanation": "Takeout double of preempt showing {hcp} HCP",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "balancing_double",
-      "bid": "X",
-      "priority": 106,
-      "description": "Balancing double",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": true,
-        "hcp": {
-          "min": 9
-        },
-        "short_in_opponent_suit": true,
-        "support_all_unbid": true
-      },
-      "forcing": "one_round",
-      "explanation": "Balancing double showing {hcp} HCP (3 less than direct)",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
     {
       "id": "1nt_overcall",
       "bid": "1NT",
-      "priority": 850,
-      "description": "1NT overcall",
-      "conditions": {
-        "is_overcall": true,
-        "opening_bid": {
-          "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "min": 15,
-          "max": 18
-        },
-        "is_balanced": true,
-        "stopper_in_opponent_suit": true
-      },
+      "priority": 800,
+      "description": "Direct 1NT overcall (15-18 HCP balanced with stopper)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 15, "max": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
+        {"feature": "stopper_in_opponent_suit", "expected": true, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
-      "explanation": "1NT overcall showing {hcp} HCP balanced with stopper",
+      "explanation": "1NT overcall showing {hcp} HCP balanced with stopper in opponent's suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "overcall_1_level_spades",
+      "bid": "1♠",
+      "priority": 720,
+      "description": "1♠ overcall with 5+ spades",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "spades_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "spades_quality", "min": 2, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
+      ],
+      "forcing": "none",
+      "explanation": "1♠ overcall with {hcp} HCP and 5+ spades",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "overcall_1_level_hearts",
+      "bid": "1♥",
+      "priority": 715,
+      "description": "1♥ overcall with 5+ hearts",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "hearts_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "hearts_quality", "min": 2, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
+      ],
+      "forcing": "none",
+      "explanation": "1♥ overcall with {hcp} HCP and 5+ hearts",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "overcall_1_level_diamonds",
+      "bid": "1♦",
+      "priority": 700,
+      "description": "1♦ overcall with 5+ diamonds",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "diamonds_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "diamonds_quality", "min": 2, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
+      ],
+      "forcing": "none",
+      "explanation": "1♦ overcall with {hcp} HCP and 5+ diamonds",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "overcall_2_level_suit",
+      "bid": "2{longest_suit}",
+      "priority": 680,
+      "description": "2-level suit overcall (needs good values)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "longest_suit_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "longest_suit_quality", "min": 2, "constraint_type": "SOFT", "penalty_per_unit": 0.15}
+      ],
+      "forcing": "none",
+      "explanation": "2-level overcall in {longest_suit} with {hcp} HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {
