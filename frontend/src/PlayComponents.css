@@ -356,8 +356,9 @@
   flex-direction: column;
   min-height: 0;
   overflow: hidden;  /* Prevent content overflow */
-  width: 100% !important;
+  width: 100%;
   max-width: 100%;
+  margin: 0 auto;    /* Center horizontally */
   /* Constrain to available viewport height */
   max-height: 100%;
 }
@@ -890,12 +891,16 @@
   display: flex;
   justify-content: center;
   margin-top: 4px;
-  max-width: 100%;  /* Prevent overflow */
+  width: max-content;   /* Grow to fit cards */
+  max-width: 95vw;      /* Safety cap */
+  margin-left: auto;
+  margin-right: auto;
+  overflow-x: auto;     /* Scroll if truly huge hand */
 }
 
-/* South's hand needs tighter overlap with 13 cards to fit viewport */
+/* South's hand overlap - show minimum 20px per card for readability */
 .position-south .user-play-hand .suit-group .playable-card {
-  margin-left: -32px;  /* Aggressive overlap to fit 13 cards - only 16px visible per card */
+  margin-left: -28px;  /* Shows 20px per card (48px - 28px) - readable with long suits */
 }
 
 .position-south .user-play-hand .suit-group .playable-card:first-child {
@@ -1550,7 +1555,37 @@
   white-space: nowrap;
 }
 
-/* Trick bar */
+/* Trick counter text - simple readable format per punch list Fix 4 */
+.trick-counter-text {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #e0e0e0;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+}
+
+.trick-counter-text .trick-ns strong {
+  color: #4CAF50;  /* Green for NS */
+}
+
+.trick-counter-text .trick-ew strong {
+  color: #ef5350;  /* Red for EW */
+}
+
+.trick-counter-text .trick-divider {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.trick-counter-text .trick-need,
+.trick-counter-text .trick-current {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Legacy trick bar (kept for learning flows) */
 .trick-score {
   flex: 1;
   max-width: 480px;

@@ -94,21 +94,21 @@
   line-height: 1;
 }
 
-/* Full-saturation suit colors on cream background - high contrast */
+/* Suit colors on cream background - must match card colors */
 .bid-suit-button .suit-clubs {
-  color: #1a6b3c; /* Dark green - contrast ~5.5:1 */
+  color: #1a1a1a; /* Near black - matches card clubs */
 }
 
 .bid-suit-button .suit-diamonds {
-  color: #d4540a; /* Burnt orange - contrast ~4.8:1 */
+  color: #cc0000; /* Bright red - matches card diamonds */
 }
 
 .bid-suit-button .suit-hearts {
-  color: #c41e3a; /* True red - contrast ~5.2:1 */
+  color: #cc0000; /* Bright red - matches card hearts */
 }
 
 .bid-suit-button .suit-spades {
-  color: #1a1a1a; /* Near black - contrast ~12:1 */
+  color: #1a1a1a; /* Near black - matches card spades */
 }
 
 .bid-suit-button .suit-nt {

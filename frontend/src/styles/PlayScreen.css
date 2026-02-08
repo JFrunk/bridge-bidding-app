@@ -11,8 +11,8 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
+  max-width: 1200px;  /* Expanded from 900px - fills more of viewport */
+  margin: 0 auto;     /* Centers horizontally */
 }
 
 /* ========================================

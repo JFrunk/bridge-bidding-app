@@ -131,22 +131,19 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
           )}
         </div>
 
-        {/* Center: Trick Counter Bar */}
-        <div className="trick-score">
-          <div className="trick-bar">
-            {cells.map(({ cellNum, cellClass }) => (
-              <div
-                key={cellNum}
-                className={`trick-cell ${cellClass}`}
-                aria-label={`Trick ${cellNum}`}
-              />
-            ))}
-          </div>
-          <div className="trick-labels">
-            <span className="trick-count you">{playerIsDeclarer ? tricksWonByPlayer : tricksWonByOpponents}</span>
-            <span className="trick-target">Need {tricksNeeded}</span>
-            <span className="trick-count opp">{playerIsDeclarer ? tricksWonByOpponents : tricksWonByPlayer}</span>
-          </div>
+        {/* Center: Trick Counter - Simple Text */}
+        <div className="trick-counter-text">
+          <span className="trick-ns">
+            <strong>NS: {tricksWonByPlayer}</strong>
+          </span>
+          <span className="trick-divider">|</span>
+          <span className="trick-ew">
+            <strong>EW: {tricksWonByOpponents}</strong>
+          </span>
+          <span className="trick-divider">|</span>
+          <span className="trick-need">Need {tricksNeeded}</span>
+          <span className="trick-divider">|</span>
+          <span className="trick-current">Trick {totalTricksPlayed + 1}/13</span>
         </div>
 
         {/* Right: Trump + Trick # + Bid History Button */}
