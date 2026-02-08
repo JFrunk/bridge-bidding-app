@@ -5105,11 +5105,12 @@ def get_experience_level():
             if not row:
                 return jsonify({"error": "User not found"}), 404
 
+            # Use column names for PostgreSQL compatibility (dict-style rows)
             return jsonify({
-                "experience_level": row[0],
-                "unlock_all_content": bool(row[1]) if row[1] is not None else False,
-                "experience_id": row[2],
-                "experience_set_at": row[3]
+                "experience_level": row['experience_level'],
+                "unlock_all_content": bool(row['unlock_all_content']) if row['unlock_all_content'] is not None else False,
+                "experience_id": row['experience_id'],
+                "experience_set_at": row['experience_set_at']
             })
 
     except Exception as e:
