@@ -38,7 +38,7 @@
         ]
       },
       "forcing": "one_round",
-      "explanation": "Stayman, asking for 4-card major with {hcp} HCP",
+      "explanation": "Stayman (8+ HCP, asking for 4-card major)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -58,7 +58,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Jacoby transfer showing 5+ hearts with {hcp} HCP",
+      "explanation": "Jacoby transfer (8+ HCP, 5+ hearts)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -78,7 +78,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Jacoby transfer showing 5+ spades with {hcp} HCP",
+      "explanation": "Jacoby transfer (8+ HCP, 5+ spades)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -137,7 +137,7 @@
         "has_5_card_major": false
       },
       "forcing": "none",
-      "explanation": "Raise to 3NT with {hcp} HCP balanced",
+      "explanation": "Raise to 3NT (10-14 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -156,7 +156,7 @@
         "has_5_card_major": false
       },
       "forcing": "none",
-      "explanation": "Invitational 2NT with {hcp} HCP balanced",
+      "explanation": "Invitational 2NT (8-9 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -247,7 +247,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "1NT response showing {hcp} HCP, no major fit",
+      "explanation": "1NT response (6-10 HCP, no major fit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -273,7 +273,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Single raise with {hcp} HCP and {support_for_partner}-card support",
+      "explanation": "Single raise (6-10 HCP, 3+ card support)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -299,7 +299,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Limit raise with {hcp} HCP and {support_for_partner}-card support",
+      "explanation": "Limit raise (11-12 HCP, 4+ card support, invitational)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -368,7 +368,7 @@
       },
       "forcing": "game",
       "suit_selection": "longest_lower_suit",
-      "explanation": "2/1 game-forcing response showing {hcp} HCP",
+      "explanation": "2/1 game-forcing response (10+ HCP, 5+ card suit)",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
@@ -426,7 +426,7 @@
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "Invitational 2NT with {hcp} HCP balanced",
+      "explanation": "Invitational 2NT (11-12 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -441,7 +441,7 @@
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "3NT with {hcp} HCP balanced",
+      "explanation": "3NT (13-15 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -457,7 +457,7 @@
         "support_for_partner": {"max": 2}
       },
       "forcing": "none",
-      "explanation": "3NT with {hcp} HCP balanced, no major fit",
+      "explanation": "3NT (13-15 HCP, balanced, no major fit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -491,7 +491,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with only {hcp} HCP (need 6+ to respond)",
+      "explanation": "Pass (0-5 HCP, insufficient to respond)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -509,7 +509,7 @@
         "has_5_card_major": false
       },
       "forcing": "none",
-      "explanation": "Pass 1NT with {hcp} HCP balanced (combined 22-24)",
+      "explanation": "Pass 1NT (0-7 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -526,7 +526,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass 1NT with {hcp} HCP (too weak to transfer)",
+      "explanation": "Pass 1NT (0-7 HCP, too weak to transfer)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -542,7 +542,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass 2NT with {hcp} HCP (not enough for game)",
+      "explanation": "Pass 2NT (0-4 HCP, not enough for game)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -571,7 +571,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass partner's preempt with {hcp} HCP and {support_for_partner}-card support",
+      "explanation": "Pass partner's preempt (insufficient strength or support)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -592,7 +592,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with only {hcp} HCP - insufficient to respond",
+      "explanation": "Pass (0-5 HCP, insufficient to respond)",
       "sets_forcing_level": "NON_FORCING"
     }
   ]

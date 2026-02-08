@@ -113,7 +113,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Thin game - {hcp} HCP but {total_playing_strength} playing strength with {our_best_fit}-card fit",
+      "explanation": "Thin game - appropriate HCP but {total_playing_strength} playing strength with {our_best_fit}-card fit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -141,7 +141,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Thin game - {hcp} HCP but {total_playing_strength} playing strength with {our_best_fit}-card fit",
+      "explanation": "Thin game - appropriate HCP but {total_playing_strength} playing strength with {our_best_fit}-card fit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -239,7 +239,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Invite: 3\u2660 with {hcp} HCP and spade fit (partner decides)",
+      "explanation": "Invite: 3\u2660 with appropriate HCP and spade fit (partner decides)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -260,7 +260,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Invite: 3\u2665 with {hcp} HCP and heart fit (partner decides)",
+      "explanation": "Invite: 3\u2665 with appropriate HCP and heart fit (partner decides)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -277,7 +277,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "3NT: {hcp} HCP, no major fit found via Stayman",
+      "explanation": "3NT: appropriate HCP, no major fit found via Stayman",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -296,7 +296,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "3NT: {hcp} HCP, partner's major doesn't fit",
+      "explanation": "3NT: appropriate HCP, partner's major doesn't fit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -314,7 +314,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "2NT invite: {hcp} HCP, no major fit (partner decides game)",
+      "explanation": "2NT invite: appropriate HCP, no major fit (partner decides game)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -697,7 +697,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "3NT with {hcp} HCP balanced - game values",
+      "explanation": "3NT with appropriate HCP balanced - game values",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -889,7 +889,7 @@
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "Invite game with {hcp} HCP balanced",
+      "explanation": "Invite game with appropriate HCP balanced",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -905,7 +905,7 @@
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "Game with {hcp} HCP balanced",
+      "explanation": "Game with appropriate HCP balanced",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -930,7 +930,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Delayed support with {support_for_partner} cards and {hcp} HCP",
+      "explanation": "Delayed support with {support_for_partner} cards and appropriate HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -956,7 +956,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Game with fit and {hcp} HCP",
+      "explanation": "Game with fit and appropriate HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -978,7 +978,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Preference to partner's first suit with {hcp} HCP",
+      "explanation": "Preference to partner's first suit with appropriate HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1003,7 +1003,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Invitational preference with {hcp} HCP and {support_for_partner_first}-card support",
+      "explanation": "Invitational preference with appropriate HCP and {support_for_partner_first}-card support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1024,7 +1024,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Limit raise with {hcp} HCP and 3-card heart support",
+      "explanation": "Limit raise with appropriate HCP and 3-card heart support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1045,7 +1045,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Limit raise with {hcp} HCP and 3-card spade support",
+      "explanation": "Limit raise with appropriate HCP and 3-card spade support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1065,7 +1065,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Game with {hcp} HCP and 3-card heart support",
+      "explanation": "Game with appropriate HCP and 3-card heart support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1085,7 +1085,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Game with {hcp} HCP and 3-card spade support",
+      "explanation": "Game with appropriate HCP and 3-card spade support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1125,7 +1125,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass opener's rebid with minimum ({hcp} HCP)",
+      "explanation": "Pass opener's rebid with minimum (appropriate HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1141,7 +1141,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass opener's 1NT with minimum ({hcp} HCP)",
+      "explanation": "Pass opener's 1NT with minimum (appropriate HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1175,7 +1175,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with {hcp} HCP - partner showed minimum",
+      "explanation": "Pass with appropriate HCP - partner showed minimum",
       "sets_forcing_level": "NON_FORCING"
     },
     {

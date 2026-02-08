@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "reverses",
+  "description": "Reverse bids - showing 17+ HCP with longer first suit and higher-ranking second suit",
+  "rules": [
+    {
+      "id": "reverse_2h_after_1d",
+      "bid": "2♥",
+      "priority": 750,
+      "description": "Reverse to 2♥ after opening 1♦ (17+ HCP, 5+ diamonds, 4+ hearts)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♦", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "diamonds_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Reverse to 2♥ showing 17+ HCP with 5+ diamonds and 4+ hearts",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "reverse_2s_after_1d",
+      "bid": "2♠",
+      "priority": 750,
+      "description": "Reverse to 2♠ after opening 1♦ (17+ HCP, 5+ diamonds, 4+ spades)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♦", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "diamonds_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Reverse to 2♠ showing 17+ HCP with 5+ diamonds and 4+ spades",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "reverse_2h_after_1c",
+      "bid": "2♥",
+      "priority": 750,
+      "description": "Reverse to 2♥ after opening 1♣ (17+ HCP, 5+ clubs, 4+ hearts)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♣", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "clubs_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Reverse to 2♥ showing 17+ HCP with 5+ clubs and 4+ hearts",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "reverse_2s_after_1c",
+      "bid": "2♠",
+      "priority": 750,
+      "description": "Reverse to 2♠ after opening 1♣ (17+ HCP, 5+ clubs, 4+ spades)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♣", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "clubs_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Reverse to 2♠ showing 17+ HCP with 5+ clubs and 4+ spades",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "reverse_2d_after_1c",
+      "bid": "2♦",
+      "priority": 750,
+      "description": "Reverse to 2♦ after opening 1♣ (17+ HCP, 5+ clubs, 4+ diamonds)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♣", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "clubs_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "diamonds_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Reverse to 2♦ showing 17+ HCP with 5+ clubs and 4+ diamonds",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "reverse_2s_after_1h",
+      "bid": "2♠",
+      "priority": 750,
+      "description": "Reverse to 2♠ after opening 1♥ (17+ HCP, 5+ hearts, 4+ spades)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "hearts_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Reverse to 2♠ showing 17+ HCP with 5+ hearts and 4+ spades",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    }
+  ]
+}

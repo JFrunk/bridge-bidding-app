@@ -126,7 +126,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Show trump queen with {hcp} HCP - partnership has all keycards",
+      "explanation": "Show trump queen with appropriate HCP - partnership has all keycards",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -249,7 +249,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Bid 6♥ with {hcp} HCP after partner shows keycards",
+      "explanation": "Bid 6♥ with appropriate HCP after partner shows keycards",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -382,7 +382,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Small slam with {hcp} HCP and sufficient keycards",
+      "explanation": "Small slam with appropriate HCP and sufficient keycards",
       "sets_forcing_level": "NON_FORCING"
     },
     {

@@ -369,7 +369,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Simple raise with {hcp} HCP and {support_for_partner}-card support after double",
+      "explanation": "Simple raise with appropriate HCP and {support_for_partner}-card support after double",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -419,7 +419,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Jordan 2NT showing {hcp} HCP with {support_for_partner}-card support (limit raise or better)",
+      "explanation": "Jordan 2NT showing appropriate HCP with {support_for_partner}-card support (limit raise or better)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -448,7 +448,7 @@
         "singleton_or_void": true
       },
       "forcing": "none",
-      "explanation": "Preemptive raise to 4{partner_suit} with {hcp} HCP, {support_for_partner}-card support and distributional shape",
+      "explanation": "Preemptive raise to 4{partner_suit} with appropriate HCP, {support_for_partner}-card support and distributional shape",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -595,7 +595,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with only {hcp} HCP in competitive auction",
+      "explanation": "Pass with only appropriate HCP in competitive auction",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -613,7 +613,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with {hcp} HCP - too weak to act over double",
+      "explanation": "Pass with appropriate HCP - too weak to act over double",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -635,7 +635,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with {hcp} HCP and only {support_for_partner} trumps - insufficient for action",
+      "explanation": "Pass with appropriate HCP and only {support_for_partner} trumps - insufficient for action",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -655,7 +655,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with {hcp} HCP - no fit for partner's suit",
+      "explanation": "Pass with appropriate HCP - no fit for partner's suit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -681,7 +681,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with {hcp} HCP - long minor but no major fit",
+      "explanation": "Pass with appropriate HCP - long minor but no major fit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -700,7 +700,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with {hcp} HCP - insufficient to act after partner's preempt",
+      "explanation": "Pass with appropriate HCP - insufficient to act after partner's preempt",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -871,7 +871,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with {hcp} HCP - too weak to continue competing in late auction",
+      "explanation": "Pass with appropriate HCP - too weak to continue competing in late auction",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -907,7 +907,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with {hcp} HCP - late auction, minimum values to continue",
+      "explanation": "Pass with appropriate HCP - late auction, minimum values to continue",
       "sets_forcing_level": "NON_FORCING"
     }
   ]

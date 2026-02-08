@@ -158,7 +158,7 @@
         "partner_last_bid": {"in": ["1NT", "2NT", "3NT"]}
       },
       "forcing": "none",
-      "explanation": "Direct 6NT with {partnership_hcp_min}+ combined HCP and {hcp} HCP",
+      "explanation": "Direct 6NT with {partnership_hcp_min}+ combined HCP and appropriate HCP",
       "sets_forcing_level": "NON_FORCING",
       "metadata": {"bypass_hcp": true}
     },
@@ -190,7 +190,7 @@
         "hcp": {"min": 17}
       },
       "forcing": "none",
-      "explanation": "Accept slam invitation with maximum {hcp} HCP",
+      "explanation": "Accept slam invitation with maximum appropriate HCP",
       "sets_forcing_level": "NON_FORCING",
       "metadata": {"bypass_hcp": true}
     },
@@ -205,7 +205,7 @@
         "hcp": {"max": 16}
       },
       "forcing": "none",
-      "explanation": "Decline slam invitation with minimum {hcp} HCP",
+      "explanation": "Decline slam invitation with minimum appropriate HCP",
       "sets_forcing_level": "NON_FORCING"
     }
   ]

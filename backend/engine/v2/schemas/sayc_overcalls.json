@@ -18,7 +18,7 @@
         {"feature": "stopper_in_opponent_suit", "expected": true, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "1NT overcall showing {hcp} HCP balanced with stopper in opponent's suit",
+      "explanation": "1NT overcall (15-18 HCP, balanced with stopper)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -35,7 +35,7 @@
         {"feature": "spades_quality", "min": 2, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
       ],
       "forcing": "none",
-      "explanation": "1♠ overcall with {hcp} HCP and 5+ spades",
+      "explanation": "1\u2660 overcall (8-16 HCP, 5+ spades)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -52,7 +52,7 @@
         {"feature": "hearts_quality", "min": 2, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
       ],
       "forcing": "none",
-      "explanation": "1♥ overcall with {hcp} HCP and 5+ hearts",
+      "explanation": "1\u2665 overcall (8-16 HCP, 5+ hearts)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -69,7 +69,7 @@
         {"feature": "diamonds_quality", "min": 2, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
       ],
       "forcing": "none",
-      "explanation": "1♦ overcall with {hcp} HCP and 5+ diamonds",
+      "explanation": "1\u2666 overcall (8-16 HCP, 5+ diamonds)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -86,7 +86,7 @@
         {"feature": "longest_suit_quality", "min": 2, "constraint_type": "SOFT", "penalty_per_unit": 0.15}
       ],
       "forcing": "none",
-      "explanation": "2-level overcall in {longest_suit} with {hcp} HCP",
+      "explanation": "2-level overcall (10-16 HCP, 5+ card suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -105,7 +105,7 @@
         "stopper_in_opponent_suit": true
       },
       "forcing": "none",
-      "explanation": "Balancing 1NT showing {hcp} HCP (3 less than direct)",
+      "explanation": "Balancing 1NT (12-15 HCP, balanced with stopper)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -216,7 +216,7 @@
       },
       "forcing": "none",
       "suit_selection": "best_5_card_suit",
-      "explanation": "Simple overcall with {hcp} HCP and {suit_length}-card {suit}",
+      "explanation": "1-level overcall (9-16 HCP, 5+ card suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -236,7 +236,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "1♠ overcall showing {hcp} HCP and 5+ spades",
+      "explanation": "1\u2660 overcall (9-16 HCP, 5+ spades)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -264,7 +264,7 @@
       },
       "forcing": "none",
       "suit_selection": "best_5_card_suit",
-      "explanation": "Balancing overcall with {hcp} HCP and good {suit_length}-card {suit}",
+      "explanation": "Balancing overcall (8-14 HCP, 5+ card suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -332,7 +332,7 @@
       },
       "forcing": "none",
       "suit_selection": "best_5_card_suit",
-      "explanation": "2-level overcall with {hcp} HCP and very good {suit}",
+      "explanation": "2-level overcall (12-16 HCP, good 5+ card suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -362,7 +362,7 @@
         "is_jump": true
       },
       "forcing": "none",
-      "explanation": "Weak jump overcall with {hcp} HCP and 6-card {suit}",
+      "explanation": "Weak jump overcall (6-10 HCP, 6+ card suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -394,7 +394,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with only {hcp} HCP (already acted in competition)",
+      "explanation": "Pass (already competed, nothing further to show)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

@@ -18,7 +18,7 @@
         {"feature": "has_4_card_major", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
       ],
       "forcing": "one_round",
-      "explanation": "Negative double showing {hcp} HCP with support for unbid suits",
+      "explanation": "Negative double (6+ HCP, support for unbid suits)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -35,7 +35,7 @@
         {"feature": "has_4_card_major", "expected": true, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Negative double at 2-level showing {hcp} HCP with 4-card major support",
+      "explanation": "Negative double at 2-level (8+ HCP, 4-card major support)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -50,7 +50,7 @@
         {"feature": "short_in_opponent_suit", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
       ],
       "forcing": "one_round",
-      "explanation": "Reopening double with {hcp} HCP - partner may have a trap pass",
+      "explanation": "Reopening double (10+ HCP, partner may have a trap pass)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -67,7 +67,7 @@
         {"feature": "has_4_card_major", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.25}
       ],
       "forcing": "one_round",
-      "explanation": "Balancing takeout double with {hcp} HCP (adjusted for position)",
+      "explanation": "Balancing takeout double (8+ HCP, Borrowed King principle)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -84,7 +84,7 @@
         {"feature": "has_4_card_major", "expected": true, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Balancing double at 2-level with {hcp} HCP",
+      "explanation": "Balancing double at 2-level (10+ HCP)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -103,7 +103,7 @@
         {"feature": "has_4_card_major", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
       ],
       "forcing": "one_round",
-      "explanation": "Takeout double showing {hcp} HCP with support for unbid suits",
+      "explanation": "Takeout double (12-16 HCP, support for unbid suits)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -121,7 +121,7 @@
         {"feature": "hearts_length", "max": 4, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Strong takeout double with {hcp} HCP - too strong for simple overcall, will bid again",
+      "explanation": "Strong takeout double (17+ HCP, too strong for simple overcall)",
       "sets_forcing_level": "FORCING_1_ROUND"
     }
   ]

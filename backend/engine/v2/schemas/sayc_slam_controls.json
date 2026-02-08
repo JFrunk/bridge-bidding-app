@@ -204,7 +204,7 @@
         "partnership_hcp_min": {"min": 33}
       },
       "forcing": "none",
-      "explanation": "Bid slam with all keycards and {hcp} HCP",
+      "explanation": "Bid slam with all keycards and appropriate HCP",
       "sets_forcing_level": "NON_FORCING"
     },
     {

@@ -33,7 +33,7 @@
         "hcp": {"min": 6, "max": 10}
       },
       "forcing": "none",
-      "explanation": "Respond to partner's takeout double with 4+ spades and {hcp} HCP",
+      "explanation": "Respond to partner's takeout double (6-10 HCP, 4+ spades)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -50,7 +50,7 @@
         "hcp": {"min": 6, "max": 10}
       },
       "forcing": "none",
-      "explanation": "Respond to partner's takeout double with 4+ hearts and {hcp} HCP",
+      "explanation": "Respond to partner's takeout double (6-10 HCP, 4+ hearts)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -133,7 +133,7 @@
         "hcp": {"min": 6, "max": 10}
       },
       "forcing": "none",
-      "explanation": "Respond to partner's takeout double with 5+ diamonds and {hcp} HCP (no 4-card major)",
+      "explanation": "Respond to partner's takeout double (6-10 HCP, 5+ diamonds, no 4-card major)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -150,7 +150,7 @@
         "hcp": {"min": 6, "max": 10}
       },
       "forcing": "none",
-      "explanation": "Respond to partner's takeout double with 5+ clubs and {hcp} HCP (no 4-card major)",
+      "explanation": "Respond to partner's takeout double (6-10 HCP, 5+ clubs, no 4-card major)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -166,7 +166,7 @@
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "1NT showing stopper in opponent's suit with {hcp} HCP",
+      "explanation": "1NT (6-10 HCP, balanced with stopper in opponent's suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -289,7 +289,7 @@
         "partnership_hcp_min": 18
       },
       "forcing": "none",
-      "explanation": "Simple raise of partner's overcall with {support_for_partner}-card support and {hcp} HCP",
+      "explanation": "Simple raise of partner's overcall (8-10 HCP, 3+ card support)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -548,7 +548,7 @@
         "diamonds_length": {"max": 4}
       },
       "forcing": "none",
-      "explanation": "Pass with very weak hand ({hcp} HCP) and no good suit",
+      "explanation": "Pass with very weak hand (0-4 HCP) and no good suit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -562,7 +562,7 @@
         "hcp": {"max": 5}
       },
       "forcing": "none",
-      "explanation": "Pass with very weak hand ({hcp} HCP) - cannot afford to respond",
+      "explanation": "Pass with very weak hand (0-5 HCP, cannot afford to respond)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -575,7 +575,7 @@
         "hcp": {"max": 5}
       },
       "forcing": "none",
-      "explanation": "Pass with weak hand ({hcp} HCP)",
+      "explanation": "Pass with weak hand (0-5 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -606,7 +606,7 @@
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "3NT with {hcp} HCP, balanced with stopper",
+      "explanation": "3NT (12+ HCP, balanced with stopper)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -621,7 +621,7 @@
         "spades_length": {"min": 5}
       },
       "forcing": "none",
-      "explanation": "Game in spades with {hcp} HCP and 5+ spades",
+      "explanation": "Game in spades (12+ HCP, 5+ spades)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -636,7 +636,7 @@
         "hearts_length": {"min": 5}
       },
       "forcing": "none",
-      "explanation": "Game in hearts with {hcp} HCP and 5+ hearts",
+      "explanation": "Game in hearts (12+ HCP, 5+ hearts)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -649,7 +649,7 @@
         "hcp": {"max": 7}
       },
       "forcing": "none",
-      "explanation": "Pass with minimum ({hcp} HCP)",
+      "explanation": "Pass with minimum (0-7 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

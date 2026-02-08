@@ -16,7 +16,7 @@
         }
       },
       "forcing": "game",
-      "explanation": "Strong artificial 2\u2663 opening showing {hcp} HCP",
+      "explanation": "Strong artificial 2\u2663 opening (22+ HCP, game-forcing)",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
@@ -39,7 +39,7 @@
         }
       },
       "forcing": "game",
-      "explanation": "Strong 2\u2663 with {hcp} HCP and exceptional playing strength ({quick_tricks} quick tricks)",
+      "explanation": "Strong 2\u2663 opening (20-21 HCP with 5+ quick tricks, game-forcing)",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
@@ -60,7 +60,7 @@
         }
       },
       "forcing": "game",
-      "explanation": "Strong 2\u2663 with {hcp} HCP and extreme playing strength ({longest_suit_length}-card suit, {losing_trick_count} losers)",
+      "explanation": "Strong 2\u2663 opening (8+ card suit with 3 or fewer losers, game-forcing)",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
@@ -78,7 +78,7 @@
         "has_5_card_major": false
       },
       "forcing": "none",
-      "explanation": "2NT opening showing {hcp} HCP, balanced",
+      "explanation": "2NT opening (20-21 HCP, balanced, no 5-card major)",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
@@ -94,7 +94,7 @@
         {"feature": "stoppers_required", "min": 3, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "1NT opening showing {hcp} HCP, balanced with stoppers in {stopper_count} suits",
+      "explanation": "1NT opening (15-17 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -116,7 +116,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "1NT opening showing {hcp} HCP balanced (maximum range compensates for stoppers)",
+      "explanation": "1NT opening (16-17 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -135,7 +135,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "1\u2660 opening showing {hcp} HCP and {spades_length}-card spade suit",
+      "explanation": "1\u2660 opening (12-21 HCP, 5+ spades)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -157,7 +157,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "1\u2660 opening with {hcp} HCP and good {spades_length}-card spade suit",
+      "explanation": "1\u2660 opening (12-21 HCP, 5+ spades)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -176,7 +176,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "1\u2660 opening showing {hcp} HCP and {spades_length}-card spade suit",
+      "explanation": "1\u2660 opening (12-21 HCP, 5+ spades)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -207,7 +207,7 @@
         ]
       },
       "forcing": "none",
-      "explanation": "1\u2665 opening showing {hcp} HCP and {hearts_length}-card heart suit",
+      "explanation": "1\u2665 opening (12-21 HCP, 5+ hearts)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -241,7 +241,7 @@
         ]
       },
       "forcing": "none",
-      "explanation": "1\u2665 opening with {hcp} HCP and good {hearts_length}-card heart suit",
+      "explanation": "1\u2665 opening (12-21 HCP, 5+ hearts)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -263,7 +263,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "1\u2665 opening showing {hcp} HCP and {hearts_length}-card heart suit",
+      "explanation": "1\u2665 opening (12-21 HCP, 5+ hearts)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -298,7 +298,7 @@
         ]
       },
       "forcing": "none",
-      "explanation": "1\u2666 opening showing {hcp} HCP and {diamonds_length}-card diamond suit",
+      "explanation": "1\u2666 opening (12-21 HCP, 4+ diamonds)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -333,7 +333,7 @@
         ]
       },
       "forcing": "none",
-      "explanation": "1\u2666 opening showing {hcp} HCP and {diamonds_length}-card diamond suit with good quality",
+      "explanation": "1\u2666 opening (12-21 HCP, 5+ diamonds)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -365,7 +365,7 @@
         ]
       },
       "forcing": "none",
-      "explanation": "1\u2663 opening showing {hcp} HCP and {clubs_length}-card club suit",
+      "explanation": "1\u2663 opening (12-21 HCP, 5+ clubs)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -388,7 +388,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "1\u2663 opening showing {hcp} HCP and {clubs_length}+ clubs",
+      "explanation": "1\u2663 opening (12-21 HCP, 3+ clubs)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -417,7 +417,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "1\u2663 opening showing {hcp} HCP (short clubs, 4-4-3-2 shape)",
+      "explanation": "1\u2663 opening (12-21 HCP, possibly short clubs)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -437,7 +437,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "1\u2663 opening with balanced {hcp} HCP (too weak for 1NT)",
+      "explanation": "1\u2663 opening (12-14 HCP balanced, below 1NT range)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -454,7 +454,7 @@
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "1\u2663 opening with balanced {hcp} HCP (too strong for 1NT)",
+      "explanation": "1\u2663 opening (18-19 HCP balanced, above 1NT range)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -482,7 +482,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Preemptive 3-bid with {hcp} HCP and 7-card {longest_suit} suit",
+      "explanation": "Preemptive 3-bid (5-10 HCP, 7+ card suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -510,7 +510,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Preemptive 3-bid with {hcp} HCP and 7-card {longest_suit} suit",
+      "explanation": "Preemptive 3-bid (5-10 HCP, 7+ card suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -542,7 +542,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Weak 2-bid with {hcp} HCP, excellent 6-card {longest_suit} suit (2+ top honors, 7+ HCP in suit)",
+      "explanation": "Weak 2-bid (6-10 HCP, good 6-card major)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -569,7 +569,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Weak 2\u2666 with {hcp} HCP, excellent 6-card diamond suit (2+ top honors, 7+ HCP in suit)",
+      "explanation": "Weak 2\u2666 (6-10 HCP, good 6-card diamond suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -595,7 +595,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Rule of 20 opening with {hcp} HCP and excellent {longest_suit_length}-card {longest_suit} suit (1st/2nd seat only)",
+      "explanation": "Rule of 20 opening (10-11 HCP with excellent long suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -610,7 +610,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with only {hcp} HCP",
+      "explanation": "Pass (insufficient values to open, need 12+ HCP)",
       "sets_forcing_level": "NON_FORCING"
     }
   ]

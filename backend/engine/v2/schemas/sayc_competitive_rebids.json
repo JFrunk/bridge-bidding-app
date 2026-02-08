@@ -1,0 +1,291 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "competitive_rebids",
+  "description": "Rebids by doubler and overcaller after partner responds",
+  "rules": [
+    {
+      "id": "doubler_raise_min_spades",
+      "bid": "2♠",
+      "priority": 700,
+      "description": "Minimum raise of partner's forced spade response to takeout double",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "partner_last_bid": "1♠",
+        "hcp": {
+          "min": 12,
+          "max": 17
+        },
+        "spades_length": {
+          "min": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Minimum raise to 2♠ with appropriate HCP and 4-card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_raise_min_hearts",
+      "bid": "2♥",
+      "priority": 700,
+      "description": "Minimum raise of partner's forced heart response to takeout double",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "partner_last_bid": "1♥",
+        "hcp": {
+          "min": 12,
+          "max": 17
+        },
+        "hearts_length": {
+          "min": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Minimum raise to 2♥ with appropriate HCP and 4-card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_raise_inv_spades",
+      "bid": "3♠",
+      "priority": 800,
+      "description": "Invitational raise of partner's spade response to takeout double",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "partner_last_bid": {
+          "in": ["1♠", "2♠"]
+        },
+        "hcp": {
+          "min": 18,
+          "max": 20
+        },
+        "spades_length": {
+          "min": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Invitational jump raise to 3♠ with appropriate HCP - inviting game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_raise_inv_hearts",
+      "bid": "3♥",
+      "priority": 800,
+      "description": "Invitational raise of partner's heart response to takeout double",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "partner_last_bid": {
+          "in": ["1♥", "2♥"]
+        },
+        "hcp": {
+          "min": 18,
+          "max": 20
+        },
+        "hearts_length": {
+          "min": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Invitational jump raise to 3♥ with appropriate HCP - inviting game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_game_spades",
+      "bid": "4♠",
+      "priority": 850,
+      "description": "Game bid in spades after takeout double - strong hand with fit",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "partner_last_bid": {
+          "in": ["1♠", "2♠"]
+        },
+        "hcp": {
+          "min": 21
+        },
+        "spades_length": {
+          "min": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in spades with appropriate HCP and 4-card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_game_hearts",
+      "bid": "4♥",
+      "priority": 850,
+      "description": "Game bid in hearts after takeout double - strong hand with fit",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "partner_last_bid": {
+          "in": ["1♥", "2♥"]
+        },
+        "hcp": {
+          "min": 21
+        },
+        "hearts_length": {
+          "min": 4
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in hearts with appropriate HCP and 4-card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_new_suit_strong",
+      "bid": "2{my_suit}",
+      "priority": 780,
+      "description": "Doubler shows own suit after partner responds - strong hand with long suit",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "hcp": {
+          "min": 17
+        },
+        "longest_suit_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Showing own {my_suit} suit with appropriate HCP - too strong for simple overcall",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "doubler_1nt_rebid",
+      "bid": "1NT",
+      "priority": 750,
+      "description": "1NT rebid by doubler showing balanced 18-19 HCP",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "hcp": {
+          "min": 18,
+          "max": 19
+        },
+        "is_balanced": true,
+        "stopper_in_opponent_suit": true
+      },
+      "forcing": "none",
+      "explanation": "1NT showing appropriate HCP balanced with stopper",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_2nt_rebid",
+      "bid": "2NT",
+      "priority": 760,
+      "description": "2NT rebid by doubler showing balanced 20-21 HCP",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "hcp": {
+          "min": 20,
+          "max": 21
+        },
+        "is_balanced": true,
+        "stopper_in_opponent_suit": true
+      },
+      "forcing": "none",
+      "explanation": "2NT showing appropriate HCP balanced with stopper",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_pass_min",
+      "bid": "Pass",
+      "priority": 650,
+      "description": "Pass with minimum takeout double after partner responds",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "hcp": {
+          "max": 15
+        },
+        "support_for_partner": {
+          "max": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with minimum (appropriate HCP) - partner's response shows minimum",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "overcaller_raise_min",
+      "bid": "2{partner_suit}",
+      "priority": 700,
+      "description": "Simple raise of advancer's suit after overcall",
+      "conditions": {
+        "is_overcaller_rebid": true,
+        "hcp": {
+          "min": 12,
+          "max": 15
+        },
+        "support_for_partner": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Raise partner's suit with appropriate HCP and {support_for_partner}-card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "overcaller_raise_inv",
+      "bid": "3{partner_suit}",
+      "priority": 800,
+      "description": "Jump raise of advancer's suit after overcall - invitational",
+      "conditions": {
+        "is_overcaller_rebid": true,
+        "hcp": {
+          "min": 16,
+          "max": 18
+        },
+        "support_for_partner": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Jump raise to 3-level with appropriate HCP - inviting game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "overcaller_rebid_own_suit",
+      "bid": "2{my_suit}",
+      "priority": 680,
+      "description": "Rebid own suit after overcall",
+      "conditions": {
+        "is_overcaller_rebid": true,
+        "hcp": {
+          "min": 12,
+          "max": 15
+        },
+        "longest_suit_length": {
+          "min": 6
+        }
+      },
+      "forcing": "none",
+      "explanation": "Rebid 6+ card suit with appropriate HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "overcaller_pass_min",
+      "bid": "Pass",
+      "priority": 600,
+      "description": "Pass with minimum overcall after partner responds",
+      "conditions": {
+        "is_overcaller_rebid": true,
+        "hcp": {
+          "max": 14
+        },
+        "support_for_partner": {
+          "max": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Pass with minimum (appropriate HCP) and no fit",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

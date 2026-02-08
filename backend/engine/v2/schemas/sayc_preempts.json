@@ -240,7 +240,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "3NT: Game facing partner's preempt with {hcp} HCP and stoppers",
+      "explanation": "3NT: Game facing partner's preempt (16+ HCP with stoppers)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -264,7 +264,7 @@
         ]
       },
       "forcing": "none",
-      "explanation": "Game raise with {hcp} HCP and support",
+      "explanation": "Game raise (10-14 HCP with support)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -288,7 +288,7 @@
         ]
       },
       "forcing": "none",
-      "explanation": "Game raise with {hcp} HCP and support",
+      "explanation": "Game raise (10-14 HCP with support)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -308,7 +308,7 @@
         "is_contested": false
       },
       "forcing": "none",
-      "explanation": "Raise to 5♣ with {hcp} HCP and {support_for_partner} clubs",
+      "explanation": "Raise to 5♣ (10+ HCP, 4+ clubs)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

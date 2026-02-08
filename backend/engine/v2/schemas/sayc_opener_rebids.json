@@ -1,0 +1,293 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "opener_rebids",
+  "description": "Opener's rebid choices based on strength buckets: Minimum (12-14), Invitational (15-17), Game Force (18+)",
+  "rules": [
+    {
+      "id": "opener_rebid_1nt_minimum",
+      "bid": "1NT",
+      "priority": 600,
+      "description": "Opener rebids 1NT with balanced minimum (12-14 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Rebid 1NT (12-14 HCP) balanced minimum",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_2nt_invitational",
+      "bid": "2NT",
+      "priority": 620,
+      "description": "Opener rebids 2NT with balanced invitational (18-19 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 18, "max": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.12},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "invitational",
+      "explanation": "Rebid 2NT (12-14 HCP) balanced invitational",
+      "sets_forcing_level": "INVITATIONAL"
+    },
+    {
+      "id": "opener_rebid_3nt_game_values",
+      "bid": "3NT",
+      "priority": 640,
+      "description": "Opener rebids 3NT with balanced game values (20-21 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 20, "max": 21, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Rebid 3NT (12-14 HCP) balanced game values",
+      "sets_forcing_level": "SIGN_OFF"
+    },
+    {
+      "id": "opener_rebid_own_suit_minimum",
+      "bid": "2♣",
+      "priority": 580,
+      "description": "Opener rebids own minor with 6+ cards minimum (12-15 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♣", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "clubs_length", "min": 6, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Rebid 2♣ (12-14 HCP) with 6+ clubs minimum",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_own_suit_diamonds_minimum",
+      "bid": "2♦",
+      "priority": 580,
+      "description": "Opener rebids own minor with 6+ cards minimum (12-15 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♦", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "diamonds_length", "min": 6, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Rebid 2♦ (12-14 HCP) with 6+ diamonds minimum",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_own_major_hearts_minimum",
+      "bid": "2♥",
+      "priority": 590,
+      "description": "Opener rebids own major with 6+ cards minimum (12-15 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "hearts_length", "min": 6, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Rebid 2♥ (12-14 HCP) with 6+ hearts minimum",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_own_major_spades_minimum",
+      "bid": "2♠",
+      "priority": 590,
+      "description": "Opener rebids own major with 6+ cards minimum (12-15 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "spades_length", "min": 6, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Rebid 2♠ (12-14 HCP) with 6+ spades minimum",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_jump_rebid_hearts_invitational",
+      "bid": "3♥",
+      "priority": 650,
+      "description": "Opener jump rebids own major with 6+ cards invitational (16-18 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 16, "max": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "hearts_length", "min": 6, "constraint_type": "HARD"}
+      ],
+      "forcing": "invitational",
+      "explanation": "Jump rebid 3♥ (12-14 HCP) with 6+ hearts invitational",
+      "sets_forcing_level": "INVITATIONAL"
+    },
+    {
+      "id": "opener_jump_rebid_spades_invitational",
+      "bid": "3♠",
+      "priority": 650,
+      "description": "Opener jump rebids own major with 6+ cards invitational (16-18 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 16, "max": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "spades_length", "min": 6, "constraint_type": "HARD"}
+      ],
+      "forcing": "invitational",
+      "explanation": "Jump rebid 3♠ (12-14 HCP) with 6+ spades invitational",
+      "sets_forcing_level": "INVITATIONAL"
+    },
+    {
+      "id": "opener_raise_partner_major_minimum",
+      "bid": "2♥",
+      "priority": 610,
+      "description": "Opener raises partner's 1♥ response with 3+ support minimum (12-15 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "hearts_length", "min": 3, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Raise to 2♥ (12-14 HCP) with 3+ heart support minimum",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_raise_partner_spades_minimum",
+      "bid": "2♠",
+      "priority": 610,
+      "description": "Opener raises partner's 1♠ response with 3+ support minimum (12-15 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "spades_length", "min": 3, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Raise to 2♠ (12-14 HCP) with 3+ spade support minimum",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_jump_raise_partner_hearts_invitational",
+      "bid": "3♥",
+      "priority": 660,
+      "description": "Opener jump raises partner's 1♥ response with 4+ support invitational (16-18 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 16, "max": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "invitational",
+      "explanation": "Jump raise to 3♥ (12-14 HCP) with 4+ heart support invitational",
+      "sets_forcing_level": "INVITATIONAL"
+    },
+    {
+      "id": "opener_jump_raise_partner_spades_invitational",
+      "bid": "3♠",
+      "priority": 660,
+      "description": "Opener jump raises partner's 1♠ response with 4+ support invitational (16-18 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 16, "max": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "invitational",
+      "explanation": "Jump raise to 3♠ (12-14 HCP) with 4+ spade support invitational",
+      "sets_forcing_level": "INVITATIONAL"
+    },
+    {
+      "id": "opener_game_raise_hearts",
+      "bid": "4♥",
+      "priority": 700,
+      "description": "Opener raises partner's 1♥ to game with 4+ support game values (19+ HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Raise to 4♥ game (12-14 HCP) with 4+ heart support",
+      "sets_forcing_level": "SIGN_OFF"
+    },
+    {
+      "id": "opener_game_raise_spades",
+      "bid": "4♠",
+      "priority": 700,
+      "description": "Opener raises partner's 1♠ to game with 4+ support game values (19+ HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Raise to 4♠ game (12-14 HCP) with 4+ spade support",
+      "sets_forcing_level": "SIGN_OFF"
+    },
+    {
+      "id": "opener_new_suit_1_level",
+      "bid": "1♠",
+      "priority": 595,
+      "description": "Opener bids new 4-card major at 1-level (12-18 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "in": ["1♣", "1♦", "1♥"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Bid 1♠ (12-14 HCP) with 4+ spades",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "opener_new_suit_2_level_minimum",
+      "bid": "2♣",
+      "priority": 570,
+      "description": "Opener bids new minor at 2-level with minimum (12-15 HCP, 4+ clubs)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "in": ["1♦", "1♥", "1♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "clubs_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Bid 2♣ (12-14 HCP) with 4+ clubs",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_new_suit_2d_minimum",
+      "bid": "2♦",
+      "priority": 570,
+      "description": "Opener bids new minor at 2-level with minimum (12-15 HCP, 4+ diamonds)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "in": ["1♣", "1♥", "1♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "diamonds_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Bid 2♦ (12-14 HCP) with 4+ diamonds",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

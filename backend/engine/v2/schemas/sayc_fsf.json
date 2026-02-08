@@ -20,7 +20,7 @@
         }
       },
       "forcing": "game",
-      "explanation": "Fourth Suit Forcing with {hcp} HCP - asking for stopper or support",
+      "explanation": "Fourth Suit Forcing with 10+ HCP - asking for stopper or support",
       "sets_forcing_level": "FORCING_TO_GAME"
     },
     {

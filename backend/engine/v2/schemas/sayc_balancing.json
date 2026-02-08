@@ -17,7 +17,7 @@
         {"feature": "has_4_card_major", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
       ],
       "forcing": "one_round",
-      "explanation": "Balancing double with {hcp} HCP (Borrowed King: partner has 8-10 HCP)",
+      "explanation": "Balancing takeout double (8-14 HCP, Borrowed King principle)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -31,7 +31,7 @@
         {"feature": "hcp", "min": 15, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Strong balancing double with {hcp} HCP - too strong for simple overcall",
+      "explanation": "Strong balancing double (15+ HCP, too strong for simple overcall)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -59,7 +59,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Balancing double with {hcp} HCP (flexible shape, Borrowed King)",
+      "explanation": "Balancing double (9-14 HCP, flexible shape, Borrowed King principle)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -75,7 +75,7 @@
         {"feature": "stopper_in_opponent_suit", "expected": true, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "Balancing 1NT with {hcp} HCP (Borrowed King: ~3 less than direct 1NT overcall)",
+      "explanation": "Balancing 1NT (11-14 HCP, balanced with stopper, Borrowed King principle)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -90,7 +90,7 @@
         {"feature": "longest_suit_length", "min": 5, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "Balancing bid in {longest_suit} with {hcp} HCP (need values since partner passed)",
+      "explanation": "Balancing 1-level overcall (8-14 HCP, 5+ card suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -105,7 +105,7 @@
         {"feature": "longest_suit_length", "min": 5, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "Balancing 2-level bid with {hcp} HCP in {longest_suit} (Borrowed King)",
+      "explanation": "Balancing 2-level overcall (6-14 HCP, 5+ card suit, Borrowed King principle)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -120,7 +120,7 @@
         {"feature": "longest_suit_length", "min": 6, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "Balancing 2-level bid with 6+ card {longest_suit} and {hcp} HCP (Borrowed King)",
+      "explanation": "Balancing 2-level overcall (6-14 HCP, 6+ card suit, Borrowed King principle)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -173,7 +173,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Jump showing {hcp} HCP (partner may have only 9) - need extra for 3-level",
+      "explanation": "Jump response to balancing double (11-13 HCP, 5+ card suit - extra values since partner may be light)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -197,7 +197,7 @@
       },
       "forcing": "none",
       "suit_selection": "longest_unbid",
-      "explanation": "Respond to partner's balancing double with {hcp} HCP - be conservative (partner may have only 8-10)",
+      "explanation": "Simple response to balancing double (10-12 HCP, 4+ card suit - conservative since partner may be light)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -219,7 +219,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "2NT showing {hcp} HCP balanced with stopper (conservative - partner may have only 8-10 HCP)",
+      "explanation": "2NT response to balancing double (11-12 HCP, balanced with stopper - conservative since partner may be light)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -233,7 +233,7 @@
         {"feature": "hcp", "max": 5, "constraint_type": "SOFT", "penalty_per_unit": 0.15}
       ],
       "forcing": "none",
-      "explanation": "Pass with only {hcp} HCP - too weak to balance",
+      "explanation": "Pass (0-5 HCP, too weak to balance)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -248,7 +248,7 @@
         {"feature": "longest_suit_length", "max": 4, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "Pass with {hcp} HCP but unsuitable shape for balancing",
+      "explanation": "Pass (5-7 HCP, unsuitable shape for balancing)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -263,7 +263,7 @@
         {"feature": "stopper_in_opponent_suit", "expected": true, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "Pass with {hcp} HCP - values in opponent's suit, let them play",
+      "explanation": "Pass (8-10 HCP, defensive values in opponent's suit)",
       "sets_forcing_level": "NON_FORCING"
     }
   ]

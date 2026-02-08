@@ -19,7 +19,7 @@
         {"feature": "hearts_length", "max": 4, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Takeout double with {hcp} HCP, shortness in opponent's suit, and major support",
+      "explanation": "Takeout double (12+ HCP, shortness in opponent's suit, major support)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -36,7 +36,7 @@
         {"feature": "hearts_length", "max": 4, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Strong takeout double with {hcp} HCP - too strong for simple overcall, will bid again",
+      "explanation": "Strong takeout double (17+ HCP, too strong for simple overcall)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -53,7 +53,7 @@
         {"feature": "hearts_length", "max": 4, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Takeout double showing {hcp} HCP with support for unbid suits (no 5-card major)",
+      "explanation": "Takeout double (12-16 HCP, support for unbid suits)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -83,7 +83,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Light takeout double with {hcp} HCP and support for unbid suits",
+      "explanation": "Light takeout double (10-11 HCP, perfect shape for unbid suits)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -107,7 +107,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Takeout double with {hcp} HCP showing spades and minor support",
+      "explanation": "Takeout double (10+ HCP, 4 spades and minor support)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -131,7 +131,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Takeout double with {hcp} HCP showing hearts and minor support",
+      "explanation": "Takeout double (10+ HCP, 4 hearts and minor support)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -153,7 +153,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Takeout double with {hcp} HCP and 4-4 majors",
+      "explanation": "Takeout double (10+ HCP, 4-4 in majors)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -191,7 +191,7 @@
         "has_unbid_major_4": true
       },
       "forcing": "one_round",
-      "explanation": "Negative double at 2-level showing {hcp} HCP",
+      "explanation": "Negative double at 2-level (8+ HCP, unbid major)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -210,7 +210,7 @@
         "has_unbid_major_4": true
       },
       "forcing": "one_round",
-      "explanation": "Negative double at 3-level showing {hcp} HCP",
+      "explanation": "Negative double at 3-level (10+ HCP, unbid major)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -265,7 +265,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Balancing double with {hcp} HCP (Borrowed King: partner has ~8-10 HCP)",
+      "explanation": "Balancing takeout double (8-14 HCP, Borrowed King principle)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -338,7 +338,7 @@
         "partnership_hcp_min": {"min": 20}
       },
       "forcing": "none",
-      "explanation": "Raise partner's major with 3-card support and {hcp} HCP",
+      "explanation": "Raise partner's major with 3-card support (15-17 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -367,7 +367,7 @@
         "partner_last_bid": {"in": ["1♥", "1♠", "2♥", "2♠"]}
       },
       "forcing": "none",
-      "explanation": "Raise to game with {hcp} HCP and support",
+      "explanation": "Raise to game (19+ HCP with support)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

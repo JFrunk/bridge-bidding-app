@@ -298,7 +298,7 @@
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "3NT with stopper in fourth suit ({fsf_suit}) and {hcp} HCP",
+      "explanation": "3NT with stopper in fourth suit (12-14 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -357,7 +357,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "3NT with stopper and extra values ({hcp} HCP)",
+      "explanation": "3NT with stopper and extra values (15-17 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -570,7 +570,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Accept Smolen transfer with {hcp} HCP and {spades_length} spades",
+      "explanation": "Accept Smolen transfer (15+ HCP, 3+ spades)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -607,7 +607,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Accept Smolen transfer with {hcp} HCP and {hearts_length} hearts",
+      "explanation": "Accept Smolen transfer (15+ HCP, 3+ hearts)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -645,7 +645,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Rebid 1NT showing {hcp} HCP balanced minimum",
+      "explanation": "Rebid 1NT (12-14 HCP, balanced minimum)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -665,7 +665,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Rebid 2NT showing {hcp} HCP balanced",
+      "explanation": "Rebid 2NT (18-19 HCP, balanced)",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
@@ -685,7 +685,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Rebid 3NT showing {hcp} HCP balanced",
+      "explanation": "Rebid 3NT (20-21 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -760,7 +760,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Jump raise showing {hcp} HCP and {support_for_partner}-card support (prefer major fit)",
+      "explanation": "Jump raise (15-18 HCP, 4+ card support, invitational)",
       "sets_forcing_level": "NON_FORCING",
       "is_limit_bid": true
     },
@@ -812,7 +812,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Rebid own 6+ card suit with {hcp} HCP in uncontested auction",
+      "explanation": "Rebid own 6+ card suit (12-15 HCP, minimum)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -845,7 +845,7 @@
         {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "Raise partner's minor with {hcp} HCP and 4+ card support - invitational",
+      "explanation": "Raise partner's minor (15-17 HCP, 4+ card support, invitational)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -861,7 +861,7 @@
         {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "Raise partner's minor with {hcp} HCP and 4+ card support",
+      "explanation": "Raise partner's minor (12-14 HCP, 4+ card support)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -876,7 +876,7 @@
         {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Jump rebid showing {hcp} HCP with 6+ card suit - game forcing",
+      "explanation": "Jump rebid (18-21 HCP, 6+ card suit, game forcing)",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
@@ -990,7 +990,7 @@
         {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Reverse showing {hcp} HCP - forcing one round (Barrier Principle)",
+      "explanation": "Reverse (17+ HCP, forcing one round, Barrier Principle)",
       "sets_forcing_level": "FORCING_1_ROUND",
       "is_limit_bid": false
     },
@@ -1009,7 +1009,7 @@
         {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Minimum reverse with {hcp} HCP - partner must bid again",
+      "explanation": "Minimum reverse (17-18 HCP, partner must bid again)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -1036,7 +1036,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "New suit below barrier with {hcp} HCP",
+      "explanation": "New suit below barrier (12-17 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1061,7 +1061,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "New suit with {hcp} HCP and good playing strength",
+      "explanation": "New suit with extra values (15+ HCP, good playing strength)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -1083,7 +1083,7 @@
         "fourth_suit_available": true
       },
       "forcing": "game",
-      "explanation": "Fourth suit forcing showing {hcp}+ HCP",
+      "explanation": "Fourth suit forcing (11+ HCP, game force)",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
@@ -1129,7 +1129,7 @@
         "fit_known": false
       },
       "forcing": "none",
-      "explanation": "2NT invitational showing {hcp} HCP balanced",
+      "explanation": "2NT invitational (11-12 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING",
       "is_limit_bid": true
     },
@@ -1153,7 +1153,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "3NT showing {hcp} HCP balanced with stoppers",
+      "explanation": "3NT (13-15 HCP, balanced with stoppers)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1306,7 +1306,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Jump rebid showing 6+ card suit and {hcp} HCP invitational",
+      "explanation": "Jump rebid (10-12 HCP, 6+ card suit, invitational)",
       "sets_forcing_level": "NON_FORCING",
       "is_limit_bid": true
     },
@@ -1329,7 +1329,7 @@
         "second_suit_lower": true
       },
       "forcing": "one_round",
-      "explanation": "New suit showing {hcp} HCP and second suit",
+      "explanation": "New suit (10+ HCP, 4+ cards in second suit)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -1373,7 +1373,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Sign-off at 2-level with {hcp} HCP and {support_for_partner}-card support",
+      "explanation": "Sign-off at 2-level (6-9 HCP, 3+ card support)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1390,7 +1390,7 @@
         "fit_known": true
       },
       "forcing": "none",
-      "explanation": "Accept limit raise with minimum {hcp} HCP",
+      "explanation": "Accept limit raise with minimum (12-14 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1408,7 +1408,7 @@
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "Accept 2NT invitation with minimum {hcp} HCP",
+      "explanation": "Accept 2NT invitation with minimum (12-13 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1429,7 +1429,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass 1NT with balanced minimum {hcp} HCP",
+      "explanation": "Pass 1NT with balanced minimum (12-14 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1449,7 +1449,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass single raise with minimum {hcp} HCP",
+      "explanation": "Pass single raise with minimum (12-14 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1478,7 +1478,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass partner's game/slam bid with {hcp} HCP",
+      "explanation": "Pass partner's game/slam bid (no extras)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1503,7 +1503,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass partner's raise with preempt values ({hcp} HCP)",
+      "explanation": "Pass partner's raise with preempt values (6-10 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1581,7 +1581,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Blackwood 4NT asking for aces with {hcp} HCP",
+      "explanation": "Blackwood 4NT asking for aces (slam interest with 19+ HCP)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -1666,7 +1666,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Balanced hand with {hcp} HCP after partner's negative double",
+      "explanation": "Balanced hand (15-17 HCP) after partner's negative double",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1707,7 +1707,7 @@
         ]
       },
       "forcing": "none",
-      "explanation": "Game with {hcp} HCP and good shape after partner's raise",
+      "explanation": "Game (16+ HCP with good shape) after partner's raise",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1737,7 +1737,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Game with {hcp} HCP - strong values opposite partner's raise (6-9)",
+      "explanation": "Game (17+ HCP) - strong values opposite partner's raise",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1768,7 +1768,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Invite with {hcp} HCP after partner's uncontested raise",
+      "explanation": "Invite (15-16 HCP) after partner's raise",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1815,7 +1815,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass with minimum {hcp} HCP after partner's raise",
+      "explanation": "Pass with minimum (12-14 HCP) after partner's raise",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1839,7 +1839,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Accept invitation with {hcp} HCP and good fit",
+      "explanation": "Accept invitation (15+ HCP with good fit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1860,7 +1860,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Decline invitation with minimum ({hcp} HCP)",
+      "explanation": "Decline invitation with minimum (12-14 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1886,7 +1886,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Game with {hcp} HCP and 6-card {my_suit}",
+      "explanation": "Game (19+ HCP, 6+ card major)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1913,7 +1913,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Invite game with {hcp} HCP and 6-card {my_suit}",
+      "explanation": "Invite game (16-18 HCP, 6+ card major)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1939,7 +1939,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Rebid 6-card {my_suit} with {hcp} HCP",
+      "explanation": "Rebid 6+ card major (12-15 HCP, minimum)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1963,7 +1963,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Show second suit with {hcp} HCP",
+      "explanation": "Show second suit (12-17 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1989,7 +1989,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Show clubs with {hcp} HCP",
+      "explanation": "Show clubs (12-15 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -2018,7 +2018,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Show diamonds with {hcp} HCP",
+      "explanation": "Show diamonds (12-15 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -2036,7 +2036,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Invite to 3NT with {hcp} HCP balanced",
+      "explanation": "Invite to 3NT (18-19 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -2054,7 +2054,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Game with {hcp} HCP balanced",
+      "explanation": "Game (20-21 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -2075,7 +2075,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass 1NT with minimum balanced ({hcp} HCP)",
+      "explanation": "Pass 1NT with minimum balanced (12-14 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -2091,7 +2091,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass partner's 3NT with {hcp} HCP",
+      "explanation": "Pass partner's 3NT (no slam interest)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -2126,7 +2126,7 @@
         "forcing_type": "non_forcing"
       },
       "forcing": "none",
-      "explanation": "Pass opener's minimum rebid with {hcp} HCP",
+      "explanation": "Pass opener's minimum rebid (6-9 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

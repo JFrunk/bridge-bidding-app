@@ -1,0 +1,153 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "simple_overcalls",
+  "description": "Simple suit overcalls - direct seat actions with 5+ card suits",
+  "rules": [
+    {
+      "id": "simple_overcall_1_spades",
+      "bid": "1♠",
+      "priority": 720,
+      "description": "1♠ simple overcall with 5+ spades (8-16 HCP)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "spades_length", "min": 5, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "1♠ overcall with appropriate HCP and 5+ spades",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "simple_overcall_1_hearts",
+      "bid": "1♥",
+      "priority": 715,
+      "description": "1♥ simple overcall with 5+ hearts (8-16 HCP)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "hearts_length", "min": 5, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "1♥ overcall with appropriate HCP and 5+ hearts",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "simple_overcall_1_diamonds",
+      "bid": "1♦",
+      "priority": 705,
+      "description": "1♦ simple overcall with 5+ diamonds (8-16 HCP)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "diamonds_length", "min": 5, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "1♦ overcall with appropriate HCP and 5+ diamonds",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "simple_overcall_1_clubs",
+      "bid": "1♣",
+      "priority": 700,
+      "description": "1♣ simple overcall with 5+ clubs (8-16 HCP)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "clubs_length", "min": 5, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "1♣ overcall with appropriate HCP and 5+ clubs",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "1nt_overcall_direct",
+      "bid": "1NT",
+      "priority": 800,
+      "description": "Direct 1NT overcall (15-18 HCP balanced with stopper)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 15, "max": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.12},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
+        {"feature": "stopper_in_opponent_suit", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "1NT overcall showing appropriate HCP balanced with stopper in opponent's suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "simple_overcall_2_level_clubs",
+      "bid": "2♣",
+      "priority": 685,
+      "description": "2♣ overcall with 5+ clubs (10-16 HCP)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "clubs_length", "min": 5, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "2♣ overcall with appropriate HCP and 5+ clubs",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "simple_overcall_2_level_diamonds",
+      "bid": "2♦",
+      "priority": 680,
+      "description": "2♦ overcall with 5+ diamonds (10-16 HCP)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "diamonds_length", "min": 5, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "2♦ overcall with appropriate HCP and 5+ diamonds",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "simple_overcall_2_level_hearts",
+      "bid": "2♥",
+      "priority": 690,
+      "description": "2♥ overcall with 5+ hearts (10-16 HCP)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "hearts_length", "min": 5, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "2♥ overcall with appropriate HCP and 5+ hearts",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "simple_overcall_2_level_spades",
+      "bid": "2♠",
+      "priority": 695,
+      "description": "2♠ overcall with 5+ spades (10-16 HCP)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "spades_length", "min": 5, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "2♠ overcall with appropriate HCP and 5+ spades",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "jump_shifts",
+  "description": "Jump shift rebids by opener - showing 19+ HCP, game forcing",
+  "rules": [
+    {
+      "id": "jump_shift_3c_after_1_level",
+      "bid": "3♣",
+      "priority": 900,
+      "description": "Jump shift to 3♣ showing 19+ HCP with 4+ clubs (game forcing)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "in": ["1♦", "1♥", "1♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "clubs_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "game",
+      "explanation": "Jump shift to 3♣ showing 17+ HCP with 4+ clubs - game forcing",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
+      "id": "jump_shift_3d_after_1c",
+      "bid": "3♦",
+      "priority": 900,
+      "description": "Jump shift to 3♦ showing 19+ HCP with 4+ diamonds (game forcing)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♣", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "diamonds_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "game",
+      "explanation": "Jump shift to 3♦ showing 17+ HCP with 4+ diamonds - game forcing",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
+      "id": "jump_shift_3d_after_1h",
+      "bid": "3♦",
+      "priority": 900,
+      "description": "Jump shift to 3♦ after 1♥ opening showing 19+ HCP (game forcing)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "diamonds_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "game",
+      "explanation": "Jump shift to 3♦ showing 17+ HCP with 4+ diamonds - game forcing",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
+      "id": "jump_shift_3d_after_1s",
+      "bid": "3♦",
+      "priority": 900,
+      "description": "Jump shift to 3♦ after 1♠ opening showing 19+ HCP (game forcing)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "diamonds_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "game",
+      "explanation": "Jump shift to 3♦ showing 17+ HCP with 4+ diamonds - game forcing",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
+      "id": "jump_shift_3h_after_minor",
+      "bid": "3♥",
+      "priority": 900,
+      "description": "Jump shift to 3♥ after minor opening showing 19+ HCP (game forcing)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "in": ["1♣", "1♦"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "game",
+      "explanation": "Jump shift to 3♥ showing 17+ HCP with 4+ hearts - game forcing",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
+      "id": "jump_shift_3h_after_1s",
+      "bid": "3♥",
+      "priority": 900,
+      "description": "Jump shift to 3♥ after 1♠ opening showing 19+ HCP (game forcing)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "game",
+      "explanation": "Jump shift to 3♥ showing 17+ HCP with 4+ hearts - game forcing",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
+      "id": "jump_shift_3s_after_minor",
+      "bid": "3♠",
+      "priority": 900,
+      "description": "Jump shift to 3♠ after minor opening showing 19+ HCP (game forcing)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "in": ["1♣", "1♦"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "game",
+      "explanation": "Jump shift to 3♠ showing 17+ HCP with 4+ spades - game forcing",
+      "sets_forcing_level": "GAME_FORCING"
+    },
+    {
+      "id": "jump_shift_3s_after_1h",
+      "bid": "3♠",
+      "priority": 900,
+      "description": "Jump shift to 3♠ after 1♥ opening showing 19+ HCP (game forcing)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "my_last_bid", "expected": "1♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "game",
+      "explanation": "Jump shift to 3♠ showing 17+ HCP with 4+ spades - game forcing",
+      "sets_forcing_level": "GAME_FORCING"
+    }
+  ]
+}

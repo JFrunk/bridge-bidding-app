@@ -40,7 +40,7 @@
         "hcp": {"max": 10}
       },
       "forcing": "none",
-      "explanation": "Pass: Insufficient values to open ({hcp} HCP)",
+      "explanation": "Pass: Insufficient values to open (minimum HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -56,7 +56,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Pass: Insufficient values to respond ({hcp} HCP, need 6+)",
+      "explanation": "Pass: Insufficient values to respond (minimum HCP, need 6+)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -69,7 +69,7 @@
         "hcp": {"max": 8}
       },
       "forcing": "none",
-      "explanation": "Pass: Insufficient values for competitive action ({hcp} HCP)",
+      "explanation": "Pass: Insufficient values for competitive action (minimum HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
