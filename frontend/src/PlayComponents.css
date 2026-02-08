@@ -1000,11 +1000,21 @@
   border: 0.5px solid rgba(0,0,0,0.2);
 }
 
+/* HOTFIX 6: Single card back icon for minimal opponent display */
+.card-back-single {
+  width: 28px;
+  height: 38px;
+  background: linear-gradient(135deg, #b71c1c 0%, #8b1515 50%, #b71c1c 100%);
+  border-radius: 3px;
+  opacity: 0.7;
+  border: 1px solid rgba(0,0,0,0.3);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
 .opp-count {
-  font-size: 10px;
-  color: var(--text-on-green-muted, #a8c4b0);
-  font-weight: 600;
-  text-transform: lowercase;
+  font-size: 13px;
+  color: var(--text-on-green, #e8f5ed);
+  font-weight: 700;
 }
 
 /* ========================================
