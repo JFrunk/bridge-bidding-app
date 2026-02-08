@@ -408,12 +408,12 @@
 /* East - right edge, vertically centered */
 .position-east {
   position: absolute;
-  right: 10px;  /* Closer to edge for clear table positioning */
+  right: 5px;  /* Push closer to edge to avoid overlap with central trick area */
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;  /* Align contents to right edge */
   z-index: 3;
 }
 
@@ -432,13 +432,19 @@
 /* West - left edge, vertically centered */
 .position-west {
   position: absolute;
-  left: 10px;  /* Closer to edge for clear table positioning */
+  left: 5px;  /* Push closer to edge to avoid overlap with central trick area */
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;  /* Align contents to left edge */
   z-index: 3;
+}
+
+/* E/W positions need margin to avoid overlapping central trick area */
+.position-east .position-label,
+.position-west .position-label {
+  margin-bottom: 4px;  /* Space between label and cards/trick area */
 }
 
 /* Position Labels - Compact per mockup */
@@ -702,14 +708,14 @@
 
 .trick-card-west,
 .trick-card.west {
-  left: 8px;
+  left: 16px;  /* Moved inward to avoid overlap with West position label */
   top: 50%;
   transform: translateY(-50%);
 }
 
 .trick-card-east,
 .trick-card.east {
-  right: 8px;
+  right: 16px;  /* Moved inward to avoid overlap with East position label */
   top: 50%;
   transform: translateY(-50%);
 }
@@ -876,6 +882,37 @@
   display: flex;
   justify-content: center;
   margin-top: 4px;
+  max-width: 100%;  /* Prevent overflow */
+}
+
+/* South's hand needs tighter overlap with 13 cards to fit viewport */
+.position-south .user-play-hand .suit-group .playable-card {
+  margin-left: -32px;  /* Aggressive overlap to fit 13 cards - only 16px visible per card */
+}
+
+.position-south .user-play-hand .suit-group .playable-card:first-child {
+  margin-left: 0;
+}
+
+/* Gap between suits on South hand - first card of each suit after the first needs NO extra overlap */
+.position-south .user-play-hand .suit-group:not(:first-child) {
+  margin-left: 6px;  /* Small gap between suits */
+}
+
+/* South hand responsive - less aggressive overlap on smaller screens for better touch targets */
+@media (max-width: 768px) {
+  .position-south .user-play-hand .suit-group .playable-card {
+    margin-left: -24px;  /* 24px visible - better for touch (card is 42px on tablet) */
+  }
+}
+
+@media (max-width: 480px) {
+  .position-south .user-play-hand .suit-group .playable-card {
+    margin-left: -22px;  /* 18px visible - reasonable for 40px mobile cards */
+  }
+  .position-south .user-play-hand .suit-group:not(:first-child) {
+    margin-left: 4px;  /* Tighter suit gap on mobile */
+  }
 }
 
 /* Dummy Hand - same as user hand (no container styling) */
@@ -1874,19 +1911,23 @@
 }
 
 /* ========================================
-   PLAY TURN INDICATOR - centered below table per mockup
+   PLAY TURN INDICATOR - positioned INSIDE play-area to ensure visibility
    ======================================== */
 
 .play-turn-indicator {
+  position: absolute;
+  bottom: 95px;  /* Above South's hand (cards at bottom: 12px + ~66px height + margin) */
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.5);  /* Slightly darker for better contrast on green felt */
   border-radius: 20px;
-  margin: 8px auto;
   width: fit-content;
+  z-index: 10;  /* Above cards and trick area */
 }
 
 .play-turn-indicator .turn-dot {
@@ -1952,5 +1993,36 @@
   .last-trick-button {
     font-size: 0.75rem;
     padding: var(--space-1) var(--space-2);
+  }
+}
+
+/* Turn indicator responsive - adjust for smaller play-area heights */
+@media (max-width: 768px) {
+  .play-turn-indicator {
+    bottom: 75px;  /* Adjust for 360px play-area height */
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .play-turn-indicator {
+    bottom: 65px;  /* Adjust for 320px play-area height */
+    padding: 5px 10px;
+  }
+
+  .play-turn-indicator .turn-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .play-turn-indicator .turn-text {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  .play-turn-indicator {
+    bottom: 55px;  /* Adjust for 280px play-area height */
   }
 }

@@ -32,7 +32,7 @@ export function CurrentTrickDisplay({ trick, trickWinner, trickComplete, nextToP
     cardsByPosition[position] = card;
   });
 
-  // Card component for trick display - compact top-left corner only
+  // Card component for trick display - compact per UI Redesign Spec
   const TrickCard = ({ card, position, isWinner }) => {
     if (!card) return null;
 
@@ -41,86 +41,77 @@ export function CurrentTrickDisplay({ trick, trickWinner, trickComplete, nextToP
     return (
       <div
         className={cn(
-          "trick-card relative bg-white rounded-card shadow-md pointer-events-auto",
-          "transition-all duration-500",
-          // Bold border (ring) for winner
-          isWinner ? "ring-4 ring-white shadow-2xl border-0" : "border border-gray-400",
-          // Slight scale up for winner
-          isWinner && "scale-105"
+          "trick-card pointer-events-auto",
+          "transition-all duration-300",
+          // Gold border for winner per spec
+          isWinner && "winner"
         )}
       >
-        {/* Top-left corner only - matches PlayableCard/BridgeCard style */}
-        <div className={cn("absolute top-1 left-1.5 leading-none flex flex-col items-center", suitColor(card.suit))}>
-          <span className="text-lg font-bold">{displayRank}</span>
-          <span className="text-base">{card.suit}</span>
-        </div>
+        {/* Centered rank and suit */}
+        <span className={cn("rank", suitColor(card.suit))}>{displayRank}</span>
+        <span className={cn("suit", suitColor(card.suit))}>{card.suit}</span>
       </div>
     );
   };
 
   return (
-    <div className="relative flex items-center justify-center w-full h-full min-h-[350px] pointer-events-none">
+    <div className="current-trick">
       {displayTrick.length === 0 ? (
-        // Show who should play next
-        <div className="flex items-center justify-center p-12 rounded-lg border-2 border-dashed border-gray-600 bg-bg-secondary pointer-events-auto">
-          <p className="text-base text-gray-400">
-            {nextToPlay ? `${nextPlayerName} to lead...` : 'Waiting for cards...'}
-          </p>
+        // Show who should play next - uses empty state styling
+        <div className="trick-label">
+          {nextToPlay ? `${nextPlayerName} to lead...` : 'Waiting...'}
         </div>
       ) : (
-        // Compass layout: North (top), East (right), South (bottom), West (left)
-        <div className="relative w-full h-full flex items-center justify-center">
-          {/* North card - Top center */}
-          {cardsByPosition.N && (
-            <div className="absolute top-0 left-1/2 -translate-x-1/2">
+        // Compass layout using CSS grid areas
+        <>
+          {/* North card */}
+          <div className="trick-card-north">
+            {cardsByPosition.N && (
               <TrickCard
                 card={cardsByPosition.N}
                 position="N"
                 isWinner={trickComplete && trickWinner === 'N'}
               />
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* East card - Right center */}
-          {cardsByPosition.E && (
-            <div className="absolute right-0 top-1/2 -translate-y-1/2">
-              <TrickCard
-                card={cardsByPosition.E}
-                position="E"
-                isWinner={trickComplete && trickWinner === 'E'}
-              />
-            </div>
-          )}
-
-          {/* South card - Bottom center */}
-          {cardsByPosition.S && (
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
-              <TrickCard
-                card={cardsByPosition.S}
-                position="S"
-                isWinner={trickComplete && trickWinner === 'S'}
-              />
-            </div>
-          )}
-
-          {/* West card - Left center */}
-          {cardsByPosition.W && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2">
+          {/* West card */}
+          <div className="trick-card-west">
+            {cardsByPosition.W && (
               <TrickCard
                 card={cardsByPosition.W}
                 position="W"
                 isWinner={trickComplete && trickWinner === 'W'}
               />
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Center "Waiting" text (only visible when cards < 4) */}
-          {displayTrick.length < 4 && displayTrick.length > 0 && (
-            <div className="text-gray-500 text-sm">
-              {nextToPlay ? `${nextPlayerName} to play...` : 'Waiting for cards...'}
-            </div>
-          )}
-        </div>
+          {/* Center label REMOVED per CC_CORRECTIONS Fix #6
+              The "{position}..." text was a rendering artifact.
+              Turn indicator below the table already shows whose turn it is. */}
+
+          {/* East card */}
+          <div className="trick-card-east">
+            {cardsByPosition.E && (
+              <TrickCard
+                card={cardsByPosition.E}
+                position="E"
+                isWinner={trickComplete && trickWinner === 'E'}
+              />
+            )}
+          </div>
+
+          {/* South card */}
+          <div className="trick-card-south">
+            {cardsByPosition.S && (
+              <TrickCard
+                card={cardsByPosition.S}
+                position="S"
+                isWinner={trickComplete && trickWinner === 'S'}
+              />
+            )}
+          </div>
+        </>
       )}
     </div>
   );

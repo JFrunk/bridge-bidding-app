@@ -15,12 +15,39 @@
  *       }
  *   - vulnerability: String indicating vulnerability ('None', 'NS', 'EW', 'Both')
  *   - compact: Whether to show compact view (default: false)
+ *   - strip: Whether to show as single-line strip (default: false) - for BID screen redesign
  */
 import React from 'react';
 import './HandAnalysis.css';
 
-function HandAnalysis({ points, vulnerability, compact = false }) {
+function HandAnalysis({ points, vulnerability, compact = false, strip = false }) {
   if (!points) return null;
+
+  // Strip mode: Single horizontal line for BID screen redesign
+  // Format: "12 total pts | ♠ 0(1) ♥ 0(3) ♦ 3(6) ♣ 7(3) | HCP: 10 + Dist: 2"
+  if (strip) {
+    return (
+      <div className="hand-analysis-strip">
+        <span className="strip-total">
+          <strong>{points.total_points}</strong> total pts
+        </span>
+        <span className="strip-divider">|</span>
+        <span className="strip-suits">
+          <span className="suit-black">♠</span> {points.suit_hcp['♠']}({points.suit_lengths['♠']})
+          {' '}
+          <span className="suit-red">♥</span> {points.suit_hcp['♥']}({points.suit_lengths['♥']})
+          {' '}
+          <span className="suit-red">♦</span> {points.suit_hcp['♦']}({points.suit_lengths['♦']})
+          {' '}
+          <span className="suit-black">♣</span> {points.suit_hcp['♣']}({points.suit_lengths['♣']})
+        </span>
+        <span className="strip-divider">|</span>
+        <span className="strip-breakdown">
+          HCP: {points.hcp} + Dist: {points.dist_points}
+        </span>
+      </div>
+    );
+  }
 
   if (compact) {
     return (

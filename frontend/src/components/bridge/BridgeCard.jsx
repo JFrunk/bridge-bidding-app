@@ -5,19 +5,23 @@ import { cn } from "../../lib/utils";
  * BridgeCard Component
  *
  * Displays a playing card with rank and suit in standard bridge card styling.
- * Uses Tailwind CSS for styling following the Rule of Three design system.
+ * Content is positioned in the LEFT visible strip to remain visible when cards overlap.
+ *
+ * Per CC_CORRECTIONS:
+ * - Card width: 48px, overlap: -16px, visible strip: 32px
+ * - Content positioned in left 32px strip (or full width for last card)
  *
  * @param {Object} props
  * @param {string} props.rank - Card rank: 'A', 'K', 'Q', 'J', 'T' (10), '9', etc.
  * @param {string} props.suit - Card suit: '♠', '♥', '♦', '♣'
  * @param {function} props.onClick - Optional click handler
  * @param {boolean} props.disabled - If true, card is not clickable
- * @param {boolean} props.compact - If true, shows rank and suit side-by-side (for vertical overlapping displays)
- * @param {string} props.className - Additional Tailwind classes
+ * @param {string} props.className - Additional classes
  */
-export function BridgeCard({ rank, suit, onClick, disabled = false, compact = false, className }) {
-  // Determine suit color (red for hearts/diamonds, black for spades/clubs)
-  const suitColor = suit === '♥' || suit === '♦' ? 'text-suit-red' : 'text-suit-black';
+export function BridgeCard({ rank, suit, onClick, disabled = false, className }) {
+  // Determine suit color
+  const isRed = suit === '♥' || suit === '♦';
+  const colorClass = isRed ? 'red' : 'black';
 
   // Map 'T' to '10' for display
   const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
@@ -28,17 +32,7 @@ export function BridgeCard({ rank, suit, onClick, disabled = false, compact = fa
 
   return (
     <div
-      className={cn(
-        // Base styles - card class provides dimensions and responsive sizing
-        "card relative bg-white border border-gray-400 rounded-card shadow-md",
-        // Hover effect (only if clickable)
-        "transition-transform duration-200",
-        isClickable && "cursor-pointer hover:-translate-y-4 hover:z-50",
-        // Disabled state
-        disabled && "cursor-not-allowed",
-        // Allow custom classes
-        className
-      )}
+      className={cn("card", colorClass, isClickable && "clickable", className)}
       onClick={!disabled ? onClick : undefined}
       role={isClickable ? "button" : undefined}
       aria-label={`${displayRank} of ${suit === '♠' ? 'Spades' : suit === '♥' ? 'Hearts' : suit === '♦' ? 'Diamonds' : 'Clubs'}`}
@@ -50,17 +44,11 @@ export function BridgeCard({ rank, suit, onClick, disabled = false, compact = fa
         }
       } : undefined}
     >
-      {/* Top-left corner - compact mode shows rank+suit horizontally */}
-      <div className={cn(
-        "absolute top-1 left-1.5 leading-none",
-        compact ? "flex flex-row items-center gap-0.5" : "flex flex-col items-center",
-        suitColor
-      )}>
-        <span className={cn("font-bold", compact ? "text-xl" : "text-lg")}>{displayRank}</span>
-        <span className={cn(compact ? "text-xl" : "text-base")}>{suit}</span>
+      {/* Content positioned in left visible strip */}
+      <div className="card-content">
+        <span className="rank">{displayRank}</span>
+        <span className="suit-symbol">{suit}</span>
       </div>
-
-      {/* Center and bottom-right removed for compact mobile-friendly display */}
     </div>
   );
 }

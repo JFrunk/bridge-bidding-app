@@ -1,93 +1,92 @@
 import * as React from "react";
-import { cn } from "../../lib/utils";
+import { useState } from "react";
 
 /**
- * ContractHeader - Consolidated header showing contract, tricks progress, and bidding summary
- * NEW LAYOUT: Contract on left, 13-block trick progress below it, bidding table on right
- * Follows "Rule of Three" and senior-friendly UX principles
- * Shows score when hand is complete (totalTricksPlayed === 13)
+ * ContractHeader - Compact contract bar per UI Redesign play-mockup-v2.html
+ *
+ * Layout: Dark charcoal bar with:
+ * - Left: Contract badge (e.g., "4♠ by South") + meta info (vulnerability, doubled)
+ * - Center: 13-cell trick counter bar (green from left for declarer, red from right for defense)
+ * - Right: Trump indicator + trick number + "📋 Bid History" popup button
  *
  * CRITICAL SCORING PERSPECTIVE LOGIC:
  * - Backend returns scores from DECLARER's perspective (positive = made, negative = went down)
  * - User always plays South (NS team)
- * - MUST convert to user's NS perspective for display:
- *   * If NS declares and makes: show positive (correct)
- *   * If NS declares and goes down: show negative (correct)
- *   * If EW declares and makes: show NEGATIVE (we lost, so flip sign)
- *   * If EW declares and goes down: show POSITIVE (we set them, so flip sign)
- * - This logic MUST match ScoreModal.jsx to prevent regression bugs
+ * - MUST convert to user's NS perspective for display
  */
-export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData }) {
+export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData, vulnerability }) {
+  const [showBidHistory, setShowBidHistory] = useState(false);
+
   if (!contract) return null;
 
   const { level, strain, declarer, doubled } = contract;
   const doubledText = doubled === 2 ? 'XX' : doubled === 1 ? 'X' : '';
   const displayStrain = strain === 'N' ? 'NT' : strain;
 
+  // Suit symbol for trump display
+  const strainSymbol = {
+    'C': '♣', 'D': '♦', 'H': '♥', 'S': '♠', 'N': 'NT'
+  }[strain] || strain;
+
+  const strainClass = {
+    'C': 'suit-club', 'D': 'suit-diamond', 'H': 'suit-heart', 'S': 'suit-spade', 'N': ''
+  }[strain] || '';
+
   // Map declarer to full name
   const declarerName = {
-    'N': 'North',
-    'E': 'East',
-    'S': 'South',
-    'W': 'West'
+    'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'
   }[declarer] || declarer;
-
-  // Calculate score from user's (NS) perspective
-  // User always plays South, so user's team is North-South (NS)
-  const declarerIsNS = declarer === 'N' || declarer === 'S';
-  // Backend score is from declarer's perspective
-  // Convert to NS perspective: if declarer is EW, flip the sign
-  const userScore = scoreData ? (declarerIsNS ? scoreData.score : -scoreData.score) : null;
 
   // Calculate tricks for 13-block progress bar
   const tricksNeeded = level + 6;
   const declarerSide = (declarer === 'N' || declarer === 'S') ? 'NS' : 'EW';
-
-  // CRITICAL: Simplified trick display logic
-  // Rule 1: Declarer fills LEFT → RIGHT
-  // Rule 2: Defender fills RIGHT → LEFT
-  // Rule 3: Player's tricks = GREEN (player is always NS/South)
-  // Rule 4: Opponent's tricks = RED
-  const playerIsNS = true; // Player always plays South (NS team)
   const playerIsDeclarer = declarerSide === 'NS';
 
   const tricksWonByPlayer = (tricksWon.N || 0) + (tricksWon.S || 0);
   const tricksWonByOpponents = (tricksWon.E || 0) + (tricksWon.W || 0);
   const totalTricksPlayed = Object.values(tricksWon).reduce((sum, tricks) => sum + tricks, 0);
-  const tricksRemaining = 13 - totalTricksPlayed;
 
-  // Create 13 blocks array with simplified logic
-  const blocks = Array.from({ length: 13 }, (_, i) => {
+  // Calculate score from user's (NS) perspective
+  const declarerIsNS = declarer === 'N' || declarer === 'S';
+  const userScore = scoreData ? (declarerIsNS ? scoreData.score : -scoreData.score) : null;
+
+  // Create 13 cells for trick bar
+  // Declarer tricks fill from LEFT (green if player, red if opponent)
+  // Defense tricks fill from RIGHT
+  const cells = Array.from({ length: 13 }, (_, i) => {
+    const cellNum = i + 1;
+    let cellClass = '';
+
     if (playerIsDeclarer) {
-      // Player is declarer: Player tricks LEFT→RIGHT (green), Opponent tricks RIGHT→LEFT (red)
+      // Player is declarer: green from left, red from right
       if (i < tricksWonByPlayer) {
-        return { state: 'won', color: 'green' }; // Player trick (declarer)
+        cellClass = 'won-you';
       } else if (i >= 13 - tricksWonByOpponents) {
-        return { state: 'lost', color: 'red' }; // Opponent trick (defender)
-      } else {
-        return { state: 'remaining', color: 'gray' };
+        cellClass = 'won-opp';
       }
     } else {
-      // Opponent is declarer: Opponent tricks LEFT→RIGHT (red), Player tricks RIGHT→LEFT (green)
+      // Opponent is declarer: red from left, green from right
       if (i < tricksWonByOpponents) {
-        return { state: 'lost', color: 'red' }; // Opponent trick (declarer)
+        cellClass = 'won-opp';
       } else if (i >= 13 - tricksWonByPlayer) {
-        return { state: 'won', color: 'green' }; // Player trick (defender)
-      } else {
-        return { state: 'remaining', color: 'gray' };
+        cellClass = 'won-you';
       }
     }
+
+    // Mark target cell (contract level)
+    if (cellNum === tricksNeeded) {
+      cellClass += ' target';
+    }
+
+    return { cellNum, cellClass };
   });
 
-  // Group auction into rounds (4 bids per round: N, E, S, W)
-  // CRITICAL: Account for dealer position - bids don't always start with North
+  // Build bidding history rounds
   const positions = ['N', 'E', 'S', 'W'];
   const dealerMap = { 'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W', 'N': 'N', 'E': 'E', 'S': 'S', 'W': 'W' };
   const dealerPos = dealerMap[dealer] || 'N';
   const dealerIndex = positions.indexOf(dealerPos);
 
-  // Build a 2D grid where each row has exactly 4 columns (N, E, S, W)
-  // Bids are placed starting from the dealer's column
   const rounds = [];
   if (auction && auction.length > 0) {
     let currentRow = [null, null, null, null];
@@ -97,151 +96,117 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
       currentRow[colIndex] = auction[i];
       colIndex = (colIndex + 1) % 4;
 
-      // When we wrap back to dealer's column, push the row and start a new one
       if (colIndex === dealerIndex && i < auction.length - 1) {
         rounds.push(currentRow);
         currentRow = [null, null, null, null];
       }
     }
 
-    // Push the final (possibly incomplete) row
     if (currentRow.some(cell => cell !== null)) {
       rounds.push(currentRow);
     }
   }
 
   return (
-    <div className="flex flex-row gap-6 p-4 bg-bg-secondary rounded-lg">
-      {/* LEFT SECTION: Contract + 13-Block Progress Bar */}
-      <div className="flex flex-col gap-4">
-        {/* Contract Display */}
-        <div className="flex flex-col gap-2">
-          <div className="text-3xl font-bold text-white">
-            {level}{displayStrain}{doubledText} by {declarerName}
+    <>
+      <div className="contract-bar">
+        {/* Left: Contract + Meta */}
+        <div className="contract-bar-left">
+          <div className="contract-badge">
+            <span className="contract-level">{level}</span>
+            <span className={`contract-strain ${strainClass}`}>{displayStrain}</span>
+            {doubledText && <span className="contract-doubled">{doubledText}</span>}
           </div>
-          {/* Score Display - Only shown when hand is complete */}
+          <div className="contract-meta">
+            <span className="contract-declarer">by {declarerName}</span>
+            {vulnerability && (
+              <span className="contract-vuln">Vuln: {vulnerability}</span>
+            )}
+          </div>
+          {/* Score when complete */}
           {scoreData && totalTricksPlayed === 13 && (
-            <div className={cn(
-              "flex items-center gap-3 px-4 py-2 rounded-md border-2 w-fit",
-              userScore >= 0 ? "bg-green-900/30 border-success" : "bg-red-900/30 border-danger"
-            )}>
-              <span className="text-lg font-medium text-gray-300">Your Score:</span>
-              <span className={cn(
-                "text-2xl font-bold",
-                userScore >= 0 ? "text-success" : "text-danger"
-              )}>
-                {userScore >= 0 ? '+' : ''}{userScore}
-              </span>
-              <span className={cn(
-                "text-base font-medium",
-                scoreData.made ? "text-success" : "text-danger"
-              )}>
-                ({scoreData.result})
-              </span>
+            <div className={`contract-score ${userScore >= 0 ? 'positive' : 'negative'}`}>
+              {userScore >= 0 ? '+' : ''}{userScore}
             </div>
           )}
         </div>
 
-        {/* 13-Block Tricks Progress Bar */}
-        <div className="flex flex-col gap-1 min-w-[500px]">
-          {/* Goal indicator above bar */}
-          <div className="flex flex-row h-6 relative">
-            {blocks.map((state, index) => (
+        {/* Center: Trick Counter Bar */}
+        <div className="trick-score">
+          <div className="trick-bar">
+            {cells.map(({ cellNum, cellClass }) => (
               <div
-                key={index}
-                className="flex-1 flex items-start justify-center"
-              >
-                {index === tricksNeeded - 1 && (
-                  <div className="text-xl font-bold text-white">↓ {tricksNeeded}</div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* 13 Blocks with vertical dividers */}
-          <div className="flex flex-row h-12 border-2 border-gray-600 rounded-md overflow-hidden">
-            {blocks.map((block, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "flex-1 flex items-center justify-center transition-colors duration-300",
-                  "border-r border-gray-600 last:border-r-0",
-                  // Bold border at trick needed line
-                  index === tricksNeeded - 1 && "border-r-4 border-r-white",
-                  // Colors based on simplified rules
-                  block.state === 'won' && "bg-success",
-                  block.state === 'remaining' && "bg-bg-tertiary",
-                  block.state === 'lost' && "bg-danger"
-                )}
-                aria-label={`Trick ${index + 1}: ${block.state}`}
+                key={cellNum}
+                className={`trick-cell ${cellClass}`}
+                aria-label={`Trick ${cellNum}`}
               />
             ))}
           </div>
-
-          {/* Labels with counts - positioned closer to bar */}
-          <div className="flex flex-row justify-between text-sm text-gray-300 mt-1">
-            {playerIsDeclarer ? (
-              <>
-                <div className="flex flex-row items-center gap-2">
-                  <span className="font-bold text-success">You (Declarer)</span>
-                  <span className="text-base text-white">{tricksWonByPlayer}</span>
-                </div>
-                <div className="flex flex-row items-center gap-2">
-                  <span className="font-bold">Remaining</span>
-                  <span className="text-base text-white">{tricksRemaining}</span>
-                </div>
-                <div className="flex flex-row items-center gap-2">
-                  <span className="font-bold text-danger">Opponents (Defense)</span>
-                  <span className="text-base text-white">{tricksWonByOpponents}</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex flex-row items-center gap-2">
-                  <span className="font-bold text-danger">Opponents (Declarer)</span>
-                  <span className="text-base text-white">{tricksWonByOpponents}</span>
-                </div>
-                <div className="flex flex-row items-center gap-2">
-                  <span className="font-bold">Remaining</span>
-                  <span className="text-base text-white">{tricksRemaining}</span>
-                </div>
-                <div className="flex flex-row items-center gap-2">
-                  <span className="font-bold text-success">You (Defense)</span>
-                  <span className="text-base text-white">{tricksWonByPlayer}</span>
-                </div>
-              </>
-            )}
+          <div className="trick-labels">
+            <span className="trick-count you">{playerIsDeclarer ? tricksWonByPlayer : tricksWonByOpponents}</span>
+            <span className="trick-target">Need {tricksNeeded}</span>
+            <span className="trick-count opp">{playerIsDeclarer ? tricksWonByOpponents : tricksWonByPlayer}</span>
           </div>
         </div>
-      </div>
 
-      {/* RIGHT SECTION: Bidding Table */}
-      <div className="flex flex-col flex-1 min-w-[200px] max-w-[300px]">
-        <div className="text-base font-bold text-gray-300 mb-2">Bidding</div>
-        <div className="flex-1 overflow-y-auto max-h-32">
-          <table className="w-full text-base border-collapse">
-            <thead>
-              <tr className="text-gray-400 border-b border-gray-600">
-                <th className="text-left px-2 py-1 border-r border-gray-600">N{dealerPos === 'N' ? ' 🔵' : ''}</th>
-                <th className="text-left px-2 py-1 border-r border-gray-600">E{dealerPos === 'E' ? ' 🔵' : ''}</th>
-                <th className="text-left px-2 py-1 border-r border-gray-600">S{dealerPos === 'S' ? ' 🔵' : ''}</th>
-                <th className="text-left px-2 py-1">W{dealerPos === 'W' ? ' 🔵' : ''}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rounds.map((round, roundIndex) => (
-                <tr key={roundIndex} className="text-white border-b border-gray-700">
-                  {[0, 1, 2, 3].map(col => (
-                    <td key={col} className={cn("px-2 py-1", col < 3 && "border-r border-gray-700")}>
-                      {round[col]?.bid || '-'}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Right: Trump + Trick # + Bid History Button */}
+        <div className="contract-bar-right">
+          <div className="trump-indicator">
+            <span className="trump-label">Trump:</span>
+            <span className={`trump-suit ${strainClass}`}>{strainSymbol}</span>
+          </div>
+          <div className="trick-number">
+            Trick {totalTricksPlayed + 1}/13
+          </div>
+          <button
+            className="bid-history-btn"
+            onClick={() => setShowBidHistory(true)}
+            aria-label="Show bid history"
+          >
+            📋 Bids
+          </button>
         </div>
       </div>
-    </div>
+
+      {/* Bid History Popup/Overlay */}
+      {showBidHistory && (
+        <div className="bid-history-overlay" onClick={() => setShowBidHistory(false)}>
+          <div className="bid-history-popup" onClick={e => e.stopPropagation()}>
+            <div className="bid-history-header">
+              <h3>Bidding History</h3>
+              <button
+                className="bid-history-close"
+                onClick={() => setShowBidHistory(false)}
+                aria-label="Close bid history"
+              >
+                ×
+              </button>
+            </div>
+            <table className="bid-history-table">
+              <thead>
+                <tr>
+                  <th>N{dealerPos === 'N' ? ' (D)' : ''}</th>
+                  <th>E{dealerPos === 'E' ? ' (D)' : ''}</th>
+                  <th>S{dealerPos === 'S' ? ' (D)' : ''}</th>
+                  <th>W{dealerPos === 'W' ? ' (D)' : ''}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rounds.map((round, roundIndex) => (
+                  <tr key={roundIndex}>
+                    {[0, 1, 2, 3].map(col => (
+                      <td key={col}>{round[col]?.bid || '-'}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="bid-history-contract">
+              Final Contract: {level}{displayStrain}{doubledText} by {declarerName}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,0 +1,225 @@
+/* ========================================
+   COACH PANEL - Right sidebar per bid-mockup-v2.html
+   Only visible in Coached mode
+   ======================================== */
+
+.coach-column {
+  width: 300px;
+  background: var(--cream-light, #faf8f4);
+  border-left: 1px solid var(--border-subtle, rgba(0,0,0,0.08));
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+.coach-column.hidden {
+  display: none;
+}
+
+/* Header */
+.coach-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle, rgba(0,0,0,0.08));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.coach-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coach-icon {
+  font-size: 16px;
+}
+
+.coach-close {
+  font-size: 18px;
+  color: var(--text-secondary, #666);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.coach-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-primary, #1a1a1a);
+}
+
+/* Body */
+.coach-body {
+  padding: 12px 14px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Sections */
+.coach-section {
+  margin-bottom: 12px;
+}
+
+.coach-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 10px;
+  background: rgba(0, 0, 0, 0.04);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 2px;
+  transition: background 0.15s;
+}
+
+.coach-section-header:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.coach-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.section-icon {
+  font-size: 12px;
+}
+
+.coach-toggle {
+  font-size: 11px;
+  color: var(--text-secondary, #666);
+}
+
+.coach-section-body {
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary, #666);
+}
+
+/* Partner Range Grid */
+.partner-range {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 10px;
+  font-size: 13px;
+}
+
+.partner-range .label {
+  color: var(--text-secondary, #666);
+  font-weight: 500;
+}
+
+.partner-range .value {
+  color: var(--text-primary, #1a1a1a);
+  font-weight: 600;
+}
+
+/* Opponent Info */
+.opponent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.opponent-row {
+  display: flex;
+  gap: 8px;
+}
+
+.opp-label {
+  color: var(--text-secondary, #666);
+  font-weight: 500;
+  min-width: 40px;
+}
+
+.opp-value {
+  color: var(--text-primary, #1a1a1a);
+}
+
+/* Explanation Text */
+.explanation-text {
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* No Info Message */
+.no-info {
+  margin: 0;
+  font-style: italic;
+  color: var(--text-secondary, #888);
+  font-size: 12px;
+}
+
+/* Hint Button */
+.hint-btn {
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(135deg, var(--gold, #c8a44e) 0%, #b8943e 100%);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s;
+  margin-top: 10px;
+}
+
+.hint-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(200, 164, 78, 0.35);
+}
+
+.hint-btn:active {
+  transform: translateY(0);
+}
+
+.hint-icon {
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .coach-column {
+    width: 260px;
+  }
+}
+
+@media (max-width: 768px) {
+  .coach-column {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 300px;
+    z-index: 100;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+  }
+
+  .coach-column.hidden {
+    transform: translateX(100%);
+    display: flex; /* Keep in DOM but slide off */
+  }
+}

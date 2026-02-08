@@ -461,27 +461,27 @@ export function PlayTable({
             </div>
           )}
         </div>
-      </div>
 
-      {/* Turn Indicator - centered below table per mockup */}
-      {!isHandComplete && (
-        <div className="play-turn-indicator">
-          <span className="turn-dot" />
-          {trick_complete ? (
-            <span className="turn-text">
-              {(trick_winner === 'N' || trick_winner === 'S') ? 'You win' : (trick_winner === 'E' ? 'East' : 'West') + ' wins'} — click to collect trick
-            </span>
-          ) : (isUserTurn || (userIsDeclarer && isDummyTurn)) ? (
-            <span className="turn-text">
-              Your turn — {dummyPosition && next_to_play === dummyPosition ? 'play from dummy' : 'click a card to play'}
-            </span>
-          ) : (
-            <span className="turn-text">
-              Waiting for {next_to_play === 'N' ? 'North' : next_to_play === 'E' ? 'East' : next_to_play === 'S' ? 'South' : 'West'}...
-            </span>
-          )}
-        </div>
-      )}
+        {/* Turn Indicator - positioned INSIDE play-area for visibility */}
+        {!isHandComplete && (
+          <div className="play-turn-indicator">
+            <span className="turn-dot" />
+            {trick_complete ? (
+              <span className="turn-text">
+                {(trick_winner === 'N' || trick_winner === 'S') ? 'You win' : (trick_winner === 'E' ? 'East' : 'West') + ' wins'} — click to collect trick
+              </span>
+            ) : (isUserTurn || (userIsDeclarer && isDummyTurn)) ? (
+              <span className="turn-text">
+                Your turn — {dummyPosition && next_to_play === dummyPosition ? 'play from dummy' : 'click a card to play'}
+              </span>
+            ) : (
+              <span className="turn-text">
+                Waiting for {next_to_play === 'N' ? 'North' : next_to_play === 'E' ? 'East' : next_to_play === 'S' ? 'South' : 'West'}...
+              </span>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Bottom Action Bar - slim row per mockup */}
       <div className="action-bar">

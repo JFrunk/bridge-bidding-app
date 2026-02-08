@@ -2,100 +2,145 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Google Fonts - DM Sans (body) and DM Serif Display (brand/titles) */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display&display=swap');
+
 /* ========================================
    CENTRALIZED DESIGN SYSTEM TOKENS
-   All CSS variables defined here for consistency
+   UI Redesign v2 - Unified color palette
    ======================================== */
 
 :root {
   /* ===================
-     COLOR PALETTE
+     CORE COLOR PALETTE
+     Single source of truth for all colors
      =================== */
 
-  /* Primary Brand Colors (Bridge Green Theme) */
-  --color-primary: #2d5a3d;
-  --color-primary-light: #3d6b52;
-  --color-primary-lighter: #4a7c5f;
-  --color-primary-dark: #1e3d29;
+  /* Table Green - THE primary surface color */
+  --table-green: #1a6b3c;
+  --table-green-dark: #145530;
+  --table-green-light: #1f7d46;
+
+  /* Header */
+  --header-green: #14432a;
+
+  /* Cream - Page & panel backgrounds */
+  --cream: #f5f0e8;
+  --cream-light: #faf8f4;
+  --cream-dark: #e8e3db;
+
+  /* Gold - Accents, highlights, turn indicators */
+  --gold: #c8a44e;
+  --gold-light: #e8d49a;
+  --gold-dark: #a68a3a;
+
+  /* Charcoal - Dark panels */
+  --charcoal: #2a2a2a;
+  --charcoal-light: #3a3a3a;
+
+  /* Card Suit Colors */
+  --card-red: #c41e3a;
+  --card-black: #1a1a1a;
+
+  /* Bidding Box Suit Colors (high contrast on cream) */
+  --bid-suit-club: #1a6b3c;
+  --bid-suit-diamond: #d4540a;
+  --bid-suit-heart: #c41e3a;
+  --bid-suit-spade: #1a1a1a;
+
+  /* Bidding Box Button Colors */
+  --bid-button-bg: #f0ede6;
+  --bid-button-border: #c8c3b8;
+  --bid-button-disabled-bg: #4a5e4f;
+  --bid-button-disabled-border: #3a4a3f;
+  --bid-button-disabled-text: #6b7d6f;
+
+  /* Action Button Colors */
+  --bid-pass-bg: #2d8a4e;
+  --bid-double-bg: #fff0f0;
+  --bid-double-border: #c41e3a;
+  --bid-redouble-bg: #f0f4ff;
+  --bid-redouble-border: #3a5fa5;
+
+  /* ===================
+     SEMANTIC MAPPINGS
+     Map core colors to semantic uses
+     =================== */
+
+  /* Primary/Brand */
+  --color-primary: var(--table-green);
+  --color-primary-light: var(--table-green-light);
+  --color-primary-dark: var(--table-green-dark);
 
   /* Semantic Colors */
-  --color-success: #4caf50;
-  --color-success-light: #66bb6a;
-  --color-success-dark: #388e3c;
-  --color-danger: #f44336;
-  --color-danger-light: #ef5350;
-  --color-danger-dark: #d32f2f;
-  --color-warning: #ff9800;
-  --color-warning-light: #ffb74d;
-  --color-warning-dark: #f57c00;
-  --color-info: #61dafb;
-  --color-info-dark: #4fa8c5;
-
-  /* Accent Colors for UI Elements */
-  --color-accent-blue: #2196F3;
-  --color-accent-blue-dark: #1976D2;
-  --color-accent-purple: #7c3aed;
-  --color-accent-purple-dark: #6d28d9;
-  --color-accent-yellow: #ffc107;
-  --color-accent-yellow-dark: #ffa000;
+  --color-success: #2d8a4e;
+  --color-success-light: #3da561;
+  --color-success-dark: #1f6b3a;
+  --color-danger: var(--card-red);
+  --color-danger-light: #d63654;
+  --color-danger-dark: #a31830;
+  --color-warning: var(--gold);
+  --color-warning-light: var(--gold-light);
+  --color-warning-dark: var(--gold-dark);
+  --color-info: #5a9bd4;
+  --color-info-dark: #4080b8;
 
   /* Background Colors */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #2a2a2a;
-  --bg-tertiary: #3a3a3a;
-  /* Light gradient matching My Progress / Learn screens */
-  --bg-app: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  --bg-learning: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-primary: var(--charcoal);
+  --bg-secondary: var(--charcoal-light);
+  --bg-tertiary: #4a4a4a;
+  --bg-app: var(--cream);
+  --bg-learning: linear-gradient(135deg, var(--header-green) 0%, #1a3d2a 100%);
+  --bg-card: var(--cream-light);
   --bg-card-dark: rgba(0, 0, 0, 0.2);
   --bg-overlay: rgba(0, 0, 0, 0.7);
 
-  /* Bridge Table Green Felt - consistent play surface */
-  --bg-table-felt: #1a5c2e;           /* Deep green felt for main play area */
-  --bg-table-felt-light: #237a3d;     /* Lighter green for highlights */
-  --bg-table-felt-dark: #0f3d1c;      /* Darker green for borders/shadows */
-  --bg-table-border: #0a3015;         /* Border color for table edges */
+  /* Bridge Table - Map to core table green */
+  --bg-table-felt: var(--table-green);
+  --bg-table-felt-light: var(--table-green-light);
+  --bg-table-felt-dark: var(--table-green-dark);
+  --bg-table-border: var(--header-green);
 
   /* Text Colors */
   --text-primary: #ffffff;
-  --text-primary-dark: #1a1a1a;
-  --text-secondary: #aaaaaa;
-  --text-secondary-dark: #666666;
-  --text-muted: #999999;
+  --text-primary-dark: var(--charcoal);
+  --text-secondary: #b8b8b8;
+  --text-secondary-dark: #555555;
+  --text-muted: #888888;
   --text-disabled: #666666;
 
-  /* Card Suits (Bridge Standard) */
-  --suit-red: #d32f2f;
-  --suit-black: #000000;
+  /* Card Suits - Map to core card colors */
+  --suit-red: var(--card-red);
+  --suit-black: var(--card-black);
 
   /* Partnerships */
-  --partnership-ns: #4caf50;
-  --partnership-ew: #ff9800;
+  --partnership-ns: var(--color-success);
+  --partnership-ew: var(--gold);
 
   /* Special States */
-  --highlight-current-player: #61dafb;
-  --highlight-winner: #ffd700;
-  --highlight-vulnerable: #d32f2f;
+  --highlight-current-player: var(--gold);
+  --highlight-winner: var(--gold);
+  --highlight-vulnerable: var(--card-red);
 
   /* Feedback Button */
-  --feedback-bg: rgba(5, 150, 105, 0.9);
-  --feedback-border: rgba(5, 150, 105, 1);
-  --feedback-hover: rgba(4, 120, 87, 1);
+  --feedback-bg: var(--table-green);
+  --feedback-border: var(--table-green);
+  --feedback-hover: var(--table-green-dark);
 
   /* ===================
      GRADIENTS
      =================== */
-  --gradient-primary: linear-gradient(135deg, #2d5a3d 0%, #3d6b52 50%, #4a7c5f 100%);
+  --gradient-primary: linear-gradient(135deg, var(--table-green) 0%, var(--table-green-light) 100%);
   --gradient-learning: linear-gradient(135deg, #5c7cfa 0%, #4263eb 100%);
   --gradient-learning-hover: linear-gradient(135deg, #4263eb 0%, #364fc7 100%);
-  --gradient-bid: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
-  --gradient-bid-hover: linear-gradient(135deg, #40c057 0%, #37b24d 100%);
+  --gradient-bid: linear-gradient(135deg, var(--table-green-light) 0%, var(--table-green) 100%);
+  --gradient-bid-hover: linear-gradient(135deg, var(--table-green) 0%, var(--table-green-dark) 100%);
   --gradient-play: linear-gradient(135deg, #845ef7 0%, #7950f2 100%);
   --gradient-play-hover: linear-gradient(135deg, #7950f2 0%, #6741d9 100%);
-  --gradient-progress: linear-gradient(135deg, #fcc419 0%, #fab005 100%);
-  --gradient-progress-hover: linear-gradient(135deg, #fab005 0%, #f59f00 100%);
+  --gradient-progress: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+  --gradient-progress-hover: linear-gradient(135deg, var(--gold-dark) 0%, #8a7030 100%);
   --gradient-dashboard: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-celebration: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+  --gradient-celebration: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
   --gradient-trend: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
 
   /* ===================
@@ -121,6 +166,10 @@
   --text-xl: 1.25rem;     /* 20px */
   --text-2xl: 1.5rem;     /* 24px */
   --text-3xl: 2rem;       /* 32px */
+
+  /* Font Families */
+  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --font-brand: 'DM Serif Display', Georgia, 'Times New Roman', serif;
 
   /* Font Weights */
   --font-normal: 400;
@@ -182,9 +231,7 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

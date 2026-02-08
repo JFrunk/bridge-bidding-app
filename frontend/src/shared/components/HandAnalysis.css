@@ -31,12 +31,12 @@
 }
 
 .suit-red {
-  color: #d32f2f;
+  color: var(--card-red, #c41e3a);
   font-weight: bold;
 }
 
 .suit-black {
-  color: #000;
+  color: var(--card-black, #1a1a1a);
   font-weight: bold;
 }
 
@@ -55,4 +55,67 @@
 .hcp-display strong {
   font-size: 18px;
   color: #2e7d32;
+}
+
+/* Strip mode - single horizontal line for BID screen redesign */
+.hand-analysis-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  flex-wrap: wrap;
+}
+
+.hand-analysis-strip .strip-total {
+  white-space: nowrap;
+}
+
+.hand-analysis-strip .strip-total strong {
+  font-size: 15px;
+  color: #ffffff;
+}
+
+.hand-analysis-strip .strip-divider {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 300;
+}
+
+.hand-analysis-strip .strip-suits {
+  white-space: nowrap;
+}
+
+.hand-analysis-strip .strip-suits .suit-red {
+  color: #ff8a8a;
+}
+
+.hand-analysis-strip .strip-suits .suit-black {
+  color: #ffffff;
+}
+
+.hand-analysis-strip .strip-breakdown {
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+}
+
+/* Responsive: Stack on mobile */
+@media (max-width: 480px) {
+  .hand-analysis-strip {
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 12px;
+  }
+
+  .hand-analysis-strip .strip-divider {
+    display: none;
+  }
+
+  .hand-analysis-strip .strip-suits {
+    font-size: 12px;
+  }
 }

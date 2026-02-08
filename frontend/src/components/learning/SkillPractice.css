@@ -190,7 +190,8 @@
   background: rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 30px;
-  min-width: 300px;
+  min-width: 48px;  /* was 300px - fixed to not override HandDisplay card sizing */
+  width: 48px;
   text-align: center;
 }
 
@@ -733,7 +734,7 @@
 
 .dual-hand-display .hand-card {
   flex: 0 1 auto;
-  min-width: 280px;
+  min-width: 48px;  /* was 280px - fixed to not override HandDisplay card sizing */
 }
 
 .dummy-hand h3 {
