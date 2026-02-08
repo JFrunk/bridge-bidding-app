@@ -23,15 +23,15 @@
     {
       "id": "balancing_double_strong",
       "bid": "X",
-      "priority": 720,
-      "description": "Strong balancing double",
+      "priority": 750,
+      "description": "Strong balancing double (15+ HCP - too strong for suit overcall)",
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
         {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+        {"feature": "hcp", "min": 15, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Strong balancing double with {hcp} HCP",
+      "explanation": "Strong balancing double with {hcp} HCP - too strong for simple overcall",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -82,11 +82,11 @@
       "id": "balancing_suit_1_level",
       "bid": "1{longest_suit}",
       "priority": 660,
-      "description": "Balancing 1-level suit bid",
+      "description": "Balancing 1-level suit bid (8-14 HCP, stronger hands double)",
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
         {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 8, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "hcp", "min": 8, "max": 14, "constraint_type": "HARD"},
         {"feature": "longest_suit_length", "min": 5, "constraint_type": "HARD"}
       ],
       "forcing": "none",

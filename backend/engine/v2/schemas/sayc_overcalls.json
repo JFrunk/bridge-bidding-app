@@ -243,13 +243,13 @@
       "id": "simple_overcall_1_level_balancing",
       "bid": "1{suit}",
       "priority": 99,
-      "description": "Balancing 1-level overcall",
+      "description": "Balancing 1-level overcall (8-14 HCP, stronger hands double)",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
         "hcp": {
           "min": 8,
-          "max": 16
+          "max": 14
         },
         "suit_length": {
           "min": 5

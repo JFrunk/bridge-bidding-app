@@ -2730,6 +2730,15 @@ ${otherCommands}`;
           onModuleSelect={handleNavModuleSelect}
           showTitle={!showModeSelector}
         >
+          {/* Feedback button - text only */}
+          <button
+            className="nav-utility-button"
+            onClick={() => setShowFeedbackModal(true)}
+            title="Send feedback"
+            data-testid="feedback-button"
+          >
+            Feedback
+          </button>
           {/* Glossary button - text only */}
           <button
             className="nav-utility-button"
@@ -2739,7 +2748,7 @@ ${otherCommands}`;
           >
             Glossary
           </button>
-          {/* User avatar menu - includes Feedback option */}
+          {/* User avatar menu */}
           <UserMenu
             onSignInClick={() => setShowLogin(true)}
             onFeedbackClick={() => setShowFeedbackModal(true)}
