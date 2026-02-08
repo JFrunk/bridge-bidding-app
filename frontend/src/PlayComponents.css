@@ -349,25 +349,29 @@
 }
 
 /* Play Table - UI Redesign v2 per play-mockup-v2.html */
-/* HOTFIX 1: Table must be centered and fill viewport width properly */
+/* HOTFIX 2: Table must be centered and fill viewport width properly */
 .play-table {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;  /* Prevent content overflow */
-  width: 100%;
+  /* CRITICAL: Force full width and center - fixes left-alignment issue */
+  width: 100% !important;
+  min-width: 100%;
   max-width: 1200px;  /* Cap width on very wide monitors */
-  margin: 0 auto;     /* Center horizontally */
+  margin-left: auto !important;
+  margin-right: auto !important;
   /* Constrain to available viewport height */
   max-height: 100%;
 }
 
 /* Play Area - Absolute positioning layout for compass positions */
-/* VIEWPORT FIX: Use flexible height instead of fixed 480px */
+/* HOTFIX 2: Full width green table, properly centered */
 .play-area {
   position: relative;
-  width: 100%;
+  width: 100% !important;  /* Force full width of parent */
+  min-width: 100%;
   flex: 1;  /* Take remaining space after contract header and action bar */
   min-height: 320px;  /* Minimum for playability */
   max-height: calc(100vh - 200px);  /* Leave room for header/footer */
@@ -423,16 +427,18 @@
   z-index: 3;
 }
 
-/* South - bottom center - uses left/right: 0 to constrain within parent bounds */
+/* South - bottom center - HOTFIX 4: positioned higher to prevent card clipping */
 .position-south {
   position: absolute;
-  bottom: 12px;
+  bottom: 8px;  /* Raised slightly */
   left: 0;
   right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  z-index: 3;
+  z-index: 5;  /* Higher z-index to ensure cards above table edge */
+  /* Allow cards to extend below if needed without clipping */
+  overflow: visible;
 }
 
 /* West - left edge, vertically centered */
@@ -1977,13 +1983,15 @@
 }
 
 /* ========================================
-   HOTFIX 5: PLAY TURN INDICATOR - positioned below trick area, not overlapping labels
+   HOTFIX 3: PLAY TURN INDICATOR - MUST NOT overlap South's cards
+   Use bottom positioning to ensure fixed distance above South's hand
    ======================================== */
 
 .play-turn-indicator {
   position: absolute;
-  /* Position below center trick area (trick area is ~180px tall, centered) */
-  top: calc(50% + 100px);  /* Below trick area center, with clearance */
+  /* CRITICAL: Position ABOVE South's hand (which starts at bottom: 12px + ~80px card height) */
+  /* Use bottom positioning for reliable clearance regardless of play-area height */
+  bottom: 130px;  /* 130px from bottom = above South's cards which are at ~100px height */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -2065,10 +2073,10 @@
   }
 }
 
-/* Turn indicator responsive - uses top-based positioning to stay below trick area */
+/* Turn indicator responsive - uses bottom positioning to stay above South's cards */
 @media (max-width: 768px) {
   .play-turn-indicator {
-    top: calc(50% + 85px);  /* Closer to trick area on smaller screens */
+    bottom: 110px;  /* Slightly closer on tablets - smaller cards */
     padding: 6px 12px;
     font-size: 12px;
   }
@@ -2076,7 +2084,7 @@
 
 @media (max-width: 480px) {
   .play-turn-indicator {
-    top: calc(50% + 70px);  /* Even closer on phones */
+    bottom: 95px;  /* Closer on phones - even smaller cards */
     padding: 5px 10px;
   }
 

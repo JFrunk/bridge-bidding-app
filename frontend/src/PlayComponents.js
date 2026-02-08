@@ -212,9 +212,18 @@ export function PlayTable({
   // Get suit order based on trump
   const suitOrder = getSuitOrder(contract.strain);
 
+  // Calculate tricks played first (needed for multiple purposes including dummy visibility)
+  const totalTricksPlayed = Object.values(tricks_won).reduce((sum, tricks) => sum + tricks, 0);
+
+  // CRITICAL FIX: Dummy is revealed after opening lead
+  // Infer from game state if backend doesn't provide it:
+  // - Any card in current trick means opening lead was made
+  // - Any completed tricks means play has progressed past opening lead
+  const dummyRevealed = playState.dummy_revealed === true ||
+                        (current_trick && current_trick.length > 0) ||
+                        totalTricksPlayed > 0;
+
   // CRITICAL: Centralized visibility rules - USE THESE for all hand rendering
-  // Pass dummy_revealed from playState to ensure dummy is only shown AFTER opening lead
-  const dummyRevealed = playState.dummy_revealed || false;
   const showNorthHand = shouldShowHand('N', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
   const showEastHand = shouldShowHand('E', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
   const showSouthHand = shouldShowHand('S', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
@@ -241,13 +250,12 @@ export function PlayTable({
     }
   });
 
-  // Calculate tricks for consolidated header
+  // Calculate tricks for consolidated header (totalTricksPlayed already calculated above)
   const tricksNeeded = contract.level + 6;
   const declarerSide = (declarerPosition === 'N' || declarerPosition === 'S') ? 'NS' : 'EW';
   const tricksWonBySide = declarerSide === 'NS'
     ? (tricks_won.N || 0) + (tricks_won.S || 0)
     : (tricks_won.E || 0) + (tricks_won.W || 0);
-  const totalTricksPlayed = Object.values(tricks_won).reduce((sum, tricks) => sum + tricks, 0);
   const tricksRemaining = 13 - totalTricksPlayed;
   const tricksLost = 13 - tricksWonBySide - tricksRemaining;
 
