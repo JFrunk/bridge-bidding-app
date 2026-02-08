@@ -348,138 +348,179 @@
   font-size: 1.1em;
 }
 
-/* Play Table */
+/* Play Table - UI Redesign v2 per play-mockup-v2.html */
 .play-table {
-  width: 100%;
-  max-width: 1200px;
-  margin: 20px auto;
-}
-
-.play-header {
+  flex: 1;
   display: flex;
-  justify-content: space-around;
-  margin-bottom: 30px;
-  gap: 20px;
+  flex-direction: column;
+  min-height: 0;
+  overflow: visible;  /* Allow content to be visible */
+  width: 100% !important; /* CRITICAL: Ensure full width */
+  max-width: 100%;
 }
 
+/* Play Area - Absolute positioning layout for compass positions */
 .play-area {
   position: relative;
   width: 100%;
-  min-height: 600px;
-  display: grid;
-  grid-template-areas:
-    ". north ."
-    "west center east"
-    ". south .";
-  grid-template-columns: minmax(150px, 1fr) minmax(400px, 2fr) minmax(150px, 1fr);
-  grid-template-rows: auto 300px auto;
-  gap: 15px;
-  padding: 15px;
-  background-color: var(--bg-table-felt);
-  border: 3px solid var(--bg-table-border);
-  border-radius: 12px;
-  overflow: visible;
+  height: 480px;  /* Taller to accommodate N/S cards within green background */
+  min-height: 480px;
+  z-index: 2;
+  padding: 0;  /* No padding - use absolute positioning from edges */
+  background-color: var(--table-green, #1a6b3c);
+  overflow: visible;  /* Allow cards at edges to be visible */
+  box-sizing: border-box;
 }
 
+/* Felt texture overlay */
+.play-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.1) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Position areas - base styles */
 .position {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  z-index: 1; /* Lower z-index than trick display */
-  position: relative;
+  gap: 4px;
+  z-index: 3;
 }
 
+/* North - top center */
 .position-north {
-  grid-area: north;
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  z-index: 3;
 }
 
+/* East - right edge, vertically centered */
 .position-east {
-  grid-area: east;
+  position: absolute;
+  right: 10px;  /* Closer to edge for clear table positioning */
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  z-index: 3;
 }
 
+/* South - bottom center */
 .position-south {
-  grid-area: south;
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  z-index: 3;
 }
 
+/* West - left edge, vertically centered */
 .position-west {
-  grid-area: west;
+  position: absolute;
+  left: 10px;  /* Closer to edge for clear table positioning */
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  z-index: 3;
 }
 
+/* Position Labels - Compact per mockup */
 .position-label {
-  font-weight: bold;
-  color: var(--color-info);
-  text-align: center;
-  padding: 5px 10px;
-  background-color: var(--bg-secondary);
-  border-radius: 5px;
-  margin-bottom: 10px;
-  width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-on-green-muted, #a8c4b0);
+  padding: 3px 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 
-/* CRITICAL: Container for current trick - centers it in grid */
+/* Active turn - gold tinted */
+.position-label.active-turn {
+  color: var(--gold-light, #e8d49a);
+  background: rgba(200, 164, 78, 0.2);
+  box-shadow: 0 0 0 1.5px rgba(200, 164, 78, 0.4);
+}
+
+/* Position role badges - per mockup */
+.position-badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.position-badge.declarer {
+  background: rgba(76, 175, 80, 0.25);
+  color: #81c784;
+}
+
+.position-badge.dummy {
+  background: rgba(200, 164, 78, 0.2);
+  color: var(--gold-light, #e8d49a);
+}
+
+.position-badge.you-control {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Center trick container - absolute positioned dead center */
 .current-trick-container {
-  grid-area: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
-  min-height: 350px;
-  z-index: 50; /* Ensure played cards appear above all hand cards */
-  position: relative;
-  pointer-events: none; /* Allow clicks to pass through to cards below */
 }
 
-/* Trick cards themselves should receive pointer events */
+/* Trick cards receive pointer events */
 .trick-card {
   pointer-events: auto;
 }
 
-/* Current Trick in Center - Compass Layout */
+/* Trick Display - Square bridge table per mockup (200×180px) */
 .current-trick {
-  grid-area: center;
+  width: 200px;
+  height: 180px;
   position: relative;
-  display: grid;
-  grid-template-areas:
-    ". north ."
-    "west . east"
-    ". south .";
-  grid-template-columns: 1fr auto 1fr;
-  grid-template-rows: 1fr auto 1fr;
-  gap: 0;
-  padding: 20px;
-  background-color: var(--bg-table-felt-dark);
-  border: 3px solid var(--bg-table-border);
-  border-radius: 10px;
-  min-height: 250px;
-  align-items: center;
-  justify-items: center;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .current-trick.empty {
   display: flex;
-  background-color: var(--bg-table-felt-dark);
-  border: 2px dashed var(--bg-table-felt-light);
-  color: rgba(255, 255, 255, 0.5);
   justify-content: center;
   align-items: center;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
 }
 
 /* Trick position slots */
@@ -579,56 +620,178 @@
   font-weight: bold;
 }
 
-/* Trick cards - cards played in the current trick (center of table)
-   Top-left corner only display - compact and efficient for mobile */
+/* Trick cards - 48×66px per mockup */
 .trick-card {
-  width: 50px;
-  height: 70px;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.25);
-  transition: all 0.3s ease;
+  position: absolute;
+  width: 48px;
+  height: 66px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  z-index: 3;
 }
 
-/* Trick card corner text - scales with card size */
-.trick-card .text-lg {
-  font-size: 1.125rem;
-}
-
-.trick-card .text-base {
-  font-size: 1rem;
-}
-
-/* Playable Cards - Desktop default size */
-.playable-card {
-  background-color: white;
-  border: 2px solid #333;
-  border-radius: 8px;
-  padding: 8px 5px;
-  width: 60px;
-  height: 84px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-block;
-  margin: 2px;
+/* Cards inside positioned wrappers - don't need position:absolute
+   The wrapper handles positioning; card just fills it */
+.trick-card-north .trick-card,
+.trick-card-south .trick-card,
+.trick-card-east .trick-card,
+.trick-card-west .trick-card {
   position: relative;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-  flex-shrink: 0;
 }
 
+.trick-card .rank {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.trick-card .suit {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Suit colors */
+.trick-card.red .rank,
+.trick-card.red .suit,
+.trick-card .suit-red {
+  color: var(--card-red, #c41e3a);
+}
+
+.trick-card.black .rank,
+.trick-card.black .suit,
+.trick-card .suit-black {
+  color: var(--card-black, #1a1a1a);
+}
+
+/* Winner card - gold highlight per mockup */
+.trick-card.winner,
+.trick-card.winning {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2), 0 0 0 2px var(--gold, #c8a44e);
+}
+
+/* Trick card position WRAPPERS - per CC_CORRECTIONS Fix #7
+   These wrappers need position: absolute to work with top/left/transform
+   Each position holds exactly ONE card at a time */
+.trick-card-north,
+.trick-card-south,
+.trick-card-west,
+.trick-card-east {
+  position: absolute;
+  /* Container for the card - card will be at 0,0 of this wrapper */
+}
+
+.trick-card-north,
+.trick-card.north {
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.trick-card-south,
+.trick-card.south {
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.trick-card-west,
+.trick-card.west {
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.trick-card-east,
+.trick-card.east {
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Trick info label in center */
+.trick-label,
+.trick-info {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-on-green-muted, #a8c4b0);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 1;
+}
+
+/* Playable Cards - 48×66px per mockup (same size for N and S) */
+.playable-card {
+  width: 48px;
+  height: 66px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  margin-left: -7px;
+  position: relative;
+  user-select: none;
+}
+
+.playable-card:first-child {
+  margin-left: 0;
+}
+
+/* Hover state - gold outline per mockup */
+.playable-card:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2), 0 0 0 2px var(--gold, #c8a44e);
+  z-index: 10;
+}
+
+.playable-card .rank {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.playable-card .suit {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Suit colors for playable cards */
+.playable-card.red .rank,
+.playable-card.red .suit {
+  color: var(--card-red, #c41e3a);
+}
+
+.playable-card.black .rank,
+.playable-card.black .suit {
+  color: var(--card-black, #1a1a1a);
+}
+
+/* Clickable cards - subtle green border when legal */
 .playable-card.clickable {
   cursor: pointer;
-  border: 3px solid #4CAF50; /* Green border for clickable cards */
-  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); /* Green glow */
 }
 
-.playable-card.clickable:hover,
-.playable-card.clickable:active {
-  transform: translateY(-15px) scale(1.05);
-  box-shadow: 0 12px 20px rgba(97, 218, 251, 0.8);
-  border-color: #61dafb;
-  border-width: 4px;
-  z-index: 40; /* High enough to appear above other cards in hand, but below trick display (z-index: 50) */
+/* Active/pressed state */
+.playable-card:active {
+  transform: translateY(-4px);
+  z-index: 10;
   position: relative;
-  animation: pulse-clickable 1s infinite;
 }
 
 /* CRITICAL: Prevent :active state on disabled cards (prevents stuck highlight bug) */
@@ -707,249 +870,162 @@
   font-size: 1.8em;
 }
 
-/* User Play Hand */
+/* Hand Row - horizontal card row per mockup (NO container border) */
+.hand-row,
 .user-play-hand {
   display: flex;
-  flex-direction: row;
-  gap: 0;
-  max-width: 100%;
-  width: 100%;
-  margin: 0 auto;
-  overflow: visible;
   justify-content: center;
+  margin-top: 4px;
 }
 
-/* Dummy Hand */
+/* Dummy Hand - same as user hand (no container styling) */
 .dummy-hand {
   display: flex;
-  flex-direction: row;
-  gap: 0;
-  max-width: 100%;
-  width: 100%;
-  margin: 0 auto;
-  padding: 10px;
-  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
-  border-radius: 8px;
-  border: 2px solid rgba(35, 122, 61, 0.4);
-  overflow: visible;
   justify-content: center;
+  margin-top: 4px;
 }
 
-/* Dummy Hand for North/South - Horizontal single-line layout (like user's hand) */
-/* IMPORTANT: Override any grid layouts - North/South should ALWAYS be horizontal */
-.position-north .dummy-hand,
-.position-south .dummy-hand {
-  display: flex !important;
-  flex-direction: row !important;
-  grid-template-columns: unset !important;
-  grid-template-rows: unset !important;
-  gap: 0;
-  max-width: 100%;
-  width: 100%;
-  margin: 0 auto;
-  padding: 10px;
-  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
-  border-radius: 8px;
-  border: 2px solid rgba(35, 122, 61, 0.4);
-  overflow: visible;
-  justify-content: center;
-}
-
-/* Dummy Hand for East/West - Single vertical column (continuous, no gaps) */
-.position-east .dummy-hand,
-.position-west .dummy-hand {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  width: auto;
-  max-width: 100px; /* Accommodate full-width cards (~70px) */
-  padding: 10px;
-  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
-  border-radius: 8px;
-  border: 2px solid rgba(35, 122, 61, 0.4);
-  overflow: visible;
-  align-items: center;
-}
-
-/* Keep suit groups horizontal for North/South (default behavior maintained) */
-.position-north .dummy-hand .suit-group,
-.position-south .dummy-hand .suit-group {
-  flex-direction: row !important;
-  align-items: flex-start;
-  justify-content: flex-start;
-  flex-wrap: nowrap !important; /* CRITICAL: Prevent wrapping to multiple rows */
-  /* Prevent grid positioning rules from applying */
-  grid-column: unset !important;
-  grid-row: unset !important;
-  /* Remove visual styling that might cause appearance of wrapping */
-  padding: 0;
-  background-color: transparent;
-  min-height: auto;
-}
-
-/* Make suit groups vertical column for East/West - continuous flow */
-.position-east .dummy-hand .suit-group,
-.position-west .dummy-hand .suit-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0;
-  gap: 0;
-  background-color: transparent;
-  min-height: auto;
-}
-
-/* Cards within East/West suit groups stack vertically with overlap
-   Show ~55px of each card (rank + suit + more white space for readability) */
-.position-east .dummy-hand .suit-group .playable-card,
-.position-west .dummy-hand .suit-group .playable-card {
-  margin-left: 0 !important; /* Force no horizontal margin */
-  margin-top: -45px; /* Improved readability - show ~55px of each card */
-  margin-right: 0;
-  margin-bottom: 0;
-}
-
-/* First card in FIRST suit group has no top margin */
-.position-east .dummy-hand .suit-group:first-child .playable-card:first-child,
-.position-west .dummy-hand .suit-group:first-child .playable-card:first-child {
-  margin-top: 0;
-}
-
-/* First card of subsequent suits - CONTINUOUS (no gap between suits) */
-.position-east .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
-.position-west .dummy-hand .suit-group:not(:first-child) .playable-card:first-child {
-  margin-left: 0 !important; /* Force no horizontal margin */
-  margin-top: -45px; /* Same overlap as within suits - continuous flow */
-}
-
-/* Declarer Hand (when user is dummy) - Default horizontal for North/South */
+/* Declarer Hand - same styling */
 .declarer-hand {
   display: flex;
-  flex-direction: row;
-  gap: 0;
-  max-width: 100%;
-  width: 100%;
-  margin: 0 auto;
-  overflow: visible;
   justify-content: center;
+  margin-top: 4px;
 }
 
-/* Declarer Hand for North/South - Horizontal single-line layout (like user's hand) */
-/* IMPORTANT: Override any grid layouts - North/South should ALWAYS be horizontal */
+/* North/South hands - horizontal layout */
+.position-north .dummy-hand,
+.position-south .dummy-hand,
 .position-north .declarer-hand,
 .position-south .declarer-hand {
-  display: flex !important;
-  flex-direction: row !important;
-  grid-template-columns: unset !important;
-  grid-template-rows: unset !important;
-  gap: 0;
-  max-width: 100%;
-  width: 100%;
-  margin: 0 auto;
-  padding: 10px;
-  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
-  border-radius: 8px;
-  border: 2px solid rgba(35, 122, 61, 0.4);
-  overflow: visible;
+  display: flex;
+  flex-direction: row;
   justify-content: center;
 }
 
-/* Keep suit groups horizontal for North/South declarer hands */
-.position-north .declarer-hand .suit-group,
-.position-south .declarer-hand .suit-group {
-  flex-direction: row !important;
-  align-items: flex-start;
-  justify-content: flex-start;
-  flex-wrap: nowrap !important; /* CRITICAL: Prevent wrapping to multiple rows */
-  /* Prevent grid positioning rules from applying */
-  grid-column: unset !important;
-  grid-row: unset !important;
-  /* Remove visual styling that might cause appearance of wrapping */
-  padding: 0;
-  background-color: transparent;
-  min-height: auto;
+/* Suit Group - cards within a suit with overlap per mockup */
+.suit-group {
+  display: flex;
+  margin: 0 5px;
 }
 
-/* Declarer Hand for East/West - Single vertical column (same as dummy hand) */
+/* Suit gap between groups */
+.suit-gap {
+  width: 8px;
+  flex-shrink: 0;
+}
+
+/* East/West Opponent Display - card backs per mockup */
+.opponent-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.opponent-card-fan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.card-back {
+  width: 36px;
+  height: 10px;
+  background: linear-gradient(135deg, #b71c1c 0%, #8b1515 50%, #b71c1c 100%);
+  border-radius: 2px;
+  opacity: 0.55;
+  border: 0.5px solid rgba(0,0,0,0.2);
+}
+
+.opp-count {
+  font-size: 11px;
+  color: var(--text-on-green-muted, #a8c4b0);
+  font-weight: 500;
+}
+
+/* ========================================
+   EAST/WEST DUMMY: Suit-Row Layout per CC_CORRECTIONS
+   Suits stacked vertically, smaller cards (36×48px), -10px overlap
+   Compact to fit within side margins
+   ======================================== */
+
+.position-east .dummy-hand,
+.position-west .dummy-hand,
 .position-east .declarer-hand,
 .position-west .declarer-hand {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  width: auto;
-  max-width: 100px;
-  padding: 10px;
-  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
-  border-radius: 8px;
-  border: 2px solid rgba(35, 122, 61, 0.4);
-  overflow: visible;
+  gap: 2px;
+  max-width: 100px;  /* Compact to fit on sides without overlapping center */
   align-items: center;
 }
 
-/* East/West declarer hand suit groups - vertical column */
+/* Suit rows for E/W - horizontal card layout within each suit */
+.position-east .dummy-hand .suit-group,
+.position-west .dummy-hand .suit-group,
 .position-east .declarer-hand .suit-group,
 .position-west .declarer-hand .suit-group {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0;
-  gap: 0;
-  background-color: transparent;
-  min-height: auto;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+  max-width: 100px;
+  margin: 0;
 }
 
-/* East/West declarer hand cards - vertical overlap */
-.position-east .declarer-hand .suit-group .playable-card,
-.position-west .declarer-hand .suit-group .playable-card {
-  margin-left: 0 !important; /* Force no horizontal margin */
-  margin-top: -45px; /* Improved readability - show ~55px of each card */
-  margin-right: 0;
-  margin-bottom: 0;
+/* Smaller cards for E/W dummy: 36×48px with tighter overlap */
+.position-east .dummy-hand .playable-card,
+.position-west .dummy-hand .playable-card,
+.position-east .declarer-hand .playable-card,
+.position-west .declarer-hand .playable-card {
+  width: 36px;
+  height: 48px;
+  border-radius: 3px;
+  margin-left: -18px;  /* Tighter overlap to fit within 100px */
 }
 
-.position-east .declarer-hand .suit-group:first-child .playable-card:first-child,
-.position-west .declarer-hand .suit-group:first-child .playable-card:first-child {
-  margin-top: 0;
+.position-east .dummy-hand .suit-group .playable-card:first-child,
+.position-west .dummy-hand .suit-group .playable-card:first-child,
+.position-east .declarer-hand .suit-group .playable-card:first-child,
+.position-west .declarer-hand .suit-group .playable-card:first-child {
+  margin-left: 0;
 }
 
-.position-east .declarer-hand .suit-group:not(:first-child) .playable-card:first-child,
-.position-west .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-  margin-left: 0 !important; /* Force no horizontal margin */
-  margin-top: -45px; /* Same overlap as within suits */
+/* Card content in visible strip (18px = 36 - 18) */
+.position-east .dummy-hand .card-content,
+.position-west .dummy-hand .card-content,
+.position-east .declarer-hand .card-content,
+.position-west .declarer-hand .card-content {
+  width: 18px;
 }
 
-/* Suit Group - organizes cards by suit in a horizontal overlapping row */
-.suit-group {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: flex-start;
-  flex-wrap: nowrap; /* Keep cards in single line - no wrapping */
-  gap: 0;
-  padding: 5px;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 5px;
-  min-height: 120px;
-  position: relative;
+.position-east .dummy-hand .playable-card:last-child .card-content,
+.position-west .dummy-hand .playable-card:last-child .card-content,
+.position-east .declarer-hand .playable-card:last-child .card-content,
+.position-west .declarer-hand .playable-card:last-child .card-content {
+  width: 100%;
 }
 
-/* Overlap playable cards horizontally - show ~60% of each card */
-.suit-group .playable-card {
-  margin-left: -25px; /* Card width 60px, show 35px (~60%) */
-  margin-top: 0;
-  margin-right: 0;
-  margin-bottom: 0;
+/* Smaller text for E/W dummy cards */
+.position-east .dummy-hand .rank,
+.position-west .dummy-hand .rank,
+.position-east .declarer-hand .rank,
+.position-west .declarer-hand .rank {
+  font-size: 14px;
 }
 
-.suit-group .playable-card:first-child {
-  margin-left: 0; /* First card in each suit has no left margin */
+.position-east .dummy-hand .suit-symbol,
+.position-west .dummy-hand .suit-symbol,
+.position-east .declarer-hand .suit-symbol,
+.position-west .declarer-hand .suit-symbol {
+  font-size: 10px;
 }
 
-/* Continue overlap between suits */
-.user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
-.dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
-.declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-  margin-left: -25px; /* Same overlap between suits */
+.position-east .dummy-hand .suit,
+.position-west .dummy-hand .suit,
+.position-east .declarer-hand .suit,
+.position-west .declarer-hand .suit {
+  font-size: 10px;
 }
 
 /* Suit Colors */
@@ -969,18 +1045,27 @@
 
 @media (max-width: 900px) {
   .play-area {
-    grid-template-columns: 150px 1fr 150px;
-    grid-template-rows: auto 250px auto;
+    height: 380px;
+    min-height: 380px;
+  }
+
+  /* Adjust E/W positions on smaller screens */
+  .position-east {
+    right: 15px;
+  }
+
+  .position-west {
+    left: 15px;
   }
 
   .playable-card {
-    min-width: 50px;
-    min-height: 80px;
-    padding: 10px 5px;
+    min-width: 44px;
+    min-height: 60px;
+    padding: 0;
   }
 
   .suit-group .playable-card {
-    margin-left: -33px; /* Smaller overlap for medium screens, maintaining visibility ratio */
+    margin-left: -10px; /* Smaller overlap for medium screens */
   }
 
   .suit-group .playable-card:first-child {
@@ -990,7 +1075,7 @@
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -33px;
+    margin-left: -10px;
   }
 
   .play-header {
@@ -1019,30 +1104,64 @@
   }
 
   .play-area {
-    grid-template-columns: 100px 1fr 100px;
-    grid-template-rows: auto 200px auto;
-    gap: 10px;
-    padding: 10px;
-    min-height: 400px;
+    height: 360px;
+    min-height: 360px;
+    padding: 0;  /* No padding for absolute positioning */
   }
 
+  /* Adjust E/W positions on tablet */
+  .position-east {
+    right: 10px;
+  }
+
+  .position-west {
+    left: 10px;
+  }
+
+  /* Trick area responsive */
   .current-trick {
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px;
-    min-height: 100px;
+    width: 160px;
+    height: 140px;
+    padding: 6px;
   }
 
   .trick-card {
-    width: 45px;
-    height: 63px;
+    width: 38px;
+    height: 50px;
   }
 
   .playable-card {
-    min-width: 45px;
-    min-height: 70px;
-    padding: 8px 5px;
-    margin: 2px;
+    width: 42px;
+    height: 56px;
+    margin: 0;
+  }
+
+  /* Contract bar stacks on mobile */
+  .contract-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Turn indicator responsive */
+  .turn-indicator-v2 {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  /* Action bar stacks on mobile */
+  .play-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .play-action-bar-left {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .play-action-bar-right {
+    text-align: center;
   }
 
   /* Mobile: Reduce overlap and allow wrapping to show all cards */
@@ -1095,43 +1214,50 @@
   }
 }
 
-/* Mobile phones - smaller cards like Learn module */
+/* Mobile phones - smaller cards per UI Redesign Spec */
 @media (max-width: 480px) {
   .play-area {
-    grid-template-columns: 70px 1fr 70px;
-    grid-template-rows: auto 130px auto;
-    gap: 4px;
-    padding: 4px;
+    height: 320px;
+    min-height: 320px;
+    padding: 0;  /* No padding for absolute positioning */
   }
 
+  /* Adjust E/W positions on mobile */
+  .position-east {
+    right: 5px;
+  }
+
+  .position-west {
+    left: 5px;
+  }
+
+  /* Trick area smaller on mobile */
   .current-trick {
-    gap: 4px;
+    width: 130px;
+    height: 110px;
     padding: 4px;
-    min-height: 70px;
   }
 
   .trick-card {
-    width: 40px;
-    height: 56px;
+    width: 36px;
+    height: 48px;
     border-radius: 4px;
   }
 
-  .trick-card .text-lg {
-    font-size: 0.875rem;
+  .trick-card .rank {
+    font-size: 12px;
   }
 
-  .trick-card .text-base {
-    font-size: 0.75rem;
+  .trick-card .suit {
+    font-size: 14px;
   }
 
-  /* Mobile card sizing - match Learn module medium size (50x70) */
+  /* Mobile playable cards */
   .playable-card {
-    width: 45px;
-    height: 63px;
-    padding: 3px 2px;
-    margin: 1px;
+    width: 40px;
+    height: 54px;
     border-radius: 5px;
-    border-width: 1px;
+    margin: 1px;
   }
 
   /* Mobile: overlap to show ~50% of each card */
@@ -1206,13 +1332,23 @@
 /* Extra small phones (Android <360px) */
 @media (max-width: 360px) {
   .play-area {
-    grid-template-columns: 55px 1fr 55px;
-    grid-template-rows: auto 100px auto;
-    gap: 3px;
-    padding: 3px;
+    height: 280px;
+    min-height: 280px;
+    padding: 0;  /* No padding for absolute positioning */
+  }
+
+  /* Adjust E/W positions on extra small screens */
+  .position-east {
+    right: 3px;
+  }
+
+  .position-west {
+    left: 3px;
   }
 
   .current-trick {
+    width: 110px;
+    height: 90px;
     min-height: 60px;
     padding: 3px;
   }
@@ -1289,6 +1425,493 @@
   .contract-bid {
     font-size: 0.95em;
   }
+}
+
+/* ========================================
+   TURN INDICATOR - Below table per mockup
+   ======================================== */
+
+.turn-indicator {
+  text-align: center;
+  padding: 4px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold-light, #e8d49a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  grid-column: 1 / -1;
+}
+
+.turn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold, #c8a44e);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+/* ========================================
+   CONTRACT BAR - with trick counter per mockup
+   ======================================== */
+
+.contract-bar {
+  background: var(--charcoal, #2a2a2a);
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+  color: white;
+}
+
+.contract-badge {
+  font-size: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.contract-suit {
+  font-size: 22px;
+}
+
+.contract-suit.red {
+  color: #ff6b7a;
+}
+
+.contract-suit.black {
+  color: #e0e0e0;
+}
+
+.contract-by {
+  font-size: 13px;
+  font-weight: 400;
+  color: #aaa;
+  margin-left: 4px;
+}
+
+.contract-meta {
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* Trick bar */
+.trick-score {
+  flex: 1;
+  max-width: 480px;
+}
+
+.trick-bar {
+  display: flex;
+  width: 100%;
+  height: 28px;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid #555;
+  background: #3a3a3a;
+}
+
+.trick-cell {
+  flex: 1;
+  border-right: 1px solid #4a4a4a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: transparent;
+  transition: background 0.3s, color 0.3s;
+  position: relative;
+}
+
+.trick-cell:last-child {
+  border-right: none;
+}
+
+.trick-cell.won-you {
+  background: var(--table-green, #1a6b3c);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.trick-cell.won-opp {
+  background: var(--card-red, #c41e3a);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.trick-cell.target {
+  color: rgba(255, 255, 255, 0.5);
+  border-left: 2px solid white;
+}
+
+.target-arrow {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 11px;
+}
+
+.trick-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.trick-label-you { color: #4CAF50; }
+.trick-label-remaining { color: #888; }
+.trick-label-opp { color: #ef5350; }
+
+.trump-badge {
+  font-size: 12px;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.trump-badge .ts {
+  font-size: 16px;
+}
+
+.trump-badge .ts.red {
+  color: #ff6b7a;
+}
+
+.trump-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trump-label {
+  font-size: 11px;
+  color: #888;
+}
+
+.trump-suit {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.trump-suit.suit-heart,
+.trump-suit.suit-diamond {
+  color: var(--card-red, #c41e3a);
+}
+
+.trump-suit.suit-spade,
+.trump-suit.suit-club {
+  color: #e0e0e0;
+}
+
+/* Contract bar left/right layout */
+.contract-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.contract-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.contract-level {
+  font-size: 22px;
+}
+
+.contract-strain {
+  font-size: 22px;
+}
+
+.contract-strain.suit-heart,
+.contract-strain.suit-diamond {
+  color: var(--card-red, #c41e3a);
+}
+
+.contract-doubled {
+  font-size: 18px;
+  color: #ff6b6b;
+  margin-left: 4px;
+}
+
+.contract-declarer {
+  font-size: 13px;
+  color: #aaa;
+}
+
+.contract-vuln {
+  font-size: 11px;
+  color: #888;
+  margin-left: 8px;
+}
+
+.contract-score {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.contract-score.positive {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  border: 1px solid #4CAF50;
+}
+
+.contract-score.negative {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+  border: 1px solid #f44336;
+}
+
+.trick-number {
+  font-size: 13px;
+  color: #aaa;
+  white-space: nowrap;
+}
+
+.trick-count {
+  font-weight: 700;
+}
+
+.trick-count.you {
+  color: var(--table-green, #1a6b3c);
+}
+
+.trick-count.opp {
+  color: var(--card-red, #c41e3a);
+}
+
+.trick-target {
+  color: #aaa;
+  font-weight: 500;
+}
+
+/* Bid History Button */
+.bid-history-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #ddd;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.bid-history-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+/* Bid History Popup Overlay */
+.bid-history-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.bid-history-popup {
+  background: var(--cream-light, #faf8f4);
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 320px;
+  max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.bid-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.bid-history-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.bid-history-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bid-history-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.bid-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.bid-history-table th,
+.bid-history-table td {
+  padding: 8px 12px;
+  text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.bid-history-table th {
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+
+.bid-history-table td {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.bid-history-contract {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--table-green, #1a6b3c);
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================
+   BOTTOM ACTION BAR - slim row per mockup
+   ======================================== */
+
+.action-bar {
+  background: var(--cream-light, #faf8f4);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 7px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.action-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+}
+
+.action-btn.primary {
+  background: var(--table-green, #1a6b3c);
+  color: white;
+}
+
+.action-btn.primary:hover {
+  background: var(--table-green-dark, #145530);
+}
+
+.action-btn.secondary {
+  background: white;
+  color: var(--text-primary, #1a1a1a);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.action-btn.secondary:hover {
+  background: var(--cream, #f5f0e8);
+}
+
+.action-status {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ========================================
+   PLAY TURN INDICATOR - centered below table per mockup
+   ======================================== */
+
+.play-turn-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 20px;
+  margin: 8px auto;
+  width: fit-content;
+}
+
+.play-turn-indicator .turn-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--gold, #c8a44e);
+  border-radius: 50%;
+  animation: turn-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes turn-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+.play-turn-indicator .turn-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-on-green, #e8f5ed);
 }
 
 /* ========================================

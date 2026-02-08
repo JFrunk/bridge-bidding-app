@@ -15,7 +15,7 @@ import './ModeSelector.css';
  * - Play: Practice card play
  * - Progress: View stats and learning insights
  */
-export function ModeSelector({ onSelectMode, userName }) {
+export function ModeSelector({ onSelectMode, userName = null }) {
   const { isGuest, promptForRegistration } = useAuth();
 
   const handleModeSelect = (modeId) => {
@@ -155,10 +155,6 @@ export function ModeSelector({ onSelectMode, userName }) {
 ModeSelector.propTypes = {
   onSelectMode: PropTypes.func.isRequired,
   userName: PropTypes.string
-};
-
-ModeSelector.defaultProps = {
-  userName: null
 };
 
 export default ModeSelector;

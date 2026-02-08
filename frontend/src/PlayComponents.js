@@ -180,11 +180,16 @@ export function PlayTable({
   onDummyCardPlay,
   isDummyTurn,
   scoreData,
+  vulnerability,
   // Last trick feature props
   showLastTrick,
   lastTrick,
   onShowLastTrick,
-  onHideLastTrick
+  onHideLastTrick,
+  // Action bar props
+  onNewHand,
+  onUndo,
+  onReplay
 }) {
   if (!playState) return null;
 
@@ -252,11 +257,18 @@ export function PlayTable({
   return (
     <div className="play-table">
       {/* Consolidated Contract Header - MIGRATED to ContractHeader component */}
-      <ContractHeader contract={contract} tricksWon={tricks_won} auction={auction} dealer={dealer} scoreData={scoreData} />
+      <ContractHeader contract={contract} tricksWon={tricks_won} auction={auction} dealer={dealer} scoreData={scoreData} vulnerability={vulnerability} />
 
       <div className="play-area">
         {/* North position */}
         <div className="position position-north">
+          {/* Position label with badges per UI Redesign Spec */}
+          <div className={`position-label ${next_to_play === 'N' ? 'active-turn' : ''}`}>
+            North
+            {dummyPosition === 'N' && <span className="position-badge dummy">Dummy</span>}
+            {declarerPosition === 'N' && <span className="position-badge declarer">Declarer</span>}
+            {dummyPosition === 'N' && userIsDeclarer && <span className="position-badge you-control">You Control</span>}
+          </div>
           {/* CRITICAL: Use centralized visibility rule - prevents regression bugs */}
           {showNorthHand && !isHandComplete && (
             <div className={dummyPosition === 'N' ? "dummy-hand" : "declarer-hand"}>
@@ -273,8 +285,6 @@ export function PlayTable({
                       const isDisabled = !isMyTurn || !isLegalCard;
 
                       // CRITICAL: Use unique key across ALL cards (not just within suit)
-                      // Bug: Using suit-index causes React to reuse state for same index across hands
-                      // Fix: Include rank to make key truly unique per card
                       const cardKey = `north-${card.rank}-${card.suit}`;
 
                       return (
@@ -291,12 +301,6 @@ export function PlayTable({
               })}
             </div>
           )}
-          <div className="position-label">
-            North
-            <CompactTurnIndicator position="N" isActive={next_to_play === 'N'} />
-            {dummyPosition === 'N' && ' (Dummy)'}
-            {declarerPosition === 'N' && userIsDummy && ' (Declarer - You control)'}
-          </div>
         </div>
 
         {/* Current trick in center - CRITICAL: Positioned in center grid area */}
@@ -318,29 +322,17 @@ export function PlayTable({
           )}
         </div>
 
-        {/* Show Last Trick button - only visible after at least one trick completed */}
-        {lastTrick && !isHandComplete && (
-          <div className="last-trick-button-container">
-            <button
-              className="last-trick-button"
-              onClick={showLastTrick ? onHideLastTrick : onShowLastTrick}
-              title={showLastTrick ? "Return to current trick" : "View the last completed trick"}
-            >
-              {showLastTrick ? "Current Trick" : "↶ Last Trick"}
-            </button>
-          </div>
-        )}
 
         {/* West position - Left side (standard bridge layout) */}
         <div className="position position-west">
-          <div className="position-label">
+          <div className={`position-label ${next_to_play === 'W' ? 'active-turn' : ''}`}>
             West
-            <CompactTurnIndicator position="W" isActive={next_to_play === 'W'} />
-            {dummyPosition === 'W' && ' (Dummy)'}
-            {declarerPosition === 'W' && userIsDummy && ' (Declarer - You control)'}
+            {dummyPosition === 'W' && <span className="position-badge dummy">Dummy</span>}
+            {declarerPosition === 'W' && <span className="position-badge declarer">Declarer</span>}
+            {dummyPosition === 'W' && userIsDeclarer && <span className="position-badge you-control">You Control</span>}
           </div>
           {/* CRITICAL: Use centralized visibility rule - prevents regression bugs */}
-          {showWestHand && !isHandComplete && (
+          {showWestHand && !isHandComplete ? (
             <div className={dummyPosition === 'W' ? "dummy-hand" : "declarer-hand"}>
               {suitOrder.map(suit => {
                 const hand = dummyPosition === 'W' ? dummyHand : declarerHand;
@@ -370,19 +362,28 @@ export function PlayTable({
                 );
               })}
             </div>
+          ) : !isHandComplete && (
+            /* Show card backs when hand is hidden */
+            <div className="opponent-display">
+              <div className="opponent-card-fan">
+                {Array.from({ length: Math.min(6, 13 - totalTricksPlayed) }).map((_, i) => (
+                  <div key={i} className="card-back" />
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
         {/* East position - Right side (standard bridge layout) */}
         <div className="position position-east">
-          <div className="position-label">
+          <div className={`position-label ${next_to_play === 'E' ? 'active-turn' : ''}`}>
             East
-            <CompactTurnIndicator position="E" isActive={next_to_play === 'E'} />
-            {dummyPosition === 'E' && ' (Dummy)'}
-            {declarerPosition === 'E' && userIsDummy && ' (Declarer - You control)'}
+            {dummyPosition === 'E' && <span className="position-badge dummy">Dummy</span>}
+            {declarerPosition === 'E' && <span className="position-badge declarer">Declarer</span>}
+            {dummyPosition === 'E' && userIsDeclarer && <span className="position-badge you-control">You Control</span>}
           </div>
           {/* CRITICAL: Use centralized visibility rule - prevents regression bugs */}
-          {showEastHand && !isHandComplete && (
+          {showEastHand && !isHandComplete ? (
             <div className={dummyPosition === 'E' ? "dummy-hand" : "declarer-hand"}>
               {suitOrder.map(suit => {
                 const hand = dummyPosition === 'E' ? dummyHand : declarerHand;
@@ -412,15 +413,24 @@ export function PlayTable({
                 );
               })}
             </div>
+          ) : !isHandComplete && (
+            /* Show card backs when hand is hidden */
+            <div className="opponent-display">
+              <div className="opponent-card-fan">
+                {Array.from({ length: Math.min(6, 13 - totalTricksPlayed) }).map((_, i) => (
+                  <div key={i} className="card-back" />
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
         {/* South position (user) */}
         <div className="position position-south">
-          <div className="position-label">
+          <div className={`position-label ${(next_to_play === 'S' && !userIsDummy) ? 'active-turn' : ''}`}>
             South (You)
-            <CompactTurnIndicator position="S" isActive={next_to_play === 'S' && !userIsDummy} />
-            {userIsDummy && ' - Dummy'}
+            {userIsDummy && <span className="position-badge dummy">Dummy</span>}
+            {userIsDeclarer && <span className="position-badge declarer">Declarer</span>}
           </div>
           {userHand && userHand.length > 0 && (
             <div className="user-play-hand">
@@ -451,6 +461,56 @@ export function PlayTable({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Turn Indicator - centered below table per mockup */}
+      {!isHandComplete && (
+        <div className="play-turn-indicator">
+          <span className="turn-dot" />
+          {trick_complete ? (
+            <span className="turn-text">
+              {(trick_winner === 'N' || trick_winner === 'S') ? 'You win' : (trick_winner === 'E' ? 'East' : 'West') + ' wins'} — click to collect trick
+            </span>
+          ) : (isUserTurn || (userIsDeclarer && isDummyTurn)) ? (
+            <span className="turn-text">
+              Your turn — {dummyPosition && next_to_play === dummyPosition ? 'play from dummy' : 'click a card to play'}
+            </span>
+          ) : (
+            <span className="turn-text">
+              Waiting for {next_to_play === 'N' ? 'North' : next_to_play === 'E' ? 'East' : next_to_play === 'S' ? 'South' : 'West'}...
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Bottom Action Bar - slim row per mockup */}
+      <div className="action-bar">
+        <div className="action-btns">
+          {onNewHand && (
+            <button className="action-btn primary" onClick={onNewHand}>
+              🎲 New Hand
+            </button>
+          )}
+          {onUndo && (
+            <button className="action-btn secondary" onClick={onUndo}>
+              ↩ Undo
+            </button>
+          )}
+          {lastTrick && !isHandComplete && (
+            <button
+              className="action-btn secondary"
+              onClick={showLastTrick ? onHideLastTrick : onShowLastTrick}
+            >
+              {showLastTrick ? 'Current' : '↶ Last Trick'}
+            </button>
+          )}
+          {onReplay && (
+            <button className="action-btn secondary" onClick={onReplay}>
+              🔄 Replay
+            </button>
+          )}
+        </div>
+        {/* Trump and Trick info removed - already shown in ContractHeader */}
       </div>
     </div>
   );

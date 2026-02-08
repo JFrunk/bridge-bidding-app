@@ -10,6 +10,8 @@ import { FeedbackModal } from './components/bridge/FeedbackModal';
 import { ConventionHelpModal } from './components/bridge/ConventionHelpModal';
 import BidFeedbackPanel from './components/bridge/BidFeedbackPanel';
 import BeliefPanel from './components/bridge/BeliefPanel';
+import { SessionModeBar } from './components/bridge/SessionModeBar';
+import { CoachPanel } from './components/bridge/CoachPanel';
 import { GovernorConfirmDialog } from './components/bridge/GovernorConfirmDialog';
 import LearningDashboard from './components/learning/LearningDashboard';
 import LearningMode from './components/learning/LearningMode';
@@ -35,14 +37,41 @@ import TopNavigation from './components/navigation/TopNavigation';
 import UserMenu from './components/navigation/UserMenu';
 import { useDevMode } from './hooks/useDevMode';
 import { TrickPotentialChart, TrickPotentialButton } from './components/analysis/TrickPotentialChart';
+import LearningFlowsHub from './components/learning/flows/LearningFlowsHub';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 // --- UI Components ---
 // Note: Card component migrated to BridgeCard (components/bridge/BridgeCard.jsx)
-function HandAnalysis({ points, vulnerability, ddTable, onShowTrickPotential }) {
+function HandAnalysis({ points, vulnerability, ddTable, onShowTrickPotential, strip = false }) {
   if (!points) return null;
+
+  // Strip mode: Single horizontal line for BID screen redesign
+  if (strip) {
+    return (
+      <div className="hand-analysis-strip">
+        <span className="strip-total">
+          <strong>{points.total_points}</strong> total pts
+        </span>
+        <span className="strip-divider">|</span>
+        <span className="strip-suits">
+          <span className="suit-black">♠</span> {points.suit_hcp['♠']}({points.suit_lengths['♠']})
+          {' '}
+          <span className="suit-red">♥</span> {points.suit_hcp['♥']}({points.suit_lengths['♥']})
+          {' '}
+          <span className="suit-red">♦</span> {points.suit_hcp['♦']}({points.suit_lengths['♦']})
+          {' '}
+          <span className="suit-black">♣</span> {points.suit_hcp['♣']}({points.suit_lengths['♣']})
+        </span>
+        <span className="strip-divider">|</span>
+        <span className="strip-breakdown">
+          HCP: {points.hcp} + Dist: {points.dist_points}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="hand-analysis">
       <div className="hand-analysis-header">
@@ -320,6 +349,7 @@ function App() {
   const [conventionInfo, setConventionInfo] = useState(null);
   const [showLearningDashboard, setShowLearningDashboard] = useState(false);
   const [showLearningMode, setShowLearningMode] = useState(false);
+  const [showLearningFlowsHub, setShowLearningFlowsHub] = useState(false);
   const [learningModeTrack, setLearningModeTrack] = useState('bidding'); // 'bidding' or 'play'
   const [showModeSelector, setShowModeSelector] = useState(true); // Landing page - shown by default
 
@@ -429,6 +459,8 @@ function App() {
 
   // Card play state
   const [gamePhase, setGamePhase] = useState('bidding'); // 'bidding' or 'playing'
+  const [sessionMode, setSessionMode] = useState('coached'); // 'practice', 'coached', 'quiz'
+  const [showCoachPanel, setShowCoachPanel] = useState(true); // Coach panel visibility
   const [playState, setPlayState] = useState(null);
   const [dummyHand, setDummyHand] = useState(null);
   const [declarerHand, setDeclarerHand] = useState(null);
@@ -2654,6 +2686,7 @@ ${otherCommands}`;
 
   // Determine current active module for navigation
   const getCurrentModule = () => {
+    if (showLearningFlowsHub) return 'lab';
     if (showLearningMode) return 'learning';
     if (showLearningDashboard) return 'progress';
     if (currentWorkspace === 'play') return 'play';
@@ -2676,6 +2709,13 @@ ${otherCommands}`;
     setShowLearningMode(false);
     setShowLearningDashboard(false);
     setShowModeSelector(false);
+    setShowLearningFlowsHub(false);
+
+    // Handle LAB mode (localhost-only learning flows preview)
+    if (modeId === 'lab') {
+      setShowLearningFlowsHub(true);
+      return;
+    }
 
     // Navigate to selected module
     handleModeSelect(modeId);
@@ -2690,24 +2730,20 @@ ${otherCommands}`;
           onModuleSelect={handleNavModuleSelect}
           showTitle={!showModeSelector}
         >
-          {/* Utility buttons in nav right section */}
+          {/* Glossary button - text only */}
           <button
             className="nav-utility-button"
             onClick={() => setShowGlossary(true)}
             title="Bridge terminology glossary"
             data-testid="glossary-button"
           >
-            📖 <span className="nav-utility-label">Glossary</span>
+            Glossary
           </button>
-          <button
-            className="nav-utility-button nav-feedback-button"
-            onClick={() => setShowFeedbackModal(true)}
-            title="Report an issue or give feedback"
-            data-testid="global-feedback-button"
-          >
-            📝 <span className="nav-utility-label">Feedback</span>
-          </button>
-          <UserMenu onSignInClick={() => setShowLogin(true)} />
+          {/* User avatar menu - includes Feedback option */}
+          <UserMenu
+            onSignInClick={() => setShowLogin(true)}
+            onFeedbackClick={() => setShowFeedbackModal(true)}
+          />
         </TopNavigation>
       )}
 
@@ -2719,7 +2755,8 @@ ${otherCommands}`;
       />
 
       {/* Mode Selector - Landing Page (shown for returning users or after wizard) */}
-      {showModeSelector && isAuthenticated && !shouldShowWelcomeWizard && (
+      {/* Note: !showLearningFlowsHub guard prevents race condition on LAB navigation from landing page */}
+      {showModeSelector && isAuthenticated && !shouldShowWelcomeWizard && !showLearningFlowsHub && (
         <ModeSelector
           onSelectMode={handleModeSelect}
           userName={user?.display_name}
@@ -2751,6 +2788,12 @@ ${otherCommands}`;
       {/* Session Score Panel */}
       <SessionScorePanel sessionData={sessionData} />
 
+      {/* Learning Flows Hub - localhost only preview */}
+      {/* key prop forces remount to reset activeFlow state when reopening */}
+      {showLearningFlowsHub && (
+        <LearningFlowsHub key={Date.now()} onClose={() => setShowLearningFlowsHub(false)} />
+      )}
+
       {/* Play Workspace - Show options when entering play mode (before playing) */}
       {currentWorkspace === 'play' && gamePhase === 'bidding' && !hand?.length && (
         <PlayWorkspace
@@ -2763,8 +2806,9 @@ ${otherCommands}`;
         />
       )}
 
-      {/* Bidding Workspace Tabs - Show above bidding content */}
-      {currentWorkspace === 'bid' && gamePhase === 'bidding' && (
+      {/* Bidding Workspace Tabs - Only show in old table layout (shouldShowHands mode)
+          New layout uses SessionModeBar for mode/deal controls */}
+      {currentWorkspace === 'bid' && gamePhase === 'bidding' && shouldShowHands && (
         <BiddingWorkspace
           activeTab={biddingTab}
           onTabChange={handleBiddingTabChange}
@@ -2825,20 +2869,131 @@ ${otherCommands}`;
           </div>
         </div>
       ) : gamePhase === 'bidding' ? (
-        <div className="top-panel">
-          <div className="my-hand">
-            <h2>Your Hand (South)</h2>
-            <div className="hand-display">
-              {hand && hand.length > 0 ? getSuitOrder(null).map(suit => (<div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => (<BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p>{isInitializing ? 'System Initiating...' : 'Dealing...'}</p>}
+        /* BID screen layout per bid-mockup-v2.html */
+        <>
+          {/* Session Mode Bar - below header */}
+          <SessionModeBar
+            mode={sessionMode}
+            onModeChange={(mode) => {
+              setSessionMode(mode);
+              // Show/hide coach panel based on mode
+              setShowCoachPanel(mode === 'coached');
+            }}
+            vulnerability={vulnerability}
+            dealer={dealer}
+            dealSource={activeConvention || 'random'}
+            onDealSourceChange={(source) => {
+              if (source === 'random') {
+                dealNewHand();
+              } else {
+                loadScenarioByName(source);
+              }
+            }}
+            conventions={Object.values(scenariosByLevel || {}).flat().map(s => s.name)}
+          />
+
+          {/* Main content: game column + coach panel */}
+          <div className="bid-main-content">
+            {/* Game Column - green table */}
+            <div className="bid-game-column">
+              <div className="bid-game-area">
+                {/* Hand Analysis Strip - only in Coached mode */}
+                {sessionMode === 'coached' && handPoints && (
+                  <HandAnalysis
+                    points={handPoints}
+                    vulnerability={vulnerability}
+                    ddTable={ddTable}
+                    onShowTrickPotential={() => setShowTrickPotential(true)}
+                    strip={true}
+                  />
+                )}
+
+                {/* Your Hand - cards sorted by suit with gaps */}
+                <div className="bid-hand-container">
+                  <div className="hand-display">
+                    {hand && hand.length > 0 ? getSuitOrder(null).map(suit => (<div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => (<BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p style={{color: 'rgba(255,255,255,0.7)'}}>{isInitializing ? 'System Initiating...' : 'Dealing...'}</p>}
+                  </div>
+                </div>
+
+                {/* Bidding Section - history, feedback, box, actions all together */}
+                <div className="bidding-section">
+                  {/* Bidding History Table */}
+                  <div className="bidding-scroll">
+                    <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(auction)} />
+                  </div>
+
+                  {/* Bid feedback - inline strip */}
+                  {bidFeedback && gamePhase === 'bidding' && (
+                    <div className="feedback-strip">
+                      <div className={`feedback-icon ${bidFeedback.score >= 8 ? 'good' : bidFeedback.score >= 5 ? 'ok' : 'poor'}`}>
+                        {bidFeedback.score >= 8 ? '✓' : bidFeedback.score >= 5 ? '~' : '✗'}
+                      </div>
+                      <div className="feedback-text">
+                        <strong>{bidFeedback.score >= 8 ? 'Excellent!' : bidFeedback.score >= 5 ? 'Acceptable' : 'Suboptimal'}</strong> {bidFeedback.message || ''}
+                      </div>
+                      {bidFeedback.concept && <div className="feedback-concept">{bidFeedback.concept}</div>}
+                      <button className="feedback-close" onClick={() => setBidFeedback(null)}>×</button>
+                    </div>
+                  )}
+
+                  {/* Bidding Box - integrated into dark section */}
+                  <div className="bidding-box-container">
+                    <BiddingBoxComponent onBid={handleUserBid} disabled={nextBidder !== 'South' || isAiBidding || isAuctionOver(auction)} auction={auction} />
+                  </div>
+
+                  {/* Deal Actions */}
+                  <div className="deal-actions">
+                    {isAuctionOver(auction) && !isPassedOut(auction) ? (
+                      <button className="deal-btn primary" data-testid="play-this-hand-button" onClick={startPlayPhase}>
+                        ▶ Play This Hand
+                      </button>
+                    ) : (
+                      <button className="deal-btn primary" data-testid="deal-button" onClick={dealNewHand}>
+                        🎲 Deal New Hand
+                      </button>
+                    )}
+                    <button className="deal-btn secondary" data-testid="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>
+                      ↻ Rebid Hand
+                    </button>
+                    {isAuctionOver(auction) && !isPassedOut(auction) && (
+                      <button className="deal-btn secondary" onClick={dealNewHand}>
+                        🎲 Deal New
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {error && <div className="error-message" style={{color: '#ff8a8a', textAlign: 'center', padding: '8px'}}>{error}</div>}
+              </div>
             </div>
-            <HandAnalysis
-              points={handPoints}
-              vulnerability={vulnerability}
-              ddTable={ddTable}
-              onShowTrickPotential={() => setShowTrickPotential(true)}
-            />
+
+            {/* Coach Panel - only in Coached mode */}
+            {sessionMode === 'coached' && (
+              <CoachPanel
+                isVisible={showCoachPanel}
+                onClose={() => setShowCoachPanel(false)}
+                partnerInfo={beliefs?.partner ? {
+                  hcpRange: beliefs.partner.hcp_range || '—',
+                  shape: beliefs.partner.shape || '—',
+                  notes: beliefs.partner.notes
+                } : null}
+                opponentInfo={beliefs?.opponents ? {
+                  east: beliefs.opponents.east,
+                  west: beliefs.opponents.west
+                } : null}
+                bidExplanation={auction.length > 0 ? auction.slice(-3).map(a => a.explanation).filter(Boolean).join(' → ') : null}
+                auction={auction}
+                onRequestHint={() => {
+                  // Request a hint for the current position
+                  // This could trigger the existing hint mode functionality
+                  if (!hintModeEnabled) {
+                    setHintModeEnabled(true);
+                  }
+                }}
+              />
+            )}
           </div>
-        </div>
+        </>
       ) : null}
 
       {/* Trick Potential Chart Overlay */}
@@ -2847,37 +3002,6 @@ ${otherCommands}`;
           ddTable={ddTable}
           onClose={() => setShowTrickPotential(false)}
         />
-      )}
-
-      {!shouldShowHands && gamePhase === 'bidding' && (
-        <div className="bidding-area">
-          <h2>Bidding</h2>
-          {/* Turn indicator - Shows whose turn it is */}
-          {isAiBidding && players[nextPlayerIndex] !== 'South' && !isAuctionOver(auction) && (
-            <div className="turn-message">
-              ⏳ Waiting for {players[nextPlayerIndex]} to bid...
-            </div>
-          )}
-          {!isAiBidding && players[nextPlayerIndex] === 'South' && !isAuctionOver(auction) && (
-            <div className="turn-message your-turn">
-              ✅ Your turn to bid!
-            </div>
-          )}
-          <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(auction)} />
-          {/* Bid feedback panel - shown when hint mode is enabled */}
-          {hintModeEnabled && (
-            <BidFeedbackPanel
-              feedback={bidFeedback}
-              userBid={lastUserBid}
-              isVisible={!!bidFeedback && gamePhase === 'bidding'}
-              onDismiss={() => setBidFeedback(null)}
-              onOpenGlossary={(termId) => setShowGlossary(termId || true)}
-              mode="review"
-            />
-          )}
-          <BeliefPanel beliefs={beliefs} myHcp={handPoints?.hcp} />
-          {error && <div className="error-message">{error}</div>}
-        </div>
       )}
 
       {/* Loading state - showing when transitioning to play but playState not yet loaded */}
@@ -2949,6 +3073,7 @@ ${otherCommands}`;
             auction={auction}
             dealer={dealer}
             scoreData={scoreData}
+            vulnerability={vulnerability}
             // Last trick feature
             showLastTrick={showLastTrick}
             lastTrick={lastTrick}
@@ -2975,10 +3100,11 @@ ${otherCommands}`;
         </div>
       )}
 
+      {/* Action area - only show in old table-layout mode (shouldShowHands)
+          New layout: PlayTable has its own action-bar, no external controls needed
+          Per CC_CORRECTIONS Fix #5: Remove separate button section below table */}
+      {shouldShowHands && (
       <div className="action-area">
-        {gamePhase === 'bidding' && (
-          <BiddingBoxComponent onBid={handleUserBid} disabled={nextBidder !== 'South' || isAiBidding || isAuctionOver(auction)} auction={auction} />
-        )}
         <div className="controls-section">
           {/* Game controls - Context-aware based on game phase AND workspace */}
           <div className="game-controls">
@@ -2993,8 +3119,10 @@ ${otherCommands}`;
                   <button className="replay-button" data-testid="replay-hand-button" onClick={replayCurrentHand} disabled={!initialDeal}>🔄 Replay Hand</button>
                 </div>
               </>
-            ) : gamePhase === 'bidding' ? (
+            ) : gamePhase === 'bidding' && shouldShowHands ? (
               <>
+                {/* Bidding controls for table-layout view (shouldShowHands) */}
+                <BiddingBoxComponent onBid={handleUserBid} disabled={nextBidder !== 'South' || isAiBidding || isAuctionOver(auction)} auction={auction} />
                 {/* Convention mode badge */}
                 {activeConvention && (
                   <div className="convention-mode-badge" data-testid="convention-mode-badge">
@@ -3033,7 +3161,7 @@ ${otherCommands}`;
                   <button className="replay-button" data-testid="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>🔄 Rebid Hand</button>
                 </div>
               </>
-            ) : (
+            ) : gamePhase === 'playing' ? (
               <>
                 {/* Playing phase in Bid workspace - show play controls */}
                 <button className="play-new-hand-button primary-action" data-testid="play-new-hand-button" onClick={playRandomHand}>🎲 Play New Hand</button>
@@ -3043,7 +3171,7 @@ ${otherCommands}`;
                   <button className="replay-button" data-testid="replay-hand-button" onClick={replayCurrentHand}>🔄 Replay Hand</button>
                 </div>
               </>
-            )}
+            ) : null}
           </div>
 
           {/* AI Difficulty Selector & Review - Dev mode only (Ctrl+Shift+D to toggle) */}
@@ -3099,6 +3227,7 @@ ${otherCommands}`;
           </>
         )}
       </div>
+      )}
 
       <ReviewModal
         isOpen={showReviewModal}

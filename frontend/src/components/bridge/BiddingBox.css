@@ -1,0 +1,274 @@
+/* BiddingBox Component Styles - UI Redesign v2
+ * ACCESSIBILITY CRITICAL: WCAG AA for 60+ audience
+ * Light solid buttons on dark table surface for maximum contrast
+ */
+
+.bidding-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* Compact: was 10px */
+  padding: 8px; /* Compact: was 12px */
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Button rows */
+.bidding-box-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Base button styles - cream/off-white background per spec */
+/* COMPACT: reduced from 44px to 36px per viewport budget */
+.bid-button {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  background: #f0ede6;
+  border: 2px solid #c8c3b8;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 15px; /* Compact: was 17px */
+  font-weight: 700;
+  color: #2a2a2a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bid-button:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: var(--gold, #c8a44e);
+  box-shadow: 0 0 8px rgba(200, 164, 78, 0.4);
+}
+
+/* Suit button hover - keep cream with brighter border */
+.bid-suit-button:hover:not(:disabled) {
+  background: #f8f6f0;
+  border-color: #1a6b3c;
+  box-shadow: 0 0 8px rgba(26, 107, 60, 0.3);
+}
+
+.bid-button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Suit button active/click state - dark green with white symbol */
+.bid-suit-button:active:not(:disabled) {
+  background: #1a6b3c !important;
+  border-color: #1a6b3c !important;
+}
+
+.bid-suit-button:active:not(:disabled) .suit-symbol {
+  color: #ffffff !important;
+}
+
+/* Level buttons (1-7) */
+.bid-level-button {
+  min-width: 42px;
+}
+
+.bid-level-button.selected {
+  background: var(--gold, #c8a44e);
+  border-color: var(--gold, #c8a44e);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(200, 164, 78, 0.4);
+}
+
+/* Suit buttons - cream background with 24px colored symbols */
+.bid-suit-button {
+  min-width: 48px;
+  background: #f0ede6;
+  border: 2px solid #c8c3b8;
+}
+
+.bid-suit-button .suit-symbol {
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* Full-saturation suit colors on cream background - high contrast */
+.bid-suit-button .suit-clubs {
+  color: #1a6b3c; /* Dark green - contrast ~5.5:1 */
+}
+
+.bid-suit-button .suit-diamonds {
+  color: #d4540a; /* Burnt orange - contrast ~4.8:1 */
+}
+
+.bid-suit-button .suit-hearts {
+  color: #c41e3a; /* True red - contrast ~5.2:1 */
+}
+
+.bid-suit-button .suit-spades {
+  color: #1a1a1a; /* Near black - contrast ~12:1 */
+}
+
+.bid-suit-button .suit-nt {
+  font-size: 15px;
+  font-weight: 800;
+  color: #2a2a2a;
+}
+
+/* Suit buttons waiting for level selection - cream but slightly muted */
+.bid-suit-button:disabled {
+  background: #f0ede6;
+  border: 2px solid #d8d4cc;
+  cursor: default;
+  opacity: 0.7;
+}
+
+.bid-suit-button:disabled .suit-symbol {
+  opacity: 0.6;
+}
+
+/* Level buttons disabled - muted dark green (below minimum bid) */
+.bid-level-button:disabled {
+  background: #4a5e4f;
+  border-color: #3a4e3f;
+  color: #6b7d6f;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* Action buttons (Pass / Dbl / Rdbl) - 15px bold text, 2px borders */
+.bid-action-button {
+  min-width: 64px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Pass button - solid green background, white text */
+.bid-action-button.pass-button {
+  background: #2d8a4e;
+  border: 2px solid #268742;
+  color: #ffffff;
+}
+
+.bid-action-button.pass-button:hover:not(:disabled) {
+  background: #339956;
+  border-color: var(--gold, #c8a44e);
+  box-shadow: 0 0 8px rgba(200, 164, 78, 0.4);
+}
+
+.bid-action-button.pass-button:disabled {
+  background: #4a5e4f;
+  border-color: #3a4e3f;
+  color: #6b7d6f;
+  opacity: 1;
+}
+
+/* Double button - white/pink background, red border and text */
+.bid-action-button.double-button {
+  background: #fff0f0;
+  border: 2px solid #c41e3a;
+  color: #c41e3a;
+}
+
+.bid-action-button.double-button:hover:not(:disabled) {
+  background: #ffe0e0;
+  box-shadow: 0 0 8px rgba(196, 30, 58, 0.3);
+}
+
+.bid-action-button.double-button:disabled {
+  background: #e8e4e4;
+  border-color: #a89898;
+  color: #a89898;
+  opacity: 1;
+}
+
+/* Redouble button - white/blue background, blue border and text */
+.bid-action-button.redouble-button {
+  background: #f0f4ff;
+  border: 2px solid #3a5fa5;
+  color: #3a5fa5;
+}
+
+.bid-action-button.redouble-button:hover:not(:disabled) {
+  background: #e0e8ff;
+  box-shadow: 0 0 8px rgba(58, 95, 165, 0.3);
+}
+
+.bid-action-button.redouble-button:disabled {
+  background: #e4e6ec;
+  border-color: #9098a8;
+  color: #9098a8;
+  opacity: 1;
+}
+
+/* Compact for short viewports - Priority 4 (549-700px height) */
+@media (max-height: 700px) {
+  .bidding-box {
+    gap: 4px;  /* Reduce from 6px */
+    padding: 6px;  /* Reduce from 8px */
+  }
+
+  .bidding-box-row {
+    gap: 4px;  /* Reduce from 6px */
+  }
+
+  .bid-button {
+    height: 34px;  /* Reduce from 36px */
+    font-size: 14px;  /* Reduce from 15px */
+  }
+
+  .bid-level-button {
+    min-width: 38px;  /* Reduce from 42px */
+  }
+
+  .bid-suit-button .suit-symbol {
+    font-size: 20px;  /* Reduce from 24px */
+  }
+
+  .bid-action-button {
+    min-width: 56px;  /* Reduce from 64px */
+    font-size: 13px;  /* Reduce from 15px */
+  }
+}
+
+/* Responsive adjustments - maintain compact sizing */
+@media (max-width: 480px) {
+  .bidding-box {
+    padding: 6px;
+    gap: 5px;
+  }
+
+  .bidding-box-row {
+    gap: 4px;
+  }
+
+  .bid-button {
+    min-width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+
+  .bid-level-button {
+    min-width: 32px;
+    padding: 0 6px;
+  }
+
+  .bid-suit-button .suit-symbol {
+    font-size: 20px;
+  }
+
+  .bid-action-button {
+    min-width: 52px;
+    font-size: 13px;
+  }
+}
+
+/* Touch device support */
+@media (hover: none) and (pointer: coarse) {
+  .bid-button:active:not(:disabled) {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+}

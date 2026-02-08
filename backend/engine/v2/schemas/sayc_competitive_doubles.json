@@ -91,31 +91,37 @@
       "id": "takeout_double_direct",
       "bid": "X",
       "priority": 750,
-      "description": "Direct takeout double of opponent's opening",
+      "description": "Direct takeout double of opponent's opening (12-16 HCP, no 5-card major)",
       "constraints": [
         {"feature": "opener_relationship", "expected": "Opponent", "constraint_type": "HARD"},
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
         {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "hcp", "min": 12, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
         {"feature": "opponent_suit_length", "max": 2, "constraint_type": "HARD"},
+        {"feature": "spades_length", "max": 4, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "max": 4, "constraint_type": "HARD"},
         {"feature": "has_4_card_major", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
       ],
       "forcing": "one_round",
-      "explanation": "Takeout double showing {hcp} HCP with shortness in opponent's suit",
+      "explanation": "Takeout double showing {hcp} HCP with support for unbid suits",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "takeout_double_strong",
       "bid": "X",
       "priority": 760,
-      "description": "Strong takeout double (17+ HCP)",
+      "description": "Strong takeout double (17+ HCP) - start with double, bid suit later",
       "constraints": [
         {"feature": "opener_relationship", "expected": "Opponent", "constraint_type": "HARD"},
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.05}
+        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.05},
+        {"feature": "opponent_suit_length", "max": 2, "constraint_type": "HARD"},
+        {"feature": "spades_length", "max": 4, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "max": 4, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Strong takeout double with {hcp} HCP - will bid again to show strength",
+      "explanation": "Strong takeout double with {hcp} HCP - too strong for simple overcall, will bid again",
       "sets_forcing_level": "FORCING_1_ROUND"
     }
   ]
