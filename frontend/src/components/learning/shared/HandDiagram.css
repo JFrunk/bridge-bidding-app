@@ -1,0 +1,46 @@
+.hand-diagram {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.8;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 5px;
+}
+
+.suit-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.suit-sym {
+  font-size: 15px;
+  width: 20px;
+  text-align: center;
+}
+
+.suit-sym.s {
+  color: #1a1a1a;
+}
+
+.suit-sym.h {
+  color: #c41e3a;
+}
+
+.suit-sym.d {
+  color: #d4540a;
+}
+
+.suit-sym.c {
+  color: #1a6b3c;
+}
+
+.ranks {
+  color: #2a2a2a;
+  letter-spacing: 1px;
+}
+
+/* Highlighted (player's hand) */
+.hand-diagram.highlight {
+  border: 1.5px solid #c8a44e;
+}

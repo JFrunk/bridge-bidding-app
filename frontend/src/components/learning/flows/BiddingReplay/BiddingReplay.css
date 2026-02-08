@@ -1,0 +1,517 @@
+/**
+ * BiddingReplay Flow Styles
+ *
+ * Spaced repetition bidding review interface
+ * Uses shared FlowLayout zones: felt-zone (green) and interaction-zone (cream)
+ */
+
+/* Queue Review State - Welcome Screen */
+.replay-queue-review {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 24px;
+  min-height: 300px;
+}
+
+.replay-queue-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary, #2a2a2a);
+  margin: 0 0 8px 0;
+}
+
+.replay-queue-subtitle {
+  font-size: 16px;
+  color: var(--text-secondary, #666);
+  margin: 0 0 32px 0;
+}
+
+/* Queue Statistics */
+.replay-queue-stats {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.replay-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 24px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  min-width: 100px;
+}
+
+.replay-stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-accent, #c8a44e);
+}
+
+.replay-stat-label {
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+  margin-top: 4px;
+}
+
+/* Category Breakdown */
+.replay-categories {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 24px;
+}
+
+.replay-category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.replay-category-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #2a2a2a);
+}
+
+.replay-category-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-accent, #c8a44e);
+  background: rgba(200, 164, 78, 0.15);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+/* Empty State */
+.replay-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.replay-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.replay-empty-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary, #2a2a2a);
+  margin: 0 0 8px 0;
+}
+
+.replay-empty-message {
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+  max-width: 300px;
+}
+
+/* Present/Rebid States - Hand Display Area */
+.replay-hand-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.replay-hand-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.replay-hcp-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.replay-vulnerability-badge {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+/* Info Strip - Shows previous attempt info */
+.replay-info-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #f8f6f0 0%, #f0ede6 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 15px;
+  color: var(--text-primary, #2a2a2a);
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+.replay-info-icon {
+  font-size: 18px;
+}
+
+.replay-info-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Bidding Area */
+.replay-bidding-area {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.replay-auction-section {
+  margin-bottom: 8px;
+}
+
+.replay-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary, #666);
+  margin-bottom: 12px;
+}
+
+/* Bidding Box Container - matches Daily Hand style */
+.replay-bidding-box-container {
+  display: flex;
+  justify-content: center;
+}
+
+/* Hint Button */
+.replay-hint-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0 auto;
+}
+
+.replay-hint-button:hover {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+.replay-hint-text {
+  padding: 12px 16px;
+  background: rgba(200, 164, 78, 0.1);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-primary, #2a2a2a);
+  text-align: center;
+}
+
+/* Evaluate State - Result Display */
+.replay-result-area {
+  padding: 24px;
+}
+
+.replay-result-strip {
+  margin-bottom: 24px;
+}
+
+.replay-interval-update {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.replay-interval-icon {
+  font-size: 24px;
+}
+
+.replay-interval-text {
+  font-size: 15px;
+  color: var(--text-primary, #2a2a2a);
+}
+
+.replay-interval-days {
+  font-weight: 700;
+  color: var(--color-accent, #c8a44e);
+}
+
+.replay-explanation {
+  padding: 16px;
+  background: rgba(200, 164, 78, 0.08);
+  border-left: 3px solid var(--color-accent, #c8a44e);
+  border-radius: 0 8px 8px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary, #2a2a2a);
+  margin-bottom: 24px;
+}
+
+.replay-next-button {
+  display: flex;
+  justify-content: center;
+}
+
+/* Session Complete State */
+.replay-complete {
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.replay-complete-header {
+  margin-bottom: 32px;
+}
+
+.replay-complete-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary, #2a2a2a);
+  margin: 0 0 8px 0;
+}
+
+.replay-complete-score {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--color-accent, #c8a44e);
+  margin: 16px 0;
+}
+
+.replay-complete-label {
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+}
+
+/* Category Results */
+.replay-category-results {
+  margin-bottom: 32px;
+}
+
+.replay-category-results h4 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary, #666);
+  margin: 0 0 16px 0;
+}
+
+.replay-category-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.replay-category-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.replay-category-trend {
+  font-size: 18px;
+}
+
+.replay-category-trend.up::before {
+  content: '\2191'; /* Up arrow */
+  color: #2d8a4e;
+}
+
+.replay-category-trend.down::before {
+  content: '\2193'; /* Down arrow */
+  color: #c41e3a;
+}
+
+.replay-category-trend.flat::before {
+  content: '\2192'; /* Right arrow */
+  color: #666;
+}
+
+.replay-category-score {
+  font-weight: 600;
+}
+
+.replay-category-score.good {
+  color: #2d8a4e;
+}
+
+.replay-category-score.medium {
+  color: #c8a44e;
+}
+
+.replay-category-score.weak {
+  color: #c41e3a;
+}
+
+/* Next Review Dates */
+.replay-next-reviews {
+  margin-bottom: 32px;
+}
+
+.replay-next-reviews h4 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary, #666);
+  margin: 0 0 16px 0;
+}
+
+.replay-review-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.replay-review-category {
+  color: var(--text-primary, #2a2a2a);
+}
+
+.replay-review-date {
+  color: var(--text-secondary, #666);
+  font-weight: 500;
+}
+
+/* Mastered Badge */
+.replay-mastered-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+/* Action Buttons */
+.replay-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Progress Indicator */
+.replay-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.replay-progress-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.replay-progress-dot.completed {
+  background: #2d8a4e;
+}
+
+.replay-progress-dot.current {
+  background: var(--color-accent, #c8a44e);
+  transform: scale(1.2);
+}
+
+.replay-progress-dot.incorrect {
+  background: #c41e3a;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+  .replay-queue-review {
+    padding: 24px 16px;
+  }
+
+  .replay-queue-title {
+    font-size: 24px;
+  }
+
+  .replay-queue-stats {
+    gap: 16px;
+  }
+
+  .replay-stat-item {
+    padding: 12px 16px;
+    min-width: 80px;
+  }
+
+  .replay-stat-value {
+    font-size: 28px;
+  }
+
+  .replay-info-strip {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .replay-bidding-area {
+    padding: 16px;
+  }
+
+  .replay-complete-score {
+    font-size: 40px;
+  }
+
+  .replay-actions {
+    flex-direction: column;
+  }
+
+  .replay-actions .btn {
+    width: 100%;
+  }
+}
+
+/* Touch device support */
+@media (hover: none) and (pointer: coarse) {
+  .replay-hint-button:active {
+    transform: scale(0.98);
+  }
+}

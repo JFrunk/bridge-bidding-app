@@ -1,0 +1,128 @@
+/* Learning Flows Design Tokens
+ * All CSS custom properties for the learning flow components
+ * Reference: docs/redesign/Learning/learning-flows-package/docs/LEARNING_DESIGN_SYSTEM.md
+ */
+
+:root {
+  /* === Background Colors === */
+  --table-green: #1a6b3c;
+  --header-green: #14432a;
+  --cream: #f5f0e8;
+  --cream-light: #faf8f4;
+  --action-bar-bg: #f0ede6;
+  --action-bar-border: #e0dcd4;
+
+  /* === Accent Colors === */
+  --gold: #c8a44e;
+  --gold-light: #e8d49a;
+  --gold-hover: #b8943e;
+  --gold-ring: rgba(200, 164, 78, 0.3);
+
+  /* === Text Colors === */
+  --charcoal: #2a2a2a;
+  --text-primary: #2a2a2a;
+  --text-secondary: #555;
+  --text-muted: #888;
+  --text-label: #999;
+
+  /* === Text on Felt (green background) === */
+  --felt-text-primary: white;
+  --felt-text-secondary: rgba(255, 255, 255, 0.7);
+  --felt-text-muted: rgba(255, 255, 255, 0.4);
+  --felt-border: rgba(255, 255, 255, 0.12);
+  --felt-border-subtle: rgba(255, 255, 255, 0.04);
+
+  /* === Card Colors === */
+  --card-red: #c41e3a;
+  --card-black: #1a1a1a;
+  --card-bg: white;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 2px var(--gold);
+
+  /* === Suit Colors on Felt === */
+  --suit-spade-felt: #d0d0d0;
+  --suit-heart-felt: #ff6b7a;
+  --suit-club-felt: #8ec5a0;
+  --suit-diamond-felt: #ff8a5c;
+
+  /* === Suit Colors on Cards === */
+  --suit-spade: #1a1a1a;
+  --suit-heart: #c41e3a;
+  --suit-club: #1a6b3c;
+  --suit-diamond: #d4540a;
+
+  /* === Semantic Colors === */
+  --success: #2d8a4e;
+  --success-bg: rgba(45, 138, 78, 0.08);
+  --error: #c41e3a;
+  --error-bg: rgba(196, 30, 58, 0.06);
+  --info: #3a6fa5;
+  --info-bg: rgba(58, 111, 165, 0.06);
+
+  /* === Card Sizes: hand-h (primary) === */
+  --card-h-width: 48px;
+  --card-h-height: 64px;
+  --card-h-overlap: -16px;
+  --card-h-visible: 32px;
+  --card-h-rank-size: 20px;
+  --card-h-suit-size: 14px;
+
+  /* === Card Sizes: suit-row (East/West dummy) === */
+  --card-row-width: 40px;
+  --card-row-height: 54px;
+  --card-row-overlap: -12px;
+  --card-row-visible: 28px;
+  --card-row-rank-size: 16px;
+  --card-row-suit-size: 11px;
+
+  /* === Card Sizes: hand-mini (quiz displays) === */
+  --card-mini-width: 36px;
+  --card-mini-height: 48px;
+  --card-mini-overlap: -10px;
+  --card-mini-visible: 26px;
+  --card-mini-rank-size: 15px;
+  --card-mini-suit-size: 10px;
+
+  /* === Layout === */
+  --header-height: 48px;
+  --action-bar-height: 48px;
+  --interaction-max-height: 45vh;
+  --touch-target-min: 44px;
+
+  /* === Spacing === */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+
+  /* === Border Radius === */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 6px;
+
+  /* === Typography === */
+  --font-family: 'DM Sans', sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* === Transitions === */
+  --transition-fast: 0.12s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* === Skill Bar Thresholds === */
+  --threshold-good: 75;
+  --threshold-medium: 60;
+}

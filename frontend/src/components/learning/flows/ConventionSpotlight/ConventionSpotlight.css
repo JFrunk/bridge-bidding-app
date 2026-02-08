@@ -1,0 +1,587 @@
+/**
+ * ConventionSpotlight.css
+ *
+ * Styles for the Convention Spotlight flow (Flow 9)
+ * Reference: docs/redesign/Learning/learning-flows-package/docs/LEARNING_DESIGN_SYSTEM.md
+ */
+
+/* Import design tokens */
+@import '../../shared/styles/learning-tokens.css';
+
+/* ============================================
+   LIBRARY STATE - Convention Grid
+   ============================================ */
+
+.convention-library {
+  padding: var(--space-lg);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.convention-library-header {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.convention-library-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.convention-library-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.convention-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
+  gap: 12px;
+}
+
+.convention-card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.convention-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.convention-card:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.convention-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.convention-card-name {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.convention-card-category {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  background: var(--cream);
+  border-radius: 3px;
+}
+
+.convention-card-mastery {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.mastery-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--cream);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mastery-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width var(--transition-normal);
+}
+
+.mastery-fill.mastered {
+  background: var(--success);
+}
+
+.mastery-fill.learning {
+  background: var(--gold);
+}
+
+.mastery-fill.needs-practice {
+  background: var(--error);
+}
+
+.mastery-percent {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ============================================
+   REFERENCE STATE - Quick Reference Card
+   ============================================ */
+
+.convention-reference {
+  padding: var(--space-lg);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.reference-card {
+  background: white;
+  border-radius: 8px;
+  padding: var(--space-xl);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.reference-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--action-bar-border);
+}
+
+.reference-back-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-xs);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.reference-back-btn:hover {
+  color: var(--text-primary);
+  background: var(--cream);
+}
+
+.reference-back-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.reference-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0;
+  flex: 1;
+}
+
+.reference-section {
+  margin-bottom: var(--space-lg);
+}
+
+.reference-section:last-child {
+  margin-bottom: 0;
+}
+
+.reference-section-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.reference-when-to-use {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.reference-structure {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+  font-size: var(--font-size-base);
+  color: var(--charcoal);
+  background: var(--cream);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.reference-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.reference-list li {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  padding: var(--space-xs) 0;
+  padding-left: var(--space-lg);
+  position: relative;
+}
+
+.reference-list li::before {
+  content: '\2022';
+  position: absolute;
+  left: 0;
+  color: var(--gold);
+  font-weight: bold;
+}
+
+.reference-actions {
+  margin-top: var(--space-xl);
+  display: flex;
+  justify-content: center;
+}
+
+/* ============================================
+   DRILL STATE - Hand Practice
+   ============================================ */
+
+.drill-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.drill-felt-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  width: 100%;
+}
+
+.drill-hand-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.drill-hand-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--felt-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.drill-auction-section {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  border: 1px solid var(--felt-border);
+}
+
+.drill-auction-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--felt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-sm);
+  text-align: center;
+}
+
+.drill-interaction {
+  padding: var(--space-lg);
+}
+
+.drill-question {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  text-align: center;
+  margin: 0 0 var(--space-lg) 0;
+}
+
+.drill-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.drill-yes-no-choices {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+}
+
+.drill-yes-no-choices .choice-btn {
+  min-width: 100px;
+}
+
+.drill-bid-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: center;
+}
+
+/* ============================================
+   FEEDBACK STATE - Result Display
+   ============================================ */
+
+.feedback-container {
+  padding: var(--space-lg);
+}
+
+.feedback-explanation {
+  margin-top: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--cream);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.feedback-actions {
+  margin-top: var(--space-lg);
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+/* ============================================
+   CONVENTION SUMMARY STATE
+   ============================================ */
+
+.convention-summary {
+  padding: var(--space-lg);
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.summary-header {
+  margin-bottom: var(--space-xl);
+}
+
+.summary-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.summary-convention-name {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.summary-progress {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-xl);
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-md);
+  background: var(--cream);
+  border-radius: var(--radius-md);
+}
+
+.summary-stat-value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.summary-stat-value.correct {
+  color: var(--success);
+}
+
+.summary-stat-value.incorrect {
+  color: var(--error);
+}
+
+.summary-stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-mastery {
+  margin-bottom: var(--space-xl);
+}
+
+.summary-mastery-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.summary-mastery-level {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  display: inline-block;
+}
+
+.summary-mastery-level.mastered {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.summary-mastery-level.learning {
+  background: rgba(200, 164, 78, 0.1);
+  color: var(--gold-hover);
+}
+
+.summary-mastery-level.needs-practice {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.summary-related {
+  margin-bottom: var(--space-xl);
+  padding: var(--space-md);
+  background: var(--cream);
+  border-radius: var(--radius-md);
+}
+
+.summary-related-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.summary-related-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: center;
+}
+
+.summary-related-item {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  background: white;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid var(--action-bar-border);
+  transition: all var(--transition-fast);
+}
+
+.summary-related-item:hover {
+  border-color: var(--gold);
+  color: var(--gold-hover);
+}
+
+.summary-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+/* ============================================
+   SUIT SYMBOL COLORS
+   ============================================ */
+
+.suit-red {
+  color: var(--card-red);
+}
+
+.suit-black {
+  color: var(--card-black);
+}
+
+/* On felt background */
+.felt-zone .suit-red {
+  color: var(--suit-heart-felt);
+}
+
+.felt-zone .suit-black {
+  color: var(--suit-spade-felt);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 480px) {
+  .convention-library {
+    padding: var(--space-md);
+  }
+
+  .convention-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .convention-card {
+    padding: var(--space-md);
+  }
+
+  .convention-reference {
+    padding: var(--space-md);
+  }
+
+  .reference-card {
+    padding: var(--space-lg);
+  }
+
+  .summary-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-sm);
+  }
+
+  .summary-stat {
+    padding: var(--space-sm);
+  }
+
+  .summary-stat-value {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (max-width: 360px) {
+  .convention-library-title {
+    font-size: var(--font-size-lg);
+  }
+
+  .reference-title {
+    font-size: var(--font-size-md);
+  }
+
+  .drill-question {
+    font-size: var(--font-size-base);
+  }
+
+  .drill-yes-no-choices .choice-btn {
+    min-width: 80px;
+  }
+}

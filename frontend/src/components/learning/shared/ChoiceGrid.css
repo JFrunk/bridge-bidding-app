@@ -1,0 +1,126 @@
+/* ChoiceGrid - Quiz-style multiple choice buttons */
+
+.choice-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.choice-btn {
+  /* Base sizing - ensure 44px minimum touch target */
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 16px;
+
+  /* Typography */
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+
+  /* Appearance */
+  border-radius: 5px;
+  border: 2px solid #d4cfc5;
+  background: white;
+  color: #555;
+
+  /* Interaction */
+  cursor: pointer;
+  transition: all 0.12s ease;
+
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.choice-btn:hover:not(.disabled):not(.correct):not(.wrong) {
+  border-color: #c8a44e;
+  color: #2a2a2a;
+}
+
+.choice-btn:focus-visible {
+  outline: 2px solid #c8a44e;
+  outline-offset: 2px;
+}
+
+/* Selected state (before result shown) */
+.choice-btn.selected {
+  border-color: #c8a44e;
+  background: rgba(200, 164, 78, 0.08);
+  color: #2a2a2a;
+}
+
+/* Correct answer state */
+.choice-btn.correct {
+  border-color: #2d8a4e;
+  background: rgba(45, 138, 78, 0.08);
+  color: #2d8a4e;
+}
+
+/* Wrong answer state */
+.choice-btn.wrong {
+  border-color: #c41e3a;
+  background: rgba(196, 30, 58, 0.06);
+  color: #c41e3a;
+  text-decoration: line-through;
+}
+
+/* Disabled state */
+.choice-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Suit symbol colors */
+.choice-btn .suit-red {
+  color: #c41e3a;
+}
+
+.choice-btn .suit-black {
+  color: #2a2a2a;
+}
+
+/* Preserve suit colors in correct state */
+.choice-btn.correct .suit-red {
+  color: #c41e3a;
+}
+
+.choice-btn.correct .suit-black {
+  color: #2a2a2a;
+}
+
+/* Muted suit colors in wrong/disabled states */
+.choice-btn.wrong .suit-red,
+.choice-btn.wrong .suit-black {
+  color: inherit;
+}
+
+.choice-btn.disabled .suit-red,
+.choice-btn.disabled .suit-black {
+  color: inherit;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .choice-grid {
+    gap: 6px;
+  }
+
+  .choice-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .choice-grid {
+    gap: 4px;
+  }
+
+  .choice-btn {
+    padding: 6px 10px;
+    /* Maintain 44px minimum touch target */
+    min-height: 44px;
+  }
+}

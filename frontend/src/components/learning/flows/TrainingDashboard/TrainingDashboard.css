@@ -1,0 +1,418 @@
+/**
+ * TrainingDashboard.css
+ * Styles for the Training Dashboard (Flow 10)
+ *
+ * Custom layout - does not use FlowLayout.
+ * Uses consistent colors from the design system.
+ */
+
+/* Fixed overlay container - matches FlowLayout behavior */
+.training-dashboard-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #f5f0e8; /* cream background */
+  overflow-y: auto;
+}
+
+.training-dashboard {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dashboard-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2a2a2a;
+  margin: 0;
+}
+
+/* Close button */
+.dashboard-close-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(0, 0, 0, 0.06);
+  color: #555;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.dashboard-close-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
+  color: #2a2a2a;
+}
+
+/* Period Toggle */
+.period-toggle {
+  display: flex;
+  background: #e0dcd4;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.period-btn {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.period-btn:hover {
+  color: #2a2a2a;
+}
+
+.period-btn.active {
+  background: white;
+  color: #2a2a2a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Summary Cards Row */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8e5df;
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: #2a2a2a;
+  line-height: 1;
+}
+
+.stat-value .fire {
+  font-size: 24px;
+  margin-left: 4px;
+}
+
+.stat-trend {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.stat-trend.improving {
+  color: #2d8a4e;
+}
+
+.stat-trend.stable {
+  color: #888;
+}
+
+.stat-trend.declining {
+  color: #c41e3a;
+}
+
+/* Section Container */
+.dashboard-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8e5df;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2a2a2a;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-icon {
+  font-size: 16px;
+}
+
+/* Skill Breakdown */
+.skill-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Suggestion Box */
+.suggestion-box {
+  background: linear-gradient(135deg, #fef9e7 0%, #fdf5dd 100%);
+  border: 1px solid #e8d9a8;
+}
+
+.suggestion-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.suggestion-text {
+  flex: 1;
+}
+
+.suggestion-text p {
+  margin: 0;
+  font-size: 14px;
+  color: #5a5a5a;
+  line-height: 1.5;
+}
+
+.suggestion-text .highlight {
+  font-weight: 600;
+  color: #2a2a2a;
+}
+
+.suggestion-action {
+  flex-shrink: 0;
+}
+
+/* Empty state for suggestions */
+.suggestion-empty {
+  text-align: center;
+  padding: 12px 0;
+  color: #888;
+  font-size: 14px;
+}
+
+/* Convention Mastery */
+.convention-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.convention-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f5f3ef;
+  border-radius: 16px;
+  font-size: 13px;
+}
+
+.convention-name {
+  font-weight: 600;
+  color: #2a2a2a;
+}
+
+.convention-pct {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.convention-pct.good {
+  color: #2d8a4e;
+}
+
+.convention-pct.medium {
+  color: #c8a44e;
+}
+
+.convention-pct.weak {
+  color: #c41e3a;
+}
+
+/* Recent Activity */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #f9f8f6;
+  border-radius: 8px;
+}
+
+.activity-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.activity-type {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2a2a2a;
+}
+
+.activity-time {
+  font-size: 11px;
+  color: #888;
+}
+
+.activity-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-score {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.activity-score.good {
+  color: #2d8a4e;
+}
+
+.activity-score.medium {
+  color: #c8a44e;
+}
+
+.activity-score.weak {
+  color: #c41e3a;
+}
+
+.activity-detail {
+  font-size: 11px;
+  color: #888;
+}
+
+/* Empty States */
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: #888;
+}
+
+.empty-state-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+.empty-state-text {
+  font-size: 14px;
+}
+
+/* Streak Section */
+.streak-section {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+/* Review Queue Badge */
+.review-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #c41e3a;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .training-dashboard {
+    padding: 16px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .summary-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .stat-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    padding: 12px 16px;
+  }
+
+  .stat-label {
+    margin-bottom: 0;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .suggestion-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .convention-list {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 360px) {
+  .training-dashboard {
+    padding: 12px;
+  }
+
+  .period-toggle {
+    width: 100%;
+  }
+
+  .period-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .dashboard-section {
+    padding: 16px;
+  }
+}

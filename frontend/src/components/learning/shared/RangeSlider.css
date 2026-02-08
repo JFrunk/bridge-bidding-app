@@ -1,0 +1,209 @@
+/* RangeSlider.css - Dual-endpoint range slider for HCP estimation */
+
+.range-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.slider-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  min-width: 100px;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider-track {
+  flex: 1;
+  height: 6px;
+  background: #e0dcd4;
+  border-radius: 3px;
+  position: relative;
+  min-width: 120px;
+}
+
+/* Selected range fill bar */
+.slider-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background: #c8a44e;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Correct range overlay */
+.slider-correct {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  background: rgba(45, 138, 78, 0.3);
+  border: 1px solid #2d8a4e;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Display value */
+.slider-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2a2a2a;
+  min-width: 50px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Range input styling - overlapping inputs for dual handles */
+.slider-input {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  z-index: 2;
+}
+
+.slider-input:focus {
+  outline: none;
+}
+
+/* Webkit (Chrome, Safari) thumb styling */
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border: 2px solid #c8a44e;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.slider-input::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.slider-input::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+  background: #f8f6f2;
+}
+
+.slider-input:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(200, 164, 78, 0.3);
+}
+
+/* Firefox thumb styling */
+.slider-input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border: 2px solid #c8a44e;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.slider-input::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.slider-input::-moz-range-thumb:active {
+  transform: scale(1.15);
+  background: #f8f6f2;
+}
+
+.slider-input:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(200, 164, 78, 0.3);
+}
+
+/* Hide the track on both inputs - we use our custom track */
+.slider-input::-webkit-slider-runnable-track {
+  height: 0;
+  background: transparent;
+}
+
+.slider-input::-moz-range-track {
+  height: 0;
+  background: transparent;
+}
+
+/* Disabled state */
+.range-slider--disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.range-slider--disabled .slider-input::-webkit-slider-thumb {
+  background: #ddd;
+  border-color: #aaa;
+  cursor: not-allowed;
+}
+
+.range-slider--disabled .slider-input::-moz-range-thumb {
+  background: #ddd;
+  border-color: #aaa;
+  cursor: not-allowed;
+}
+
+.range-slider--disabled .slider-fill {
+  background: #bbb;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .slider-label {
+    font-size: 12px;
+    min-width: 80px;
+  }
+
+  .slider-value {
+    font-size: 13px;
+    min-width: 45px;
+  }
+
+  .slider-input::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  .slider-input::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* Horizontal layout variant */
+.range-slider.range-slider--horizontal {
+  flex-direction: row;
+  align-items: center;
+}
+
+.range-slider--horizontal .slider-label {
+  flex-shrink: 0;
+}
+
+.range-slider--horizontal .slider-container {
+  flex: 1;
+}

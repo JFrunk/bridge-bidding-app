@@ -1,0 +1,237 @@
+/* HandDisplay.css
+ * Styles for the HandDisplay component - overlapping card display
+ * Reference: docs/redesign/Learning/learning-flows-package/docs/LEARNING_DESIGN_SYSTEM.md
+ */
+
+@import './styles/learning-tokens.css';
+
+/* === Hand Container === */
+.hand-display {
+  display: flex;
+  align-items: center;
+}
+
+/* === Base Card Styles === */
+/* CRITICAL: Hardcoded fallback values to ensure cards render correctly */
+.hand-card {
+  background: white;
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  position: relative;
+  cursor: default;
+  user-select: none;
+  flex-shrink: 0;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.hand-card:first-child {
+  margin-left: 0;
+}
+
+/* === Card Content - LEFT aligned in visible strip === */
+.hand-card-content {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+/* Last card shows full face - content centered */
+.hand-card:last-child .hand-card-content {
+  width: 100%;
+}
+
+.hand-card-rank {
+  font-weight: 800; /* CRITICAL: Hardcoded - var(--font-weight-extrabold) */
+  line-height: 1;
+}
+
+.hand-card-suit {
+  line-height: 1;
+}
+
+/* === Suit Colors === */
+/* CRITICAL: Hardcoded - CSS variables weren't loading via @import */
+.hand-card.red .hand-card-rank,
+.hand-card.red .hand-card-suit {
+  color: #c41e3a; /* var(--card-red) */
+}
+
+.hand-card.black .hand-card-rank,
+.hand-card.black .hand-card-suit {
+  color: #1a1a1a; /* var(--card-black) */
+}
+
+/* === Card States === */
+.hand-card.selectable {
+  cursor: pointer;
+}
+
+.hand-card.selectable:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 2px #c8a44e; /* var(--card-shadow-hover) */
+  z-index: 10;
+}
+
+.hand-card.selectable:focus {
+  outline: none;
+  transform: translateY(-6px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 2px #c8a44e; /* var(--card-shadow-hover) */
+  z-index: 10;
+}
+
+.hand-card.selected {
+  transform: translateY(-6px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 2px #c8a44e; /* var(--card-shadow-hover) */
+  z-index: 10;
+}
+
+.hand-card.correct {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px #2d8a4e; /* var(--success) */
+}
+
+.hand-card.incorrect {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px #c41e3a; /* var(--error) */
+  opacity: 0.6;
+}
+
+.hand-card.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* === Mode: hand-h (Primary - 48x64px) === */
+/* CRITICAL: Hardcoded values to ensure cards render at correct size */
+/* CSS variables weren't loading via @import - see learning-tokens.css for source values */
+.hand-display--hand-h .hand-card {
+  width: 48px;
+  height: 64px;
+  margin-left: -16px;
+}
+
+.hand-display--hand-h .hand-card:first-child {
+  margin-left: 0;
+}
+
+.hand-display--hand-h .hand-card-content {
+  width: 32px;
+}
+
+.hand-display--hand-h .hand-card:last-child .hand-card-content {
+  width: 100%;
+}
+
+.hand-display--hand-h .hand-card-rank {
+  font-size: 20px;
+}
+
+.hand-display--hand-h .hand-card-suit {
+  font-size: 14px;
+}
+
+/* === Mode: suit-row (East/West dummy - 40x54px) === */
+.hand-display--suit-row .hand-card {
+  width: 40px;
+  height: 54px;
+  margin-left: -12px;
+}
+
+.hand-display--suit-row .hand-card:first-child {
+  margin-left: 0;
+}
+
+.hand-display--suit-row .hand-card-content {
+  width: 28px;
+}
+
+.hand-display--suit-row .hand-card:last-child .hand-card-content {
+  width: 100%;
+}
+
+.hand-display--suit-row .hand-card-rank {
+  font-size: 16px;
+}
+
+.hand-display--suit-row .hand-card-suit {
+  font-size: 11px;
+}
+
+/* === Mode: hand-mini (Quiz displays - 36x48px) === */
+.hand-display--hand-mini .hand-card {
+  width: 36px;
+  height: 48px;
+  margin-left: -10px;
+}
+
+.hand-display--hand-mini .hand-card:first-child {
+  margin-left: 0;
+}
+
+.hand-display--hand-mini .hand-card-content {
+  width: 26px;
+}
+
+.hand-display--hand-mini .hand-card:last-child .hand-card-content {
+  width: 100%;
+}
+
+.hand-display--hand-mini .hand-card-rank {
+  font-size: 15px;
+}
+
+.hand-display--hand-mini .hand-card-suit {
+  font-size: 10px;
+}
+
+/* === Responsive Adjustments === */
+@media (max-width: 480px) {
+  /* Slightly smaller cards on mobile */
+  .hand-display--hand-h .hand-card {
+    width: 44px;
+    height: 58px;
+    margin-left: -14px;
+  }
+
+  .hand-display--hand-h .hand-card:first-child {
+    margin-left: 0;
+  }
+
+  .hand-display--hand-h .hand-card-content {
+    width: 30px;
+  }
+
+  .hand-display--hand-h .hand-card-rank {
+    font-size: 18px;
+  }
+
+  .hand-display--hand-h .hand-card-suit {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  /* Even smaller on extra small phones */
+  .hand-display--hand-h .hand-card {
+    width: 40px;
+    height: 52px;
+    margin-left: -12px;
+  }
+
+  .hand-display--hand-h .hand-card-content {
+    width: 28px;
+  }
+
+  .hand-display--hand-h .hand-card-rank {
+    font-size: 16px;
+  }
+
+  .hand-display--hand-h .hand-card-suit {
+    font-size: 11px;
+  }
+}

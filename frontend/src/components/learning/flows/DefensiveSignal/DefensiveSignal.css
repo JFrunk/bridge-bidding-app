@@ -1,0 +1,461 @@
+/**
+ * DefensiveSignal.css
+ * Flow-specific styles for the Defensive Signal Quiz
+ */
+
+@import '../../shared/styles/learning-tokens.css';
+
+/* === Level Select State === */
+.signal-level-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  width: 100%;
+  max-width: 400px;
+}
+
+.signal-level-title {
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--space-sm) 0;
+  text-align: center;
+}
+
+.signal-level-subtitle {
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  margin: 0 0 var(--space-lg) 0;
+  text-align: center;
+}
+
+.signal-level-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.signal-level-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: var(--space-lg);
+  background: white;
+  border: 1.5px solid var(--action-bar-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  text-align: left;
+  width: 100%;
+}
+
+.signal-level-btn:hover {
+  border-color: var(--gold);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.signal-level-btn:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-ring);
+}
+
+.signal-level-btn-name {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.signal-level-btn-desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+/* === Felt Zone Layout (PRESENT and SELECT_CARD states) === */
+.signal-felt-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-xl);
+  width: 100%;
+  max-width: 700px;
+}
+
+.signal-situation-panel {
+  flex: 1;
+  max-width: 260px;
+}
+
+.signal-your-hand-panel {
+  flex: 1;
+  max-width: 300px;
+}
+
+/* === Situation Panel === */
+.signal-situation-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--felt-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+}
+
+.signal-situation-title {
+  color: var(--felt-text-muted);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 var(--space-md) 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.signal-situation-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  color: var(--felt-text-primary);
+  font-size: var(--font-size-base);
+}
+
+.signal-situation-label {
+  color: var(--felt-text-muted);
+  font-size: var(--font-size-sm);
+  min-width: 70px;
+}
+
+.signal-situation-value {
+  color: var(--felt-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Dummy display within situation */
+.signal-dummy-section {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--felt-border-subtle);
+}
+
+.signal-dummy-label {
+  color: var(--felt-text-muted);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-sm);
+}
+
+.signal-dummy-diagram {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.signal-dummy-diagram .suit-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.6;
+}
+
+.signal-dummy-diagram .suit-sym {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+}
+
+.signal-dummy-diagram .suit-sym.s { color: var(--suit-spade-felt); }
+.signal-dummy-diagram .suit-sym.h { color: var(--suit-heart-felt); }
+.signal-dummy-diagram .suit-sym.c { color: var(--suit-club-felt); }
+.signal-dummy-diagram .suit-sym.d { color: var(--suit-diamond-felt); }
+
+.signal-dummy-diagram .ranks {
+  color: var(--felt-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.5px;
+}
+
+/* === Your Hand Panel === */
+.signal-your-hand-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.signal-your-hand-title {
+  color: var(--felt-text-muted);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 var(--space-md) 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.signal-hand-container {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--felt-border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+}
+
+/* Highlight signal suit indicator */
+.signal-suit-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
+  background: rgba(200, 164, 78, 0.2);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  color: var(--gold-light);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.signal-suit-symbol {
+  font-size: var(--font-size-md);
+}
+
+/* === Interaction Zone Content === */
+.signal-interaction-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  text-align: center;
+}
+
+.signal-prompt {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.signal-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--info-bg);
+  color: var(--info);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.signal-waiting-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+/* === Result State === */
+.signal-result-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 100%;
+  max-width: 500px;
+}
+
+.signal-explanation {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  padding: var(--space-md);
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: var(--radius-md);
+}
+
+.signal-result-cards {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-lg);
+  margin-top: var(--space-sm);
+}
+
+.signal-card-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.signal-card-label-text {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.signal-card-display {
+  width: 48px;
+  height: 64px;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--card-shadow);
+}
+
+.signal-card-display.correct {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px var(--success);
+}
+
+.signal-card-display.incorrect {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px var(--error);
+  opacity: 0.7;
+}
+
+.signal-card-rank {
+  font-size: 20px;
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1;
+}
+
+.signal-card-suit {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.signal-card-display.red .signal-card-rank,
+.signal-card-display.red .signal-card-suit {
+  color: var(--card-red);
+}
+
+.signal-card-display.black .signal-card-rank,
+.signal-card-display.black .signal-card-suit {
+  color: var(--card-black);
+}
+
+/* === Session Summary State === */
+.signal-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xl);
+  padding: var(--space-xl);
+  width: 100%;
+  max-width: 400px;
+}
+
+.signal-summary-score {
+  text-align: center;
+}
+
+.signal-summary-fraction {
+  font-size: 36px;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.signal-summary-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-top: var(--space-xs);
+}
+
+.signal-summary-breakdown {
+  width: 100%;
+}
+
+.signal-summary-breakdown-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+.signal-summary-type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--action-bar-border);
+}
+
+.signal-summary-type-row:last-child {
+  border-bottom: none;
+}
+
+.signal-summary-type-name {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.signal-summary-type-score {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.signal-summary-type-score.good {
+  color: var(--success);
+}
+
+.signal-summary-type-score.medium {
+  color: var(--gold);
+}
+
+.signal-summary-type-score.weak {
+  color: var(--error);
+}
+
+.signal-summary-type-score.na {
+  color: var(--text-muted);
+}
+
+.signal-summary-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+/* === Responsive === */
+@media (max-width: 600px) {
+  .signal-felt-content {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+  }
+
+  .signal-situation-panel,
+  .signal-your-hand-panel {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .signal-level-select {
+    padding: var(--space-lg);
+  }
+
+  .signal-summary {
+    padding: var(--space-lg);
+  }
+
+  .signal-summary-fraction {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 360px) {
+  .signal-level-btn {
+    padding: var(--space-md);
+  }
+
+  .signal-level-btn-name {
+    font-size: var(--font-size-base);
+  }
+}

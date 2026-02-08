@@ -1,0 +1,30 @@
+.progress-ring {
+  position: relative;
+}
+
+.progress-ring svg {
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  stroke: #e0dcd4;
+  fill: none;
+}
+
+.ring-fill {
+  stroke: #c8a44e;
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s;
+}
+
+.ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: #2a2a2a;
+}

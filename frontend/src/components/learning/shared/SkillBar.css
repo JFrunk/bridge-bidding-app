@@ -1,0 +1,59 @@
+.skill-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.skill-name {
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 160px;
+}
+
+.skill-track {
+  flex: 1;
+  height: 8px;
+  background: #e0dcd4;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.skill-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s;
+}
+
+.skill-pct {
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 35px;
+  text-align: right;
+}
+
+/* Color thresholds: >=75% green, 60-74% gold, <60% red */
+.skill-pct.good,
+.skill-fill.good {
+  color: #2d8a4e;
+  background: #2d8a4e;
+}
+
+.skill-pct.medium,
+.skill-fill.medium {
+  color: #c8a44e;
+  background: #c8a44e;
+}
+
+.skill-pct.weak,
+.skill-fill.weak {
+  color: #c41e3a;
+  background: #c41e3a;
+}
+
+/* Fix: skill-pct should not have background */
+.skill-pct.good,
+.skill-pct.medium,
+.skill-pct.weak {
+  background: transparent;
+}

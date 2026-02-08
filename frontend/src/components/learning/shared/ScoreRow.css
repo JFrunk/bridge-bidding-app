@@ -1,0 +1,33 @@
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.score-row:last-child {
+  border-bottom: none;
+}
+
+.score-label {
+  font-size: 13px;
+  color: #888;
+}
+
+.score-value {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.score-value.good {
+  color: #2d8a4e;
+}
+
+.score-value.bad {
+  color: #c41e3a;
+}
+
+.score-value.neutral {
+  color: #555;
+}

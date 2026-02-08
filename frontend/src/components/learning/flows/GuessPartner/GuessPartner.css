@@ -1,0 +1,341 @@
+/**
+ * GuessPartner.css
+ *
+ * Flow-specific styles for the Guess Partner's Hand flow.
+ * Builds on shared component styles from the design system.
+ *
+ * Reference: docs/redesign/Learning/learning-flows-package/docs/LEARNING_DESIGN_SYSTEM.md
+ */
+
+/* ============================================
+   Felt Zone Layout
+   ============================================ */
+
+.guess-partner-felt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.felt-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 4px;
+}
+
+/* Auction display container */
+.auction-section {
+  width: 100%;
+  max-width: 320px;
+}
+
+/* Hand display container */
+.hand-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Partner's revealed hand */
+.partner-hand-section {
+  width: 100%;
+  max-width: 280px;
+  margin-top: 8px;
+}
+
+.partner-hand-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* ============================================
+   Interaction Zone Layout
+   ============================================ */
+
+.guess-partner-interaction {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.estimation-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Panel sections */
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #999;
+}
+
+/* Prompt text */
+.prompt-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2a2a2a;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+/* ============================================
+   Choice Group Styles
+   ============================================ */
+
+.suit-choice-group,
+.length-choice-group,
+.shape-choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suit-choice-btn,
+.length-choice-btn,
+.shape-choice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid #d4cfc5;
+  background: white;
+  color: #555;
+  transition: all 0.12s ease;
+  min-width: 48px;
+}
+
+.suit-choice-btn:hover:not(.disabled):not(.correct):not(.wrong),
+.length-choice-btn:hover:not(.disabled):not(.correct):not(.wrong),
+.shape-choice-btn:hover:not(.disabled):not(.correct):not(.wrong) {
+  border-color: #c8a44e;
+  color: #2a2a2a;
+}
+
+.suit-choice-btn.selected,
+.length-choice-btn.selected,
+.shape-choice-btn.selected {
+  border-color: #c8a44e;
+  background: rgba(200, 164, 78, 0.08);
+  color: #2a2a2a;
+}
+
+.suit-choice-btn.correct,
+.length-choice-btn.correct,
+.shape-choice-btn.correct {
+  border-color: #2d8a4e;
+  background: rgba(45, 138, 78, 0.08);
+  color: #2d8a4e;
+}
+
+.suit-choice-btn.wrong,
+.length-choice-btn.wrong,
+.shape-choice-btn.wrong {
+  border-color: #c41e3a;
+  background: rgba(196, 30, 58, 0.06);
+  color: #c41e3a;
+  text-decoration: line-through;
+}
+
+.suit-choice-btn.disabled,
+.length-choice-btn.disabled,
+.shape-choice-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Suit symbols in buttons */
+.suit-choice-btn .suit-symbol {
+  font-size: 18px;
+}
+
+.suit-choice-btn .suit-symbol.spades,
+.suit-choice-btn .suit-symbol.clubs {
+  color: #1a1a1a;
+}
+
+.suit-choice-btn .suit-symbol.hearts,
+.suit-choice-btn .suit-symbol.diamonds {
+  color: #c41e3a;
+}
+
+/* Shape buttons are wider */
+.shape-choice-btn {
+  flex: 1;
+  min-width: 100px;
+}
+
+/* ============================================
+   Score Display
+   ============================================ */
+
+.score-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.score-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+}
+
+.overall-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(200, 164, 78, 0.08);
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.overall-score-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+.overall-score-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #2a2a2a;
+}
+
+.overall-score-value.excellent {
+  color: #2d8a4e;
+}
+
+.overall-score-value.good {
+  color: #c8a44e;
+}
+
+.overall-score-value.poor {
+  color: #c41e3a;
+}
+
+/* ============================================
+   Reveal Button
+   ============================================ */
+
+.reveal-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+/* ============================================
+   Action Bar Content
+   ============================================ */
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* ============================================
+   Validation Message
+   ============================================ */
+
+.validation-message {
+  font-size: 12px;
+  color: #c41e3a;
+  text-align: center;
+  padding: 8px;
+  background: rgba(196, 30, 58, 0.06);
+  border-radius: 4px;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+
+@media (max-width: 480px) {
+  .guess-partner-felt {
+    gap: 12px;
+  }
+
+  .estimation-panel {
+    gap: 12px;
+  }
+
+  .suit-choice-btn,
+  .length-choice-btn {
+    padding: 8px 12px;
+    min-width: 44px;
+    font-size: 13px;
+  }
+
+  .shape-choice-btn {
+    padding: 8px 12px;
+    min-width: 80px;
+    font-size: 12px;
+  }
+
+  .prompt-text {
+    font-size: 14px;
+  }
+}
+
+/* ============================================
+   Transitions
+   ============================================ */
+
+.guess-partner-interaction {
+  animation: fadeSlideUp 0.3s ease-out;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.partner-hand-section {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

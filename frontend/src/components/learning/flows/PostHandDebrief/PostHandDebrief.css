@@ -1,0 +1,256 @@
+/* PostHandDebrief.css
+ * Flow-specific styles for Post-Hand Debrief
+ * Minimal felt zone, full-width review layout
+ */
+
+@import '../../shared/styles/learning-tokens.css';
+
+/* === Override FlowLayout for Debrief === */
+.debrief-flow .felt-zone {
+  display: none; /* Minimal/no felt zone for debrief */
+}
+
+.debrief-flow .interaction-zone {
+  flex: 1;
+  max-height: none;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* === Debrief Container === */
+.debrief-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--cream-light);
+}
+
+/* === Contract Bar === */
+.contract-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--cream);
+  border-bottom: 1px solid var(--action-bar-border);
+  flex-shrink: 0;
+}
+
+.contract-bar-contract {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.contract-bar-by {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+}
+
+.contract-bar-result {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.contract-bar-result.success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.contract-bar-result.failure {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+/* === Main Content Grid === */
+.debrief-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xl);
+  padding: var(--space-lg) var(--space-xl);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* === Four Hands Panel === */
+.four-hands-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.four-hands-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: var(--space-md);
+}
+
+.four-hands-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--space-md);
+  flex: 1;
+}
+
+.hand-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.hand-cell-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.hand-cell-label.player {
+  color: var(--gold);
+}
+
+/* === Timeline Panel === */
+.timeline-panel {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--action-bar-border);
+  padding-left: var(--space-xl);
+}
+
+.timeline-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: var(--space-md);
+}
+
+.timeline-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* === Action Bar === */
+.debrief-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--action-bar-bg);
+  border-top: 1px solid var(--action-bar-border);
+  flex-shrink: 0;
+}
+
+/* === Score Summary === */
+.score-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--cream);
+  border-top: 1px solid var(--action-bar-border);
+}
+
+.score-summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.score-summary-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.score-summary-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.score-summary-value.good {
+  color: var(--success);
+}
+
+.score-summary-value.medium {
+  color: var(--gold);
+}
+
+.score-summary-value.weak {
+  color: var(--error);
+}
+
+/* === Responsive: Tablet and below === */
+@media (max-width: 768px) {
+  .debrief-content {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .timeline-panel {
+    border-left: none;
+    border-top: 1px solid var(--action-bar-border);
+    padding-left: 0;
+    padding-top: var(--space-lg);
+  }
+
+  .four-hands-grid {
+    gap: var(--space-sm);
+  }
+}
+
+/* === Responsive: Mobile === */
+@media (max-width: 480px) {
+  .contract-bar {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .contract-bar-contract {
+    font-size: var(--font-size-md);
+  }
+
+  .debrief-content {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .four-hands-title,
+  .timeline-title {
+    font-size: var(--font-size-xs);
+  }
+
+  .score-summary {
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    justify-content: center;
+  }
+}
+
+/* === Responsive: Extra small === */
+@media (max-width: 360px) {
+  .four-hands-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .hand-cell {
+    padding: var(--space-xs);
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: var(--radius-sm);
+  }
+}

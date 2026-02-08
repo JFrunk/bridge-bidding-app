@@ -1,0 +1,454 @@
+/**
+ * QuickCount.css
+ *
+ * Flow-specific styles for the Quick Count drill.
+ * Uses design tokens from shared/styles/learning-tokens.css
+ */
+
+/* ============================================================================
+   Level Select Screen
+   ============================================================================ */
+
+.quick-count-level-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+  text-align: center;
+}
+
+.quick-count-level-select h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2a2a2a;
+  margin: 0 0 8px 0;
+}
+
+.quick-count-level-select p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  max-width: 320px;
+}
+
+.level-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.level-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px 20px;
+  background: white;
+  border: 2px solid #e5e0d6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  min-height: 44px;
+}
+
+.level-btn:hover {
+  border-color: #c8a44e;
+  background: rgba(200, 164, 78, 0.04);
+}
+
+.level-btn:focus-visible {
+  outline: 2px solid #c8a44e;
+  outline-offset: 2px;
+}
+
+.level-btn-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2a2a2a;
+  margin-bottom: 4px;
+}
+
+.level-btn-desc {
+  font-size: 13px;
+  color: #666;
+}
+
+/* ============================================================================
+   Countdown Screen
+   ============================================================================ */
+
+.quick-count-countdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.countdown-number {
+  font-size: 120px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: countdown-pulse 1s ease-in-out;
+}
+
+@keyframes countdown-pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   Hand Display Area (Felt Zone)
+   ============================================================================ */
+
+.quick-count-felt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.timer-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+}
+
+.timer-icon {
+  font-size: 16px;
+}
+
+.timer-stopped {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.hand-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* ============================================================================
+   Question/Answer Area (Interaction Zone)
+   ============================================================================ */
+
+.quick-count-question {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.question-prompt {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2a2a2a;
+  text-align: center;
+  margin: 0;
+}
+
+.question-prompt .trump-suit {
+  font-weight: 700;
+}
+
+.question-prompt .trump-suit.red {
+  color: #c41e3a;
+}
+
+.question-prompt .trump-suit.black {
+  color: #2a2a2a;
+}
+
+.quick-count-choices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.count-choice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 16px;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 6px;
+  border: 2px solid #d4cfc5;
+  background: white;
+  color: #2a2a2a;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.count-choice-btn:hover:not(:disabled) {
+  border-color: #c8a44e;
+  background: rgba(200, 164, 78, 0.06);
+}
+
+.count-choice-btn:focus-visible {
+  outline: 2px solid #c8a44e;
+  outline-offset: 2px;
+}
+
+.count-choice-btn:disabled {
+  cursor: not-allowed;
+}
+
+.count-choice-btn.selected {
+  border-color: #c8a44e;
+  background: rgba(200, 164, 78, 0.1);
+}
+
+.count-choice-btn.correct {
+  border-color: #2d8a4e;
+  background: rgba(45, 138, 78, 0.1);
+  color: #2d8a4e;
+}
+
+.count-choice-btn.wrong {
+  border-color: #c41e3a;
+  background: rgba(196, 30, 58, 0.08);
+  color: #c41e3a;
+  text-decoration: line-through;
+}
+
+.count-choice-btn.dimmed {
+  opacity: 0.35;
+}
+
+/* ============================================================================
+   Feedback Area
+   ============================================================================ */
+
+.quick-count-feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.breakdown-text {
+  font-size: 14px;
+  color: #555;
+  text-align: center;
+  line-height: 1.5;
+  max-width: 400px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+}
+
+.progress-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 280px;
+}
+
+.progress-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e0dcd4;
+  transition: background 0.2s ease;
+}
+
+.progress-dot.correct {
+  background: #2d8a4e;
+}
+
+.progress-dot.wrong {
+  background: #c41e3a;
+}
+
+.progress-dot.current {
+  box-shadow: 0 0 0 2px #c8a44e;
+}
+
+/* ============================================================================
+   Round Summary Screen
+   ============================================================================ */
+
+.quick-count-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  text-align: center;
+}
+
+.summary-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #2a2a2a;
+  margin: 0;
+}
+
+.summary-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.summary-score-value {
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.summary-score-value.good {
+  color: #2d8a4e;
+}
+
+.summary-score-value.neutral {
+  color: #c8a44e;
+}
+
+.summary-score-value.bad {
+  color: #c41e3a;
+}
+
+.summary-score-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.summary-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 280px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+}
+
+.summary-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.summary-stat-label {
+  color: #666;
+}
+
+.summary-stat-value {
+  font-weight: 600;
+  color: #2a2a2a;
+}
+
+.summary-stat-value.is-best {
+  color: #c8a44e;
+}
+
+.summary-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 280px;
+}
+
+/* ============================================================================
+   Responsive Adjustments
+   ============================================================================ */
+
+@media (max-width: 480px) {
+  .countdown-number {
+    font-size: 80px;
+  }
+
+  .quick-count-choices {
+    max-width: 260px;
+    gap: 8px;
+  }
+
+  .count-choice-btn {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+
+  .breakdown-text {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .summary-score-value {
+    font-size: 48px;
+  }
+}
+
+@media (max-width: 360px) {
+  .quick-count-level-select {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .level-btn {
+    padding: 12px 16px;
+  }
+
+  .level-btn-title {
+    font-size: 14px;
+  }
+
+  .level-btn-desc {
+    font-size: 12px;
+  }
+
+  .countdown-number {
+    font-size: 64px;
+  }
+
+  .quick-count-choices {
+    max-width: 240px;
+  }
+
+  .count-choice-btn {
+    font-size: 15px;
+  }
+
+  .progress-dots {
+    max-width: 200px;
+  }
+
+  .progress-dot {
+    width: 8px;
+    height: 8px;
+  }
+}

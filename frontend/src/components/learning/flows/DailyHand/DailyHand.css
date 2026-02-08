@@ -1,0 +1,462 @@
+/**
+ * DailyHand.css
+ *
+ * Flow-specific styles for the Daily Hand Challenge.
+ * Reference: docs/redesign/Learning/learning-flows-package/docs/LEARNING_DESIGN_SYSTEM.md
+ * Reference: docs/redesign/Learning/learning-flows-package/docs/CC_CORRECTIONS.md
+ */
+
+/* =============================================================================
+   DEAL STATE
+   ============================================================================= */
+
+.deal-felt-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.deal-interaction-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 0;
+}
+
+/* =============================================================================
+   HAND INFO (HCP, Dealer, Vulnerability)
+   ============================================================================= */
+
+.hand-info {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.hand-info-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.hand-info-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.hand-info-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+}
+
+/* =============================================================================
+   STREAK SECTION
+   ============================================================================= */
+
+.streak-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.streak-count {
+  font-size: 14px;
+  color: #555;
+}
+
+.streak-count strong {
+  color: #2d8a4e;
+  font-weight: 700;
+}
+
+.streak-count.streak-updated strong {
+  color: #c8a44e;
+}
+
+/* =============================================================================
+   BID STATE
+   ============================================================================= */
+
+.bid-felt-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.bid-felt-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.bid-table-container {
+  width: 100%;
+  max-width: 280px;
+  min-height: 80px;
+}
+
+.bid-interaction-content {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.waiting-message {
+  text-align: center;
+  font-size: 14px;
+  color: #888;
+  padding: 20px;
+}
+
+/* =============================================================================
+   BIDDING BOX
+   Following CC_CORRECTIONS.md for suit button contrast
+   ============================================================================= */
+
+.bidding-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bidding-box-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bidding-box-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #999;
+}
+
+/* Level buttons (1-7) */
+.level-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.level-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 2px solid #d4cfc5;
+  background: white;
+  font-size: 18px;
+  font-weight: 700;
+  color: #2a2a2a;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.level-button:hover:not(.disabled) {
+  border-color: #c8a44e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.level-button.selected {
+  background: #1a6b3c;
+  border-color: #1a6b3c;
+  color: white;
+}
+
+.level-button.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Strain/Suit buttons - CREAM BACKGROUND per CC_CORRECTIONS */
+.strain-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.suit-button {
+  background: #f0ede6;          /* cream */
+  border: 2px solid #c8c3b8;    /* warm gray border */
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: 700;
+  transition: all 0.12s;
+  min-width: 52px;
+  text-align: center;
+}
+
+.suit-button:hover:not(.disabled) {
+  border-color: #c8a44e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Individual suit colors - FULL SATURATION on light background */
+.suit-button.clubs {
+  color: #1a6b3c;   /* dark green */
+}
+
+.suit-button.diamonds {
+  color: #d4540a;   /* orange-red */
+}
+
+.suit-button.hearts {
+  color: #c41e3a;   /* red */
+}
+
+.suit-button.spades {
+  color: #1a1a1a;   /* black */
+}
+
+.suit-button.notrump {
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+/* Selected state */
+.suit-button.selected {
+  background: #1a6b3c;          /* green fill */
+  color: white !important;      /* white symbol */
+  border-color: #1a6b3c;
+  box-shadow: 0 0 0 2px rgba(26, 107, 60, 0.3);
+}
+
+.suit-button.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Action buttons (Pass, Dbl, Rdbl) */
+.bidding-box-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.action-button {
+  padding: 10px 16px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid #d4cfc5;
+  background: white;
+  color: #555;
+  transition: all 0.12s;
+}
+
+.action-button:hover:not(.disabled) {
+  border-color: #c8a44e;
+  color: #2a2a2a;
+}
+
+.action-button.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pass-button {
+  color: #888;
+}
+
+.double-button,
+.redouble-button {
+  color: #c41e3a;
+}
+
+/* =============================================================================
+   PLAY STATE
+   ============================================================================= */
+
+.play-felt-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.play-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.play-area-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.contract-display {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.trick-display {
+  width: 200px;
+  height: 120px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.trick-placeholder {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.tricks-count {
+  display: flex;
+  gap: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.play-interaction-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.play-prompt {
+  font-size: 14px;
+  color: #555;
+}
+
+/* =============================================================================
+   RESULT STATE
+   ============================================================================= */
+
+.result-interaction-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.result-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+}
+
+/* =============================================================================
+   SUMMARY STATE
+   ============================================================================= */
+
+.summary-interaction-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.summary-header {
+  margin-bottom: 8px;
+}
+
+.summary-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2d8a4e;
+}
+
+.summary-message {
+  font-size: 14px;
+  color: #888;
+  font-style: italic;
+}
+
+/* =============================================================================
+   PANEL LABEL (shared styling)
+   ============================================================================= */
+
+.panel-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+@media (max-width: 480px) {
+  .level-button {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .suit-button {
+    min-width: 44px;
+    font-size: 20px;
+    padding: 6px 10px;
+  }
+
+  .suit-button.notrump {
+    font-size: 14px;
+  }
+
+  .action-button {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .hand-info {
+    gap: 16px;
+  }
+
+  .hand-info-value {
+    font-size: 14px;
+  }
+}
+
+/* Ensure touch targets are at least 44px */
+@media (pointer: coarse) {
+  .level-button,
+  .suit-button,
+  .action-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

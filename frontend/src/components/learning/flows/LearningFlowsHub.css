@@ -1,0 +1,141 @@
+/* Learning Flows Hub - Development preview screen */
+
+.learning-flows-hub {
+  position: fixed;
+  inset: 0;
+  background: #f5f0e8;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.hub-header {
+  background: #14432a;
+  color: white;
+  padding: 20px 24px;
+  position: relative;
+}
+
+.hub-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.hub-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.hub-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.hub-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.hub-grid {
+  flex: 1;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  overflow-y: auto;
+  align-content: start;
+}
+
+.hub-flow-card {
+  background: white;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.hub-flow-card:hover {
+  border-color: #c8a44e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.hub-flow-card:active {
+  transform: translateY(0);
+}
+
+.flow-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.flow-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2a2a2a;
+}
+
+.flow-description {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.hub-footer {
+  background: #e8e4dc;
+  padding: 12px 24px;
+  text-align: center;
+}
+
+.hub-footer p {
+  margin: 0;
+  font-size: 12px;
+  color: #888;
+}
+
+/* Active flow container - just holds the flow component at full screen */
+.learning-flows-hub.flow-active {
+  display: block; /* Override flex to just contain the flow */
+  background: transparent; /* Let the flow control its own background */
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .hub-header {
+    padding: 16px;
+  }
+
+  .hub-header h1 {
+    font-size: 20px;
+  }
+
+  .hub-grid {
+    padding: 16px;
+    grid-template-columns: 1fr;
+  }
+
+  .hub-flow-card {
+    padding: 16px;
+  }
+}

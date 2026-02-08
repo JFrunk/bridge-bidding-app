@@ -1,0 +1,435 @@
+/**
+ * CriticalTrick.css
+ * Flow-specific styles for Play the Critical Trick (Flow 8)
+ */
+
+@import '../../shared/styles/learning-tokens.css';
+
+/* === Contract Display === */
+.critical-contract {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.contract-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--felt-text-primary);
+  min-width: 48px;
+}
+
+.contract-badge .suit-red {
+  color: var(--suit-heart-felt);
+}
+
+.contract-badge .suit-black {
+  color: var(--felt-text-primary);
+}
+
+.vulnerability-badge {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--felt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vulnerability-badge.vul-ns,
+.vulnerability-badge.vul-both {
+  color: var(--suit-heart-felt);
+}
+
+/* === Trick Bar === */
+.trick-bar {
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: var(--space-lg);
+}
+
+.trick-bar-cells {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+}
+
+.trick-cell {
+  width: 28px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all var(--transition-fast);
+}
+
+.trick-cell .trick-number {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--felt-text-muted);
+}
+
+/* Won by NS (declarer) - green */
+.trick-cell.won-ns {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.trick-cell.won-ns .trick-number {
+  color: white;
+}
+
+/* Won by EW (defense) - red */
+.trick-cell.won-ew {
+  background: var(--error);
+  border-color: var(--error);
+}
+
+.trick-cell.won-ew .trick-number {
+  color: white;
+}
+
+/* Current trick - white border */
+.trick-cell.current {
+  border: 2px solid white;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.trick-cell.current .trick-number {
+  color: var(--felt-text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Target trick - gold underline */
+.trick-cell.target {
+  border-bottom: 3px solid var(--gold);
+}
+
+.trick-cell.target .trick-number {
+  color: var(--gold-light);
+}
+
+/* Combined states */
+.trick-cell.won-ns.target,
+.trick-cell.won-ew.target {
+  border-bottom: 3px solid var(--gold);
+}
+
+/* Legend */
+.trick-bar-legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-lg);
+  margin-top: var(--space-sm);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.legend-dot.won-ns {
+  background: var(--success);
+}
+
+.legend-dot.won-ew {
+  background: var(--error);
+}
+
+.legend-dot.target {
+  background: transparent;
+  border-bottom: 2px solid var(--gold);
+}
+
+.legend-label {
+  font-size: var(--font-size-xs);
+  color: var(--felt-text-muted);
+}
+
+/* === Hands Display === */
+.critical-hands {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+.hand-section {
+  width: 100%;
+}
+
+.hand-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--felt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-xs);
+  text-align: center;
+}
+
+/* === Situation Text === */
+.situation-box {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--felt-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  margin-top: var(--space-md);
+  max-width: 500px;
+  width: 100%;
+}
+
+.situation-text {
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--felt-text-secondary);
+  margin: 0;
+}
+
+.situation-text .suit-red {
+  color: var(--suit-heart-felt);
+}
+
+.situation-text .suit-black {
+  color: var(--felt-text-primary);
+}
+
+/* === Question Header === */
+.question-header {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+/* === Plan Choice Grid === */
+.plan-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.plan-choice {
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-md) var(--space-lg);
+  text-align: left;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  font-family: inherit;
+  border-radius: var(--radius-md);
+  border: 2px solid #d4cfc5;
+  background: white;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1.4;
+}
+
+.plan-choice:hover:not(.disabled):not(.correct):not(.wrong) {
+  border-color: var(--gold);
+  color: var(--text-primary);
+}
+
+.plan-choice:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Selected state */
+.plan-choice.selected {
+  border-color: var(--gold);
+  background: rgba(200, 164, 78, 0.08);
+  color: var(--text-primary);
+}
+
+/* Correct state */
+.plan-choice.correct {
+  border-color: var(--success);
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+/* Wrong state */
+.plan-choice.wrong {
+  border-color: var(--error);
+  background: var(--error-bg);
+  color: var(--error);
+  text-decoration: line-through;
+}
+
+/* Disabled state */
+.plan-choice.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Suit symbols in plans */
+.plan-choice .suit-red {
+  color: var(--card-red);
+}
+
+.plan-choice .suit-black {
+  color: var(--card-black);
+}
+
+/* Preserve colors in correct state */
+.plan-choice.correct .suit-red {
+  color: var(--card-red);
+}
+
+.plan-choice.correct .suit-black {
+  color: var(--card-black);
+}
+
+/* Muted in wrong/disabled */
+.plan-choice.wrong .suit-red,
+.plan-choice.wrong .suit-black {
+  color: inherit;
+}
+
+/* === Explanation Box === */
+.explanation-box {
+  background: var(--cream-light);
+  border: 1px solid var(--action-bar-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-top: var(--space-lg);
+  max-width: 500px;
+  width: 100%;
+}
+
+.explanation-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-sm);
+}
+
+.explanation-text {
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.technique-badge {
+  display: inline-block;
+  background: rgba(200, 164, 78, 0.15);
+  color: var(--gold-hover);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-md);
+}
+
+/* === Evaluating State === */
+.evaluating-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+}
+
+.evaluating-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--gold);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* === Responsive === */
+@media (max-width: 480px) {
+  .trick-cell {
+    width: 24px;
+    height: 28px;
+  }
+
+  .trick-cell .trick-number {
+    font-size: 10px;
+  }
+
+  .trick-bar-legend {
+    gap: var(--space-md);
+  }
+
+  .legend-label {
+    font-size: 10px;
+  }
+
+  .plan-choice {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-sm);
+  }
+
+  .situation-box {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .situation-text {
+    font-size: var(--font-size-sm);
+  }
+}
+
+@media (max-width: 360px) {
+  .trick-bar-cells {
+    gap: 1px;
+  }
+
+  .trick-cell {
+    width: 22px;
+    height: 26px;
+  }
+
+  .trick-bar-legend {
+    gap: var(--space-sm);
+  }
+
+  .contract-badge {
+    font-size: var(--font-size-md);
+    padding: var(--space-xs) var(--space-sm);
+    min-width: 40px;
+  }
+
+  .critical-contract {
+    gap: var(--space-sm);
+  }
+}

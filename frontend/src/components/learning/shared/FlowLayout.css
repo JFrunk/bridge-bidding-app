@@ -1,0 +1,183 @@
+/* FlowLayout.css
+ * Three-zone container layout for all learning flows
+ * Reference: docs/redesign/Learning/learning-flows-package/docs/LEARNING_DESIGN_SYSTEM.md
+ */
+
+@import './styles/learning-tokens.css';
+
+.flow-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* NO SCROLLING on container */
+  font-family: var(--font-family);
+  background: var(--table-green); /* Ensure no bleed-through */
+}
+
+/* === Header Zone === */
+.flow-header {
+  height: var(--header-height);
+  flex-shrink: 0;
+  background: var(--header-green);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-lg);
+  color: var(--felt-text-primary);
+}
+
+.flow-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.flow-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--felt-text-primary);
+  margin: 0;
+}
+
+.step-indicator {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--felt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.flow-close-button {
+  background: transparent;
+  border: none;
+  color: var(--felt-text-secondary);
+  cursor: pointer;
+  padding: var(--space-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+}
+
+.flow-close-button:hover {
+  color: var(--felt-text-primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.flow-close-button:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.flow-close-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* === Felt Zone (Green) === */
+.felt-zone {
+  background: var(--table-green);
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg) var(--space-xl);
+}
+
+/* Subtle radial gradient overlay */
+.felt-zone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.felt-zone-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* === Interaction Zone (Cream) === */
+.interaction-zone {
+  background: var(--cream-light);
+  flex-shrink: 0;
+  padding: var(--space-lg) var(--space-xl);
+  max-height: var(--interaction-max-height);
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for interaction zone */
+.interaction-zone::-webkit-scrollbar {
+  width: 6px;
+}
+
+.interaction-zone::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.interaction-zone::-webkit-scrollbar-thumb {
+  background: var(--action-bar-border);
+  border-radius: 3px;
+}
+
+.interaction-zone::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* === Action Bar === */
+.action-bar {
+  height: var(--action-bar-height);
+  flex-shrink: 0;
+  background: var(--action-bar-bg);
+  border-top: 1px solid var(--action-bar-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: 0 var(--space-lg);
+}
+
+/* === Responsive Adjustments === */
+@media (max-width: 480px) {
+  .flow-header {
+    padding: 0 var(--space-md);
+  }
+
+  .felt-zone {
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .interaction-zone {
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .action-bar {
+    padding: 0 var(--space-md);
+  }
+}
+
+@media (max-width: 360px) {
+  .flow-title {
+    font-size: var(--font-size-base);
+  }
+
+  .step-indicator {
+    font-size: 10px;
+  }
+}

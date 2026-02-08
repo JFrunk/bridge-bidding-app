@@ -1,0 +1,55 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.12s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Primary - Gold accent button */
+.btn-primary {
+  background: #c8a44e;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #b8943e;
+}
+
+/* Secondary - Subtle background button */
+.btn-secondary {
+  background: rgba(0, 0, 0, 0.06);
+  color: #555;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* On Felt - Glass-style button for green/felt backgrounds */
+.btn-on-felt {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-on-felt:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+}
