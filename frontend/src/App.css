@@ -64,6 +64,9 @@ body {
   border: 3px solid var(--bg-table-border);
   padding: var(--space-2);
   border-radius: var(--radius-md);
+  /* VIEWPORT FIX Issue 8: Cap auction table height with scroll */
+  max-height: 180px;  /* ~5 rows of bids */
+  overflow-y: auto;
 }
 
 /* ========================================
@@ -876,12 +879,16 @@ body {
 }
 
 /* Table Layout - Bridge Table View */
+/* VIEWPORT FIX Issue 8: BID screen must fit without scrolling */
 .table-layout {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);  /* Reduced from space-3 for tighter fit */
   max-width: 1400px;
   margin: 0 auto;
+  /* Viewport containment - subtract nav bar and workspace tabs */
+  max-height: calc(100vh - 120px);
+  overflow: hidden;
 }
 
 .table-center {
