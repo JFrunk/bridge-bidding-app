@@ -3070,14 +3070,19 @@ ${otherCommands}`;
             // Use rules engine data from backend for correct hand visibility and control
             isUserTurn={playState.is_user_turn ?? (playState.next_to_play === 'S' && playState.dummy !== 'S')}
             isDeclarerTurn={
-              (playState.controllable_positions?.includes(playState.contract.declarer) && playState.next_to_play === playState.contract.declarer)
-              // Fallback: User controls declarer when NS is declaring (declarer is N or S)
-              ?? (playState.next_to_play === playState.contract.declarer && (playState.contract.declarer === 'N' || playState.contract.declarer === 'S'))
+              // If backend provides controllable_positions (array), trust it completely
+              // This correctly handles: empty array (waiting for lead), non-empty array (active play)
+              Array.isArray(playState.controllable_positions)
+                ? (playState.controllable_positions.includes(playState.contract.declarer) && playState.next_to_play === playState.contract.declarer)
+                // Fallback for legacy backends: User controls declarer when NS is declaring
+                : (playState.next_to_play === playState.contract.declarer && (playState.contract.declarer === 'N' || playState.contract.declarer === 'S'))
             }
             isDummyTurn={
-              (playState.controllable_positions?.includes(playState.dummy) && playState.next_to_play === playState.dummy)
-              // Fallback: User controls dummy when NS is declaring (declarer is N or S)
-              ?? (playState.next_to_play === playState.dummy && (playState.contract.declarer === 'N' || playState.contract.declarer === 'S'))
+              // If backend provides controllable_positions (array), trust it completely
+              Array.isArray(playState.controllable_positions)
+                ? (playState.controllable_positions.includes(playState.dummy) && playState.next_to_play === playState.dummy)
+                // Fallback for legacy backends: User controls dummy when NS is declaring
+                : (playState.next_to_play === playState.dummy && (playState.contract.declarer === 'N' || playState.contract.declarer === 'S'))
             }
             auction={auction}
             dealer={dealer}
