@@ -189,7 +189,8 @@ export function PlayTable({
   // Action bar props
   onNewHand,
   onUndo,
-  onReplay
+  onReplay,
+  onClaim  // Claim remaining tricks
 }) {
   if (!playState) return null;
 
@@ -503,7 +504,15 @@ export function PlayTable({
               className="action-btn secondary"
               onClick={showLastTrick ? onHideLastTrick : onShowLastTrick}
             >
-              {showLastTrick ? 'Current' : '↶ Last Trick'}
+              {showLastTrick ? '◆ Current' : '↶ Last Trick'}
+            </button>
+          )}
+          {onClaim && !isHandComplete && userIsDeclarer && totalTricksPlayed > 0 && (
+            <button
+              className="action-btn secondary"
+              onClick={onClaim}
+            >
+              🏆 Claim
             </button>
           )}
           {onReplay && (

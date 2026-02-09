@@ -373,10 +373,11 @@
   width: 100% !important;  /* Force full width of parent */
   min-width: 100%;
   flex: 1;  /* Take remaining space after contract header and action bar */
-  min-height: 320px;  /* Minimum for playability */
-  max-height: calc(100vh - 200px);  /* Leave room for header/footer */
+  min-height: 340px;  /* Minimum for playability - includes room for South hand */
+  max-height: calc(100vh - 180px);  /* Leave room for header/footer */
   z-index: 2;
   padding: 0;
+  padding-bottom: 90px;  /* CRITICAL: Reserve space for South's cards at bottom */
   background-color: var(--table-green, #1a6b3c);
   overflow: visible;  /* Allow cards at edges to be visible */
   box-sizing: border-box;
@@ -427,16 +428,19 @@
   z-index: 3;
 }
 
-/* South - bottom center - HOTFIX 4: positioned higher to prevent card clipping */
+/* South - bottom center - HOTFIX: positioned with sufficient height to prevent clipping */
 .position-south {
   position: absolute;
-  bottom: 8px;  /* Raised slightly */
+  bottom: 0;  /* Anchor to bottom of play-area */
   left: 0;
   right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   z-index: 5;  /* Higher z-index to ensure cards above table edge */
+  /* CRITICAL: Fixed height to prevent clipping - cards must be fully visible */
+  min-height: 100px;  /* Enough for label + cards */
+  padding-bottom: 8px;
   /* Allow cards to extend below if needed without clipping */
   overflow: visible;
 }
@@ -1024,9 +1028,9 @@
 }
 
 /* ========================================
-   EAST/WEST DUMMY: Suit-Row Layout per CC_CORRECTIONS
-   Suits stacked vertically, smaller cards (36×48px), -10px overlap
-   Compact to fit within side margins
+   EAST/WEST DUMMY: Portrait Cards Layout
+   REQUIREMENT: Same card style as South - portrait orientation with visible rank+suit
+   Cards stacked vertically with overlap, larger than before for readability
    ======================================== */
 
 .position-east .dummy-hand,
@@ -1034,77 +1038,63 @@
 .position-east .declarer-hand,
 .position-west .declarer-hand {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-width: 100px;  /* Compact to fit on sides without overlapping center */
+  flex-direction: column;  /* Suits stacked vertically */
+  gap: 4px;  /* Gap between suits */
+  max-width: 70px;  /* Compact but readable */
   align-items: center;
 }
 
-/* Suit rows for E/W - horizontal card layout within each suit */
+/* Suit rows for E/W - cards overlap vertically within each suit */
 .position-east .dummy-hand .suit-group,
 .position-west .dummy-hand .suit-group,
 .position-east .declarer-hand .suit-group,
 .position-west .declarer-hand .suit-group {
   display: flex;
-  align-items: flex-end;
-  flex-wrap: nowrap;
-  max-width: 100px;
+  flex-direction: column;  /* Vertical stacking within suit */
+  align-items: center;
   margin: 0;
 }
 
-/* Smaller cards for E/W dummy: 36×48px with tighter overlap */
+/* Portrait cards for E/W dummy: Same aspect ratio as South (48x66), overlapped vertically */
 .position-east .dummy-hand .playable-card,
 .position-west .dummy-hand .playable-card,
 .position-east .declarer-hand .playable-card,
 .position-west .declarer-hand .playable-card {
-  width: 36px;
-  height: 48px;
-  border-radius: 3px;
-  margin-left: -18px;  /* Tighter overlap to fit within 100px */
+  width: 44px;
+  height: 60px;
+  border-radius: 4px;
+  margin-left: 0;
+  margin-top: -42px;  /* Vertical overlap - shows ~18px per card (rank+suit visible) */
 }
 
 .position-east .dummy-hand .suit-group .playable-card:first-child,
 .position-west .dummy-hand .suit-group .playable-card:first-child,
 .position-east .declarer-hand .suit-group .playable-card:first-child,
 .position-west .declarer-hand .suit-group .playable-card:first-child {
-  margin-left: 0;
+  margin-top: 0;  /* First card in suit has no overlap */
 }
 
-/* Card content in visible strip (18px = 36 - 18) */
-.position-east .dummy-hand .card-content,
-.position-west .dummy-hand .card-content,
-.position-east .declarer-hand .card-content,
-.position-west .declarer-hand .card-content {
-  width: 18px;
-}
-
-.position-east .dummy-hand .playable-card:last-child .card-content,
-.position-west .dummy-hand .playable-card:last-child .card-content,
-.position-east .declarer-hand .playable-card:last-child .card-content,
-.position-west .declarer-hand .playable-card:last-child .card-content {
-  width: 100%;
-}
-
-/* Smaller text for E/W dummy cards */
+/* Readable text for E/W dummy cards - rank and suit clearly visible */
 .position-east .dummy-hand .rank,
 .position-west .dummy-hand .rank,
 .position-east .declarer-hand .rank,
 .position-west .declarer-hand .rank {
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .position-east .dummy-hand .suit-symbol,
 .position-west .dummy-hand .suit-symbol,
 .position-east .declarer-hand .suit-symbol,
 .position-west .declarer-hand .suit-symbol {
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .position-east .dummy-hand .suit,
 .position-west .dummy-hand .suit,
 .position-east .declarer-hand .suit,
 .position-west .declarer-hand .suit {
-  font-size: 10px;
+  font-size: 12px;
 }
 
 /* Suit Colors */
