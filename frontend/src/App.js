@@ -1629,6 +1629,7 @@ ${otherCommands}`;
     setReviewPageHandId(null);
     setReviewHandList([]);
     setReviewCurrentIndex(0);
+    setHandReviewSource(null);
     // Restore scroll position after React re-renders the previous view
     requestAnimationFrame(() => {
       window.scrollTo(0, scrollY);
@@ -3409,14 +3410,6 @@ ${otherCommands}`;
         />
       )}
 
-      {/* Hand Review Modal - Play-by-play analysis */}
-      {showHandReviewModal && lastSavedHandId && (
-        <HandReviewModal
-          handId={lastSavedHandId}
-          onClose={() => setShowHandReviewModal(false)}
-        />
-      )}
-
       {/* Progress/Dashboard - Full-screen page */}
       {showLearningDashboard && (
         <div className="learning-dashboard-overlay" data-testid="dashboard-overlay">
@@ -3452,7 +3445,7 @@ ${otherCommands}`;
         </div>
       )}
 
-      {/* Full-screen play review page (new approach) */}
+      {/* Full-screen play review page (consolidated) */}
       {showHandReviewPage && reviewPageHandId && (
         <HandReviewPage
           handId={reviewPageHandId}
@@ -3461,6 +3454,19 @@ ${otherCommands}`;
           onNextHand={reviewCurrentIndex < reviewHandList.length - 1 ? () => handleNavigateReviewHand(1) : null}
           currentIndex={reviewCurrentIndex}
           totalHands={reviewHandList.length}
+          // Post-hand context: show action buttons for playing another hand
+          onPlayAnother={handReviewSource === 'post-hand' ? () => {
+            handleCloseReviewPage();
+            playRandomHand();
+          } : null}
+          onReplay={handReviewSource === 'post-hand' ? () => {
+            handleCloseReviewPage();
+            replayCurrentHand();
+          } : null}
+          onViewProgress={handReviewSource === 'post-hand' ? () => {
+            handleCloseReviewPage();
+            setShowLearningDashboard(true);
+          } : null}
         />
       )}
 
