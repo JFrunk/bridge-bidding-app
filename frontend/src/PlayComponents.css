@@ -428,20 +428,24 @@
   z-index: 3;
 }
 
-/* South - bottom center - HOTFIX: positioned with sufficient height to prevent clipping */
+/* South - bottom center - UI_UX_CONSTITUTION.md: Pinned to bottom with fixed height */
 .position-south {
-  position: absolute;
-  bottom: 0;  /* Anchor to bottom of play-area */
+  position: fixed;  /* FIXED position per UI Constitution */
+  bottom: 0;  /* Anchor to bottom of viewport */
   left: 0;
   right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  z-index: 5;  /* Higher z-index to ensure cards above table edge */
-  /* CRITICAL: Fixed height to prevent clipping - cards must be fully visible */
-  min-height: 100px;  /* Enough for label + cards */
-  padding-bottom: 8px;
-  /* Allow cards to extend below if needed without clipping */
+  z-index: 50;  /* Higher z-index to ensure cards above all elements */
+  /* CRITICAL: Fixed height h-64 (256px) per UI_UX_CONSTITUTION.md */
+  height: 256px;  /* h-64 = 16rem = 256px */
+  min-height: 256px;
+  padding-bottom: 16px;
+  padding-top: 8px;
+  /* Semi-transparent background to ensure visibility over table */
+  background: linear-gradient(to top, rgba(27, 77, 62, 0.95) 0%, rgba(27, 77, 62, 0.85) 70%, transparent 100%);
+  /* Allow cards to extend without clipping */
   overflow: visible;
 }
 
@@ -1996,30 +2000,30 @@
    ======================================== */
 
 .play-turn-indicator {
-  position: absolute;
-  /* CRITICAL: Positioned relative to center, with offset to sit BELOW the trick area */
-  /* Trick area is ~180px tall centered at 50%, so bottom of trick is at 50% + 90px = ~60% */
-  /* Adding 20px margin below trick area */
-  top: calc(50% + 110px);  /* 90px (half trick height) + 20px margin */
+  position: fixed;  /* Fixed position per UI_UX_CONSTITUTION.md */
+  /* Per UI_UX_CONSTITUTION.md: Toasts at bottom-32 (above hand) = 128px from bottom */
+  bottom: 288px;  /* bottom-32 (128px) + South hand height (256px - ~100px overlap) */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 6px 14px;
-  background: rgba(45, 80, 22, 0.95);  /* Solid dark green for readability */
-  border-radius: 16px;
+  padding: 8px 16px;
+  /* Accent Gold per UI_UX_CONSTITUTION.md for "Your Turn" toasts */
+  background: #EAB308;  /* Accent Gold from constitution */
+  color: #1a1a1a;  /* Dark text on gold background */
+  border-radius: 20px;
   width: fit-content;
-  z-index: 15;  /* Above cards, labels, and trick area */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);  /* Stronger shadow for visibility */
-  white-space: nowrap;  /* Prevent text wrapping */
+  z-index: 60;  /* Above South hand (z-50) */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
 }
 
 .play-turn-indicator .turn-dot {
   width: 10px;
   height: 10px;
-  background: var(--gold, #c8a44e);
+  background: #1B4D3E;  /* Clubhouse Deep Green dot on gold background */
   border-radius: 50%;
   animation: turn-pulse 1.5s ease-in-out infinite;
 }
@@ -2036,9 +2040,9 @@
 }
 
 .play-turn-indicator .turn-text {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-on-green, #e8f5ed);
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;  /* Dark text on gold background per constitution */
 }
 
 /* ========================================
@@ -2082,19 +2086,22 @@
   }
 }
 
-/* Turn indicator responsive - uses TOP positioning, below center trick area */
+/* Turn indicator responsive - uses bottom positioning above South hand */
 @media (max-width: 768px) {
   .play-turn-indicator {
-    top: calc(50% + 90px);  /* Slightly tighter on tablets */
-    padding: 5px 10px;
-    font-size: 12px;
+    bottom: 270px;  /* Adjust for tablet */
+    padding: 6px 12px;
+  }
+
+  .play-turn-indicator .turn-text {
+    font-size: 13px;
   }
 }
 
 @media (max-width: 480px) {
   .play-turn-indicator {
-    top: calc(50% + 75px);  /* Tighter on phones where trick area is smaller */
-    padding: 4px 8px;
+    bottom: 260px;  /* Adjust for mobile */
+    padding: 5px 10px;
   }
 
   .play-turn-indicator .turn-dot {
@@ -2103,6 +2110,6 @@
   }
 
   .play-turn-indicator .turn-text {
-    font-size: 11px;
+    font-size: 12px;
   }
 }

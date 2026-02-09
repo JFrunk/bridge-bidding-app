@@ -6,12 +6,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Clubhouse Theme - UI_UX_CONSTITUTION.md
+        'clubhouse-green': '#1B4D3E',      // Primary Game Surface
+        'clubhouse-green-dark': '#143D31', // Darker variant
+        'clubhouse-green-light': '#245E4D',// Lighter variant
+        'clubhouse-beige': '#FDFBF7',      // Primary Canvas
+        'clubhouse-beige-dark': '#F5F2EC', // Darker beige
+        'accent-gold': '#EAB308',          // Your Turn highlights
+
         // Bridge-specific colors
         'success': '#4caf50',
         'danger': '#f44336',
         'info': '#61dafb',
-        'suit-red': '#d32f2f',
-        'suit-black': '#000000',
+        'suit-red': '#dc2626',  // text-red-600 equivalent
+        'suit-black': '#111827', // text-gray-900 equivalent
 
         // Partnership colors
         'partnership-ns': '#4caf50',

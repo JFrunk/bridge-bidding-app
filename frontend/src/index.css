@@ -12,22 +12,23 @@
 
 :root {
   /* ===================
-     CORE COLOR PALETTE
+     CORE COLOR PALETTE - CLUBHOUSE THEME
      Single source of truth for all colors
+     Deep Green #1B4D3E and Beige #FDFBF7
      =================== */
 
-  /* Table Green - THE primary surface color */
-  --table-green: #1a6b3c;
-  --table-green-dark: #145530;
-  --table-green-light: #1f7d46;
+  /* Clubhouse Deep Green - THE primary surface color */
+  --table-green: #1B4D3E;
+  --table-green-dark: #143D31;
+  --table-green-light: #245E4D;
 
-  /* Header */
-  --header-green: #14432a;
+  /* Header - Darker variant of Clubhouse Green */
+  --header-green: #143D31;
 
-  /* Cream - Page & panel backgrounds */
-  --cream: #f5f0e8;
-  --cream-light: #faf8f4;
-  --cream-dark: #e8e3db;
+  /* Clubhouse Beige - Page & panel backgrounds */
+  --cream: #FDFBF7;
+  --cream-light: #FFFFFF;
+  --cream-dark: #F5F2EC;
 
   /* Gold - Accents, highlights, turn indicators */
   --gold: #c8a44e;

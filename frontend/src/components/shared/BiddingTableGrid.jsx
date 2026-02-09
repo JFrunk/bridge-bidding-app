@@ -1,4 +1,5 @@
 import * as React from "react";
+import { BidChip } from "./BidChip";
 
 /**
  * BiddingTableGrid - Shared bidding history table component
@@ -9,6 +10,8 @@ import * as React from "react";
  *
  * Displays a 4-column grid (N-E-S-W) with dealer-based row wrapping.
  * Blank cells appear before the dealer's position on row 0.
+ *
+ * Per UI_UX_CONSTITUTION.md - uses BidChip for high-contrast white pills.
  */
 export function BiddingTableGrid({
   auction = [],
@@ -81,10 +84,12 @@ export function BiddingTableGrid({
   };
 
   // Format bid for display - handles both string and object formats
-  const formatBid = (bid) => {
-    if (!bid) return '';
-    if (typeof bid === 'string') return bid;
-    return bid.bid || '';
+  // Returns a BidChip component for high-contrast display per UI_UX_CONSTITUTION.md
+  const formatBid = (bid, onClick) => {
+    if (!bid) return null;
+    const bidStr = typeof bid === 'string' ? bid : (bid.bid || '');
+    if (!bidStr) return null;
+    return <BidChip bid={bidStr} onClick={onClick ? () => onClick(bid) : undefined} />;
   };
 
   // Compact mode uses simpler styling for popups
@@ -103,7 +108,7 @@ export function BiddingTableGrid({
           {grid.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {[0, 1, 2, 3].map(col => (
-                <td key={col}>{formatBid(row[col])}</td>
+                <td key={col}>{formatBid(row[col], onBidClick)}</td>
               ))}
             </tr>
           ))}
@@ -138,9 +143,8 @@ export function BiddingTableGrid({
               <td
                 key={colIndex}
                 className={getCellHighlightClass(rowIndex, colIndex, row)}
-                onClick={() => onBidClick && row[colIndex] && onBidClick(row[colIndex])}
               >
-                {formatBid(row[colIndex])}
+                {formatBid(row[colIndex], onBidClick)}
               </td>
             ))}
           </tr>
