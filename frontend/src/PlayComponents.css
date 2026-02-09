@@ -355,7 +355,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: hidden;  /* Prevent content overflow */
+  overflow: visible;  /* HOTFIX: Allow South's cards to extend below without clipping */
   /* CRITICAL: Force full width and center - fixes left-alignment issue */
   width: 100% !important;
   min-width: 100%;
@@ -1983,27 +1983,27 @@
 }
 
 /* ========================================
-   HOTFIX 3: PLAY TURN INDICATOR - MUST NOT overlap South's cards
-   Use bottom positioning to ensure fixed distance above South's hand
+   HOTFIX 3: PLAY TURN INDICATOR - Positioned at TOP, NEVER overlaps trick area or South's cards
+   Changed from bottom positioning to top positioning to avoid occlusion issues
    ======================================== */
 
 .play-turn-indicator {
   position: absolute;
-  /* CRITICAL: Position ABOVE South's hand (which starts at bottom: 12px + ~80px card height) */
-  /* Use bottom positioning for reliable clearance regardless of play-area height */
-  bottom: 130px;  /* 130px from bottom = above South's cards which are at ~100px height */
+  /* CRITICAL: Position at TOP of play area, below North's hand */
+  /* This ensures it NEVER overlaps the center trick area or South's cards */
+  top: 90px;  /* Below North's label + hand area */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: rgba(45, 80, 22, 0.95);  /* Solid dark green for readability */
-  border-radius: 20px;
+  padding: 6px 14px;
+  background: rgba(45, 80, 22, 0.92);  /* Solid dark green for readability */
+  border-radius: 16px;
   width: fit-content;
   z-index: 15;  /* Above cards, labels, and trick area */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);  /* Subtle shadow for depth */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);  /* Subtle shadow for depth */
   white-space: nowrap;  /* Prevent text wrapping */
 }
 
@@ -2073,19 +2073,19 @@
   }
 }
 
-/* Turn indicator responsive - uses bottom positioning to stay above South's cards */
+/* Turn indicator responsive - uses TOP positioning, stays below North's hand */
 @media (max-width: 768px) {
   .play-turn-indicator {
-    bottom: 110px;  /* Slightly closer on tablets - smaller cards */
-    padding: 6px 12px;
+    top: 75px;  /* Slightly lower on tablets - smaller North hand */
+    padding: 5px 10px;
     font-size: 12px;
   }
 }
 
 @media (max-width: 480px) {
   .play-turn-indicator {
-    bottom: 95px;  /* Closer on phones - even smaller cards */
-    padding: 5px 10px;
+    top: 65px;  /* Lower on phones - even smaller North hand */
+    padding: 4px 8px;
   }
 
   .play-turn-indicator .turn-dot {
