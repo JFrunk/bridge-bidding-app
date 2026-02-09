@@ -12,11 +12,12 @@ import BidFeedbackPanel from './components/bridge/BidFeedbackPanel';
 import BeliefPanel from './components/bridge/BeliefPanel';
 import { SessionModeBar } from './components/bridge/SessionModeBar';
 import { CoachPanel } from './components/bridge/CoachPanel';
+import { BidChip } from './components/shared/BidChip';
 import { GovernorConfirmDialog } from './components/bridge/GovernorConfirmDialog';
 import LearningDashboard from './components/learning/LearningDashboard';
 import LearningMode from './components/learning/LearningMode';
-import HandReviewModal from './components/learning/HandReviewModal';
-import HandReviewPage from './components/learning/HandReviewPage';
+// Consolidated Hand Review Page (replaces both HandReviewModal and old HandReviewPage)
+import { HandReviewPage } from './components/learning/hand-review';
 import BidReviewPage from './components/learning/BidReviewPage';
 import { ModeSelector } from './components/ModeSelector';
 import { BiddingWorkspace } from './components/workspaces/BiddingWorkspace';
@@ -230,10 +231,18 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer, i
 
     return (
       <tr key={rowIndex}>
-        <td className={getHighlightClass(0)} onClick={() => row[0] && onBidClick(row[0])}>{row[0]?.bid || ''}</td>
-        <td className={getHighlightClass(1)} onClick={() => row[1] && onBidClick(row[1])}>{row[1]?.bid || ''}</td>
-        <td className={getHighlightClass(2)} onClick={() => row[2] && onBidClick(row[2])}>{row[2]?.bid || ''}</td>
-        <td className={getHighlightClass(3)} onClick={() => row[3] && onBidClick(row[3])}>{row[3]?.bid || ''}</td>
+        <td className={getHighlightClass(0)} onClick={() => row[0] && onBidClick(row[0])}>
+          {row[0]?.bid ? <BidChip bid={row[0].bid} /> : ''}
+        </td>
+        <td className={getHighlightClass(1)} onClick={() => row[1] && onBidClick(row[1])}>
+          {row[1]?.bid ? <BidChip bid={row[1].bid} /> : ''}
+        </td>
+        <td className={getHighlightClass(2)} onClick={() => row[2] && onBidClick(row[2])}>
+          {row[2]?.bid ? <BidChip bid={row[2].bid} /> : ''}
+        </td>
+        <td className={getHighlightClass(3)} onClick={() => row[3] && onBidClick(row[3])}>
+          {row[3]?.bid ? <BidChip bid={row[3].bid} /> : ''}
+        </td>
       </tr>
     );
   });
@@ -353,12 +362,10 @@ function App() {
   const [learningModeTrack, setLearningModeTrack] = useState('bidding'); // 'bidding' or 'play'
   const [showModeSelector, setShowModeSelector] = useState(true); // Landing page - shown by default
 
-  // Hand review - modal (keeping for post-game flow) and full-screen pages (new approach from dashboard)
-  const [showHandReviewModal, setShowHandReviewModal] = useState(false);
-  const [lastSavedHandId, setLastSavedHandId] = useState(null);
-
-  // Full-screen review pages (new approach from LearningDashboard)
+  // Hand review - full-screen page (used for both post-game and dashboard review)
   const [showHandReviewPage, setShowHandReviewPage] = useState(false);
+  const [handReviewSource, setHandReviewSource] = useState(null); // 'post-hand' or 'dashboard'
+  const [lastSavedHandId, setLastSavedHandId] = useState(null);
   const [showBidReviewPage, setShowBidReviewPage] = useState(false);
   const [reviewPageHandId, setReviewPageHandId] = useState(null);
   const [reviewPageType, setReviewPageType] = useState('play'); // 'play' or 'bidding'
@@ -1593,6 +1600,7 @@ ${otherCommands}`;
     savedScrollPositionRef.current = window.scrollY;
     setReviewPageHandId(handId);
     setReviewPageType(type);
+    setHandReviewSource('dashboard'); // Coming from My Progress dashboard
 
     // Setup navigation if hand list provided
     if (handList.length > 0) {
@@ -3393,7 +3401,11 @@ ${otherCommands}`;
           }}
           onPlayAnotherHand={playRandomHand}
           onReplayHand={replayCurrentHand}
-          onReviewHand={lastSavedHandId ? () => setShowHandReviewModal(true) : null}
+          onReviewHand={lastSavedHandId ? () => {
+            setReviewPageHandId(lastSavedHandId);
+            setHandReviewSource('post-hand');
+            setShowHandReviewPage(true);
+          } : null}
         />
       )}
 
