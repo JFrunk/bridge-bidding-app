@@ -1,0 +1,884 @@
+/**
+ * HandReviewPage.css - Consolidated Play-by-Play Review Styles
+ *
+ * Design principles:
+ * - Fixed viewport, no scrolling for core content
+ * - Compact header (44px)
+ * - Grid-based compass layout
+ * - Horizontal card layout for all positions
+ * - Collapsible panels for secondary content
+ */
+
+/* ========================================
+   CSS VARIABLES (following UI standards)
+   ======================================== */
+
+.hand-review-page {
+  --table-green: #1a6b3c;
+  --table-green-dark: #145530;
+  --header-dark: #2a2a2a;
+  --cream: #f5f0e8;
+  --cream-light: #faf8f4;
+  --gold: #c8a44e;
+  --text-on-dark: #e0e0e0;
+  --text-muted: #888;
+  --card-red: #c41e3a;
+  --card-black: #1a1a1a;
+  --success-green: #059669;
+  --success-bg: #ecfdf5;
+  --warning-amber: #f59e0b;
+  --warning-bg: #fffbeb;
+  --error-red: #dc2626;
+  --error-bg: #fef2f2;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+}
+
+/* ========================================
+   PAGE CONTAINER
+   ======================================== */
+
+.hand-review-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--table-green);
+  overflow: hidden;
+  z-index: 1000;
+}
+
+/* ========================================
+   HEADER BAR - Single compact bar (44px)
+   ======================================== */
+
+.hand-review-page .header-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  height: 44px;
+  background: var(--header-dark);
+  color: var(--text-on-dark);
+  flex-shrink: 0;
+}
+
+.hand-review-page .back-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: var(--text-on-dark);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.hand-review-page .back-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Contract summary */
+.hand-review-page .contract-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.hand-review-page .contract-badge {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+}
+
+.hand-review-page .contract-badge.red {
+  color: #ff6b7a;
+}
+
+.hand-review-page .contract-by {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.hand-review-page .result-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.hand-review-page .result-badge.success {
+  background: var(--success-green);
+  color: white;
+}
+
+.hand-review-page .result-badge.failure {
+  background: var(--error-red);
+  color: white;
+}
+
+.hand-review-page .result-detail {
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+.hand-review-page .role-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text-on-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hand-review-page .score-badge {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hand-review-page .score-badge.positive {
+  color: #4ade80;
+}
+
+.hand-review-page .score-badge.negative {
+  color: #f87171;
+}
+
+.hand-review-page .accuracy-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+/* Navigation controls */
+.hand-review-page .nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 4px 8px;
+  border-radius: var(--radius-md);
+}
+
+.hand-review-page .nav-btn {
+  background: none;
+  border: none;
+  color: var(--text-on-dark);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.hand-review-page .nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.hand-review-page .nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.hand-review-page .nav-btn.small {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+}
+
+.hand-review-page .nav-counter {
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: center;
+}
+
+.hand-review-page .hand-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hand-review-page .hand-counter {
+  font-size: 11px;
+  min-width: 32px;
+  text-align: center;
+}
+
+.hand-review-page .chart-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: var(--text-on-dark);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.hand-review-page .chart-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.hand-review-page .chart-toggle.active {
+  background: var(--gold);
+  color: var(--header-dark);
+}
+
+/* ========================================
+   COMPASS TABLE - CSS Grid Layout
+   ======================================== */
+
+.hand-review-page .compass-table {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-rows: auto 1fr auto;
+  gap: 4px;
+  padding: 8px 16px;
+  min-height: 0;
+  position: relative;
+}
+
+/* Felt texture overlay */
+.hand-review-page .compass-table::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Position areas */
+.hand-review-page .position-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.hand-review-page .north-area {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.hand-review-page .west-area {
+  grid-column: 1;
+  grid-row: 2;
+  justify-content: center;
+}
+
+.hand-review-page .center-area {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.hand-review-page .east-area {
+  grid-column: 3;
+  grid-row: 2;
+  justify-content: center;
+}
+
+.hand-review-page .south-area {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+/* Position labels */
+.hand-review-page .pos-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 2px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-sm);
+}
+
+/* ========================================
+   CARDS - Compact horizontal layout
+   ======================================== */
+
+.hand-review-page .replay-hand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hand-review-page .hand-cards {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hand-review-page .suit-group {
+  display: flex;
+}
+
+.hand-review-page .replay-card {
+  width: 36px;
+  height: 50px;
+  background: white;
+  border-radius: 3px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-left: -10px;
+  position: relative;
+}
+
+.hand-review-page .replay-card:first-child {
+  margin-left: 0;
+}
+
+.hand-review-page .replay-card .rank {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hand-review-page .replay-card .suit {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.hand-review-page .replay-card.red .rank,
+.hand-review-page .replay-card.red .suit {
+  color: var(--card-red);
+}
+
+.hand-review-page .replay-card.black .rank,
+.hand-review-page .replay-card.black .suit {
+  color: var(--card-black);
+}
+
+/* Compact cards for E/W */
+.hand-review-page .replay-card.compact {
+  width: 30px;
+  height: 42px;
+  margin-left: -8px;
+}
+
+.hand-review-page .replay-card.compact:first-child {
+  margin-left: 0;
+}
+
+.hand-review-page .replay-card.compact .rank {
+  font-size: 12px;
+}
+
+.hand-review-page .replay-card.compact .suit {
+  font-size: 9px;
+}
+
+.hand-review-page .hand-empty {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+}
+
+/* ========================================
+   CENTER TRICK DISPLAY
+   ======================================== */
+
+.hand-review-page .trick-display {
+  width: 150px;
+  height: 130px;
+  position: relative;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  grid-template-areas:
+    ". north ."
+    "west center east"
+    ". south .";
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-rows: 1fr auto 1fr;
+  padding: 4px;
+}
+
+.hand-review-page .trick-info {
+  grid-area: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.hand-review-page .trick-number {
+  font-weight: 600;
+}
+
+.hand-review-page .trick-leader {
+  font-size: 9px;
+}
+
+.hand-review-page .trick-card-north {
+  grid-area: north;
+  justify-self: center;
+  align-self: end;
+}
+
+.hand-review-page .trick-card-south {
+  grid-area: south;
+  justify-self: center;
+  align-self: start;
+}
+
+.hand-review-page .trick-card-west {
+  grid-area: west;
+  justify-self: end;
+  align-self: center;
+}
+
+.hand-review-page .trick-card-east {
+  grid-area: east;
+  justify-self: start;
+  align-self: center;
+}
+
+/* Center info box (start state) */
+.hand-review-page .center-info-box {
+  width: 150px;
+  height: 130px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hand-review-page .center-contract {
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+}
+
+.hand-review-page .center-contract.red {
+  color: #ff6b7a;
+}
+
+.hand-review-page .center-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ========================================
+   FEEDBACK BAR - Compact single line (52px)
+   ======================================== */
+
+.hand-review-page .feedback-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  min-height: 52px;
+  background: white;
+  border-top: 1px solid var(--border-subtle);
+  border-left: 4px solid transparent;
+  flex-shrink: 0;
+}
+
+.hand-review-page .feedback-bar.hint {
+  justify-content: center;
+  background: var(--cream-light);
+  border-left-color: transparent;
+}
+
+.hand-review-page .feedback-bar.ai-play {
+  background: #f9fafb;
+}
+
+.hand-review-page .feedback-bar.basic {
+  border-left-color: #6b7280;
+  background: #f9fafb;
+}
+
+.hand-review-page .hint-icon {
+  font-size: 16px;
+}
+
+.hand-review-page .hint-text {
+  font-size: 13px;
+  color: #666;
+}
+
+.hand-review-page .hint-text kbd {
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-family: inherit;
+  border: 1px solid #e5e7eb;
+  margin: 0 2px;
+}
+
+.hand-review-page .hint-text .key-hint {
+  background: var(--table-green);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 4px;
+}
+
+.hand-review-page .feedback-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: white;
+  white-space: nowrap;
+}
+
+.hand-review-page .played-info {
+  font-size: 13px;
+  color: #1a1a1a;
+}
+
+.hand-review-page .card-text {
+  font-weight: 700;
+}
+
+.hand-review-page .card-text.red {
+  color: var(--card-red);
+}
+
+.hand-review-page .card-text.black {
+  color: var(--card-black);
+}
+
+.hand-review-page .better-play {
+  font-size: 12px;
+  color: #666;
+}
+
+.hand-review-page .tricks-cost {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--error-red);
+  padding: 2px 6px;
+  background: var(--error-bg);
+  border-radius: 4px;
+}
+
+.hand-review-page .feedback-text {
+  flex: 1;
+  font-size: 13px;
+  color: #666;
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 12px;
+}
+
+.hand-review-page .feedback-text.muted {
+  color: #9ca3af;
+  font-style: italic;
+  border-left: none;
+  padding-left: 0;
+}
+
+/* ========================================
+   DECAY CHART PANEL (Collapsible)
+   ======================================== */
+
+.hand-review-page .chart-panel {
+  background: var(--cream-light);
+  border-top: 1px solid var(--border-subtle);
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  flex-shrink: 0;
+}
+
+.hand-review-page .chart-panel.collapsed {
+  max-height: 0;
+}
+
+.hand-review-page .chart-panel.expanded {
+  max-height: 200px;
+  padding: 12px 16px;
+}
+
+/* ========================================
+   HEURISTIC PANEL
+   ======================================== */
+
+.hand-review-page .heuristic-panel {
+  padding: 8px 16px;
+  background: var(--cream-light);
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+/* ========================================
+   ACTION BAR
+   ======================================== */
+
+.hand-review-page .action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--cream);
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.hand-review-page .action-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+}
+
+.hand-review-page .action-btn.primary {
+  background: var(--table-green);
+  color: white;
+}
+
+.hand-review-page .action-btn.primary:hover {
+  background: var(--table-green-dark);
+}
+
+.hand-review-page .action-btn.secondary {
+  background: white;
+  color: #2a2a2a;
+  border: 1px solid #d0d0d0;
+}
+
+.hand-review-page .action-btn.secondary:hover {
+  background: #f5f5f5;
+  border-color: var(--gold);
+}
+
+/* ========================================
+   LOADING & ERROR STATES
+   ======================================== */
+
+.hand-review-page .loading-state,
+.hand-review-page .error-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+.hand-review-page .error-state button {
+  margin-top: 16px;
+}
+
+/* ========================================
+   RESPONSIVE - Tablet (768px)
+   ======================================== */
+
+@media (max-width: 768px) {
+  .hand-review-page .header-bar {
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .hand-review-page .contract-by,
+  .hand-review-page .accuracy-badge {
+    display: none;
+  }
+
+  .hand-review-page .compass-table {
+    padding: 6px 10px;
+  }
+
+  .hand-review-page .replay-card {
+    width: 32px;
+    height: 44px;
+    margin-left: -8px;
+  }
+
+  .hand-review-page .replay-card .rank {
+    font-size: 13px;
+  }
+
+  .hand-review-page .replay-card .suit {
+    font-size: 9px;
+  }
+
+  .hand-review-page .replay-card.compact {
+    width: 26px;
+    height: 36px;
+    margin-left: -6px;
+  }
+
+  .hand-review-page .replay-card.compact .rank {
+    font-size: 11px;
+  }
+
+  .hand-review-page .replay-card.compact .suit {
+    font-size: 8px;
+  }
+
+  .hand-review-page .trick-display,
+  .hand-review-page .center-info-box {
+    width: 130px;
+    height: 110px;
+  }
+
+  .hand-review-page .center-contract {
+    font-size: 18px;
+  }
+
+  .hand-review-page .feedback-bar {
+    padding: 8px 12px;
+    flex-wrap: wrap;
+  }
+
+  .hand-review-page .feedback-text {
+    width: 100%;
+    border-left: none;
+    padding-left: 0;
+    margin-top: 4px;
+  }
+}
+
+/* ========================================
+   RESPONSIVE - Mobile (480px)
+   ======================================== */
+
+@media (max-width: 480px) {
+  .hand-review-page .header-bar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .hand-review-page .contract-summary {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hand-review-page .nav-controls {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hand-review-page .chart-toggle {
+    order: 1;
+    margin-left: auto;
+  }
+
+  .hand-review-page .role-badge,
+  .hand-review-page .score-badge {
+    display: none;
+  }
+
+  .hand-review-page .compass-table {
+    gap: 2px;
+    padding: 4px 8px;
+  }
+
+  .hand-review-page .replay-card {
+    width: 28px;
+    height: 38px;
+    margin-left: -6px;
+  }
+
+  .hand-review-page .replay-card .rank {
+    font-size: 11px;
+  }
+
+  .hand-review-page .replay-card .suit {
+    font-size: 8px;
+  }
+
+  .hand-review-page .replay-card.compact {
+    width: 24px;
+    height: 32px;
+    margin-left: -5px;
+  }
+
+  .hand-review-page .replay-card.compact .rank {
+    font-size: 10px;
+  }
+
+  .hand-review-page .replay-card.compact .suit {
+    font-size: 7px;
+  }
+
+  .hand-review-page .trick-display,
+  .hand-review-page .center-info-box {
+    width: 110px;
+    height: 95px;
+  }
+
+  .hand-review-page .center-contract {
+    font-size: 16px;
+  }
+
+  .hand-review-page .center-meta {
+    font-size: 9px;
+  }
+
+  .hand-review-page .pos-label {
+    font-size: 9px;
+    padding: 1px 6px;
+  }
+
+  .hand-review-page .action-bar {
+    flex-wrap: wrap;
+  }
+
+  .hand-review-page .action-btn {
+    flex: 1;
+    min-width: 100px;
+  }
+}
