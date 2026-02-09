@@ -3130,6 +3130,8 @@ ${otherCommands}`;
             onCardPlay={handleCardPlay}
             onDeclarerCardPlay={handleDeclarerCardPlay}
             onDummyCardPlay={handleDummyCardPlay}
+            onNewHand={playRandomHand}
+            onReplay={replayCurrentHand}
             // === BRIDGE RULES ENGINE INTEGRATION ===
             // Use rules engine data from backend for correct hand visibility and control
             isUserTurn={playState.is_user_turn ?? (playState.next_to_play === 'S' && playState.dummy !== 'S')}
