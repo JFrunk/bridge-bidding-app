@@ -6,11 +6,16 @@ import { cn } from "../../lib/utils";
  *
  * Displays when user clicks "Last Trick" button, auto-dismisses after 3 seconds.
  * Uses same card layout as CurrentTrickDisplay for visual consistency.
+ *
+ * CRITICAL: Uses inline styles for colors to ensure visibility regardless of Tailwind config
  */
 export function LastTrickOverlay({ trick, trickNumber, onClose }) {
   if (!trick || !trick.cards) return null;
 
-  const suitColor = (suit) => suit === '♥' || suit === '♦' ? 'text-suit-red' : 'text-suit-black';
+  // Use inline styles for guaranteed color visibility (not Tailwind classes)
+  const getSuitStyle = (suit) => ({
+    color: suit === '♥' || suit === '♦' ? '#c41e3a' : '#000000'  // Red or black
+  });
   const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
 
   // Create a map of position -> card from trick data
@@ -20,10 +25,12 @@ export function LastTrickOverlay({ trick, trickNumber, onClose }) {
   });
 
   // Card component for trick display - sized to match CurrentTrickDisplay (48x66px)
+  // CRITICAL: Uses inline styles for text color to ensure visibility (black text on white card)
   const TrickCard = ({ card, position, isWinner }) => {
     if (!card) return null;
 
     const displayRank = rankMap[card.rank] || card.rank;
+    const suitStyle = getSuitStyle(card.suit);
 
     return (
       <div
@@ -36,10 +43,10 @@ export function LastTrickOverlay({ trick, trickNumber, onClose }) {
           isWinner && "scale-105"
         )}
       >
-        <span className={cn("text-lg font-bold leading-none", suitColor(card.suit))}>
+        <span className="text-lg font-bold leading-none" style={suitStyle}>
           {displayRank}
         </span>
-        <span className={cn("text-sm leading-none", suitColor(card.suit))}>
+        <span className="text-sm leading-none" style={suitStyle}>
           {card.suit}
         </span>
       </div>

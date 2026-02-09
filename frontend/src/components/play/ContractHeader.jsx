@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useState } from "react";
+import { BiddingTableGrid } from "../shared/BiddingTableGrid";
 
 /**
  * ContractHeader - Compact contract bar per UI Redesign play-mockup-v2.html
@@ -12,6 +13,8 @@ import { useState } from "react";
  * CRITICAL TEXT COLOR RULES:
  * - Spades ♠ / Clubs ♣ / NT: Text must be WHITE (for dark header) or BLACK (for light)
  * - Hearts ♥ / Diamonds ♦: Text must be RED (#c41e3a)
+ *
+ * Uses shared BiddingTableGrid component for bid history popup (REUSE!)
  */
 export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData, vulnerability }) {
   const [showBidHistory, setShowBidHistory] = useState(false);
@@ -29,8 +32,8 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
   // Display text for strain (spell out NT)
   const displayStrain = strainSymbol;
 
-  // CRITICAL: Text color must respond to suit for readability
-  // Red suits (hearts/diamonds) = red text, Black suits (spades/clubs/NT) = white text (on dark bg)
+  // CRITICAL: Text color must respond to suit for readability on DARK header (#2a2a2a)
+  // Red suits (hearts/diamonds) = bright red text, Black suits (spades/clubs/NT) = bright white
   const isRedSuit = strain === 'H' || strain === 'D';
   const suitTextColor = isRedSuit ? '#ff6b7a' : '#ffffff';  // Bright red vs white
 
@@ -48,39 +51,6 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
   // Calculate score from user's (NS) perspective
   const declarerIsNS = declarer === 'N' || declarer === 'S';
   const userScore = scoreData ? (declarerIsNS ? scoreData.score : -scoreData.score) : null;
-
-  // Build bidding history grid - same logic as BiddingTable in App.js
-  // Columns are always [North, East, South, West] = indices [0, 1, 2, 3]
-  // Dealer starts on row 0 in their column
-  // When North column (0) is reached, move to next row
-  const players = ['North', 'East', 'South', 'West'];
-  const dealerFull = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' }[dealer] || dealer;
-  const dealerShort = { 'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W', 'N': 'N', 'E': 'E', 'S': 'S', 'W': 'W' }[dealer] || 'N';
-  const dealerIndex = players.indexOf(dealerFull);
-
-  const grid = [];
-  let currentRow = 0;
-  let currentCol = dealerIndex >= 0 ? dealerIndex : 0; // Start at dealer's column
-
-  for (let i = 0; i < (auction?.length || 0); i++) {
-    const bid = auction[i];
-
-    // Ensure row exists
-    if (!grid[currentRow]) {
-      grid[currentRow] = [null, null, null, null];
-    }
-
-    // Place bid in current position
-    grid[currentRow][currentCol] = bid;
-
-    // Move to next column (wrapping around)
-    currentCol = (currentCol + 1) % 4;
-
-    // If we just wrapped to North column (column 0), move to next row
-    if (currentCol === 0 && i < auction.length - 1) {
-      currentRow++;
-    }
-  }
 
   return (
     <>
@@ -139,12 +109,12 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
         </div>
       </div>
 
-      {/* Bid History Popup/Overlay - CRITICAL: Force black text on white background */}
+      {/* Bid History Popup - Uses shared BiddingTableGrid component (REUSE!) */}
       {showBidHistory && (
         <div className="bid-history-overlay" onClick={() => setShowBidHistory(false)}>
-          <div className="bid-history-popup" onClick={e => e.stopPropagation()} style={{ color: '#1a1a1a' }}>
+          <div className="bid-history-popup" onClick={e => e.stopPropagation()}>
             <div className="bid-history-header">
-              <h3 style={{ color: '#1a1a1a' }}>Bidding History</h3>
+              <h3>Bidding History</h3>
               <button
                 className="bid-history-close"
                 onClick={() => setShowBidHistory(false)}
@@ -153,26 +123,14 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
                 ×
               </button>
             </div>
-            <table className="bid-history-table">
-              <thead>
-                <tr>
-                  <th style={{ color: '#1a1a1a' }}>N{dealerShort === 'N' ? ' (D)' : ''}</th>
-                  <th style={{ color: '#1a1a1a' }}>E{dealerShort === 'E' ? ' (D)' : ''}</th>
-                  <th style={{ color: '#1a1a1a' }}>S{dealerShort === 'S' ? ' (D)' : ''}</th>
-                  <th style={{ color: '#1a1a1a' }}>W{dealerShort === 'W' ? ' (D)' : ''}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {grid.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {[0, 1, 2, 3].map(col => (
-                      <td key={col} style={{ color: '#1a1a1a' }}>{row[col]?.bid || ''}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="bid-history-contract" style={{ color: '#1a6b3c' }}>
+            {/* REUSE: Same component as main bidding phase */}
+            <BiddingTableGrid
+              auction={auction || []}
+              dealer={dealer}
+              isComplete={true}
+              compact={true}
+            />
+            <div className="bid-history-contract">
               Final Contract: <span style={{ color: isRedSuit ? '#c41e3a' : '#1a1a1a' }}>{level}{displayStrain}{doubledText}</span> by {declarerName}
             </div>
           </div>

@@ -1991,15 +1991,16 @@
 }
 
 /* ========================================
-   HOTFIX 3: PLAY TURN INDICATOR - Positioned at TOP, NEVER overlaps trick area or South's cards
-   Changed from bottom positioning to top positioning to avoid occlusion issues
+   PLAY TURN INDICATOR - Positioned BELOW center trick, ABOVE South's cards
+   Uses top: 50% + margin to stay below trick area, not bottom positioning
    ======================================== */
 
 .play-turn-indicator {
   position: absolute;
-  /* CRITICAL: Position BELOW the center trick area, ABOVE South's hand */
-  /* This provides clear vertical separation from both North and South */
-  bottom: 100px;  /* Above South's cards (South has ~90px min-height) */
+  /* CRITICAL: Positioned relative to center, with offset to sit BELOW the trick area */
+  /* Trick area is ~180px tall centered at 50%, so bottom of trick is at 50% + 90px = ~60% */
+  /* Adding 20px margin below trick area */
+  top: calc(50% + 110px);  /* 90px (half trick height) + 20px margin */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -2081,10 +2082,10 @@
   }
 }
 
-/* Turn indicator responsive - uses BOTTOM positioning, above South's hand */
+/* Turn indicator responsive - uses TOP positioning, below center trick area */
 @media (max-width: 768px) {
   .play-turn-indicator {
-    bottom: 85px;  /* Adjust for smaller South hand on tablets */
+    top: calc(50% + 90px);  /* Slightly tighter on tablets */
     padding: 5px 10px;
     font-size: 12px;
   }
@@ -2092,7 +2093,7 @@
 
 @media (max-width: 480px) {
   .play-turn-indicator {
-    bottom: 75px;  /* Adjust for phones */
+    top: calc(50% + 75px);  /* Tighter on phones where trick area is smaller */
     padding: 4px 8px;
   }
 
