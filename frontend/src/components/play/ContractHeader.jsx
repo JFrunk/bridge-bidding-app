@@ -9,10 +9,9 @@ import { useState } from "react";
  * - Center: NS/EW trick counts + Need X + Trick X/13
  * - Right: 📋 Bids button only
  *
- * CRITICAL SCORING PERSPECTIVE LOGIC:
- * - Backend returns scores from DECLARER's perspective (positive = made, negative = went down)
- * - User always plays South (NS team)
- * - MUST convert to user's NS perspective for display
+ * CRITICAL TEXT COLOR RULES:
+ * - Spades ♠ / Clubs ♣ / NT: Text must be WHITE (for dark header) or BLACK (for light)
+ * - Hearts ♥ / Diamonds ♦: Text must be RED (#c41e3a)
  */
 export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData, vulnerability }) {
   const [showBidHistory, setShowBidHistory] = useState(false);
@@ -21,16 +20,19 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
 
   const { level, strain, declarer, doubled } = contract;
   const doubledText = doubled === 2 ? 'XX' : doubled === 1 ? 'X' : '';
-  const displayStrain = strain === 'N' ? 'NT' : strain;
 
   // Suit symbol for trump display
   const strainSymbol = {
     'C': '♣', 'D': '♦', 'H': '♥', 'S': '♠', 'N': 'NT'
   }[strain] || strain;
 
-  const strainClass = {
-    'C': 'suit-club', 'D': 'suit-diamond', 'H': 'suit-heart', 'S': 'suit-spade', 'N': ''
-  }[strain] || '';
+  // Display text for strain (spell out NT)
+  const displayStrain = strainSymbol;
+
+  // CRITICAL: Text color must respond to suit for readability
+  // Red suits (hearts/diamonds) = red text, Black suits (spades/clubs/NT) = white text (on dark bg)
+  const isRedSuit = strain === 'H' || strain === 'D';
+  const suitTextColor = isRedSuit ? '#ff6b7a' : '#ffffff';  // Bright red vs white
 
   // Map declarer to full name
   const declarerName = {
@@ -76,18 +78,20 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
   return (
     <>
       <div className="contract-bar">
-        {/* Left: Contract + Meta */}
+        {/* Left: Contract Badge - CRITICAL: Suit-responsive text color */}
         <div className="contract-bar-left">
-          <div className="contract-badge">
+          <div className="contract-badge" style={{ color: suitTextColor }}>
             <span className="contract-level">{level}</span>
-            <span className={`contract-strain ${strainClass}`}>{displayStrain}</span>
+            <span className="contract-strain">{displayStrain}</span>
             {doubledText && <span className="contract-doubled">{doubledText}</span>}
           </div>
-          <div className="contract-meta">
-            <span className="contract-declarer">by {declarerName}</span>
-            {vulnerability && (
-              <span className="contract-vuln">Vuln: {vulnerability}</span>
-            )}
+          {/* Meta info - normalized typography */}
+          <div className="contract-info-row">
+            <span className="info-label">by</span>
+            <span className="info-value">{declarerName}</span>
+            <span className="info-separator">•</span>
+            <span className="info-label">Vuln:</span>
+            <span className="info-value">{vulnerability || 'None'}</span>
           </div>
           {/* Score when complete */}
           {scoreData && totalTricksPlayed === 13 && (
@@ -97,22 +101,26 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
           )}
         </div>
 
-        {/* Center: Trick Counter - Simple Text */}
+        {/* Center: Trick Counter - Normalized typography */}
         <div className="trick-counter-text">
           <span className="trick-ns">
-            <strong>NS: {tricksWonByPlayer}</strong>
+            <span className="info-label">NS:</span> <strong>{tricksWonByPlayer}</strong>
           </span>
-          <span className="trick-divider">|</span>
+          <span className="info-separator">•</span>
           <span className="trick-ew">
-            <strong>EW: {tricksWonByOpponents}</strong>
+            <span className="info-label">EW:</span> <strong>{tricksWonByOpponents}</strong>
           </span>
-          <span className="trick-divider">|</span>
-          <span className="trick-need">Need {tricksNeeded}</span>
-          <span className="trick-divider">|</span>
-          <span className="trick-current">Trick {totalTricksPlayed + 1}/13</span>
+          <span className="info-separator">•</span>
+          <span className="trick-need">
+            <span className="info-label">Need</span> <strong>{tricksNeeded}</strong>
+          </span>
+          <span className="info-separator">•</span>
+          <span className="trick-current">
+            <span className="info-label">Trick</span> <strong>{totalTricksPlayed + 1}/13</strong>
+          </span>
         </div>
 
-        {/* Right: Bid History Button only (Trump/Trick shown in contract badge and center) */}
+        {/* Right: Bid History Button */}
         <div className="contract-bar-right">
           <button
             className="bid-history-btn"
@@ -124,12 +132,12 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
         </div>
       </div>
 
-      {/* Bid History Popup/Overlay */}
+      {/* Bid History Popup/Overlay - CRITICAL: Force black text on white background */}
       {showBidHistory && (
         <div className="bid-history-overlay" onClick={() => setShowBidHistory(false)}>
-          <div className="bid-history-popup" onClick={e => e.stopPropagation()}>
+          <div className="bid-history-popup" onClick={e => e.stopPropagation()} style={{ color: '#1a1a1a' }}>
             <div className="bid-history-header">
-              <h3>Bidding History</h3>
+              <h3 style={{ color: '#1a1a1a' }}>Bidding History</h3>
               <button
                 className="bid-history-close"
                 onClick={() => setShowBidHistory(false)}
@@ -141,24 +149,24 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
             <table className="bid-history-table">
               <thead>
                 <tr>
-                  <th>N{dealerPos === 'N' ? ' (D)' : ''}</th>
-                  <th>E{dealerPos === 'E' ? ' (D)' : ''}</th>
-                  <th>S{dealerPos === 'S' ? ' (D)' : ''}</th>
-                  <th>W{dealerPos === 'W' ? ' (D)' : ''}</th>
+                  <th style={{ color: '#1a1a1a' }}>N{dealerPos === 'N' ? ' (D)' : ''}</th>
+                  <th style={{ color: '#1a1a1a' }}>E{dealerPos === 'E' ? ' (D)' : ''}</th>
+                  <th style={{ color: '#1a1a1a' }}>S{dealerPos === 'S' ? ' (D)' : ''}</th>
+                  <th style={{ color: '#1a1a1a' }}>W{dealerPos === 'W' ? ' (D)' : ''}</th>
                 </tr>
               </thead>
               <tbody>
                 {rounds.map((round, roundIndex) => (
                   <tr key={roundIndex}>
                     {[0, 1, 2, 3].map(col => (
-                      <td key={col}>{round[col]?.bid || '-'}</td>
+                      <td key={col} style={{ color: '#1a1a1a' }}>{round[col]?.bid || '-'}</td>
                     ))}
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div className="bid-history-contract">
-              Final Contract: {level}{displayStrain}{doubledText} by {declarerName}
+            <div className="bid-history-contract" style={{ color: '#1a6b3c' }}>
+              Final Contract: <span style={{ color: isRedSuit ? '#c41e3a' : '#1a1a1a' }}>{level}{displayStrain}{doubledText}</span> by {declarerName}
             </div>
           </div>
         </div>
