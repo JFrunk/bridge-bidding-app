@@ -1637,6 +1637,70 @@ ${otherCommands}`;
     }
   };
 
+  /**
+   * Handle claim for remaining tricks
+   * Opens a dialog for the user to claim N tricks, validates with DDS on backend
+   */
+  const handleClaim = async () => {
+    if (!playState) return;
+
+    // Calculate remaining tricks
+    const totalTricksPlayed = Object.values(playState.tricks_won).reduce((a, b) => a + b, 0);
+    const tricksRemaining = 13 - totalTricksPlayed;
+
+    if (tricksRemaining === 0) {
+      alert('No tricks remaining to claim.');
+      return;
+    }
+
+    // Prompt user for number of tricks to claim
+    const input = window.prompt(
+      `How many of the ${tricksRemaining} remaining tricks do you claim?\n\n` +
+      `Enter a number from 0 to ${tricksRemaining}:`,
+      String(tricksRemaining)
+    );
+
+    // User cancelled
+    if (input === null) return;
+
+    const claimedTricks = parseInt(input, 10);
+
+    // Validate input
+    if (isNaN(claimedTricks) || claimedTricks < 0 || claimedTricks > tricksRemaining) {
+      alert(`Please enter a valid number between 0 and ${tricksRemaining}.`);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/validate-claim`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+        body: JSON.stringify({ claimed_tricks: claimedTricks })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(`Error: ${result.error || 'Failed to validate claim'}`);
+        return;
+      }
+
+      // Show result
+      if (result.valid) {
+        alert(`✅ ${result.message}`);
+
+        // TODO: Auto-complete the hand with claimed tricks
+        // For now, user can continue playing or start new hand
+      } else {
+        alert(`❌ ${result.message}`);
+      }
+
+    } catch (err) {
+      console.error('Error validating claim:', err);
+      alert('Failed to validate claim. Please try again.');
+    }
+  };
+
   // ========== END CARD PLAY FUNCTIONS ==========
 
   const dealNewHand = async () => {
@@ -3093,10 +3157,38 @@ ${otherCommands}`;
             lastTrick={lastTrick}
             onShowLastTrick={() => setShowLastTrick(true)}
             onHideLastTrick={() => setShowLastTrick(false)}
+            // Claim remaining tricks
+            onClaim={handleClaim}
           />
           {/* Don't show AI bidding status messages during play - only show errors if they occur */}
-          {/* Play phase errors - Dev mode only */}
-          {isDevMode && Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && error && <div className="error-message">{error}</div>}
+          {/* Play phase errors - Show session-related errors always, dev errors in dev mode only */}
+          {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && error && (
+            error.toLowerCase().includes('session') || error.toLowerCase().includes('no play in progress') || error.toLowerCase().includes('deal') ? (
+              <div className="session-lost-message" style={{
+                background: 'rgba(244, 67, 54, 0.15)',
+                border: '1px solid #f44336',
+                borderRadius: '8px',
+                padding: '16px',
+                margin: '16px auto',
+                maxWidth: '400px',
+                textAlign: 'center'
+              }}>
+                <p style={{ color: '#f44336', fontWeight: 600, marginBottom: '12px' }}>
+                  Session expired
+                </p>
+                <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
+                  The game state was lost. Please deal a new hand to continue.
+                </p>
+                <button
+                  onClick={dealNewHand}
+                  className="action-btn primary"
+                  style={{ padding: '10px 24px' }}
+                >
+                  Deal New Hand
+                </button>
+              </div>
+            ) : isDevMode && <div className="error-message">{error}</div>
+          )}
 
           {/* Show All Hands toggle for play phase - available after hand is complete */}
           {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) === 13 && (

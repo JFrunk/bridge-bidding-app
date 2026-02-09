@@ -3986,6 +3986,136 @@ def complete_play():
         return jsonify({"error": f"Error calculating final score: {e}"}), 500
 
 
+@app.route("/api/validate-claim", methods=["POST"])
+def validate_claim():
+    """
+    Validate a claim for remaining tricks using DDS.
+
+    The declarer can claim N remaining tricks. DDS calculates the maximum
+    tricks achievable with optimal play from the current position.
+
+    If claimed_tricks <= dds_max_tricks, the claim is valid.
+
+    Request body:
+        - claimed_tricks: int - Number of remaining tricks declarer claims
+
+    Returns:
+        - valid: bool - Whether the claim is valid
+        - claimed: int - Tricks claimed
+        - max_possible: int - Maximum tricks DDS says are achievable
+        - dds_available: bool - Whether DDS was used for validation
+        - message: str - Human-readable result message
+    """
+    state = get_state()
+
+    if not state.play_state:
+        return jsonify({"error": "No play in progress"}), 400
+
+    try:
+        data = request.get_json() or {}
+        claimed_tricks = data.get("claimed_tricks")
+
+        if claimed_tricks is None:
+            return jsonify({"error": "claimed_tricks is required"}), 400
+
+        claimed_tricks = int(claimed_tricks)
+
+        # Get current state
+        play_state = state.play_state
+        contract = play_state.contract
+        declarer = contract.declarer
+        declarer_side = 'NS' if declarer in ['N', 'S'] else 'EW'
+
+        # Calculate tricks already won by declarer's side
+        if declarer_side == 'NS':
+            tricks_already_won = play_state.tricks_won['N'] + play_state.tricks_won['S']
+        else:
+            tricks_already_won = play_state.tricks_won['E'] + play_state.tricks_won['W']
+
+        # Calculate remaining tricks in play
+        total_tricks_played = sum(play_state.tricks_won.values())
+        tricks_remaining = 13 - total_tricks_played
+
+        # Basic validation: can't claim more than remaining
+        if claimed_tricks > tricks_remaining:
+            return jsonify({
+                "valid": False,
+                "claimed": claimed_tricks,
+                "tricks_remaining": tricks_remaining,
+                "message": f"Cannot claim {claimed_tricks} tricks - only {tricks_remaining} remain",
+                "dds_available": False
+            })
+
+        # Try to use DDS for validation
+        dds_max_tricks = None
+        dds_available = False
+
+        if PLATFORM_ALLOWS_DDS and is_dds_available():
+            try:
+                dds_service = get_dds_service()
+
+                # Get current hands (remaining cards)
+                hands = play_state.hands
+
+                # Convert trump suit for DDS
+                trump_strain = contract.strain
+                if trump_strain == 'NT':
+                    strain = 'NT'
+                else:
+                    # Convert symbol to letter if needed
+                    strain_map = {'♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C',
+                                  'S': 'S', 'H': 'H', 'D': 'D', 'C': 'C'}
+                    strain = strain_map.get(trump_strain, trump_strain)
+
+                # DDS returns tricks makeable from current position
+                dds_max_tricks = dds_service.get_tricks(hands, declarer, strain)
+
+                if dds_max_tricks is not None:
+                    dds_available = True
+
+            except Exception as e:
+                print(f"⚠️  DDS claim validation failed: {e}")
+                traceback.print_exc()
+
+        # Validate the claim
+        if dds_available and dds_max_tricks is not None:
+            # DDS validation
+            is_valid = claimed_tricks <= dds_max_tricks
+
+            if is_valid:
+                message = f"Claim accepted! You claimed {claimed_tricks} of {tricks_remaining} remaining tricks."
+                if dds_max_tricks > claimed_tricks:
+                    message += f" (You could have claimed up to {dds_max_tricks})"
+            else:
+                message = f"Claim rejected. You claimed {claimed_tricks} tricks but can only make {dds_max_tricks} with perfect play."
+
+            return jsonify({
+                "valid": is_valid,
+                "claimed": claimed_tricks,
+                "max_possible": dds_max_tricks,
+                "tricks_remaining": tricks_remaining,
+                "tricks_already_won": tricks_already_won,
+                "dds_available": True,
+                "message": message
+            })
+        else:
+            # No DDS available - accept claim optimistically
+            # This happens on macOS dev or if DDS fails
+            return jsonify({
+                "valid": True,
+                "claimed": claimed_tricks,
+                "max_possible": None,
+                "tricks_remaining": tricks_remaining,
+                "tricks_already_won": tricks_already_won,
+                "dds_available": False,
+                "message": f"Claim accepted (DDS unavailable for verification). You claimed {claimed_tricks} of {tricks_remaining} remaining tricks."
+            })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Error validating claim: {e}"}), 500
+
+
 # ============================================================================
 # AI MONITORING & QUALITY ENDPOINTS
 # ============================================================================

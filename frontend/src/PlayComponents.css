@@ -1997,9 +1997,9 @@
 
 .play-turn-indicator {
   position: absolute;
-  /* CRITICAL: Position at TOP of play area, below North's hand */
-  /* This ensures it NEVER overlaps the center trick area or South's cards */
-  top: 90px;  /* Below North's label + hand area */
+  /* CRITICAL: Position BELOW the center trick area, ABOVE South's hand */
+  /* This provides clear vertical separation from both North and South */
+  bottom: 100px;  /* Above South's cards (South has ~90px min-height) */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -2007,11 +2007,11 @@
   justify-content: center;
   gap: 8px;
   padding: 6px 14px;
-  background: rgba(45, 80, 22, 0.92);  /* Solid dark green for readability */
+  background: rgba(45, 80, 22, 0.95);  /* Solid dark green for readability */
   border-radius: 16px;
   width: fit-content;
   z-index: 15;  /* Above cards, labels, and trick area */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);  /* Subtle shadow for depth */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);  /* Stronger shadow for visibility */
   white-space: nowrap;  /* Prevent text wrapping */
 }
 
@@ -2081,10 +2081,10 @@
   }
 }
 
-/* Turn indicator responsive - uses TOP positioning, stays below North's hand */
+/* Turn indicator responsive - uses BOTTOM positioning, above South's hand */
 @media (max-width: 768px) {
   .play-turn-indicator {
-    top: 75px;  /* Slightly lower on tablets - smaller North hand */
+    bottom: 85px;  /* Adjust for smaller South hand on tablets */
     padding: 5px 10px;
     font-size: 12px;
   }
@@ -2092,7 +2092,7 @@
 
 @media (max-width: 480px) {
   .play-turn-indicator {
-    top: 65px;  /* Lower on phones - even smaller North hand */
+    bottom: 75px;  /* Adjust for phones */
     padding: 4px 8px;
   }
 

@@ -49,29 +49,36 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
   const declarerIsNS = declarer === 'N' || declarer === 'S';
   const userScore = scoreData ? (declarerIsNS ? scoreData.score : -scoreData.score) : null;
 
-  // Build bidding history rounds
-  const positions = ['N', 'E', 'S', 'W'];
-  const dealerMap = { 'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W', 'N': 'N', 'E': 'E', 'S': 'S', 'W': 'W' };
-  const dealerPos = dealerMap[dealer] || 'N';
-  const dealerIndex = positions.indexOf(dealerPos);
+  // Build bidding history grid - same logic as BiddingTable in App.js
+  // Columns are always [North, East, South, West] = indices [0, 1, 2, 3]
+  // Dealer starts on row 0 in their column
+  // When North column (0) is reached, move to next row
+  const players = ['North', 'East', 'South', 'West'];
+  const dealerFull = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' }[dealer] || dealer;
+  const dealerShort = { 'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W', 'N': 'N', 'E': 'E', 'S': 'S', 'W': 'W' }[dealer] || 'N';
+  const dealerIndex = players.indexOf(dealerFull);
 
-  const rounds = [];
-  if (auction && auction.length > 0) {
-    let currentRow = [null, null, null, null];
-    let colIndex = dealerIndex;
+  const grid = [];
+  let currentRow = 0;
+  let currentCol = dealerIndex >= 0 ? dealerIndex : 0; // Start at dealer's column
 
-    for (let i = 0; i < auction.length; i++) {
-      currentRow[colIndex] = auction[i];
-      colIndex = (colIndex + 1) % 4;
+  for (let i = 0; i < (auction?.length || 0); i++) {
+    const bid = auction[i];
 
-      if (colIndex === dealerIndex && i < auction.length - 1) {
-        rounds.push(currentRow);
-        currentRow = [null, null, null, null];
-      }
+    // Ensure row exists
+    if (!grid[currentRow]) {
+      grid[currentRow] = [null, null, null, null];
     }
 
-    if (currentRow.some(cell => cell !== null)) {
-      rounds.push(currentRow);
+    // Place bid in current position
+    grid[currentRow][currentCol] = bid;
+
+    // Move to next column (wrapping around)
+    currentCol = (currentCol + 1) % 4;
+
+    // If we just wrapped to North column (column 0), move to next row
+    if (currentCol === 0 && i < auction.length - 1) {
+      currentRow++;
     }
   }
 
@@ -149,17 +156,17 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
             <table className="bid-history-table">
               <thead>
                 <tr>
-                  <th style={{ color: '#1a1a1a' }}>N{dealerPos === 'N' ? ' (D)' : ''}</th>
-                  <th style={{ color: '#1a1a1a' }}>E{dealerPos === 'E' ? ' (D)' : ''}</th>
-                  <th style={{ color: '#1a1a1a' }}>S{dealerPos === 'S' ? ' (D)' : ''}</th>
-                  <th style={{ color: '#1a1a1a' }}>W{dealerPos === 'W' ? ' (D)' : ''}</th>
+                  <th style={{ color: '#1a1a1a' }}>N{dealerShort === 'N' ? ' (D)' : ''}</th>
+                  <th style={{ color: '#1a1a1a' }}>E{dealerShort === 'E' ? ' (D)' : ''}</th>
+                  <th style={{ color: '#1a1a1a' }}>S{dealerShort === 'S' ? ' (D)' : ''}</th>
+                  <th style={{ color: '#1a1a1a' }}>W{dealerShort === 'W' ? ' (D)' : ''}</th>
                 </tr>
               </thead>
               <tbody>
-                {rounds.map((round, roundIndex) => (
-                  <tr key={roundIndex}>
+                {grid.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
                     {[0, 1, 2, 3].map(col => (
-                      <td key={col} style={{ color: '#1a1a1a' }}>{round[col]?.bid || '-'}</td>
+                      <td key={col} style={{ color: '#1a1a1a' }}>{row[col]?.bid || ''}</td>
                     ))}
                   </tr>
                 ))}

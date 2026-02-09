@@ -19,7 +19,7 @@ export function LastTrickOverlay({ trick, trickNumber, onClose }) {
     cardsByPosition[position] = card;
   });
 
-  // Card component for trick display (same as CurrentTrickDisplay)
+  // Card component for trick display - sized to match CurrentTrickDisplay (48x66px)
   const TrickCard = ({ card, position, isWinner }) => {
     if (!card) return null;
 
@@ -28,18 +28,18 @@ export function LastTrickOverlay({ trick, trickNumber, onClose }) {
     return (
       <div
         className={cn(
-          "w-[70px] h-[100px] bg-white rounded-card shadow-md flex flex-col items-center justify-center",
+          "w-[48px] h-[66px] bg-white rounded shadow-md flex flex-col items-center justify-center",
           "transition-all duration-300",
           // Bold border (ring) for winner
-          isWinner ? "ring-4 ring-yellow-400 shadow-2xl border-0" : "border border-gray-400",
+          isWinner ? "ring-2 ring-yellow-400 shadow-xl border-0" : "border border-gray-300",
           // Slight scale up for winner
           isWinner && "scale-105"
         )}
       >
-        <span className={cn("text-3xl font-bold", suitColor(card.suit))}>
+        <span className={cn("text-lg font-bold leading-none", suitColor(card.suit))}>
           {displayRank}
         </span>
-        <span className={cn("text-2xl", suitColor(card.suit))}>
+        <span className={cn("text-sm leading-none", suitColor(card.suit))}>
           {card.suit}
         </span>
       </div>
@@ -51,13 +51,13 @@ export function LastTrickOverlay({ trick, trickNumber, onClose }) {
 
   return (
     <div
-      className="relative flex flex-col items-center justify-center w-full h-full min-h-[350px] cursor-pointer"
+      className="relative flex flex-col items-center justify-center w-[200px] h-[180px] cursor-pointer mx-auto"
       onClick={onClose}
       title="Click to dismiss"
     >
       {/* Header showing trick number and winner */}
-      <div className="absolute top-0 left-0 right-0 text-center py-2 bg-bg-secondary/80 rounded-t-lg">
-        <p className="text-sm text-gray-300">
+      <div className="absolute -top-6 left-0 right-0 text-center py-1 bg-black/70 rounded-t-lg">
+        <p className="text-xs text-white">
           <span className="font-semibold">Trick #{trickNumber}</span>
           {' '}&mdash;{' '}
           Won by <span className="font-semibold text-yellow-400">{positionNames[trick.winner]}</span>
@@ -65,10 +65,10 @@ export function LastTrickOverlay({ trick, trickNumber, onClose }) {
       </div>
 
       {/* Compass layout: North (top), East (right), South (bottom), West (left) */}
-      <div className="relative w-full h-full flex items-center justify-center mt-8">
+      <div className="relative w-full h-full flex items-center justify-center">
         {/* North card - Top center */}
         {cardsByPosition.N && (
-          <div className="absolute top-0 left-1/2 -translate-x-1/2">
+          <div className="absolute top-[6px] left-1/2 -translate-x-1/2">
             <TrickCard
               card={cardsByPosition.N}
               position="N"
@@ -79,7 +79,7 @@ export function LastTrickOverlay({ trick, trickNumber, onClose }) {
 
         {/* East card - Right center */}
         {cardsByPosition.E && (
-          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+          <div className="absolute right-[16px] top-1/2 -translate-y-1/2">
             <TrickCard
               card={cardsByPosition.E}
               position="E"
@@ -90,7 +90,7 @@ export function LastTrickOverlay({ trick, trickNumber, onClose }) {
 
         {/* South card - Bottom center */}
         {cardsByPosition.S && (
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
+          <div className="absolute bottom-[6px] left-1/2 -translate-x-1/2">
             <TrickCard
               card={cardsByPosition.S}
               position="S"
@@ -101,7 +101,7 @@ export function LastTrickOverlay({ trick, trickNumber, onClose }) {
 
         {/* West card - Left center */}
         {cardsByPosition.W && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2">
+          <div className="absolute left-[16px] top-1/2 -translate-y-1/2">
             <TrickCard
               card={cardsByPosition.W}
               position="W"
@@ -110,9 +110,9 @@ export function LastTrickOverlay({ trick, trickNumber, onClose }) {
           </div>
         )}
 
-        {/* Center indicator */}
-        <div className="text-gray-500 text-xs opacity-60">
-          (click to dismiss)
+        {/* Center indicator - smaller and more subtle */}
+        <div className="text-white/70 text-[10px] bg-black/30 px-1.5 py-0.5 rounded">
+          tap to close
         </div>
       </div>
     </div>
