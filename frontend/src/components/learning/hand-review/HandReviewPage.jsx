@@ -136,9 +136,9 @@ const FeedbackBar = ({ decision, isStart }) => {
   if (isStart) {
     return (
       <div className="feedback-bar hint">
-        <span className="hint-icon">\u{1f446}</span>
+        <span className="hint-icon">{'\u261D'}</span>
         <span className="hint-text">
-          Press <span className="key-hint">\u25b6 Next</span> or use <kbd>\u2190</kbd> <kbd>\u2192</kbd> arrow keys to step through each play
+          Press <span className="key-hint">{'\u25B6'} Next</span> or use <kbd>{'\u2190'}</kbd> <kbd>{'\u2192'}</kbd> arrow keys to step through each play
         </span>
       </div>
     );
