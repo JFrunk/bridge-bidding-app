@@ -8,7 +8,7 @@ import { cn } from "../../lib/utils";
  * Shows only the top ~20px when overlapped, with rank and suit clearly visible.
  *
  * Design Philosophy:
- * - Rank and suit ONLY in top-left corner - minimal display for vertical stacking
+ * - Rank and suit CENTERED horizontally at top - clean display for vertical stacking
  * - Same dimensions as PlayableCard for consistency
  * - No center symbol or bottom content - clean appearance when overlapped
  *
@@ -60,9 +60,9 @@ export function VerticalPlayableCard({ card, onClick, disabled = false, classNam
         }
       } : undefined}
     >
-      {/* Top-left corner ONLY - rank and suit side by side for compact vertical display */}
+      {/* Centered text - rank and suit side by side for E/W vertical display */}
       <div className={cn(
-        "absolute top-1 left-1.5 leading-none flex flex-row items-center gap-0.5",
+        "absolute top-1 left-0 right-0 leading-none flex flex-row items-center justify-center gap-0.5",
         suitColor
       )}>
         <span className="text-lg font-bold">{displayRank}</span>
