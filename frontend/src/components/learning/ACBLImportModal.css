@@ -25,7 +25,7 @@
   background: var(--bg-primary, #fff);
   border-radius: var(--radius-lg, 12px);
   width: 100%;
-  max-width: 700px;
+  max-width: var(--content-width-standard, min(95vw, 900px));
   max-height: 90vh;
   display: flex;
   flex-direction: column;

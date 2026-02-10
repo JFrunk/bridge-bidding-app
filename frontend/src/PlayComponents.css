@@ -91,6 +91,37 @@
   --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-in: cubic-bezier(0.55, 0.055, 0.675, 0.19);
   --ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+
+  /* =========================================
+     CARD SIZING SYSTEM - Responsive by default
+     Single source of truth for all card dimensions
+     Aspect ratio: 5:7 (standard playing card)
+     ========================================= */
+
+  /* Responsive card dimensions using clamp() */
+  --card-width: clamp(38px, 5vw, 60px);
+  --card-height: clamp(53px, 7vw, 84px);
+
+  /* Card overlap - scales proportionally with card size */
+  --card-overlap-horizontal: clamp(-24px, -3vw, -38px);
+  --card-overlap-vertical: clamp(-32px, -4vw, -52px);
+
+  /* Card typography - scales with card */
+  --card-rank-size: clamp(14px, 1.5vw, 20px);
+  --card-suit-size: clamp(12px, 1.3vw, 16px);
+
+  /* Suit gap (space between suit groups) */
+  --card-suit-gap: clamp(6px, 1vw, 12px);
+
+  /* =========================================
+     CONTAINER WIDTHS - Fluid responsive
+     Uses min() for fluid width with max cap
+     ========================================= */
+
+  --content-width-narrow: min(95vw, 700px);   /* Compact views */
+  --content-width-standard: min(95vw, 900px); /* Default for most pages */
+  --content-width-wide: min(95vw, 1100px);    /* Wide layouts */
+  --compass-width: min(95vw, 960px);          /* Compass layout (4 hands + center) */
 }
 
 /* ========================================
@@ -483,11 +514,12 @@
   white-space: nowrap;
 }
 
-/* Active turn - gold tinted */
+/* Active turn - gold tinted with pulse animation */
 .position-label.active-turn {
-  color: var(--gold-light, #e8d49a);
-  background: rgba(200, 164, 78, 0.2);
-  box-shadow: 0 0 0 1.5px rgba(200, 164, 78, 0.4);
+  color: var(--gold-light, #f5e6a3);
+  background: rgba(234, 179, 8, 0.25);
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.5);
+  animation: label-pulse 2s ease-in-out infinite;
 }
 
 /* Position role badges - per mockup */
@@ -758,13 +790,13 @@
   z-index: 1;
 }
 
-/* Playable Cards - Responsive sizing for viewport containment */
-/* VIEWPORT FIX: Use clamp() for responsive card sizes */
+/* Playable Cards - Responsive sizing using CSS variables */
+/* Single source of truth: uses --card-* variables from :root */
 .playable-card {
-  width: clamp(40px, 6vw, 48px);
-  height: clamp(54px, 8vh, 66px);
+  width: var(--card-width);
+  height: var(--card-height);
   background: white;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06);
   display: flex;
   flex-direction: column;
@@ -773,7 +805,7 @@
   gap: 1px;
   cursor: pointer;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
-  margin-left: -7px;
+  margin-left: var(--card-overlap-horizontal);
   position: relative;
   user-select: none;
 }
@@ -790,13 +822,13 @@
 }
 
 .playable-card .rank {
-  font-size: 18px;
+  font-size: var(--card-rank-size);
   font-weight: 700;
   line-height: 1;
 }
 
 .playable-card .suit {
-  font-size: 12px;
+  font-size: var(--card-suit-size);
   line-height: 1;
 }
 
@@ -1534,15 +1566,17 @@
    CONTRACT BAR - with trick counter per mockup
    ======================================== */
 
-.contract-bar {
-  background: var(--charcoal, #2a2a2a);
+.play-table .contract-bar {
+  background: var(--charcoal, #2a2a2a) !important;
   padding: 10px 24px;
   display: flex;
   align-items: center;
   gap: 20px;
   flex-shrink: 0;
-  color: white;
+  color: #ffffff !important;
   font-size: 14px;  /* Base size for normalized typography */
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 
 /* Contract badge - level + strain + doubled */
@@ -1576,24 +1610,27 @@
   flex-direction: row;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 13px;  /* Base size for all info text */
+  line-height: 1.4;  /* Consistent line height */
   white-space: nowrap;
 }
 
-/* Typography normalization for info text */
+/* Typography normalization for info text - WCAG 2.1 AA compliant (4.5:1 contrast ratio) */
 .info-label {
-  color: rgba(255, 255, 255, 0.6);  /* Muted labels */
+  color: rgba(255, 255, 255, 0.75);  /* Increased from 0.6 for WCAG AA contrast on #2a2a2a */
   font-weight: 400;
+  font-size: inherit;  /* Consistent sizing - inherits from parent */
 }
 
 .info-value {
-  color: #ffffff;  /* Bright values */
+  color: #ffffff;  /* Bright values - full contrast */
   font-weight: 500;
+  font-size: inherit;  /* Consistent sizing */
 }
 
 .info-separator {
-  color: rgba(255, 255, 255, 0.3);  /* Subtle separators - dots instead of pipes */
-  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);  /* Increased from 0.3 for WCAG AA contrast */
+  font-size: inherit;  /* Consistent sizing - no longer 10px, inherits from parent (13px) */
   margin: 0 2px;
 }
 
@@ -1628,13 +1665,13 @@
 }
 
 .trick-counter-text .info-label {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.75);  /* WCAG AA compliant */
   font-weight: 400;
 }
 
 .trick-counter-text .info-separator {
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 8px;
+  color: rgba(255, 255, 255, 0.5);  /* WCAG AA compliant */
+  /* font-size inherits from parent (13px) for consistency */
 }
 
 /* Legacy trick bar (kept for learning flows) */
@@ -2110,6 +2147,77 @@
   }
 
   .play-turn-indicator .turn-text {
+    font-size: 12px;
+  }
+}
+
+/* ========================================
+   REACTOR LAYOUT - Physics v2.0
+   Centripetal 3x3 Grid with TrickArena at center
+   ======================================== */
+
+.reactor-layout {
+  /* Override old play-area absolute positioning */
+  position: relative !important;
+  width: 100% !important;
+  min-height: auto !important;
+  max-height: none !important;
+  padding: 0 !important;
+  padding-bottom: 0 !important;
+  background-color: var(--table-green, #1a6b3c);
+}
+
+/* Position orbit containers - flex column for label + hand */
+.position-orbit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+}
+
+/* North orbit - cards spread horizontally below label */
+.position-north-orbit {
+  padding-bottom: 0.5em;
+}
+
+/* South orbit - cards spread horizontally, larger scale */
+.position-south-orbit {
+  padding-top: 0.5em;
+}
+
+/* East/West orbits - cards stacked vertically */
+.position-east-orbit,
+.position-west-orbit {
+  padding: 0 0.5em;
+}
+
+/* Compact turn prompt - minimal, only shows when user action needed */
+.play-turn-prompt {
+  margin-top: 0.75em;
+  padding: 6px 14px;
+  background: rgba(234, 179, 8, 0.9);  /* Semi-transparent gold */
+  color: #1a1a1a;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: prompt-pulse 2s ease-in-out infinite;
+}
+
+@keyframes prompt-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes label-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.5); }
+  50% { box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.3); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .play-turn-prompt {
+    padding: 5px 12px;
     font-size: 12px;
   }
 }

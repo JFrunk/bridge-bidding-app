@@ -14,6 +14,7 @@
 import React, { useState } from 'react';
 import './RecentDecisionsCard.css';
 import { TermHighlight } from '../glossary';
+import { BidChip } from '../shared/BidChip';
 
 const RecentDecisionsCard = ({ decisions }) => {
   const [expandedId, setExpandedId] = useState(null);
@@ -82,10 +83,10 @@ const DecisionItem = ({ decision, isExpanded, onToggle }) => {
 
   const display = getCorrectnessDisplay(decision.correctness);
 
-  // Format bid display
+  // Format bid display using BidChip components
   const bidDisplay = decision.user_bid === decision.optimal_bid
-    ? decision.user_bid
-    : `${decision.user_bid} → ${decision.optimal_bid}`;
+    ? <BidChip bid={decision.user_bid} />
+    : <><BidChip bid={decision.user_bid} /> <span className="bid-arrow">→</span> <BidChip bid={decision.optimal_bid} /></>;
 
   // Format score display
   const scoreDisplay = decision.score ? decision.score.toFixed(1) : '—';

@@ -1,24 +1,26 @@
 /**
- * Card Component
+ * Card Component - Physics v2.0
  *
- * Displays a single playing card with rank and suit.
- * Used by both bidding and play modules.
- *
- * Props:
- *   - rank: Card rank ('A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2')
- *   - suit: Card suit ('♠', '♥', '♦', '♣')
- *   - onClick: Optional click handler for card selection
- *   - selectable: Whether the card can be selected (default: false)
- *   - selected: Whether the card is currently selected (default: false)
+ * Fully scalable card using em units.
+ * Safe-Zone: Rank and Suit centered within 1.6em strip.
+ * Vertical Gap: 0.4em between Rank and Suit.
+ * The Heavy Club: text-shadow + scale-110 for visual weight.
  */
 import React from 'react';
-import './Card.css';
 
-function Card({ rank, suit, onClick, selectable = false, selected = false }) {
-  const suitColor = suit === '♥' || suit === '♦' ? 'suit-red' : 'suit-black';
+const Card = ({ rank, suit, isHidden = false, customScaleClass = "text-base", onClick, selectable = false, selected = false }) => {
+  const isRed = ['H', 'D', '♥', '♦'].includes(suit?.toUpperCase());
+  const isClub = suit?.toUpperCase() === 'C' || suit === '♣';
+  const isSpade = suit?.toUpperCase() === 'S' || suit === '♠';
 
-  const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
-  const displayRank = rankMap[rank] || rank;
+  // Hidden card (back)
+  if (isHidden) {
+    return (
+      <div className={`${customScaleClass} inline-block`}>
+        <div className="w-[3.5em] h-[5.0em] bg-red-800 rounded-[0.35em] border-[0.06em] border-white shadow-[0.1em_0.1em_0.2em_rgba(0,0,0,0.3)]" />
+      </div>
+    );
+  }
 
   const handleClick = (e) => {
     if (selectable && onClick) {
@@ -28,32 +30,38 @@ function Card({ rank, suit, onClick, selectable = false, selected = false }) {
 
   const handleTouchEnd = (e) => {
     if (selectable && onClick) {
-      e.preventDefault(); // Prevent ghost clicks on mobile
+      e.preventDefault();
       onClick({ rank, suit });
     }
   };
 
-  const className = `card ${selectable ? 'card-selectable' : ''} ${selected ? 'card-selected' : ''}`;
+  // Build suit classes with Heavy Club rule
+  const suitClasses = [
+    'text-[1.3em] leading-none mt-[0.4em] text-center',
+    isRed ? 'text-red-600' : 'text-gray-900',
+    isClub ? 'drop-shadow-[0_0_0.05em_currentColor] scale-110' : '',
+    isSpade ? 'scale-105' : ''
+  ].filter(Boolean).join(' ');
 
   return (
     <div
-      className={className}
+      className={`${customScaleClass} inline-block select-none ${selectable ? 'cursor-pointer' : ''} transform transition-transform hover:-translate-y-[0.5em] hover:z-50 ${selected ? 'ring-2 ring-amber-500 -translate-y-[0.5em]' : ''}`}
       onClick={handleClick}
       onTouchEnd={handleTouchEnd}
     >
-      <div className={`card-corner top-left ${suitColor}`}>
-        <span className="rank">{displayRank}</span>
-        <span className="suit-symbol-small">{suit}</span>
-      </div>
-      <div className={`card-center ${suitColor}`}>
-        <span className="suit-symbol-large">{suit}</span>
-      </div>
-      <div className={`card-corner bottom-right ${suitColor}`}>
-        <span className="rank">{displayRank}</span>
-        <span className="suit-symbol-small">{suit}</span>
+      <div className="w-[3.5em] h-[5.0em] bg-white rounded-[0.35em] border-[0.06em] border-gray-300 shadow-[0.1em_0.1em_0.2em_rgba(0,0,0,0.3)] flex flex-col items-start overflow-hidden">
+        {/* Safe-Zone: 1.6em centered strip for rank + suit */}
+        <div className="w-[1.6em] flex flex-col items-center pt-[0.3em]">
+          <span className="text-[1.4em] font-black leading-none text-gray-900 text-center">
+            {rank}
+          </span>
+          <span className={suitClasses}>
+            {suit}
+          </span>
+        </div>
       </div>
     </div>
   );
-}
+};
 
 export default Card;

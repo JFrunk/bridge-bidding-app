@@ -1171,7 +1171,7 @@
   overflow-y: auto;
   margin-bottom: 12px;
   /* Center and constrain width to match compass layout */
-  max-width: 700px;
+  max-width: var(--content-width-standard, min(95vw, 900px));
   margin-left: auto;
   margin-right: auto;
   /* Z-index below South's cards to prevent overlap */
@@ -1405,7 +1405,7 @@
   background: #f0f9ff;
   border-radius: 12px;
   /* Center the compass layout and constrain width */
-  max-width: 700px;
+  max-width: var(--compass-width, min(95vw, 960px));
   margin: 0 auto 16px auto;
   /* Fixed minimum height to prevent layout shift during navigation */
   min-height: 420px;
@@ -2586,7 +2586,7 @@
   margin-top: var(--space-4, 16px);
   flex-wrap: wrap;
   /* Center and constrain width to match compass layout */
-  max-width: 700px;
+  max-width: var(--content-width-standard, min(95vw, 900px));
   margin-left: auto;
   margin-right: auto;
 }

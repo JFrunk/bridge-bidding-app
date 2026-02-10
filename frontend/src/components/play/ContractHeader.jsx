@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useState } from "react";
 import { BiddingTableGrid } from "../shared/BiddingTableGrid";
+import { BidChip } from "../shared/BidChip";
 
 /**
  * ContractHeader - Compact contract bar per UI Redesign play-mockup-v2.html
@@ -131,7 +132,7 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
               compact={true}
             />
             <div className="bid-history-contract">
-              Final Contract: <span style={{ color: isRedSuit ? '#c41e3a' : '#1a1a1a' }}>{level}{displayStrain}{doubledText}</span> by {declarerName}
+              Final Contract: <BidChip bid={`${level}${strain}${doubledText}`} /> by {declarerName}
             </div>
           </div>
         </div>

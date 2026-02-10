@@ -377,3 +377,6 @@ const BeliefPanel = ({ beliefs, myHcp }) => {
 };
 
 export default BeliefPanel;
+
+// Export SeatBeliefView for use in other components (e.g., CoachPanel)
+export { SeatBeliefView, SUIT_SYMBOLS, SUIT_ORDER };

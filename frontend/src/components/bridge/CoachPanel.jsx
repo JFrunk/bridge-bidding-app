@@ -1,30 +1,40 @@
 import React, { useState } from 'react';
+import { BidChip } from '../shared/BidChip';
+import { SeatBeliefView } from './BeliefPanel';
 import './CoachPanel.css';
+import './BeliefPanel.css';  // Import for SeatBeliefView styles
 
 /**
  * CoachPanel - Right sidebar coach assistant per UI Redesign bid-mockup-v2.html
  *
  * Only visible in Coached mode.
  * Contains collapsible sections:
- * - Partner's Likely Hand (HCP range, shape)
+ * - Partner's Likely Hand (HCP range, shape, suit lengths with colored symbols)
  * - Opponents' Hands (collapsed by default)
  * - Bid Explanation (what the auction means)
- * - "What Should I Bid?" hint button
+ * - "What Should I Bid?" hint button with AI suggestion
  */
 export function CoachPanel({
   isVisible = true,
   onClose,
-  partnerInfo,
-  opponentInfo,
-  bidExplanation,
+  beliefs,       // Raw beliefs object from backend { partner, lho, rho }
   onRequestHint,
-  auction = []
+  suggestedBid,  // { bid, explanation, loading, error }
+  selectedBid,   // { bid, explanation, player } - clicked bid from auction history
+  auction = [],
+  myHcp          // User's HCP for combined estimate
 }) {
   const [expandedSections, setExpandedSections] = useState({
     partner: true,
     opponents: false,
     explanation: true
   });
+
+  // Helper to check if a seat has meaningful beliefs
+  const hasOpponentBeliefs = (belief) => {
+    if (!belief) return false;
+    return belief.hcp?.min > 0 || belief.hcp?.max < 40 || (belief.tags && belief.tags.length > 0);
+  };
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
@@ -72,19 +82,8 @@ export function CoachPanel({
           </button>
           {expandedSections.partner && (
             <div className="coach-section-body">
-              {partnerInfo ? (
-                <div className="partner-range">
-                  <span className="label">HCP Range:</span>
-                  <span className="value">{partnerInfo.hcpRange || '—'}</span>
-                  <span className="label">Likely Shape:</span>
-                  <span className="value">{partnerInfo.shape || '—'}</span>
-                  {partnerInfo.notes && (
-                    <>
-                      <span className="label">Notes:</span>
-                      <span className="value">{partnerInfo.notes}</span>
-                    </>
-                  )}
-                </div>
+              {beliefs?.partner && (beliefs.partner.hcp?.min > 0 || beliefs.partner.hcp?.max < 40 || beliefs.partner.tags?.length > 0) ? (
+                <SeatBeliefView belief={beliefs.partner} showHow={false} />
               ) : (
                 <p className="no-info">Make a bid to see partner analysis</p>
               )}
@@ -108,18 +107,24 @@ export function CoachPanel({
           </button>
           {expandedSections.opponents && (
             <div className="coach-section-body">
-              {opponentInfo ? (
+              {(hasOpponentBeliefs(beliefs?.lho) || hasOpponentBeliefs(beliefs?.rho)) ? (
                 <div className="opponent-info">
-                  {opponentInfo.east && (
-                    <div className="opponent-row">
-                      <span className="opp-label">East:</span>
-                      <span className="opp-value">{opponentInfo.east}</span>
+                  {/* LHO (Left-Hand Opponent) */}
+                  {hasOpponentBeliefs(beliefs?.lho) && (
+                    <div className="opponent-seat">
+                      <div className="opponent-seat-label">
+                        Left-Hand Opponent ({beliefs.lho.seat})
+                      </div>
+                      <SeatBeliefView belief={beliefs.lho} showHow={false} />
                     </div>
                   )}
-                  {opponentInfo.west && (
-                    <div className="opponent-row">
-                      <span className="opp-label">West:</span>
-                      <span className="opp-value">{opponentInfo.west}</span>
+                  {/* RHO (Right-Hand Opponent) */}
+                  {hasOpponentBeliefs(beliefs?.rho) && (
+                    <div className="opponent-seat">
+                      <div className="opponent-seat-label">
+                        Right-Hand Opponent ({beliefs.rho.seat})
+                      </div>
+                      <SeatBeliefView belief={beliefs.rho} showHow={false} />
                     </div>
                   )}
                 </div>
@@ -146,10 +151,30 @@ export function CoachPanel({
           </button>
           {expandedSections.explanation && (
             <div className="coach-section-body">
-              {bidExplanation || auction.length > 0 ? (
-                <p className="explanation-text">
-                  {bidExplanation || generateExplanation(auction)}
-                </p>
+              {selectedBid ? (
+                // Show selected bid's explanation
+                <div className="selected-bid-explanation">
+                  <div className="selected-bid-header">
+                    <BidChip bid={selectedBid.bid} />
+                    <span className="selected-bid-by">by {selectedBid.player || 'Unknown'}</span>
+                  </div>
+                  <p className="explanation-text">
+                    {selectedBid.explanation || 'No explanation available'}
+                  </p>
+                  <p className="explanation-hint">Click another bid to see its explanation</p>
+                </div>
+              ) : auction.length > 0 ? (
+                // Show last bid's explanation by default
+                <div className="selected-bid-explanation">
+                  <div className="selected-bid-header">
+                    <BidChip bid={auction[auction.length - 1].bid} />
+                    <span className="selected-bid-by">by {auction[auction.length - 1].player || 'Unknown'}</span>
+                  </div>
+                  <p className="explanation-text">
+                    {auction[auction.length - 1].explanation || 'No explanation available'}
+                  </p>
+                  <p className="explanation-hint">Click any bid in the auction to see its explanation</p>
+                </div>
               ) : (
                 <p className="no-info">Bid explanations will appear here as the auction progresses</p>
               )}
@@ -157,40 +182,37 @@ export function CoachPanel({
           )}
         </div>
 
+        {/* Suggested Bid Display */}
+        {suggestedBid && !suggestedBid.loading && suggestedBid.bid && (
+          <div className="coach-suggestion" data-testid="coach-suggestion">
+            <div className="suggestion-header">
+              <span className="suggestion-icon">💡</span>
+              <span className="suggestion-label">Suggested Bid</span>
+            </div>
+            <div className="suggestion-bid">
+              <BidChip bid={suggestedBid.bid} />
+            </div>
+            {suggestedBid.explanation && (
+              <p className="suggestion-explanation">{suggestedBid.explanation}</p>
+            )}
+          </div>
+        )}
+
         {/* Hint Button */}
         {onRequestHint && (
           <button
             className="hint-btn"
             onClick={onRequestHint}
+            disabled={suggestedBid?.loading}
             data-testid="coach-hint-button"
           >
             <span className="hint-icon">💡</span>
-            What Should I Bid?
+            {suggestedBid?.loading ? 'Thinking...' : 'What Should I Bid?'}
           </button>
         )}
       </div>
     </div>
   );
-}
-
-/**
- * Generate a basic auction explanation from the bid history
- */
-function generateExplanation(auction) {
-  if (!auction || auction.length === 0) {
-    return 'The auction has not started yet.';
-  }
-
-  const explanations = auction
-    .filter(a => a.explanation)
-    .map(a => `${a.bid}: ${a.explanation}`)
-    .slice(-3); // Show last 3 explanations
-
-  if (explanations.length === 0) {
-    return 'Auction in progress...';
-  }
-
-  return explanations.join(' → ');
 }
 
 export default CoachPanel;

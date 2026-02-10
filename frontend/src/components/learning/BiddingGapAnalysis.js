@@ -13,17 +13,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { BidChip } from '../shared/BidChip';
 import './BiddingGapAnalysis.css';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
-// Format a bid for display (handle special characters)
-const formatBid = (bid) => {
-  if (!bid) return '—';
-  return bid;
-};
-
-// Get suit color for display
+// Get suit color for display (used for non-bid suit indicators)
 const getSuitColor = (suitStr) => {
   if (!suitStr) return '#1e293b';
   const s = suitStr.toLowerCase();
@@ -109,9 +104,6 @@ const formatValue = (value) => {
 
 // Rule card showing matched or near-miss rule
 const RuleCard = ({ rule, isMatched, expanded, onToggle }) => {
-  const bidDisplay = formatBid(rule.bid);
-  const bidColor = getSuitColor(rule.bid);
-
   // Count passed/failed conditions
   const passedCount = rule.conditions?.filter(c => c.passed).length || 0;
   const failedCount = rule.conditions?.filter(c => !c.passed).length || 0;
@@ -119,9 +111,7 @@ const RuleCard = ({ rule, isMatched, expanded, onToggle }) => {
   return (
     <div className={`gap-rule-card ${isMatched ? 'matched' : 'near-miss'}`}>
       <div className="rule-header" onClick={onToggle}>
-        <div className="rule-bid" style={{ color: bidColor }}>
-          {bidDisplay}
-        </div>
+        <BidChip bid={rule.bid} />
         <div className="rule-info">
           <div className="rule-description">{rule.description || rule.rule_id}</div>
           <div className="rule-meta">

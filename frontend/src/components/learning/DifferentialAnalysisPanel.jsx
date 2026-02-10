@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { BidChip } from '../shared/BidChip';
 import './DifferentialAnalysisPanel.css';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -26,24 +27,6 @@ const RATING_COLORS = {
   acceptable: '#3b82f6',  // blue
   suboptimal: '#f59e0b',  // yellow/orange
   error: '#ef4444'        // red
-};
-
-/**
- * Format a bid for display with suit colors
- */
-const formatBid = (bid) => {
-  if (!bid) return '—';
-  return bid;
-};
-
-/**
- * Get suit color for display
- */
-const getSuitColor = (bid) => {
-  if (!bid) return 'inherit';
-  if (bid.includes('♥') || bid.includes('♦')) return '#dc2626';
-  if (bid.includes('♠') || bid.includes('♣')) return '#1e293b';
-  return 'inherit';
 };
 
 /**
@@ -84,9 +67,7 @@ const RuleCard = ({ rule, type }) => {
   return (
     <div className={`rule-card ${isOptimal ? 'optimal-rule' : 'user-rule'}`}>
       <div className="rule-header">
-        <span className="rule-bid" style={{ color: getSuitColor(rule.bid) }}>
-          {formatBid(rule.bid)}
-        </span>
+        <BidChip bid={rule.bid} />
         <span className="rule-priority">P{rule.priority}</span>
       </div>
       <div className="rule-body">
@@ -299,16 +280,12 @@ const DifferentialAnalysisPanel = ({
       <div className="bid-comparison">
         <div className="bid-box user-bid">
           <span className="bid-label">Your Bid</span>
-          <span className="bid-value" style={{ color: getSuitColor(data.user_bid) }}>
-            {formatBid(data.user_bid)}
-          </span>
+          <BidChip bid={data.user_bid} />
         </div>
         <div className="bid-arrow">→</div>
         <div className="bid-box optimal-bid">
           <span className="bid-label">Optimal</span>
-          <span className="bid-value" style={{ color: getSuitColor(data.optimal_bid) }}>
-            {formatBid(data.optimal_bid)}
-          </span>
+          <BidChip bid={data.optimal_bid} />
         </div>
       </div>
 

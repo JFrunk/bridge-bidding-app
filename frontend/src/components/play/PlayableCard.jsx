@@ -7,12 +7,13 @@ import { cn } from "../../lib/utils";
  * Follows "Rule of Three" and senior-friendly UX principles
  *
  * @param {boolean} compact - If true, shows rank and suit side-by-side (for vertical overlapping displays)
+ * @param {boolean} readOnly - If true, removes all interactive affordances (for review/display modes)
  */
-export function PlayableCard({ card, onClick, disabled = false, compact = false, className }) {
+export function PlayableCard({ card, onClick, disabled = false, compact = false, readOnly = false, className }) {
   const suitColor = card.suit === '♥' || card.suit === '♦' ? 'text-suit-red' : 'text-suit-black';
   const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
   const displayRank = rankMap[card.rank] || card.rank;
-  const isClickable = onClick && !disabled;
+  const isClickable = onClick && !disabled && !readOnly;
 
   const suitName = {
     '♠': 'Spades',
@@ -26,9 +27,10 @@ export function PlayableCard({ card, onClick, disabled = false, compact = false,
       className={cn(
         "playable-card", // CRITICAL: This class enables overlap and responsive sizing in CSS
         "relative bg-white border border-gray-400 rounded-card shadow-md",
-        "transition-all duration-200",
+        !readOnly && "transition-all duration-200",
         isClickable && "cursor-pointer hover:-translate-y-4 hover:shadow-xl hover:z-50 clickable",
-        disabled && "cursor-not-allowed",
+        disabled && !readOnly && "cursor-not-allowed",
+        readOnly && "read-only cursor-default",
         className
       )}
       onClick={!disabled ? onClick : undefined}

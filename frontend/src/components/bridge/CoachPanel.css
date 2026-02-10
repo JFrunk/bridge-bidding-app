@@ -134,22 +134,26 @@
 .opponent-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
 }
 
-.opponent-row {
-  display: flex;
-  gap: 8px;
+.opponent-seat {
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.opp-label {
+.opponent-seat:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.opponent-seat-label {
+  font-size: 11px;
+  font-weight: 600;
   color: var(--text-secondary, #666);
-  font-weight: 500;
-  min-width: 40px;
-}
-
-.opp-value {
-  color: var(--text-primary, #1a1a1a);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 /* Explanation Text */
@@ -158,12 +162,84 @@
   line-height: 1.6;
 }
 
+/* Selected Bid Explanation */
+.selected-bid-explanation {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selected-bid-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selected-bid-by {
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+  font-style: italic;
+}
+
+.explanation-hint {
+  margin: 4px 0 0 0;
+  font-size: 11px;
+  color: var(--text-muted, #aaa);
+  font-style: italic;
+}
+
 /* No Info Message */
 .no-info {
   margin: 0;
   font-style: italic;
   color: var(--text-secondary, #888);
   font-size: 12px;
+}
+
+/* Suggested Bid Display */
+.coach-suggestion {
+  margin-top: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(200, 164, 78, 0.15) 0%, rgba(200, 164, 78, 0.08) 100%);
+  border: 1px solid rgba(200, 164, 78, 0.3);
+  border-radius: 8px;
+}
+
+.suggestion-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.suggestion-icon {
+  font-size: 16px;
+}
+
+.suggestion-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.suggestion-bid {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.suggestion-bid .bid-chip {
+  transform: scale(1.2);
+}
+
+.suggestion-explanation {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary, #555);
+  text-align: center;
 }
 
 /* Hint Button */
@@ -183,6 +259,11 @@
   gap: 6px;
   transition: all 0.15s;
   margin-top: 10px;
+}
+
+.hint-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .hint-btn:hover {

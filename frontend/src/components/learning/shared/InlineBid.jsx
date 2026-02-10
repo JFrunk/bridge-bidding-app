@@ -1,55 +1,23 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { formatBid } from '../types/flow-types';
+import { BidChip } from '../../shared/BidChip';
 import './InlineBid.css';
 
 /**
  * InlineBid - Inline bid badge for referencing bids within text
  *
+ * Now uses BidChip internally for consistent suit coloring (Clubhouse theme).
+ * Wraps BidChip with inline-specific styling for text flow.
+ *
  * @param {Object} props
  * @param {string} props.bid - Bid string like "1H", "3NT", "Pass"
  */
 const InlineBid = ({ bid }) => {
-  const formattedBid = formatBid(bid);
-
-  // Parse the formatted bid to identify and colorize suit symbols
-  const renderBid = () => {
-    if (!formattedBid) return null;
-
-    // Handle special bids
-    if (formattedBid === 'Pass' || formattedBid === 'X' || formattedBid === 'XX') {
-      return <span>{formattedBid}</span>;
-    }
-
-    // Handle NT bids
-    if (formattedBid.includes('NT')) {
-      return <span>{formattedBid}</span>;
-    }
-
-    // Parse level and suit symbol
-    const parts = [];
-    for (let i = 0; i < formattedBid.length; i++) {
-      const char = formattedBid[i];
-
-      if (char === '♥' || char === '♦') {
-        parts.push(
-          <span key={i} className="suit-symbol red">{char}</span>
-        );
-      } else if (char === '♠' || char === '♣') {
-        parts.push(
-          <span key={i} className="suit-symbol black">{char}</span>
-        );
-      } else {
-        parts.push(<span key={i}>{char}</span>);
-      }
-    }
-
-    return <>{parts}</>;
-  };
+  if (!bid) return null;
 
   return (
-    <span className="inline-bid">
-      {renderBid()}
+    <span className="inline-bid-wrapper">
+      <BidChip bid={bid} />
     </span>
   );
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { formatBid } from '../types/flow-types';
+import { BidChip } from '../../shared/BidChip';
 import './BidTable.css';
 
 /**
@@ -16,7 +16,7 @@ const SEAT_ORDER = ['N', 'E', 'S', 'W'];
 const getSeatIndex = (seat) => SEAT_ORDER.indexOf(seat);
 
 /**
- * Render a bid with colorized suit symbols
+ * Render a bid using BidChip for consistent styling
  * @param {string} bid - The bid string (e.g., "1H", "3NT", "Pass")
  * @param {boolean} isActive - Whether this bid should be highlighted
  * @returns {React.ReactNode}
@@ -26,38 +26,11 @@ const renderBid = (bid, isActive = false) => {
     return <span className="empty-cell">&mdash;</span>;
   }
 
-  const formattedBid = formatBid(bid);
-
-  if (formattedBid === 'Pass') {
-    return <span className={`pass ${isActive ? 'bid-active' : ''}`}>Pass</span>;
-  }
-
-  if (formattedBid === 'X' || formattedBid === 'XX') {
-    return <span className={isActive ? 'bid-active' : ''}>{formattedBid}</span>;
-  }
-
-  // Check for suit symbols and colorize them
-  const suitMatch = formattedBid.match(/^(\d)([\u2660\u2665\u2666\u2663]|NT)$/);
-  if (suitMatch) {
-    const [, level, strain] = suitMatch;
-
-    if (strain === 'NT') {
-      return <span className={isActive ? 'bid-active' : ''}>{level}NT</span>;
-    }
-
-    // Determine color: hearts and diamonds are red, spades and clubs are black
-    const isRed = strain === '\u2665' || strain === '\u2666'; // hearts or diamonds
-
-    return (
-      <span className={isActive ? 'bid-active' : ''}>
-        {level}
-        <span className={`bid-suit ${isRed ? 'red' : 'black'}`}>{strain}</span>
-      </span>
-    );
-  }
-
-  // Fallback for any other format
-  return <span className={isActive ? 'bid-active' : ''}>{formattedBid}</span>;
+  return (
+    <span className={isActive ? 'bid-active' : ''}>
+      <BidChip bid={bid} />
+    </span>
+  );
 };
 
 /**

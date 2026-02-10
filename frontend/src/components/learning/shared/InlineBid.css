@@ -1,18 +1,11 @@
-.inline-bid {
+.inline-bid-wrapper {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 2px 8px;
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.05);
-  font-weight: 700;
-  font-size: 13px;
+  vertical-align: baseline;
 }
 
-.inline-bid .suit-symbol.red {
-  color: #c41e3a;
-}
-
-.inline-bid .suit-symbol.black {
-  color: #1a1a1a;
+/* Scale down BidChip slightly for inline usage */
+.inline-bid-wrapper > div {
+  transform: scale(0.9);
+  transform-origin: center;
 }

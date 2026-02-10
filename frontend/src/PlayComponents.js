@@ -16,9 +16,139 @@ import { ContractHeader } from './components/play/ContractHeader';
 import { CurrentTrickDisplay } from './components/play/CurrentTrickDisplay';
 import { LastTrickOverlay } from './components/play/LastTrickOverlay';
 import { ScoreModal } from './components/play/ScoreModal';
+import PlayFeedbackPanel from './components/play/PlayFeedbackPanel';
 import { PlayableCard as PlayableCardComponent } from './components/play/PlayableCard';
-import { VerticalPlayableCard } from './components/play/VerticalPlayableCard';
 import { sortCards } from './shared/utils/cardUtils';
+import Card from './shared/components/Card';
+import TrickArena from './components/shared/TrickArena';
+import ReactorLayout from './components/layout/ReactorLayout';
+
+/**
+ * PlayableSuitStack - Physics v2.0 compliant suit row for E/W positions
+ * Renders a vertical stack of suit rows, each with em-based overlapping cards
+ *
+ * @param {Array} hand - Full hand of cards
+ * @param {Array} suitOrder - Order of suits to display
+ * @param {Array} currentTrick - Current trick for legality checking
+ * @param {boolean} isMyTurn - Is it this position's turn?
+ * @param {function} onCardPlay - Click handler for card plays
+ * @param {string} positionKey - Position identifier for unique keys (e.g., 'east', 'west')
+ * @param {string} scaleClass - Tailwind text scale class (e.g., 'text-sm')
+ */
+function PlayableSuitStack({ hand, suitOrder, currentTrick, isMyTurn, onCardPlay, positionKey, scaleClass = 'text-sm' }) {
+  if (!hand || hand.length === 0) return null;
+
+  // Helper to check if card is legal to play
+  const isCardLegal = (card) => {
+    if (!currentTrick || currentTrick.length === 0) return true;
+    const ledSuit = currentTrick[0].card.suit;
+    const hasLedSuit = hand.some(c => c.suit === ledSuit);
+    if (hasLedSuit) return card.suit === ledSuit;
+    return true;
+  };
+
+  // Dynamic spacing based on card count (matching SuitRow.jsx patterns)
+  const getSpacingClass = (count) => {
+    if (count >= 7) return '-space-x-[1.9em]';
+    if (count === 6) return '-space-x-[1.6em]';
+    if (count === 5) return '-space-x-[1.4em]';
+    return '-space-x-[1.2em]';
+  };
+
+  return (
+    <div className={`${scaleClass} flex flex-col gap-[0.3em]`}>
+      {suitOrder.map(suit => {
+        const suitCards = sortCards(hand.filter(card => card.suit === suit));
+        if (suitCards.length === 0) return null;
+
+        const spacingClass = getSpacingClass(suitCards.length);
+
+        return (
+          <div key={suit} className={`flex flex-row ${spacingClass}`}>
+            {suitCards.map((card, idx) => {
+              const isLegalCard = isCardLegal(card);
+              const isDisabled = !isMyTurn || !isLegalCard;
+              const cardKey = `${positionKey}-${card.rank}-${card.suit}`;
+
+              return (
+                <div key={cardKey} style={{ zIndex: 10 + idx }}>
+                  <Card
+                    rank={card.rank}
+                    suit={card.suit}
+                    customScaleClass={scaleClass}
+                    selectable={!isDisabled}
+                    onClick={!isDisabled ? () => onCardPlay(card) : undefined}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * PlayableHorizontalHand - Physics v2.0 compliant horizontal hand for N/S positions
+ * Renders horizontal suit groups with overlapping cards
+ * Used for both North and South (faces user horizontally)
+ *
+ * @param {string} positionKey - 'north' or 'south' for unique keys
+ */
+function PlayableHorizontalHand({ hand, suitOrder, currentTrick, isMyTurn, onCardPlay, positionKey, scaleClass = 'text-base' }) {
+  if (!hand || hand.length === 0) return null;
+
+  // Helper to check if card is legal to play
+  const isCardLegal = (card) => {
+    if (!currentTrick || currentTrick.length === 0) return true;
+    const ledSuit = currentTrick[0].card.suit;
+    const hasLedSuit = hand.some(c => c.suit === ledSuit);
+    if (hasLedSuit) return card.suit === ledSuit;
+    return true;
+  };
+
+  // Dynamic spacing based on scale (tighter for smaller cards)
+  const getSpacingClass = (count) => {
+    if (count >= 7) return '-space-x-[2.2em]';
+    if (count === 6) return '-space-x-[1.9em]';
+    if (count === 5) return '-space-x-[1.6em]';
+    return '-space-x-[1.4em]';
+  };
+
+  return (
+    <div className={`${scaleClass} flex flex-row gap-[0.8em] justify-center`}>
+      {suitOrder.map(suit => {
+        const suitCards = sortCards(hand.filter(card => card.suit === suit));
+        if (suitCards.length === 0) return null;
+
+        const spacingClass = getSpacingClass(suitCards.length);
+
+        return (
+          <div key={suit} className={`flex flex-row ${spacingClass}`}>
+            {suitCards.map((card, idx) => {
+              const isLegalCard = isCardLegal(card);
+              const isDisabled = !isMyTurn || !isLegalCard;
+              const cardKey = `${positionKey}-${card.rank}-${card.suit}`;
+
+              return (
+                <div key={cardKey} style={{ zIndex: 10 + idx }}>
+                  <Card
+                    rank={card.rank}
+                    suit={card.suit}
+                    customScaleClass={scaleClass}
+                    selectable={!isDisabled}
+                    onClick={!isDisabled ? () => onCardPlay(card) : undefined}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 /**
  * Get suit display order based on trump suit
@@ -268,223 +398,132 @@ export function PlayTable({
       {/* Consolidated Contract Header - MIGRATED to ContractHeader component */}
       <ContractHeader contract={contract} tricksWon={tricks_won} auction={auction} dealer={dealer} scoreData={scoreData} vulnerability={vulnerability} />
 
-      <div className="play-area">
-        {/* North position */}
-        <div className="position position-north">
-          {/* Position label with badges per UI Redesign Spec */}
-          <div className={`position-label ${next_to_play === 'N' ? 'active-turn' : ''}`}>
-            North
-            {dummyPosition === 'N' && <span className="position-badge dummy">Dummy</span>}
-            {declarerPosition === 'N' && <span className="position-badge declarer">Declarer</span>}
-            {dummyPosition === 'N' && userIsDeclarer && <span className="position-badge you-control">You Control</span>}
-          </div>
-          {/* CRITICAL: Use centralized visibility rule - prevents regression bugs */}
-          {showNorthHand && !isHandComplete && (
-            <div className={dummyPosition === 'N' ? "dummy-hand" : "declarer-hand"}>
-              {suitOrder.map(suit => {
-                const hand = dummyPosition === 'N' ? dummyHand : declarerHand;
-                if (!hand || hand.length === 0) return null;
-                const suitCards = sortCards(hand.filter(card => card.suit === suit));
-                return (
-                  <div key={suit} className="suit-group">
-                    {suitCards.map((card, index) => {
-                      // CRITICAL: Determine if this specific card is legal to play
-                      const isMyTurn = dummyPosition === 'N' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
-                      const isLegalCard = isCardLegalToPlay(card, hand, current_trick);
-                      const isDisabled = !isMyTurn || !isLegalCard;
-
-                      // CRITICAL: Use unique key across ALL cards (not just within suit)
-                      const cardKey = `north-${card.rank}-${card.suit}`;
-
-                      return (
-                        <PlayableCard
-                          key={cardKey}
-                          card={card}
-                          onClick={dummyPosition === 'N' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
-                          disabled={isDisabled}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              })}
+      {/* ReactorLayout: Centripetal 3x3 Grid - Physics v2.0 */}
+      <ReactorLayout
+        className="play-area reactor-layout"
+        scaleClass="text-base"
+        north={
+          <div className="position-orbit position-north-orbit">
+            <div className={`position-label ${next_to_play === 'N' ? 'active-turn' : ''}`}>
+              North
+              {dummyPosition === 'N' && <span className="position-badge dummy">Dummy</span>}
+              {declarerPosition === 'N' && <span className="position-badge declarer">Declarer</span>}
+              {dummyPosition === 'N' && userIsDeclarer && <span className="position-badge you-control">You Control</span>}
             </div>
-          )}
-        </div>
-
-        {/* Current trick in center - CRITICAL: Positioned in center grid area */}
-        <div className="current-trick-container">
-          {showLastTrick && lastTrick ? (
-            <LastTrickOverlay
-              trick={lastTrick}
-              trickNumber={playState.trick_history?.length || 0}
-              onClose={onHideLastTrick}
-            />
-          ) : (
-            <CurrentTrick
-              trick={current_trick}
-              positions={positions}
-              trickWinner={trick_winner}
-              trickComplete={trick_complete}
-              nextToPlay={next_to_play}
-            />
-          )}
-        </div>
-
-
-        {/* West position - Left side (standard bridge layout) */}
-        <div className="position position-west">
-          <div className={`position-label ${next_to_play === 'W' ? 'active-turn' : ''}`}>
-            West
-            {dummyPosition === 'W' && <span className="position-badge dummy">Dummy</span>}
-            {declarerPosition === 'W' && <span className="position-badge declarer">Declarer</span>}
-            {dummyPosition === 'W' && userIsDeclarer && <span className="position-badge you-control">You Control</span>}
-          </div>
-          {/* CRITICAL: Use centralized visibility rule - prevents regression bugs */}
-          {showWestHand && !isHandComplete ? (
-            <div className={dummyPosition === 'W' ? "dummy-hand" : "declarer-hand"}>
-              {suitOrder.map(suit => {
-                const hand = dummyPosition === 'W' ? dummyHand : declarerHand;
-                if (!hand || hand.length === 0) return null;
-                const suitCards = sortCards(hand.filter(card => card.suit === suit));
-                return (
-                  <div key={suit} className="suit-group">
-                    {suitCards.map((card, index) => {
-                      // CRITICAL: Determine if this specific card is legal to play
-                      const isMyTurn = dummyPosition === 'W' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
-                      const isLegalCard = isCardLegalToPlay(card, hand, current_trick);
-                      const isDisabled = !isMyTurn || !isLegalCard;
-
-                      // CRITICAL: Use unique key per card
-                      const cardKey = `west-${card.rank}-${card.suit}`;
-
-                      return (
-                        <VerticalPlayableCard
-                          key={cardKey}
-                          card={card}
-                          onClick={dummyPosition === 'W' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
-                          disabled={isDisabled}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          ) : !isHandComplete && (
-            /* HOTFIX 6: Minimal opponent display - single card icon + count */
-            <div className="opponent-display compact">
-              <div className="card-back-single" />
-              <span className="opp-count">{13 - totalTricksPlayed}</span>
-            </div>
-          )}
-        </div>
-
-        {/* East position - Right side (standard bridge layout) */}
-        <div className="position position-east">
-          <div className={`position-label ${next_to_play === 'E' ? 'active-turn' : ''}`}>
-            East
-            {dummyPosition === 'E' && <span className="position-badge dummy">Dummy</span>}
-            {declarerPosition === 'E' && <span className="position-badge declarer">Declarer</span>}
-            {dummyPosition === 'E' && userIsDeclarer && <span className="position-badge you-control">You Control</span>}
-          </div>
-          {/* CRITICAL: Use centralized visibility rule - prevents regression bugs */}
-          {showEastHand && !isHandComplete ? (
-            <div className={dummyPosition === 'E' ? "dummy-hand" : "declarer-hand"}>
-              {suitOrder.map(suit => {
-                const hand = dummyPosition === 'E' ? dummyHand : declarerHand;
-                if (!hand || hand.length === 0) return null;
-                const suitCards = sortCards(hand.filter(card => card.suit === suit));
-                return (
-                  <div key={suit} className="suit-group">
-                    {suitCards.map((card, index) => {
-                      // CRITICAL: Determine if this specific card is legal to play
-                      const isMyTurn = dummyPosition === 'E' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
-                      const isLegalCard = isCardLegalToPlay(card, hand, current_trick);
-                      const isDisabled = !isMyTurn || !isLegalCard;
-
-                      // CRITICAL: Use unique key per card
-                      const cardKey = `east-${card.rank}-${card.suit}`;
-
-                      return (
-                        <VerticalPlayableCard
-                          key={cardKey}
-                          card={card}
-                          onClick={dummyPosition === 'E' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
-                          disabled={isDisabled}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          ) : !isHandComplete && (
-            /* HOTFIX 6: Minimal opponent display - single card icon + count */
-            <div className="opponent-display compact">
-              <div className="card-back-single" />
-              <span className="opp-count">{13 - totalTricksPlayed}</span>
-            </div>
-          )}
-        </div>
-
-        {/* South position (user) */}
-        <div className="position position-south">
-          <div className={`position-label ${(next_to_play === 'S' && !userIsDummy) ? 'active-turn' : ''}`}>
-            South (You)
-            {userIsDummy && <span className="position-badge dummy">Dummy</span>}
-            {userIsDeclarer && <span className="position-badge declarer">Declarer</span>}
-          </div>
-          {userHand && userHand.length > 0 && (
-            <div className="user-play-hand">
-              {suitOrder.map(suit => {
-                const suitCards = sortCards(userHand.filter(card => card.suit === suit));
-                return (
-                  <div key={suit} className="suit-group">
-                    {suitCards.map((card, index) => {
-                      // CRITICAL: Determine if this specific card is legal to play
-                      const isLegalCard = isCardLegalToPlay(card, userHand, current_trick);
-                      const isDisabled = !isUserTurn || !isLegalCard;
-
-                      // CRITICAL: Use unique key per card
-                      const cardKey = `south-${card.rank}-${card.suit}`;
-
-                      return (
-                        <PlayableCard
-                          key={cardKey}
-                          card={card}
-                          onClick={onCardPlay}
-                          disabled={isDisabled}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Turn Indicator - positioned INSIDE play-area for visibility */}
-        {!isHandComplete && (
-          <div className="play-turn-indicator">
-            <span className="turn-dot" />
-            {trick_complete ? (
-              <span className="turn-text">
-                {(trick_winner === 'N' || trick_winner === 'S') ? 'You win' : (trick_winner === 'E' ? 'East' : 'West') + ' wins'} — click to collect trick
-              </span>
-            ) : (isUserTurn || (userIsDeclarer && isDummyTurn)) ? (
-              <span className="turn-text">
-                Your turn — {dummyPosition && next_to_play === dummyPosition ? 'play from dummy' : 'click a card to play'}
-              </span>
-            ) : (
-              <span className="turn-text">
-                Waiting for {next_to_play === 'N' ? 'North' : next_to_play === 'E' ? 'East' : next_to_play === 'S' ? 'South' : 'West'}...
-              </span>
+            {showNorthHand && !isHandComplete && (
+              <PlayableHorizontalHand
+                hand={dummyPosition === 'N' ? dummyHand : declarerHand}
+                suitOrder={suitOrder}
+                currentTrick={current_trick}
+                isMyTurn={dummyPosition === 'N' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn}
+                onCardPlay={dummyPosition === 'N' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
+                positionKey="north"
+                scaleClass="text-sm"
+              />
             )}
           </div>
-        )}
-      </div>
+        }
+        south={
+          <div className="position-orbit position-south-orbit">
+            <div className={`position-label ${(next_to_play === 'S' && !userIsDummy) ? 'active-turn' : ''}`}>
+              South (You)
+              {userIsDummy && <span className="position-badge dummy">Dummy</span>}
+              {userIsDeclarer && <span className="position-badge declarer">Declarer</span>}
+            </div>
+            {userHand && userHand.length > 0 && (
+              <PlayableHorizontalHand
+                hand={userHand}
+                suitOrder={suitOrder}
+                currentTrick={current_trick}
+                isMyTurn={isUserTurn}
+                onCardPlay={onCardPlay}
+                positionKey="south"
+                scaleClass="text-lg"
+              />
+            )}
+          </div>
+        }
+        east={
+          <div className="position-orbit position-east-orbit">
+            <div className={`position-label ${next_to_play === 'E' ? 'active-turn' : ''}`}>
+              East
+              {dummyPosition === 'E' && <span className="position-badge dummy">Dummy</span>}
+              {declarerPosition === 'E' && <span className="position-badge declarer">Declarer</span>}
+              {dummyPosition === 'E' && userIsDeclarer && <span className="position-badge you-control">You Control</span>}
+            </div>
+            {showEastHand && !isHandComplete ? (
+              <PlayableSuitStack
+                hand={dummyPosition === 'E' ? dummyHand : declarerHand}
+                suitOrder={suitOrder}
+                currentTrick={current_trick}
+                isMyTurn={dummyPosition === 'E' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn}
+                onCardPlay={dummyPosition === 'E' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
+                positionKey="east"
+                scaleClass="text-sm"
+              />
+            ) : !isHandComplete && (
+              <div className="opponent-display compact">
+                <div className="card-back-single" />
+                <span className="opp-count">{13 - totalTricksPlayed}</span>
+              </div>
+            )}
+          </div>
+        }
+        west={
+          <div className="position-orbit position-west-orbit">
+            <div className={`position-label ${next_to_play === 'W' ? 'active-turn' : ''}`}>
+              West
+              {dummyPosition === 'W' && <span className="position-badge dummy">Dummy</span>}
+              {declarerPosition === 'W' && <span className="position-badge declarer">Declarer</span>}
+              {dummyPosition === 'W' && userIsDeclarer && <span className="position-badge you-control">You Control</span>}
+            </div>
+            {showWestHand && !isHandComplete ? (
+              <PlayableSuitStack
+                hand={dummyPosition === 'W' ? dummyHand : declarerHand}
+                suitOrder={suitOrder}
+                currentTrick={current_trick}
+                isMyTurn={dummyPosition === 'W' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn}
+                onCardPlay={dummyPosition === 'W' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
+                positionKey="west"
+                scaleClass="text-sm"
+              />
+            ) : !isHandComplete && (
+              <div className="opponent-display compact">
+                <div className="card-back-single" />
+                <span className="opp-count">{13 - totalTricksPlayed}</span>
+              </div>
+            )}
+          </div>
+        }
+        center={
+          <>
+            {showLastTrick && lastTrick ? (
+              <LastTrickOverlay
+                trick={lastTrick}
+                trickNumber={playState.trick_history?.length || 0}
+                onClose={onHideLastTrick}
+              />
+            ) : (
+              <TrickArena
+                playedCards={(() => {
+                  const cards = {};
+                  (current_trick || []).forEach(({ card, position }) => {
+                    if (card && position) {
+                      cards[position] = {
+                        rank: card.rank,
+                        suit: card.suit,
+                        isWinner: trick_complete && trick_winner === position
+                      };
+                    }
+                  });
+                  return cards;
+                })()}
+                scaleClass="text-base"
+              />
+            )}
+          </>
+        }
+      />
 
       {/* Bottom Action Bar - slim row per mockup */}
       <div className="action-bar">
@@ -538,3 +577,6 @@ export function ScoreDisplay({ scoreData, onClose, onDealNewHand, onShowLearning
 
 // Export TurnIndicator components for use in other files
 export { TurnIndicator, CompactTurnIndicator };
+
+// Export PlayFeedbackPanel for inline play result feedback
+export { PlayFeedbackPanel };

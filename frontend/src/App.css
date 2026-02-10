@@ -1926,6 +1926,7 @@ html, body {
   position: relative;
   overflow: hidden;
   min-height: 0;
+  min-width: 0; /* Allow flex shrinking when coach panel is visible */
 }
 
 /* Felt texture overlay */
@@ -1951,17 +1952,63 @@ html, body {
   min-height: 0;
 }
 
-/* Hand container for cards */
+/* Hand container for cards - Physics v2.0 compliant */
 .bid-hand-container {
   display: flex;
   justify-content: center;
-  padding: 2px 0 8px;
+  padding: 8px 0 12px;
   flex-shrink: 0;
+  /* Allow em-based cards to size naturally */
+  min-height: 90px;
+  /* Container query context for responsive card sizing */
+  container-type: inline-size;
+  container-name: hand-container;
+  /* Ensure content doesn't overflow */
+  overflow: visible;
+  width: 100%;
 }
 
+/* Legacy .hand-display support */
 .bid-hand-container .hand-display {
   margin-top: 0;
   padding: 0;
+}
+
+/* Physics v2.0 card scaling within bid container */
+/* Base scale: text-lg (1.125rem = 18px base) gives cards ~63x90px */
+/* Use container-relative units (cqw) to scale with available width, not viewport */
+.bid-hand-container .text-lg {
+  /* Scale based on container width, not viewport - accounts for coach panel */
+  font-size: clamp(0.75rem, 3.5cqw, 1.125rem);
+}
+
+/* Fallback for browsers without container query support */
+@supports not (container-type: inline-size) {
+  .bid-hand-container .text-lg {
+    /* Fallback: reduce vw factor to account for potential coach panel (300px) */
+    font-size: clamp(0.75rem, calc(2.5vw - 0.1rem), 1rem);
+  }
+}
+
+/* Responsive scaling for smaller viewports */
+@media (max-width: 768px) {
+  .bid-hand-container {
+    padding: 6px 0 10px;
+    min-height: 75px;
+  }
+  .bid-hand-container .text-lg {
+    font-size: clamp(0.7rem, 4cqw, 1rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .bid-hand-container {
+    padding: 4px 0 8px;
+    min-height: 60px;
+  }
+  .bid-hand-container .text-lg {
+    font-size: clamp(0.6rem, 4.5cqw, 0.875rem);
+  }
 }
 
 /* ========================================
