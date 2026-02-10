@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import './App.css';
-import { PlayTable, ScoreDisplay, getSuitOrder } from './PlayComponents';
-import { BridgeCard } from './components/bridge/BridgeCard';
+import { PlayTable, getSuitOrder } from './PlayComponents';
+import ResultOverlay from './components/shared/ResultOverlay';
+import Card from './shared/components/Card';
+import { BridgeCard } from './components/bridge/BridgeCard';  // Legacy - being phased out
 import { VerticalCard } from './components/bridge/VerticalCard';
 import { BiddingBox as BiddingBoxComponent } from './components/bridge/BiddingBox';
 import { ReviewModal } from './components/bridge/ReviewModal';
@@ -332,6 +334,8 @@ function App() {
   const [bidFeedback, setBidFeedback] = useState(null);  // Structured feedback from evaluate-bid
   const [lastUserBid, setLastUserBid] = useState(null);  // Track last user bid for feedback display
   const [beliefs, setBeliefs] = useState(null);  // BiddingState beliefs (partner + opponents)
+  const [suggestedBid, setSuggestedBid] = useState(null);  // AI-suggested bid for "What Should I Bid?"
+  const [selectedBid, setSelectedBid] = useState(null);  // Selected bid for explanation display in CoachPanel
 
   // Governor Safety Guard state - blocks critical/significant impact bids when hints are enabled
   const [pendingBid, setPendingBid] = useState(null);  // Bid waiting for governor confirmation
@@ -523,6 +527,10 @@ function App() {
   // Prevents cleanup function from killing the loop when we just want to restart it
   const keepAiLoopAlive = useRef(false);
 
+  // Ref to track deal request version - incremented when convention is loaded
+  // to invalidate pending random deals (prevents race condition)
+  const dealRequestIdRef = useRef(0);
+
   const resetAuction = (dealData, skipInitialAiBidding = false) => {
     setInitialDeal(dealData);
     setHand(dealData.hand);
@@ -551,6 +559,8 @@ function App() {
 
     setAuction([]);
     setBeliefs(null);
+    setSuggestedBid(null);
+    setSelectedBid(null);
 
     // Reset the AI bidding guards when auction is reset
     isAiBiddingInProgress.current = false;
@@ -1716,10 +1726,20 @@ ${otherCommands}`;
     // Reset save guard for new hand
     handSaveInProgressRef.current = false;
 
+    // Capture current request ID to detect if a convention was loaded during fetch
+    const requestId = dealRequestIdRef.current;
+
     try {
       const response = await fetch(`${API_URL}/api/deal-hands`, { headers: { ...getSessionHeaders() } });
       if (!response.ok) throw new Error("Failed to deal hands.");
       const data = await response.json();
+
+      // Check if request was invalidated by a convention load during fetch
+      // This prevents race condition where random deal overwrites convention
+      if (dealRequestIdRef.current !== requestId) {
+        console.log('🚫 Random deal cancelled - convention was loaded during fetch');
+        return;
+      }
 
       // Backend returns next_bidder — use it to decide if AI should start bidding
       const shouldAiBid = data.next_bidder && data.next_bidder !== 'South';
@@ -1933,6 +1953,10 @@ ${otherCommands}`;
   // Load scenario by name (for convention grid)
   const loadScenarioByName = async (scenarioName) => {
     if (!scenarioName) return;
+
+    // Invalidate any pending random deal (prevents race condition)
+    dealRequestIdRef.current++;
+
     try {
       const response = await fetch(`${API_URL}/api/load-scenario`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
@@ -1940,7 +1964,10 @@ ${otherCommands}`;
       });
       if (!response.ok) throw new Error("Failed to load scenario.");
       const data = await response.json();
-      resetAuction(data, true);
+
+      // Check if AI should bid first (same logic as dealNewHand)
+      const shouldAiBid = data.next_bidder && data.next_bidder !== 'South';
+      resetAuction(data, !shouldAiBid);
       setIsInitializing(false);
       setActiveConvention(scenarioName); // Enter convention mode
     } catch (err) { setError("Could not load scenario from server."); }
@@ -2027,6 +2054,8 @@ ${otherCommands}`;
       timestamp: new Date().toISOString()
     });
 
+    // Clear any pending hint suggestion
+    setSuggestedBid(null);
     setDisplayedMessage('...');
     const newAuction = [...auction, { bid: bid, explanation: 'Your bid.', player: 'South' }];
 
@@ -2118,6 +2147,47 @@ ${otherCommands}`;
       console.error('❌ Error evaluating bid:', err);
       setBidFeedback(null);
       setDisplayedMessage('Could not get feedback from the server.');
+    }
+  };
+
+  // Fetch AI's suggested bid for "What Should I Bid?" button
+  const handleRequestHint = async () => {
+    if (nextBidder !== 'South' || isAuctionOver(auction)) {
+      return;
+    }
+
+    try {
+      setSuggestedBid({ loading: true });
+      const response = await fetch(`${API_URL}/api/get-next-bid`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+        body: JSON.stringify({
+          auction_history: auction.map(a => a.bid),
+          current_player: 'South',
+          vulnerability: vulnerability,
+          explanation_detail: 'detailed',
+          hint_only: true  // Don't record this bid in session state
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get hint');
+      }
+
+      const data = await response.json();
+      setSuggestedBid({
+        bid: data.bid,
+        explanation: data.explanation,
+        loading: false
+      });
+
+      // Also enable hint mode so feedback shows after they bid
+      if (!hintModeEnabled) {
+        setHintModeEnabled(true);
+      }
+    } catch (err) {
+      console.error('❌ Error getting hint:', err);
+      setSuggestedBid({ error: 'Could not get suggestion', loading: false });
     }
   };
 
@@ -2236,7 +2306,10 @@ ${otherCommands}`;
     setDisplayedMessage('Choose a different bid.');
   };
 
-  const handleBidClick = (bidObject) => { setDisplayedMessage(`[${bidObject.bid}] ${bidObject.explanation}`); };
+  const handleBidClick = (bidObject) => {
+    // Set selected bid for CoachPanel explanation display
+    setSelectedBid(bidObject);
+  };
 
   // ── AI BIDDING LOOP ──
   // Driven by `nextBidder` (set from backend API responses).
@@ -2990,11 +3063,33 @@ ${otherCommands}`;
                   />
                 )}
 
-                {/* Your Hand - cards sorted by suit with gaps */}
+                {/* Your Hand - Physics v2.0 compliant, uses shared Card component */}
+                {/* Scale: text-base (16px) = 56×80px cards - fits well above bidding section */}
                 <div className="bid-hand-container">
-                  <div className="hand-display">
-                    {hand && hand.length > 0 ? getSuitOrder(null).map(suit => (<div key={suit} className="suit-group">{hand.filter(card => card.suit === suit).map((card, index) => (<BridgeCard key={`${suit}-${index}`} rank={card.rank} suit={card.suit} />))}</div>)) : <p style={{color: 'rgba(255,255,255,0.7)'}}>{isInitializing ? 'System Initiating...' : 'Dealing...'}</p>}
-                  </div>
+                  {hand && hand.length > 0 ? (
+                    <div className="text-base flex flex-row gap-[0.6em] justify-center py-2">
+                      {getSuitOrder(null).map(suit => {
+                        const suitCards = hand.filter(card => card.suit === suit);
+                        if (suitCards.length === 0) return null;
+                        // Dynamic spacing based on card count - tighter for smaller cards
+                        const count = suitCards.length;
+                        const spacingClass = count >= 7 ? '-space-x-[2.0em]' : count >= 5 ? '-space-x-[1.6em]' : '-space-x-[1.2em]';
+                        return (
+                          <div key={suit} className={`flex flex-row ${spacingClass}`}>
+                            {suitCards.map((card, idx) => (
+                              <div key={`${suit}-${card.rank}`} style={{ zIndex: 10 + idx }}>
+                                <Card rank={card.rank} suit={card.suit} customScaleClass="text-base" />
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p style={{color: 'rgba(255,255,255,0.7)', textAlign: 'center', padding: '16px'}}>
+                      {isInitializing ? 'System Initiating...' : 'Dealing...'}
+                    </p>
+                  )}
                 </div>
 
                 {/* Bidding Section - history, feedback, box, actions all together */}
@@ -3054,24 +3149,12 @@ ${otherCommands}`;
               <CoachPanel
                 isVisible={showCoachPanel}
                 onClose={() => setShowCoachPanel(false)}
-                partnerInfo={beliefs?.partner ? {
-                  hcpRange: beliefs.partner.hcp_range || '—',
-                  shape: beliefs.partner.shape || '—',
-                  notes: beliefs.partner.notes
-                } : null}
-                opponentInfo={beliefs?.opponents ? {
-                  east: beliefs.opponents.east,
-                  west: beliefs.opponents.west
-                } : null}
-                bidExplanation={auction.length > 0 ? auction.slice(-3).map(a => a.explanation).filter(Boolean).join(' → ') : null}
+                beliefs={beliefs}
+                myHcp={handPoints?.hcp}
                 auction={auction}
-                onRequestHint={() => {
-                  // Request a hint for the current position
-                  // This could trigger the existing hint mode functionality
-                  if (!hintModeEnabled) {
-                    setHintModeEnabled(true);
-                  }
-                }}
+                suggestedBid={suggestedBid}
+                selectedBid={selectedBid}
+                onRequestHint={handleRequestHint}
               />
             )}
           </div>
@@ -3097,7 +3180,7 @@ ${otherCommands}`;
       )}
 
       {!shouldShowHands && gamePhase === 'playing' && playState && (
-        <div className="play-phase">
+        <div className="play-phase" style={{ position: 'relative' }}>
           {/* DEBUG INDICATOR: Shows AI loop state - Dev mode only */}
           {isDevMode && Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && (
             <div style={{
@@ -3214,6 +3297,27 @@ ${otherCommands}`;
               </label>
             </div>
           )}
+
+          {/* Floating Result Overlay - appears over the game board when hand is complete */}
+          <ResultOverlay
+            scoreData={scoreData}
+            isVisible={!!scoreData && Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) === 13}
+            onPlayAnotherHand={playRandomHand}
+            onReplayHand={replayCurrentHand}
+            onReviewHand={lastSavedHandId ? () => {
+              setReviewPageHandId(lastSavedHandId);
+              setHandReviewSource('post-hand');
+              setShowHandReviewPage(true);
+            } : null}
+            onViewProgress={() => {
+              if (isGuest && requiresRegistration('progress')) {
+                promptForRegistration();
+              } else {
+                setShowLearningDashboard(true);
+              }
+            }}
+            onDealNewHand={dealNewHand}
+          />
         </div>
       )}
 
@@ -3387,28 +3491,7 @@ ${otherCommands}`;
         optimalBid={pendingBidFeedback?.feedback?.optimal_bid}
       />
 
-      {scoreData && (
-        <ScoreDisplay
-          scoreData={scoreData}
-          onClose={handleCloseScore}
-          onDealNewHand={dealNewHand}
-          sessionData={sessionData}
-          onShowLearningDashboard={() => {
-            if (isGuest && requiresRegistration('progress')) {
-              promptForRegistration();
-            } else {
-              setShowLearningDashboard(true);
-            }
-          }}
-          onPlayAnotherHand={playRandomHand}
-          onReplayHand={replayCurrentHand}
-          onReviewHand={lastSavedHandId ? () => {
-            setReviewPageHandId(lastSavedHandId);
-            setHandReviewSource('post-hand');
-            setShowHandReviewPage(true);
-          } : null}
-        />
-      )}
+      {/* ScoreDisplay modal replaced by floating ResultOverlay in play-phase section */}
 
       {/* Progress/Dashboard - Full-screen page */}
       {showLearningDashboard && (

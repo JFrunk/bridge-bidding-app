@@ -1,0 +1,72 @@
+/**
+ * BidReviewPage.css - Bidding Review specific styles
+ *
+ * MINIMAL OVERRIDES ONLY - leverages standard PlayableCard styles.
+ * Only modifies what's necessary for read-only display mode.
+ */
+
+/* =====================================================
+   READ-ONLY CARD DISPLAY
+   Single override: disable pointer events for static display
+   All visual styling inherited from .playable-card in PlayComponents.css
+   ===================================================== */
+
+.playable-card.read-only {
+  pointer-events: none;
+}
+
+/* =====================================================
+   USER HAND HIGHLIGHTING
+   Visual distinction for the user's hand position
+   Uses CSS variables from design system
+   ===================================================== */
+
+.replay-hand.user-hand {
+  background: rgba(59, 130, 246, 0.08);
+  border: 2px solid rgba(59, 130, 246, 0.4);
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-3, 12px);
+  margin: calc(-1 * var(--space-2, 8px));
+}
+
+/* "You" badge next to position label */
+.you-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: var(--space-2, 8px);
+  padding: 2px var(--space-2, 8px);
+  font-size: var(--text-xs, 10px);
+  font-weight: var(--font-semibold, 600);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #3b82f6;
+  color: white;
+  border-radius: var(--radius-full, 10px);
+}
+
+/* =====================================================
+   BID AUCTION CENTER - BidChip sizing
+   Inherits BidChip component styling, just adjusts scale
+   ===================================================== */
+
+.bid-auction-cell.user-bid {
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: var(--radius-sm, 6px);
+}
+
+/* =====================================================
+   MOBILE RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 768px) {
+  .replay-hand.user-hand {
+    padding: var(--space-2, 8px);
+    margin: calc(-1 * var(--space-1, 4px));
+  }
+
+  .you-badge {
+    padding: 1px 6px;
+    font-size: 9px;
+  }
+}

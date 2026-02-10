@@ -1,0 +1,330 @@
+/**
+ * ResultOverlay Styles
+ *
+ * Floating overlay for hand results - "Clubhouse" aesthetic:
+ * - Deep Green header (#1B4D3E)
+ * - Cream body (#F5F5DC)
+ * - Clear button separation
+ * - z-index 50+ to float above cards
+ */
+
+/* Backdrop - semi-transparent overlay */
+.result-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.result-overlay-backdrop.showing {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Main overlay card */
+.result-overlay {
+  width: 90%;
+  max-width: 420px;
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  transform: translateY(20px) scale(0.95);
+  transition: transform 0.3s ease;
+}
+
+.result-overlay-backdrop.showing .result-overlay {
+  transform: translateY(0) scale(1);
+}
+
+/* Deep Green Header */
+.result-overlay-header {
+  background: linear-gradient(135deg, #1B4D3E 0%, #2A5D4E 100%);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  color: white;
+}
+
+.result-overlay-header .header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  flex-wrap: wrap;
+}
+
+.result-overlay-header .header-by {
+  font-size: var(--text-sm, 14px);
+  opacity: 0.9;
+}
+
+.result-overlay-header .header-vuln {
+  font-size: var(--text-xs, 12px);
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+.result-overlay-header .header-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  margin-top: var(--space-2, 8px);
+  font-size: var(--text-xs, 12px);
+  opacity: 0.85;
+}
+
+.result-overlay-header .stat-divider {
+  opacity: 0.5;
+}
+
+/* Cream Body */
+.result-overlay-body {
+  background: linear-gradient(180deg, #F5F5DC 0%, #EDE8D0 100%);
+  padding: var(--space-4, 16px);
+}
+
+/* Result rows */
+.result-overlay .result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2, 8px) 0;
+  border-bottom: 1px solid rgba(139, 119, 101, 0.2);
+}
+
+.result-overlay .row-label {
+  font-size: var(--text-sm, 14px);
+  color: #5D4E37;
+  font-weight: 500;
+}
+
+.result-overlay .row-value {
+  font-size: var(--text-base, 16px);
+  font-weight: 600;
+  color: #2C1810;
+}
+
+.result-overlay .row-value.text-success {
+  color: #2E7D32;
+}
+
+.result-overlay .row-value.text-failure {
+  color: #C62828;
+}
+
+/* Score display box */
+.result-overlay .result-score {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3, 12px);
+  margin-top: var(--space-3, 12px);
+  border-radius: var(--radius-md, 8px);
+  border: 2px solid;
+}
+
+.result-overlay .result-score.score-positive {
+  background-color: rgba(76, 175, 80, 0.15);
+  border-color: #4CAF50;
+}
+
+.result-overlay .result-score.score-negative {
+  background-color: rgba(244, 67, 54, 0.15);
+  border-color: #F44336;
+}
+
+.result-overlay .score-label {
+  font-size: var(--text-base, 16px);
+  font-weight: 600;
+  color: #2C1810;
+}
+
+.result-overlay .score-value {
+  font-size: var(--text-2xl, 24px);
+  font-weight: 700;
+}
+
+.result-overlay .score-positive .score-value {
+  color: #2E7D32;
+}
+
+.result-overlay .score-negative .score-value {
+  color: #C62828;
+}
+
+/* Breakdown toggle */
+.result-overlay .breakdown-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2, 8px);
+  width: 100%;
+  margin-top: var(--space-3, 12px);
+  padding: var(--space-2, 8px);
+  background: transparent;
+  border: none;
+  color: #1B4D3E;
+  font-size: var(--text-sm, 14px);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.result-overlay .breakdown-toggle:hover {
+  color: #2A6D5E;
+  text-decoration: underline;
+}
+
+.result-overlay .toggle-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Breakdown container */
+.result-overlay .breakdown-container {
+  margin-top: var(--space-3, 12px);
+  padding: var(--space-3, 12px);
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid rgba(139, 119, 101, 0.2);
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Action buttons - Clear separation */
+.result-overlay .action-btn {
+  width: 100%;
+  padding: var(--space-3, 12px);
+  border-radius: var(--radius-md, 8px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 2px solid transparent;
+}
+
+/* Primary button - Deep green, prominent */
+.result-overlay .action-btn.action-primary {
+  margin-top: var(--space-4, 16px);
+  background: linear-gradient(135deg, #1B4D3E 0%, #2A5D4E 100%);
+  color: white;
+  font-size: var(--text-base, 16px);
+}
+
+.result-overlay .action-btn.action-primary:hover {
+  background: linear-gradient(135deg, #2A5D4E 0%, #3A6D5E 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(27, 77, 62, 0.3);
+}
+
+/* Secondary buttons row - Review / Progress */
+.result-overlay .action-row-secondary {
+  display: flex;
+  gap: var(--space-2, 8px);
+  margin-top: var(--space-3, 12px);
+}
+
+.result-overlay .action-btn.action-secondary {
+  flex: 1;
+  background-color: white;
+  border-color: #1B4D3E;
+  color: #1B4D3E;
+  font-size: var(--text-sm, 14px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+}
+
+.result-overlay .action-btn.action-secondary:hover {
+  background-color: #1B4D3E;
+  color: white;
+}
+
+/* Tertiary buttons row - Replay / Bid New */
+.result-overlay .action-row-tertiary {
+  display: flex;
+  gap: var(--space-2, 8px);
+  margin-top: var(--space-2, 8px);
+}
+
+.result-overlay .action-btn.action-tertiary {
+  flex: 1;
+  background-color: transparent;
+  border-color: rgba(139, 119, 101, 0.4);
+  color: #5D4E37;
+  font-size: var(--text-xs, 12px);
+  font-weight: 500;
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+}
+
+.result-overlay .action-btn.action-tertiary:hover {
+  background-color: rgba(139, 119, 101, 0.1);
+  border-color: #5D4E37;
+}
+
+/* Result state styling */
+.result-overlay.result-success .result-overlay-header {
+  background: linear-gradient(135deg, #1B4D3E 0%, #2E7D32 100%);
+}
+
+.result-overlay.result-failure .result-overlay-header {
+  background: linear-gradient(135deg, #5D1A1A 0%, #8B2A2A 100%);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 480px) {
+  .result-overlay {
+    width: 95%;
+    max-width: none;
+    margin: var(--space-2, 8px);
+  }
+
+  .result-overlay-header {
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+  }
+
+  .result-overlay-body {
+    padding: var(--space-3, 12px);
+  }
+
+  .result-overlay .action-row-secondary {
+    flex-direction: column;
+  }
+
+  .result-overlay .action-row-tertiary {
+    flex-direction: column;
+  }
+
+  .result-overlay .action-btn.action-secondary,
+  .result-overlay .action-btn.action-tertiary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .result-overlay-header .header-stats {
+    flex-wrap: wrap;
+    gap: var(--space-1, 4px);
+  }
+
+  .result-overlay .result-score {
+    flex-direction: column;
+    gap: var(--space-1, 4px);
+    text-align: center;
+  }
+}

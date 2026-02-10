@@ -1,15 +1,8 @@
 /**
  * HandReviewPage - Consolidated Play-by-Play Review Page
  *
- * Single full-screen page for reviewing hand play.
- * Replaces both HandReviewModal and the old HandReviewPage.
- *
- * Design principles:
- * - Everything fits on one screen (no scrolling for core content)
- * - Single compact header with all controls
- * - Horizontal card layout for E/W (not vertical)
- * - Collapsible decay chart
- * - Inline feedback (not modal)
+ * System v2.0 compliant - Uses ReactorLayout for consistent table layout.
+ * Matches the Gameplay Page for consistent user mental model.
  *
  * Entry points:
  * - After hand completion (returns to play screen)
@@ -17,154 +10,176 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  SkipBack,
+  SkipForward,
+  ArrowLeft,
+  BarChart2
+} from 'lucide-react';
 import { useHandReview } from './useHandReview';
 import {
-  RATING_CONFIG,
   POSITION_LABELS,
-  RANK_DISPLAY,
   getSuitOrder,
   normalizeSuit,
   isRedSuit,
-  groupCardsBySuit
+  groupCardsBySuit,
+  sortCards
 } from './constants';
 import DecayChart from '../../analysis/DecayChart';
 import HeuristicScorecard from '../HeuristicScorecard';
+import ReactorLayout from '../../layout/ReactorLayout';
+import TrickArena from '../../shared/TrickArena';
+import Card from '../../../shared/components/Card';
+import FeedbackDashboard from './FeedbackDashboard';
 import './HandReviewPage.css';
 
-// Compact card component for replay display
-const ReplayCard = ({ card, compact = false }) => {
-  const rank = card.rank || card.r;
-  const suit = normalizeSuit(card.suit || card.s);
-  const displayRank = RANK_DISPLAY[rank] || rank;
-  const redSuit = isRedSuit(suit);
-
-  return (
-    <div className={`replay-card ${compact ? 'compact' : ''} ${redSuit ? 'red' : 'black'}`}>
-      <span className="rank">{displayRank}</span>
-      <span className="suit">{suit}</span>
-    </div>
-  );
-};
-
-// Hand display component - horizontal layout for all positions
-const ReplayHandDisplay = ({ cards, position, trumpStrain, compact = false }) => {
+/**
+ * ReplayHorizontalHand - Physics v2.0 compliant horizontal hand for N/S positions
+ */
+const ReplayHorizontalHand = ({ cards, position, trumpStrain, scaleClass = 'text-base', isUser = false }) => {
   const suitOrder = getSuitOrder(trumpStrain);
-  const cardsBySuit = useMemo(() => groupCardsBySuit(cards), [cards]);
+  const cardsBySuit = useMemo(() => {
+    const grouped = groupCardsBySuit(cards);
+    // Sort each suit
+    Object.keys(grouped).forEach(suit => {
+      grouped[suit] = sortCards(grouped[suit]);
+    });
+    return grouped;
+  }, [cards]);
+
+  const getSpacingClass = (count) => {
+    if (count >= 7) return '-space-x-[2.2em]';
+    if (count === 6) return '-space-x-[1.9em]';
+    if (count === 5) return '-space-x-[1.6em]';
+    return '-space-x-[1.4em]';
+  };
+
+  const positionLabels = { N: 'North', S: 'South' };
+
+  if (!cards || cards.length === 0) {
+    return (
+      <div className={`${scaleClass} text-center text-white/60 py-4`}>
+        No cards
+      </div>
+    );
+  }
 
   return (
-    <div className={`replay-hand ${compact ? 'compact' : ''}`}>
-      <div className="hand-cards">
+    <div className={`${scaleClass} flex flex-col items-center gap-[0.3em]`}>
+      <div className="text-[0.75em] font-semibold text-white/70 uppercase tracking-wider flex items-center gap-2">
+        {positionLabels[position]}
+        {isUser && (
+          <span className="bg-blue-500 text-white px-2 py-0.5 rounded-full text-[0.7em] normal-case">
+            You
+          </span>
+        )}
+      </div>
+      <div className="flex flex-row gap-[0.8em] justify-center">
         {suitOrder.map(suit => {
           const suitCards = cardsBySuit[suit];
-          if (suitCards.length === 0) return null;
+          if (!suitCards || suitCards.length === 0) return null;
+          const spacingClass = getSpacingClass(suitCards.length);
+
           return (
-            <div key={suit} className="suit-group">
-              {suitCards.map((card) => (
-                <ReplayCard
-                  key={`${card.rank}-${card.suit}`}
-                  card={card}
-                  compact={compact}
-                />
+            <div key={suit} className={`flex flex-row ${spacingClass}`}>
+              {suitCards.map((card, idx) => (
+                <div key={`${card.rank}-${card.suit}`} style={{ zIndex: 10 + idx }}>
+                  <Card
+                    rank={card.rank}
+                    suit={card.suit}
+                    customScaleClass={scaleClass}
+                  />
+                </div>
               ))}
             </div>
           );
         })}
-        {cards.length === 0 && (
-          <div className="hand-empty">-</div>
-        )}
       </div>
     </div>
   );
 };
 
-// Trick display component - compact compass layout
-const ReplayTrickDisplay = ({ trick, leader, trickNumber }) => {
-  const cardByPosition = useMemo(() => {
-    const map = { N: null, E: null, S: null, W: null };
-    trick.forEach(play => {
-      const pos = play.player || play.position;
-      map[pos] = {
-        rank: play.rank || play.r,
-        suit: normalizeSuit(play.suit || play.s)
-      };
+/**
+ * ReplaySuitStack - Physics v2.0 compliant vertical suit stack for E/W positions
+ */
+const ReplaySuitStack = ({ cards, position, trumpStrain, scaleClass = 'text-sm' }) => {
+  const suitOrder = getSuitOrder(trumpStrain);
+  const cardsBySuit = useMemo(() => {
+    const grouped = groupCardsBySuit(cards);
+    Object.keys(grouped).forEach(suit => {
+      grouped[suit] = sortCards(grouped[suit]);
     });
-    return map;
-  }, [trick]);
+    return grouped;
+  }, [cards]);
+
+  const getSpacingClass = (count) => {
+    if (count >= 7) return '-space-x-[1.9em]';
+    if (count === 6) return '-space-x-[1.6em]';
+    if (count === 5) return '-space-x-[1.4em]';
+    return '-space-x-[1.2em]';
+  };
+
+  const positionLabels = { E: 'East', W: 'West' };
+
+  if (!cards || cards.length === 0) {
+    return (
+      <div className={`${scaleClass} text-center text-white/60 py-4`}>
+        No cards
+      </div>
+    );
+  }
 
   return (
-    <div className="trick-display">
-      <div className="trick-info">
-        <span className="trick-number">Trick {trickNumber}</span>
-        {leader && <span className="trick-leader">Lead: {leader}</span>}
+    <div className={`${scaleClass} flex flex-col items-center gap-[0.3em]`}>
+      <div className="text-[0.75em] font-semibold text-white/70 uppercase tracking-wider">
+        {positionLabels[position]}
       </div>
-      <div className="trick-card-north">
-        {cardByPosition.N && <ReplayCard card={cardByPosition.N} />}
-      </div>
-      <div className="trick-card-west">
-        {cardByPosition.W && <ReplayCard card={cardByPosition.W} />}
-      </div>
-      <div className="trick-card-east">
-        {cardByPosition.E && <ReplayCard card={cardByPosition.E} />}
-      </div>
-      <div className="trick-card-south">
-        {cardByPosition.S && <ReplayCard card={cardByPosition.S} />}
+      <div className="flex flex-col gap-[0.3em]">
+        {suitOrder.map(suit => {
+          const suitCards = cardsBySuit[suit];
+          if (!suitCards || suitCards.length === 0) return null;
+          const spacingClass = getSpacingClass(suitCards.length);
+
+          return (
+            <div key={suit} className={`flex flex-row ${spacingClass}`}>
+              {suitCards.map((card, idx) => (
+                <div key={`${card.rank}-${card.suit}`} style={{ zIndex: 10 + idx }}>
+                  <Card
+                    rank={card.rank}
+                    suit={card.suit}
+                    customScaleClass={scaleClass}
+                  />
+                </div>
+              ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 };
 
-// Center info box - shown at position 0 (start)
-const CenterInfoBox = ({ contract, vulnerability, dealer }) => {
-  // Parse contract for color
-  const suitMatch = contract?.match(/[SHDC\u2660\u2665\u2666\u2663]/i);
-  const isRed = suitMatch && isRedSuit(suitMatch[0]);
-
-  return (
-    <div className="center-info-box">
-      <div className={`center-contract ${isRed ? 'red' : ''}`}>{contract}</div>
-      <div className="center-meta">
-        <span>Vul: {vulnerability || 'None'}</span>
-        <span>Dealer: {dealer}</span>
-      </div>
-    </div>
-  );
+// Helper to convert trick to TrickArena format
+const formatTrickForArena = (trick) => {
+  const cards = {};
+  if (!trick) return cards;
+  trick.forEach(play => {
+    const pos = play.player || play.position;
+    cards[pos] = {
+      rank: play.rank || play.r,
+      suit: normalizeSuit(play.suit || play.s)
+    };
+  });
+  return cards;
 };
 
-// Feedback bar component - compact single-line feedback
-const FeedbackBar = ({ decision, isStart }) => {
-  // Start state hint
-  if (isStart) {
-    return (
-      <div className="feedback-bar hint">
-        <span className="hint-icon">{'\u261D'}</span>
-        <span className="hint-text">
-          Press <span className="key-hint">{'\u25B6'} Next</span> or use <kbd>{'\u2190'}</kbd> <kbd>{'\u2192'}</kbd> arrow keys to step through each play
-        </span>
-      </div>
-    );
-  }
-
-  // No decision (AI play)
-  if (!decision) {
-    return (
-      <div className="feedback-bar ai-play">
-        <span className="feedback-text muted">AI play \u2014 no feedback recorded</span>
-      </div>
-    );
-  }
-
-  // Basic info (no DDS analysis)
-  if (decision.is_basic_info) {
-    const posName = POSITION_LABELS[decision.position];
-    return (
-      <div className="feedback-bar basic">
-        <span className="played-info">
-          <strong>{posName}</strong> played <span className={`card-text ${isRedSuit(decision.user_card?.slice(-1)) ? 'red' : 'black'}`}>{decision.user_card}</span>
-        </span>
-        <span className="feedback-text muted">No detailed analysis recorded</span>
-      </div>
-    );
-  }
+/**
+ * Map decision rating to FeedbackDashboard grade
+ */
+const mapRatingToGrade = (decision) => {
+  if (!decision) return 'reasonable';
 
   // Check for signal feedback (no trick cost but signal issue)
   const isSignalFeedback = decision.signal_reason && decision.tricks_cost === 0 && !decision.is_signal_optimal;
@@ -180,36 +195,60 @@ const FeedbackBar = ({ decision, isStart }) => {
     suppressSignalFeedback = true;
   }
 
-  const effectiveRating = (isSignalFeedback && !suppressSignalFeedback) ? 'suboptimal_signal' : decision.rating;
-  const config = RATING_CONFIG[effectiveRating] || RATING_CONFIG.good;
-  const posName = POSITION_LABELS[decision.position];
-  const cardSuit = decision.user_card?.slice(-1);
+  const effectiveRating = (isSignalFeedback && !suppressSignalFeedback) ? 'suboptimal' : decision.rating;
 
-  return (
-    <div className="feedback-bar" style={{ borderLeftColor: config.color, backgroundColor: config.bgColor }}>
-      <span className="feedback-badge" style={{ backgroundColor: config.color }}>
-        {config.icon} {config.label}
-      </span>
+  // Map rating to grade
+  switch (effectiveRating) {
+    case 'optimal':
+      return 'optimal';
+    case 'good':
+      return 'reasonable';
+    case 'suboptimal':
+    case 'suboptimal_signal':
+      return 'questionable';
+    case 'blunder':
+      return 'blunder';
+    default:
+      return 'reasonable';
+  }
+};
 
-      <span className="played-info">
-        <strong>{posName}</strong> played <span className={`card-text ${isRedSuit(cardSuit) ? 'red' : 'black'}`}>{decision.user_card}</span>
-      </span>
+/**
+ * Parse a card string like "A♠" or "10H" into {rank, suit}
+ */
+const parseCardString = (cardStr) => {
+  if (!cardStr || typeof cardStr !== 'string') return null;
 
-      {decision.optimal_card && decision.optimal_card !== decision.user_card && decision.rating !== 'optimal' && (
-        <span className="better-play">
-          Better: <span className={`card-text ${isRedSuit(decision.optimal_card?.slice(-1)) ? 'red' : 'black'}`}>{decision.optimal_card}</span>
-        </span>
-      )}
+  // Handle suit symbols
+  const suitMap = { '♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C' };
+  let suit = cardStr.slice(-1);
+  let rank = cardStr.slice(0, -1);
 
-      {decision.tricks_cost > 0 && (
-        <span className="tricks-cost">-{decision.tricks_cost} trick{decision.tricks_cost !== 1 ? 's' : ''}</span>
-      )}
+  // Check for symbol suits
+  if (suitMap[suit]) {
+    suit = suitMap[suit];
+  }
 
-      {decision.feedback && (
-        <span className="feedback-text">{decision.feedback}</span>
-      )}
-    </div>
-  );
+  return { rank, suit };
+};
+
+/**
+ * Build analysis text from decision data
+ */
+const buildAnalysisText = (decision) => {
+  if (!decision) return null;
+
+  // Priority: feedback > reasoning > signal_reason
+  if (decision.feedback) return decision.feedback;
+  if (decision.reasoning) return decision.reasoning;
+  if (decision.signal_reason) return decision.signal_reason;
+
+  // Fallback based on rating
+  const grade = mapRatingToGrade(decision);
+  if (grade === 'optimal') return 'This was the best play in this position.';
+  if (grade === 'reasonable') return 'A solid choice that maintains your position.';
+
+  return null;
 };
 
 // Main component
@@ -294,149 +333,177 @@ const HandReviewPage = ({
 
   return (
     <div className="hand-review-page" data-testid="hand-review-page">
-      {/* Header Bar - Single compact bar with all controls */}
-      <div className="header-bar">
-        <button className="back-btn" onClick={onBack}>\u2190 Back</button>
+      {/* Stage Container - Centered flexbox column for all content */}
+      <div className="stage-container">
+        {/* Header Bar - Constrained to table width */}
+        <div className="header-bar">
+          <button className="back-btn" onClick={onBack}>
+            <ArrowLeft size={16} />
+            <span>Back</span>
+          </button>
 
-        <div className="contract-summary">
-          <span className={`contract-badge ${isRedSuit(handData?.contract?.match(/[SHDC\u2660\u2665\u2666\u2663]/i)?.[0]) ? 'red' : ''}`}>
-            {handData?.contract || 'Unknown'}
-          </span>
-          <span className="contract-by">by {POSITION_LABELS[handData?.contract_declarer] || handData?.contract_declarer}</span>
-          <span className={`result-badge ${result.isGood ? 'success' : 'failure'}`}>
-            {result.text}
-            {result.detail && <span className="result-detail"> {result.detail}</span>}
-          </span>
-          <span className="role-badge">{userRole}</span>
-          <span className={`score-badge ${userScore >= 0 ? 'positive' : 'negative'}`}>
-            {userScore > 0 ? '+' : ''}{userScore}
-          </span>
-          {handData?.play_quality_summary?.has_data && (
-            <span className="accuracy-badge">{handData.play_quality_summary.accuracy_rate}% play</span>
-          )}
+          <div className="contract-summary">
+            <span className={`contract-badge ${isRedSuit(handData?.contract?.match(/[SHDC♠♥♦♣]/i)?.[0]) ? 'red' : ''}`}>
+              {handData?.contract || 'Unknown'}
+            </span>
+            <span className="contract-by">by {POSITION_LABELS[handData?.contract_declarer] || handData?.contract_declarer}</span>
+            <span className={`result-badge ${result.isGood ? 'success' : 'failure'}`}>
+              {result.text}
+              {result.detail && <span className="result-detail"> {result.detail}</span>}
+            </span>
+            <span className="role-badge">{userRole}</span>
+            <span className={`score-badge ${userScore >= 0 ? 'positive' : 'negative'}`}>
+              {userScore > 0 ? '+' : ''}{userScore}
+            </span>
+            {handData?.play_quality_summary?.has_data && (
+              <span className="accuracy-badge">{handData.play_quality_summary.accuracy_rate}% play</span>
+            )}
+          </div>
+
+          <button
+            className={`chart-toggle ${chartExpanded ? 'active' : ''}`}
+            onClick={() => setChartExpanded(!chartExpanded)}
+            title="Toggle decay chart"
+          >
+            <BarChart2 size={18} />
+          </button>
         </div>
 
-        {/* Navigation controls */}
-        <div className="nav-controls">
-          <button className="nav-btn" onClick={goToStart} disabled={replayPosition <= 0} title="Start (Home)">\u23ee</button>
-          <button className="nav-btn" onClick={goPrev} disabled={replayPosition <= 0}>\u25c0</button>
-          <span className="nav-counter">
-            {replayPosition === 0 ? 'Start' : `${replayPosition}/${totalPlays}`}
-          </span>
-          <button className="nav-btn" onClick={goNext} disabled={replayPosition >= totalPlays} data-testid="nav-next">\u25b6</button>
-          <button className="nav-btn" onClick={goToEnd} disabled={replayPosition >= totalPlays} title="End (End)">\u23ed</button>
+        {/* ReactorLayout - System v2.0 compliant table layout */}
+        {remainingHands && (
+          <ReactorLayout
+            className="replay-reactor"
+            scaleClass="text-base"
+            north={
+              <ReplayHorizontalHand
+                cards={remainingHands.N}
+                position="N"
+                trumpStrain={trumpStrain}
+                scaleClass="text-lg"
+              />
+            }
+            south={
+              <ReplayHorizontalHand
+                cards={remainingHands.S}
+                position="S"
+                trumpStrain={trumpStrain}
+                scaleClass="text-xl"
+                isUser={true}
+              />
+            }
+            east={
+              <ReplaySuitStack
+                cards={remainingHands.E}
+                position="E"
+                trumpStrain={trumpStrain}
+                scaleClass="text-sm"
+              />
+            }
+            west={
+              <ReplaySuitStack
+                cards={remainingHands.W}
+                position="W"
+                trumpStrain={trumpStrain}
+                scaleClass="text-sm"
+              />
+            }
+            center={
+              <TrickArena
+                playedCards={formatTrickForArena(currentReplayTrick)}
+                scaleClass="text-base"
+              />
+            }
+          />
+        )}
 
-          {/* Hand navigation (when multiple hands) */}
-          {totalHands > 1 && (
-            <div className="hand-nav">
-              <button className="nav-btn small" onClick={onPrevHand} disabled={!onPrevHand}>\u25c0</button>
-              <span className="hand-counter">{currentIndex + 1}/{totalHands}</span>
-              <button className="nav-btn small" onClick={onNextHand} disabled={!onNextHand}>\u25b6</button>
+        {/* Pit Container - Footer controls constrained to table width */}
+        <div className="pit-container">
+          {/* Replay Navigation Controls - Always visible */}
+          <div className="replay-controls">
+            <button className="replay-btn icon-only" onClick={goToStart} disabled={replayPosition <= 0} title="Start (Home)">
+              <SkipBack size={18} />
+            </button>
+            <button className="replay-btn prev" onClick={goPrev} disabled={replayPosition <= 0}>
+              <ChevronLeft size={18} />
+              <span>Prev</span>
+            </button>
+            <span className="replay-counter">
+              {replayPosition === 0 ? 'Start' : `Play ${replayPosition} of ${totalPlays}`}
+            </span>
+            <button className="replay-btn next primary" onClick={goNext} disabled={replayPosition >= totalPlays} data-testid="nav-next">
+              <span>Next</span>
+              <ChevronRight size={18} />
+            </button>
+            <button className="replay-btn icon-only" onClick={goToEnd} disabled={replayPosition >= totalPlays} title="End (End)">
+              <SkipForward size={18} />
+            </button>
+
+            {/* Hand navigation (when multiple hands) */}
+            {totalHands > 1 && (
+              <div className="hand-nav">
+                <button className="replay-btn small" onClick={onPrevHand} disabled={!onPrevHand}>
+                  <ChevronLeft size={14} />
+                </button>
+                <span className="hand-counter">{currentIndex + 1}/{totalHands}</span>
+                <button className="replay-btn small" onClick={onNextHand} disabled={!onNextHand}>
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Feedback Dashboard - Learning Coach */}
+          {tricks.length > 0 && (currentReplayDecision || replayPosition === 0) && (
+            <FeedbackDashboard
+              grade={currentReplayDecision ? mapRatingToGrade(currentReplayDecision) : 'reasonable'}
+              analysisText={buildAnalysisText(currentReplayDecision)}
+              alternativePlay={
+                currentReplayDecision?.optimal_card &&
+                currentReplayDecision.optimal_card !== currentReplayDecision.user_card
+                  ? parseCardString(currentReplayDecision.optimal_card)
+                  : null
+              }
+              playedCard={currentReplayDecision?.user_card ? parseCardString(currentReplayDecision.user_card) : null}
+              tricksCost={currentReplayDecision?.tricks_cost || 0}
+              isStart={replayPosition === 0}
+              isAiPlay={!currentReplayDecision && replayPosition > 0}
+            />
+          )}
+
+          {/* Decay Chart (Collapsible) */}
+          {handData?.decay_curve && chartExpanded && (
+            <div className="chart-panel expanded">
+              <DecayChart
+                data={handData.decay_curve}
+                replayPosition={replayPosition}
+                onPositionChange={setReplayPosition}
+              />
+            </div>
+          )}
+
+          {/* Heuristic Scorecard (if decision has data) */}
+          {currentReplayDecision && !currentReplayDecision.is_basic_info && (
+            <div className="heuristic-panel">
+              <HeuristicScorecard decision={currentReplayDecision} />
+            </div>
+          )}
+
+          {/* Action buttons (post-hand flow) */}
+          {(onPlayAnother || onReplay || onViewProgress) && (
+            <div className="action-bar">
+              {onPlayAnother && (
+                <button className="action-btn primary" onClick={onPlayAnother}>Play Another</button>
+              )}
+              {onReplay && (
+                <button className="action-btn secondary" onClick={onReplay}>Replay Hand</button>
+              )}
+              {onViewProgress && (
+                <button className="action-btn secondary" onClick={onViewProgress}>My Progress</button>
+              )}
             </div>
           )}
         </div>
-
-        <button
-          className={`chart-toggle ${chartExpanded ? 'active' : ''}`}
-          onClick={() => setChartExpanded(!chartExpanded)}
-          title="Toggle decay chart"
-        >
-          \ud83d\udcca
-        </button>
       </div>
-
-      {/* Compass Table - Main play area */}
-      <div className="compass-table">
-        {/* North */}
-        <div className="position-area north-area">
-          <div className="pos-label">North</div>
-          {remainingHands && (
-            <ReplayHandDisplay cards={remainingHands.N} position="N" trumpStrain={trumpStrain} />
-          )}
-        </div>
-
-        {/* West */}
-        <div className="position-area west-area">
-          <div className="pos-label">West</div>
-          {remainingHands && (
-            <ReplayHandDisplay cards={remainingHands.W} position="W" trumpStrain={trumpStrain} compact />
-          )}
-        </div>
-
-        {/* Center - Trick or Info */}
-        <div className="center-area">
-          {replayPosition === 0 ? (
-            <CenterInfoBox
-              contract={handData?.contract}
-              vulnerability={handData?.vulnerability}
-              dealer={handData?.dealer}
-            />
-          ) : (
-            <ReplayTrickDisplay
-              trick={currentReplayTrick}
-              leader={currentReplayLeader}
-              trickNumber={currentReplayTrickNumber}
-            />
-          )}
-        </div>
-
-        {/* East */}
-        <div className="position-area east-area">
-          <div className="pos-label">East</div>
-          {remainingHands && (
-            <ReplayHandDisplay cards={remainingHands.E} position="E" trumpStrain={trumpStrain} compact />
-          )}
-        </div>
-
-        {/* South */}
-        <div className="position-area south-area">
-          {remainingHands && (
-            <ReplayHandDisplay cards={remainingHands.S} position="S" trumpStrain={trumpStrain} />
-          )}
-          <div className="pos-label">South (You)</div>
-        </div>
-      </div>
-
-      {/* Feedback Bar */}
-      {tricks.length > 0 && (
-        <FeedbackBar
-          decision={currentReplayDecision}
-          isStart={replayPosition === 0}
-        />
-      )}
-
-      {/* Decay Chart (Collapsible) */}
-      {handData?.decay_curve && (
-        <div className={`chart-panel ${chartExpanded ? 'expanded' : 'collapsed'}`}>
-          <DecayChart
-            data={handData.decay_curve}
-            replayPosition={replayPosition}
-            onPositionChange={setReplayPosition}
-          />
-        </div>
-      )}
-
-      {/* Heuristic Scorecard (if decision has data) */}
-      {currentReplayDecision && !currentReplayDecision.is_basic_info && (
-        <div className="heuristic-panel">
-          <HeuristicScorecard decision={currentReplayDecision} />
-        </div>
-      )}
-
-      {/* Action buttons (post-hand flow) */}
-      {(onPlayAnother || onReplay || onViewProgress) && (
-        <div className="action-bar">
-          {onPlayAnother && (
-            <button className="action-btn primary" onClick={onPlayAnother}>Play Another</button>
-          )}
-          {onReplay && (
-            <button className="action-btn secondary" onClick={onReplay}>Replay Hand</button>
-          )}
-          {onViewProgress && (
-            <button className="action-btn secondary" onClick={onViewProgress}>My Progress</button>
-          )}
-        </div>
-      )}
     </div>
   );
 };
