@@ -33,7 +33,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  max-width: 700px;
+  max-width: var(--content-width-standard, min(95vw, 900px));
   margin: 0 auto;
 }
 
@@ -142,7 +142,7 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  max-width: 700px;
+  max-width: var(--content-width-standard, min(95vw, 900px));
   margin: 0 auto;
 }
 
@@ -235,9 +235,9 @@
 /* Replay table, hands, tricks, feedback panels, etc. */
 /* These use the same class names so they'll be styled correctly */
 
-/* Content inner wrapper - aligns all content to 700px column */
+/* Content inner wrapper - aligns all content using fluid width variable */
 .hand-review-page .page-content-inner {
-  max-width: 700px;
+  max-width: var(--content-width-standard, min(95vw, 900px));
   margin: 0 auto;
 }
 
@@ -364,5 +364,164 @@
   .hand-review-page .result {
     font-size: 12px;
     padding: 3px 8px;
+  }
+}
+
+/* =====================================================
+   FIXED BOTTOM CONTROLS - Outside Reactor Core
+   ===================================================== */
+
+.hand-review-page .replay-controls-fixed {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid #e5e7eb;
+  padding: 12px 24px;
+  z-index: 100;
+}
+
+.hand-review-page .replay-controls-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: var(--content-width-standard, min(95vw, 900px));
+  margin: 0 auto;
+}
+
+.hand-review-page .replay-hint {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.hand-review-page .replay-hint kbd {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.hand-review-page .replay-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hand-review-page .replay-navigation button {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hand-review-page .replay-navigation button:hover:not(:disabled) {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.hand-review-page .replay-navigation button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.hand-review-page .replay-navigation button.primary {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.hand-review-page .replay-navigation button.primary:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.hand-review-page .replay-counter {
+  font-size: 14px;
+  color: #374151;
+  min-width: 140px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.hand-review-page .replay-counter .trick-indicator {
+  color: #6b7280;
+  font-weight: 400;
+}
+
+/* ReactorLayout specific styling for replay */
+.hand-review-page .replay-reactor {
+  margin-bottom: 24px;
+}
+
+/* Feedback container */
+.hand-review-page .trick-feedback-container {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.hand-review-page .replay-start-hint {
+  text-align: center;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  color: #6b7280;
+}
+
+.hand-review-page .replay-start-hint strong {
+  color: #374151;
+}
+
+/* =====================================================
+   FIXED BOTTOM - MOBILE RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 768px) {
+  .hand-review-page .replay-controls-fixed {
+    padding: 10px 16px;
+  }
+
+  .hand-review-page .replay-hint {
+    display: none;
+  }
+
+  .hand-review-page .replay-navigation {
+    gap: 6px;
+  }
+
+  .hand-review-page .replay-navigation button {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .hand-review-page .replay-counter {
+    font-size: 13px;
+    min-width: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hand-review-page .replay-controls-fixed {
+    padding: 8px 12px;
+  }
+
+  .hand-review-page .replay-navigation button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .hand-review-page .replay-counter {
+    font-size: 12px;
+    min-width: 80px;
   }
 }

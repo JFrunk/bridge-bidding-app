@@ -132,9 +132,10 @@ const FeedbackDashboard = ({
   isVisible = true,
 }) => {
   // Ghost card pattern - return invisible placeholder with fixed height
+  // Uses CSS variable for consistent height with parent slot
   if (!isVisible) {
     return (
-      <div className="feedback-dashboard ghost-placeholder" style={{ minHeight: '6em', visibility: 'hidden' }}>
+      <div className="feedback-dashboard ghost-placeholder" style={{ minHeight: 'var(--feedback-slot-height, 8em)', visibility: 'hidden' }}>
         {/* Invisible placeholder to prevent layout bounce */}
       </div>
     );
@@ -143,8 +144,8 @@ const FeedbackDashboard = ({
   // Start state - show navigation hint
   if (isStart) {
     return (
-      <div className="feedback-dashboard start-hint" style={{ minHeight: '6em' }}>
-        <div className="flex items-center justify-center gap-3 py-3 h-full">
+      <div className="feedback-dashboard start-hint">
+        <div className="flex items-center justify-center gap-3 py-4 h-full">
           <span className="text-gray-600">
             Press <kbd className="px-2 py-1 bg-gray-200 rounded text-sm font-mono">→</kbd> or click <span className="font-semibold text-emerald-700">Next</span> to step through each play
           </span>
@@ -156,8 +157,8 @@ const FeedbackDashboard = ({
   // AI play - minimal display
   if (isAiPlay) {
     return (
-      <div className="feedback-dashboard ai-play" style={{ minHeight: '6em' }}>
-        <div className="flex items-center justify-center gap-2 py-2 text-gray-500 h-full">
+      <div className="feedback-dashboard ai-play">
+        <div className="flex items-center justify-center gap-2 py-4 text-gray-500">
           <Info size={16} />
           <span className="text-sm">AI play — no feedback recorded</span>
         </div>
@@ -168,7 +169,7 @@ const FeedbackDashboard = ({
   // No analysis available - still show placeholder
   if (!analysisText && !grade) {
     return (
-      <div className="feedback-dashboard empty-state" style={{ minHeight: '6em' }}>
+      <div className="feedback-dashboard empty-state">
         {/* Empty but maintains layout height */}
       </div>
     );
@@ -179,7 +180,7 @@ const FeedbackDashboard = ({
   const showComparison = (grade === 'questionable' || grade === 'blunder') && alternativePlay && playedCard;
 
   return (
-    <div className={`feedback-dashboard ${config.bg} ${config.border} border-l-4 rounded-lg`} style={{ minHeight: '6em' }}>
+    <div className={`feedback-dashboard ${config.bg} ${config.border} border-l-4 rounded-lg`}>
       {/* Grade Header */}
       <div className="flex items-start gap-3 p-4">
         {/* Icon */}

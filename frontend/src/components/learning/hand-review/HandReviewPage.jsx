@@ -416,44 +416,46 @@ const HandReviewPage = ({
           />
         )}
 
-        {/* Pit Container - Footer controls constrained to table width */}
+        {/* Pit Container - Fixed-Stack Footer Layout */}
         <div className="pit-container">
-          {/* Replay Navigation Controls - Always visible */}
-          <div className="replay-controls">
-            <button className="replay-btn icon-only" onClick={goToStart} disabled={replayPosition <= 0} title="Start (Home)">
-              <SkipBack size={18} />
-            </button>
-            <button className="replay-btn prev" onClick={goPrev} disabled={replayPosition <= 0}>
-              <ChevronLeft size={18} />
-              <span>Prev</span>
-            </button>
-            <span className="replay-counter">
-              {replayPosition === 0 ? 'Start' : `Play ${replayPosition} of ${totalPlays}`}
-            </span>
-            <button className="replay-btn next primary" onClick={goNext} disabled={replayPosition >= totalPlays} data-testid="nav-next">
-              <span>Next</span>
-              <ChevronRight size={18} />
-            </button>
-            <button className="replay-btn icon-only" onClick={goToEnd} disabled={replayPosition >= totalPlays} title="End (End)">
-              <SkipForward size={18} />
-            </button>
+          {/* LAYER 1: Replay Controls (Gray Bar) - Fixed at top */}
+          <div className="controls-layer">
+            <div className="replay-controls">
+              <button className="replay-btn icon-only" onClick={goToStart} disabled={replayPosition <= 0} title="Start (Home)">
+                <SkipBack size={18} />
+              </button>
+              <button className="replay-btn prev" onClick={goPrev} disabled={replayPosition <= 0}>
+                <ChevronLeft size={18} />
+                <span>Prev</span>
+              </button>
+              <span className="replay-counter">
+                {replayPosition === 0 ? 'Start' : `Play ${replayPosition} of ${totalPlays}`}
+              </span>
+              <button className="replay-btn next primary" onClick={goNext} disabled={replayPosition >= totalPlays} data-testid="nav-next">
+                <span>Next</span>
+                <ChevronRight size={18} />
+              </button>
+              <button className="replay-btn icon-only" onClick={goToEnd} disabled={replayPosition >= totalPlays} title="End (End)">
+                <SkipForward size={18} />
+              </button>
 
-            {/* Hand navigation (when multiple hands) */}
-            {totalHands > 1 && (
-              <div className="hand-nav">
-                <button className="replay-btn small" onClick={onPrevHand} disabled={!onPrevHand}>
-                  <ChevronLeft size={14} />
-                </button>
-                <span className="hand-counter">{currentIndex + 1}/{totalHands}</span>
-                <button className="replay-btn small" onClick={onNextHand} disabled={!onNextHand}>
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-            )}
+              {/* Hand navigation (when multiple hands) */}
+              {totalHands > 1 && (
+                <div className="hand-nav">
+                  <button className="replay-btn small" onClick={onPrevHand} disabled={!onPrevHand}>
+                    <ChevronLeft size={14} />
+                  </button>
+                  <span className="hand-counter">{currentIndex + 1}/{totalHands}</span>
+                  <button className="replay-btn small" onClick={onNextHand} disabled={!onNextHand}>
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Feedback Dashboard - Learning Coach */}
-          {tricks.length > 0 && (currentReplayDecision || replayPosition === 0) && (
+          {/* LAYER 2: Feedback Slot (Anti-Bounce Zone) - Fixed height */}
+          <div className="feedback-slot">
             <FeedbackDashboard
               grade={currentReplayDecision ? mapRatingToGrade(currentReplayDecision) : 'reasonable'}
               analysisText={buildAnalysisText(currentReplayDecision)}
@@ -467,39 +469,47 @@ const HandReviewPage = ({
               tricksCost={currentReplayDecision?.tricks_cost || 0}
               isStart={replayPosition === 0}
               isAiPlay={!currentReplayDecision && replayPosition > 0}
+              isVisible={tricks.length > 0}
             />
-          )}
+          </div>
 
-          {/* Decay Chart (Collapsible) */}
-          {handData?.decay_curve && chartExpanded && (
-            <div className="chart-panel expanded">
-              <DecayChart
-                data={handData.decay_curve}
-                replayPosition={replayPosition}
-                onPositionChange={setReplayPosition}
-              />
+          {/* LAYER 3: Expandable Content (Charts, Heuristics) */}
+          {(chartExpanded || (currentReplayDecision && !currentReplayDecision.is_basic_info)) && (
+            <div className="expandable-layer">
+              {/* Decay Chart (Collapsible) */}
+              {handData?.decay_curve && chartExpanded && (
+                <div className="chart-panel expanded">
+                  <DecayChart
+                    data={handData.decay_curve}
+                    replayPosition={replayPosition}
+                    onPositionChange={setReplayPosition}
+                  />
+                </div>
+              )}
+
+              {/* Heuristic Scorecard (if decision has data) */}
+              {currentReplayDecision && !currentReplayDecision.is_basic_info && (
+                <div className="heuristic-panel">
+                  <HeuristicScorecard decision={currentReplayDecision} />
+                </div>
+              )}
             </div>
           )}
 
-          {/* Heuristic Scorecard (if decision has data) */}
-          {currentReplayDecision && !currentReplayDecision.is_basic_info && (
-            <div className="heuristic-panel">
-              <HeuristicScorecard decision={currentReplayDecision} />
-            </div>
-          )}
-
-          {/* Action buttons (post-hand flow) */}
+          {/* LAYER 4: Action Buttons (Beige Bar) - Fixed at bottom */}
           {(onPlayAnother || onReplay || onViewProgress) && (
-            <div className="action-bar">
-              {onPlayAnother && (
-                <button className="action-btn primary" onClick={onPlayAnother}>Play Another</button>
-              )}
-              {onReplay && (
-                <button className="action-btn secondary" onClick={onReplay}>Replay Hand</button>
-              )}
-              {onViewProgress && (
-                <button className="action-btn secondary" onClick={onViewProgress}>My Progress</button>
-              )}
+            <div className="action-layer">
+              <div className="action-bar">
+                {onPlayAnother && (
+                  <button className="action-btn primary" onClick={onPlayAnother}>Play Another</button>
+                )}
+                {onReplay && (
+                  <button className="action-btn secondary" onClick={onReplay}>Replay Hand</button>
+                )}
+                {onViewProgress && (
+                  <button className="action-btn secondary" onClick={onViewProgress}>My Progress</button>
+                )}
+              </div>
             </div>
           )}
         </div>
