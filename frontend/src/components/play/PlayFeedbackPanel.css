@@ -1,0 +1,330 @@
+/**
+ * PlayFeedbackPanel Styles
+ *
+ * Inline feedback panel for card play results.
+ * Follows the same pattern as BidFeedbackPanel.css for consistency.
+ */
+
+.play-feedback-panel {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-secondary);
+  border-left: 4px solid var(--color-info);
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.play-feedback-panel.showing {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Result variants */
+.play-feedback-panel.feedback-success {
+  border-left-color: var(--color-success);
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.play-feedback-panel.feedback-failure {
+  border-left-color: var(--color-danger);
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* Header row with main message */
+.play-feedback-panel .feedback-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  line-height: 1.4;
+}
+
+.play-feedback-panel .feedback-icon {
+  font-size: var(--text-xl);
+  font-weight: bold;
+}
+
+.feedback-success .feedback-icon {
+  color: var(--color-success);
+}
+
+.feedback-failure .feedback-icon {
+  color: var(--color-danger);
+}
+
+.play-feedback-panel .feedback-label {
+  font-weight: 700;
+  font-size: var(--text-xl);
+}
+
+.feedback-success .feedback-label {
+  color: var(--color-success);
+}
+
+.feedback-failure .feedback-label {
+  color: var(--color-danger);
+}
+
+.play-feedback-panel .feedback-by {
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+}
+
+/* Dismiss button */
+.play-feedback-panel .feedback-dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: var(--text-xl);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 var(--space-1);
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.play-feedback-panel .feedback-dismiss:hover {
+  opacity: 1;
+}
+
+/* Result details */
+.feedback-details {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-1) 0;
+}
+
+.detail-row + .detail-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.detail-value.text-success {
+  color: var(--color-success);
+}
+
+.detail-value.text-failure {
+  color: var(--color-danger);
+}
+
+/* Score display */
+.score-display {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 2px solid;
+}
+
+.score-display.score-positive {
+  background-color: rgba(76, 175, 80, 0.15);
+  border-color: var(--color-success);
+}
+
+.score-display.score-negative {
+  background-color: rgba(244, 67, 54, 0.15);
+  border-color: var(--color-danger);
+}
+
+.score-label {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.score-value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+.score-positive .score-value {
+  color: var(--color-success);
+}
+
+.score-negative .score-value {
+  color: var(--color-danger);
+}
+
+/* Breakdown toggle */
+.breakdown-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-2);
+  background: transparent;
+  border: none;
+  color: var(--color-info);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.breakdown-toggle:hover {
+  color: var(--color-info-light);
+}
+
+.toggle-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Breakdown container */
+.breakdown-container {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Action buttons */
+.feedback-actions {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.action-row-secondary,
+.action-row-tertiary {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.play-feedback-panel .action-btn {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.play-feedback-panel .action-btn.action-primary {
+  background-color: var(--color-primary);
+  color: white;
+  font-size: var(--text-base);
+  padding: var(--space-3);
+}
+
+.play-feedback-panel .action-btn.action-primary:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.play-feedback-panel .action-btn.action-secondary {
+  background-color: transparent;
+  border-color: var(--color-border);
+  color: var(--text-primary);
+}
+
+.play-feedback-panel .action-btn.action-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--text-primary);
+}
+
+.play-feedback-panel .action-btn.action-tertiary {
+  background-color: transparent;
+  border-color: var(--color-border);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+}
+
+.play-feedback-panel .action-btn.action-tertiary:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 480px) {
+  .play-feedback-panel {
+    padding: var(--space-3);
+    margin-left: var(--space-2);
+    margin-right: var(--space-2);
+  }
+
+  .play-feedback-panel .feedback-header {
+    font-size: var(--text-base);
+  }
+
+  .play-feedback-panel .feedback-icon,
+  .play-feedback-panel .feedback-label {
+    font-size: var(--text-lg);
+  }
+
+  .score-value {
+    font-size: var(--text-xl);
+  }
+
+  .action-row-secondary,
+  .action-row-tertiary {
+    flex-direction: column;
+  }
+
+  .play-feedback-panel .action-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .play-feedback-panel {
+    padding: var(--space-2);
+  }
+
+  .feedback-details {
+    padding: var(--space-2);
+  }
+
+  .score-display {
+    flex-direction: column;
+    gap: var(--space-1);
+    text-align: center;
+  }
+}
