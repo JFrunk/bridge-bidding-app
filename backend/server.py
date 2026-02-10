@@ -92,7 +92,7 @@ CORS(app, resources={
     r"/api/*": {
         "origins": CORS_ORIGINS,
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "X-Session-ID"],
+        "allow_headers": ["Content-Type", "X-Session-ID", "X-User-ID"],
         "expose_headers": ["Content-Type"],
         "supports_credentials": False
     }
@@ -1681,8 +1681,11 @@ def get_next_bid():
         elif not isinstance(explanation, str) and explanation is not None:
             explanation = str(explanation)
 
-        # ── Record bid in session state and compute next bidder ──
-        state.auction_history.append(bid)
+        # ── Optionally skip recording for hint-only requests ──
+        # hint_only=true means this is a "What Should I Bid?" request that shouldn't modify state
+        hint_only = data.get('hint_only', False)
+        if not hint_only:
+            state.auction_history.append(bid)
         next_bidder = BridgeRulesEngine.get_current_bidder(dealer, len(state.auction_history))
 
         # Build beliefs from the complete auction (including the bid just made).
@@ -2021,6 +2024,22 @@ def evaluate_bid():
                 'dealer': dealer,
                 'vulnerability': state.vulnerability
             }
+
+            # Generate learning feedback for suboptimal bids (V2 path)
+            if user_bid != v2_feedback.optimal_bid:
+                try:
+                    from engine.feedback.learning_feedback import generate_learning_feedback
+                    learning_fb_obj = generate_learning_feedback(
+                        user_bid=user_bid,
+                        optimal_bid=v2_feedback.optimal_bid,
+                        hand=user_hand,
+                        auction_context=auction_context,
+                        optimal_explanation=v2_feedback.optimal_explanation
+                    )
+                    if learning_fb_obj:
+                        feedback.learning_feedback = learning_fb_obj.to_dict()
+                except Exception as e:
+                    print(f"⚠️ Failed to generate learning feedback: {e}")
 
             # Get hand_number from game session (1-indexed for display)
             hand_number = state.game_session.hands_completed + 1 if state.game_session else None

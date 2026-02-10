@@ -567,6 +567,16 @@ class SoftMatcher:
                         for pattern in forbidden:
                             if self._matches_pattern(str(pattern), str(actual)):
                                 return (0.0, f"{key}: '{actual}' in forbidden list")
+                elif 'exact' in expected:
+                    # Check for exact value match (HARD constraint)
+                    exact_val = expected['exact']
+                    if actual is None:
+                        return (0.0, f"{key}: value not set, expected exactly {exact_val}")
+                    try:
+                        if actual != exact_val:
+                            return (0.0, f"{key}: expected exactly {exact_val}, got {actual}")
+                    except TypeError:
+                        pass  # Can't compare, skip
                 elif 'min' in expected or 'max' in expected:
                     # Numeric comparison
                     if actual is None:

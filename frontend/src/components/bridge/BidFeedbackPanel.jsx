@@ -15,6 +15,7 @@
 import React, { useState, useEffect } from 'react';
 import { TermHighlight } from '../glossary/TermTooltip';
 import DifferentialAnalysisPanel from '../learning/DifferentialAnalysisPanel';
+import { BidChip } from '../shared/BidChip';
 import './BidFeedbackPanel.css';
 
 // Map correctness levels to display info
@@ -95,7 +96,7 @@ const BidFeedbackPanel = ({
         <>
           <span className="feedback-icon">{config.icon}</span>
           <span className="feedback-label">{config.label}</span>
-          <span className="feedback-bid">{userBid}</span>
+          <BidChip bid={userBid} />
           <span className="feedback-text">is appropriate here.</span>
         </>
       );
@@ -105,11 +106,11 @@ const BidFeedbackPanel = ({
       return (
         <>
           <span className="feedback-icon">{config.icon}</span>
-          <span className="feedback-bid">{userBid}</span>
+          <BidChip bid={userBid} />
           <span className="feedback-text">is acceptable.</span>
           {feedback.optimal_bid && feedback.optimal_bid !== userBid && (
             <span className="feedback-optimal-note">
-              (Optimal: <strong>{feedback.optimal_bid}</strong>)
+              (Optimal: <BidChip bid={feedback.optimal_bid} />)
             </span>
           )}
         </>
@@ -121,9 +122,9 @@ const BidFeedbackPanel = ({
       <>
         <span className="feedback-icon">{config.icon}</span>
         <span className="feedback-label">{config.label}</span>
-        <span className="feedback-optimal-bid">{feedback.optimal_bid}</span>
+        <BidChip bid={feedback.optimal_bid} />
         {correctnessLevel === 'suboptimal' && (
-          <span className="feedback-text">would be better than {userBid}.</span>
+          <span className="feedback-text">would be better than <BidChip bid={userBid} />.</span>
         )}
       </>
     );
@@ -151,6 +152,33 @@ const BidFeedbackPanel = ({
       <div className="feedback-concept">
         <span className="concept-label">Concept:</span>
         <TermHighlight text={concept} onOpenGlossary={onOpenGlossary} />
+      </div>
+    );
+  };
+
+  // Get alternative acceptable bids (affordances)
+  const getAlternatives = () => {
+    const alternatives = feedback.alternative_bids;
+    if (!alternatives || alternatives.length === 0) return null;
+
+    // Filter out bids already shown (user's bid and optimal bid)
+    const filteredAlternatives = alternatives.filter(
+      bid => bid !== userBid && bid !== feedback.optimal_bid
+    );
+
+    if (filteredAlternatives.length === 0) return null;
+
+    return (
+      <div className="feedback-alternatives" data-testid="feedback-alternatives">
+        <span className="alternatives-label">Also acceptable:</span>
+        <span className="alternatives-list">
+          {filteredAlternatives.map((bid, idx) => (
+            <span key={bid} className="alternative-bid">
+              <BidChip bid={bid} />
+              {idx < filteredAlternatives.length - 1 && <span className="alt-separator">,</span>}
+            </span>
+          ))}
+        </span>
       </div>
     );
   };
@@ -196,9 +224,39 @@ const BidFeedbackPanel = ({
         </div>
       )}
 
-      {!isCorrect && !isGovernorWarning && getExplanation()}
+      {/* Learning Feedback - structured educational feedback */}
+      {!isCorrect && feedback.learning_feedback && (
+        <div className="learning-feedback" data-testid="learning-feedback">
+          <div className="learning-row your-bid">
+            <span className="learning-label">Your bid:</span>
+            <span className="learning-content">{feedback.learning_feedback.your_bid_promised}</span>
+          </div>
+          <div className="learning-row your-hand">
+            <span className="learning-label">Your hand:</span>
+            <span className="learning-content">{feedback.learning_feedback.your_hand_is}</span>
+          </div>
+          <div className="learning-row mismatch">
+            <span className="learning-label">The problem:</span>
+            <span className="learning-content">{feedback.learning_feedback.the_mismatch}</span>
+          </div>
+          <div className="learning-row consequence">
+            <span className="learning-label">Consequence:</span>
+            <span className="learning-content">{feedback.learning_feedback.the_consequence}</span>
+          </div>
+          <div className="learning-row principle">
+            <span className="learning-label">Remember:</span>
+            <span className="learning-content">{feedback.learning_feedback.the_principle}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback to existing explanation if no learning feedback */}
+      {!isCorrect && !isGovernorWarning && !feedback.learning_feedback && getExplanation()}
 
       {getConcept()}
+
+      {/* Alternative acceptable bids (affordances) */}
+      {getAlternatives()}
 
       {/* Score indicator for non-optimal bids */}
       {feedback.score !== undefined && feedback.score < 10 && (

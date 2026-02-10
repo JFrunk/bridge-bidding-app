@@ -14,20 +14,20 @@ and provides feedback on decisions that have already been made.
 
 import json
 import sys
-import sqlite3
 from pathlib import Path
 from enum import Enum
 from dataclasses import dataclass, asdict
 from typing import Optional, List, Dict, Tuple
 from datetime import datetime
 
-# Database abstraction layer for SQLite/PostgreSQL compatibility
+# Database abstraction layer (PostgreSQL in production)
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from db import get_connection
 
 from engine.hand import Hand
 from engine.ai.bid_explanation import BidExplanation
 from engine.learning.error_categorizer import get_error_categorizer
+from engine.feedback.learning_feedback import generate_learning_feedback
 
 # Import bidding modules for generating acceptable alternatives
 from engine.overcalls import OvercallModule
@@ -95,6 +95,9 @@ class BiddingFeedback:
     # Learning
     key_concept: str              # "HCP counting", "finding fits", etc.
     difficulty: str               # "beginner", "intermediate", "advanced"
+
+    # Structured learning feedback (Phase: Learning Enhancement)
+    learning_feedback: Optional[Dict] = None  # LearningFeedback.to_dict()
 
     def to_dict(self) -> Dict:
         """Convert to JSON-serializable dict"""
@@ -235,6 +238,24 @@ class BiddingFeedbackGenerator:
         else:
             helpful_hint = ""
 
+        # Generate structured learning feedback if not optimal
+        learning_fb = None
+        if user_bid != optimal_bid:
+            try:
+                learning_fb_obj = generate_learning_feedback(
+                    user_bid=user_bid,
+                    optimal_bid=optimal_bid,
+                    hand=hand,
+                    auction_context=auction_context,
+                    optimal_explanation=optimal_explanation.primary_reason if optimal_explanation else ""
+                )
+                if learning_fb_obj:
+                    learning_fb = learning_fb_obj.to_dict()
+            except Exception as e:
+                # Log but don't fail on learning feedback generation
+                import logging
+                logging.getLogger(__name__).warning(f"Failed to generate learning feedback: {e}")
+
         # Build feedback object
         feedback = BiddingFeedback(
             bid_number=len(auction_context.get('history', [])) + 1,
@@ -252,7 +273,8 @@ class BiddingFeedbackGenerator:
             impact=impact,
             helpful_hint=helpful_hint,
             key_concept=self._extract_key_concept(optimal_explanation),
-            difficulty=self._assess_difficulty(optimal_explanation, auction_context)
+            difficulty=self._assess_difficulty(optimal_explanation, auction_context),
+            learning_feedback=learning_fb
         )
 
         return feedback
