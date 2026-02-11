@@ -1,0 +1,164 @@
+/**
+ * SplitGameLayout Styles
+ *
+ * Handles sidebar mechanics without breaking game board layout.
+ * Uses CSS custom properties for sidebar width.
+ */
+
+/* Container: fills available space, flex row layout */
+.split-game-layout {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* LEFT PANEL: Main game content */
+.split-game-main {
+  flex: 1 1 0%;           /* Grow and shrink as needed */
+  min-width: 0;            /* Critical: allows shrinking below content size */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: flex 0.25s ease;
+}
+
+/* Content wrapper: centers game table within available space */
+.split-game-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* RIGHT PANEL: Sidebar */
+.split-game-sidebar {
+  flex: 0 0 var(--sidebar-width, 300px);  /* Fixed width, no grow/shrink */
+  width: var(--sidebar-width, 300px);
+  min-width: var(--sidebar-width, 300px);
+  max-width: var(--sidebar-width, 300px);
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-left: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+  background: var(--cream-light, #faf8f4);
+
+  /* Slide-in animation */
+  animation: slideInRight 0.25s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* When sidebar is open, ensure left panel doesn't overflow */
+.split-game-layout.sidebar-open .split-game-main {
+  /* Let it shrink naturally */
+  flex: 1 1 0%;
+}
+
+/* ========================================
+   RESPONSIVE: Tablet and Mobile
+   ======================================== */
+
+/* Tablet: Stack on smaller screens */
+@media (max-width: 1024px) {
+  .split-game-layout {
+    flex-direction: column;
+  }
+
+  .split-game-main {
+    flex: 1 1 auto;
+    min-height: 60%;
+  }
+
+  .split-game-sidebar {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    max-height: 40vh;
+    border-left: none;
+    border-top: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+    animation: slideInUp 0.25s ease;
+  }
+
+  @keyframes slideInUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+/* Mobile: Sidebar as overlay */
+@media (max-width: 768px) {
+  .split-game-layout.sidebar-open {
+    position: relative;
+  }
+
+  .split-game-sidebar {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 85%;
+    min-width: 280px;
+    max-width: 320px;
+    max-height: 100%;
+    z-index: 100;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* ========================================
+   GAME TABLE SHRINK-TO-FIT HELPERS
+   ======================================== */
+
+/* These classes can be applied to game table elements
+   to ensure they shrink gracefully when sidebar opens */
+
+.shrink-to-fit {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.shrink-to-fit-center {
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Scale down content when space is limited */
+.split-game-layout.sidebar-open .scale-on-squeeze {
+  transform-origin: center center;
+  transition: transform 0.25s ease;
+}
+
+@media (max-width: 1200px) {
+  .split-game-layout.sidebar-open .scale-on-squeeze {
+    transform: scale(0.95);
+  }
+}
+
+@media (max-width: 1024px) {
+  .split-game-layout.sidebar-open .scale-on-squeeze {
+    transform: scale(1); /* Reset on stacked layout */
+  }
+}
