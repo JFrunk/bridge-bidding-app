@@ -12,7 +12,7 @@ import './UserMenu.css';
 
 const EXPERIENCE_LABELS = {
   0: 'Beginner',
-  1: 'Rusty',
+  1: 'Intermediate',
   99: 'Experienced'
 };
 

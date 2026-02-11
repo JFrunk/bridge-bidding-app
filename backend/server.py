@@ -5215,7 +5215,7 @@ def get_experience_level():
 
     Returns:
         {
-            "experience_level": 0,  // 0=beginner, 1=rusty, 99=expert, null=not set
+            "experience_level": 0,  // 0=beginner, 1=intermediate, 99=expert, null=not set
             "unlock_all_content": false,
             "experience_id": "beginner",  // wizard option selected
             "experience_set_at": "2026-01-07T12:00:00Z"
@@ -5275,7 +5275,7 @@ def set_experience_level():
     Expected JSON:
         {
             "user_id": 123,
-            "experience_level": 0,  // 0=beginner, 1=rusty, 99=expert
+            "experience_level": 0,  // 0=beginner, 1=intermediate, 99=expert
             "unlock_all_content": false,
             "experience_id": "beginner"  // wizard option selected
         }

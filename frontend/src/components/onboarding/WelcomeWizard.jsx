@@ -3,13 +3,18 @@
  *
  * Shows only on first visit (no experienceLevel set).
  * Routes users to appropriate starting point based on selection:
- * - Beginner → Learning Mode (guided lessons)
- * - Rusty → Bidding practice (jump into random hands)
- * - Experienced → Mode Selector (full access, choose their path)
+ * - Beginner → Main Play Component (guided play with full coaching)
+ * - Intermediate → Bidding practice (bidding coach only)
+ * - Experienced → Mode Selector (full access, no coaches)
+ *
+ * Profile Presets (initial settings, can be overridden manually):
+ * - Beginner: biddingCoach=true, playCoach=true, difficulty='beginner'
+ * - Intermediate: biddingCoach=true, playCoach=false, difficulty='intermediate'
+ * - Experienced: biddingCoach=false, playCoach=false, difficulty='expert'
  *
  * Experience Levels:
- * - Beginner (level 0): Only Level 0 unlocked, starts in Learning Mode
- * - Rusty (level 1): Levels 0-1 unlocked, starts in Bidding practice
+ * - Beginner (level 0): Only Level 0 unlocked, starts in Play mode
+ * - Intermediate (level 1): Levels 0-1 unlocked, starts in Bidding practice
  * - Expert (level 99): All levels unlocked, goes to Mode Selector
  */
 
@@ -28,31 +33,34 @@ const EXPERIENCE_OPTIONS = [
     id: 'beginner',
     level: 0,
     unlockAll: false,
-    route: 'learning',  // Go to Learning Mode
+    route: 'play',  // Go to Main Play Component with full coaching
     emoji: '🌱',
     title: 'New to Bridge',
     description: 'I\'m just starting to learn bridge and want to build my skills from the ground up.',
-    benefit: 'Start with guided lessons on the basics'
+    benefit: 'Start with guided play and full coaching support',
+    // Presets: biddingCoach=true, playCoach=true, difficulty='beginner'
   },
   {
-    id: 'rusty',
+    id: 'intermediate',
     level: 1,
     unlockAll: false,
-    route: 'bid',  // Go directly to bidding practice
+    route: 'bid',  // Go to Bidding/Play View
     emoji: '🔄',
-    title: 'Rusty Player',
-    description: 'I know the basics but haven\'t played in a while. I need a refresher.',
-    benefit: 'Jump straight into bidding practice'
+    title: 'Intermediate Player',
+    description: 'I know the basics but want to improve my bidding skills.',
+    benefit: 'Jump into bidding practice with coaching hints',
+    // Presets: biddingCoach=true, playCoach=false, difficulty='intermediate'
   },
   {
     id: 'expert',
     level: 99,
     unlockAll: true,
-    route: 'modeSelector',  // Go to Mode Selector (full access)
+    route: 'modeSelector',  // Go to Practice Dashboard / Convention Selector
     emoji: '🎯',
     title: 'Experienced Player',
     description: 'I\'m comfortable with bridge and want access to all content.',
-    benefit: 'Choose your own path with full access'
+    benefit: 'Choose your own path with full access',
+    // Presets: biddingCoach=false, playCoach=false, difficulty='expert'
   }
 ];
 

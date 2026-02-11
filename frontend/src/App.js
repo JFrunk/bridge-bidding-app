@@ -41,6 +41,7 @@ import UserMenu from './components/navigation/UserMenu';
 import { useDevMode } from './hooks/useDevMode';
 import { TrickPotentialChart, TrickPotentialButton } from './components/analysis/TrickPotentialChart';
 import LearningFlowsHub from './components/learning/flows/LearningFlowsHub';
+import SplitGameLayout from './components/layout/SplitGameLayout';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -297,8 +298,15 @@ function App() {
     requiresRegistration
   } = useAuth();
 
-  // User experience state - for first-time onboarding
-  const { shouldShowWelcomeWizard, setExperienceLevel } = useUser();
+  // User experience state - for first-time onboarding and profile presets
+  const {
+    shouldShowWelcomeWizard,
+    setExperienceLevel,
+    applyProfilePresets,
+    biddingCoachEnabled,
+    playCoachEnabled,
+    difficulty
+  } = useUser();
 
   const [showLogin, setShowLogin] = useState(false);
 
@@ -473,6 +481,23 @@ function App() {
   const [sessionMode, setSessionMode] = useState('coached'); // 'practice', 'coached', 'quiz'
   const [showCoachPanel, setShowCoachPanel] = useState(true); // Coach panel visibility
   const [playState, setPlayState] = useState(null);
+
+  // Sync session mode with user preferences on load
+  // This ensures returning users get their saved coach preferences applied
+  useEffect(() => {
+    // Only sync if not in the middle of the welcome wizard
+    if (!shouldShowWelcomeWizard) {
+      if (biddingCoachEnabled) {
+        setSessionMode('coached');
+        setShowCoachPanel(true);
+      } else {
+        setSessionMode('practice');
+        setShowCoachPanel(false);
+      }
+    }
+    // Note: playCoachEnabled and difficulty are available for future play phase integration
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount
   const [dummyHand, setDummyHand] = useState(null);
   const [declarerHand, setDeclarerHand] = useState(null);
   const [isPlayingCard, setIsPlayingCard] = useState(false);
@@ -740,26 +765,36 @@ ${otherCommands}`;
     setReviewFilename('');
   };
 
-  // Welcome wizard handler - saves experience level and routes to appropriate starting point
+  // Welcome wizard handler - saves experience level, applies presets, and routes to appropriate starting point
   const handleExperienceSelect = (data) => {
     // Save the experience level (this closes the wizard)
     setExperienceLevel(data);
 
+    // Apply profile presets (coaches and difficulty) based on selection
+    // These are initial settings - manual toggles during session will override
+    const presets = applyProfilePresets(data.experienceId);
+    console.log(`Applied ${data.experienceId} profile presets:`, presets);
+
+    // Update session mode based on bidding coach preset
+    if (presets.biddingCoachEnabled) {
+      setSessionMode('coached');
+      setShowCoachPanel(true);
+    } else {
+      setSessionMode('practice');
+      setShowCoachPanel(false);
+    }
+
     // Route based on selection
     switch (data.route) {
-      case 'learning':
-        // Beginner: Go to Learning Mode for guided lessons
+      case 'play':
+        // Beginner: Go to Main Play Component with full coaching
         setShowModeSelector(false);
-        if (isGuest && requiresRegistration('learning')) {
-          promptForRegistration();
-        } else {
-          setShowLearningMode(true);
-          setCurrentWorkspace(null);
-        }
+        setCurrentWorkspace('play');
+        playRandomHand();
         break;
 
       case 'bid':
-        // Rusty: Jump straight into bidding practice
+        // Intermediate: Jump straight into bidding practice with bidding coach
         setShowModeSelector(false);
         setCurrentWorkspace('bid');
         setBiddingTab('random');
@@ -769,7 +804,7 @@ ${otherCommands}`;
 
       case 'modeSelector':
       default:
-        // Experienced: Show full mode selector to choose their path
+        // Experienced: Show full mode selector (Practice Dashboard / Convention Selector)
         setShowModeSelector(true);
         break;
     }
@@ -3047,8 +3082,25 @@ ${otherCommands}`;
             conventions={Object.values(scenariosByLevel || {}).flat().map(s => s.name)}
           />
 
-          {/* Main content: game column + coach panel */}
-          <div className="bid-main-content">
+          {/* Main content: game column + coach panel using SplitGameLayout */}
+          <SplitGameLayout
+            isSidebarOpen={sessionMode === 'coached' && showCoachPanel}
+            sidebarWidth={300}
+            sidebar={
+              sessionMode === 'coached' ? (
+                <CoachPanel
+                  isVisible={true}
+                  onClose={() => setShowCoachPanel(false)}
+                  beliefs={beliefs}
+                  myHcp={handPoints?.hcp}
+                  auction={auction}
+                  suggestedBid={suggestedBid}
+                  selectedBid={selectedBid}
+                  onRequestHint={handleRequestHint}
+                />
+              ) : null
+            }
+          >
             {/* Game Column - green table */}
             <div className="bid-game-column">
               <div className="bid-game-area">
@@ -3065,9 +3117,9 @@ ${otherCommands}`;
 
                 {/* Your Hand - Physics v2.0 compliant, uses shared Card component */}
                 {/* Scale: text-base (16px) = 56×80px cards - fits well above bidding section */}
-                <div className="bid-hand-container">
+                <div className="bid-hand-container shrink-to-fit-center">
                   {hand && hand.length > 0 ? (
-                    <div className="text-base flex flex-row gap-[0.6em] justify-center py-2">
+                    <div className="text-base flex flex-row gap-[0.6em] justify-center py-2 scale-on-squeeze">
                       {getSuitOrder(null).map(suit => {
                         const suitCards = hand.filter(card => card.suit === suit);
                         if (suitCards.length === 0) return null;
@@ -3143,21 +3195,7 @@ ${otherCommands}`;
                 {error && <div className="error-message" style={{color: '#ff8a8a', textAlign: 'center', padding: '8px'}}>{error}</div>}
               </div>
             </div>
-
-            {/* Coach Panel - only in Coached mode */}
-            {sessionMode === 'coached' && (
-              <CoachPanel
-                isVisible={showCoachPanel}
-                onClose={() => setShowCoachPanel(false)}
-                beliefs={beliefs}
-                myHcp={handPoints?.hcp}
-                auction={auction}
-                suggestedBid={suggestedBid}
-                selectedBid={selectedBid}
-                onRequestHint={handleRequestHint}
-              />
-            )}
-          </div>
+          </SplitGameLayout>
         </>
       ) : null}
 

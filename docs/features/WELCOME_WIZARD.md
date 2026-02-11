@@ -11,9 +11,9 @@ The Welcome Wizard provides a first-run experience that allows users to self-sel
 
 1. **First Visit Detection**: On first app load, if no `experienceLevel` is stored in localStorage, the Welcome Wizard modal appears
 2. **Experience Selection**: User chooses from 3 options:
-   - **New to Bridge** (level 0): Only Level 0 unlocked
-   - **Rusty Player** (level 1): Levels 0-1 unlocked
-   - **Experienced Player** (level 99): All content unlocked
+   - **New to Bridge** (level 0): Only Level 0 unlocked, starts in Play mode with full coaching
+   - **Intermediate Player** (level 1): Levels 0-1 unlocked, starts in Bidding practice with bidding coach
+   - **Experienced Player** (level 99): All content unlocked, no coaches enabled
 3. **Persistent Storage**: Choice saved to localStorage, wizard doesn't reappear
 4. **Settings Access**: Users can change their selection anytime via Settings in Learning Mode
 
@@ -58,7 +58,7 @@ Experience settings stored in localStorage under key `bridge_experience_level`:
 {
   "level": 1,
   "unlockAll": false,
-  "experienceId": "rusty",
+  "experienceId": "intermediate",
   "setAt": "2026-01-07T12:00:00.000Z"
 }
 ```
@@ -70,7 +70,7 @@ For authenticated users, experience level is persisted to the database for cross
 **Database columns (users table):**
 - `experience_level`: INTEGER (0, 1, or 99)
 - `unlock_all_content`: BOOLEAN
-- `experience_id`: TEXT ('beginner', 'rusty', 'expert')
+- `experience_id`: TEXT ('beginner', 'intermediate', 'expert')
 - `experience_set_at`: TIMESTAMP
 
 **API Endpoints:**

@@ -14,6 +14,30 @@ const UserContext = createContext(null);
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 const EXPERIENCE_STORAGE_KEY = 'bridge_experience_level';
+const PREFERENCES_STORAGE_KEY = 'bridge_user_preferences';
+
+// Profile presets - defines default settings for each user segment
+// Manual toggles during a session will override these presets
+const PROFILE_PRESETS = {
+  beginner: {
+    biddingCoachEnabled: true,
+    playCoachEnabled: true,
+    difficulty: 'beginner'  // Maps to AI difficulty 'beginner'
+  },
+  intermediate: {
+    biddingCoachEnabled: true,
+    playCoachEnabled: false,
+    difficulty: 'intermediate'  // Maps to AI difficulty 'intermediate'
+  },
+  expert: {
+    biddingCoachEnabled: false,
+    playCoachEnabled: false,
+    difficulty: 'expert'  // Maps to AI difficulty 'expert'
+  }
+};
+
+// Default to intermediate if segment is undefined
+const DEFAULT_SEGMENT = 'intermediate';
 
 export const useUser = () => {
   const context = useContext(UserContext);
@@ -32,6 +56,12 @@ export const UserProvider = ({ children }) => {
   const [experienceLevel, setExperienceLevelState] = useState(null);
   const [areAllLevelsUnlocked, setAreAllLevelsUnlockedState] = useState(false);
   const [experienceId, setExperienceId] = useState(null);
+
+  // User preferences state (coaches and difficulty)
+  // These are initialized from profile presets but can be overridden manually
+  const [biddingCoachEnabled, setBiddingCoachEnabled] = useState(true);
+  const [playCoachEnabled, setPlayCoachEnabled] = useState(false);
+  const [difficulty, setDifficulty] = useState('intermediate');
 
   // Sync experience level to backend (defined first so it can be used in effects)
   const syncToBackend = useCallback(async (level, unlockAll, expId) => {
@@ -80,6 +110,20 @@ export const UserProvider = ({ children }) => {
       } catch (e) {
         console.error('Failed to parse stored experience level:', e);
         localStorage.removeItem(EXPERIENCE_STORAGE_KEY);
+      }
+    }
+
+    // Load user preferences from localStorage
+    const storedPrefs = localStorage.getItem(PREFERENCES_STORAGE_KEY);
+    if (storedPrefs) {
+      try {
+        const prefs = JSON.parse(storedPrefs);
+        setBiddingCoachEnabled(prefs.biddingCoachEnabled ?? true);
+        setPlayCoachEnabled(prefs.playCoachEnabled ?? false);
+        setDifficulty(prefs.difficulty ?? 'intermediate');
+      } catch (e) {
+        console.error('Failed to parse stored preferences:', e);
+        localStorage.removeItem(PREFERENCES_STORAGE_KEY);
       }
     }
 
@@ -169,6 +213,47 @@ export const UserProvider = ({ children }) => {
     syncToBackend(current.level, newUnlockAll, current.experienceId);
   }, [areAllLevelsUnlocked, experienceLevel, experienceId, syncToBackend]);
 
+  // Update user preferences (persists to localStorage)
+  const updatePreferences = useCallback((newPrefs) => {
+    if (newPrefs.biddingCoachEnabled !== undefined) {
+      setBiddingCoachEnabled(newPrefs.biddingCoachEnabled);
+    }
+    if (newPrefs.playCoachEnabled !== undefined) {
+      setPlayCoachEnabled(newPrefs.playCoachEnabled);
+    }
+    if (newPrefs.difficulty !== undefined) {
+      setDifficulty(newPrefs.difficulty);
+    }
+
+    // Save to localStorage
+    const storedPrefs = localStorage.getItem(PREFERENCES_STORAGE_KEY);
+    const currentPrefs = storedPrefs ? JSON.parse(storedPrefs) : {};
+    const updatedPrefs = { ...currentPrefs, ...newPrefs, setAt: new Date().toISOString() };
+    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(updatedPrefs));
+  }, []);
+
+  // Apply profile presets (used when user selects a profile in WelcomeWizard)
+  const applyProfilePresets = useCallback((profileId) => {
+    const presets = PROFILE_PRESETS[profileId] || PROFILE_PRESETS[DEFAULT_SEGMENT];
+    setBiddingCoachEnabled(presets.biddingCoachEnabled);
+    setPlayCoachEnabled(presets.playCoachEnabled);
+    setDifficulty(presets.difficulty);
+
+    // Save to localStorage
+    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify({
+      ...presets,
+      appliedFromProfile: profileId,
+      setAt: new Date().toISOString()
+    }));
+
+    return presets;
+  }, []);
+
+  // Get current profile presets for a segment (without applying)
+  const getProfilePresets = useCallback((profileId) => {
+    return PROFILE_PRESETS[profileId] || PROFILE_PRESETS[DEFAULT_SEGMENT];
+  }, []);
+
   // Check if a level should be unlocked based on experience
   const isLevelUnlocked = useCallback((levelNumber) => {
     // Unlock all override
@@ -218,7 +303,15 @@ export const UserProvider = ({ children }) => {
     setExperienceLevel,
     toggleUnlockAllLevels,
     isLevelUnlocked,
-    shouldShowWelcomeWizard
+    shouldShowWelcomeWizard,
+
+    // User preferences (coaches and difficulty)
+    biddingCoachEnabled,
+    playCoachEnabled,
+    difficulty,
+    updatePreferences,
+    applyProfilePresets,
+    getProfilePresets
   };
 
   return (

@@ -3,7 +3,7 @@
 --
 -- Experience levels:
 --   0 = Beginner (New to Bridge) - Only Level 0 unlocked
---   1 = Rusty (Returning player) - Levels 0-1 unlocked
+--   1 = Intermediate (Returning player) - Levels 0-1 unlocked
 --   99 = Expert (Experienced player) - All content unlocked
 --
 -- The unlock_all_content flag overrides experience level when true

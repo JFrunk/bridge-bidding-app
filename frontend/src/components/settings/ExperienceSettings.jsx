@@ -20,7 +20,7 @@ import './ExperienceSettings.css';
 
 const EXPERIENCE_OPTIONS = [
   { id: 'beginner', level: 0, label: 'New to Bridge', description: 'Level 0 unlocked' },
-  { id: 'rusty', level: 1, label: 'Rusty Player', description: 'Levels 0-1 unlocked' },
+  { id: 'intermediate', level: 1, label: 'Intermediate Player', description: 'Levels 0-1 unlocked' },
   { id: 'expert', level: 99, label: 'Experienced', description: 'All levels unlocked' }
 ];
 
