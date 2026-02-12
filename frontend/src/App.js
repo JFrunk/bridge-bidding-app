@@ -3064,15 +3064,15 @@ ${otherCommands}`;
           onModuleSelect={handleNavModuleSelect}
           showTitle={!showModeSelector}
         >
-          {/* Join Room button - for Team Practice */}
+          {/* Partner Practice button - create or join room */}
           {!inRoom && (
             <button
               className="nav-utility-button nav-join-button"
               onClick={() => setShowJoinRoomModal(true)}
-              title="Join a partner's practice room"
-              data-testid="join-room-button"
+              title="Play with a human partner"
+              data-testid="partner-practice-button"
             >
-              Join Room
+              👥 Partner
             </button>
           )}
           {/* Room indicator when in a room */}
