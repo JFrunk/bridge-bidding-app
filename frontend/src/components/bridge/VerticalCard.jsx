@@ -8,11 +8,14 @@ import { cn } from "../../lib/utils";
  * Designed to show only the top ~15-20px when overlapped, with rank and suit
  * clearly visible in the top-left corner.
  *
+ * P0 FIX: Card sizing uses vmin units for proportional scaling at all zoom levels (80%-110%+)
+ * - Card dimensions: clamp(50px, 7.5vmin, 80px) width × clamp(70px, 10.5vmin, 112px) height
+ * - Ensures cards scale proportionally even when browser is zoomed to 100% or 110%
+ *
  * Design Philosophy:
- * - Rank and suit ONLY in top-left corner (no bottom-right corner)
- * - Large, bold text for easy readability when heavily overlapped
+ * - Rank and suit in corners for visibility when overlapped
+ * - Large, bold text for easy readability
  * - Large center suit symbol visible when card is hovered/selected
- * - Minimal design similar to classic playing cards
  *
  * @param {Object} props
  * @param {string} props.rank - Card rank: 'A', 'K', 'Q', 'J', 'T' (10), '9', etc.
@@ -33,11 +36,18 @@ export function VerticalCard({ rank, suit, onClick, disabled = false, className,
   // Determine if card is clickable
   const isClickable = onClick && !disabled;
 
+  // P0 FIX: Use vmin units for proportional scaling at all zoom levels (80%-110%+)
+  const cardStyle = {
+    width: 'clamp(50px, 7.5vmin, 80px)',
+    height: 'clamp(70px, 10.5vmin, 112px)',
+    ...style
+  };
+
   return (
     <div
       className={cn(
-        // Base styles - same size as BridgeCard for consistency
-        "relative w-[70px] h-[100px] bg-white rounded-card",
+        // Base styles - using inline style for vmin-based sizing
+        "relative bg-white rounded-card",
         "border border-gray-400", // Full border like BridgeCard
         "shadow-md", // Same shadow as BridgeCard
         // Rotate each card 90 degrees counter-clockwise for vertical display
@@ -50,7 +60,7 @@ export function VerticalCard({ rank, suit, onClick, disabled = false, className,
         // Allow custom classes
         className
       )}
-      style={style}
+      style={cardStyle}
       onClick={!disabled ? onClick : undefined}
       role={isClickable ? "button" : undefined}
       aria-label={`${displayRank} of ${suit === '♠' ? 'Spades' : suit === '♥' ? 'Hearts' : suit === '♦' ? 'Diamonds' : 'Clubs'}`}

@@ -19,14 +19,13 @@ import {
   BarChart2
 } from 'lucide-react';
 import { getBiddingHandDetail } from '../../services/analyticsService';
-import { bidderRole, normalize, seatIndex, seatFromIndex } from '../../utils/seats';
 import ReactorLayout from '../layout/ReactorLayout';
 import AuctionArena from '../shared/AuctionArena';
 import FeedbackDashboard from './hand-review/FeedbackDashboard';
 import Card from '../../shared/components/Card';
+import DDTableDisplay from '../analysis/DDTableDisplay';
 import {
   getSuitOrder,
-  normalizeSuit,
   isRedSuit,
   groupCardsBySuit,
   sortCards
@@ -225,6 +224,22 @@ const normalizePosition = (pos) => {
   return posMap[pos] || pos;
 };
 
+/**
+ * Get the position (N/E/S/W) for a given bid number in the auction
+ * @param {number} bidNumber - 1-indexed bid number
+ * @param {string} dealer - Dealer position
+ * @returns {string} Position letter (N/E/S/W)
+ */
+const getPositionForBidNumber = (bidNumber, dealer) => {
+  const positions = ['N', 'E', 'S', 'W'];
+  const normalizedDealer = normalizePosition(dealer || 'N');
+  const dealerIndex = positions.indexOf(normalizedDealer);
+  const safeDealerIndex = dealerIndex >= 0 ? dealerIndex : 0;
+  // bidNumber is 1-indexed, so subtract 1 for array index
+  const positionIndex = (safeDealerIndex + (bidNumber - 1)) % 4;
+  return positions[positionIndex];
+};
+
 // Main component
 const BidReviewPage = ({
   handId,
@@ -274,16 +289,20 @@ const BidReviewPage = ({
   }, [handData?.bidding_decisions]);
 
   // Get user bid numbers for highlighting
+  // CRITICAL FIX: Always recognize South's bids even if dealer data is missing
   const userBidNumbers = useMemo(() => {
-    if (!handData?.auction_history || !handData?.dealer) return [];
+    if (!handData?.auction_history) return [];
 
     const positions = ['N', 'E', 'S', 'W'];
-    const normalizedDealer = normalizePosition(handData.dealer);
+    // Default to North as dealer if not specified (common convention)
+    const normalizedDealer = normalizePosition(handData?.dealer || 'N');
     const dealerIndex = positions.indexOf(normalizedDealer);
+    // Fallback to 0 if dealer position is invalid
+    const safeDealerIndex = dealerIndex >= 0 ? dealerIndex : 0;
     const userBids = [];
 
     handData.auction_history.forEach((_, idx) => {
-      const positionIndex = (dealerIndex + idx) % 4;
+      const positionIndex = (safeDealerIndex + idx) % 4;
       if (positions[positionIndex] === userPosition) {
         userBids.push(idx + 1);
       }
@@ -375,7 +394,13 @@ const BidReviewPage = ({
   }
 
   // Determine if current position is a user bid
-  const isUserBidPosition = userBidNumbers.includes(bidPosition);
+  // CRITICAL FIX: Use both the calculated list AND direct position check
+  // to ensure South's moves are NEVER marked as AI plays
+  const currentBidPosition = bidPosition > 0
+    ? getPositionForBidNumber(bidPosition, handData?.dealer)
+    : null;
+  const isUserBidPosition = userBidNumbers.includes(bidPosition) ||
+    currentBidPosition === userPosition;
 
   return (
     <div className="hand-review-page" data-testid="bid-review-page">
@@ -517,89 +542,17 @@ const BidReviewPage = ({
             />
           )}
 
-          {/* DD Table (Collapsible) */}
+          {/* DD Table (Collapsible) - Uses new overlay component */}
           {handData?.dd_analysis?.dd_table && chartExpanded && (
-            <div className="chart-panel expanded">
-              <DDTableDisplay ddAnalysis={handData.dd_analysis} />
-            </div>
+            <DDTableDisplay
+              ddAnalysis={handData.dd_analysis}
+              onDismiss={() => setChartExpanded(false)}
+              asOverlay={true}
+              showExplanation={true}
+            />
           )}
         </div>
       </div>
-    </div>
-  );
-};
-
-// DD Table Display Component
-const DDTableDisplay = ({ ddAnalysis }) => {
-  if (!ddAnalysis?.dd_table) return null;
-
-  const strains = ['NT', 'S', 'H', 'D', 'C'];
-  const strainSymbols = { NT: 'NT', S: '\u2660', H: '\u2665', D: '\u2666', C: '\u2663' };
-  const positions = ['N', 'S', 'E', 'W'];
-
-  const getContractLevel = (tricks, strain) => {
-    if (typeof tricks !== 'number') return 'partscore';
-    if (tricks >= 13) return 'grand';
-    if (tricks >= 12) return 'slam';
-
-    const isMinor = strain === 'C' || strain === 'D';
-    const isMajor = strain === 'S' || strain === 'H';
-
-    if (strain === 'NT' && tricks >= 9) return 'game';
-    if (isMajor && tricks >= 10) return 'game';
-    if (isMinor && tricks >= 11) return 'game';
-
-    return 'partscore';
-  };
-
-  return (
-    <div className="bg-white rounded-lg p-4 w-full">
-      <h4 className="text-sm font-semibold text-gray-700 mb-3">Possible Tricks (Double Dummy)</h4>
-      <table className="w-full text-sm">
-        <thead>
-          <tr>
-            <th className="text-left p-1"></th>
-            {strains.map(strain => (
-              <th
-                key={strain}
-                className={`text-center p-1 font-bold ${
-                  strain === 'H' || strain === 'D' ? 'text-red-600' : 'text-gray-800'
-                }`}
-              >
-                {strainSymbols[strain]}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {positions.map(pos => (
-            <tr key={pos}>
-              <th className="text-left p-1 font-semibold text-gray-600">{pos}</th>
-              {strains.map(strain => {
-                const tricks = ddAnalysis.dd_table[pos]?.[strain] ?? '-';
-                const level = getContractLevel(tricks, strain);
-                const bgClass = level === 'game' ? 'bg-blue-100' :
-                               level === 'slam' ? 'bg-purple-100' :
-                               level === 'grand' ? 'bg-yellow-100' : '';
-                return (
-                  <td key={strain} className={`text-center p-1 ${bgClass}`}>
-                    {tricks}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {ddAnalysis.par && (
-        <div className="mt-3 pt-3 border-t border-gray-200 text-sm">
-          <span className="font-medium text-gray-600">Par: </span>
-          <span className="font-semibold">
-            {ddAnalysis.par.contracts?.join(' / ') || 'Unknown'}
-            {ddAnalysis.par.score !== undefined && ` (${ddAnalysis.par.score >= 0 ? '+' : ''}${ddAnalysis.par.score})`}
-          </span>
-        </div>
-      )}
     </div>
   );
 };

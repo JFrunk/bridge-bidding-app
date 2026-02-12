@@ -123,6 +123,44 @@ function getCombinedVerdict(min, max) {
   return null;
 }
 
+// ── Deck-Aware HCP Hard-Cap ──
+// Total deck has exactly 40 HCP. Opponent's max cannot exceed remaining points.
+// P0 FIX: Enhanced to validate sum constraints and show clear "Max Possible [X]" UI
+
+function applyDeckAwareHcpCap(belief, userHcp, partnerMinHcp, otherOpponentMinHcp = 0) {
+  if (!belief || !belief.hcp) return belief;
+
+  // Calculate remaining HCP in deck after accounting for ALL known constraints
+  // Formula: This_Opponent_Max = 40 - User_HCP - Partner_Min - Other_Opponent_Min
+  const knownMin = (userHcp || 0) + (partnerMinHcp || 0) + (otherOpponentMinHcp || 0);
+  const remainingMax = Math.max(0, 40 - knownMin);
+
+  // Apply hard-cap to opponent's max HCP
+  const originalMax = belief.hcp.max;
+  const cappedMax = Math.min(originalMax, remainingMax);
+
+  // Also cap the min if it exceeds the remaining max (mathematically impossible)
+  const originalMin = belief.hcp.min;
+  const cappedMin = Math.min(originalMin, cappedMax);
+
+  // Determine if constraint was applied
+  const hardCapped = cappedMax < originalMax;
+  const minCapped = cappedMin < originalMin;
+
+  return {
+    ...belief,
+    hcp: {
+      min: cappedMin,
+      max: cappedMax,
+      hardCapped,
+      minCapped,
+      originalMax,
+      originalMin,
+      remainingInDeck: remainingMax  // Show how much HCP is actually possible
+    }
+  };
+}
+
 // ═══════════════════════════════════════════
 // SeatBeliefView — renders one seat's beliefs
 // ═══════════════════════════════════════════
@@ -151,9 +189,16 @@ function SeatBeliefView({ belief, showHow = true }) {
         </div>
       )}
 
-      {/* HCP range */}
+      {/* HCP range - P0 FIX: Show clear "Max Possible [X]" when deck constraint applied */}
       <div className="beliefs-hcp-section">
-        <div className="beliefs-hcp-label">HCP Range</div>
+        <div className="beliefs-hcp-label">
+          HCP Range
+          {hcp.hardCapped && (
+            <span className="beliefs-hcp-deck-constraint" title={`Deck has 40 HCP total. After accounting for your hand and other players' minimums, max possible is ${hcp.max}`}>
+              &nbsp;(Deck Constrained)
+            </span>
+          )}
+        </div>
         <div className="beliefs-hcp-range-row">
           <div className="beliefs-hcp-bar-track">
             <div
@@ -163,6 +208,11 @@ function SeatBeliefView({ belief, showHow = true }) {
           </div>
           <div className="beliefs-hcp-values">
             {hcp.min}<span className="sep">&ndash;</span>{hcp.max}
+            {hcp.hardCapped && (
+              <span className="beliefs-hcp-capped" title={`Original range was ${hcp.originalMin || hcp.min}-${hcp.originalMax || 40}, capped by remaining deck HCP`}>
+                Max&nbsp;{hcp.max}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -329,13 +379,13 @@ const BeliefPanel = ({ beliefs, myHcp }) => {
               </div>
             </div>
 
-            {/* LHO */}
+            {/* LHO - Apply deck-aware HCP hard-cap (includes RHO's min to prevent >40 total) */}
             {lho && (lho.hcp?.min > 0 || lho.hcp?.max < 40 || (lho.tags && lho.tags.length > 0)) && (
               <div className="beliefs-opponent-seat">
                 <div className="beliefs-seat-label">
                   Left-Hand Opponent ({lho.seat})
                 </div>
-                <SeatBeliefView belief={lho} />
+                <SeatBeliefView belief={applyDeckAwareHcpCap(lho, myHcp, partner?.hcp?.min || 0, rho?.hcp?.min || 0)} />
               </div>
             )}
 
@@ -346,13 +396,13 @@ const BeliefPanel = ({ beliefs, myHcp }) => {
               <hr className="beliefs-opponent-divider" />
             )}
 
-            {/* RHO */}
+            {/* RHO - Apply deck-aware HCP hard-cap (includes LHO's min to prevent >40 total) */}
             {rho && (rho.hcp?.min > 0 || rho.hcp?.max < 40 || (rho.tags && rho.tags.length > 0)) && (
               <div className="beliefs-opponent-seat">
                 <div className="beliefs-seat-label">
                   Right-Hand Opponent ({rho.seat})
                 </div>
-                <SeatBeliefView belief={rho} />
+                <SeatBeliefView belief={applyDeckAwareHcpCap(rho, myHcp, partner?.hcp?.min || 0, lho?.hcp?.min || 0)} />
               </div>
             )}
           </div>

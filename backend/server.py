@@ -18,10 +18,12 @@ from flask_limiter.util import get_remote_address
 from db import get_connection, is_postgres, init_database
 from engine.hand import Hand, Card
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
+from engine.fallback_hands import get_fallback_hand, get_remaining_deck
 from engine.ai.conventions.preempts import PreemptConvention
 from engine.ai.conventions.jacoby_transfers import JacobyConvention
 from engine.ai.conventions.stayman import StaymanConvention
 from engine.ai.conventions.blackwood import BlackwoodConvention
+from engine.ai.conventions.strong_2c import Strong2CConvention
 from engine.play_engine import PlayEngine, PlayState, Contract, GamePhase
 from engine.simple_play_ai import SimplePlayAI
 from engine.play.ai.simple_ai import SimplePlayAI as SimplePlayAINew
@@ -38,6 +40,9 @@ from engine.analysis import get_analysis_engine
 
 # Session state management (fixes global state race conditions)
 from core.session_state import SessionStateManager, get_session_id_from_request
+
+# Room state management for Team Practice Lobby
+from core.room_state import RoomStateManager
 
 # Error logging for bidding/play diagnostics
 from utils.error_logger import log_error
@@ -226,6 +231,9 @@ session_manager = SessionManager('bridge.db')  # Session management
 # Initialize session state manager (replaces global variables)
 state_manager = SessionStateManager()
 
+# Initialize room state manager (Team Practice Lobby)
+room_manager = RoomStateManager()
+
 
 def ensure_bidding_tables():
     """Ensure bidding_decisions table exists (safe to call repeatedly)."""
@@ -272,6 +280,7 @@ def ensure_bidding_tables():
 # Ensure bidding tables exist on import (covers both gunicorn and __main__)
 ensure_bidding_tables()
 app.config['STATE_MANAGER'] = state_manager
+app.config['ROOM_MANAGER'] = room_manager
 
 # REMOVED: Global state variables are now per-session
 # - current_deal -> state.deal
@@ -286,7 +295,8 @@ CONVENTION_MAP = {
     "Preempt": PreemptConvention(),
     "JacobyTransfer": JacobyConvention(),
     "Stayman": StaymanConvention(),
-    "Blackwood": BlackwoodConvention()
+    "Blackwood": BlackwoodConvention(),
+    "Strong2C": Strong2CConvention()
 }
 
 # AI instances for different difficulty levels
@@ -868,6 +878,10 @@ register_analytics_endpoints(app)
 # Register authentication endpoints (MVP - email/phone only, no passwords)
 from engine.auth.simple_auth_api import register_simple_auth_endpoints
 register_simple_auth_endpoints(app)
+
+# Register room endpoints (Team Practice Lobby)
+from routes.room_api import register_room_endpoints
+register_room_endpoints(app, room_manager)
 
 # Register ACBL PBN import API endpoints (tournament analysis) - optional module
 try:
@@ -1520,10 +1534,18 @@ def load_scenario():
         for setup_rule in target_scenario.get('setup', []):
             position = setup_rule['position']
             hand = None
-            if setup_rule.get('generate_for_convention'):
-                specialist = CONVENTION_MAP.get(setup_rule['generate_for_convention'])
+            convention_name = setup_rule.get('generate_for_convention')
+            if convention_name:
+                specialist = CONVENTION_MAP.get(convention_name)
                 if specialist:
-                    hand, deck = generate_hand_for_convention(specialist, deck)
+                    hand, deck = generate_hand_for_convention(specialist, deck, timeout_ms=500)
+
+                    # Fallback: If generation failed, use pre-scripted hand
+                    if hand is None:
+                        print(f"⚠️ Using fallback hand for {convention_name} (generation timed out)")
+                        hand = get_fallback_hand(convention_name)
+                        if hand:
+                            deck = get_remaining_deck(hand)
             elif setup_rule.get('constraints'):
                  hand, deck = generate_hand_with_constraints(setup_rule['constraints'], deck)
             if hand:
@@ -4133,6 +4155,208 @@ def validate_claim():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": f"Error validating claim: {e}"}), 500
+
+
+@app.route("/api/complete-with-claim", methods=["POST"])
+def complete_with_claim():
+    """
+    Validate a claim and if valid, complete the hand with the claimed tricks.
+    Returns the final score data (same format as /api/complete-play).
+
+    Request body:
+        - claimed_tricks: int - Number of remaining tricks declarer claims
+
+    Returns:
+        If claim is valid:
+            - Same response as /api/complete-play (contract, tricks_taken, score, etc.)
+            - claim_info: dict with validation details
+        If claim is invalid:
+            - valid: false
+            - message: str explaining why claim was rejected
+            - max_possible: int (if DDS available)
+    """
+    state = get_state()
+
+    if not state.play_state:
+        return jsonify({"error": "No play in progress"}), 400
+
+    try:
+        data = request.get_json() or {}
+        claimed_tricks = data.get("claimed_tricks")
+
+        if claimed_tricks is None:
+            return jsonify({"error": "claimed_tricks is required"}), 400
+
+        claimed_tricks = int(claimed_tricks)
+
+        # Get current state
+        play_state = state.play_state
+        contract = play_state.contract
+        declarer = contract.declarer
+        declarer_side = 'NS' if declarer in ['N', 'S'] else 'EW'
+
+        # Calculate tricks already won by declarer's side
+        if declarer_side == 'NS':
+            tricks_already_won = play_state.tricks_won['N'] + play_state.tricks_won['S']
+        else:
+            tricks_already_won = play_state.tricks_won['E'] + play_state.tricks_won['W']
+
+        # Calculate remaining tricks in play
+        total_tricks_played = sum(play_state.tricks_won.values())
+        tricks_remaining = 13 - total_tricks_played
+
+        # Basic validation: can't claim more than remaining
+        if claimed_tricks > tricks_remaining:
+            return jsonify({
+                "valid": False,
+                "claimed": claimed_tricks,
+                "tricks_remaining": tricks_remaining,
+                "message": f"Cannot claim {claimed_tricks} tricks - only {tricks_remaining} remain",
+                "dds_available": False
+            })
+
+        # Try to use DDS for validation
+        dds_max_tricks = None
+        dds_available = False
+
+        if PLATFORM_ALLOWS_DDS and is_dds_available():
+            try:
+                dds_service = get_dds_service()
+                hands = play_state.hands
+
+                # Get trump strain for DDS
+                trump_strain = contract.strain
+                if trump_strain:
+                    # Map strain to DDS format
+                    strain_map = {'NT': 'N', 'N': 'N',
+                                  'S': 'S', 'H': 'H', 'D': 'D', 'C': 'C'}
+                    strain = strain_map.get(trump_strain, trump_strain)
+
+                # DDS returns tricks makeable from current position
+                dds_max_tricks = dds_service.get_tricks(hands, declarer, strain)
+
+                if dds_max_tricks is not None:
+                    dds_available = True
+
+            except Exception as e:
+                print(f"DDS claim validation failed: {e}")
+                traceback.print_exc()
+
+        # Validate the claim
+        is_valid = True
+        claim_message = ""
+
+        if dds_available and dds_max_tricks is not None:
+            # DDS validation
+            is_valid = claimed_tricks <= dds_max_tricks
+
+            if is_valid:
+                claim_message = f"Claim accepted! You claimed {claimed_tricks} of {tricks_remaining} remaining tricks."
+                if dds_max_tricks > claimed_tricks:
+                    claim_message += f" (You could have claimed up to {dds_max_tricks})"
+            else:
+                return jsonify({
+                    "valid": False,
+                    "claimed": claimed_tricks,
+                    "max_possible": dds_max_tricks,
+                    "tricks_remaining": tricks_remaining,
+                    "tricks_already_won": tricks_already_won,
+                    "dds_available": True,
+                    "message": f"Claim rejected. You claimed {claimed_tricks} tricks but can only make {dds_max_tricks} with perfect play."
+                })
+        else:
+            # No DDS available - accept claim optimistically
+            claim_message = f"Claim accepted (DDS unavailable for verification). You claimed {claimed_tricks} of {tricks_remaining} remaining tricks."
+
+        # Claim is valid - update play state with claimed tricks
+        # Declarer's side gets the claimed tricks, defense gets the rest
+        defense_gets = tricks_remaining - claimed_tricks
+
+        if declarer_side == 'NS':
+            # Add claimed tricks to declarer's side (North)
+            play_state.tricks_won['N'] += claimed_tricks
+            # Add remaining tricks to defense (East)
+            play_state.tricks_won['E'] += defense_gets
+        else:
+            # Add claimed tricks to declarer's side (East)
+            play_state.tricks_won['E'] += claimed_tricks
+            # Add remaining tricks to defense (North)
+            play_state.tricks_won['N'] += defense_gets
+
+        # Mark play as complete
+        play_state.is_complete = True
+
+        # Calculate final score (same logic as complete_play)
+        vulnerability = state.vulnerability
+        if declarer in ["N", "S"]:
+            tricks_taken = play_state.tricks_won['N'] + play_state.tricks_won['S']
+        else:
+            tricks_taken = play_state.tricks_won['E'] + play_state.tricks_won['W']
+
+        # Calculate vulnerability
+        vuln_dict = {
+            "ns": vulnerability in ["NS", "Both"],
+            "ew": vulnerability in ["EW", "Both"]
+        }
+
+        # Calculate score (including honors)
+        score_result = play_engine.calculate_score(
+            play_state.contract,
+            tricks_taken,
+            vuln_dict,
+            play_state.hands  # Pass hands for honors calculation
+        )
+
+        # Generate human-readable result text from player's (NS) perspective
+        player_is_declarer = declarer in ['N', 'S']
+
+        if score_result["made"]:
+            overtricks = score_result.get("overtricks", 0)
+            if player_is_declarer:
+                if overtricks == 0:
+                    result_text = "Made exactly"
+                else:
+                    result_text = f"Made +{overtricks}"
+            else:
+                if overtricks == 0:
+                    result_text = "Opponents made contract"
+                else:
+                    result_text = f"Opponents made +{overtricks}"
+        else:
+            undertricks = score_result.get("undertricks", 0)
+            if player_is_declarer:
+                result_text = f"Down {undertricks}"
+            else:
+                result_text = f"Defense successful! Down {undertricks}"
+
+        return jsonify({
+            "valid": True,
+            "claim_info": {
+                "claimed": claimed_tricks,
+                "max_possible": dds_max_tricks,
+                "tricks_remaining": tricks_remaining,
+                "dds_available": dds_available,
+                "message": claim_message
+            },
+            "contract": {
+                "level": contract.level,
+                "strain": contract.strain,
+                "declarer": contract.declarer,
+                "doubled": contract.doubled
+            },
+            "tricks_taken": tricks_taken,
+            "tricks_needed": contract.tricks_needed,
+            "score": score_result["score"],
+            "made": score_result["made"],
+            "result": result_text,
+            "overtricks": score_result.get("overtricks", 0),
+            "undertricks": score_result.get("undertricks", 0),
+            "breakdown": score_result.get("breakdown", {})
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Error completing with claim: {e}"}), 500
 
 
 # ============================================================================

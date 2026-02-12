@@ -46,6 +46,9 @@ import './DecayChart.css';
  * @param {number} props.biddingContext.bid_level - Actual bid level
  * @param {string} props.biddingContext.primary_reason - Primary reason for bidding issue
  * @param {Array} props.biddingContext.factors - Array of differential factors from bidding
+ * @param {function} props.onDismiss - Callback when dismiss button is clicked
+ * @param {boolean} props.showExplanation - Whether to show two-column layout with explanation (default true)
+ * @param {boolean} props.asOverlay - Whether to render as overlay with high z-index (default false)
  */
 const DecayChart = ({
   data,
@@ -53,7 +56,10 @@ const DecayChart = ({
   onPositionChange,
   width = 560,
   height = 180,
-  biddingContext = null
+  biddingContext = null,
+  onDismiss = null,
+  showExplanation = false,
+  asOverlay = false
 }) => {
   // Extract data with defaults (before any conditional returns)
   const rawCurve = data?.curve || [];
@@ -264,7 +270,26 @@ const DecayChart = ({
   // Label for required line
   const requiredLabel = ns_is_declarer ? 'Need' : 'To Set';
 
-  return (
+  // Explanation text based on context
+  const getExplanationText = () => {
+    if (ns_is_declarer) {
+      return {
+        title: 'Trick Potential Analysis',
+        paragraph: `This chart tracks your declaration health. Blue bars show tricks won; the dotted line indicates maximum potential tricks available. A drop in the dotted line indicates a play that cost your side a trick.`,
+        tip: 'Click on the chart to jump to that position in the replay.'
+      };
+    }
+    return {
+      title: 'Trick Potential Analysis',
+      paragraph: `This chart tracks your defense health. Blue bars show tricks won; the dotted line indicates maximum potential tricks available. A drop in the dotted line indicates a play that cost your side a trick.`,
+      tip: 'Click on the chart to jump to that position in the replay.'
+    };
+  };
+
+  const explanation = getExplanationText();
+
+  // The main chart content
+  const chartContent = (
     <div className="decay-chart-container">
       <div className="decay-chart-header">
         <div className="decay-chart-title-row">
@@ -586,6 +611,47 @@ const DecayChart = ({
       </div>
     </div>
   );
+
+  // If not using overlay or explanation, return just the chart
+  if (!asOverlay && !showExplanation) {
+    return chartContent;
+  }
+
+  // Build the two-column layout if explanation is requested
+  const twoColumnContent = showExplanation ? (
+    <div className="decay-chart-two-column">
+      <div className="decay-chart-explanation">
+        <h3>{explanation.title}</h3>
+        <p>{explanation.paragraph}</p>
+        <div className="explanation-tip">{explanation.tip}</div>
+      </div>
+      <div className="decay-chart-main">
+        {chartContent}
+      </div>
+    </div>
+  ) : chartContent;
+
+  // Wrap in overlay if requested
+  if (asOverlay) {
+    return (
+      <div className="decay-chart-overlay">
+        {onDismiss && (
+          <button
+            className="decay-chart-dismiss"
+            onClick={onDismiss}
+            aria-label="Close chart"
+            type="button"
+          >
+            ×
+          </button>
+        )}
+        {twoColumnContent}
+      </div>
+    );
+  }
+
+  // Return two-column without overlay wrapper
+  return twoColumnContent;
 };
 
 export default DecayChart;

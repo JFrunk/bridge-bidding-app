@@ -83,6 +83,20 @@ export function ModeSelector({ onSelectMode, userName = null }) {
       ],
       buttonText: 'View Progress',
       buttonClass: 'mode-button-progress'
+    },
+    {
+      id: 'team',
+      icon: '👥',
+      title: 'Team Practice',
+      subtitle: 'Play with a partner against AI opponents',
+      description: 'Best for: Practicing partnership bidding with a friend',
+      features: [
+        'North-South partnership (2 humans)',
+        'East-West controlled by AI',
+        'Shared room code to join'
+      ],
+      buttonText: 'Team Up',
+      buttonClass: 'mode-button-team'
     }
   ];
 

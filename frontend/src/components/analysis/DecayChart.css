@@ -6,14 +6,138 @@
  * - Clear error indicators
  * - Responsive width
  * - Matches HandReviewModal color scheme
+ *
+ * UI Enhancement:
+ * - Overlay layering (z-index 1000) ensures charts appear ABOVE all game assets
+ * - Two-column layout: explanatory text left, chart right
+ * - Backdrop blur (8px) for visual separation between Game Layer and Analysis Layer
+ * - Static container prevents layout jumping
+ * - Dismiss affordance (X button)
  */
+
+/* ========================================
+   OVERLAY WRAPPER - High z-index for layering above cards
+   ======================================== */
+
+.decay-chart-overlay {
+  position: relative;
+  z-index: 1000;  /* Above ALL game assets including BridgeCards and GameTable */
+  /* Static container: reserved height prevents jumping */
+  min-height: 280px;
+  width: 100%;
+  /* Backdrop for visual separation */
+  background: rgba(250, 250, 250, 0.97);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* ========================================
+   TWO-COLUMN LAYOUT - Text left, Chart right
+   ======================================== */
+
+.decay-chart-two-column {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* Left column: Explanatory text (30% width) */
+.decay-chart-explanation {
+  flex: 0 0 30%;
+  max-width: 30%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 16px;
+  border-right: 1px solid #e5e7eb;
+  /* Internal scrollbar if text exceeds available space */
+  overflow-y: auto;
+  max-height: 240px;
+}
+
+.decay-chart-explanation h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.decay-chart-explanation p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.decay-chart-explanation .explanation-highlight {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.decay-chart-explanation .explanation-tip {
+  margin-top: auto;
+  padding: 8px 12px;
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: 6px;
+  font-size: 12px;
+  color: #1e40af;
+}
+
+/* Right column: Chart (70% width) */
+.decay-chart-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ========================================
+   DISMISS BUTTON - Top right corner
+   ======================================== */
+
+.decay-chart-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1010;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.06);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 18px;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.decay-chart-dismiss:hover {
+  background: rgba(0, 0, 0, 0.12);
+  color: #1f2937;
+}
+
+.decay-chart-dismiss:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* ========================================
+   ORIGINAL CONTAINER STYLES (enhanced)
+   ======================================== */
 
 .decay-chart-container {
   background: #fafafa;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 12px;
-  margin: 12px 0;
+  margin: 0;  /* Remove margin, handled by overlay/two-column */
 }
 
 .decay-chart-header {
@@ -323,10 +447,48 @@
 }
 
 /* Responsive */
+@media (max-width: 900px) {
+  /* Two-column becomes stacked on tablet */
+  .decay-chart-two-column {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .decay-chart-explanation {
+    flex: 0 0 auto;
+    max-width: 100%;
+    padding-right: 0;
+    padding-bottom: 12px;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .decay-chart-explanation .explanation-tip {
+    margin-top: 8px;
+  }
+}
+
 @media (max-width: 600px) {
+  .decay-chart-overlay {
+    min-height: 220px;
+    border-radius: 8px;
+  }
+
+  .decay-chart-two-column {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .decay-chart-explanation h3 {
+    font-size: 14px;
+  }
+
+  .decay-chart-explanation p {
+    font-size: 12px;
+  }
+
   .decay-chart-container {
     padding: 8px;
-    margin: 8px 0;
   }
 
   .decay-chart-header {
@@ -338,5 +500,11 @@
   .decay-chart-legend {
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  .decay-chart-dismiss {
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
   }
 }

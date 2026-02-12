@@ -168,6 +168,71 @@ def calculate_losing_trick_count(hand: Hand) -> int:
     return ltc
 
 
+def calculate_playing_tricks(hand: Hand) -> float:
+    """
+    Calculate estimated Playing Tricks for evaluating strong opening hands.
+
+    Playing tricks count the expected tricks when the hand is played with
+    its longest suit as trumps. Used for Strong 2♣ opening decisions.
+
+    Calculation per suit:
+    - A = 1 trick
+    - K in 2+ card suit = 1 trick
+    - K singleton = 0.5 trick
+    - Q in 3+ card suit = 1 trick
+    - Q doubleton with another honor = 0.5 trick
+    - Length tricks: cards beyond 3 in a suit with A or K = 1 trick each
+
+    A hand needs 9+ playing tricks with 19-21 HCP for Strong 2♣.
+    A hand with 22+ HCP automatically qualifies for Strong 2♣.
+
+    Returns:
+        Float representing estimated playing tricks (e.g., 9.5)
+    """
+    tricks = 0.0
+
+    for suit in ['♠', '♥', '♦', '♣']:
+        suit_cards = [c.rank for c in hand.cards if c.suit == suit]
+        length = len(suit_cards)
+
+        if length == 0:
+            continue
+
+        has_ace = 'A' in suit_cards
+        has_king = 'K' in suit_cards
+        has_queen = 'Q' in suit_cards
+        has_jack = 'J' in suit_cards
+        has_ten = 'T' in suit_cards
+
+        # Honor tricks
+        if has_ace:
+            tricks += 1.0
+        if has_king:
+            if length >= 2:
+                tricks += 1.0
+            else:
+                tricks += 0.5  # Singleton K
+        if has_queen:
+            if length >= 3:
+                tricks += 1.0
+            elif length == 2 and (has_ace or has_king or has_jack):
+                tricks += 0.5  # Qx with another honor
+        if has_jack:
+            if length >= 4 and (has_queen or has_ten):
+                tricks += 0.5  # Jxxx with Q or T
+
+        # Length tricks (cards beyond 3 in a suit that has A or K)
+        # These are "running tricks" once trumps are drawn
+        if length > 3 and (has_ace or has_king):
+            length_tricks = length - 3
+            # Reduce value slightly if suit lacks solidity
+            if not has_queen and not has_jack:
+                length_tricks *= 0.75
+            tricks += length_tricks
+
+    return tricks
+
+
 def get_suit_from_bid(bid: str) -> str:
     """Extract suit from a bid string.
 

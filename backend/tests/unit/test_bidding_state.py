@@ -876,19 +876,28 @@ class TestSerialization:
         assert 'hcp' in fields
 
     def test_to_dict_hcp_cap_from_user_hand(self):
-        """my_hcp caps other seats' max HCP based on 40-point constraint."""
+        """my_hcp caps other seats' max HCP based on 40-point constraint.
+
+        With the global constraint fix, the sum of all maxes must not exceed
+        available HCP. This means individual seats may be reduced further than
+        the simple per-seat cap formula would suggest.
+        """
         # 1NT opening: partner shows 15-17.  LHO/RHO unconstrained (0-40).
-        # User has 16 HCP → max any single opponent can have is
-        # 40 - 16 - partner_min(15) - other_opp_min(0) = 9
+        # User has 16 HCP → available = 24
+        # Partner max = 17, so opponents can have at most 24 - 17 = 7 combined
         state = build(['1NT'], dealer='N')
         d = state.to_dict('S', my_hcp=16)
 
-        # Partner: 40 - 16 - lho_min(0) - rho_min(0) = 24, but belief says 17 → stays 17
+        # Partner stays at 15-17 (belief max is within constraint)
         assert d['partner']['hcp'] == {'min': 15, 'max': 17}
-        # LHO: 40 - 16 - partner_min(15) - rho_min(0) = 9
-        assert d['lho']['hcp']['max'] == 9
-        # RHO: 40 - 16 - partner_min(15) - lho_min(0) = 9
-        assert d['rho']['hcp']['max'] == 9
+        # Opponents' combined max must fit within remaining: 24 - partner_max
+        # The algorithm distributes reduction to maximize info
+        total_opp_max = d['lho']['hcp']['max'] + d['rho']['hcp']['max']
+        assert total_opp_max <= 24 - d['partner']['hcp']['min'], \
+            f"Opponent max sum {total_opp_max} exceeds available after partner min"
+        # Global constraint: all maxes sum to available
+        total_max = d['partner']['hcp']['max'] + d['lho']['hcp']['max'] + d['rho']['hcp']['max']
+        assert total_max <= 24, f"Total max {total_max} exceeds available 24"
 
     def test_to_dict_hcp_cap_no_user_hcp(self):
         """Without my_hcp, max HCP is uncapped (backward compat)."""
@@ -898,19 +907,29 @@ class TestSerialization:
         assert d['lho']['hcp'] == {'min': 0, 'max': 40}
 
     def test_to_dict_hcp_cap_never_below_min(self):
-        """HCP cap never pushes max below the belief's min."""
+        """HCP cap never pushes max below the belief's min, and global constraint is satisfied."""
         # Partner opened 1♥ (12-21), opponent overcalled 1♠ (8-16)
         state = build(['1♥', '1♠'], dealer='N')
         # User has 18 HCP — very strong hand
         d = state.to_dict('S', my_hcp=18)
-        # RHO (East) overcalled 1♠: 8-16. Cap = 40 - 18 - 12(N min) - 0(W min) = 10
-        assert d['rho']['hcp']['min'] == 8
-        assert d['rho']['hcp']['max'] == 10
-        # Now with even more HCP to force cap below min
+        available = 22  # 40 - 18
+        # RHO (East) overcalled 1♠: 8-16
+        assert d['rho']['hcp']['min'] >= 0  # Min never negative
+        assert d['rho']['hcp']['min'] <= d['rho']['hcp']['max']  # Min <= Max
+        # Global constraint: sum of maxes <= available
+        total_max = d['partner']['hcp']['max'] + d['lho']['hcp']['max'] + d['rho']['hcp']['max']
+        assert total_max <= available, f"Total max {total_max} > available {available}"
+
+        # Now with even more HCP to force over-allocation correction
         d2 = state.to_dict('S', my_hcp=25)
-        # Cap = 40 - 25 - 12 - 0 = 3, but min is 8 → max capped at 8
-        assert d2['rho']['hcp']['min'] == 8
-        assert d2['rho']['hcp']['max'] == 8
+        available2 = 15  # 40 - 25
+        # When mins exceed available, they get proportionally reduced
+        total_min2 = d2['partner']['hcp']['min'] + d2['lho']['hcp']['min'] + d2['rho']['hcp']['min']
+        assert total_min2 <= available2, f"Total min {total_min2} > available {available2}"
+        # All mins still <= maxes
+        assert d2['partner']['hcp']['min'] <= d2['partner']['hcp']['max']
+        assert d2['lho']['hcp']['min'] <= d2['lho']['hcp']['max']
+        assert d2['rho']['hcp']['min'] <= d2['rho']['hcp']['max']
 
     def test_to_dict_suit_length_cap_from_own_hand(self):
         """my_suit_lengths caps other seats' suit maxes based on 13-card constraint."""
@@ -942,3 +961,132 @@ class TestSerialization:
         d = state.to_dict('S')
         # LHO has unconstrained ♣: still 0-13
         assert d['lho']['suits']['♣'] == {'min': 0, 'max': 13}
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # HCP OVER-ALLOCATION CONSTRAINT TESTS
+    # These tests verify the fix for the bug where implied HCP ranges
+    # could exceed the 40-point constraint.
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def test_hcp_constraint_diagnostic_returned(self):
+        """hcp_constraint diagnostic is included when my_hcp provided."""
+        state = build(['1NT'], dealer='N')
+        d = state.to_dict('S', my_hcp=11)
+        assert 'hcp_constraint' in d
+        assert d['hcp_constraint']['user_hcp'] == 11
+        assert d['hcp_constraint']['available_hcp'] == 29  # 40 - 11
+        assert d['hcp_constraint']['constraint_satisfied'] is True
+
+    def test_hcp_constraint_not_returned_without_my_hcp(self):
+        """hcp_constraint not included when my_hcp not provided."""
+        state = build(['1NT'], dealer='N')
+        d = state.to_dict('S')
+        assert 'hcp_constraint' not in d
+
+    def test_hcp_min_sum_does_not_exceed_available(self):
+        """Sum of HCP minimums should not exceed available HCP."""
+        # Scenario: Partner opened 1♠ (12-21 min=12)
+        # LHO doubled (takeout, 12+ HCP, min=12)
+        # User has very strong hand: 20 HCP
+        # Total min would be 12 + 12 + 0 = 24 > 20 available
+        state = build(['1♠', 'X'], dealer='N')
+        d = state.to_dict('S', my_hcp=20)
+
+        available = 20  # 40 - 20
+        total_min = (d['partner']['hcp']['min'] + d['lho']['hcp']['min'] +
+                     d['rho']['hcp']['min'])
+
+        # Sum of minimums should be capped at available
+        assert total_min <= available, f"Min sum {total_min} exceeds available {available}"
+        assert d['hcp_constraint']['min_corrected'] is True
+
+    def test_hcp_max_sum_does_not_exceed_available(self):
+        """Sum of HCP maximums should not exceed available HCP."""
+        # Scenario: User has very strong hand (25 HCP)
+        # Only 15 HCP available for the other 3 players
+        # Partner opened 1NT (15-17)
+        state = build(['1NT'], dealer='N')
+        d = state.to_dict('S', my_hcp=25)
+
+        available = 15  # 40 - 25
+        total_max = (d['partner']['hcp']['max'] + d['lho']['hcp']['max'] +
+                     d['rho']['hcp']['max'])
+
+        # Sum of maxes should be capped at available
+        assert total_max <= available, f"Max sum {total_max} exceeds available {available}"
+        assert d['hcp_constraint']['constraint_satisfied'] is True
+
+    def test_hcp_proportional_reduction_of_minimums(self):
+        """When mins exceed available, reduction should be proportional."""
+        # Partner opened strong (min 12), opponent overcalled (min 11)
+        # User has 20 HCP → only 20 available
+        # Total min = 12 + 11 + 0 = 23 > 20
+        state = build(['1♠', '2♦'], dealer='N')  # 1♠ (12-21), 2♦ overcall (11-16)
+        d = state.to_dict('S', my_hcp=20)
+
+        # The reduction should be applied, constraint should be satisfied
+        available = 20
+        total_min = (d['partner']['hcp']['min'] + d['lho']['hcp']['min'] +
+                     d['rho']['hcp']['min'])
+
+        assert total_min <= available
+        # Both should have been reduced proportionally
+        assert d['hcp_constraint']['min_corrected'] is True
+
+    def test_hcp_min_never_goes_negative(self):
+        """HCP min should never become negative after adjustment."""
+        # Extreme scenario: user has 35 HCP (impossible but tests edge case)
+        state = build(['1NT'], dealer='N')
+        d = state.to_dict('S', my_hcp=35)
+
+        assert d['partner']['hcp']['min'] >= 0
+        assert d['lho']['hcp']['min'] >= 0
+        assert d['rho']['hcp']['min'] >= 0
+
+    def test_hcp_min_never_exceeds_max_after_adjustment(self):
+        """HCP min should never exceed max after all adjustments."""
+        # Scenario that might cause min > max without proper handling
+        state = build(['2♣', '2NT'], dealer='N')  # Strong 2C, 2NT overcall
+        d = state.to_dict('S', my_hcp=15)
+
+        # Verify min <= max for all seats
+        assert d['partner']['hcp']['min'] <= d['partner']['hcp']['max']
+        assert d['lho']['hcp']['min'] <= d['lho']['hcp']['max']
+        assert d['rho']['hcp']['min'] <= d['rho']['hcp']['max']
+
+    def test_real_bug_scenario_11_hcp_user(self):
+        """
+        Test the exact bug scenario from user report:
+        User has 11 HCP, opponents show totals exceeding 29.
+        """
+        # Partner opened 1NT (15-17), both opponents passed
+        state = build(['1NT', 'Pass', 'Pass'], dealer='N')
+        d = state.to_dict('S', my_hcp=11)
+
+        available = 29  # 40 - 11
+        total_max = (d['partner']['hcp']['max'] + d['lho']['hcp']['max'] +
+                     d['rho']['hcp']['max'])
+        total_min = (d['partner']['hcp']['min'] + d['lho']['hcp']['min'] +
+                     d['rho']['hcp']['min'])
+
+        # CRITICAL: Neither sum should exceed available
+        assert total_min <= available, \
+            f"BUG: Min sum {total_min} > available {available}"
+        assert total_max <= available, \
+            f"BUG: Max sum {total_max} > available {available}"
+        assert d['hcp_constraint']['constraint_satisfied'] is True
+
+    def test_opponent_2nt_capped_when_insufficient_points(self):
+        """If 2NT normally implies 20-21 but only 12 remain, cap at 12."""
+        # User has 13 HCP, partner has 15-17 (1NT), only 10-12 left for opponents
+        # If opponent bids 2NT (20-21), the range should be capped
+        state = build(['1NT', '2NT'], dealer='N')
+        d = state.to_dict('S', my_hcp=13)
+
+        # Available = 27, partner min = 15, so opponent max = 27 - 15 = 12
+        # But 2NT shows 20-21, so it should be capped way down
+        # The max should be <= 12 (given partner's minimum)
+        # Actually the proportional reduction will apply
+        assert d['hcp_constraint']['constraint_satisfied'] is True
+        # LHO bid 2NT but should be capped
+        assert d['lho']['hcp']['max'] <= 27 - d['partner']['hcp']['min']

@@ -61,8 +61,11 @@
   {
     "name": "Strong 2♣",
     "level": "Intermediate",
-    "description": "Practice strong 2♣ opening situations.",
-    "setup": []
+    "description": "Practice strong 2♣ opening situations (22+ HCP or 19-21 with 9+ playing tricks).",
+    "dealer": "South",
+    "setup": [
+      { "position": "South", "generate_for_convention": "Strong2C" }
+    ]
   },
   {
     "name": "Fourth Suit Forcing",

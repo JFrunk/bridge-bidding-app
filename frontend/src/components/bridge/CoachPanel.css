@@ -4,14 +4,16 @@
    ======================================== */
 
 .coach-column {
-  width: 300px;
+  width: 100%;
+  height: 100%;
   background: var(--cream-light, #faf8f4);
-  border-left: 1px solid var(--border-subtle, rgba(0,0,0,0.08));
+  /* border handled by SplitGameLayout sidebar container */
+  border-left: none;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   overflow-y: auto;
-  max-height: 100%;
+  overflow-x: hidden;
 }
 
 .coach-column.hidden {

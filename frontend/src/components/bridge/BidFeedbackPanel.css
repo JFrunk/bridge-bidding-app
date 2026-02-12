@@ -15,6 +15,11 @@
   transform: translateY(-10px);
   transition: opacity 0.2s ease, transform 0.2s ease;
   position: relative;
+  /* Left-aligned to match PlayFeedbackPanel */
+  max-width: 480px;
+  width: 100%;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 .bid-feedback-panel.showing {

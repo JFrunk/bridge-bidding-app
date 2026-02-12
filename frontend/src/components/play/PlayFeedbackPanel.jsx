@@ -37,6 +37,35 @@ const RESULT_CONFIG = {
   }
 };
 
+/**
+ * BottomAffordanceContainer - Static-height wrapper for feedback area
+ * Prevents vertical "hopping" when feedback appears/disappears
+ *
+ * Usage:
+ *   <BottomAffordanceContainer>
+ *     <PlayFeedbackPanel ... />
+ *     <ActionButtons ... />
+ *   </BottomAffordanceContainer>
+ */
+const BottomAffordanceContainer = ({ children, className = '' }) => (
+  <div className={`bottom-affordance-container ${className}`}>
+    {children}
+  </div>
+);
+
+/**
+ * GhostPlaceholder - Maintains dimensions when no feedback is present
+ * Prevents UI from shifting when content is injected
+ */
+const GhostPlaceholder = ({ aiPlaying = false }) => (
+  <div className="play-feedback-ghost" data-testid="play-feedback-ghost">
+    <span className="ghost-icon">🎴</span>
+    <span className="ghost-text">
+      {aiPlaying ? 'AI is playing...' : 'Play result will appear here'}
+    </span>
+  </div>
+);
+
 const PlayFeedbackPanel = ({
   scoreData,           // Score data from API
   isVisible,           // Whether to show the panel
@@ -46,6 +75,8 @@ const PlayFeedbackPanel = ({
   onReviewHand,        // Open hand review page
   onViewProgress,      // Open progress dashboard
   onDealNewHand,       // Deal new hand (restart bidding)
+  showGhost = false,   // Show ghost placeholder when no feedback
+  aiPlaying = false,   // Whether AI is currently playing
 }) => {
   const [isShowing, setIsShowing] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -61,7 +92,13 @@ const PlayFeedbackPanel = ({
     }
   }, [isVisible, scoreData]);
 
-  if (!isVisible || !scoreData) return null;
+  // If no feedback but ghost is requested, show placeholder
+  if (!isVisible || !scoreData) {
+    if (showGhost) {
+      return <GhostPlaceholder aiPlaying={aiPlaying} />;
+    }
+    return null;
+  }
 
   const { contract, tricks_taken, tricks_needed, result, score, made, breakdown, overtricks, undertricks } = scoreData;
   const doubledText = contract?.doubled === 2 ? 'XX' : contract?.doubled === 1 ? 'X' : '';
@@ -124,58 +161,61 @@ const PlayFeedbackPanel = ({
         )}
       </div>
 
-      {/* Result details */}
-      <div className="feedback-details">
-        <div className="detail-row">
-          <span className="detail-label">Tricks:</span>
-          <span className="detail-value">{tricks_taken} of {tricks_needed} needed</span>
+      {/* Scroll-safe content area - prevents long content from pushing table */}
+      <div className="feedback-content-scroll">
+        {/* Result details */}
+        <div className="feedback-details">
+          <div className="detail-row">
+            <span className="detail-label">Tricks:</span>
+            <span className="detail-value">{tricks_taken} of {tricks_needed} needed</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Result:</span>
+            <span className={`detail-value ${userMade ? 'text-success' : 'text-failure'}`}>
+              {getResultDescription()}
+            </span>
+          </div>
         </div>
-        <div className="detail-row">
-          <span className="detail-label">Result:</span>
-          <span className={`detail-value ${userMade ? 'text-success' : 'text-failure'}`}>
-            {getResultDescription()}
+
+        {/* Score display */}
+        <div className={`score-display ${userScore >= 0 ? 'score-positive' : 'score-negative'}`}>
+          <span className="score-label">Your Score:</span>
+          <span className="score-value">
+            {userScore >= 0 ? '+' : ''}{userScore}
           </span>
         </div>
+
+        {/* Score breakdown toggle */}
+        {breakdown && (
+          <button
+            className="breakdown-toggle"
+            onClick={() => setShowBreakdown(!showBreakdown)}
+            aria-expanded={showBreakdown}
+          >
+            <span>How was this calculated?</span>
+            {showBreakdown ? (
+              <ChevronUp className="toggle-icon" />
+            ) : (
+              <ChevronDown className="toggle-icon" />
+            )}
+          </button>
+        )}
+
+        {/* Collapsible breakdown */}
+        {showBreakdown && breakdown && (
+          <div className="breakdown-container">
+            <ScoreBreakdown
+              breakdown={breakdown}
+              contract={contract}
+              made={made}
+              overtricks={overtricks || 0}
+              undertricks={undertricks || 0}
+              tricksNeeded={tricks_needed}
+              userPerspective={!declarerIsNS}
+            />
+          </div>
+        )}
       </div>
-
-      {/* Score display */}
-      <div className={`score-display ${userScore >= 0 ? 'score-positive' : 'score-negative'}`}>
-        <span className="score-label">Your Score:</span>
-        <span className="score-value">
-          {userScore >= 0 ? '+' : ''}{userScore}
-        </span>
-      </div>
-
-      {/* Score breakdown toggle */}
-      {breakdown && (
-        <button
-          className="breakdown-toggle"
-          onClick={() => setShowBreakdown(!showBreakdown)}
-          aria-expanded={showBreakdown}
-        >
-          <span>How was this calculated?</span>
-          {showBreakdown ? (
-            <ChevronUp className="toggle-icon" />
-          ) : (
-            <ChevronDown className="toggle-icon" />
-          )}
-        </button>
-      )}
-
-      {/* Collapsible breakdown */}
-      {showBreakdown && breakdown && (
-        <div className="breakdown-container">
-          <ScoreBreakdown
-            breakdown={breakdown}
-            contract={contract}
-            made={made}
-            overtricks={overtricks || 0}
-            undertricks={undertricks || 0}
-            tricksNeeded={tricks_needed}
-            userPerspective={!declarerIsNS}
-          />
-        </div>
-      )}
 
       {/* Action buttons */}
       <div className="feedback-actions">
@@ -228,4 +268,6 @@ const PlayFeedbackPanel = ({
   );
 };
 
+// Named exports for flexibility
+export { GhostPlaceholder, BottomAffordanceContainer };
 export default PlayFeedbackPanel;

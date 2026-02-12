@@ -93,25 +93,52 @@
   --ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
 
   /* =========================================
-     CARD SIZING SYSTEM - Responsive by default
+     VMIN-BASED SCALING SYSTEM
+     Base unit scales with smallest viewport dimension
+     Ensures proportional scaling at all zoom levels (80%-100%+)
+     ========================================= */
+
+  /* Base unit: 1% of shortest viewport dimension */
+  --bridge-unit: 1vmin;
+
+  /* Table scale factor: can be adjusted by ResizeObserver hook */
+  --table-scale: 1;
+
+  /* =========================================
+     CARD SIZING SYSTEM - vmin-based responsive
      Single source of truth for all card dimensions
      Aspect ratio: 5:7 (standard playing card)
      ========================================= */
 
-  /* Responsive card dimensions using clamp() */
-  --card-width: clamp(38px, 5vw, 60px);
-  --card-height: clamp(53px, 7vw, 84px);
+  /* Card dimensions using vmin for proportional scaling */
+  /* Base: 8 vmin width ensures 13 cards fit with overlap */
+  --card-width: clamp(38px, calc(var(--bridge-unit) * 6 * var(--table-scale)), 60px);
+  --card-height: clamp(53px, calc(var(--bridge-unit) * 8.4 * var(--table-scale)), 84px);
+  /* Aspect ratio fallback */
+  --card-aspect-ratio: 0.714; /* 5:7 */
 
-  /* Card overlap - scales proportionally with card size */
-  --card-overlap-horizontal: clamp(-24px, -3vw, -38px);
-  --card-overlap-vertical: clamp(-32px, -4vw, -52px);
+  /* Card overlap - uses clamp for "squish" factor */
+  /* Cards "huddle" closer on smaller screens, spread on larger */
+  --card-overlap-horizontal: clamp(-40px, calc(var(--bridge-unit) * -4 * var(--table-scale)), -20px);
+  --card-overlap-vertical: clamp(-52px, calc(var(--bridge-unit) * -5 * var(--table-scale)), -32px);
 
-  /* Card typography - scales with card */
-  --card-rank-size: clamp(14px, 1.5vw, 20px);
-  --card-suit-size: clamp(12px, 1.3vw, 16px);
+  /* Card typography - scales with vmin */
+  --card-rank-size: clamp(14px, calc(var(--bridge-unit) * 2 * var(--table-scale)), 22px);
+  --card-suit-size: clamp(12px, calc(var(--bridge-unit) * 1.6 * var(--table-scale)), 18px);
 
-  /* Suit gap (space between suit groups) */
-  --card-suit-gap: clamp(6px, 1vw, 12px);
+  /* Suit gap (space between suit groups) - scales with vmin */
+  --card-suit-gap: clamp(4px, calc(var(--bridge-unit) * 1 * var(--table-scale)), 14px);
+
+  /* =========================================
+     TABLE SIZING - vmin-based with aspect ratio
+     Ensures table never pushes footer off-screen
+     ========================================= */
+
+  /* Table dimensions */
+  --table-max-height: 80vh;
+  --table-aspect-ratio: 16 / 9;
+  --table-min-width: min(95vw, 600px);
+  --table-max-width: min(95vw, 1000px);
 
   /* =========================================
      CONTAINER WIDTHS - Fluid responsive
@@ -380,35 +407,42 @@
 }
 
 /* Play Table - UI Redesign v2 per play-mockup-v2.html */
-/* HOTFIX 2: Table must be centered and fill viewport width properly */
+/* P0 FIX: Vertical Stage Anchoring - Flex column with pinned top and reserved bottom */
+/* Container uses flex-direction: column with NO vertical centering to pin content to top */
 .play-table {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   min-height: 0;
-  overflow: visible;  /* HOTFIX: Allow South's cards to extend below without clipping */
+  overflow: visible;  /* Allow cards at edges to be visible */
   /* CRITICAL: Force full width and center - fixes left-alignment issue */
-  width: 100% !important;
-  min-width: 100%;
-  max-width: 1200px;  /* Cap width on very wide monitors */
-  margin-left: auto !important;
-  margin-right: auto !important;
-  /* Constrain to available viewport height */
-  max-height: 100%;
+  width: 100%;
+  min-width: 0;
+  max-width: var(--table-max-width, min(95vw, 1000px));
+  margin-left: auto;
+  margin-right: auto;
+  /* P0 FIX: Remove max-height constraint - let flex handle distribution */
+  /* Smooth transition for scaling changes */
+  transition: all 0.3s ease-in-out, max-width 0.3s ease-in-out;
+  /* CSS custom property for ResizeObserver hook to adjust */
+  --table-scale: 1;
+  /* CRITICAL: Align to top, not center - prevents vertical centering */
+  justify-content: flex-start;
 }
 
 /* Play Area - Absolute positioning layout for compass positions */
-/* HOTFIX 2: Full width green table, properly centered */
+/* P0 FIX: Fluid middle section - flex-grow:1 takes available space ABOVE South footer */
 .play-area {
   position: relative;
   width: 100% !important;  /* Force full width of parent */
   min-width: 100%;
-  flex: 1;  /* Take remaining space after contract header and action bar */
-  min-height: 340px;  /* Minimum for playability - includes room for South hand */
-  max-height: calc(100vh - 180px);  /* Leave room for header/footer */
+  /* P0 FIX: flex-grow:1 to fill available space above South footer */
+  flex: 1 1 auto;
+  /* P0 FIX: Reasonable min-height, no max-height constraint */
+  min-height: clamp(200px, 35vmin, 320px);
   z-index: 2;
   padding: 0;
-  padding-bottom: 90px;  /* CRITICAL: Reserve space for South's cards at bottom */
+  padding-bottom: 0;
   background-color: var(--table-green, #1a6b3c);
   overflow: visible;  /* Allow cards at edges to be visible */
   box-sizing: border-box;
@@ -459,25 +493,28 @@
   z-index: 3;
 }
 
-/* South - bottom center - UI_UX_CONSTITUTION.md: Pinned to bottom with fixed height */
+/* South - bottom center - P0 FIX: Static footer with reserved 35vh height */
+/* Uses flex-basis with min-height to guarantee space for hand + affordances */
 .position-south {
-  position: fixed;  /* FIXED position per UI Constitution */
-  bottom: 0;  /* Anchor to bottom of viewport */
-  left: 0;
-  right: 0;
+  position: relative;  /* Relative position - part of flex flow */
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   z-index: 50;  /* Higher z-index to ensure cards above all elements */
-  /* CRITICAL: Fixed height h-64 (256px) per UI_UX_CONSTITUTION.md */
-  height: 256px;  /* h-64 = 16rem = 256px */
-  min-height: 256px;
+  /* P0 FIX: flex-basis 35vh with min 350px - reserves static space at bottom */
+  flex: 0 0 auto;
+  height: clamp(350px, 35vh, 400px);
+  min-height: 350px;  /* Absolute minimum - never cut off cards or affordances */
+  width: 100%;
   padding-bottom: 16px;
   padding-top: 8px;
   /* Semi-transparent background to ensure visibility over table */
-  background: linear-gradient(to top, rgba(27, 77, 62, 0.95) 0%, rgba(27, 77, 62, 0.85) 70%, transparent 100%);
+  background: linear-gradient(to top, rgba(27, 77, 62, 0.98) 0%, rgba(27, 77, 62, 0.92) 80%, transparent 100%);
   /* Allow cards to extend without clipping */
   overflow: visible;
+  /* P0 FIX: Position at bottom of flex container */
+  margin-top: auto;
 }
 
 /* West - left edge, vertically centered */
@@ -931,7 +968,7 @@
   font-size: 1.8em;
 }
 
-/* HOTFIX 3 & 4: Hand Row - horizontal card row, no clipping, readable overlap */
+/* VMIN SCALING: Hand Row - horizontal card row with dynamic overlap */
 .hand-row,
 .user-play-hand {
   display: flex;
@@ -940,40 +977,34 @@
   width: max-content;   /* Grow to fit all cards */
   margin-left: auto;
   margin-right: auto;
-  /* HOTFIX 3: Remove max-width to prevent card clipping - all 13 cards must show */
-  /* Cards will naturally stay within table since table is responsive */
+  /* Cards "huddle" together proportionally via vmin-based overlap */
 }
 
-/* HOTFIX 4: South's hand overlap - show 24px per card for better readability (10 vs 9 distinguishable) */
+/* VMIN SCALING: South's hand overlap - uses CSS variable for proportional huddling */
 .position-south .user-play-hand .suit-group .playable-card {
-  margin-left: -24px;  /* Shows 24px per card (48px - 24px) - every rank clearly visible */
+  margin-left: var(--card-overlap-horizontal);  /* Dynamic: huddles closer on smaller screens */
 }
 
 .position-south .user-play-hand .suit-group .playable-card:first-child {
   margin-left: 0;
 }
 
-/* Gap between suits on South hand - clear visual separation */
+/* VMIN SCALING: Gap between suits - uses CSS variable */
 .position-south .user-play-hand .suit-group:not(:first-child) {
-  margin-left: 10px;  /* Visible gap between suits for easy counting */
+  margin-left: var(--card-suit-gap);  /* Dynamic: scales with viewport */
 }
 
-/* South hand responsive - maintain readability on smaller screens */
+/* VMIN SCALING: South hand automatically scales via CSS variables */
+/* Media queries kept as safety net for extreme cases only */
 @media (max-width: 768px) {
   .position-south .user-play-hand .suit-group .playable-card {
-    margin-left: -20px;  /* 22px visible (42px - 20px) - tablet readable */
-  }
-  .position-south .user-play-hand .suit-group:not(:first-child) {
-    margin-left: 8px;  /* Maintain suit separation */
+    /* vmin-based overlap handles tablet automatically */
   }
 }
 
 @media (max-width: 480px) {
   .position-south .user-play-hand .suit-group .playable-card {
-    margin-left: -18px;  /* 22px visible (40px - 18px) - mobile readable */
-  }
-  .position-south .user-play-hand .suit-group:not(:first-child) {
-    margin-left: 6px;  /* Tighter but still visible suit gap on mobile */
+    /* vmin-based overlap handles mobile automatically */
   }
 }
 
@@ -1001,15 +1032,15 @@
   justify-content: center;
 }
 
-/* Suit Group - cards within a suit with overlap per mockup */
+/* VMIN SCALING: Suit Group - cards within a suit with dynamic overlap */
 .suit-group {
   display: flex;
-  margin: 0 5px;
+  margin: 0 calc(var(--card-suit-gap) / 2);  /* Dynamic gap between suit groups */
 }
 
-/* Suit gap between groups */
+/* Suit gap between groups - uses CSS variable */
 .suit-gap {
-  width: 8px;
+  width: var(--card-suit-gap);
   flex-shrink: 0;
 }
 
@@ -1146,13 +1177,12 @@
 
 /* ========================================
    RESPONSIVE SAFETY NET - PLAY COMPONENTS
+   VMIN-based scaling handles most cases automatically
+   These media queries provide fallbacks for edge cases
    ======================================== */
 
 @media (max-width: 900px) {
-  .play-area {
-    height: 380px;
-    min-height: 380px;
-  }
+  /* Let CSS variables handle play-area sizing - no fixed values */
 
   /* Adjust E/W positions on smaller screens */
   .position-east {
@@ -1163,14 +1193,16 @@
     left: 15px;
   }
 
+  /* Cards use CSS variables - just set minimum bounds */
   .playable-card {
-    min-width: 44px;
-    min-height: 60px;
-    padding: 0;
+    /* Minimum bounds only - let vmin handle actual sizing */
+    min-width: calc(var(--bridge-unit) * 5);
+    min-height: calc(var(--bridge-unit) * 7);
   }
 
+  /* Overlap uses CSS variable - no fixed pixels */
   .suit-group .playable-card {
-    margin-left: -10px; /* Smaller overlap for medium screens */
+    margin-left: var(--card-overlap-horizontal);
   }
 
   .suit-group .playable-card:first-child {
@@ -1180,7 +1212,7 @@
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -10px;
+    margin-left: var(--card-overlap-horizontal);
   }
 
   .play-header {
@@ -1235,9 +1267,12 @@
     height: 50px;
   }
 
+  /* Adjust scale at 768px breakpoint */
+  --table-scale: 0.85;
+
   .playable-card {
-    width: 42px;
-    height: 56px;
+    width: var(--card-width);
+    height: var(--card-height);
     margin: 0;
   }
 
@@ -1274,10 +1309,11 @@
     flex-wrap: wrap;
     min-height: auto;
     max-width: 100%;
+    gap: var(--card-suit-gap);
   }
 
   .suit-group .playable-card {
-    margin-left: -22px; /* Less overlap for mobile to fit more cards */
+    margin-left: var(--card-overlap-horizontal);
     margin-top: 0;
     margin-right: 0;
   }
@@ -1294,7 +1330,7 @@
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -22px;
+    margin-left: var(--card-overlap-horizontal);
   }
 
   .playable-card .rank {
@@ -1321,6 +1357,11 @@
 
 /* Mobile phones - smaller cards per UI Redesign Spec */
 @media (max-width: 480px) {
+  /* Adjust scale at 480px breakpoint */
+  :root {
+    --table-scale: 0.75;
+  }
+
   .play-area {
     height: 320px;
     min-height: 320px;
@@ -1344,23 +1385,23 @@
   }
 
   .trick-card {
-    width: 36px;
-    height: 48px;
+    width: calc(var(--card-width) * 0.9);
+    height: calc(var(--card-height) * 0.9);
     border-radius: 4px;
   }
 
   .trick-card .rank {
-    font-size: 12px;
+    font-size: var(--card-rank-size);
   }
 
   .trick-card .suit {
-    font-size: 14px;
+    font-size: var(--card-suit-size);
   }
 
-  /* Mobile playable cards */
+  /* Mobile playable cards - use CSS variables */
   .playable-card {
-    width: 40px;
-    height: 54px;
+    width: var(--card-width);
+    height: var(--card-height);
     border-radius: 5px;
     margin: 1px;
   }
@@ -1370,10 +1411,11 @@
     flex-wrap: nowrap;
     min-height: auto;
     padding: 2px;
+    gap: var(--card-suit-gap);
   }
 
   .suit-group .playable-card {
-    margin-left: -22px;
+    margin-left: var(--card-overlap-horizontal);
     margin-top: 0;
     margin-right: 0;
   }
@@ -1385,7 +1427,7 @@
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -22px;
+    margin-left: var(--card-overlap-horizontal);
   }
 
   .playable-card .rank {
@@ -1436,6 +1478,11 @@
 
 /* Extra small phones (Android <360px) */
 @media (max-width: 360px) {
+  /* Adjust scale at 360px breakpoint - tightest squeeze */
+  :root {
+    --table-scale: 0.65;
+  }
+
   .play-area {
     height: 280px;
     min-height: 280px;
@@ -1459,8 +1506,8 @@
   }
 
   .trick-card {
-    width: 34px;
-    height: 48px;
+    width: calc(var(--card-width) * 0.85);
+    height: calc(var(--card-height) * 0.85);
     border-radius: 3px;
   }
 
@@ -1472,35 +1519,36 @@
     font-size: 0.625rem;
   }
 
-  /* Extra small cards - Learn module small size (38x53) */
+  /* Extra small cards - use CSS variables with scale factor */
   .playable-card {
-    width: 38px;
-    height: 53px;
+    width: var(--card-width);
+    height: var(--card-height);
     padding: 2px 1px;
     border-radius: 4px;
   }
 
   .suit-group {
     padding: 1px;
+    gap: var(--card-suit-gap);
   }
 
-  /* Tighter overlap on very small screens */
+  /* Tighter overlap on very small screens - use CSS variable */
   .suit-group .playable-card {
-    margin-left: -18px;
+    margin-left: var(--card-overlap-horizontal);
   }
 
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -18px;
+    margin-left: var(--card-overlap-horizontal);
   }
 
   .playable-card .rank {
-    font-size: 0.7em;
+    font-size: var(--card-rank-size);
   }
 
   .playable-card .suit-symbol-large {
-    font-size: 0.9em;
+    font-size: var(--card-suit-size);
   }
 
   .playable-card .card-corner {
@@ -2219,5 +2267,73 @@
   .play-turn-prompt {
     padding: 5px 12px;
     font-size: 12px;
+  }
+}
+
+/* ========================================
+   P0 FIX: PLAY STAGE WRAPPER - Vertical Anchoring
+   Flex column layout pinning table to top, reserving bottom for South
+   ======================================== */
+
+.play-stage-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  /* Pin content to TOP - no vertical centering */
+  justify-content: flex-start;
+}
+
+/* Table section: grows to fill available space ABOVE bottom section */
+.play-stage-top {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+/* Bottom section: static 35vh (min 350px) for South hand + affordances */
+.play-stage-bottom {
+  flex: 0 0 auto;
+  height: clamp(350px, 35vh, 400px);
+  min-height: 350px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: visible;
+  /* Background to ensure visibility */
+  background: linear-gradient(to top, rgba(27, 77, 62, 0.98) 0%, rgba(27, 77, 62, 0.92) 80%, transparent 100%);
+  padding: 8px 0 16px;
+  box-sizing: border-box;
+}
+
+/* Feedback/affordance overlay container - positioned ABOVE South's cards */
+.play-feedback-overlay {
+  position: relative;
+  z-index: 1000;  /* Above ALL game assets including cards */
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  /* Left-aligned content per UI requirement */
+  text-align: left;
+}
+
+/* Responsive: Tablet */
+@media (max-width: 768px) {
+  .play-stage-bottom {
+    height: clamp(300px, 32vh, 350px);
+    min-height: 300px;
+  }
+}
+
+/* Responsive: Mobile */
+@media (max-width: 480px) {
+  .play-stage-bottom {
+    height: clamp(280px, 30vh, 320px);
+    min-height: 280px;
   }
 }

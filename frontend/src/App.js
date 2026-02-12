@@ -27,6 +27,8 @@ import { PlayWorkspace } from './components/workspaces/PlayWorkspace';
 import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UserProvider, useUser } from './contexts/UserContext';
+import { RoomProvider, useRoom } from './contexts/RoomContext';
+import { RoomLobby, RoomStatusBar } from './components/room';
 import WelcomeWizard from './components/onboarding/WelcomeWizard';
 import { SimpleLogin } from './components/auth/SimpleLogin';
 import { RegistrationPrompt } from './components/auth/RegistrationPrompt';
@@ -42,6 +44,7 @@ import { useDevMode } from './hooks/useDevMode';
 import { TrickPotentialChart, TrickPotentialButton } from './components/analysis/TrickPotentialChart';
 import LearningFlowsHub from './components/learning/flows/LearningFlowsHub';
 import SplitGameLayout from './components/layout/SplitGameLayout';
+import { ClaimModal } from './components/play/ClaimModal';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -373,6 +376,7 @@ function App() {
   const [showLearningFlowsHub, setShowLearningFlowsHub] = useState(false);
   const [learningModeTrack, setLearningModeTrack] = useState('bidding'); // 'bidding' or 'play'
   const [showModeSelector, setShowModeSelector] = useState(true); // Landing page - shown by default
+  const [showTeamPractice, setShowTeamPractice] = useState(false); // Team Practice Lobby
 
   // Hand review - full-screen page (used for both post-game and dashboard review)
   const [showHandReviewPage, setShowHandReviewPage] = useState(false);
@@ -507,6 +511,11 @@ function App() {
   // Last trick display state
   const [showLastTrick, setShowLastTrick] = useState(false);
   const [lastTrick, setLastTrick] = useState(null);
+
+  // Claim modal state
+  const [showClaimModal, setShowClaimModal] = useState(false);
+  const [claimValidating, setClaimValidating] = useState(false);
+  const [claimValidationResult, setClaimValidationResult] = useState(null);
 
   // Extract last trick from play state whenever it changes
   useEffect(() => {
@@ -866,6 +875,12 @@ ${otherCommands}`;
         } else {
           setShowLearningDashboard(true);
         }
+        break;
+
+      case 'team':
+        // Open Team Practice Lobby
+        setShowTeamPractice(true);
+        setCurrentWorkspace(null);
         break;
 
       default:
@@ -1692,41 +1707,37 @@ ${otherCommands}`;
   };
 
   /**
-   * Handle claim for remaining tricks
-   * Opens a dialog for the user to claim N tricks, validates with DDS on backend
+   * Handle claim button click - opens the claim modal
    */
-  const handleClaim = async () => {
+  const handleClaim = () => {
     if (!playState) return;
 
-    // Calculate remaining tricks
-    const totalTricksPlayed = Object.values(playState.tricks_won).reduce((a, b) => a + b, 0);
-    const tricksRemaining = 13 - totalTricksPlayed;
+    // Reset modal state and open
+    setClaimValidationResult(null);
+    setClaimValidating(false);
+    setShowClaimModal(true);
+  };
 
-    if (tricksRemaining === 0) {
-      alert('No tricks remaining to claim.');
-      return;
-    }
+  /**
+   * Handle claim modal close
+   */
+  const handleClaimModalClose = () => {
+    // If claim was accepted (valid result), close immediately
+    // The score modal will be shown automatically
+    setShowClaimModal(false);
+    setClaimValidationResult(null);
+    setClaimValidating(false);
+  };
 
-    // Prompt user for number of tricks to claim
-    const input = window.prompt(
-      `How many of the ${tricksRemaining} remaining tricks do you claim?\n\n` +
-      `Enter a number from 0 to ${tricksRemaining}:`,
-      String(tricksRemaining)
-    );
-
-    // User cancelled
-    if (input === null) return;
-
-    const claimedTricks = parseInt(input, 10);
-
-    // Validate input
-    if (isNaN(claimedTricks) || claimedTricks < 0 || claimedTricks > tricksRemaining) {
-      alert(`Please enter a valid number between 0 and ${tricksRemaining}.`);
-      return;
-    }
+  /**
+   * Submit claim to backend - validates and completes hand if valid
+   */
+  const handleSubmitClaim = async (claimedTricks) => {
+    setClaimValidating(true);
+    setClaimValidationResult(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/validate-claim`, {
+      const response = await fetch(`${API_URL}/api/complete-with-claim`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({ claimed_tricks: claimedTricks })
@@ -1735,23 +1746,51 @@ ${otherCommands}`;
       const result = await response.json();
 
       if (!response.ok) {
-        alert(`Error: ${result.error || 'Failed to validate claim'}`);
+        setClaimValidationResult({
+          valid: false,
+          message: result.error || 'Failed to validate claim',
+          claimed: claimedTricks,
+          max_possible: null,
+          dds_available: false
+        });
+        setClaimValidating(false);
         return;
       }
 
-      // Show result
       if (result.valid) {
-        alert(`✅ ${result.message}`);
+        // Claim accepted! Close modal and show score
+        setShowClaimModal(false);
+        setClaimValidationResult(null);
+        setClaimValidating(false);
 
-        // TODO: Auto-complete the hand with claimed tricks
-        // For now, user can continue playing or start new hand
+        // Save hand to database (backend already updated play state with claimed tricks)
+        const saved = await saveHandToDatabase(result, auction, playState?.contract);
+        if (saved) result._saved = true;
+
+        // Set score data to trigger the result overlay
+        setScoreData(result);
       } else {
-        alert(`❌ ${result.message}`);
+        // Claim rejected - show result in modal
+        setClaimValidationResult({
+          valid: false,
+          message: result.message,
+          claimed: result.claimed,
+          max_possible: result.max_possible,
+          dds_available: result.dds_available
+        });
+        setClaimValidating(false);
       }
 
     } catch (err) {
-      console.error('Error validating claim:', err);
-      alert('Failed to validate claim. Please try again.');
+      console.error('Error submitting claim:', err);
+      setClaimValidationResult({
+        valid: false,
+        message: 'Failed to validate claim. Please try again.',
+        claimed: claimedTricks,
+        max_possible: null,
+        dds_available: false
+      });
+      setClaimValidating(false);
     }
   };
 
@@ -2953,6 +2992,16 @@ ${otherCommands}`;
         />
       )}
 
+      {/* Team Practice Lobby */}
+      {showTeamPractice && (
+        <RoomLobby
+          onBack={() => {
+            setShowTeamPractice(false);
+            setShowModeSelector(true);
+          }}
+        />
+      )}
+
       {/* Login Modal - Show when explicitly opened OR when not authenticated (after loading) */}
       {(showLogin || (!isAuthenticated && !authLoading)) && (
         <SimpleLogin onClose={() => {
@@ -3085,7 +3134,7 @@ ${otherCommands}`;
           {/* Main content: game column + coach panel using SplitGameLayout */}
           <SplitGameLayout
             isSidebarOpen={sessionMode === 'coached' && showCoachPanel}
-            sidebarWidth={300}
+            sidebarWidth={350}
             sidebar={
               sessionMode === 'coached' ? (
                 <CoachPanel
@@ -3336,10 +3385,10 @@ ${otherCommands}`;
             </div>
           )}
 
-          {/* Floating Result Overlay - appears over the game board when hand is complete */}
+          {/* Floating Result Overlay - appears over the game board when hand is complete (via tricks or claim) */}
           <ResultOverlay
             scoreData={scoreData}
-            isVisible={!!scoreData && Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) === 13}
+            isVisible={!!scoreData}
             onPlayAnotherHand={playRandomHand}
             onReplayHand={replayCurrentHand}
             onReviewHand={lastSavedHandId ? () => {
@@ -3529,6 +3578,19 @@ ${otherCommands}`;
         optimalBid={pendingBidFeedback?.feedback?.optimal_bid}
       />
 
+      {/* Claim Modal - for claiming remaining tricks during play */}
+      <ClaimModal
+        isOpen={showClaimModal}
+        onClose={handleClaimModalClose}
+        tricksRemaining={playState ? 13 - Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) : 0}
+        tricksWonNS={playState ? (playState.tricks_won?.N || 0) + (playState.tricks_won?.S || 0) : 0}
+        tricksWonEW={playState ? (playState.tricks_won?.E || 0) + (playState.tricks_won?.W || 0) : 0}
+        tricksNeeded={playState?.contract?.tricks_needed || 7}
+        onSubmitClaim={handleSubmitClaim}
+        isValidating={claimValidating}
+        validationResult={claimValidationResult}
+      />
+
       {/* ScoreDisplay modal replaced by floating ResultOverlay in play-phase section */}
 
       {/* Progress/Dashboard - Full-screen page */}
@@ -3662,12 +3724,14 @@ ${otherCommands}`;
     </div>
   );
 }
-// Wrap App with AuthProvider and UserProvider
+// Wrap App with AuthProvider, UserProvider, and RoomProvider
 function AppWithAuth() {
   return (
     <AuthProvider>
       <UserProvider>
-        <App />
+        <RoomProvider>
+          <App />
+        </RoomProvider>
       </UserProvider>
     </AuthProvider>
   );

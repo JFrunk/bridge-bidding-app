@@ -149,6 +149,25 @@
   color: var(--text-muted, #999999);
   font-weight: 400;
 }
+/* Deck-aware HCP hard-cap indicator - P0 FIX: Show "Max Possible [X]" clearly */
+.beliefs-hcp-capped {
+  font-size: var(--text-xs, 12px);
+  font-weight: 600;
+  color: var(--color-warning, #ff9800);
+  margin-left: 6px;
+  padding: 1px 6px;
+  background: rgba(255, 152, 0, 0.15);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Deck constraint label in HCP section header */
+.beliefs-hcp-deck-constraint {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-warning, #ff9800);
+  opacity: 0.8;
+}
 
 /* ── Suit lengths ── */
 .beliefs-suits-section {

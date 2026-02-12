@@ -294,11 +294,79 @@ def generate_hand_with_constraints(constraints: dict, deck: List[Card]):
     print(f"Warning: Could not generate a hand with constraints after {max_attempts} attempts.")
     return None, deck
 
-def generate_hand_for_convention(convention_specialist, deck: List[Card]):
+def generate_hand_for_convention(convention_specialist, deck: List[Card], timeout_ms: int = 500):
     """
     Generates a hand that meets convention constraints from a provided deck.
+
+    If the convention has a validate_hand() method, it will be called for
+    additional validation beyond basic constraints (e.g., Strong 2♣ checking
+    for 22+ HCP OR 19-21 HCP with 9+ playing tricks).
+
+    Args:
+        convention_specialist: Convention module with get_constraints() method
+        deck: Card deck to draw from
+        timeout_ms: Maximum time in milliseconds before giving up (default 500ms)
+
+    Returns:
+        (Hand, remaining_deck) or (None, deck) on failure
     """
+    import time
+
     if not hasattr(convention_specialist, 'get_constraints'):
         return None, deck
+
     constraints = convention_specialist.get_constraints()
-    return generate_hand_with_constraints(constraints, deck)
+    has_custom_validator = hasattr(convention_specialist, 'validate_hand')
+
+    start_time = time.time()
+    timeout_sec = timeout_ms / 1000.0
+
+    # If no custom validator, use standard constraint-based generation
+    if not has_custom_validator:
+        return generate_hand_with_constraints(constraints, deck)
+
+    # With custom validator, we need rejection sampling with validation
+    hcp_range = constraints.get('hcp_range', (0, 40))
+    is_balanced = constraints.get('is_balanced')
+    suit_length_req = constraints.get('suit_length_req')
+    min_longest_suit = constraints.get('min_longest_suit')
+
+    max_attempts = 50000  # High limit since we have timeout
+
+    for attempt in range(max_attempts):
+        # Check timeout
+        if time.time() - start_time > timeout_sec:
+            print(f"⚠️ Convention hand generation timed out after {timeout_ms}ms ({attempt} attempts)")
+            return None, deck
+
+        random.shuffle(deck)
+        hand_cards = deck[:13]
+        temp_hand = Hand(hand_cards)
+
+        # Check basic constraints first (fast rejection)
+        if not (hcp_range[0] <= temp_hand.hcp <= hcp_range[1]):
+            continue
+
+        if is_balanced is not None and temp_hand.is_balanced != is_balanced:
+            continue
+
+        if suit_length_req:
+            suits_list, min_length, mode = suit_length_req
+            if mode == 'any_of':
+                if not any(temp_hand.suit_lengths[suit] >= min_length for suit in suits_list):
+                    continue
+            elif mode == 'all_of':
+                if not all(temp_hand.suit_lengths[suit] >= min_length for suit in suits_list):
+                    continue
+
+        if min_longest_suit:
+            if max(temp_hand.suit_lengths.values()) < min_longest_suit:
+                continue
+
+        # Basic constraints pass - now check custom validator
+        if convention_specialist.validate_hand(temp_hand):
+            remaining_deck = deck[13:]
+            return temp_hand, remaining_deck
+
+    print(f"⚠️ Could not generate hand for convention after {max_attempts} attempts")
+    return None, deck

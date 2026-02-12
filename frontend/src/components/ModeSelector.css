@@ -286,6 +286,15 @@
   background: var(--gradient-progress-hover);
 }
 
+.mode-button-team {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+}
+
+.mode-button-team:hover {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+}
+
 /* Footer Hint */
 .mode-selector-hint {
   font-size: var(--text-xs, 0.85rem);

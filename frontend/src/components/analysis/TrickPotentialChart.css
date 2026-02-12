@@ -116,10 +116,11 @@
 }
 
 /* Overlay mode (popup) - Light mode for readability */
+/* z-index: 1000 ensures charts appear ABOVE all game assets (cards, table) */
 .trick-potential-overlay {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;

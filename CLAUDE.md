@@ -76,6 +76,77 @@ Claude: *completes all three tasks*
 
 ---
 
+## ⚠️ MANDATORY: Reuse Existing Code - Never Recreate
+
+**CRITICAL: Before writing ANY new function, utility, or logic, you MUST verify that equivalent functionality does not already exist in the codebase.**
+
+Recreating existing functionality is a serious problem that:
+- Introduces bugs (new implementations are often wrong)
+- Creates maintenance burden (multiple implementations to keep in sync)
+- Causes inconsistency (different behaviors in different places)
+- Wastes time fixing what already works
+
+### Required Search Protocol
+
+**Before implementing ANY functionality, complete this checklist:**
+
+1. **Search for existing implementations:**
+```bash
+# Search for function/variable names related to what you're building
+grep -r "functionName\|relatedTerm" --include="*.js" --include="*.jsx" --include="*.py" frontend/src/ backend/
+
+# Search for the concept/feature
+grep -r "bidding.*history\|auction.*log" --include="*.js*" frontend/src/
+
+# Check utility directories specifically
+ls frontend/src/utils/
+ls backend/utils/
+```
+
+2. **Read related files completely:**
+   - If you find similar code, READ THE ENTIRE FILE before deciding to create something new
+   - Understand what already exists and why it was built that way
+
+3. **Check common locations for utilities:**
+   - `frontend/src/utils/` - Frontend utilities
+   - `backend/utils/` - Backend utilities
+   - `frontend/src/hooks/` - Custom React hooks
+   - `frontend/src/contexts/` - Shared state/context
+   - `backend/engine/` - Core engine logic
+
+4. **Ask yourself:**
+   - Does a function already do this or something very similar?
+   - Can I extend/modify existing code instead of creating new?
+   - Is there a utility module I should be importing from?
+
+### Key Rules
+
+- ✅ **ALWAYS search before writing** - No exceptions
+- ✅ **Import and reuse** existing utilities (seats.js, etc.)
+- ✅ **Extend existing functions** rather than creating parallel ones
+- ✅ **Ask the user** if unsure whether something exists
+- ❌ **NEVER assume** functionality doesn't exist without searching
+- ❌ **NEVER create a new utility** if one already handles the use case
+- ❌ **NEVER duplicate** state management, calculations, or display logic
+
+### Examples of What NOT to Do
+
+**BAD:** Creating a new `getBiddingHistory()` function when `auction` state already contains the history
+**BAD:** Writing inline seat position math when `utils/seats.js` already has `partner()`, `lho()`, `rho()`
+**BAD:** Creating a new card sorting function when one exists in the Hand component
+**BAD:** Duplicating HCP calculation logic when `Hand` class already computes it
+
+### When You Find Existing Code
+
+1. **Use it directly** via import
+2. **If it needs modification**, extend it rather than creating a parallel implementation
+3. **If it's buggy**, fix the existing code rather than working around it
+4. **Document** any non-obvious imports for future reference
+
+**Failure to follow this protocol results in code that is wrong, duplicative, and creates ongoing maintenance burden.**
+
+---
+
 ## Development Commands
 
 ### Backend (Python/Flask)
@@ -1242,11 +1313,110 @@ When trigger detected:
 
 ---
 
+## LLM-First Development Guidelines
+
+**Context:** This codebase is 100% LLM-generated (Claude Code + Gemini guidance). All future development will continue via LLM. These guidelines optimize for LLM development patterns.
+
+### File Size Limits
+
+LLMs naturally accumulate code in existing files. Proactively split to prevent monolithic growth:
+
+- **Maximum file size:** 500 lines
+- **Warning threshold:** 400 lines (split at next opportunity)
+- **App.js target:** <800 lines (after hook extraction)
+- **server.py target:** <300 lines (after route splitting)
+
+**When approaching limits:**
+```
+"This file is approaching 400 lines. Identify logical groupings
+that can be extracted to separate modules. Create new files for
+each grouping and update imports."
+```
+
+### State Management Limits
+
+- **Maximum useState per component:** 15 calls
+- **Related state must be grouped** in custom hooks
+- **New state requires justification:** Add comment explaining why state is needed
+
+**Pattern to follow:**
+```javascript
+// GOOD: Grouped in custom hook
+const { auction, nextBidder, handleBid } = useBidding();
+
+// BAD: Scattered individual states
+const [auction, setAuction] = useState([]);
+const [nextBidder, setNextBidder] = useState(null);
+```
+
+### Periodic Maintenance Prompts
+
+Run these prompts monthly to prevent entropy:
+
+1. **State audit:**
+   ```
+   "Audit App.js for useState calls that should be extracted to
+   custom hooks. Group related state and extract to hooks/ directory."
+   ```
+
+2. **Duplication check:**
+   ```
+   "Search for duplicate logic patterns across frontend components.
+   Consolidate into shared utilities or hooks."
+   ```
+
+3. **Dead code removal:**
+   ```
+   "Remove unused imports, commented-out code blocks, and
+   console.log statements (except those marked // KEEP)."
+   ```
+
+4. **Documentation sync:**
+   ```
+   "Verify CLAUDE.md accurately reflects current architecture.
+   Update any outdated sections."
+   ```
+
+### Before Adding New Code
+
+1. **Search first:** Always search for existing implementations
+2. **Check utilities:** Look in `utils/`, `hooks/`, `services/` directories
+3. **Consider extraction:** If adding >50 lines, should it be a new file?
+4. **Update docs:** If architecture changes, update CLAUDE.md
+
+### LLM-Friendly Patterns
+
+**DO:**
+- Keep functions small and focused (<50 lines)
+- Use explicit type annotations (TypeScript preferred)
+- Write descriptive comments explaining "why" not "what"
+- Create separate files for distinct concerns
+- Use meaningful names that provide context
+
+**DON'T:**
+- Add to monolithic files without considering extraction
+- Accumulate useState calls (group in hooks)
+- Leave console.log statements after debugging
+- Create workarounds with useRef for state issues
+- Duplicate logic instead of extracting utilities
+
+### Refactoring Reference
+
+See `docs/LLM_REFACTORING_PROMPTS.md` for comprehensive prompts to:
+- Extract state to custom hooks
+- Split server.py into route modules
+- Migrate to TypeScript
+- Add test coverage
+- Create documentation
+
+---
+
 ## Additional Resources
 
 - **Quick Start:** `.claude/QUICK_START.md` - Quick debugging and validation checklist
 - **Project Context:** `.claude/PROJECT_CONTEXT.md` - Comprehensive project information
 - **Coding Guidelines:** `.claude/CODING_GUIDELINES.md` - Systematic analysis and QA protocols
+- **LLM Refactoring Prompts:** `docs/LLM_REFACTORING_PROMPTS.md` - Comprehensive prompts for parallel refactoring
 - **Bidding Test Suite:** `docs/testing/BIDDING_TEST_SUITE.md` - Comprehensive bidding testing guide
 - **Play Test Suite:** `docs/testing/PLAY_TEST_SUITE.md` - Comprehensive card play testing guide
 - **Documentation Index:** `docs/README.md` - Complete documentation navigation

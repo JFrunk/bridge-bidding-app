@@ -390,8 +390,19 @@ const HandReviewModal = ({
   }, [handData?.play_history]);
 
   // Get user-controlled positions (S always, plus dummy when NS declaring)
+  // CRITICAL FIX: Always ensure 'S' is included to prevent false "AI play" messages
   const userControlledPositions = useMemo(() => {
-    return handData?.user_controlled_positions || ['S'];
+    const positions = handData?.user_controlled_positions || ['S'];
+    // Normalize all positions to single letters and always include South
+    const normalized = positions.map(p => {
+      const posMap = { 'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W' };
+      return posMap[p] || p;
+    });
+    // Ensure South is always included (user's default position)
+    if (!normalized.includes('S')) {
+      normalized.push('S');
+    }
+    return normalized;
   }, [handData?.user_controlled_positions]);
 
   // Map decisions by trick number AND position for accurate lookup
@@ -497,9 +508,13 @@ const HandReviewModal = ({
     if (!lastPlay) return null;
 
     const trickNum = Math.floor(lastPlayedIdx / 4) + 1;
-    const position = lastPlay.player || lastPlay.position;
+    const rawPosition = lastPlay.player || lastPlay.position;
+    // Normalize position to single letter (handle 'South' -> 'S', etc.)
+    const posMap = { 'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W' };
+    const position = posMap[rawPosition] || rawPosition;
 
     // Only show decision/info if this position was controlled by user
+    // CRITICAL FIX: Use normalized position for comparison
     if (!userControlledPositions.includes(position)) return null;
 
     // Look up by trick_position key for precise matching

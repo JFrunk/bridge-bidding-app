@@ -7,9 +7,10 @@ import { cn } from "../../lib/utils";
  * Displays a playing card with rank and suit in standard bridge card styling.
  * Content is positioned in the LEFT visible strip to remain visible when cards overlap.
  *
- * Per CC_CORRECTIONS:
- * - Card width: 48px, overlap: -16px, visible strip: 32px
- * - Content positioned in left 32px strip (or full width for last card)
+ * P0 FIX: Card sizing uses vmin units for proportional scaling at all zoom levels (80%-110%+)
+ * - Card dimensions: clamp(38px, 6vmin, 60px) width × clamp(53px, 8.4vmin, 84px) height
+ * - CSS variables --card-width and --card-height control sizing (see PlayComponents.css)
+ * - Content positioned in left visible strip (scales with card)
  *
  * @param {Object} props
  * @param {string} props.rank - Card rank: 'A', 'K', 'Q', 'J', 'T' (10), '9', etc.

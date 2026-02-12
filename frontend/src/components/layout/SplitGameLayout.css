@@ -13,6 +13,8 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  /* Center content when sidebar is closed */
+  justify-content: center;
 }
 
 /* LEFT PANEL: Main game content */
@@ -23,7 +25,15 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: flex 0.25s ease;
+  /* Smooth transition for width changes */
+  transition: all 0.3s ease-in-out;
+}
+
+/* When sidebar is closed, center the content */
+.split-game-layout:not(.sidebar-open) .split-game-main {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
 }
 
 /* Content wrapper: centers game table within available space */
@@ -38,18 +48,20 @@
 
 /* RIGHT PANEL: Sidebar */
 .split-game-sidebar {
-  flex: 0 0 var(--sidebar-width, 300px);  /* Fixed width, no grow/shrink */
-  width: var(--sidebar-width, 300px);
-  min-width: var(--sidebar-width, 300px);
-  max-width: var(--sidebar-width, 300px);
+  flex: 0 0 var(--sidebar-width, 350px);  /* Fixed width, no grow/shrink */
+  width: var(--sidebar-width, 350px);
+  min-width: var(--sidebar-width, 350px);
+  max-width: var(--sidebar-width, 350px);
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   border-left: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
   background: var(--cream-light, #faf8f4);
 
+  /* Smooth transition for width changes */
+  transition: width 0.3s ease-in-out;
   /* Slide-in animation */
-  animation: slideInRight 0.25s ease;
+  animation: slideInRight 0.3s ease-in-out;
 }
 
 @keyframes slideInRight {

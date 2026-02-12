@@ -103,20 +103,32 @@ class SeatBelief:
     def hcp_midpoint(self) -> float:
         return (self.hcp[0] + self.hcp[1]) / 2
 
-    def to_dict(self, hcp_cap: int = None, suit_caps: Dict[str, int] = None) -> dict:
+    def to_dict(self, hcp_cap: int = None, hcp_min_override: int = None,
+                suit_caps: Dict[str, int] = None) -> dict:
         """Serialize belief for API/frontend consumption.
 
         Args:
             hcp_cap: If provided, caps max HCP at this value (derived from
                      the 40-point constraint minus user's known HCP and
                      other seats' minimum HCP).
+            hcp_min_override: If provided, overrides the min HCP value.
+                     Used when the sum of all minimums exceeds the available
+                     HCP and proportional reduction is needed.
             suit_caps: If provided, dict mapping suit → max length cap
                        (derived from 13-card constraint minus user's own
                        suit lengths and other seats' minimum lengths).
         """
+        # Apply min override if provided (used for over-allocation correction)
+        hcp_min = self.hcp[0] if hcp_min_override is None else hcp_min_override
         hcp_max = self.hcp[1]
+
+        # Apply max cap
         if hcp_cap is not None:
-            hcp_max = min(hcp_max, max(self.hcp[0], hcp_cap))
+            hcp_max = min(hcp_max, max(hcp_min, hcp_cap))
+
+        # Ensure min doesn't exceed max after adjustments
+        if hcp_min > hcp_max:
+            hcp_min = hcp_max
 
         suits_out = {}
         for suit, r in self.suits.items():
@@ -127,7 +139,7 @@ class SeatBelief:
 
         return {
             'seat': self.seat,
-            'hcp': {'min': self.hcp[0], 'max': hcp_max},
+            'hcp': {'min': hcp_min, 'max': hcp_max},
             'suits': suits_out,
             'limited': self.limited,
             'tags': list(self.tags),
@@ -186,9 +198,10 @@ class BiddingState:
         """Serialize beliefs relative to a player's perspective.
 
         Returns partner, LHO, and RHO beliefs (not the player's own seat).
-        When my_hcp is provided, each seat's max HCP is capped based on
-        the known HCP total of 40 minus the user's HCP and the other
-        seats' minimum HCP.
+        When my_hcp is provided:
+        1. Each seat's max HCP is capped based on the 40-point constraint
+        2. Global validation ensures sum(all_mins) <= 40 - my_hcp
+        3. Global validation ensures sum(all_maxes) <= 40 - my_hcp
         When my_suit_lengths is provided, each seat's max suit length is
         capped based on the 13-card constraint minus the user's own suit
         lengths and other seats' minimum lengths.
@@ -201,12 +214,125 @@ class BiddingState:
 
         others = [partner_belief, lho_belief, rho_belief]
 
-        # Compute per-seat HCP caps from the 40-point constraint
+        # Compute HCP adjustments from the 40-point constraint
         hcp_caps = {}
+        hcp_min_adjustments = {}  # Track if we need to adjust minimums
         if my_hcp is not None:
+            available_hcp = 40 - my_hcp
+
+            # Step 1: Check if sum of minimums exceeds available HCP
+            total_mins = sum(b.hcp[0] for b in others)
+            if total_mins > available_hcp:
+                # CRITICAL: Minimums over-allocated. Need to reduce them.
+                # This indicates conflicting inferences that can't all be true.
+                # Strategy: Proportionally reduce each seat's min based on their share
+                excess = total_mins - available_hcp
+                for belief in others:
+                    if total_mins > 0:
+                        # Reduce each min proportionally to its contribution
+                        reduction = int((belief.hcp[0] / total_mins) * excess + 0.5)
+                        new_min = max(0, belief.hcp[0] - reduction)
+                        hcp_min_adjustments[belief.seat] = new_min
+                    else:
+                        hcp_min_adjustments[belief.seat] = belief.hcp[0]
+                logger.debug(f"HCP over-allocation: total mins {total_mins} > available {available_hcp}. "
+                             f"Adjustments: {hcp_min_adjustments}")
+
+            # Step 2: Compute per-seat max caps
             for belief in others:
-                other_mins = sum(b.hcp[0] for b in others if b is not belief)
-                hcp_caps[belief.seat] = 40 - my_hcp - other_mins
+                # Use adjusted mins if available, otherwise original mins
+                other_mins = sum(
+                    hcp_min_adjustments.get(b.seat, b.hcp[0])
+                    for b in others if b is not belief
+                )
+                hcp_caps[belief.seat] = available_hcp - other_mins
+
+            # Step 3: Ensure sum of maxes doesn't exceed available HCP
+            # First compute what the capped maxes would be
+            capped_maxes = {}
+            for belief in others:
+                belief_min = hcp_min_adjustments.get(belief.seat, belief.hcp[0])
+                cap = hcp_caps.get(belief.seat, belief.hcp[1])
+                capped_max = min(belief.hcp[1], max(belief_min, cap))
+                capped_maxes[belief.seat] = capped_max
+
+            # Check if sum of capped maxes still exceeds available
+            total_maxes = sum(capped_maxes.values())
+            if total_maxes > available_hcp:
+                # Reduce maxes to fit within budget.
+                # Strategy: Preserve bid-derived ranges, distribute remaining HCP
+                # evenly among unconstrained seats.
+                excess = total_maxes - available_hcp
+
+                # Compute priority for each seat:
+                # 0 = bid-derived (has tags from actual bids) - preserve
+                # 1 = pass-inferred (has pass tags) - reduce second
+                # 2 = unconstrained (no tags) - reduce first (distribute evenly)
+                def get_reduction_priority(belief):
+                    if not belief.tags:
+                        return 2  # Unconstrained - reduce first
+                    # Check for pass-derived tags
+                    pass_tags = {'passed_opening', 'passed_late', 'passed_response',
+                                 'passed_over_interference', 'passed_overcall',
+                                 'passed_over_opening'}
+                    if all(t in pass_tags for t in belief.tags):
+                        return 1  # Pass-inferred only - reduce second
+                    return 0  # Has bid-derived tags - preserve
+
+                # Create list with priority info
+                seats_info = []
+                for belief in others:
+                    belief_min = hcp_min_adjustments.get(belief.seat, belief.hcp[0])
+                    seats_info.append({
+                        'seat': belief.seat,
+                        'max': capped_maxes[belief.seat],
+                        'min': belief_min,
+                        'range': capped_maxes[belief.seat] - belief_min,
+                        'priority': get_reduction_priority(belief),
+                    })
+
+                # Group by priority
+                priority_groups = {}
+                for info in seats_info:
+                    p = info['priority']
+                    if p not in priority_groups:
+                        priority_groups[p] = []
+                    priority_groups[p].append(info)
+
+                # Process priority groups from highest (reduce first) to lowest
+                for priority in sorted(priority_groups.keys(), reverse=True):
+                    if excess <= 0:
+                        break
+                    group = priority_groups[priority]
+
+                    # Calculate total reducible in this group
+                    total_reducible = sum(info['max'] - info['min'] for info in group)
+
+                    if total_reducible == 0:
+                        continue
+
+                    # For same-priority seats, distribute reduction proportionally
+                    # to their current max values (fairer distribution)
+                    group_excess = min(excess, total_reducible)
+
+                    # Calculate proportional reduction for each seat in group
+                    total_max_in_group = sum(info['max'] for info in group)
+                    if total_max_in_group > 0:
+                        for info in group:
+                            # Proportional share of reduction
+                            share = info['max'] / total_max_in_group
+                            reduction = int(share * group_excess + 0.5)
+                            # Don't reduce below min
+                            actual_reduction = min(reduction, info['max'] - info['min'])
+                            info['max'] -= actual_reduction
+                            excess -= actual_reduction
+
+                # Apply final caps
+                for info in seats_info:
+                    hcp_caps[info['seat']] = info['max']
+
+                logger.debug(f"HCP max over-allocation: total maxes {total_maxes} > available {available_hcp}. "
+                             f"Final caps: {hcp_caps}")
 
         # Compute per-seat suit length caps from the 13-card constraint
         suit_caps_per_seat = {}
@@ -222,15 +348,64 @@ class BiddingState:
                     caps[suit] = 13 - my_len - other_mins
                 suit_caps_per_seat[belief.seat] = caps
 
+        # Build diagnostic info about HCP constraint validation
+        hcp_diagnostic = None
+        if my_hcp is not None:
+            available_hcp = 40 - my_hcp
+            # Compute final totals after all adjustments
+            partner_dict = partner_belief.to_dict(
+                hcp_cap=hcp_caps.get(partner_belief.seat),
+                hcp_min_override=hcp_min_adjustments.get(partner_belief.seat),
+                suit_caps=suit_caps_per_seat.get(partner_belief.seat))
+            lho_dict = lho_belief.to_dict(
+                hcp_cap=hcp_caps.get(lho_belief.seat),
+                hcp_min_override=hcp_min_adjustments.get(lho_belief.seat),
+                suit_caps=suit_caps_per_seat.get(lho_belief.seat))
+            rho_dict = rho_belief.to_dict(
+                hcp_cap=hcp_caps.get(rho_belief.seat),
+                hcp_min_override=hcp_min_adjustments.get(rho_belief.seat),
+                suit_caps=suit_caps_per_seat.get(rho_belief.seat))
+
+            final_min_sum = (partner_dict['hcp']['min'] + lho_dict['hcp']['min'] +
+                             rho_dict['hcp']['min'])
+            final_max_sum = (partner_dict['hcp']['max'] + lho_dict['hcp']['max'] +
+                             rho_dict['hcp']['max'])
+
+            original_min_sum = sum(b.hcp[0] for b in others)
+            original_max_sum = sum(b.hcp[1] for b in others)
+
+            hcp_diagnostic = {
+                'user_hcp': my_hcp,
+                'available_hcp': available_hcp,
+                'min_sum': final_min_sum,
+                'max_sum': final_max_sum,
+                'original_min_sum': original_min_sum,
+                'original_max_sum': original_max_sum,
+                'min_corrected': bool(hcp_min_adjustments),
+                'constraint_satisfied': final_min_sum <= available_hcp and final_max_sum <= available_hcp,
+            }
+
+            return {
+                'partner': partner_dict,
+                'lho': lho_dict,
+                'rho': rho_dict,
+                'agreed_suit': self.agreed_suits.get(pship),
+                'forcing': self.forcing.get(pship, 'none'),
+                'hcp_constraint': hcp_diagnostic,
+            }
+
         return {
             'partner': partner_belief.to_dict(
                 hcp_cap=hcp_caps.get(partner_belief.seat),
+                hcp_min_override=hcp_min_adjustments.get(partner_belief.seat),
                 suit_caps=suit_caps_per_seat.get(partner_belief.seat)),
             'lho': lho_belief.to_dict(
                 hcp_cap=hcp_caps.get(lho_belief.seat),
+                hcp_min_override=hcp_min_adjustments.get(lho_belief.seat),
                 suit_caps=suit_caps_per_seat.get(lho_belief.seat)),
             'rho': rho_belief.to_dict(
                 hcp_cap=hcp_caps.get(rho_belief.seat),
+                hcp_min_override=hcp_min_adjustments.get(rho_belief.seat),
                 suit_caps=suit_caps_per_seat.get(rho_belief.seat)),
             'agreed_suit': self.agreed_suits.get(pship),
             'forcing': self.forcing.get(pship, 'none'),
