@@ -3146,7 +3146,7 @@ ${otherCommands}`;
           onNewHand={playRandomHand}
           onPlayLastBid={startPlayPhase}
           onReplayLast={replayCurrentHand}
-          hasLastBidHand={isAuctionOver(auction)}
+          hasLastBidHand={isAuctionOver(displayAuction)}
           hasLastPlayedHand={!!initialDeal}
           isPlaying={false}
         />
@@ -3180,17 +3180,17 @@ ${otherCommands}`;
               <div className="bidding-area">
                 <h2>Bidding</h2>
                 {/* Turn indicator - Shows whose turn it is */}
-                {isAiBidding && players[nextPlayerIndex] !== 'South' && !isAuctionOver(auction) && (
+                {isAiBidding && players[nextPlayerIndex] !== 'South' && !isAuctionOver(displayAuction) && (
                   <div className="turn-message">
                     ⏳ Waiting for {players[nextPlayerIndex]} to bid...
                   </div>
                 )}
-                {!isAiBidding && players[nextPlayerIndex] === 'South' && !isAuctionOver(auction) && (
+                {!isAiBidding && canUserBid && !isAuctionOver(displayAuction) && (
                   <div className="turn-message your-turn">
                     ✅ Your turn to bid!
                   </div>
                 )}
-                <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(auction)} />
+                <BiddingTable auction={displayAuction} players={players} dealer={displayDealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(displayAuction)} />
                 {/* Bid feedback panel - shown when hint mode is enabled */}
                 {hintModeEnabled && (
                   <BidFeedbackPanel
@@ -3328,7 +3328,7 @@ ${otherCommands}`;
 
                   {/* Deal Actions */}
                   <div className="deal-actions">
-                    {isAuctionOver(auction) && !isPassedOut(auction) ? (
+                    {isAuctionOver(displayAuction) && !isPassedOut(displayAuction) ? (
                       <button className="deal-btn primary" data-testid="play-this-hand-button" onClick={startPlayPhase}>
                         ▶ Play This Hand
                       </button>
@@ -3337,10 +3337,10 @@ ${otherCommands}`;
                         🎲 Deal New Hand
                       </button>
                     )}
-                    <button className="deal-btn secondary" data-testid="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>
+                    <button className="deal-btn secondary" data-testid="replay-button" onClick={handleReplayHand} disabled={!initialDeal || displayAuction.length === 0}>
                       ↻ Rebid Hand
                     </button>
-                    {isAuctionOver(auction) && !isPassedOut(auction) && (
+                    {isAuctionOver(displayAuction) && !isPassedOut(displayAuction) && (
                       <button className="deal-btn secondary" onClick={dealNewHand}>
                         🎲 Deal New
                       </button>
@@ -3553,13 +3553,13 @@ ${otherCommands}`;
                   </div>
                 )}
                 {/* Primary action when bidding is complete */}
-                {isAuctionOver(auction) && !isPassedOut(auction) && (
+                {isAuctionOver(displayAuction) && !isPassedOut(displayAuction) && (
                   <button className="play-this-hand-button primary-action" data-testid="play-this-hand-button" onClick={startPlayPhase}>
                     ▶ Play This Hand
                   </button>
                 )}
                 {/* Show message when hand is passed out */}
-                {isPassedOut(auction) && (
+                {isPassedOut(displayAuction) && (
                   <div className="passed-out-message" data-testid="passed-out-message">
                     Passed Out - No contract
                   </div>
@@ -3573,7 +3573,7 @@ ${otherCommands}`;
                   ) : (
                     <button className="deal-button" data-testid="deal-button" onClick={dealNewHand}>🎲 Deal New Hand</button>
                   )}
-                  <button className="replay-button" data-testid="replay-button" onClick={handleReplayHand} disabled={!initialDeal || auction.length === 0}>🔄 Rebid Hand</button>
+                  <button className="replay-button" data-testid="replay-button" onClick={handleReplayHand} disabled={!initialDeal || displayAuction.length === 0}>🔄 Rebid Hand</button>
                 </div>
               </>
             ) : gamePhase === 'playing' ? (
