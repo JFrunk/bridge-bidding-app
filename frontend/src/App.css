@@ -612,6 +612,20 @@ body {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.85; transform: scale(1.02); }
 }
+
+/* Room mode: Partner is thinking indicator */
+.turn-message.partner-thinking {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--text-primary);
+  border: 2px solid var(--color-primary, #3b82f6);
+  animation: pulse-think 2s ease-in-out infinite;
+}
+
+@keyframes pulse-think {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
 .action-area {
   background-color: var(--bg-table-felt);
   border: 3px solid var(--bg-table-border);
@@ -1898,6 +1912,7 @@ html, body {
 }
 
 /* Game Column: center area with green felt background */
+/* P0 FIX: Use explicit height to prevent content from pushing south affordance off-screen */
 .bid-game-column {
   flex: 1;
   background: var(--table-green, #1a6b3c);
@@ -1905,6 +1920,8 @@ html, body {
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  height: 100%; /* Fill parent exactly */
+  max-height: 100vh; /* Never exceed viewport */
   min-height: 0;
   min-width: 0; /* Allow flex shrinking when coach panel is visible */
 }
@@ -1922,15 +1939,18 @@ html, body {
 }
 
 /* Game area: padded container inside game column */
-/* VMIN SCALING: Auto-scale stage that preserves internal proportions */
+/* P0 FIX: Strict flex column layout with south affordance anchored to bottom */
 .bid-game-area {
   flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end; /* Push content toward bottom */
   position: relative;
   z-index: 2;
   padding: 10px 24px 8px;
   min-height: 0;
+  height: 100%; /* Fill parent */
+  overflow: hidden; /* Prevent body-level scrolling */
   /* VMIN SCALING: Fluid max-width prevents table from becoming narrower than cards */
   max-width: min(90vw, 900px);
   margin: 0 auto;
@@ -1938,13 +1958,16 @@ html, body {
 }
 
 /* Hand container for cards - Physics v2.0 compliant */
+/* P0 FIX: Reserved height using vh for proportional scaling */
 .bid-hand-container {
   display: flex;
   justify-content: center;
+  align-items: center;
   padding: 8px 0 12px;
-  flex-shrink: 0;
-  /* Allow em-based cards to size naturally */
-  min-height: 90px;
+  flex-shrink: 0; /* Never squish the hand */
+  /* Proportional height: scales with viewport */
+  min-height: max(90px, 12vh);
+  height: auto;
   /* Container query context for responsive card sizing */
   container-type: inline-size;
   container-name: hand-container;
@@ -1997,15 +2020,53 @@ html, body {
 }
 
 /* ========================================
+   SOUTH AFFORDANCE ZONE - P0 STABILITY FIX
+   Combined hand + bidding section locked to viewport bottom
+   Prevents layout "hopping" during Dealing... state
+   ======================================== */
+.south-affordance-zone {
+  display: flex;
+  flex-direction: column;
+  min-height: 35vh;
+  flex-shrink: 0;
+  /* Anchor to bottom of game area */
+  margin-top: auto;
+  width: 100%;
+}
+
+/* When in loading/dealing state, maintain placeholder space */
+.south-affordance-zone.loading .bid-hand-container {
+  min-height: 12vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .south-affordance-zone {
+    min-height: 40vh; /* More space on smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .south-affordance-zone {
+    min-height: 45vh;
+  }
+}
+
+/* ========================================
    BIDDING SECTION V2 - Dark integrated section
    Contains: history, feedback, bidding box, actions
+   P0 FIX: Reserved bottom affordance - never pushed off screen
    ======================================== */
 
 .bidding-section {
-  flex: 1;
+  flex: 1 1 auto; /* Can grow but also shrink */
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  min-height: max(200px, 25vh); /* Reserved minimum height */
+  max-height: 45vh; /* Cap growth to prevent overwhelming */
   background: rgba(0, 0, 0, 0.15);
   border-radius: var(--radius-md, 8px);
   overflow: hidden;
@@ -2013,9 +2074,10 @@ html, body {
 
 /* Scrollable bidding history */
 .bidding-scroll {
-  flex: 1;
+  flex: 1 1 0%;
   overflow-y: auto;
-  min-height: 0;
+  min-height: 60px; /* At least show a few bids */
+  max-height: 20vh; /* Cap scroll area */
 }
 
 /* Bidding table within new layout */

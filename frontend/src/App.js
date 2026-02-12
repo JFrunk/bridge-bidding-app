@@ -401,6 +401,33 @@ function App() {
     return inRoom && !isHost && partnerConnected && roomGamePhase === 'waiting';
   }, [inRoom, isHost, partnerConnected, roomGamePhase]);
 
+  // Game is active in room mode (bidding or playing)
+  const isRoomGameActive = useMemo(() => {
+    return inRoom && (roomGamePhase === 'bidding' || roomGamePhase === 'playing');
+  }, [inRoom, roomGamePhase]);
+
+  // AUTO-HIDE lobby when game becomes active (view orchestration)
+  // Also sync local state from room state when in room mode
+  useEffect(() => {
+    if (isRoomGameActive) {
+      // Game started - unmount lobby, show game view
+      setShowTeamPractice(false);
+      setShowModeSelector(false);
+
+      // Sync local gamePhase from room state
+      if (roomGamePhase === 'bidding') {
+        setGamePhase('bidding');
+      } else if (roomGamePhase === 'playing') {
+        setGamePhase('playing');
+      }
+
+      // Sync hand from room state
+      if (roomHand && roomHand.length > 0) {
+        setHand(roomHand);
+      }
+    }
+  }, [isRoomGameActive, roomGamePhase, roomHand]);
+
   const [isAiBidding, setIsAiBidding] = useState(false);
   const [error, setError] = useState('');
   const [displayedMessage, setDisplayedMessage] = useState('');
@@ -3220,11 +3247,19 @@ ${otherCommands}`;
               <div className="bidding-area">
                 <h2>Bidding</h2>
                 {/* Turn indicator - Shows whose turn it is */}
-                {isAiBidding && players[nextPlayerIndex] !== 'South' && !isAuctionOver(displayAuction) && (
+                {/* Room mode: Partner is thinking */}
+                {inRoom && !isMyTurn && roomGamePhase === 'bidding' && !isAuctionOver(displayAuction) && (
+                  <div className="turn-message partner-thinking">
+                    💭 Partner is thinking...
+                  </div>
+                )}
+                {/* Solo mode: AI bidding */}
+                {!inRoom && isAiBidding && players[nextPlayerIndex] !== 'South' && !isAuctionOver(displayAuction) && (
                   <div className="turn-message">
                     ⏳ Waiting for {players[nextPlayerIndex]} to bid...
                   </div>
                 )}
+                {/* Both modes: User's turn */}
                 {!isAiBidding && canUserBid && !isAuctionOver(displayAuction) && (
                   <div className="turn-message your-turn">
                     ✅ Your turn to bid!
@@ -3311,6 +3346,9 @@ ${otherCommands}`;
                   />
                 )}
 
+                {/* SOUTH AFFORDANCE ZONE - P0 STABILITY FIX */}
+                {/* Wraps hand + bidding section with 35vh minimum to prevent layout hopping */}
+                <div className={`south-affordance-zone ${!displayHand || displayHand.length === 0 ? 'loading' : ''}`}>
                 {/* Your Hand - Physics v2.0 compliant, uses shared Card component */}
                 {/* Scale: text-base (16px) = 56×80px cards - fits well above bidding section */}
                 <div className="bid-hand-container shrink-to-fit-center">
@@ -3387,6 +3425,7 @@ ${otherCommands}`;
                     )}
                   </div>
                 </div>
+                </div>{/* End south-affordance-zone */}
 
                 {error && <div className="error-message" style={{color: '#ff8a8a', textAlign: 'center', padding: '8px'}}>{error}</div>}
               </div>

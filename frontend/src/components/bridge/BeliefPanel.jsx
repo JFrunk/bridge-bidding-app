@@ -329,7 +329,7 @@ const BeliefPanel = ({ beliefs, myHcp }) => {
               </div>
             </div>
 
-            <SeatBeliefView belief={partner} />
+            <SeatBeliefView belief={applyDeckAwareHcpCap(partner, myHcp, 0, (lho?.hcp?.min || 0) + (rho?.hcp?.min || 0))} />
 
             {/* Combined footer */}
             {myHcp != null && (
