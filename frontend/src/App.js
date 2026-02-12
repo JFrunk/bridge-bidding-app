@@ -1066,13 +1066,28 @@ ${otherCommands}`;
     try {
       const auctionBids = auction.map(a => a.bid);
 
+      // Convert allHands to format expected by backend
+      // Backend expects: { N: [{rank, suit}, ...], E: [...], S: [...], W: [...] }
+      let handsData = null;
+      if (allHands) {
+        handsData = {};
+        const posMap = { 'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W' };
+        for (const [fullPos, data] of Object.entries(allHands)) {
+          const shortPos = posMap[fullPos];
+          if (shortPos && data?.hand) {
+            handsData[shortPos] = data.hand;
+          }
+        }
+      }
+
       const response = await fetch(`${API_URL}/api/start-play`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({
           auction_history: auctionBids,
           vulnerability: vulnerability,
-          dealer: dealer  // NEW: Send dealer to backend
+          dealer: dealer,
+          hands: handsData  // Send hands to avoid session state dependency
         })
       });
 
