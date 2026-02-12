@@ -1069,10 +1069,25 @@ ${otherCommands}`;
       // Convert allHands to format expected by backend
       // Backend expects: { N: [{rank, suit}, ...], E: [...], S: [...], W: [...] }
       let handsData = null;
-      if (allHands) {
+      let handsSource = allHands;
+
+      // If allHands not available, fetch them first
+      if (!handsSource) {
+        try {
+          const handsResponse = await fetch(`${API_URL}/api/get-all-hands`, { headers: { ...getSessionHeaders() } });
+          if (handsResponse.ok) {
+            const handsResult = await handsResponse.json();
+            handsSource = handsResult.hands;
+          }
+        } catch (e) {
+          console.warn('Could not fetch hands for play:', e);
+        }
+      }
+
+      if (handsSource) {
         handsData = {};
         const posMap = { 'North': 'N', 'East': 'E', 'South': 'S', 'West': 'W' };
-        for (const [fullPos, data] of Object.entries(allHands)) {
+        for (const [fullPos, data] of Object.entries(handsSource)) {
           const shortPos = posMap[fullPos];
           if (shortPos && data?.hand) {
             handsData[shortPos] = data.hand;
