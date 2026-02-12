@@ -1093,6 +1093,12 @@ ${otherCommands}`;
             handsData[shortPos] = data.hand;
           }
         }
+        console.log('📤 Sending hands to start-play:', {
+          positions: Object.keys(handsData),
+          cardCounts: Object.fromEntries(Object.entries(handsData).map(([k, v]) => [k, v?.length || 0]))
+        });
+      } else {
+        console.warn('⚠️ No hands available for start-play');
       }
 
       const response = await fetch(`${API_URL}/api/start-play`, {
@@ -1106,7 +1112,11 @@ ${otherCommands}`;
         })
       });
 
-      if (!response.ok) throw new Error("Failed to start play phase");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ start-play failed:', errorData);
+        throw new Error(errorData.error || "Failed to start play phase");
+      }
 
       const data = await response.json();
       console.log('Play started:', data);
