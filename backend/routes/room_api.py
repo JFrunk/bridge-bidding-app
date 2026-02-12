@@ -420,8 +420,129 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         return room_deal()
 
     # =========================================================================
+    # BIDDING ENDPOINTS
+    # =========================================================================
+
+    @app.route('/api/room/bid', methods=['POST'])
+    def room_bid():
+        """
+        Submit a bid in room mode
+
+        Request JSON:
+            {
+                "bid": "1NT" | "Pass" | "X" | "XX" | etc.
+            }
+
+        Response:
+            {
+                "success": true,
+                "auction_history": ["1NT", "Pass", ...],
+                "current_bidder": "E",
+                "is_my_turn": false,
+                "version": 6
+            }
+        """
+        session_id = get_session_id_from_request(request)
+        if not session_id:
+            return jsonify({
+                'success': False,
+                'error': 'No session ID provided'
+            }), 400
+
+        room = room_manager.get_room_by_session(session_id)
+        if not room:
+            return jsonify({
+                'success': False,
+                'error': 'Not in a room'
+            }), 404
+
+        # Check game phase
+        if room.game_phase != 'bidding':
+            return jsonify({
+                'success': False,
+                'error': f'Cannot bid in {room.game_phase} phase'
+            }), 400
+
+        # Check it's this player's turn
+        if not room.is_session_turn(session_id):
+            return jsonify({
+                'success': False,
+                'error': 'Not your turn to bid'
+            }), 403
+
+        data = request.get_json() or {}
+        bid = data.get('bid')
+
+        if not bid:
+            return jsonify({
+                'success': False,
+                'error': 'Bid required'
+            }), 400
+
+        # Add bid to auction history
+        room.auction_history.append(bid)
+        room.increment_version()
+
+        # Check if auction is complete (3 consecutive passes after opening bid)
+        auction_complete = _check_auction_complete(room.auction_history)
+
+        if auction_complete:
+            room.game_phase = 'complete'  # Or 'playing' if we implement play
+
+        # Auto-play AI bids for E/W
+        ai_bids = []
+        while not auction_complete:
+            current_bidder = room.get_current_bidder()
+            if current_bidder in ('E', 'W'):
+                # AI's turn - make a simple pass for now
+                # TODO: Integrate with actual bidding engine
+                ai_bid = 'Pass'
+                room.auction_history.append(ai_bid)
+                ai_bids.append({'position': current_bidder, 'bid': ai_bid})
+                room.increment_version()
+
+                auction_complete = _check_auction_complete(room.auction_history)
+                if auction_complete:
+                    room.game_phase = 'complete'
+            else:
+                # Human's turn - stop and wait for next request
+                break
+
+        return jsonify({
+            'success': True,
+            'bid': bid,
+            'ai_bids': ai_bids,
+            'auction_history': room.auction_history,
+            'current_bidder': room.get_current_bidder(),
+            'is_my_turn': room.is_session_turn(session_id),
+            'game_phase': room.game_phase,
+            'auction_complete': auction_complete,
+            'version': room.version
+        })
+
+    # =========================================================================
     # HELPER FUNCTIONS
     # =========================================================================
+
+
+def _check_auction_complete(auction_history: list) -> bool:
+    """
+    Check if auction is complete (3 consecutive passes after opening bid,
+    or 4 passes with no bids)
+    """
+    if len(auction_history) < 4:
+        return False
+
+    # All passes (passed out)
+    if all(b == 'Pass' for b in auction_history):
+        return len(auction_history) >= 4
+
+    # Check for 3 consecutive passes after at least one non-pass bid
+    non_pass_bids = [b for b in auction_history if b != 'Pass']
+    if non_pass_bids and len(auction_history) >= 4:
+        return auction_history[-3:] == ['Pass', 'Pass', 'Pass']
+
+    return False
 
 
 def _generate_room_hands(settings: RoomSettings) -> dict:

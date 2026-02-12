@@ -28,7 +28,7 @@ import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UserProvider, useUser } from './contexts/UserContext';
 import { RoomProvider, useRoom } from './contexts/RoomContext';
-import { RoomLobby, RoomStatusBar } from './components/room';
+import { RoomLobby, RoomStatusBar, JoinRoomModal, RoomWaitingState } from './components/room';
 import WelcomeWizard from './components/onboarding/WelcomeWizard';
 import { SimpleLogin } from './components/auth/SimpleLogin';
 import { RegistrationPrompt } from './components/auth/RegistrationPrompt';
@@ -311,7 +311,26 @@ function App() {
     difficulty
   } = useUser();
 
+  // Room state - for Team Practice Lobby
+  const {
+    inRoom,
+    roomCode,
+    isHost,
+    myPosition,
+    partnerConnected,
+    gamePhase: roomGamePhase,
+    isMyTurn,
+    myHand: roomHand,
+    auction: roomAuction,
+    dealer: roomDealer,
+    vulnerability: roomVulnerability,
+    currentBidder: roomCurrentBidder,
+    leaveRoom,
+    submitBid: submitRoomBid,
+  } = useRoom();
+
   const [showLogin, setShowLogin] = useState(false);
+  const [showJoinRoomModal, setShowJoinRoomModal] = useState(false);
 
   // Dev mode - toggle with Ctrl+Shift+D (or Cmd+Shift+D on Mac)
   // Also available via URL param ?dev=true or console: window.enableDevMode()
@@ -338,6 +357,48 @@ function App() {
     const idx = players.indexOf(nextBidder);
     return idx >= 0 ? idx : 0;
   }, [nextBidder, players]);
+
+  // === ROOM MODE: Dynamic state swapping ===
+  // When in a room, use shared room state instead of local state
+  const displayHand = useMemo(() => {
+    if (inRoom && roomHand) return roomHand;
+    return hand;
+  }, [inRoom, roomHand, hand]);
+
+  const displayAuction = useMemo(() => {
+    if (inRoom && roomAuction) {
+      // Convert room auction (array of strings) to expected format {bid, explanation}
+      return roomAuction.map(bid => ({ bid, explanation: '' }));
+    }
+    return auction;
+  }, [inRoom, roomAuction, auction]);
+
+  const displayDealer = useMemo(() => {
+    if (inRoom && roomDealer) {
+      // Convert short position to full name
+      const posMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
+      return posMap[roomDealer] || roomDealer;
+    }
+    return dealer;
+  }, [inRoom, roomDealer, dealer]);
+
+  const displayVulnerability = useMemo(() => {
+    if (inRoom) return roomVulnerability || 'None';
+    return vulnerability;
+  }, [inRoom, roomVulnerability, vulnerability]);
+
+  // In room mode, determine if user can bid based on position and turn
+  const canUserBid = useMemo(() => {
+    if (inRoom) {
+      return isMyTurn && partnerConnected && roomGamePhase === 'bidding';
+    }
+    return nextBidder === 'South';
+  }, [inRoom, isMyTurn, partnerConnected, roomGamePhase, nextBidder]);
+
+  // Waiting for host to deal (guest joined but no hands yet)
+  const isWaitingForDeal = useMemo(() => {
+    return inRoom && !isHost && partnerConnected && roomGamePhase === 'waiting';
+  }, [inRoom, isHost, partnerConnected, roomGamePhase]);
 
   const [isAiBidding, setIsAiBidding] = useState(false);
   const [error, setError] = useState('');
@@ -2266,6 +2327,19 @@ ${otherCommands}`;
   };
 
   const handleUserBid = async (bid) => {
+    // ROOM MODE: Route to room bid submission
+    if (inRoom) {
+      if (!isMyTurn) {
+        setError("Not your turn!");
+        return;
+      }
+      const result = await submitRoomBid(bid);
+      if (!result.success) {
+        setError(result.error || 'Failed to submit bid');
+      }
+      return;
+    }
+
     // CRITICAL VALIDATION: Check if auction is already complete
     if (isAuctionOver(auction)) {
       console.warn('🚫 User tried to bid after auction ended');
@@ -2950,6 +3024,23 @@ ${otherCommands}`;
           onModuleSelect={handleNavModuleSelect}
           showTitle={!showModeSelector}
         >
+          {/* Join Room button - for Team Practice */}
+          {!inRoom && (
+            <button
+              className="nav-utility-button nav-join-button"
+              onClick={() => setShowJoinRoomModal(true)}
+              title="Join a partner's practice room"
+              data-testid="join-room-button"
+            >
+              Join Room
+            </button>
+          )}
+          {/* Room indicator when in a room */}
+          {inRoom && (
+            <span className="nav-room-indicator" title={`Room: ${roomCode}`}>
+              👥 {roomCode}
+            </span>
+          )}
           {/* Feedback button - text only */}
           <button
             className="nav-utility-button"
@@ -3017,6 +3108,22 @@ ${otherCommands}`;
           onClose={() => dismissRegistrationPrompt(false)}
         />
       )}
+
+      {/* Join Room Modal */}
+      <JoinRoomModal
+        isOpen={showJoinRoomModal}
+        onClose={() => setShowJoinRoomModal(false)}
+        onJoined={() => {
+          setShowModeSelector(false);
+          setShowTeamPractice(true);
+        }}
+      />
+
+      {/* Room Status Bar - shown when in a room during gameplay */}
+      {inRoom && !showTeamPractice && <RoomStatusBar />}
+
+      {/* Room Waiting State - Guest waiting for host to deal */}
+      {isWaitingForDeal && <RoomWaitingState />}
 
       {/* Glossary Drawer */}
       <GlossaryDrawer
@@ -3167,10 +3274,10 @@ ${otherCommands}`;
                 {/* Your Hand - Physics v2.0 compliant, uses shared Card component */}
                 {/* Scale: text-base (16px) = 56×80px cards - fits well above bidding section */}
                 <div className="bid-hand-container shrink-to-fit-center">
-                  {hand && hand.length > 0 ? (
+                  {displayHand && displayHand.length > 0 ? (
                     <div className="text-base flex flex-row gap-[0.6em] justify-center py-2 scale-on-squeeze">
                       {getSuitOrder(null).map(suit => {
-                        const suitCards = hand.filter(card => card.suit === suit);
+                        const suitCards = displayHand.filter(card => card.suit === suit);
                         if (suitCards.length === 0) return null;
                         // Dynamic spacing based on card count - tighter for smaller cards
                         const count = suitCards.length;
@@ -3197,7 +3304,7 @@ ${otherCommands}`;
                 <div className="bidding-section">
                   {/* Bidding History Table */}
                   <div className="bidding-scroll">
-                    <BiddingTable auction={auction} players={players} dealer={dealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(auction)} />
+                    <BiddingTable auction={displayAuction} players={players} dealer={displayDealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(displayAuction)} />
                   </div>
 
                   {/* Bid feedback - inline strip */}
@@ -3216,7 +3323,7 @@ ${otherCommands}`;
 
                   {/* Bidding Box - integrated into dark section */}
                   <div className="bidding-box-container">
-                    <BiddingBoxComponent onBid={handleUserBid} disabled={nextBidder !== 'South' || isAiBidding || isAuctionOver(auction)} auction={auction} />
+                    <BiddingBoxComponent onBid={handleUserBid} disabled={!canUserBid || isAiBidding || isAuctionOver(displayAuction)} auction={displayAuction} />
                   </div>
 
                   {/* Deal Actions */}
@@ -3430,7 +3537,7 @@ ${otherCommands}`;
             ) : gamePhase === 'bidding' && shouldShowHands ? (
               <>
                 {/* Bidding controls for table-layout view (shouldShowHands) */}
-                <BiddingBoxComponent onBid={handleUserBid} disabled={nextBidder !== 'South' || isAiBidding || isAuctionOver(auction)} auction={auction} />
+                <BiddingBoxComponent onBid={handleUserBid} disabled={!canUserBid || isAiBidding || isAuctionOver(displayAuction)} auction={displayAuction} />
                 {/* Convention mode badge */}
                 {activeConvention && (
                   <div className="convention-mode-badge" data-testid="convention-mode-badge">

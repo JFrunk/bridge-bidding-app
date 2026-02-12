@@ -1,0 +1,203 @@
+/**
+ * RoomWaitingState Styles
+ *
+ * Maintains stable 35vh reserved height at bottom for hand display area.
+ * This prevents layout shift when hands are dealt.
+ */
+
+.room-waiting-state {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 60px); /* Account for top nav */
+  padding: var(--space-6, 1.5rem);
+  background: linear-gradient(135deg, var(--bg-primary, #fff) 0%, var(--bg-secondary, #f9fafb) 100%);
+}
+
+.waiting-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-4, 1rem);
+  padding: var(--space-6, 1.5rem);
+}
+
+/* Animated icon */
+.waiting-icon {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--color-primary-light, #dbeafe);
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+.icon-inner {
+  position: relative;
+  font-size: 2.5rem;
+  z-index: 1;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.waiting-title {
+  margin: 0;
+  font-size: var(--text-xl, 1.25rem);
+  color: var(--text-primary, #1f2937);
+}
+
+.waiting-message {
+  margin: 0;
+  color: var(--text-secondary, #6b7280);
+  max-width: 300px;
+}
+
+.room-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: var(--radius-full, 9999px);
+}
+
+.room-code-label {
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-secondary, #6b7280);
+}
+
+.room-code-value {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-weight: 600;
+  color: var(--color-primary, #3b82f6);
+  letter-spacing: 0.1em;
+}
+
+.position-info {
+  display: flex;
+  gap: var(--space-4, 1rem);
+  margin-top: var(--space-2, 0.5rem);
+}
+
+.position-badge,
+.partner-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: var(--radius-md, 0.375rem);
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+
+.position-label,
+.partner-label {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #9ca3af);
+}
+
+.position-value {
+  font-weight: 600;
+  color: var(--color-primary, #3b82f6);
+}
+
+.partner-value {
+  font-weight: 600;
+  color: var(--color-success, #22c55e);
+}
+
+.hint-text {
+  margin: 0;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-muted, #9ca3af);
+  font-style: italic;
+}
+
+/* Reserved space for hand - P0 requirement: 35vh minimum */
+.hand-placeholder {
+  min-height: 35vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4, 1rem);
+  background: var(--bg-tertiary, #f3f4f6);
+  border-radius: var(--radius-lg, 0.75rem);
+  border: 2px dashed var(--border-color, #e5e7eb);
+  margin-top: auto;
+}
+
+.placeholder-cards {
+  display: flex;
+  justify-content: center;
+  gap: -20px;
+}
+
+.placeholder-card {
+  width: 50px;
+  height: 70px;
+  background: linear-gradient(135deg, var(--bg-secondary, #f9fafb), var(--bg-tertiary, #f3f4f6));
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-sm, 0.25rem);
+  margin-left: -25px;
+  animation: card-shimmer 1.5s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+.placeholder-card:first-child {
+  margin-left: 0;
+}
+
+@keyframes card-shimmer {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-2px);
+  }
+}
+
+.placeholder-label {
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-muted, #9ca3af);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .room-waiting-state {
+    padding: var(--space-4, 1rem);
+  }
+
+  .position-info {
+    flex-direction: column;
+    gap: var(--space-2, 0.5rem);
+  }
+
+  .placeholder-card {
+    width: 40px;
+    height: 56px;
+    margin-left: -20px;
+  }
+}

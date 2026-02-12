@@ -300,6 +300,42 @@ export function RoomProvider({ children }) {
     }
   }, [isHost]);
 
+  // Submit a bid in room mode
+  const submitBid = useCallback(async (bid) => {
+    if (!inRoom) {
+      return { success: false, error: 'Not in a room' };
+    }
+
+    if (!isMyTurn) {
+      return { success: false, error: 'Not your turn' };
+    }
+
+    try {
+      const response = await fetchWithSession(`${API_URL}/api/room/bid`, {
+        method: 'POST',
+        body: JSON.stringify({ bid }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setAuction(data.auction_history);
+        setCurrentBidder(data.current_bidder);
+        setIsMyTurn(data.is_my_turn);
+        setGamePhase(data.game_phase);
+        setRoomVersion(data.version);
+        return { success: true, data };
+      } else {
+        setError(data.error || 'Failed to submit bid');
+        return { success: false, error: data.error };
+      }
+    } catch (err) {
+      const errorMsg = err.message || 'Network error';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  }, [inRoom, isMyTurn]);
+
   // Poll room state
   const pollRoom = useCallback(async () => {
     if (!inRoom) return { success: false };
@@ -428,6 +464,7 @@ export function RoomProvider({ children }) {
     leaveRoom,
     updateSettings,
     dealHands,
+    submitBid,
     pollRoom,
 
     // Polling control
