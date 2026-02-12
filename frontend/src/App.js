@@ -331,6 +331,7 @@ function App() {
 
   const [showLogin, setShowLogin] = useState(false);
   const [showJoinRoomModal, setShowJoinRoomModal] = useState(false);
+  const [vulnerability, setVulnerability] = useState('None');
 
   // Dev mode - toggle with Ctrl+Shift+D (or Cmd+Shift+D on Mac)
   // Also available via URL param ?dev=true or console: window.enableDevMode()
@@ -417,7 +418,6 @@ function App() {
   const [scenarioList, setScenarioList] = useState([]);
   const [scenariosByLevel, setScenariosByLevel] = useState(null);
   const [initialDeal, setInitialDeal] = useState(null);
-  const [vulnerability, setVulnerability] = useState('None');
   const [allHands, setAllHands] = useState(null);
   // Single toggle for showing all hands - persisted to localStorage
   const [showAllHands, setShowAllHands] = useState(() => {
