@@ -483,6 +483,17 @@ function App() {
     }
   }, [inRoom, roomDealer, dealer]);
 
+  // ROOM MODE: Sync playState from room context
+  // Room's play_state comes from polling - need to sync to local playState
+  useEffect(() => {
+    if (!inRoom) return;
+
+    if (roomPlayState) {
+      console.log('🔄 Room: Syncing playState from room context');
+      setPlayState(roomPlayState);
+    }
+  }, [inRoom, roomPlayState]);
+
   const [isAiBidding, setIsAiBidding] = useState(false);
   const [error, setError] = useState('');
   const [displayedMessage, setDisplayedMessage] = useState('');
