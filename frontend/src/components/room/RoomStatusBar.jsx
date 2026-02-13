@@ -1,13 +1,14 @@
 /**
- * RoomStatusBar - Minimalist 40px Team Practice Bar
+ * RoomStatusBar - Minimalist 40px Team Practice Bar + Compass
  *
  * P0: Fixed at top, high-contrast, large text for accessibility
+ * P0: Compass Bar shows "You: SOUTH (Host) | Partner: NORTH | Opponents: AI (E/W)"
  * P1: Shows Drill Focus when convention is selected
  *
  * Layout:
  * - Left: Room Code (high-contrast green) + Drill Focus badge
  * - Center: Status (Waiting / Connected / Your Turn / Partner's Turn)
- * - Right: Leave Session button
+ * - Right: Deal + Leave buttons
  */
 
 import React from 'react';
@@ -27,6 +28,7 @@ export default function RoomStatusBar() {
   const {
     roomCode,
     isHost,
+    myPosition,
     partnerConnected,
     isMyTurn,
     gamePhase,
@@ -34,6 +36,8 @@ export default function RoomStatusBar() {
     settings,
     leaveRoom,
     dealHands,
+    error,
+    pollRoom,
   } = useRoom();
 
   // Host can deal when partner connected and in waiting phase
@@ -84,6 +88,17 @@ export default function RoomStatusBar() {
 
   const status = getStatus();
 
+  // Compass labels based on position
+  const myLabel = myPosition === 'S' ? 'SOUTH (Host)' : 'NORTH (Guest)';
+  const partnerLabel = myPosition === 'S' ? 'NORTH' : 'SOUTH';
+
+  // Check for connection error (404)
+  const hasConnectionError = error && (error.includes('404') || error.includes('Room closed'));
+
+  const handleReconnect = async () => {
+    await pollRoom();
+  };
+
   return (
     <>
       <div className="room-status-bar">
@@ -107,6 +122,15 @@ export default function RoomStatusBar() {
 
         {/* Right: Deal + Leave buttons */}
         <div className="room-status-right">
+          {hasConnectionError && (
+            <button
+              className="btn-reconnect"
+              onClick={handleReconnect}
+              title="Reconnect to session"
+            >
+              Reconnect
+            </button>
+          )}
           {canDeal && (
             <button
               className="btn-deal"
@@ -126,7 +150,16 @@ export default function RoomStatusBar() {
         </div>
       </div>
 
-      {/* Spacer to push content below fixed bar */}
+      {/* Compass Bar - High-contrast seat indicator */}
+      <div className="compass-bar">
+        <span className="compass-you">You: {myLabel}</span>
+        <span className="compass-divider">|</span>
+        <span className="compass-partner">Partner: {partnerLabel}</span>
+        <span className="compass-divider">|</span>
+        <span className="compass-opponents">Opponents: AI (E/W)</span>
+      </div>
+
+      {/* Spacer to push content below fixed bars */}
       <div className="room-bar-spacer" />
     </>
   );

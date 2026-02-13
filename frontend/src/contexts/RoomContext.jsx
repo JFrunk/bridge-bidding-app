@@ -352,14 +352,17 @@ export function RoomProvider({ children }) {
 
       // 304 Not Modified - no changes
       if (response.status === 304) {
+        // Clear any previous error on successful poll
+        if (error) setError(null);
         return { success: true, unchanged: true };
       }
 
       if (!response.ok) {
         if (response.status === 404) {
-          // Not in a room anymore
-          await leaveRoom();
-          return { success: false, error: 'Room closed' };
+          // Room not found - show reconnect option instead of auto-leaving
+          // This allows user to reconnect after server restart
+          setError('Room connection lost (404). Click Reconnect to try again.');
+          return { success: false, error: 'Room connection lost' };
         }
         throw new Error(`Poll failed: ${response.status}`);
       }
@@ -367,19 +370,24 @@ export function RoomProvider({ children }) {
       const data = await response.json();
 
       if (data.success) {
+        // Clear any previous error on successful poll
+        if (error) setError(null);
         updateFromRoomData(data);
         return { success: true, data };
       } else {
         if (!data.in_room) {
-          await leaveRoom();
+          // Room explicitly closed by host or expired
+          setError('Room has been closed.');
+          return { success: false, error: 'Room closed' };
         }
         return { success: false, error: data.error };
       }
     } catch (err) {
       console.warn('Poll error:', err);
+      setError(`Connection error: ${err.message}`);
       return { success: false, error: err.message };
     }
-  }, [inRoom, roomVersion, updateFromRoomData, leaveRoom]);
+  }, [inRoom, roomVersion, updateFromRoomData, error]);
 
   // Start polling
   const startPolling = useCallback(() => {

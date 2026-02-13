@@ -4,9 +4,9 @@
  */
 
 .room-status-bar {
-  /* Fixed at top - doesn't push content down */
+  /* Fixed below TopNavigation (64px on desktop, 56px on mobile) */
   position: fixed;
-  top: 0;
+  top: 64px;
   left: 0;
   right: 0;
   z-index: 900;
@@ -178,15 +178,85 @@
   color: #9b2c2c;
 }
 
-/* Spacer to push main content below fixed bar */
+/* Reconnect button - prominent blue */
+.btn-reconnect {
+  background: #3182ce;
+  border: 1px solid #2b6cb0;
+  color: #ffffff;
+  padding: 5px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  animation: reconnect-pulse 1.5s ease-in-out infinite;
+}
+
+.btn-reconnect:hover {
+  background: #2b6cb0;
+  border-color: #2c5282;
+}
+
+@keyframes reconnect-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(49, 130, 206, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(49, 130, 206, 0); }
+}
+
+/* Compass Bar - High-contrast seat indicator */
+.compass-bar {
+  position: fixed;
+  top: 104px; /* Below TopNavigation (64px) + status bar (40px) */
+  left: 0;
+  right: 0;
+  z-index: 899;
+
+  /* 32px height with flexbox layout */
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 20px;
+
+  /* HIGH-CONTRAST: Dark background with white text for legibility */
+  background: #2d3748;
+  border-bottom: 1px solid #1a202c;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+
+  /* Large, legible sans-serif text */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.compass-you {
+  color: #68d391; /* Green for "You" */
+}
+
+.compass-partner {
+  color: #63b3ed; /* Blue for "Partner" */
+}
+
+.compass-opponents {
+  color: #fc8181; /* Red for "Opponents" */
+}
+
+.compass-divider {
+  color: #718096; /* Gray divider */
+  font-weight: 400;
+}
+
+/* Spacer to push main content below BOTH fixed bars */
 .room-bar-spacer {
-  height: 40px;
+  height: 72px; /* 40px status bar + 32px compass bar */
   flex-shrink: 0;
 }
 
 /* Responsive adjustments */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .room-status-bar {
+    top: 56px; /* Tablet/mobile nav height */
     height: 48px;
     padding: 0 12px;
     font-size: 14px;
@@ -204,7 +274,14 @@
     display: none;
   }
 
+  .compass-bar {
+    top: 104px; /* 56px nav + 48px status bar */
+    height: 28px;
+    font-size: 13px;
+    gap: 8px;
+  }
+
   .room-bar-spacer {
-    height: 48px;
+    height: 76px; /* 48px status bar + 28px compass bar */
   }
 }

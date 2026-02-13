@@ -272,6 +272,15 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 'in_room': False
             }), 404
 
+        # UNBLOCK AI: If it's an AI's turn (E/W), trigger auto-bidding now
+        # This ensures AI bidding happens even if poll is the first call after deal
+        if room.game_phase == 'bidding':
+            current_bidder = room.get_current_bidder()
+            if current_bidder in ('E', 'W'):
+                ai_bids = auto_bid_for_ai(room)
+                if ai_bids:
+                    print(f"🤖 Poll triggered AI bids: {ai_bids}")
+
         # Check for version match (ETag-style)
         client_version = request.args.get('version', type=int)
         if client_version is not None and client_version == room.version:
