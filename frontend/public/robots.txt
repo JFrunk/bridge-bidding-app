@@ -2,6 +2,8 @@
 # Interactive app: do not index (lesson content lives on mybridgebuddy.com)
 
 User-agent: *
+Allow: /privacy
+Allow: /about
 Disallow: /api/
 Disallow: /static/js/
 Disallow: /static/css/

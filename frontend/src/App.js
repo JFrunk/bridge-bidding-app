@@ -45,6 +45,9 @@ import { TrickPotentialChart, TrickPotentialButton } from './components/analysis
 import LearningFlowsHub from './components/learning/flows/LearningFlowsHub';
 import SplitGameLayout from './components/layout/SplitGameLayout';
 import { ClaimModal } from './components/play/ClaimModal';
+import { PrivacyPage } from './components/legal/PrivacyPage';
+import { AboutPage } from './components/legal/AboutPage';
+import { Footer } from './components/navigation/Footer';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -531,6 +534,8 @@ function App() {
   const [learningModeTrack, setLearningModeTrack] = useState('bidding'); // 'bidding' or 'play'
   const [showModeSelector, setShowModeSelector] = useState(true); // Landing page - shown by default
   const [showTeamPractice, setShowTeamPractice] = useState(false); // Team Practice Lobby
+  const [showPrivacy, setShowPrivacy] = useState(false); // Privacy modal
+  const [showAbout, setShowAbout] = useState(false); // About modal
 
   // Hand review - full-screen page (used for both post-game and dashboard review)
   const [showHandReviewPage, setShowHandReviewPage] = useState(false);
@@ -4037,6 +4042,20 @@ ${otherCommands}`;
 
       {/* DDS Status Indicator - Dev mode only */}
       {isDevMode && <DDSStatusIndicator />}
+
+      {/* Privacy Modal */}
+      <PrivacyPage isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
+
+      {/* About Modal */}
+      <AboutPage isOpen={showAbout} onClose={() => setShowAbout(false)} />
+
+      {/* Footer with trust links - shown on mode selector */}
+      {showModeSelector && (
+        <Footer
+          onPrivacyClick={() => setShowPrivacy(true)}
+          onAboutClick={() => setShowAbout(true)}
+        />
+      )}
 
       {/* Dev mode indicator - subtle badge when dev mode is active */}
       {isDevMode && (
