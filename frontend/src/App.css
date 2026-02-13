@@ -11,6 +11,44 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* ========================================
+   P0: 3-TIER ZONE ARCHITECTURE
+   Zone 1: Header (60px fixed)
+   Zone 2: Game Stage (flex: 1, scrollable)
+   Zone 3: South Affordance (35vh, min 320px)
+   ======================================== */
+
+.app-root-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.zone-header {
+  flex: 0 0 60px;
+  height: 60px;
+  z-index: 100;
+}
+
+.zone-game-stage {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.zone-south-affordance {
+  height: 35vh;
+  min-height: 320px;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+/* Z-Index Hierarchy */
+/* Zone 1 & 3: 100 */
+/* Overlays (modals, drawers, charts): 1000 */
+/* TopNavigation: 1000 (existing) */
+
 /* Responsive: Reduce body padding on small screens */
 @media (max-width: 768px) {
   body {
