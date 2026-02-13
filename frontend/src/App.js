@@ -325,8 +325,11 @@ function App() {
     dealer: roomDealer,
     vulnerability: roomVulnerability,
     currentBidder: roomCurrentBidder,
+    playState: roomPlayState,
     leaveRoom,
     submitBid: submitRoomBid,
+    startRoomPlay,
+    playRoomCard,
     error: roomError,
   } = useRoom();
 
@@ -1142,6 +1145,27 @@ ${otherCommands}`;
   // ========== CARD PLAY FUNCTIONS ==========
 
   const startPlayPhase = async () => {
+    // Room mode: Use room-aware play endpoints
+    if (inRoom) {
+      if (!isHost) {
+        // Guest cannot start play - this shouldn't happen, button should be disabled
+        console.warn('Guest cannot start play - waiting for host');
+        return;
+      }
+
+      // Host starts room play
+      const result = await startRoomPlay();
+      if (result.success) {
+        console.log('🎮 Room play started:', result.data);
+        setGamePhase('playing');
+      } else {
+        console.error('Failed to start room play:', result.error);
+        setError(result.error);
+      }
+      return;
+    }
+
+    // Individual mode: Use session-based play endpoints
     try {
       const auctionBids = auction.map(a => a.bid);
 
@@ -1276,6 +1300,35 @@ ${otherCommands}`;
 
   const handleCardPlay = async (card) => {
     console.log('🃏 handleCardPlay called:', { card, isPlayingCard });
+
+    // Room mode: Use room-aware play endpoint
+    if (inRoom) {
+      try {
+        console.log('🎮 Room card play:', card);
+        setIsPlayingCard(true);
+
+        const result = await playRoomCard({ rank: card.rank, suit: card.suit });
+
+        if (result.success) {
+          console.log('✅ Room card played:', result.data);
+          // Update local hand state - remove played card
+          setHand(prevHand => prevHand.filter(c =>
+            !(c.rank === card.rank && c.suit === card.suit)
+          ));
+        } else {
+          console.error('Failed to play room card:', result.error);
+          setError(result.error);
+        }
+      } catch (err) {
+        console.error('Room card play error:', err);
+        setError(err.message);
+      } finally {
+        setIsPlayingCard(false);
+      }
+      return;
+    }
+
+    // Individual mode: Use session-based play endpoint
 
     // If there's a pending trick clear, execute it immediately before user plays
     if (trickClearTimeoutRef.current) {
@@ -3489,9 +3542,25 @@ ${otherCommands}`;
                   {/* Deal Actions */}
                   <div className="deal-actions">
                     {isAuctionOver(displayAuction) && !isPassedOut(displayAuction) ? (
-                      <button className="deal-btn primary" data-testid="play-this-hand-button" onClick={startPlayPhase}>
-                        ▶ Play This Hand
-                      </button>
+                      // Room mode: Guest waits for host to start play
+                      inRoom && !isHost ? (
+                        <div className="waiting-for-host" style={{
+                          background: 'rgba(59, 130, 246, 0.15)',
+                          border: '2px solid #3b82f6',
+                          borderRadius: '8px',
+                          padding: '12px 20px',
+                          color: '#93c5fd',
+                          fontWeight: '600',
+                          fontSize: '15px',
+                          textAlign: 'center'
+                        }}>
+                          ⏳ Waiting for Host to start play...
+                        </div>
+                      ) : (
+                        <button className="deal-btn primary" data-testid="play-this-hand-button" onClick={startPlayPhase}>
+                          ▶ Play This Hand
+                        </button>
+                      )
                     ) : (
                       <button className="deal-btn primary" data-testid="deal-button" onClick={dealNewHand}>
                         🎲 Deal New Hand
@@ -3715,9 +3784,24 @@ ${otherCommands}`;
                 )}
                 {/* Primary action when bidding is complete */}
                 {isAuctionOver(displayAuction) && !isPassedOut(displayAuction) && (
-                  <button className="play-this-hand-button primary-action" data-testid="play-this-hand-button" onClick={startPlayPhase}>
-                    ▶ Play This Hand
-                  </button>
+                  inRoom && !isHost ? (
+                    <div className="waiting-for-host" style={{
+                      background: 'rgba(59, 130, 246, 0.15)',
+                      border: '2px solid #3b82f6',
+                      borderRadius: '8px',
+                      padding: '12px 20px',
+                      color: '#93c5fd',
+                      fontWeight: '600',
+                      fontSize: '15px',
+                      textAlign: 'center'
+                    }}>
+                      ⏳ Waiting for Host to start play...
+                    </div>
+                  ) : (
+                    <button className="play-this-hand-button primary-action" data-testid="play-this-hand-button" onClick={startPlayPhase}>
+                      ▶ Play This Hand
+                    </button>
+                  )
                 )}
                 {/* Show message when hand is passed out */}
                 {isPassedOut(displayAuction) && (

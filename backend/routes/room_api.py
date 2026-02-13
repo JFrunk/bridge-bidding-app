@@ -587,8 +587,429 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         })
 
     # =========================================================================
+    # PLAY ENDPOINTS
+    # =========================================================================
+
+    @app.route('/api/room/start-play', methods=['POST'])
+    def room_start_play():
+        """
+        Start card play phase (host only)
+
+        Transitions room from bidding complete to playing phase.
+        Initializes shared PlayState for synchronized play.
+
+        Response:
+            {
+                "success": true,
+                "contract": "3NT by S",
+                "declarer": "S",
+                "dummy": "N",
+                "opening_leader": "W",
+                "play_state": { ... }
+            }
+        """
+        from engine.play_engine import PlayEngine, Contract, PlayState
+
+        session_id = get_session_id_from_request(request)
+        if not session_id:
+            return jsonify({
+                'success': False,
+                'error': 'No session ID provided'
+            }), 400
+
+        room = room_manager.get_room_by_session(session_id)
+        if not room:
+            return jsonify({
+                'success': False,
+                'error': 'Not in a room'
+            }), 404
+
+        # Only host can start play
+        if session_id != room.host_session_id:
+            return jsonify({
+                'success': False,
+                'error': 'Only host can start play'
+            }), 403
+
+        # Must be in complete phase (bidding finished)
+        if room.game_phase != 'complete':
+            return jsonify({
+                'success': False,
+                'error': f'Cannot start play in {room.game_phase} phase'
+            }), 400
+
+        # Determine contract from auction
+        dealer_positions = ['N', 'E', 'S', 'W']
+        dealer_idx = dealer_positions.index(room.dealer[0].upper())
+        contract = PlayEngine.determine_contract(room.auction_history, dealer_idx)
+
+        if not contract:
+            return jsonify({
+                'success': False,
+                'error': 'No valid contract (hand was passed out)'
+            }), 400
+
+        # Convert hands to format needed by PlayEngine
+        hands = {}
+        for pos_full, hand in room.deal.items():
+            pos_short = pos_full[0]  # 'North' -> 'N'
+            hands[pos_short] = hand
+
+        # Create play state
+        play_state = PlayEngine.create_play_session(contract, hands)
+
+        # Determine dummy (partner of declarer)
+        dummy = PlayEngine.partner(contract.declarer)
+
+        room.play_state = play_state
+        room.game_phase = 'playing'
+        room.increment_version()
+
+        # If opening leader is AI (E or W), trigger AI play
+        ai_plays = []
+        if play_state.next_to_play in ('E', 'W'):
+            ai_plays = _auto_play_for_ai(room)
+
+        return jsonify({
+            'success': True,
+            'contract': str(contract),
+            'declarer': contract.declarer,
+            'dummy': dummy,
+            'opening_leader': PlayEngine.next_player(contract.declarer),
+            'next_to_play': room.play_state.next_to_play,
+            'is_my_turn': room.is_session_turn(session_id),
+            'ai_plays': ai_plays,
+            'version': room.version
+        })
+
+    @app.route('/api/room/play-card', methods=['POST'])
+    def room_play_card():
+        """
+        Play a card in room mode
+
+        Request JSON:
+            {
+                "card": {"rank": "A", "suit": "♠"}
+            }
+
+        Response:
+            {
+                "success": true,
+                "card_played": {"rank": "A", "suit": "♠"},
+                "next_to_play": "E",
+                "is_my_turn": false,
+                "trick_complete": false,
+                "trick_winner": null,
+                "ai_plays": [...]
+            }
+        """
+        from engine.play_engine import PlayEngine
+        from engine.hand import Card
+
+        session_id = get_session_id_from_request(request)
+        if not session_id:
+            return jsonify({
+                'success': False,
+                'error': 'No session ID provided'
+            }), 400
+
+        room = room_manager.get_room_by_session(session_id)
+        if not room:
+            return jsonify({
+                'success': False,
+                'error': 'Not in a room'
+            }), 404
+
+        # Must be in playing phase
+        if room.game_phase != 'playing':
+            return jsonify({
+                'success': False,
+                'error': f'Cannot play card in {room.game_phase} phase'
+            }), 400
+
+        if not room.play_state:
+            return jsonify({
+                'success': False,
+                'error': 'No play state initialized'
+            }), 400
+
+        # Check it's this player's turn
+        if not room.is_session_turn(session_id):
+            return jsonify({
+                'success': False,
+                'error': 'Not your turn to play'
+            }), 403
+
+        data = request.get_json() or {}
+        card_data = data.get('card')
+
+        if not card_data or 'rank' not in card_data or 'suit' not in card_data:
+            return jsonify({
+                'success': False,
+                'error': 'Card with rank and suit required'
+            }), 400
+
+        card = Card(rank=card_data['rank'], suit=card_data['suit'])
+        player = room.play_state.next_to_play
+
+        # Handle dummy play - declarer controls dummy
+        actual_player = player
+        declarer = room.play_state.contract.declarer
+        dummy = PlayEngine.partner(declarer)
+
+        if player == dummy:
+            # Dummy's cards are played by declarer
+            actual_player = declarer
+            # Check if the session is declarer
+            session_position = room.get_position_for_session(session_id)
+            if session_position != declarer:
+                return jsonify({
+                    'success': False,
+                    'error': 'Only declarer can play dummy\'s cards'
+                }), 403
+
+        # Get the hand for the player whose turn it is
+        position_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[player]
+        hand = room.play_state.hands[player]
+
+        # Validate card is legal
+        trump_suit = None if room.play_state.contract.strain == 'NT' else room.play_state.contract.strain
+        if not PlayEngine.is_legal_play(card, hand, room.play_state.current_trick, trump_suit):
+            return jsonify({
+                'success': False,
+                'error': 'Illegal card play - must follow suit if able'
+            }), 400
+
+        # Play the card
+        room.play_state.current_trick.append((card, player))
+        hand.cards.remove(card)
+
+        # Reveal dummy after opening lead
+        if not room.play_state.dummy_revealed and len(room.play_state.trick_history) == 0:
+            if len(room.play_state.current_trick) == 1:
+                room.play_state.dummy_revealed = True
+
+        trick_complete = False
+        trick_winner = None
+
+        # Check if trick is complete
+        if len(room.play_state.current_trick) == 4:
+            trick_complete = True
+            trick_winner = PlayEngine.determine_trick_winner(
+                room.play_state.current_trick,
+                trump_suit
+            )
+
+            # Update tricks won
+            room.play_state.tricks_won[trick_winner] += 1
+
+            # Save trick to history
+            from engine.play_engine import Trick
+            trick = Trick(
+                cards=list(room.play_state.current_trick),
+                winner=trick_winner,
+                leader=room.play_state.current_trick_leader or player
+            )
+            room.play_state.trick_history.append(trick)
+
+            # Start new trick
+            room.play_state.current_trick = []
+            room.play_state.next_to_play = trick_winner
+            room.play_state.current_trick_leader = trick_winner
+
+            # Check if play is complete (13 tricks played)
+            if len(room.play_state.trick_history) == 13:
+                room.game_phase = 'complete'
+        else:
+            # Next player
+            room.play_state.next_to_play = PlayEngine.next_player(player)
+
+        room.increment_version()
+
+        # Auto-play for AI if it's their turn
+        ai_plays = []
+        if room.game_phase == 'playing' and room.play_state.next_to_play in ('E', 'W'):
+            ai_plays = _auto_play_for_ai(room)
+
+        return jsonify({
+            'success': True,
+            'card_played': {'rank': card.rank, 'suit': card.suit},
+            'player': player,
+            'next_to_play': room.play_state.next_to_play if room.game_phase == 'playing' else None,
+            'is_my_turn': room.is_session_turn(session_id),
+            'trick_complete': trick_complete,
+            'trick_winner': trick_winner,
+            'tricks_ns': room.play_state.tricks_won['N'] + room.play_state.tricks_won['S'],
+            'tricks_ew': room.play_state.tricks_won['E'] + room.play_state.tricks_won['W'],
+            'ai_plays': ai_plays,
+            'game_phase': room.game_phase,
+            'dummy_revealed': room.play_state.dummy_revealed,
+            'version': room.version
+        })
+
+    @app.route('/api/room/play-state', methods=['GET'])
+    def room_play_state():
+        """
+        Get current play state for room
+
+        Response includes visible hands based on position and dummy status.
+        """
+        from engine.play_engine import PlayEngine
+
+        session_id = get_session_id_from_request(request)
+        if not session_id:
+            return jsonify({
+                'success': False,
+                'error': 'No session ID provided'
+            }), 400
+
+        room = room_manager.get_room_by_session(session_id)
+        if not room:
+            return jsonify({
+                'success': False,
+                'error': 'Not in a room'
+            }), 404
+
+        if not room.play_state:
+            return jsonify({
+                'success': False,
+                'error': 'No play state'
+            }), 400
+
+        position = room.get_position_for_session(session_id)
+        ps = room.play_state
+        declarer = ps.contract.declarer
+        dummy = PlayEngine.partner(declarer)
+
+        # Determine visible hands
+        visible_hands = {}
+
+        # Always see your own hand
+        if position:
+            visible_hands[position] = room._serialize_hand(ps.hands[position])
+
+        # Dummy is visible after opening lead
+        if ps.dummy_revealed:
+            visible_hands[dummy] = room._serialize_hand(ps.hands[dummy])
+
+        # Declarer sees both their hand and dummy
+        if position == declarer:
+            visible_hands[dummy] = room._serialize_hand(ps.hands[dummy])
+
+        return jsonify({
+            'success': True,
+            'contract': str(ps.contract),
+            'declarer': declarer,
+            'dummy': dummy,
+            'next_to_play': ps.next_to_play,
+            'is_my_turn': room.is_session_turn(session_id),
+            'current_trick': [{'rank': c.rank, 'suit': c.suit, 'player': p} for c, p in ps.current_trick],
+            'trick_history': [
+                {
+                    'cards': [{'rank': c.rank, 'suit': c.suit, 'player': p} for c, p in t.cards],
+                    'winner': t.winner
+                } for t in ps.trick_history
+            ],
+            'tricks_ns': ps.tricks_won['N'] + ps.tricks_won['S'],
+            'tricks_ew': ps.tricks_won['E'] + ps.tricks_won['W'],
+            'visible_hands': visible_hands,
+            'dummy_revealed': ps.dummy_revealed,
+            'game_phase': room.game_phase,
+            'version': room.version
+        })
+
+    # =========================================================================
     # HELPER FUNCTIONS
     # =========================================================================
+
+
+def _auto_play_for_ai(room: RoomState) -> list:
+    """
+    Auto-play for E/W AI positions until a human's turn
+
+    Returns:
+        List of AI plays made: [{'player': 'E', 'card': {...}}, ...]
+    """
+    from engine.play_engine import PlayEngine
+    from engine.play.ai.simple_play_ai import SimplePlayAI
+
+    ai_plays = []
+
+    while room.game_phase == 'playing' and room.play_state:
+        current_player = room.play_state.next_to_play
+
+        if current_player not in ('E', 'W'):
+            # Human's turn - stop
+            break
+
+        # Get AI card selection
+        try:
+            ai = SimplePlayAI(difficulty=room.settings.ai_difficulty)
+
+            # Determine trump suit
+            trump_suit = None if room.play_state.contract.strain == 'NT' else room.play_state.contract.strain
+
+            # Get legal cards
+            hand = room.play_state.hands[current_player]
+            legal_cards = [
+                c for c in hand.cards
+                if PlayEngine.is_legal_play(c, hand, room.play_state.current_trick, trump_suit)
+            ]
+
+            if not legal_cards:
+                break  # Should never happen
+
+            # Select card (simple AI for now)
+            card = ai.select_card(
+                hand=hand,
+                current_trick=room.play_state.current_trick,
+                trump_suit=trump_suit,
+                legal_cards=legal_cards
+            )
+
+            # Play the card
+            room.play_state.current_trick.append((card, current_player))
+            hand.cards.remove(card)
+            ai_plays.append({'player': current_player, 'card': {'rank': card.rank, 'suit': card.suit}})
+
+            # Reveal dummy after opening lead
+            if not room.play_state.dummy_revealed and len(room.play_state.trick_history) == 0:
+                if len(room.play_state.current_trick) == 1:
+                    room.play_state.dummy_revealed = True
+
+            # Check if trick complete
+            if len(room.play_state.current_trick) == 4:
+                trick_winner = PlayEngine.determine_trick_winner(
+                    room.play_state.current_trick,
+                    trump_suit
+                )
+                room.play_state.tricks_won[trick_winner] += 1
+
+                from engine.play_engine import Trick
+                trick = Trick(
+                    cards=list(room.play_state.current_trick),
+                    winner=trick_winner,
+                    leader=room.play_state.current_trick_leader or current_player
+                )
+                room.play_state.trick_history.append(trick)
+
+                room.play_state.current_trick = []
+                room.play_state.next_to_play = trick_winner
+                room.play_state.current_trick_leader = trick_winner
+
+                if len(room.play_state.trick_history) == 13:
+                    room.game_phase = 'complete'
+                    break
+            else:
+                room.play_state.next_to_play = PlayEngine.next_player(current_player)
+
+            room.increment_version()
+
+        except Exception as e:
+            print(f"⚠️ AI play error for {current_player}: {e}")
+            break
+
+    return ai_plays
 
 
 def _check_auction_complete(auction_history: list) -> bool:

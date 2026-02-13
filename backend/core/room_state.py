@@ -181,7 +181,61 @@ class RoomState:
                 result['current_bidder'] = current_bidder
                 result['waiting_for'] = 'partner' if current_bidder in ('N', 'S') and current_bidder != position else 'ai'
 
+        # Include play state if in playing phase
+        if self.game_phase == 'playing' and self.play_state:
+            result['play_state'] = self._serialize_play_state(for_session)
+
         return result
+
+    def _serialize_play_state(self, for_session: Optional[str] = None) -> dict:
+        """Serialize play state for API response"""
+        if not self.play_state:
+            return None
+
+        ps = self.play_state
+        position = self.get_position_for_session(for_session) if for_session else None
+
+        # Determine declarer and dummy
+        declarer = ps.contract.declarer
+        from engine.play_engine import PlayEngine
+        dummy = PlayEngine.partner(declarer)
+
+        # Build visible hands based on position
+        visible_hands = {}
+
+        # Always see your own hand
+        if position and position in ps.hands:
+            visible_hands[position] = self._serialize_hand(ps.hands[position])
+
+        # Dummy is visible after opening lead
+        if ps.dummy_revealed and dummy in ps.hands:
+            visible_hands[dummy] = self._serialize_hand(ps.hands[dummy])
+
+        # Declarer always sees dummy
+        if position == declarer and dummy in ps.hands:
+            visible_hands[dummy] = self._serialize_hand(ps.hands[dummy])
+
+        return {
+            'contract': str(ps.contract),
+            'declarer': declarer,
+            'dummy': dummy,
+            'next_to_play': ps.next_to_play,
+            'current_trick': [
+                {'rank': c.rank, 'suit': c.suit, 'player': p}
+                for c, p in ps.current_trick
+            ],
+            'trick_history': [
+                {
+                    'cards': [{'rank': c.rank, 'suit': c.suit, 'player': p} for c, p in t.cards],
+                    'winner': t.winner
+                }
+                for t in ps.trick_history
+            ],
+            'tricks_ns': ps.tricks_won.get('N', 0) + ps.tricks_won.get('S', 0),
+            'tricks_ew': ps.tricks_won.get('E', 0) + ps.tricks_won.get('W', 0),
+            'visible_hands': visible_hands,
+            'dummy_revealed': ps.dummy_revealed,
+        }
 
     def _full_position_name(self, short: str) -> str:
         """Convert S/N/E/W to full position name"""

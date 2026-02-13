@@ -41,6 +41,9 @@ const RoomContext = createContext({
   vulnerability: 'None',
   currentBidder: null,
 
+  // Play state (shared for room play sync)
+  playState: null,
+
   // Settings
   settings: {
     deal_type: 'random',
@@ -55,6 +58,8 @@ const RoomContext = createContext({
   updateSettings: async () => {},
   dealHands: async () => {},
   pollRoom: async () => {},
+  startRoomPlay: async () => {},
+  playRoomCard: async () => {},
 
   // Polling control
   startPolling: () => {},
@@ -84,6 +89,9 @@ export function RoomProvider({ children }) {
   const [dealer, setDealer] = useState('N');
   const [vulnerability, setVulnerability] = useState('None');
   const [currentBidder, setCurrentBidder] = useState(null);
+
+  // Play state (shared for room play sync)
+  const [playState, setPlayState] = useState(null);
 
   // Settings
   const [settings, setSettings] = useState({
@@ -133,6 +141,12 @@ export function RoomProvider({ children }) {
     }
     if (room.settings) {
       setSettings(room.settings);
+    }
+    // Update play state if present
+    if (room.play_state) {
+      setPlayState(room.play_state);
+    } else if (room.game_phase !== 'playing') {
+      setPlayState(null);
     }
   }, []);
 
@@ -231,6 +245,7 @@ export function RoomProvider({ children }) {
     setDealer('N');
     setVulnerability('None');
     setCurrentBidder(null);
+    setPlayState(null);
     setError(null);
   }, []);
 
@@ -327,6 +342,75 @@ export function RoomProvider({ children }) {
         return { success: true, data };
       } else {
         setError(data.error || 'Failed to submit bid');
+        return { success: false, error: data.error };
+      }
+    } catch (err) {
+      const errorMsg = err.message || 'Network error';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  }, [inRoom, isMyTurn]);
+
+  // Start play phase (host only) - transitions from bidding complete to playing
+  const startRoomPlay = useCallback(async () => {
+    if (!inRoom) {
+      return { success: false, error: 'Not in a room' };
+    }
+
+    if (!isHost) {
+      return { success: false, error: 'Only host can start play' };
+    }
+
+    try {
+      const response = await fetchWithSession(`${API_URL}/api/room/start-play`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setGamePhase('playing');
+        setIsMyTurn(data.is_my_turn);
+        setRoomVersion(data.version);
+        // Play state will be updated via next poll
+        return { success: true, data };
+      } else {
+        setError(data.error || 'Failed to start play');
+        return { success: false, error: data.error };
+      }
+    } catch (err) {
+      const errorMsg = err.message || 'Network error';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  }, [inRoom, isHost]);
+
+  // Play a card in room mode
+  const playRoomCard = useCallback(async (card) => {
+    if (!inRoom) {
+      return { success: false, error: 'Not in a room' };
+    }
+
+    if (!isMyTurn) {
+      return { success: false, error: 'Not your turn' };
+    }
+
+    try {
+      const response = await fetchWithSession(`${API_URL}/api/room/play-card`, {
+        method: 'POST',
+        body: JSON.stringify({ card }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setIsMyTurn(data.is_my_turn);
+        setGamePhase(data.game_phase);
+        setRoomVersion(data.version);
+        // Play state will be updated via next poll
+        return { success: true, data };
+      } else {
+        setError(data.error || 'Failed to play card');
         return { success: false, error: data.error };
       }
     } catch (err) {
@@ -463,6 +547,9 @@ export function RoomProvider({ children }) {
     vulnerability,
     currentBidder,
 
+    // Play state
+    playState,
+
     // Settings
     settings,
 
@@ -473,6 +560,8 @@ export function RoomProvider({ children }) {
     updateSettings,
     dealHands,
     submitBid,
+    startRoomPlay,
+    playRoomCard,
     pollRoom,
 
     // Polling control
