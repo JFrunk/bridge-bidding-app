@@ -1,0 +1,310 @@
+/**
+ * DDTableDisplay Styles - Double Dummy Analysis Table
+ *
+ * Design principles:
+ * - Overlay layering (z-index 999) ensures table appears ABOVE cards/game assets
+ * - Two-column layout: explanatory text left, table right
+ * - Backdrop blur for visual separation between Game Layer and Analysis Layer
+ * - Vertical stability with reserved min-height
+ * - Dismiss affordance (X button)
+ * - vmin-based scaling for legibility at all zoom levels
+ */
+
+/* ========================================
+   OVERLAY WRAPPER - High z-index for layering above cards
+   ======================================== */
+
+.dd-table-overlay {
+  position: relative;
+  z-index: 1000;  /* Above ALL game assets including BridgeCards and GameTable */
+  /* Static container: reserved height prevents jumping */
+  min-height: 280px;
+  width: 100%;
+  /* Backdrop for visual separation */
+  background: rgba(250, 250, 250, 0.97);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* ========================================
+   TWO-COLUMN LAYOUT - Text left, Table right
+   ======================================== */
+
+.dd-table-two-column {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* Left column: Explanatory text (30% width) */
+.dd-table-explanation {
+  flex: 0 0 30%;
+  max-width: 30%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 16px;
+  border-right: 1px solid #e5e7eb;
+  /* Internal scrollbar if text exceeds available space */
+  overflow-y: auto;
+  max-height: 240px;
+}
+
+.dd-table-explanation h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.dd-table-explanation p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.dd-table-explanation .explanation-highlight {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.dd-table-explanation .explanation-tip {
+  margin-top: auto;
+  padding: 8px 12px;
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: 6px;
+  font-size: 12px;
+  color: #1e40af;
+}
+
+.dd-table-explanation .color-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.dd-table-explanation .legend-game {
+  color: #2563eb;
+}
+
+.dd-table-explanation .legend-slam {
+  color: #7c3aed;
+}
+
+.dd-table-explanation .legend-grand {
+  color: #ca8a04;
+}
+
+/* Right column: Table (70% width) */
+.dd-table-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ========================================
+   DISMISS BUTTON - Top right corner
+   ======================================== */
+
+.dd-table-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1010;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.06);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 18px;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.dd-table-dismiss:hover {
+  background: rgba(0, 0, 0, 0.12);
+  color: #1f2937;
+}
+
+.dd-table-dismiss:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* ========================================
+   TABLE STYLES
+   ======================================== */
+
+.dd-table-container {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.dd-table-container h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+}
+
+.dd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(12px, 1.5vmin, 14px);
+}
+
+.dd-table th,
+.dd-table td {
+  padding: clamp(4px, 0.8vmin, 8px);
+  text-align: center;
+}
+
+.dd-table th {
+  font-weight: 700;
+  color: #374151;
+}
+
+.dd-table th.red-suit {
+  color: #dc2626;
+}
+
+.dd-table td {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dd-table td.position-header {
+  text-align: left;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* Level highlighting */
+.dd-table td.level-game {
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+.dd-table td.level-slam {
+  background-color: rgba(139, 92, 246, 0.15);
+}
+
+.dd-table td.level-grand {
+  background-color: rgba(234, 179, 8, 0.15);
+}
+
+/* Par display */
+.dd-table-par {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.dd-table-par .par-label {
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.dd-table-par .par-value {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* ========================================
+   COMPACT MODE - For small viewports
+   ======================================== */
+
+@media (max-height: 800px) {
+  .dd-table-overlay {
+    min-height: 220px;
+  }
+
+  .dd-table-two-column {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .dd-table-explanation h3 {
+    font-size: 14px;
+  }
+
+  .dd-table-explanation p {
+    font-size: 12px;
+  }
+
+  .dd-table {
+    font-size: 11px;
+  }
+
+  .dd-table th,
+  .dd-table td {
+    padding: 3px 4px;
+  }
+}
+
+/* ========================================
+   RESPONSIVE - Stack on tablet
+   ======================================== */
+
+@media (max-width: 900px) {
+  .dd-table-two-column {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .dd-table-explanation {
+    flex: 0 0 auto;
+    max-width: 100%;
+    padding-right: 0;
+    padding-bottom: 12px;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .dd-table-explanation .explanation-tip {
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .dd-table-overlay {
+    min-height: 200px;
+    border-radius: 8px;
+  }
+
+  .dd-table-two-column {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .dd-table-explanation h3 {
+    font-size: 13px;
+  }
+
+  .dd-table-explanation p {
+    font-size: 11px;
+  }
+
+  .dd-table {
+    font-size: 10px;
+  }
+
+  .dd-table-dismiss {
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+  }
+}
