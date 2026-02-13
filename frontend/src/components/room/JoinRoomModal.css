@@ -17,7 +17,17 @@
 }
 
 .join-room-modal {
-  background: var(--bg-primary, #fff);
+  /* LIGHT THEME: Override dark theme variables for modal */
+  --modal-bg: #ffffff;
+  --modal-text: #1f2937;
+  --modal-text-secondary: #6b7280;
+  --modal-text-muted: #9ca3af;
+  --modal-border: #e5e7eb;
+  --modal-bg-secondary: #f9fafb;
+  --modal-bg-hover: #f3f4f6;
+
+  background: var(--modal-bg);
+  color: var(--modal-text);
   border-radius: var(--radius-lg, 0.75rem);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   width: 100%;
@@ -33,14 +43,14 @@
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: var(--text-muted, #9ca3af);
+  color: var(--modal-text-muted, #9ca3af);
   cursor: pointer;
   padding: var(--space-1, 0.25rem);
   line-height: 1;
 }
 
 .modal-close-btn:hover {
-  color: var(--text-primary, #1f2937);
+  color: var(--modal-text, #1f2937);
 }
 
 .modal-header {
@@ -57,12 +67,12 @@
 .modal-header h2 {
   margin: 0 0 var(--space-2, 0.5rem);
   font-size: var(--text-xl, 1.25rem);
-  color: var(--text-primary, #1f2937);
+  color: var(--modal-text, #1f2937);
 }
 
 .modal-header p {
   margin: 0;
-  color: var(--text-secondary, #6b7280);
+  color: var(--modal-text-secondary, #6b7280);
   font-size: var(--text-sm, 0.875rem);
 }
 
@@ -96,11 +106,12 @@
   letter-spacing: 0.3em;
   text-align: center;
   padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
-  border: 2px solid var(--border-color, #e5e7eb);
+  border: 2px solid var(--modal-border, #e5e7eb);
   border-radius: var(--radius-lg, 0.75rem);
   width: 220px;
   text-transform: uppercase;
-  background: var(--bg-secondary, #f9fafb);
+  background: var(--modal-bg-secondary, #f9fafb);
+  color: var(--modal-text, #1f2937);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -108,17 +119,17 @@
   outline: none;
   border-color: var(--color-primary, #3b82f6);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  background: var(--bg-primary, #fff);
+  background: var(--modal-bg, #fff);
 }
 
 .room-code-input::placeholder {
-  color: var(--text-muted, #9ca3af);
+  color: var(--modal-text-muted, #9ca3af);
   letter-spacing: 0.2em;
 }
 
 .input-hint {
   font-size: var(--text-xs, 0.75rem);
-  color: var(--text-muted, #9ca3af);
+  color: var(--modal-text-muted, #9ca3af);
 }
 
 .modal-actions {
@@ -139,13 +150,13 @@
 }
 
 .btn-cancel {
-  background: var(--bg-secondary, #f9fafb);
-  color: var(--text-primary, #1f2937);
-  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--modal-bg-secondary, #f9fafb);
+  color: var(--modal-text, #1f2937);
+  border: 1px solid var(--modal-border, #e5e7eb);
 }
 
 .btn-cancel:hover {
-  background: var(--bg-hover, #f3f4f6);
+  background: var(--modal-bg-hover, #f3f4f6);
 }
 
 .btn-join {
@@ -166,14 +177,14 @@
 .modal-footer {
   margin-top: var(--space-4, 1rem);
   padding-top: var(--space-4, 1rem);
-  border-top: 1px solid var(--border-color, #e5e7eb);
+  border-top: 1px solid var(--modal-border, #e5e7eb);
   text-align: center;
 }
 
 .modal-footer p {
   margin: 0;
   font-size: var(--text-sm, 0.875rem);
-  color: var(--text-muted, #9ca3af);
+  color: var(--modal-text-muted, #9ca3af);
 }
 
 /* Back button */
@@ -184,13 +195,13 @@
   background: none;
   border: none;
   font-size: var(--text-sm, 0.875rem);
-  color: var(--text-muted, #9ca3af);
+  color: var(--modal-text-muted, #9ca3af);
   cursor: pointer;
   padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
 }
 
 .modal-back-btn:hover {
-  color: var(--text-primary, #1f2937);
+  color: var(--modal-text, #1f2937);
 }
 
 /* Mode selection buttons */
@@ -206,9 +217,9 @@
   flex-direction: column;
   align-items: center;
   padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
-  border: 2px solid var(--border-color, #e5e7eb);
+  border: 2px solid var(--modal-border, #e5e7eb);
   border-radius: var(--radius-lg, 0.75rem);
-  background: var(--bg-secondary, #f9fafb);
+  background: var(--modal-bg-secondary, #f9fafb);
   cursor: pointer;
   transition: all 0.15s;
   text-align: center;
@@ -216,7 +227,7 @@
 
 .mode-btn:hover:not(:disabled) {
   border-color: var(--color-primary, #3b82f6);
-  background: var(--bg-primary, #fff);
+  background: var(--modal-bg, #fff);
   transform: translateY(-2px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
@@ -242,13 +253,13 @@
 .mode-title {
   font-size: var(--text-lg, 1.125rem);
   font-weight: 600;
-  color: var(--text-primary, #1f2937);
+  color: var(--modal-text, #1f2937);
   margin-bottom: var(--space-1, 0.25rem);
 }
 
 .mode-desc {
   font-size: var(--text-sm, 0.875rem);
-  color: var(--text-secondary, #6b7280);
+  color: var(--modal-text-secondary, #6b7280);
 }
 
 /* Room code display (after creation) */
@@ -266,7 +277,7 @@
   font-weight: 700;
   letter-spacing: 0.15em;
   color: var(--color-primary, #3b82f6);
-  background: var(--bg-secondary, #f9fafb);
+  background: var(--modal-bg-secondary, #f9fafb);
   padding: var(--space-3, 0.75rem) var(--space-5, 1.25rem);
   border-radius: var(--radius-lg, 0.75rem);
   border: 2px solid var(--color-primary, #3b82f6);
@@ -283,7 +294,7 @@
 }
 
 .copy-btn:hover {
-  background: var(--bg-hover, #f3f4f6);
+  background: var(--modal-bg-hover, #f3f4f6);
 }
 
 /* Waiting message */
@@ -298,14 +309,14 @@
 
 .waiting-message p {
   margin: 0;
-  color: var(--text-secondary, #6b7280);
+  color: var(--modal-text-secondary, #6b7280);
   font-size: var(--text-sm, 0.875rem);
 }
 
 .waiting-spinner {
   width: 24px;
   height: 24px;
-  border: 3px solid var(--border-color, #e5e7eb);
+  border: 3px solid var(--modal-border, #e5e7eb);
   border-top-color: var(--color-primary, #3b82f6);
   border-radius: 50%;
   animation: spin 1s linear infinite;
