@@ -34,7 +34,7 @@ import { SimpleLogin } from './components/auth/SimpleLogin';
 import { RegistrationPrompt } from './components/auth/RegistrationPrompt';
 import DDSStatusIndicator from './components/DDSStatusIndicator';
 import AIDifficultySelector from './components/AIDifficultySelector';
-import { getSessionHeaders } from './utils/sessionHelper';
+import { getSessionHeaders, fetchWithSession } from './utils/sessionHelper';
 import { getRecentLogs } from './utils/consoleCapture';
 import { getRecentActions } from './utils/actionTracker';
 import { GlossaryDrawer } from './components/glossary';
@@ -327,6 +327,7 @@ function App() {
     currentBidder: roomCurrentBidder,
     leaveRoom,
     submitBid: submitRoomBid,
+    error: roomError,
   } = useRoom();
 
   const [showLogin, setShowLogin] = useState(false);
@@ -427,6 +428,57 @@ function App() {
       }
     }
   }, [isRoomGameActive, roomGamePhase, roomHand]);
+
+  // ROOM MODE: Sync nextBidder from roomCurrentBidder (short form → full form)
+  // This ensures AI bidding triggers correctly for E/W positions
+  useEffect(() => {
+    if (!inRoom || !roomCurrentBidder) return;
+
+    // Convert short position to full name
+    const positionMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
+    const fullPosition = positionMap[roomCurrentBidder] || roomCurrentBidder;
+
+    // Only update if different to avoid infinite loops
+    if (fullPosition !== nextBidder) {
+      console.log('🔄 Room: Syncing nextBidder:', roomCurrentBidder, '→', fullPosition);
+      setNextBidder(fullPosition);
+    }
+  }, [inRoom, roomCurrentBidder, nextBidder]);
+
+  // ROOM MODE: Sync auction from room state
+  // Room auction comes from polling, need to sync to local auction state
+  useEffect(() => {
+    if (!inRoom) return;
+
+    // Import roomAuction - need to convert to expected format if needed
+    const { auction: roomAuctionFromContext } = { auction: roomAuction };
+    if (roomAuctionFromContext && roomAuctionFromContext.length > 0) {
+      // Room auction might be just bid strings, convert to {bid, explanation} format
+      const formattedAuction = roomAuctionFromContext.map(bid =>
+        typeof bid === 'string' ? { bid, explanation: '' } : bid
+      );
+
+      // Only update if different
+      if (JSON.stringify(formattedAuction) !== JSON.stringify(auction)) {
+        console.log('🔄 Room: Syncing auction from room state:', formattedAuction.length, 'bids');
+        setAuction(formattedAuction);
+      }
+    }
+  }, [inRoom, roomAuction, auction]);
+
+  // ROOM MODE: Sync dealer from room state
+  useEffect(() => {
+    if (!inRoom || !roomDealer) return;
+
+    // Convert short to full name if needed
+    const positionMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
+    const fullDealer = positionMap[roomDealer] || roomDealer;
+
+    if (fullDealer !== dealer) {
+      console.log('🔄 Room: Syncing dealer:', roomDealer, '→', fullDealer);
+      setDealer(fullDealer);
+    }
+  }, [inRoom, roomDealer, dealer]);
 
   const [isAiBidding, setIsAiBidding] = useState(false);
   const [error, setError] = useState('');
@@ -2153,9 +2205,33 @@ ${otherCommands}`;
   };
 
   // Load scenario by name (for convention grid)
+  // In room mode, also updates room settings for sync to guest
   const loadScenarioByName = async (scenarioName) => {
     if (!scenarioName) return;
 
+    // ROOM MODE: Update room settings so guest sees the drill
+    if (inRoom && isHost) {
+      try {
+        const { updateSettings } = { updateSettings: async (s) => {
+          const response = await fetchWithSession(`${API_URL}/api/room/settings`, {
+            method: 'POST',
+            body: JSON.stringify(s),
+          });
+          return response.json();
+        }};
+        await updateSettings({
+          deal_type: 'convention',
+          convention_filter: scenarioName,
+        });
+        console.log('🎯 Room: Set drill focus to', scenarioName);
+        setActiveConvention(scenarioName);
+        return; // Don't load scenario directly - let host deal via status bar
+      } catch (err) {
+        console.error('Failed to update room settings:', err);
+      }
+    }
+
+    // Non-room mode: Load scenario directly
     // Invalidate any pending random deal (prevents race condition)
     dealRequestIdRef.current++;
 
@@ -2533,8 +2609,12 @@ ${otherCommands}`;
   // is written into state, re-triggering this effect for the next turn.
   useEffect(() => {
     console.log('🤖 AI BIDDING USEEFFECT:', {
-      isInitializing, isAiBidding, nextBidder, auctionLength: auction.length, gamePhase
+      isInitializing, isAiBidding, nextBidder, auctionLength: auction.length, gamePhase, inRoom, roomError
     });
+
+    // ROOM MODE: Skip local AI bidding UNLESS there's a room error (fallback to local)
+    // When room polling fails (e.g., server restart), continue with local AI
+    if (inRoom && !roomError) return;
 
     if (isInitializing) return;
 
@@ -2617,18 +2697,20 @@ ${otherCommands}`;
     };
 
     runAiTurn();
-  }, [nextBidder, isAiBidding, auction, isInitializing, dealer, gamePhase]);
+  }, [nextBidder, isAiBidding, auction, isInitializing, dealer, gamePhase, inRoom, roomError]);
 
   // Trigger AI bidding after initialization completes (if it's not South's turn)
+  // ROOM MODE: Skip UNLESS there's an error (fallback to local)
   useEffect(() => {
     if (showModeSelector) return;
+    if (inRoom && !roomError) return;  // Room mode: bidding handled by room polling (unless error)
     if (!isInitializing && gamePhase === 'bidding' && auction.length === 0
         && !hasTriggeredInitialBid.current && nextBidder && nextBidder !== 'South') {
       console.log('▶️ Starting AI bidding after init, nextBidder:', nextBidder);
       hasTriggeredInitialBid.current = true;
       setIsAiBidding(true);
     }
-  }, [isInitializing, gamePhase, auction.length, nextBidder, showModeSelector]);
+  }, [isInitializing, gamePhase, auction.length, nextBidder, showModeSelector, inRoom, roomError]);
 
   // AI play loop - runs during play phase
   useEffect(() => {
@@ -3150,8 +3232,8 @@ ${otherCommands}`;
         />
       )}
 
-      {/* Team Practice Lobby */}
-      {showTeamPractice && (
+      {/* Team Practice Lobby - Unmount when game is active (View Orchestration Rule) */}
+      {showTeamPractice && !isRoomGameActive && (
         <RoomLobby
           onBack={() => {
             setShowTeamPractice(false);
@@ -3186,11 +3268,11 @@ ${otherCommands}`;
         }}
       />
 
-      {/* Room Status Bar - shown when in a room during gameplay */}
-      {inRoom && !showTeamPractice && <RoomStatusBar />}
+      {/* Room Status Bar - Fixed 40px bar at top when in any room */}
+      {inRoom && <RoomStatusBar />}
 
-      {/* Room Waiting State - Guest waiting for host to deal */}
-      {isWaitingForDeal && <RoomWaitingState />}
+      {/* Room Waiting State - Guest waiting for host to deal (only when NOT game active) */}
+      {isWaitingForDeal && !isRoomGameActive && <RoomWaitingState />}
 
       {/* Glossary Drawer */}
       <GlossaryDrawer

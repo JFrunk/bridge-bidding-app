@@ -1,0 +1,165 @@
+/**
+ * ConventionReference Styles - SAYC Rule Quick Lookup
+ *
+ * P1 Feature: Hot-key in South affordance zone
+ * Constraint: Must not break 35vh reserved height for South's hand
+ */
+
+/* Reference Button - South Affordance Zone */
+.convention-ref-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.15s ease;
+}
+
+.convention-ref-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+.convention-ref-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Reference Panel - Positioned to not overlap South hand */
+.convention-ref-panel {
+  position: absolute;
+  bottom: calc(35vh + 20px); /* Above the 35vh South affordance */
+  right: 20px;
+  width: 320px;
+  max-width: calc(100vw - 40px);
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  z-index: 800;
+  overflow: hidden;
+}
+
+.convention-ref-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #1e40af 0%, #1e3a8a 100%);
+  color: white;
+}
+
+.convention-ref-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ref-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.ref-close:hover {
+  color: white;
+}
+
+/* Content */
+.convention-ref-content {
+  padding: 16px;
+}
+
+.convention-ref-content.empty {
+  text-align: center;
+  color: #6b7280;
+}
+
+.convention-ref-content.empty p {
+  margin: 8px 0;
+}
+
+.ref-hint {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* Sections */
+.ref-section {
+  margin-bottom: 14px;
+}
+
+.ref-section:last-child {
+  margin-bottom: 0;
+}
+
+.ref-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.ref-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.ref-text {
+  margin: 0;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* Responses list */
+.ref-responses {
+  margin: 4px 0 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.ref-responses li {
+  margin-bottom: 4px;
+}
+
+.ref-responses li:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .convention-ref-panel {
+    right: 10px;
+    left: 10px;
+    width: auto;
+    bottom: calc(35vh + 10px);
+  }
+
+  .convention-ref-header {
+    padding: 12px 14px;
+  }
+
+  .convention-ref-header h4 {
+    font-size: 15px;
+  }
+
+  .convention-ref-content {
+    padding: 14px;
+  }
+}

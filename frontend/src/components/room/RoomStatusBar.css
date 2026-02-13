@@ -1,153 +1,210 @@
 /**
- * RoomStatusBar Styles
+ * RoomStatusBar Styles - Standardized Table Top Bar
+ * P0: High-contrast (black on cream), 40px fixed, accessible text
  */
 
 .room-status-bar {
+  /* Fixed at top - doesn't push content down */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+
+  /* 40px height with flexbox layout */
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-  background: var(--bg-secondary, #f9fafb);
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
-  font-size: var(--text-sm, 0.875rem);
-  gap: var(--space-4, 1rem);
+  padding: 0 20px;
+
+  /* HIGH-CONTRAST: Light cream background with black text */
+  background: linear-gradient(180deg, #fef9e7 0%, #f5f0dc 100%);
+  border-bottom: 1px solid #d4c9a8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  /* Large, legible sans-serif text (16pt+) */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1a1a; /* Dark text for readability */
 }
 
-.room-status-left,
-.room-status-center,
+/* Left section: Room Code + Drill */
+.room-status-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.room-code-label {
+  color: #666666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.room-code-value {
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.12em;
+  color: #0d5d3a; /* Dark green for code - high contrast on cream */
+  background: rgba(13, 93, 58, 0.1);
+  padding: 3px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(13, 93, 58, 0.2);
+}
+
+/* Drill Focus Badge - Shows active convention */
+.drill-focus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff8e1;
+  color: #8b6914;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid #d4a520;
+  white-space: nowrap;
+}
+
+/* Center section: Status */
+.room-status-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 18px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.status-indicator.waiting {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+.status-indicator.connected {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #28a745;
+}
+
+.status-indicator.your-turn {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #28a745;
+  animation: turn-pulse 1.2s ease-in-out infinite;
+}
+
+.status-indicator.partner-turn {
+  background: #cce5ff;
+  color: #004085;
+  border: 1px solid #007bff;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes turn-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(40, 167, 69, 0); }
+}
+
+/* Right section: Leave button */
 .room-status-right {
   display: flex;
   align-items: center;
-  gap: var(--space-3, 0.75rem);
+  gap: 12px;
+  flex-shrink: 0;
 }
 
-.room-status-left {
-  flex: 0 0 auto;
+.partner-badge {
+  font-size: 14px;
+  color: #666666;
 }
 
-.room-status-center {
-  flex: 1;
-  justify-content: center;
+.partner-badge.connected {
+  color: #155724;
 }
 
-.room-status-right {
-  flex: 0 0 auto;
-}
-
-/* Room badge */
-.room-badge {
-  background: var(--color-primary, #3b82f6);
-  color: white;
-  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-  border-radius: var(--radius-sm, 0.25rem);
-  font-weight: 500;
-  font-size: var(--text-xs, 0.75rem);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.room-code-mini {
-  font-family: monospace;
+/* Deal button - prominent green */
+.btn-deal {
+  background: #28a745;
+  border: 1px solid #218838;
+  color: #ffffff;
+  padding: 5px 16px;
+  border-radius: 4px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--text-secondary, #6b7280);
-  letter-spacing: 0.1em;
-}
-
-/* Turn indicator */
-.turn-indicator {
-  padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
-  border-radius: var(--radius-full, 9999px);
-  font-weight: 500;
-}
-
-.turn-indicator.status-your-turn {
-  background: var(--color-success-light, #dcfce7);
-  color: var(--color-success-dark, #166534);
-  animation: attention-pulse 1.5s infinite;
-}
-
-.turn-indicator.status-waiting {
-  background: var(--color-warning-light, #fef3c7);
-  color: var(--color-warning-dark, #92400e);
-}
-
-.turn-indicator.status-ready {
-  background: var(--color-info-light, #dbeafe);
-  color: var(--color-info-dark, #1e40af);
-}
-
-@keyframes attention-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0);
-  }
-}
-
-/* Position badge */
-.position-badge {
-  color: var(--text-secondary, #6b7280);
-}
-
-/* Partner status */
-.partner-status {
-  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-  border-radius: var(--radius-sm, 0.25rem);
-  font-size: var(--text-xs, 0.75rem);
-}
-
-.partner-status.connected {
-  background: var(--color-success-light, #dcfce7);
-  color: var(--color-success-dark, #166534);
-}
-
-.partner-status.disconnected {
-  background: var(--color-danger-light, #fee2e2);
-  color: var(--color-danger-dark, #b91c1c);
-}
-
-/* Leave button */
-.btn-leave-room {
-  background: none;
-  border: 1px solid var(--border-color, #e5e7eb);
-  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-  border-radius: var(--radius-sm, 0.25rem);
-  font-size: var(--text-xs, 0.75rem);
-  color: var(--text-secondary, #6b7280);
   cursor: pointer;
   transition: all 0.15s;
 }
 
-.btn-leave-room:hover {
-  background: var(--color-danger-light, #fee2e2);
-  border-color: var(--color-danger, #ef4444);
-  color: var(--color-danger-dark, #b91c1c);
+.btn-deal:hover {
+  background: #218838;
+  border-color: #1e7e34;
 }
 
-/* Responsive */
-@media (max-width: 640px) {
+.btn-leave-session {
+  background: #fff5f5;
+  border: 1px solid #e53e3e;
+  color: #c53030;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-leave-session:hover {
+  background: #fed7d7;
+  border-color: #c53030;
+  color: #9b2c2c;
+}
+
+/* Spacer to push main content below fixed bar */
+.room-bar-spacer {
+  height: 40px;
+  flex-shrink: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
   .room-status-bar {
-    flex-wrap: wrap;
-    padding: var(--space-2, 0.5rem);
+    height: 48px;
+    padding: 0 12px;
+    font-size: 14px;
   }
 
-  .room-status-left {
-    order: 1;
-  }
-
-  .room-status-center {
-    order: 3;
-    flex-basis: 100%;
-    justify-content: center;
-    margin-top: var(--space-2, 0.5rem);
-  }
-
-  .room-status-right {
-    order: 2;
-  }
-
-  .position-badge {
+  .room-code-label {
     display: none;
+  }
+
+  .room-code-value {
+    font-size: 16px;
+  }
+
+  .partner-badge {
+    display: none;
+  }
+
+  .room-bar-spacer {
+    height: 48px;
   }
 }

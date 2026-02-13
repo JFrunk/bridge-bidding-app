@@ -20,6 +20,73 @@ from engine.hand import Hand, Card
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
 
 
+def get_ai_bid_for_room(room: RoomState, position: str) -> str:
+    """
+    Get AI bid for E/W position using the bidding engine
+
+    Args:
+        room: Current room state
+        position: 'E' or 'W'
+
+    Returns:
+        Bid string (e.g., '1NT', 'Pass')
+    """
+    try:
+        # Import bidding engine (lazy to avoid circular imports)
+        from engine.v2 import BiddingEngineV2Schema
+        engine = BiddingEngineV2Schema(use_v1_fallback=True)
+
+        # Get the hand for this position
+        position_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[position]
+        hand = room.deal.get(position_full)
+
+        if not hand:
+            return 'Pass'
+
+        # Get bid from engine
+        result = engine.get_bid(
+            hand=hand,
+            auction_history=room.auction_history,
+            dealer=room.dealer,
+            vulnerability=room.vulnerability or 'None'
+        )
+
+        return result.get('bid', 'Pass') if result else 'Pass'
+    except Exception as e:
+        print(f"⚠️ AI bid error for {position}: {e}")
+        return 'Pass'
+
+
+def auto_bid_for_ai(room: RoomState) -> list:
+    """
+    Auto-bid for E/W positions until a human's turn
+
+    Returns:
+        List of AI bids made: [{'position': 'E', 'bid': 'Pass'}, ...]
+    """
+    ai_bids = []
+
+    while room.game_phase == 'bidding':
+        current_bidder = room.get_current_bidder()
+
+        if current_bidder not in ('E', 'W'):
+            # Human's turn - stop
+            break
+
+        # AI's turn - get bid
+        ai_bid = get_ai_bid_for_room(room, current_bidder)
+        room.auction_history.append(ai_bid)
+        ai_bids.append({'position': current_bidder, 'bid': ai_bid})
+        room.increment_version()
+
+        # Check if auction is complete
+        if _check_auction_complete(room.auction_history):
+            room.game_phase = 'complete'
+            break
+
+    return ai_bids
+
+
 # Convention map for hand generation (mirrors server.py)
 def get_convention_map():
     """Lazy import to avoid circular dependencies"""
@@ -395,6 +462,9 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         room.game_phase = 'bidding'
         room.increment_version()
 
+        # Auto-bid for AI if dealer is E or W
+        ai_bids = auto_bid_for_ai(room)
+
         # Return response with caller's hand
         position = room.get_position_for_session(session_id)
         position_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[position]
@@ -407,6 +477,8 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             'game_phase': room.game_phase,
             'current_bidder': room.get_current_bidder(),
             'is_my_turn': room.is_session_turn(session_id),
+            'ai_bids': ai_bids,  # Include any AI bids made
+            'auction_history': room.auction_history,
             'version': room.version
         })
 
@@ -489,24 +561,9 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         if auction_complete:
             room.game_phase = 'complete'  # Or 'playing' if we implement play
 
-        # Auto-play AI bids for E/W
-        ai_bids = []
-        while not auction_complete:
-            current_bidder = room.get_current_bidder()
-            if current_bidder in ('E', 'W'):
-                # AI's turn - make a simple pass for now
-                # TODO: Integrate with actual bidding engine
-                ai_bid = 'Pass'
-                room.auction_history.append(ai_bid)
-                ai_bids.append({'position': current_bidder, 'bid': ai_bid})
-                room.increment_version()
-
-                auction_complete = _check_auction_complete(room.auction_history)
-                if auction_complete:
-                    room.game_phase = 'complete'
-            else:
-                # Human's turn - stop and wait for next request
-                break
+        # Auto-bid for E/W using the actual bidding engine
+        ai_bids = auto_bid_for_ai(room) if not auction_complete else []
+        auction_complete = _check_auction_complete(room.auction_history)
 
         return jsonify({
             'success': True,
