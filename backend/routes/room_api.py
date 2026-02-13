@@ -931,7 +931,7 @@ def _auto_play_for_ai(room: RoomState) -> list:
         List of AI plays made: [{'player': 'E', 'card': {...}}, ...]
     """
     from engine.play_engine import PlayEngine
-    from engine.play.ai.simple_play_ai import SimplePlayAI
+    from engine.play.ai.simple_ai import SimplePlayAI
 
     ai_plays = []
 
