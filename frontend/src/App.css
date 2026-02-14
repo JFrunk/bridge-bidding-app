@@ -1883,6 +1883,32 @@ html, body {
 }
 
 /* ========================================
+   BIDDING PHASE - Viewport-height container
+   Mirrors play-phase pattern: constrains height so sidebar
+   can't grow beyond viewport and push south zone off-screen.
+   ======================================== */
+
+.bidding-phase {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 80px);  /* Viewport minus fixed nav (64px) + gap (16px) */
+  overflow: hidden;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .bidding-phase {
+    height: calc(100vh - 72px);  /* Smaller nav (56px) + gap (16px) */
+  }
+}
+
+@media (max-width: 480px) {
+  .bidding-phase {
+    height: calc(100vh - 64px);  /* Smallest nav (56px) + gap (8px) */
+  }
+}
+
+/* ========================================
    PLAY PHASE - P0 Vertical Stage Anchoring Fix
    Uses flex column layout to pin table to top and reserve 35vh at bottom
    ======================================== */

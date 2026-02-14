@@ -3516,7 +3516,7 @@ ${otherCommands}`;
         </div>
       ) : gamePhase === 'bidding' ? (
         /* BID screen layout per bid-mockup-v2.html */
-        <>
+        <div className="bidding-phase">
           {/* Session Mode Bar - below header */}
           <SessionModeBar
             mode={sessionMode}
@@ -3672,7 +3672,7 @@ ${otherCommands}`;
               </div>
             </div>
           </SplitGameLayout>
-        </>
+        </div>
       ) : null}
 
       {/* Trick Potential Chart Overlay */}
