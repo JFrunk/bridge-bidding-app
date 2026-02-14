@@ -114,6 +114,13 @@
     border-top: 2px solid var(--border-subtle, rgba(0, 0, 0, 0.15));
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
     animation: slideInUp 0.25s ease;
+    /* Button protection: transparent areas pass clicks to bidding buttons */
+    pointer-events: none;
+  }
+
+  /* Re-enable pointer events on the actual coach content */
+  .split-game-sidebar > * {
+    pointer-events: auto;
   }
 
   @keyframes slideInUp {

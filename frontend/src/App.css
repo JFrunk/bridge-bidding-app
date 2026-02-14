@@ -1964,17 +1964,16 @@ html, body {
 }
 
 /* Game Column: center area with green felt background */
-/* P0 FIX: Use explicit height to prevent content from pushing south affordance off-screen */
+/* Flex child of SplitGameLayout — fills parent, never exceeds it */
 .bid-game-column {
-  flex: 1;
+  flex: 1 1 0%;
   background: var(--table-green, #1a6b3c);
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
   height: 100%; /* Fill parent exactly */
-  max-height: 100vh; /* Never exceed viewport */
-  min-height: 0;
+  min-height: 0; /* Critical: allows flex shrinking */
   min-width: 0; /* Allow flex shrinking when coach panel is visible */
 }
 
@@ -1991,17 +1990,16 @@ html, body {
 }
 
 /* Game area: padded container inside game column */
-/* P0 FIX: Strict flex column layout with south affordance anchored to bottom */
+/* Zone 2 (green felt) — absorbs all vertical shrinkage before south zone */
 .bid-game-area {
-  flex: 1;
+  flex: 1 1 0%; /* Grow AND shrink freely — absorbs height pressure */
   display: flex;
   flex-direction: column;
   justify-content: flex-end; /* Push content toward bottom */
   position: relative;
   z-index: 2;
   padding: 10px 24px 8px;
-  min-height: 0;
-  height: 100%; /* Fill parent */
+  min-height: 0; /* Critical: allows shrinking below content size */
   overflow: hidden;
   /* VMIN SCALING: Fluid max-width prevents table from becoming narrower than cards */
   max-width: min(90vw, 900px);
@@ -2098,11 +2096,18 @@ html, body {
 .south-affordance-zone {
   display: flex;
   flex-direction: column;
-  min-height: 35vh;
+  height: 35vh; /* Hard lock — bidding box never pushed off-screen */
+  min-height: 320px; /* Absolute floor: buttons always reachable */
   flex-shrink: 0;
   /* Anchor to bottom of game area */
   margin-top: auto;
   width: 100%;
+  overflow-y: auto; /* Internal scroll if contents exceed 35vh */
+  overflow-x: hidden;
+  /* Sacrosanct: solid background + z-index prevent coach bleed-through */
+  background: var(--table-green-dark, #155a30);
+  z-index: 10;
+  position: relative;
 }
 
 /* When in loading/dealing state, maintain placeholder space */
@@ -2116,13 +2121,13 @@ html, body {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .south-affordance-zone {
-    min-height: 40vh; /* More space on smaller screens */
+    height: 40vh; /* More space on smaller screens */
   }
 }
 
 @media (max-width: 480px) {
   .south-affordance-zone {
-    min-height: 45vh;
+    height: 45vh;
   }
 }
 
