@@ -31,6 +31,8 @@ import { RoomProvider, useRoom } from './contexts/RoomContext';
 import { RoomLobby, RoomStatusBar, JoinRoomModal, RoomWaitingState } from './components/room';
 import WelcomeWizard from './components/onboarding/WelcomeWizard';
 import { SimpleLogin } from './components/auth/SimpleLogin';
+import { PrivacyPolicy } from './components/legal/PrivacyPolicy';
+import { AboutUs } from './components/legal/AboutUs';
 import { RegistrationPrompt } from './components/auth/RegistrationPrompt';
 import DDSStatusIndicator from './components/DDSStatusIndicator';
 import AIDifficultySelector from './components/AIDifficultySelector';
@@ -182,13 +184,19 @@ function PlayerHand({ position, hand, points, vulnerability }) {
     </div>
   );
 }
-function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer, isComplete = false }) {
+function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer, isComplete = false, myPosition = null }) {
   // Build table using row-based approach:
   // - Dealer starts on row 0
   // - Each player bids in their column on current row
   // - When North column (column 0) is reached, increment to next row
 
   const dealerIndex = players.indexOf(dealer);
+
+  // Room mode: Calculate partner position
+  const positionMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
+  const partnerMap = { 'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E' };
+  const myPositionFull = myPosition ? positionMap[myPosition] : null;
+  const partnerPositionFull = myPosition ? positionMap[partnerMap[myPosition]] : null;
 
   // Build a 2D grid: rows[rowIndex][columnIndex] = bid object or null
   const grid = [];
@@ -265,21 +273,45 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer, i
     return players[nextPlayerIndex] === position ? 'current-player' : '';
   };
 
+  // Helper to get role class for room mode (You/Partner indicators)
+  const getRoleClass = (position) => {
+    if (!myPosition) return '';
+    if (position === myPositionFull) return 'role-you';
+    if (position === partnerPositionFull) return 'role-partner';
+    return '';
+  };
+
+  // Helper to render role badge
+  const renderRoleBadge = (position) => {
+    if (!myPosition) return null;
+    if (position === myPositionFull) {
+      return <span className="role-badge role-badge-you">You</span>;
+    }
+    if (position === partnerPositionFull) {
+      return <span className="role-badge role-badge-partner">Partner</span>;
+    }
+    return null;
+  };
+
   return (
     <table className="bidding-table" data-testid="bidding-table">
       <thead>
         <tr>
-          <th className={getHeaderClass('North')} data-testid="bidding-header-north">
-            North{dealerIndicator('North')}
+          <th className={`${getHeaderClass('North')} ${getRoleClass('North')}`} data-testid="bidding-header-north">
+            <span className="position-name">North{dealerIndicator('North')}</span>
+            {renderRoleBadge('North')}
           </th>
-          <th className={getHeaderClass('East')} data-testid="bidding-header-east">
-            East{dealerIndicator('East')}
+          <th className={`${getHeaderClass('East')} ${getRoleClass('East')}`} data-testid="bidding-header-east">
+            <span className="position-name">East{dealerIndicator('East')}</span>
+            {renderRoleBadge('East')}
           </th>
-          <th className={getHeaderClass('South')} data-testid="bidding-header-south">
-            South{dealerIndicator('South')}
+          <th className={`${getHeaderClass('South')} ${getRoleClass('South')}`} data-testid="bidding-header-south">
+            <span className="position-name">South{dealerIndicator('South')}</span>
+            {renderRoleBadge('South')}
           </th>
-          <th className={getHeaderClass('West')} data-testid="bidding-header-west">
-            West{dealerIndicator('West')}
+          <th className={`${getHeaderClass('West')} ${getRoleClass('West')}`} data-testid="bidding-header-west">
+            <span className="position-name">West{dealerIndicator('West')}</span>
+            {renderRoleBadge('West')}
           </th>
         </tr>
       </thead>
@@ -329,6 +361,7 @@ function App() {
     vulnerability: roomVulnerability,
     currentBidder: roomCurrentBidder,
     playState: roomPlayState,
+    beliefs: roomBeliefs,
     leaveRoom,
     submitBid: submitRoomBid,
     startRoomPlay,
@@ -497,12 +530,28 @@ function App() {
     }
   }, [inRoom, roomPlayState]);
 
+  // ROOM MODE: Invalidate stale hint when auction advances
+  // When partner or AI bids, the suggested bid is no longer valid
+  const roomAuctionLength = displayAuction?.length || 0;
+  useEffect(() => {
+    if (!inRoom) return;
+    // Clear stale hint so user must re-request for current auction state
+    setSuggestedBid(null);
+  }, [inRoom, roomAuctionLength]);
+
   const [isAiBidding, setIsAiBidding] = useState(false);
   const [error, setError] = useState('');
   const [displayedMessage, setDisplayedMessage] = useState('');
   const [bidFeedback, setBidFeedback] = useState(null);  // Structured feedback from evaluate-bid
   const [lastUserBid, setLastUserBid] = useState(null);  // Track last user bid for feedback display
   const [beliefs, setBeliefs] = useState(null);  // BiddingState beliefs (partner + opponents)
+
+  // Beliefs for coaching - use room beliefs when in room mode
+  const displayBeliefs = useMemo(() => {
+    if (inRoom && roomBeliefs) return roomBeliefs;
+    return beliefs;
+  }, [inRoom, roomBeliefs, beliefs]);
+
   const [suggestedBid, setSuggestedBid] = useState(null);  // AI-suggested bid for "What Should I Bid?"
   const [selectedBid, setSelectedBid] = useState(null);  // Selected bid for explanation display in CoachPanel
 
@@ -523,6 +572,16 @@ function App() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showAboutUs, setShowAboutUs] = useState(false);
+
+  // Auto-show privacy/about modals when URL path matches (for crawler access)
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path === '/privacy') setShowPrivacyPolicy(true);
+    if (path === '/about') setShowAboutUs(true);
+  }, []);
+
   const [userConcern, setUserConcern] = useState('');
   const [reviewPrompt, setReviewPrompt] = useState('');
   const [reviewFilename, setReviewFilename] = useState('');
@@ -1497,6 +1556,11 @@ ${otherCommands}`;
   const handleDeclarerCardPlay = async (card) => {
     if (!playState) return;
 
+    // Room mode: route through room API (declarer controls dummy in room)
+    if (inRoom) {
+      return handleCardPlay(card);
+    }
+
     // If there's a pending trick clear, execute it immediately before user plays
     if (trickClearTimeoutRef.current) {
       console.log('⚡ User played (declarer) - clearing pending trick immediately');
@@ -1647,6 +1711,11 @@ ${otherCommands}`;
     if (!playState) {
       console.log('⚠️ Blocked: playState is null');
       return;
+    }
+
+    // Room mode: route through room API (declarer controls dummy in room)
+    if (inRoom) {
+      return handleCardPlay(card);
     }
 
     // If there's a pending trick clear, execute it immediately before user plays
@@ -2499,7 +2568,11 @@ ${otherCommands}`;
 
   // Fetch AI's suggested bid for "What Should I Bid?" button
   const handleRequestHint = async () => {
-    if (nextBidder !== 'South' || isAuctionOver(auction)) {
+    // Determine user's position and check if it's their turn
+    const userPosition = inRoom ? (isHost ? 'South' : 'North') : 'South';
+    const canRequestHint = inRoom ? isMyTurn : (nextBidder === 'South');
+
+    if (!canRequestHint || isAuctionOver(displayAuction)) {
       return;
     }
 
@@ -2509,9 +2582,9 @@ ${otherCommands}`;
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
         body: JSON.stringify({
-          auction_history: auction.map(a => a.bid),
-          current_player: 'South',
-          vulnerability: vulnerability,
+          auction_history: displayAuction.map(a => a.bid),
+          current_player: userPosition,
+          vulnerability: displayVulnerability,
           explanation_detail: 'detailed',
           hint_only: true  // Don't record this bid in session state
         })
@@ -2545,6 +2618,7 @@ ${otherCommands}`;
         setError("Not your turn!");
         return;
       }
+      setSuggestedBid(null);
       const result = await submitRoomBid(bid);
       if (!result.success) {
         setError(result.error || 'Failed to submit bid');
@@ -3416,7 +3490,7 @@ ${otherCommands}`;
                     ✅ Your turn to bid!
                   </div>
                 )}
-                <BiddingTable auction={displayAuction} players={players} dealer={displayDealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(displayAuction)} />
+                <BiddingTable auction={displayAuction} players={players} dealer={displayDealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(displayAuction)} myPosition={inRoom ? (isHost ? 'S' : 'N') : null} />
                 {/* Bid feedback panel - shown when hint mode is enabled */}
                 {hintModeEnabled && (
                   <BidFeedbackPanel
@@ -3428,7 +3502,7 @@ ${otherCommands}`;
                     mode="review"
                   />
                 )}
-                <BeliefPanel beliefs={beliefs} myHcp={handPoints?.hcp} />
+                <BeliefPanel beliefs={displayBeliefs} myHcp={handPoints?.hcp} />
                 {error && <div className="error-message">{error}</div>}
               </div>
             </div>
@@ -3473,9 +3547,9 @@ ${otherCommands}`;
                 <CoachPanel
                   isVisible={true}
                   onClose={() => setShowCoachPanel(false)}
-                  beliefs={beliefs}
+                  beliefs={displayBeliefs}
                   myHcp={handPoints?.hcp}
-                  auction={auction}
+                  auction={displayAuction}
                   suggestedBid={suggestedBid}
                   selectedBid={selectedBid}
                   onRequestHint={handleRequestHint}
@@ -3533,7 +3607,7 @@ ${otherCommands}`;
                 <div className="bidding-section">
                   {/* Bidding History Table */}
                   <div className="bidding-scroll">
-                    <BiddingTable auction={displayAuction} players={players} dealer={displayDealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(displayAuction)} />
+                    <BiddingTable auction={displayAuction} players={players} dealer={displayDealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(displayAuction)} myPosition={inRoom ? (isHost ? 'S' : 'N') : null} />
                   </div>
 
                   {/* Bid feedback - inline strip */}
@@ -3622,7 +3696,7 @@ ${otherCommands}`;
       {!shouldShowHands && gamePhase === 'playing' && playState && (
         <div className="play-phase" style={{ position: 'relative' }}>
           {/* DEBUG INDICATOR: Shows AI loop state - Dev mode only */}
-          {isDevMode && Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && (
+          {isDevMode && playState.tricks_won && Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && (
             <div style={{
               position: 'fixed',
               top: '10px',
@@ -3640,20 +3714,6 @@ ${otherCommands}`;
               AI: {isPlayingCard ? '▶' : '⏸'}
             </div>
           )}
-          {console.log('🎯 PlayTable render:', {
-            next_to_play: playState.next_to_play,
-            isPlayingCard: isPlayingCard,
-            dummy: playState.dummy,
-            declarer: playState.contract.declarer,
-            nsIsDeclaring: playState.contract.declarer === 'N' || playState.contract.declarer === 'S',
-            dummy_hand_in_state: playState.dummy_hand?.cards?.length || playState.dummy_hand?.length || 0,
-            dummy_revealed: playState.dummy_revealed,
-            // User controls both N and S when NS is declaring
-            userControlsNorth: (playState.contract.declarer === 'N' || playState.contract.declarer === 'S'),
-            userControlsSouth: true, // Always
-            isUserTurn: playState.next_to_play === 'S' || (playState.next_to_play === 'N' && (playState.contract.declarer === 'N' || playState.contract.declarer === 'S')),
-            controllable_positions: playState.controllable_positions
-          })}
           <PlayTable
             playState={playState}
             userHand={hand}
@@ -3664,22 +3724,24 @@ ${otherCommands}`;
             onDummyCardPlay={handleDummyCardPlay}
             onNewHand={playRandomHand}
             onReplay={replayCurrentHand}
-            // === BRIDGE RULES ENGINE INTEGRATION ===
-            // Use rules engine data from backend for correct hand visibility and control
-            isUserTurn={playState.is_user_turn ?? (playState.next_to_play === 'S' && playState.dummy !== 'S')}
+            // Room mode: pass actual user position
+            userPosition={inRoom ? myPosition : 'S'}
+            // Turn control: use backend data when available
+            isUserTurn={
+              playState.is_user_turn ?? (
+                inRoom
+                  ? isMyTurn
+                  : (playState.next_to_play === 'S' && playState.dummy !== 'S')
+              )
+            }
             isDeclarerTurn={
-              // If backend provides controllable_positions (array), trust it completely
-              // This correctly handles: empty array (waiting for lead), non-empty array (active play)
               Array.isArray(playState.controllable_positions)
                 ? (playState.controllable_positions.includes(playState.contract.declarer) && playState.next_to_play === playState.contract.declarer)
-                // Fallback for legacy backends: User controls declarer when NS is declaring
                 : (playState.next_to_play === playState.contract.declarer && (playState.contract.declarer === 'N' || playState.contract.declarer === 'S'))
             }
             isDummyTurn={
-              // If backend provides controllable_positions (array), trust it completely
               Array.isArray(playState.controllable_positions)
                 ? (playState.controllable_positions.includes(playState.dummy) && playState.next_to_play === playState.dummy)
-                // Fallback for legacy backends: User controls dummy when NS is declaring
                 : (playState.next_to_play === playState.dummy && (playState.contract.declarer === 'N' || playState.contract.declarer === 'S'))
             }
             auction={auction}
@@ -3696,7 +3758,7 @@ ${otherCommands}`;
           />
           {/* Don't show AI bidding status messages during play - only show errors if they occur */}
           {/* Play phase errors - Show session-related errors always, dev errors in dev mode only */}
-          {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && error && (
+          {playState.tricks_won && Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) < 13 && error && (
             error.toLowerCase().includes('session') || error.toLowerCase().includes('no play in progress') || error.toLowerCase().includes('deal') ? (
               <div className="session-lost-message" style={{
                 background: 'rgba(244, 67, 54, 0.15)',
@@ -3725,7 +3787,7 @@ ${otherCommands}`;
           )}
 
           {/* Show All Hands toggle for play phase - available after hand is complete */}
-          {Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) === 13 && (
+          {playState.tricks_won && Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) === 13 && (
             <div className="show-hands-controls" style={{ marginTop: '20px' }}>
               <label className="show-hands-toggle">
                 <input
@@ -3950,7 +4012,7 @@ ${otherCommands}`;
       <ClaimModal
         isOpen={showClaimModal}
         onClose={handleClaimModalClose}
-        tricksRemaining={playState ? 13 - Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) : 0}
+        tricksRemaining={playState?.tricks_won ? 13 - Object.values(playState.tricks_won).reduce((a, b) => a + b, 0) : 0}
         tricksWonNS={playState ? (playState.tricks_won?.N || 0) + (playState.tricks_won?.S || 0) : 0}
         tricksWonEW={playState ? (playState.tricks_won?.E || 0) + (playState.tricks_won?.W || 0) : 0}
         tricksNeeded={playState?.contract?.tricks_needed || 7}
@@ -4039,6 +4101,29 @@ ${otherCommands}`;
           <LearningMode userId={userId} initialTrack={learningModeTrack} />
         </div>
       )}
+
+      {/* Privacy Policy Modal - accessible via /privacy URL and footer link */}
+      {showPrivacyPolicy && (
+        <PrivacyPolicy onClose={() => {
+          setShowPrivacyPolicy(false);
+          if (window.location.pathname === '/privacy') window.history.replaceState(null, '', '/');
+        }} />
+      )}
+
+      {/* About Us Modal - accessible via /about URL and footer link */}
+      {showAboutUs && (
+        <AboutUs onClose={() => {
+          setShowAboutUs(false);
+          if (window.location.pathname === '/about') window.history.replaceState(null, '', '/');
+        }} />
+      )}
+
+      {/* Persistent footer with legal links */}
+      <footer className="app-footer">
+        <button className="footer-link" onClick={() => setShowPrivacyPolicy(true)}>Privacy Policy</button>
+        <span className="footer-divider">|</span>
+        <button className="footer-link" onClick={() => setShowAboutUs(true)}>About Us</button>
+      </footer>
 
       {/* DDS Status Indicator - Dev mode only */}
       {isDevMode && <DDSStatusIndicator />}

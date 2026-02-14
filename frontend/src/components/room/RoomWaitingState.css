@@ -86,7 +86,8 @@
   color: var(--text-secondary, #6b7280);
 }
 
-.room-code-value {
+/* Scoped to waiting state component */
+.room-waiting-state .room-code-value {
   font-family: 'SF Mono', 'Menlo', monospace;
   font-weight: 600;
   color: var(--color-primary, #3b82f6);

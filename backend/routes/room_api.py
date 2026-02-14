@@ -18,6 +18,7 @@ from core.room_state import RoomStateManager, RoomSettings, RoomState
 from core.session_state import get_session_id_from_request
 from engine.hand import Hand, Card
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
+from engine.ai.bidding_state import BiddingStateBuilder
 
 
 def get_ai_bid_for_room(room: RoomState, position: str) -> str:
@@ -272,8 +273,14 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 'in_room': False
             }), 404
 
+        # Check for version match (ETag-style) BEFORE triggering AI
+        # This prevents auto-bid from incrementing version on every poll
+        client_version = request.args.get('version', type=int)
+        if client_version is not None and client_version == room.version:
+            return '', 304  # Not Modified
+
         # UNBLOCK AI: If it's an AI's turn (E/W), trigger auto-bidding now
-        # This ensures AI bidding happens even if poll is the first call after deal
+        # Only runs when version has changed (i.e., after a human action)
         if room.game_phase == 'bidding':
             current_bidder = room.get_current_bidder()
             if current_bidder in ('E', 'W'):
@@ -281,15 +288,39 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 if ai_bids:
                     print(f"🤖 Poll triggered AI bids: {ai_bids}")
 
-        # Check for version match (ETag-style)
-        client_version = request.args.get('version', type=int)
-        if client_version is not None and client_version == room.version:
-            return '', 304  # Not Modified
+        # Build room dict for response
+        room_dict = room.to_dict(for_session=session_id)
+
+        # Add beliefs for coaching support during bidding phase
+        if room.game_phase == 'bidding' and room.auction_history:
+            try:
+                position = room.get_position_for_session(session_id)
+                position_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}.get(position, position)
+                hand = room.deal.get(position_full)
+
+                if hand:
+                    # Get user's hand info for beliefs context
+                    user_hcp = hand.hcp
+                    user_suit_lengths = {
+                        '♠': len([c for c in hand.cards if c.suit == '♠']),
+                        '♥': len([c for c in hand.cards if c.suit == '♥']),
+                        '♦': len([c for c in hand.cards if c.suit == '♦']),
+                        '♣': len([c for c in hand.cards if c.suit == '♣']),
+                    }
+
+                    # Build bidding state and extract beliefs
+                    dealer_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}.get(room.dealer, room.dealer)
+                    bidding_state = BiddingStateBuilder().build(room.auction_history, dealer_full)
+                    beliefs = bidding_state.to_dict(position, my_hcp=user_hcp, my_suit_lengths=user_suit_lengths)
+                    room_dict['beliefs'] = beliefs
+            except Exception as e:
+                # Don't fail the poll if beliefs computation fails
+                print(f"⚠️ Could not compute beliefs for room {room.room_code}: {e}")
 
         return jsonify({
             'success': True,
             'in_room': True,
-            'room': room.to_dict(for_session=session_id)
+            'room': room_dict
         })
 
     @app.route('/api/room/status', methods=['GET'])
@@ -679,7 +710,9 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             'next_to_play': room.play_state.next_to_play,
             'is_my_turn': room.is_session_turn(session_id),
             'ai_plays': ai_plays,
-            'version': room.version
+            'version': room.version,
+            'play_state': room._serialize_play_state(for_session=session_id),
+            'game_phase': room.game_phase,
         })
 
     @app.route('/api/room/play-card', methods=['POST'])
@@ -960,12 +993,16 @@ def _auto_play_for_ai(room: RoomState) -> list:
                 break  # Should never happen
 
             # Select card (simple AI for now)
-            card = ai.select_card(
-                hand=hand,
-                current_trick=room.play_state.current_trick,
-                trump_suit=trump_suit,
-                legal_cards=legal_cards
-            )
+            try:
+                card = ai.select_card(
+                    hand=hand,
+                    current_trick=room.play_state.current_trick,
+                    trump_suit=trump_suit,
+                    legal_cards=legal_cards
+                )
+            except Exception as ai_err:
+                print(f"⚠️ AI card selection error for {current_player}: {ai_err}")
+                card = legal_cards[0]  # Fallback: play first legal card
 
             # Play the card
             room.play_state.current_trick.append((card, current_player))
@@ -1006,7 +1043,9 @@ def _auto_play_for_ai(room: RoomState) -> list:
             room.increment_version()
 
         except Exception as e:
+            import traceback
             print(f"⚠️ AI play error for {current_player}: {e}")
+            traceback.print_exc()
             break
 
     return ai_plays

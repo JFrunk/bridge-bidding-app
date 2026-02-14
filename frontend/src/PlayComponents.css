@@ -1663,22 +1663,26 @@
   white-space: nowrap;
 }
 
-/* Typography normalization for info text - WCAG 2.1 AA compliant (4.5:1 contrast ratio) */
-.info-label {
-  color: rgba(255, 255, 255, 0.75);  /* Increased from 0.6 for WCAG AA contrast on #2a2a2a */
+/* Typography normalization for contract-bar info text - WCAG 2.1 AA compliant
+ * Scoped to .contract-bar to override DDSStatusIndicator.css global styles */
+.contract-bar .info-label,
+.contract-info-row .info-label {
+  color: rgba(255, 255, 255, 0.75) !important;  /* White text on dark header */
   font-weight: 400;
-  font-size: inherit;  /* Consistent sizing - inherits from parent */
+  font-size: inherit;
 }
 
-.info-value {
-  color: #ffffff;  /* Bright values - full contrast */
+.contract-bar .info-value,
+.contract-info-row .info-value {
+  color: #ffffff !important;  /* Bright white - full contrast */
   font-weight: 500;
-  font-size: inherit;  /* Consistent sizing */
+  font-size: inherit;
 }
 
-.info-separator {
-  color: rgba(255, 255, 255, 0.5);  /* Increased from 0.3 for WCAG AA contrast */
-  font-size: inherit;  /* Consistent sizing - no longer 10px, inherits from parent (13px) */
+.contract-bar .info-separator,
+.contract-info-row .info-separator {
+  color: rgba(255, 255, 255, 0.5) !important;  /* White separator on dark header */
+  font-size: inherit;
   margin: 0 2px;
 }
 
@@ -1713,12 +1717,12 @@
 }
 
 .trick-counter-text .info-label {
-  color: rgba(255, 255, 255, 0.75);  /* WCAG AA compliant */
+  color: rgba(255, 255, 255, 0.75) !important;  /* White text - overrides DDSStatusIndicator */
   font-weight: 400;
 }
 
 .trick-counter-text .info-separator {
-  color: rgba(255, 255, 255, 0.5);  /* WCAG AA compliant */
+  color: rgba(255, 255, 255, 0.5) !important;  /* White separator - overrides DDSStatusIndicator */
   /* font-size inherits from parent (13px) for consistency */
 }
 

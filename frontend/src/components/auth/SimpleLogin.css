@@ -304,6 +304,42 @@
   line-height: 1.6;
 }
 
+.privacy-note .security-badge {
+  display: inline-block;
+  color: var(--color-success-dark, #1b5e20);
+  font-weight: var(--font-medium);
+  margin-bottom: var(--space-2);
+}
+
+.privacy-note a {
+  color: var(--color-info, #1976d2);
+  text-decoration: none;
+}
+
+.privacy-note a:hover {
+  text-decoration: underline;
+}
+
+.privacy-note .privacy-link {
+  background: none;
+  border: none;
+  color: var(--color-info, #1976d2);
+  font-size: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.privacy-note .privacy-link:hover {
+  text-decoration: underline;
+}
+
+.privacy-note .link-separator {
+  color: var(--text-muted, #999);
+  margin: 0 var(--space-1, 4px);
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .simple-login-modal {

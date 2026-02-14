@@ -1,26 +1,319 @@
 /**
- * DDTableDisplay Styles - Double Dummy Analysis Table
+ * DDTableDisplay Styles - Double Dummy Analysis Modal
  *
  * Design principles:
- * - Overlay layering (z-index 999) ensures table appears ABOVE cards/game assets
+ * - Full-screen modal overlay with centered content (z-index 1000)
  * - Two-column layout: explanatory text left, table right
- * - Backdrop blur for visual separation between Game Layer and Analysis Layer
- * - Vertical stability with reserved min-height
- * - Dismiss affordance (X button)
- * - vmin-based scaling for legibility at all zoom levels
+ * - Clear grid lines for data separation (matches bidding history modal)
+ * - Prominent color-coded cells: Game (blue), Slam (purple), Grand (gold)
+ * - Responsive stacking on smaller screens
  */
 
 /* ========================================
-   OVERLAY WRAPPER - High z-index for layering above cards
+   MODAL OVERLAY - Fullscreen backdrop
+   ======================================== */
+
+.dd-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* ========================================
+   MODAL CONTENT - Centered card
+   ======================================== */
+
+.dd-modal-content {
+  background: var(--cream-light, #faf8f4);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 680px;
+  width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================
+   MODAL HEADER - Title bar with close button
+   ======================================== */
+
+.dd-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+}
+
+.dd-modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dd-modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 24px;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.dd-modal-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #1f2937;
+}
+
+.dd-modal-close:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* ========================================
+   MODAL BODY - Two-column layout
+   ======================================== */
+
+.dd-modal-body {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.dd-modal-body-compact {
+  padding: 20px;
+}
+
+/* ========================================
+   EXPLANATION COLUMN - Left side
+   ======================================== */
+
+.dd-explanation {
+  flex: 0 0 35%;
+  max-width: 35%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 20px;
+  border-right: 1px solid #e5e7eb;
+}
+
+.dd-explanation p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4b5563;
+}
+
+.dd-explanation-tip {
+  font-style: italic;
+  color: #6b7280 !important;
+}
+
+/* ========================================
+   COLOR LEGEND - Square swatches
+   ======================================== */
+
+.dd-color-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.dd-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.dd-legend-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* Legend swatch colors - match table cell colors */
+.dd-legend-swatch.level-game {
+  background: #dbeafe;
+  border: 2px solid #3b82f6;
+}
+
+.dd-legend-swatch.level-slam {
+  background: #ede9fe;
+  border: 2px solid #8b5cf6;
+}
+
+.dd-legend-swatch.level-grand {
+  background: #fef3c7;
+  border: 2px solid #d97706;
+}
+
+/* ========================================
+   TABLE WRAPPER - Right side
+   ======================================== */
+
+.dd-table-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ========================================
+   TABLE CONTAINER
+   ======================================== */
+
+.dd-table-container {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+/* ========================================
+   DD TABLE - With grid lines
+   ======================================== */
+
+.dd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+/* All cells have borders for grid effect */
+.dd-table th,
+.dd-table td {
+  padding: 10px 12px;
+  text-align: center;
+  border: 1px solid #d1d5db;
+}
+
+/* Corner cell (empty top-left) */
+.dd-corner-cell {
+  background: #f9fafb;
+  border-color: #e5e7eb !important;
+}
+
+/* Header cells (strain symbols) */
+.dd-header-cell {
+  font-weight: 700;
+  font-size: 16px;
+  color: #1f2937;
+  background: #f9fafb;
+}
+
+.dd-header-cell.red-suit {
+  color: #dc2626;
+}
+
+/* Position cells (N, S, E, W) */
+.dd-position-cell {
+  font-weight: 600;
+  color: #6b7280;
+  background: #f9fafb;
+  text-align: center;
+}
+
+/* Value cells - default styling */
+.dd-value-cell {
+  font-weight: 600;
+  color: #374151;
+  background: #ffffff;
+  transition: background-color 0.15s ease;
+}
+
+/* Trick value number */
+.dd-trick-value {
+  display: inline-block;
+  min-width: 24px;
+}
+
+/* ========================================
+   LEVEL COLOR CODING - Prominent backgrounds
+   ======================================== */
+
+/* Game level - Blue */
+.dd-value-cell.level-game {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #93c5fd;
+}
+
+/* Small Slam - Purple */
+.dd-value-cell.level-slam {
+  background: #ede9fe;
+  color: #5b21b6;
+  border-color: #c4b5fd;
+}
+
+/* Grand Slam - Gold/Amber */
+.dd-value-cell.level-grand {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+
+/* Partscore - Subtle gray */
+.dd-value-cell.level-partscore {
+  color: #6b7280;
+}
+
+/* ========================================
+   PAR DISPLAY
+   ======================================== */
+
+.dd-table-par {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.dd-table-par .par-label {
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.dd-table-par .par-value {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* ========================================
+   LEGACY OVERLAY SUPPORT (inline mode)
    ======================================== */
 
 .dd-table-overlay {
   position: relative;
-  z-index: 1000;  /* Above ALL game assets including BridgeCards and GameTable */
-  /* Static container: reserved height prevents jumping */
+  z-index: 1000;
   min-height: 280px;
   width: 100%;
-  /* Backdrop for visual separation */
   background: rgba(250, 250, 250, 0.97);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -30,10 +323,6 @@
   overflow: hidden;
 }
 
-/* ========================================
-   TWO-COLUMN LAYOUT - Text left, Table right
-   ======================================== */
-
 .dd-table-two-column {
   display: flex;
   flex-direction: row;
@@ -41,7 +330,6 @@
   padding: 16px;
 }
 
-/* Left column: Explanatory text (30% width) */
 .dd-table-explanation {
   flex: 0 0 30%;
   max-width: 30%;
@@ -50,7 +338,6 @@
   gap: 12px;
   padding-right: 16px;
   border-right: 1px solid #e5e7eb;
-  /* Internal scrollbar if text exceeds available space */
   overflow-y: auto;
   max-height: 240px;
 }
@@ -69,11 +356,6 @@
   color: #4b5563;
 }
 
-.dd-table-explanation .explanation-highlight {
-  font-weight: 600;
-  color: #2563eb;
-}
-
 .dd-table-explanation .explanation-tip {
   margin-top: auto;
   padding: 8px 12px;
@@ -90,27 +372,10 @@
   font-size: 11px;
 }
 
-.dd-table-explanation .legend-game {
-  color: #2563eb;
-}
-
-.dd-table-explanation .legend-slam {
-  color: #7c3aed;
-}
-
-.dd-table-explanation .legend-grand {
-  color: #ca8a04;
-}
-
-/* Right column: Table (70% width) */
 .dd-table-main {
   flex: 1;
   min-width: 0;
 }
-
-/* ========================================
-   DISMISS BUTTON - Top right corner
-   ======================================== */
 
 .dd-table-dismiss {
   position: absolute;
@@ -137,129 +402,43 @@
   color: #1f2937;
 }
 
-.dd-table-dismiss:focus {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
-}
-
 /* ========================================
-   TABLE STYLES
+   RESPONSIVE - Stack on smaller screens
    ======================================== */
 
-.dd-table-container {
-  background: #ffffff;
-  border-radius: 8px;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-}
-
-.dd-table-container h4 {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  margin: 0 0 12px 0;
-}
-
-.dd-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: clamp(12px, 1.5vmin, 14px);
-}
-
-.dd-table th,
-.dd-table td {
-  padding: clamp(4px, 0.8vmin, 8px);
-  text-align: center;
-}
-
-.dd-table th {
-  font-weight: 700;
-  color: #374151;
-}
-
-.dd-table th.red-suit {
-  color: #dc2626;
-}
-
-.dd-table td {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.dd-table td.position-header {
-  text-align: left;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-/* Level highlighting */
-.dd-table td.level-game {
-  background-color: rgba(59, 130, 246, 0.15);
-}
-
-.dd-table td.level-slam {
-  background-color: rgba(139, 92, 246, 0.15);
-}
-
-.dd-table td.level-grand {
-  background-color: rgba(234, 179, 8, 0.15);
-}
-
-/* Par display */
-.dd-table-par {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #e5e7eb;
-  font-size: 13px;
-}
-
-.dd-table-par .par-label {
-  font-weight: 500;
-  color: #6b7280;
-}
-
-.dd-table-par .par-value {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-/* ========================================
-   COMPACT MODE - For small viewports
-   ======================================== */
-
-@media (max-height: 800px) {
-  .dd-table-overlay {
-    min-height: 220px;
+@media (max-width: 640px) {
+  .dd-modal-content {
+    width: 95vw;
+    max-height: 95vh;
   }
 
-  .dd-table-two-column {
-    padding: 12px;
+  .dd-modal-body {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .dd-explanation {
+    flex: 0 0 auto;
+    max-width: 100%;
+    padding-right: 0;
+    padding-bottom: 16px;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .dd-color-legend {
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 12px;
-  }
-
-  .dd-table-explanation h3 {
-    font-size: 14px;
-  }
-
-  .dd-table-explanation p {
-    font-size: 12px;
-  }
-
-  .dd-table {
-    font-size: 11px;
+    padding-top: 12px;
   }
 
   .dd-table th,
   .dd-table td {
-    padding: 3px 4px;
+    padding: 8px;
+    font-size: 14px;
   }
-}
 
-/* ========================================
-   RESPONSIVE - Stack on tablet
-   ======================================== */
-
-@media (max-width: 900px) {
   .dd-table-two-column {
     flex-direction: column;
     gap: 12px;
@@ -273,38 +452,24 @@
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
   }
-
-  .dd-table-explanation .explanation-tip {
-    margin-top: 8px;
-  }
 }
 
-@media (max-width: 600px) {
-  .dd-table-overlay {
-    min-height: 200px;
-    border-radius: 8px;
+@media (max-width: 480px) {
+  .dd-modal-header {
+    padding: 12px 16px;
   }
 
-  .dd-table-two-column {
-    padding: 10px;
-    gap: 8px;
-  }
-
-  .dd-table-explanation h3 {
-    font-size: 13px;
-  }
-
-  .dd-table-explanation p {
-    font-size: 11px;
-  }
-
-  .dd-table {
-    font-size: 10px;
-  }
-
-  .dd-table-dismiss {
-    width: 24px;
-    height: 24px;
+  .dd-modal-title {
     font-size: 16px;
+  }
+
+  .dd-modal-body {
+    padding: 16px;
+  }
+
+  .dd-table th,
+  .dd-table td {
+    padding: 6px 8px;
+    font-size: 13px;
   }
 }

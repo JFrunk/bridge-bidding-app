@@ -1,5 +1,6 @@
 /* TrickPotentialChart Component Styles */
 /* Supports both dark mode (main app) and light mode (modals) */
+/* Updated with grid lines and prominent color-coded cells */
 
 .trick-potential-chart {
   /* Default to dark mode (for main app bidding area) */
@@ -7,15 +8,20 @@
   --tpc-text-secondary: #9ca3af;
   --tpc-text-muted: #6b7280;
   --tpc-bg: transparent;
+  --tpc-border: rgba(255, 255, 255, 0.15);
+  --tpc-header-bg: rgba(255, 255, 255, 0.05);
 }
 
 /* Light mode override (inside modals) */
 .hand-review-modal .trick-potential-chart,
-.trick-potential-section .trick-potential-chart {
+.trick-potential-section .trick-potential-chart,
+.trick-potential-overlay .trick-potential-chart {
   --tpc-text-primary: #1f2937;
   --tpc-text-secondary: #6b7280;
   --tpc-text-muted: #9ca3af;
   --tpc-bg: #f8fafc;
+  --tpc-border: #d1d5db;
+  --tpc-header-bg: #f9fafb;
 }
 
 .trick-potential-chart table {
@@ -23,52 +29,72 @@
   border-collapse: collapse;
 }
 
+/* Grid lines on all cells */
 .trick-potential-chart th,
 .trick-potential-chart td {
-  padding: 4px 8px;
+  padding: 8px 10px;
   text-align: center;
   font-size: 14px;
+  border: 1px solid var(--tpc-border);
 }
 
 .trick-potential-chart th {
   color: var(--tpc-text-secondary);
-  font-weight: 500;
+  font-weight: 600;
+  background: var(--tpc-header-bg);
 }
 
 .trick-potential-chart .row-label {
   color: var(--tpc-text-secondary);
-  font-weight: 500;
-  text-align: left;
+  font-weight: 600;
+  text-align: center;
+  background: var(--tpc-header-bg);
 }
 
 .trick-potential-chart .trick-cell {
   color: var(--tpc-text-primary);
+  font-weight: 500;
 }
 
 .trick-potential-chart .trick-cell.partscore {
   color: var(--tpc-text-muted);
 }
 
-/* Game/Slam/Grand indicators - subtle ring borders */
+/* Game/Slam/Grand indicators - prominent colored backgrounds with borders */
 .trick-potential-chart .trick-value {
-  display: inline-block;
-  width: 28px;
-  height: 28px;
-  line-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   border-radius: 4px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
+/* Game - Blue background */
 .trick-potential-chart .trick-value.game {
-  box-shadow: inset 0 0 0 2px #22c55e;
+  background: #dbeafe;
+  color: #1e40af;
+  border: 2px solid #3b82f6;
 }
 
+/* Small Slam - Purple background */
 .trick-potential-chart .trick-value.slam {
-  box-shadow: inset 0 0 0 2px #fb923c;
+  background: #ede9fe;
+  color: #5b21b6;
+  border: 2px solid #8b5cf6;
 }
 
+/* Grand Slam - Gold background */
 .trick-potential-chart .trick-value.grand {
-  box-shadow: inset 0 0 0 2px #ef4444;
+  background: #fef3c7;
+  color: #92400e;
+  border: 2px solid #d97706;
+}
+
+/* Dark mode color overrides */
+.trick-potential-chart .trick-value.game {
+  /* Keep same colors - they work well on dark background too */
 }
 
 /* Legend */
@@ -76,34 +102,40 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 8px;
-  font-size: 11px;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--tpc-border);
+  font-size: 12px;
   color: var(--tpc-text-muted);
 }
 
 .trick-potential-legend .legend-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .trick-potential-legend .legend-swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
 }
 
+/* Legend swatches match the value cell colors */
 .trick-potential-legend .legend-swatch.game {
-  box-shadow: inset 0 0 0 2px #22c55e;
+  background: #dbeafe;
+  border: 2px solid #3b82f6;
 }
 
 .trick-potential-legend .legend-swatch.slam {
-  box-shadow: inset 0 0 0 2px #fb923c;
+  background: #ede9fe;
+  border: 2px solid #8b5cf6;
 }
 
 .trick-potential-legend .legend-swatch.grand {
-  box-shadow: inset 0 0 0 2px #ef4444;
+  background: #fef3c7;
+  border: 2px solid #d97706;
 }
 
 /* Suit colors */
@@ -115,44 +147,44 @@
   color: var(--tpc-text-primary);
 }
 
-/* Overlay mode (popup) - Light mode for readability */
+/* ========================================
+   OVERLAY MODE - Full modal popup
+   ======================================== */
+
 /* z-index: 1000 ensures charts appear ABOVE all game assets (cards, table) */
 .trick-potential-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(55, 65, 81, 0.75);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 .trick-potential-overlay .trick-potential-modal {
   /* Light background for better readability */
-  background: #ffffff;
+  background: var(--cream-light, #faf8f4);
   border-radius: 12px;
-  padding: 20px;
-  min-width: 280px;
-  max-width: 360px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
-/* Override to light mode inside overlay */
-.trick-potential-overlay .trick-potential-chart {
-  --tpc-text-primary: #1f2937;
-  --tpc-text-secondary: #6b7280;
-  --tpc-text-muted: #9ca3af;
-  --tpc-bg: transparent;
+  padding: 0;
+  min-width: 320px;
+  max-width: 420px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
 }
 
 .trick-potential-overlay .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: #ffffff;
 }
 
 .trick-potential-overlay .modal-title-row {
@@ -162,38 +194,51 @@
 }
 
 .trick-potential-overlay .modal-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: #1f2937;
 }
 
 .trick-potential-overlay .modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   color: #6b7280;
   font-size: 24px;
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
   line-height: 1;
-  border-radius: 4px;
-  transition: background-color 0.15s ease;
+  border-radius: 6px;
+  transition: all 0.15s ease;
 }
 
 .trick-potential-overlay .modal-close:hover {
   color: #1f2937;
-  background: #f3f4f6;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Table wrapper inside modal */
+.trick-potential-overlay .trick-potential-chart {
+  padding: 20px;
 }
 
 .trick-potential-overlay .modal-footer {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #e5e7eb;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
   text-align: center;
   font-size: 12px;
   color: #6b7280;
+  background: #f9fafb;
 }
 
-/* Trigger button */
+/* ========================================
+   TRIGGER BUTTON
+   ======================================== */
+
 .trick-potential-button {
   display: inline-flex;
   align-items: center;
@@ -210,4 +255,37 @@
 
 .trick-potential-button:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 480px) {
+  .trick-potential-overlay .trick-potential-modal {
+    min-width: 280px;
+    max-width: 95vw;
+  }
+
+  .trick-potential-chart th,
+  .trick-potential-chart td {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  .trick-potential-chart .trick-value {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+
+  .trick-potential-legend {
+    gap: 10px;
+    font-size: 11px;
+  }
+
+  .trick-potential-legend .legend-swatch {
+    width: 14px;
+    height: 14px;
+  }
 }

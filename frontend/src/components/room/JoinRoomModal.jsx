@@ -1,18 +1,62 @@
 /**
  * RoomModal - Modal for creating or joining a partner practice room
+ *
+ * Redesigned UX:
+ * - Join code input is visible immediately (no click-through)
+ * - Create Room is a prominent button
+ * - Auto-close when partner joins
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRoom } from '../../contexts/RoomContext';
 import './JoinRoomModal.css';
 
 export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
-  const { createRoom, joinRoom, error, clearError } = useRoom();
-  const [mode, setMode] = useState(null); // null = choose, 'create', 'join'
+  const {
+    createRoom,
+    joinRoom,
+    dealHands,
+    error,
+    clearError,
+    partnerConnected,
+    isHost,
+    inRoom,
+    gamePhase
+  } = useRoom();
+
   const [roomCode, setRoomCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [localError, setLocalError] = useState(null);
   const [createdRoomCode, setCreatedRoomCode] = useState(null);
+  const [waitingForPartner, setWaitingForPartner] = useState(false);
+  const hasAutoDealt = useRef(false);
+
+  // Auto-deal and transition when partner connects
+  useEffect(() => {
+    if (waitingForPartner && partnerConnected && isHost && !hasAutoDealt.current) {
+      hasAutoDealt.current = true;
+
+      // Auto-deal a hand
+      dealHands().then((result) => {
+        if (result.success) {
+          // Close modal and go to game
+          onJoined?.();
+          onClose();
+        }
+      });
+    }
+  }, [waitingForPartner, partnerConnected, isHost, dealHands, onJoined, onClose]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setRoomCode('');
+      setLocalError(null);
+      setCreatedRoomCode(null);
+      setWaitingForPartner(false);
+      hasAutoDealt.current = false;
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -26,13 +70,14 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
 
     if (result.success) {
       setCreatedRoomCode(result.roomCode);
+      setWaitingForPartner(true);
     } else {
       setLocalError(result.error || 'Failed to create room');
     }
   };
 
   const handleJoinRoom = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
 
     if (!roomCode.trim() || roomCode.length < 6) {
       setLocalError('Please enter a 6-character room code');
@@ -58,17 +103,11 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
   const handleClose = () => {
     setRoomCode('');
     setLocalError(null);
-    setMode(null);
     setCreatedRoomCode(null);
+    setWaitingForPartner(false);
+    hasAutoDealt.current = false;
     clearError();
     onClose();
-  };
-
-  const handleBack = () => {
-    setMode(null);
-    setLocalError(null);
-    setCreatedRoomCode(null);
-    clearError();
   };
 
   const handleStartPlaying = () => {
@@ -78,7 +117,7 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
 
   const displayError = localError || error;
 
-  // Room created successfully - show code to share
+  // Room created successfully - show code to share and wait for partner
   if (createdRoomCode) {
     return (
       <div className="join-room-modal-overlay" onClick={handleClose}>
@@ -106,9 +145,46 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
             </button>
           </div>
 
+          {/* Share buttons */}
+          <div className="share-buttons">
+            <span className="share-label">Share via:</span>
+            <a
+              href={`mailto:?subject=Join my Bridge game!&body=Join me for Bridge practice! Enter code ${createdRoomCode} at ${window.location.origin}`}
+              className="share-btn share-email"
+              title="Share via Email"
+            >
+              ✉️ Email
+            </a>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(`Join me for Bridge practice! Code: ${createdRoomCode}\n${window.location.origin}`)}`}
+              className="share-btn share-whatsapp"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Share via WhatsApp"
+            >
+              💬 WhatsApp
+            </a>
+            <a
+              href={`sms:?body=${encodeURIComponent(`Join me for Bridge practice! Code: ${createdRoomCode} - ${window.location.origin}`)}`}
+              className="share-btn share-sms"
+              title="Share via Text"
+            >
+              📱 Text
+            </a>
+          </div>
+
           <div className="waiting-message">
-            <div className="waiting-spinner"></div>
-            <p>Waiting for partner to join...</p>
+            {partnerConnected ? (
+              <>
+                <span className="connected-icon">✓</span>
+                <p>Partner connected! Starting game...</p>
+              </>
+            ) : (
+              <>
+                <div className="waiting-spinner"></div>
+                <p>Waiting for partner to join...</p>
+              </>
+            )}
           </div>
 
           <div className="modal-actions">
@@ -117,7 +193,7 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
               className="btn-join"
               onClick={handleStartPlaying}
             >
-              Go to Lobby
+              {partnerConnected ? 'Go to Game' : 'Go to Lobby'}
             </button>
           </div>
 
@@ -129,76 +205,18 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
     );
   }
 
-  // Choose mode (Create or Join)
-  if (mode === null) {
-    return (
-      <div className="join-room-modal-overlay" onClick={handleClose}>
-        <div className="join-room-modal" onClick={(e) => e.stopPropagation()}>
-          <button className="modal-close-btn" onClick={handleClose}>
-            &times;
-          </button>
-
-          <div className="modal-header">
-            <span className="modal-icon">👥</span>
-            <h2>Partner Practice</h2>
-            <p>Play with a human partner against AI opponents</p>
-          </div>
-
-          {displayError && (
-            <div className="modal-error">
-              {displayError}
-            </div>
-          )}
-
-          <div className="mode-buttons">
-            <button
-              className="mode-btn mode-btn-create"
-              onClick={() => {
-                setMode('create');
-                handleCreateRoom();
-              }}
-              disabled={isLoading}
-            >
-              <span className="mode-icon">🏠</span>
-              <span className="mode-title">Create Room</span>
-              <span className="mode-desc">Start a new room and invite your partner</span>
-            </button>
-
-            <button
-              className="mode-btn mode-btn-join"
-              onClick={() => setMode('join')}
-              disabled={isLoading}
-            >
-              <span className="mode-icon">🚪</span>
-              <span className="mode-title">Join Room</span>
-              <span className="mode-desc">Enter a code from your partner</span>
-            </button>
-          </div>
-
-          <div className="modal-footer">
-            <p>Both players bid; East-West are AI opponents</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Join mode - enter room code
+  // Main view - Create Room + Join Room with inline code input
   return (
     <div className="join-room-modal-overlay" onClick={handleClose}>
-      <div className="join-room-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="join-room-modal modal-combined" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close-btn" onClick={handleClose}>
           &times;
         </button>
 
-        <button className="modal-back-btn" onClick={handleBack}>
-          ← Back
-        </button>
-
         <div className="modal-header">
-          <span className="modal-icon">🚪</span>
-          <h2>Join Room</h2>
-          <p>Enter the room code shared by your partner</p>
+          <span className="modal-icon">👥</span>
+          <h2>Partner Practice</h2>
+          <p>Play with a human partner against AI opponents</p>
         </div>
 
         {displayError && (
@@ -207,8 +225,33 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
           </div>
         )}
 
-        <form onSubmit={handleJoinRoom} className="join-form">
-          <div className="room-code-input-wrapper">
+        {/* Create Room Section */}
+        <div className="room-section create-section">
+          <button
+            className="create-room-btn"
+            onClick={handleCreateRoom}
+            disabled={isLoading}
+          >
+            <span className="btn-icon">🏠</span>
+            <span className="btn-text">
+              <span className="btn-title">Create Room</span>
+              <span className="btn-desc">Start a new room and invite your partner</span>
+            </span>
+          </button>
+        </div>
+
+        <div className="section-divider">
+          <span>or</span>
+        </div>
+
+        {/* Join Room Section - Code input visible immediately */}
+        <div className="room-section join-section">
+          <div className="join-section-header">
+            <span className="join-icon">🚪</span>
+            <span className="join-title">Join Room</span>
+          </div>
+
+          <form onSubmit={handleJoinRoom} className="join-inline-form">
             <input
               type="text"
               value={roomCode}
@@ -216,29 +259,24 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
                 setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''));
                 setLocalError(null);
               }}
-              placeholder="ABC123"
+              placeholder="Enter 6-digit code"
               maxLength={6}
-              className="room-code-input"
-              autoFocus
+              className="room-code-input-inline"
               autoComplete="off"
               spellCheck="false"
             />
-            <span className="input-hint">6-character code</span>
-          </div>
-
-          <div className="modal-actions">
             <button
               type="submit"
-              className="btn-join"
+              className="join-btn-inline"
               disabled={isLoading || roomCode.length < 6}
             >
-              {isLoading ? 'Joining...' : 'Join Room'}
+              {isLoading ? '...' : 'Join'}
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
 
         <div className="modal-footer">
-          <p>You'll play as North, partnering with South (host)</p>
+          <p>Both players bid; East-West are AI opponents</p>
         </div>
       </div>
     </div>

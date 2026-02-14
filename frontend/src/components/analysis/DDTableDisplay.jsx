@@ -4,12 +4,12 @@
  * Displays the DDS matrix showing maximum tricks for each declarer/strain combination.
  *
  * Features:
- * - Overlay layering (z-index 999) ensures table appears ABOVE cards/game assets
- * - Two-column layout: 30% explanatory text left, 70% table right
+ * - Full modal overlay with centered positioning (z-index 1000)
+ * - Two-column layout: 35% explanatory text left, 65% table right
+ * - Grid lines for clear data separation
+ * - Color-coded cells: Game (blue), Slam (purple), Grand (gold)
  * - Backdrop blur for visual separation
  * - Dismiss button (X) in top-right corner
- * - Color coding for game/slam/grand levels
- * - Responsive scaling with vmin units
  */
 
 import React from 'react';
@@ -50,12 +50,12 @@ const getContractLevel = (tricks, strain) => {
 const isRedStrain = (strain) => strain === 'H' || strain === 'D';
 
 /**
- * DDTableDisplay - Double Dummy Analysis Table with Overlay
+ * DDTableDisplay - Double Dummy Analysis Table with Modal Overlay
  *
  * Props:
  * @param {Object} ddAnalysis - The DD analysis data containing dd_table and par
  * @param {Function} onDismiss - Callback when dismiss button is clicked
- * @param {boolean} asOverlay - Whether to render as overlay (default: true)
+ * @param {boolean} asOverlay - Whether to render as modal overlay (default: true)
  * @param {boolean} showExplanation - Whether to show two-column layout with text (default: true)
  */
 const DDTableDisplay = ({
@@ -74,11 +74,11 @@ const DDTableDisplay = ({
       <table className="dd-table">
         <thead>
           <tr>
-            <th></th>
+            <th className="dd-corner-cell"></th>
             {STRAINS.map(strain => (
               <th
                 key={strain}
-                className={isRedStrain(strain) ? 'red-suit' : ''}
+                className={`dd-header-cell ${isRedStrain(strain) ? 'red-suit' : ''}`}
               >
                 {STRAIN_SYMBOLS[strain]}
               </th>
@@ -88,16 +88,13 @@ const DDTableDisplay = ({
         <tbody>
           {POSITIONS.map(pos => (
             <tr key={pos}>
-              <td className="position-header">{pos}</td>
+              <td className="dd-position-cell">{pos}</td>
               {STRAINS.map(strain => {
                 const tricks = dd_table[pos]?.[strain] ?? '-';
                 const level = getContractLevel(tricks, strain);
-                const levelClass = level === 'game' ? 'level-game' :
-                                   level === 'slam' ? 'level-slam' :
-                                   level === 'grand' ? 'level-grand' : '';
                 return (
-                  <td key={strain} className={levelClass}>
-                    {tricks}
+                  <td key={strain} className={`dd-value-cell level-${level}`}>
+                    <span className="dd-trick-value">{tricks}</span>
                   </td>
                 );
               })}
@@ -124,50 +121,65 @@ const DDTableDisplay = ({
     return renderTable();
   }
 
-  // Full overlay with two-column layout
+  // Full modal overlay with two-column layout
   return (
-    <div className="dd-table-overlay">
-      {/* Dismiss button */}
-      {onDismiss && (
-        <button
-          className="dd-table-dismiss"
-          onClick={onDismiss}
-          aria-label="Dismiss DD table"
-        >
-          ×
-        </button>
-      )}
+    <div className="dd-modal-overlay" onClick={onDismiss}>
+      <div className="dd-modal-content" onClick={e => e.stopPropagation()}>
+        {/* Modal Header */}
+        <div className="dd-modal-header">
+          <h3 className="dd-modal-title">Possible Tricks (Double Dummy)</h3>
+          {onDismiss && (
+            <button
+              className="dd-modal-close"
+              onClick={onDismiss}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          )}
+        </div>
 
-      {showExplanation ? (
-        <div className="dd-table-two-column">
-          {/* Left column: Explanatory text (30%) */}
-          <div className="dd-table-explanation">
-            <h3>Possible Tricks (Double Dummy)</h3>
-            <p>
-              This matrix represents the theoretical maximum number of tricks each
-              position can win for every possible strain. These values assume
-              "Double Dummy" conditions—where all players see all cards and play
-              perfectly. Use this to benchmark if your contract was mathematically sound.
-            </p>
-            <div className="explanation-tip">
-              <div className="color-legend">
-                <span className="legend-game">Blue = Game</span>
-                <span className="legend-slam">Purple = Slam</span>
-                <span className="legend-grand">Yellow = Grand</span>
+        {showExplanation ? (
+          <div className="dd-modal-body">
+            {/* Left column: Explanatory text */}
+            <div className="dd-explanation">
+              <p>
+                This matrix shows the maximum number of tricks each position
+                can win for every possible trump suit, assuming perfect play
+                by all four players (double dummy conditions).
+              </p>
+              <p className="dd-explanation-tip">
+                Use this to evaluate whether your contract was mathematically sound.
+              </p>
+
+              {/* Color Legend */}
+              <div className="dd-color-legend">
+                <div className="dd-legend-item">
+                  <span className="dd-legend-swatch level-game"></span>
+                  <span>Game</span>
+                </div>
+                <div className="dd-legend-item">
+                  <span className="dd-legend-swatch level-slam"></span>
+                  <span>Small Slam</span>
+                </div>
+                <div className="dd-legend-item">
+                  <span className="dd-legend-swatch level-grand"></span>
+                  <span>Grand Slam</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Right column: Table (70%) */}
-          <div className="dd-table-main">
+            {/* Right column: Table */}
+            <div className="dd-table-wrapper">
+              {renderTable()}
+            </div>
+          </div>
+        ) : (
+          <div className="dd-modal-body-compact">
             {renderTable()}
           </div>
-        </div>
-      ) : (
-        <div className="dd-table-main" style={{ padding: '16px' }}>
-          {renderTable()}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

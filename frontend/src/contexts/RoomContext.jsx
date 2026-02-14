@@ -44,6 +44,9 @@ const RoomContext = createContext({
   // Play state (shared for room play sync)
   playState: null,
 
+  // Coaching support
+  beliefs: null,
+
   // Settings
   settings: {
     deal_type: 'random',
@@ -93,6 +96,9 @@ export function RoomProvider({ children }) {
   // Play state (shared for room play sync)
   const [playState, setPlayState] = useState(null);
 
+  // Coaching support
+  const [beliefs, setBeliefs] = useState(null);
+
   // Settings
   const [settings, setSettings] = useState({
     deal_type: 'random',
@@ -117,7 +123,14 @@ export function RoomProvider({ children }) {
     setRoomData(room);
     setRoomCode(room.room_code);
     setIsHost(room.is_host);
-    setMyPosition(room.my_position || 'S');
+    if (room.my_position) {
+      setMyPosition(prev => {
+        if (prev !== room.my_position) {
+          console.log('Mapping User:', room.is_host ? 'Host' : 'Guest', 'my_position:', room.my_position, 'was:', prev);
+        }
+        return room.my_position;
+      });
+    }
     setPartnerConnected(room.partner_connected);
     setGamePhase(room.game_phase);
     setRoomVersion(room.version);
@@ -147,6 +160,12 @@ export function RoomProvider({ children }) {
       setPlayState(room.play_state);
     } else if (room.game_phase !== 'playing') {
       setPlayState(null);
+    }
+    // Update beliefs for coaching support
+    if (room.beliefs) {
+      setBeliefs(room.beliefs);
+    } else if (room.game_phase !== 'bidding') {
+      setBeliefs(null);
     }
   }, []);
 
@@ -246,6 +265,7 @@ export function RoomProvider({ children }) {
     setVulnerability('None');
     setCurrentBidder(null);
     setPlayState(null);
+    setBeliefs(null);
     setError(null);
   }, []);
 
@@ -372,7 +392,10 @@ export function RoomProvider({ children }) {
         setGamePhase('playing');
         setIsMyTurn(data.is_my_turn);
         setRoomVersion(data.version);
-        // Play state will be updated via next poll
+        // Set play state immediately from response (prevents 304 loop)
+        if (data.play_state) {
+          setPlayState(data.play_state);
+        }
         return { success: true, data };
       } else {
         setError(data.error || 'Failed to start play');
@@ -505,7 +528,9 @@ export function RoomProvider({ children }) {
           if (data.in_room) {
             setRoomCode(data.room_code);
             setIsHost(data.is_host);
-            setMyPosition(data.my_position);
+            if (data.my_position) {
+              setMyPosition(data.my_position);
+            }
             setPartnerConnected(data.partner_connected);
             setGamePhase(data.game_phase);
             setRoomVersion(data.version);
@@ -549,6 +574,9 @@ export function RoomProvider({ children }) {
 
     // Play state
     playState,
+
+    // Coaching support
+    beliefs,
 
     // Settings
     settings,

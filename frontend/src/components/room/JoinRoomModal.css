@@ -271,7 +271,8 @@
   margin-bottom: var(--space-4, 1rem);
 }
 
-.room-code-value {
+/* Scoped to modal to avoid conflicting with RoomStatusBar */
+.join-room-modal .room-code-value {
   font-size: var(--text-4xl, 2.25rem);
   font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
   font-weight: 700;
@@ -328,7 +329,237 @@
   }
 }
 
-/* Responsive */
+/* ========================================
+   Share Buttons
+   ======================================== */
+
+.share-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-4, 1rem);
+  flex-wrap: wrap;
+}
+
+.share-label {
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--modal-text-muted, #9ca3af);
+  margin-right: var(--space-1, 0.25rem);
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  border-radius: var(--radius-full, 9999px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+
+.share-btn:hover {
+  transform: translateY(-1px);
+}
+
+.share-email {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.share-email:hover {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.share-whatsapp {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
+}
+
+.share-whatsapp:hover {
+  background: #bbf7d0;
+  color: #15803d;
+}
+
+.share-sms {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #93c5fd;
+}
+
+.share-sms:hover {
+  background: #bfdbfe;
+  color: #1d4ed8;
+}
+
+/* ========================================
+   Combined Create/Join View (Redesigned UX)
+   ======================================== */
+
+.modal-combined {
+  max-width: 380px;
+}
+
+/* Section container */
+.room-section {
+  margin-bottom: var(--space-4, 1rem);
+}
+
+/* Create Room Button - Large prominent button */
+.create-room-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 1rem);
+  padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
+  background: linear-gradient(135deg, var(--color-success, #22c55e) 0%, #16a34a 100%);
+  border: none;
+  border-radius: var(--radius-lg, 0.75rem);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.create-room-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -4px rgba(34, 197, 94, 0.4);
+}
+
+.create-room-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.create-room-btn .btn-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.create-room-btn .btn-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.create-room-btn .btn-title {
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: 600;
+  color: white;
+}
+
+.create-room-btn .btn-desc {
+  font-size: var(--text-sm, 0.875rem);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Section divider with "or" */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  margin: var(--space-4, 1rem) 0;
+  color: var(--modal-text-muted, #9ca3af);
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--modal-border, #e5e7eb);
+}
+
+/* Join Section Header */
+.join-section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-3, 0.75rem);
+}
+
+.join-icon {
+  font-size: 1.25rem;
+}
+
+.join-title {
+  font-size: var(--text-base, 1rem);
+  font-weight: 600;
+  color: var(--modal-text, #1f2937);
+}
+
+/* Inline Join Form */
+.join-inline-form {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+}
+
+.room-code-input-inline {
+  flex: 1;
+  font-size: var(--text-lg, 1.125rem);
+  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  letter-spacing: 0.15em;
+  text-align: center;
+  padding: var(--space-3, 0.75rem) var(--space-3, 0.75rem);
+  border: 2px solid var(--modal-border, #e5e7eb);
+  border-radius: var(--radius-md, 0.375rem);
+  text-transform: uppercase;
+  background: var(--modal-bg-secondary, #f9fafb);
+  color: var(--modal-text, #1f2937);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.room-code-input-inline:focus {
+  outline: none;
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: var(--modal-bg, #fff);
+}
+
+.room-code-input-inline::placeholder {
+  color: var(--modal-text-muted, #9ca3af);
+  letter-spacing: 0.05em;
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.join-btn-inline {
+  padding: var(--space-3, 0.75rem) var(--space-5, 1.25rem);
+  background: var(--color-primary, #3b82f6);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md, 0.375rem);
+  font-size: var(--text-base, 1rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.join-btn-inline:hover:not(:disabled) {
+  background: var(--color-primary-dark, #2563eb);
+}
+
+.join-btn-inline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Connected icon (checkmark) */
+.connected-icon {
+  font-size: 1.5rem;
+  color: var(--color-success, #22c55e);
+}
+
+/* ========================================
+   Responsive
+   ======================================== */
+
 @media (max-width: 480px) {
   .join-room-modal {
     padding: var(--space-4, 1rem);
@@ -348,5 +579,46 @@
   .btn-cancel,
   .btn-join {
     width: 100%;
+  }
+
+  /* Inline form stacks on mobile */
+  .join-inline-form {
+    flex-direction: column;
+  }
+
+  .join-btn-inline {
+    width: 100%;
+  }
+
+  .create-room-btn {
+    padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  }
+
+  .create-room-btn .btn-icon {
+    font-size: 1.5rem;
+  }
+
+  .create-room-btn .btn-title {
+    font-size: var(--text-base, 1rem);
+  }
+
+  .create-room-btn .btn-desc {
+    font-size: var(--text-xs, 0.75rem);
+  }
+
+  /* Share buttons - stack on mobile */
+  .share-buttons {
+    flex-direction: column;
+    gap: var(--space-2, 0.5rem);
+  }
+
+  .share-label {
+    margin-bottom: var(--space-1, 0.25rem);
+  }
+
+  .share-btn {
+    width: 100%;
+    justify-content: center;
+    padding: var(--space-3, 0.75rem);
   }
 }

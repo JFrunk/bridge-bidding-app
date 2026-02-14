@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { PrivacyPolicy } from '../legal/PrivacyPolicy';
+import { AboutUs } from '../legal/AboutUs';
 import './SimpleLogin.css';
 
 export function SimpleLogin({ onClose }) {
@@ -11,6 +13,8 @@ export function SimpleLogin({ onClose }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showAboutUs, setShowAboutUs] = useState(false);
   const { simpleLogin, continueAsGuest } = useAuth();
 
   const handleSubmit = async (e) => {
@@ -148,7 +152,7 @@ export function SimpleLogin({ onClose }) {
                 placeholder="your@email.com"
                 required
                 autoFocus
-                autoComplete="email"
+                autoComplete="username"
                 data-testid="login-email-input"
               />
             </div>
@@ -220,13 +224,38 @@ export function SimpleLogin({ onClose }) {
           </button>
 
           <p className="privacy-note">
+            <span className="security-badge">🔒 Secure, Password-less Login</span>
+            <br />
             {userType === 'new'
-              ? `No password required. We'll send you a welcome email and remember you on this device.`
-              : `No password required. We'll remember you on this device.`
+              ? `We use secure, password-less authentication to protect your privacy. We'll send you a welcome email and remember you on this device.`
+              : `We use secure, password-less authentication to protect your privacy. We'll remember you on this device.`
             }
+            <br />
+            <button
+              type="button"
+              className="privacy-link"
+              onClick={() => setShowPrivacyPolicy(true)}
+            >
+              Privacy Policy
+            </button>
+            <span className="link-separator"> | </span>
+            <button
+              type="button"
+              className="privacy-link"
+              onClick={() => setShowAboutUs(true)}
+            >
+              About Us
+            </button>
           </p>
         </form>
       </div>
+
+      {showPrivacyPolicy && (
+        <PrivacyPolicy onClose={() => setShowPrivacyPolicy(false)} />
+      )}
+      {showAboutUs && (
+        <AboutUs onClose={() => setShowAboutUs(false)} />
+      )}
     </div>
   );
 }

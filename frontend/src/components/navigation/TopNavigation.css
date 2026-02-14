@@ -160,6 +160,20 @@
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
+/* Room code indicator - non-interactive badge matching nav-utility-button style */
+.nav-room-indicator {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-md);
+  color: #ffffff;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
 /* Hide the label class - just use text directly */
 .nav-utility-label {
   /* Keep visible, no icon prefix needed */
@@ -222,6 +236,12 @@
     padding: var(--space-1) var(--space-2);
     font-size: 13px;
   }
+
+  .nav-room-indicator {
+    padding: var(--space-1) var(--space-2);
+    font-size: 13px;
+    max-width: 100px;
+  }
 }
 
 /* Small Mobile (0 - 480px) */
@@ -254,6 +274,15 @@
   .nav-utility-button::before {
     content: '📖';
     font-size: 18px;
+  }
+
+  .nav-room-indicator {
+    padding: var(--space-1);
+    font-size: 11px;
+    max-width: 80px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 }
 

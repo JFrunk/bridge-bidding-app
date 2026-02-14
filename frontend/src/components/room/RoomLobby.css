@@ -180,7 +180,8 @@
   color: var(--text-secondary, #6b7280);
 }
 
-.room-code-value {
+/* Scoped to lobby to avoid conflicting with RoomStatusBar */
+.room-lobby .room-code-value {
   font-size: var(--text-xl, 1.25rem);
   font-family: monospace;
   letter-spacing: 0.15em;
@@ -389,4 +390,65 @@
     width: 100%;
     max-width: none;
   }
+}
+
+/* ========================================
+   SIMPLIFIED WAITING VIEW (P0)
+   ======================================== */
+
+.room-lobby-waiting {
+  max-width: 400px;
+  text-align: center;
+}
+
+.room-waiting-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5, 1.25rem);
+  padding: var(--space-6, 1.5rem);
+  background: var(--bg-secondary, #f9fafb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-lg, 0.5rem);
+}
+
+.player-status-simple {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  background: var(--bg-primary, #fff);
+  border-radius: var(--radius-md, 0.375rem);
+  font-size: var(--text-base, 1rem);
+}
+
+.status-item .status-icon {
+  font-size: 1.25rem;
+  width: 24px;
+  text-align: center;
+}
+
+.status-item.waiting .status-icon {
+  color: var(--color-warning, #f59e0b);
+  animation: pulse 2s infinite;
+}
+
+.status-item.connected .status-icon {
+  color: var(--color-success, #22c55e);
+}
+
+.share-message {
+  margin: 0;
+  color: var(--text-secondary, #6b7280);
+  font-size: var(--text-sm, 0.875rem);
+}
+
+.btn-leave {
+  margin-top: var(--space-4, 1rem);
 }

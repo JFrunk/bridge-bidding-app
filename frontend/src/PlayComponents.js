@@ -239,9 +239,9 @@ export function CurrentTrick({ trick, positions, trickWinner, trickComplete, nex
  * @param {boolean} dummyRevealed - Has dummy been revealed? (after opening lead)
  * @returns {boolean} - Should this hand be visible?
  */
-function shouldShowHand(position, dummyPosition, declarerPosition, userIsDummy, dummyRevealed) {
-  // Rule 1: Always show South (user's own hand)
-  if (position === 'S') {
+function shouldShowHand(position, dummyPosition, declarerPosition, userIsDummy, dummyRevealed, userPosition = 'S') {
+  // Rule 1: Always show user's own hand
+  if (position === userPosition) {
     return true;
   }
 
@@ -320,22 +320,23 @@ export function PlayTable({
   onNewHand,
   onUndo,
   onReplay,
-  onClaim  // Claim remaining tricks
+  onClaim,  // Claim remaining tricks
+  // Room mode: actual user position (default 'S' for solo play)
+  userPosition = 'S'
 }) {
   if (!playState) return null;
 
   const { contract, current_trick, tricks_won, next_to_play, dummy, trick_complete, trick_winner } = playState;
 
-  // Determine which positions are user (South) and dummy
-  const userPosition = 'S';
+  // Determine which positions are user and dummy
   const dummyPosition = dummy;
   const declarerPosition = contract.declarer;
 
-  // User is dummy if South is dummy position
-  const userIsDummy = dummyPosition === 'S';
+  // User is dummy if their position matches dummy
+  const userIsDummy = dummyPosition === userPosition;
 
-  // User is declarer if South is declarer
-  const userIsDeclarer = declarerPosition === 'S';
+  // User is declarer if their position matches declarer
+  const userIsDeclarer = declarerPosition === userPosition;
 
   // Position mapping for display (clockwise from North)
   const positions = ['N', 'E', 'S', 'W'];
@@ -344,7 +345,7 @@ export function PlayTable({
   const suitOrder = getSuitOrder(contract.strain);
 
   // Calculate tricks played first (needed for multiple purposes including dummy visibility)
-  const totalTricksPlayed = Object.values(tricks_won).reduce((sum, tricks) => sum + tricks, 0);
+  const totalTricksPlayed = tricks_won ? Object.values(tricks_won).reduce((sum, tricks) => sum + tricks, 0) : 0;
 
   // CRITICAL FIX: Dummy is revealed after opening lead
   // Infer from game state if backend doesn't provide it:
@@ -355,31 +356,10 @@ export function PlayTable({
                         totalTricksPlayed > 0;
 
   // CRITICAL: Centralized visibility rules - USE THESE for all hand rendering
-  const showNorthHand = shouldShowHand('N', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
-  const showEastHand = shouldShowHand('E', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
-  const showSouthHand = shouldShowHand('S', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
-  const showWestHand = shouldShowHand('W', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
-
-  // DEBUG: Log visibility decisions
-  console.log('👁️ Hand Visibility Rules Applied:', {
-    dummyPosition,
-    declarerPosition,
-    userIsDummy,
-    userIsDeclarer,
-    dummyRevealed,  // CRITICAL: Track if dummy should be visible
-    visibility: {
-      'North': showNorthHand,
-      'East': showEastHand,
-      'South': showSouthHand,
-      'West': showWestHand
-    },
-    reason: {
-      'North': showNorthHand ? (dummyPosition === 'N' ? `DUMMY (revealed: ${dummyRevealed})` : userIsDummy && declarerPosition === 'N' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN',
-      'East': showEastHand ? (dummyPosition === 'E' ? `DUMMY (revealed: ${dummyRevealed})` : userIsDummy && declarerPosition === 'E' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN',
-      'South': 'USER (always visible)',
-      'West': showWestHand ? (dummyPosition === 'W' ? `DUMMY (revealed: ${dummyRevealed})` : userIsDummy && declarerPosition === 'W' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN'
-    }
-  });
+  const showNorthHand = shouldShowHand('N', dummyPosition, declarerPosition, userIsDummy, dummyRevealed, userPosition);
+  const showEastHand = shouldShowHand('E', dummyPosition, declarerPosition, userIsDummy, dummyRevealed, userPosition);
+  const showSouthHand = shouldShowHand('S', dummyPosition, declarerPosition, userIsDummy, dummyRevealed, userPosition);
+  const showWestHand = shouldShowHand('W', dummyPosition, declarerPosition, userIsDummy, dummyRevealed, userPosition);
 
   // Calculate tricks for consolidated header (totalTricksPlayed already calculated above)
   const tricksNeeded = contract.level + 6;
@@ -405,40 +385,41 @@ export function PlayTable({
         north={
           <div className="position-orbit position-north-orbit">
             <div className={`position-label ${next_to_play === 'N' ? 'active-turn' : ''}`}>
-              North
+              North {userPosition === 'N' ? '(You)' : ''}
               {dummyPosition === 'N' && <span className="position-badge dummy">Dummy</span>}
               {declarerPosition === 'N' && <span className="position-badge declarer">Declarer</span>}
-              {dummyPosition === 'N' && userIsDeclarer && <span className="position-badge you-control">You Control</span>}
+              {dummyPosition === 'N' && userIsDeclarer && userPosition !== 'N' && <span className="position-badge you-control">You Control</span>}
             </div>
             {showNorthHand && !isHandComplete && (
               <PlayableHorizontalHand
-                hand={dummyPosition === 'N' ? dummyHand : declarerHand}
+                hand={userPosition === 'N' ? userHand : (dummyPosition === 'N' ? dummyHand : declarerHand)}
                 suitOrder={suitOrder}
                 currentTrick={current_trick}
-                isMyTurn={dummyPosition === 'N' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn}
-                onCardPlay={dummyPosition === 'N' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
+                isMyTurn={userPosition === 'N' ? isUserTurn : (dummyPosition === 'N' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn)}
+                onCardPlay={userPosition === 'N' ? onCardPlay : (dummyPosition === 'N' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay)}
                 positionKey="north"
-                scaleClass="text-sm"
+                scaleClass={userPosition === 'N' ? 'text-lg' : 'text-sm'}
               />
             )}
           </div>
         }
         south={
           <div className="position-orbit position-south-orbit">
-            <div className={`position-label ${(next_to_play === 'S' && !userIsDummy) ? 'active-turn' : ''}`}>
-              South (You)
-              {userIsDummy && <span className="position-badge dummy">Dummy</span>}
-              {userIsDeclarer && <span className="position-badge declarer">Declarer</span>}
+            <div className={`position-label ${(next_to_play === 'S' && (userPosition === 'S' ? !userIsDummy : true)) ? 'active-turn' : ''}`}>
+              South {userPosition === 'S' ? '(You)' : ''}
+              {dummyPosition === 'S' && <span className="position-badge dummy">Dummy</span>}
+              {declarerPosition === 'S' && <span className="position-badge declarer">Declarer</span>}
+              {dummyPosition === 'S' && userIsDeclarer && userPosition !== 'S' && <span className="position-badge you-control">You Control</span>}
             </div>
-            {userHand && userHand.length > 0 && (
+            {(userPosition === 'S' ? (userHand && userHand.length > 0) : showSouthHand && !isHandComplete) && (
               <PlayableHorizontalHand
-                hand={userHand}
+                hand={userPosition === 'S' ? userHand : (dummyPosition === 'S' ? dummyHand : declarerHand)}
                 suitOrder={suitOrder}
                 currentTrick={current_trick}
-                isMyTurn={isUserTurn}
-                onCardPlay={onCardPlay}
+                isMyTurn={userPosition === 'S' ? isUserTurn : (dummyPosition === 'S' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn)}
+                onCardPlay={userPosition === 'S' ? onCardPlay : (dummyPosition === 'S' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay)}
                 positionKey="south"
-                scaleClass="text-lg"
+                scaleClass={userPosition === 'S' ? 'text-lg' : 'text-sm'}
               />
             )}
           </div>

@@ -1,8 +1,13 @@
 /* Card Component Styles - UI Redesign v2 */
+/* P0 FIX: Proportional scaling with vmin units */
 
 .card {
-  width: 48px;
-  height: 62px;
+  /* Base dimensions using vmin for proportional scaling */
+  width: min(48px, 7.5vmin);
+  height: min(62px, 9.7vmin);
+  /* Viewport height constraint - scale down on short screens */
+  max-height: 20vh;
+  max-width: calc(20vh * 0.774); /* Maintain aspect ratio when height-constrained */
   background: #ffffff;
   border: 1.5px solid #d0d0d0;
   border-radius: 6px;
@@ -14,6 +19,8 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   margin: 0;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  /* Ensure aspect ratio is maintained */
+  aspect-ratio: 48 / 62;
 }
 
 .card-selectable {
@@ -85,18 +92,19 @@
   align-items: center;
 }
 
+/* P0 FIX: Proportional font scaling using clamp */
 .suit-symbol-large {
-  font-size: 24px;
+  font-size: clamp(16px, 3.5vmin, 24px);
   line-height: 1;
 }
 
 .suit-symbol-small {
-  font-size: 10px;
+  font-size: clamp(7px, 1.5vmin, 10px);
   line-height: 1;
 }
 
 .rank {
-  font-size: 13px;
+  font-size: clamp(9px, 2vmin, 13px);
   line-height: 1;
 }
 

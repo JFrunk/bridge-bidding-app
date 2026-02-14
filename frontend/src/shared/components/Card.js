@@ -43,11 +43,19 @@ const Card = ({ rank, suit, isHidden = false, customScaleClass = "text-base", on
     isSpade ? 'scale-105' : ''
   ].filter(Boolean).join(' ');
 
+  // Suit name for aria-label
+  const suitName = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs',
+                    'S': 'spades', 'H': 'hearts', 'D': 'diamonds', 'C': 'clubs'}[suit] || suit;
+
   return (
     <div
       className={`${customScaleClass} inline-block select-none ${selectable ? 'cursor-pointer' : ''} transform transition-transform hover:-translate-y-[0.5em] hover:z-50 ${selected ? 'ring-2 ring-amber-500 -translate-y-[0.5em]' : ''}`}
       onClick={handleClick}
       onTouchEnd={handleTouchEnd}
+      role={selectable ? 'button' : undefined}
+      tabIndex={selectable ? 0 : undefined}
+      aria-label={selectable ? `${rank} of ${suitName}` : undefined}
+      onKeyDown={selectable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(e); } } : undefined}
     >
       <div className="w-[3.5em] h-[5.0em] bg-white rounded-[0.35em] border-[0.06em] border-gray-300 shadow-[0.1em_0.1em_0.2em_rgba(0,0,0,0.3)] flex flex-col items-start overflow-hidden">
         {/* Safe-Zone: 1.6em centered strip for rank + suit */}

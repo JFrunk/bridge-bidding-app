@@ -121,7 +121,7 @@ class RoomState:
         return dealer_positions[current_idx]
 
     def is_session_turn(self, session_id: str) -> bool:
-        """Check if it's this session's turn to act"""
+        """Check if it's this session's turn to act (includes declarer controlling dummy)"""
         position = self.get_position_for_session(session_id)
         if not position:
             return False
@@ -129,7 +129,16 @@ class RoomState:
         if self.game_phase == 'bidding':
             return self.get_current_bidder() == position
         elif self.game_phase == 'playing' and self.play_state:
-            return self.play_state.next_to_play == position
+            next_player = self.play_state.next_to_play
+            if next_player == position:
+                return True
+            # Declarer also controls dummy's cards
+            from engine.play_engine import PlayEngine
+            declarer = self.play_state.contract.declarer
+            dummy = PlayEngine.partner(declarer)
+            if position == declarer and next_player == dummy:
+                return True
+            return False
         return False
 
     def reset_hand(self):
@@ -188,7 +197,7 @@ class RoomState:
         return result
 
     def _serialize_play_state(self, for_session: Optional[str] = None) -> dict:
-        """Serialize play state for API response"""
+        """Serialize play state matching solo /api/get-play-state format"""
         if not self.play_state:
             return None
 
@@ -205,36 +214,80 @@ class RoomState:
 
         # Always see your own hand
         if position and position in ps.hands:
-            visible_hands[position] = self._serialize_hand(ps.hands[position])
+            visible_hands[position] = {
+                'cards': self._serialize_hand(ps.hands[position]),
+                'position': position
+            }
 
         # Dummy is visible after opening lead
         if ps.dummy_revealed and dummy in ps.hands:
-            visible_hands[dummy] = self._serialize_hand(ps.hands[dummy])
+            visible_hands[dummy] = {
+                'cards': self._serialize_hand(ps.hands[dummy]),
+                'position': dummy
+            }
 
         # Declarer always sees dummy
         if position == declarer and dummy in ps.hands:
-            visible_hands[dummy] = self._serialize_hand(ps.hands[dummy])
+            visible_hands[dummy] = {
+                'cards': self._serialize_hand(ps.hands[dummy]),
+                'position': dummy
+            }
+
+        # Trick completion check
+        trick_complete = len(ps.current_trick) == 4
+        trick_winner = None
+        if trick_complete and ps.trick_history:
+            trick_winner = ps.trick_history[-1].winner
+
+        # Dummy hand for legacy compatibility
+        dummy_hand = None
+        opening_lead_made = len(ps.current_trick) >= 1 or len(ps.trick_history) >= 1
+        if ps.dummy_revealed and opening_lead_made and dummy in ps.hands:
+            dummy_hand = {
+                'cards': self._serialize_hand(ps.hands[dummy]),
+                'position': dummy
+            }
+
+        # Determine controllable positions and turn info for this session
+        is_user_turn = self.is_session_turn(for_session) if for_session else False
+        controllable_positions = []
+        if position:
+            # Player can always play their own position
+            if position in ('N', 'S'):
+                controllable_positions.append(position)
+            # Declarer also controls dummy
+            if position == declarer:
+                controllable_positions.append(dummy)
 
         return {
-            'contract': str(ps.contract),
-            'declarer': declarer,
-            'dummy': dummy,
+            'contract': {
+                'level': ps.contract.level,
+                'strain': ps.contract.strain,
+                'declarer': declarer,
+                'doubled': getattr(ps.contract, 'doubled', 0),
+            },
             'next_to_play': ps.next_to_play,
+            'dummy': dummy,
+            'dummy_revealed': ps.dummy_revealed,
+            'dummy_hand': dummy_hand,
             'current_trick': [
-                {'rank': c.rank, 'suit': c.suit, 'player': p}
+                {'card': {'rank': c.rank, 'suit': c.suit}, 'position': p}
                 for c, p in ps.current_trick
             ],
+            'trick_complete': trick_complete,
+            'trick_winner': trick_winner,
             'trick_history': [
                 {
-                    'cards': [{'rank': c.rank, 'suit': c.suit, 'player': p} for c, p in t.cards],
+                    'cards': [{'card': {'rank': c.rank, 'suit': c.suit}, 'position': p} for c, p in t.cards],
+                    'leader': getattr(t, 'leader', None),
                     'winner': t.winner
                 }
                 for t in ps.trick_history
             ],
-            'tricks_ns': ps.tricks_won.get('N', 0) + ps.tricks_won.get('S', 0),
-            'tricks_ew': ps.tricks_won.get('E', 0) + ps.tricks_won.get('W', 0),
+            'tricks_won': dict(ps.tricks_won),
             'visible_hands': visible_hands,
-            'dummy_revealed': ps.dummy_revealed,
+            'is_user_turn': is_user_turn,
+            'controllable_positions': controllable_positions,
         }
 
     def _full_position_name(self, short: str) -> str:

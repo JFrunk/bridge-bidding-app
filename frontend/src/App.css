@@ -350,6 +350,9 @@ body {
   margin-top: var(--space-2);
   padding: var(--space-2);
   min-height: 90px;
+  /* Scale to fit - no horizontal scrolling */
+  overflow: visible;
+  width: 100%;
 }
 
 /* Mobile: Horizontal scroll for 13-card hands that overflow */
@@ -394,12 +397,16 @@ body {
   display: flex;
   gap: 0;
   flex-direction: row;
+  /* Allow shrinking when container is smaller */
+  flex-shrink: 1;
 }
 
-/* Card overlap: uses clamp for "squish" factor - cards huddle closer on smaller screens */
+/* Card overlap: uses em for proportional overlap that scales with card size */
+/* AUTO-SCALE FIX: Overlap uses em so it scales with parent font-size */
 .suit-group .card,
 .suit-group > div.card {
-  margin-left: clamp(-40px, calc(-4vmin * var(--table-scale, 1)), -16px);
+  /* Overlap is ~60% of card width (3.5em * 0.6 = 2.1em) */
+  margin-left: -2.1em;
 }
 
 .suit-group .card:first-child,
@@ -407,21 +414,24 @@ body {
   margin-left: 0;
 }
 
-/* Gap between suit groups - scales with vmin */
+/* Gap between suit groups - scales with em */
 .hand-display .suit-group:not(:first-child) {
-  margin-left: var(--card-suit-gap, clamp(4px, 1vmin, 14px));
+  margin-left: var(--card-suit-gap, 0.5em);
 }
 
-/* Card container - vmin-based responsive sizing */
+/* Card container - em-based responsive sizing (scales with parent font-size) */
+/* AUTO-SCALE FIX: Cards use em units so they scale with container font-size */
 .card {
-  width: var(--card-width, clamp(38px, 6vmin, 60px));
-  height: var(--card-height, clamp(53px, 8.4vmin, 84px));
+  /* Use em units - these scale based on parent font-size set by container queries */
+  width: var(--card-width, 3.5em);
+  height: var(--card-height, 5em);
   background: white;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06);
   position: relative;
   cursor: pointer;
   user-select: none;
+  /* Cards are fixed-size at their em scale - shrinking handled by parent font-size */
   flex-shrink: 0;
   /* Smooth transition for scaling changes */
   transition: width 0.2s ease, height 0.2s ease;
@@ -438,13 +448,14 @@ body {
 
 /* CRITICAL: Content in the LEFT visible strip */
 /* Visible strip = card width - overlap amount */
+/* AUTO-SCALE FIX: Use em units so content scales with card */
 .card .card-content {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
-  /* Visible strip width: card width minus overlap (absolute value) */
-  width: clamp(20px, calc(2.5vmin * var(--table-scale, 1)), 32px);
+  /* Visible strip width: card width (3.5em) minus overlap (2.1em) = 1.4em */
+  width: 1.4em;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -457,15 +468,16 @@ body {
   width: 100%;
 }
 
-/* Rank and suit styling - vmin-based responsive */
+/* Rank and suit styling - em-based responsive */
+/* AUTO-SCALE FIX: Use em units so text scales with card */
 .card .rank {
-  font-size: var(--card-rank-size, clamp(14px, 2vmin, 22px));
+  font-size: var(--card-rank-size, 1.2em);
   font-weight: 800;
   line-height: 1;
 }
 
 .card .suit-symbol {
-  font-size: var(--card-suit-size, clamp(12px, 1.6vmin, 18px));
+  font-size: var(--card-suit-size, 1em);
   line-height: 1;
 }
 
@@ -1502,18 +1514,13 @@ html, body {
     gap: 15px;
   }
 
-  /* Make cards slightly smaller on mobile */
-  .card {
-    width: 50px;
-    height: 72px;
-  }
-
+  /* Cards scale automatically via container queries - no fixed override needed */
   .card-corner .rank {
-    font-size: 14px;
+    font-size: 0.9em;
   }
 
   .card-corner .suit-symbol-small {
-    font-size: 12px;
+    font-size: 0.7em;
   }
 
   .card-center .suit-symbol-large {
@@ -1893,7 +1900,7 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
+  min-height: min(400px, 60vh);
   max-height: none; /* Override for loading state */
   background: var(--bg-secondary, #f5f5f5);
   border-radius: 12px;
@@ -1988,7 +1995,7 @@ html, body {
   padding: 10px 24px 8px;
   min-height: 0;
   height: 100%; /* Fill parent */
-  overflow: hidden; /* Prevent body-level scrolling */
+  overflow: hidden;
   /* VMIN SCALING: Fluid max-width prevents table from becoming narrower than cards */
   max-width: min(90vw, 900px);
   margin: 0 auto;
@@ -1997,6 +2004,7 @@ html, body {
 
 /* Hand container for cards - Physics v2.0 compliant */
 /* P0 FIX: Reserved height using vh for proportional scaling */
+/* AUTO-SCALE FIX: Cards scale to fit container - no scrolling */
 .bid-hand-container {
   display: flex;
   justify-content: center;
@@ -2009,7 +2017,7 @@ html, body {
   /* Container query context for responsive card sizing */
   container-type: inline-size;
   container-name: hand-container;
-  /* Ensure content doesn't overflow */
+  /* No scrolling - cards scale to fit */
   overflow: visible;
   width: 100%;
 }
@@ -2021,18 +2029,22 @@ html, body {
 }
 
 /* Physics v2.0 card scaling within bid container */
-/* Base scale: text-lg (1.125rem = 18px base) gives cards ~63x90px */
-/* Use container-relative units (cqw) to scale with available width, not viewport */
+/* AUTO-SCALE FIX: Cards scale based on container width to always fit */
+/* Base scale: text-base (1rem = 16px) gives cards ~56x80px at full size */
+/* 13 cards with overlap need ~450px minimum, so scale factor = containerWidth / 500 */
+.bid-hand-container .text-base,
 .bid-hand-container .text-lg {
-  /* Scale based on container width, not viewport - accounts for coach panel */
-  font-size: clamp(0.75rem, 3.5cqw, 1.125rem);
+  /* Scale aggressively based on container width - ensures cards always fit */
+  /* At 500px container: 1rem, at 400px: 0.8rem, at 300px: 0.6rem */
+  font-size: clamp(0.5rem, 2cqw, 1rem);
 }
 
 /* Fallback for browsers without container query support */
 @supports not (container-type: inline-size) {
+  .bid-hand-container .text-base,
   .bid-hand-container .text-lg {
-    /* Fallback: reduce vw factor to account for potential coach panel (300px) */
-    font-size: clamp(0.75rem, calc(2.5vw - 0.1rem), 1rem);
+    /* Fallback: use vw-based scaling */
+    font-size: clamp(0.5rem, 2vw, 1rem);
   }
 }
 
@@ -2042,8 +2054,9 @@ html, body {
     padding: 6px 0 10px;
     min-height: 75px;
   }
+  .bid-hand-container .text-base,
   .bid-hand-container .text-lg {
-    font-size: clamp(0.7rem, 4cqw, 1rem);
+    font-size: clamp(0.5rem, 2.5cqw, 0.9rem);
   }
 }
 
@@ -2052,9 +2065,22 @@ html, body {
     padding: 4px 0 8px;
     min-height: 60px;
   }
+  .bid-hand-container .text-base,
   .bid-hand-container .text-lg {
-    font-size: clamp(0.6rem, 4.5cqw, 0.875rem);
+    font-size: clamp(0.45rem, 3cqw, 0.8rem);
   }
+}
+
+/* AUTO-SCALE FIX: Allow inner flex container to shrink to fit */
+.bid-hand-container > .flex {
+  max-width: 100%;
+}
+
+/* Allow suit groups to scale */
+.bid-hand-container .suit-group,
+.bid-hand-container [class*="gap-"] > div {
+  /* Allow shrinking when needed */
+  flex-shrink: 1;
 }
 
 /* ========================================
@@ -2141,6 +2167,60 @@ html, body {
 
 .bidding-section .bidding-table th.you {
   color: var(--gold-light, #e8d49a);
+}
+
+/* ========================================
+   Room Mode: Position Role Indicators
+   "You" and "Partner" badges in bidding table headers
+   ======================================== */
+
+.bidding-table th .position-name {
+  display: block;
+}
+
+.bidding-table th .role-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-top: 3px;
+}
+
+/* "You" badge - Amber/Gold color */
+.bidding-table th .role-badge-you {
+  background: rgba(245, 158, 11, 0.9);
+  color: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.4);
+}
+
+/* "Partner" badge - Blue color */
+.bidding-table th .role-badge-partner {
+  background: rgba(59, 130, 246, 0.9);
+  color: white;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.4);
+}
+
+/* Header cell styling when role is active */
+.bidding-table th.role-you {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border-bottom: 2px solid rgba(245, 158, 11, 0.6) !important;
+}
+
+.bidding-table th.role-partner {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-bottom: 2px solid rgba(59, 130, 246, 0.6) !important;
+}
+
+/* In bidding-section (green background), use slightly different styling */
+.bidding-section .bidding-table th.role-you {
+  background: rgba(245, 158, 11, 0.2) !important;
+}
+
+.bidding-section .bidding-table th.role-partner {
+  background: rgba(59, 130, 246, 0.2) !important;
 }
 
 .bidding-section .bidding-table td {
@@ -2475,4 +2555,44 @@ html, body {
     flex-basis: 100%;
     text-align: right;
   }
+}
+
+/* ========================================
+   PERSISTENT FOOTER - Legal/Trust Signal Links
+   ======================================== */
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-top: auto;
+  font-size: var(--text-sm, 14px);
+}
+
+.footer-link {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #6b7280);
+  font-size: var(--text-sm, 14px);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm, 4px);
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: var(--text-primary-dark, #1f2937);
+  text-decoration: underline;
+}
+
+.footer-divider {
+  color: var(--text-secondary, #9ca3af);
+  font-size: 12px;
+}
+
+/* Hide footer during play phase to preserve south affordance */
+.play-phase ~ .app-footer {
+  display: none;
 }

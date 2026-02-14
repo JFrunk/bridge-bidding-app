@@ -44,16 +44,22 @@
   font-weight: 500;
 }
 
-.room-code-value {
+/* Scoped to status bar - compact styling for 40px bar */
+.room-status-bar .room-code-value {
   font-family: 'SF Mono', Monaco, 'Courier New', monospace;
   font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 0.12em;
+  font-size: 14px;
+  letter-spacing: 0.08em;
   color: #0d5d3a; /* Dark green for code - high contrast on cream */
-  background: rgba(13, 93, 58, 0.1);
-  padding: 3px 12px;
+  background: rgba(13, 93, 58, 0.12);
+  padding: 4px 10px;
   border-radius: 4px;
-  border: 1px solid rgba(13, 93, 58, 0.2);
+  border: 1px solid rgba(13, 93, 58, 0.25);
+  line-height: 1;
+  /* Ensure it stays within the 40px bar */
+  max-height: 26px;
+  display: inline-flex;
+  align-items: center;
 }
 
 /* Drill Focus Badge - Shows active convention */
@@ -225,7 +231,7 @@
 
   /* Large, legible sans-serif text */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 15px;
+  font-size: var(--text-base, 16px);
   font-weight: 600;
   color: #ffffff;
 }
@@ -266,7 +272,7 @@
     display: none;
   }
 
-  .room-code-value {
+  .room-status-bar .room-code-value {
     font-size: 16px;
   }
 
