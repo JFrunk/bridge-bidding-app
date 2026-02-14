@@ -234,23 +234,35 @@
   font-size: var(--text-base, 16px);
   font-weight: 600;
   color: #ffffff;
+  /* Prevent wrapping on narrow screens — truncate opponents, keep "You: SOUTH" visible */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .compass-you {
   color: #68d391; /* Green for "You" */
+  flex-shrink: 0; /* Never truncate the user's own seat */
 }
 
 .compass-partner {
   color: #63b3ed; /* Blue for "Partner" */
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .compass-opponents {
   color: #fc8181; /* Red for "Opponents" */
+  flex-shrink: 2; /* Truncate first on narrow screens */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .compass-divider {
   color: #718096; /* Gray divider */
   font-weight: 400;
+  flex-shrink: 0;
 }
 
 /* Spacer to push main content below BOTH fixed bars */

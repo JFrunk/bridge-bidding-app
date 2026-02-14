@@ -29,16 +29,19 @@
   touch-action: manipulation;
 }
 
-/* Hover with gold outline */
+/* Hover with gold outline + scale for instant visual feedback */
 .card-selectable:hover {
-  transform: translateY(-6px);
+  transform: translateY(-6px) scale(1.05);
   border-color: var(--gold, #c8a44e);
   box-shadow: 0 0 0 2px var(--gold, #c8a44e), 0 6px 12px rgba(0, 0, 0, 0.2);
   z-index: 100;
 }
 
+/* Active press state - confirms click registration */
 .card-selectable:active {
-  transform: translateY(-4px);
+  transform: translateY(-2px) scale(0.97);
+  box-shadow: 0 0 0 2px var(--gold, #c8a44e), 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.05s ease;
 }
 
 /* Mobile touch support */

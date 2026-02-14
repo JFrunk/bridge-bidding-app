@@ -419,12 +419,11 @@ body {
   margin-left: var(--card-suit-gap, 0.5em);
 }
 
-/* Card container - em-based responsive sizing (scales with parent font-size) */
-/* AUTO-SCALE FIX: Cards use em units so they scale with container font-size */
+/* Card container - fluid vmin scaling, stable 80%-150% zoom */
 .card {
-  /* Use em units - these scale based on parent font-size set by container queries */
-  width: var(--card-width, 3.5em);
-  height: var(--card-height, 5em);
+  /* Fluid: uses vmin variable, em fallback for legacy contexts */
+  width: var(--card-width, clamp(40px, 8.5vmin, 120px));
+  height: var(--card-height, clamp(56px, 11.9vmin, 168px));
   background: white;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06);
@@ -437,13 +436,21 @@ body {
   transition: width 0.2s ease, height 0.2s ease;
 }
 
-/* Card hover - gold outline */
+/* Card hover - gold outline + scale for instant visual feedback */
 .card:hover,
 .card.clickable:hover {
-  transform: translateY(-6px);
+  transform: translateY(-6px) scale(1.05);
   border-color: var(--gold, #c8a44e);
   box-shadow: 0 0 0 2px var(--gold, #c8a44e), 0 6px 12px rgba(0, 0, 0, 0.2);
   z-index: 100;
+}
+
+/* Active press state - confirms click registration */
+.card:active,
+.card.clickable:active {
+  transform: translateY(-2px) scale(0.97);
+  box-shadow: 0 0 0 2px var(--gold, #c8a44e), 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.05s ease;
 }
 
 /* CRITICAL: Content in the LEFT visible strip */

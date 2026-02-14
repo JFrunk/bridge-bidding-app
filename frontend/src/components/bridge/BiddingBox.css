@@ -33,7 +33,7 @@
   border: 2px solid #c8c3b8;
   border-radius: 6px;
   font-family: inherit;
-  font-size: 15px; /* Compact: was 17px */
+  font-size: clamp(14px, 2.2vh, 22px); /* Fluid: scales with viewport height */
   font-weight: 700;
   color: #2a2a2a;
   cursor: pointer;
@@ -47,6 +47,7 @@
   background: #ffffff;
   border-color: var(--gold, #c8a44e);
   box-shadow: 0 0 8px rgba(200, 164, 78, 0.4);
+  transform: scale(1.05);
 }
 
 /* Suit button hover - keep cream with brighter border */
@@ -54,10 +55,14 @@
   background: #f8f6f0;
   border-color: #1a6b3c;
   box-shadow: 0 0 8px rgba(26, 107, 60, 0.3);
+  transform: scale(1.05);
 }
 
+/* Active press state - confirms click registration */
 .bid-button:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(0.95);
+  box-shadow: 0 0 4px rgba(200, 164, 78, 0.6);
+  transition: transform 0.05s ease;
 }
 
 /* Suit button active/click state - dark green with white symbol */
@@ -112,7 +117,7 @@
 }
 
 .bid-suit-button .suit-nt {
-  font-size: 15px;
+  font-size: clamp(14px, 2.2vh, 22px);
   font-weight: 800;
   color: #2a2a2a;
 }
@@ -138,10 +143,10 @@
   opacity: 1;
 }
 
-/* Action buttons (Pass / Dbl / Rdbl) - 15px bold text, 2px borders */
+/* Action buttons (Pass / Dbl / Rdbl) - fluid text, 2px borders */
 .bid-action-button {
   min-width: 64px;
-  font-size: 15px;
+  font-size: clamp(14px, 2.2vh, 22px);
   font-weight: 700;
 }
 
@@ -215,25 +220,25 @@
   }
 
   .bid-button {
-    height: 34px;  /* Reduce from 36px */
-    font-size: 14px;  /* Reduce from 15px */
+    height: 34px;
+    /* font-size governed by clamp() in base rule */
   }
 
   .bid-level-button {
-    min-width: 38px;  /* Reduce from 42px */
+    min-width: 38px;
   }
 
   .bid-suit-button .suit-symbol {
-    font-size: 20px;  /* Reduce from 24px */
+    font-size: clamp(18px, 3vh, 24px);
   }
 
   .bid-action-button {
-    min-width: 56px;  /* Reduce from 64px */
-    font-size: 13px;  /* Reduce from 15px */
+    min-width: 56px;
+    /* font-size governed by clamp() in base rule */
   }
 }
 
-/* Responsive adjustments - maintain compact sizing */
+/* Responsive adjustments - narrow viewports */
 @media (max-width: 480px) {
   .bidding-box {
     padding: 6px;
@@ -247,7 +252,7 @@
   .bid-button {
     min-width: 34px;
     height: 34px;
-    font-size: 14px;
+    /* font-size governed by clamp() in base rule */
   }
 
   .bid-level-button {
@@ -256,12 +261,12 @@
   }
 
   .bid-suit-button .suit-symbol {
-    font-size: 20px;
+    font-size: clamp(18px, 3vh, 24px);
   }
 
   .bid-action-button {
     min-width: 52px;
-    font-size: 13px;
+    /* font-size governed by clamp() in base rule */
   }
 }
 

@@ -111,9 +111,9 @@
      ========================================= */
 
   /* Card dimensions using vmin for proportional scaling */
-  /* Base: 8 vmin width ensures 13 cards fit with overlap */
-  --card-width: clamp(38px, calc(var(--bridge-unit) * 6 * var(--table-scale)), 60px);
-  --card-height: clamp(53px, calc(var(--bridge-unit) * 8.4 * var(--table-scale)), 84px);
+  /* Fluid: scales with shortest viewport dimension, stable 80%-150% zoom */
+  --card-width: clamp(40px, 8.5vmin, 120px);
+  --card-height: clamp(56px, 11.9vmin, 168px);
   /* Aspect ratio fallback */
   --card-aspect-ratio: 0.714; /* 5:7 */
 
@@ -851,9 +851,9 @@
   margin-left: 0;
 }
 
-/* Hover state - gold outline per mockup */
+/* Hover state - gold outline + scale for instant visual feedback */
 .playable-card:hover {
-  transform: translateY(-7px);
+  transform: translateY(-7px) scale(1.05);
   box-shadow: 0 4px 12px rgba(0,0,0,0.2), 0 0 0 2px var(--gold, #c8a44e);
   z-index: 10;
 }
@@ -885,11 +885,13 @@
   cursor: pointer;
 }
 
-/* Active/pressed state */
+/* Active/pressed state - confirms click registration */
 .playable-card:active {
-  transform: translateY(-4px);
+  transform: translateY(-2px) scale(0.97);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3), 0 0 0 2px var(--gold, #c8a44e);
   z-index: 10;
   position: relative;
+  transition: transform 0.05s ease;
 }
 
 /* CRITICAL: Prevent :active state on disabled cards (prevents stuck highlight bug) */
