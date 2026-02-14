@@ -2122,13 +2122,14 @@ html, body {
 .south-affordance-zone {
   display: flex;
   flex-direction: column;
-  height: 35vh; /* Hard lock — bidding box never pushed off-screen */
-  min-height: 320px; /* Absolute floor: buttons always reachable */
+  /* Claim 35-55% of viewport height depending on screen size */
+  /* clamp: at least 35vh, prefer 320px, never exceed 55vh */
+  height: clamp(35vh, 320px, 55vh);
   flex-shrink: 0;
   /* Anchor to bottom of game area */
   margin-top: auto;
   width: 100%;
-  overflow-y: auto; /* Internal scroll if contents exceed 35vh */
+  overflow-y: auto; /* Internal scroll if contents exceed height */
   overflow-x: hidden;
   /* Sacrosanct: solid background + z-index prevent coach bleed-through */
   background: var(--table-green-dark, #155a30);
@@ -2144,16 +2145,16 @@ html, body {
   justify-content: center;
 }
 
-/* Responsive adjustments */
+/* Responsive adjustments — narrow widths get more vh share */
 @media (max-width: 768px) {
   .south-affordance-zone {
-    height: 40vh; /* More space on smaller screens */
+    height: clamp(40vh, 320px, 60vh);
   }
 }
 
 @media (max-width: 480px) {
   .south-affordance-zone {
-    height: 45vh;
+    height: clamp(45vh, 320px, 65vh);
   }
 }
 
