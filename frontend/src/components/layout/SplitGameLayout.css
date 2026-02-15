@@ -83,8 +83,8 @@
 /* ========================================
    RESPONSIVE: Coach Drawer at <1200px
    Moves sidebar from right column into an overlay
-   drawer anchored to bottom of layout, contained
-   within the 35vh south affordance zone.
+   drawer anchored to bottom of layout, overlaying
+   the bidding-table-zone (green space above south zone).
    ======================================== */
 
 @media (max-width: 1200px) {

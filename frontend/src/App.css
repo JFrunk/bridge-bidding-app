@@ -2033,6 +2033,15 @@ html, body {
   width: 100%;
 }
 
+/* Bidding table zone: fills green space above south zone */
+.bidding-table-zone {
+  flex: 1 1 0%;          /* Absorbs all leftover vertical space */
+  display: flex;
+  flex-direction: column;
+  min-height: 80px;      /* At least show header + 1 row */
+  overflow: hidden;       /* bidding-scroll handles internal scrolling */
+}
+
 /* Hand container for cards - Physics v2.0 compliant */
 /* P0 FIX: Reserved height using vh for proportional scaling */
 /* AUTO-SCALE FIX: Cards scale to fit container - no scrolling */
@@ -2122,19 +2131,15 @@ html, body {
 .south-affordance-zone {
   display: flex;
   flex-direction: column;
-  /* Claim 35-55% of viewport height depending on screen size */
-  /* clamp: at least 35vh, prefer 320px, never exceed 55vh */
-  height: clamp(35vh, 320px, 55vh);
+  /* Content-sized: hand + bidding controls only */
   flex-shrink: 0;
-  /* Anchor to bottom of game area */
-  margin-top: auto;
   width: 100%;
-  overflow-y: auto; /* Internal scroll if contents exceed height */
-  overflow-x: hidden;
+  overflow: visible;
   /* Sacrosanct: solid background + z-index prevent coach bleed-through */
   background: var(--table-green-dark, #155a30);
   z-index: 10;
   position: relative;
+  padding-bottom: 12px; /* Buttons don't touch bottom edge */
 }
 
 /* When in loading/dealing state, maintain placeholder space */
@@ -2145,52 +2150,36 @@ html, body {
   justify-content: center;
 }
 
-/* Responsive adjustments — narrow widths get more vh share */
-@media (max-width: 768px) {
-  .south-affordance-zone {
-    height: clamp(40vh, 320px, 60vh);
-  }
-}
-
-@media (max-width: 480px) {
-  .south-affordance-zone {
-    height: clamp(45vh, 320px, 65vh);
-  }
-}
-
 /* ========================================
    BIDDING SECTION V2 - Dark integrated section
-   Contains: history, feedback, bidding box, actions
+   Contains: bidding box + action buttons
    P0 FIX: Reserved bottom affordance - never pushed off screen
    ======================================== */
 
 .bidding-section {
-  flex: 1 1 auto; /* Can grow but also shrink */
+  flex: 0 0 auto; /* Content-sized: just bidding box + action buttons */
   display: flex;
   flex-direction: column;
-  min-height: max(200px, 25vh); /* Reserved minimum height */
-  max-height: 45vh; /* Cap growth to prevent overwhelming */
   background: rgba(0, 0, 0, 0.15);
   border-radius: var(--radius-md, 8px);
   overflow: hidden;
 }
 
-/* Scrollable bidding history */
+/* Scrollable bidding history — now inside .bidding-table-zone */
 .bidding-scroll {
   flex: 1 1 0%;
   overflow-y: auto;
   min-height: 60px; /* At least show a few bids */
-  max-height: 20vh; /* Cap scroll area */
 }
 
-/* Bidding table within new layout */
-.bidding-section .bidding-table {
+/* Bidding table within bidding-table-zone */
+.bidding-table-zone .bidding-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
-.bidding-section .bidding-table th {
+.bidding-table-zone .bidding-table th {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-on-green-muted, rgba(168, 196, 176, 1));
@@ -2204,7 +2193,7 @@ html, body {
   border: none;
 }
 
-.bidding-section .bidding-table th.you {
+.bidding-table-zone .bidding-table th.you {
   color: var(--gold-light, #e8d49a);
 }
 
@@ -2253,16 +2242,16 @@ html, body {
   border-bottom: 2px solid rgba(59, 130, 246, 0.6) !important;
 }
 
-/* In bidding-section (green background), use slightly different styling */
-.bidding-section .bidding-table th.role-you {
+/* In bidding-table-zone (green background), use slightly different styling */
+.bidding-table-zone .bidding-table th.role-you {
   background: rgba(245, 158, 11, 0.2) !important;
 }
 
-.bidding-section .bidding-table th.role-partner {
+.bidding-table-zone .bidding-table th.role-partner {
   background: rgba(59, 130, 246, 0.2) !important;
 }
 
-.bidding-section .bidding-table td {
+.bidding-table-zone .bidding-table td {
   text-align: center;
   padding: 5px 4px;
   font-size: 15px;
@@ -2274,11 +2263,11 @@ html, body {
   height: auto;
 }
 
-.bidding-section .bidding-table td:hover {
+.bidding-table-zone .bidding-table td:hover {
   background: rgba(255, 255, 255, 0.06);
 }
 
-.bidding-section .bidding-table td.player-bid {
+.bidding-table-zone .bidding-table td.player-bid {
   color: white;
   font-weight: 700;
 }
@@ -2516,11 +2505,9 @@ html, body {
   font-size: clamp(0.7rem, 4cqw, 1rem);
 }
 
-/* Bidding section: ensure it stays visible above bottom */
+/* Bidding controls: content-sized within south zone */
 .split-game-layout .bidding-section {
-  flex: 0 1 auto;  /* Don't grow infinitely, but can shrink */
-  max-height: 50vh; /* Limit height to prevent pushing off screen */
-  overflow-y: auto;
+  flex: 0 0 auto;
 }
 
 /* Bidding box always visible */

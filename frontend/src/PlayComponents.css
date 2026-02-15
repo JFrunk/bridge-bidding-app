@@ -2237,6 +2237,7 @@
 /* South orbit - cards spread horizontally, larger scale */
 .position-south-orbit {
   padding-top: 0.5em;
+  padding-bottom: 12px; /* Prevent card clipping at bottom */
 }
 
 /* East/West orbits - cards stacked vertically */

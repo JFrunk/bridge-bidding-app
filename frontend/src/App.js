@@ -3571,18 +3571,36 @@ ${otherCommands}`;
                   />
                 )}
 
-                {/* SOUTH AFFORDANCE ZONE - P0 STABILITY FIX */}
-                {/* Wraps hand + bidding section with 35vh minimum to prevent layout hopping */}
+                {/* BIDDING TABLE ZONE — fills green space above hand */}
+                <div className="bidding-table-zone">
+                  <div className="bidding-scroll">
+                    <BiddingTable auction={displayAuction} players={players} dealer={displayDealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(displayAuction)} myPosition={inRoom ? (isHost ? 'S' : 'N') : null} />
+                  </div>
+                </div>
+
+                {/* Bid feedback - between table and hand */}
+                {bidFeedback && gamePhase === 'bidding' && (
+                  <div className="feedback-strip">
+                    <div className={`feedback-icon ${bidFeedback.score >= 8 ? 'good' : bidFeedback.score >= 5 ? 'ok' : 'poor'}`}>
+                      {bidFeedback.score >= 8 ? '✓' : bidFeedback.score >= 5 ? '~' : '✗'}
+                    </div>
+                    <div className="feedback-text">
+                      <strong>{bidFeedback.score >= 8 ? 'Excellent!' : bidFeedback.score >= 5 ? 'Acceptable' : 'Suboptimal'}</strong> {bidFeedback.message || ''}
+                    </div>
+                    {bidFeedback.concept && <div className="feedback-concept">{bidFeedback.concept}</div>}
+                    <button className="feedback-close" onClick={() => setBidFeedback(null)}>×</button>
+                  </div>
+                )}
+
+                {/* SOUTH ZONE — hand + bidding controls only (content-sized) */}
                 <div className={`south-affordance-zone ${!displayHand || displayHand.length === 0 ? 'loading' : ''}`}>
-                {/* Your Hand - Physics v2.0 compliant, uses shared Card component */}
-                {/* Scale: text-base (16px) = 56×80px cards - fits well above bidding section */}
+                {/* Your Hand */}
                 <div className="bid-hand-container shrink-to-fit-center">
                   {displayHand && displayHand.length > 0 ? (
                     <div className="text-base flex flex-row gap-[0.6em] justify-center py-2 scale-on-squeeze">
                       {getSuitOrder(null).map(suit => {
                         const suitCards = displayHand.filter(card => card.suit === suit);
                         if (suitCards.length === 0) return null;
-                        // Dynamic spacing based on card count - tighter for smaller cards
                         const count = suitCards.length;
                         const spacingClass = count >= 7 ? '-space-x-[2.0em]' : count >= 5 ? '-space-x-[1.6em]' : '-space-x-[1.2em]';
                         return (
@@ -3603,36 +3621,14 @@ ${otherCommands}`;
                   )}
                 </div>
 
-                {/* Bidding Section - history, feedback, box, actions all together */}
+                {/* Bidding controls — box + action buttons */}
                 <div className="bidding-section">
-                  {/* Bidding History Table */}
-                  <div className="bidding-scroll">
-                    <BiddingTable auction={displayAuction} players={players} dealer={displayDealer} nextPlayerIndex={nextPlayerIndex} onBidClick={handleBidClick} isComplete={isAuctionOver(displayAuction)} myPosition={inRoom ? (isHost ? 'S' : 'N') : null} />
-                  </div>
-
-                  {/* Bid feedback - inline strip */}
-                  {bidFeedback && gamePhase === 'bidding' && (
-                    <div className="feedback-strip">
-                      <div className={`feedback-icon ${bidFeedback.score >= 8 ? 'good' : bidFeedback.score >= 5 ? 'ok' : 'poor'}`}>
-                        {bidFeedback.score >= 8 ? '✓' : bidFeedback.score >= 5 ? '~' : '✗'}
-                      </div>
-                      <div className="feedback-text">
-                        <strong>{bidFeedback.score >= 8 ? 'Excellent!' : bidFeedback.score >= 5 ? 'Acceptable' : 'Suboptimal'}</strong> {bidFeedback.message || ''}
-                      </div>
-                      {bidFeedback.concept && <div className="feedback-concept">{bidFeedback.concept}</div>}
-                      <button className="feedback-close" onClick={() => setBidFeedback(null)}>×</button>
-                    </div>
-                  )}
-
-                  {/* Bidding Box - integrated into dark section */}
                   <div className="bidding-box-container">
                     <BiddingBoxComponent onBid={handleUserBid} disabled={!canUserBid || isAiBidding || isAuctionOver(displayAuction)} auction={displayAuction} />
                   </div>
 
-                  {/* Deal Actions */}
                   <div className="deal-actions">
                     {isAuctionOver(displayAuction) && !isPassedOut(displayAuction) ? (
-                      // Room mode: Guest waits for host to start play
                       inRoom && !isHost ? (
                         <div className="waiting-for-host" style={{
                           background: 'rgba(59, 130, 246, 0.15)',
