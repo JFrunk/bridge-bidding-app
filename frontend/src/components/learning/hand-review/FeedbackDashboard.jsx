@@ -137,6 +137,7 @@ const FeedbackDashboard = ({
   tricksCost,
   isStart = false,
   isAiPlay = false,
+  aiPlayLabel = null,
   isVisible = true,
 }) => {
   // Ghost card pattern - return invisible placeholder with fixed height
@@ -162,13 +163,13 @@ const FeedbackDashboard = ({
     );
   }
 
-  // AI play - minimal display
+  // AI play/bid - minimal display
   if (isAiPlay) {
     return (
       <div className="feedback-dashboard ai-play">
         <div className="flex items-center justify-center gap-2 py-2 text-gray-500">
           <Info size={16} />
-          <span className="text-sm">AI play — no feedback recorded</span>
+          <span className="text-sm">{aiPlayLabel || 'AI play — no analysis for this card'}</span>
         </div>
       </div>
     );

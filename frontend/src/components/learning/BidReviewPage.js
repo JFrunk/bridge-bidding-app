@@ -432,22 +432,33 @@ const BidReviewPage = ({
 
           {/* LAYER 2: Feedback Slot (Anti-Bounce Zone) */}
           <div className="feedback-slot">
-            {totalBids > 0 && (
-              <FeedbackDashboard
-                grade={currentDecision ? mapCorrectnessToGrade(currentDecision) : 'reasonable'}
-                analysisText={buildAnalysisText(currentDecision)}
-                alternativePlay={
-                  currentDecision?.optimal_bid &&
-                  currentDecision.optimal_bid !== currentDecision.user_bid
-                    ? parseBidToCard(currentDecision.optimal_bid)
-                    : null
-                }
-                playedCard={currentDecision?.user_bid ? parseBidToCard(currentDecision.user_bid) : null}
-                tricksCost={0}
-                isStart={bidPosition === 0}
-                isAiPlay={!isUserBidPosition && bidPosition > 0 && !currentDecision}
-              />
-            )}
+            {totalBids > 0 && (() => {
+              const isAiBid = !isUserBidPosition && bidPosition > 0 && !currentDecision;
+              let aiBidLabel = null;
+              if (isAiBid) {
+                const posNames = { N: 'North', E: 'East', S: 'South', W: 'West' };
+                const posName = posNames[currentBidPosition] || currentBidPosition;
+                const bidText = handData?.auction_history?.[bidPosition - 1] || '';
+                aiBidLabel = `${posName} bid ${bidText} — analysis is shown for your bids`;
+              }
+              return (
+                <FeedbackDashboard
+                  grade={currentDecision ? mapCorrectnessToGrade(currentDecision) : 'reasonable'}
+                  analysisText={buildAnalysisText(currentDecision)}
+                  alternativePlay={
+                    currentDecision?.optimal_bid &&
+                    currentDecision.optimal_bid !== currentDecision.user_bid
+                      ? parseBidToCard(currentDecision.optimal_bid)
+                      : null
+                  }
+                  playedCard={currentDecision?.user_bid ? parseBidToCard(currentDecision.user_bid) : null}
+                  tricksCost={0}
+                  isStart={bidPosition === 0}
+                  isAiPlay={isAiBid}
+                  aiPlayLabel={aiBidLabel}
+                />
+              );
+            })()}
           </div>
 
         </div>

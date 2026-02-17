@@ -376,21 +376,39 @@ const HandReviewPage = ({
 
           {/* LAYER 2: Feedback Slot (Anti-Bounce Zone) - Fixed height */}
           <div className="feedback-slot">
-            <FeedbackDashboard
-              grade={currentReplayDecision ? mapRatingToGrade(currentReplayDecision) : 'reasonable'}
-              analysisText={buildAnalysisText(currentReplayDecision)}
-              alternativePlay={
-                currentReplayDecision?.optimal_card &&
-                currentReplayDecision.optimal_card !== currentReplayDecision.user_card
-                  ? parseCardString(currentReplayDecision.optimal_card)
-                  : null
+            {(() => {
+              const isAi = !currentReplayDecision && replayPosition > 0;
+              let aiLabel = null;
+              if (isAi && handData?.play_history) {
+                const play = handData.play_history[replayPosition - 1];
+                if (play) {
+                  const posNames = { N: 'North', E: 'East', S: 'South', W: 'West' };
+                  const pos = play.player || play.position;
+                  const posName = posNames[pos] || pos;
+                  const rank = play.rank || play.r;
+                  const suit = normalizeSuit(play.suit || play.s);
+                  aiLabel = `${posName} played ${rank}${suit} — analysis is shown for your cards`;
+                }
               }
-              playedCard={currentReplayDecision?.user_card ? parseCardString(currentReplayDecision.user_card) : null}
-              tricksCost={currentReplayDecision?.tricks_cost || 0}
-              isStart={replayPosition === 0}
-              isAiPlay={!currentReplayDecision && replayPosition > 0}
-              isVisible={tricks.length > 0}
-            />
+              return (
+                <FeedbackDashboard
+                  grade={currentReplayDecision ? mapRatingToGrade(currentReplayDecision) : 'reasonable'}
+                  analysisText={buildAnalysisText(currentReplayDecision)}
+                  alternativePlay={
+                    currentReplayDecision?.optimal_card &&
+                    currentReplayDecision.optimal_card !== currentReplayDecision.user_card
+                      ? parseCardString(currentReplayDecision.optimal_card)
+                      : null
+                  }
+                  playedCard={currentReplayDecision?.user_card ? parseCardString(currentReplayDecision.user_card) : null}
+                  tricksCost={currentReplayDecision?.tricks_cost || 0}
+                  isStart={replayPosition === 0}
+                  isAiPlay={isAi}
+                  aiPlayLabel={aiLabel}
+                  isVisible={tricks.length > 0}
+                />
+              );
+            })()}
           </div>
 
           {/* LAYER 3: Heuristic Scorecard (inline when decision has data) */}
