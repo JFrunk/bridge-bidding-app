@@ -62,7 +62,7 @@
   height: 100%;
   width: 100%;
   overflow-y: auto;
-  padding-bottom: 1em;
+  padding-bottom: 0;
 }
 
 /* ========================================
@@ -71,9 +71,9 @@
    ======================================== */
 
 .hand-review-page {
-  --feedback-slot-height: 8em;  /* Fixed height for feedback zone */
-  --controls-height: 4em;       /* Fixed height for replay controls */
-  --action-bar-height: 4em;     /* Fixed height for action buttons */
+  --feedback-slot-height: 4.5em; /* Compact feedback zone */
+  --controls-height: 3em;        /* Compact replay controls */
+  --action-bar-height: 3em;      /* Compact action buttons */
 }
 
 .hand-review-page .pit-container {
@@ -84,7 +84,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 1em 1em 1.5em 1em;
+  padding: 0.5em 1em 0.5em 1em;
   position: relative;
   z-index: 10;
   background: #FDFBF7;
@@ -100,7 +100,7 @@
   flex-shrink: 0;
 }
 
-/* LAYER 2: Feedback Slot (Anti-Bounce Zone) - Fixed height */
+/* LAYER 2: Feedback Slot (Anti-Bounce Zone) - Compact height */
 .hand-review-page .feedback-slot {
   width: 100%;
   min-height: var(--feedback-slot-height);
@@ -108,17 +108,37 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 0.5em 0;
+  padding: 0.25em 0;
   flex-shrink: 0;
 }
 
-/* LAYER 3: Expandable Content (Charts, Heuristics) */
+/* LAYER 3: Expandable Content (Charts, Heuristics) — overlay on table area */
 .hand-review-page .expandable-layer {
-  width: 100%;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75em;
+  gap: 0.5em;
+  padding: 0.5em;
+  background: rgba(253, 251, 247, 0.97);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 20;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* DD Table rendered in expandable-layer */
+.hand-review-page .expandable-layer .dd-table-container {
+  width: 100%;
+  max-width: 60em;
+  background: var(--cream-light);
+  border-radius: var(--radius-md);
+  padding: 0.5em 1em;
+  flex-shrink: 0;
 }
 
 /* LAYER 4: Action Buttons (Beige Bar) - Fixed at bottom */
@@ -128,8 +148,8 @@
   justify-content: center;
   min-height: var(--action-bar-height);
   flex-shrink: 0;
-  margin-top: 0.5em;
-  padding-bottom: 12px; /* Buttons don't touch bottom edge */
+  margin-top: 0.25em;
+  padding-bottom: 4px;
 }
 
 /* ========================================
@@ -237,14 +257,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1em;
-  padding: 0.75em 1em;
+  gap: 0.75em;
+  padding: 0.5em 1em;
   width: 100%;
   max-width: 60em;
   background: var(--header-dark);
   color: var(--text-on-dark);
   flex-shrink: 0;
-  margin-top: 2em;
+  margin-top: 0.5em;
   border-radius: var(--radius-md);
 }
 
@@ -405,10 +425,9 @@
    ======================================== */
 
 .hand-review-page .replay-reactor {
-  margin-top: 1em;
-  margin-bottom: 1em;
-  flex: 1;
-  min-height: 0;
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+  flex: 0 0 auto;       /* Never shrink — prevents cards from disappearing */
 }
 
 /* ========================================
@@ -805,12 +824,139 @@
 }
 
 /* ========================================
+   REVIEW MODE TABS - Bidding / Play toggle
+   Inline within header bar, next to back button
+   ======================================== */
+
+.header-mode-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius-sm, 4px);
+  padding: 2px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.mode-tab {
+  padding: 0.3em 0.8em;
+  border-radius: calc(var(--radius-sm, 4px) - 1px);
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.mode-tab.active {
+  background: var(--gold, #c8a44e);
+  color: var(--header-dark, #2a2a2a);
+}
+
+.mode-tab:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.mode-tab:hover:not(:disabled):not(.active) {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+/* ========================================
+   ANALYSIS MODAL OVERLAY - DecayChart, DD Table
+   ======================================== */
+
+.analysis-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.analysis-modal-content {
+  background: var(--cream-light, #faf8f4);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 750px;
+  width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.analysis-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+}
+
+.analysis-modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.analysis-modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 24px;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.analysis-modal-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #1f2937;
+}
+
+.analysis-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* DD Table overlay z-index fix (both .hand-review-page and .dd-modal-overlay are z-index 1000) */
+.hand-review-page .dd-modal-overlay {
+  z-index: 1100;
+}
+
+@media (max-width: 640px) {
+  .analysis-modal-content {
+    width: 95vw;
+    max-height: 95vh;
+  }
+}
+
+/* ========================================
    RESPONSIVE - Tablet (768px)
    ======================================== */
 
 @media (max-width: 768px) {
   .hand-review-page .header-bar {
-    margin-top: 1em;
+    margin-top: 0.25em;
     padding: 0.5em 0.75em;
     gap: 0.5em;
   }

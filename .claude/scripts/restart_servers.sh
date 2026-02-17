@@ -5,7 +5,7 @@
 
 set -e  # Exit on error
 
-PROJECT_ROOT="/Users/simonroy/Desktop/bridge_bidding_app"
+PROJECT_ROOT="/Users/simonroy/Desktop/Bridge-Bidding-Program"
 cd "$PROJECT_ROOT"
 
 echo "=================================================="

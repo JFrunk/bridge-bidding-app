@@ -1959,6 +1959,7 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
                 tricks_cost,
                 contract,
                 feedback,
+                helpful_hint,
                 signal_reason,
                 signal_heuristic,
                 signal_context,
@@ -1984,6 +1985,7 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
                 'contract': row['contract'],
                 'feedback': row['feedback'],
                 'reasoning': row['feedback'],  # Alias for frontend consistency checks
+                'helpful_hint': row['helpful_hint'] if 'helpful_hint' in row.keys() else None,
                 'signal_reason': row['signal_reason'],
                 'signal_heuristic': row['signal_heuristic'],
                 'signal_context': row['signal_context'],
@@ -3556,6 +3558,20 @@ def get_bidding_hand_detail():
                 'you_communicated': user_message
             })
 
+        # Look up play_hand_id (session_hands.id) for bidding↔play tab toggle
+        play_hand_id = None
+        if session_id is not None and hand_number is not None:
+            cursor.execute("""
+                SELECT sh.id
+                FROM session_hands sh
+                WHERE sh.session_id = CAST(? AS INTEGER)
+                  AND sh.hand_number = ?
+                LIMIT 1
+            """, (session_id, hand_number))
+            ph_row = cursor.fetchone()
+            if ph_row:
+                play_hand_id = ph_row['id']
+
         conn.close()
 
         # Reconstruct auction_history if not available (composite hand_id format)
@@ -3647,6 +3663,7 @@ def get_bidding_hand_detail():
 
         return jsonify({
             'hand_id': hand_id_raw,
+            'play_hand_id': play_hand_id,
             'session_id': session_id,
             'hand_number': hand_number,
             'dealer': dealer,

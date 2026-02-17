@@ -174,6 +174,13 @@ class LegalityValidator:
         if bid in ["Pass", "X", "XX"]:
             return True, None
 
+        # Hard cap: no bid level above 7 is ever legal in bridge
+        try:
+            if int(bid[0]) > 7:
+                return False, f"Bid level {bid[0]} exceeds maximum of 7"
+        except (ValueError, IndexError):
+            return False, f"Invalid bid format: {bid}"
+
         if not auction:
             return True, None  # First bid is always legal
 
@@ -201,6 +208,9 @@ class LegalityValidator:
     def _is_higher_bid(self, bid: str, last_bid: str) -> Tuple[bool, Optional[str]]:
         """Check if bid is higher than last_bid."""
         bid_level = int(bid[0])
+        # Hard cap: no bid level above 7 is ever legal in bridge
+        if bid_level > 7:
+            return False, f"Bid level {bid_level} exceeds maximum of 7"
         last_level = int(last_bid[0])
 
         if bid_level > last_level:

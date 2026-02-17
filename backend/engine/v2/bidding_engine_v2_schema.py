@@ -124,12 +124,47 @@ class BiddingEngineV2Schema:
             # Find the best legal bid that doesn't violate forcing constraints
             # Track best forcing-rejected candidate as fallback
             best_forcing_rejected = None
+            # Slam context detection for safety net
+            SLAM_SCHEMA_FILES = {'sayc_slam', 'sayc_rkcb', 'sayc_slam_controls', 'sayc_slam_tries'}
+            SLAM_RULE_KEYWORDS = {'slam', 'blackwood', 'rkcb', 'grand', 'king_response'}
+
             for candidate in candidates:
                 bid = candidate.bid
 
                 # Validate bid is legal in the auction
                 if not self._is_bid_legal(bid, auction_history):
                     continue
+
+                # Safety net: reject 6+ level bids that aren't part of a slam sequence.
+                # Slam context = partner bid 4NT/5NT (convention), or rule from slam schema,
+                # or combined partnership HCP justifies slam. LOTT and competitive rules
+                # should never produce 6+ level bids.
+                bid_level = int(bid[0]) if bid and bid[0].isdigit() else 0
+                if bid_level >= 6:
+                    schema_stem = (candidate.schema_file or '').replace('.json', '').split('/')[-1]
+                    rule_id = candidate.rule_id or ''
+                    partner_last = features.get('partner_last_bid', '')
+                    partnership_hcp = features.get('partnership_hcp_min', 0)
+
+                    in_slam_context = (
+                        # Rule source indicates slam investigation
+                        schema_stem in SLAM_SCHEMA_FILES or
+                        any(kw in rule_id for kw in SLAM_RULE_KEYWORDS) or
+                        # Auction context indicates slam investigation
+                        partner_last in ['4NT', '5NT'] or
+                        features.get('in_slam_zone', False) or
+                        # Combined partnership HCP justifies slam (33+ for small, 37+ for grand)
+                        (bid_level == 6 and partnership_hcp >= 30) or
+                        (bid_level == 7 and partnership_hcp >= 35)
+                    )
+                    if not in_slam_context:
+                        logger.warning(
+                            f"Safety net: Rejecting {bid} from rule '{rule_id}' — "
+                            f"level {bid_level} bid outside slam context "
+                            f"(partnership HCP ~{partnership_hcp}, "
+                            f"partner last bid: {partner_last or 'N/A'})"
+                        )
+                        continue
 
                 # Validate against forcing constraints (only in partnership auctions)
                 # Skip forcing validation in competitive situations - opponents' bids
@@ -452,13 +487,22 @@ class BiddingEngineV2Schema:
                 break
 
         if last_bid is None:
-            return True  # First real bid
+            # First real bid — still check level is valid
+            try:
+                if int(bid[0]) > 7:
+                    return False
+            except (ValueError, IndexError):
+                return False
+            return True
 
         # Compare levels and suits
         suit_rank = {'♣': 1, '♦': 2, '♥': 3, '♠': 4, 'NT': 5}
 
         try:
             my_level = int(bid[0])
+            # Hard cap: no bid level above 7 is ever legal in bridge
+            if my_level > 7:
+                return False
             my_suit = bid[1:] if 'NT' not in bid else 'NT'
             if my_suit.startswith('N'):
                 my_suit = 'NT'

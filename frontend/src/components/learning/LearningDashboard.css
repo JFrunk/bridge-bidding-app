@@ -55,7 +55,7 @@
 
 /* Empty Dashboard State for New Players */
 .empty-dashboard-state {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--gradient-trend);
   border-radius: var(--radius-xl);
   padding: 60px var(--space-10);
   text-align: center;
@@ -77,13 +77,13 @@
 .empty-dashboard-title {
   font-size: var(--text-3xl);
   font-weight: var(--font-semibold);
-  color: #2c3e50;
+  color: var(--text-primary-dark);
   margin: 0 0 var(--space-4) 0;
 }
 
 .empty-dashboard-message {
   font-size: var(--text-lg);
-  color: #555;
+  color: var(--text-secondary-dark);
   max-width: 600px;
   margin: 0 auto var(--space-8) auto;
   line-height: 1.6;
@@ -101,7 +101,7 @@
 .tip-title {
   font-size: var(--text-base);
   font-weight: var(--font-semibold);
-  color: #2c3e50;
+  color: var(--text-primary-dark);
   margin: 0 0 var(--space-3) 0;
 }
 
@@ -114,7 +114,7 @@
 .tip-list li {
   padding: var(--space-2) 0 var(--space-2) var(--space-6);
   position: relative;
-  color: #555;
+  color: var(--text-secondary-dark);
   font-size: var(--text-base);
   line-height: 1.5;
 }
@@ -123,7 +123,7 @@
   content: "✓";
   position: absolute;
   left: 0;
-  color: #27ae60;
+  color: var(--color-success);
   font-weight: var(--font-bold);
   font-size: var(--text-lg);
 }
@@ -170,7 +170,7 @@
 
 /* Gameplay Stats Bar - different gradient */
 .gameplay-stats-bar {
-  background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%);
+  background: linear-gradient(135deg, var(--charcoal-light) 0%, var(--bg-tertiary) 100%);
 }
 
 .stat-item {
@@ -304,13 +304,13 @@
 .celebration-title {
   font-size: var(--text-base);
   font-weight: var(--font-semibold);
-  color: #2d3436;
+  color: var(--text-primary-dark);
   margin: 0 0 var(--space-1) 0;
 }
 
 .celebration-message {
   font-size: var(--text-sm);
-  color: #636e72;
+  color: var(--text-muted);
   margin: 0 0 var(--space-2) 0;
 }
 
@@ -344,14 +344,14 @@
 
 .growth-area-item {
   padding: var(--space-4);
-  background: #f8f9fa;
+  background: var(--cream-dark, #F5F2EC);
   border-radius: var(--radius-md);
   border-left: 4px solid var(--color-danger);
   transition: background var(--duration-fast) ease;
 }
 
 .growth-area-item:hover {
-  background: #ecf0f1;
+  background: var(--cream-dark);
 }
 
 .growth-area-item.improving {
@@ -372,7 +372,7 @@
 .growth-area-name {
   font-size: var(--text-base);
   font-weight: var(--font-semibold);
-  color: #2d3436;
+  color: var(--text-primary-dark);
   margin: 0;
 }
 
@@ -385,17 +385,17 @@
 }
 
 .status-needs-attention {
-  background: #ffe5e5;
+  background: rgba(196, 30, 58, 0.08);
   color: var(--color-danger);
 }
 
 .status-active {
-  background: #e3f2fd;
+  background: rgba(90, 155, 212, 0.1);
   color: var(--color-accent-blue);
 }
 
 .status-improving {
-  background: #fff3cd;
+  background: rgba(200, 164, 78, 0.12);
   color: var(--color-warning);
 }
 
@@ -403,12 +403,12 @@
   display: flex;
   gap: var(--space-4);
   font-size: var(--text-sm);
-  color: #636e72;
+  color: var(--text-muted);
 }
 
 .growth-area-accuracy {
   font-weight: var(--font-semibold);
-  color: #2d3436;
+  color: var(--text-primary-dark);
 }
 
 /* Recent Wins */
@@ -420,7 +420,7 @@
 
 .recent-win-item {
   padding: var(--space-4);
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  background: linear-gradient(135deg, rgba(45, 138, 78, 0.15) 0%, rgba(45, 138, 78, 0.2) 100%);
   border-radius: var(--radius-md);
   border-left: 4px solid var(--color-success);
 }
@@ -435,7 +435,7 @@
 .recent-win-name {
   font-size: var(--text-base);
   font-weight: var(--font-semibold);
-  color: #155724;
+  color: var(--color-success-dark, #1f6b3a);
   margin: 0;
 }
 
@@ -450,7 +450,7 @@
 
 .recent-win-stats {
   font-size: var(--text-sm);
-  color: #155724;
+  color: var(--color-success-dark, #1f6b3a);
 }
 
 .improvement-indicator {
@@ -469,13 +469,13 @@
 
 .recommendation-item {
   padding: var(--space-4);
-  background: #f8f9fa;
+  background: var(--cream-dark, #F5F2EC);
   border-radius: var(--radius-md);
   transition: background var(--duration-fast) ease;
 }
 
 .recommendation-item:hover {
-  background: #e9ecef;
+  background: var(--cream-dark);
 }
 
 .recommendation-header {
@@ -488,7 +488,7 @@
 .recommendation-category {
   font-size: var(--text-base);
   font-weight: var(--font-semibold);
-  color: #2d3436;
+  color: var(--text-primary-dark);
   margin: 0;
 }
 
@@ -501,23 +501,23 @@
 }
 
 .priority-1 {
-  background: #ffe5e5;
+  background: rgba(196, 30, 58, 0.08);
   color: var(--color-danger);
 }
 
 .priority-2 {
-  background: #fff3cd;
+  background: rgba(200, 164, 78, 0.12);
   color: var(--color-warning);
 }
 
 .priority-3 {
-  background: #e3f2fd;
+  background: rgba(90, 155, 212, 0.1);
   color: var(--color-accent-blue);
 }
 
 .recommendation-reason {
   font-size: var(--text-sm);
-  color: #636e72;
+  color: var(--text-muted);
   margin-bottom: var(--space-3);
 }
 
@@ -529,7 +529,7 @@
 
 .hands-count {
   font-size: var(--text-xs);
-  color: #636e72;
+  color: var(--text-muted);
 }
 
 .practice-button {
@@ -546,7 +546,7 @@
 
 .practice-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(90, 155, 212, 0.4);
 }
 
 .practice-button:active {
@@ -569,13 +569,13 @@
 .trend-text {
   font-size: var(--text-2xl);
   font-weight: var(--font-semibold);
-  color: #2d3436;
+  color: var(--text-primary-dark);
   margin: 0 0 var(--space-3) 0;
 }
 
 .trend-description {
   font-size: var(--text-base);
-  color: #636e72;
+  color: var(--text-muted);
 }
 
 /* Empty States */
@@ -607,8 +607,8 @@
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #667eea;
+  border: 4px solid var(--cream-dark, #F5F2EC);
+  border-top: 4px solid var(--color-info);
   border-radius: var(--radius-full);
   animation: spin 1s linear infinite;
 }

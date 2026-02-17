@@ -92,27 +92,34 @@ fetch(`${API_URL}/api/deal-hands`, {
 
 ## Design Standards
 
-**Reference:** `.claude/UI_UX_DESIGN_STANDARDS.md`
+**Reference:** `.claude/UI_STANDARDS.md` (single source of truth)
+
+### Key Rules
+- **No Tailwind for layout.** Use CSS with `clamp()`, `vmin`, and `max-width` media queries.
+- **South Hand + Bidding Box are sacrosanct.** They must never be obscured or pushed off-screen.
+- **All CSS variables defined in `index.css` only.** Do not redefine `:root` in component CSS.
 
 ### Colors (CSS Variables Only)
 ```css
-/* NEVER hardcode colors - use variables */
+/* Clubhouse theme — NEVER hardcode colors */
+--table-green, --cream, --gold, --charcoal
 --color-success, --color-danger, --color-info
---bg-primary, --bg-secondary
 --text-primary, --text-secondary
 ```
 
-### Responsive Breakpoints
+### Responsive Breakpoints (max-width, desktop-first)
 ```
-375px  - Mobile (base styles)
-768px  - Tablet (sm: prefix)
-1280px - Desktop (md: and lg: prefixes)
+1024px - Small desktop (coach panel stacks)
+768px  - Tablet (reduced padding, stacked layouts)
+600px  - Compact tablet (bid actions stack)
+480px  - Mobile (minimal padding, bottom-sheet modals)
+360px  - Small phone (tightest squeeze)
 ```
 
 ### Card Display
-- **North/South:** Horizontal layout, standard overlap
-- **East/West:** Vertical (rotated 90°), 65% overlap
-- **Card library:** `@letele/playing-cards` for professional SVGs
+- **North/South:** Horizontal layout, vmin-based overlap via `--card-overlap-horizontal`
+- **East/West:** Vertical (rotated 90°), overlap controlled by inline styles
+- **Card sizing:** `clamp()` + `vmin` — never set fixed pixel card sizes
 
 ## Quality Requirements
 
@@ -198,5 +205,5 @@ frontend/e2e/tests/
 
 ## Reference Documents
 
-- **Design Standards:** `.claude/UI_UX_DESIGN_STANDARDS.md` - UI/UX rules
+- **Design Standards:** `.claude/UI_STANDARDS.md` - UI layout, tokens, zone architecture (single source of truth)
 - **Play Rules:** `.claude/BRIDGE_PLAY_RULES.md` - Online single-player control rules

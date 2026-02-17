@@ -1,28 +1,8 @@
 /* ModeSelector - Landing Page Styles */
-/* Uses CSS variables from PlayComponents.css design system */
+/* Uses CSS variables from index.css :root design system */
 
-/* Mode-specific color variables */
-:root {
-  /* Mode selector gradients */
-  --mode-bg-gradient: linear-gradient(135deg, #2d5a3d 0%, #3d6b52 50%, #4a7c5f 100%);
-  --mode-primary: #2d5a3d;
-  --mode-primary-light: #4a7c5f;
-
-  /* Button gradients */
-  --gradient-learning: linear-gradient(135deg, #5c7cfa 0%, #4263eb 100%);
-  --gradient-learning-hover: linear-gradient(135deg, #4263eb 0%, #364fc7 100%);
-  --gradient-bid: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
-  --gradient-bid-hover: linear-gradient(135deg, #40c057 0%, #37b24d 100%);
-  --gradient-play: linear-gradient(135deg, #845ef7 0%, #7950f2 100%);
-  --gradient-play-hover: linear-gradient(135deg, #7950f2 0%, #6741d9 100%);
-  --gradient-progress: linear-gradient(135deg, #fcc419 0%, #fab005 100%);
-  --gradient-progress-hover: linear-gradient(135deg, #fab005 0%, #f59f00 100%);
-
-  /* Feedback button */
-  --feedback-bg: rgba(5, 150, 105, 0.9);
-  --feedback-border: rgba(5, 150, 105, 1);
-  --feedback-hover: rgba(4, 120, 87, 1);
-}
+/* Mode-specific variables now in index.css :root */
+/* Gradient overrides removed — use index.css values */
 
 .mode-selector-container {
   position: fixed;
@@ -173,7 +153,7 @@
 
 /* Spade icon needs dark color on white card background */
 .mode-card:nth-child(3) .mode-icon {
-  color: #1a1a1a;
+  color: var(--card-black);
 }
 
 .mode-title {
@@ -202,7 +182,7 @@
   padding-left: var(--space-5, 20px);
   margin-bottom: var(--space-2, 6px);
   font-size: var(--text-sm, 0.9rem);
-  color: #444;
+  color: var(--text-secondary-dark);
   line-height: 1.4;
 }
 
@@ -220,7 +200,7 @@
   font-style: italic;
   margin: 0;
   padding-top: var(--space-2, 8px);
-  border-top: 1px solid #eee;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 /* Mode Buttons */
@@ -279,7 +259,7 @@
 
 .mode-button-progress {
   background: var(--gradient-progress);
-  color: #333;
+  color: var(--charcoal);
 }
 
 .mode-button-progress:hover {
@@ -287,12 +267,12 @@
 }
 
 .mode-button-team {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: var(--gradient-team);
   color: white;
 }
 
 .mode-button-team:hover {
-  background: linear-gradient(135deg, #2563eb, #1e40af);
+  background: var(--gradient-team-hover);
 }
 
 /* Footer Hint */

@@ -90,7 +90,7 @@ const ResultOverlay = ({
             <span className="stat-divider">•</span>
             <span>Need {tricks_needed}</span>
             <span className="stat-divider">•</span>
-            <span>Trick 14/13</span>
+            <span>Trick 13/13</span>
           </div>
         </div>
 

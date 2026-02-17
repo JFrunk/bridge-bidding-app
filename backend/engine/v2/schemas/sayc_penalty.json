@@ -359,9 +359,9 @@
     },
     {
       "id": "lott_volatile_compete",
-      "bid": "{lott_safe_level}{agreed_suit}",
+      "bid": "{effective_lott_level}{agreed_suit}",
       "priority": 145,
-      "description": "LoTT volatile board - compete to safe level on distributional hands",
+      "description": "LoTT volatile board - compete to HCP-moderated safe level on distributional hands",
       "conditions": {
         "is_contested": true,
         "is_volatile_board": true,
@@ -371,7 +371,7 @@
         "is_fragile_ruff": false
       },
       "forcing": "none",
-      "explanation": "Compete to {lott_safe_level}-level - volatile board with {our_best_fit}-card fit",
+      "explanation": "Compete to {effective_lott_level}-level - volatile board with {our_best_fit}-card fit",
       "sets_forcing_level": "NON_FORCING"
     },
     {

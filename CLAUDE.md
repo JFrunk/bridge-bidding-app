@@ -1210,70 +1210,48 @@ python3 .claude/scripts/check_documentation_compliance.py --verbose
 
 ## UI/UX Standards
 
-**⚠️ MANDATORY: Reference UI/UX standards for ALL interface changes**
+**⚠️ MANDATORY: Read `.claude/UI_STANDARDS.md` before ANY UI work.**
 
-### Design Authority
+### Single Source of Truth
 
-**Primary Document:** `.claude/UI_UX_DESIGN_STANDARDS.md`
+**Primary Document:** `.claude/UI_STANDARDS.md`
 
-This is the **authoritative source** for all UI/UX decisions.
+This is the **only authoritative source** for all UI/UX decisions. It supersedes all previous UI documentation including `UI_UX_DESIGN_STANDARDS.md`.
 
-### When to Consult Standards
+### Binding Rules (Summary)
 
-**ALWAYS reference UI_UX_DESIGN_STANDARDS.md when:**
-- Creating new UI components
-- Modifying existing components
-- Adding interactive elements (buttons, modals, etc.)
-- Changing colors, spacing, or typography
-- Implementing animations or transitions
-- Adding tooltips, error messages, or feedback
-- Making responsive design decisions
-- Implementing accessibility features
+**1. No Tailwind for Layout or Responsiveness**
+- Do NOT use Tailwind responsive prefixes (`sm:`, `md:`, `lg:`) for layout
+- Use standard CSS with `clamp()`, `vmin`, and `max-width` media queries
+- Tailwind utility classes permitted only for non-layout one-offs (`text-center`, `font-bold`)
 
-### Key Requirements
+**2. South Hand + Bidding Box Are Sacrosanct**
+- These elements must never be obscured, clipped, or pushed off-screen
+- Their containers have `flex-shrink: 0` — they never compress
+- Adjacent zones (bidding history, coach panel) absorb all compression
 
-**Design System:**
-- **Colors:** Use CSS variables only (NO hardcoded colors)
-  - `--color-success`, `--color-danger`, `--color-info`
-  - `--bg-primary`, `--bg-secondary`, `--text-primary`
-- **Spacing:** Use 8px grid system (`--space-2`, `--space-4`, `--space-6`)
-- **Typography:** Use font scale (`--text-sm`, `--text-base`, `--text-lg`)
+**3. Design Tokens Live in index.css Only**
+- All CSS variables defined in `frontend/src/index.css` `:root`
+- Do not redefine `:root` in component CSS files
 
-**Responsive Design (MANDATORY):**
-- **Mobile-first approach**
-- **Test at breakpoints:** 360px (small phone), 480px (phone), 768px (tablet), 1024px (iPad landscape), 1280px (desktop)
-- **Use responsive classes:** `w-9 sm:w-12 md:w-16` (NOT fixed `w-12`)
-- **Breakpoint prefixes:** base, sm:, md:, lg:
+### Responsive Architecture
 
-**Responsive CSS Patterns (CRITICAL):**
-- **NEVER use fixed `min-width` over 300px** - Use `min-width: min(350px, 100%)` instead
-- **NEVER use fixed `min-height` over 200px** without a responsive fallback
-- **ALWAYS add 360px breakpoint** for extra small phones when using grids/flex layouts
-- **ALWAYS use `calc(100vw - Xpx)` or `min()` function** for widths that could overflow
-- **ALWAYS test on 360px viewport** before committing CSS changes
-- **Grid layouts:** Use `minmax(min(300px, 100%), 1fr)` pattern for responsive grids
-- **Animations:** Use percentage-based transforms (`translateX(100%)`) not fixed pixels (`translateX(400px)`)
+- **Desktop-first** with `max-width` media queries (NOT mobile-first, NOT `min-width`)
+- **Breakpoints:** 1024px, 768px, 600px, 480px, 360px + height 700px
+- **Card sizing:** `clamp()` + `vmin` — never fixed pixel card sizes
+- **Zone system:** Flex column layouts with explicit compression rules per screen
 
-**Accessibility (WCAG 2.1 AA):**
-- Keyboard navigation support
-- ARIA labels for all interactive elements
-- Contrast ratios meet standards
-- Touch targets ≥44px on mobile
-- Screen reader compatibility
-
-### UI Code Review Checklist
+### Quick Checklist
 
 Before committing UI code:
-- [ ] Uses CSS variables (not hardcoded colors)
-- [ ] Responsive at all breakpoints (test 375px, 768px, 1280px)
-- [ ] Keyboard navigation works
-- [ ] ARIA labels present
-- [ ] Touch targets ≥44px
-- [ ] Animations respect prefers-reduced-motion
-- [ ] Loading states implemented
-- [ ] Error messages are educational (not technical)
+- [ ] Uses CSS variables from index.css (no hardcoded colors)
+- [ ] No Tailwind responsive classes for layout
+- [ ] South Hand + Bidding Box visible at 768x600 and 360x640
+- [ ] Touch targets ≥44px on mobile
+- [ ] ARIA labels on interactive elements
+- [ ] `prefers-reduced-motion` respected
 
-**See:** `.claude/UI_UX_DESIGN_STANDARDS.md`, `.claude/RESPONSIVE_DESIGN_RULES.md`, `.claude/HOW_TO_ENSURE_CLAUDE_FOLLOWS_STANDARDS.md`
+**See:** `.claude/UI_STANDARDS.md` for complete design tokens, zone architecture, component patterns, and technical debt tracking
 
 ---
 

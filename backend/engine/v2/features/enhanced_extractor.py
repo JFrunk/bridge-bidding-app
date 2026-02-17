@@ -1350,7 +1350,32 @@ def _calculate_lott_features(hand: Hand, flat: Dict[str, Any], partner_bids: Lis
 
     # LoTT safe level = Our best fit - 6
     # Minimum safe level is 2 (can't bid below 2-level in competition)
-    result['lott_safe_level'] = max(2, result['our_best_fit'] - 6)
+    # Maximum safe level is 5 (LOTT is unreliable above 4-level per expert consensus;
+    # slam/grand-slam requires explicit investigation, not competitive LOTT)
+    result['lott_safe_level'] = min(5, max(2, result['our_best_fit'] - 6))
+
+    # HCP-moderated LOTT level for competitive bidding
+    # Bridge theory: LOTT is reliable at levels 2-4. Above 4, HCP dominates.
+    # Weaker hands should compete lower; vulnerability shifts risk/reward.
+    effective = result['lott_safe_level']
+    hcp = flat.get('hcp', 0)
+
+    # HCP ceiling: weaker hands can't compete as high
+    if hcp <= 7:
+        effective = min(effective, 3)   # Very weak: preemptive only (max 3-level)
+    elif hcp <= 10:
+        effective = min(effective, 4)   # Weak-medium: max 4-level competitive
+    # 11+ HCP: use full LOTT safe level (already capped at 5)
+
+    # Vulnerability adjustment: penalize unfavorable, reward favorable
+    we_vul = flat.get('we_are_vulnerable', False)
+    they_vul = flat.get('they_are_vulnerable', False)
+    if we_vul and not they_vul:
+        effective = max(2, effective - 1)  # Unfavorable: reduce by 1
+    elif not we_vul and they_vul:
+        effective = min(5, effective + 1)  # Favorable: can stretch 1 level
+
+    result['effective_lott_level'] = effective
 
     # Infer opponent's fit length from their bids
     opponent_inferred_suits = _infer_opponent_suit_lengths(
@@ -1365,9 +1390,10 @@ def _calculate_lott_features(hand: Hand, flat: Dict[str, Any], partner_bids: Lis
     # 18+ total tricks means both sides have good fits
     result['is_volatile_board'] = result['total_tricks_index'] >= 18
 
-    # Check if current auction level exceeds our safe level
+    # Check if current auction level exceeds our effective safe level
+    # Uses effective_lott_level (HCP + vulnerability adjusted) not raw lott_safe_level
     current_level = _get_current_auction_level(auction_history)
-    result['lott_above_safe'] = current_level > result['lott_safe_level']
+    result['lott_above_safe'] = current_level > result['effective_lott_level']
 
     # Strength-Based Override: HCP should override LoTT when game values exist
     # If combined partnership HCP >= 25, we have game values and LoTT ceiling
@@ -1380,9 +1406,10 @@ def _calculate_lott_features(hand: Hand, flat: Dict[str, Any], partner_bids: Lis
     result['is_misfit'] = result['our_best_fit'] <= 6
 
     # Combined decision: Should we compete based on LoTT?
-    # Yes if: (above safe level AND vulnerable AND not game values) OR misfit
+    # Yes if: (above effective safe level AND not game values) OR misfit
+    # Vulnerability is already factored into effective_lott_level, so no separate check needed
     result['lott_says_pass'] = (
-        (result['lott_above_safe'] and flat.get('we_are_vulnerable', False) and not result['hcp_overrides_lott'])
+        (result['lott_above_safe'] and not result['hcp_overrides_lott'])
         or result['is_misfit']
     )
 
@@ -1406,11 +1433,11 @@ def _calculate_lott_features(hand: Hand, flat: Dict[str, Any], partner_bids: Lis
         result['trump_quality_safe'] = False
         result['trump_quality_fragile'] = True
 
-    # Honor-adjusted LoTT: If trumps are fragile AND vulnerable, reduce safe level
+    # Honor-adjusted LoTT: If trumps are fragile AND vulnerable, reduce effective level further
     if result['trump_quality_fragile'] and flat.get('we_are_vulnerable', False):
-        result['honor_adjusted_safe_level'] = max(2, result['lott_safe_level'] - 1)
+        result['honor_adjusted_safe_level'] = max(2, result['effective_lott_level'] - 1)
     else:
-        result['honor_adjusted_safe_level'] = result['lott_safe_level']
+        result['honor_adjusted_safe_level'] = result['effective_lott_level']
 
     # Working HCP vs Wasteful HCP
     # Working HCP = honors in our long suits (offensive power)

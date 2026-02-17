@@ -3226,26 +3226,31 @@
   color: #dc2626;
 }
 
-/* Play feedback container for side-by-side on larger screens */
+/* Play feedback container - desktop-first: row default, column on mobile */
 .play-feedback-container {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  gap: 16px;
 }
 
-@media (min-width: 768px) {
+.play-feedback-container > .trick-feedback-panel {
+  flex: 1;
+}
+
+.play-feedback-container > .card-impact-matrix {
+  flex: 1;
+  margin-top: 0;
+}
+
+@media (max-width: 767px) {
   .play-feedback-container {
-    flex-direction: row;
-    gap: 16px;
+    flex-direction: column;
+    gap: 12px;
   }
 
-  .play-feedback-container > .trick-feedback-panel {
-    flex: 1;
-  }
-
+  .play-feedback-container > .trick-feedback-panel,
   .play-feedback-container > .card-impact-matrix {
-    flex: 1;
-    margin-top: 0;
+    flex: none;
   }
 }
 

@@ -94,7 +94,7 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
           </span>
           <span className="info-separator">•</span>
           <span className="trick-current">
-            <span className="info-label">Trick</span> <strong>{totalTricksPlayed + 1}/13</strong>
+            <span className="info-label">Trick</span> <strong>{Math.min(totalTricksPlayed + 1, 13)}/13</strong>
           </span>
         </div>
 

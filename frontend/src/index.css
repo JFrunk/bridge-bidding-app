@@ -143,6 +143,8 @@
   --gradient-dashboard: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --gradient-celebration: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
   --gradient-trend: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  --gradient-team: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  --gradient-team-hover: linear-gradient(135deg, #2563eb, #1e40af);
 
   /* ===================
      SPACING (8px Grid)
@@ -209,6 +211,7 @@
   --duration-fast: 200ms;
   --duration-normal: 300ms;
   --duration-slow: 500ms;
+  --duration-slower: 1000ms;
 
   --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-in: cubic-bezier(0.55, 0.055, 0.675, 0.19);
@@ -224,6 +227,66 @@
   --z-modal-overlay: 2000;
   --z-modal-content: 2001;
   --z-tooltip: 2100;      /* Tooltips above modals */
+
+  /* ===================
+     VMIN-BASED SCALING SYSTEM
+     Base unit scales with smallest viewport dimension
+     =================== */
+  --bridge-unit: 1vmin;
+  --table-scale: 1;
+
+  /* ===================
+     CARD SIZING SYSTEM
+     Aspect ratio: 5:7 (standard playing card)
+     Uses clamp() + vmin for proportional scaling
+     =================== */
+  --card-width: clamp(40px, 8.5vmin, 120px);
+  --card-height: clamp(56px, 11.9vmin, 168px);
+  --card-aspect-ratio: 0.714;
+  --card-overlap-horizontal: clamp(-40px, calc(var(--bridge-unit) * -4 * var(--table-scale)), -20px);
+  --card-overlap-vertical: clamp(-52px, calc(var(--bridge-unit) * -5 * var(--table-scale)), -32px);
+  --card-rank-size: clamp(14px, calc(var(--bridge-unit) * 2 * var(--table-scale)), 22px);
+  --card-suit-size: clamp(12px, calc(var(--bridge-unit) * 1.6 * var(--table-scale)), 18px);
+  --card-suit-gap: clamp(4px, calc(var(--bridge-unit) * 1 * var(--table-scale)), 14px);
+
+  /* ===================
+     TABLE SIZING
+     =================== */
+  --table-max-height: 80vh;
+  --table-aspect-ratio: 16 / 9;
+  --table-min-width: min(95vw, 600px);
+  --table-max-width: min(95vw, 1000px);
+
+  /* ===================
+     CONTAINER WIDTHS
+     =================== */
+  --content-width-narrow: min(95vw, 700px);
+  --content-width-standard: min(95vw, 900px);
+  --content-width-wide: min(95vw, 1100px);
+  --compass-width: min(95vw, 960px);
+
+  /* ===================
+     MODE SELECTOR
+     =================== */
+  --mode-bg-gradient: linear-gradient(135deg, #2d5a3d 0%, #3d6b52 50%, #4a7c5f 100%);
+  --mode-primary: #2d5a3d;
+  --mode-primary-light: #4a7c5f;
+}
+
+/* ===================
+   RESPONSIVE SCALE OVERRIDES
+   =================== */
+
+@media (max-width: 480px) {
+  :root {
+    --table-scale: 0.75;
+  }
+}
+
+@media (max-width: 360px) {
+  :root {
+    --table-scale: 0.65;
+  }
 }
 
 /* ===================

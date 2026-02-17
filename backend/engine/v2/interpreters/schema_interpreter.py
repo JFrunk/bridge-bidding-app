@@ -883,8 +883,13 @@ class SchemaInterpreter:
                 logger.warning(f"Invalid bid resolved: '{resolved}' from template '{bid_template}' - missing suit")
                 return None  # Signal that bid resolution failed
             if len(resolved) >= 2 and resolved[0].isdigit():
+                # Check level is valid (1-7)
+                bid_level = int(resolved[0])
+                if bid_level < 1 or bid_level > 7:
+                    logger.warning(f"Invalid bid resolved: '{resolved}' from template '{bid_template}' - level {bid_level} outside 1-7")
+                    return None  # Signal that bid resolution failed
                 suit_part = resolved[1:]
-                if suit_part not in ['♠', '♥', '♦', '♣', 'NT', '♠', '♥', '♦', '♣']:
+                if suit_part not in ['♠', '♥', '♦', '♣', 'NT']:
                     logger.warning(f"Invalid bid resolved: '{resolved}' from template '{bid_template}' - invalid suit")
                     return None  # Signal that bid resolution failed
 

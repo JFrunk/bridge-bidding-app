@@ -9,7 +9,7 @@
  * - From My Progress (returns to progress)
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,145 +21,16 @@ import {
 import { useHandReview } from './useHandReview';
 import {
   POSITION_LABELS,
-  getSuitOrder,
   normalizeSuit,
   isRedSuit,
-  groupCardsBySuit,
-  sortCards
 } from './constants';
 import DecayChart from '../../analysis/DecayChart';
 import HeuristicScorecard from '../HeuristicScorecard';
 import ReactorLayout from '../../layout/ReactorLayout';
 import TrickArena from '../../shared/TrickArena';
-import Card from '../../../shared/components/Card';
+import { ReplayHorizontalHand, ReplaySuitStack } from './ReplayHand';
 import FeedbackDashboard from './FeedbackDashboard';
 import './HandReviewPage.css';
-
-/**
- * ReplayHorizontalHand - Physics v2.0 compliant horizontal hand for N/S positions
- */
-const ReplayHorizontalHand = ({ cards, position, trumpStrain, scaleClass = 'text-base', isUser = false }) => {
-  const suitOrder = getSuitOrder(trumpStrain);
-  const cardsBySuit = useMemo(() => {
-    const grouped = groupCardsBySuit(cards);
-    // Sort each suit
-    Object.keys(grouped).forEach(suit => {
-      grouped[suit] = sortCards(grouped[suit]);
-    });
-    return grouped;
-  }, [cards]);
-
-  const getSpacingClass = (count) => {
-    if (count >= 7) return '-space-x-[2.2em]';
-    if (count === 6) return '-space-x-[1.9em]';
-    if (count === 5) return '-space-x-[1.6em]';
-    return '-space-x-[1.4em]';
-  };
-
-  const positionLabels = { N: 'North', S: 'South' };
-
-  if (!cards || cards.length === 0) {
-    return (
-      <div className={`${scaleClass} text-center text-white/60 py-4`}>
-        No cards
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${scaleClass} flex flex-col items-center gap-[0.3em]`}>
-      <div className="text-[0.75em] font-semibold text-white/70 uppercase tracking-wider flex items-center gap-2">
-        {positionLabels[position]}
-        {isUser && (
-          <span className="bg-blue-500 text-white px-2 py-0.5 rounded-full text-[0.7em] normal-case">
-            You
-          </span>
-        )}
-      </div>
-      <div className="flex flex-row gap-[0.8em] justify-center">
-        {suitOrder.map(suit => {
-          const suitCards = cardsBySuit[suit];
-          if (!suitCards || suitCards.length === 0) return null;
-          const spacingClass = getSpacingClass(suitCards.length);
-
-          return (
-            <div key={suit} className={`flex flex-row ${spacingClass}`}>
-              {suitCards.map((card, idx) => (
-                <div key={`${card.rank}-${card.suit}`} style={{ zIndex: 10 + idx }}>
-                  <Card
-                    rank={card.rank}
-                    suit={card.suit}
-                    customScaleClass={scaleClass}
-                  />
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-/**
- * ReplaySuitStack - Physics v2.0 compliant vertical suit stack for E/W positions
- */
-const ReplaySuitStack = ({ cards, position, trumpStrain, scaleClass = 'text-sm' }) => {
-  const suitOrder = getSuitOrder(trumpStrain);
-  const cardsBySuit = useMemo(() => {
-    const grouped = groupCardsBySuit(cards);
-    Object.keys(grouped).forEach(suit => {
-      grouped[suit] = sortCards(grouped[suit]);
-    });
-    return grouped;
-  }, [cards]);
-
-  const getSpacingClass = (count) => {
-    if (count >= 7) return '-space-x-[1.9em]';
-    if (count === 6) return '-space-x-[1.6em]';
-    if (count === 5) return '-space-x-[1.4em]';
-    return '-space-x-[1.2em]';
-  };
-
-  const positionLabels = { E: 'East', W: 'West' };
-
-  if (!cards || cards.length === 0) {
-    return (
-      <div className={`${scaleClass} text-center text-white/60 py-4`}>
-        No cards
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${scaleClass} flex flex-col items-center gap-[0.3em]`}>
-      <div className="text-[0.75em] font-semibold text-white/70 uppercase tracking-wider">
-        {positionLabels[position]}
-      </div>
-      <div className="flex flex-col gap-[0.3em]">
-        {suitOrder.map(suit => {
-          const suitCards = cardsBySuit[suit];
-          if (!suitCards || suitCards.length === 0) return null;
-          const spacingClass = getSpacingClass(suitCards.length);
-
-          return (
-            <div key={suit} className={`flex flex-row ${spacingClass}`}>
-              {suitCards.map((card, idx) => (
-                <div key={`${card.rank}-${card.suit}`} style={{ zIndex: 10 + idx }}>
-                  <Card
-                    rank={card.rank}
-                    suit={card.suit}
-                    customScaleClass={scaleClass}
-                  />
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
 
 // Helper to convert trick to TrickArena format
 const formatTrickForArena = (trick) => {
@@ -179,7 +50,10 @@ const formatTrickForArena = (trick) => {
  * Map decision rating to FeedbackDashboard grade
  */
 const mapRatingToGrade = (decision) => {
-  if (!decision) return 'reasonable';
+  if (!decision) return 'no-data';
+
+  // No stored analysis — don't claim it was good
+  if (decision.is_basic_info) return 'no-data';
 
   // Check for signal feedback (no trick cost but signal issue)
   const isSignalFeedback = decision.signal_reason && decision.tricks_cost === 0 && !decision.is_signal_optimal;
@@ -209,7 +83,7 @@ const mapRatingToGrade = (decision) => {
     case 'blunder':
       return 'blunder';
     default:
-      return 'reasonable';
+      return 'no-data';
   }
 };
 
@@ -238,16 +112,13 @@ const parseCardString = (cardStr) => {
 const buildAnalysisText = (decision) => {
   if (!decision) return null;
 
-  // Priority: feedback > reasoning > signal_reason
+  // Priority: feedback > reasoning > signal_reason > helpful_hint
   if (decision.feedback) return decision.feedback;
   if (decision.reasoning) return decision.reasoning;
   if (decision.signal_reason) return decision.signal_reason;
+  if (decision.helpful_hint) return decision.helpful_hint;
 
-  // Fallback based on rating
-  const grade = mapRatingToGrade(decision);
-  if (grade === 'optimal') return 'This was the best play in this position.';
-  if (grade === 'reasonable') return 'A solid choice that maintains your position.';
-
+  // No stored analysis — don't fabricate a positive assessment
   return null;
 };
 
@@ -263,7 +134,12 @@ const HandReviewPage = ({
   // Action buttons (for post-hand flow)
   onPlayAnother,
   onReplay,
-  onViewProgress
+  onViewProgress,
+  // Review mode toggle (from ReviewPage wrapper)
+  reviewMode,
+  onSetReviewMode,
+  biddingAvailable,
+  playAvailable
 }) => {
   const [chartExpanded, setChartExpanded] = useState(false);
 
@@ -333,6 +209,31 @@ const HandReviewPage = ({
 
   return (
     <div className="hand-review-page" data-testid="hand-review-page">
+      {/* DecayChart modal overlay */}
+      {handData?.decay_curve && chartExpanded && (
+        <div className="analysis-modal-overlay" onClick={() => setChartExpanded(false)}>
+          <div className="analysis-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="analysis-modal-header">
+              <h3 className="analysis-modal-title">Trick Potential Analysis</h3>
+              <button
+                className="analysis-modal-close"
+                onClick={() => setChartExpanded(false)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="analysis-modal-body">
+              <DecayChart
+                data={handData.decay_curve}
+                replayPosition={replayPosition}
+                onPositionChange={setReplayPosition}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stage Container - Centered flexbox column for all content */}
       <div className="stage-container">
         {/* Header Bar - Constrained to table width */}
@@ -341,6 +242,25 @@ const HandReviewPage = ({
             <ArrowLeft size={16} />
             <span>Back</span>
           </button>
+
+          <div className="header-mode-tabs">
+            <button
+              className={`mode-tab ${reviewMode === 'bidding' ? 'active' : ''}`}
+              onClick={() => onSetReviewMode('bidding')}
+              disabled={!biddingAvailable}
+              title={!biddingAvailable ? 'No bidding data for this hand' : undefined}
+            >
+              Bidding
+            </button>
+            <button
+              className={`mode-tab ${reviewMode === 'play' ? 'active' : ''}`}
+              onClick={() => onSetReviewMode('play')}
+              disabled={!playAvailable}
+              title={!playAvailable ? 'No play data for this hand' : undefined}
+            >
+              Play
+            </button>
+          </div>
 
           <div className="contract-summary">
             <span className={`contract-badge ${isRedSuit(handData?.contract?.match(/[SHDC♠♥♦♣]/i)?.[0]) ? 'red' : ''}`}>
@@ -473,26 +393,12 @@ const HandReviewPage = ({
             />
           </div>
 
-          {/* LAYER 3: Expandable Content (Charts, Heuristics) */}
-          {(chartExpanded || (currentReplayDecision && !currentReplayDecision.is_basic_info)) && (
+          {/* LAYER 3: Heuristic Scorecard (inline when decision has data) */}
+          {currentReplayDecision && !currentReplayDecision.is_basic_info && (
             <div className="expandable-layer">
-              {/* Decay Chart (Collapsible) */}
-              {handData?.decay_curve && chartExpanded && (
-                <div className="chart-panel expanded">
-                  <DecayChart
-                    data={handData.decay_curve}
-                    replayPosition={replayPosition}
-                    onPositionChange={setReplayPosition}
-                  />
-                </div>
-              )}
-
-              {/* Heuristic Scorecard (if decision has data) */}
-              {currentReplayDecision && !currentReplayDecision.is_basic_info && (
-                <div className="heuristic-panel">
-                  <HeuristicScorecard decision={currentReplayDecision} />
-                </div>
-              )}
+              <div className="heuristic-panel">
+                <HeuristicScorecard decision={currentReplayDecision} />
+              </div>
             </div>
           )}
 

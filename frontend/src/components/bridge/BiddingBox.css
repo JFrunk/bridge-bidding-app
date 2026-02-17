@@ -29,13 +29,13 @@
   min-width: 36px;
   height: 36px;
   padding: 0 10px;
-  background: #f0ede6;
-  border: 2px solid #c8c3b8;
+  background: var(--bid-button-bg);
+  border: 2px solid var(--bid-button-border);
   border-radius: 6px;
   font-family: inherit;
   font-size: clamp(14px, 2.2vh, 22px); /* Fluid: scales with viewport height */
   font-weight: 700;
-  color: #2a2a2a;
+  color: var(--charcoal);
   cursor: pointer;
   transition: all 0.15s ease;
   display: flex;
@@ -90,8 +90,8 @@
 /* Suit buttons - cream background with 24px colored symbols */
 .bid-suit-button {
   min-width: 48px;
-  background: #f0ede6;
-  border: 2px solid #c8c3b8;
+  background: var(--bid-button-bg);
+  border: 2px solid var(--bid-button-border);
 }
 
 .bid-suit-button .suit-symbol {
@@ -101,30 +101,30 @@
 
 /* Suit colors on cream background - must match card colors */
 .bid-suit-button .suit-clubs {
-  color: #1a1a1a; /* Near black - matches card clubs */
+  color: var(--card-black);
 }
 
 .bid-suit-button .suit-diamonds {
-  color: #cc0000; /* Bright red - matches card diamonds */
+  color: var(--card-red);
 }
 
 .bid-suit-button .suit-hearts {
-  color: #cc0000; /* Bright red - matches card hearts */
+  color: var(--card-red);
 }
 
 .bid-suit-button .suit-spades {
-  color: #1a1a1a; /* Near black - matches card spades */
+  color: var(--card-black);
 }
 
 .bid-suit-button .suit-nt {
   font-size: clamp(14px, 2.2vh, 22px);
   font-weight: 800;
-  color: #2a2a2a;
+  color: var(--charcoal);
 }
 
 /* Suit buttons waiting for level selection - cream but slightly muted */
 .bid-suit-button:disabled {
-  background: #f0ede6;
+  background: var(--bid-button-bg);
   border: 2px solid #d8d4cc;
   cursor: default;
   opacity: 0.7;
@@ -136,9 +136,9 @@
 
 /* Level buttons disabled - muted dark green (below minimum bid) */
 .bid-level-button:disabled {
-  background: #4a5e4f;
-  border-color: #3a4e3f;
-  color: #6b7d6f;
+  background: var(--bid-button-disabled-bg);
+  border-color: var(--bid-button-disabled-border);
+  color: var(--bid-button-disabled-text);
   cursor: not-allowed;
   opacity: 1;
 }
@@ -152,8 +152,8 @@
 
 /* Pass button - solid green background, white text */
 .bid-action-button.pass-button {
-  background: #2d8a4e;
-  border: 2px solid #268742;
+  background: var(--bid-pass-bg);
+  border: 2px solid var(--color-success-dark);
   color: #ffffff;
 }
 
@@ -164,17 +164,17 @@
 }
 
 .bid-action-button.pass-button:disabled {
-  background: #4a5e4f;
-  border-color: #3a4e3f;
-  color: #6b7d6f;
+  background: var(--bid-button-disabled-bg);
+  border-color: var(--bid-button-disabled-border);
+  color: var(--bid-button-disabled-text);
   opacity: 1;
 }
 
 /* Double button - white/pink background, red border and text */
 .bid-action-button.double-button {
-  background: #fff0f0;
-  border: 2px solid #c41e3a;
-  color: #c41e3a;
+  background: var(--bid-double-bg);
+  border: 2px solid var(--bid-double-border);
+  color: var(--color-danger);
 }
 
 .bid-action-button.double-button:hover:not(:disabled) {
@@ -191,9 +191,9 @@
 
 /* Redouble button - white/blue background, blue border and text */
 .bid-action-button.redouble-button {
-  background: #f0f4ff;
-  border: 2px solid #3a5fa5;
-  color: #3a5fa5;
+  background: var(--bid-redouble-bg);
+  border: 2px solid var(--bid-redouble-border);
+  color: var(--bid-redouble-border);
 }
 
 .bid-action-button.redouble-button:hover:not(:disabled) {

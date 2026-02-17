@@ -22,141 +22,11 @@ import { getBiddingHandDetail } from '../../services/analyticsService';
 import ReactorLayout from '../layout/ReactorLayout';
 import AuctionArena from '../shared/AuctionArena';
 import FeedbackDashboard from './hand-review/FeedbackDashboard';
-import Card from '../../shared/components/Card';
 import DDTableDisplay from '../analysis/DDTableDisplay';
-import {
-  getSuitOrder,
-  isRedSuit,
-  groupCardsBySuit,
-  sortCards
-} from './hand-review/constants';
+import { ReplayHorizontalHand, ReplaySuitStack } from './hand-review/ReplayHand';
+import { isRedSuit } from './hand-review/constants';
 import './hand-review/HandReviewPage.css';
 import './BidReviewPage.css';
-
-/**
- * ReplayHorizontalHand - Physics v2.0 compliant horizontal hand for N/S positions
- */
-const ReplayHorizontalHand = ({ cards, position, scaleClass = 'text-base', isUser = false }) => {
-  const suitOrder = getSuitOrder(null); // No trump for bidding
-  const cardsBySuit = useMemo(() => {
-    const grouped = groupCardsBySuit(cards);
-    Object.keys(grouped).forEach(suit => {
-      grouped[suit] = sortCards(grouped[suit]);
-    });
-    return grouped;
-  }, [cards]);
-
-  const getSpacingClass = (count) => {
-    if (count >= 7) return '-space-x-[2.2em]';
-    if (count === 6) return '-space-x-[1.9em]';
-    if (count === 5) return '-space-x-[1.6em]';
-    return '-space-x-[1.4em]';
-  };
-
-  const positionLabels = { N: 'North', S: 'South' };
-
-  if (!cards || cards.length === 0) {
-    return (
-      <div className={`${scaleClass} text-center text-white/60 py-4`}>
-        No cards
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${scaleClass} flex flex-col items-center gap-[0.3em]`}>
-      <div className="text-[0.75em] font-semibold text-white/70 uppercase tracking-wider flex items-center gap-2">
-        {positionLabels[position]}
-        {isUser && (
-          <span className="bg-blue-500 text-white px-2 py-0.5 rounded-full text-[0.7em] normal-case">
-            You
-          </span>
-        )}
-      </div>
-      <div className="flex flex-row gap-[0.8em] justify-center">
-        {suitOrder.map(suit => {
-          const suitCards = cardsBySuit[suit];
-          if (!suitCards || suitCards.length === 0) return null;
-          const spacingClass = getSpacingClass(suitCards.length);
-
-          return (
-            <div key={suit} className={`flex flex-row ${spacingClass}`}>
-              {suitCards.map((card, idx) => (
-                <div key={`${card.rank}-${card.suit}`} style={{ zIndex: 10 + idx }}>
-                  <Card
-                    rank={card.rank}
-                    suit={card.suit}
-                    customScaleClass={scaleClass}
-                  />
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-/**
- * ReplaySuitStack - Physics v2.0 compliant vertical suit stack for E/W positions
- */
-const ReplaySuitStack = ({ cards, position, scaleClass = 'text-sm' }) => {
-  const suitOrder = getSuitOrder(null);
-  const cardsBySuit = useMemo(() => {
-    const grouped = groupCardsBySuit(cards);
-    Object.keys(grouped).forEach(suit => {
-      grouped[suit] = sortCards(grouped[suit]);
-    });
-    return grouped;
-  }, [cards]);
-
-  const getSpacingClass = (count) => {
-    if (count >= 7) return '-space-x-[1.9em]';
-    if (count === 6) return '-space-x-[1.6em]';
-    if (count === 5) return '-space-x-[1.4em]';
-    return '-space-x-[1.2em]';
-  };
-
-  const positionLabels = { E: 'East', W: 'West' };
-
-  if (!cards || cards.length === 0) {
-    return (
-      <div className={`${scaleClass} text-center text-white/60 py-4`}>
-        No cards
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${scaleClass} flex flex-col items-center gap-[0.3em]`}>
-      <div className="text-[0.75em] font-semibold text-white/70 uppercase tracking-wider">
-        {positionLabels[position]}
-      </div>
-      <div className="flex flex-col gap-[0.3em]">
-        {suitOrder.map(suit => {
-          const suitCards = cardsBySuit[suit];
-          if (!suitCards || suitCards.length === 0) return null;
-          const spacingClass = getSpacingClass(suitCards.length);
-
-          return (
-            <div key={suit} className={`flex flex-row ${spacingClass}`}>
-              {suitCards.map((card, idx) => (
-                <div key={`${card.rank}-${card.suit}`} style={{ zIndex: 10 + idx }}>
-                  <Card
-                    rank={card.rank}
-                    suit={card.suit}
-                    customScaleClass={scaleClass}
-                  />
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
 
 /**
  * Map bid correctness to FeedbackDashboard grade
@@ -247,7 +117,12 @@ const BidReviewPage = ({
   onPrevHand,
   onNextHand,
   currentIndex,
-  totalHands
+  totalHands,
+  // Review mode toggle (from ReviewPage wrapper)
+  reviewMode,
+  onSetReviewMode,
+  biddingAvailable,
+  playAvailable
 }) => {
   const [handData, setHandData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -404,6 +279,16 @@ const BidReviewPage = ({
 
   return (
     <div className="hand-review-page" data-testid="bid-review-page">
+      {/* DD Table modal overlay */}
+      {handData?.dd_analysis?.dd_table && chartExpanded && (
+        <DDTableDisplay
+          ddAnalysis={handData.dd_analysis}
+          onDismiss={() => setChartExpanded(false)}
+          asOverlay={true}
+          showExplanation={true}
+        />
+      )}
+
       {/* Stage Container - Centered flexbox column for all content */}
       <div className="stage-container">
         {/* Header Bar - Constrained to table width */}
@@ -412,6 +297,25 @@ const BidReviewPage = ({
             <ArrowLeft size={16} />
             <span>Back</span>
           </button>
+
+          <div className="header-mode-tabs">
+            <button
+              className={`mode-tab ${reviewMode === 'bidding' ? 'active' : ''}`}
+              onClick={() => onSetReviewMode('bidding')}
+              disabled={!biddingAvailable}
+              title={!biddingAvailable ? 'No bidding data for this hand' : undefined}
+            >
+              Bidding
+            </button>
+            <button
+              className={`mode-tab ${reviewMode === 'play' ? 'active' : ''}`}
+              onClick={() => onSetReviewMode('play')}
+              disabled={!playAvailable}
+              title={!playAvailable ? 'No play data for this hand' : undefined}
+            >
+              Play
+            </button>
+          </div>
 
           <div className="contract-summary">
             <span className="contract-badge">
@@ -487,70 +391,65 @@ const BidReviewPage = ({
           }
         />
 
-        {/* Pit Container - Footer controls constrained to table width */}
+        {/* Pit Container - Fixed-Stack Footer Layout (matches HandReviewPage) */}
         <div className="pit-container">
-          {/* Replay Navigation Controls - Always visible */}
-          <div className="replay-controls">
-            <button className="replay-btn icon-only" onClick={goToStart} disabled={bidPosition <= 0} title="Start (Home)">
-              <SkipBack size={18} />
-            </button>
-            <button className="replay-btn prev" onClick={goPrev} disabled={bidPosition <= 0}>
-              <ChevronLeft size={18} />
-              <span>Prev</span>
-            </button>
-            <span className="replay-counter">
-              {bidPosition === 0 ? 'Start' : `Bid ${bidPosition} of ${totalBids}`}
-              {isUserBidPosition && <span className="text-blue-400 ml-1">(Your bid)</span>}
-            </span>
-            <button className="replay-btn next primary" onClick={goNext} disabled={bidPosition >= totalBids} data-testid="nav-next">
-              <span>Next</span>
-              <ChevronRight size={18} />
-            </button>
-            <button className="replay-btn icon-only" onClick={goToEnd} disabled={bidPosition >= totalBids} title="End (End)">
-              <SkipForward size={18} />
-            </button>
+          {/* LAYER 1: Replay Controls */}
+          <div className="controls-layer">
+            <div className="replay-controls">
+              <button className="replay-btn icon-only" onClick={goToStart} disabled={bidPosition <= 0} title="Start (Home)">
+                <SkipBack size={18} />
+              </button>
+              <button className="replay-btn prev" onClick={goPrev} disabled={bidPosition <= 0}>
+                <ChevronLeft size={18} />
+                <span>Prev</span>
+              </button>
+              <span className="replay-counter">
+                {bidPosition === 0 ? 'Start' : `Bid ${bidPosition} of ${totalBids}`}
+                {isUserBidPosition && <span className="text-blue-400 ml-1">(Your bid)</span>}
+              </span>
+              <button className="replay-btn next primary" onClick={goNext} disabled={bidPosition >= totalBids} data-testid="nav-next">
+                <span>Next</span>
+                <ChevronRight size={18} />
+              </button>
+              <button className="replay-btn icon-only" onClick={goToEnd} disabled={bidPosition >= totalBids} title="End (End)">
+                <SkipForward size={18} />
+              </button>
 
-            {/* Hand navigation (when multiple hands) */}
-            {totalHands > 1 && (
-              <div className="hand-nav">
-                <button className="replay-btn small" onClick={onPrevHand} disabled={!onPrevHand}>
-                  <ChevronLeft size={14} />
-                </button>
-                <span className="hand-counter">{currentIndex + 1}/{totalHands}</span>
-                <button className="replay-btn small" onClick={onNextHand} disabled={!onNextHand}>
-                  <ChevronRight size={14} />
-                </button>
-              </div>
+              {/* Hand navigation (when multiple hands) */}
+              {totalHands > 1 && (
+                <div className="hand-nav">
+                  <button className="replay-btn small" onClick={onPrevHand} disabled={!onPrevHand}>
+                    <ChevronLeft size={14} />
+                  </button>
+                  <span className="hand-counter">{currentIndex + 1}/{totalHands}</span>
+                  <button className="replay-btn small" onClick={onNextHand} disabled={!onNextHand}>
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* LAYER 2: Feedback Slot (Anti-Bounce Zone) */}
+          <div className="feedback-slot">
+            {totalBids > 0 && (
+              <FeedbackDashboard
+                grade={currentDecision ? mapCorrectnessToGrade(currentDecision) : 'reasonable'}
+                analysisText={buildAnalysisText(currentDecision)}
+                alternativePlay={
+                  currentDecision?.optimal_bid &&
+                  currentDecision.optimal_bid !== currentDecision.user_bid
+                    ? parseBidToCard(currentDecision.optimal_bid)
+                    : null
+                }
+                playedCard={currentDecision?.user_bid ? parseBidToCard(currentDecision.user_bid) : null}
+                tricksCost={0}
+                isStart={bidPosition === 0}
+                isAiPlay={!isUserBidPosition && bidPosition > 0 && !currentDecision}
+              />
             )}
           </div>
 
-          {/* Feedback Dashboard - Learning Coach */}
-          {totalBids > 0 && (
-            <FeedbackDashboard
-              grade={currentDecision ? mapCorrectnessToGrade(currentDecision) : 'reasonable'}
-              analysisText={buildAnalysisText(currentDecision)}
-              alternativePlay={
-                currentDecision?.optimal_bid &&
-                currentDecision.optimal_bid !== currentDecision.user_bid
-                  ? parseBidToCard(currentDecision.optimal_bid)
-                  : null
-              }
-              playedCard={currentDecision?.user_bid ? parseBidToCard(currentDecision.user_bid) : null}
-              tricksCost={0} // Bidding doesn't have trick cost
-              isStart={bidPosition === 0}
-              isAiPlay={!isUserBidPosition && bidPosition > 0 && !currentDecision}
-            />
-          )}
-
-          {/* DD Table (Collapsible) - Uses new overlay component */}
-          {handData?.dd_analysis?.dd_table && chartExpanded && (
-            <DDTableDisplay
-              ddAnalysis={handData.dd_analysis}
-              onDismiss={() => setChartExpanded(false)}
-              asOverlay={true}
-              showExplanation={true}
-            />
-          )}
         </div>
       </div>
     </div>

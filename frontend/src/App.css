@@ -207,7 +207,7 @@ body {
 
 /* Excellent feedback */
 .bid-feedback-strip.feedback-excellent {
-  border-left: 3px solid #4caf50;
+  border-left: 3px solid var(--color-success);
 }
 
 /* Good feedback */
@@ -217,12 +217,12 @@ body {
 
 /* Suboptimal feedback */
 .bid-feedback-strip.feedback-suboptimal {
-  border-left: 3px solid #ff9800;
+  border-left: 3px solid var(--color-warning);
 }
 
 /* Error feedback */
 .bid-feedback-strip.feedback-error {
-  border-left: 3px solid #f44336;
+  border-left: 3px solid var(--color-danger);
 }
 
 /* Action buttons row - COMPACT per viewport budget */
@@ -1228,7 +1228,7 @@ body {
 }
 
 /* iPad modal adjustments */
-@media (min-width: 769px) and (max-width: 1024px) {
+@media (max-width: 1024px) and (min-width: 769px) {
   .modal-content {
     max-width: 550px;
     width: 85%;
@@ -2494,15 +2494,14 @@ html, body {
   height: 100%;
 }
 
-/* When sidebar is open, allow cards to scale down */
-.split-game-layout.sidebar-open .bid-hand-container {
-  /* Use container queries for smooth responsive sizing */
-  container-type: inline-size;
-}
-
-/* Scale cards based on container, not viewport, when sidebar open */
-.split-game-layout.sidebar-open .bid-hand-container .text-base {
-  font-size: clamp(0.7rem, 4cqw, 1rem);
+/* When sidebar is open (desktop side-by-side), scale cards proportionally */
+/* Only >1200px — below that, sidebar becomes a bottom drawer and main panel is full width */
+@media (min-width: 1201px) {
+  /* Cards match base size (1rem) but scale down via 2.4cqw when container narrows */
+  .split-game-layout.sidebar-open .bid-hand-container .text-base,
+  .split-game-layout.sidebar-open .bid-hand-container .text-lg {
+    font-size: clamp(0.5rem, 2.4cqw, 1rem);
+  }
 }
 
 /* Bidding controls: content-sized within south zone */

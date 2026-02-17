@@ -1120,7 +1120,27 @@ def complete_session_hand():
             total_cards = sum(len(h.cards) for h in state.original_deal.values())
             print(f"✅ Using original_deal for hand history ({total_cards} cards)")
         else:
-            print("⚠️ No original_deal available - hand history will be incomplete")
+            # Fallback: try to get deal_data from bidding_decisions table
+            try:
+                if state.game_session:
+                    conn = session_manager.get_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT deal_data FROM bidding_decisions
+                        WHERE session_id = ? AND hand_number = ? AND deal_data IS NOT NULL AND deal_data != '{}'
+                        LIMIT 1
+                    """, (str(state.game_session.id), state.game_session.hands_completed))
+                    row = cursor.fetchone()
+                    if row and row[0]:
+                        import json as _json
+                        deal_data = _json.loads(row[0]) if isinstance(row[0], str) else row[0]
+                        print(f"✅ Recovered deal_data from bidding_decisions table")
+                    conn.close()
+            except Exception as e:
+                print(f"⚠️ Could not recover deal_data from bidding_decisions: {e}")
+
+            if not deal_data:
+                print("⚠️ No original_deal available - will reconstruct from play_history")
 
         # Build play_history from trick_history on backend
         # This is the authoritative source - don't rely on frontend
@@ -1144,6 +1164,19 @@ def complete_session_hand():
                 print(f"⚠️ Using frontend play_history ({len(play_history)} plays)")
             else:
                 print("⚠️ No play_history available - replay will not work")
+
+        # Last resort: reconstruct deal_data from play_history
+        # All 52 plays have position info, so we can rebuild each hand
+        if not deal_data and play_history and len(play_history) == 52:
+            deal_data = {'N': {'hand': []}, 'E': {'hand': []}, 'S': {'hand': []}, 'W': {'hand': []}}
+            for play in play_history:
+                pos = play.get('position')
+                if pos in deal_data:
+                    deal_data[pos]['hand'].append({
+                        'rank': play['rank'],
+                        'suit': play['suit']
+                    })
+            print(f"✅ Reconstructed deal_data from play_history (52 cards)")
 
         # Prepare hand data for database
         hand_data = {
@@ -1665,6 +1698,18 @@ def get_next_bid():
             current_player = expected_bidder
 
         print(f"🔍 get-next-bid: player={current_player}, auction_len={auction_length}, dealer={dealer}")
+
+        # SAFETY: Prevent runaway auctions
+        if auction_length >= 60:
+            print(f"🛑 Runaway auction detected: {auction_length} bids. Forcing Pass.")
+            next_bidder = BridgeRulesEngine.get_current_bidder(dealer, auction_length + 1)
+            state.auction_history.append('Pass')
+            return jsonify({
+                'bid': 'Pass',
+                'explanation': 'Auction exceeded maximum length.',
+                'player': current_player,
+                'next_bidder': next_bidder,
+            })
 
         # Normalize auction history from frontend (used for engine call)
         auction_history_raw = data.get('auction_history', [])
@@ -3412,7 +3457,7 @@ def play_card():
         # === EVALUATE PLAY FOR DASHBOARD (before modifying state) ===
         # Record plays from South OR from North/dummy when user controls both as declarer
         # User (South) controls: South always, AND dummy when South or North is declarer
-        user_id = data.get('user_id')
+        user_id = data.get('user_id') or (state.game_session.user_id if state.game_session else None)
         play_feedback = None
         declarer = state.play_state.contract.declarer
         dummy = state.play_state.dummy

@@ -79,6 +79,16 @@ class BiddingEngine:
         """
         import time
 
+        # SAFETY: Prevent runaway auctions
+        # A legal bridge auction can have at most 35 non-special bids (7 levels x 5 strains)
+        # plus passes/doubles. Any auction over 60 bids is certainly broken.
+        if len(auction_history) >= 60:
+            import logging
+            logging.getLogger(__name__).error(
+                f"Runaway auction detected: {len(auction_history)} bids. Forcing Pass."
+            )
+            return ("Pass", "Auction exceeded maximum length.")
+
         # Infer dealer if not provided (for backward compatibility)
         if dealer is None:
             # Dealer is determined by: auction_history[0] was made by dealer
@@ -275,6 +285,11 @@ class BiddingEngine:
     def _is_bid_legal(self, bid: str, auction_history: list) -> bool:
         """Universal check to ensure an AI bid is legal."""
         if bid in ['Pass', 'X', 'XX']: return True
+        # Hard cap: no bid level above 7 is ever legal in bridge
+        try:
+            if int(bid[0]) > 7: return False
+        except (ValueError, IndexError):
+            return False
         last_real_bid = next((b for b in reversed(auction_history) if b not in ['Pass', 'X', 'XX']), None)
         if not last_real_bid: return True
         suit_rank = {'♣': 1, '♦': 2, '♥': 3, '♠': 4, 'NT': 5}

@@ -18,9 +18,8 @@ import { BidChip } from './components/shared/BidChip';
 import { GovernorConfirmDialog } from './components/bridge/GovernorConfirmDialog';
 import LearningDashboard from './components/learning/LearningDashboard';
 import LearningMode from './components/learning/LearningMode';
-// Consolidated Hand Review Page (replaces both HandReviewModal and old HandReviewPage)
-import { HandReviewPage } from './components/learning/hand-review';
-import BidReviewPage from './components/learning/BidReviewPage';
+// Unified Review Page (bidding + play with tab toggle)
+import ReviewPage from './components/learning/ReviewPage';
 import { ModeSelector } from './components/ModeSelector';
 import { BiddingWorkspace } from './components/workspaces/BiddingWorkspace';
 import { PlayWorkspace } from './components/workspaces/PlayWorkspace';
@@ -597,10 +596,9 @@ function App() {
   const [showAbout, setShowAbout] = useState(false); // About modal
 
   // Hand review - full-screen page (used for both post-game and dashboard review)
-  const [showHandReviewPage, setShowHandReviewPage] = useState(false);
+  const [showReviewPage, setShowReviewPage] = useState(false);
   const [handReviewSource, setHandReviewSource] = useState(null); // 'post-hand' or 'dashboard'
   const [lastSavedHandId, setLastSavedHandId] = useState(null);
-  const [showBidReviewPage, setShowBidReviewPage] = useState(false);
   const [reviewPageHandId, setReviewPageHandId] = useState(null);
   const [reviewPageType, setReviewPageType] = useState('play'); // 'play' or 'bidding'
   // Navigation data for review pages
@@ -1990,20 +1988,12 @@ ${otherCommands}`;
       setReviewCurrentIndex(0);
     }
 
-    // Show appropriate page
-    if (type === 'play') {
-      setShowHandReviewPage(true);
-      setShowBidReviewPage(false);
-    } else {
-      setShowBidReviewPage(true);
-      setShowHandReviewPage(false);
-    }
+    setShowReviewPage(true);
   };
 
   const handleCloseReviewPage = () => {
     const scrollY = savedScrollPositionRef.current;
-    setShowHandReviewPage(false);
-    setShowBidReviewPage(false);
+    setShowReviewPage(false);
     setReviewPageHandId(null);
     setReviewHandList([]);
     setReviewCurrentIndex(0);
@@ -2512,8 +2502,14 @@ ${otherCommands}`;
         // Fall through — optimistic nextBidder is already set
       }
       setLastUserBid(bid);
-      setBidFeedback(feedbackData.feedback || null);
-      setDisplayedMessage(feedbackData.user_message || feedbackData.explanation || 'Bid recorded.');
+      // Only show bid evaluation feedback in coached mode
+      if (sessionMode === 'coached') {
+        setBidFeedback(feedbackData.feedback || null);
+        setDisplayedMessage(feedbackData.user_message || feedbackData.explanation || 'Bid recorded.');
+      } else {
+        setBidFeedback(null);
+        setDisplayedMessage('Bid recorded.');
+      }
       return;
     }
 
@@ -2557,8 +2553,14 @@ ${otherCommands}`;
       }
       if (data.beliefs) setBeliefs(data.beliefs);
       setLastUserBid(bid);
-      setBidFeedback(data.feedback || null);
-      setDisplayedMessage(data.user_message || data.explanation || 'Bid recorded.');
+      // Only show bid evaluation feedback in coached mode
+      if (sessionMode === 'coached') {
+        setBidFeedback(data.feedback || null);
+        setDisplayedMessage(data.user_message || data.explanation || 'Bid recorded.');
+      } else {
+        setBidFeedback(null);
+        setDisplayedMessage('Bid recorded.');
+      }
     } catch (err) {
       console.error('❌ Error evaluating bid:', err);
       setBidFeedback(null);
@@ -2646,8 +2648,8 @@ ${otherCommands}`;
 
     if (nextBidder !== 'South' || isAiBidding) return;
 
-    // Governor Safety Guard: When hints are enabled, pre-evaluate bid to check for critical issues
-    if (hintModeEnabled) {
+    // Governor Safety Guard: Only in coached mode with hints enabled, pre-evaluate bid to check for critical issues
+    if (hintModeEnabled && sessionMode === 'coached') {
       setDisplayedMessage('Evaluating bid...');
 
       try {
@@ -2763,6 +2765,13 @@ ${otherCommands}`;
 
     if (isAuctionOver(auction)) {
       if (isAiBidding) setIsAiBidding(false);
+      return;
+    }
+
+    // SAFETY: Prevent runaway auctions (max 60 bids — far beyond any legal auction)
+    if (auction.length >= 60) {
+      console.error('🛑 Runaway auction detected:', auction.length, 'bids. Stopping AI bidding.');
+      setIsAiBidding(false);
       return;
     }
 
@@ -3578,8 +3587,8 @@ ${otherCommands}`;
                   </div>
                 </div>
 
-                {/* Bid feedback - between table and hand */}
-                {bidFeedback && gamePhase === 'bidding' && (
+                {/* Bid feedback - between table and hand (coached mode only) */}
+                {bidFeedback && gamePhase === 'bidding' && sessionMode === 'coached' && (
                   <div className="feedback-strip">
                     <div className={`feedback-icon ${bidFeedback.score >= 8 ? 'good' : bidFeedback.score >= 5 ? 'ok' : 'poor'}`}>
                       {bidFeedback.score >= 8 ? '✓' : bidFeedback.score >= 5 ? '~' : '✗'}
@@ -3804,8 +3813,9 @@ ${otherCommands}`;
             onReplayHand={replayCurrentHand}
             onReviewHand={lastSavedHandId ? () => {
               setReviewPageHandId(lastSavedHandId);
+              setReviewPageType('play');
               setHandReviewSource('post-hand');
-              setShowHandReviewPage(true);
+              setShowReviewPage(true);
             } : null}
             onViewProgress={() => {
               if (isGuest && requiresRegistration('progress')) {
@@ -4054,16 +4064,17 @@ ${otherCommands}`;
         </div>
       )}
 
-      {/* Full-screen play review page (consolidated) */}
-      {showHandReviewPage && reviewPageHandId && (
-        <HandReviewPage
+      {/* Unified review page (bidding + play with tab toggle) */}
+      {showReviewPage && reviewPageHandId && (
+        <ReviewPage
           handId={reviewPageHandId}
+          initialMode={reviewPageType}
           onBack={handleCloseReviewPage}
           onPrevHand={reviewCurrentIndex > 0 ? () => handleNavigateReviewHand(-1) : null}
           onNextHand={reviewCurrentIndex < reviewHandList.length - 1 ? () => handleNavigateReviewHand(1) : null}
           currentIndex={reviewCurrentIndex}
           totalHands={reviewHandList.length}
-          // Post-hand context: show action buttons for playing another hand
+          handReviewSource={handReviewSource}
           onPlayAnother={handReviewSource === 'post-hand' ? () => {
             handleCloseReviewPage();
             playRandomHand();
@@ -4076,18 +4087,6 @@ ${otherCommands}`;
             handleCloseReviewPage();
             setShowLearningDashboard(true);
           } : null}
-        />
-      )}
-
-      {/* Full-screen bidding review page (new approach) */}
-      {showBidReviewPage && reviewPageHandId && (
-        <BidReviewPage
-          handId={reviewPageHandId}
-          onBack={handleCloseReviewPage}
-          onPrevHand={reviewCurrentIndex > 0 ? () => handleNavigateReviewHand(-1) : null}
-          onNextHand={reviewCurrentIndex < reviewHandList.length - 1 ? () => handleNavigateReviewHand(1) : null}
-          currentIndex={reviewCurrentIndex}
-          totalHands={reviewHandList.length}
         />
       )}
 

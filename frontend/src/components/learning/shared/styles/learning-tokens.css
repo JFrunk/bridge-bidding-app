@@ -1,9 +1,10 @@
 /* Learning Flows Design Tokens
- * All CSS custom properties for the learning flow components
+ * Scoped to .flow-container to avoid global :root conflicts with index.css
+ * These override core tokens for the learning flow context (cream backgrounds, dark text)
  * Reference: docs/redesign/Learning/learning-flows-package/docs/LEARNING_DESIGN_SYSTEM.md
  */
 
-:root {
+.flow-container {
   /* === Background Colors === */
   --table-green: #1a6b3c;
   --header-green: #14432a;

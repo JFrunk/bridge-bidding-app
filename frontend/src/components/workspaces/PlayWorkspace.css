@@ -147,7 +147,7 @@
 /* Responsive Design */
 
 /* iPad Landscape & Small Desktop (769px - 1024px) */
-@media (min-width: 769px) and (max-width: 1024px) {
+@media (max-width: 1024px) and (min-width: 769px) {
   .play-options-grid {
     gap: 16px;
   }
@@ -162,7 +162,7 @@
 }
 
 /* iPad Portrait (601px - 900px) - 2 columns with descriptions */
-@media (min-width: 601px) and (max-width: 900px) {
+@media (max-width: 900px) and (min-width: 601px) {
   .play-options-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;

@@ -73,15 +73,43 @@ export function useHandReview(handId) {
     return extractTrumpStrain(handData?.contract);
   }, [handData?.contract]);
 
+  // Reconstruct original deal from play_history when deal_data is empty
+  // This handles hands where original_deal wasn't preserved at save time
+  const fullDeal = useMemo(() => {
+    const deal = handData?.deal;
+    const ph = handData?.play_history;
+
+    // Check if deal has actual card data
+    const hasCards = deal && Object.keys(deal).length > 0 &&
+      ['N', 'E', 'S', 'W'].some(pos => deal[pos]?.hand?.length > 0);
+
+    if (hasCards) return deal;
+
+    // Reconstruct from play_history: group all 52 plays by position
+    if (!ph || ph.length === 0) return null;
+
+    const reconstructed = { N: { hand: [] }, E: { hand: [] }, S: { hand: [] }, W: { hand: [] } };
+    ph.forEach(play => {
+      const pos = play.player || play.position;
+      if (reconstructed[pos]) {
+        reconstructed[pos].hand.push({
+          rank: play.rank || play.r,
+          suit: normalizeSuit(play.suit || play.s)
+        });
+      }
+    });
+    return reconstructed;
+  }, [handData?.deal, handData?.play_history]);
+
   // Compute remaining hands at current replay position
   const remainingHands = useMemo(() => {
-    if (!handData?.deal || !handData?.play_history) return null;
+    if (!fullDeal || !handData?.play_history) return null;
 
     const hands = {
-      N: [...(handData.deal.N?.hand || [])],
-      E: [...(handData.deal.E?.hand || [])],
-      S: [...(handData.deal.S?.hand || [])],
-      W: [...(handData.deal.W?.hand || [])]
+      N: [...(fullDeal.N?.hand || [])],
+      E: [...(fullDeal.E?.hand || [])],
+      S: [...(fullDeal.S?.hand || [])],
+      W: [...(fullDeal.W?.hand || [])]
     };
 
     // Remove cards that have been played up to replayPosition
@@ -104,7 +132,7 @@ export function useHandReview(handId) {
     });
 
     return hands;
-  }, [handData?.deal, handData?.play_history, replayPosition]);
+  }, [fullDeal, handData?.play_history, replayPosition]);
 
   // Get current trick cards for replay
   const currentReplayTrick = useMemo(() => {

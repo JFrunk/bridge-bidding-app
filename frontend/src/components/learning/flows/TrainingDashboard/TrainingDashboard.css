@@ -11,7 +11,7 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: #f5f0e8; /* cream background */
+  background: var(--cream); /* cream background */
   overflow-y: auto;
 }
 
@@ -19,7 +19,7 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
 }
 
 /* Header */
@@ -35,7 +35,7 @@
 .dashboard-title {
   font-size: 24px;
   font-weight: 700;
-  color: #2a2a2a;
+  color: var(--charcoal);
   margin: 0;
 }
 
@@ -45,7 +45,7 @@
   height: 36px;
   border: none;
   background: rgba(0, 0, 0, 0.06);
-  color: #555;
+  color: var(--text-secondary-dark);
   border-radius: 50%;
   font-size: 18px;
   cursor: pointer;
@@ -58,13 +58,13 @@
 
 .dashboard-close-btn:hover {
   background: rgba(0, 0, 0, 0.12);
-  color: #2a2a2a;
+  color: var(--charcoal);
 }
 
 /* Period Toggle */
 .period-toggle {
   display: flex;
-  background: #e0dcd4;
+  background: var(--action-bar-border, #e0dcd4);
   border-radius: 8px;
   padding: 3px;
 }
@@ -73,7 +73,7 @@
   padding: 6px 12px;
   border: none;
   background: transparent;
-  color: #666;
+  color: var(--text-muted);
   font-size: 12px;
   font-weight: 600;
   border-radius: 6px;
@@ -82,12 +82,12 @@
 }
 
 .period-btn:hover {
-  color: #2a2a2a;
+  color: var(--charcoal);
 }
 
 .period-btn.active {
   background: white;
-  color: #2a2a2a;
+  color: var(--charcoal);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -105,13 +105,13 @@
   padding: 16px;
   text-align: center;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e8e5df;
+  border: 1px solid var(--action-bar-border, #e8e5df);
 }
 
 .stat-label {
   font-size: 11px;
   font-weight: 600;
-  color: #888;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
@@ -120,7 +120,7 @@
 .stat-value {
   font-size: 32px;
   font-weight: 800;
-  color: #2a2a2a;
+  color: var(--charcoal);
   line-height: 1;
 }
 
@@ -154,13 +154,13 @@
   padding: 20px;
   margin-bottom: 16px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e8e5df;
+  border: 1px solid var(--action-bar-border, #e8e5df);
 }
 
 .section-title {
   font-size: 14px;
   font-weight: 700;
-  color: #2a2a2a;
+  color: var(--charcoal);
   margin: 0 0 16px 0;
   display: flex;
   align-items: center;
@@ -198,13 +198,13 @@
 .suggestion-text p {
   margin: 0;
   font-size: 14px;
-  color: #5a5a5a;
+  color: var(--text-secondary-dark);
   line-height: 1.5;
 }
 
 .suggestion-text .highlight {
   font-weight: 600;
-  color: #2a2a2a;
+  color: var(--charcoal);
 }
 
 .suggestion-action {
@@ -215,7 +215,7 @@
 .suggestion-empty {
   text-align: center;
   padding: 12px 0;
-  color: #888;
+  color: var(--text-muted);
   font-size: 14px;
 }
 
@@ -231,14 +231,14 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: #f5f3ef;
+  background: var(--cream-dark, #F5F2EC);
   border-radius: 16px;
   font-size: 13px;
 }
 
 .convention-name {
   font-weight: 600;
-  color: #2a2a2a;
+  color: var(--charcoal);
 }
 
 .convention-pct {
@@ -270,7 +270,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  background: #f9f8f6;
+  background: var(--cream, #FDFBF7);
   border-radius: 8px;
 }
 
@@ -283,12 +283,12 @@
 .activity-type {
   font-size: 13px;
   font-weight: 600;
-  color: #2a2a2a;
+  color: var(--charcoal);
 }
 
 .activity-time {
   font-size: 11px;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .activity-right {
@@ -316,14 +316,14 @@
 
 .activity-detail {
   font-size: 11px;
-  color: #888;
+  color: var(--text-muted);
 }
 
 /* Empty States */
 .empty-state {
   text-align: center;
   padding: 24px;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .empty-state-icon {

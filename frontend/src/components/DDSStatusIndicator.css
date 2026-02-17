@@ -6,7 +6,7 @@
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: var(--font-body);
   max-width: 320px;
 }
 
@@ -17,15 +17,15 @@
 
 .dds-status-indicator.error {
   padding: 12px 16px;
-  border-left: 3px solid #ff9800;
+  border-left: 3px solid var(--color-warning);
 }
 
 .dds-status-indicator.dds-enabled {
-  border-left: 3px solid #4caf50;
+  border-left: 3px solid var(--color-success);
 }
 
 .dds-status-indicator.dds-disabled {
-  border-left: 3px solid #ff9800;
+  border-left: 3px solid var(--color-warning);
 }
 
 .status-main {
@@ -39,7 +39,7 @@
 }
 
 .status-main:hover {
-  background-color: #f5f5f5;
+  background-color: var(--cream-dark, #F5F2EC);
 }
 
 .status-dot {
@@ -51,19 +51,19 @@
   flex: 1;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--charcoal);
 }
 
 .expand-icon {
   font-size: 10px;
-  color: #666;
+  color: var(--text-muted);
   transition: transform 0.2s;
 }
 
 .status-details {
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
   padding: 12px 16px;
-  background-color: #fafafa;
+  background-color: var(--cream, #FDFBF7);
   animation: slideDown 0.2s ease-out;
 }
 
@@ -90,7 +90,7 @@
   margin: 0 0 8px 0;
   font-size: 12px;
   font-weight: 600;
-  color: #666;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -115,29 +115,29 @@
 
 .info-label {
   font-weight: 500;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .info-value {
-  color: #333;
+  color: var(--charcoal);
   font-weight: 400;
 }
 
 .info-value.success {
-  color: #4caf50;
+  color: var(--color-success);
   font-weight: 500;
 }
 
 .info-value.warning {
-  color: #ff9800;
+  color: var(--color-warning);
   font-weight: 500;
 }
 
 .info-description {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #f0f0f0;
-  color: #666;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.4;
 }
@@ -161,11 +161,11 @@
 
 .difficulty-name {
   text-transform: capitalize;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .difficulty-rating {
-  color: #333;
+  color: var(--charcoal);
   font-weight: 500;
   font-family: 'Courier New', monospace;
 }

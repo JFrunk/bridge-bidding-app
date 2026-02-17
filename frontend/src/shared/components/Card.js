@@ -49,7 +49,7 @@ const Card = ({ rank, suit, isHidden = false, customScaleClass = "text-base", on
 
   return (
     <div
-      className={`${customScaleClass} inline-block select-none ${selectable ? 'cursor-pointer' : ''} transform transition-transform hover:-translate-y-[0.5em] hover:z-50 ${selected ? 'ring-2 ring-amber-500 -translate-y-[0.5em]' : ''}`}
+      className={`${customScaleClass} inline-block select-none ${selectable ? 'cursor-pointer transform transition-transform hover:-translate-y-[0.5em] hover:z-50' : ''} ${selected ? 'ring-2 ring-amber-500 -translate-y-[0.5em]' : ''}`}
       onClick={handleClick}
       onTouchEnd={handleTouchEnd}
       role={selectable ? 'button' : undefined}

@@ -221,7 +221,7 @@
 }
 
 /* Tablet */
-@media (min-width: 481px) and (max-width: 768px) {
+@media (max-width: 768px) and (min-width: 481px) {
   .term-tooltip {
     width: 260px;
   }

@@ -51,6 +51,14 @@ const GRADE_CONFIG = {
     border: 'border-red-300',
     iconBg: 'bg-red-200',
   },
+  'no-data': {
+    label: 'No Analysis',
+    icon: Info,
+    bg: 'bg-gray-50',
+    text: 'text-gray-500',
+    border: 'border-gray-200',
+    iconBg: 'bg-gray-100',
+  },
 };
 
 /**
@@ -122,7 +130,7 @@ const ComparisonView = ({ playedCard, betterCard }) => {
 };
 
 const FeedbackDashboard = ({
-  grade = 'reasonable',
+  grade = 'no-data',
   analysisText,
   alternativePlay,
   playedCard,
@@ -135,7 +143,7 @@ const FeedbackDashboard = ({
   // Uses CSS variable for consistent height with parent slot
   if (!isVisible) {
     return (
-      <div className="feedback-dashboard ghost-placeholder" style={{ minHeight: 'var(--feedback-slot-height, 8em)', visibility: 'hidden' }}>
+      <div className="feedback-dashboard ghost-placeholder" style={{ minHeight: 'var(--feedback-slot-height, 4.5em)', visibility: 'hidden' }}>
         {/* Invisible placeholder to prevent layout bounce */}
       </div>
     );
@@ -145,9 +153,9 @@ const FeedbackDashboard = ({
   if (isStart) {
     return (
       <div className="feedback-dashboard start-hint">
-        <div className="flex items-center justify-center gap-3 py-4 h-full">
-          <span className="text-gray-600">
-            Press <kbd className="px-2 py-1 bg-gray-200 rounded text-sm font-mono">→</kbd> or click <span className="font-semibold text-emerald-700">Next</span> to step through each play
+        <div className="flex items-center justify-center gap-3 py-2 h-full">
+          <span className="text-gray-600 text-sm">
+            Press <kbd className="px-2 py-0.5 bg-gray-200 rounded text-xs font-mono">→</kbd> or click <span className="font-semibold text-emerald-700">Next</span> to step through each play
           </span>
         </div>
       </div>
@@ -158,7 +166,7 @@ const FeedbackDashboard = ({
   if (isAiPlay) {
     return (
       <div className="feedback-dashboard ai-play">
-        <div className="flex items-center justify-center gap-2 py-4 text-gray-500">
+        <div className="flex items-center justify-center gap-2 py-2 text-gray-500">
           <Info size={16} />
           <span className="text-sm">AI play — no feedback recorded</span>
         </div>
@@ -166,62 +174,73 @@ const FeedbackDashboard = ({
     );
   }
 
-  // No analysis available - still show placeholder
-  if (!analysisText && !grade) {
+  // No analysis available - show neutral state
+  if (grade === 'no-data' || (!analysisText && !grade)) {
     return (
-      <div className="feedback-dashboard empty-state">
-        {/* Empty but maintains layout height */}
+      <div className="feedback-dashboard no-data-state">
+        <div className="flex flex-col items-center gap-2 p-4 text-center">
+          <div className="p-2 rounded-full bg-gray-100">
+            <Info size={20} className="text-gray-400" />
+          </div>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold bg-gray-100 text-gray-500">
+              No Analysis
+            </span>
+            {playedCard && (
+              <span className="text-sm text-gray-500">
+                You played: {formatCard(playedCard)}
+              </span>
+            )}
+          </div>
+          <p className="text-gray-500 text-sm leading-relaxed">
+            Play analysis was not recorded for this card.
+          </p>
+        </div>
       </div>
     );
   }
 
-  const config = GRADE_CONFIG[grade] || GRADE_CONFIG.reasonable;
+  const config = GRADE_CONFIG[grade] || GRADE_CONFIG['no-data'];
   const Icon = config.icon;
   const showComparison = (grade === 'questionable' || grade === 'blunder') && alternativePlay && playedCard;
 
   return (
     <div className={`feedback-dashboard ${config.bg} ${config.border} border-l-4 rounded-lg`}>
-      {/* Grade Header */}
-      <div className="flex items-start gap-3 p-4">
+      <div className="flex flex-col items-center gap-2 p-4 text-center">
         {/* Icon */}
-        <div className={`flex-shrink-0 p-2 rounded-full ${config.iconBg}`}>
+        <div className={`p-2 rounded-full ${config.iconBg}`}>
           <Icon size={20} className={config.text} />
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Grade Badge + Trick Cost */}
-          <div className="flex items-center gap-3 mb-2">
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold ${config.bg} ${config.text}`}>
-              {config.label}
+        {/* Grade Badge + Trick Cost */}
+        <div className="flex items-center justify-center gap-3 flex-wrap">
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold ${config.bg} ${config.text}`}>
+            {config.label}
+          </span>
+          {/* Only show played card inline for optimal/reasonable (no comparison needed) */}
+          {playedCard && !showComparison && (
+            <span className="text-sm text-gray-600">
+              You played: {formatCard(playedCard)}
             </span>
-            {/* Only show played card inline for optimal/reasonable (no comparison needed) */}
-            {playedCard && !showComparison && (
-              <span className="text-sm text-gray-600">
-                You played: {formatCard(playedCard)}
-              </span>
-            )}
-            {tricksCost > 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded bg-red-100 text-red-700 text-xs font-semibold">
-                -{tricksCost} trick{tricksCost > 1 ? 's' : ''}
-              </span>
-            )}
-          </div>
-
-          {/* Comparison View - Split display for questionable/blunder */}
-          {showComparison && (
-            <div className="mb-3">
-              <ComparisonView playedCard={playedCard} betterCard={alternativePlay} />
-            </div>
           )}
-
-          {/* Analysis Text */}
-          {analysisText && (
-            <p className="text-gray-800 text-base leading-relaxed">
-              {analysisText}
-            </p>
+          {tricksCost > 0 && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded bg-red-100 text-red-700 text-xs font-semibold">
+              -{tricksCost} trick{tricksCost > 1 ? 's' : ''}
+            </span>
           )}
         </div>
+
+        {/* Comparison View - Split display for questionable/blunder */}
+        {showComparison && (
+          <ComparisonView playedCard={playedCard} betterCard={alternativePlay} />
+        )}
+
+        {/* Analysis Text */}
+        {analysisText && (
+          <p className="text-gray-800 text-base leading-relaxed">
+            {analysisText}
+          </p>
+        )}
       </div>
     </div>
   );

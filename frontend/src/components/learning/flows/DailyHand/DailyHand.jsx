@@ -231,7 +231,7 @@ const PlayArea = ({ currentTrick, tricksPlayed, tricksTaken, contract }) => (
     <div className="trick-display">
       {/* TODO: Render current trick cards */}
       <div className="trick-placeholder">
-        Trick {tricksPlayed + 1} / 13
+        Trick {Math.min(tricksPlayed + 1, 13)} / 13
       </div>
     </div>
     <div className="tricks-count">
