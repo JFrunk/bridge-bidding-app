@@ -84,16 +84,18 @@ class JacobyConvention(ConventionModule):
         partner_last_bid = features['auction_features']['partner_last_bid']
         # Metadata to bypass suit length validation for artificial transfer completions
         metadata = {'bypass_suit_length': True}
+        # Super-accept is game-forcing (17 HCP opener + 5+ card suit from responder = 22+ combined minimum)
+        super_accept_metadata = {'bypass_suit_length': True, 'game_forcing': True, 'forcing_sequence': 'jacoby_super_accept'}
 
         if partner_last_bid == "2♦":
             # Super-accept with maximum (17 HCP) and 4-card support
             if hand.hcp == 17 and hand.suit_lengths['♥'] >= 4:
-                return ("3♥", "Super-accept showing maximum 1NT (17 HCP) with 4-card heart support.", metadata)
+                return ("3♥", "Super-accept showing maximum 1NT (17 HCP) with 4-card heart support.", super_accept_metadata)
             return ("2♥", "Completing the transfer to Hearts.", metadata)
         if partner_last_bid == "2♥":
             # Super-accept with maximum (17 HCP) and 4-card support
             if hand.hcp == 17 and hand.suit_lengths['♠'] >= 4:
-                return ("3♠", "Super-accept showing maximum 1NT (17 HCP) with 4-card spade support.", metadata)
+                return ("3♠", "Super-accept showing maximum 1NT (17 HCP) with 4-card spade support.", super_accept_metadata)
             return ("2♠", "Completing the transfer to Spades.", metadata)
         return ("Pass", "Error: Fall-through in transfer completion.", {})
 
