@@ -233,8 +233,27 @@ class SchemaInterpreter:
         # Sort by priority (highest first)
         candidates.sort(key=lambda c: c.priority, reverse=True)
 
-        # Return best match
+        # Validate Pass bids against forcing constraints
         best = candidates[0]
+        if best.bid == "Pass":
+            # Extract auction context for validation
+            last_contract_level = features.get('auction_level', 0)
+            last_contract_suit = features.get('last_contract_suit', '')
+            validation = self.validate_bid_against_forcing("Pass", last_contract_level, last_contract_suit)
+
+            if not validation.is_valid:
+                # Pass is illegal due to forcing - filter out Pass and select next best
+                logger.warning(f"Pass bid rejected: {validation.reason}")
+                non_pass_candidates = [c for c in candidates if c.bid != "Pass"]
+                if non_pass_candidates:
+                    best = non_pass_candidates[0]
+                    logger.info(f"Selected alternative bid: {best.bid} (priority {best.priority})")
+                else:
+                    # No valid bids available
+                    logger.error("No valid bids available - all candidates are Pass but forcing is active")
+                    return None
+
+        # Return best match
         return (best.bid, best.explanation)
 
     def evaluate_with_details(self, features: Dict[str, Any]) -> List[BidCandidate]:
