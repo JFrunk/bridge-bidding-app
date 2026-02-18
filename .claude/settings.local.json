@@ -280,7 +280,21 @@
       "Bash(git commit --no-verify -m \"$\\(cat <<''EOF''\nfeat\\(play-ai\\): Add unblocking exception to defensive deference\n\nWhen partner leads from a long suit and we have a doubleton honor\n\\(A-x, K-x, Q-x\\), we should UNBLOCK by playing the honor rather than\ndeferring with a low card. This prevents blocking partner''s suit.\n\nChanges:\n- Added _should_unblock\\(\\) method to detect doubleton honor situations\n- Modified _should_defer_to_partner\\(\\) to check for unblocking exception\n- Pass hand object to enable suit length analysis\n- Updated TACTICAL_SIGNAL_OVERLAY.md documentation\n\nTest scenarios:\n- A-x-x with partner leading K → DEFER \\(play low, 3+ cards\\)\n- A-x with partner leading K → UNBLOCK \\(play A, doubleton\\)\n- Q-x with partner leading J → UNBLOCK \\(play Q, doubleton\\)\n- Q-x-x with partner leading J → DEFER \\(play low, 3+ cards\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(CI=true npm test -- --watchAll=false --testPathIgnorePatterns=\"e2e\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(onboarding\\): Move WelcomeWizard to app root with smart routing\n\nFixes the disconnect where \"Rusty Player\" promised bidding practice\nbut only unlocked content within Learning Mode without navigating.\n\nChanges:\n- Move WelcomeWizard from LearningMode.js to App.js \\(shows before ModeSelector\\)\n- Add route property to experience options for navigation after selection\n- Implement handleExperienceSelect with smart routing:\n  - Beginner → Learning Mode \\(guided lessons\\)\n  - Rusty → Bidding workspace \\(random hands immediately\\)\n  - Experienced → ModeSelector \\(full access, choose path\\)\n- Update benefit text to match actual behavior\n- ModeSelector only shows for returning users \\(experienceLevel already set\\)\n\nUser Flow \\(New\\):\n1. New user → Login/Guest → WelcomeWizard\n2. Selection routes to appropriate starting point\n3. Returning user → ModeSelector directly\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix\\(play\\): Improve AI loop continuation after trick clear for E/W positions\n\n- Add diagnostic logging for next player control checks\n- Increase timeout delays \\(100ms→200ms for trick clear, 100ms→150ms for mid-trick\\)\n- Add explicit logging when E/W AI positions should lead\n- Add useEffect cleanup to prevent stale timeouts\n- Rename nsDeclaringAI to nsIsDeclaring for clarity\n\nAddresses P1 bug: \"East does not lead after taking trick\"\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix\\(play\\): Improve AI loop continuation after trick clear for E/W positions\n\n- Add diagnostic logging for next player control checks\n- Increase timeout delays \\(100ms→200ms for trick clear, 100ms→150ms for mid-trick\\)\n- Add explicit logging when E/W AI positions should lead\n- Add useEffect cleanup to prevent stale timeouts\n- Rename nsDeclaringAI to nsIsDeclaring for clarity\n\nAddresses P1 bug: \"East does not lead after taking trick\"\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(gh pr create:*)",
+      "Bash(open \"https://github.com/JFrunk/bridge-bidding-app/pull/new/fix/game-forcing-metadata-bug\")",
+      "Bash(git show:*)",
+      "Bash(env:*)",
+      "Bash(/tmp/create_pr.sh:*)",
+      "Bash(/tmp/create_pr.sh)",
+      "Bash(brew:*)",
+      "Bash(git config:*)",
+      "Bash(tar:*)",
+      "Bash(/tmp/gh_2.62.0_macOS_arm64/bin/gh:*)",
+      "Bash(./gh_2.62.0_macOS_arm64/bin/gh:*)",
+      "Bash(/tmp/pr_data.json:*)",
+      "Bash(git credential-osxkeychain:*)",
+      "Bash(git stash pop:*)"
     ],
     "deny": [],
     "ask": []

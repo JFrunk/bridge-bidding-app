@@ -414,6 +414,49 @@ git commit -m "Descriptive commit message"
 git push origin development
 ```
 
+### Creating Pull Requests via GitHub API
+
+**When gh CLI is not available, use the GitHub API directly with git credentials:**
+
+**Step 1: Extract GitHub credentials from keychain**
+```bash
+# Get credentials stored by git
+echo "protocol=https
+host=github.com" | git credential-osxkeychain get
+```
+
+**Step 2: Create PR using curl**
+```bash
+# Create PR data JSON
+cat > /tmp/pr_data.json << 'EOF'
+{
+  "title": "Your PR title",
+  "body": "Your PR description\n\nWith multiple lines...",
+  "head": "your-feature-branch",
+  "base": "development"
+}
+EOF
+
+# Create the PR
+curl -X POST \
+  -H "Authorization: token YOUR_GITHUB_TOKEN" \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/JFrunk/bridge-bidding-app/pulls \
+  -d @/tmp/pr_data.json
+```
+
+**Step 3: Merge PR using API**
+```bash
+# Merge PR (replace {PR_NUMBER} with actual PR number)
+curl -X PUT \
+  -H "Authorization: token YOUR_GITHUB_TOKEN" \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/JFrunk/bridge-bidding-app/pulls/{PR_NUMBER}/merge \
+  -d '{"commit_title": "Your commit message", "merge_method": "squash"}'
+```
+
+**Note:** Replace `YOUR_GITHUB_TOKEN` with the token from Step 1 (starts with `ghp_`).
+
 ### Deploying to Production
 
 **Production Infrastructure:**

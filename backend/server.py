@@ -92,7 +92,7 @@ CORS(app, resources={
     r"/api/*": {
         "origins": CORS_ORIGINS,
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "X-Session-ID"],
+        "allow_headers": "*",  # Allow all headers - prevents CORS issues when frontend adds new headers
         "expose_headers": ["Content-Type"],
         "supports_credentials": False
     }
