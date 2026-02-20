@@ -307,13 +307,21 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
  */
 const getQuestionType = (expected) => {
   if (!expected) return 'unknown';
-  if ('hcp' in expected && !('bid' in expected) && !('game_points_needed' in expected)) return 'hcp';
+
+  // Check specific question types first (higher priority)
   if ('should_open' in expected) return 'should_open';
-  if ('bid' in expected) return 'bidding';
   if ('longest_suit' in expected) return 'longest_suit';
   if ('game_points_needed' in expected) return 'game_points';
   // Contract-specific game/slam points (bidding_language skill)
   if ('correct_answer' in expected && expected.no_hand_required) return 'contract_points';
+
+  // If we're asking about bid AND hcp, prioritize based on what makes sense
+  // If both present, assume it's a bidding question (the HCP is just context)
+  if ('bid' in expected) return 'bidding';
+
+  // HCP question (only if no bid question)
+  if ('hcp' in expected) return 'hcp';
+
   return 'unknown';
 };
 

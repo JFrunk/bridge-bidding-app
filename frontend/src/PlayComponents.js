@@ -262,14 +262,16 @@ export function PlayTable({
             <div className={dummyPosition === 'N' ? "dummy-hand" : "declarer-hand"}>
               {suitOrder.map(suit => {
                 const hand = dummyPosition === 'N' ? dummyHand : declarerHand;
-                if (!hand || hand.length === 0) return null;
-                const suitCards = sortCards(hand.filter(card => card.suit === suit));
+                // Extract cards array - handle both {cards: [...], position: "N"} and [...]
+                const handCards = hand?.cards || hand;
+                if (!handCards || handCards.length === 0) return null;
+                const suitCards = sortCards(handCards.filter(card => card.suit === suit));
                 return (
                   <div key={suit} className="suit-group">
                     {suitCards.map((card, index) => {
                       // CRITICAL: Determine if this specific card is legal to play
                       const isMyTurn = dummyPosition === 'N' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
-                      const isLegalCard = isCardLegalToPlay(card, hand, current_trick);
+                      const isLegalCard = isCardLegalToPlay(card, handCards, current_trick);
                       const isDisabled = !isMyTurn || !isLegalCard;
 
                       // CRITICAL: Use unique key across ALL cards (not just within suit)
@@ -344,14 +346,16 @@ export function PlayTable({
             <div className={dummyPosition === 'W' ? "dummy-hand" : "declarer-hand"}>
               {suitOrder.map(suit => {
                 const hand = dummyPosition === 'W' ? dummyHand : declarerHand;
-                if (!hand || hand.length === 0) return null;
-                const suitCards = sortCards(hand.filter(card => card.suit === suit));
+                // Extract cards array - handle both {cards: [...], position: "W"} and [...]
+                const handCards = hand?.cards || hand;
+                if (!handCards || handCards.length === 0) return null;
+                const suitCards = sortCards(handCards.filter(card => card.suit === suit));
                 return (
                   <div key={suit} className="suit-group">
                     {suitCards.map((card, index) => {
                       // CRITICAL: Determine if this specific card is legal to play
                       const isMyTurn = dummyPosition === 'W' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
-                      const isLegalCard = isCardLegalToPlay(card, hand, current_trick);
+                      const isLegalCard = isCardLegalToPlay(card, handCards, current_trick);
                       const isDisabled = !isMyTurn || !isLegalCard;
 
                       // CRITICAL: Use unique key per card
@@ -386,14 +390,16 @@ export function PlayTable({
             <div className={dummyPosition === 'E' ? "dummy-hand" : "declarer-hand"}>
               {suitOrder.map(suit => {
                 const hand = dummyPosition === 'E' ? dummyHand : declarerHand;
-                if (!hand || hand.length === 0) return null;
-                const suitCards = sortCards(hand.filter(card => card.suit === suit));
+                // Extract cards array - handle both {cards: [...], position: "E"} and [...]
+                const handCards = hand?.cards || hand;
+                if (!handCards || handCards.length === 0) return null;
+                const suitCards = sortCards(handCards.filter(card => card.suit === suit));
                 return (
                   <div key={suit} className="suit-group">
                     {suitCards.map((card, index) => {
                       // CRITICAL: Determine if this specific card is legal to play
                       const isMyTurn = dummyPosition === 'E' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
-                      const isLegalCard = isCardLegalToPlay(card, hand, current_trick);
+                      const isLegalCard = isCardLegalToPlay(card, handCards, current_trick);
                       const isDisabled = !isMyTurn || !isLegalCard;
 
                       // CRITICAL: Use unique key per card

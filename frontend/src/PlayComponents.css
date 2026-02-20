@@ -372,7 +372,8 @@
     "west center east"
     ". south .";
   grid-template-columns: minmax(150px, 1fr) minmax(400px, 2fr) minmax(150px, 1fr);
-  grid-template-rows: auto 300px auto;
+  /* Allow middle row to expand for full 13-card vertical hands (needs ~760px) */
+  grid-template-rows: auto minmax(300px, auto) auto;
   gap: 15px;
   padding: 15px;
   background-color: var(--bg-table-felt);
