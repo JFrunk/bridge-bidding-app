@@ -291,11 +291,6 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer, i
       classes.push('player-you');
     }
 
-    // Current player highlight (disabled when auction is complete)
-    if (!isComplete && players[nextPlayerIndex] === position) {
-      classes.push('current-player');
-    }
-
     return classes.join(' ');
   };
 
