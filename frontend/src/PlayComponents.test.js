@@ -38,6 +38,77 @@ function createMockHand() {
 }
 
 /**
+ * CRITICAL TEST SUITE: Data Structure Handling
+ *
+ * Bug Fix (2026-02-19): Backend returns dummy_hand as {cards: [...], position: "N"}
+ * Frontend must handle both object format and array format
+ */
+describe('Data Structure Handling - Prevent Regression', () => {
+  test('Handles dummy hand as object {cards: [...], position: "N"}', () => {
+    const playState = createMockPlayState('S', 'N');
+    const userHand = createMockHand();
+    // Backend format: {cards: [...], position: "N"}
+    const dummyHandObject = {
+      cards: createMockHand(),
+      position: 'N'
+    };
+
+    const { container } = render(
+      <PlayTable
+        playState={playState}
+        userHand={userHand}
+        dummyHand={dummyHandObject}
+        onCardPlay={() => {}}
+        isUserTurn={true}
+        auction={[]}
+        declarerHand={null}
+        onDeclarerCardPlay={() => {}}
+        isDeclarerTurn={false}
+        onDummyCardPlay={() => {}}
+        isDummyTurn={false}
+        scoreData={null}
+      />
+    );
+
+    // Should extract cards array and render all 3 cards
+    const northHand = container.querySelector('.position-north .dummy-hand');
+    expect(northHand).toBeTruthy();
+    const cards = northHand.querySelectorAll('.playable-card');
+    expect(cards.length).toBe(3);
+  });
+
+  test('Handles dummy hand as array [...] (legacy format)', () => {
+    const playState = createMockPlayState('S', 'N');
+    const userHand = createMockHand();
+    // Legacy format: [...]
+    const dummyHandArray = createMockHand();
+
+    const { container } = render(
+      <PlayTable
+        playState={playState}
+        userHand={userHand}
+        dummyHand={dummyHandArray}
+        onCardPlay={() => {}}
+        isUserTurn={true}
+        auction={[]}
+        declarerHand={null}
+        onDeclarerCardPlay={() => {}}
+        isDeclarerTurn={false}
+        onDummyCardPlay={() => {}}
+        isDummyTurn={false}
+        scoreData={null}
+      />
+    );
+
+    // Should render all 3 cards
+    const northHand = container.querySelector('.position-north .dummy-hand');
+    expect(northHand).toBeTruthy();
+    const cards = northHand.querySelectorAll('.playable-card');
+    expect(cards.length).toBe(3);
+  });
+});
+
+/**
  * CRITICAL TEST SUITE: Hand Visibility Rules
  *
  * Bridge Rules:

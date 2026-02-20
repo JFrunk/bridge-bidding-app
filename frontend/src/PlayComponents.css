@@ -1,10 +1,97 @@
 /**
  * PlayComponents.css - Styling for card play UI
- * Design tokens in index.css :root — see .claude/UI_STANDARDS.md
+ * Following UI/UX Design Standards - see .claude/UI_UX_DESIGN_STANDARDS.md
  */
 
-/* All CSS variables now centralized in index.css :root */
-/* Card sizing, table sizing, and container widths migrated to index.css */
+/* ========================================
+   CSS VARIABLES - UI/UX DESIGN SYSTEM
+   ======================================== */
+
+:root {
+  /* Feedback Colors */
+  --color-success: #4caf50;        /* Legal plays, correct actions, making contract */
+  --color-danger: #f44336;         /* Illegal plays, errors, going down */
+  --color-warning: #ff9800;        /* Warnings, suboptimal plays */
+  --color-info: #61dafb;           /* Highlights, informational */
+
+  /* Backgrounds */
+  --bg-primary: #1a1a1a;           /* Main dark background */
+  --bg-secondary: #2a2a2a;         /* Card backgrounds, panels */
+  --bg-tertiary: #3a3a3a;          /* Hover states */
+
+  /* Bridge Table Green Felt - consistent play surface */
+  --bg-table-felt: #1a5c2e;           /* Deep green felt for main play area */
+  --bg-table-felt-light: #237a3d;     /* Lighter green for highlights */
+  --bg-table-felt-dark: #0f3d1c;      /* Darker green for borders/shadows */
+  --bg-table-border: #0a3015;         /* Border color for table edges */
+
+  /* Text */
+  --text-primary: #ffffff;          /* Main text */
+  --text-secondary: #aaaaaa;        /* Secondary text, labels */
+  --text-disabled: #666666;         /* Disabled text */
+
+  /* Card Suits (Bridge Standard) */
+  --suit-red: #d32f2f;             /* Hearts & Diamonds */
+  --suit-black: #000000;            /* Spades & Clubs */
+
+  /* Partnerships (Consistent Throughout) */
+  --partnership-ns: #4caf50;        /* North-South = Green */
+  --partnership-ew: #ff9800;        /* East-West = Orange */
+
+  /* Special States */
+  --highlight-current-player: #61dafb; /* Whose turn indicator */
+  --highlight-winner: #ffd700;         /* Winning card/trick (gold) */
+  --highlight-vulnerable: #d32f2f;     /* Vulnerability indicator */
+
+  /* Spacing (8px grid) */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+
+  /* Typography */
+  --text-xs: 0.75rem;    /* 12px - Fine print */
+  --text-sm: 0.875rem;   /* 14px - Secondary text */
+  --text-base: 1rem;     /* 16px - Body text */
+  --text-lg: 1.125rem;   /* 18px - Subheadings */
+  --text-xl: 1.25rem;    /* 20px - Headings */
+  --text-2xl: 1.5rem;    /* 24px - Major headings */
+  --text-3xl: 2rem;      /* 32px - Hero text */
+
+  /* Border Radius */
+  --radius-sm: 4px;      /* Small elements */
+  --radius-md: 8px;      /* Buttons, cards */
+  --radius-lg: 12px;     /* Panels, modals */
+  --radius-xl: 16px;     /* Large containers */
+
+  /* Shadows (Depth) */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.2);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.3);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.4);
+
+  /* Glows for emphasis */
+  --glow-success: 0 0 20px rgba(76, 175, 80, 0.5);
+  --glow-danger: 0 0 20px rgba(244, 67, 54, 0.5);
+  --glow-info: 0 0 20px rgba(97, 218, 251, 0.5);
+
+  /* Animation Durations */
+  --duration-instant: 100ms;
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 1000ms;
+
+  /* Easing Functions */
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-in: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  --ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+}
 
 /* ========================================
    BIDDING SUMMARY
@@ -54,7 +141,7 @@
 }
 
 .tricks-won-section {
-  background: linear-gradient(90deg, var(--color-success), var(--color-success-light));
+  background: linear-gradient(90deg, var(--color-success), #66bb6a);
 }
 
 .tricks-remaining-section {
@@ -62,7 +149,7 @@
 }
 
 .tricks-lost-section {
-  background: linear-gradient(90deg, var(--color-danger-light), var(--color-danger));
+  background: linear-gradient(90deg, #ef5350, var(--color-danger));
 }
 
 .tricks-count {
@@ -261,217 +348,139 @@
   font-size: 1.1em;
 }
 
-/* Play Table - UI Redesign v2 per play-mockup-v2.html */
-/* P0 FIX: Vertical Stage Anchoring - Flex column with pinned top and reserved bottom */
-/* Container uses flex-direction: column with NO vertical centering to pin content to top */
+/* Play Table */
 .play-table {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: visible;  /* Allow cards at edges to be visible */
-  /* CRITICAL: Force full width and center - fixes left-alignment issue */
   width: 100%;
-  min-width: 0;
-  max-width: var(--table-max-width, min(95vw, 1000px));
-  margin-left: auto;
-  margin-right: auto;
-  /* P0 FIX: Remove max-height constraint - let flex handle distribution */
-  /* Smooth transition for scaling changes */
-  transition: all 0.3s ease-in-out, max-width 0.3s ease-in-out;
-  /* CSS custom property for ResizeObserver hook to adjust */
-  --table-scale: 1;
-  /* CRITICAL: Align to top, not center - prevents vertical centering */
-  justify-content: flex-start;
+  max-width: 1200px;
+  margin: 20px auto;
 }
 
-/* Play Area - Absolute positioning layout for compass positions */
-/* P0 FIX: Fluid middle section - flex-grow:1 takes available space ABOVE South footer */
+.play-header {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30px;
+  gap: 20px;
+}
+
 .play-area {
   position: relative;
-  width: 100% !important;  /* Force full width of parent */
-  min-width: 100%;
-  /* P0 FIX: flex-grow:1 to fill available space above South footer */
-  flex: 1 1 auto;
-  /* P0 FIX: Reasonable min-height, no max-height constraint */
-  min-height: clamp(200px, 35vmin, 320px);
-  z-index: 2;
-  padding: 0;
-  padding-bottom: 0;
-  background-color: var(--table-green, #1a6b3c);
-  overflow: visible;  /* Allow cards at edges to be visible */
-  box-sizing: border-box;
+  width: 100%;
+  min-height: 600px;
+  display: grid;
+  grid-template-areas:
+    ". north ."
+    "west center east"
+    ". south .";
+  grid-template-columns: minmax(150px, 1fr) minmax(400px, 2fr) minmax(150px, 1fr);
+  /* Allow middle row to expand for full 13-card vertical hands (needs ~760px) */
+  grid-template-rows: auto minmax(300px, auto) auto;
+  gap: 15px;
+  padding: 15px;
+  background-color: var(--bg-table-felt);
+  border: 3px solid var(--bg-table-border);
+  border-radius: 12px;
+  overflow: visible;
 }
 
-/* Felt texture overlay */
-.play-area::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 70%),
-    radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.1) 0%, transparent 40%);
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* Position areas - base styles */
 .position {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  z-index: 3;
+  gap: 10px;
+  z-index: 1; /* Lower z-index than trick display */
+  position: relative;
 }
 
-/* North - top center - uses left/right: 0 to constrain within parent bounds */
 .position-north {
-  position: absolute;
-  top: clamp(8px, 2vmin, 16px);
-  left: 0;
-  right: 0;
+  grid-area: north;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  z-index: 3;
-}
-
-/* East - right edge, vertically centered */
-.position-east {
-  position: absolute;
-  right: 5px;  /* Push closer to edge to avoid overlap with central trick area */
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;  /* Align contents to right edge */
-  z-index: 3;
-}
-
-/* South - bottom center - P0 FIX: Static footer with reserved 35vh height */
-/* Uses flex-basis with min-height to guarantee space for hand + affordances */
-.position-south {
-  position: relative;  /* Relative position - part of flex flow */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  z-index: 50;  /* Higher z-index to ensure cards above all elements */
-  /* P0 FIX: flex-basis 35vh with min 350px - reserves static space at bottom */
-  flex: 0 0 auto;
-  height: clamp(350px, 35vh, 400px);
-  min-height: 350px;  /* Absolute minimum - never cut off cards or affordances */
-  width: 100%;
-  padding-bottom: 16px;
-  padding-top: 8px;
-  /* Semi-transparent background to ensure visibility over table */
-  background: linear-gradient(to top, rgba(27, 77, 62, 0.98) 0%, rgba(27, 77, 62, 0.92) 80%, transparent 100%);
-  /* Allow cards to extend without clipping */
-  overflow: visible;
-  /* P0 FIX: Position at bottom of flex container */
-  margin-top: auto;
-}
-
-/* West - left edge, vertically centered */
-.position-west {
-  position: absolute;
-  left: 5px;  /* Push closer to edge to avoid overlap with central trick area */
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;  /* Align contents to left edge */
-  z-index: 3;
-}
-
-/* E/W positions need margin to avoid overlapping central trick area */
-.position-east .position-label,
-.position-west .position-label {
-  margin-bottom: 4px;  /* Space between label and cards/trick area */
-}
-
-/* Position Labels - Compact per mockup */
-.position-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--text-on-green-muted, #a8c4b0);
-  padding: 3px 10px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-/* Active turn - gold tinted with pulse animation */
-.position-label.active-turn {
-  color: var(--gold-light, #f5e6a3);
-  background: rgba(234, 179, 8, 0.25);
-  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.5);
-  animation: label-pulse 2s ease-in-out infinite;
-}
-
-/* Position role badges - per mockup */
-.position-badge {
-  font-size: 9px;
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.position-badge.declarer {
-  background: rgba(45, 138, 78, 0.25);
-  color: var(--color-success-light);
-}
-
-.position-badge.dummy {
-  background: rgba(200, 164, 78, 0.2);
-  color: var(--gold-light, #e8d49a);
-}
-
-.position-badge.you-control {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.7);
-}
-
-/* Center trick container - absolute positioned dead center */
-.current-trick-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Trick cards receive pointer events */
+.position-east {
+  grid-area: east;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.position-south {
+  grid-area: south;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.position-west {
+  grid-area: west;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.position-label {
+  font-weight: bold;
+  color: var(--color-info);
+  text-align: center;
+  padding: 5px 10px;
+  background-color: var(--bg-secondary);
+  border-radius: 5px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+/* CRITICAL: Container for current trick - centers it in grid */
+.current-trick-container {
+  grid-area: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 350px;
+  z-index: 50; /* Ensure played cards appear above all hand cards */
+  position: relative;
+  pointer-events: none; /* Allow clicks to pass through to cards below */
+}
+
+/* Trick cards themselves should receive pointer events */
 .trick-card {
   pointer-events: auto;
 }
 
-/* Trick Display - Responsive sizing for viewport containment */
-/* VIEWPORT FIX: Use clamp() for responsive trick area */
+/* Current Trick in Center - Compass Layout */
 .current-trick {
-  width: clamp(160px, 25vw, 200px);
-  height: clamp(140px, 22vh, 180px);
+  grid-area: center;
   position: relative;
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 8px;
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.15);
+  display: grid;
+  grid-template-areas:
+    ". north ."
+    "west . east"
+    ". south .";
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-rows: 1fr auto 1fr;
+  gap: 0;
+  padding: 20px;
+  background-color: var(--bg-table-felt-dark);
+  border: 3px solid var(--bg-table-border);
+  border-radius: 10px;
+  min-height: 250px;
+  align-items: center;
+  justify-items: center;
 }
 
 .current-trick.empty {
   display: flex;
+  background-color: var(--bg-table-felt-dark);
+  border: 2px dashed var(--bg-table-felt-light);
+  color: rgba(255, 255, 255, 0.5);
   justify-content: center;
   align-items: center;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 12px;
 }
 
 /* Trick position slots */
@@ -571,182 +580,56 @@
   font-weight: bold;
 }
 
-/* Trick cards - Responsive sizing for viewport containment */
-/* VIEWPORT FIX: Use clamp() for responsive trick card sizes */
+/* Trick cards - cards played in the current trick (center of table)
+   Top-left corner only display - compact and efficient for mobile */
 .trick-card {
-  position: absolute;
-  width: clamp(38px, 5vw, 48px);
-  height: clamp(52px, 6.5vh, 66px);
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
-  z-index: 3;
+  width: 50px;
+  height: 70px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+  transition: all 0.3s ease;
 }
 
-/* Cards inside positioned wrappers - don't need position:absolute
-   The wrapper handles positioning; card just fills it */
-.trick-card-north .trick-card,
-.trick-card-south .trick-card,
-.trick-card-east .trick-card,
-.trick-card-west .trick-card {
-  position: relative;
+/* Trick card corner text - scales with card size */
+.trick-card .text-lg {
+  font-size: 1.125rem;
 }
 
-.trick-card .rank {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1;
+.trick-card .text-base {
+  font-size: 1rem;
 }
 
-.trick-card .suit {
-  font-size: 12px;
-  line-height: 1;
-}
-
-/* Suit colors */
-.trick-card.red .rank,
-.trick-card.red .suit,
-.trick-card .suit-red {
-  color: var(--card-red, #c41e3a);
-}
-
-.trick-card.black .rank,
-.trick-card.black .suit,
-.trick-card .suit-black {
-  color: var(--card-black, #1a1a1a);
-}
-
-/* Winner card - gold highlight per mockup */
-.trick-card.winner,
-.trick-card.winning {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2), 0 0 0 2px var(--gold, #c8a44e);
-}
-
-/* Trick card position WRAPPERS - per CC_CORRECTIONS Fix #7
-   These wrappers need position: absolute to work with top/left/transform
-   Each position holds exactly ONE card at a time */
-.trick-card-north,
-.trick-card-south,
-.trick-card-west,
-.trick-card-east {
-  position: absolute;
-  /* Container for the card - card will be at 0,0 of this wrapper */
-}
-
-.trick-card-north,
-.trick-card.north {
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.trick-card-south,
-.trick-card.south {
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.trick-card-west,
-.trick-card.west {
-  left: 16px;  /* Moved inward to avoid overlap with West position label */
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.trick-card-east,
-.trick-card.east {
-  right: 16px;  /* Moved inward to avoid overlap with East position label */
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-/* Trick info label in center */
-.trick-label,
-.trick-info {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-on-green-muted, #a8c4b0);
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  z-index: 1;
-}
-
-/* Playable Cards - Responsive sizing using CSS variables */
-/* Single source of truth: uses --card-* variables from :root */
+/* Playable Cards - Desktop default size */
 .playable-card {
-  width: var(--card-width);
-  height: var(--card-height);
-  background: white;
-  border-radius: var(--radius-sm);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
+  background-color: white;
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 8px 5px;
+  width: 60px;
+  height: 84px;
   cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-  margin-left: var(--card-overlap-horizontal);
+  transition: all 0.2s ease;
+  display: inline-block;
+  margin: 2px;
   position: relative;
-  user-select: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  flex-shrink: 0;
 }
 
-.playable-card:first-child {
-  margin-left: 0;
-}
-
-/* Hover state - gold outline + scale for instant visual feedback */
-.playable-card:hover {
-  transform: translateY(-7px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2), 0 0 0 2px var(--gold, #c8a44e);
-  z-index: 10;
-}
-
-.playable-card .rank {
-  font-size: var(--card-rank-size);
-  font-weight: 700;
-  line-height: 1;
-}
-
-.playable-card .suit {
-  font-size: var(--card-suit-size);
-  line-height: 1;
-}
-
-/* Suit colors for playable cards */
-.playable-card.red .rank,
-.playable-card.red .suit {
-  color: var(--card-red, #c41e3a);
-}
-
-.playable-card.black .rank,
-.playable-card.black .suit {
-  color: var(--card-black, #1a1a1a);
-}
-
-/* Clickable cards - subtle green border when legal */
 .playable-card.clickable {
   cursor: pointer;
+  border: 3px solid #4CAF50; /* Green border for clickable cards */
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); /* Green glow */
 }
 
-/* Active/pressed state - confirms click registration */
-.playable-card:active {
-  transform: translateY(-2px) scale(0.97);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3), 0 0 0 2px var(--gold, #c8a44e);
-  z-index: 10;
+.playable-card.clickable:hover,
+.playable-card.clickable:active {
+  transform: translateY(-15px) scale(1.05);
+  box-shadow: 0 12px 20px rgba(97, 218, 251, 0.8);
+  border-color: #61dafb;
+  border-width: 4px;
+  z-index: 40; /* High enough to appear above other cards in hand, but below trick display (z-index: 50) */
   position: relative;
-  transition: transform 0.05s ease;
+  animation: pulse-clickable 1s infinite;
 }
 
 /* CRITICAL: Prevent :active state on disabled cards (prevents stuck highlight bug) */
@@ -761,21 +644,21 @@
   .playable-card.clickable {
     /* Make clickable cards more obvious on touch devices */
     border-width: 3px;
-    box-shadow: 0 0 15px rgba(45, 138, 78, 0.6);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
   }
 
   .playable-card.clickable:active {
     transform: translateY(-10px) scale(1.03);
-    box-shadow: 0 8px 15px rgba(90, 155, 212, 0.8);
+    box-shadow: 0 8px 15px rgba(97, 218, 251, 0.8);
   }
 }
 
 @keyframes pulse-clickable {
   0%, 100% {
-    box-shadow: 0 12px 20px rgba(90, 155, 212, 0.8);
+    box-shadow: 0 12px 20px rgba(97, 218, 251, 0.8);
   }
   50% {
-    box-shadow: 0 12px 25px rgba(90, 155, 212, 1);
+    box-shadow: 0 12px 25px rgba(97, 218, 251, 1);
   }
 }
 
@@ -825,200 +708,249 @@
   font-size: 1.8em;
 }
 
-/* VMIN SCALING: Hand Row - horizontal card row with dynamic overlap */
-.hand-row,
+/* User Play Hand */
 .user-play-hand {
   display: flex;
+  flex-direction: row;
+  gap: 0;
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+  overflow: visible;
   justify-content: center;
-  margin-top: 4px;
-  width: max-content;   /* Grow to fit all cards */
-  margin-left: auto;
-  margin-right: auto;
-  /* Cards "huddle" together proportionally via vmin-based overlap */
 }
 
-/* VMIN SCALING: South's hand overlap - uses CSS variable for proportional huddling */
-.position-south .user-play-hand .suit-group .playable-card {
-  margin-left: var(--card-overlap-horizontal);  /* Dynamic: huddles closer on smaller screens */
-}
-
-.position-south .user-play-hand .suit-group .playable-card:first-child {
-  margin-left: 0;
-}
-
-/* VMIN SCALING: Gap between suits - uses CSS variable */
-.position-south .user-play-hand .suit-group:not(:first-child) {
-  margin-left: var(--card-suit-gap);  /* Dynamic: scales with viewport */
-}
-
-/* VMIN SCALING: South hand automatically scales via CSS variables */
-/* Media queries kept as safety net for extreme cases only */
-@media (max-width: 768px) {
-  .position-south .user-play-hand .suit-group .playable-card {
-    /* vmin-based overlap handles tablet automatically */
-  }
-}
-
-@media (max-width: 480px) {
-  .position-south .user-play-hand .suit-group .playable-card {
-    /* vmin-based overlap handles mobile automatically */
-  }
-}
-
-/* Dummy Hand - same as user hand (no container styling) */
+/* Dummy Hand */
 .dummy-hand {
   display: flex;
+  flex-direction: row;
+  gap: 0;
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px;
+  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
+  border-radius: 8px;
+  border: 2px solid rgba(35, 122, 61, 0.4);
+  overflow: visible;
   justify-content: center;
-  margin-top: 4px;
 }
 
-/* Declarer Hand - same styling */
+/* Dummy Hand for North/South - Horizontal single-line layout (like user's hand) */
+/* IMPORTANT: Override any grid layouts - North/South should ALWAYS be horizontal */
+.position-north .dummy-hand,
+.position-south .dummy-hand {
+  display: flex !important;
+  flex-direction: row !important;
+  grid-template-columns: unset !important;
+  grid-template-rows: unset !important;
+  gap: 0;
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px;
+  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
+  border-radius: 8px;
+  border: 2px solid rgba(35, 122, 61, 0.4);
+  overflow: visible;
+  justify-content: center;
+}
+
+/* Dummy Hand for East/West - Single vertical column (continuous, no gaps) */
+.position-east .dummy-hand,
+.position-west .dummy-hand {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: auto;
+  max-width: 100px; /* Accommodate full-width cards (~70px) */
+  padding: 10px;
+  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
+  border-radius: 8px;
+  border: 2px solid rgba(35, 122, 61, 0.4);
+  overflow: visible;
+  align-items: center;
+}
+
+/* Keep suit groups horizontal for North/South (default behavior maintained) */
+.position-north .dummy-hand .suit-group,
+.position-south .dummy-hand .suit-group {
+  flex-direction: row !important;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-wrap: nowrap !important; /* CRITICAL: Prevent wrapping to multiple rows */
+  /* Prevent grid positioning rules from applying */
+  grid-column: unset !important;
+  grid-row: unset !important;
+  /* Remove visual styling that might cause appearance of wrapping */
+  padding: 0;
+  background-color: transparent;
+  min-height: auto;
+}
+
+/* Make suit groups vertical column for East/West - continuous flow */
+.position-east .dummy-hand .suit-group,
+.position-west .dummy-hand .suit-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  gap: 0;
+  background-color: transparent;
+  min-height: auto;
+}
+
+/* Cards within East/West suit groups stack vertically with overlap
+   Show ~55px of each card (rank + suit + more white space for readability) */
+.position-east .dummy-hand .suit-group .playable-card,
+.position-west .dummy-hand .suit-group .playable-card {
+  margin-left: 0 !important; /* Force no horizontal margin */
+  margin-top: -45px; /* Improved readability - show ~55px of each card */
+  margin-right: 0;
+  margin-bottom: 0;
+}
+
+/* First card in FIRST suit group has no top margin */
+.position-east .dummy-hand .suit-group:first-child .playable-card:first-child,
+.position-west .dummy-hand .suit-group:first-child .playable-card:first-child {
+  margin-top: 0;
+}
+
+/* First card of subsequent suits - CONTINUOUS (no gap between suits) */
+.position-east .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
+.position-west .dummy-hand .suit-group:not(:first-child) .playable-card:first-child {
+  margin-left: 0 !important; /* Force no horizontal margin */
+  margin-top: -45px; /* Same overlap as within suits - continuous flow */
+}
+
+/* Declarer Hand (when user is dummy) - Default horizontal for North/South */
 .declarer-hand {
   display: flex;
+  flex-direction: row;
+  gap: 0;
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+  overflow: visible;
   justify-content: center;
-  margin-top: 4px;
 }
 
-/* North/South hands - horizontal layout */
-.position-north .dummy-hand,
-.position-south .dummy-hand,
+/* Declarer Hand for North/South - Horizontal single-line layout (like user's hand) */
+/* IMPORTANT: Override any grid layouts - North/South should ALWAYS be horizontal */
 .position-north .declarer-hand,
 .position-south .declarer-hand {
-  display: flex;
-  flex-direction: row;
+  display: flex !important;
+  flex-direction: row !important;
+  grid-template-columns: unset !important;
+  grid-template-rows: unset !important;
+  gap: 0;
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px;
+  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
+  border-radius: 8px;
+  border: 2px solid rgba(35, 122, 61, 0.4);
+  overflow: visible;
   justify-content: center;
 }
 
-/* VMIN SCALING: Suit Group - cards within a suit with dynamic overlap */
-.suit-group {
-  display: flex;
-  margin: 0 calc(var(--card-suit-gap) / 2);  /* Dynamic gap between suit groups */
+/* Keep suit groups horizontal for North/South declarer hands */
+.position-north .declarer-hand .suit-group,
+.position-south .declarer-hand .suit-group {
+  flex-direction: row !important;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-wrap: nowrap !important; /* CRITICAL: Prevent wrapping to multiple rows */
+  /* Prevent grid positioning rules from applying */
+  grid-column: unset !important;
+  grid-row: unset !important;
+  /* Remove visual styling that might cause appearance of wrapping */
+  padding: 0;
+  background-color: transparent;
+  min-height: auto;
 }
 
-/* Suit gap between groups - uses CSS variable */
-.suit-gap {
-  width: var(--card-suit-gap);
-  flex-shrink: 0;
-}
-
-/* HOTFIX 6: East/West Opponent Display - compact card backs with count */
-.opponent-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Compact mode - fewer cards, cleaner display */
-.opponent-display.compact {
-  gap: 3px;
-}
-
-.opponent-card-fan {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.opponent-display.compact .opponent-card-fan {
-  gap: 1px;
-}
-
-.card-back {
-  width: 32px;
-  height: 8px;
-  background: linear-gradient(135deg, #b71c1c 0%, #8b1515 50%, #b71c1c 100%);
-  border-radius: 2px;
-  opacity: 0.6;
-  border: 0.5px solid rgba(0,0,0,0.2);
-}
-
-/* HOTFIX 6: Single card back icon for minimal opponent display */
-.card-back-single {
-  width: 28px;
-  height: 38px;
-  background: linear-gradient(135deg, #b71c1c 0%, #8b1515 50%, #b71c1c 100%);
-  border-radius: 3px;
-  opacity: 0.7;
-  border: 1px solid rgba(0,0,0,0.3);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-.opp-count {
-  font-size: 13px;
-  color: var(--text-on-green, #e8f5ed);
-  font-weight: 700;
-}
-
-/* ========================================
-   EAST/WEST DUMMY: Portrait Cards Layout
-   REQUIREMENT: Same card style as South - portrait orientation with visible rank+suit
-   Cards stacked vertically with overlap, larger than before for readability
-   ======================================== */
-
-.position-east .dummy-hand,
-.position-west .dummy-hand,
+/* Declarer Hand for East/West - Single vertical column (same as dummy hand) */
 .position-east .declarer-hand,
 .position-west .declarer-hand {
   display: flex;
-  flex-direction: column;  /* Suits stacked vertically */
-  gap: 4px;  /* Gap between suits */
-  max-width: 70px;  /* Compact but readable */
+  flex-direction: column;
+  gap: 0;
+  width: auto;
+  max-width: 100px;
+  padding: 10px;
+  background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
+  border-radius: 8px;
+  border: 2px solid rgba(35, 122, 61, 0.4);
+  overflow: visible;
   align-items: center;
 }
 
-/* Suit rows for E/W - cards overlap vertically within each suit */
-.position-east .dummy-hand .suit-group,
-.position-west .dummy-hand .suit-group,
+/* East/West declarer hand suit groups - vertical column */
 .position-east .declarer-hand .suit-group,
 .position-west .declarer-hand .suit-group {
   display: flex;
-  flex-direction: column;  /* Vertical stacking within suit */
+  flex-direction: column;
   align-items: center;
-  margin: 0;
+  padding: 0;
+  gap: 0;
+  background-color: transparent;
+  min-height: auto;
 }
 
-/* Portrait cards for E/W dummy: Same aspect ratio as South (48x66), overlapped vertically */
-.position-east .dummy-hand .playable-card,
-.position-west .dummy-hand .playable-card,
-.position-east .declarer-hand .playable-card,
-.position-west .declarer-hand .playable-card {
-  width: 44px;
-  height: 60px;
-  border-radius: 4px;
-  margin-left: 0;
-  margin-top: -42px;  /* Vertical overlap - shows ~18px per card (rank+suit visible) */
+/* East/West declarer hand cards - vertical overlap */
+.position-east .declarer-hand .suit-group .playable-card,
+.position-west .declarer-hand .suit-group .playable-card {
+  margin-left: 0 !important; /* Force no horizontal margin */
+  margin-top: -45px; /* Improved readability - show ~55px of each card */
+  margin-right: 0;
+  margin-bottom: 0;
 }
 
-.position-east .dummy-hand .suit-group .playable-card:first-child,
-.position-west .dummy-hand .suit-group .playable-card:first-child,
-.position-east .declarer-hand .suit-group .playable-card:first-child,
-.position-west .declarer-hand .suit-group .playable-card:first-child {
-  margin-top: 0;  /* First card in suit has no overlap */
+.position-east .declarer-hand .suit-group:first-child .playable-card:first-child,
+.position-west .declarer-hand .suit-group:first-child .playable-card:first-child {
+  margin-top: 0;
 }
 
-/* Readable text for E/W dummy cards - rank and suit clearly visible */
-.position-east .dummy-hand .rank,
-.position-west .dummy-hand .rank,
-.position-east .declarer-hand .rank,
-.position-west .declarer-hand .rank {
-  font-size: 16px;
-  font-weight: 700;
+.position-east .declarer-hand .suit-group:not(:first-child) .playable-card:first-child,
+.position-west .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
+  margin-left: 0 !important; /* Force no horizontal margin */
+  margin-top: -45px; /* Same overlap as within suits */
 }
 
-.position-east .dummy-hand .suit-symbol,
-.position-west .dummy-hand .suit-symbol,
-.position-east .declarer-hand .suit-symbol,
-.position-west .declarer-hand .suit-symbol {
-  font-size: 12px;
+/* Suit Group - organizes cards by suit in a horizontal overlapping row */
+.suit-group {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex-wrap: nowrap; /* Keep cards in single line - no wrapping */
+  gap: 0;
+  padding: 5px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+  min-height: 120px;
+  position: relative;
 }
 
-.position-east .dummy-hand .suit,
-.position-west .dummy-hand .suit,
-.position-east .declarer-hand .suit,
-.position-west .declarer-hand .suit {
-  font-size: 12px;
+/* Overlap playable cards horizontally - show ~60% of each card */
+.suit-group .playable-card {
+  margin-left: -25px; /* Card width 60px, show 35px (~60%) */
+  margin-top: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+}
+
+.suit-group .playable-card:first-child {
+  margin-left: 0; /* First card in each suit has no left margin */
+}
+
+/* Continue overlap between suits */
+.user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
+.dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
+.declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
+  margin-left: -25px; /* Same overlap between suits */
 }
 
 /* Suit Colors */
@@ -1027,39 +959,29 @@
 }
 
 .suit-black {
-  color: var(--card-black);
+  color: #000;
 }
 
 /* Old Score Modal CSS removed - now using ScoreModal.jsx with Shadcn Dialog */
 
 /* ========================================
    RESPONSIVE SAFETY NET - PLAY COMPONENTS
-   VMIN-based scaling handles most cases automatically
-   These media queries provide fallbacks for edge cases
    ======================================== */
 
 @media (max-width: 900px) {
-  /* Let CSS variables handle play-area sizing - no fixed values */
-
-  /* Adjust E/W positions on smaller screens */
-  .position-east {
-    right: 15px;
+  .play-area {
+    grid-template-columns: 150px 1fr 150px;
+    grid-template-rows: auto 250px auto;
   }
 
-  .position-west {
-    left: 15px;
-  }
-
-  /* Cards use CSS variables - just set minimum bounds */
   .playable-card {
-    /* Minimum bounds only - let vmin handle actual sizing */
-    min-width: calc(var(--bridge-unit) * 5);
-    min-height: calc(var(--bridge-unit) * 7);
+    min-width: 50px;
+    min-height: 80px;
+    padding: 10px 5px;
   }
 
-  /* Overlap uses CSS variable - no fixed pixels */
   .suit-group .playable-card {
-    margin-left: var(--card-overlap-horizontal);
+    margin-left: -33px; /* Smaller overlap for medium screens, maintaining visibility ratio */
   }
 
   .suit-group .playable-card:first-child {
@@ -1069,7 +991,7 @@
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: var(--card-overlap-horizontal);
+    margin-left: -33px;
   }
 
   .play-header {
@@ -1098,67 +1020,30 @@
   }
 
   .play-area {
-    height: clamp(300px, 32vh, 360px);
-    min-height: 300px;
-    padding: 0;  /* No padding for absolute positioning */
+    grid-template-columns: 100px 1fr 100px;
+    grid-template-rows: auto 200px auto;
+    gap: 10px;
+    padding: 10px;
+    min-height: 400px;
   }
 
-  /* Adjust E/W positions on tablet */
-  .position-east {
-    right: 10px;
-  }
-
-  .position-west {
-    left: 10px;
-  }
-
-  /* Trick area responsive */
   .current-trick {
-    width: clamp(140px, 22vw, 160px);
-    height: clamp(120px, 18vh, 140px);
-    padding: 6px;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    min-height: 100px;
   }
 
   .trick-card {
-    width: 38px;
-    height: 50px;
+    width: 45px;
+    height: 63px;
   }
-
-  /* Adjust scale at 768px breakpoint */
-  --table-scale: 0.85;
 
   .playable-card {
-    width: var(--card-width);
-    height: var(--card-height);
-    margin: 0;
-  }
-
-  /* Contract bar stacks on mobile */
-  .contract-bar {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  /* Turn indicator responsive */
-  .turn-indicator-v2 {
-    font-size: 13px;
-    padding: 8px 12px;
-  }
-
-  /* Action bar stacks on mobile */
-  .play-action-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .play-action-bar-left {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .play-action-bar-right {
-    text-align: center;
+    min-width: 45px;
+    min-height: 70px;
+    padding: 8px 5px;
+    margin: 2px;
   }
 
   /* Mobile: Reduce overlap and allow wrapping to show all cards */
@@ -1166,11 +1051,10 @@
     flex-wrap: wrap;
     min-height: auto;
     max-width: 100%;
-    gap: var(--card-suit-gap);
   }
 
   .suit-group .playable-card {
-    margin-left: var(--card-overlap-horizontal);
+    margin-left: -22px; /* Less overlap for mobile to fit more cards */
     margin-top: 0;
     margin-right: 0;
   }
@@ -1187,7 +1071,7 @@
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: var(--card-overlap-horizontal);
+    margin-left: -22px;
   }
 
   .playable-card .rank {
@@ -1212,52 +1096,43 @@
   }
 }
 
-/* Mobile phones - smaller cards per UI Redesign Spec */
+/* Mobile phones - smaller cards like Learn module */
 @media (max-width: 480px) {
-  /* --table-scale: 0.75 now in index.css responsive overrides */
-
   .play-area {
-    height: clamp(280px, 30vh, 320px);
-    min-height: 280px;
-    padding: 0;  /* No padding for absolute positioning */
-  }
-
-  /* Adjust E/W positions on mobile */
-  .position-east {
-    right: 5px;
-  }
-
-  .position-west {
-    left: 5px;
-  }
-
-  /* Trick area smaller on mobile */
-  .current-trick {
-    width: clamp(110px, 28vw, 130px);
-    height: clamp(90px, 22vh, 110px);
+    grid-template-columns: 70px 1fr 70px;
+    grid-template-rows: auto 130px auto;
+    gap: 4px;
     padding: 4px;
   }
 
+  .current-trick {
+    gap: 4px;
+    padding: 4px;
+    min-height: 70px;
+  }
+
   .trick-card {
-    width: calc(var(--card-width) * 0.9);
-    height: calc(var(--card-height) * 0.9);
+    width: 40px;
+    height: 56px;
     border-radius: 4px;
   }
 
-  .trick-card .rank {
-    font-size: var(--card-rank-size);
+  .trick-card .text-lg {
+    font-size: 0.875rem;
   }
 
-  .trick-card .suit {
-    font-size: var(--card-suit-size);
+  .trick-card .text-base {
+    font-size: 0.75rem;
   }
 
-  /* Mobile playable cards - use CSS variables */
+  /* Mobile card sizing - match Learn module medium size (50x70) */
   .playable-card {
-    width: var(--card-width);
-    height: var(--card-height);
-    border-radius: 5px;
+    width: 45px;
+    height: 63px;
+    padding: 3px 2px;
     margin: 1px;
+    border-radius: 5px;
+    border-width: 1px;
   }
 
   /* Mobile: overlap to show ~50% of each card */
@@ -1265,11 +1140,10 @@
     flex-wrap: nowrap;
     min-height: auto;
     padding: 2px;
-    gap: var(--card-suit-gap);
   }
 
   .suit-group .playable-card {
-    margin-left: var(--card-overlap-horizontal);
+    margin-left: -22px;
     margin-top: 0;
     margin-right: 0;
   }
@@ -1281,7 +1155,7 @@
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: var(--card-overlap-horizontal);
+    margin-left: -22px;
   }
 
   .playable-card .rank {
@@ -1332,33 +1206,21 @@
 
 /* Extra small phones (Android <360px) */
 @media (max-width: 360px) {
-  /* --table-scale: 0.65 now in index.css responsive overrides */
-
   .play-area {
-    height: clamp(260px, 28vh, 280px);
-    min-height: 260px;
-    padding: 0;  /* No padding for absolute positioning */
-  }
-
-  /* Adjust E/W positions on extra small screens */
-  .position-east {
-    right: 3px;
-  }
-
-  .position-west {
-    left: 3px;
+    grid-template-columns: 55px 1fr 55px;
+    grid-template-rows: auto 100px auto;
+    gap: 3px;
+    padding: 3px;
   }
 
   .current-trick {
-    width: clamp(90px, 30vw, 110px);
-    height: clamp(70px, 24vh, 90px);
     min-height: 60px;
     padding: 3px;
   }
 
   .trick-card {
-    width: calc(var(--card-width) * 0.85);
-    height: calc(var(--card-height) * 0.85);
+    width: 34px;
+    height: 48px;
     border-radius: 3px;
   }
 
@@ -1370,36 +1232,35 @@
     font-size: 0.625rem;
   }
 
-  /* Extra small cards - use CSS variables with scale factor */
+  /* Extra small cards - Learn module small size (38x53) */
   .playable-card {
-    width: var(--card-width);
-    height: var(--card-height);
+    width: 38px;
+    height: 53px;
     padding: 2px 1px;
     border-radius: 4px;
   }
 
   .suit-group {
     padding: 1px;
-    gap: var(--card-suit-gap);
   }
 
-  /* Tighter overlap on very small screens - use CSS variable */
+  /* Tighter overlap on very small screens */
   .suit-group .playable-card {
-    margin-left: var(--card-overlap-horizontal);
+    margin-left: -18px;
   }
 
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: var(--card-overlap-horizontal);
+    margin-left: -18px;
   }
 
   .playable-card .rank {
-    font-size: var(--card-rank-size);
+    font-size: 0.7em;
   }
 
   .playable-card .suit-symbol-large {
-    font-size: var(--card-suit-size);
+    font-size: 0.9em;
   }
 
   .playable-card .card-corner {
@@ -1429,560 +1290,6 @@
   .contract-bid {
     font-size: 0.95em;
   }
-}
-
-/* ========================================
-   TURN INDICATOR - Below table per mockup
-   ======================================== */
-
-.turn-indicator {
-  text-align: center;
-  padding: 4px 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--gold-light, #e8d49a);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  grid-column: 1 / -1;
-}
-
-.turn-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--gold, #c8a44e);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.3); }
-}
-
-/* ========================================
-   CONTRACT BAR - with trick counter per mockup
-   ======================================== */
-
-.play-table .contract-bar {
-  background: var(--charcoal, #2a2a2a) !important;
-  padding: 10px 24px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-shrink: 0;
-  color: #ffffff !important;
-  font-size: 14px;  /* Base size for normalized typography */
-  border-radius: 8px;
-  margin-bottom: 8px;
-}
-
-/* Contract badge - level + strain + doubled */
-.contract-badge {
-  font-size: 24px;
-  font-weight: 700;
-  white-space: nowrap;
-  display: flex;
-  align-items: baseline;
-  gap: 2px;
-  /* Color is set inline based on suit (red for hearts/diamonds, white for spades/clubs/NT) */
-}
-
-.contract-level {
-  font-size: 24px;
-}
-
-.contract-strain {
-  font-size: 24px;
-}
-
-.contract-doubled {
-  font-size: 18px;
-  color: var(--color-danger-light);
-  margin-left: 4px;
-}
-
-/* Normalized info row - "by North • Vuln: Both" */
-.contract-info-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;  /* Base size for all info text */
-  line-height: 1.4;  /* Consistent line height */
-  white-space: nowrap;
-}
-
-/* Typography normalization for contract-bar info text - WCAG 2.1 AA compliant
- * Scoped to .contract-bar to override DDSStatusIndicator.css global styles */
-.contract-bar .info-label,
-.contract-info-row .info-label {
-  color: rgba(255, 255, 255, 0.75) !important;  /* White text on dark header */
-  font-weight: 400;
-  font-size: inherit;
-}
-
-.contract-bar .info-value,
-.contract-info-row .info-value {
-  color: #ffffff !important;  /* Bright white - full contrast */
-  font-weight: 500;
-  font-size: inherit;
-}
-
-.contract-bar .info-separator,
-.contract-info-row .info-separator {
-  color: rgba(255, 255, 255, 0.5) !important;  /* White separator on dark header */
-  font-size: inherit;
-  margin: 0 2px;
-}
-
-/* Trick counter text - normalized typography with consistent hierarchy */
-.trick-counter-text {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #ffffff;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-}
-
-.trick-counter-text .trick-ns strong {
-  color: var(--color-success-light);  /* Bright green for NS */
-  font-weight: 700;
-}
-
-.trick-counter-text .trick-ew strong {
-  color: var(--color-danger-light);  /* Red for EW */
-  font-weight: 700;
-}
-
-.trick-counter-text .trick-need strong,
-.trick-counter-text .trick-current strong {
-  color: #ffffff;  /* White for emphasis */
-  font-weight: 700;
-}
-
-.trick-counter-text .info-label {
-  color: rgba(255, 255, 255, 0.75) !important;  /* White text - overrides DDSStatusIndicator */
-  font-weight: 400;
-}
-
-.trick-counter-text .info-separator {
-  color: rgba(255, 255, 255, 0.5) !important;  /* White separator - overrides DDSStatusIndicator */
-  /* font-size inherits from parent (13px) for consistency */
-}
-
-/* Legacy trick bar (kept for learning flows) */
-.trick-score {
-  flex: 1;
-  max-width: 480px;
-}
-
-.trick-bar {
-  display: flex;
-  width: 100%;
-  height: 28px;
-  border-radius: 3px;
-  overflow: hidden;
-  border: 1px solid #555;
-  background: #3a3a3a;
-}
-
-.trick-cell {
-  flex: 1;
-  border-right: 1px solid #4a4a4a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: transparent;
-  transition: background 0.3s, color 0.3s;
-  position: relative;
-}
-
-.trick-cell:last-child {
-  border-right: none;
-}
-
-.trick-cell.won-you {
-  background: var(--table-green, #1a6b3c);
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.trick-cell.won-opp {
-  background: var(--card-red, #c41e3a);
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.trick-cell.target {
-  color: rgba(255, 255, 255, 0.5);
-  border-left: 2px solid white;
-}
-
-.target-arrow {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: white;
-  font-size: 11px;
-}
-
-.trick-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 3px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.trick-label-you { color: var(--color-success); }
-.trick-label-remaining { color: var(--text-muted); }
-.trick-label-opp { color: var(--color-danger-light); }
-
-.trump-badge {
-  font-size: 12px;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-
-.trump-badge .ts {
-  font-size: 16px;
-}
-
-.trump-badge .ts.red {
-  color: #ff6b7a;
-}
-
-.trump-indicator {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.trump-label {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.trump-suit {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.trump-suit.suit-heart,
-.trump-suit.suit-diamond {
-  color: var(--card-red, #c41e3a);
-}
-
-.trump-suit.suit-spade,
-.trump-suit.suit-club {
-  color: #e0e0e0;
-}
-
-/* Contract bar left/right layout */
-.contract-bar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.contract-bar-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-  margin-left: auto;
-}
-
-/* Contract level/strain styles moved to main contract-bar section above */
-
-.contract-doubled {
-  font-size: 18px;
-  color: var(--color-danger-light);
-  margin-left: 4px;
-}
-
-.contract-declarer {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.contract-vuln {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-left: 8px;
-}
-
-.contract-score {
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.contract-score.positive {
-  background: rgba(45, 138, 78, 0.2);
-  color: var(--color-success);
-  border: 1px solid var(--color-success);
-}
-
-.contract-score.negative {
-  background: rgba(196, 30, 58, 0.2);
-  color: var(--color-danger);
-  border: 1px solid var(--color-danger);
-}
-
-.trick-number {
-  font-size: 13px;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.trick-count {
-  font-weight: 700;
-}
-
-.trick-count.you {
-  color: var(--table-green, #1a6b3c);
-}
-
-.trick-count.opp {
-  color: var(--card-red, #c41e3a);
-}
-
-.trick-target {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-/* Bid History Button */
-.bid-history-btn {
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  color: #ddd;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.bid-history-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: white;
-}
-
-/* Bid History Popup Overlay */
-.bid-history-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.bid-history-popup {
-  background: var(--cream-light, #faf8f4);
-  border-radius: 12px;
-  padding: 20px;
-  min-width: 320px;
-  max-width: 90vw;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-.bid-history-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.bid-history-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary, #1a1a1a);
-}
-
-.bid-history-close {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 50%;
-  font-size: 20px;
-  color: #666;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bid-history-close:hover {
-  background: rgba(0, 0, 0, 0.1);
-  color: #333;
-}
-
-.bid-history-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 16px;
-}
-
-.bid-history-table th,
-.bid-history-table td {
-  padding: 8px 12px;
-  text-align: center;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.bid-history-table th {
-  background: rgba(0, 0, 0, 0.05);
-  font-size: 13px;
-  font-weight: 600;
-  color: #666;
-}
-
-.bid-history-table td {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--text-primary, #1a1a1a);
-}
-
-.bid-history-contract {
-  text-align: center;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--table-green, #1a6b3c);
-  padding-top: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-/* ========================================
-   BOTTOM ACTION BAR - slim row per mockup
-   ======================================== */
-
-.action-bar {
-  background: var(--cream-light, #faf8f4);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 7px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.action-btns {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  padding: 7px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  border: none;
-}
-
-.action-btn.primary {
-  background: var(--table-green, #1a6b3c);
-  color: white;
-}
-
-.action-btn.primary:hover {
-  background: var(--table-green-dark, #145530);
-}
-
-.action-btn.secondary {
-  background: white;
-  color: var(--text-primary, #1a1a1a);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.action-btn.secondary:hover {
-  background: var(--cream, #f5f0e8);
-}
-
-.action-status {
-  font-size: 12px;
-  color: var(--text-secondary, #666);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* ========================================
-   PLAY TURN INDICATOR - Positioned BELOW center trick, ABOVE South's cards
-   Uses top: 50% + margin to stay below trick area, not bottom positioning
-   ======================================== */
-
-.play-turn-indicator {
-  position: fixed;  /* Fixed position per UI_UX_CONSTITUTION.md */
-  /* Per UI_UX_CONSTITUTION.md: Toasts at bottom-32 (above hand) = 128px from bottom */
-  bottom: clamp(240px, 35vh, 300px);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
-  /* Accent Gold per UI_UX_CONSTITUTION.md for "Your Turn" toasts */
-  background: var(--gold);
-  color: var(--card-black);
-  border-radius: 20px;
-  width: fit-content;
-  z-index: 60;  /* Above South hand (z-50) */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  white-space: nowrap;
-}
-
-.play-turn-indicator .turn-dot {
-  width: 10px;
-  height: 10px;
-  background: var(--table-green);
-  border-radius: 50%;
-  animation: turn-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes turn-pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.2);
-  }
-}
-
-.play-turn-indicator .turn-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--card-black);
 }
 
 /* ========================================
@@ -2023,173 +1330,5 @@
   .last-trick-button {
     font-size: 0.75rem;
     padding: var(--space-1) var(--space-2);
-  }
-}
-
-/* Turn indicator responsive - uses bottom positioning above South hand */
-@media (max-width: 768px) {
-  .play-turn-indicator {
-    bottom: clamp(230px, 33vh, 270px);
-    padding: 6px 12px;
-  }
-
-  .play-turn-indicator .turn-text {
-    font-size: 13px;
-  }
-}
-
-@media (max-width: 480px) {
-  .play-turn-indicator {
-    bottom: clamp(220px, 30vh, 260px);
-    padding: 5px 10px;
-  }
-
-  .play-turn-indicator .turn-dot {
-    width: 8px;
-    height: 8px;
-  }
-
-  .play-turn-indicator .turn-text {
-    font-size: 12px;
-  }
-}
-
-/* ========================================
-   REACTOR LAYOUT - Physics v2.0
-   Centripetal 3x3 Grid with TrickArena at center
-   ======================================== */
-
-.reactor-layout {
-  /* Override old play-area absolute positioning */
-  position: relative !important;
-  width: 100% !important;
-  min-height: auto !important;
-  max-height: none !important;
-  padding: 0 !important;
-  padding-bottom: 0 !important;
-  background-color: var(--table-green, #1a6b3c);
-}
-
-/* Position orbit containers - flex column for label + hand */
-.position-orbit {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5em;
-}
-
-/* North orbit - cards spread horizontally below label */
-.position-north-orbit {
-  padding-bottom: 0.5em;
-}
-
-/* South orbit - cards spread horizontally, larger scale */
-.position-south-orbit {
-  padding-top: 0.5em;
-  padding-bottom: 12px; /* Prevent card clipping at bottom */
-}
-
-/* East/West orbits - cards stacked vertically */
-.position-east-orbit,
-.position-west-orbit {
-  padding: 0 0.5em;
-}
-
-/* Compact turn prompt - minimal, only shows when user action needed */
-.play-turn-prompt {
-  margin-top: 0.75em;
-  padding: 6px 14px;
-  background: rgba(234, 179, 8, 0.9);  /* Semi-transparent gold */
-  color: #1a1a1a;
-  border-radius: 16px;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  animation: prompt-pulse 2s ease-in-out infinite;
-}
-
-@keyframes prompt-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-@keyframes label-pulse {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.5); }
-  50% { box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.3); }
-}
-
-/* Responsive adjustments */
-@media (max-width: 480px) {
-  .play-turn-prompt {
-    padding: 5px 12px;
-    font-size: 12px;
-  }
-}
-
-/* ========================================
-   P0 FIX: PLAY STAGE WRAPPER - Vertical Anchoring
-   Flex column layout pinning table to top, reserving bottom for South
-   ======================================== */
-
-.play-stage-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  /* Pin content to TOP - no vertical centering */
-  justify-content: flex-start;
-}
-
-/* Table section: grows to fill available space ABOVE bottom section */
-.play-stage-top {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: visible;
-}
-
-/* Bottom section: static 35vh (min 350px) for South hand + affordances */
-.play-stage-bottom {
-  flex: 0 0 auto;
-  height: clamp(350px, 35vh, 400px);
-  min-height: 350px;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  overflow: visible;
-  /* Background to ensure visibility */
-  background: linear-gradient(to top, rgba(27, 77, 62, 0.98) 0%, rgba(27, 77, 62, 0.92) 80%, transparent 100%);
-  padding: 8px 0 16px;
-  box-sizing: border-box;
-}
-
-/* Feedback/affordance overlay container - positioned ABOVE South's cards */
-.play-feedback-overlay {
-  position: relative;
-  z-index: 1000;  /* Above ALL game assets including cards */
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  /* Left-aligned content per UI requirement */
-  text-align: left;
-}
-
-/* Responsive: Tablet */
-@media (max-width: 768px) {
-  .play-stage-bottom {
-    height: clamp(300px, 32vh, 350px);
-    min-height: 300px;
-  }
-}
-
-/* Responsive: Mobile */
-@media (max-width: 480px) {
-  .play-stage-bottom {
-    height: clamp(280px, 30vh, 320px);
-    min-height: 280px;
   }
 }

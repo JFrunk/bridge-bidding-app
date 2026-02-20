@@ -264,14 +264,17 @@
 .question-area {
   background: rgba(0, 0, 0, 0.3);
   padding: 30px;
+  /* Always use flexbox for proper question/answer alignment */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
 .question-area.centered {
+  /* Additional styling for centered (no hand) questions */
   flex: 1;
-  display: flex;
-  flex-direction: column;
   justify-content: center;
-  align-items: center;
   min-height: 60vh;
 }
 
@@ -871,6 +874,10 @@
     font-size: 18px;
   }
 
+  .question-area {
+    padding: 20px;
+  }
+
   .hand-stats {
     flex-wrap: wrap;
   }
@@ -942,5 +949,45 @@
 
   .suit-name {
     font-size: 11px;
+  }
+}
+
+/* Extra small phones (360px and below) */
+@media (max-width: 360px) {
+  .question-area {
+    padding: 15px;
+  }
+
+  .answer-form {
+    max-width: 100%;
+    gap: 15px;
+  }
+
+  .answer-input {
+    padding: 12px 16px;
+    font-size: 18px;
+  }
+
+  .submit-button {
+    padding: 14px 36px;
+    font-size: 16px;
+  }
+
+  .hand-card {
+    padding: 20px;
+  }
+
+  .hand-text {
+    font-size: 16px;
+    padding: 15px;
+  }
+
+  .bid-shortcuts {
+    max-width: 100%;
+  }
+
+  .bid-shortcut {
+    padding: 8px 12px;
+    font-size: 14px;
   }
 }

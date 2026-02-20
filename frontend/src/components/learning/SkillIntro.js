@@ -266,6 +266,432 @@ With 4+ HCP, partner usually bids game.`
     practice_tip: 'Identify balanced hands with 20-21 HCP for a 2NT opening.'
   },
 
+  // ========================================================================
+  // LEVEL 1: BASIC BIDDING ACTIONS
+  // Core bidding decisions that every player must master
+  // ========================================================================
+
+  when_to_pass: {
+    title: 'When to Pass',
+    subtitle: 'Knowing when NOT to bid is as important as knowing when to bid',
+    sections: [
+      {
+        heading: 'The Default Action',
+        content: `Pass is not a "weak" bid - it's often the smartest bid!
+
+When to pass:
+• 0-11 HCP with no special distribution (you can't open)
+• Partner has described their hand fully and you know the right contract
+• Opponents are bidding and you have no action
+• You have nothing constructive to say`
+      },
+      {
+        heading: 'Pass After Partner Opens',
+        content: `If partner opens 1-of-a-suit and you have 0-5 HCP, usually pass.
+
+Exception: With 6+ HCP you should respond even with minimal values.
+Why? You might have a game (partner could have 20+ HCP).`
+      },
+      {
+        heading: 'Pass in Competitive Auctions',
+        content: `After opponents interfere, pass if:
+• You have nothing to say (balanced, minimum points)
+• Partner has already described their hand
+• Opponents are in trouble (let them fail!)
+
+Don't bid just to "say something" - every bid should have a purpose.`
+      },
+      {
+        heading: 'The Forcing Pass',
+        content: `In game-forcing auctions, a pass may ASK partner to act.
+This is advanced - for now, remember: Pass = "I'm done describing my hand."`
+      }
+    ],
+    practice_tip: 'Pass when you have nothing constructive to add. Silence is often golden in bridge!'
+  },
+
+  opening_one_major: {
+    title: 'Opening 1 of a Major',
+    subtitle: 'How to open 1♥ or 1♠',
+    sections: [
+      {
+        heading: 'Five-Card Major Requirement',
+        content: `In SAYC, you MUST have 5+ cards to open 1♥ or 1♠.
+
+Why? Finding an 8-card major fit is the holy grail.
+With 5-3 fit, you have 8 trumps = excellent contract!`
+      },
+      {
+        heading: 'Which Major to Open?',
+        content: `With two 5-card majors: Open 1♠ (higher ranking)
+With one 5-card major: Open that major
+
+Example:
+• ♠ A-K-J-6-5  ♥ Q-J-8-4-3  ♦ 7  ♣ A-2 → Open 1♠
+• ♠ K-8  ♥ A-Q-10-7-6  ♦ K-Q-3  ♣ 8-4 → Open 1♥`
+      },
+      {
+        heading: 'Point Range',
+        content: `1♥ or 1♠ opening shows:
+• 12-21 HCP (wide range!)
+• 5+ cards in the major suit
+
+Partner will respond to narrow down your strength.`
+      },
+      {
+        heading: 'Why Majors are Special',
+        content: `Major suit games (4♥ and 4♠) need only 10 tricks.
+Minor suit games (5♣ and 5♦) need 11 tricks!
+
+This makes majors much easier to make game in - always prioritize finding a major fit.`
+      }
+    ],
+    practice_tip: 'You need 5+ cards to open 1♥ or 1♠. With two 5-card majors, open the higher-ranking spades first.'
+  },
+
+  opening_one_minor: {
+    title: 'Opening 1 of a Minor',
+    subtitle: 'How to open 1♣ or 1♦',
+    sections: [
+      {
+        heading: 'Minor Suit Requirements',
+        content: `In SAYC, minor openings are more flexible:
+• 1♦ = 4+ diamonds (usually)
+• 1♣ = 3+ clubs (could be very weak club suit!)
+
+1♣ is the "catch-all" opening - you might have clubs, or you might just have 12+ HCP with no better bid.`
+      },
+      {
+        heading: 'When to Open a Minor',
+        content: `Open a minor when you have:
+• 12+ HCP
+• No 5-card major to bid
+• No balanced hand for 1NT (15-17 HCP)
+
+Minors are the "leftover" opening - bid them when nothing else fits.`
+      },
+      {
+        heading: 'Which Minor to Open?',
+        content: `With 4-4 in minors: Usually open 1♦
+With 3-3 in minors: Open 1♣ (the catch-all)
+With longer minor: Open that minor
+
+Example:
+• ♠ K-Q  ♥ A-8-4  ♦ K-J-8-6  ♣ Q-J-7-2 → Open 1♦ (4-4)
+• ♠ A-Q-8  ♥ K-J-4  ♦ 8-6-3  ♣ K-10-7-2 → Open 1♣ (no 4-card diamond)`
+      },
+      {
+        heading: 'Finding Major Fits',
+        content: `After you open 1♣ or 1♦, partner will bid a 4-card major if they have one.
+Finding a major fit is more important than playing in your minor!
+
+This is why 1♣ opening is so flexible - it lets partner search for majors.`
+      }
+    ],
+    practice_tip: 'Open 1♦ with 4+ diamonds, 1♣ with 3+ clubs. Minor openings are used when you have no 5-card major and wrong strength for 1NT.'
+  },
+
+  opening_1nt: {
+    title: 'Opening 1NT',
+    subtitle: 'The most descriptive opening bid',
+    sections: [
+      {
+        heading: '1NT Requirements',
+        content: `Open 1NT with ALL of:
+• 15-17 HCP (exact range - very precise!)
+• Balanced shape: 4-3-3-3, 4-4-3-2, or 5-3-3-2
+• Stoppers in most suits (ideally all)
+
+This is the most descriptive opening - partner knows exactly what you have!`
+      },
+      {
+        heading: 'Why 1NT is Powerful',
+        content: `With a 1NT opening, partner immediately knows:
+1. Your point range (15-17)
+2. Your shape (balanced)
+3. You have NO 5-card major
+
+Partner can often place the final contract immediately - very efficient!`
+      },
+      {
+        heading: 'When NOT to Open 1NT',
+        content: `Don't open 1NT with:
+• 5-card major (open the major instead - better for finding fit)
+• Unbalanced shape (void, singleton, or two doubletons)
+• 14 HCP or less (too weak)
+• 18+ HCP (too strong)
+
+With 15-17 HCP but a 5-card major, open the major first.`
+      },
+      {
+        heading: 'After 1NT',
+        content: `Partner uses Stayman and Jacoby Transfers to find the best contract.
+With 0-7 points, partner usually passes.
+With 8+ points, partner invites or bids game.`
+      }
+    ],
+    practice_tip: '1NT = 15-17 HCP + balanced. This precise description makes it the most efficient opening bid.'
+  },
+
+  single_raise: {
+    title: 'Single Raise',
+    subtitle: 'Supporting partner with 6-10 points',
+    sections: [
+      {
+        heading: 'What is a Single Raise?',
+        content: `A single raise means bidding partner's suit at the next level:
+• Partner opens 1♥ → You bid 2♥
+• Partner opens 1♠ → You bid 2♠
+
+This shows support (3+ cards) and limited strength (6-10 points).`
+      },
+      {
+        heading: 'Requirements',
+        content: `To make a single raise, you need:
+• 6-10 total points (HCP + distribution)
+• 3+ card support for partner's major
+• No better bid available
+
+With 4+ card support, this bid is even better!`
+      },
+      {
+        heading: 'Why Raise Immediately?',
+        content: `Raising partner's major suit immediately tells partner:
+1. We have a fit (at least 8 cards)
+2. My hand is limited (6-10 points)
+3. I want to play in this suit
+
+Partner can now pass (minimum), invite game (15-16 HCP), or bid game (17+ HCP).`
+      },
+      {
+        heading: 'Single Raise vs Other Responses',
+        content: `Single raise shows 6-10 points.
+Compare to:
+• 1NT response: 6-10 points, NO fit
+• Jump raise to 3: 10-12 points, 4+ card support (invitational)
+• Jump to game (4-major): 13+ points, 4+ card support
+
+The single raise is the most common response - it limits your hand immediately.`
+      }
+    ],
+    practice_tip: 'Single raise = 3+ card support + 6-10 points. This is the most common way to support partner.'
+  },
+
+  limit_raise: {
+    title: 'Limit Raise',
+    subtitle: 'Invitational raise showing 10-12 points',
+    sections: [
+      {
+        heading: 'What is a Limit Raise?',
+        content: `A limit raise is a JUMP raise showing invitational values:
+• Partner opens 1♥ → You bid 3♥
+• Partner opens 1♠ → You bid 3♠
+
+This shows 10-12 points and 4+ card support.`
+      },
+      {
+        heading: 'Requirements',
+        content: `To make a limit raise, you need:
+• 10-12 total points (HCP + distribution)
+• 4+ card support (good trump holding)
+• Invitational strength (partner needs 14+ to bid game)
+
+This is called "limit" because it limits your range to exactly 10-12 points.`
+      },
+      {
+        heading: 'Partner\'s Response',
+        content: `After your limit raise, partner will:
+• Pass with 12-13 HCP (game unlikely)
+• Bid game (4-major) with 14+ HCP (25+ combined)
+
+Example: You have 11 HCP, partner has 14 HCP = 25 total = bid game!`
+      },
+      {
+        heading: 'Limit Raise vs Single Raise',
+        content: `Single raise (2-major): 6-10 points, 3+ support
+Limit raise (3-major): 10-12 points, 4+ support (INVITATIONAL)
+Game raise (4-major): 13+ points, 4+ support (GAME FORCING)
+
+The jump to 3 invites partner to game if they have extras.`
+      }
+    ],
+    practice_tip: 'Jump to 3 of partner\'s major with 10-12 points and 4+ card support. This invites partner to bid game with 14+ HCP.'
+  },
+
+  new_suit_response: {
+    title: 'New Suit Response',
+    subtitle: 'Showing your own suit as responder',
+    sections: [
+      {
+        heading: 'When to Bid a New Suit',
+        content: `After partner opens, you can bid a new suit to:
+• Show a 4+ card suit
+• Search for a better fit than partner's suit
+• Keep the auction going
+
+Example: Partner opens 1♥, you have 4 spades → Bid 1♠ to show your suit.`
+      },
+      {
+        heading: 'Point Requirements',
+        content: `At the 1-level (e.g., 1♥ → 1♠): 6+ points, 4+ cards
+At the 2-level (e.g., 1♥ → 2♣): 10+ points, 4+ cards (forcing!)
+
+Bidding a new suit at the 2-level shows a stronger hand because you're pushing the auction higher.`
+      },
+      {
+        heading: 'Why Bid a New Suit?',
+        content: `Reasons to bid a new suit:
+1. You don't have support for partner's suit
+2. You want to find a better fit
+3. You have enough strength to explore
+
+New suit responses are FORCING - partner must bid again!`
+      },
+      {
+        heading: 'Priority: 1-Level First',
+        content: `With two 4-card suits, bid the cheaper one first:
+• 1♣ → 1♦/1♥/1♠: Show 4-card suits "up the line"
+• 1♦ → 1♥/1♠: Bid hearts before spades
+
+This lets you find fits efficiently without raising the bidding level.`
+      }
+    ],
+    practice_tip: 'New suit at 1-level = 6+ points, 4+ cards. New suit at 2-level = 10+ points, 4+ cards (stronger!).'
+  },
+
+  dustbin_1nt_response: {
+    title: '1NT Response ("Dustbin")',
+    subtitle: 'The catch-all response showing 6-10 points',
+    sections: [
+      {
+        heading: 'What is the Dustbin 1NT?',
+        content: `1NT response is called the "dustbin" because it's where you put all hands that don't fit elsewhere:
+• Partner opens 1♥/1♠ → You bid 1NT
+
+This shows 6-10 HCP, no fit, no biddable suit at the 1-level.`
+      },
+      {
+        heading: 'When to Respond 1NT',
+        content: `Bid 1NT when you have:
+• 6-10 HCP (constructive values)
+• Fewer than 3-card support for partner's major
+• No 4-card suit you can bid at the 1-level
+• Too weak to bid a new suit at the 2-level (need 10+ for that)
+
+It's the "leftover" response - use it when nothing else fits.`
+      },
+      {
+        heading: 'What 1NT Tells Partner',
+        content: `Your 1NT response tells partner:
+1. You have 6-10 HCP (limited strength)
+2. You don't have support for my suit
+3. You don't have a biddable 4-card suit at the 1-level
+4. I should probably pass or rebid my suit
+
+This is a LIMIT bid - partner can pass with a minimum opening.`
+      },
+      {
+        heading: 'Example Hands',
+        content: `Partner opens 1♠:
+• ♠ 8-3  ♥ K-Q-7  ♦ J-8-6-3  ♣ Q-10-4-2 → Bid 1NT (no spade fit, can't bid 2♦)
+• ♠ J-7  ♥ A-Q-8-6  ♦ 9-5-3  ♣ K-J-4-2 → Bid 1NT (8 HCP, no 4-card suit at 1-level)
+
+1NT is the most flexible response - it keeps the auction low.`
+      }
+    ],
+    practice_tip: '1NT response = 6-10 HCP, no fit, no suit to bid at 1-level. This is your "catch-all" when nothing else fits.'
+  },
+
+  game_raise: {
+    title: 'Game Raise',
+    subtitle: 'Jumping directly to game with 13+ points',
+    sections: [
+      {
+        heading: 'What is a Game Raise?',
+        content: `A game raise means jumping directly to game in partner's suit:
+• Partner opens 1♥ → You bid 4♥
+• Partner opens 1♠ → You bid 4♠
+
+This shows 13+ points and 4+ card support - enough for game!`
+      },
+      {
+        heading: 'Why Jump to Game?',
+        content: `With 13+ points facing partner's opening (12+ points), you have 25+ combined.
+That's enough for a major suit game!
+
+• You: 13+ points
+• Partner: 12+ points (opening bid)
+• Total: 25+ points = BID GAME
+
+No need to invite - just bid it!`
+      },
+      {
+        heading: 'Requirements',
+        content: `To jump to game in partner's major:
+• 13+ total points (HCP + distribution)
+• 4+ card support (excellent trump holding)
+• Balanced or semi-balanced hand
+
+With unbalanced shape and slam interest, use Jacoby 2NT instead (advanced).`
+      },
+      {
+        heading: 'Game Raise vs Limit Raise',
+        content: `Single raise (2-major): 6-10 points
+Limit raise (3-major): 10-12 points (INVITATIONAL)
+Game raise (4-major): 13+ points (GAME FORCING)
+
+The jump to game says "We have enough - let's play it!"`
+      }
+    ],
+    practice_tip: 'With 13+ points and 4+ card support for partner\'s major, jump directly to game. You know you have 25+ combined!'
+  },
+
+  two_over_one_response: {
+    title: 'Two-Over-One Response',
+    subtitle: 'Showing 10+ points with a new suit at the 2-level',
+    sections: [
+      {
+        heading: 'What is Two-Over-One?',
+        content: `A two-over-one response means bidding a NEW SUIT at the 2-level:
+• Partner opens 1♠ → You bid 2♣/2♦/2♥
+• Partner opens 1♥ → You bid 2♣/2♦
+
+This shows 10+ HCP and 4+ cards in your suit.`
+      },
+      {
+        heading: 'Why 10+ Points Required?',
+        content: `Bidding at the 2-level commits your side to a higher contract.
+You need extra strength to compensate for the higher level.
+
+Compare:
+• 1-level response (1♥ → 1♠): Only 6+ HCP needed
+• 2-level response (1♥ → 2♣): Need 10+ HCP (stronger!)
+
+Two-over-one is FORCING - partner must bid again.`
+      },
+      {
+        heading: 'Finding the Best Fit',
+        content: `Two-over-one starts a conversation about the best contract:
+• Shows your suit
+• Denies support for partner (usually)
+• Keeps auction going to find best fit
+
+Example: Partner opens 1♠, you have ♠ 8-3  ♥ A-7  ♦ K-Q-J-8-6  ♣ K-10-4
+→ Bid 2♦ to show your diamond suit (10+ HCP, 5 diamonds)`
+      },
+      {
+        heading: 'Two-Over-One Game Forcing?',
+        content: `In standard SAYC, two-over-one is FORCING but NOT game-forcing.
+The auction must continue, but you can stop below game.
+
+In advanced "Two-Over-One Game Forcing" systems, it's game-forcing - but that's a different convention!
+
+For now: Two-over-one = 10+ HCP, 4+ cards, forcing for one round.`
+      }
+    ],
+    practice_tip: 'Bidding a new suit at the 2-level requires 10+ HCP and 4+ cards. This is stronger than a 1-level response!'
+  },
+
   // Level 2: Responding to Partner
   responding_to_major: {
     title: 'Responding to Major Suit Openings',
