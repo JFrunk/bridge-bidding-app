@@ -253,7 +253,7 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer, i
         <td className={getHighlightClass(1)} onClick={() => row[1] && onBidClick(row[1])}>
           {row[1]?.bid ? <BidChip bid={row[1].bid} /> : ''}
         </td>
-        <td className={getHighlightClass(2)} onClick={() => row[2] && onBidClick(row[2])}>
+        <td className={`${getHighlightClass(2)} partnership-separator`} onClick={() => row[2] && onBidClick(row[2])}>
           {row[2]?.bid ? <BidChip bid={row[2].bid} /> : ''}
         </td>
         <td className={getHighlightClass(3)} onClick={() => row[3] && onBidClick(row[3])}>
@@ -263,13 +263,40 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer, i
     );
   });
 
-  // Helper to show dealer indicator
-  const dealerIndicator = (pos) => dealer === pos ? ' 🔵' : '';
-
-  // Helper to get header highlight class (disabled when auction is complete)
+  // Helper to get header classes (partnership colors, current player, dealer)
   const getHeaderClass = (position) => {
-    if (isComplete) return '';
-    return players[nextPlayerIndex] === position ? 'current-player' : '';
+    const classes = [];
+
+    // Partnership color coding
+    if (position === 'North' || position === 'South') {
+      classes.push('ns-header');
+    } else {
+      classes.push('ew-header');
+    }
+
+    // Dealer indicator class
+    if (dealer === position) {
+      classes.push('dealer-indicator');
+    }
+
+    // Partnership separator (South column = boundary between N/S and E/W)
+    if (position === 'South') {
+      classes.push('partnership-separator');
+    }
+
+    // Player position indicator (gold border glow)
+    // Solo mode: user is always South
+    // Room mode: user is at myPositionFull
+    if ((!myPosition && position === 'South') || (myPosition && position === myPositionFull)) {
+      classes.push('player-you');
+    }
+
+    // Current player highlight (disabled when auction is complete)
+    if (!isComplete && players[nextPlayerIndex] === position) {
+      classes.push('current-player');
+    }
+
+    return classes.join(' ');
   };
 
   // Helper to get role class for room mode (You/Partner indicators)
@@ -297,19 +324,19 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer, i
       <thead>
         <tr>
           <th className={`${getHeaderClass('North')} ${getRoleClass('North')}`} data-testid="bidding-header-north">
-            <span className="position-name">North{dealerIndicator('North')}</span>
+            <span className="position-name">North</span>
             {renderRoleBadge('North')}
           </th>
           <th className={`${getHeaderClass('East')} ${getRoleClass('East')}`} data-testid="bidding-header-east">
-            <span className="position-name">East{dealerIndicator('East')}</span>
+            <span className="position-name">East</span>
             {renderRoleBadge('East')}
           </th>
           <th className={`${getHeaderClass('South')} ${getRoleClass('South')}`} data-testid="bidding-header-south">
-            <span className="position-name">South{dealerIndicator('South')}</span>
+            <span className="position-name">South</span>
             {renderRoleBadge('South')}
           </th>
           <th className={`${getHeaderClass('West')} ${getRoleClass('West')}`} data-testid="bidding-header-west">
-            <span className="position-name">West{dealerIndicator('West')}</span>
+            <span className="position-name">West</span>
             {renderRoleBadge('West')}
           </th>
         </tr>

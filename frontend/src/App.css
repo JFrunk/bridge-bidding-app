@@ -115,7 +115,7 @@ body {
 .bid-screen-layout {
   display: flex;
   flex-direction: column;
-  gap: 8px; /* Compact: was 12px */
+  gap: 6px; /* Reduced by 20% from 8px */
   padding: 10px; /* Compact: was 16px */
   background-color: var(--table-green, #1a6b3c);
   border: 3px solid var(--table-green-dark, #145530);
@@ -295,7 +295,7 @@ body {
 /* Responsive adjustments - COMPACT for 549-768px viewport (Priority 4) */
 @media (max-height: 700px) {
   .bid-screen-layout {
-    gap: 6px;  /* Reduce gap from 8px */
+    gap: 5px;  /* Reduced by 20% from 6px */
     padding: 8px;  /* Reduce padding from 10px */
   }
 
@@ -611,9 +611,12 @@ body {
 }
 
 .bidding-table {
-  width: 100%;
+  width: 400px;
+  max-width: 100%;
   border-collapse: collapse;
   text-align: center;
+  margin-left: 0;
+  margin-right: auto;
 }
 .bidding-table th, .bidding-table td {
   border: 1px solid var(--text-secondary);
@@ -629,7 +632,49 @@ body {
 .bidding-table th {
   background-color: rgba(255, 255, 255, 0.1);
   cursor: default;
+  position: relative; /* For dealer indicator positioning */
+  padding-left: 20px; /* Space for blue dot to prevent overlap */
+  text-align: center;
 }
+
+/* Partnership color coding - N/S green, E/W gold */
+.bidding-table th.ns-header {
+  background: rgba(45, 138, 78, 0.5);
+  border: 1px solid rgba(45, 138, 78, 0.7);
+}
+
+.bidding-table th.ew-header {
+  background: rgba(200, 164, 78, 0.5);
+  border: 1px solid rgba(200, 164, 78, 0.7);
+}
+
+/* Dealer indicator - blue dot positioned left, text centered */
+.bidding-table th.dealer-indicator::before {
+  content: '🔵';
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+}
+
+/* Partnership separator - visual border between N/S and E/W */
+.bidding-table th.partnership-separator,
+.bidding-table td.partnership-separator {
+  border-left: 3px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Grid lines for bidding table - more prominent borders */
+.bidding-table th,
+.bidding-table td {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Player position indicator - gold border glow for user's seat */
+.bidding-table th.player-you {
+  box-shadow: inset 0 0 0 2px var(--gold, #c8a44e);
+}
+
 /* Enhanced current player highlight with animation */
 .bidding-table .current-player {
   background-color: #fff3cd !important;
@@ -2172,11 +2217,14 @@ html, body {
   min-height: 60px; /* At least show a few bids */
 }
 
-/* Bidding table within bidding-table-zone */
+/* Bidding table within bidding-table-zone - narrower and left-aligned */
 .bidding-table-zone .bidding-table {
-  width: 100%;
+  width: 400px;
+  max-width: 50%;
   border-collapse: collapse;
   table-layout: fixed;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 .bidding-table-zone .bidding-table th {
@@ -2185,12 +2233,23 @@ html, body {
   color: var(--text-on-green-muted, rgba(168, 196, 176, 1));
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  padding: 6px 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 4px 6px 20px; /* Extra left padding for blue dot */
+  border: 1px solid rgba(255, 255, 255, 0.2);
   position: sticky;
   top: 0;
   background: rgba(0, 0, 0, 0.3);
-  border: none;
+  text-align: center;
+}
+
+/* Partnership colors in bidding-table-zone */
+.bidding-table-zone .bidding-table th.ns-header {
+  background: rgba(45, 138, 78, 0.4);
+  border-color: rgba(45, 138, 78, 0.6);
+}
+
+.bidding-table-zone .bidding-table th.ew-header {
+  background: rgba(200, 164, 78, 0.4);
+  border-color: rgba(200, 164, 78, 0.6);
 }
 
 .bidding-table-zone .bidding-table th.you {
@@ -2257,6 +2316,7 @@ html, body {
   font-size: 15px;
   font-weight: 500;
   color: var(--text-on-green, #e8f0eb);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   border: none;
   min-width: auto;

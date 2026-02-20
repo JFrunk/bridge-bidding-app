@@ -20,6 +20,7 @@ export function BiddingBox({ onBid, disabled, auction }) {
 
   // Find last real bid (not Pass/X/XX) to validate legal bids
   const lastRealBid = [...auction].reverse().find(b => !['Pass', 'X', 'XX'].includes(b.bid));
+  const lastBid = auction.length > 0 ? auction[auction.length - 1] : null;
   const suitOrder = { '♣': 1, '♦': 2, '♥': 3, '♠': 4, 'NT': 5 };
 
   /**
@@ -34,6 +35,24 @@ export function BiddingBox({ onBid, disabled, auction }) {
     if (bidLevel === lastLevel && suitOrder[suit] > suitOrder[lastSuit]) return true;
     return false;
   };
+
+  /**
+   * Check if a level is legal (at least as high as last real bid)
+   */
+  const isLevelLegal = (bidLevel) => {
+    if (!lastRealBid) return true;
+    const lastLevel = parseInt(lastRealBid.bid[0], 10);
+    return bidLevel >= lastLevel;
+  };
+
+  /**
+   * Smart Dbl/Rdbl logic: Show only one at a time
+   * - Show Rdbl if last bid was 'X' (opponent doubled)
+   * - Show Dbl if there's a real bid from opponent
+   * - Show neither if no bids yet
+   */
+  const showDouble = lastRealBid && lastBid?.bid !== 'X';
+  const showRedouble = lastBid?.bid === 'X';
 
   const handleLevelClick = (l) => {
     setLevel(l);
@@ -63,45 +82,28 @@ export function BiddingBox({ onBid, disabled, auction }) {
 
   return (
     <div className="bidding-box" data-testid="bidding-box">
-      {/* Level buttons (1-7) */}
+      {/* Row 1: Level buttons (1-7) with illegal bid graying */}
       <div className="bidding-box-row" data-testid="bid-levels">
-        {levels.map(l => (
-          <button
-            key={l}
-            onClick={() => handleLevelClick(l)}
-            disabled={disabled}
-            className={`bid-button bid-level-button ${level === l ? 'selected' : ''}`}
-            aria-label={`Select level ${l}`}
-            data-testid={`bid-level-${l}`}
-          >
-            {l}
-          </button>
-        ))}
-      </div>
-
-      {/* Suit buttons */}
-      <div className="bidding-box-row" data-testid="bid-suits">
-        {suits.map(s => {
-          const isLegal = !level || isBidLegal(level, s);
+        {levels.map(l => {
+          const levelLegal = isLevelLegal(l);
           return (
             <button
-              key={s}
-              onClick={() => handleSuitClick(s)}
-              disabled={!level || disabled || !isLegal}
-              className="bid-button bid-suit-button"
-              aria-label={`Bid ${level || ''} ${s === 'NT' ? 'No Trump' : s}`}
-              data-testid={`bid-suit-${s === 'NT' ? 'NT' : s}`}
+              key={l}
+              onClick={() => handleLevelClick(l)}
+              disabled={disabled}
+              className={`bid-button bid-level-button ${level === l ? 'selected' : ''} ${!levelLegal ? 'illegal-bid' : ''}`}
+              aria-label={`Select level ${l}`}
+              data-testid={`bid-level-${l}`}
             >
-              <span className={`suit-symbol ${getSuitClass(s)}`}>
-                {s === 'NT' ? 'NT' : s}
-              </span>
+              {l}
             </button>
           );
         })}
       </div>
 
-      {/* Action buttons (Pass / Dbl / Rdbl) */}
-      <div className="bidding-box-row" data-testid="bid-calls">
+      {/* Row 2: Pass + Suit buttons + Smart Dbl/Rdbl */}
+      <div className="bidding-box-row" data-testid="bid-suits-and-calls">
+        {/* Pass button */}
         <button
           onClick={() => handleCallClick('Pass')}
           disabled={disabled}
@@ -111,24 +113,50 @@ export function BiddingBox({ onBid, disabled, auction }) {
         >
           Pass
         </button>
-        <button
-          onClick={() => handleCallClick('X')}
-          disabled={disabled}
-          className="bid-button bid-action-button double-button"
-          aria-label="Double"
-          data-testid="bid-call-X"
-        >
-          Dbl
-        </button>
-        <button
-          onClick={() => handleCallClick('XX')}
-          disabled={disabled}
-          className="bid-button bid-action-button redouble-button"
-          aria-label="Redouble"
-          data-testid="bid-call-XX"
-        >
-          Rdbl
-        </button>
+
+        {/* Suit buttons with illegal bid graying */}
+        {suits.map(s => {
+          const isLegal = !level || isBidLegal(level, s);
+          const isIllegal = level && !isBidLegal(level, s);
+          return (
+            <button
+              key={s}
+              onClick={() => handleSuitClick(s)}
+              disabled={!level || disabled || !isLegal}
+              className={`bid-button bid-suit-button ${isIllegal ? 'illegal-bid' : ''}`}
+              aria-label={`Bid ${level || ''} ${s === 'NT' ? 'No Trump' : s}`}
+              data-testid={`bid-suit-${s === 'NT' ? 'NT' : s}`}
+            >
+              <span className={`suit-symbol ${getSuitClass(s)}`}>
+                {s === 'NT' ? 'NT' : s}
+              </span>
+            </button>
+          );
+        })}
+
+        {/* Smart Dbl/Rdbl: Show only one at a time */}
+        {showDouble && (
+          <button
+            onClick={() => handleCallClick('X')}
+            disabled={disabled}
+            className="bid-button bid-action-button double-button"
+            aria-label="Double"
+            data-testid="bid-call-X"
+          >
+            Dbl
+          </button>
+        )}
+        {showRedouble && (
+          <button
+            onClick={() => handleCallClick('XX')}
+            disabled={disabled}
+            className="bid-button bid-action-button redouble-button"
+            aria-label="Redouble"
+            data-testid="bid-call-XX"
+          >
+            Rdbl
+          </button>
+        )}
       </div>
     </div>
   );
