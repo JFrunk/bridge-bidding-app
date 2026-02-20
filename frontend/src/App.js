@@ -228,36 +228,47 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer, i
   }
 
   // Render grid as table rows
-  // Highlight the cell where the next player should bid
+  // Show yellow placeholder button where the next player should bid
   const rows = grid.map((row, rowIndex) => {
     // Determine if this is the active row (last row with bids or empty first row)
     const isActiveRow = rowIndex === grid.length - 1;
 
-    // Find the next empty cell in the active row to highlight
-    const getHighlightClass = (colIndex) => {
-      if (isComplete) return ''; // No highlighting after auction ends
-      if (!isActiveRow) return '';
-      // Check if this cell is where the next bid should go
+    // Check if this cell should show the turn indicator
+    const shouldShowTurnIndicator = (colIndex) => {
+      if (isComplete) return false; // No indicator after auction ends
+      if (!isActiveRow) return false;
       const cellPlayer = players[colIndex];
-      if (cellPlayer === players[nextPlayerIndex] && row[colIndex] === null) {
-        return 'current-player';
+      return cellPlayer === players[nextPlayerIndex] && row[colIndex] === null;
+    };
+
+    // Render cell content (bid chip, turn indicator, or empty)
+    const renderCellContent = (colIndex) => {
+      if (row[colIndex]?.bid) {
+        return <BidChip bid={row[colIndex].bid} />;
+      }
+      if (shouldShowTurnIndicator(colIndex)) {
+        return (
+          <div className="inline-flex items-center justify-center bg-white rounded-[0.3em] px-[0.5em] py-[0.1em] border-[3px] border-[#ffc107] min-w-[3.2em] h-[2em] mx-auto shadow-[0_0_8px_rgba(255,193,7,0.4)]">
+            <span className="text-[0.8em] font-bold text-transparent select-none">_</span>
+          </div>
+        );
       }
       return '';
     };
 
     return (
       <tr key={rowIndex}>
-        <td className={getHighlightClass(0)} onClick={() => row[0] && onBidClick(row[0])}>
-          {row[0]?.bid ? <BidChip bid={row[0].bid} /> : ''}
+        <td onClick={() => row[0] && onBidClick(row[0])}>
+          {renderCellContent(0)}
         </td>
-        <td className={getHighlightClass(1)} onClick={() => row[1] && onBidClick(row[1])}>
-          {row[1]?.bid ? <BidChip bid={row[1].bid} /> : ''}
+        <td onClick={() => row[1] && onBidClick(row[1])}>
+          {renderCellContent(1)}
         </td>
-        <td className={`${getHighlightClass(2)} partnership-separator`} onClick={() => row[2] && onBidClick(row[2])}>
-          {row[2]?.bid ? <BidChip bid={row[2].bid} /> : ''}
+        <td className="partnership-separator" onClick={() => row[2] && onBidClick(row[2])}>
+          {renderCellContent(2)}
         </td>
-        <td className={getHighlightClass(3)} onClick={() => row[3] && onBidClick(row[3])}>
-          {row[3]?.bid ? <BidChip bid={row[3].bid} /> : ''}
+        <td onClick={() => row[3] && onBidClick(row[3])}>
+          {renderCellContent(3)}
         </td>
       </tr>
     );
