@@ -2555,6 +2555,7 @@ html, body {
 /* Bidding controls: content-sized within south zone */
 .split-game-layout .bidding-section {
   flex: 0 0 auto;
+  min-width: 512px; /* Ensure space for 480px bidding box + 32px padding */
 }
 
 /* Bidding box always visible */
