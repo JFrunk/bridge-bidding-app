@@ -25,7 +25,7 @@ const BidChip = ({ bid }) => {
   return (
     <div className="inline-flex items-center justify-center bg-white rounded-[0.3em] px-[0.5em] py-[0.1em] shadow-[0.1em_0.1em_0.1em_rgba(0,0,0,0.1)] border border-gray-200 min-w-[3.2em] h-[2em] mx-auto">
       {isSpecial ? (
-        <span className="text-[0.8em] font-bold text-gray-400 uppercase">
+        <span className="text-[0.8em] font-bold text-gray-900 uppercase">
           {bidStr}
         </span>
       ) : (
