@@ -294,7 +294,10 @@
       "Bash(./gh_2.62.0_macOS_arm64/bin/gh:*)",
       "Bash(/tmp/pr_data.json:*)",
       "Bash(git credential-osxkeychain:*)",
-      "Bash(git stash pop:*)"
+      "Bash(git stash pop:*)",
+      "Bash(git branch:*)",
+      "Bash(pgrep:*)",
+      "Bash(PRE_COMMIT_TEST_LEVEL=1 git commit:*)"
     ],
     "deny": [],
     "ask": []
