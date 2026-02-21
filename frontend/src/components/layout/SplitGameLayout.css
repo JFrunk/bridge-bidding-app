@@ -29,11 +29,6 @@
   transition: all 0.3s ease-in-out;
 }
 
-/* Prevent main panel from shrinking below bidding box requirements when sidebar open */
-.split-game-layout.sidebar-open .split-game-main {
-  min-width: 656px; /* Ensure space for 480px bidding box + 32px padding + margins */
-}
-
 /* When sidebar is closed, center the content */
 .split-game-layout:not(.sidebar-open) .split-game-main {
   display: flex;
@@ -79,10 +74,10 @@
   }
 }
 
-/* When sidebar is open, ensure left panel doesn't overflow */
+/* When sidebar is open, ensure left panel doesn't shrink below bidding box requirements */
 .split-game-layout.sidebar-open .split-game-main {
-  /* Let it shrink naturally */
   flex: 1 1 0%;
+  min-width: 656px; /* Prevent shrinking below 480px bidding box + padding */
 }
 
 /* ========================================
