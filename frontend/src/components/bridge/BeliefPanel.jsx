@@ -220,24 +220,19 @@ function SeatBeliefView({ belief, showHow = true }) {
       {/* Suit lengths */}
       <div className="beliefs-suits-section">
         <div className="beliefs-suits-label">Suit Lengths</div>
-        <div className="beliefs-suits-grid">
+        <div className="beliefs-suits-inline">
           {SUIT_ORDER.map(suit => {
             const suitData = suits[suit] || { min: 0, max: 13 };
             const info = SUIT_SYMBOLS[suit];
             const constrained = isSuitConstrained(suitData);
+            const rangeText = constrained
+              ? (suitData.min === suitData.max ? `${suitData.min}` : `${suitData.min}\u2013${suitData.max}`)
+              : '0\u201313';
             return (
-              <div key={suit} className={`beliefs-suit-cell ${getSuitCellClass(suitData, tags)}`}>
-                <div className={`beliefs-suit-icon ${info.color}`}>{info.sym}</div>
-                <div className="beliefs-suit-range">
-                  {constrained ? (
-                    <span className={getSuitRangeClass(suitData, tags)}>
-                      {suitData.min === suitData.max ? suitData.min : `${suitData.min}\u2013${suitData.max}`}
-                    </span>
-                  ) : (
-                    '0\u201313'
-                  )}
-                </div>
-              </div>
+              <span key={suit} className="beliefs-suit-detail">
+                <span className={`beliefs-suit-symbol ${info.color}`}>{info.sym}</span>{' '}
+                {rangeText}
+              </span>
             );
           })}
         </div>

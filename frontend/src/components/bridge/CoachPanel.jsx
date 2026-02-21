@@ -86,12 +86,29 @@ export function CoachPanel({
               </button>
             </div>
             <div className="my-hand-content">
-              {/* Total Points */}
-              <div className="my-hand-total">
-                {handAnalysis.totalPoints} total pts
+              {/* Line 1: Total Points, HCP, Dist, Balanced */}
+              <div className="my-hand-summary">
+                <span>Total Points {handAnalysis.totalPoints}</span>
+                <span>HCP {handAnalysis.hcp}</span>
+                <span>Dist {handAnalysis.dist}</span>
+                <span>{handAnalysis.balanced ? 'Balanced' : 'Unbalanced'}</span>
               </div>
 
-              {/* Suit Breakdown with HCP per suit - with suit colors */}
+              {/* Line 2: HCP Bar */}
+              <div className="my-hand-hcp-row">
+                <div className="my-hand-hcp-bar-track">
+                  <div
+                    className="my-hand-hcp-bar-fill"
+                    style={{
+                      left: `${(handAnalysis.hcp / 40) * 100}%`,
+                      width: '2%'
+                    }}
+                  />
+                </div>
+                <div className="my-hand-hcp-value">{handAnalysis.hcp}</div>
+              </div>
+
+              {/* Line 3: Suits */}
               <div className="my-hand-suits">
                 <span className="suit-detail">
                   <span className="suit-black">♠</span> {handAnalysis.suits?.spades?.hcp || 0}({handAnalysis.suits?.spades?.length || 0})
@@ -105,26 +122,6 @@ export function CoachPanel({
                 <span className="suit-detail">
                   <span className="suit-black">♣</span> {handAnalysis.suits?.clubs?.hcp || 0}({handAnalysis.suits?.clubs?.length || 0})
                 </span>
-              </div>
-
-              {/* HCP + Distribution */}
-              <div className="my-hand-breakdown">
-                HCP: {handAnalysis.hcp} + Dist: {handAnalysis.dist}
-              </div>
-
-              {/* Suit Quality */}
-              {handAnalysis.suitQuality && handAnalysis.suitQuality.length > 0 && (
-                <div className="my-hand-quality">
-                  <span className="quality-label">Biddable:</span>
-                  {handAnalysis.suitQuality.map((suit, idx) => (
-                    <span key={idx} className="biddable-suit">{suit}</span>
-                  ))}
-                </div>
-              )}
-
-              {/* Balanced/Unbalanced */}
-              <div className="my-hand-shape">
-                {handAnalysis.balanced ? '⚖️ Balanced' : '⚡ Unbalanced'}
               </div>
             </div>
           </div>

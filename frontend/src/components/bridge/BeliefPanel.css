@@ -178,45 +178,27 @@
   color: var(--text-muted, #999999);
   margin-bottom: 6px;
 }
-.beliefs-suits-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+.beliefs-suits-inline {
+  display: flex;
+  justify-content: space-around;
+  gap: 8px;
+  padding: 6px 0;
 }
-.beliefs-suit-cell {
-  text-align: center;
-  background: var(--bg-tertiary, #3a3a3a);
-  border-radius: var(--radius-sm, 4px);
-  padding: 5px 4px;
+.beliefs-suit-detail {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #ffffff);
+  white-space: nowrap;
 }
-.beliefs-suit-cell.constrained {
-  border: 1px solid rgba(76, 175, 80, 0.35);
+.beliefs-suit-symbol {
+  font-size: 14px;
+  font-weight: 700;
 }
-.beliefs-suit-cell.convention-constrained {
-  border: 1px solid rgba(97, 218, 251, 0.4);
-}
-.beliefs-suit-icon {
-  font-size: var(--text-base, 16px);
-  font-weight: var(--font-bold, 700);
-}
-.beliefs-suit-icon.red {
+.beliefs-suit-symbol.red {
   color: var(--suit-red, #d32f2f);
 }
-.beliefs-suit-icon.black {
+.beliefs-suit-symbol.black {
   color: var(--text-primary, #ffffff);
-}
-.beliefs-suit-range {
-  font-size: 11px;
-  color: var(--text-secondary, #aaaaaa);
-  margin-top: 2px;
-}
-.beliefs-suit-range .known {
-  color: var(--color-success, #4caf50);
-  font-weight: var(--font-semibold, 600);
-}
-.beliefs-suit-range .convention-known {
-  color: var(--color-info, #61dafb);
-  font-weight: var(--font-semibold, 600);
 }
 
 /* ── Tags ── */
