@@ -287,6 +287,97 @@
   font-size: 16px;
 }
 
+/* ========================================
+   MY HAND SECTION - Always expanded at top
+   ======================================== */
+
+.my-hand-section {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.my-hand-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.my-hand-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.my-hand-content {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.my-hand-total {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+  text-align: center;
+}
+
+.my-hand-suits {
+  display: flex;
+  justify-content: space-around;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.suit-detail {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.my-hand-breakdown {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  text-align: center;
+}
+
+.my-hand-quality {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.quality-label {
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+}
+
+.biddable-suit {
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+  font-weight: 500;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.my-hand-shape {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #666);
+  text-align: center;
+  padding: 4px 0;
+}
+
 /* BeliefPanel inside coach column - restore dark theme for dark backgrounds */
 .coach-column .beliefs-panel,
 .coach-column .beliefs-collapsed {

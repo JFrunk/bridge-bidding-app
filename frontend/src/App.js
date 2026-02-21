@@ -3595,6 +3595,30 @@ ${otherCommands}`;
                   suggestedBid={suggestedBid}
                   selectedBid={selectedBid}
                   onRequestHint={handleRequestHint}
+                  handAnalysis={handPoints ? {
+                    totalPoints: handPoints.total_points,
+                    hcp: handPoints.hcp,
+                    dist: handPoints.dist_points,
+                    suits: {
+                      spades: { hcp: handPoints.suit_hcp?.['♠'] || 0, length: handPoints.suit_lengths?.['♠'] || 0 },
+                      hearts: { hcp: handPoints.suit_hcp?.['♥'] || 0, length: handPoints.suit_lengths?.['♥'] || 0 },
+                      diamonds: { hcp: handPoints.suit_hcp?.['♦'] || 0, length: handPoints.suit_lengths?.['♦'] || 0 },
+                      clubs: { hcp: handPoints.suit_hcp?.['♣'] || 0, length: handPoints.suit_lengths?.['♣'] || 0 }
+                    },
+                    suitQuality: handPoints.suit_quality || [],
+                    balanced: handPoints.balanced !== undefined ? handPoints.balanced : (
+                      // Calculate balanced if not provided: 4-3-3-3, 4-4-3-2, or 5-3-3-2 with no voids/singletons
+                      (() => {
+                        const lengths = [
+                          handPoints.suit_lengths?.['♠'] || 0,
+                          handPoints.suit_lengths?.['♥'] || 0,
+                          handPoints.suit_lengths?.['♦'] || 0,
+                          handPoints.suit_lengths?.['♣'] || 0
+                        ].sort((a, b) => b - a);
+                        return lengths[0] <= 5 && lengths[3] >= 2;
+                      })()
+                    )
+                  } : null}
                 />
               ) : null
             }
@@ -3602,17 +3626,6 @@ ${otherCommands}`;
             {/* Game Column - green table */}
             <div className="bid-game-column">
               <div className="bid-game-area">
-                {/* Hand Analysis Strip - only in Coached mode */}
-                {sessionMode === 'coached' && handPoints && (
-                  <HandAnalysis
-                    points={handPoints}
-                    vulnerability={vulnerability}
-                    ddTable={ddTable}
-                    onShowTrickPotential={() => setShowTrickPotential(true)}
-                    strip={true}
-                  />
-                )}
-
                 {/* BIDDING TABLE ZONE — fills green space above hand */}
                 <div className="bidding-table-zone">
                   <div className="bidding-scroll">

@@ -22,7 +22,8 @@ export function CoachPanel({
   suggestedBid,  // { bid, explanation, loading, error }
   selectedBid,   // { bid, explanation, player } - clicked bid from auction history
   auction = [],
-  myHcp          // User's HCP for combined estimate
+  myHcp,         // User's HCP for combined estimate
+  handAnalysis   // User's hand analysis { totalPoints, hcp, dist, suits, suitQuality, balanced }
 }) {
   const [expandedSections, setExpandedSections] = useState({
     partner: true,
@@ -66,6 +67,50 @@ export function CoachPanel({
 
       {/* Body */}
       <div className="coach-body">
+        {/* My Hand - Always Expanded */}
+        {handAnalysis && (
+          <div className="coach-section my-hand-section">
+            <div className="my-hand-header">
+              <span className="section-icon">🃏</span>
+              <span className="my-hand-title">My Hand</span>
+            </div>
+            <div className="my-hand-content">
+              {/* Total Points */}
+              <div className="my-hand-total">
+                {handAnalysis.totalPoints} total pts
+              </div>
+
+              {/* Suit Breakdown with HCP per suit */}
+              <div className="my-hand-suits">
+                <span className="suit-detail">♠ {handAnalysis.suits?.spades?.hcp || 0}({handAnalysis.suits?.spades?.length || 0})</span>
+                <span className="suit-detail">♥ {handAnalysis.suits?.hearts?.hcp || 0}({handAnalysis.suits?.hearts?.length || 0})</span>
+                <span className="suit-detail">♦ {handAnalysis.suits?.diamonds?.hcp || 0}({handAnalysis.suits?.diamonds?.length || 0})</span>
+                <span className="suit-detail">♣ {handAnalysis.suits?.clubs?.hcp || 0}({handAnalysis.suits?.clubs?.length || 0})</span>
+              </div>
+
+              {/* HCP + Distribution */}
+              <div className="my-hand-breakdown">
+                HCP: {handAnalysis.hcp} + Dist: {handAnalysis.dist}
+              </div>
+
+              {/* Suit Quality */}
+              {handAnalysis.suitQuality && handAnalysis.suitQuality.length > 0 && (
+                <div className="my-hand-quality">
+                  <span className="quality-label">Biddable:</span>
+                  {handAnalysis.suitQuality.map((suit, idx) => (
+                    <span key={idx} className="biddable-suit">{suit}</span>
+                  ))}
+                </div>
+              )}
+
+              {/* Balanced/Unbalanced */}
+              <div className="my-hand-shape">
+                {handAnalysis.balanced ? '⚖️ Balanced' : '⚡ Unbalanced'}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Partner's Likely Hand */}
         <div className="coach-section">
           <button
