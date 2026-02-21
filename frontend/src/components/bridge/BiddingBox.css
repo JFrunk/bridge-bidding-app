@@ -288,8 +288,3 @@
     transition: transform 0.1s ease;
   }
 }
-
-/* Wider bidding box in coach mode (sidebar open) - 30% wider */
-.split-game-layout.sidebar-open .bidding-box {
-  max-width: 624px; /* 30% wider than base 480px */
-}

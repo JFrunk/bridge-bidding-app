@@ -29,6 +29,11 @@
   transition: all 0.3s ease-in-out;
 }
 
+/* Prevent main panel from shrinking below bidding box requirements when sidebar open */
+.split-game-layout.sidebar-open .split-game-main {
+  min-width: 656px; /* Ensure space for 480px bidding box + 32px padding + margins */
+}
+
 /* When sidebar is closed, center the content */
 .split-game-layout:not(.sidebar-open) .split-game-main {
   display: flex;
