@@ -300,16 +300,38 @@
 .my-hand-header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
   padding: 6px 10px;
   background: rgba(0, 0, 0, 0.04);
   border-radius: 4px;
   margin-bottom: 10px;
 }
 
+.my-hand-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .my-hand-title {
   font-size: 13px;
   font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.my-hand-close {
+  font-size: 18px;
+  color: var(--text-secondary, #666);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.my-hand-close:hover {
+  background: rgba(0, 0, 0, 0.05);
   color: var(--text-primary, #1a1a1a);
 }
 
@@ -376,6 +398,15 @@
   color: var(--text-secondary, #666);
   text-align: center;
   padding: 4px 0;
+}
+
+/* Suit colors for My Hand section */
+.my-hand-suits .suit-red {
+  color: var(--card-red, #c41e3a);
+}
+
+.my-hand-suits .suit-black {
+  color: var(--text-primary, #333);
 }
 
 /* BeliefPanel inside coach column - restore dark theme for dark backgrounds */

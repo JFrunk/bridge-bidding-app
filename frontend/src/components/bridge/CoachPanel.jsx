@@ -31,6 +31,8 @@ export function CoachPanel({
     explanation: true
   });
 
+  const [showMyHand, setShowMyHand] = useState(true);
+
   // Helper to check if a seat has meaningful beliefs
   const hasOpponentBeliefs = (belief) => {
     if (!belief) return false;
@@ -67,12 +69,21 @@ export function CoachPanel({
 
       {/* Body */}
       <div className="coach-body">
-        {/* My Hand - Always Expanded */}
-        {handAnalysis && (
+        {/* My Hand - Collapsible */}
+        {handAnalysis && showMyHand && (
           <div className="coach-section my-hand-section">
             <div className="my-hand-header">
-              <span className="section-icon">🃏</span>
-              <span className="my-hand-title">My Hand</span>
+              <div className="my-hand-header-left">
+                <span className="section-icon">🃏</span>
+                <span className="my-hand-title">My Hand</span>
+              </div>
+              <button
+                className="my-hand-close"
+                onClick={() => setShowMyHand(false)}
+                aria-label="Hide My Hand"
+              >
+                ×
+              </button>
             </div>
             <div className="my-hand-content">
               {/* Total Points */}
@@ -80,12 +91,20 @@ export function CoachPanel({
                 {handAnalysis.totalPoints} total pts
               </div>
 
-              {/* Suit Breakdown with HCP per suit */}
+              {/* Suit Breakdown with HCP per suit - with suit colors */}
               <div className="my-hand-suits">
-                <span className="suit-detail">♠ {handAnalysis.suits?.spades?.hcp || 0}({handAnalysis.suits?.spades?.length || 0})</span>
-                <span className="suit-detail">♥ {handAnalysis.suits?.hearts?.hcp || 0}({handAnalysis.suits?.hearts?.length || 0})</span>
-                <span className="suit-detail">♦ {handAnalysis.suits?.diamonds?.hcp || 0}({handAnalysis.suits?.diamonds?.length || 0})</span>
-                <span className="suit-detail">♣ {handAnalysis.suits?.clubs?.hcp || 0}({handAnalysis.suits?.clubs?.length || 0})</span>
+                <span className="suit-detail">
+                  <span className="suit-black">♠</span> {handAnalysis.suits?.spades?.hcp || 0}({handAnalysis.suits?.spades?.length || 0})
+                </span>
+                <span className="suit-detail">
+                  <span className="suit-red">♥</span> {handAnalysis.suits?.hearts?.hcp || 0}({handAnalysis.suits?.hearts?.length || 0})
+                </span>
+                <span className="suit-detail">
+                  <span className="suit-red">♦</span> {handAnalysis.suits?.diamonds?.hcp || 0}({handAnalysis.suits?.diamonds?.length || 0})
+                </span>
+                <span className="suit-detail">
+                  <span className="suit-black">♣</span> {handAnalysis.suits?.clubs?.hcp || 0}({handAnalysis.suits?.clubs?.length || 0})
+                </span>
               </div>
 
               {/* HCP + Distribution */}
