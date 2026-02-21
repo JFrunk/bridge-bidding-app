@@ -546,6 +546,11 @@ class SkillTreeManager:
 
     def get_all_levels(self) -> Dict:
         """Get the complete skill tree as JSON-serializable dict"""
+        # Import here to avoid circular dependency
+        from engine.ai.conventions.convention_registry import get_convention_registry
+
+        registry = get_convention_registry()
+
         result = {}
         for level_id, level_data in self.tree.items():
             level_dict = {
@@ -556,10 +561,19 @@ class SkillTreeManager:
                 'completion_requirement': level_data.get('completion_requirement', ''),
             }
 
-            # Handle convention groups
+            # Handle convention groups - enrich with full metadata
             if 'conventions' in level_data:
                 level_dict['type'] = 'convention_group'
-                level_dict['conventions'] = level_data['conventions']
+                # Convert convention IDs to full metadata objects
+                conventions_with_metadata = []
+                for conv_id in level_data['conventions']:
+                    convention = registry.get_convention(conv_id)
+                    if convention:
+                        conventions_with_metadata.append(convention.to_dict())
+                    else:
+                        # Fallback if convention not found in registry
+                        conventions_with_metadata.append({'id': conv_id, 'name': conv_id})
+                level_dict['conventions'] = conventions_with_metadata
                 level_dict['unlock_message'] = level_data.get('unlock_message', '')
 
             # Handle skill groups - convert SkillNode objects to dicts

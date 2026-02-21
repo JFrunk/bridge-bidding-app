@@ -604,14 +604,14 @@ const LevelCard = ({
         <div className="level-skills">
           {is_convention_group ? (
             <div className="convention-list">
-              {conventions.map((convId) => (
-                <div key={convId} className="skill-item">
-                  <span className="skill-name">{convId}</span>
+              {conventions.map((convention) => (
+                <div key={convention.id} className="skill-item">
+                  <span className="skill-name">{convention.name}</span>
                   <button
                     className="practice-button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onStartSkill(convId, convId);
+                      onStartSkill(convention.id, convention.name);
                     }}
                   >
                     Practice
