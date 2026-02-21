@@ -77,7 +77,7 @@
 /* When sidebar is open, ensure left panel doesn't shrink below bidding box requirements */
 .split-game-layout.sidebar-open .split-game-main {
   flex: 1 1 0%;
-  min-width: 656px; /* Prevent shrinking below 480px bidding box + padding */
+  min-width: 540px; /* Prevent shrinking below 480px bidding box + 32px padding + margins */
 }
 
 /* ========================================
