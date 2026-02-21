@@ -425,13 +425,13 @@
 
 .position-label {
   font-weight: bold;
-  color: var(--color-info);
+  color: #ffffff; /* White for maximum contrast - WCAG AAA compliant */
   text-align: center;
   padding: 5px 10px;
   background-color: var(--bg-secondary);
   border-radius: 5px;
-  margin-bottom: 10px;
-  width: 100%;
+  margin: 0 auto 10px auto; /* Center horizontally, preserve bottom margin */
+  width: fit-content; /* Size to content, not full width */
 }
 
 /* CRITICAL: Container for current trick - centers it in grid */
