@@ -125,7 +125,11 @@ class SchemaInterpreter:
 
     def _load_schemas(self):
         """Load all JSON schema files from the schema directory."""
-        for schema_file in self.schema_dir.glob('*.json'):
+        # CRITICAL: Sort schema files for deterministic loading order
+        # glob() returns files in arbitrary filesystem order, causing non-deterministic
+        # bid selection when multiple rules have the same priority
+        schema_files = sorted(self.schema_dir.glob('*.json'))
+        for schema_file in schema_files:
             try:
                 with open(schema_file, 'r') as f:
                     schema = json.load(f)
@@ -240,8 +244,8 @@ class SchemaInterpreter:
         if not candidates:
             return None
 
-        # Sort by priority (highest first)
-        candidates.sort(key=lambda c: c.priority, reverse=True)
+        # Sort by priority (highest first), then by rule_id for deterministic tie-breaking
+        candidates.sort(key=lambda c: (c.priority, c.rule_id), reverse=True)
 
         # Validate Pass bids against forcing constraints
         best = candidates[0]
@@ -315,8 +319,8 @@ class SchemaInterpreter:
             logger.debug("No candidates found with soft matching")
             return None
 
-        # Sort by weighted_score (priority * match_quality) descending
-        candidates.sort(key=lambda c: c.weighted_score, reverse=True)
+        # Sort by weighted_score (priority * match_quality) descending, then by rule_id for deterministic tie-breaking
+        candidates.sort(key=lambda c: (c.weighted_score, c.rule_id), reverse=True)
 
         # Log top candidates for debugging
         if logger.isEnabledFor(logging.DEBUG):
