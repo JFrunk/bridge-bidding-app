@@ -208,7 +208,7 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
                 <div className="hand-card visual-hand dummy-hand">
                   <h3>Dummy (North)</h3>
                   {deal.dummy_hand?.cards && deal.dummy_hand.cards.length > 0 ? (
-                    <LearningHand cards={deal.dummy_hand.cards} size="medium" />
+                    <LearningHand cards={deal.dummy_hand.cards} />
                   ) : (
                     <pre className="hand-text">{deal.dummy_hand?.display || 'No hand data'}</pre>
                   )}
@@ -220,7 +220,7 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
                 <div className="hand-card visual-hand declarer-hand">
                   <h3>Declarer (South)</h3>
                   {deal.declarer_hand?.cards && deal.declarer_hand.cards.length > 0 ? (
-                    <LearningHand cards={deal.declarer_hand.cards} size="medium" />
+                    <LearningHand cards={deal.declarer_hand.cards} />
                   ) : (
                     <pre className="hand-text">{deal.declarer_hand?.display || 'No hand data'}</pre>
                   )}
@@ -236,7 +236,7 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
               <h3>Your Hand</h3>
               {/* Visual card display - matches main app styling */}
               {hand?.cards && hand.cards.length > 0 ? (
-                <LearningHand cards={hand.cards} size="medium" />
+                <LearningHand cards={hand.cards} />
               ) : (
                 <pre className="hand-text">{hand?.display || 'No hand data'}</pre>
               )}

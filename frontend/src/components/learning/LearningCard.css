@@ -1,37 +1,23 @@
 /**
  * LearningCard Styles
  *
- * Visual card display for learning mode matching the main app's styling.
- * Uses white background with red/black suit colors.
+ * Visual card display for learning mode.
+ * Uses the same responsive clamp()/vmin scaling as the main play screen.
  */
 
-/* Base Card Styles */
+/* Base Card Styles - matches play screen card sizing */
 .learning-card {
   position: relative;
   background: white;
   border: 1px solid #d0d0d0;
   border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-/* Size Variants */
-.learning-card.small {
-  width: 45px;
-  height: 63px;
-}
-
-.learning-card.medium {
-  width: 60px;
-  height: 84px;
-}
-
-.learning-card.large {
-  width: 70px;
-  height: 100px;
+  width: var(--card-width, clamp(40px, 8.5vmin, 120px));
+  height: var(--card-height, clamp(56px, 11.9vmin, 168px));
 }
 
 /* Color Variants */
@@ -63,44 +49,18 @@
   transform: rotate(180deg);
 }
 
-/* Rank and Suit Sizes */
-.learning-card.small .card-rank {
-  font-size: 12px;
+/* Rank and Suit Sizes - scale with viewport */
+.learning-card .card-rank {
+  font-size: clamp(10px, 2vmin, 16px);
   font-weight: 700;
 }
 
-.learning-card.small .card-suit {
-  font-size: 10px;
+.learning-card .card-suit {
+  font-size: clamp(8px, 1.6vmin, 14px);
 }
 
-.learning-card.small .card-suit-large {
-  font-size: 22px;
-}
-
-.learning-card.medium .card-rank {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.learning-card.medium .card-suit {
-  font-size: 12px;
-}
-
-.learning-card.medium .card-suit-large {
-  font-size: 28px;
-}
-
-.learning-card.large .card-rank {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.learning-card.large .card-suit {
-  font-size: 14px;
-}
-
-.learning-card.large .card-suit-large {
-  font-size: 36px;
+.learning-card .card-suit-large {
+  font-size: clamp(18px, 4vmin, 36px);
 }
 
 /* Center Suit */
@@ -110,15 +70,16 @@
   justify-content: center;
 }
 
-/* Learning Hand Container - slate gray background for card contrast */
+/* Learning Hand Container - horizontal row like South in main app */
 .learning-hand {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px;
+  flex-direction: row;
+  gap: var(--card-suit-gap, clamp(4px, 0.8vmin, 14px));
+  padding: 6px 10px;
   background: #3d4a5c;
-  border-radius: 12px;
+  border-radius: 8px;
   max-width: fit-content;
+  align-items: flex-end;
 }
 
 .learning-hand.empty {
@@ -127,55 +88,24 @@
   font-style: italic;
 }
 
-/* Suit Row - cards overlap horizontally */
-.suit-row {
+/* Suit Group - cards overlap horizontally within each suit */
+.suit-group {
   display: flex;
   gap: 0;
 }
 
-/* Overlap cards within a suit row */
-.suit-row .learning-card:not(:first-child) {
-  margin-left: -25px;
-}
-
-.suit-row .learning-card.small:not(:first-child) {
-  margin-left: -20px;
-}
-
-.suit-row .learning-card.large:not(:first-child) {
-  margin-left: -30px;
+/* Overlap cards within a suit group - em-based like play screen (~60% of card width) */
+.suit-group .learning-card:not(:first-child) {
+  margin-left: -2.1em;
 }
 
 /* Hover effect to show full card */
-.suit-row .learning-card {
+.suit-group .learning-card {
   transition: transform 0.2s ease, z-index 0s;
+  font-size: clamp(10px, 2.2vmin, 16px);
 }
 
-.suit-row .learning-card:hover {
+.suit-group .learning-card:hover {
   transform: translateY(-8px);
   z-index: 10;
-}
-
-/* Responsive adjustments */
-@media (max-width: 600px) {
-  .learning-card.medium {
-    width: 50px;
-    height: 70px;
-  }
-
-  .learning-card.medium .card-rank {
-    font-size: 12px;
-  }
-
-  .learning-card.medium .card-suit {
-    font-size: 10px;
-  }
-
-  .learning-card.medium .card-suit-large {
-    font-size: 24px;
-  }
-
-  .suit-row .learning-card:not(:first-child) {
-    margin-left: -22px;
-  }
 }
