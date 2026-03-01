@@ -331,15 +331,49 @@ const getQuestionType = (expected) => {
 const getPlayQuestionType = (situation) => {
   if (!situation) return 'unknown';
   const questionType = situation.question_type;
+
+  // Counting questions
   if (questionType === 'count_winners') return 'count_winners';
   if (questionType === 'count_losers') return 'count_losers';
+  if (questionType === 'count_tricks') return 'play_numeric';
+  if (questionType === 'count_entries') return 'play_numeric';
+  if (questionType === 'elimination_count') return 'play_numeric';
+  if (questionType === 'squeeze_count') return 'play_numeric';
+  if (questionType === 'combination_tricks') return 'play_numeric';
+  if (questionType === 'crossruff_tricks') return 'play_numeric';
+
+  // Card selection questions
+  if (questionType === 'third_hand_play') return 'third_hand_play';
+  if (questionType === 'leading_to_tricks') return 'card_play';
+  if (questionType === 'second_hand_play') return 'card_play';
+  if (questionType === 'winning_cheaply') return 'card_play';
+  if (questionType === 'finesse_play') return 'card_play';
+  if (questionType === 'entry_card') return 'card_play';
+  if (questionType === 'unblock_card') return 'card_play';
+
+  // Multiple choice questions
   if (questionType === 'analyze_lead') return 'analyze_lead';
   if (questionType === 'finesse_direction') return 'finesse_direction';
   if (questionType === 'finesse_or_drop') return 'finesse_or_drop';
   if (questionType === 'establish_suit') return 'establish_suit';
+  if (questionType === 'suit_choice') return 'play_numeric';
+  if (questionType === 'safety_choice') return 'play_numeric';
+  if (questionType === 'percentage_choice') return 'play_numeric';
+  if (questionType === 'planning_choice') return 'play_numeric';
+  if (questionType === 'timing_choice') return 'play_numeric';
+  if (questionType === 'danger_choice') return 'play_numeric';
+  if (questionType === 'endplay_choice') return 'play_numeric';
+  if (questionType === 'avoidance_choice') return 'play_numeric';
+  if (questionType === 'deception_choice') return 'play_numeric';
+
+  // Decision questions
   if (questionType === 'hold_up') return 'hold_up';
-  if (questionType === 'draw_trumps') return 'draw_trumps';
-  if (questionType === 'ruff_losers') return 'ruff_losers';
+  if (questionType === 'duck_count') return 'play_numeric';
+  if (questionType === 'draw_trumps_decision') return 'draw_trumps';
+  if (questionType === 'ruffing_losers') return 'play_numeric';
+  if (questionType === 'trump_rounds') return 'play_numeric';
+  if (questionType === 'entry_defense') return 'card_play';
+
   return 'play_numeric'; // Default for most play skills
 };
 
@@ -893,6 +927,36 @@ const AnswerInput = ({ questionType, expected, value, onChange, disabled }) => {
           >
             Play for the Drop
           </button>
+        </div>
+      );
+
+    case 'third_hand_play':
+    case 'card_play':
+      // Card selection - show buttons for common card ranks
+      return (
+        <div className="card-answer-area">
+          <input
+            type="text"
+            className="answer-input card-input"
+            placeholder="Enter card (A, K, Q, J, 10, 9...)"
+            value={value}
+            onChange={(e) => onChange(e.target.value.toUpperCase())}
+            disabled={disabled}
+            autoFocus
+          />
+          <div className="card-shortcuts">
+            {['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'].map((rank) => (
+              <button
+                key={rank}
+                type="button"
+                className={`card-shortcut ${value === rank || value === rank.replace('10', 'T') ? 'selected' : ''}`}
+                onClick={() => onChange(rank)}
+                disabled={disabled}
+              >
+                {rank}
+              </button>
+            ))}
+          </div>
         </div>
       );
 

@@ -428,34 +428,44 @@ export function PlayTable({
             <CompactTurnIndicator position="S" isActive={next_to_play === 'S' && !userIsDummy} />
             {userIsDummy && ' - Dummy'}
           </div>
-          {userHand && userHand.length > 0 && (
-            <div className="user-play-hand">
-              {suitOrder.map(suit => {
-                const suitCards = sortCards(userHand.filter(card => card.suit === suit));
-                return (
-                  <div key={suit} className="suit-group">
-                    {suitCards.map((card, index) => {
-                      // CRITICAL: Determine if this specific card is legal to play
-                      const isLegalCard = isCardLegalToPlay(card, userHand, current_trick);
-                      const isDisabled = !isUserTurn || !isLegalCard;
+          {/* CRITICAL FIX: Show dummy hand if South is dummy, otherwise show user hand */}
+          {(() => {
+            // Determine which hand to display
+            const hand = dummyPosition === 'S' ? dummyHand : userHand;
+            // Extract cards array - handle both {cards: [...]} and [...] formats
+            const handCards = hand?.cards || hand;
 
-                      // CRITICAL: Use unique key per card
-                      const cardKey = `south-${card.rank}-${card.suit}`;
+            if (!handCards || handCards.length === 0) return null;
 
-                      return (
-                        <PlayableCard
-                          key={cardKey}
-                          card={card}
-                          onClick={onCardPlay}
-                          disabled={isDisabled}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+            return (
+              <div className="user-play-hand">
+                {suitOrder.map(suit => {
+                  const suitCards = sortCards(handCards.filter(card => card.suit === suit));
+                  return (
+                    <div key={suit} className="suit-group">
+                      {suitCards.map((card, index) => {
+                        // CRITICAL: Determine if this specific card is legal to play
+                        const isLegalCard = isCardLegalToPlay(card, handCards, current_trick);
+                        const isDisabled = !isUserTurn || !isLegalCard;
+
+                        // CRITICAL: Use unique key per card
+                        const cardKey = `south-${card.rank}-${card.suit}`;
+
+                        return (
+                          <PlayableCard
+                            key={cardKey}
+                            card={card}
+                            onClick={onCardPlay}
+                            disabled={isDisabled}
+                          />
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import * as React from "react";
 import { useState } from "react";
 import { BiddingTableGrid } from "../shared/BiddingTableGrid";
 import { BidChip } from "../shared/BidChip";
+import "../../styles/PlayScreen.css";  // Import contract-bar styles
 
 /**
  * ContractHeader - Compact contract bar per UI Redesign play-mockup-v2.html
