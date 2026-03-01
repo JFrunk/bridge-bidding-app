@@ -111,7 +111,7 @@
 
 /* Suit colors from design system */
 .suit-red {
-  color: var(--card-red, #c41e3a);
+  color: var(--card-red, #d32f2f);
 }
 
 .suit-black {

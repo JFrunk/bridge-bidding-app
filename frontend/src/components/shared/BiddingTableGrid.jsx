@@ -98,10 +98,10 @@ export function BiddingTableGrid({
       <table className="bid-history-table">
         <thead>
           <tr>
-            <th>N{dealerIndicator('North')}</th>
-            <th>E{dealerIndicator('East')}</th>
-            <th>S{dealerIndicator('South')}</th>
-            <th>W{dealerIndicator('West')}</th>
+            <th>North{dealerIndicator('North')}</th>
+            <th>East{dealerIndicator('East')}</th>
+            <th>South{dealerIndicator('South')}</th>
+            <th>West{dealerIndicator('West')}</th>
           </tr>
         </thead>
         <tbody>

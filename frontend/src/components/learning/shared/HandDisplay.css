@@ -59,7 +59,7 @@
 /* CRITICAL: Hardcoded - CSS variables weren't loading via @import */
 .hand-card.red .hand-card-rank,
 .hand-card.red .hand-card-suit {
-  color: #c41e3a; /* var(--card-red) */
+  color: #d32f2f; /* var(--card-red) */
 }
 
 .hand-card.black .hand-card-rank,
@@ -96,7 +96,7 @@
 }
 
 .hand-card.incorrect {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px #c41e3a; /* var(--error) */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px #d32f2f; /* var(--error) */
   opacity: 0.6;
 }
 

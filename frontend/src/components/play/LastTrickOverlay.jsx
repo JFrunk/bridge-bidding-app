@@ -14,7 +14,7 @@ export function LastTrickOverlay({ trick, trickNumber, onClose }) {
 
   // Use inline styles for guaranteed color visibility (not Tailwind classes)
   const getSuitStyle = (suit) => ({
-    color: suit === '♥' || suit === '♦' ? '#c41e3a' : '#000000'  // Red or black
+    color: suit === '♥' || suit === '♦' ? '#d32f2f' : '#000000'  // Red or black
   });
   const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
 

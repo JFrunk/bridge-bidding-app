@@ -54,7 +54,7 @@
 }
 
 .compare-table td.bad {
-  color: #c41e3a;
+  color: #d32f2f;
   font-weight: 600;
 }
 
@@ -68,7 +68,7 @@
 
 /* Suit symbol styling within cells */
 .compare-table .suit-red {
-  color: #c41e3a;
+  color: #d32f2f;
 }
 
 .compare-table .suit-black {

@@ -19,24 +19,25 @@
    CONTRACT BAR - Dark charcoal header
    ======================================== */
 
-.contract-bar {
+/* Scoped to .play-table to beat PostHandDebrief's competing .contract-bar */
+.play-table .contract-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding: 12px 16px;
-  background: var(--charcoal, #2a2a2a);
+  background: #2a2a2a;
   border-radius: 8px;
   color: #ffffff;
 }
 
-.contract-bar-left {
+.play-table .contract-bar-left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.contract-badge {
+.play-table .contract-badge {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -46,49 +47,237 @@
   font-weight: 600;
 }
 
-.contract-badge .contract-level {
+.play-table .contract-badge .contract-level {
   font-size: 20px;
   font-weight: 700;
 }
 
-.contract-badge .contract-strain {
+.play-table .contract-badge .contract-strain {
   font-size: 20px;
 }
 
-.contract-badge .contract-strain.suit-red {
-  color: var(--card-red, #c41e3a);
-}
-
-.contract-badge .contract-strain.suit-black {
-  color: #ffffff;
-}
-
-.contract-badge .contract-by {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
-  margin-left: 4px;
-}
-
-.contract-meta {
+.play-table .contract-meta {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.6);
 }
 
-.contract-bar-right {
+.play-table .contract-bar-right {
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: 14px;
 }
 
-.trump-indicator {
+.play-table .trump-indicator {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.trick-count {
+.play-table .trick-count {
   font-weight: 600;
+}
+
+/* Contract info row - "by South • Vuln: None" */
+.play-table .contract-info-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.play-table .info-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 400;
+}
+
+.play-table .info-value {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.play-table .info-separator {
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0 2px;
+}
+
+/* Trick counter - NS: 0 • EW: 0 • Need 10 • Trick 1/13 */
+.play-table .trick-counter-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #ffffff;
+}
+
+.play-table .trick-ns,
+.play-table .trick-ew,
+.play-table .trick-need,
+.play-table .trick-current {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Contract score badge (shown at end of hand) */
+.play-table .contract-score {
+  font-size: 16px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 4px;
+}
+
+.play-table .contract-score.positive {
+  color: #66bb6a;
+  background: rgba(102, 187, 106, 0.15);
+}
+
+.play-table .contract-score.negative {
+  color: #ef5350;
+  background: rgba(239, 83, 80, 0.15);
+}
+
+.play-table .contract-doubled {
+  color: #ff6b6b;
+  font-weight: 700;
+}
+
+/* Bid history button */
+.play-table .bid-history-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.play-table .bid-history-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Bid history overlay & popup */
+.bid-history-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.bid-history-popup {
+  background: #faf8f4;
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 320px;
+  max-width: 480px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.bid-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.bid-history-header h3 {
+  color: #1a1a1a;
+  margin: 0;
+  font-size: 16px;
+}
+
+.bid-history-close {
+  background: none;
+  border: none;
+  color: rgba(0, 0, 0, 0.4);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.bid-history-close:hover {
+  color: #1a1a1a;
+}
+
+/* Bid history table - light background with position headers */
+.bid-history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bid-history-table th {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+  padding: 6px 8px;
+  border-bottom: 2px solid #e0dcd4;
+  text-align: center;
+}
+
+.bid-history-table td {
+  padding: 5px 8px;
+  text-align: center;
+  border-bottom: 1px solid #eae6de;
+}
+
+.bid-history-contract {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e0dcd4;
+  color: #333;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Responsive contract bar */
+@media (max-width: 768px) {
+  .play-table .contract-bar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .play-table .contract-info-row {
+    font-size: 11px;
+  }
+
+  .play-table .trick-counter-text {
+    font-size: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .play-table .contract-badge .contract-level,
+  .play-table .contract-badge .contract-strain {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .play-table .contract-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .play-table .trick-counter-text {
+    font-size: 11px;
+    gap: 4px;
+  }
 }
 
 /* ========================================
@@ -495,7 +684,7 @@
     height: 58px;
   }
 
-  .contract-bar {
+  .play-table .contract-bar {
     flex-wrap: wrap;
     gap: 8px;
   }

@@ -354,7 +354,7 @@
 
 .replay-category-trend.down::before {
   content: '\2193'; /* Down arrow */
-  color: #c41e3a;
+  color: #d32f2f;
 }
 
 .replay-category-trend.flat::before {
@@ -375,7 +375,7 @@
 }
 
 .replay-category-score.weak {
-  color: #c41e3a;
+  color: #d32f2f;
 }
 
 /* Next Review Dates */
@@ -461,7 +461,7 @@
 }
 
 .replay-progress-dot.incorrect {
-  background: #c41e3a;
+  background: #d32f2f;
 }
 
 /* Responsive Adjustments */

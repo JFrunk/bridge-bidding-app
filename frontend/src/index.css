@@ -40,14 +40,14 @@
   --charcoal-light: #3a3a3a;
 
   /* Card Suit Colors */
-  --card-red: #c41e3a;
-  --card-black: #1a1a1a;
+  --card-red: #d32f2f;
+  --card-black: #000000;
 
   /* Bidding Box Suit Colors (high contrast on cream) */
   --bid-suit-club: #1a6b3c;
   --bid-suit-diamond: #d4540a;
-  --bid-suit-heart: #c41e3a;
-  --bid-suit-spade: #1a1a1a;
+  --bid-suit-heart: #d32f2f;
+  --bid-suit-spade: #000000;
 
   /* Bidding Box Button Colors */
   --bid-button-bg: #f0ede6;
@@ -59,7 +59,7 @@
   /* Action Button Colors */
   --bid-pass-bg: #2d8a4e;
   --bid-double-bg: #fff0f0;
-  --bid-double-border: #c41e3a;
+  --bid-double-border: #d32f2f;
   --bid-redouble-bg: #f0f4ff;
   --bid-redouble-border: #3a5fa5;
 
@@ -96,11 +96,11 @@
   --bg-card-dark: rgba(0, 0, 0, 0.2);
   --bg-overlay: rgba(0, 0, 0, 0.7);
 
-  /* Bridge Table - Map to core table green */
-  --bg-table-felt: var(--table-green);
-  --bg-table-felt-light: var(--table-green-light);
-  --bg-table-felt-dark: var(--table-green-dark);
-  --bg-table-border: var(--header-green);
+  /* Bridge Table - Unified felt green (#1a6b3c) across gameplay and review */
+  --bg-table-felt: #1a6b3c;
+  --bg-table-felt-light: #237a3d;
+  --bg-table-felt-dark: #145530;
+  --bg-table-border: #0f4a28;
 
   /* Text Colors */
   --text-primary: #ffffff;

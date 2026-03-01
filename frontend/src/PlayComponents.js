@@ -11,13 +11,13 @@
 
 import React from 'react';
 import './PlayComponents.css';
-import { TurnIndicator, CompactTurnIndicator } from './components/play/TurnIndicator';
+import { CompactTurnIndicator } from './components/play/TurnIndicator';
 import { ContractHeader } from './components/play/ContractHeader';
 import { CurrentTrickDisplay } from './components/play/CurrentTrickDisplay';
 import { LastTrickOverlay } from './components/play/LastTrickOverlay';
 import { ScoreModal } from './components/play/ScoreModal';
 import { PlayableCard as PlayableCardComponent } from './components/play/PlayableCard';
-import { VerticalPlayableCard } from './components/play/VerticalPlayableCard';
+import Card from './shared/components/Card';
 import { sortCards } from './shared/utils/cardUtils';
 
 /**
@@ -215,27 +215,6 @@ export function PlayTable({
   const showSouthHand = shouldShowHand('S', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
   const showWestHand = shouldShowHand('W', dummyPosition, declarerPosition, userIsDummy, dummyRevealed);
 
-  // DEBUG: Log visibility decisions
-  console.log('👁️ Hand Visibility Rules Applied:', {
-    dummyPosition,
-    declarerPosition,
-    userIsDummy,
-    userIsDeclarer,
-    dummyRevealed,  // CRITICAL: Track if dummy should be visible
-    visibility: {
-      'North': showNorthHand,
-      'East': showEastHand,
-      'South': showSouthHand,
-      'West': showWestHand
-    },
-    reason: {
-      'North': showNorthHand ? (dummyPosition === 'N' ? `DUMMY (revealed: ${dummyRevealed})` : userIsDummy && declarerPosition === 'N' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN',
-      'East': showEastHand ? (dummyPosition === 'E' ? `DUMMY (revealed: ${dummyRevealed})` : userIsDummy && declarerPosition === 'E' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN',
-      'South': 'USER (always visible)',
-      'West': showWestHand ? (dummyPosition === 'W' ? `DUMMY (revealed: ${dummyRevealed})` : userIsDummy && declarerPosition === 'W' ? 'DECLARER (user controls)' : 'UNKNOWN') : 'HIDDEN'
-    }
-  });
-
   // Calculate tricks for consolidated header
   const tricksNeeded = contract.level + 6;
   const declarerSide = (declarerPosition === 'N' || declarerPosition === 'S') ? 'NS' : 'EW';
@@ -258,27 +237,20 @@ export function PlayTable({
         {/* North position */}
         <div className="position position-north">
           {/* CRITICAL: Use centralized visibility rule - prevents regression bugs */}
-          {showNorthHand && !isHandComplete && (
+          {showNorthHand && !isHandComplete ? (
             <div className={dummyPosition === 'N' ? "dummy-hand" : "declarer-hand"}>
               {suitOrder.map(suit => {
                 const hand = dummyPosition === 'N' ? dummyHand : declarerHand;
-                // Extract cards array - handle both {cards: [...], position: "N"} and [...]
                 const handCards = hand?.cards || hand;
                 if (!handCards || handCards.length === 0) return null;
                 const suitCards = sortCards(handCards.filter(card => card.suit === suit));
                 return (
                   <div key={suit} className="suit-group">
                     {suitCards.map((card, index) => {
-                      // CRITICAL: Determine if this specific card is legal to play
                       const isMyTurn = dummyPosition === 'N' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
                       const isLegalCard = isCardLegalToPlay(card, handCards, current_trick);
                       const isDisabled = !isMyTurn || !isLegalCard;
-
-                      // CRITICAL: Use unique key across ALL cards (not just within suit)
-                      // Bug: Using suit-index causes React to reuse state for same index across hands
-                      // Fix: Include rank to make key truly unique per card
                       const cardKey = `north-${card.rank}-${card.suit}`;
-
                       return (
                         <PlayableCard
                           key={cardKey}
@@ -292,6 +264,8 @@ export function PlayTable({
                 );
               })}
             </div>
+          ) : !isHandComplete && (
+            <Card isHidden customScaleClass="text-sm" />
           )}
           <div className="position-label">
             North
@@ -320,19 +294,6 @@ export function PlayTable({
           )}
         </div>
 
-        {/* Show Last Trick button - only visible after at least one trick completed */}
-        {lastTrick && !isHandComplete && (
-          <div className="last-trick-button-container">
-            <button
-              className="last-trick-button"
-              onClick={showLastTrick ? onHideLastTrick : onShowLastTrick}
-              title={showLastTrick ? "Return to current trick" : "View the last completed trick"}
-            >
-              {showLastTrick ? "Current Trick" : "↶ Last Trick"}
-            </button>
-          </div>
-        )}
-
         {/* West position - Left side (standard bridge layout) */}
         <div className="position position-west">
           <div className="position-label">
@@ -341,38 +302,40 @@ export function PlayTable({
             {dummyPosition === 'W' && ' (Dummy)'}
             {declarerPosition === 'W' && userIsDummy && ' (Declarer - You control)'}
           </div>
-          {/* CRITICAL: Use centralized visibility rule - prevents regression bugs */}
-          {showWestHand && !isHandComplete && (
-            <div className={dummyPosition === 'W' ? "dummy-hand" : "declarer-hand"}>
+          {showWestHand && !isHandComplete ? (
+            <div className="ew-hand-stack">
               {suitOrder.map(suit => {
                 const hand = dummyPosition === 'W' ? dummyHand : declarerHand;
-                // Extract cards array - handle both {cards: [...], position: "W"} and [...]
                 const handCards = hand?.cards || hand;
                 if (!handCards || handCards.length === 0) return null;
                 const suitCards = sortCards(handCards.filter(card => card.suit === suit));
+                if (suitCards.length === 0) return null;
+                const isMyTurn = dummyPosition === 'W' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
                 return (
-                  <div key={suit} className="suit-group">
-                    {suitCards.map((card, index) => {
-                      // CRITICAL: Determine if this specific card is legal to play
-                      const isMyTurn = dummyPosition === 'W' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
+                  <div key={suit} className="ew-suit-row">
+                    {suitCards.map((card, idx) => {
                       const isLegalCard = isCardLegalToPlay(card, handCards, current_trick);
                       const isDisabled = !isMyTurn || !isLegalCard;
-
-                      // CRITICAL: Use unique key per card
-                      const cardKey = `west-${card.rank}-${card.suit}`;
-
+                      const clickHandler = dummyPosition === 'W' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay;
                       return (
-                        <VerticalPlayableCard
-                          key={cardKey}
-                          card={card}
-                          onClick={dummyPosition === 'W' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
-                          disabled={isDisabled}
-                        />
+                        <div key={`west-${card.rank}-${card.suit}`} className="ew-card-slot" style={{ zIndex: 10 + idx }}>
+                          <Card
+                            rank={card.rank}
+                            suit={card.suit}
+                            customScaleClass="text-sm"
+                            selectable={!isDisabled}
+                            onClick={() => clickHandler(card)}
+                          />
+                        </div>
                       );
                     })}
                   </div>
                 );
               })}
+            </div>
+          ) : !isHandComplete && (
+            <div className="ew-hand-stack">
+              <Card isHidden customScaleClass="text-sm" />
             </div>
           )}
         </div>
@@ -385,38 +348,40 @@ export function PlayTable({
             {dummyPosition === 'E' && ' (Dummy)'}
             {declarerPosition === 'E' && userIsDummy && ' (Declarer - You control)'}
           </div>
-          {/* CRITICAL: Use centralized visibility rule - prevents regression bugs */}
-          {showEastHand && !isHandComplete && (
-            <div className={dummyPosition === 'E' ? "dummy-hand" : "declarer-hand"}>
+          {showEastHand && !isHandComplete ? (
+            <div className="ew-hand-stack">
               {suitOrder.map(suit => {
                 const hand = dummyPosition === 'E' ? dummyHand : declarerHand;
-                // Extract cards array - handle both {cards: [...], position: "E"} and [...]
                 const handCards = hand?.cards || hand;
                 if (!handCards || handCards.length === 0) return null;
                 const suitCards = sortCards(handCards.filter(card => card.suit === suit));
+                if (suitCards.length === 0) return null;
+                const isMyTurn = dummyPosition === 'E' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
                 return (
-                  <div key={suit} className="suit-group">
-                    {suitCards.map((card, index) => {
-                      // CRITICAL: Determine if this specific card is legal to play
-                      const isMyTurn = dummyPosition === 'E' ? (userIsDeclarer && isDummyTurn) : isDeclarerTurn;
+                  <div key={suit} className="ew-suit-row">
+                    {suitCards.map((card, idx) => {
                       const isLegalCard = isCardLegalToPlay(card, handCards, current_trick);
                       const isDisabled = !isMyTurn || !isLegalCard;
-
-                      // CRITICAL: Use unique key per card
-                      const cardKey = `east-${card.rank}-${card.suit}`;
-
+                      const clickHandler = dummyPosition === 'E' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay;
                       return (
-                        <VerticalPlayableCard
-                          key={cardKey}
-                          card={card}
-                          onClick={dummyPosition === 'E' && userIsDeclarer ? onDummyCardPlay : onDeclarerCardPlay}
-                          disabled={isDisabled}
-                        />
+                        <div key={`east-${card.rank}-${card.suit}`} className="ew-card-slot" style={{ zIndex: 10 + idx }}>
+                          <Card
+                            rank={card.rank}
+                            suit={card.suit}
+                            customScaleClass="text-sm"
+                            selectable={!isDisabled}
+                            onClick={() => clickHandler(card)}
+                          />
+                        </div>
                       );
                     })}
                   </div>
                 );
               })}
+            </div>
+          ) : !isHandComplete && (
+            <div className="ew-hand-stack">
+              <Card isHidden customScaleClass="text-sm" />
             </div>
           )}
         </div>
@@ -428,11 +393,11 @@ export function PlayTable({
             <CompactTurnIndicator position="S" isActive={next_to_play === 'S' && !userIsDummy} />
             {userIsDummy && ' - Dummy'}
           </div>
-          {/* CRITICAL FIX: Show dummy hand if South is dummy, otherwise show user hand */}
+          {/* CRITICAL FIX: Show South's hand - try dummyHand when dummy, fallback to userHand */}
           {(() => {
-            // Determine which hand to display
-            const hand = dummyPosition === 'S' ? dummyHand : userHand;
-            // Extract cards array - handle both {cards: [...]} and [...] formats
+            // When South is dummy, try dummyHand first, but always fallback to userHand
+            // dummyHand can be null before dummy is revealed, but userHand always has South's cards
+            const hand = (dummyPosition === 'S' ? (dummyHand || userHand) : userHand);
             const handCards = hand?.cards || hand;
 
             if (!handCards || handCards.length === 0) return null;
@@ -467,6 +432,24 @@ export function PlayTable({
             );
           })()}
         </div>
+
+      </div>
+
+      {/* Action Bar - Below play area */}
+      <div className="action-bar">
+        <div className="action-btns">
+          {lastTrick && !isHandComplete && (
+            <button
+              className="action-btn secondary"
+              onClick={showLastTrick ? onHideLastTrick : onShowLastTrick}
+            >
+              {showLastTrick ? 'Current Trick' : '↶ Last Trick'}
+            </button>
+          )}
+        </div>
+        <div className="action-status">
+          {/* Status text can go here if needed */}
+        </div>
       </div>
     </div>
   );
@@ -481,5 +464,5 @@ export function ScoreDisplay({ scoreData, onClose, onDealNewHand, onShowLearning
   return <ScoreModal isOpen={!!scoreData} onClose={onClose} scoreData={scoreData} onDealNewHand={onDealNewHand} onShowLearningDashboard={onShowLearningDashboard} onPlayAnotherHand={onPlayAnotherHand} onReplayHand={onReplayHand} onReviewHand={onReviewHand} />;
 }
 
-// Export TurnIndicator components for use in other files
-export { TurnIndicator, CompactTurnIndicator };
+// Export CompactTurnIndicator for use in other files
+export { CompactTurnIndicator };

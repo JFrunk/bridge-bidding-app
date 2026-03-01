@@ -491,7 +491,7 @@ body {
 /* Red suits (hearts, diamonds) */
 .card.red .rank,
 .card.red .suit-symbol {
-  color: #c41e3a;
+  color: #d32f2f;
 }
 
 /* Black suits (spades, clubs) */
@@ -1950,7 +1950,8 @@ html, body {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 60px);  /* Full viewport minus nav header */
-  overflow: hidden;
+  overflow-y: auto;  /* Allow scroll as safety net — prevents South clipping */
+  overflow-x: hidden;
   /* Full width container with padding */
   width: 100%;
   padding: 0 16px;
@@ -2371,7 +2372,7 @@ html, body {
 }
 
 .feedback-icon.poor {
-  background: #c41e3a;
+  background: #d32f2f;
   color: white;
 }
 

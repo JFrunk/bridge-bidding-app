@@ -59,9 +59,9 @@
 
 /* Wrong answer state */
 .choice-btn.wrong {
-  border-color: #c41e3a;
+  border-color: #d32f2f;
   background: rgba(196, 30, 58, 0.06);
-  color: #c41e3a;
+  color: #d32f2f;
   text-decoration: line-through;
 }
 
@@ -74,7 +74,7 @@
 
 /* Suit symbol colors */
 .choice-btn .suit-red {
-  color: #c41e3a;
+  color: #d32f2f;
 }
 
 .choice-btn .suit-black {
@@ -83,7 +83,7 @@
 
 /* Preserve suit colors in correct state */
 .choice-btn.correct .suit-red {
-  color: #c41e3a;
+  color: #d32f2f;
 }
 
 .choice-btn.correct .suit-black {

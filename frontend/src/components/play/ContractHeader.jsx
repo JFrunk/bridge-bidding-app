@@ -14,7 +14,7 @@ import "../../styles/PlayScreen.css";  // Import contract-bar styles
  *
  * CRITICAL TEXT COLOR RULES:
  * - Spades ♠ / Clubs ♣ / NT: Text must be WHITE (for dark header) or BLACK (for light)
- * - Hearts ♥ / Diamonds ♦: Text must be RED (#c41e3a)
+ * - Hearts ♥ / Diamonds ♦: Text must be RED (#d32f2f)
  *
  * Uses shared BiddingTableGrid component for bid history popup (REUSE!)
  */

@@ -144,7 +144,7 @@
 }
 
 .stat-trend.declining {
-  color: #c41e3a;
+  color: #d32f2f;
 }
 
 /* Section Container */
@@ -255,7 +255,7 @@
 }
 
 .convention-pct.weak {
-  color: #c41e3a;
+  color: #d32f2f;
 }
 
 /* Recent Activity */
@@ -311,7 +311,7 @@
 }
 
 .activity-score.weak {
-  color: #c41e3a;
+  color: #d32f2f;
 }
 
 .activity-detail {
@@ -348,7 +348,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #c41e3a;
+  background: #d32f2f;
   color: white;
   padding: 4px 10px;
   border-radius: 12px;

@@ -19,7 +19,7 @@
   --text-primary: #333;
   --text-secondary: #666;
   --text-muted: #999;
-  --card-red: #c41e3a;
+  --card-red: #d32f2f;
 }
 
 .coach-column.hidden {
@@ -400,7 +400,7 @@
 
 /* Suit colors for My Hand section */
 .my-hand-suits .suit-red {
-  color: var(--card-red, #c41e3a);
+  color: var(--card-red, #d32f2f);
 }
 
 .my-hand-suits .suit-black {

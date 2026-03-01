@@ -47,8 +47,8 @@
 
 .skill-pct.weak,
 .skill-fill.weak {
-  color: #c41e3a;
-  background: #c41e3a;
+  color: #d32f2f;
+  background: #d32f2f;
 }
 
 /* Fix: skill-pct should not have background */
