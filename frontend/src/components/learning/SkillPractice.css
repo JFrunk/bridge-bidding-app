@@ -176,13 +176,12 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* Hand Display */
+/* Hand Display - compact, no greedy vertical expansion */
 .hand-display-area {
-  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 15px 20px;
+  padding: 10px 20px;
 }
 
 .hand-card {
@@ -688,7 +687,7 @@
 .play-deal-display {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
   width: 100%;
   max-width: 800px;
 }
@@ -722,12 +721,12 @@
   border-left: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Dual Hand Display - Side by Side */
+/* Dual Hand Display - North on top, South on bottom (both horizontal) */
 .dual-hand-display {
   display: flex;
-  justify-content: center;
-  gap: 30px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .dual-hand-display .hand-card {
@@ -888,17 +887,6 @@
 
   .bid-shortcuts {
     max-width: 300px;
-  }
-
-  /* Play skill responsive */
-  .dual-hand-display {
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .dual-hand-display .hand-card {
-    min-width: auto;
-    width: 100%;
   }
 
   .contract-info {

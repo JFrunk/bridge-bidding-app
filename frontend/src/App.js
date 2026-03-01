@@ -49,6 +49,17 @@ import { ClaimModal } from './components/play/ClaimModal';
 import { PrivacyPage } from './components/legal/PrivacyPage';
 import { AboutPage } from './components/legal/AboutPage';
 import { Footer } from './components/navigation/Footer';
+import {
+  initializeAnalytics,
+  trackDealHand,
+  trackBidMade,
+  trackCardPlayed,
+  trackHandComplete,
+  trackBiddingComplete,
+  trackModeChange,
+  trackDashboardOpen,
+  trackScenarioSelected,
+} from './services/analytics';
 
 // API URL configuration - uses environment variable in production, localhost in development
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -477,6 +488,11 @@ function App() {
   const isRoomGameActive = useMemo(() => {
     return inRoom && (roomGamePhase === 'bidding' || roomGamePhase === 'playing');
   }, [inRoom, roomGamePhase]);
+
+  // Initialize Google Analytics on mount
+  useEffect(() => {
+    initializeAnalytics();
+  }, []);
 
   // AUTO-HIDE lobby when game becomes active (view orchestration)
   // Also sync local state from room state when in room mode
@@ -1123,6 +1139,7 @@ ${otherCommands}`;
           promptForRegistration();
         } else {
           setShowLearningDashboard(true);
+          trackDashboardOpen();
         }
         break;
 
@@ -1374,15 +1391,16 @@ ${otherCommands}`;
           }
         }
 
-        // === NEW FIX: Update South's hand from visible_hands ===
-        // Critical for when South is declarer - ensures user's own hand is visible
+        // === Update South's hand from visible_hands (only if non-empty) ===
+        // Guard: never overwrite an existing hand with empty data
         if (state.visible_hands && state.visible_hands['S']) {
-          const southCards = state.visible_hands['S'].cards || [];
-          console.log('👁️ Updating South hand from visible_hands (startPlayPhase):', {
-            cardCount: southCards.length,
-            visible_hands_keys: Object.keys(state.visible_hands)
-          });
-          setHand(southCards);
+          const southCards = state.visible_hands['S'].cards || state.visible_hands['S'];
+          if (Array.isArray(southCards) && southCards.length > 0) {
+            console.log('👁️ Updating South hand from visible_hands (startPlayPhase):', {
+              cardCount: southCards.length
+            });
+            setHand(southCards);
+          }
         }
       }
 
@@ -1485,6 +1503,9 @@ ${otherCommands}`;
       const data = await response.json();
       console.log('Card played:', data);
 
+      // Track user card play
+      trackCardPlayed(true);
+
       // Update hand (remove played card)
       setHand(prevHand => prevHand.filter(c =>
         !(c.rank === card.rank && c.suit === card.suit)
@@ -1544,6 +1565,11 @@ ${otherCommands}`;
               const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
               if (saved) scoreData._saved = true;
               setScoreData(scoreData);
+
+              // Track hand completion
+              const contractMade = scoreData.declarerMade || scoreData.declarer_made;
+              const tricksWon = scoreData.tricks_won_declarer || scoreData.declarerTricks || 0;
+              trackHandComplete(scoreData.contract, contractMade, tricksWon);
             } else {
               const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
               console.error('❌ Failed to get score:', errorData);
@@ -1696,6 +1722,11 @@ ${otherCommands}`;
               const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
               if (saved) scoreData._saved = true;
               setScoreData(scoreData);
+
+              // Track hand completion
+              const contractMade = scoreData.declarerMade || scoreData.declarer_made;
+              const tricksWon = scoreData.tricks_won_declarer || scoreData.declarerTricks || 0;
+              trackHandComplete(scoreData.contract, contractMade, tricksWon);
             } else {
               const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
               console.error('❌ Failed to get score:', errorData);
@@ -1854,6 +1885,11 @@ ${otherCommands}`;
               const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
               if (saved) scoreData._saved = true;
               setScoreData(scoreData);
+
+              // Track hand completion
+              const contractMade = scoreData.declarerMade || scoreData.declarer_made;
+              const tricksWon = scoreData.tricks_won_declarer || scoreData.declarerTricks || 0;
+              trackHandComplete(scoreData.contract, contractMade, tricksWon);
             } else {
               const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
               console.error('❌ Failed to get score:', errorData);
@@ -2165,6 +2201,9 @@ ${otherCommands}`;
       resetAuction(data, !shouldAiBid);
       setIsInitializing(false); // Ensure we're not in initializing state for manual deals
       setActiveConvention(null); // Exit convention mode when dealing random hand
+
+      // Track deal hand event
+      trackDealHand('random');
     } catch (err) { setError("Could not connect to server to deal."); }
   };
 
@@ -2239,14 +2278,15 @@ ${otherCommands}`;
           }
         }
 
-        // === NEW FIX: Update South's hand from visible_hands ===
+        // === Update South's hand from visible_hands (only if non-empty) ===
         if (state.visible_hands && state.visible_hands['S']) {
-          const southCards = state.visible_hands['S'].cards || [];
-          console.log('👁️ Updating South hand from visible_hands (playRandomHand):', {
-            cardCount: southCards.length,
-            visible_hands_keys: Object.keys(state.visible_hands)
-          });
-          setHand(southCards);
+          const southCards = state.visible_hands['S'].cards || state.visible_hands['S'];
+          if (Array.isArray(southCards) && southCards.length > 0) {
+            console.log('👁️ Updating South hand from visible_hands (playRandomHand):', {
+              cardCount: southCards.length
+            });
+            setHand(southCards);
+          }
         }
       }
 
@@ -2310,14 +2350,15 @@ ${otherCommands}`;
           }
         }
 
-        // === NEW FIX: Update South's hand from visible_hands ===
+        // === Update South's hand from visible_hands (only if non-empty) ===
         if (state.visible_hands && state.visible_hands['S']) {
-          const southCards = state.visible_hands['S'].cards || [];
-          console.log('👁️ Updating South hand from visible_hands (replayCurrentHand):', {
-            cardCount: southCards.length,
-            visible_hands_keys: Object.keys(state.visible_hands)
-          });
-          setHand(southCards);
+          const southCards = state.visible_hands['S'].cards || state.visible_hands['S'];
+          if (Array.isArray(southCards) && southCards.length > 0) {
+            console.log('👁️ Updating South hand from visible_hands (replayCurrentHand):', {
+              cardCount: southCards.length
+            });
+            setHand(southCards);
+          }
         }
       }
 
@@ -2409,6 +2450,10 @@ ${otherCommands}`;
       resetAuction(data, !shouldAiBid);
       setIsInitializing(false);
       setActiveConvention(scenarioName); // Enter convention mode
+
+      // Track scenario selection
+      trackScenarioSelected(scenarioName);
+      trackDealHand('scenario');
     } catch (err) { setError("Could not load scenario from server."); }
   };
 
@@ -2586,6 +2631,11 @@ ${otherCommands}`;
       }
       if (data.beliefs) setBeliefs(data.beliefs);
       setLastUserBid(bid);
+
+      // Track user bid event
+      const bidScore = data.feedback?.score ?? null;
+      trackBidMade(bid, true, bidScore);
+
       // Only show bid evaluation feedback in coached mode
       if (sessionMode === 'coached') {
         setBidFeedback(data.feedback || null);
@@ -2871,6 +2921,10 @@ ${otherCommands}`;
         setAuction(prev => [...prev, data]);
         setNextBidder(data.next_bidder || null);
         if (data.beliefs) setBeliefs(data.beliefs);
+
+        // Track AI bid event
+        trackBidMade(data.bid, false, null);
+
         isAiBiddingInProgress.current = false;
         console.log('✅ Auction updated, next_bidder:', data.next_bidder);
       } catch (err) {
@@ -2999,14 +3053,15 @@ ${otherCommands}`;
           }
         }
 
-        // === NEW FIX: Update South's hand from visible_hands ===
+        // === Update South's hand from visible_hands (only if non-empty) ===
         if (state.visible_hands && state.visible_hands['S']) {
-          const southCards = state.visible_hands['S'].cards || [];
-          console.log('👁️ Updating South hand from visible_hands (AI loop):', {
-            cardCount: southCards.length,
-            visible_hands_keys: Object.keys(state.visible_hands)
-          });
-          setHand(southCards);
+          const southCards = state.visible_hands['S'].cards || state.visible_hands['S'];
+          if (Array.isArray(southCards) && southCards.length > 0) {
+            console.log('👁️ Updating South hand from visible_hands (AI loop):', {
+              cardCount: southCards.length
+            });
+            setHand(southCards);
+          }
         }
 
         // Check if play is complete (13 tricks)
@@ -3155,6 +3210,9 @@ ${otherCommands}`;
 
         const playData = await playResponse.json();
         console.log('AI played:', playData);
+
+        // Track AI card play
+        trackCardPlayed(false);
 
         // Fetch updated play state to show the card that was just played
         if (signal.aborted) return;
@@ -3358,8 +3416,8 @@ ${otherCommands}`;
           onModuleSelect={handleNavModuleSelect}
           showTitle={!showModeSelector}
         >
-          {/* Partner Practice button - create or join room */}
-          {!inRoom && (
+          {/* Partner Practice button - dev only (not yet functional in production) */}
+          {!inRoom && process.env.NODE_ENV === 'development' && (
             <button
               className="nav-utility-button nav-join-button"
               onClick={() => setShowJoinRoomModal(true)}
@@ -3564,6 +3622,7 @@ ${otherCommands}`;
             mode={sessionMode}
             onModeChange={(mode) => {
               setSessionMode(mode);
+              trackModeChange(mode);
               // Show/hide coach panel based on mode
               setShowCoachPanel(mode === 'coached');
             }}
@@ -3868,6 +3927,7 @@ ${otherCommands}`;
                 promptForRegistration();
               } else {
                 setShowLearningDashboard(true);
+          trackDashboardOpen();
               }
             }}
             onDealNewHand={dealNewHand}
@@ -4132,6 +4192,7 @@ ${otherCommands}`;
           onViewProgress={handReviewSource === 'post-hand' ? () => {
             handleCloseReviewPage();
             setShowLearningDashboard(true);
+          trackDashboardOpen();
           } : null}
         />
       )}
