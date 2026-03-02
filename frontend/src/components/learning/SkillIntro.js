@@ -560,19 +560,19 @@ This lets you find fits efficiently without raising the bidding level.`
   },
 
   dustbin_1nt_response: {
-    title: '1NT Response ("Dustbin")',
-    subtitle: 'The catch-all response showing 6-10 points',
+    title: '1NT Response to a Major Opening ("Dustbin")',
+    subtitle: 'The catch-all response to partner\'s 1♥/1♠ opening showing 6-10 points',
     sections: [
       {
         heading: 'What is the Dustbin 1NT?',
-        content: `1NT response is called the "dustbin" because it's where you put all hands that don't fit elsewhere:
-• Partner opens 1♥/1♠ → You bid 1NT
+        content: `When partner opens 1♥ or 1♠, the 1NT response is called the "dustbin" because it's where you put all hands that don't fit elsewhere:
+• Partner opens 1♥/1♠ → You respond 1NT
 
-This shows 6-10 HCP, no fit, no biddable suit at the 1-level.`
+This shows 6-10 HCP, no fit for partner's major, and no biddable suit at the 1-level.`
       },
       {
         heading: 'When to Respond 1NT',
-        content: `Bid 1NT when you have:
+        content: `After partner opens 1♥ or 1♠, bid 1NT when you have:
 • 6-10 HCP (constructive values)
 • Fewer than 3-card support for partner's major
 • No 4-card suit you can bid at the 1-level
@@ -582,24 +582,24 @@ It's the "leftover" response - use it when nothing else fits.`
       },
       {
         heading: 'What 1NT Tells Partner',
-        content: `Your 1NT response tells partner:
+        content: `Your 1NT response to their major opening tells partner:
 1. You have 6-10 HCP (limited strength)
-2. You don't have support for my suit
+2. You don't have support for their major suit
 3. You don't have a biddable 4-card suit at the 1-level
-4. I should probably pass or rebid my suit
+4. They should probably pass or rebid their suit
 
 This is a LIMIT bid - partner can pass with a minimum opening.`
       },
       {
         heading: 'Example Hands',
         content: `Partner opens 1♠:
-• ♠ 8-3  ♥ K-Q-7  ♦ J-8-6-3  ♣ Q-10-4-2 → Bid 1NT (no spade fit, can't bid 2♦)
-• ♠ J-7  ♥ A-Q-8-6  ♦ 9-5-3  ♣ K-J-4-2 → Bid 1NT (8 HCP, no 4-card suit at 1-level)
+• ♠ 8-3  ♥ K-Q-7  ♦ J-8-6-3  ♣ Q-10-4-2 → Respond 1NT (no spade fit, can't bid 2♦)
+• ♠ J-7  ♥ A-Q-8-6  ♦ 9-5-3  ♣ K-J-4-2 → Respond 1NT (8 HCP, no 4-card suit at 1-level)
 
-1NT is the most flexible response - it keeps the auction low.`
+1NT keeps the auction low while showing constructive values.`
       }
     ],
-    practice_tip: '1NT response = 6-10 HCP, no fit, no suit to bid at 1-level. This is your "catch-all" when nothing else fits.'
+    practice_tip: 'After partner opens 1♥/1♠, respond 1NT with 6-10 HCP, no fit, and no suit to bid at 1-level. This is your "catch-all" when nothing else fits.'
   },
 
   game_raise: {
@@ -1368,12 +1368,12 @@ const SkillIntro = ({ skillId, skillName, onStart, onBack }) => {
         {content.sections.map((section, index) => (
           <div key={index} className="intro-section">
             <h3>{section.heading}</h3>
-            <p className="section-content">
+            <div className="section-content">
               <TermHighlight
                 text={section.content}
                 onOpenGlossary={handleOpenGlossary}
               />
-            </p>
+            </div>
           </div>
         ))}
       </div>
