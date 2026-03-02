@@ -14,8 +14,7 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-# Database abstraction layer (supports SQLite locally, PostgreSQL in production)
-from db import get_connection, is_postgres, init_database
+from db import get_connection, init_database
 from engine.hand import Hand, Card
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
 from engine.ai.conventions.preempts import PreemptConvention
@@ -221,56 +220,14 @@ else:
 
 play_engine = PlayEngine()
 play_ai = SimplePlayAI()  # Default AI (backward compatibility)
-session_manager = SessionManager('bridge.db')  # Session management
+session_manager = SessionManager()
 
 # Initialize session state manager (replaces global variables)
 state_manager = SessionStateManager()
 
 
-def ensure_bidding_tables():
-    """Ensure bidding_decisions table exists (safe to call repeatedly)."""
-    try:
-        conn = sqlite3.connect('bridge.db')
-        cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS bidding_decisions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                hand_analysis_id INTEGER,
-                user_id INTEGER NOT NULL,
-                session_id TEXT,
-                bid_number INTEGER NOT NULL,
-                position TEXT NOT NULL,
-                dealer TEXT,
-                vulnerability TEXT,
-                user_bid TEXT NOT NULL,
-                optimal_bid TEXT NOT NULL,
-                auction_before TEXT,
-                correctness TEXT NOT NULL,
-                score REAL NOT NULL,
-                impact TEXT,
-                error_category TEXT,
-                error_subcategory TEXT,
-                key_concept TEXT,
-                difficulty TEXT,
-                helpful_hint TEXT,
-                reasoning TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id)
-            )
-        """)
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_bidding_decisions_user_time
-                ON bidding_decisions(user_id, timestamp DESC)
-        """)
-        conn.commit()
-        conn.close()
-        print("✅ bidding_decisions table ready")
-    except Exception as e:
-        print(f"⚠️ Could not ensure bidding tables: {e}")
 
 
-# Ensure bidding tables exist on import (covers both gunicorn and __main__)
-ensure_bidding_tables()
 app.config['STATE_MANAGER'] = state_manager
 
 # REMOVED: Global state variables are now per-session
@@ -1992,7 +1949,7 @@ def evaluate_bid():
 
             # Store in database for analytics (V2 feedback uses same DB schema)
             from engine.feedback.bidding_feedback import get_feedback_generator, BiddingFeedback, CorrectnessLevel, ImpactLevel
-            feedback_generator = get_feedback_generator('bridge.db')
+            feedback_generator = get_feedback_generator()
 
             # Convert V2 feedback to V1 format for storage compatibility
             feedback = BiddingFeedback(
@@ -2158,8 +2115,7 @@ def evaluate_bid():
 
             # Generate structured feedback using BiddingFeedbackGenerator
             from engine.feedback.bidding_feedback import get_feedback_generator
-            # Use 'bridge.db' (works from root via symlink to backend/bridge.db)
-            feedback_generator = get_feedback_generator('bridge.db')
+            feedback_generator = get_feedback_generator()
 
             # Get hand_number from game session (1-indexed for display)
             hand_number = state.game_session.hands_completed + 1 if state.game_session else None
@@ -4045,7 +4001,7 @@ def dds_health():
                 GROUP BY ai_level
             """, (cutoff_time,))
 
-            by_level = {row[0]: {'ai_level': row[0], 'plays': row[1], 'avg_solve_time_ms': row[2], 'fallback_rate': row[3], 'fallback_count': row[4]} for row in cursor.fetchall()}
+            by_level = {row['ai_level']: {'ai_level': row['ai_level'], 'plays': row['plays'], 'avg_solve_time_ms': row['avg_solve_time_ms'], 'fallback_rate': row['fallback_rate'], 'fallback_count': row['fallback_count']} for row in cursor.fetchall()}
 
             # Recent plays (last 10)
             cursor.execute("""
@@ -4062,7 +4018,7 @@ def dds_health():
                 LIMIT 10
             """)
 
-            recent_plays = [{'timestamp': row[0], 'position': row[1], 'ai_level': row[2], 'card_played': row[3], 'solve_time_ms': row[4], 'used_fallback': row[5], 'contract': row[6]} for row in cursor.fetchall()]
+            recent_plays = [{'timestamp': row['timestamp'], 'position': row['position'], 'ai_level': row['ai_level'], 'card_played': row['card_played'], 'solve_time_ms': row['solve_time_ms'], 'used_fallback': row['used_fallback'], 'contract': row['contract']} for row in cursor.fetchall()]
 
         return jsonify({
             "dds_available": DDS_AVAILABLE and PLATFORM_ALLOWS_DDS,
@@ -4743,7 +4699,7 @@ def ai_quality_summary():
             cursor = conn.cursor()
 
             # Daily play counts for trend analysis
-            # Using CAST for date extraction (works in both SQLite and PostgreSQL)
+            # Using CAST for date extraction
             cursor.execute("""
                 SELECT
                     COUNT(*) as plays,
@@ -4755,7 +4711,7 @@ def ai_quality_summary():
             """, (cutoff_30_days,))
 
             row = cursor.fetchone()
-            daily_trends = [{'plays': row[0], 'sessions': row[1], 'avg_solve_time_ms': row[2], 'fallback_rate': row[3]}] if row else []
+            daily_trends = [{'plays': row['plays'], 'sessions': row['sessions'], 'avg_solve_time_ms': row['avg_solve_time_ms'], 'fallback_rate': row['fallback_rate']}] if row else []
 
             # Contract type performance
             cursor.execute("""
@@ -4771,7 +4727,7 @@ def ai_quality_summary():
                 LIMIT 20
             """)
 
-            by_contract = [{'contract': row[0], 'plays': row[1], 'avg_solve_time_ms': row[2], 'fallback_rate': row[3]} for row in cursor.fetchall()]
+            by_contract = [{'contract': row['contract'], 'plays': row['plays'], 'avg_solve_time_ms': row['avg_solve_time_ms'], 'fallback_rate': row['fallback_rate']} for row in cursor.fetchall()]
 
             # All-time stats (use simple query instead of view for compatibility)
             cursor.execute("""
@@ -4783,7 +4739,7 @@ def ai_quality_summary():
             """)
 
             row = cursor.fetchone()
-            all_time = {'total_plays': row[0], 'avg_solve_time_ms': row[1], 'overall_fallback_rate': row[2]} if row else {}
+            all_time = {'total_plays': row['total_plays'], 'avg_solve_time_ms': row['avg_solve_time_ms'], 'overall_fallback_rate': row['overall_fallback_rate']} if row else {}
 
         # Calculate quality score (0-100)
         # Based on: low fallback rate, reasonable solve times, consistent play
@@ -4931,19 +4887,19 @@ def simple_login():
                 cursor.execute('''
                     SELECT experience_level, unlock_all_content, experience_id, experience_set_at
                     FROM users WHERE id = ?
-                ''', (existing_user[0],))
+                ''', (existing_user['id'],))
                 exp_row = cursor.fetchone()
 
                 return jsonify({
-                    "user_id": existing_user[0],
-                    "email": existing_user[1],
-                    "phone": existing_user[2],
-                    "display_name": existing_user[3],
+                    "user_id": existing_user['id'],
+                    "email": existing_user['email'],
+                    "phone": existing_user['phone'],
+                    "display_name": existing_user['display_name'],
                     "created": False,
-                    "experience_level": exp_row[0] if exp_row else None,
-                    "unlock_all_content": bool(exp_row[1]) if exp_row and exp_row[1] is not None else False,
-                    "experience_id": exp_row[2] if exp_row else None,
-                    "experience_set_at": exp_row[3] if exp_row else None
+                    "experience_level": exp_row['experience_level'] if exp_row else None,
+                    "unlock_all_content": bool(exp_row['unlock_all_content']) if exp_row and exp_row['unlock_all_content'] is not None else False,
+                    "experience_id": exp_row['experience_id'] if exp_row else None,
+                    "experience_set_at": exp_row['experience_set_at'] if exp_row else None
                 })
 
             # User doesn't exist
@@ -5106,10 +5062,10 @@ def get_experience_level():
                 return jsonify({"error": "User not found"}), 404
 
             return jsonify({
-                "experience_level": row[0],
-                "unlock_all_content": bool(row[1]) if row[1] is not None else False,
-                "experience_id": row[2],
-                "experience_set_at": row[3]
+                "experience_level": row['experience_level'],
+                "unlock_all_content": bool(row['unlock_all_content']) if row['unlock_all_content'] is not None else False,
+                "experience_id": row['experience_id'],
+                "experience_set_at": row['experience_set_at']
             })
 
     except Exception as e:
