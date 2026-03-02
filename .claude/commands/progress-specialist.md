@@ -37,7 +37,7 @@ You are working on the analytics dashboard, progress visualization, and hand rev
 
 - **Code Context:** `backend/engine/learning/CLAUDE.md` - Learning system architecture
 - **Frontend Context:** `frontend/CLAUDE.md` - Frontend architecture
-- **Design Standards:** `.claude/UI_UX_DESIGN_STANDARDS.md` - UI/UX rules
+- **Design Standards:** `.claude/UI_STANDARDS.md` - UI/UX rules
 - **Differential Analyzer:** `docs/features/DIFFERENTIAL_ANALYZER_IMPLEMENTATION.md`
 
 ## Session Workflow

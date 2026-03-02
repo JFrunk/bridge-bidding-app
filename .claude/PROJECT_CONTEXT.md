@@ -477,13 +477,13 @@ python3 .claude/scripts/documentation_coverage_report.py --html
 
 ### UI/UX Design Authority
 
-**Primary Document**: `.claude/UI_UX_DESIGN_STANDARDS.md`
+**Primary Document**: `.claude/UI_STANDARDS.md`
 
 This document is the **authoritative source** for all UI/UX decisions in the Bridge Bidding App.
 
 ### When to Reference UI/UX Standards
 
-**ALWAYS consult UI_UX_DESIGN_STANDARDS.md when:**
+**ALWAYS consult UI_STANDARDS.md when:**
 - [ ] Creating new UI components
 - [ ] Modifying existing UI components
 - [ ] Adding interactive elements (buttons, cards, modals)
@@ -528,7 +528,7 @@ The UI/UX standards incorporate best practices from:
 ### UI/UX Code Review Checklist
 
 Before merging any UI code, verify:
-- [ ] Follows color palette from UI_UX_DESIGN_STANDARDS.md
+- [ ] Follows color palette from UI_STANDARDS.md
 - [ ] Responsive at all breakpoints (480px, 768px, 900px, 1200px)
 - [ ] Accessible (keyboard nav, ARIA labels, contrast ratios)
 - [ ] Consistent spacing (uses --space-N variables)
@@ -542,7 +542,7 @@ Before merging any UI code, verify:
 
 ### UI/UX Implementation Process
 
-1. **Check UI_UX_DESIGN_STANDARDS.md first** - Is there a pattern for this?
+1. **Check UI_STANDARDS.md first** - Is there a pattern for this?
 2. **Reference INTERFACE_IMPROVEMENTS_PLAN.md** - Is this feature planned?
 3. **Use existing components** - Don't recreate if it exists
 4. **Copy component examples** from standards document
@@ -564,7 +564,7 @@ Before merging any UI code, verify:
 
 ### Green Flags (UI/UX)
 
-✅ Consulting UI_UX_DESIGN_STANDARDS.md before implementation
+✅ Consulting UI_STANDARDS.md before implementation
 ✅ Using CSS variables for all colors and spacing
 ✅ Testing at all breakpoints
 ✅ Adding ARIA labels and keyboard support
@@ -608,7 +608,7 @@ Before merging any UI code, verify:
 - `ContractDisplay` - Contract info
 - `ScoreDisplay` - Final score modal
 
-**To Create** (examples in UI_UX_DESIGN_STANDARDS.md):
+**To Create** (examples in UI_STANDARDS.md):
 - `TurnIndicator` - Whose turn visualization
 - `ContractGoalTracker` - Progress toward contract
 - `LegalPlayIndicator` - Legal/illegal play highlighting
@@ -617,7 +617,7 @@ Before merging any UI code, verify:
 
 ### Resources
 
-- **UI/UX Standards**: `.claude/UI_UX_DESIGN_STANDARDS.md` (READ BEFORE ANY UI WORK)
+- **UI/UX Standards**: `.claude/UI_STANDARDS.md` (READ BEFORE ANY UI WORK)
 - **Implementation Plan**: `docs/features/INTERFACE_IMPROVEMENTS_PLAN.md`
 - **Current Components**: `frontend/src/PlayComponents.js` and `.css`
 

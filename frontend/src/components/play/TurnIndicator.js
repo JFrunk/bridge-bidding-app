@@ -1,6 +1,6 @@
 /**
  * TurnIndicator.js - Shows whose turn it is with clear visual indicator
- * Following UI/UX Design Standards - see .claude/UI_UX_DESIGN_STANDARDS.md
+ * Following UI/UX Design Standards - see .claude/UI_STANDARDS.md
  */
 
 import React from 'react';

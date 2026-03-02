@@ -24,7 +24,7 @@ You are working on the React user interface. Your domain includes:
 ## Reference Documents
 
 - **Code Context:** `frontend/CLAUDE.md` - Frontend architecture
-- **Design Standards:** `.claude/UI_UX_DESIGN_STANDARDS.md` - UI/UX design rules
+- **Design Standards:** `.claude/UI_STANDARDS.md` - UI/UX design rules
 - **Play Rules:** `.claude/BRIDGE_PLAY_RULES.md` - Online single-player control rules
 
 ## Session Workflow
@@ -33,7 +33,7 @@ You are working on the React user interface. Your domain includes:
 
 ### 1. Investigate First (NO branch yet)
 - Read `frontend/CLAUDE.md` for architecture overview
-- Read `.claude/UI_UX_DESIGN_STANDARDS.md` for design rules
+- Read `.claude/UI_STANDARDS.md` for design rules
 - Check `docs/domains/frontend/bug-fixes/` for similar past issues
 - Analyze the issue - inspect components, check styling
 - Determine: Is this a **code fix** or just **analysis/explanation**?

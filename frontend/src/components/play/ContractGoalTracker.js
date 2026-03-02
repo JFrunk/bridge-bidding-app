@@ -1,6 +1,6 @@
 /**
  * ContractGoalTracker.js - Shows progress toward making contract
- * Following UI/UX Design Standards - see .claude/UI_UX_DESIGN_STANDARDS.md
+ * Following UI/UX Design Standards - see .claude/UI_STANDARDS.md
  */
 
 import React from 'react';

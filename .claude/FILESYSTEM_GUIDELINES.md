@@ -52,7 +52,7 @@
 ├── FILESYSTEM_GUIDELINES.md        # This file
 ├── ARCHITECTURAL_DECISION_FRAMEWORK.md  # Review process
 ├── HOW_TO_ENSURE_CLAUDE_FOLLOWS_STANDARDS.md
-├── UI_UX_DESIGN_STANDARDS.md
+├── UI_STANDARDS.md
 ├── DOCUMENTATION_PRACTICES.md
 ├── scripts/                        # Automation scripts
 │   ├── check_filesystem_health.py

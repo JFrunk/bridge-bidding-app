@@ -82,7 +82,7 @@ pytest [test_file] -v
 - [ ] Loading states implemented
 - [ ] Error messages are user-friendly
 
-Reference: `.claude/UI_UX_DESIGN_STANDARDS.md`
+Reference: `.claude/UI_STANDARDS.md`
 
 ---
 

@@ -1,6 +1,6 @@
 /**
  * PlayComponents.css - Styling for card play UI
- * Following UI/UX Design Standards - see .claude/UI_UX_DESIGN_STANDARDS.md
+ * Following UI/UX Design Standards - see .claude/UI_STANDARDS.md
  */
 
 /* ========================================
@@ -282,7 +282,7 @@
 
 .tricks-count {
   display: flex;
-  gap: 20px;
+  gap: var(--space-5);
   justify-content: center;
   font-size: 1.1em;
 }
@@ -302,7 +302,7 @@
   display: flex;
   justify-content: space-around;
   margin-bottom: 30px;
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 .play-area {
@@ -318,7 +318,7 @@
   grid-template-columns: 1fr auto 1fr;
   grid-template-rows: auto minmax(140px, 1fr) auto;
   column-gap: clamp(4px, 1.5vw, 10px);
-  row-gap: 12px;
+  row-gap: var(--space-3);
   padding: 15px;
   background-color: var(--bg-table-felt);
   border: 3px solid var(--bg-table-border);
@@ -374,7 +374,7 @@
   letter-spacing: 0.8px;
   color: #ffffff;
   text-align: center;
-  padding: 2px 8px;
+  padding: 2px var(--space-2);
   background: transparent;
   border-radius: 3px;
   margin: 0 auto 6px auto;
@@ -501,7 +501,7 @@
   transform: translateX(-50%);
   background-color: var(--highlight-winner);
   color: #000;
-  padding: 8px 16px;
+  padding: var(--space-2) var(--space-4);
   border-radius: 20px;
   font-size: 0.95em;
   font-weight: bold;
@@ -551,7 +551,7 @@
   background-color: white;
   border: 2px solid #333;
   border-radius: 3px;
-  padding: 8px 5px;
+  padding: var(--space-2) 5px;
   width: 60px;  /* Restored original size */
   height: 84px;  /* Restored original size */
   cursor: pointer;
@@ -908,7 +908,7 @@
   .playable-card {
     min-width: 45px;
     min-height: 70px;
-    padding: 8px 5px;
+    padding: var(--space-2) 5px;
     margin: 2px;
   }
 
@@ -958,7 +958,7 @@
 
   .position-label {
     font-size: 0.9em;
-    padding: 3px 8px;
+    padding: 3px var(--space-2);
   }
 }
 
@@ -966,7 +966,7 @@
 @media (max-width: 480px) {
   .play-area {
     grid-template-rows: auto minmax(100px, 1fr) auto;
-    padding: 4px;
+    padding: var(--space-1);
   }
 
   .current-trick {
@@ -1058,12 +1058,12 @@
 
   .tricks-count {
     font-size: 0.9em;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .trick-winner-announcement {
     font-size: 0.9em;
-    padding: 8px 15px;
+    padding: var(--space-2) 15px;
   }
 }
 
@@ -1075,7 +1075,7 @@
   }
 
   .current-trick {
-    padding: 4px;
+    padding: var(--space-1);
   }
 
   .trick-card {
@@ -1160,7 +1160,7 @@
 .action-bar {
   background: var(--cream-light, #faf8f4);
   border-top: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 6px 16px;  /* Reduced for compactness */
+  padding: 6px var(--space-4);  /* Reduced for compactness */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1170,11 +1170,11 @@
 
 .action-btns {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .action-btn {
-  padding: 8px 14px;
+  padding: var(--space-2) 14px;
   font-size: 13px;
   font-weight: 600;
   border-radius: 8px;
@@ -1208,13 +1208,13 @@
   color: var(--text-secondary, #666);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 /* Action bar responsive */
 @media (max-width: 768px) {
   .action-bar {
-    padding: 8px 16px;
+    padding: var(--space-2) var(--space-4);
   }
 }
 
@@ -1222,8 +1222,8 @@
   .action-bar {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
   }
 
   .action-btns {
