@@ -747,19 +747,33 @@ class NewSuitResponseGenerator(SkillHandGenerator):
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
         if hand.hcp < 6:
             bid = 'Pass'
-            explanation = f'{hand.hcp} HCP is too weak to respond (need 6+).'
-        elif self.variant == 'one_heart_over_minor':
-            bid = '1♥'
-            explanation = f'Bid 1♥ with {hand.suit_lengths["♥"]} hearts and {hand.hcp} HCP. New suit at 1-level is forcing!'
-        elif self.variant == 'one_spade_over_minor':
+            explanation = f'{hand.hcp} HCP is too weak to respond (need 6+). Pass!'
+
+        elif self.variant == 'one_spade_over_heart':
+            # Partner opened 1♥ — only spades can be bid at 1-level
             bid = '1♠'
             explanation = f'Bid 1♠ with {hand.suit_lengths["♠"]} spades and {hand.hcp} HCP. New suit at 1-level is forcing!'
-        elif self.variant == 'one_spade_over_heart':
-            bid = '1♠'
-            explanation = f'Bid 1♠ with {hand.suit_lengths["♠"]} spades over partner\'s 1♥. Looking for major fit!'
+
         else:
-            bid = 'Pass'
-            explanation = f'{hand.hcp} HCP - too weak to respond.'
+            # Partner opened a minor (1♦) — determine correct major from hand shape
+            # SAYC: With both majors, bid the LONGER one first.
+            # With equal length, bid hearts first (up the line).
+            hearts = hand.suit_lengths.get('♥', 0)
+            spades = hand.suit_lengths.get('♠', 0)
+
+            if hearts >= 4 and hearts >= spades:
+                bid = '1♥'
+                explanation = f'Bid 1♥ with {hearts} hearts and {hand.hcp} HCP. New suit at 1-level is forcing!'
+                if spades >= 4:
+                    explanation += f' Convention: Bid 1♥ first with {hearts} hearts and {spades} spades (longer/equal major first).'
+            elif spades >= 4:
+                bid = '1♠'
+                explanation = f'Bid 1♠ with {spades} spades and {hand.hcp} HCP. New suit at 1-level is forcing!'
+                if hearts >= 4:
+                    explanation += f' Convention: Bid 1♠ with {spades} spades vs {hearts} hearts (longer major first).'
+            else:
+                bid = 'Pass'
+                explanation = f'{hand.hcp} HCP but no 4+ card major to show at 1-level.'
 
         return {
             'bid': bid,

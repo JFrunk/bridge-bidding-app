@@ -323,6 +323,42 @@ Updated `TakeoutDoubleConvention` to double with 19+ HCP balanced, planning to b
 
 ---
 
+## 🔵 ENHANCEMENT: Skill Practice Generators Should Use Bidding Engine
+
+**Status:** Not Started
+**Severity:** 🟡 Moderate (correctness risk)
+**Priority:** MEDIUM
+**Area:** Learning / Bidding Engine
+**Reported:** 2026-03-02
+**Evidence:** User feedback 2026-03-02 15:19 — "New Suit Response" skill told user 1♠ was correct when 1♥ was right (6H-4S responding to 1♦)
+
+### Problem Description
+
+The 24 `get_expected_response()` methods in `skill_hand_generators.py` each hardcode their own bidding rules independently of the bidding engine (`responses.py`, `opening_bids.py`, etc.). When engine logic is updated, skill generators silently drift out of sync.
+
+### Proposed Solution
+
+Refactor skill generators to call the bidding engine for bid evaluation:
+1. Generators handle only **hand generation** (constraints, variants)
+2. Correct bid determined by calling `BiddingEngine.get_next_bid()` with the generated hand + auction
+3. `get_expected_response()` becomes a thin wrapper around the engine call
+4. Generators still provide skill-specific **explanations** for pedagogical value
+
+### Benefits
+- Single source of truth for bidding rules
+- No more drift between engine and learning system
+- Reduced maintenance burden (24 implementations → 1)
+
+### Risks
+- Engine may return bids that don't match the skill's pedagogical intent (e.g., a convention module intercepting)
+- Need to handle engine failures gracefully in skill context
+
+### Files to Review
+- `backend/engine/learning/skill_hand_generators.py` (24 generators)
+- `backend/engine/bidding_engine.py` (engine entry point)
+
+---
+
 ## 📝 Template for New Issues
 
 ### Issue Title
