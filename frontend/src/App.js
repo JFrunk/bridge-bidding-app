@@ -2554,8 +2554,10 @@ ${otherCommands}`;
       setNextBidder(optimisticNextBidder);
     });
 
-    // Enable AI bidding after user's bid is rendered
-    setIsAiBidding(true);
+    // NOTE: Do NOT enable AI bidding here. We must wait until the backend
+    // has recorded the user's bid in state.auction_history. Otherwise the
+    // AI loop's get-next-bid can race ahead of the record_only call,
+    // causing state.auction_history to desync and skip/corrupt turns.
 
     // If we already have feedback data (from pre-evaluation), use it
     // BUT we must still record the bid on the backend — pre-evaluation used
@@ -2588,6 +2590,8 @@ ${otherCommands}`;
         setBidFeedback(null);
         setDisplayedMessage('Bid recorded.');
       }
+      // Backend has recorded the bid — safe to start AI bidding now
+      setIsAiBidding(true);
       return;
     }
 
@@ -2649,6 +2653,8 @@ ${otherCommands}`;
       setBidFeedback(null);
       setDisplayedMessage('Could not get feedback from the server.');
     }
+    // Backend has recorded the bid (or tried to) — safe to start AI bidding
+    setIsAiBidding(true);
   };
 
   // Fetch AI's suggested bid for "What Should I Bid?" button

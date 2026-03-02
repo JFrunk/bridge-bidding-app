@@ -1611,6 +1611,23 @@ def get_next_bid():
             else:
                 auction_history.append(item if item else 'Pass')
 
+        # ── Defense: sync backend auction state from frontend if desync detected ──
+        # Race condition can cause state.auction_history to lag behind the frontend
+        # (e.g. record_only for user's bid hasn't arrived yet). The frontend auction
+        # is the source of truth for what bids have been made.
+        frontend_auction_len = len(auction_history)
+        if auction_length != frontend_auction_len:
+            print(f"⚠️ Auction desync in get-next-bid: backend={auction_length}, frontend={frontend_auction_len}. Syncing from frontend.")
+            state.auction_history = list(auction_history)
+            auction_length = frontend_auction_len
+            expected_bidder = BridgeRulesEngine.get_current_bidder(dealer, auction_length)
+            # Re-validate current_player against corrected state
+            current_player = data.get('current_player', expected_bidder)
+            is_valid, _ = BridgeRulesEngine.validate_bidder(dealer, auction_length, current_player)
+            if not is_valid:
+                print(f"⚠️ Bidder still mismatches after sync: frontend='{current_player}', expected='{expected_bidder}'. Using expected.")
+                current_player = expected_bidder
+
         # For non-South players (hidden hands), use convention_only to avoid revealing hand specifics
         if current_player != 'South':
             explanation_level = 'convention_only'
