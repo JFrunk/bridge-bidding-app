@@ -426,6 +426,19 @@
   border-top: 1px solid var(--border-color);
 }
 
+/* Locked level skills — dimmed preview of curriculum */
+.level-skills-locked {
+  pointer-events: none;
+}
+
+.skill-item-locked {
+  border-left-color: var(--border-color);
+}
+
+.skill-item-locked .skill-name {
+  color: var(--text-muted);
+}
+
 .skill-list,
 .convention-list {
   display: flex;

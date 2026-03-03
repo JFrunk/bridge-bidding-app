@@ -376,7 +376,8 @@ function App() {
     dismissRegistrationPrompt,
     recordHandCompleted,
     promptForRegistration,
-    requiresRegistration
+    requiresRegistration,
+    showPromptIfReady
   } = useAuth();
 
   // User experience state - for first-time onboarding and profile presets
@@ -821,9 +822,9 @@ function App() {
   useEffect(() => {
     if (scoreData && scoreData !== lastRecordedScoreRef.current) {
       lastRecordedScoreRef.current = scoreData;
-      recordHandCompleted();
+      recordHandCompleted(showLearningMode);
     }
-  }, [scoreData, recordHandCompleted]);
+  }, [scoreData, recordHandCompleted, showLearningMode]);
 
   // Ref to track if AI loop should be kept alive during state transitions
   // Prevents cleanup function from killing the loop when we just want to restart it
@@ -3402,6 +3403,9 @@ ${otherCommands}`;
       promptForRegistration();
       return;
     }
+
+    // Show deferred registration prompt on navigation (idle moment)
+    showPromptIfReady();
 
     // Close any open overlays first
     setShowLearningMode(false);

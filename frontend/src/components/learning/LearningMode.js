@@ -3,7 +3,7 @@
  *
  * Main guided learning interface showing:
  * - Track selector (Bidding | Card Play)
- * - Skill tree with 9 levels (0-8) per track
+ * - Skill tree with 10 levels (0-9) per track
  * - Progress through each level
  * - Skill practice sessions
  * - Level assessments
@@ -648,14 +648,14 @@ const LevelCard = ({
         <span className="progress-text">{completed}/{total}</span>
       </div>
 
-      {/* Always show skills for unlocked levels so users can see progress and retry */}
-      {isUnlocked && (
-        <div className="level-skills">
-          {is_convention_group ? (
-            <div className="convention-list">
-              {conventions.map((convention) => (
-                <div key={convention.id} className="skill-item">
-                  <span className="skill-name">{convention.name}</span>
+      {/* Show skills for all levels — unlocked get practice buttons, locked get dimmed preview */}
+      <div className={`level-skills ${!isUnlocked ? 'level-skills-locked' : ''}`}>
+        {is_convention_group ? (
+          <div className="convention-list">
+            {conventions.map((convention) => (
+              <div key={convention.id} className={`skill-item ${!isUnlocked ? 'skill-item-locked' : ''}`}>
+                <span className="skill-name">{convention.name}</span>
+                {isUnlocked && (
                   <button
                     className="practice-button"
                     onClick={(e) => {
@@ -665,23 +665,29 @@ const LevelCard = ({
                   >
                     Practice
                   </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="skill-list">
-              {skills.map((skill) => (
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="skill-list">
+            {skills.map((skill) => (
+              isUnlocked ? (
                 <SkillItem
                   key={skill.id}
                   skill={skill}
                   status={skillProgress[skill.id] || 'not_started'}
                   onStart={() => onStartSkill(skill.id, skill.name)}
                 />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+              ) : (
+                <div key={skill.id} className="skill-item skill-item-locked">
+                  <span className="skill-name">{skill.name}</span>
+                </div>
+              )
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
