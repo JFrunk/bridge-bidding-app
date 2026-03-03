@@ -81,7 +81,7 @@ const CardChip = ({ card, variant = 'default' }) => {
 
   return (
     <span className={`${baseClasses} ${variantClasses}`}>
-      <span className={isRed ? 'text-red-600' : 'text-gray-900'}>
+      <span className={isRed ? 'text-suit-red' : 'text-suit-black'}>
         {rank}{suitSymbol}
       </span>
     </span>
@@ -102,7 +102,7 @@ const formatCard = (card) => {
   const isRed = ['H', 'D', '♥', '♦'].includes(suit.toUpperCase());
 
   return (
-    <span className={`font-bold ${isRed ? 'text-red-600' : 'text-gray-900'}`}>
+    <span className={`font-bold ${isRed ? 'text-suit-red' : 'text-suit-black'}`}>
       {rank}{suitSymbol}
     </span>
   );

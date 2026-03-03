@@ -20,10 +20,11 @@ export function SessionModeBar({
   onDealSourceChange,
   conventions = []
 }) {
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const modes = [
     { id: 'practice', label: 'Practice', icon: '🃏' },
     { id: 'coached', label: 'Coached', icon: '🎓' },
-    { id: 'quiz', label: 'Quiz', icon: '❓' }
+    ...(isLocalhost ? [{ id: 'quiz', label: 'Quiz', icon: '❓' }] : [])
   ];
 
   // Format vulnerability display

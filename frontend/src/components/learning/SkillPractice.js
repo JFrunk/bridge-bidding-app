@@ -103,22 +103,24 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
   const questionType = isPlayTrack ? getPlayQuestionType(situation) : getQuestionType(expected_response);
   const noHandRequired = expected_response?.no_hand_required || (!hand && !deal);
 
-  // Calculate hand progress
-  // Minimum is 6 hands, but can be more if accuracy isn't met
-  const minHands = 6;
+  // Session mastery constants
+  const MIN_HANDS = 6;
+  const MAX_HANDS = 10;
+  const PASSING_ACCURACY = 80; // percentage
+
   const currentHandNumber = (currentHandIndex ?? 0) + 1;
 
-  // Calculate SESSION-specific stats from handHistory (not cumulative from DB)
-  // This shows progress within the current practice session
+  // Calculate SESSION-specific stats from handHistory
   const sessionAnswered = handHistory?.filter(h => h.result !== null).length || 0;
   const sessionCorrect = handHistory?.filter(h => h.result?.isCorrect === true).length || 0;
   const sessionAccuracy = sessionAnswered > 0 ? Math.round((sessionCorrect / sessionAnswered) * 100) : 0;
 
-  // Show "Hand X of Y" if under minimum, just "Hand X" if exceeded
-  const showTotal = (handHistory?.length || 0) < minHands;
+  // Determine session phase for display
+  const isExtended = sessionAnswered >= MIN_HANDS && sessionAccuracy < PASSING_ACCURACY && !session.sessionComplete;
+  const displayTotal = isExtended ? MAX_HANDS : MIN_HANDS;
 
-  // Build array of 6 slots for dots, filling with history data where available
-  const handSlots = Array.from({ length: Math.max(minHands, handHistory?.length || 0) }, (_, i) => {
+  // Build array of slots for dots
+  const handSlots = Array.from({ length: Math.max(displayTotal, handHistory?.length || 0) }, (_, i) => {
     if (handHistory && i < handHistory.length) {
       return handHistory[i];
     }
@@ -134,16 +136,19 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
         <div className="progress-indicator">
           <div className="progress-stats">
             <span className="hand-counter">
-              {showTotal ? `Hand ${currentHandNumber} of ${minHands}` : `Hand ${currentHandNumber}`}
+              Hand {currentHandNumber} of {displayTotal}
             </span>
             {sessionAnswered > 0 && (
-              <span className="accuracy-label">
+              <span className={`accuracy-label ${sessionAccuracy >= PASSING_ACCURACY ? 'passing' : ''}`}>
                 Accuracy: <span className="accuracy-value">{sessionAccuracy}%</span>
               </span>
             )}
           </div>
           {sessionAnswered > 0 && (
-            <span className="score-display">{sessionCorrect} correct of {sessionAnswered} this session</span>
+            <span className="score-display">
+              {sessionCorrect} correct of {sessionAnswered}
+              {isExtended && ` — need ${PASSING_ACCURACY}% to master`}
+            </span>
           )}
         </div>
       </div>
@@ -295,9 +300,39 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
             isReviewing={isReviewing}
             isReplaying={isReplaying}
             canContinue={!isReviewing || currentHandIndex === (handHistory?.length || 1) - 1}
+            sessionComplete={session.sessionComplete}
           />
         )}
       </div>
+
+      {/* Session Summary — shown after final hand feedback when session is complete */}
+      {session.sessionComplete && showFeedback && (
+        <div className={`session-summary ${session.sessionComplete === 'mastered' ? 'mastered' : 'keep-practicing'}`}>
+          <h3>{session.sessionComplete === 'mastered' ? 'Skill Mastered!' : 'Keep Practicing'}</h3>
+          <div className="summary-stats">
+            <div className="stat">
+              <span className="stat-value">{Math.round((session.sessionAccuracy || 0) * 100)}%</span>
+              <span className="stat-label">Accuracy</span>
+            </div>
+            <div className="stat">
+              <span className="stat-value">{sessionCorrect}/{session.sessionHands || 0}</span>
+              <span className="stat-label">Correct</span>
+            </div>
+            {session.sessionComplete !== 'mastered' && (
+              <div className="stat">
+                <span className="stat-value">{PASSING_ACCURACY}%</span>
+                <span className="stat-label">Target</span>
+              </div>
+            )}
+          </div>
+          <p className="summary-message">
+            {session.sessionComplete === 'mastered'
+              ? "You've demonstrated mastery of this skill. Great work!"
+              : "You're making progress. Come back and try again to reach 80% and master this skill."
+            }
+          </p>
+        </div>
+      )}
     </div>
   );
 };
@@ -1013,7 +1048,7 @@ const formatBid = (bid) => {
 /**
  * Feedback Display Component
  */
-const FeedbackDisplay = ({ result, expected, onContinue, onReplay, isReviewing, isReplaying, canContinue }) => {
+const FeedbackDisplay = ({ result, expected, onContinue, onReplay, isReviewing, isReplaying, canContinue, sessionComplete }) => {
   if (!result) return null;
 
   const { isCorrect, feedback } = result;
@@ -1023,27 +1058,31 @@ const FeedbackDisplay = ({ result, expected, onContinue, onReplay, isReviewing, 
       {isReviewing && (
         <div className="reviewing-badge">Reviewing</div>
       )}
-      <div className="feedback-icon">
-        {isCorrect ? '✓' : '✗'}
-      </div>
-      <div className="feedback-content">
-        <h4>{isCorrect ? 'Correct!' : 'Not quite...'}</h4>
-        <p className="feedback-text">
-          <TermHighlight text={feedback || ''} />
-        </p>
-        {expected?.explanation && !isCorrect && (
-          <p className="explanation">
-            <TermHighlight text={expected.explanation} />
-          </p>
-        )}
+      <div className="feedback-row">
+        <div className="feedback-icon">
+          {isCorrect ? '✓' : '✗'}
+        </div>
+        <div className="feedback-content">
+          <h4>{isCorrect ? 'Correct!' : 'Not quite...'}</h4>
+          <div className="feedback-text">
+            <TermHighlight text={feedback || ''} />
+          </div>
+          {expected?.explanation && !isCorrect && (
+            <div className="explanation">
+              <TermHighlight text={expected.explanation} />
+            </div>
+          )}
+        </div>
       </div>
       <div className="feedback-actions">
-        <button onClick={onReplay} className="replay-button">
-          {isReplaying ? 'Try Again' : 'Replay Hand'}
-        </button>
+        {!sessionComplete && (
+          <button onClick={onReplay} className="replay-button">
+            {isReplaying ? 'Try Again' : 'Replay Hand'}
+          </button>
+        )}
         {canContinue && (
           <button onClick={onContinue} className="continue-button">
-            Continue
+            {sessionComplete ? 'Finish' : 'Continue'}
           </button>
         )}
       </div>

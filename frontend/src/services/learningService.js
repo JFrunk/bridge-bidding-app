@@ -339,6 +339,34 @@ export async function recordPlayPractice(practiceData) {
 }
 
 /**
+ * Mark a skill as mastered after a successful practice session.
+ * Called when the user achieves >=80% accuracy on 6+ hands in one session.
+ * @param {Object} masteryData
+ * @param {number} masteryData.user_id - User ID
+ * @param {string} masteryData.skill_id - Skill ID
+ * @param {string} masteryData.track - 'bidding' or 'play'
+ * @param {number} masteryData.session_accuracy - Session accuracy (0.0-1.0)
+ * @param {number} masteryData.session_hands - Number of hands completed
+ * @returns {Promise<Object>} Updated status
+ */
+export async function markSkillMastered(masteryData) {
+  const response = await fetch(`${API_BASE_URL}/api/learning/mark-mastered`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(masteryData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to mark skill mastered');
+  }
+
+  return response.json();
+}
+
+/**
  * Get list of available play skill generators
  * @returns {Promise<Object>} List of available generators
  */

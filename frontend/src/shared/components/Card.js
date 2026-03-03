@@ -38,7 +38,7 @@ const Card = ({ rank, suit, isHidden = false, customScaleClass = "text-base", on
   // Build suit classes with Heavy Club rule
   const suitClasses = [
     'text-[1.3em] leading-none mt-[0.4em] text-center',
-    isRed ? 'text-red-600' : 'text-gray-900',
+    isRed ? 'text-suit-red' : 'text-suit-black',
     isClub ? 'drop-shadow-[0_0_0.05em_currentColor] scale-110' : '',
     isSpade ? 'scale-105' : ''
   ].filter(Boolean).join(' ');
@@ -60,7 +60,7 @@ const Card = ({ rank, suit, isHidden = false, customScaleClass = "text-base", on
       <div className="w-[3.5em] h-[5.0em] bg-white rounded-[0.35em] border-[0.06em] border-gray-300 shadow-[0.1em_0.1em_0.2em_rgba(0,0,0,0.3)] flex flex-col items-start overflow-hidden">
         {/* Safe-Zone: 1.6em centered strip for rank + suit */}
         <div className="w-[1.6em] flex flex-col items-center pt-[0.3em]">
-          <span className="text-[1.4em] font-black leading-none text-gray-900 text-center">
+          <span className={`text-[1.4em] font-black leading-none text-center ${isRed ? 'text-suit-red' : 'text-suit-black'}`}>
             {rank}
           </span>
           <span className={suitClasses}>

@@ -2,7 +2,7 @@
  * BidChip Component - Physics v2.0
  *
  * Fully scalable bid chip using em units.
- * Suit Colors: Hearts/Diamonds = Red-600; Spades/Clubs/NT = Gray-900.
+ * Suit Colors: Hearts/Diamonds = suit-red; Spades/Clubs/NT = suit-black.
  */
 import React from 'react';
 
@@ -18,19 +18,19 @@ const BidChip = ({ bid }) => {
 
   // Suit color helper
   const getSuitColor = (s) => {
-    if (['H', 'D', '♥', '♦'].includes(s)) return 'text-red-600';
-    return 'text-gray-900';
+    if (['H', 'D', '♥', '♦'].includes(s)) return 'text-suit-red';
+    return 'text-suit-black';
   };
 
   return (
     <div className="inline-flex items-center justify-center bg-white rounded-[0.3em] px-[0.5em] py-[0.1em] shadow-[0.1em_0.1em_0.1em_rgba(0,0,0,0.1)] border border-gray-200 min-w-[3.2em] h-[2em] mx-auto">
       {isSpecial ? (
-        <span className="text-[0.8em] font-bold text-gray-900 uppercase">
+        <span className="text-[0.8em] font-bold text-suit-black uppercase">
           {bidStr}
         </span>
       ) : (
         <div className="flex items-center gap-[0.1em] font-bold text-[1em] leading-none">
-          <span className="text-gray-900">{rank}</span>
+          <span className="text-suit-black">{rank}</span>
           <span className={getSuitColor(suit)}>{suit}</span>
         </div>
       )}

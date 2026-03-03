@@ -34,10 +34,10 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
   // Display text for strain (spell out NT)
   const displayStrain = strainSymbol;
 
-  // CRITICAL: Text color must respond to suit for readability on DARK header (#2a2a2a)
-  // Red suits (hearts/diamonds) = bright red text, Black suits (spades/clubs/NT) = bright white
+  // Text color must respond to suit for readability on DARK header
+  // Red suits = bright red (felt variant), Black suits/NT = white
   const isRedSuit = strain === 'H' || strain === 'D';
-  const suitTextColor = isRedSuit ? '#ff6b7a' : '#ffffff';  // Bright red vs white
+  const suitTextColor = isRedSuit ? 'var(--suit-heart-felt, #ff6b7a)' : '#ffffff';
 
   // Map declarer to full name
   const declarerName = {

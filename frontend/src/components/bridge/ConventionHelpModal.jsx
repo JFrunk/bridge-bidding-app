@@ -38,9 +38,9 @@ export function ConventionHelpModal({ isOpen, onClose, conventionInfo }) {
             <h3 className="text-base font-semibold text-gray-900 mb-2 border-b border-gray-300 pb-2">
               Background
             </h3>
-            <p className="text-sm text-gray-700 leading-relaxed">
+            <div className="text-sm text-gray-700 leading-relaxed">
               <TermHighlight text={conventionInfo.background || ''} />
-            </p>
+            </div>
           </div>
 
           {/* When to Use */}
@@ -48,9 +48,9 @@ export function ConventionHelpModal({ isOpen, onClose, conventionInfo }) {
             <h3 className="text-base font-semibold text-gray-900 mb-2 border-b border-gray-300 pb-2">
               When to Use
             </h3>
-            <p className="text-sm text-gray-700 leading-relaxed">
+            <div className="text-sm text-gray-700 leading-relaxed">
               <TermHighlight text={conventionInfo.when_used || ''} />
-            </p>
+            </div>
           </div>
 
           {/* How It Works */}
@@ -58,9 +58,9 @@ export function ConventionHelpModal({ isOpen, onClose, conventionInfo }) {
             <h3 className="text-base font-semibold text-gray-900 mb-2 border-b border-gray-300 pb-2">
               How It Works
             </h3>
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+            <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
               <TermHighlight text={conventionInfo.how_it_works || ''} />
-            </p>
+            </div>
           </div>
 
           {/* As Responder */}
@@ -68,9 +68,9 @@ export function ConventionHelpModal({ isOpen, onClose, conventionInfo }) {
             <h3 className="text-base font-semibold text-gray-900 mb-2 border-b border-gray-300 pb-2">
               As Responder
             </h3>
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+            <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
               <TermHighlight text={conventionInfo.responder_actions || ''} />
-            </p>
+            </div>
           </div>
 
           {/* As Opener */}
@@ -78,9 +78,9 @@ export function ConventionHelpModal({ isOpen, onClose, conventionInfo }) {
             <h3 className="text-base font-semibold text-gray-900 mb-2 border-b border-gray-300 pb-2">
               As Opener
             </h3>
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+            <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
               <TermHighlight text={conventionInfo.opener_actions || ''} />
-            </p>
+            </div>
           </div>
         </div>
 
