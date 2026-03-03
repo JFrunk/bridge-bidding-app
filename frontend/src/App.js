@@ -1095,13 +1095,9 @@ ${otherCommands}`;
 
     switch (modeId) {
       case 'learning':
-        // Open Learning Mode overlay (guard for guest users)
-        if (isGuest && requiresRegistration('learning')) {
-          promptForRegistration();
-        } else {
-          setShowLearningMode(true);
-          setCurrentWorkspace(null);
-        }
+        // Open Learning Mode overlay (available to all users including guests)
+        setShowLearningMode(true);
+        setCurrentWorkspace(null);
         break;
 
       case 'bid':
