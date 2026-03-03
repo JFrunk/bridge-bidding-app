@@ -42,8 +42,8 @@
 .decay-chart-two-column {
   display: flex;
   flex-direction: row;
-  gap: 16px;
-  padding: 16px;
+  gap: var(--space-4);
+  padding: var(--space-4);
 }
 
 /* Left column: Explanatory text (30% width) */
@@ -52,8 +52,8 @@
   max-width: 30%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-right: 16px;
+  gap: var(--space-3);
+  padding-right: var(--space-4);
   border-right: 1px solid #e5e7eb;
   /* Internal scrollbar if text exceeds available space */
   overflow-y: auto;
@@ -81,7 +81,7 @@
 
 .decay-chart-explanation .explanation-tip {
   margin-top: auto;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   background: rgba(37, 99, 235, 0.08);
   border-radius: 6px;
   font-size: 12px;
@@ -136,7 +136,7 @@
   background: #fafafa;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 12px;
+  padding: var(--space-3);
   margin: 0;  /* Remove margin, handled by overlay/two-column */
 }
 
@@ -144,8 +144,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  padding: 0 4px;
+  margin-bottom: var(--space-2);
+  padding: 0 var(--space-1);
 }
 
 .decay-chart-title-row {
@@ -309,10 +309,10 @@
 /* Legend */
 .decay-chart-legend {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   justify-content: center;
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
   border-top: 1px solid #e5e7eb;
 }
 
@@ -366,7 +366,7 @@
   background: #f9fafb;
   border: 1px dashed #d1d5db;
   border-radius: 8px;
-  padding: 24px;
+  padding: var(--space-6);
   text-align: center;
   color: #6b7280;
   font-size: 13px;
@@ -451,20 +451,20 @@
   /* Two-column becomes stacked on tablet */
   .decay-chart-two-column {
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .decay-chart-explanation {
     flex: 0 0 auto;
     max-width: 100%;
     padding-right: 0;
-    padding-bottom: 12px;
+    padding-bottom: var(--space-3);
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
   }
 
   .decay-chart-explanation .explanation-tip {
-    margin-top: 8px;
+    margin-top: var(--space-2);
   }
 }
 
@@ -475,8 +475,8 @@
   }
 
   .decay-chart-two-column {
-    padding: 12px;
-    gap: 8px;
+    padding: var(--space-3);
+    gap: var(--space-2);
   }
 
   .decay-chart-explanation h3 {
@@ -488,18 +488,18 @@
   }
 
   .decay-chart-container {
-    padding: 8px;
+    padding: var(--space-2);
   }
 
   .decay-chart-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: var(--space-1);
   }
 
   .decay-chart-legend {
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .decay-chart-dismiss {

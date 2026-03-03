@@ -2,8 +2,8 @@
 
 .bidding-quality-bar {
   display: flex;
-  gap: 20px;
-  padding: 20px;
+  gap: var(--space-5);
+  padding: var(--space-5);
   background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
   border-radius: 12px;
   color: white;
@@ -22,7 +22,7 @@
 .empty-state-content {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 .empty-state-icon {
@@ -141,7 +141,7 @@
   background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
   overflow: hidden;
-  margin-top: 8px;
+  margin-top: var(--space-2);
   position: relative;
 }
 
@@ -225,8 +225,8 @@
 @media (max-width: 768px) {
   .bidding-quality-bar {
     flex-direction: column;
-    gap: 20px;
-    padding: 20px;
+    gap: var(--space-5);
+    padding: var(--space-5);
   }
 
   .quality-stat-item {

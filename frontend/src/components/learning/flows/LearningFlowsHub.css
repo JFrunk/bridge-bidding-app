@@ -13,7 +13,7 @@
 .hub-header {
   background: #14432a;
   color: white;
-  padding: 20px 24px;
+  padding: var(--space-5) var(--space-6);
   position: relative;
 }
 
@@ -24,7 +24,7 @@
 }
 
 .hub-subtitle {
-  margin: 4px 0 0 0;
+  margin: var(--space-1) 0 0 0;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.6);
 }
@@ -53,10 +53,10 @@
 
 .hub-grid {
   flex: 1;
-  padding: 24px;
+  padding: var(--space-6);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  gap: var(--space-4);
   overflow-y: auto;
   align-content: start;
 }
@@ -65,13 +65,13 @@
   background: white;
   border: 2px solid transparent;
   border-radius: 12px;
-  padding: 20px;
+  padding: var(--space-5);
   text-align: left;
   cursor: pointer;
   transition: all 0.15s;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
@@ -104,7 +104,7 @@
 
 .hub-footer {
   background: #e8e4dc;
-  padding: 12px 24px;
+  padding: var(--space-3) var(--space-6);
   text-align: center;
 }
 
@@ -123,7 +123,7 @@
 /* Responsive */
 @media (max-width: 600px) {
   .hub-header {
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .hub-header h1 {
@@ -131,11 +131,11 @@
   }
 
   .hub-grid {
-    padding: 16px;
+    padding: var(--space-4);
     grid-template-columns: 1fr;
   }
 
   .hub-flow-card {
-    padding: 16px;
+    padding: var(--space-4);
   }
 }

@@ -56,15 +56,14 @@
 }
 
 /* === Suit Colors === */
-/* CRITICAL: Hardcoded - CSS variables weren't loading via @import */
 .hand-card.red .hand-card-rank,
 .hand-card.red .hand-card-suit {
-  color: #d32f2f; /* var(--card-red) */
+  color: var(--card-red, #d32f2f);
 }
 
 .hand-card.black .hand-card-rank,
 .hand-card.black .hand-card-suit {
-  color: #1a1a1a; /* var(--card-black) */
+  color: var(--card-black, #1a1a1a);
 }
 
 /* === Card States === */

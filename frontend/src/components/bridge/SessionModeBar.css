@@ -5,7 +5,7 @@
 .session-bar {
   background: var(--cream-light, #faf8f4);
   border-bottom: 1px solid var(--border-subtle, rgba(0,0,0,0.08));
-  padding: 6px 20px;
+  padding: 6px var(--space-5);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -14,7 +14,6 @@
   /* Override global CSS variables for light background context */
   --text-primary: #333;
   --text-secondary: #666;
-  --card-red: #d32f2f;
 }
 
 /* Mode Selector - pill group */
@@ -74,7 +73,7 @@
 .session-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .vuln-value {
@@ -94,7 +93,7 @@
 /* Deal Source Buttons */
 .deal-source-group {
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .deal-source {
@@ -127,17 +126,17 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 6px center;
-  padding-right: 24px;
+  padding-right: var(--space-6);
 }
 
 /* Compact for short viewports - Priority 4 */
 @media (max-height: 700px) {
   .session-bar {
-    padding: 4px 16px;  /* Reduce from 6px 20px */
+    padding: var(--space-1) var(--space-4);  /* Reduce from 6px 20px */
   }
 
   .session-mode {
-    padding: 4px 10px;  /* Reduce from 5px 14px */
+    padding: var(--space-1) 10px;  /* Reduce from 5px 14px */
     font-size: 12px;
   }
 
@@ -151,8 +150,8 @@
 @media (max-width: 768px) {
   .session-bar {
     flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
   }
 
   .session-modes {
@@ -166,13 +165,13 @@
     width: 100%;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-2);
   }
 }
 
 @media (max-width: 480px) {
   .session-mode {
-    padding: 4px 10px;
+    padding: var(--space-1) 10px;
     font-size: 12px;
   }
 

@@ -11,7 +11,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 20px;
+  padding: 30px var(--space-5);
   text-align: center;
 }
 
@@ -56,9 +56,9 @@
 .play-decision-item-main {
   display: flex;
   align-items: center;
-  padding: 12px 15px;
+  padding: var(--space-3) 15px;
   cursor: pointer;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 /* Rating Indicator */
@@ -158,10 +158,10 @@
 .play-decision-hint {
   display: flex;
   gap: 10px;
-  padding: 12px;
+  padding: var(--space-3);
   background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
   border-radius: 8px;
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 
 .play-decision-hint .hint-icon {
@@ -180,8 +180,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
   border-top: 1px dashed #e5e7eb;
 }
 
@@ -229,7 +229,7 @@
 /* Responsive Design */
 @media (max-width: 480px) {
   .play-decision-item-main {
-    padding: 10px 12px;
+    padding: 10px var(--space-3);
     gap: 10px;
   }
 
@@ -253,6 +253,6 @@
 
   .play-decision-metadata {
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-2);
   }
 }

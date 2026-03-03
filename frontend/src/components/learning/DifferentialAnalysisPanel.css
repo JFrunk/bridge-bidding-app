@@ -329,7 +329,7 @@
 
 .physics-tag {
   font-size: var(--text-xs, 12px);
-  padding: 2px 8px;
+  padding: 2px var(--space-2);
   border-radius: var(--radius-full, 9999px);
   background: var(--color-info, #3b82f6);
   color: white;

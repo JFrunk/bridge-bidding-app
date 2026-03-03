@@ -41,13 +41,13 @@
 
   /* Card Suit Colors */
   --card-red: #d32f2f;
-  --card-black: #000000;
+  --card-black: #1a1a1a;
 
   /* Bidding Box Suit Colors (high contrast on cream) */
   --bid-suit-club: #1a6b3c;
   --bid-suit-diamond: #d4540a;
-  --bid-suit-heart: #d32f2f;
-  --bid-suit-spade: #000000;
+  --bid-suit-heart: var(--card-red);
+  --bid-suit-spade: var(--card-black);
 
   /* Bidding Box Button Colors */
   --bid-button-bg: #f0ede6;

@@ -10,14 +10,14 @@
   letter-spacing: 0.5px;
   color: #999;
   text-align: left;
-  padding-bottom: 8px;
+  padding-bottom: var(--space-2);
 }
 
 .compare-table th {
   font-size: 12px;
   font-weight: 600;
   color: #555;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   text-align: center;
   background: rgba(0, 0, 0, 0.03);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
@@ -35,7 +35,7 @@
 }
 
 .compare-table td {
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   text-align: center;
   font-size: 14px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
@@ -79,7 +79,7 @@
 @media (max-width: 480px) {
   .compare-table th,
   .compare-table td {
-    padding: 6px 8px;
+    padding: 6px var(--space-2);
   }
 
   .compare-table th {

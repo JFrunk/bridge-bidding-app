@@ -22,11 +22,11 @@
 
 /* Color Variants */
 .learning-card.card-red {
-  color: #d40000;
+  color: var(--card-red, #d32f2f);
 }
 
 .learning-card.card-black {
-  color: #1a1a1a;
+  color: var(--card-black, #1a1a1a);
 }
 
 /* Corner Elements */
@@ -75,16 +75,17 @@
   display: flex;
   flex-direction: row;
   gap: var(--card-suit-gap, clamp(4px, 0.8vmin, 14px));
-  padding: 6px 10px;
-  background: #3d4a5c;
+  padding: var(--space-2) var(--space-3);
+  background: #e9ecef;
+  border: 1px solid #ced4da;
   border-radius: 8px;
   max-width: fit-content;
   align-items: flex-end;
 }
 
 .learning-hand.empty {
-  padding: 20px;
-  color: rgba(255, 255, 255, 0.7);
+  padding: var(--space-5);
+  color: #6b7280;
   font-style: italic;
 }
 

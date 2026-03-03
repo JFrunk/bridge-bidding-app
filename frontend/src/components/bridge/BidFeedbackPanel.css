@@ -85,7 +85,7 @@
 .feedback-optimal-bid {
   font-weight: bold;
   font-size: var(--text-lg);
-  padding: 2px 8px;
+  padding: 2px var(--space-2);
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-sm);
 }
@@ -273,7 +273,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: var(--space-2);
-  padding: 2px 8px;
+  padding: 2px var(--space-2);
   background-color: rgba(139, 92, 246, 0.2);
   border-radius: var(--radius-sm);
   display: inline-block;
@@ -293,14 +293,14 @@
   background-color: #fff5f5;
   border: 2px solid #c0392b;
   border-radius: 6px;
-  padding: 12px;
+  padding: var(--space-3);
   margin-top: var(--space-3);
 }
 
 .governor-warning strong {
   color: #c0392b;
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
   text-transform: uppercase;
   font-size: 0.85rem;
 }
@@ -330,8 +330,8 @@
 .trust-shield {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
   background-color: rgba(76, 175, 80, 0.2);
   border-radius: var(--radius-sm);
   font-size: var(--text-xs);
@@ -444,7 +444,7 @@
   }
 
   .governor-warning {
-    padding: 8px;
+    padding: var(--space-2);
   }
 
   .consultant-tag {

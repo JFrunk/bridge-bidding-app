@@ -12,15 +12,15 @@
 .experience-options {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .experience-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
+  gap: var(--space-4);
+  padding: var(--space-4);
   background: #f8f9fa;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
@@ -65,7 +65,7 @@
   font-size: 16px;
   font-weight: 600;
   color: #1f2937;
-  margin: 0 0 4px 0;
+  margin: 0 0 var(--space-1) 0;
 }
 
 .experience-description {
@@ -104,8 +104,8 @@
 /* Responsive adjustments */
 @media (max-width: 480px) {
   .experience-card {
-    padding: 12px;
-    gap: 12px;
+    padding: var(--space-3);
+    gap: var(--space-3);
   }
 
   .experience-emoji {

@@ -10,7 +10,7 @@
   color: rgba(255, 255, 255, 0.45);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 6px 4px;
+  padding: 6px var(--space-1);
   border-bottom: 1.5px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -20,7 +20,7 @@
 
 .bid-table td {
   text-align: center;
-  padding: 6px 4px;
+  padding: 6px var(--space-1);
   font-size: 14px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.8);
@@ -52,9 +52,9 @@
 }
 
 .bid-suit.red {
-  color: #ff6b7a;
+  color: var(--suit-heart-felt, #ff6b7a);
 }
 
 .bid-suit.black {
-  color: #d0d0d0;
+  color: var(--suit-spade-felt, #d0d0d0);
 }

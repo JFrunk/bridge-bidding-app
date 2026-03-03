@@ -1,6 +1,6 @@
 .streak-bar {
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
   align-items: flex-end;
 }
 

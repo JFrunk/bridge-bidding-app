@@ -9,7 +9,7 @@
 .play-screen {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
   width: 100%;
   max-width: 1200px;  /* Expanded from 900px - fills more of viewport */
   margin: 0 auto;     /* Centers horizontally */
@@ -24,8 +24,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 16px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
   background: #2a2a2a;
   border-radius: 8px;
   color: #ffffff;
@@ -34,14 +34,14 @@
 .play-table .contract-bar-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .play-table .contract-badge {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 6px var(--space-3);
   background: rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   font-weight: 600;
@@ -64,14 +64,14 @@
 .play-table .contract-bar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   font-size: 14px;
 }
 
 .play-table .trump-indicator {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .play-table .trick-count {
@@ -116,7 +116,7 @@
 .play-table .trick-current {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 /* Contract score badge (shown at end of hand) */
@@ -144,7 +144,7 @@
 
 /* Bid history button */
 .play-table .bid-history-btn {
-  padding: 6px 12px;
+  padding: 6px var(--space-3);
   font-size: 13px;
   font-weight: 500;
   background: rgba(255, 255, 255, 0.1);
@@ -178,7 +178,7 @@
 .bid-history-popup {
   background: #faf8f4;
   border-radius: 12px;
-  padding: 20px;
+  padding: var(--space-5);
   min-width: 320px;
   max-width: 480px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
@@ -188,7 +188,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .bid-history-header h3 {
@@ -203,7 +203,7 @@
   color: rgba(0, 0, 0, 0.4);
   font-size: 24px;
   cursor: pointer;
-  padding: 0 4px;
+  padding: 0 var(--space-1);
   line-height: 1;
 }
 
@@ -223,20 +223,20 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: #555;
-  padding: 6px 8px;
+  padding: 6px var(--space-2);
   border-bottom: 2px solid #e0dcd4;
   text-align: center;
 }
 
 .bid-history-table td {
-  padding: 5px 8px;
+  padding: 5px var(--space-2);
   text-align: center;
   border-bottom: 1px solid #eae6de;
 }
 
 .bid-history-contract {
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
   border-top: 1px solid #e0dcd4;
   color: #333;
   font-size: 14px;
@@ -246,8 +246,8 @@
 /* Responsive contract bar */
 @media (max-width: 768px) {
   .play-table .contract-bar {
-    padding: 8px 12px;
-    gap: 8px;
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
   }
 
   .play-table .contract-info-row {
@@ -271,12 +271,12 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 6px;
-    padding: 8px;
+    padding: var(--space-2);
   }
 
   .play-table .trick-counter-text {
     font-size: 11px;
-    gap: 4px;
+    gap: var(--space-1);
   }
 }
 
@@ -288,8 +288,8 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   grid-template-rows: auto 1fr auto;
-  gap: 12px;
-  padding: 16px;
+  gap: var(--space-3);
+  padding: var(--space-4);
   background: var(--table-green, #1a6b3c);
   border: 3px solid var(--table-green-dark, #145530);
   border-radius: 12px;
@@ -303,7 +303,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .grid-west {
@@ -313,7 +313,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .grid-center {
@@ -331,7 +331,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .grid-south {
@@ -340,7 +340,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 /* ========================================
@@ -350,8 +350,8 @@
 .position-label-v2 {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
+  gap: var(--space-2);
+  padding: 6px var(--space-3);
   background: rgba(0, 0, 0, 0.3);
   border-radius: 6px;
   font-size: 13px;
@@ -366,7 +366,7 @@
 }
 
 .position-badge {
-  padding: 2px 8px;
+  padding: 2px var(--space-2);
   border-radius: 4px;
   font-size: 11px;
   font-weight: 700;
@@ -410,7 +410,7 @@
     ". south .";
   grid-template-columns: 1fr auto 1fr;
   grid-template-rows: 1fr auto 1fr;
-  padding: 8px;
+  padding: var(--space-2);
 }
 
 .trick-area .trick-label {
@@ -485,7 +485,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .card-back-stack {
@@ -515,7 +515,7 @@
   display: flex;
   gap: 0;
   justify-content: center;
-  padding: 8px;
+  padding: var(--space-2);
   background: rgba(0, 0, 0, 0.1);
   border-radius: 8px;
 }
@@ -527,7 +527,7 @@
 }
 
 .player-hand-v2 .suit-group-v2:not(:first-child) {
-  margin-left: 8px;
+  margin-left: var(--space-2);
 }
 
 /* Card overlap within suit */
@@ -588,7 +588,7 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 10px 16px;
+  padding: 10px var(--space-4);
   background: rgba(0, 0, 0, 0.2);
   border-radius: 6px;
   font-size: 14px;
@@ -622,22 +622,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: var(--space-3);
+  padding: 10px var(--space-4);
   background: var(--cream, #f5f0e8);
   border-radius: 8px;
 }
 
 .play-action-bar-left {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .play-action-button {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: var(--space-2) 14px;
   background: #ffffff;
   border: 1px solid #d0d0d0;
   border-radius: 6px;
@@ -664,8 +664,8 @@
 
 @media (max-width: 768px) {
   .play-table-grid {
-    gap: 8px;
-    padding: 12px;
+    gap: var(--space-2);
+    padding: var(--space-3);
     min-height: 400px;
   }
 
@@ -686,21 +686,21 @@
 
   .play-table .contract-bar {
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-2);
   }
 }
 
 @media (max-width: 480px) {
   .play-table-grid {
     gap: 6px;
-    padding: 8px;
+    padding: var(--space-2);
     min-height: 350px;
   }
 
   .trick-area {
     width: 150px;
     height: 130px;
-    padding: 4px;
+    padding: var(--space-1);
   }
 
   .trick-card-v2 {
@@ -732,7 +732,7 @@
   .play-action-bar {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .play-action-bar-left {

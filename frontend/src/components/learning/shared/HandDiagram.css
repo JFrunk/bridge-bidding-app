@@ -2,7 +2,7 @@
   font-size: 14px;
   font-weight: 600;
   line-height: 1.8;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   background: rgba(0, 0, 0, 0.06);
   border-radius: 5px;
 }
@@ -10,7 +10,7 @@
 .suit-line {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .suit-sym {
@@ -20,19 +20,19 @@
 }
 
 .suit-sym.s {
-  color: #1a1a1a;
+  color: var(--card-black, #1a1a1a);
 }
 
 .suit-sym.h {
-  color: #d32f2f;
+  color: var(--card-red, #d32f2f);
 }
 
 .suit-sym.d {
-  color: #d4540a;
+  color: var(--bid-suit-diamond, #d4540a);
 }
 
 .suit-sym.c {
-  color: #1a6b3c;
+  color: var(--bid-suit-club, #1a6b3c);
 }
 
 .ranks {

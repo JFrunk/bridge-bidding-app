@@ -133,7 +133,7 @@ body {
 /* Hand display within bid screen */
 .bid-screen-layout .hand-display {
   margin-top: 0;
-  padding: 8px;
+  padding: var(--space-2);
   justify-content: center;
 }
 
@@ -148,7 +148,7 @@ body {
   background: rgba(0, 0, 0, 0.2);
   color: rgba(255, 255, 255, 0.9);
   font-weight: 600;
-  padding: 4px 8px; /* Compact: was 8px 12px */
+  padding: var(--space-1) var(--space-2); /* Compact: was 8px 12px */
   font-size: 13px;
   border: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -156,7 +156,7 @@ body {
 
 .bid-screen-layout .bidding-table td {
   color: rgba(255, 255, 255, 0.95);
-  padding: 4px 8px; /* Compact: was 6px 12px */
+  padding: var(--space-1) var(--space-2); /* Compact: was 6px 12px */
   font-size: 13px;
   border: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -170,7 +170,7 @@ body {
 .bid-feedback-strip {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   padding: 6px 10px; /* Compact: was 10px 14px */
   background: rgba(0, 0, 0, 0.2);
   border-radius: 6px;
@@ -197,7 +197,7 @@ body {
   color: rgba(255, 255, 255, 0.6);
   font-size: 18px;
   cursor: pointer;
-  padding: 4px;
+  padding: var(--space-1);
   line-height: 1;
 }
 
@@ -231,7 +231,7 @@ body {
   gap: 6px;
   justify-content: center;
   flex-wrap: wrap;
-  padding-top: 4px;
+  padding-top: var(--space-1);
 }
 
 .bid-action-button-primary {
@@ -258,7 +258,7 @@ body {
   background: rgba(255, 255, 255, 0.15);
   color: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 8px 16px;
+  padding: var(--space-2) var(--space-4);
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
@@ -282,7 +282,7 @@ body {
 /* Turn indicator */
 .bid-turn-indicator {
   text-align: center;
-  padding: 8px;
+  padding: var(--space-2);
   font-size: 14px;
   color: rgba(255, 255, 255, 0.8);
 }
@@ -296,7 +296,7 @@ body {
 @media (max-height: 700px) {
   .bid-screen-layout {
     gap: 5px;  /* Reduced by 20% from 6px */
-    padding: 8px;  /* Reduce padding from 10px */
+    padding: var(--space-2);  /* Reduce padding from 10px */
   }
 
   .bid-screen-layout .bidding-table th,
@@ -306,29 +306,29 @@ body {
   }
 
   .bid-feedback-strip {
-    padding: 4px 8px;  /* More compact feedback */
+    padding: var(--space-1) var(--space-2);  /* More compact feedback */
     font-size: 12px;
   }
 
   .bid-action-button-primary {
-    padding: 6px 12px;
+    padding: 6px var(--space-3);
     font-size: 12px;
   }
 
   .bid-action-button-secondary {
-    padding: 6px 12px;
+    padding: 6px var(--space-3);
     font-size: 12px;
   }
 
   .hand-display {
     min-height: 70px;  /* Reduce from 90px */
-    padding: 4px;
+    padding: var(--space-1);
   }
 }
 
 @media (max-width: 600px) {
   .bid-screen-layout {
-    padding: 12px;
+    padding: var(--space-3);
     gap: 10px;
   }
 
@@ -491,13 +491,13 @@ body {
 /* Red suits (hearts, diamonds) */
 .card.red .rank,
 .card.red .suit-symbol {
-  color: #d32f2f;
+  color: var(--card-red, #d32f2f);
 }
 
 /* Black suits (spades, clubs) */
 .card.black .rank,
 .card.black .suit-symbol {
-  color: #1a1a1a;
+  color: var(--card-black, #1a1a1a);
 }
 
 /* Responsive adjustments - vmin handles most scaling, these are fallbacks */
@@ -552,8 +552,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
   background: rgba(0, 0, 0, 0.2);
   border-radius: 6px;
   font-size: 13px;
@@ -597,8 +597,8 @@ body {
 @media (max-width: 480px) {
   .hand-analysis-strip {
     flex-direction: column;
-    gap: 4px;
-    padding: 6px 12px;
+    gap: var(--space-1);
+    padding: 6px var(--space-3);
   }
 
   .hand-analysis-strip .strip-divider {
@@ -633,7 +633,7 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
   cursor: default;
   position: relative; /* For dealer indicator positioning */
-  padding-left: 20px; /* Space for blue dot to prevent overlap */
+  padding: 6px var(--space-2);
   text-align: center;
 }
 
@@ -1031,7 +1031,7 @@ body {
 /* Extra padding for East/West to accommodate rotated content */
 .player-east,
 .player-west {
-  padding: 20px 15px; /* Reduced horizontal padding */
+  padding: var(--space-5) 15px; /* Reduced horizontal padding */
   min-height: 500px;
   display: flex;
   flex-direction: column;
@@ -1052,7 +1052,7 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   justify-content: center;
   min-height: 450px; /* Ensure enough height for rotated cards */
   padding: 30px 10px; /* Padding for spacing within border */
@@ -1089,7 +1089,7 @@ body {
 .player-east .hand-analysis h4,
 .player-west .hand-analysis h4 {
   margin-top: 0;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   text-align: center;
   font-size: 1em; /* Match N/S */
 }
@@ -1108,7 +1108,7 @@ body {
   flex-direction: column; /* Stack vertically */
   font-size: 14px; /* Slightly smaller to fit */
   margin-top: 10px;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .player-east .suit-points > div,
@@ -1331,14 +1331,14 @@ body {
 }
 
 .user-concern-section {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .user-concern-section label {
   display: block;
   color: #ccc;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   font-size: 14px;
 }
 
@@ -1363,7 +1363,7 @@ body {
 .review-actions {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .primary-button {
@@ -1404,8 +1404,8 @@ body {
 
 .prompt-section {
   border-top: 1px solid #444;
-  padding-top: 20px;
-  margin-top: 20px;
+  padding-top: var(--space-5);
+  margin-top: var(--space-5);
 }
 
 .prompt-section h3 {
@@ -1483,7 +1483,7 @@ body {
 }
 
 .convention-section {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
   padding: 15px;
   background-color: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
@@ -1507,7 +1507,7 @@ body {
 .convention-actions {
   display: flex;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: var(--space-5);
   justify-content: flex-end;
 }
 
@@ -1573,7 +1573,7 @@ html, body {
 
   .bidding-table th, .bidding-table td {
     min-width: 50px;
-    padding: 6px 4px;
+    padding: 6px var(--space-1);
   }
 
   /* Stack action area vertically on mobile */
@@ -1645,7 +1645,7 @@ html, body {
   /* Modal adjustments */
   .modal-content {
     width: 95%;
-    padding: 20px;
+    padding: var(--space-5);
     max-height: 90vh;
   }
 
@@ -1668,7 +1668,7 @@ html, body {
 
   .bidding-table th, .bidding-table td {
     min-width: 40px;
-    padding: 4px 2px;
+    padding: var(--space-1) 2px;
   }
 
   .modal-content {
@@ -1757,7 +1757,7 @@ html, body {
 
 /* Learn Button */
 .learn-button {
-  padding: 10px 20px;
+  padding: 10px var(--space-5);
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   border-radius: 8px;
@@ -1781,22 +1781,22 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
-  margin-bottom: 20px;
+  padding: var(--space-4) 0;
+  margin-bottom: var(--space-5);
   border-bottom: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .top-bar-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .home-button {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   font-size: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1822,14 +1822,14 @@ html, body {
 .top-bar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .glossary-button {
   background: rgba(33, 150, 243, 0.8);
   border: 1px solid rgba(33, 150, 243, 1);
   border-radius: 8px;
-  padding: 8px 16px;
+  padding: var(--space-2) var(--space-4);
   font-size: 14px;
   font-weight: 500;
   color: white;
@@ -1851,7 +1851,7 @@ html, body {
   background: rgba(5, 150, 105, 0.8);
   border: 1px solid rgba(5, 150, 105, 1);
   border-radius: 8px;
-  padding: 8px 16px;
+  padding: var(--space-2) var(--space-4);
   font-size: 14px;
   font-weight: 500;
   color: white;
@@ -1872,7 +1872,7 @@ html, body {
 .user-menu {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .user-display {
@@ -1883,7 +1883,7 @@ html, body {
 
 .auth-button,
 .logout-button {
-  padding: 8px 16px;
+  padding: var(--space-2) var(--space-4);
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -1954,7 +1954,7 @@ html, body {
   overflow-x: hidden;
   /* Full width container with padding */
   width: 100%;
-  padding: 0 16px;
+  padding: 0 var(--space-4);
   box-sizing: border-box;
   /* CRITICAL: Align items to TOP, not center - prevents vertical centering */
   align-items: center;  /* Horizontal centering only */
@@ -1970,14 +1970,14 @@ html, body {
   max-height: none; /* Override for loading state */
   background: var(--bg-secondary, #f5f5f5);
   border-radius: 12px;
-  margin: 20px 0;
+  margin: var(--space-5) 0;
 }
 
 .loading-indicator {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
   color: var(--text-secondary, #666);
 }
 
@@ -2057,7 +2057,7 @@ html, body {
   justify-content: flex-end; /* Push content toward bottom */
   position: relative;
   z-index: 2;
-  padding: 10px 24px 8px;
+  padding: 10px var(--space-6) var(--space-2);
   min-height: 0; /* Critical: allows shrinking below content size */
   overflow: hidden;
   /* VMIN SCALING: Fluid max-width prevents table from becoming narrower than cards */
@@ -2082,7 +2082,7 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 8px 0 12px;
+  padding: var(--space-2) 0 var(--space-3);
   flex-shrink: 0; /* Never squish the hand */
   /* Proportional height: scales with viewport */
   min-height: max(90px, 12vh);
@@ -2135,7 +2135,7 @@ html, body {
 
 @media (max-width: 480px) {
   .bid-hand-container {
-    padding: 4px 0 8px;
+    padding: var(--space-1) 0 var(--space-2);
     min-height: 60px;
   }
   .bid-hand-container .text-base,
@@ -2172,7 +2172,7 @@ html, body {
   background: var(--table-green-dark, #155a30);
   z-index: 10;
   position: relative;
-  padding-bottom: 12px; /* Buttons don't touch bottom edge */
+  padding-bottom: var(--space-3); /* Buttons don't touch bottom edge */
 }
 
 /* When in loading/dealing state, maintain placeholder space */
@@ -2221,7 +2221,7 @@ html, body {
   color: var(--text-on-green-muted, rgba(168, 196, 176, 1));
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  padding: 6px 4px 6px 20px; /* Extra left padding for blue dot */
+  padding: 6px var(--space-2);
   border: 1px solid rgba(255, 255, 255, 0.2);
   position: sticky;
   top: 0;
@@ -2300,7 +2300,7 @@ html, body {
 
 .bidding-table-zone .bidding-table td {
   text-align: center;
-  padding: 5px 4px;
+  padding: 5px var(--space-1);
   font-size: 15px;
   font-weight: 500;
   color: var(--text-on-green, #e8f0eb);
@@ -2343,7 +2343,7 @@ html, body {
   padding: 7px 14px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   background: rgba(0, 0, 0, 0.2);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
@@ -2372,7 +2372,7 @@ html, body {
 }
 
 .feedback-icon.poor {
-  background: #d32f2f;
+  background: var(--color-danger, #d32f2f);
   color: white;
 }
 
@@ -2414,7 +2414,7 @@ html, body {
    ======================================== */
 
 .bidding-section .bidding-box-container {
-  padding: 10px 16px;
+  padding: 10px var(--space-4);
   background: rgba(0, 0, 0, 0.3);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
@@ -2434,7 +2434,7 @@ html, body {
    ======================================== */
 
 .deal-actions {
-  padding: 8px 16px;
+  padding: var(--space-2) var(--space-4);
   display: flex;
   gap: 6px;
   background: rgba(0, 0, 0, 0.1);
@@ -2444,7 +2444,7 @@ html, body {
 
 .deal-btn {
   flex: 1;
-  padding: 8px;
+  padding: var(--space-2);
   font-size: 12px;
   font-weight: 600;
   border-radius: var(--radius-sm, 4px);
@@ -2488,11 +2488,11 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: var(--space-5);
   padding: 5px 14px;
   background: rgba(0, 0, 0, 0.2);
   border-radius: var(--radius-md, 8px);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   flex-shrink: 0;
 }
 
@@ -2582,13 +2582,13 @@ html, body {
   }
 
   .bid-game-area {
-    padding: 8px 16px;
+    padding: var(--space-2) var(--space-4);
   }
 }
 
 @media (max-width: 768px) {
   .bid-game-area {
-    padding: 6px 12px;
+    padding: 6px var(--space-3);
   }
 
   /* Responsive bidding box - correct class names */
@@ -2619,7 +2619,7 @@ html, body {
 
 @media (max-width: 480px) {
   .bid-game-area {
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
   }
 
   .feedback-strip {
@@ -2641,8 +2641,8 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   margin-top: auto;
   font-size: var(--text-sm, 14px);
 }
@@ -2653,7 +2653,7 @@ html, body {
   color: var(--text-secondary, #6b7280);
   font-size: var(--text-sm, 14px);
   cursor: pointer;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm, 4px);
   transition: color 0.2s ease;
 }

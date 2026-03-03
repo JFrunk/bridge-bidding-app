@@ -43,7 +43,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: var(--space-1);
   padding: var(--space-lg);
   background: white;
   border: 1.5px solid var(--action-bar-border);
@@ -157,7 +157,7 @@
 .signal-dummy-diagram .suit-line {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   line-height: 1.6;
 }
 

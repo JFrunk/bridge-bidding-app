@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 var(--space-5);
 
   /* HIGH-CONTRAST: Light cream background with black text */
   background: linear-gradient(180deg, #fef9e7 0%, #f5f0dc 100%);
@@ -34,7 +34,7 @@
 .room-status-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
   flex-shrink: 0;
 }
 
@@ -52,7 +52,7 @@
   letter-spacing: 0.08em;
   color: #0d5d3a; /* Dark green for code - high contrast on cream */
   background: rgba(13, 93, 58, 0.12);
-  padding: 4px 10px;
+  padding: var(--space-1) 10px;
   border-radius: 4px;
   border: 1px solid rgba(13, 93, 58, 0.25);
   line-height: 1;
@@ -69,7 +69,7 @@
   gap: 6px;
   background: #fff8e1;
   color: #8b6914;
-  padding: 4px 12px;
+  padding: var(--space-1) var(--space-3);
   border-radius: 16px;
   font-size: 14px;
   font-weight: 600;
@@ -88,7 +88,7 @@
 .status-indicator {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   padding: 5px 18px;
   border-radius: 20px;
   font-weight: 600;
@@ -135,7 +135,7 @@
 .room-status-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   flex-shrink: 0;
 }
 
@@ -153,7 +153,7 @@
   background: #28a745;
   border: 1px solid #218838;
   color: #ffffff;
-  padding: 5px 16px;
+  padding: 5px var(--space-4);
   border-radius: 4px;
   font-size: 14px;
   font-weight: 600;
@@ -170,7 +170,7 @@
   background: #fff5f5;
   border: 1px solid #e53e3e;
   color: #c53030;
-  padding: 5px 12px;
+  padding: 5px var(--space-3);
   border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
@@ -189,7 +189,7 @@
   background: #3182ce;
   border: 1px solid #2b6cb0;
   color: #ffffff;
-  padding: 5px 16px;
+  padding: 5px var(--space-4);
   border-radius: 4px;
   font-size: 14px;
   font-weight: 600;
@@ -221,8 +221,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 0 20px;
+  gap: var(--space-3);
+  padding: 0 var(--space-5);
 
   /* HIGH-CONTRAST: Dark background with white text for legibility */
   background: #2d3748;
@@ -276,7 +276,7 @@
   .room-status-bar {
     top: 56px; /* Tablet/mobile nav height */
     height: 48px;
-    padding: 0 12px;
+    padding: 0 var(--space-3);
     font-size: 14px;
   }
 
@@ -296,7 +296,7 @@
     top: 104px; /* 56px nav + 48px status bar */
     height: 28px;
     font-size: 13px;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .room-bar-spacer {

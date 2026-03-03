@@ -4,10 +4,10 @@
   position: relative;
   background: linear-gradient(135deg, #1e3a5f 0%, #2a5a8f 100%);
   color: white;
-  padding: 16px;
+  padding: var(--space-4);
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 /* Collapsed state - minimal footprint */
@@ -83,14 +83,14 @@
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 16px 0;
+  padding: var(--space-4) 0;
 }
 
 .partnership-score {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   min-width: 100px;
   padding: 10px;
   border-radius: 8px;
@@ -125,7 +125,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
 }
 
 .vs-label {
@@ -138,9 +138,9 @@
 .panel-actions {
   display: flex;
   justify-content: center;
-  padding-top: 12px;
+  padding-top: var(--space-3);
   border-top: 1px solid rgba(255, 255, 255, 0.15);
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 
 .view-history-btn {
@@ -162,16 +162,16 @@
 /* Responsive design */
 @media (max-width: 480px) {
   .session-score-panel {
-    padding: 12px;
+    padding: var(--space-3);
   }
 
   .session-scores {
-    padding: 12px 0;
+    padding: var(--space-3) 0;
   }
 
   .partnership-score {
     min-width: 80px;
-    padding: 8px;
+    padding: var(--space-2);
   }
 
   .score-value {

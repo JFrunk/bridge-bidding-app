@@ -30,7 +30,7 @@
 .beliefs-collapsed-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .beliefs-collapsed-icon {
   font-size: var(--text-sm, 14px);
@@ -84,7 +84,7 @@
 .beliefs-header-buttons {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 .beliefs-toggle {
   font-size: 11px;
@@ -92,7 +92,7 @@
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-sm, 4px);
-  padding: 2px 8px;
+  padding: 2px var(--space-2);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }
@@ -108,7 +108,7 @@
 .beliefs-hcp-label {
   font-size: var(--text-xs, 12px);
   color: var(--text-muted, #999999);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 .beliefs-hcp-range-row {
   display: flex;
@@ -181,7 +181,7 @@
 .beliefs-suits-inline {
   display: flex;
   justify-content: space-around;
-  gap: 8px;
+  gap: var(--space-2);
   padding: 6px 0;
 }
 .beliefs-suit-detail {
@@ -211,7 +211,7 @@
 .belief-tag {
   font-size: 11px;
   font-weight: var(--font-medium, 500);
-  padding: 2px 8px;
+  padding: 2px var(--space-2);
   border-radius: 10px;
   border: 1px solid;
 }
@@ -267,7 +267,7 @@
 .beliefs-verdict-chip {
   font-size: 11px;
   font-weight: var(--font-medium, 500);
-  padding: 2px 8px;
+  padding: 2px var(--space-2);
   border-radius: 10px;
 }
 .beliefs-verdict-chip.game {
@@ -293,7 +293,7 @@
   text-transform: uppercase;
   letter-spacing: 0.3px;
   margin-bottom: var(--space-2, 8px);
-  padding-bottom: 4px;
+  padding-bottom: var(--space-1);
   border-bottom: 1px solid rgba(255, 152, 0, 0.2);
   display: flex;
   align-items: center;
@@ -312,10 +312,10 @@
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-sm, 4px);
-  padding: 2px 8px;
+  padding: 2px var(--space-2);
   cursor: pointer;
   transition: all 0.15s;
-  margin-left: 8px;
+  margin-left: var(--space-2);
 }
 .beliefs-how-button:hover {
   color: var(--color-info, #61dafb);
@@ -347,7 +347,7 @@
 /* Timeline */
 .beliefs-reasoning-timeline {
   position: relative;
-  padding-left: 20px;
+  padding-left: var(--space-5);
 }
 .beliefs-reasoning-timeline::before {
   content: '';
