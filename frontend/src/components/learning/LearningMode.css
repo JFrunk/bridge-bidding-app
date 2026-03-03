@@ -455,6 +455,7 @@
   border-radius: var(--radius-md);
   border-left: 4px solid transparent;
   transition: all var(--duration-fast);
+  min-width: 0;
 }
 
 /* Skill Status Indicators */
@@ -515,6 +516,7 @@
   flex-direction: column;
   gap: var(--space-1);
   flex: 1;
+  min-width: 0;
 }
 
 .skill-name {
@@ -536,6 +538,8 @@
   font-size: var(--text-sm);
   cursor: pointer;
   transition: background var(--duration-fast);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .practice-button:hover {
