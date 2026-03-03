@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { setUserId, clearUserId, trackLogin, trackLogout, trackGuestMode } from '../services/analytics';
 
 const AuthContext = createContext(null);
 
@@ -182,6 +183,10 @@ export function AuthProvider({ children }) {
       // Hide the registration prompt
       setShowRegistrationPrompt(false);
 
+      // Track login event and set user ID for analytics
+      setUserId(userData.id);
+      trackLogin(type); // 'email' or 'phone'
+
       return { success: true, created: data.created, user: userData };
     } catch (error) {
       return { success: false, error: error.message };
@@ -205,6 +210,11 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('session_token');
     localStorage.removeItem('bridge_user');
     localStorage.removeItem('bridge_experience_level');
+
+    // Track logout and clear user ID from analytics
+    trackLogout();
+    clearUserId();
+
     // Clear user state - this will show login screen (isAuthenticated becomes false)
     setUser(null);
     setLoading(false);
@@ -219,6 +229,11 @@ export function AuthProvider({ children }) {
     // Without this, AuthContext mount finds no stored user → user=null → userId=null
     // → session/start fails, hand saving fails, evaluate-bid fails.
     localStorage.setItem('bridge_user', JSON.stringify(guestUser));
+
+    // Track guest mode and set guest user ID for analytics
+    setUserId(guestId);
+    trackGuestMode();
+
     setLoading(false);
   };
 
@@ -237,10 +252,12 @@ export function AuthProvider({ children }) {
   }, [user, handsCompleted, hasSeenPrompt]);
 
   // Dismiss registration prompt (temporarily or permanently)
+  // "Maybe Later" sets hasSeenPrompt to prevent re-triggering for this session.
+  // "Don't Ask Again" additionally persists across sessions via localStorage.
   const dismissRegistrationPrompt = useCallback((permanent = false) => {
     setShowRegistrationPrompt(false);
+    setHasSeenPrompt(true);
     if (permanent) {
-      setHasSeenPrompt(true);
       localStorage.setItem('bridge_registration_dismissed', 'true');
     }
   }, []);

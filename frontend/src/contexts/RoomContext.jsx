@@ -515,7 +515,8 @@ export function RoomProvider({ children }) {
     setIsPolling(false);
   }, []);
 
-  // Check room status on mount
+  // Check room status on mount (reconnection after page refresh)
+  // Skip if room endpoints aren't registered on the backend yet
   useEffect(() => {
     const checkRoomStatus = async () => {
       try {
@@ -540,8 +541,8 @@ export function RoomProvider({ children }) {
             startPolling();
           }
         }
-      } catch (err) {
-        console.warn('Could not check room status:', err);
+      } catch {
+        // Silently ignore -- room endpoints may not be registered
       }
     };
 

@@ -546,20 +546,18 @@
   font-size: 1rem;
 }
 
-/* Playable Cards - Desktop default size */
+/* Playable Cards - Desktop default size
+   Visual styling (border, border-radius, background, shadow) controlled by
+   Tailwind classes in PlayableCard.jsx to match Card.js (Physics v2.0) */
 .playable-card {
-  background-color: white;
-  border: 2px solid #333;
-  border-radius: 3px;
   padding: var(--space-2) 5px;
-  width: 60px;  /* Restored original size */
-  height: 84px;  /* Restored original size */
+  width: 60px;
+  height: 84px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: inline-block;
   margin: 2px;
   position: relative;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
   flex-shrink: 0;
 }
 
@@ -994,8 +992,6 @@
     height: 63px;
     padding: 3px 2px;
     margin: 1px;
-    border-radius: 3px;
-    border-width: 1px;
   }
 
   /* Mobile: overlap to show ~50% of each card */
@@ -1097,7 +1093,6 @@
     width: 38px;
     height: 53px;
     padding: 2px 1px;
-    border-radius: 3px;
   }
 
   .suit-group {

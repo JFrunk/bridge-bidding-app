@@ -51,7 +51,7 @@ export function RegistrationPrompt({
 
   return (
     <div className="registration-prompt-overlay" onClick={(e) => {
-      if (e.target.className === 'registration-prompt-overlay') handleDismiss(false);
+      if (e.target === e.currentTarget) handleDismiss(false);
     }}>
       <div className="registration-prompt-modal">
         <button

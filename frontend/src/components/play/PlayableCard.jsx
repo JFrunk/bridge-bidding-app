@@ -26,7 +26,7 @@ export function PlayableCard({ card, onClick, disabled = false, compact = false,
     <div
       className={cn(
         "playable-card", // CRITICAL: This class enables overlap and responsive sizing in CSS
-        "relative bg-white border border-gray-400 rounded-card shadow-md",
+        "relative bg-white border-[1px] border-gray-300 rounded-card shadow-[1px_1px_3px_rgba(0,0,0,0.3)]",
         !readOnly && "transition-all duration-200",
         isClickable && "cursor-pointer hover:-translate-y-4 hover:shadow-xl hover:z-50 clickable",
         disabled && !readOnly && "cursor-not-allowed",
