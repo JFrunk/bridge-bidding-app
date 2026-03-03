@@ -6,7 +6,7 @@
 -- User play decision logging for dashboard analytics
 -- Similar to bidding_decisions but for card play evaluation
 CREATE TABLE IF NOT EXISTS play_decisions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     session_id TEXT,
     position TEXT NOT NULL CHECK(position IN ('N', 'E', 'S', 'W')),

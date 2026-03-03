@@ -5,7 +5,7 @@
 -- User play decision logging for dashboard analytics
 -- Similar to bidding_decisions but for card play evaluation
 CREATE TABLE IF NOT EXISTS play_decisions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     session_id TEXT,
     position TEXT NOT NULL CHECK(position IN ('N', 'E', 'S', 'W')),
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS play_decisions (
     tricks_cost INTEGER DEFAULT 0,
     contract TEXT,
     feedback TEXT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 -- Indexes for play decision queries
@@ -27,7 +27,7 @@ CREATE INDEX IF NOT EXISTS idx_play_decisions_session ON play_decisions(session_
 
 -- AI play logging table (for DDS quality monitoring)
 CREATE TABLE IF NOT EXISTS ai_play_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     position TEXT NOT NULL CHECK(position IN ('N', 'E', 'S', 'W')),
     ai_level TEXT NOT NULL,
     card_played TEXT NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS ai_play_log (
     trick_number INTEGER,
     contract TEXT,
     trump_suit TEXT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 -- Indexes for AI play log queries

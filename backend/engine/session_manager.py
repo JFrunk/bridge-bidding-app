@@ -19,7 +19,7 @@ from datetime import datetime
 import logging
 from engine.play_engine import Contract
 
-# Use database abstraction layer for SQLite/PostgreSQL compatibility
+# Database abstraction layer
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -180,8 +180,8 @@ class GameSession:
 class SessionManager:
     """Database operations for game sessions"""
 
-    def __init__(self, db_path: str = 'backend/bridge.db'):
-        self.db_path = db_path  # Kept for backward compatibility, but not used
+    def __init__(self):
+        pass
 
     def _get_connection(self):
         """Get database connection using abstraction layer"""
@@ -209,14 +209,20 @@ class SessionManager:
         # Use infinite hands for continuous play (default)
         max_hands = DEFAULT_MAX_HANDS
 
-        # Ensure guest users (negative IDs) exist in users table for FK constraint
-        if user_id and int(user_id) < 0:
+        # Ensure user exists in users table for FK constraint
+        if user_id:
             cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
             if not cursor.fetchone():
+                if int(user_id) < 0:
+                    username = f'guest_{abs(int(user_id))}'
+                    display_name = 'Guest'
+                else:
+                    username = f'user_{user_id}'
+                    display_name = f'User {user_id}'
                 cursor.execute("""
                     INSERT INTO users (id, username, display_name)
                     VALUES (?, ?, ?)
-                """, (user_id, f'guest_{abs(user_id)}', 'Guest'))
+                """, (user_id, username, display_name))
 
         cursor.execute("""
             INSERT INTO game_sessions
@@ -352,17 +358,11 @@ class SessionManager:
         contract = hand_data.get('contract')
 
         # Check if DDS columns exist (migration 007)
-        # Use information_schema for PostgreSQL, PRAGMA for SQLite
-        from db import USE_POSTGRES
-        if USE_POSTGRES:
-            cursor.execute(
-                "SELECT column_name FROM information_schema.columns "
-                "WHERE table_name = 'session_hands'"
-            )
-            columns = {row['column_name'] for row in cursor.fetchall()}
-        else:
-            cursor.execute("PRAGMA table_info(session_hands)")
-            columns = {row['name'] for row in cursor.fetchall()}
+        cursor.execute(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_name = 'session_hands'"
+        )
+        columns = {row['column_name'] for row in cursor.fetchall()}
         has_dds_columns = 'dds_analysis' in columns
 
         # Perform DDS analysis if available (non-blocking)

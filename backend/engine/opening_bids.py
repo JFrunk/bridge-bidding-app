@@ -92,30 +92,40 @@ class OpeningBidsModule(ConventionModule):
             return ("2♣", explanation, {'bypass_suit_length': True})
 
         # Rule for standard 1-level openings (13-21 points)
+        # SAYC requirement: 12+ HCP for major suit openings (1M)
+        # Minors can be opened with 13 total points if hand has good shape
         if hand.total_points >= 13:
             if max(hand.suit_lengths.values()) >= 5: # Has a 5+ card suit
-                # Prioritize majors
+                # Prioritize majors - REQUIRE 12+ HCP for 1M openings per SAYC
                 if hand.suit_lengths['♥'] >= 5 and hand.suit_lengths['♥'] >= hand.suit_lengths['♠']:
-                    explanation = BidExplanation("1♥")
-                    explanation.set_primary_reason("Open longest suit - hearts (5+ cards)")
-                    explanation.add_requirement("Opening Points", "13+")
-                    explanation.add_requirement("Heart Length", "5+")
-                    explanation.add_actual_value("Total Points", str(hand.total_points))
-                    explanation.add_actual_value("Hearts", f"{hand.suit_lengths['♥']} cards, {hand.suit_hcp['♥']} HCP")
-                    if hand.suit_lengths['♠'] >= 5:
-                        explanation.add_alternative("1♠", f"Hearts are longer or equal ({hand.suit_lengths['♥']} vs {hand.suit_lengths['♠']})")
-                    explanation.set_forcing_status("Forcing for 1 round")
-                    return ("1♥", explanation)
+                    # SAYC: 1M opening requires 12+ HCP (not just total points)
+                    if hand.hcp >= 12:
+                        explanation = BidExplanation("1♥")
+                        explanation.set_primary_reason("Open longest suit - hearts (5+ cards, 12+ HCP)")
+                        explanation.add_requirement("HCP", "12+")
+                        explanation.add_requirement("Heart Length", "5+")
+                        explanation.add_actual_value("HCP", str(hand.hcp))
+                        explanation.add_actual_value("Total Points", str(hand.total_points))
+                        explanation.add_actual_value("Hearts", f"{hand.suit_lengths['♥']} cards, {hand.suit_hcp['♥']} HCP")
+                        if hand.suit_lengths['♠'] >= 5:
+                            explanation.add_alternative("1♠", f"Hearts are longer or equal ({hand.suit_lengths['♥']} vs {hand.suit_lengths['♠']})")
+                        explanation.set_forcing_status("Forcing for 1 round")
+                        return ("1♥", explanation)
+                    # Fall through to minors if HCP < 12
 
                 if hand.suit_lengths['♠'] >= 5:
-                    explanation = BidExplanation("1♠")
-                    explanation.set_primary_reason("Open longest suit - spades (5+ cards)")
-                    explanation.add_requirement("Opening Points", "13+")
-                    explanation.add_requirement("Spade Length", "5+")
-                    explanation.add_actual_value("Total Points", str(hand.total_points))
-                    explanation.add_actual_value("Spades", f"{hand.suit_lengths['♠']} cards, {hand.suit_hcp['♠']} HCP")
-                    explanation.set_forcing_status("Forcing for 1 round")
-                    return ("1♠", explanation)
+                    # SAYC: 1M opening requires 12+ HCP (not just total points)
+                    if hand.hcp >= 12:
+                        explanation = BidExplanation("1♠")
+                        explanation.set_primary_reason("Open longest suit - spades (5+ cards, 12+ HCP)")
+                        explanation.add_requirement("HCP", "12+")
+                        explanation.add_requirement("Spade Length", "5+")
+                        explanation.add_actual_value("HCP", str(hand.hcp))
+                        explanation.add_actual_value("Total Points", str(hand.total_points))
+                        explanation.add_actual_value("Spades", f"{hand.suit_lengths['♠']} cards, {hand.suit_hcp['♠']} HCP")
+                        explanation.set_forcing_status("Forcing for 1 round")
+                        return ("1♠", explanation)
+                    # Fall through to minors if HCP < 12
 
                 # Then minors
                 if hand.suit_lengths['♦'] >= 5 and hand.suit_lengths['♦'] >= hand.suit_lengths['♣']:

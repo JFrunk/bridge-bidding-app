@@ -4,7 +4,7 @@
 
 -- Main logging table for AI play decisions
 CREATE TABLE IF NOT EXISTS ai_play_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
 
     -- Timing
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -58,7 +58,7 @@ SELECT
     AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate,
     COUNT(CASE WHEN used_fallback THEN 1 END) as fallback_count
 FROM ai_play_log
-WHERE timestamp > datetime('now', '-24 hours')
+WHERE timestamp > NOW() - INTERVAL '24 hours'
 GROUP BY ai_level;
 
 -- View for per-session quality metrics

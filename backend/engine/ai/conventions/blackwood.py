@@ -113,11 +113,9 @@ class BlackwoodConvention(ConventionModule):
             estimated_combined = hand.total_points + partner_total_points
 
         # MINIMUM HCP requirement for Blackwood
-        # Lower threshold when combined strength clearly indicates slam
-        # With 33+ combined, we can trigger with 14+ HCP (partner has extras)
-        if hand.hcp < 14:
-            return False
-        if hand.hcp < 16 and estimated_combined < 33:
+        # SAYC requires 16+ HCP for slam exploration with Blackwood
+        # This ensures we have genuine slam values, not just counting on partner
+        if hand.hcp < 16:
             return False
 
         # Strong direct jump raises (e.g., 1♥ - 4♥) indicate slam interest
@@ -125,11 +123,12 @@ class BlackwoodConvention(ConventionModule):
         if len(my_previous_bids) == 1 and partner_last_bid[0] == '4' and len(partner_last_bid) == 2:
             partner_suit = partner_last_bid[1]
             # Partner jumped to game in our suit - they have 13-15 pts with fit
-            # With 17+ total points ourselves, combined is 30+, explore slam
-            if hand.total_points >= 17:
+            # SAYC: Need 16+ HCP for Blackwood, even with strong total points
+            # With 16+ HCP and fit, combined is likely 29+, explore slam
+            if hand.hcp >= 16 and hand.total_points >= 17:
                 return True
-            # With fit and 33+ estimated combined, explore slam
-            if estimated_combined >= 33:
+            # With fit and 33+ estimated combined AND 16+ HCP, explore slam
+            if hand.hcp >= 16 and estimated_combined >= 33:
                 return True
 
         # After game-forcing sequence at 3-level, check for slam exploration
@@ -141,11 +140,12 @@ class BlackwoodConvention(ConventionModule):
                 my_first_suit = my_previous_bids[0][1] if len(my_previous_bids[0]) >= 2 else None
                 if my_first_suit == partner_suit:
                     # Partner raised our suit - check combined values for slam
-                    # Need 32+ combined points AND a strong hand for Blackwood
-                    if estimated_combined >= 32 and hand.total_points >= 16:
+                    # SAYC: Need 16+ HCP for Blackwood
+                    # Need 32+ combined points AND 16+ HCP for Blackwood
+                    if hand.hcp >= 16 and estimated_combined >= 32 and hand.total_points >= 16:
                         return True
-                    # Very strong opener (18+) can explore slam if combined is close (30+)
-                    if hand.total_points >= 18 and estimated_combined >= 30:
+                    # Very strong opener (18+ HCP) can explore slam if combined is close (30+)
+                    if hand.hcp >= 18 and estimated_combined >= 30:
                         return True
 
         # After partner's JUMP SHIFT (game-forcing, 17+ pts)
@@ -188,12 +188,14 @@ class BlackwoodConvention(ConventionModule):
                 # Minor suit 2-level bids (2♣, 2♦) are typically 2-over-1 showing 10+ pts
                 is_major_jump_shift = partner_suit in ['♥', '♠'] and partner_suit_rank > my_suit_rank
 
-                if is_major_jump_shift and partner_suit != my_suit and hand.total_points >= 17:
+                # SAYC: Need 16+ HCP for Blackwood even after jump shift
+                if is_major_jump_shift and partner_suit != my_suit and hand.hcp >= 16 and hand.total_points >= 17:
                     return True
 
         # High combined values warrant slam exploration (33+ combined)
         # BUT only if there's a clear trump fit (partner raised our suit)
-        if estimated_combined >= 33:
+        # SAYC: Still need 16+ HCP even with high combined strength
+        if hand.hcp >= 16 and estimated_combined >= 33:
             # Partner has raised our suit or we have clear fit
             is_raise = len(my_previous_bids) >= 1 and len(partner_last_bid) >= 2 and partner_last_bid[1:] == my_previous_bids[0][1:]
             if is_raise and partner_last_bid[0] in ['3', '4']:

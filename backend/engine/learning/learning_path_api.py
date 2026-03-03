@@ -16,7 +16,7 @@ from typing import Dict, List
 import sys
 from pathlib import Path
 
-# Database abstraction layer for SQLite/PostgreSQL compatibility
+# Database abstraction layer
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from db import get_connection
 
@@ -29,7 +29,7 @@ from engine.learning.play_skill_tree import get_play_skill_tree_manager
 # HELPER FUNCTIONS
 # ============================================================================
 
-def get_db_connection(db_path='bridge.db'):
+def get_db_connection():
     """Get database connection using abstraction layer"""
     return get_connection()
 
@@ -106,28 +106,9 @@ def record_skill_practice(user_id: int, skill_id: str, skill_level: int,
             new_correct = existing['correct'] + (1 if was_correct else 0)
             new_accuracy = new_correct / new_attempts if new_attempts > 0 else 0
 
-            # Check if mastered (80% accuracy with minimum attempts)
-            from engine.learning.skill_tree import get_skill_tree_manager
-            manager = get_skill_tree_manager()
-            skill_node = None
-            for level_id, level_data in manager.tree.items():
-                if 'skills' in level_data:
-                    for skill in level_data['skills']:
-                        if skill.id == skill_id:
-                            skill_node = skill
-                            break
-
-            required_hands = skill_node.practice_hands_required if skill_node else 5
-            required_accuracy = skill_node.passing_accuracy if skill_node else 0.80
-
+            # Mastery is now determined per-session by the frontend.
+            # Backend preserves existing status (frontend calls mark-mastered).
             new_status = existing['status']
-            mastered_at = existing['mastered_at']
-
-            if (new_attempts >= required_hands and
-                new_accuracy >= required_accuracy and
-                new_status != 'mastered'):
-                new_status = 'mastered'
-                mastered_at = 'CURRENT_TIMESTAMP'
 
             cursor.execute("""
                 UPDATE user_skill_progress
@@ -960,20 +941,11 @@ def submit_learning_answer():
 
     if topic_type == 'skill':
         # Skill-specific evaluation with educational feedback
-        if 'hcp' in expected:
-            # HCP counting question
-            try:
-                user_hcp = int(answer)
-                is_correct = user_hcp == expected['hcp']
-                if is_correct:
-                    feedback = f'Correct! {expected["hcp"]} HCP. '
-                    feedback += 'Remember: A=4, K=3, Q=2, J=1.'
-                else:
-                    feedback = f'The hand has {expected["hcp"]} HCP, not {user_hcp}. '
-                    feedback += 'Count: Ace=4, King=3, Queen=2, Jack=1 points.'
-            except ValueError:
-                feedback = 'Please enter a number for HCP'
-        elif 'should_open' in expected:
+        # IMPORTANT: Check 'bid' before 'hcp' because some generators
+        # (e.g. WhenToPassGenerator) include both keys — 'hcp' is metadata,
+        # 'bid' is the actual question. Must match frontend priority in
+        # SkillPractice.js getQuestionType().
+        if 'should_open' in expected:
             # Should open question
             user_answer = str(answer).lower() in ['yes', 'true', 'open', '1']
             is_correct = user_answer == expected['should_open']
@@ -1003,6 +975,19 @@ def submit_learning_answer():
             else:
                 # This is an opening bid situation
                 feedback += _get_opening_education(expected['bid'])
+        elif 'hcp' in expected:
+            # HCP counting question (only reached when 'bid' is NOT present)
+            try:
+                user_hcp = int(answer)
+                is_correct = user_hcp == expected['hcp']
+                if is_correct:
+                    feedback = f'Correct! {expected["hcp"]} HCP. '
+                    feedback += 'Remember: A=4, K=3, Q=2, J=1.'
+                else:
+                    feedback = f'The hand has {expected["hcp"]} HCP, not {user_hcp}. '
+                    feedback += 'Count: Ace=4, King=3, Queen=2, Jack=1 points.'
+            except ValueError:
+                feedback = 'Please enter a number for HCP'
         elif 'longest_suit' in expected:
             # Longest suit question (suit quality)
             # Normalize both to handle different suit representations
@@ -1072,16 +1057,15 @@ def submit_learning_answer():
         result = {'success': True, 'status': 'in_progress', 'accuracy': 0}
         feedback = 'Convention evaluation uses existing system'
 
-    # Check if topic is mastered
+    # Get current progress for response (mastery is now determined per-session by frontend)
     progress = get_user_skill_status(user_id, topic_id) if topic_type == 'skill' else get_user_convention_status(user_id, topic_id)
-    is_mastered = progress and progress.get('status') == 'mastered'
 
-    # Generate next hand/question if not mastered
+    # Always generate next hand — frontend controls session length
     next_hand = None
     next_expected = None
     next_hand_id = None
 
-    if not is_mastered and topic_type == 'skill':
+    if topic_type == 'skill':
         generator = get_skill_hand_generator(topic_id)
         if generator:
             deck = create_deck()
@@ -1116,11 +1100,86 @@ def submit_learning_answer():
             'accuracy': round(progress.get('accuracy', 0) * 100, 1) if progress else 0,
             'status': progress.get('status', 'in_progress') if progress else 'in_progress'
         },
-        'is_mastered': is_mastered,
+        'is_mastered': False,  # Mastery now determined per-session by frontend
         'next_hand': next_hand,
         'next_expected': next_expected,
         'next_hand_id': next_hand_id
     })
+
+
+def mark_skill_mastered():
+    """
+    POST /api/learning/mark-mastered
+
+    Mark a skill as mastered after a successful practice session.
+    Called by the frontend when the user achieves >=80% accuracy
+    on 6+ hands within a single session.
+
+    Body:
+        {
+            "user_id": 1,
+            "skill_id": "hand_evaluation_basics",
+            "track": "bidding",          # "bidding" or "play"
+            "session_accuracy": 0.85,
+            "session_hands": 7
+        }
+    """
+    data = request.get_json()
+    user_id = data.get('user_id')
+    skill_id = data.get('skill_id')
+    track = data.get('track', 'bidding')
+    session_accuracy = data.get('session_accuracy')
+    session_hands = data.get('session_hands')
+
+    if not all([user_id, skill_id, session_accuracy is not None, session_hands]):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        table = 'user_play_progress' if track == 'play' else 'user_skill_progress'
+
+        cursor.execute(f"""
+            UPDATE {table}
+            SET status = 'mastered',
+                mastered_at = CURRENT_TIMESTAMP,
+                last_practiced = CURRENT_TIMESTAMP
+            WHERE user_id = ? AND skill_id = ? AND status != 'mastered'
+        """, (user_id, skill_id))
+
+        if cursor.rowcount == 0:
+            # Check if already mastered (idempotent)
+            cursor.execute(f"""
+                SELECT status FROM {table}
+                WHERE user_id = ? AND skill_id = ?
+            """, (user_id, skill_id))
+            existing = cursor.fetchone()
+
+            if not existing:
+                # No record exists — create one as mastered
+                cursor.execute(f"""
+                    INSERT INTO {table}
+                    (user_id, skill_id, skill_level, status, attempts, correct, accuracy,
+                     started_at, last_practiced, mastered_at)
+                    VALUES (?, ?, 0, 'mastered', ?, ?, ?,
+                            CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """, (user_id, skill_id, session_hands,
+                      int(session_hands * session_accuracy), session_accuracy))
+
+        conn.commit()
+
+        return jsonify({
+            'success': True,
+            'skill_id': skill_id,
+            'status': 'mastered'
+        })
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
 
 
 def get_interleaved_review():
@@ -1537,24 +1596,9 @@ def record_play_skill_practice(user_id: int, skill_id: str, skill_level: int,
             accuracy = correct / attempts
             current_status = existing['status']
 
-            # Determine new status
-            if current_status in ['not_started', 'in_progress']:
-                # Check if mastered (needs 80% on 5+ attempts for most skills)
-                manager = get_play_skill_tree_manager()
-                skill_node = manager.get_skill_by_id(skill_id)
-                if skill_node:
-                    required_accuracy = skill_node.passing_accuracy
-                    required_hands = skill_node.practice_hands_required
-                else:
-                    required_accuracy = 0.80
-                    required_hands = 5
-
-                if accuracy >= required_accuracy and attempts >= required_hands:
-                    new_status = 'mastered'
-                else:
-                    new_status = 'in_progress'
-            else:
-                new_status = current_status
+            # Mastery is now determined per-session by the frontend.
+            # Backend preserves existing status (frontend calls mark-mastered).
+            new_status = current_status
 
             cursor.execute("""
                 UPDATE user_play_progress
@@ -1776,6 +1820,7 @@ def register_learning_endpoints(app):
     app.route('/api/learning/review', methods=['GET'])(get_interleaved_review)
     app.route('/api/learning/level-assessment', methods=['GET'])(get_level_assessment)
     app.route('/api/learning/status', methods=['GET'])(get_user_learning_status)
+    app.route('/api/learning/mark-mastered', methods=['POST'])(mark_skill_mastered)
 
     # Play skill tree endpoints
     app.route('/api/play-skill-tree', methods=['GET'])(play_skill_tree_full)

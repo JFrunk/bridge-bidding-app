@@ -163,8 +163,7 @@ ALTER TABLE hand_analyses
 -- ============================================================================
 -- STEP 6: Recreate views (PostgreSQL-native syntax)
 -- ============================================================================
--- Original views used SQLite functions (datetime(), printf()) which are not
--- valid in PostgreSQL. These recreations use PostgreSQL-native equivalents.
+-- Recreated views using PostgreSQL-native functions (NOW(), CONCAT(), etc.).
 
 -- ---------------------------------------------------------------------------
 -- From migration 001: Bidding feedback views
@@ -397,7 +396,7 @@ COMMIT;
 --   - 17 user_id columns: INTEGER → BIGINT
 --   - 11 FK constraints: dropped and re-added with ON DELETE CASCADE
 --   - 7 views: recreated with PostgreSQL-native syntax
---     (replaced SQLite's datetime()/printf() with NOW()/CONCAT())
+--     (using PostgreSQL-native NOW()/CONCAT())
 --
 -- Verification queries:
 --   SELECT column_name, data_type

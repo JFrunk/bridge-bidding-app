@@ -11,7 +11,7 @@ import json
 import sys
 from pathlib import Path
 
-# Database abstraction layer for SQLite/PostgreSQL compatibility
+# Database abstraction layer
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from db import get_connection
 
@@ -42,8 +42,7 @@ class ErrorCategorizer:
     Categorizes bidding errors with context
     """
 
-    def __init__(self, db_path: str = 'backend/bridge.db'):
-        self.db_path = db_path  # Kept for backward compatibility
+    def __init__(self):
         self._load_categories()
 
     def _get_connection(self):
@@ -355,9 +354,9 @@ class ErrorCategorizer:
 _error_categorizer_instance = None
 
 
-def get_error_categorizer(db_path: str = 'bridge.db') -> ErrorCategorizer:
+def get_error_categorizer() -> ErrorCategorizer:
     """Get singleton ErrorCategorizer instance"""
     global _error_categorizer_instance
     if _error_categorizer_instance is None:
-        _error_categorizer_instance = ErrorCategorizer(db_path)
+        _error_categorizer_instance = ErrorCategorizer()
     return _error_categorizer_instance

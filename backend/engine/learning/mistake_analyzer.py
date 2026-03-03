@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 import sys
 from pathlib import Path
 
-# Database abstraction layer for SQLite/PostgreSQL compatibility
+# Database abstraction layer
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from db import get_connection, date_subtract
 
@@ -65,8 +65,7 @@ class InsightSummary:
 class MistakeAnalyzer:
     """Analyzes mistake patterns and provides learning insights"""
 
-    def __init__(self, db_path: str = 'backend/bridge.db'):
-        self.db_path = db_path  # Kept for backward compatibility
+    def __init__(self):
         self._ensure_tables_exist()
 
     def _ensure_tables_exist(self):
@@ -360,7 +359,7 @@ class MistakeAnalyzer:
         category_row = cursor.fetchone()
         category_name = category_row['friendly_name'] if category_row else pattern['error_category']
 
-        celebration_manager = get_celebration_manager(self.db_path)
+        celebration_manager = get_celebration_manager()
         celebration_manager.create_pattern_resolved_milestone(
             pattern['user_id'],
             pattern['error_category'],
@@ -680,9 +679,9 @@ class MistakeAnalyzer:
 # Singleton instance
 _mistake_analyzer_instance = None
 
-def get_mistake_analyzer(db_path: str = 'bridge.db') -> MistakeAnalyzer:
+def get_mistake_analyzer() -> MistakeAnalyzer:
     """Get singleton MistakeAnalyzer instance"""
     global _mistake_analyzer_instance
     if _mistake_analyzer_instance is None:
-        _mistake_analyzer_instance = MistakeAnalyzer(db_path)
+        _mistake_analyzer_instance = MistakeAnalyzer()
     return _mistake_analyzer_instance

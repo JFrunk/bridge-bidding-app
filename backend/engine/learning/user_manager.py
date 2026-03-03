@@ -12,7 +12,7 @@ import json
 import sys
 from pathlib import Path
 
-# Database abstraction layer for SQLite/PostgreSQL compatibility
+# Database abstraction layer
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from db import get_connection
 
@@ -51,8 +51,8 @@ class UserManager:
     Manages user accounts and basic operations
     """
 
-    def __init__(self, db_path: str = 'bridge.db'):
-        self.db_path = db_path  # Kept for backward compatibility
+    def __init__(self):
+        pass
 
     def _get_connection(self):
         """Get database connection using abstraction layer"""
@@ -87,16 +87,11 @@ class UserManager:
 
         try:
             # Check if phone column exists, if not create it
-            from db import USE_POSTGRES
-            if USE_POSTGRES:
-                cursor.execute(
-                    "SELECT column_name FROM information_schema.columns "
-                    "WHERE table_name = 'users'"
-                )
-                columns = [row['column_name'] for row in cursor.fetchall()]
-            else:
-                cursor.execute("PRAGMA table_info(users)")
-                columns = [row[1] for row in cursor.fetchall()]
+            cursor.execute(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'users'"
+            )
+            columns = [row['column_name'] for row in cursor.fetchall()]
             if 'phone' not in columns:
                 cursor.execute("ALTER TABLE users ADD COLUMN phone TEXT")
                 conn.commit()
@@ -122,7 +117,7 @@ class UserManager:
             conn.commit()
             return user_id
 
-        except sqlite3.IntegrityError as e:
+        except Exception as e:
             conn.rollback()
             if 'username' in str(e):
                 raise ValueError(f"Username '{username}' already exists")
@@ -450,7 +445,7 @@ class UserManager:
         }
 
         if streak_days in milestones:
-            celebration_mgr = CelebrationManager(self.db_path)
+            celebration_mgr = CelebrationManager()
             celebration_mgr.create_milestone(
                 user_id=user_id,
                 milestone_type='streak_milestone',
@@ -521,7 +516,7 @@ class UserManager:
         """Create milestone for leveling up"""
         from engine.learning.celebration_manager import CelebrationManager
 
-        celebration_mgr = CelebrationManager(self.db_path)
+        celebration_mgr = CelebrationManager()
         celebration_mgr.create_milestone(
             user_id=user_id,
             milestone_type='level_up',
@@ -557,9 +552,9 @@ class UserManager:
 _user_manager_instance = None
 
 
-def get_user_manager(db_path: str = 'bridge.db') -> UserManager:
+def get_user_manager() -> UserManager:
     """Get singleton UserManager instance"""
     global _user_manager_instance
     if _user_manager_instance is None:
-        _user_manager_instance = UserManager(db_path)
+        _user_manager_instance = UserManager()
     return _user_manager_instance

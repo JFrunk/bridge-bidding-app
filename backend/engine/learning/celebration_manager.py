@@ -17,7 +17,7 @@ from datetime import datetime
 import sys
 from pathlib import Path
 
-# Database abstraction layer for SQLite/PostgreSQL compatibility
+# Database abstraction layer
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from db import get_connection
 
@@ -62,8 +62,8 @@ class CelebrationTemplate:
 class CelebrationManager:
     """Manages milestone celebrations and achievement rewards"""
 
-    def __init__(self, db_path: str = 'backend/bridge.db'):
-        self.db_path = db_path  # Kept for backward compatibility
+    def __init__(self):
+        pass
 
     def create_milestone(self, user_id: int, milestone_type: str,
                         context: Dict, xp_reward: Optional[int] = None) -> Optional[int]:
@@ -555,9 +555,9 @@ class CelebrationManager:
 # Singleton instance
 _celebration_manager_instance = None
 
-def get_celebration_manager(db_path: str = 'bridge.db') -> CelebrationManager:
+def get_celebration_manager() -> CelebrationManager:
     """Get singleton CelebrationManager instance"""
     global _celebration_manager_instance
     if _celebration_manager_instance is None:
-        _celebration_manager_instance = CelebrationManager(db_path)
+        _celebration_manager_instance = CelebrationManager()
     return _celebration_manager_instance

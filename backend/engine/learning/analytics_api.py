@@ -32,12 +32,10 @@ from engine.feedback.signal_integrity_auditor import SignalIntegrityAuditor
 # Seat utilities - single source of truth for position calculations
 from utils.seats import partner
 
-# Database abstraction layer for SQLite/PostgreSQL compatibility
+# Database abstraction layer
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from db import get_connection, date_subtract, date_between
 
-# Legacy DB_PATH kept for reference but not used
-DB_PATH = 'bridge.db'
 
 
 # ============================================================================
@@ -2584,7 +2582,7 @@ def get_hand_detail():
         # Enhanced to compute NS perspective data on-the-fly
         decay_curve_data = None
         try:
-            # sqlite3.Row doesn't have .get(), use bracket access with column check
+            # RealDictCursor rows support .keys() for column checking
             row_keys = row.keys() if hasattr(row, 'keys') else []
             decay_curve_raw = row['decay_curve'] if 'decay_curve' in row_keys else None
             major_errors_raw = row['major_errors'] if 'major_errors' in row_keys else None
