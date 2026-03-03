@@ -144,7 +144,12 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
           skill_level: playData.skill_level,
           practice_format: playData.practice_format,
           // For play skills, expected_response comes from situation
-          expected_response: playData.situation.expected_response,
+          // Include wrong_answers and explanation at the expected_response level for feedback
+          expected_response: {
+            ...playData.situation.expected_response,
+            explanation: playData.situation.explanation,
+            wrong_answers: playData.situation.wrong_answers,
+          },
           progress: { attempts: 0, correct: 0, accuracy: 0, status: 'not_started' },
         };
       } else {
@@ -222,10 +227,16 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
           }
         }
 
-        // Generate feedback
-        const feedback = isCorrect
-          ? `Correct! ${expected.explanation || ''}`
-          : `The answer is ${correctAnswer}. ${expected.explanation || ''}`;
+        // Generate feedback — use wrong-answer-specific rationale when available
+        let feedback;
+        if (isCorrect) {
+          feedback = `Correct! ${expected.explanation || ''}`;
+        } else {
+          const wrongRationale = expected.wrong_answers?.[userAnswer];
+          feedback = wrongRationale
+            ? `The correct answer is ${correctAnswer}. ${wrongRationale}`
+            : `The correct answer is ${correctAnswer}. ${expected.explanation || ''}`;
+        }
 
         // Record the practice attempt
         const recordResult = await recordPlayPractice({
@@ -250,7 +261,11 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
           next_deal: nextPlayData.deal,
           next_situation: nextPlayData.situation,
           next_hand_id: nextPlayData.hand_id,
-          next_expected: nextPlayData.situation.expected_response,
+          next_expected: {
+            ...nextPlayData.situation.expected_response,
+            explanation: nextPlayData.situation.explanation,
+            wrong_answers: nextPlayData.situation.wrong_answers,
+          },
         };
       } else {
         // Bidding skill - use existing API
