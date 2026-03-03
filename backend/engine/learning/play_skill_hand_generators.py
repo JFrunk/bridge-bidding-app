@@ -69,6 +69,24 @@ def shuffle_deck() -> List[Card]:
     return deck
 
 
+def fill_hand(suit_cards: List[Card], deck: List[Card], target_suit: str) -> Tuple[List[Card], List[Card]]:
+    """
+    Build a 13-card hand from suit_cards + filler, excluding extra target-suit cards.
+
+    Without this, filler cards from the deck can include more cards in the target suit,
+    causing the hand to have more cards in the practice suit than the question text describes.
+
+    Returns: (hand_cards, remaining_deck)
+    """
+    filler_needed = 13 - len(suit_cards)
+    non_suit_cards = [c for c in deck if c.suit != target_suit]
+    filler = non_suit_cards[:filler_needed]
+    hand_cards = suit_cards + filler
+    used = set(id(c) for c in filler)
+    remaining_deck = [c for c in deck if id(c) not in used]
+    return hand_cards, remaining_deck
+
+
 @dataclass
 class PlayDeal:
     """Complete deal for play practice."""
@@ -678,15 +696,13 @@ class LeadingToTricksGenerator(PlaySkillHandGenerator):
         your_cards_in_suit, deck = holding_to_cards(your_holding_str, suit, deck)
         dummy_cards_in_suit, deck = holding_to_cards(dummy_holding_str, suit, deck)
 
-        # Build hands (each must have exactly 13 cards)
-        your_hand_cards = your_cards_in_suit + deck[:13-len(your_cards_in_suit)]
+        # Build hands — exclude extra target-suit cards from filler
+        your_hand_cards, deck = fill_hand(your_cards_in_suit, deck, suit)
         your_hand = Hand(your_hand_cards)
 
-        deck = deck[13-len(your_cards_in_suit):]
-        dummy_hand_cards = dummy_cards_in_suit + deck[:13-len(dummy_cards_in_suit)]
+        dummy_hand_cards, deck = fill_hand(dummy_cards_in_suit, deck, suit)
         dummy_hand = Hand(dummy_hand_cards)
 
-        deck = deck[13-len(dummy_cards_in_suit):]
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -758,22 +774,15 @@ class SecondHandLowGenerator(PlaySkillHandGenerator):
 
         # Note: lead_card stays in the deck - it's in opponent's hand
 
-        # Build hands (each must have exactly 13 cards)
-        # Your hand: your_cards_in_suit + filler
-        your_hand_cards = your_cards_in_suit + deck[:13-len(your_cards_in_suit)]
+        # Build hands — exclude extra target-suit cards from filler
+        your_hand_cards, deck = fill_hand(your_cards_in_suit, deck, suit)
         your_hand = Hand(your_hand_cards)
-        deck = deck[13-len(your_cards_in_suit):]
 
-        # Dummy hand: 13 cards
         dummy_hand = Hand(deck[:13])
         deck = deck[13:]
 
-        # LHO hand: 13 cards
         lho_hand = Hand(deck[:13])
-        deck = deck[13:]
-
-        # RHO hand: 13 cards
-        rho_hand = Hand(deck[:13])
+        rho_hand = Hand(deck[13:26])
 
         deal = PlayDeal(
             declarer_hand=your_hand,
@@ -846,15 +855,13 @@ class WinningCheaplyGenerator(PlaySkillHandGenerator):
         if dummy_card_obj in deck:
             deck = [c for c in deck if c != dummy_card_obj]
 
-        # Build hands (each must have exactly 13 cards)
-        your_hand_cards = your_cards_in_suit + deck[:13-len(your_cards_in_suit)]
+        # Build hands — exclude extra target-suit cards from filler
+        your_hand_cards, deck = fill_hand(your_cards_in_suit, deck, suit)
         your_hand = Hand(your_hand_cards)
 
-        deck = deck[13-len(your_cards_in_suit):]
-        dummy_hand_cards = [dummy_card_obj] + deck[:12]
+        dummy_hand_cards, deck = fill_hand([dummy_card_obj], deck, suit)
         dummy_hand = Hand(dummy_hand_cards)
 
-        deck = deck[12:]
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -1093,15 +1100,13 @@ class DoubleFinesseGenerator(PlaySkillHandGenerator):
         your_cards_in_suit, deck = holding_to_cards(your_holding_str, suit, deck)
         dummy_cards_in_suit, deck = holding_to_cards(dummy_holding_str, suit, deck)
 
-        # Build hands
-        your_hand_cards = your_cards_in_suit + deck[:13-len(your_cards_in_suit)]
+        # Build hands — exclude extra target-suit cards from filler
+        your_hand_cards, deck = fill_hand(your_cards_in_suit, deck, suit)
         your_hand = Hand(your_hand_cards)
 
-        deck = deck[13-len(your_cards_in_suit):]
-        dummy_hand_cards = dummy_cards_in_suit + deck[:13-len(dummy_cards_in_suit)]
+        dummy_hand_cards, deck = fill_hand(dummy_cards_in_suit, deck, suit)
         dummy_hand = Hand(dummy_hand_cards)
 
-        deck = deck[13-len(dummy_cards_in_suit):]
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -1160,15 +1165,13 @@ class TwoWayFinesseGenerator(PlaySkillHandGenerator):
         your_cards_in_suit, deck = holding_to_cards(your_holding_str, suit, deck)
         dummy_cards_in_suit, deck = holding_to_cards(dummy_holding_str, suit, deck)
 
-        # Build hands
-        your_hand_cards = your_cards_in_suit + deck[:13-len(your_cards_in_suit)]
+        # Build hands — exclude extra target-suit cards from filler
+        your_hand_cards, deck = fill_hand(your_cards_in_suit, deck, suit)
         your_hand = Hand(your_hand_cards)
 
-        deck = deck[13-len(your_cards_in_suit):]
-        dummy_hand_cards = dummy_cards_in_suit + deck[:13-len(dummy_cards_in_suit)]
+        dummy_hand_cards, deck = fill_hand(dummy_cards_in_suit, deck, suit)
         dummy_hand = Hand(dummy_hand_cards)
 
-        deck = deck[13-len(dummy_cards_in_suit):]
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -1347,14 +1350,13 @@ class DuckingPlaysGenerator(PlaySkillHandGenerator):
         your_cards_in_suit, deck = holding_to_cards(your_holding, suit, deck)
         dummy_cards_in_suit, deck = holding_to_cards(dummy_holding, suit, deck)
 
-        your_hand_cards = your_cards_in_suit + deck[:13-len(your_cards_in_suit)]
+        # Exclude extra target-suit cards from filler
+        your_hand_cards, deck = fill_hand(your_cards_in_suit, deck, suit)
         your_hand = Hand(your_hand_cards)
 
-        deck = deck[13-len(your_cards_in_suit):]
-        dummy_hand_cards = dummy_cards_in_suit + deck[:13-len(dummy_cards_in_suit)]
+        dummy_hand_cards, deck = fill_hand(dummy_cards_in_suit, deck, suit)
         dummy_hand = Hand(dummy_hand_cards)
 
-        deck = deck[13-len(dummy_cards_in_suit):]
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -1416,10 +1418,14 @@ class WhichSuitToEstablishGenerator(PlaySkillHandGenerator):
         cards_a, deck = holding_to_cards(holding_a, suit_a, deck)
         cards_b, deck = holding_to_cards(holding_b, suit_b, deck)
 
-        your_hand_cards = cards_a + cards_b + deck[:13-len(cards_a)-len(cards_b)]
+        # Exclude extra cards in both target suits from filler
+        non_suit = [c for c in deck if c.suit not in (suit_a, suit_b)]
+        filler_needed = 13 - len(cards_a) - len(cards_b)
+        your_hand_cards = cards_a + cards_b + non_suit[:filler_needed]
         your_hand = Hand(your_hand_cards[:13])
 
-        deck = deck[13-len(cards_a)-len(cards_b):]
+        used = set(id(c) for c in non_suit[:filler_needed])
+        deck = [c for c in deck if id(c) not in used]
         dummy_hand = Hand(deck[:13])
         deck = deck[13:]
         lho_hand = Hand(deck[:13])
@@ -1617,14 +1623,13 @@ class TrumpControlGenerator(PlaySkillHandGenerator):
         your_trumps, deck = holding_to_cards(your_trump, trump_suit, deck)
         dummy_trumps, deck = holding_to_cards(dummy_trump, trump_suit, deck)
 
-        your_hand_cards = your_trumps + deck[:13-len(your_trumps)]
+        # Exclude extra trump-suit cards from filler
+        your_hand_cards, deck = fill_hand(your_trumps, deck, trump_suit)
         your_hand = Hand(your_hand_cards)
 
-        deck = deck[13-len(your_trumps):]
-        dummy_hand_cards = dummy_trumps + deck[:13-len(dummy_trumps)]
+        dummy_hand_cards, deck = fill_hand(dummy_trumps, deck, trump_suit)
         dummy_hand = Hand(dummy_hand_cards)
 
-        deck = deck[13-len(dummy_trumps):]
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -1680,14 +1685,15 @@ class CrossruffGenerator(PlaySkillHandGenerator):
         your_short_in_a, deck = holding_to_cards('32', side_suit_a, deck)
         dummy_short_in_b, deck = holding_to_cards('43', side_suit_b, deck)
 
-        your_hand_cards = your_trumps + your_short_in_a + deck[:13-len(your_trumps)-len(your_short_in_a)]
+        # Exclude extra trump-suit cards from filler
+        your_suit_cards = your_trumps + your_short_in_a
+        your_hand_cards, deck = fill_hand(your_suit_cards, deck, trump_suit)
         your_hand = Hand(your_hand_cards[:13])
 
-        deck = deck[13-len(your_trumps)-len(your_short_in_a):]
-        dummy_hand_cards = dummy_trumps + dummy_short_in_b + deck[:13-len(dummy_trumps)-len(dummy_short_in_b)]
+        dummy_suit_cards = dummy_trumps + dummy_short_in_b
+        dummy_hand_cards, deck = fill_hand(dummy_suit_cards, deck, trump_suit)
         dummy_hand = Hand(dummy_hand_cards[:13])
 
-        deck = deck[13-len(dummy_trumps)-len(dummy_short_in_b):]
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -1744,10 +1750,10 @@ class PreservingEntriesGenerator(PlaySkillHandGenerator):
         your_cards, deck = holding_to_cards(your_holding, suit, deck)
         dummy_cards, deck = holding_to_cards(dummy_holding, suit, deck)
 
-        your_hand = Hand(your_cards + deck[:13-len(your_cards)])
-        deck = deck[13-len(your_cards):]
-        dummy_hand = Hand(dummy_cards + deck[:13-len(dummy_cards)])
-        deck = deck[13-len(dummy_cards):]
+        your_hand_cards, deck = fill_hand(your_cards, deck, suit)
+        your_hand = Hand(your_hand_cards)
+        dummy_hand_cards, deck = fill_hand(dummy_cards, deck, suit)
+        dummy_hand = Hand(dummy_hand_cards)
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -1782,10 +1788,10 @@ class UnblockingGenerator(PlaySkillHandGenerator):
         your_cards, deck = holding_to_cards(your_holding, suit, deck)
         dummy_cards, deck = holding_to_cards(dummy_holding, suit, deck)
 
-        your_hand = Hand(your_cards + deck[:13-len(your_cards)])
-        deck = deck[13-len(your_cards):]
-        dummy_hand = Hand(dummy_cards + deck[:13-len(dummy_cards)])
-        deck = deck[13-len(dummy_cards):]
+        your_hand_cards, deck = fill_hand(your_cards, deck, suit)
+        your_hand = Hand(your_hand_cards)
+        dummy_hand_cards, deck = fill_hand(dummy_cards, deck, suit)
+        dummy_hand = Hand(dummy_hand_cards)
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -1822,10 +1828,10 @@ class CreatingEntriesGenerator(PlaySkillHandGenerator):
         your_cards, deck = holding_to_cards(your_holding, suit, deck)
         dummy_cards, deck = holding_to_cards(dummy_holding, suit, deck)
 
-        your_hand = Hand(your_cards + deck[:13-len(your_cards)])
-        deck = deck[13-len(your_cards):]
-        dummy_hand = Hand(dummy_cards + deck[:13-len(dummy_cards)])
-        deck = deck[13-len(dummy_cards):]
+        your_hand_cards, deck = fill_hand(your_cards, deck, suit)
+        your_hand = Hand(your_hand_cards)
+        dummy_hand_cards, deck = fill_hand(dummy_cards, deck, suit)
+        dummy_hand = Hand(dummy_hand_cards)
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -1860,10 +1866,10 @@ class EntryKillingPlaysGenerator(PlaySkillHandGenerator):
         your_cards, deck = holding_to_cards(your_holding, suit, deck)
         dummy_cards, deck = holding_to_cards(dummy_holding, suit, deck)
 
-        your_hand = Hand(your_cards + deck[:13-len(your_cards)])
-        deck = deck[13-len(your_cards):]
-        dummy_hand = Hand(dummy_cards + deck[:13-len(dummy_cards)])
-        deck = deck[13-len(dummy_cards):]
+        your_hand_cards, deck = fill_hand(your_cards, deck, suit)
+        your_hand = Hand(your_hand_cards)
+        dummy_hand_cards, deck = fill_hand(dummy_cards, deck, suit)
+        dummy_hand = Hand(dummy_hand_cards)
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -1905,10 +1911,10 @@ class AQCombinationsGenerator(PlaySkillHandGenerator):
         your_cards, deck = holding_to_cards(your_holding, suit, deck)
         dummy_cards, deck = holding_to_cards(dummy_holding, suit, deck)
 
-        your_hand = Hand(your_cards + deck[:13-len(your_cards)])
-        deck = deck[13-len(your_cards):]
-        dummy_hand = Hand(dummy_cards + deck[:13-len(dummy_cards)])
-        deck = deck[13-len(dummy_cards):]
+        your_hand_cards, deck = fill_hand(your_cards, deck, suit)
+        your_hand = Hand(your_hand_cards)
+        dummy_hand_cards, deck = fill_hand(dummy_cards, deck, suit)
+        dummy_hand = Hand(dummy_hand_cards)
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -1946,10 +1952,10 @@ class KJCombinationsGenerator(PlaySkillHandGenerator):
         your_cards, deck = holding_to_cards(your_holding, suit, deck)
         dummy_cards, deck = holding_to_cards(dummy_holding, suit, deck)
 
-        your_hand = Hand(your_cards + deck[:13-len(your_cards)])
-        deck = deck[13-len(your_cards):]
-        dummy_hand = Hand(dummy_cards + deck[:13-len(dummy_cards)])
-        deck = deck[13-len(dummy_cards):]
+        your_hand_cards, deck = fill_hand(your_cards, deck, suit)
+        your_hand = Hand(your_hand_cards)
+        dummy_hand_cards, deck = fill_hand(dummy_cards, deck, suit)
+        dummy_hand = Hand(dummy_hand_cards)
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -1984,10 +1990,10 @@ class SafetyPlaysGenerator(PlaySkillHandGenerator):
         your_cards, deck = holding_to_cards(your_holding, suit, deck)
         dummy_cards, deck = holding_to_cards(dummy_holding, suit, deck)
 
-        your_hand = Hand(your_cards + deck[:13-len(your_cards)])
-        deck = deck[13-len(your_cards):]
-        dummy_hand = Hand(dummy_cards + deck[:13-len(dummy_cards)])
-        deck = deck[13-len(dummy_cards):]
+        your_hand_cards, deck = fill_hand(your_cards, deck, suit)
+        your_hand = Hand(your_hand_cards)
+        dummy_hand_cards, deck = fill_hand(dummy_cards, deck, suit)
+        dummy_hand = Hand(dummy_hand_cards)
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
@@ -2028,10 +2034,10 @@ class PercentagePlaysGenerator(PlaySkillHandGenerator):
         your_cards, deck = holding_to_cards(your_holding, suit, deck)
         dummy_cards, deck = holding_to_cards(dummy_holding, suit, deck)
 
-        your_hand = Hand(your_cards + deck[:13-len(your_cards)])
-        deck = deck[13-len(your_cards):]
-        dummy_hand = Hand(dummy_cards + deck[:13-len(dummy_cards)])
-        deck = deck[13-len(dummy_cards):]
+        your_hand_cards, deck = fill_hand(your_cards, deck, suit)
+        your_hand = Hand(your_hand_cards)
+        dummy_hand_cards, deck = fill_hand(dummy_cards, deck, suit)
+        dummy_hand = Hand(dummy_hand_cards)
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
