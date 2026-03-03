@@ -3,16 +3,20 @@
 Production AI DDS Analysis Tool
 Analyzes AI bidding and play performance from production database
 """
-import sqlite3
+import os
+import sys
 import json
 from datetime import datetime, timedelta
 from collections import defaultdict, Counter
-import sys
 
-def analyze_ai_play_performance(db_path='backend/bridge.db'):
+# Add backend to path so we can import db module
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
+from db import get_connection
+
+
+def analyze_ai_play_performance():
     """Analyze AI play performance from production logs"""
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     cursor = conn.cursor()
 
     print("=" * 80)
@@ -101,12 +105,12 @@ def analyze_ai_play_performance(db_path='backend/bridge.db'):
         print()
 
         if dds_stats['fallback_rate'] > 5:
-            print("⚠️  WARNING: DDS fallback rate > 5%")
+            print("WARNING: DDS fallback rate > 5%")
             print("   Investigate potential DDS instability")
         elif dds_stats['fallback_rate'] == 0:
-            print("✅ EXCELLENT: DDS running without fallbacks")
+            print("EXCELLENT: DDS running without fallbacks")
         else:
-            print("✅ GOOD: DDS fallback rate acceptable")
+            print("GOOD: DDS fallback rate acceptable")
     else:
         print("No expert level plays found (DDS not in use)")
     print()
@@ -172,7 +176,7 @@ def analyze_ai_play_performance(db_path='backend/bridge.db'):
             COUNT(*) as recent_plays,
             COUNT(DISTINCT session_id) as recent_sessions
         FROM ai_play_log
-        WHERE timestamp >= datetime('now', '-1 day')
+        WHERE timestamp >= NOW() - INTERVAL '1 day'
     """)
 
     recent = cursor.fetchone()
@@ -183,10 +187,9 @@ def analyze_ai_play_performance(db_path='backend/bridge.db'):
     conn.close()
 
 
-def analyze_bidding_decisions(db_path='backend/bridge.db'):
+def analyze_bidding_decisions():
     """Analyze AI bidding recommendations from production logs"""
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     cursor = conn.cursor()
 
     print("=" * 80)
@@ -363,10 +366,9 @@ def analyze_bidding_decisions(db_path='backend/bridge.db'):
     conn.close()
 
 
-def export_detailed_report(db_path='backend/bridge.db', output_file='production_ai_analysis.json'):
+def export_detailed_report(output_file='production_ai_analysis.json'):
     """Export detailed analysis to JSON for further processing"""
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
     cursor = conn.cursor()
 
     report = {
@@ -397,58 +399,31 @@ def export_detailed_report(db_path='backend/bridge.db', output_file='production_
 
 def main():
     print("\n")
-    print("╔" + "═" * 78 + "╗")
-    print("║" + " " * 20 + "PRODUCTION AI ANALYSIS TOOL" + " " * 31 + "║")
-    print("╚" + "═" * 78 + "╝")
+    print("+" + "=" * 78 + "+")
+    print("|" + " " * 20 + "PRODUCTION AI ANALYSIS TOOL" + " " * 31 + "|")
+    print("+" + "=" * 78 + "+")
     print()
 
     # Parse command line arguments
-    db_path = 'backend/bridge.db'
     export_report = False
-
-    # Check for --db flag
-    if '--db' in sys.argv:
-        try:
-            db_index = sys.argv.index('--db')
-            if db_index + 1 < len(sys.argv):
-                db_path = sys.argv[db_index + 1]
-        except (ValueError, IndexError):
-            print("❌ Error: --db flag requires a database path")
-            print("   Usage: python analyze_production_ai.py --db path/to/database.db")
-            sys.exit(1)
 
     # Check for --export flag
     if '--export' in sys.argv:
         export_report = True
 
-    # Check if database exists
-    import os
-    if not os.path.exists(db_path):
-        print(f"❌ Database not found: {db_path}")
-        print("   Make sure the path is correct")
-        print()
-        print("   Examples:")
-        print("     python analyze_production_ai.py")
-        print("     python analyze_production_ai.py --db backend/bridge.db")
-        print("     python analyze_production_ai.py --db production_bridge.db --export")
-        sys.exit(1)
-
-    print(f"📊 Analyzing database: {db_path}")
+    print("Analyzing production PostgreSQL database...")
     print()
 
     try:
         # Run analyses
-        analyze_ai_play_performance(db_path)
+        analyze_ai_play_performance()
         print("\n")
-        analyze_bidding_decisions(db_path)
+        analyze_bidding_decisions()
         print("\n")
 
         # Export if requested
         if export_report:
-            output_file = db_path.replace('.db', '_analysis.json')
-            if output_file == db_path:  # Safety check
-                output_file = 'production_ai_analysis.json'
-            export_detailed_report(db_path, output_file)
+            export_detailed_report('production_ai_analysis.json')
             print()
         else:
             print("=" * 80)
@@ -456,7 +431,7 @@ def main():
             print("=" * 80)
             print()
             print("To export detailed JSON report, run:")
-            print(f"  python analyze_production_ai.py --db {db_path} --export")
+            print("  python analyze_production_ai.py --export")
             print()
 
         print("=" * 80)
@@ -465,7 +440,7 @@ def main():
         print()
 
     except Exception as e:
-        print(f"❌ Error during analysis: {e}")
+        print(f"Error during analysis: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

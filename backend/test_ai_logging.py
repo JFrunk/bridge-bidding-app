@@ -6,7 +6,6 @@ This script tests the minimal viable logging approach for DDS quality monitoring
 It simulates AI plays and verifies that logging works correctly.
 """
 
-import sqlite3
 import time
 import sys
 import os
@@ -14,6 +13,7 @@ import os
 # Add backend to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from db import get_connection
 from engine.hand import Card
 
 
@@ -22,22 +22,20 @@ def log_ai_play_test(card, position, ai_level, solve_time_ms, used_fallback=Fals
                      contract=None, trump_suit=None):
     """Test version of log_ai_play function"""
     try:
-        conn = sqlite3.connect('bridge.db')
-        cursor = conn.cursor()
+        with get_connection() as conn:
+            cursor = conn.cursor()
 
-        # Convert card to simple string format
-        card_str = f"{card.rank}{card.suit}"
+            # Convert card to simple string format
+            card_str = f"{card.rank}{card.suit}"
 
-        cursor.execute("""
-            INSERT INTO ai_play_log
-            (position, ai_level, card_played, solve_time_ms, used_fallback,
-             session_id, hand_number, trick_number, contract, trump_suit)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (position, ai_level, card_str, solve_time_ms, int(used_fallback),
-              session_id, hand_number, trick_number, contract, trump_suit))
+            cursor.execute("""
+                INSERT INTO ai_play_log
+                (position, ai_level, card_played, solve_time_ms, used_fallback,
+                 session_id, hand_number, trick_number, contract, trump_suit)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (position, ai_level, card_str, solve_time_ms, int(used_fallback),
+                  session_id, hand_number, trick_number, contract, trump_suit))
 
-        conn.commit()
-        conn.close()
         return True
 
     except Exception as e:
@@ -70,18 +68,17 @@ def test_basic_logging():
         print("✅ Successfully logged AI play")
 
         # Verify it was stored
-        conn = sqlite3.connect('bridge.db')
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT * FROM ai_play_log
-            WHERE session_id = 'test_session_001'
-            ORDER BY timestamp DESC LIMIT 1
-        """)
-        row = cursor.fetchone()
-        conn.close()
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM ai_play_log
+                WHERE session_id = 'test_session_001'
+                ORDER BY timestamp DESC LIMIT 1
+            """)
+            row = cursor.fetchone()
 
         if row:
-            print(f"✅ Verified in database: {row[9]} played by {row[5]} ({row[6]} level)")
+            print(f"✅ Verified in database: {row['card_played']} played by {row['position']} ({row['ai_level']} level)")
             return True
         else:
             print("❌ Could not verify in database")
@@ -134,50 +131,48 @@ def test_health_metrics():
     print("="*60)
 
     try:
-        conn = sqlite3.connect('bridge.db')
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+        with get_connection() as conn:
+            cursor = conn.cursor()
 
-        # Test overall stats
-        cursor.execute("""
-            SELECT
-                COUNT(*) as total_plays,
-                AVG(solve_time_ms) as avg_solve_time,
-                AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate
-            FROM ai_play_log
-            WHERE session_id LIKE 'test_session_%'
-        """)
+            # Test overall stats
+            cursor.execute("""
+                SELECT
+                    COUNT(*) as total_plays,
+                    AVG(solve_time_ms) as avg_solve_time,
+                    AVG(CASE WHEN used_fallback THEN 1.0 ELSE 0.0 END) as fallback_rate
+                FROM ai_play_log
+                WHERE session_id LIKE 'test_session_%'
+            """)
 
-        row = dict(cursor.fetchone())
+            row = dict(cursor.fetchone())
 
-        print(f"✅ Total test plays: {row['total_plays']}")
-        print(f"✅ Average solve time: {row['avg_solve_time']:.1f}ms")
-        print(f"✅ Fallback rate: {row['fallback_rate']*100:.1f}%")
+            print(f"✅ Total test plays: {row['total_plays']}")
+            print(f"✅ Average solve time: {row['avg_solve_time']:.1f}ms")
+            print(f"✅ Fallback rate: {row['fallback_rate']*100:.1f}%")
 
-        # Test by-level stats
-        cursor.execute("""
-            SELECT
-                ai_level,
-                COUNT(*) as plays,
-                AVG(solve_time_ms) as avg_time
-            FROM ai_play_log
-            WHERE session_id LIKE 'test_session_%'
-            GROUP BY ai_level
-        """)
+            # Test by-level stats
+            cursor.execute("""
+                SELECT
+                    ai_level,
+                    COUNT(*) as plays,
+                    AVG(solve_time_ms) as avg_time
+                FROM ai_play_log
+                WHERE session_id LIKE 'test_session_%'
+                GROUP BY ai_level
+            """)
 
-        print("\n📊 Stats by AI level:")
-        for row in cursor.fetchall():
-            print(f"   {row['ai_level']:12} - {row['plays']} plays, {row['avg_time']:.1f}ms avg")
+            print("\n📊 Stats by AI level:")
+            for row in cursor.fetchall():
+                print(f"   {row['ai_level']:12} - {row['plays']} plays, {row['avg_time']:.1f}ms avg")
 
-        # Test views
-        cursor.execute("SELECT * FROM v_dds_health_summary")
-        summary = dict(cursor.fetchone())
+            # Test views
+            cursor.execute("SELECT * FROM v_dds_health_summary")
+            summary = dict(cursor.fetchone())
 
-        print(f"\n✅ Health summary view works:")
-        print(f"   Total plays all time: {summary['total_plays_all_time']}")
-        print(f"   Days with data: {summary['days_with_data']}")
+            print(f"\n✅ Health summary view works:")
+            print(f"   Total plays all time: {summary['total_plays_all_time']}")
+            print(f"   Days with data: {summary['days_with_data']}")
 
-        conn.close()
         return True
 
     except Exception as e:
@@ -233,14 +228,11 @@ def cleanup_test_data():
     print("="*60)
 
     try:
-        conn = sqlite3.connect('bridge.db')
-        cursor = conn.cursor()
+        with get_connection() as conn:
+            cursor = conn.cursor()
 
-        cursor.execute("DELETE FROM ai_play_log WHERE session_id LIKE 'test_%'")
-        deleted = cursor.rowcount
-
-        conn.commit()
-        conn.close()
+            cursor.execute("DELETE FROM ai_play_log WHERE session_id LIKE 'test_%'")
+            deleted = cursor.rowcount
 
         print(f"✅ Deleted {deleted} test records")
         return True

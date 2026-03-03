@@ -138,10 +138,11 @@ source venv/bin/activate
 pip install --upgrade pip
 pip install flask flask-cors gunicorn python-dotenv
 
-# Create minimal environment file (SQLite mode)
+# Create minimal environment file
 cat > .env << EOF
 FLASK_ENV=production
 DEFAULT_AI_DIFFICULTY=advanced
+DATABASE_URL=postgresql://bridge_user:CHANGE_ME@localhost:5432/bridge_bidding
 EOF
 
 # Initialize database

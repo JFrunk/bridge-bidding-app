@@ -17,17 +17,15 @@ sys.path.insert(0, '.')
 from engine.feedback.bidding_feedback import get_feedback_generator, CorrectnessLevel, ImpactLevel
 from engine.hand import Hand
 from engine.ai.bid_explanation import BidExplanation
-import sqlite3
+from db import get_connection
 
 
 # Import helper functions directly since they don't depend on Flask context
 def get_bidding_feedback_stats_for_user(user_id: int):
     """Calculate bidding feedback statistics (copied from analytics_api)"""
-    conn = sqlite3.connect('bridge.db')
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    with get_connection() as conn:
+        cursor = conn.cursor()
 
-    try:
         cursor.execute("""
             SELECT
                 COUNT(*) as total_decisions,
@@ -37,7 +35,7 @@ def get_bidding_feedback_stats_for_user(user_id: int):
                 SUM(CASE WHEN impact = 'critical' THEN 1 ELSE 0 END) as critical_errors
             FROM bidding_decisions
             WHERE user_id = ?
-              AND timestamp >= datetime('now', '-30 days')
+              AND timestamp >= NOW() - INTERVAL '30 days'
         """, (user_id,))
 
         row = cursor.fetchone()
@@ -54,17 +52,13 @@ def get_bidding_feedback_stats_for_user(user_id: int):
             'critical_errors': row['critical_errors'] or 0,
             'recent_trend': 'stable'
         }
-    finally:
-        conn.close()
 
 
 def get_recent_bidding_decisions_for_user(user_id: int, limit: int = 10):
     """Get recent bidding decisions (copied from analytics_api)"""
-    conn = sqlite3.connect('bridge.db')
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    with get_connection() as conn:
+        cursor = conn.cursor()
 
-    try:
         cursor.execute("""
             SELECT
                 id, bid_number, position, user_bid, optimal_bid,
@@ -76,8 +70,6 @@ def get_recent_bidding_decisions_for_user(user_id: int, limit: int = 10):
         """, (user_id, limit))
 
         return [dict(row) for row in cursor.fetchall()]
-    finally:
-        conn.close()
 
 
 def test_feedback_generator():
@@ -166,19 +158,18 @@ def test_feedback_storage():
     )
 
     # Verify it was stored
-    conn = sqlite3.connect('bridge.db')
-    cursor = conn.cursor()
+    with get_connection() as conn:
+        cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT COUNT(*) as count
-        FROM bidding_decisions
-        WHERE user_id = 1
-          AND user_bid = ?
-          AND session_id = 'test_session_1'
-    """, (user_bid,))
+        cursor.execute("""
+            SELECT COUNT(*) as count
+            FROM bidding_decisions
+            WHERE user_id = 1
+              AND user_bid = ?
+              AND session_id = 'test_session_1'
+        """, (user_bid,))
 
-    count = cursor.fetchone()[0]
-    conn.close()
+        count = cursor.fetchone()['count']
 
     print(f"✓ Feedback stored in database")
     print(f"✓ Records found: {count}")
@@ -234,18 +225,16 @@ def cleanup_test_data():
     """Clean up test data"""
     print("=== Cleanup ===")
 
-    conn = sqlite3.connect('bridge.db')
-    cursor = conn.cursor()
+    with get_connection() as conn:
+        cursor = conn.cursor()
 
-    # Remove test session data
-    cursor.execute("""
-        DELETE FROM bidding_decisions
-        WHERE session_id = 'test_session_1'
-    """)
+        # Remove test session data
+        cursor.execute("""
+            DELETE FROM bidding_decisions
+            WHERE session_id = 'test_session_1'
+        """)
 
-    deleted = cursor.rowcount
-    conn.commit()
-    conn.close()
+        deleted = cursor.rowcount
 
     print(f"✓ Cleaned up {deleted} test records")
     print("✅ Cleanup complete\n")

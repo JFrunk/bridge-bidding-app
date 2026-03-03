@@ -59,42 +59,46 @@ generate_report() {
     echo "  Database User Stats"
     echo "========================================"
 
-    cd /opt/bridge-bidding-app/backend
+    APP_DIR="/opt/bridge-bidding-app"
+    cd "$APP_DIR/backend"
     source venv/bin/activate
+    set -a; source .env 2>/dev/null; set +a
 
-    python3 << 'PYTHON'
-import sqlite3
+    python3 << PYTHON
+import sys
+sys.path.insert(0, '$APP_DIR/backend')
+from db import get_connection
 
 try:
-    conn = sqlite3.connect('bridge.db')
+    conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute('SELECT COUNT(*) FROM users')
-    total = cur.fetchone()[0]
+    cur.execute('SELECT COUNT(*) AS cnt FROM users')
+    total = cur.fetchone()['cnt']
     print(f"Total registered users: {total}")
 
-    cur.execute("SELECT COUNT(*) FROM users WHERE date(last_activity) = date('now')")
-    today = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) AS cnt FROM users WHERE date(last_activity) = CURRENT_DATE")
+    today = cur.fetchone()['cnt']
     print(f"Active today (DB): {today}")
 
-    cur.execute("SELECT COUNT(*) FROM users WHERE last_activity >= date('now', '-7 days')")
-    week = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) AS cnt FROM users WHERE last_activity >= CURRENT_DATE - INTERVAL '7 days'")
+    week = cur.fetchone()['cnt']
     print(f"Active this week: {week}")
 
-    cur.execute("SELECT COUNT(*) FROM users WHERE last_activity >= date('now', '-30 days')")
-    month = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) AS cnt FROM users WHERE last_activity >= CURRENT_DATE - INTERVAL '30 days'")
+    month = cur.fetchone()['cnt']
     print(f"Active this month: {month}")
 
-    cur.execute("SELECT COUNT(*) FROM users WHERE created_at >= date('now', '-7 days')")
-    new_week = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) AS cnt FROM users WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'")
+    new_week = cur.fetchone()['cnt']
     print(f"New users this week: {new_week}")
 
-    cur.execute("SELECT COUNT(*) FROM session_hands")
-    hands = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) AS cnt FROM session_hands")
+    hands = cur.fetchone()['cnt']
     print(f"Total hands played: {hands}")
 
-    cur.execute("SELECT COUNT(*) FROM bidding_decisions")
-    bids = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) AS cnt FROM bidding_decisions")
+    bids = cur.fetchone()['cnt']
     print(f"Total bidding decisions: {bids}")
 
     conn.close()
