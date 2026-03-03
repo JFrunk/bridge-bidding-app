@@ -18,8 +18,8 @@ module.exports = {
         'success': '#4caf50',
         'danger': '#f44336',
         'info': '#61dafb',
-        'suit-red': '#dc2626',  // text-red-600 equivalent
-        'suit-black': '#111827', // text-gray-900 equivalent
+        'suit-red': '#d32f2f',  // matches --card-red in index.css
+        'suit-black': '#1a1a1a', // matches --card-black in index.css
 
         // Partnership colors
         'partnership-ns': '#4caf50',

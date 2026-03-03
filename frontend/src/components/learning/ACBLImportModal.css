@@ -549,7 +549,7 @@
 .contract-label .declarer {
   font-weight: 400;
   color: var(--text-muted, #868e96);
-  margin-left: 4px;
+  margin-left: var(--space-1);
 }
 
 .bar-container {

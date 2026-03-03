@@ -1,12 +1,12 @@
 .ai-difficulty-selector {
-  margin: 16px 0;
+  margin: var(--space-4) 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .difficulty-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .difficulty-label {
@@ -18,8 +18,8 @@
 .difficulty-current {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
   background: white;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
@@ -56,12 +56,12 @@
 .expand-arrow {
   font-size: 10px;
   color: #999;
-  margin-left: 4px;
+  margin-left: var(--space-1);
 }
 
 .difficulty-options {
-  margin-top: 12px;
-  padding: 16px;
+  margin-top: var(--space-3);
+  padding: var(--space-4);
   background: #fafafa;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
@@ -82,8 +82,8 @@
 .difficulty-option {
   display: block;
   width: 100%;
-  padding: 12px 16px;
-  margin-bottom: 8px;
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-2);
   background: white;
   border: 2px solid #e0e0e0;
   border-left-width: 4px;
@@ -118,8 +118,8 @@
 .option-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 
 .option-emoji {
@@ -160,10 +160,10 @@
 .dds-status-banner {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   padding: 10px 14px;
   border-radius: 6px;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
   font-size: 13px;
   flex-wrap: wrap;
 }
@@ -192,7 +192,7 @@
   font-size: 11px;
   font-style: italic;
   width: 100%;
-  margin-top: 4px;
+  margin-top: var(--space-1);
   opacity: 0.85;
 }
 
@@ -205,12 +205,12 @@
   background: #ffc107;
   color: #856404;
   border-radius: 3px;
-  margin-left: 4px;
+  margin-left: var(--space-1);
 }
 
 .difficulty-note {
-  margin-top: 12px;
-  padding: 12px;
+  margin-top: var(--space-3);
+  padding: var(--space-3);
   background: #fff3cd;
   border-left: 3px solid #ffc107;
   border-radius: 4px;
@@ -237,6 +237,6 @@
 
   .option-description {
     margin-left: 0;
-    margin-top: 4px;
+    margin-top: var(--space-1);
   }
 }

@@ -10,7 +10,7 @@
    ============================================================================ */
 
 .chart-help-inline {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -20,7 +20,7 @@
   align-items: center;
   gap: 6px;
   width: 100%;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   background: rgba(76, 175, 80, 0.1);
   border: 1px solid rgba(76, 175, 80, 0.2);
   border-radius: 8px;
@@ -56,7 +56,7 @@
 }
 
 .chart-help-content {
-  padding: 12px 14px 14px;
+  padding: var(--space-3) 14px 14px;
   background: rgba(76, 175, 80, 0.05);
   border: 1px solid rgba(76, 175, 80, 0.2);
   border-top: none;
@@ -147,7 +147,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 14px;
+  padding: var(--space-3) 14px;
   border-bottom: 1px solid rgba(76, 175, 80, 0.2);
 }
 
@@ -194,12 +194,12 @@
 }
 
 .chart-help-intro {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
   color: rgba(255, 255, 255, 0.85);
 }
 
 .chart-help-section {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .chart-help-section:last-child {
@@ -227,9 +227,9 @@
 .chart-help-list-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--space-2);
   margin-bottom: 6px;
-  padding-left: 4px;
+  padding-left: var(--space-1);
 }
 
 .chart-help-list-item:last-child {
@@ -245,7 +245,7 @@
 
 .chart-help-item-label {
   color: #A5D6A7;
-  margin-right: 4px;
+  margin-right: var(--space-1);
   white-space: nowrap;
 }
 
@@ -255,8 +255,8 @@
 
 /* Pro Tip box */
 .chart-help-pro-tip {
-  margin-top: 12px;
-  padding: 10px 12px;
+  margin-top: var(--space-3);
+  padding: 10px var(--space-3);
   background: rgba(76, 175, 80, 0.15);
   border-left: 3px solid #4CAF50;
   border-radius: 0 6px 6px 0;
@@ -269,7 +269,7 @@
   color: #4CAF50;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .pro-tip-text {
@@ -359,7 +359,7 @@
   }
 
   .chart-help-content {
-    padding: 14px 16px 16px;
+    padding: 14px var(--space-4) var(--space-4);
   }
 
   .chart-help-body {

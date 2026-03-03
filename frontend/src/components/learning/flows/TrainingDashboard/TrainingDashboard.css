@@ -18,7 +18,7 @@
 .training-dashboard {
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--space-5);
   font-family: var(--font-body);
 }
 
@@ -27,9 +27,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .dashboard-title {
@@ -70,7 +70,7 @@
 }
 
 .period-btn {
-  padding: 6px 12px;
+  padding: 6px var(--space-3);
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -95,14 +95,14 @@
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .stat-card {
   background: white;
   border-radius: 12px;
-  padding: 16px;
+  padding: var(--space-4);
   text-align: center;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--action-bar-border, #e8e5df);
@@ -114,7 +114,7 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .stat-value {
@@ -126,13 +126,13 @@
 
 .stat-value .fire {
   font-size: 24px;
-  margin-left: 4px;
+  margin-left: var(--space-1);
 }
 
 .stat-trend {
   font-size: 12px;
   font-weight: 600;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 .stat-trend.improving {
@@ -151,8 +151,8 @@
 .dashboard-section {
   background: white;
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--action-bar-border, #e8e5df);
 }
@@ -161,10 +161,10 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--charcoal);
-  margin: 0 0 16px 0;
+  margin: 0 0 var(--space-4) 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .section-icon {
@@ -175,7 +175,7 @@
 .skill-breakdown {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 /* Suggestion Box */
@@ -188,7 +188,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .suggestion-text {
@@ -214,7 +214,7 @@
 /* Empty state for suggestions */
 .suggestion-empty {
   text-align: center;
-  padding: 12px 0;
+  padding: var(--space-3) 0;
   color: var(--text-muted);
   font-size: 14px;
 }
@@ -223,14 +223,14 @@
 .convention-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .convention-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 6px var(--space-3);
   background: var(--cream-dark, #F5F2EC);
   border-radius: 16px;
   font-size: 13px;
@@ -262,14 +262,14 @@
 .activity-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .activity-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 10px var(--space-3);
   background: var(--cream, #FDFBF7);
   border-radius: 8px;
 }
@@ -294,7 +294,7 @@
 .activity-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .activity-score {
@@ -322,13 +322,13 @@
 /* Empty States */
 .empty-state {
   text-align: center;
-  padding: 24px;
+  padding: var(--space-6);
   color: var(--text-muted);
 }
 
 .empty-state-icon {
   font-size: 32px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   opacity: 0.5;
 }
 
@@ -340,17 +340,17 @@
 .streak-section {
   display: flex;
   justify-content: center;
-  padding: 8px 0;
+  padding: var(--space-2) 0;
 }
 
 /* Review Queue Badge */
 .review-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   background: #d32f2f;
   color: white;
-  padding: 4px 10px;
+  padding: var(--space-1) 10px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
@@ -359,7 +359,7 @@
 /* Responsive */
 @media (max-width: 600px) {
   .training-dashboard {
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .dashboard-header {
@@ -369,7 +369,7 @@
 
   .summary-cards {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .stat-card {
@@ -377,7 +377,7 @@
     justify-content: space-between;
     align-items: center;
     text-align: left;
-    padding: 12px 16px;
+    padding: var(--space-3) var(--space-4);
   }
 
   .stat-label {
@@ -400,7 +400,7 @@
 
 @media (max-width: 360px) {
   .training-dashboard {
-    padding: 12px;
+    padding: var(--space-3);
   }
 
   .period-toggle {
@@ -413,6 +413,6 @@
   }
 
   .dashboard-section {
-    padding: 16px;
+    padding: var(--space-4);
   }
 }

@@ -20,13 +20,13 @@
 .hand-display {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .suit-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--space-1);
   align-items: flex-start;
   min-height: 90px;
   padding: 5px;

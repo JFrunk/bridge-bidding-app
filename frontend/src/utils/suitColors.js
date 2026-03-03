@@ -1,8 +1,9 @@
 /**
  * Suit Color Utilities
- * Per UI_UX_CONSTITUTION.md:
- * - Hearts (♥) and Diamonds (♦) = text-red-600
- * - Spades (♠), Clubs (♣), and NT = text-gray-900
+ *
+ * Uses design token colors from tailwind.config.js:
+ * - suit-red (#d32f2f) = --card-red
+ * - suit-black (#1a1a1a) = --card-black
  */
 
 /**
@@ -20,8 +21,8 @@ export function getSuitColorClass(suit, onDarkBackground = false) {
     return isRedSuit ? 'text-red-300' : 'text-white';
   }
 
-  // On white/beige surfaces: standard high contrast
-  return isRedSuit ? 'text-red-600' : 'text-gray-900';
+  // On white/beige surfaces: use design token colors
+  return isRedSuit ? 'text-suit-red' : 'text-suit-black';
 }
 
 /**

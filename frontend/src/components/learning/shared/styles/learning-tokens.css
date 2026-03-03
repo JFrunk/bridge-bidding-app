@@ -33,9 +33,9 @@
   --felt-border: rgba(255, 255, 255, 0.12);
   --felt-border-subtle: rgba(255, 255, 255, 0.04);
 
-  /* === Card Colors === */
+  /* === Card Colors — match :root tokens === */
   --card-red: #d32f2f;
-  --card-black: #000000;
+  --card-black: #1a1a1a;
   --card-bg: white;
   --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.06);
   --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 2px var(--gold);
@@ -47,8 +47,8 @@
   --suit-diamond-felt: #ff8a5c;
 
   /* === Suit Colors on Cards === */
-  --suit-spade: #000000;
-  --suit-heart: #d32f2f;
+  --suit-spade: var(--card-black);
+  --suit-heart: var(--card-red);
   --suit-club: #1a6b3c;
   --suit-diamond: #d4540a;
 

@@ -20,7 +20,7 @@
 .registration-prompt-modal {
   background: white;
   border-radius: 16px;
-  padding: 32px;
+  padding: var(--space-8);
   max-width: 420px;
   width: 90%;
   position: relative;
@@ -48,7 +48,7 @@
   font-size: 24px;
   color: #666;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   line-height: 1;
   border-radius: 4px;
 }
@@ -60,13 +60,13 @@
 
 .prompt-header {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .prompt-icon {
   font-size: 48px;
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .prompt-header h2 {
@@ -78,7 +78,7 @@
 .prompt-message {
   text-align: center;
   color: #555;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
   font-size: 16px;
   line-height: 1.5;
 }
@@ -86,9 +86,9 @@
 .progress-stats {
   display: flex;
   justify-content: center;
-  gap: 24px;
-  margin-bottom: 20px;
-  padding: 16px;
+  gap: var(--space-6);
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
   background: #f8f9fa;
   border-radius: 12px;
 }
@@ -112,14 +112,14 @@
 }
 
 .benefits-list {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .benefit {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 0;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
   color: #444;
 }
 
@@ -129,8 +129,8 @@
 
 .login-method-toggle {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
 .login-method-toggle .toggle-btn {
@@ -157,11 +157,11 @@
 .registration-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .registration-form input {
-  padding: 14px 16px;
+  padding: 14px var(--space-4);
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   font-size: 16px;
@@ -180,7 +180,7 @@
 }
 
 .registration-form .btn-primary {
-  padding: 14px 24px;
+  padding: 14px var(--space-6);
   background: #1a5f2a;
   color: white;
   border: none;
@@ -203,7 +203,7 @@
 .registration-form .error-message {
   color: #d32f2f;
   font-size: 14px;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   background: #ffebee;
   border-radius: 6px;
 }
@@ -212,9 +212,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-  padding-top: 16px;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
   border-top: 1px solid #eee;
 }
 
@@ -224,7 +224,7 @@
   color: #666;
   cursor: pointer;
   font-size: 14px;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
 }
 
 .btn-text:hover {
@@ -245,15 +245,15 @@
   text-align: center;
   font-size: 12px;
   color: #888;
-  margin-top: 12px;
+  margin-top: var(--space-3);
   margin-bottom: 0;
 }
 
 /* Responsive */
 @media (max-width: 480px) {
   .registration-prompt-modal {
-    padding: 24px 20px;
-    margin: 16px;
+    padding: var(--space-6) var(--space-5);
+    margin: var(--space-4);
     width: calc(100% - 32px);
   }
 

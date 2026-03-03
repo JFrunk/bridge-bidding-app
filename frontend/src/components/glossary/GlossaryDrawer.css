@@ -65,17 +65,17 @@
 
 .glossary-drawer.senior-mode .search-input {
   font-size: 18px;
-  padding: 14px 16px 14px 44px;
+  padding: 14px var(--space-4) 14px 44px;
 }
 
 .glossary-drawer.senior-mode .category-tab {
-  padding: 12px 16px;
+  padding: var(--space-3) var(--space-4);
   font-size: 15px;
 }
 
 /* Header */
 .glossary-header {
-  padding: 20px;
+  padding: var(--space-5);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
 }
@@ -114,14 +114,14 @@
 }
 
 .glossary-subtitle {
-  margin: 8px 0 0;
+  margin: var(--space-2) 0 0;
   color: rgba(255, 255, 255, 0.6);
   font-size: 14px;
 }
 
 /* Search */
 .glossary-search {
-  padding: 16px 20px;
+  padding: var(--space-4) var(--space-5);
   flex-shrink: 0;
 }
 
@@ -140,7 +140,7 @@
 
 .search-input {
   width: 100%;
-  padding: 12px 40px 12px 40px;
+  padding: var(--space-3) var(--space-10) var(--space-3) var(--space-10);
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.08);
@@ -184,15 +184,15 @@
 .category-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 20px 16px;
+  gap: var(--space-2);
+  padding: 0 var(--space-5) var(--space-4);
   flex-shrink: 0;
   max-height: 100px;
   overflow-y: auto;
 }
 
 .category-tab {
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 20px;
   background: transparent;
@@ -231,7 +231,7 @@
 
 /* Results Info */
 .results-info {
-  padding: 8px 20px;
+  padding: var(--space-2) var(--space-5);
   color: rgba(255, 255, 255, 0.5);
   font-size: 13px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -246,14 +246,14 @@
 .terms-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
 }
 
 /* Individual Term */
 .term-item {
   background: rgba(255, 255, 255, 0.03);
   border-radius: 10px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   overflow: hidden;
   transition: all 0.2s;
 }
@@ -270,7 +270,7 @@
 /* Term Header (clickable) */
 .term-header {
   width: 100%;
-  padding: 14px 16px;
+  padding: 14px var(--space-4);
   border: none;
   background: transparent;
   color: white;
@@ -279,7 +279,7 @@
   justify-content: space-between;
   align-items: center;
   text-align: left;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .term-title-row {
@@ -304,7 +304,7 @@
 
 /* Difficulty Badges */
 .difficulty-badge {
-  padding: 2px 8px;
+  padding: 2px var(--space-2);
   border-radius: 12px;
   font-size: 11px;
   font-weight: 500;
@@ -329,7 +329,7 @@
 
 /* Term Content (expanded) */
 .term-content {
-  padding: 0 16px 16px;
+  padding: 0 var(--space-4) var(--space-4);
   animation: expandIn 0.2s ease;
 }
 
@@ -345,7 +345,7 @@
 }
 
 .term-definition {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
   color: rgba(255, 255, 255, 0.9);
   font-size: 15px;
   line-height: 1.5;
@@ -353,9 +353,9 @@
 
 .term-example {
   background: rgba(0, 0, 0, 0.2);
-  padding: 10px 12px;
+  padding: 10px var(--space-3);
   border-radius: 8px;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
   font-size: 14px;
 }
 
@@ -372,7 +372,7 @@
 
 /* Related Terms */
 .related-terms {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .related-label {
@@ -389,7 +389,7 @@
 }
 
 .related-link {
-  padding: 4px 10px;
+  padding: var(--space-1) 10px;
   background: rgba(45, 138, 78, 0.15);
   border: 1px solid rgba(45, 138, 78, 0.3);
   border-radius: 14px;
@@ -406,14 +406,14 @@
 
 /* Category Chip */
 .term-category {
-  margin-top: 8px;
+  margin-top: var(--space-2);
 }
 
 .category-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: var(--space-1);
+  padding: var(--space-1) 10px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   color: rgba(255, 255, 255, 0.6);
@@ -424,8 +424,8 @@
 .difficulty-legend {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 20px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
@@ -439,7 +439,7 @@
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   font-size: 12px;
 }
 
@@ -481,7 +481,7 @@
   }
 
   .category-tabs {
-    padding: 0 16px 12px;
+    padding: 0 var(--space-4) var(--space-3);
     gap: 6px;
   }
 
@@ -491,7 +491,7 @@
   }
 
   .term-header {
-    padding: 12px 14px;
+    padding: var(--space-3) 14px;
   }
 
   .term-name {
