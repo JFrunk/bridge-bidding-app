@@ -78,7 +78,7 @@ class ErrorLogger:
             return 'play_engine'
 
         # Database errors
-        if 'database' in str(error).lower() or 'sqlite' in str(error).lower():
+        if 'database' in str(error).lower() or 'psycopg2' in str(error).lower() or 'postgresql' in str(error).lower():
             return 'database'
 
         # API/Request errors

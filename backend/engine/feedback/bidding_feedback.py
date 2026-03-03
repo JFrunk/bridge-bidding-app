@@ -164,8 +164,7 @@ class BiddingFeedbackGenerator:
     It only writes to the bidding_decisions table for analytics.
     """
 
-    def __init__(self, db_path: str = 'backend/bridge.db'):
-        self.db_path = db_path
+    def __init__(self):
         self.error_categorizer = get_error_categorizer()
 
     def evaluate_bid(self,
@@ -332,8 +331,6 @@ class BiddingFeedbackGenerator:
                        deal_data: Optional[Dict] = None):
         """Store feedback in bidding_decisions table"""
         # Always use get_connection() for consistency with analytics queries.
-        # Previously, non-default db_path values caused writes to a different
-        # database file than the one analytics reads from.
         conn = get_connection()
         cursor = conn.cursor()
 
@@ -796,9 +793,9 @@ class BiddingFeedbackGenerator:
 # Singleton instance
 _feedback_generator = None
 
-def get_feedback_generator(db_path: str = 'backend/bridge.db') -> BiddingFeedbackGenerator:
+def get_feedback_generator() -> BiddingFeedbackGenerator:
     """Get singleton feedback generator instance"""
     global _feedback_generator
     if _feedback_generator is None:
-        _feedback_generator = BiddingFeedbackGenerator(db_path)
+        _feedback_generator = BiddingFeedbackGenerator()
     return _feedback_generator

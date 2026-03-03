@@ -590,14 +590,14 @@ class SkillTreeManager:
         return result
 
     def get_level_by_number(self, level_num: int) -> Optional[Dict]:
-        """Get level by number (0-8)"""
+        """Get level by number (0-9)"""
         for level_id, level_data in self.tree.items():
             if level_data['level'] == level_num:
                 return level_data
         return None
 
     def get_level_id_by_number(self, level_num: int) -> Optional[str]:
-        """Get level ID by number (0-8)"""
+        """Get level ID by number (0-9)"""
         for level_id, level_data in self.tree.items():
             if level_data['level'] == level_num:
                 return level_id

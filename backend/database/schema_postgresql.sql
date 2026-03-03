@@ -1,7 +1,6 @@
 -- ============================================================================
 -- PostgreSQL Schema for Bridge Bidding App
--- Combined schema for production deployment on Render
--- Auto-converted from SQLite schemas
+-- Production database schema
 -- ============================================================================
 
 -- Drop existing tables to ensure clean schema (reverse order due to foreign keys)
@@ -210,7 +209,7 @@ CREATE TABLE IF NOT EXISTS game_sessions (
     player_position TEXT DEFAULT 'S',
     ai_difficulty TEXT DEFAULT 'intermediate',
     CONSTRAINT valid_status CHECK(status IN ('active', 'completed', 'abandoned')),
-    CONSTRAINT valid_session_type CHECK(session_type IN ('chicago', 'rubber', 'practice')),
+    CONSTRAINT valid_session_type CHECK(session_type IN ('chicago', 'rubber', 'practice', 'continuous')),
     CONSTRAINT valid_player_position CHECK(player_position IN ('N', 'E', 'S', 'W'))
 );
 
@@ -356,6 +355,7 @@ CREATE TABLE IF NOT EXISTS bidding_decisions (
     difficulty TEXT,
     helpful_hint TEXT,
     reasoning TEXT,
+    hand_number INTEGER,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -475,6 +475,7 @@ CREATE TABLE IF NOT EXISTS play_decisions (
     tricks_cost INTEGER DEFAULT 0,
     contract TEXT,
     feedback TEXT,
+    hand_number INTEGER,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 

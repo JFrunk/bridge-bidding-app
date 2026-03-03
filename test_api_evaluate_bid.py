@@ -46,13 +46,15 @@ if evaluate_response.status_code == 200:
     print(f"   Was correct: {result.get('was_correct')}")
 
     # Check database
-    import sqlite3
-    conn = sqlite3.connect('backend/bridge.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM bidding_decisions")
-    count = cursor.fetchone()[0]
+    import sys as _sys
+    import os as _os
+    _sys.path.insert(0, _os.path.join(_os.path.dirname(__file__), 'backend'))
+    from db import get_connection
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) as count FROM bidding_decisions")
+        count = cursor.fetchone()['count']
     print(f"\n4. Database check: {count} bidding_decisions records")
-    conn.close()
 else:
     print("❌ Error!")
     print(f"   Response: {evaluate_response.text}")

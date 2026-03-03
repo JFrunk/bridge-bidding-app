@@ -5,18 +5,23 @@ Automatically runs SQL migration files from the migrations/ directory.
 Tracks which migrations have been applied using a migrations_applied table.
 
 Usage:
-    python run_migrations.py [db_path]
+    python run_migrations.py
+    python run_migrations.py --list
 
     Or import and call:
     from run_migrations import run_migrations
-    run_migrations('bridge.db')
+    run_migrations()
 """
 
-import sqlite3
 import os
 from pathlib import Path
 from typing import List, Tuple
 import sys
+
+# Add backend dir to path so we can import db module
+sys.path.insert(0, str(Path(__file__).parent))
+
+from db import get_connection, _execute_script
 
 
 def get_migration_files(migrations_dir: str = 'migrations') -> List[Tuple[str, str]]:
@@ -39,12 +44,12 @@ def get_migration_files(migrations_dir: str = 'migrations') -> List[Tuple[str, s
     return [(f.name, str(f)) for f in sql_files]
 
 
-def init_migrations_table(conn: sqlite3.Connection):
+def init_migrations_table(conn):
     """Create migrations tracking table if it doesn't exist"""
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS migrations_applied (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             migration_name TEXT UNIQUE NOT NULL,
             applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -52,18 +57,19 @@ def init_migrations_table(conn: sqlite3.Connection):
     conn.commit()
 
 
-def is_migration_applied(conn: sqlite3.Connection, migration_name: str) -> bool:
+def is_migration_applied(conn, migration_name: str) -> bool:
     """Check if a migration has already been applied"""
     cursor = conn.cursor()
     cursor.execute(
         "SELECT COUNT(*) FROM migrations_applied WHERE migration_name = ?",
         (migration_name,)
     )
-    count = cursor.fetchone()[0]
+    result = cursor.fetchone()
+    count = result['count'] if isinstance(result, dict) else result[0]
     return count > 0
 
 
-def apply_migration(conn: sqlite3.Connection, migration_name: str, filepath: str):
+def apply_migration(conn, migration_name: str, filepath: str):
     """
     Apply a single migration file.
 
@@ -79,7 +85,7 @@ def apply_migration(conn: sqlite3.Connection, migration_name: str, filepath: str
 
         # Execute migration
         cursor = conn.cursor()
-        cursor.executescript(sql_content)
+        _execute_script(cursor, sql_content)
 
         # Record migration as applied
         cursor.execute(
@@ -88,20 +94,19 @@ def apply_migration(conn: sqlite3.Connection, migration_name: str, filepath: str
         )
 
         conn.commit()
-        print(f"  ✓ Successfully applied: {migration_name}")
+        print(f"  Successfully applied: {migration_name}")
 
     except Exception as e:
         conn.rollback()
-        print(f"  ✗ Failed to apply {migration_name}: {e}")
+        print(f"  Failed to apply {migration_name}: {e}")
         raise
 
 
-def run_migrations(db_path: str = 'bridge.db', migrations_dir: str = 'migrations'):
+def run_migrations(migrations_dir: str = 'migrations'):
     """
     Run all pending database migrations.
 
     Args:
-        db_path: Path to SQLite database file
         migrations_dir: Directory containing migration .sql files
 
     Returns:
@@ -115,11 +120,11 @@ def run_migrations(db_path: str = 'bridge.db', migrations_dir: str = 'migrations
     print(f"\n{'='*60}")
     print(f"Database Migration Runner")
     print(f"{'='*60}")
-    print(f"Database: {db_path}")
+    print(f"Database: PostgreSQL")
     print(f"Migrations directory: {migrations_dir}")
 
     # Connect to database
-    conn = sqlite3.connect(db_path)
+    conn = get_connection()
 
     try:
         # Initialize migrations tracking table
@@ -156,25 +161,22 @@ def run_migrations(db_path: str = 'bridge.db', migrations_dir: str = 'migrations
         return applied_count
 
     except Exception as e:
-        print(f"\n✗ Migration failed: {e}")
+        print(f"\nMigration failed: {e}")
         raise
 
     finally:
         conn.close()
 
 
-def list_applied_migrations(db_path: str = 'bridge.db'):
+def list_applied_migrations():
     """List all applied migrations"""
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-
-    try:
+    with get_connection() as conn:
         cursor = conn.cursor()
 
         # Check if migrations table exists
         cursor.execute("""
-            SELECT name FROM sqlite_master
-            WHERE type='table' AND name='migrations_applied'
+            SELECT tablename FROM pg_tables
+            WHERE schemaname = 'public' AND tablename = 'migrations_applied'
         """)
 
         if not cursor.fetchone():
@@ -195,20 +197,14 @@ def list_applied_migrations(db_path: str = 'bridge.db'):
             print(f"  {row['migration_name']:<50} {row['applied_at']}")
         print(f"\nTotal: {len(rows)} migration(s) applied")
 
-    finally:
-        conn.close()
-
 
 if __name__ == '__main__':
-    # Allow database path as command line argument
-    db_path = sys.argv[1] if len(sys.argv) > 1 else 'bridge.db'
-
     # Check if --list flag is provided
     if '--list' in sys.argv:
-        list_applied_migrations(db_path)
+        list_applied_migrations()
     else:
         try:
-            run_migrations(db_path)
+            run_migrations()
         except Exception as e:
             print(f"\nFatal error: {e}")
             sys.exit(1)

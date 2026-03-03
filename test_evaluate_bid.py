@@ -3,9 +3,9 @@
 Test script to debug why evaluate-bid isn't storing data
 """
 import sys
-import sqlite3
+import os
 
-sys.path.insert(0, 'backend')
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
 
 from engine.feedback.bidding_feedback import get_feedback_generator
 from engine.hand import Hand, Card
@@ -22,8 +22,8 @@ hand = Hand(cards)
 
 # Create feedback generator
 print("Creating feedback generator...")
-gen = get_feedback_generator('backend/bridge.db')
-print(f"Database path: {gen.db_path}")
+gen = get_feedback_generator()
+print("Feedback generator created")
 
 # Create auction context
 auction_context = {
@@ -63,19 +63,19 @@ except Exception as e:
 
 # Check database
 print("\nChecking database...")
-conn = sqlite3.connect('backend/bridge.db')
-cursor = conn.cursor()
+from db import get_connection
 
-cursor.execute("SELECT COUNT(*) FROM bidding_decisions")
-count = cursor.fetchone()[0]
-print(f"Total bidding_decisions records: {count}")
+with get_connection() as conn:
+    cursor = conn.cursor()
 
-if count > 0:
-    cursor.execute("SELECT id, user_bid, optimal_bid, correctness, score FROM bidding_decisions ORDER BY id DESC LIMIT 3")
-    print("\nLast 3 records:")
-    for row in cursor.fetchall():
-        print(f"  ID {row[0]}: {row[1]} (optimal: {row[2]}) - {row[3]} - score: {row[4]}")
+    cursor.execute("SELECT COUNT(*) as count FROM bidding_decisions")
+    count = cursor.fetchone()['count']
+    print(f"Total bidding_decisions records: {count}")
 
-conn.close()
+    if count > 0:
+        cursor.execute("SELECT id, user_bid, optimal_bid, correctness, score FROM bidding_decisions ORDER BY id DESC LIMIT 3")
+        print("\nLast 3 records:")
+        for row in cursor.fetchall():
+            print(f"  ID {row['id']}: {row['user_bid']} (optimal: {row['optimal_bid']}) - {row['correctness']} - score: {row['score']}")
 
 print("\n✓ Test complete")

@@ -1,11 +1,11 @@
 #!/bin/bash
 # fix-database-config.sh
-# Diagnose and fix DATABASE_URL issues on Oracle production server
+# Diagnose and fix DATABASE_URL issues on production server
 #
-# Usage: bash fix-database-config.sh [diagnose|fix-sqlite|fix-postgres]
+# Usage: bash fix-database-config.sh [diagnose|fix-postgres]
 #
-# Run this script ON the Oracle server after SSHing in:
-#   ssh opc@<ORACLE_IP>
+# Run this script ON the server after SSHing in:
+#   ssh hetzner-bridge
 #   bash /opt/bridge-bidding-app/deploy/oracle/fix-database-config.sh diagnose
 
 set -e
@@ -31,17 +31,17 @@ diagnose() {
     if [ -f "$ENV_FILE" ]; then
         echo -e "File exists: ${GREEN}$ENV_FILE${NC}"
         if grep -q "DATABASE_URL" "$ENV_FILE"; then
-            echo -e "${RED}Found DATABASE_URL:${NC}"
+            echo -e "${GREEN}Found DATABASE_URL:${NC}"
             grep "DATABASE_URL" "$ENV_FILE"
 
             if grep -q "dpg-" "$ENV_FILE"; then
-                echo -e "${RED}⚠️  WARNING: This is a Render PostgreSQL URL!${NC}"
+                echo -e "${RED}WARNING: This is a Render PostgreSQL URL!${NC}"
                 echo -e "${RED}   This is causing the connection error.${NC}"
             elif grep -q "localhost" "$ENV_FILE"; then
-                echo -e "${GREEN}✓ Points to localhost (local PostgreSQL)${NC}"
+                echo -e "${GREEN}Points to localhost (local PostgreSQL)${NC}"
             fi
         else
-            echo -e "${GREEN}✓ No DATABASE_URL set (will use SQLite)${NC}"
+            echo -e "${YELLOW}No DATABASE_URL set${NC}"
         fi
     else
         echo -e "${YELLOW}No .env file found (will use defaults)${NC}"
@@ -55,7 +55,7 @@ diagnose() {
             echo -e "${RED}Found DATABASE_URL in service file:${NC}"
             grep -i "DATABASE_URL" "$SERVICE_FILE"
         else
-            echo -e "${GREEN}✓ No DATABASE_URL in service file${NC}"
+            echo -e "${GREEN}No DATABASE_URL in service file${NC}"
         fi
 
         if grep -q "EnvironmentFile" "$SERVICE_FILE"; then
@@ -72,10 +72,10 @@ diagnose() {
         echo -e "${RED}DATABASE_URL is set in environment:${NC}"
         echo "$DATABASE_URL"
         if echo "$DATABASE_URL" | grep -q "dpg-"; then
-            echo -e "${RED}⚠️  WARNING: This is a Render PostgreSQL URL!${NC}"
+            echo -e "${RED}WARNING: This is a Render PostgreSQL URL!${NC}"
         fi
     else
-        echo -e "${GREEN}✓ DATABASE_URL not set in current environment${NC}"
+        echo -e "${GREEN}DATABASE_URL not set in current environment${NC}"
     fi
     echo ""
 
@@ -83,11 +83,11 @@ diagnose() {
     if command -v psql &> /dev/null; then
         echo -e "${GREEN}PostgreSQL client installed${NC}"
         if sudo systemctl is-active --quiet postgresql 2>/dev/null; then
-            echo -e "${GREEN}✓ PostgreSQL service is running${NC}"
+            echo -e "${GREEN}PostgreSQL service is running${NC}"
 
             # Check if bridge database exists
             if sudo -u postgres psql -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw "bridge_bidding"; then
-                echo -e "${GREEN}✓ bridge_bidding database exists${NC}"
+                echo -e "${GREEN}bridge_bidding database exists${NC}"
             else
                 echo -e "${YELLOW}bridge_bidding database not found${NC}"
             fi
@@ -95,28 +95,19 @@ diagnose() {
             echo -e "${YELLOW}PostgreSQL service is not running${NC}"
         fi
     else
-        echo -e "${YELLOW}PostgreSQL not installed (SQLite will be used)${NC}"
+        echo -e "${RED}PostgreSQL not installed${NC}"
     fi
     echo ""
 
-    echo -e "${YELLOW}=== STEP 5: Checking SQLite database ===${NC}"
-    if [ -f "$BACKEND_DIR/bridge.db" ]; then
-        echo -e "${GREEN}✓ SQLite database exists: $BACKEND_DIR/bridge.db${NC}"
-        ls -lh "$BACKEND_DIR/bridge.db"
-    else
-        echo -e "${YELLOW}No SQLite database found${NC}"
-    fi
-    echo ""
-
-    echo -e "${YELLOW}=== STEP 6: Testing backend connection ===${NC}"
+    echo -e "${YELLOW}=== STEP 5: Testing backend connection ===${NC}"
     if curl -s "http://localhost:5001/api/scenarios" > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ Backend is responding${NC}"
+        echo -e "${GREEN}Backend is responding${NC}"
     else
-        echo -e "${RED}✗ Backend is not responding on port 5001${NC}"
+        echo -e "${RED}Backend is not responding on port 5001${NC}"
     fi
     echo ""
 
-    echo -e "${YELLOW}=== STEP 7: Recent backend logs ===${NC}"
+    echo -e "${YELLOW}=== STEP 6: Recent backend logs ===${NC}"
     echo "Last 10 lines of backend logs:"
     sudo journalctl -u bridge-backend --no-pager -n 10 2>/dev/null || echo "Could not read logs"
     echo ""
@@ -125,59 +116,8 @@ diagnose() {
     echo -e "${BLUE}  DIAGNOSIS COMPLETE${NC}"
     echo -e "${BLUE}================================================${NC}"
     echo ""
-    echo "To fix the issue, run one of:"
-    echo "  bash $0 fix-sqlite    # Use SQLite (simpler, no PostgreSQL needed)"
-    echo "  bash $0 fix-postgres  # Use local PostgreSQL"
-}
-
-fix_sqlite() {
-    echo -e "${YELLOW}=== Configuring backend to use SQLite ===${NC}"
-    echo ""
-
-    # Backup existing .env if it exists
-    if [ -f "$ENV_FILE" ]; then
-        cp "$ENV_FILE" "$ENV_FILE.backup.$(date +%Y%m%d_%H%M%S)"
-        echo -e "${GREEN}✓ Backed up existing .env file${NC}"
-    fi
-
-    # Create new .env without DATABASE_URL
-    cat > "$ENV_FILE" << 'EOF'
-# Backend Environment Configuration
-# Production on Oracle Cloud
-
-# AI Configuration
-DEFAULT_AI_DIFFICULTY=expert
-
-# Database: Using SQLite (bridge.db)
-# To use PostgreSQL instead, uncomment and set:
-# DATABASE_URL=postgresql://bridge_user:password@localhost:5432/bridge_bidding
-EOF
-
-    echo -e "${GREEN}✓ Created new .env file (SQLite mode)${NC}"
-
-    # Initialize SQLite database if needed
-    echo -e "${YELLOW}Initializing SQLite database...${NC}"
-    cd "$BACKEND_DIR"
-    source venv/bin/activate 2>/dev/null || true
-    python3 database/init_all_tables.py 2>/dev/null || echo "Database init script not found or failed"
-
-    # Restart backend
-    echo -e "${YELLOW}Restarting backend service...${NC}"
-    sudo systemctl restart bridge-backend
-    sleep 3
-
-    # Verify
-    echo -e "${YELLOW}Verifying backend...${NC}"
-    if curl -s "http://localhost:5001/api/scenarios" > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ Backend is responding!${NC}"
-        echo ""
-        echo -e "${GREEN}=== FIX SUCCESSFUL ===${NC}"
-        echo "The backend is now using SQLite."
-        echo "Test the dashboard: curl 'http://localhost:5001/api/analytics/dashboard?user_id=1'"
-    else
-        echo -e "${RED}✗ Backend still not responding${NC}"
-        echo "Check logs: sudo journalctl -u bridge-backend -f"
-    fi
+    echo "To fix the issue, run:"
+    echo "  bash $0 fix-postgres  # Configure local PostgreSQL"
 }
 
 fix_postgres() {
@@ -199,13 +139,13 @@ fix_postgres() {
     # Backup existing .env if it exists
     if [ -f "$ENV_FILE" ]; then
         cp "$ENV_FILE" "$ENV_FILE.backup.$(date +%Y%m%d_%H%M%S)"
-        echo -e "${GREEN}✓ Backed up existing .env file${NC}"
+        echo -e "${GREEN}Backed up existing .env file${NC}"
     fi
 
     # Create new .env with local PostgreSQL
     cat > "$ENV_FILE" << EOF
 # Backend Environment Configuration
-# Production on Oracle Cloud
+# Production on Hetzner Cloud
 
 # AI Configuration
 DEFAULT_AI_DIFFICULTY=expert
@@ -214,7 +154,7 @@ DEFAULT_AI_DIFFICULTY=expert
 DATABASE_URL=postgresql://bridge_user:${DB_PASSWORD}@localhost:5432/bridge_bidding
 EOF
 
-    echo -e "${GREEN}✓ Created new .env file (PostgreSQL mode)${NC}"
+    echo -e "${GREEN}Created new .env file (PostgreSQL mode)${NC}"
 
     # Initialize database
     echo -e "${YELLOW}Initializing PostgreSQL database...${NC}"
@@ -230,13 +170,13 @@ EOF
     # Verify
     echo -e "${YELLOW}Verifying backend...${NC}"
     if curl -s "http://localhost:5001/api/scenarios" > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ Backend is responding!${NC}"
+        echo -e "${GREEN}Backend is responding!${NC}"
         echo ""
         echo -e "${GREEN}=== FIX SUCCESSFUL ===${NC}"
         echo "The backend is now using local PostgreSQL."
         echo "Test the dashboard: curl 'http://localhost:5001/api/analytics/dashboard?user_id=1'"
     else
-        echo -e "${RED}✗ Backend still not responding${NC}"
+        echo -e "${RED}Backend still not responding${NC}"
         echo "Check logs: sudo journalctl -u bridge-backend -f"
     fi
 }
@@ -246,17 +186,13 @@ case "${1:-diagnose}" in
     diagnose)
         diagnose
         ;;
-    fix-sqlite)
-        fix_sqlite
-        ;;
     fix-postgres)
         fix_postgres
         ;;
     *)
-        echo "Usage: $0 [diagnose|fix-sqlite|fix-postgres]"
+        echo "Usage: $0 [diagnose|fix-postgres]"
         echo ""
         echo "  diagnose     - Show current database configuration (default)"
-        echo "  fix-sqlite   - Configure backend to use SQLite"
         echo "  fix-postgres - Configure backend to use local PostgreSQL"
         exit 1
         ;;

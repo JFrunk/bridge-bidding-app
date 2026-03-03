@@ -13,57 +13,58 @@ import pytest
 import sys
 import os
 import json
-import sqlite3
 from datetime import datetime
 
 # Add backend to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
+from db import get_connection
 from server import app
 
 
-@pytest.fixture
-def client(tmp_path):
-    """Create test client with isolated test database"""
-    app.config['TESTING'] = True
+# Use unique test identifiers to avoid collisions
+TEST_EMAIL_PREFIX = 'regtest_login_10292025_'
 
-    # Create temporary database file for this test
-    test_db_path = tmp_path / "test_bridge.db"
 
-    # Initialize test database
-    conn = sqlite3.connect(str(test_db_path))
-    cursor = conn.cursor()
+@pytest.fixture(autouse=True)
+def cleanup_test_users():
+    """Clean up test users before and after each test"""
+    _cleanup()
+    yield
+    _cleanup()
 
-    # Create users table
-    cursor.execute('''
-        CREATE TABLE users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE,
-            phone TEXT UNIQUE,
-            display_name TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_login TIMESTAMP,
-            last_activity TIMESTAMP,
-            timezone TEXT DEFAULT 'UTC',
-            preferences TEXT,
-            CONSTRAINT valid_username CHECK(length(username) >= 3)
-        )
-    ''')
-    conn.commit()
-    conn.close()
 
-    # Patch db.SQLITE_PATH to use test database
-    import db
-    original_sqlite_path = db.SQLITE_PATH
-    db.SQLITE_PATH = test_db_path
-
+def _cleanup():
+    """Remove test users created during tests"""
     try:
-        with app.test_client() as test_client:
-            yield test_client
-    finally:
-        # Restore original path
-        db.SQLITE_PATH = original_sqlite_path
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "DELETE FROM users WHERE email LIKE ? OR phone LIKE ?",
+                (f'{TEST_EMAIL_PREFIX}%', '+15551234567_regtest%')
+            )
+            # Also clean up by specific test emails/phones used
+            cursor.execute(
+                "DELETE FROM users WHERE email IN (?, ?, ?) OR phone IN (?, ?, ?)",
+                (
+                    f'{TEST_EMAIL_PREFIX}test@example.com',
+                    f'{TEST_EMAIL_PREFIX}newuser@example.com',
+                    f'{TEST_EMAIL_PREFIX}existing@example.com',
+                    '+15551234567',
+                    '+15551234568',
+                    '+15551234569',
+                )
+            )
+    except Exception:
+        pass
+
+
+@pytest.fixture
+def client():
+    """Create test client"""
+    app.config['TESTING'] = True
+    with app.test_client() as test_client:
+        yield test_client
 
 
 class TestSimpleLoginEndpoint:
@@ -72,7 +73,7 @@ class TestSimpleLoginEndpoint:
     def test_endpoint_exists(self, client):
         """Test that /api/auth/simple-login endpoint exists"""
         response = client.post('/api/auth/simple-login',
-                              json={'email': 'test@example.com'},
+                              json={'email': f'{TEST_EMAIL_PREFIX}test@example.com'},
                               content_type='application/json')
 
         # Should NOT be 404 - endpoint should exist
@@ -83,7 +84,7 @@ class TestSimpleLoginEndpoint:
         """Test simple login creates new user with email"""
         response = client.post('/api/auth/simple-login',
                               json={
-                                  'email': 'newuser@example.com',
+                                  'email': f'{TEST_EMAIL_PREFIX}newuser@example.com',
                                   'create_if_not_exists': True
                               },
                               content_type='application/json')
@@ -99,7 +100,7 @@ class TestSimpleLoginEndpoint:
         assert 'created' in data, "Response missing 'created' flag"
 
         # Verify new user was created
-        assert data['email'] == 'newuser@example.com'
+        assert data['email'] == f'{TEST_EMAIL_PREFIX}newuser@example.com'
         assert data['created'] is True, "Should indicate new user was created"
         assert isinstance(data['user_id'], int), "user_id should be an integer"
         assert data['user_id'] > 0, "user_id should be positive"
@@ -162,7 +163,7 @@ class TestSimpleLoginEndpoint:
         # First login - creates user
         response1 = client.post('/api/auth/simple-login',
                                json={
-                                   'email': 'existing@example.com',
+                                   'email': f'{TEST_EMAIL_PREFIX}existing@example.com',
                                    'create_if_not_exists': True
                                },
                                content_type='application/json')
@@ -175,7 +176,7 @@ class TestSimpleLoginEndpoint:
         # Second login - should return existing user
         response2 = client.post('/api/auth/simple-login',
                                json={
-                                   'email': 'existing@example.com',
+                                   'email': f'{TEST_EMAIL_PREFIX}existing@example.com',
                                    'create_if_not_exists': True
                                },
                                content_type='application/json')
@@ -237,7 +238,7 @@ class TestSimpleLoginEndpoint:
     def test_simple_login_cors_enabled(self, client):
         """Test that CORS headers are present for frontend access"""
         response = client.post('/api/auth/simple-login',
-                              json={'email': 'test@example.com'},
+                              json={'email': f'{TEST_EMAIL_PREFIX}test@example.com'},
                               content_type='application/json')
 
         # CORS should be enabled for frontend to access

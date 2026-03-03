@@ -13,7 +13,7 @@
 -- Only insert if they have at least one Essential convention mastered
 -- and don't already have the foundational convention
 
-INSERT OR IGNORE INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
+INSERT INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
 SELECT DISTINCT
     ucp.user_id,
     'when_to_pass' as convention_id,
@@ -30,9 +30,10 @@ AND ucp.convention_id IN ('stayman', 'jacoby_transfers', 'weak_two', 'takeout_do
 AND NOT EXISTS (
     SELECT 1 FROM user_convention_progress ucp2
     WHERE ucp2.user_id = ucp.user_id AND ucp2.convention_id = 'when_to_pass'
-);
+)
+ON CONFLICT (user_id, convention_id) DO NOTHING;
 
-INSERT OR IGNORE INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
+INSERT INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
 SELECT DISTINCT
     ucp.user_id,
     'opening_one_major' as convention_id,
@@ -49,9 +50,10 @@ AND ucp.convention_id IN ('stayman', 'jacoby_transfers', 'weak_two', 'takeout_do
 AND NOT EXISTS (
     SELECT 1 FROM user_convention_progress ucp2
     WHERE ucp2.user_id = ucp.user_id AND ucp2.convention_id = 'opening_one_major'
-);
+)
+ON CONFLICT (user_id, convention_id) DO NOTHING;
 
-INSERT OR IGNORE INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
+INSERT INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
 SELECT DISTINCT
     ucp.user_id,
     'opening_one_minor' as convention_id,
@@ -68,9 +70,10 @@ AND ucp.convention_id IN ('stayman', 'jacoby_transfers', 'weak_two', 'takeout_do
 AND NOT EXISTS (
     SELECT 1 FROM user_convention_progress ucp2
     WHERE ucp2.user_id = ucp.user_id AND ucp2.convention_id = 'opening_one_minor'
-);
+)
+ON CONFLICT (user_id, convention_id) DO NOTHING;
 
-INSERT OR IGNORE INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
+INSERT INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
 SELECT DISTINCT
     ucp.user_id,
     'opening_1nt' as convention_id,
@@ -87,9 +90,10 @@ AND ucp.convention_id IN ('stayman', 'jacoby_transfers', 'weak_two', 'takeout_do
 AND NOT EXISTS (
     SELECT 1 FROM user_convention_progress ucp2
     WHERE ucp2.user_id = ucp.user_id AND ucp2.convention_id = 'opening_1nt'
-);
+)
+ON CONFLICT (user_id, convention_id) DO NOTHING;
 
-INSERT OR IGNORE INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
+INSERT INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
 SELECT DISTINCT
     ucp.user_id,
     'single_raise' as convention_id,
@@ -106,9 +110,10 @@ AND ucp.convention_id IN ('stayman', 'jacoby_transfers', 'weak_two', 'takeout_do
 AND NOT EXISTS (
     SELECT 1 FROM user_convention_progress ucp2
     WHERE ucp2.user_id = ucp.user_id AND ucp2.convention_id = 'single_raise'
-);
+)
+ON CONFLICT (user_id, convention_id) DO NOTHING;
 
-INSERT OR IGNORE INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
+INSERT INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
 SELECT DISTINCT
     ucp.user_id,
     'limit_raise' as convention_id,
@@ -125,9 +130,10 @@ AND ucp.convention_id IN ('stayman', 'jacoby_transfers', 'weak_two', 'takeout_do
 AND NOT EXISTS (
     SELECT 1 FROM user_convention_progress ucp2
     WHERE ucp2.user_id = ucp.user_id AND ucp2.convention_id = 'limit_raise'
-);
+)
+ON CONFLICT (user_id, convention_id) DO NOTHING;
 
-INSERT OR IGNORE INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
+INSERT INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
 SELECT DISTINCT
     ucp.user_id,
     'new_suit_response' as convention_id,
@@ -144,9 +150,10 @@ AND ucp.convention_id IN ('stayman', 'jacoby_transfers', 'weak_two', 'takeout_do
 AND NOT EXISTS (
     SELECT 1 FROM user_convention_progress ucp2
     WHERE ucp2.user_id = ucp.user_id AND ucp2.convention_id = 'new_suit_response'
-);
+)
+ON CONFLICT (user_id, convention_id) DO NOTHING;
 
-INSERT OR IGNORE INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
+INSERT INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
 SELECT DISTINCT
     ucp.user_id,
     'dustbin_1nt_response' as convention_id,
@@ -163,9 +170,10 @@ AND ucp.convention_id IN ('stayman', 'jacoby_transfers', 'weak_two', 'takeout_do
 AND NOT EXISTS (
     SELECT 1 FROM user_convention_progress ucp2
     WHERE ucp2.user_id = ucp.user_id AND ucp2.convention_id = 'dustbin_1nt_response'
-);
+)
+ON CONFLICT (user_id, convention_id) DO NOTHING;
 
-INSERT OR IGNORE INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
+INSERT INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
 SELECT DISTINCT
     ucp.user_id,
     'game_raise' as convention_id,
@@ -182,9 +190,10 @@ AND ucp.convention_id IN ('stayman', 'jacoby_transfers', 'weak_two', 'takeout_do
 AND NOT EXISTS (
     SELECT 1 FROM user_convention_progress ucp2
     WHERE ucp2.user_id = ucp.user_id AND ucp2.convention_id = 'game_raise'
-);
+)
+ON CONFLICT (user_id, convention_id) DO NOTHING;
 
-INSERT OR IGNORE INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
+INSERT INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
 SELECT DISTINCT
     ucp.user_id,
     'two_over_one_response' as convention_id,
@@ -201,9 +210,10 @@ AND ucp.convention_id IN ('stayman', 'jacoby_transfers', 'weak_two', 'takeout_do
 AND NOT EXISTS (
     SELECT 1 FROM user_convention_progress ucp2
     WHERE ucp2.user_id = ucp.user_id AND ucp2.convention_id = 'two_over_one_response'
-);
+)
+ON CONFLICT (user_id, convention_id) DO NOTHING;
 
-INSERT OR IGNORE INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
+INSERT INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
 SELECT DISTINCT
     ucp.user_id,
     'opener_rebid' as convention_id,
@@ -220,9 +230,10 @@ AND ucp.convention_id IN ('stayman', 'jacoby_transfers', 'weak_two', 'takeout_do
 AND NOT EXISTS (
     SELECT 1 FROM user_convention_progress ucp2
     WHERE ucp2.user_id = ucp.user_id AND ucp2.convention_id = 'opener_rebid'
-);
+)
+ON CONFLICT (user_id, convention_id) DO NOTHING;
 
-INSERT OR IGNORE INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
+INSERT INTO user_convention_progress (user_id, convention_id, status, attempts, correct, accuracy, mastered_at, last_practiced)
 SELECT DISTINCT
     ucp.user_id,
     'responder_rebid' as convention_id,
@@ -239,4 +250,5 @@ AND ucp.convention_id IN ('stayman', 'jacoby_transfers', 'weak_two', 'takeout_do
 AND NOT EXISTS (
     SELECT 1 FROM user_convention_progress ucp2
     WHERE ucp2.user_id = ucp.user_id AND ucp2.convention_id = 'responder_rebid'
-);
+)
+ON CONFLICT (user_id, convention_id) DO NOTHING;

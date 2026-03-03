@@ -4,7 +4,7 @@
 
 -- User Play Progress - tracks mastery of each play skill
 CREATE TABLE IF NOT EXISTS user_play_progress (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     skill_id TEXT NOT NULL,
     skill_level INTEGER DEFAULT 0,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS user_play_progress (
 
 -- Play Practice History - records each play practice attempt
 CREATE TABLE IF NOT EXISTS play_practice_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     skill_id TEXT NOT NULL,
     skill_level INTEGER DEFAULT 0,

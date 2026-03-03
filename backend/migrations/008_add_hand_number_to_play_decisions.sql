@@ -4,7 +4,7 @@
 
 -- Check if column exists and add if not
 -- Note: This migration may fail if column already exists - that's OK
--- We use a pattern that SQLite tolerates for re-runs
+-- Safe to re-run (uses IF NOT EXISTS)
 
 -- First, try to add column (ignore error if already exists)
 -- The migration runner will catch the error gracefully

@@ -7,7 +7,7 @@
 -- Stores tournament/event metadata from imported PBN files
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS imported_tournaments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
 
     -- Event metadata from PBN tags
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS imported_tournaments (
 -- Stores individual hands/boards from PBN files with full analysis
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS imported_hands (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     tournament_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
 
@@ -167,10 +167,16 @@ CREATE INDEX IF NOT EXISTS idx_imported_hands_user_status
 -- =============================================================================
 -- TRIGGER: Update timestamp on imported_hands modification
 -- =============================================================================
-CREATE TRIGGER IF NOT EXISTS update_imported_hands_timestamp
-AFTER UPDATE ON imported_hands
+CREATE OR REPLACE FUNCTION update_imported_hands_timestamp()
+RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE imported_hands
-    SET updated_at = CURRENT_TIMESTAMP
-    WHERE id = NEW.id;
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
 END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_imported_hands_timestamp ON imported_hands;
+CREATE TRIGGER update_imported_hands_timestamp
+BEFORE UPDATE ON imported_hands
+FOR EACH ROW
+EXECUTE FUNCTION update_imported_hands_timestamp();

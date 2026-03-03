@@ -3,7 +3,7 @@
  *
  * Main guided learning interface showing:
  * - Track selector (Bidding | Card Play)
- * - Skill tree with 9 levels (0-8) per track
+ * - Skill tree with 10 levels (0-9) per track
  * - Progress through each level
  * - Skill practice sessions
  * - Level assessments
@@ -22,6 +22,7 @@ import {
   getUserPlayProgress,
   getPlayPracticeHand,
   recordPlayPractice,
+  markSkillMastered,
 } from '../../services/learningService';
 import SkillPractice from './SkillPractice';
 import SkillIntro from './SkillIntro';
@@ -187,16 +188,38 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
       if (activeSession.track === 'play') {
         // Play skill - evaluate locally and record practice
         const expected = activeSession.expected_response;
-        const userAnswer = parseInt(answer, 10);
-        const correctAnswer = expected.winners ?? expected.losers ?? expected.correct_answer;
 
-        // Check if answer is correct (within acceptable range if provided)
+        // Determine answer type and evaluate accordingly
         let isCorrect = false;
-        if (expected.acceptable_range) {
-          isCorrect = userAnswer >= expected.acceptable_range[0] &&
-                      userAnswer <= expected.acceptable_range[1];
-        } else {
+        let correctAnswer;
+        let userAnswer;
+
+        if (expected.card) {
+          // Card-based answer (third_hand_high, etc.)
+          correctAnswer = expected.card;
+          // Normalize user input: convert full names to single letters
+          const normalized = answer.trim().toUpperCase()
+            .replace('ACE', 'A')
+            .replace('KING', 'K')
+            .replace('QUEEN', 'Q')
+            .replace('JACK', 'J')
+            .replace('10', 'T')
+            .replace('TEN', 'T');
+
+          userAnswer = normalized[0]; // Take first character after normalization
           isCorrect = userAnswer === correctAnswer;
+        } else {
+          // Numeric answer (counting winners, losers, etc.)
+          userAnswer = parseInt(answer, 10);
+          correctAnswer = expected.winners ?? expected.losers ?? expected.correct_answer;
+
+          // Check if answer is correct (within acceptable range if provided)
+          if (expected.acceptable_range) {
+            isCorrect = userAnswer >= expected.acceptable_range[0] &&
+                        userAnswer <= expected.acceptable_range[1];
+          } else {
+            isCorrect = userAnswer === correctAnswer;
+          }
         }
 
         // Generate feedback
@@ -252,10 +275,24 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
         },
       };
 
-      // Store result and next hand info, but DON'T change the current hand yet
-      // The hand will be updated when user clicks "Continue" in SkillPractice
-      if (result.is_mastered) {
-        // Skill mastered - store this info, will close session on Continue
+      // Per-session mastery check (replaces cumulative mastery)
+      const SESSION_MIN_HANDS = 6;
+      const SESSION_MAX_HANDS = 10;
+      const SESSION_PASSING_ACCURACY = 0.80;
+
+      const answered = updatedHistory.filter(h => h.result !== null).length;
+      const correct = updatedHistory.filter(h => h.result?.isCorrect === true).length;
+      const accuracy = answered > 0 ? correct / answered : 0;
+
+      let sessionOutcome = null; // null | 'mastered' | 'keep_practicing'
+      if (answered >= SESSION_MIN_HANDS && accuracy >= SESSION_PASSING_ACCURACY) {
+        sessionOutcome = 'mastered';
+      } else if (answered >= SESSION_MAX_HANDS) {
+        sessionOutcome = 'keep_practicing';
+      }
+
+      if (sessionOutcome) {
+        // Session complete — show summary, no next hand needed
         setActiveSession({
           ...activeSession,
           progress: result.progress,
@@ -263,14 +300,13 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
             isCorrect: result.is_correct,
             feedback: result.feedback,
           },
-          isMastered: true,
+          sessionComplete: sessionOutcome,
+          sessionAccuracy: accuracy,
+          sessionHands: answered,
           handHistory: updatedHistory,
         });
       } else {
-        // Store result but keep current hand visible
-        // Next hand data is stored in pendingNext for when user clicks Continue
-        // For bidding skills, we need next_expected OR next_hand to advance
-        // (Some skills like bidding_language have no hand but still have next questions)
+        // Session continues — prepare next hand
         const pendingNext = activeSession.track === 'play'
           ? {
               deal: result.next_deal,
@@ -309,14 +345,27 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
     scrollToTop();
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!activeSession) return;
 
-    // Check if skill was mastered
-    if (activeSession.isMastered) {
-      // Close session and show completion
+    // Session complete — mark mastery if achieved, then close
+    if (activeSession.sessionComplete) {
+      if (activeSession.sessionComplete === 'mastered') {
+        try {
+          await markSkillMastered({
+            user_id: userId,
+            skill_id: activeSession.skillId,
+            track: activeSession.track || 'bidding',
+            session_accuracy: activeSession.sessionAccuracy,
+            session_hands: activeSession.sessionHands,
+          });
+        } catch (err) {
+          console.error('Failed to mark skill mastered:', err);
+        }
+      }
       setActiveSession(null);
       loadData();
+      scrollToTop();
       return;
     }
 
@@ -599,14 +648,14 @@ const LevelCard = ({
         <span className="progress-text">{completed}/{total}</span>
       </div>
 
-      {/* Always show skills for unlocked levels so users can see progress and retry */}
-      {isUnlocked && (
-        <div className="level-skills">
-          {is_convention_group ? (
-            <div className="convention-list">
-              {conventions.map((convention) => (
-                <div key={convention.id} className="skill-item">
-                  <span className="skill-name">{convention.name}</span>
+      {/* Show skills for all levels — unlocked get practice buttons, locked get dimmed preview */}
+      <div className={`level-skills ${!isUnlocked ? 'level-skills-locked' : ''}`}>
+        {is_convention_group ? (
+          <div className="convention-list">
+            {conventions.map((convention) => (
+              <div key={convention.id} className={`skill-item ${!isUnlocked ? 'skill-item-locked' : ''}`}>
+                <span className="skill-name">{convention.name}</span>
+                {isUnlocked && (
                   <button
                     className="practice-button"
                     onClick={(e) => {
@@ -616,23 +665,29 @@ const LevelCard = ({
                   >
                     Practice
                   </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="skill-list">
-              {skills.map((skill) => (
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="skill-list">
+            {skills.map((skill) => (
+              isUnlocked ? (
                 <SkillItem
                   key={skill.id}
                   skill={skill}
                   status={skillProgress[skill.id] || 'not_started'}
                   onStart={() => onStartSkill(skill.id, skill.name)}
                 />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+              ) : (
+                <div key={skill.id} className="skill-item skill-item-locked">
+                  <span className="skill-name">{skill.name}</span>
+                </div>
+              )
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

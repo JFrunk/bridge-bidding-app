@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { setUserId, clearUserId, trackLogin, trackLogout, trackGuestMode } from '../services/analytics';
 
 const AuthContext = createContext(null);
@@ -7,6 +7,10 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 // Number of hands before prompting for registration
 const HANDS_BEFORE_PROMPT = 3;
+const HANDS_BEFORE_PROMPT_LEARNING = 5;
+
+// Delay before showing modal after threshold is met (ms)
+const PROMPT_DELAY_MS = 3000;
 
 // Generate or retrieve a unique guest ID for this browser
 // Uses large negative numbers to avoid collision with real user IDs (which are positive)
@@ -237,16 +241,31 @@ export function AuthProvider({ children }) {
     setLoading(false);
   };
 
-  // Track completed hands and trigger registration prompt
-  const recordHandCompleted = useCallback(() => {
+  // Track completed hands and mark prompt as ready (shown on next idle moment)
+  const promptReadyRef = useRef(false);
+  const promptTimerRef = useRef(null);
+
+  const recordHandCompleted = useCallback((isLearningMode = false) => {
     if (user?.isGuest && !hasSeenPrompt) {
       const newCount = handsCompleted + 1;
       setHandsCompleted(newCount);
       localStorage.setItem('bridge_hands_completed', newCount.toString());
 
-      // Show registration prompt after threshold
-      if (newCount >= HANDS_BEFORE_PROMPT) {
-        setShowRegistrationPrompt(true);
+      // Use higher threshold for learning mode (shorter hands)
+      const threshold = isLearningMode ? HANDS_BEFORE_PROMPT_LEARNING : HANDS_BEFORE_PROMPT;
+
+      // Mark prompt as ready — actual display deferred with a delay
+      if (newCount >= threshold) {
+        promptReadyRef.current = true;
+
+        // Show after delay so user can see their score/feedback first
+        if (promptTimerRef.current) clearTimeout(promptTimerRef.current);
+        promptTimerRef.current = setTimeout(() => {
+          if (promptReadyRef.current) {
+            setShowRegistrationPrompt(true);
+            promptReadyRef.current = false;
+          }
+        }, PROMPT_DELAY_MS);
       }
     }
   }, [user, handsCompleted, hasSeenPrompt]);
@@ -257,6 +276,8 @@ export function AuthProvider({ children }) {
   const dismissRegistrationPrompt = useCallback((permanent = false) => {
     setShowRegistrationPrompt(false);
     setHasSeenPrompt(true);
+    promptReadyRef.current = false;
+    if (promptTimerRef.current) clearTimeout(promptTimerRef.current);
     if (permanent) {
       localStorage.setItem('bridge_registration_dismissed', 'true');
     }
@@ -268,6 +289,15 @@ export function AuthProvider({ children }) {
     const protectedFeatures = ['progress', 'dashboard', 'history'];
     return user?.isGuest && protectedFeatures.includes(feature);
   }, [user]);
+
+  // Show deferred prompt immediately (call on navigation/idle moments)
+  const showPromptIfReady = useCallback(() => {
+    if (promptReadyRef.current && !hasSeenPrompt) {
+      if (promptTimerRef.current) clearTimeout(promptTimerRef.current);
+      setShowRegistrationPrompt(true);
+      promptReadyRef.current = false;
+    }
+  }, [hasSeenPrompt]);
 
   // Trigger registration prompt for protected features
   const promptForRegistration = useCallback(() => {
@@ -300,7 +330,8 @@ export function AuthProvider({ children }) {
       showRegistrationPrompt,
       dismissRegistrationPrompt,
       requiresRegistration,
-      promptForRegistration
+      promptForRegistration,
+      showPromptIfReady
     }}>
       {children}
     </AuthContext.Provider>

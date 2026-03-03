@@ -35,7 +35,7 @@ export function ModeSelector({ onSelectMode, userName = null }) {
       subtitle: 'Structured lessons from basics to advanced',
       description: 'Best for: Building solid foundations, filling knowledge gaps',
       features: [
-        'Step-by-step skill progression (9 levels)',
+        'Step-by-step skill progression (10 levels)',
         'Practice hands matched to each topic',
         'Track your mastery progress'
       ],

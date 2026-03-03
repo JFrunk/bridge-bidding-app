@@ -20,9 +20,9 @@ const SuitRow = ({ suit, cards, customScaleClass = "text-base" }) => {
   if (count === 6) spacingClass = '-space-x-[1.6em]';
   if (count >= 7) spacingClass = '-space-x-[1.9em]';
 
-  // Suit color for the indicator
+  // Suit color for the indicator — uses design token colors
   const isRed = ['H', 'D', '♥', '♦'].includes(suit.toUpperCase());
-  const suitColor = isRed ? 'text-red-600' : 'text-gray-900';
+  const suitColor = isRed ? 'text-suit-red' : 'text-suit-black';
 
   return (
     <div className="flex flex-row items-center gap-[0.5em] min-h-[4em] max-w-[18em]">

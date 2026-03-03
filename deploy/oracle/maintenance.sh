@@ -53,20 +53,21 @@ show_logs() {
     sudo journalctl -u bridge-backend --no-pager -n 50
 }
 
-# Backup database (SQLite)
+# Backup database (PostgreSQL)
 backup_database() {
     log_section "Creating Database Backup"
     mkdir -p "$BACKUP_DIR"
 
     DATE=$(date +%Y%m%d_%H%M%S)
-    BACKUP_FILE="$BACKUP_DIR/db_backup_$DATE.db"
-    DB_FILE="$APP_DIR/backend/bridge.db"
+    BACKUP_FILE="$BACKUP_DIR/db_backup_$DATE.sql"
 
-    if [ -f "$DB_FILE" ]; then
-        log_info "Backing up SQLite database to $BACKUP_FILE..."
-        # Use sqlite3 .backup for safe copy (handles locks)
-        sqlite3 "$DB_FILE" ".backup '$BACKUP_FILE'" 2>/dev/null || cp "$DB_FILE" "$BACKUP_FILE"
+    # Load database credentials from .env
+    source "$APP_DIR/backend/.env"
 
+    log_info "Backing up PostgreSQL database to $BACKUP_FILE..."
+    PGPASSWORD="$DB_PASSWORD" pg_dump -h localhost -U bridge_user bridge_bidding > "$BACKUP_FILE"
+
+    if [ $? -eq 0 ]; then
         # Compress backup
         gzip "$BACKUP_FILE"
         log_info "Backup created: ${BACKUP_FILE}.gz"
@@ -78,7 +79,7 @@ backup_database() {
         log_section "Available Backups"
         ls -lh "$BACKUP_DIR"/*.gz 2>/dev/null || echo "No backups found"
     else
-        log_warn "Database file not found: $DB_FILE"
+        log_error "PostgreSQL backup failed"
     fi
 }
 

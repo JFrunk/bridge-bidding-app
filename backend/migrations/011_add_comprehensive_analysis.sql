@@ -96,7 +96,7 @@ ALTER TABLE session_hands ADD COLUMN dd_matrix TEXT DEFAULT NULL;
 -- Field results from other tables at the same event
 -- Enables comparative analysis: "You scored 420, field average was 380"
 CREATE TABLE IF NOT EXISTS imported_field_results (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     imported_hand_id INTEGER NOT NULL,
 
     -- Table/pair identification
@@ -280,8 +280,8 @@ SELECT
     -- Contract display
     CASE
         WHEN sh.contract_level IS NULL THEN 'Pass'
-        ELSE printf('%d%s', sh.contract_level, sh.contract_strain) ||
-             CASE sh.contract_doubled WHEN 1 THEN 'X' WHEN 2 THEN 'XX' ELSE '' END
+        ELSE CONCAT(sh.contract_level, sh.contract_strain,
+             CASE sh.contract_doubled WHEN 1 THEN 'X' WHEN 2 THEN 'XX' ELSE '' END)
     END as contract_display,
     sh.contract_declarer,
 
@@ -343,6 +343,6 @@ ORDER BY sh.played_at DESC;
 --   - v_user_strain_accuracy (per-strain bidding accuracy)
 --   - v_recent_boards_for_quadrant (chart data)
 --
--- To apply: sqlite3 bridge.db < migrations/011_add_comprehensive_analysis.sql
+-- To apply: psql bridge_db < migrations/011_add_comprehensive_analysis.sql
 -- To rollback: See comments at top of file
 -- ============================================================================

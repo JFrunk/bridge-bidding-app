@@ -9,7 +9,7 @@
 -- Purpose: Store detailed feedback for every bidding decision
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS bidding_decisions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
 
     -- Hand Analysis Reference (optional, for post-hand analysis)
     hand_analysis_id INTEGER,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS bidding_decisions (
     reasoning TEXT,                       -- Full explanation
 
     -- Metadata
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
@@ -73,7 +73,7 @@ CREATE INDEX IF NOT EXISTS idx_bidding_decisions_session
 --       for foreign key references
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS hand_analyses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
 
     -- User Info
     user_id INTEGER NOT NULL,
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS hand_analyses (
     auction_data TEXT,                    -- JSON: complete auction
 
     -- Metadata
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
@@ -135,7 +135,7 @@ SELECT
     SUM(CASE WHEN impact = 'significant' THEN 1 ELSE 0 END) as significant_errors,
 
     -- Recent activity (last 30 days)
-    SUM(CASE WHEN timestamp >= datetime('now', '-30 days') THEN 1 ELSE 0 END) as recent_decisions,
+    SUM(CASE WHEN timestamp >= NOW() - INTERVAL '30 days' THEN 1 ELSE 0 END) as recent_decisions,
 
     -- Date range
     MIN(timestamp) as first_decision,

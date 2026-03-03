@@ -90,7 +90,7 @@ export function BiddingBox({ onBid, disabled, auction }) {
             <button
               key={l}
               onClick={() => handleLevelClick(l)}
-              disabled={disabled}
+              disabled={disabled || !levelLegal}
               className={`bid-button bid-level-button ${level === l ? 'selected' : ''} ${!levelLegal ? 'illegal-bid' : ''}`}
               aria-label={`Select level ${l}`}
               data-testid={`bid-level-${l}`}

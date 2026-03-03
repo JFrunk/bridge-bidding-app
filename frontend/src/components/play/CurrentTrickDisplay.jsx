@@ -35,7 +35,7 @@ export function CurrentTrickDisplay({ trick, trickWinner, trickComplete, nextToP
   // Empty state - show who leads next
   if (displayTrick.length === 0) {
     return (
-      <div className="text-base relative w-[22em] h-[20em] bg-black/5 border-[0.1em] border-dashed border-white/10 rounded-[1em] flex items-center justify-center">
+      <div className="text-sm relative w-[22em] h-[20em] bg-black/5 border-[0.1em] border-dashed border-white/10 rounded-[1em] flex items-center justify-center">
         <span className="text-[1.2em] font-medium text-white/60">
           {nextToPlay ? `${nextPlayerName} to lead...` : 'Waiting...'}
         </span>
@@ -43,5 +43,5 @@ export function CurrentTrickDisplay({ trick, trickWinner, trickComplete, nextToP
     );
   }
 
-  return <TrickArena playedCards={playedCards} scaleClass="text-base" />;
+  return <TrickArena playedCards={playedCards} scaleClass="text-sm" />;
 }

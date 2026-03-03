@@ -60,7 +60,6 @@ logger = logging.getLogger(__name__)
 
 def ensure_acbl_tables_exist():
     """Ensure the ACBL import tables exist in the database."""
-    from db import is_postgres
     conn = get_connection()
     cursor = conn.cursor()
 

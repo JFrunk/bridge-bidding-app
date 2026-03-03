@@ -35,49 +35,47 @@ def test_database_schema():
     """Test 2: Verify database tables exist"""
     print("=== Test 2: Database Schema ===")
 
-    import sqlite3
+    from db import get_connection
 
     try:
-        conn = sqlite3.connect('bridge.db')
-        cursor = conn.cursor()
+        with get_connection() as conn:
+            cursor = conn.cursor()
 
-        # Check bidding_decisions table
-        cursor.execute("""
-            SELECT name FROM sqlite_master
-            WHERE type='table' AND name='bidding_decisions'
-        """)
+            # Check bidding_decisions table
+            cursor.execute("""
+                SELECT tablename FROM pg_tables
+                WHERE schemaname = 'public' AND tablename = 'bidding_decisions'
+            """)
 
-        if cursor.fetchone():
-            print("✓ bidding_decisions table exists")
-        else:
-            print("❌ bidding_decisions table not found")
-            return False
+            if cursor.fetchone():
+                print("✓ bidding_decisions table exists")
+            else:
+                print("❌ bidding_decisions table not found")
+                return False
 
-        # Check hand_analyses table
-        cursor.execute("""
-            SELECT name FROM sqlite_master
-            WHERE type='table' AND name='hand_analyses'
-        """)
+            # Check hand_analyses table
+            cursor.execute("""
+                SELECT tablename FROM pg_tables
+                WHERE schemaname = 'public' AND tablename = 'hand_analyses'
+            """)
 
-        if cursor.fetchone():
-            print("✓ hand_analyses table exists")
-        else:
-            print("❌ hand_analyses table not found")
-            return False
+            if cursor.fetchone():
+                print("✓ hand_analyses table exists")
+            else:
+                print("❌ hand_analyses table not found")
+                return False
 
-        # Check views
-        cursor.execute("""
-            SELECT name FROM sqlite_master
-            WHERE type='view' AND name='v_bidding_feedback_stats'
-        """)
+            # Check views
+            cursor.execute("""
+                SELECT viewname FROM pg_views
+                WHERE schemaname = 'public' AND viewname = 'v_bidding_feedback_stats'
+            """)
 
-        if cursor.fetchone():
-            print("✓ v_bidding_feedback_stats view exists")
-        else:
-            print("❌ v_bidding_feedback_stats view not found")
-            return False
-
-        conn.close()
+            if cursor.fetchone():
+                print("✓ v_bidding_feedback_stats view exists")
+            else:
+                print("❌ v_bidding_feedback_stats view not found")
+                return False
 
         print("✅ Test 2 PASSED\n")
         return True

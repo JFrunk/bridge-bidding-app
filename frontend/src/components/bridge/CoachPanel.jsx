@@ -69,6 +69,82 @@ export function CoachPanel({
 
       {/* Body */}
       <div className="coach-body">
+        {/* Bid Explanation — first section under Coach header */}
+        <div className="coach-section">
+          <button
+            className="coach-section-header"
+            onClick={() => toggleSection('explanation')}
+          >
+            <span className="coach-section-title">
+              <span className="section-icon">📝</span>
+              Bid Explanation
+            </span>
+            <span className="coach-toggle">
+              {expandedSections.explanation ? '▾' : '▸'}
+            </span>
+          </button>
+          {expandedSections.explanation && (
+            <div className="coach-section-body">
+              {selectedBid ? (
+                // Show selected bid's explanation
+                <div className="selected-bid-explanation">
+                  <div className="selected-bid-header">
+                    <BidChip bid={selectedBid.bid} />
+                    <span className="selected-bid-by">by {selectedBid.player || 'Unknown'}</span>
+                  </div>
+                  <p className="explanation-text">
+                    {selectedBid.explanation || 'No explanation available'}
+                  </p>
+                  <p className="explanation-hint">Click another bid to see its explanation</p>
+                </div>
+              ) : auction.length > 0 ? (
+                // Show last bid's explanation by default
+                <div className="selected-bid-explanation">
+                  <div className="selected-bid-header">
+                    <BidChip bid={auction[auction.length - 1].bid} />
+                    <span className="selected-bid-by">by {auction[auction.length - 1].player || 'Unknown'}</span>
+                  </div>
+                  <p className="explanation-text">
+                    {auction[auction.length - 1].explanation || 'No explanation available'}
+                  </p>
+                  <p className="explanation-hint">Click any bid in the auction to see its explanation</p>
+                </div>
+              ) : (
+                <p className="no-info">Bid explanations will appear here as the auction progresses</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Hint Button — directly under Bid Explanation */}
+        {onRequestHint && (
+          <button
+            className="hint-btn"
+            onClick={onRequestHint}
+            disabled={suggestedBid?.loading}
+            data-testid="coach-hint-button"
+          >
+            <span className="hint-icon">💡</span>
+            {suggestedBid?.loading ? 'Thinking...' : 'What Should I Bid?'}
+          </button>
+        )}
+
+        {/* Suggested Bid Display — opens below the button */}
+        {suggestedBid && !suggestedBid.loading && suggestedBid.bid && (
+          <div className="coach-suggestion" data-testid="coach-suggestion">
+            <div className="suggestion-header">
+              <span className="suggestion-icon">💡</span>
+              <span className="suggestion-label">Suggested Bid</span>
+            </div>
+            <div className="suggestion-bid">
+              <BidChip bid={suggestedBid.bid} />
+            </div>
+            {suggestedBid.explanation && (
+              <p className="suggestion-explanation">{suggestedBid.explanation}</p>
+            )}
+          </div>
+        )}
+
         {/* My Hand - Collapsible */}
         {handAnalysis && showMyHand && (
           <div className="coach-section my-hand-section">
@@ -195,82 +271,6 @@ export function CoachPanel({
             </div>
           )}
         </div>
-
-        {/* Bid Explanation */}
-        <div className="coach-section">
-          <button
-            className="coach-section-header"
-            onClick={() => toggleSection('explanation')}
-          >
-            <span className="coach-section-title">
-              <span className="section-icon">📝</span>
-              Bid Explanation
-            </span>
-            <span className="coach-toggle">
-              {expandedSections.explanation ? '▾' : '▸'}
-            </span>
-          </button>
-          {expandedSections.explanation && (
-            <div className="coach-section-body">
-              {selectedBid ? (
-                // Show selected bid's explanation
-                <div className="selected-bid-explanation">
-                  <div className="selected-bid-header">
-                    <BidChip bid={selectedBid.bid} />
-                    <span className="selected-bid-by">by {selectedBid.player || 'Unknown'}</span>
-                  </div>
-                  <p className="explanation-text">
-                    {selectedBid.explanation || 'No explanation available'}
-                  </p>
-                  <p className="explanation-hint">Click another bid to see its explanation</p>
-                </div>
-              ) : auction.length > 0 ? (
-                // Show last bid's explanation by default
-                <div className="selected-bid-explanation">
-                  <div className="selected-bid-header">
-                    <BidChip bid={auction[auction.length - 1].bid} />
-                    <span className="selected-bid-by">by {auction[auction.length - 1].player || 'Unknown'}</span>
-                  </div>
-                  <p className="explanation-text">
-                    {auction[auction.length - 1].explanation || 'No explanation available'}
-                  </p>
-                  <p className="explanation-hint">Click any bid in the auction to see its explanation</p>
-                </div>
-              ) : (
-                <p className="no-info">Bid explanations will appear here as the auction progresses</p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Suggested Bid Display */}
-        {suggestedBid && !suggestedBid.loading && suggestedBid.bid && (
-          <div className="coach-suggestion" data-testid="coach-suggestion">
-            <div className="suggestion-header">
-              <span className="suggestion-icon">💡</span>
-              <span className="suggestion-label">Suggested Bid</span>
-            </div>
-            <div className="suggestion-bid">
-              <BidChip bid={suggestedBid.bid} />
-            </div>
-            {suggestedBid.explanation && (
-              <p className="suggestion-explanation">{suggestedBid.explanation}</p>
-            )}
-          </div>
-        )}
-
-        {/* Hint Button */}
-        {onRequestHint && (
-          <button
-            className="hint-btn"
-            onClick={onRequestHint}
-            disabled={suggestedBid?.loading}
-            data-testid="coach-hint-button"
-          >
-            <span className="hint-icon">💡</span>
-            {suggestedBid?.loading ? 'Thinking...' : 'What Should I Bid?'}
-          </button>
-        )}
       </div>
     </div>
   );

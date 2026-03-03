@@ -8,7 +8,7 @@
 -- - ACBL result import and analysis
 -- - Training feedback based on optimal play
 --
--- SQLite-compatible (no JSONB, uses TEXT for JSON storage)
+-- Uses TEXT for JSON storage (compatible with PostgreSQL)
 -- ============================================================================
 
 -- Add DDS analysis column to session_hands
@@ -50,13 +50,13 @@ SELECT
     sh.vulnerability,
     CASE
         WHEN sh.contract_level IS NULL THEN 'Passed Out'
-        ELSE printf('%d%s', sh.contract_level, sh.contract_strain) ||
+        ELSE CONCAT(sh.contract_level, sh.contract_strain,
              CASE sh.contract_doubled
                  WHEN 1 THEN 'X'
                  WHEN 2 THEN 'XX'
                  ELSE ''
-             END ||
-             ' by ' || sh.contract_declarer
+             END,
+             ' by ', sh.contract_declarer)
     END as contract_display,
     sh.tricks_taken,
     sh.tricks_needed,
@@ -96,7 +96,7 @@ ORDER BY sh.session_id, sh.hand_number;
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS imported_hands (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
 
     -- Import metadata
