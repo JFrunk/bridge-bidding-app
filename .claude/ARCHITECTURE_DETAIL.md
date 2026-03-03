@@ -49,6 +49,7 @@ This file contains detailed subsystem documentation. For the high-level architec
 - Automatic account creation on first login
 - Guest mode for quick play
 - Persistent login via localStorage
+- **No-registration URLs** (for bots/reviewers): `?demo=true` or `?review=true` query parameter auto-signs in as "Reviewer" guest — see `AuthContext.jsx:47`
 
 **API:** `/api/auth/simple-login`
 **Frontend:** `frontend/src/components/auth/SimpleLogin.jsx`, `frontend/src/contexts/AuthContext.jsx`
