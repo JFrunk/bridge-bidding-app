@@ -669,24 +669,53 @@ class LeadingToTricksGenerator(PlaySkillHandGenerator):
     description = 'Practice which card to lead from various holdings'
     practice_format = 'single_decision'
 
-    # Leading situations
+    # Leading situations: (holding, dummy, correct, explanation, wrong_answer_rationale)
     SITUATIONS = [
-        # (your_holding, dummy_holding, correct_lead, explanation)
-        ('KQJ', 'xxx', 'K', 'Lead top of sequence (KQJ) - the King. This drives out the Ace.'),
-        ('QJ3', 'xxx', 'Q', 'Lead top of sequence (QJ) - the Queen. This forces the King.'),
-        ('J109', 'xxx', 'J', 'Lead top of sequence (J10) - the Jack. Interior sequences start at the top.'),
-        ('432', 'AK5', '3', 'Lead low toward honors in dummy. The 3 leads to dummy\'s AK.'),
-        ('K52', 'AQ4', '2', 'Lead low toward honors. Never lead away from a King without the Queen.'),
-        ('Q63', 'AJ5', '3', 'Lead low toward dummy\'s AJ. Leading the Queen would waste it.'),
-        ('AK3', 'xxx', 'A', 'Lead top of touching honors (AK). Cash your winners.'),
-        ('A52', 'K43', '2', 'Lead low toward the King. Don\'t waste your Ace.'),
-        ('KJ4', 'xxx', '4', 'Lead low from this broken holding. Save honors for later.'),
-        ('543', 'xxx', '5', 'From three small, lead the top (5). This shows no honors.'),
+        ('KQJ', 'xxx', 'K', 'Lead top of sequence (KQJ) - the King. This drives out the Ace.', {
+            'Q': 'The Queen is part of the sequence, but always lead the TOP of touching honors. Leading K from KQJ tells partner you also hold the Queen.',
+            'J': 'The Jack is the bottom of your sequence. Lead the King — the top of your touching honors KQJ. This drives out the Ace while your QJ back it up.',
+        }),
+        ('QJ3', 'xxx', 'Q', 'Lead top of sequence (QJ) - the Queen. This forces the King.', {
+            'J': 'The Jack is the second card in your sequence. Lead the Queen — top of the QJ sequence. This forces the opponents to play their King or Ace to win.',
+            '3': 'Leading low from QJ wastes your sequence. Lead the Queen — it forces a higher honor and your Jack becomes a threat behind it.',
+        }),
+        ('J109', 'xxx', 'J', 'Lead top of sequence (J10) - the Jack. Interior sequences start at the top.', {
+            'T': 'The 10 is the second card in your J-10-9 sequence. Always lead the top — the Jack. If it loses to the Queen, your 10-9 are still a connected threat.',
+            '9': 'The 9 is the bottom of your sequence. Lead the Jack — the top of your J-10-9 interior sequence. This puts maximum pressure on the opponents.',
+        }),
+        ('432', 'AK5', '3', 'Lead low toward honors in dummy. The 3 leads to dummy\'s AK.', {
+            '4': 'With no honors in your hand, lead your LOWEST card (3). Leading fourth-best (4) would signal a longer suit. Low leads toward dummy\'s AK are correct.',
+            '2': 'Close — leading low is the right idea, but from three small cards, lead the highest (not the lowest). However, the key principle is leading TOWARD dummy\'s honors (AK).',
+        }),
+        ('K52', 'AQ4', '2', 'Lead low toward honors. Never lead away from a King without the Queen.', {
+            'K': 'Leading the King is risky — if opponents have the Ace, your King is captured immediately. Lead low (2) toward dummy\'s AQ instead. This keeps your King protected.',
+            '5': 'Right idea leading low, but lead the LOWEST card (2). This is fourth-best and tells partner about your suit length. The key is leading toward dummy\'s AQ tenace.',
+        }),
+        ('Q63', 'AJ5', '3', 'Lead low toward dummy\'s AJ. Leading the Queen would waste it.', {
+            'Q': 'Leading the Queen exposes it to capture by the King. Lead low (3) toward dummy\'s AJ instead — if LHO holds the King and plays low, dummy\'s Jack wins cheaply.',
+            '6': 'Right idea to lead low, but choose the lowest card (3). This preserves proper signaling. The principle is: lead toward dummy\'s AJ tenace, not away from your Queen.',
+        }),
+        ('AK3', 'xxx', 'A', 'Lead top of touching honors (AK). Cash your winners.', {
+            'K': 'With AK touching honors, lead the Ace first — top of the sequence. In standard carding, leading the King promises the Queen or a doubleton, which would mislead partner.',
+            '3': 'Don\'t lead low when you have AK — you have two sure tricks to cash! Lead the Ace (top of touching honors), then the King. Leading low risks losing tricks you should win.',
+        }),
+        ('A52', 'K43', '2', 'Lead low toward the King. Don\'t waste your Ace.', {
+            'A': 'Leading the Ace wastes your entry and doesn\'t help establish tricks. Lead low (2) toward dummy\'s King — if LHO has the Queen, your King wins. Save the Ace as an entry.',
+            '5': 'Right idea to lead low, but lead the LOWEST card (2). Fourth-best leads give partner count information. The principle: lead toward dummy\'s King, keeping your Ace as an entry.',
+        }),
+        ('KJ4', 'xxx', '4', 'Lead low from this broken holding. Save honors for later.', {
+            'K': 'The King is unsupported — leading it risks capture by the Ace with nothing to show for it. Lead low (4) and save the King-Jack to capture tricks later when opponents lead the suit.',
+            'J': 'The Jack is your secondary honor. Leading it exposes it to capture by the Queen or King. Lead low (4) — this preserves both your honors for defensive play later.',
+        }),
+        ('543', 'xxx', '5', 'From three small, lead the top (5). This shows no honors.', {
+            '4': 'From three small cards (5-4-3), lead the TOP card (5). This signals to partner that you have no honors in this suit. Leading middle or low could mislead partner about your holding.',
+            '3': 'From three small cards, lead the HIGHEST (5), not the lowest. Top-of-nothing leads tell partner you have no honors here. Leading the 3 would suggest fourth-best from a longer suit.',
+        }),
     ]
 
     def generate(self) -> Tuple[PlayDeal, Dict]:
         # Pick a situation
-        your_holding_str, dummy_holding_str, correct_lead, explanation = random.choice(self.SITUATIONS)
+        your_holding_str, dummy_holding_str, correct_lead, explanation, wrong_answers = random.choice(self.SITUATIONS)
 
         # Determine suit
         suit = random.choice(['♦', '♣'])
@@ -728,6 +757,7 @@ class LeadingToTricksGenerator(PlaySkillHandGenerator):
                 'full_card': f'{correct_lead}{suit}'
             },
             'explanation': explanation,
+            'wrong_answers': wrong_answers,
             'accepts_multiple': False,
             'context': {
                 'suit': suit,
