@@ -809,6 +809,9 @@ function App() {
   // Ref to prevent concurrent AI bids from racing
   const isAiBiddingInProgress = useRef(false);
 
+  // Epoch counter — incremented on each resetAuction to invalidate in-flight AI fetches
+  const auctionEpochRef = useRef(0);
+
   // Ref to track if we've triggered initial AI bidding after initialization
   // Prevents duplicate triggers while avoiding infinite loops
   const hasTriggeredInitialBid = useRef(false);
@@ -862,6 +865,8 @@ function App() {
     setSelectedBid(null);
 
     // Reset the AI bidding guards when auction is reset
+    // Increment epoch to invalidate any in-flight AI bid fetches from a previous auction
+    auctionEpochRef.current++;
     isAiBiddingInProgress.current = false;
     hasTriggeredInitialBid.current = skipInitialAiBidding;
 // NOTE: nextPlayerIndex is now derived from dealer + auction.length
@@ -2878,7 +2883,8 @@ ${otherCommands}`;
     // Prevent concurrent AI bids
     if (isAiBiddingInProgress.current) return;
 
-    // Snapshot nextBidder at effect time for stale-check
+    // Capture epoch to detect if resetAuction was called during async work
+    const epoch = auctionEpochRef.current;
     const expectedBidder = nextBidder;
     console.log('✅ Starting AI turn for:', expectedBidder);
 
@@ -2887,10 +2893,8 @@ ${otherCommands}`;
       await new Promise(resolve => setTimeout(resolve, 500));
 
       try {
-        // Stale-check: if nextBidder changed during delay, abort
-        // (nextBidder is captured via closure — this check uses the value
-        //  from the render that scheduled this effect)
-        if (nextBidder !== expectedBidder) {
+        // Stale-check: if auction was reset during delay, abort
+        if (auctionEpochRef.current !== epoch) {
           isAiBiddingInProgress.current = false;
           return;
         }
@@ -2914,6 +2918,12 @@ ${otherCommands}`;
           }
         }
         if (!response.ok) throw new Error("AI failed to get bid.");
+
+        // Stale-check after fetch: if auction was reset while waiting for response, discard
+        if (auctionEpochRef.current !== epoch) {
+          isAiBiddingInProgress.current = false;
+          return;
+        }
 
         const data = await response.json();
         console.log('✅ AI bid received:', data);
