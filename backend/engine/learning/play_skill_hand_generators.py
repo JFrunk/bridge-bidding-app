@@ -700,7 +700,7 @@ class LeadingToTricksGenerator(PlaySkillHandGenerator):
             '9': 'The 9 is the bottom of your sequence. Lead the Jack — the top of your J-10-9 interior sequence. This puts maximum pressure on the opponents.',
         }),
         ('432', 'AK5', '3', 'Lead low toward honors in dummy. The 3 leads to dummy\'s AK.', {
-            '4': 'With no honors in your hand, lead your LOWEST card (3). Leading fourth-best (4) would signal a longer suit. Low leads toward dummy\'s AK are correct.',
+            '4': 'With no honors in your hand, lead your LOWEST card (3). The 4 is not the cheapest card available. Low leads toward dummy\'s AK are correct.',
             '2': 'Close — leading low is the right idea, but from three small cards, lead the highest (not the lowest). However, the key principle is leading TOWARD dummy\'s honors (AK).',
         }),
         ('K52', 'AQ4', '2', 'Lead low toward honors. Never lead away from a King without the Queen.', {
@@ -709,7 +709,7 @@ class LeadingToTricksGenerator(PlaySkillHandGenerator):
         }),
         ('Q63', 'AJ5', '3', 'Lead low toward dummy\'s AJ. Leading the Queen would waste it.', {
             'Q': 'Leading the Queen exposes it to capture by the King. Lead low (3) toward dummy\'s AJ instead — if LHO holds the King and plays low, dummy\'s Jack wins cheaply.',
-            '6': 'Right idea to lead low, but choose the lowest card (3). This preserves proper signaling. The principle is: lead toward dummy\'s AJ tenace, not away from your Queen.',
+            '6': 'Right idea to lead low, but choose the lowest card (3). Leading the 6 wastes a potentially useful middle card. The principle is: lead toward dummy\'s AJ tenace, not away from your Queen.',
         }),
         ('AK3', 'xxx', 'A', 'Lead top of touching honors (AK). Cash your winners.', {
             'K': 'With AK touching honors, lead the Ace first — top of the sequence. The standard principle is to always lead the highest of touching honors.',
