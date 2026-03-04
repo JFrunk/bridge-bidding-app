@@ -129,10 +129,53 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
 
   return (
     <div className="skill-practice" ref={containerRef}>
-      {/* Header */}
+      {/* Header with integrated navigation */}
       <div className="practice-header">
-        <button onClick={onClose} className="back-button">← Back</button>
-        <h2 className="skill-title">{formatSkillName(topic_id, expected_response)}</h2>
+        <div className="header-left">
+          <button onClick={onClose} className="back-button">← Back</button>
+          <h2 className="skill-title">{formatSkillName(topic_id, expected_response)}</h2>
+        </div>
+
+        <div className="hand-navigation">
+          <button
+            className="nav-arrow"
+            onClick={() => onNavigateHand(currentHandIndex - 1)}
+            disabled={!handHistory || currentHandIndex <= 0}
+            aria-label="Previous hand"
+          >
+            ‹
+          </button>
+          <div className="hand-dots">
+            {handSlots.map((entry, index) => {
+              const isAccessible = handHistory && index < handHistory.length;
+              const isCurrent = index === currentHandIndex;
+              const isCorrect = entry?.result?.isCorrect === true;
+              const isIncorrect = entry?.result?.isCorrect === false;
+              const isFuture = !isAccessible;
+
+              return (
+                <button
+                  key={index}
+                  className={`hand-dot ${isCurrent ? 'active' : ''} ${isCorrect ? 'correct' : ''} ${isIncorrect ? 'incorrect' : ''} ${isFuture ? 'future' : ''}`}
+                  onClick={() => isAccessible && onNavigateHand(index)}
+                  disabled={isFuture}
+                  aria-label={`Hand ${index + 1}${entry?.result ? (isCorrect ? ' - correct' : ' - incorrect') : isFuture ? ' - not yet attempted' : ''}`}
+                >
+                  {index + 1}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            className="nav-arrow"
+            onClick={() => onNavigateHand(currentHandIndex + 1)}
+            disabled={!handHistory || currentHandIndex >= handHistory.length - 1}
+            aria-label="Next hand"
+          >
+            ›
+          </button>
+        </div>
+
         <div className="progress-indicator">
           <div className="progress-stats">
             <span className="hand-counter">
@@ -151,47 +194,6 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
             </span>
           )}
         </div>
-      </div>
-
-      {/* Hand Navigation - always show dots (at least 6) */}
-      <div className="hand-navigation">
-        <button
-          className="nav-arrow"
-          onClick={() => onNavigateHand(currentHandIndex - 1)}
-          disabled={!handHistory || currentHandIndex <= 0}
-          aria-label="Previous hand"
-        >
-          ‹
-        </button>
-        <div className="hand-dots">
-          {handSlots.map((entry, index) => {
-            const isAccessible = handHistory && index < handHistory.length;
-            const isCurrent = index === currentHandIndex;
-            const isCorrect = entry?.result?.isCorrect === true;
-            const isIncorrect = entry?.result?.isCorrect === false;
-            const isFuture = !isAccessible;
-
-            return (
-              <button
-                key={index}
-                className={`hand-dot ${isCurrent ? 'active' : ''} ${isCorrect ? 'correct' : ''} ${isIncorrect ? 'incorrect' : ''} ${isFuture ? 'future' : ''}`}
-                onClick={() => isAccessible && onNavigateHand(index)}
-                disabled={isFuture}
-                aria-label={`Hand ${index + 1}${entry?.result ? (isCorrect ? ' - correct' : ' - incorrect') : isFuture ? ' - not yet attempted' : ''}`}
-              >
-                {index + 1}
-              </button>
-            );
-          })}
-        </div>
-        <button
-          className="nav-arrow"
-          onClick={() => onNavigateHand(currentHandIndex + 1)}
-          disabled={!handHistory || currentHandIndex >= handHistory.length - 1}
-          aria-label="Next hand"
-        >
-          ›
-        </button>
       </div>
 
       {/* Hand Display - only show if hand is required */}
