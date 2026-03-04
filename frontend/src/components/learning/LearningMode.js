@@ -27,6 +27,7 @@ import {
 import SkillPractice from './SkillPractice';
 import SkillIntro from './SkillIntro';
 import { useUser } from '../../contexts/UserContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   // Track selector: 'bidding' or 'play'
@@ -36,6 +37,7 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   // Get user experience level settings from context
   // Note: WelcomeWizard is now shown at app root level (App.js), not here
   const { isLevelUnlocked } = useUser();
+  const { recordSkillPracticed } = useAuth();
 
   // Toast state for locked level clicks
   const [lockedToast, setLockedToast] = useState(null);
@@ -278,6 +280,9 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
           expected_response: activeSession.expected_response,
         });
       }
+
+      // Track skill practice for guest registration prompt
+      recordSkillPracticed();
 
       // Update history with result for current hand
       const updatedHistory = [...activeSession.handHistory];
@@ -669,11 +674,14 @@ const LevelCard = ({
           <div className="convention-list">
             {conventions.map((convention) => {
               const convStatus = skillProgress[convention.id] || 'not_started';
+              const statusIcon = convStatus === 'mastered' ? '✓' : convStatus === 'in_progress' ? '◐' : '○';
+              const statusClass = convStatus === 'mastered' ? 'status-mastered' : convStatus === 'in_progress' ? 'status-in-progress' : 'status-not-started';
               return (
-                <div key={convention.id} className={`skill-item ${!isUnlocked ? 'skill-item-locked' : ''} ${convStatus === 'mastered' ? 'skill-mastered' : ''}`}>
-                  {convStatus === 'mastered' && <span className="status-icon status-mastered">✓</span>}
-                  {convStatus === 'in_progress' && <span className="status-icon status-in-progress">◐</span>}
-                  <span className="skill-name">{convention.name}</span>
+                <div key={convention.id} className={`skill-item ${statusClass} ${!isUnlocked ? 'skill-item-locked' : ''}`}>
+                  <div className="skill-status-indicator">{statusIcon}</div>
+                  <div className="skill-info">
+                    <span className="skill-name">{convention.name}</span>
+                  </div>
                   {isUnlocked && (
                     <button
                       className="practice-button"
@@ -738,7 +746,7 @@ const SkillItem = ({ skill, status, onStart }) => {
       <div className="skill-info">
         <span className="skill-name">{name}</span>
         <span className="skill-meta">
-          {practice_hands_required} hands • {Math.round(passing_accuracy * 100)}% to pass
+          {practice_hands_required} hands
         </span>
       </div>
       <button
