@@ -154,17 +154,40 @@ def record_skill_practice(user_id: int, skill_id: str, skill_level: int,
 
 
 def get_user_mastered_conventions(user_id: int) -> List[str]:
-    """Get list of conventions user has mastered"""
+    """Get list of conventions user has mastered.
+
+    Checks both user_convention_progress (named conventions like Stayman)
+    and user_skill_progress (foundational convention-group skills like
+    when_to_pass, single_raise, etc.) since both are used in convention
+    group levels of the skill tree.
+    """
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # Named conventions (Levels 6, 8, 9)
     cursor.execute("""
         SELECT convention_id
         FROM user_convention_progress
         WHERE user_id = ? AND status = 'mastered'
     """, (user_id,))
-
     conventions = [row['convention_id'] for row in cursor.fetchall()]
+
+    # Foundational convention-group skills (Level 1) stored in user_skill_progress
+    # These are registered in ConventionRegistry but not in the conventions DB table
+    try:
+        registry = get_convention_registry()
+        cursor.execute("""
+            SELECT skill_id
+            FROM user_skill_progress
+            WHERE user_id = ? AND status = 'mastered'
+        """, (user_id,))
+        for row in cursor.fetchall():
+            skill_id = row['skill_id']
+            if skill_id not in conventions and registry.get_convention(skill_id):
+                conventions.append(skill_id)
+    except Exception:
+        pass  # Table may not exist yet
+
     conn.close()
 
     return conventions

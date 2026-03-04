@@ -364,11 +364,19 @@ class WhenToPassGenerator(SkillHandGenerator):
         'borderline_pass': 0.25,  # Borderline hands that should pass
     }
 
+    # Non-forcing openings where passing with 0-5 HCP is correct
+    # Excludes 2C (game-forcing) where you must respond even with 0 HCP
+    RESPONDER_PASS_OPENINGS = ['1♣', '1♦', '1♥', '1♠', '1NT']
+
     def __init__(self, variant: str = None):
         if variant is None:
             self.variant = self._select_variant()
         else:
             self.variant = variant
+
+        # For responder_pass, select a random partner opening
+        if self.variant == 'responder_pass':
+            self.partner_opened = random.choice(self.RESPONDER_PASS_OPENINGS)
 
     def _select_variant(self) -> str:
         r = random.random()
@@ -393,17 +401,31 @@ class WhenToPassGenerator(SkillHandGenerator):
 
         if self.variant == 'opener_pass':
             explanation = f'{hand.hcp} HCP is below opening strength (need 12+). Pass!'
+            return {
+                'bid': 'Pass',
+                'should_pass': True,
+                'hcp': hand.hcp,
+                'explanation': explanation,
+                'auction_context': 'You are the opening bidder.'
+            }
         elif self.variant == 'responder_pass':
-            explanation = f'{hand.hcp} HCP is too weak to respond (need 6+). Pass!'
+            explanation = f'{hand.hcp} HCP is too weak to respond to partner\'s {self.partner_opened} (need 6+). Pass!'
+            return {
+                'bid': 'Pass',
+                'should_pass': True,
+                'hcp': hand.hcp,
+                'explanation': explanation,
+                'partner_opened': self.partner_opened
+            }
         else:
             explanation = f'{hand.hcp} HCP, Rule of 20 = {rule_of_20} (need 20). Not worth opening. Pass!'
-
-        return {
-            'bid': 'Pass',
-            'should_pass': True,
-            'hcp': hand.hcp,
-            'explanation': explanation
-        }
+            return {
+                'bid': 'Pass',
+                'should_pass': True,
+                'hcp': hand.hcp,
+                'explanation': explanation,
+                'auction_context': 'You are the opening bidder.'
+            }
 
 
 class OpeningOneMajorGenerator(SkillHandGenerator):
