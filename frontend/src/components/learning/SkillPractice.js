@@ -556,6 +556,10 @@ const QuestionPrompt = ({ questionType, expected, situation }) => {
         if (expected?.partner_opened) {
           return `Partner opened ${expected.partner_opened}. What is your response?`;
         }
+        // Check if auction context is provided (e.g., opening position)
+        if (expected?.auction_context) {
+          return `${expected.auction_context} What would you bid?`;
+        }
         return 'What would you bid with this hand?';
       case 'longest_suit':
         return 'What is the longest suit in this hand?';

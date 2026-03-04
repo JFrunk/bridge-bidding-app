@@ -667,22 +667,27 @@ const LevelCard = ({
       <div className={`level-skills ${!isUnlocked ? 'level-skills-locked' : ''}`}>
         {is_convention_group ? (
           <div className="convention-list">
-            {conventions.map((convention) => (
-              <div key={convention.id} className={`skill-item ${!isUnlocked ? 'skill-item-locked' : ''}`}>
-                <span className="skill-name">{convention.name}</span>
-                {isUnlocked && (
-                  <button
-                    className="practice-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStartSkill(convention.id, convention.name);
-                    }}
-                  >
-                    Practice
-                  </button>
-                )}
-              </div>
-            ))}
+            {conventions.map((convention) => {
+              const convStatus = skillProgress[convention.id] || 'not_started';
+              return (
+                <div key={convention.id} className={`skill-item ${!isUnlocked ? 'skill-item-locked' : ''} ${convStatus === 'mastered' ? 'skill-mastered' : ''}`}>
+                  {convStatus === 'mastered' && <span className="status-icon status-mastered">✓</span>}
+                  {convStatus === 'in_progress' && <span className="status-icon status-in-progress">◐</span>}
+                  <span className="skill-name">{convention.name}</span>
+                  {isUnlocked && (
+                    <button
+                      className="practice-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onStartSkill(convention.id, convention.name);
+                      }}
+                    >
+                      {convStatus === 'mastered' ? 'Review' : 'Practice'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="skill-list">
