@@ -473,10 +473,11 @@
 
 /* Suit Buttons (for longest suit questions) - white background like cards */
 .suit-buttons {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--space-4);
-  justify-content: center;
-  flex-wrap: wrap;
+  max-width: 400px;
+  width: 100%;
 }
 
 .suit-button {
@@ -490,7 +491,6 @@
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 80px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
@@ -1070,11 +1070,11 @@
   /* Suit buttons - smaller on mobile */
   .suit-buttons {
     gap: var(--space-3);
+    max-width: 320px;
   }
 
   .suit-button {
     padding: var(--space-3) var(--space-4);
-    min-width: 70px;
   }
 
   .suit-symbol {

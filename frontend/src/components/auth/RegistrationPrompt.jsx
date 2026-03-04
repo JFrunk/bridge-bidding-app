@@ -11,7 +11,7 @@ export function RegistrationPrompt({
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { simpleLogin, dismissRegistrationPrompt, handsCompleted } = useAuth();
+  const { simpleLogin, dismissRegistrationPrompt, handsCompleted, bidsPracticed, skillsPracticed } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -71,12 +71,28 @@ export function RegistrationPrompt({
           {message}
         </p>
 
-        <div className="progress-stats">
-          <div className="stat">
-            <span className="stat-value">{handsCompleted}</span>
-            <span className="stat-label">Hands Played</span>
+        {(handsCompleted > 0 || bidsPracticed > 0 || skillsPracticed > 0) && (
+          <div className="progress-stats">
+            {handsCompleted > 0 && (
+              <div className="stat">
+                <span className="stat-value">{handsCompleted}</span>
+                <span className="stat-label">Hands Played</span>
+              </div>
+            )}
+            {bidsPracticed > 0 && (
+              <div className="stat">
+                <span className="stat-value">{bidsPracticed}</span>
+                <span className="stat-label">Bids Practiced</span>
+              </div>
+            )}
+            {skillsPracticed > 0 && (
+              <div className="stat">
+                <span className="stat-value">{skillsPracticed}</span>
+                <span className="stat-label">Skills Practiced</span>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         <div className="benefits-list">
           <div className="benefit">
