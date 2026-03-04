@@ -928,15 +928,25 @@ python3 backend/test_learning_hand_quality.py
 
 Explicitly excluded to keep scope manageable:
 
+**Gamification:**
 - XP system
 - Badges/achievements
 - Streak tracking
 - Leaderboards
+
+**Learning Intelligence:**
 - Spaced repetition scheduling
 - Adaptive difficulty (beyond what exists)
+- Hint system (beyond existing explanations)
+
+**UI/UX Enhancements:**
+- Compass/table view for play practice — replace two vertically stacked hands with a compass diamond layout (N/S/E/W) or bird's-eye table view to eliminate position confusion in defender scenarios. Intermediate option: add a small compass indicator near the contract info bar showing all four positions with "You" highlighted at South.
+- Interactive card play view — allow users to click/tap cards to play them instead of selecting from buttons
+- Progress animations and transitions between hands
+
+**Content & Community:**
 - Social features
 - Video tutorials
-- Hint system (beyond existing explanations)
 
 These can be added in future phases using the existing infrastructure (user_manager.py, celebration_manager.py, etc.)
 
