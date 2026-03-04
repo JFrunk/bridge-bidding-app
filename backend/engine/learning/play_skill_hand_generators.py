@@ -97,6 +97,9 @@ class PlayDeal:
     contract: str  # e.g., "3NT", "4♠"
     declarer_position: str  # "South" typically
     lead: Optional[Card] = None  # Opening lead if specified
+    # Player perspective: 'declarer' (default) or 'defender'
+    # When 'defender', declarer_hand = your defending hand, dummy_hand = dummy visible to you
+    player_perspective: str = 'declarer'
 
     def to_dict(self) -> Dict:
         """Convert to JSON-serializable dictionary."""
@@ -113,6 +116,7 @@ class PlayDeal:
             },
             'contract': self.contract,
             'declarer_position': self.declarer_position,
+            'player_perspective': self.player_perspective,
             'lead': {'rank': self.lead.rank, 'suit': self.lead.suit} if self.lead else None,
             'combined_hcp': self.declarer_hand.hcp + self.dummy_hand.hcp
         }
@@ -626,7 +630,7 @@ class ThirdHandHighGenerator(PlaySkillHandGenerator):
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
-        # Contract doesn't matter much - use NT
+        # Defensive scenario: user is East, partner (West) leads
         deal = PlayDeal(
             declarer_hand=your_hand,
             dummy_hand=dummy_hand,
@@ -634,7 +638,8 @@ class ThirdHandHighGenerator(PlaySkillHandGenerator):
             rho_hand=rho_hand,
             contract='3NT',
             declarer_position='South',
-            lead=None  # Partner's lead not shown explicitly
+            lead=None,
+            player_perspective='defender'
         )
 
         # Determine suit name for question
@@ -642,7 +647,7 @@ class ThirdHandHighGenerator(PlaySkillHandGenerator):
         suit_name = suit_names[suit]
 
         situation = {
-            'question': f'Partner leads a low {suit_name}, dummy plays the {dummy_card}. Which card do you play from your hand?',
+            'question': f'You are East, defending 3NT. Your partner (West) leads a low {suit_name} and dummy plays the {dummy_card}. Which card do you play?',
             'question_type': 'third_hand_play',
             'expected_response': {
                 'card': correct_card,
@@ -814,6 +819,7 @@ class SecondHandLowGenerator(PlaySkillHandGenerator):
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
+        # Defensive scenario: user plays second to the trick
         deal = PlayDeal(
             declarer_hand=your_hand,
             dummy_hand=dummy_hand,
@@ -821,14 +827,15 @@ class SecondHandLowGenerator(PlaySkillHandGenerator):
             rho_hand=rho_hand,
             contract='3NT',
             declarer_position='South',
-            lead=None
+            lead=None,
+            player_perspective='defender'
         )
 
         suit_names = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}
         suit_name = suit_names[suit]
 
         situation = {
-            'question': f'Opponent leads the {opponent_lead} of {suit_name}. You have {your_holding_str}. Which card do you play?',
+            'question': f'You are defending. Declarer leads the {opponent_lead} of {suit_name}. You have {your_holding_str}. Which card do you play?',
             'question_type': 'second_hand_play',
             'expected_response': {
                 'card': correct_card,
@@ -895,6 +902,7 @@ class WinningCheaplyGenerator(PlaySkillHandGenerator):
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
+        # Defensive scenario: you are a defender winning the trick cheaply
         deal = PlayDeal(
             declarer_hand=your_hand,
             dummy_hand=dummy_hand,
@@ -902,14 +910,15 @@ class WinningCheaplyGenerator(PlaySkillHandGenerator):
             rho_hand=rho_hand,
             contract='3NT',
             declarer_position='South',
-            lead=None
+            lead=None,
+            player_perspective='defender'
         )
 
         suit_names = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}
         suit_name = suit_names[suit]
 
         situation = {
-            'question': f'Dummy plays the {dummy_card} of {suit_name}. You have {your_holding_str}. Which card do you play to win the trick economically?',
+            'question': f'You are defending. Dummy plays the {dummy_card} of {suit_name}. You have {your_holding_str}. Which card wins the trick most economically?',
             'question_type': 'winning_cheaply',
             'expected_response': {
                 'card': correct_card,
@@ -1903,10 +1912,12 @@ class EntryKillingPlaysGenerator(PlaySkillHandGenerator):
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
-        deal = PlayDeal(your_hand, dummy_hand, lho_hand, rho_hand, '3NT', 'South')
+        # Defensive scenario: you are killing dummy's entry
+        deal = PlayDeal(your_hand, dummy_hand, lho_hand, rho_hand, '3NT', 'South',
+                        player_perspective='defender')
 
         situation = {
-            'question': 'Dummy has a long suit with only the Q as entry. Should you hold up your A or cash it?',
+            'question': 'You are defending. Dummy has a long suit with only the Q as entry. You hold AK. Should you cash the Ace to kill the entry or hold up?',
             'question_type': 'entry_defense',
             'expected_response': {'correct_answer': 'cash'},
             'explanation': 'Cash your Ace to kill dummy\'s Queen entry. This strands dummy\'s long suit.',

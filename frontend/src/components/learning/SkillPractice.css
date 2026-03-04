@@ -20,18 +20,19 @@
   flex-direction: column;
 }
 
-/* Header - Dark green strip matching app nav */
+/* Header - Dark green strip matching learning flow headers (48px) */
 .practice-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-3) var(--space-5);
+  height: 48px;
+  padding: 0 var(--space-5);
   background: var(--header-green, #143D31);
   color: white;
 }
 
 .back-button {
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-1) var(--space-3);
   background: rgba(255, 255, 255, 0.12);
   border: none;
   border-radius: var(--radius-md);
@@ -47,8 +48,8 @@
 
 .skill-title {
   margin: 0;
-  font-size: var(--text-xl);
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: 600;
   flex: 1;
   text-align: center;
   color: white;
@@ -56,28 +57,29 @@
 
 .progress-indicator {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-1);
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .progress-stats {
   display: flex;
-  gap: var(--space-4);
+  gap: var(--space-3);
   align-items: center;
 }
 
 .hand-counter {
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--header-green, #143D31);
-  background: var(--gold-light, #e8d49a);
+  line-height: 1;
+  color: white;
+  background: rgba(255, 255, 255, 0.12);
   padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-xl);
+  border: none;
+  border-radius: var(--radius-md);
 }
 
 .accuracy-label {
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   color: rgba(255, 255, 255, 0.8);
 }
 
@@ -95,7 +97,7 @@
 }
 
 .score-display {
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -755,8 +757,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-6);
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-5);
   background: #e9ecef;
   border: 1px solid #ced4da;
   border-radius: var(--radius-lg);
@@ -768,7 +770,7 @@
 }
 
 .contract-value {
-  font-size: var(--text-2xl);
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--table-green, #1B4D3E);
 }
@@ -780,7 +782,7 @@
   border-left: 1px solid #ced4da;
 }
 
-/* Dual Hand Display - North on top, South on bottom (both horizontal) */
+/* Dual Hand Display - North on top, South on bottom (both horizontal, centered) */
 .dual-hand-display {
   display: flex;
   flex-direction: column;
@@ -791,6 +793,11 @@
 .dual-hand-display .hand-card {
   flex: 0 1 auto;
   min-width: 48px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .dummy-hand h3 {
@@ -964,9 +971,9 @@
 /* Responsive */
 @media (max-width: 768px) {
   .practice-header {
-    flex-direction: column;
-    gap: var(--space-4);
-    text-align: center;
+    height: auto;
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
   }
 
   .hand-card {

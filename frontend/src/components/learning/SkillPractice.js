@@ -209,7 +209,7 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
                 </div>
               )}
               <div className="dual-hand-display">
-                {/* Dummy hand (North) */}
+                {/* Top hand: Dummy for declarer view, Dummy for defender view */}
                 <div className="hand-card visual-hand dummy-hand">
                   <h3>Dummy (North)</h3>
                   {deal.dummy_hand?.cards && deal.dummy_hand.cards.length > 0 ? (
@@ -221,9 +221,9 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
                     <span>HCP: {deal.dummy_hand?.hcp}</span>
                   </div>
                 </div>
-                {/* Declarer hand (South) */}
+                {/* Bottom hand: Declarer or Your Hand (defender) */}
                 <div className="hand-card visual-hand declarer-hand">
-                  <h3>Declarer (South)</h3>
+                  <h3>{deal.player_perspective === 'defender' ? 'Your Hand (East)' : 'Declarer (South)'}</h3>
                   {deal.declarer_hand?.cards && deal.declarer_hand.cards.length > 0 ? (
                     <LearningHand cards={deal.declarer_hand.cards} />
                   ) : (
