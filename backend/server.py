@@ -4995,6 +4995,23 @@ def simple_login():
                         (new_user_id, guest_id)
                     )
 
+                    # Migrate learning progress tables
+                    for table in ['user_skill_progress', 'skill_practice_history',
+                                  'convention_practice_history', 'user_play_progress',
+                                  'play_practice_history', 'practice_history',
+                                  'practice_sessions', 'user_settings',
+                                  'user_gamification']:
+                        try:
+                            cursor.execute(
+                                f'UPDATE {table} SET user_id = ? WHERE user_id = ?',
+                                (new_user_id, guest_id)
+                            )
+                            count = cursor.rowcount
+                            if count > 0:
+                                migrated_data[table] = count
+                        except Exception:
+                            pass  # Table may not exist
+
                     conn.commit()
                     print(f"✅ Migrated guest data from {guest_id} to user {new_user_id}: {migrated_data}")
                 except Exception as migration_error:
