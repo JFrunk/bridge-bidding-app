@@ -165,30 +165,11 @@ git push origin main
 
 ## User Feedback (Production)
 
-**IMPORTANT: When asked to review user feedback, check the PRODUCTION server — feedback is NOT stored locally.**
+**Use `/fetch-feedback` to retrieve, categorize, and analyze user feedback from production.**
 
-**Location:** `/opt/bridge-bidding-app/backend/user_feedback/` on the production server
+**IMPORTANT:** Feedback is on the PRODUCTION server, not local. Local `backend/user_feedback/` is dev-only.
 
-**How to retrieve:**
-```bash
-# List recent feedback files
-ssh hetzner-bridge "ls -t /opt/bridge-bidding-app/backend/user_feedback/feedback_*.json 2>/dev/null | head -15"
-
-# Read a specific feedback file
-ssh hetzner-bridge "cat /opt/bridge-bidding-app/backend/user_feedback/feedback_freeplay_YYYY-MM-DD_HH-MM-SS.json"
-
-# Read ALL recent feedback (last 3 days)
-ssh hetzner-bridge "find /opt/bridge-bidding-app/backend/user_feedback/ -mtime -3 -name '*.json' -exec cat {} \;"
-
-# Read ALL recent feedback (last 7 days)
-ssh hetzner-bridge "find /opt/bridge-bidding-app/backend/user_feedback/ -mtime -7 -name '*.json' -exec cat {} \;"
-```
-
-**Naming convention:**
-- `feedback_freeplay_YYYY-MM-DD_HH-MM-SS.json` — General freeplay feedback
-- `feedback_YYYY-MM-DD_HH-MM-SS.json` — Feedback with full game context
-
-**Local (dev only):** `backend/user_feedback/` — only from local testing, not real users
+**Production location:** `/opt/bridge-bidding-app/backend/user_feedback/` on `hetzner-bridge`
 
 **Email Notifications:** See `backend/engine/notifications/email_service.py`
 
