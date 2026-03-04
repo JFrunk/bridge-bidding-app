@@ -41,6 +41,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [handsCompleted, setHandsCompleted] = useState(0);
+  const [bidsPracticed, setBidsPracticed] = useState(0);
+  const [skillsPracticed, setSkillsPracticed] = useState(0);
   const [showRegistrationPrompt, setShowRegistrationPrompt] = useState(false);
   const [hasSeenPrompt, setHasSeenPrompt] = useState(false);
 
@@ -85,11 +87,13 @@ export function AuthProvider({ children }) {
       localStorage.removeItem('bridge_experience_level');
     }
 
-    // Load hands completed from localStorage
+    // Load activity counters from localStorage
     const savedHands = localStorage.getItem('bridge_hands_completed');
-    if (savedHands) {
-      setHandsCompleted(parseInt(savedHands, 10) || 0);
-    }
+    if (savedHands) setHandsCompleted(parseInt(savedHands, 10) || 0);
+    const savedBids = localStorage.getItem('bridge_bids_practiced');
+    if (savedBids) setBidsPracticed(parseInt(savedBids, 10) || 0);
+    const savedSkills = localStorage.getItem('bridge_skills_practiced');
+    if (savedSkills) setSkillsPracticed(parseInt(savedSkills, 10) || 0);
 
     // Check if user has already dismissed the prompt
     const dismissed = localStorage.getItem('bridge_registration_dismissed');
@@ -241,34 +245,51 @@ export function AuthProvider({ children }) {
     setLoading(false);
   };
 
-  // Track completed hands and mark prompt as ready (shown on next idle moment)
+  // Track activity and mark prompt as ready (shown on next idle moment)
   const promptReadyRef = useRef(false);
   const promptTimerRef = useRef(null);
+
+  // Shared threshold check — triggers prompt when total activity across all modes reaches threshold
+  const checkPromptThreshold = useCallback((totalActivity, isLearningMode = false) => {
+    const threshold = isLearningMode ? HANDS_BEFORE_PROMPT_LEARNING : HANDS_BEFORE_PROMPT;
+    if (totalActivity >= threshold) {
+      promptReadyRef.current = true;
+      if (promptTimerRef.current) clearTimeout(promptTimerRef.current);
+      promptTimerRef.current = setTimeout(() => {
+        if (promptReadyRef.current) {
+          setShowRegistrationPrompt(true);
+          promptReadyRef.current = false;
+        }
+      }, PROMPT_DELAY_MS);
+    }
+  }, []);
 
   const recordHandCompleted = useCallback((isLearningMode = false) => {
     if (user?.isGuest && !hasSeenPrompt) {
       const newCount = handsCompleted + 1;
       setHandsCompleted(newCount);
       localStorage.setItem('bridge_hands_completed', newCount.toString());
-
-      // Use higher threshold for learning mode (shorter hands)
-      const threshold = isLearningMode ? HANDS_BEFORE_PROMPT_LEARNING : HANDS_BEFORE_PROMPT;
-
-      // Mark prompt as ready — actual display deferred with a delay
-      if (newCount >= threshold) {
-        promptReadyRef.current = true;
-
-        // Show after delay so user can see their score/feedback first
-        if (promptTimerRef.current) clearTimeout(promptTimerRef.current);
-        promptTimerRef.current = setTimeout(() => {
-          if (promptReadyRef.current) {
-            setShowRegistrationPrompt(true);
-            promptReadyRef.current = false;
-          }
-        }, PROMPT_DELAY_MS);
-      }
+      checkPromptThreshold(newCount + bidsPracticed + skillsPracticed, isLearningMode);
     }
-  }, [user, handsCompleted, hasSeenPrompt]);
+  }, [user, handsCompleted, bidsPracticed, skillsPracticed, hasSeenPrompt, checkPromptThreshold]);
+
+  const recordBidCompleted = useCallback(() => {
+    if (user?.isGuest && !hasSeenPrompt) {
+      const newCount = bidsPracticed + 1;
+      setBidsPracticed(newCount);
+      localStorage.setItem('bridge_bids_practiced', newCount.toString());
+      checkPromptThreshold(handsCompleted + newCount + skillsPracticed);
+    }
+  }, [user, handsCompleted, bidsPracticed, skillsPracticed, hasSeenPrompt, checkPromptThreshold]);
+
+  const recordSkillPracticed = useCallback(() => {
+    if (user?.isGuest && !hasSeenPrompt) {
+      const newCount = skillsPracticed + 1;
+      setSkillsPracticed(newCount);
+      localStorage.setItem('bridge_skills_practiced', newCount.toString());
+      checkPromptThreshold(handsCompleted + bidsPracticed + newCount, true);
+    }
+  }, [user, handsCompleted, bidsPracticed, skillsPracticed, hasSeenPrompt, checkPromptThreshold]);
 
   // Dismiss registration prompt (temporarily or permanently)
   // "Maybe Later" sets hasSeenPrompt to prevent re-triggering for this session.
@@ -324,9 +345,13 @@ export function AuthProvider({ children }) {
       isGuest: user?.isGuest || false,
       getAuthToken,
       userId: user?.id || null,
-      // New registration prompt features
+      // Registration prompt — activity tracking
       handsCompleted,
+      bidsPracticed,
+      skillsPracticed,
       recordHandCompleted,
+      recordBidCompleted,
+      recordSkillPracticed,
       showRegistrationPrompt,
       dismissRegistrationPrompt,
       requiresRegistration,

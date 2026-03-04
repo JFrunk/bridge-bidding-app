@@ -83,7 +83,7 @@
   line-height: 1.5;
 }
 
-.progress-stats {
+.registration-prompt-modal .progress-stats {
   display: flex;
   justify-content: center;
   gap: var(--space-6);

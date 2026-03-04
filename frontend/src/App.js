@@ -375,6 +375,7 @@ function App() {
     showRegistrationPrompt,
     dismissRegistrationPrompt,
     recordHandCompleted,
+    recordBidCompleted,
     promptForRegistration,
     requiresRegistration,
     showPromptIfReady
@@ -2176,6 +2177,11 @@ ${otherCommands}`;
   // ========== END CARD PLAY FUNCTIONS ==========
 
   const dealNewHand = async () => {
+    // Track bid-only completion: auction finished but user didn't play
+    if (isAuctionOver(displayAuction) && !scoreData) {
+      recordBidCompleted();
+    }
+
     // Reset save guard for new hand
     handSaveInProgressRef.current = false;
 
