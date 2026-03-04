@@ -699,33 +699,22 @@ class LeadingToTricksGenerator(PlaySkillHandGenerator):
             'T': 'The 10 is the second card in your J-10-9 sequence. Always lead the top — the Jack. If it loses to the Queen, your 10-9 are still a connected threat.',
             '9': 'The 9 is the bottom of your sequence. Lead the Jack — the top of your J-10-9 interior sequence. This puts maximum pressure on the opponents.',
         }),
-        ('432', 'AK5', '3', 'Lead low toward honors in dummy. The 3 leads to dummy\'s AK.', {
-            '4': 'With no honors in your hand, lead your LOWEST card (3). The 4 is not the cheapest card available. Low leads toward dummy\'s AK are correct.',
-            '2': 'Close — leading low is the right idea, but from three small cards, lead the highest (not the lowest). However, the key principle is leading TOWARD dummy\'s honors (AK).',
-        }),
         ('K52', 'AQ4', '2', 'Lead low toward honors. Never lead away from a King without the Queen.', {
-            'K': 'Leading the King is risky — if opponents have the Ace, your King is captured immediately. Lead low (2) toward dummy\'s AQ instead. This keeps your King protected.',
-            '5': 'Right idea leading low, but lead the LOWEST card (2). The key is leading toward dummy\'s AQ tenace. Save higher cards for later.',
+            'K': 'Leading the King is risky — if opponents have the Ace, your King is captured immediately. Lead low toward dummy\'s AQ instead. This keeps your King protected.',
         }),
         ('Q63', 'AJ5', '3', 'Lead low toward dummy\'s AJ. Leading the Queen would waste it.', {
-            'Q': 'Leading the Queen exposes it to capture by the King. Lead low (3) toward dummy\'s AJ instead — if LHO holds the King and plays low, dummy\'s Jack wins cheaply.',
-            '6': 'Right idea to lead low, but choose the lowest card (3). Leading the 6 wastes a potentially useful middle card. The principle is: lead toward dummy\'s AJ tenace, not away from your Queen.',
+            'Q': 'Leading the Queen exposes it to capture by the King. Lead low toward dummy\'s AJ instead — if LHO holds the King and plays low, dummy\'s Jack wins cheaply.',
         }),
         ('AK3', 'xxx', 'A', 'Lead top of touching honors (AK). Cash your winners.', {
             'K': 'With AK touching honors, lead the Ace first — top of the sequence. The standard principle is to always lead the highest of touching honors.',
             '3': 'Don\'t lead low when you have AK — you have two sure tricks to cash! Lead the Ace (top of touching honors), then the King. Leading low risks losing tricks you should win.',
         }),
         ('A52', 'K43', '2', 'Lead low toward the King. Don\'t waste your Ace.', {
-            'A': 'Leading the Ace wastes your entry and doesn\'t help establish tricks. Lead low (2) toward dummy\'s King — if LHO has the Queen, your King wins. Save the Ace as an entry.',
-            '5': 'Right idea to lead low, but lead the LOWEST card (2). The principle: lead toward dummy\'s King, keeping your Ace as an entry.',
+            'A': 'Leading the Ace wastes your entry and doesn\'t help establish tricks. Lead low toward dummy\'s King — if LHO has the Queen, your King wins. Save the Ace as an entry.',
         }),
         ('KJ4', 'xxx', '4', 'Lead low from this broken holding. Save honors for later.', {
-            'K': 'The King is unsupported — leading it risks capture by the Ace with nothing to show for it. Lead low (4) and save the King-Jack to capture tricks later when opponents lead the suit.',
-            'J': 'The Jack is your secondary honor. Leading it exposes it to capture by the Queen or King. Lead low (4) — this preserves both your honors for defensive play later.',
-        }),
-        ('543', 'xxx', '5', 'From three small, lead the top (5). This shows no honors.', {
-            '4': 'From three small cards (5-4-3), lead the TOP card (5). Top-of-nothing is the standard lead convention. Leading middle or low suggests you hold an honor.',
-            '3': 'From three small cards, lead the HIGHEST (5), not the lowest. Top-of-nothing is the standard lead convention. Leading the 3 would suggest a longer suit with an honor.',
+            'K': 'The King is unsupported — leading it risks capture by the Ace with nothing to show for it. Lead low and save the King-Jack to capture tricks later when opponents lead the suit.',
+            'J': 'The Jack is your secondary honor. Leading it exposes it to capture by the Queen or King. Lead low — this preserves both your honors for later.',
         }),
     ]
 
