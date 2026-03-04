@@ -391,7 +391,7 @@ class WhenToPassGenerator(SkillHandGenerator):
         if self.variant == 'opener_pass':
             return {'hcp_range': (5, 11)}  # Below opening strength
         elif self.variant == 'responder_pass':
-            return {'hcp_range': (0, 5)}   # Below responding strength
+            return {'hcp_range': (0, 5), 'max_suit_length': 5}   # Below responding strength, no 6+ card suits
         else:  # borderline_pass
             return {'hcp_range': (10, 11), 'max_suit_length': 4}  # Fails Rule of 20
 
