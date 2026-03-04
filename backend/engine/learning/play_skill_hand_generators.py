@@ -103,6 +103,15 @@ class PlayDeal:
 
     def to_dict(self) -> Dict:
         """Convert to JSON-serializable dictionary."""
+        # Dummy position depends on perspective:
+        # - Declarer (user=South): dummy is always North (partner)
+        # - Defender (user=South): dummy is opposite the actual declarer
+        if self.player_perspective == 'defender':
+            dummy_position = {'East': 'West', 'West': 'East'}.get(
+                self.declarer_position, 'West')
+        else:
+            dummy_position = 'North'
+
         return {
             'declarer_hand': {
                 'cards': [{'rank': c.rank, 'suit': c.suit} for c in self.declarer_hand.cards],
@@ -116,6 +125,7 @@ class PlayDeal:
             },
             'contract': self.contract,
             'declarer_position': self.declarer_position,
+            'dummy_position': dummy_position,
             'player_perspective': self.player_perspective,
             'lead': {'rank': self.lead.rank, 'suit': self.lead.suit} if self.lead else None,
             'combined_hcp': self.declarer_hand.hcp + self.dummy_hand.hcp
@@ -630,14 +640,15 @@ class ThirdHandHighGenerator(PlaySkillHandGenerator):
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
-        # Defensive scenario: user is East, partner (West) leads
+        # Defensive scenario: user is South defending against East's 3NT
+        # North (partner) leads, West (dummy) plays, South (user) plays 3rd
         deal = PlayDeal(
             declarer_hand=your_hand,
             dummy_hand=dummy_hand,
             lho_hand=lho_hand,
             rho_hand=rho_hand,
             contract='3NT',
-            declarer_position='South',
+            declarer_position='East',
             lead=None,
             player_perspective='defender'
         )
@@ -647,7 +658,7 @@ class ThirdHandHighGenerator(PlaySkillHandGenerator):
         suit_name = suit_names[suit]
 
         situation = {
-            'question': f'You are East, defending 3NT. Your partner (West) leads a low {suit_name} and dummy plays the {dummy_card}. Which card do you play?',
+            'question': f'You are South, defending against 3NT. Your partner (North) leads a low {suit_name} and dummy (West) plays the {dummy_card}. Which card do you play?',
             'question_type': 'third_hand_play',
             'expected_response': {
                 'card': correct_card,
@@ -819,14 +830,15 @@ class SecondHandLowGenerator(PlaySkillHandGenerator):
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
-        # Defensive scenario: user plays second to the trick
+        # Defensive scenario: user is South, declarer is East, leads from hand
+        # East leads, South plays 2nd
         deal = PlayDeal(
             declarer_hand=your_hand,
             dummy_hand=dummy_hand,
             lho_hand=lho_hand,
             rho_hand=rho_hand,
             contract='3NT',
-            declarer_position='South',
+            declarer_position='East',
             lead=None,
             player_perspective='defender'
         )
@@ -835,7 +847,7 @@ class SecondHandLowGenerator(PlaySkillHandGenerator):
         suit_name = suit_names[suit]
 
         situation = {
-            'question': f'You are defending. Declarer leads the {opponent_lead} of {suit_name}. You have {your_holding_str}. Which card do you play?',
+            'question': f'You are South, defending against 3NT. Declarer (East) leads the {opponent_lead} of {suit_name}. You have {your_holding_str}. Which card do you play?',
             'question_type': 'second_hand_play',
             'expected_response': {
                 'card': correct_card,
@@ -902,14 +914,15 @@ class WinningCheaplyGenerator(PlaySkillHandGenerator):
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
-        # Defensive scenario: you are a defender winning the trick cheaply
+        # Defensive scenario: user is South, declarer is East, dummy is West
+        # Dummy (West) plays a card, South (user) needs to beat it cheaply
         deal = PlayDeal(
             declarer_hand=your_hand,
             dummy_hand=dummy_hand,
             lho_hand=lho_hand,
             rho_hand=rho_hand,
             contract='3NT',
-            declarer_position='South',
+            declarer_position='East',
             lead=None,
             player_perspective='defender'
         )
@@ -918,7 +931,7 @@ class WinningCheaplyGenerator(PlaySkillHandGenerator):
         suit_name = suit_names[suit]
 
         situation = {
-            'question': f'You are defending. Dummy plays the {dummy_card} of {suit_name}. You have {your_holding_str}. Which card wins the trick most economically?',
+            'question': f'You are South, defending against 3NT. Dummy (West) plays the {dummy_card} of {suit_name}. You have {your_holding_str}. Which card wins the trick most economically?',
             'question_type': 'winning_cheaply',
             'expected_response': {
                 'card': correct_card,
@@ -1912,12 +1925,12 @@ class EntryKillingPlaysGenerator(PlaySkillHandGenerator):
         lho_hand = Hand(deck[:13])
         rho_hand = Hand(deck[13:26])
 
-        # Defensive scenario: you are killing dummy's entry
-        deal = PlayDeal(your_hand, dummy_hand, lho_hand, rho_hand, '3NT', 'South',
+        # Defensive scenario: user is South, declarer is East, dummy is West
+        deal = PlayDeal(your_hand, dummy_hand, lho_hand, rho_hand, '3NT', 'East',
                         player_perspective='defender')
 
         situation = {
-            'question': 'You are defending. Dummy has a long suit with only the Q as entry. You hold AK. Should you cash the Ace to kill the entry or hold up?',
+            'question': 'You are South, defending against 3NT. Dummy (West) has a long suit with only the Q as entry. You hold AK. Should you cash the Ace to kill the entry or hold up?',
             'question_type': 'entry_defense',
             'expected_response': {'correct_answer': 'cash'},
             'explanation': 'Cash your Ace to kill dummy\'s Queen entry. This strands dummy\'s long suit.',

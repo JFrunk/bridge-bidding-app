@@ -204,14 +204,20 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
               {deal.contract && (
                 <div className="contract-info">
                   <span className="contract-label">Contract:</span>
-                  <span className="contract-value">{deal.contract}</span>
-                  <span className="combined-hcp">Combined: {deal.combined_hcp} HCP</span>
+                  <span className="contract-value">
+                    {deal.contract}{deal.player_perspective === 'defender' ? ` by ${deal.declarer_position}` : ''}
+                  </span>
+                  {deal.player_perspective === 'defender' ? (
+                    <span className="combined-hcp">Your HCP: {deal.declarer_hand?.hcp}</span>
+                  ) : (
+                    <span className="combined-hcp">Combined: {deal.combined_hcp} HCP</span>
+                  )}
                 </div>
               )}
               <div className="dual-hand-display">
-                {/* Top hand: Dummy for declarer view, Dummy for defender view */}
+                {/* Top hand: Dummy (position varies by perspective) */}
                 <div className="hand-card visual-hand dummy-hand">
-                  <h3>Dummy (North)</h3>
+                  <h3>Dummy ({deal.dummy_position || 'North'})</h3>
                   {deal.dummy_hand?.cards && deal.dummy_hand.cards.length > 0 ? (
                     <LearningHand cards={deal.dummy_hand.cards} />
                   ) : (
@@ -221,9 +227,9 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
                     <span>HCP: {deal.dummy_hand?.hcp}</span>
                   </div>
                 </div>
-                {/* Bottom hand: Declarer or Your Hand (defender) */}
+                {/* Bottom hand: always South (user) */}
                 <div className="hand-card visual-hand declarer-hand">
-                  <h3>{deal.player_perspective === 'defender' ? 'Your Hand (East)' : 'Declarer (South)'}</h3>
+                  <h3>{deal.player_perspective === 'defender' ? 'Your Hand (South)' : 'Declarer (South)'}</h3>
                   {deal.declarer_hand?.cards && deal.declarer_hand.cards.length > 0 ? (
                     <LearningHand cards={deal.declarer_hand.cards} />
                   ) : (
