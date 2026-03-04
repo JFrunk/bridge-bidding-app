@@ -681,6 +681,9 @@ const LevelCard = ({
                   <div className="skill-status-indicator">{statusIcon}</div>
                   <div className="skill-info">
                     <span className="skill-name">{convention.name}</span>
+                    <span className="skill-meta">
+                      {convention.practice_hands_required || 6} hands
+                    </span>
                   </div>
                   {isUnlocked && (
                     <button
@@ -700,18 +703,13 @@ const LevelCard = ({
         ) : (
           <div className="skill-list">
             {skills.map((skill) => (
-              isUnlocked ? (
-                <SkillItem
-                  key={skill.id}
-                  skill={skill}
-                  status={skillProgress[skill.id] || 'not_started'}
-                  onStart={() => onStartSkill(skill.id, skill.name)}
-                />
-              ) : (
-                <div key={skill.id} className="skill-item skill-item-locked">
-                  <span className="skill-name">{skill.name}</span>
-                </div>
-              )
+              <SkillItem
+                key={skill.id}
+                skill={skill}
+                status={skillProgress[skill.id] || 'not_started'}
+                onStart={() => onStartSkill(skill.id, skill.name)}
+                locked={!isUnlocked}
+              />
             ))}
           </div>
         )}
@@ -723,8 +721,8 @@ const LevelCard = ({
 /**
  * Skill Item Component
  */
-const SkillItem = ({ skill, status, onStart }) => {
-  const { name, practice_hands_required, passing_accuracy } = skill;
+const SkillItem = ({ skill, status, onStart, locked = false }) => {
+  const { name, practice_hands_required } = skill;
 
   // Status indicator styling
   const getStatusIndicator = () => {
@@ -741,7 +739,7 @@ const SkillItem = ({ skill, status, onStart }) => {
   const statusInfo = getStatusIndicator();
 
   return (
-    <div className={`skill-item ${statusInfo.className}`}>
+    <div className={`skill-item ${statusInfo.className} ${locked ? 'skill-item-locked' : ''}`}>
       <div className="skill-status-indicator">{statusInfo.icon}</div>
       <div className="skill-info">
         <span className="skill-name">{name}</span>
@@ -749,15 +747,17 @@ const SkillItem = ({ skill, status, onStart }) => {
           {practice_hands_required} hands
         </span>
       </div>
-      <button
-        className="practice-button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onStart();
-        }}
-      >
-        {status === 'mastered' ? 'Review' : 'Practice'}
-      </button>
+      {!locked && (
+        <button
+          className="practice-button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onStart();
+          }}
+        >
+          {status === 'mastered' ? 'Review' : 'Practice'}
+        </button>
+      )}
     </div>
   );
 };
