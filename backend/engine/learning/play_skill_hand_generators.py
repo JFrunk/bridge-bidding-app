@@ -688,7 +688,7 @@ class LeadingToTricksGenerator(PlaySkillHandGenerator):
     # Leading situations: (holding, dummy, correct, explanation, wrong_answer_rationale)
     SITUATIONS = [
         ('KQJ', 'xxx', 'K', 'Lead top of sequence (KQJ) - the King. This drives out the Ace.', {
-            'Q': 'The Queen is part of the sequence, but always lead the TOP of touching honors. Leading K from KQJ tells partner you also hold the Queen.',
+            'Q': 'The Queen is part of the sequence, but always lead the TOP of touching honors. Leading K from KQJ is the standard convention — highest of the sequence.',
             'J': 'The Jack is the bottom of your sequence. Lead the King — the top of your touching honors KQJ. This drives out the Ace while your QJ back it up.',
         }),
         ('QJ3', 'xxx', 'Q', 'Lead top of sequence (QJ) - the Queen. This forces the King.', {
@@ -705,27 +705,27 @@ class LeadingToTricksGenerator(PlaySkillHandGenerator):
         }),
         ('K52', 'AQ4', '2', 'Lead low toward honors. Never lead away from a King without the Queen.', {
             'K': 'Leading the King is risky — if opponents have the Ace, your King is captured immediately. Lead low (2) toward dummy\'s AQ instead. This keeps your King protected.',
-            '5': 'Right idea leading low, but lead the LOWEST card (2). This is fourth-best and tells partner about your suit length. The key is leading toward dummy\'s AQ tenace.',
+            '5': 'Right idea leading low, but lead the LOWEST card (2). The key is leading toward dummy\'s AQ tenace. Save higher cards for later.',
         }),
         ('Q63', 'AJ5', '3', 'Lead low toward dummy\'s AJ. Leading the Queen would waste it.', {
             'Q': 'Leading the Queen exposes it to capture by the King. Lead low (3) toward dummy\'s AJ instead — if LHO holds the King and plays low, dummy\'s Jack wins cheaply.',
             '6': 'Right idea to lead low, but choose the lowest card (3). This preserves proper signaling. The principle is: lead toward dummy\'s AJ tenace, not away from your Queen.',
         }),
         ('AK3', 'xxx', 'A', 'Lead top of touching honors (AK). Cash your winners.', {
-            'K': 'With AK touching honors, lead the Ace first — top of the sequence. In standard carding, leading the King promises the Queen or a doubleton, which would mislead partner.',
+            'K': 'With AK touching honors, lead the Ace first — top of the sequence. The standard principle is to always lead the highest of touching honors.',
             '3': 'Don\'t lead low when you have AK — you have two sure tricks to cash! Lead the Ace (top of touching honors), then the King. Leading low risks losing tricks you should win.',
         }),
         ('A52', 'K43', '2', 'Lead low toward the King. Don\'t waste your Ace.', {
             'A': 'Leading the Ace wastes your entry and doesn\'t help establish tricks. Lead low (2) toward dummy\'s King — if LHO has the Queen, your King wins. Save the Ace as an entry.',
-            '5': 'Right idea to lead low, but lead the LOWEST card (2). Fourth-best leads give partner count information. The principle: lead toward dummy\'s King, keeping your Ace as an entry.',
+            '5': 'Right idea to lead low, but lead the LOWEST card (2). The principle: lead toward dummy\'s King, keeping your Ace as an entry.',
         }),
         ('KJ4', 'xxx', '4', 'Lead low from this broken holding. Save honors for later.', {
             'K': 'The King is unsupported — leading it risks capture by the Ace with nothing to show for it. Lead low (4) and save the King-Jack to capture tricks later when opponents lead the suit.',
             'J': 'The Jack is your secondary honor. Leading it exposes it to capture by the Queen or King. Lead low (4) — this preserves both your honors for defensive play later.',
         }),
         ('543', 'xxx', '5', 'From three small, lead the top (5). This shows no honors.', {
-            '4': 'From three small cards (5-4-3), lead the TOP card (5). This signals to partner that you have no honors in this suit. Leading middle or low could mislead partner about your holding.',
-            '3': 'From three small cards, lead the HIGHEST (5), not the lowest. Top-of-nothing leads tell partner you have no honors here. Leading the 3 would suggest fourth-best from a longer suit.',
+            '4': 'From three small cards (5-4-3), lead the TOP card (5). Top-of-nothing is the standard lead convention. Leading middle or low suggests you hold an honor.',
+            '3': 'From three small cards, lead the HIGHEST (5), not the lowest. Top-of-nothing is the standard lead convention. Leading the 3 would suggest a longer suit with an honor.',
         }),
     ]
 
@@ -765,7 +765,7 @@ class LeadingToTricksGenerator(PlaySkillHandGenerator):
         suit_name = suit_names[suit]
 
         situation = {
-            'question': f'You are on lead. You have {your_holding_str} in {suit_name}, dummy has {dummy_holding_str}. Which card do you lead?',
+            'question': f'You are declarer in 3NT. You need to play {suit_name}. You have {your_holding_str}, dummy has {dummy_holding_str}. Which card do you lead from your hand?',
             'question_type': 'leading_to_tricks',
             'expected_response': {
                 'card': correct_lead,
