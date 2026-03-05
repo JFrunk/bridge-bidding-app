@@ -2,22 +2,19 @@
 
 **Referenced from:** `CLAUDE.md` — Quality Assurance and Testing sections
 
-For the trigger rules (when to run these), see `CLAUDE.md`. This file contains the detailed protocols.
+**Prefer slash commands:** `/quality-baseline`, `/compare-quality`, `/smart-commit` automate these protocols. Manual commands below are for reference.
 
 ---
 
 ## Bidding Quality Score Protocol
 
-### How to Run
+**Slash commands:** `/quality-baseline` (capture), `/compare-quality` (diff), `/smart-commit` (auto-gate + commit)
+
+### Manual Commands
 ```bash
-# Quick test (5 minutes, 100 hands) - during development
-python3 backend/test_bidding_quality_score.py --hands 100
-
-# Comprehensive test (15 minutes, 500 hands) - before commits
-python3 backend/test_bidding_quality_score.py --hands 500 --output baseline_after.json
-
-# Compare with baseline
-python3 compare_scores.py baseline_before.json baseline_after.json
+python3 backend/test_bidding_quality_score.py --hands 100                              # Quick (dev)
+python3 backend/test_bidding_quality_score.py --hands 500 --output baseline_after.json  # Comprehensive
+python3 compare_scores.py baseline_before.json baseline_after.json                      # Compare
 ```
 
 ### Quality Requirements (BLOCKING)
@@ -48,16 +45,13 @@ Breakdown:
 
 ## Play Quality Score Protocol
 
-### How to Run
+**Slash commands:** `/quality-baseline` (capture), `/compare-quality` (diff), `/smart-commit` (auto-gate + commit)
+
+### Manual Commands
 ```bash
-# Quick test (10 minutes, 100 hands)
-python3 backend/test_play_quality_integrated.py --hands 100 --level 8
-
-# Comprehensive test (30 minutes, 500 hands)
-python3 backend/test_play_quality_integrated.py --hands 500 --level 8 --output play_after.json
-
-# Compare with baseline
-python3 compare_play_scores.py play_baseline_before.json play_after.json
+python3 backend/test_play_quality_integrated.py --hands 100 --level 8                       # Quick (dev)
+python3 backend/test_play_quality_integrated.py --hands 500 --level 8 --output play_after.json  # Comprehensive
+python3 compare_play_scores.py play_baseline_before.json play_after.json                     # Compare
 ```
 
 ### Quality Requirements (BLOCKING)

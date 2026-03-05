@@ -29,6 +29,35 @@ This file provides guidance to Claude Code when working with this repository. De
 
 ---
 
+## Skill-First Workflow
+
+**When a task maps to an existing slash command, invoke the skill instead of doing the work manually.**
+
+Before starting any task, check if a matching skill exists. If it does, use the Skill tool to invoke it. Do not replicate what a skill already automates.
+
+| Task | Invoke |
+|------|--------|
+| Debugging a bug | `/debug-systematic` |
+| Fixing a bug with tests | `/fix-with-tests` |
+| Checking for similar patterns | `/check-scope` |
+| Committing changes | `/smart-commit` |
+| Capturing quality baselines | `/quality-baseline` |
+| Comparing quality scores | `/compare-quality` |
+| Adding a new convention | `/add-convention` |
+| Reviewing user feedback | `/fetch-feedback` |
+| Checking production server | `/production-health` |
+| Choosing which specialist to use | `/suggest-specialist` |
+| Planning a feature | `/plan-feature` |
+| Starting TDD feature | `/start-tdd-feature` |
+| Reviewing code quality | `/review-code` |
+| Running tests | `/test` or `/quick-test` |
+| Triaging multiple issues | `/triage-issues` |
+| Analyzing error logs | `/analyze-errors` |
+| Analyzing a specific hand | `/analyze-hand` |
+| Deploying to production | `/deploy-production` |
+
+---
+
 ## Code Reuse — Never Recreate
 
 **Before writing ANY new function, utility, or logic, verify it doesn't already exist.**
@@ -87,30 +116,13 @@ Feedback is on the **production server**, not local. See `.claude/DEPLOY_GUIDE.m
 
 **MANDATORY: Run baseline quality scores before committing changes to bidding or play logic.**
 
-### Triggers — When to Run
+**Use `/smart-commit` to automatically detect which quality gates to run based on changed files.**
 
-| Test | When to Run |
-|------|------------|
-| Bidding Quality | Before modifying `backend/engine/*.py` or `backend/engine/ai/conventions/*.py` |
-| Play Quality | Before modifying `backend/engine/play_engine.py` or `backend/engine/play/ai/*.py` |
-| V2 Schema Efficiency | Before modifying `backend/engine/v2/schemas/*.json` or V2 interpreter/extractor |
-| SAYC Compliance | Before modifying bidding modules, after SAYC-related fixes |
-
-### Quick Commands
-```bash
-# Bidding quality (quick / comprehensive)
-python3 backend/test_bidding_quality_score.py --hands 100
-python3 backend/test_bidding_quality_score.py --hands 500 --output baseline_after.json
-
-# Play quality
-python3 backend/test_play_quality_integrated.py --hands 100 --level 8
-
-# SAYC compliance
-python3 backend/test_sayc_compliance.py --hands 100 --output sayc_quick.json
-
-# Compare baselines
-python3 compare_scores.py baseline_before.json baseline_after.json
-```
+| Slash Command | When to Use |
+|---------------|-------------|
+| `/quality-baseline` | Capture baseline scores before starting work |
+| `/compare-quality` | Compare before/after scores to detect regressions |
+| `/smart-commit` | Auto-detect changed domains, run relevant gates, then commit |
 
 **DDS only works on Linux production servers — crashes on macOS M1/M2. Use Level 8 (Minimax) for development.**
 
@@ -120,12 +132,13 @@ python3 compare_scores.py baseline_before.json baseline_after.json
 
 ## Systematic Issue Analysis
 
-**MANDATORY: Before implementing any fix, complete this protocol.**
+**MANDATORY: Before implementing any fix, complete systematic analysis.**
 
-1. **Identify & Search** — After finding root cause, search for similar patterns across the codebase
-2. **Document Scope** — Immediate issue, pattern occurrences, actually affected, preventatively fix
-3. **Solution Design** — 1 occurrence: fix locally. 2-3: fix all. 4+: create abstraction
-4. **Present to User** — Complete analysis before implementing
+| Slash Command | When to Use |
+|---------------|-------------|
+| `/debug-systematic` | Full 4-step debugging protocol (identify, search, scope, present) |
+| `/check-scope` | Search for similar patterns after finding root cause |
+| `/fix-with-tests` | TDD workflow: regression test first, then implement fix |
 
 **See:** `.claude/CODING_GUIDELINES.md` for complete framework and common patterns
 
@@ -299,12 +312,7 @@ When triggered: PAUSE -> Read `.claude/ARCHITECTURAL_DECISION_FRAMEWORK.md` -> G
 
 ## Adding New Conventions
 
-1. Create file in `backend/engine/ai/conventions/`
-2. Extend `ConventionModule`, implement `evaluate()`
-3. Register in `BiddingEngine.modules`
-4. Add routing logic to `decision_engine.py`
-5. Add tests in `backend/tests/`
-6. Run baseline quality score before and after
+Use `/add-convention` to scaffold the full 6-step integration process (create file, register, route, test, baseline).
 
 ---
 

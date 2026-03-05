@@ -403,6 +403,25 @@ export const TermHighlight = ({ text, onOpenGlossary, seniorMode }) => {
     segments = newSegments;
   });
 
+  // Color suit symbols in a text string
+  const colorSuits = (text, key) => {
+    const parts = text.split(/([♥♦♠♣])/);
+    if (parts.length === 1) return <span key={key}>{text}</span>;
+    return (
+      <span key={key}>
+        {parts.map((part, i) => {
+          if (part === '♥' || part === '♦') {
+            return <span key={i} style={{ color: 'var(--card-red, #d32f2f)' }}>{part}</span>;
+          }
+          if (part === '♠' || part === '♣') {
+            return <span key={i} style={{ color: 'var(--card-black, #1a1a1a)' }}>{part}</span>;
+          }
+          return part;
+        })}
+      </span>
+    );
+  };
+
   return (
     <span className="term-highlight-text">
       {segments.map((segment, index) =>
@@ -416,7 +435,7 @@ export const TermHighlight = ({ text, onOpenGlossary, seniorMode }) => {
             {segment.content}
           </TermTooltip>
         ) : (
-          <span key={index}>{segment.content}</span>
+          colorSuits(segment.content, index)
         )
       )}
     </span>

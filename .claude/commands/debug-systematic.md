@@ -29,7 +29,8 @@ Issue description: $ARGUMENTS
 
 ## Step 2: Search for Similar Patterns (2 minutes)
 
-**Pattern Search:**
+Use `/check-scope` to systematically search for similar patterns. Alternatively, search manually:
+
 ```bash
 # Example searches based on issue type:
 # - React hooks: grep -r "useEffect" --include="*.js*" frontend/src/
@@ -38,7 +39,7 @@ Issue description: $ARGUMENTS
 # - Bidding logic: grep -r "def evaluate" backend/engine/
 ```
 
-6. Search codebase for similar patterns
+6. Search codebase for similar patterns (use `/check-scope` for thorough analysis)
 7. List ALL files with similar code
 8. Identify which ones exhibit the bug
 9. Identify which ones COULD have the bug (preventative)

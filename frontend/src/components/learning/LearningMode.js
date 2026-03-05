@@ -125,6 +125,7 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   const handleStartSkill = (skillId, skillName) => {
     // Show intro screen first, include track info
     setShowingIntro({ skillId, skillName, track: selectedTrack });
+    scrollToTop();
   };
 
   const handleStartPractice = async () => {
@@ -175,6 +176,7 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
         currentHandIndex: 0,
       });
       setShowingIntro(null);
+      scrollToTop();
     } catch (err) {
       setError(err.message);
       setShowingIntro(null);

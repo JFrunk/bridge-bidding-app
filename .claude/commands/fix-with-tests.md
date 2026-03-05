@@ -20,7 +20,7 @@ Bug description: $ARGUMENTS
 2. Read error logs and stack traces
 3. Identify affected code location
 4. **Think hard** about root cause
-5. Use systematic analysis (search for similar patterns)
+5. Use `/check-scope` to search for similar patterns across the codebase
 
 ---
 

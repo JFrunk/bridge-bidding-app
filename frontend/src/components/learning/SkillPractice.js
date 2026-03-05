@@ -28,7 +28,7 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
       containerRef.current.scrollTop = 0;
     }
     window.scrollTo(0, 0);
-  }, [session?.hand_id, session?.skill_id]);
+  }, [session?.hand_id, session?.skill_id, session?.currentHandIndex]);
 
   // Sync local state when navigating between hands
   // This handles both new hands and reviewing previous hands
@@ -133,7 +133,7 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
       <div className="practice-header">
         <div className="header-left">
           <button onClick={onClose} className="back-button">← Back</button>
-          <h2 className="skill-title">{formatSkillName(topic_id, expected_response)}</h2>
+          <h2 className="skill-title"><TermHighlight text={formatSkillName(topic_id, expected_response)} /></h2>
         </div>
 
         <div className="hand-navigation">
@@ -309,6 +309,9 @@ const SkillPractice = ({ session, onSubmitAnswer, onContinue, onClose, onNavigat
             isReplaying={isReplaying}
             canContinue={!isReviewing || currentHandIndex === (handHistory?.length || 1) - 1}
             sessionComplete={session.sessionComplete}
+            onNavigateNext={isReviewing && currentHandIndex < (handHistory?.length || 1) - 1
+              ? () => onNavigateHand(currentHandIndex + 1)
+              : null}
           />
         )}
       </div>
@@ -599,7 +602,7 @@ const QuestionPrompt = ({ questionType, expected, situation }) => {
 
   return (
     <div className="question-prompt">
-      <h3>{getPrompt()}</h3>
+      <h3><TermHighlight text={getPrompt()} /></h3>
     </div>
   );
 };
@@ -1060,7 +1063,7 @@ const formatBid = (bid) => {
 /**
  * Feedback Display Component
  */
-const FeedbackDisplay = ({ result, expected, onContinue, onReplay, isReviewing, isReplaying, canContinue, sessionComplete }) => {
+const FeedbackDisplay = ({ result, expected, onContinue, onReplay, isReviewing, isReplaying, canContinue, sessionComplete, onNavigateNext }) => {
   if (!result) return null;
 
   const { isCorrect, feedback } = result;
@@ -1094,11 +1097,16 @@ const FeedbackDisplay = ({ result, expected, onContinue, onReplay, isReviewing, 
         )}
         {canContinue && (
           <button onClick={onContinue} className="continue-button">
-            {sessionComplete ? 'Finish' : 'Continue'}
+            {sessionComplete ? 'Finish' : 'Next Hand'}
+          </button>
+        )}
+        {onNavigateNext && !canContinue && (
+          <button onClick={onNavigateNext} className="continue-button">
+            Next Hand
           </button>
         )}
       </div>
-      {isReviewing && !canContinue && (
+      {isReviewing && !canContinue && !onNavigateNext && (
         <p className="review-hint">Use the hand navigation above to view other hands</p>
       )}
     </div>
