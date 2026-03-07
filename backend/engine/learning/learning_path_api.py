@@ -676,15 +676,12 @@ def generate_skill_practice_hand():
     if not generator:
         return jsonify({'error': f'No generator found for skill: {skill_id}'}), 404
 
-    deck = create_deck()
-    hand, remaining = generator.generate(deck)
+    hand, expected = _generate_vetted_hand(generator)
 
     if not hand:
         return jsonify({'error': 'Failed to generate hand with constraints'}), 500
 
     hand_id = str(uuid.uuid4())[:8]
-
-    # Format cards for JSON
     cards = [{'rank': c.rank, 'suit': c.suit} for c in hand.cards]
 
     response_data = {
@@ -699,7 +696,7 @@ def generate_skill_practice_hand():
             'is_balanced': hand.is_balanced,
             'suit_lengths': hand.suit_lengths
         },
-        'expected_response': _resolve_engine_bid(generator, hand, generator.get_expected_response(hand)),
+        'expected_response': expected,
         'hand_id': hand_id
     }
 
@@ -766,54 +763,114 @@ _RESPONSE_SKILLS = {
     'responding_to_1nt', 'responding_to_2c', 'responding_to_2nt',
 }
 
+# Skills where generators have low agreement with engine (<50%).
+# For these, we use engine-override rather than filtering, since
+# filtering would reject too many hands.
+_ENGINE_OVERRIDE_SKILLS = {
+    'responding_to_1nt', 'responding_to_2c', 'responding_to_2nt',
+    'dustbin_1nt_response',  # Hand generation often fails
+    'game_raise',            # ~34% agreement (splinter divergences)
+    'two_over_one_response', # ~30% agreement
+}
 
-def _resolve_engine_bid(generator, hand, expected_response):
-    """Replace generator's bid with BiddingEngine's authoritative answer.
 
-    For bidding skills, calls BiddingEngine.get_next_bid() with the
-    appropriate auction context. Keeps the generator's pedagogical
-    explanation but uses the engine's bid as the correct answer.
+def _get_engine_bid(generator, hand):
+    """Get BiddingEngine's bid for this generator's hand and auction context.
 
-    Non-bidding skills (HCP counting, suit quality, etc.) pass through unchanged.
+    Returns (engine_bid, engine_explanation) or (None, None) if not a mapped skill.
     """
-    # Only override if generator returned a bid
-    if 'bid' not in expected_response or expected_response.get('bid') is None:
-        return expected_response
-
     skill_id = getattr(generator, 'skill_id', '')
 
-    # Determine auction context
     if skill_id in _OPENING_SKILLS:
         auction = []
         position = 'South'
         dealer = 'South'
     elif skill_id in _RESPONSE_SKILLS:
-        # Get partner's opening bid from generator
         partner_bid = getattr(generator, 'partner_opened', None) or \
                       getattr(generator, 'opening_bid', None)
         if not partner_bid:
-            return expected_response  # Can't resolve without auction context
+            return None, None
         auction = [partner_bid, 'Pass']
         position = 'South'
         dealer = 'North'
     else:
-        # Skill not mapped (rebids, competitive, etc.) — pass through
-        return expected_response
+        return None, None
 
     try:
         engine = _get_bidding_engine()
-        engine_bid, engine_explanation = engine.get_next_bid(
-            hand, auction, position, 'None', dealer=dealer
-        )
-        # Override the bid, keep the generator's pedagogical explanation
+        return engine.get_next_bid(hand, auction, position, 'None', dealer=dealer)
+    except Exception:
+        return None, None
+
+
+def _resolve_engine_bid(generator, hand, expected_response):
+    """Validate generator's bid against BiddingEngine.
+
+    Returns the expected_response if engine agrees (or skill is unmapped).
+    Returns None if engine disagrees — caller should retry with a new hand.
+
+    For skills with very low agreement (e.g. responding_to_1nt), overrides
+    the bid with the engine's answer instead of rejecting.
+
+    Non-bidding skills (HCP counting, suit quality, etc.) pass through unchanged.
+    """
+    if 'bid' not in expected_response or expected_response.get('bid') is None:
+        return expected_response
+
+    skill_id = getattr(generator, 'skill_id', '')
+    if skill_id not in _OPENING_SKILLS and skill_id not in _RESPONSE_SKILLS:
+        return expected_response
+
+    engine_bid, engine_explanation = _get_engine_bid(generator, hand)
+    if engine_bid is None:
+        return expected_response  # Engine couldn't resolve — pass through
+
+    if expected_response['bid'] == engine_bid:
+        # Agreement — generator's explanation matches the correct bid
+        return expected_response
+
+    # Disagreement
+    if skill_id in _ENGINE_OVERRIDE_SKILLS:
+        # Low-agreement skill: override bid, use engine explanation
         result = dict(expected_response)
         result['bid'] = engine_bid
-        # Store engine explanation as supplementary info
-        result['engine_explanation'] = str(engine_explanation)[:200]
+        result['explanation'] = str(engine_explanation)[:300]
         return result
-    except Exception:
-        # On any engine error, fall back to generator's answer
-        return expected_response
+
+    # Normal skill: reject this hand so caller retries
+    return None
+
+
+def _generate_vetted_hand(generator, max_attempts=10):
+    """Generate a hand where generator and engine agree on the bid.
+
+    Retries up to max_attempts times. Returns (hand, expected_response)
+    or (None, None) if no agreement found after all attempts.
+    """
+    from engine.learning.skill_hand_generators import create_deck
+
+    for _ in range(max_attempts):
+        deck = create_deck()
+        hand, _ = generator.generate(deck)
+        if hand is None:
+            continue
+
+        expected = generator.get_expected_response(hand)
+        resolved = _resolve_engine_bid(generator, hand, expected)
+
+        if resolved is not None:
+            return hand, resolved
+
+    # Exhausted retries — fall back to engine override on last hand
+    if hand is not None and expected is not None:
+        engine_bid, engine_exp = _get_engine_bid(generator, hand)
+        if engine_bid is not None:
+            result = dict(expected)
+            result['bid'] = engine_bid
+            result['explanation'] = str(engine_exp)[:300]
+            return hand, result
+
+    return None, None
 
 
 def normalize_bid(bid: str) -> str:
@@ -966,14 +1023,10 @@ def start_learning_session():
         if not generator:
             return jsonify({'error': f'No generator for skill: {topic_id}'}), 404
 
-        deck = create_deck()
-        hand, _ = generator.generate(deck)
-
-        # Get expected response first (some skills don't need hands)
-        expected = _resolve_engine_bid(generator, hand, generator.get_expected_response(hand))
+        hand, expected = _generate_vetted_hand(generator)
 
         # Check if this is a no-hand skill (like bidding_language)
-        if expected.get('no_hand_required'):
+        if expected and expected.get('no_hand_required'):
             hand_data = None
         elif not hand:
             return jsonify({'error': 'Failed to generate hand'}), 500
@@ -1170,14 +1223,10 @@ def submit_learning_answer():
     if topic_type == 'skill':
         generator = get_skill_hand_generator(topic_id)
         if generator:
-            deck = create_deck()
-            hand, _ = generator.generate(deck)
-
-            # Get expected response (works for both hand and no-hand skills)
-            next_expected = _resolve_engine_bid(generator, hand, generator.get_expected_response(hand))
+            hand, next_expected = _generate_vetted_hand(generator)
 
             # Check if this is a no-hand skill
-            if next_expected.get('no_hand_required'):
+            if next_expected and next_expected.get('no_hand_required'):
                 next_hand = None  # No hand needed
                 next_hand_id = str(uuid.uuid4())[:8]  # Still need ID for tracking
             elif hand:
@@ -1346,9 +1395,8 @@ def get_interleaved_review():
         if topic_type == 'skill':
             generator = get_skill_hand_generator(topic_id)
             if generator:
-                deck = create_deck()
-                hand, _ = generator.generate(deck)
-                if hand:
+                hand, expected = _generate_vetted_hand(generator)
+                if hand and expected:
                     hands.append({
                         'topic_id': topic_id,
                         'hand': {
@@ -1360,7 +1408,7 @@ def get_interleaved_review():
                             'is_balanced': hand.is_balanced,
                             'suit_lengths': hand.suit_lengths
                         },
-                        'expected_response': _resolve_engine_bid(generator, hand, generator.get_expected_response(hand)),
+                        'expected_response': expected,
                         'hand_id': str(uuid.uuid4())[:8]
                     })
 
@@ -1443,9 +1491,8 @@ def get_level_assessment():
             generator = get_skill_hand_generator(topic_id)
             if generator:
                 for _ in range(hands_per_topic):
-                    deck = create_deck()
-                    hand, _ = generator.generate(deck)
-                    if hand:
+                    hand, expected = _generate_vetted_hand(generator)
+                    if hand and expected:
                         hands.append({
                             'topic_id': topic_id,
                             'hand': {
@@ -1457,7 +1504,7 @@ def get_level_assessment():
                                 'is_balanced': hand.is_balanced,
                                 'suit_lengths': hand.suit_lengths
                             },
-                            'expected_response': _resolve_engine_bid(generator, hand, generator.get_expected_response(hand)),
+                            'expected_response': expected,
                             'hand_id': str(uuid.uuid4())[:8]
                         })
 
