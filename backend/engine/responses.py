@@ -517,23 +517,24 @@ class ResponseModule(ConventionModule):
                         return (f"3{suit}", f"Jump shift showing 17+ HCP and 5+ {suit} (game-forcing).", jump_shift_metadata)
 
         # PRIORITY: Show 4+ card suits at 1-level BEFORE raising partner's minor with only 3-card support
-        # This is standard SAYC - bid up the line at the 1-level
-        if opening_suit == '♣':  # Partner opened 1♣
-            # Check for 4+ card diamond to show at 1-level (before raising clubs with 3)
-            if hand.suit_lengths.get('♦', 0) >= 4:
-                return ("1♦", f"Showing a 4+ card diamond suit (priority over raising {opening_suit}).")
-            # Check for 4+ card major to show at 1-level
-            if hand.suit_lengths.get('♥', 0) >= 4:
-                return ("1♥", f"Showing a 4+ card heart suit (priority over raising {opening_suit}).")
-            if hand.suit_lengths.get('♠', 0) >= 4:
-                return ("1♠", f"Showing a 4+ card spade suit (priority over raising {opening_suit}).")
+        # This is standard SAYC - bid up the line at the 1-level (requires 6+ HCP to respond)
+        if hand.hcp >= 6:
+            if opening_suit == '♣':  # Partner opened 1♣
+                # Check for 4+ card diamond to show at 1-level (before raising clubs with 3)
+                if hand.suit_lengths.get('♦', 0) >= 4:
+                    return ("1♦", f"Showing a 4+ card diamond suit (priority over raising {opening_suit}).")
+                # Check for 4+ card major to show at 1-level
+                if hand.suit_lengths.get('♥', 0) >= 4:
+                    return ("1♥", f"Showing a 4+ card heart suit (priority over raising {opening_suit}).")
+                if hand.suit_lengths.get('♠', 0) >= 4:
+                    return ("1♠", f"Showing a 4+ card spade suit (priority over raising {opening_suit}).")
 
-        if opening_suit == '♦':  # Partner opened 1♦
-            # Check for 4+ card major to show at 1-level
-            if hand.suit_lengths.get('♥', 0) >= 4:
-                return ("1♥", f"Showing a 4+ card heart suit (priority over raising {opening_suit}).")
-            if hand.suit_lengths.get('♠', 0) >= 4:
-                return ("1♠", f"Showing a 4+ card spade suit (priority over raising {opening_suit}).")
+            if opening_suit == '♦':  # Partner opened 1♦
+                # Check for 4+ card major to show at 1-level
+                if hand.suit_lengths.get('♥', 0) >= 4:
+                    return ("1♥", f"Showing a 4+ card heart suit (priority over raising {opening_suit}).")
+                if hand.suit_lengths.get('♠', 0) >= 4:
+                    return ("1♠", f"Showing a 4+ card spade suit (priority over raising {opening_suit}).")
 
         # Raise partner's suit with 3+ card support
         if opening_suit in hand.suit_lengths and hand.suit_lengths[opening_suit] >= 3:
@@ -692,11 +693,12 @@ class ResponseModule(ConventionModule):
                     if hand.suit_lengths.get('♦', 0) >= 5:
                         return ("3♦", "Jump shift showing 17+ HCP and 5+ diamonds (game-forcing).")
 
-            # Can still bid new suits at 1-level
-            if opening_bid in ['1♣', '1♦'] and hand.suit_lengths.get('♥', 0) >= 4:
-                return ("1♥", "Showing a 4+ card heart suit.")
-            if opening_bid in ['1♣', '1♦', '1♥'] and hand.suit_lengths.get('♠', 0) >= 4:
-                return ("1♠", "Showing a 4+ card spade suit.")
+            # Can still bid new suits at 1-level (requires 6+ HCP)
+            if hand.hcp >= 6:
+                if opening_bid in ['1♣', '1♦'] and hand.suit_lengths.get('♥', 0) >= 4:
+                    return ("1♥", "Showing a 4+ card heart suit.")
+                if opening_bid in ['1♣', '1♦', '1♥'] and hand.suit_lengths.get('♠', 0) >= 4:
+                    return ("1♠", "Showing a 4+ card spade suit.")
 
             # 2-level new suit responses (require 10+ HCP in SAYC)
             # Bid a new suit at the 2-level with 10+ HCP and 5+ card suit

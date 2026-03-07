@@ -91,13 +91,12 @@ class OpeningBidsModule(ConventionModule):
             # 2♣ is artificial - doesn't promise clubs, bypass suit length validation
             return ("2♣", explanation, {'bypass_suit_length': True})
 
-        # Rule for standard 1-level openings (13-21 points)
-        # SAYC requirement: 12+ HCP for major suit openings (1M)
-        # Minors can be opened with 13 total points if hand has good shape
-        if hand.total_points >= 13:
+        # Rule for standard 1-level openings
+        # SAYC: Open with 12+ HCP, or 13+ total points (HCP + distribution)
+        if hand.hcp >= 12 or hand.total_points >= 13:
             if max(hand.suit_lengths.values()) >= 5: # Has a 5+ card suit
                 # Prioritize majors - REQUIRE 12+ HCP for 1M openings per SAYC
-                if hand.suit_lengths['♥'] >= 5 and hand.suit_lengths['♥'] >= hand.suit_lengths['♠']:
+                if hand.suit_lengths['♥'] >= 5 and hand.suit_lengths['♥'] > hand.suit_lengths['♠']:
                     # SAYC: 1M opening requires 12+ HCP (not just total points)
                     if hand.hcp >= 12:
                         explanation = BidExplanation("1♥")
@@ -168,38 +167,37 @@ class OpeningBidsModule(ConventionModule):
                 diamond_len = hand.suit_lengths['♦']
 
                 if club_len == diamond_len and club_len == 4:
-                    # 4-4 minors: Consider strength and quality
-                    # SAYC guideline: With 4-4 minors, prefer 1♦ with:
-                    # - Stronger diamonds (better honors)
-                    # - Weak clubs (poor quality)
-                    # - 4-4-3-2 shape (rebid issues with 1♣)
+                    # SAYC: With 4-4 minors, always open 1♦
+                    explanation = BidExplanation("1♦")
+                    explanation.set_primary_reason("4-4 minors - open 1♦ (SAYC convention)")
+                    explanation.add_requirement("Opening Points", "13+")
+                    explanation.add_actual_value("Total Points", str(hand.total_points))
+                    explanation.add_actual_value("Diamonds", f"4 cards, {hand.suit_hcp['♦']} HCP")
+                    explanation.add_actual_value("Clubs", f"4 cards, {hand.suit_hcp['♣']} HCP")
+                    explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
+                    explanation.set_forcing_status("Forcing for 1 round")
+                    return ("1♦", explanation)
 
-                    club_hcp = hand.suit_hcp['♣']
-                    diamond_hcp = hand.suit_hcp['♦']
+                if club_len == diamond_len and club_len == 3:
+                    # SAYC: With 3-3 minors, open 1♣
+                    explanation = BidExplanation("1♣")
+                    explanation.set_primary_reason("3-3 minors - open 1♣ (SAYC convention)")
+                    explanation.add_requirement("Opening Points", "13+")
+                    explanation.add_actual_value("Total Points", str(hand.total_points))
+                    explanation.add_actual_value("Clubs", f"{hand.suit_lengths['♣']} cards")
+                    explanation.add_actual_value("Diamonds", f"{hand.suit_lengths['♦']} cards")
+                    explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
+                    explanation.set_forcing_status("Forcing for 1 round")
+                    return ("1♣", explanation)
 
-                    # If diamonds significantly stronger (2+ HCP difference), open 1♦
-                    if diamond_hcp >= club_hcp + 2:
-                        explanation = BidExplanation("1♦")
-                        explanation.set_primary_reason("4-4 minors - open stronger minor (diamonds)")
-                        explanation.add_requirement("Opening Points", "13+")
-                        explanation.add_actual_value("Total Points", str(hand.total_points))
-                        explanation.add_actual_value("Diamonds", f"4 cards, {diamond_hcp} HCP")
-                        explanation.add_actual_value("Clubs", f"4 cards, {club_hcp} HCP")
-                        explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
-                        explanation.add_alternative("1♣", f"Diamonds stronger ({diamond_hcp} vs {club_hcp} HCP)")
-                        explanation.set_forcing_status("Forcing for 1 round")
-                        return ("1♦", explanation)
-
-                # Default: open 1♣ with equal or clubs longer
+                # Clubs longer than diamonds
                 explanation = BidExplanation("1♣")
-                explanation.set_primary_reason("No 5-card suit - open longer or equal minor (clubs)")
+                explanation.set_primary_reason("No 5-card suit - open longer minor (clubs)")
                 explanation.add_requirement("Opening Points", "13+")
                 explanation.add_actual_value("Total Points", str(hand.total_points))
                 explanation.add_actual_value("Clubs", f"{hand.suit_lengths['♣']} cards")
                 explanation.add_actual_value("Diamonds", f"{hand.suit_lengths['♦']} cards")
                 explanation.add_actual_value("Distribution", f"{hand.suit_lengths['♠']}-{hand.suit_lengths['♥']}-{hand.suit_lengths['♦']}-{hand.suit_lengths['♣']}")
-                if hand.suit_lengths['♦'] == hand.suit_lengths['♣']:
-                    explanation.add_alternative("1♦", f"Equal length ({hand.suit_lengths['♣']} each) - default to clubs")
                 explanation.set_forcing_status("Forcing for 1 round")
                 return ("1♣", explanation)
 

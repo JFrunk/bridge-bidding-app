@@ -25,6 +25,24 @@ def create_deck() -> List[Card]:
     return [Card(rank, suit) for suit in suits for rank in ranks]
 
 
+def calculate_support_points(hand: Hand, trump_suit: str) -> int:
+    """Calculate support points for raising partner's suit.
+
+    SAYC Dummy Points (per ACBL booklet): Void +5, Singleton +3, Doubleton +1.
+    Matches engine/responses.py:_calculate_support_points().
+    """
+    points = hand.hcp
+    for suit, length in hand.suit_lengths.items():
+        if suit != trump_suit:
+            if length == 0:
+                points += 5
+            elif length == 1:
+                points += 3
+            elif length == 2:
+                points += 1
+    return points
+
+
 class SkillHandGenerator(ABC):
     """Base class for skill-specific hand generators."""
 
@@ -482,6 +500,21 @@ class OpeningOneMajorGenerator(SkillHandGenerator):
                 'max_suit_length': 4,  # No 5-card suit
             }
 
+    def generate(self, deck: List[Card] = None) -> Tuple[Optional[Hand], List[Card]]:
+        """Generate hand, excluding 15-17 HCP balanced (should open 1NT instead)."""
+        if deck is None:
+            deck = create_deck()
+        constraints = self.get_constraints()
+        for _ in range(50):
+            hand, remaining = generate_hand_with_constraints(constraints, deck)
+            if hand is None:
+                return None, deck
+            # Only filter no_major variant; major variants require 5+ card suits
+            if self.variant == 'no_major' and hand.is_balanced and 15 <= hand.hcp <= 17:
+                continue
+            return hand, remaining
+        return None, deck
+
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
         spades = hand.suit_lengths['♠']
         hearts = hand.suit_lengths['♥']
@@ -543,6 +576,20 @@ class OpeningOneMinorGenerator(SkillHandGenerator):
         # equal_minors: no additional constraint
         return base
 
+    def generate(self, deck: List[Card] = None) -> Tuple[Optional[Hand], List[Card]]:
+        """Generate hand, excluding 15-17 HCP balanced (should open 1NT instead)."""
+        if deck is None:
+            deck = create_deck()
+        constraints = self.get_constraints()
+        for _ in range(50):
+            hand, remaining = generate_hand_with_constraints(constraints, deck)
+            if hand is None:
+                return None, deck
+            if hand.is_balanced and 15 <= hand.hcp <= 17:
+                continue  # This hand should open 1NT, not a minor
+            return hand, remaining
+        return None, deck
+
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
         diamonds = hand.suit_lengths['♦']
         clubs = hand.suit_lengths['♣']
@@ -569,7 +616,8 @@ class OpeningOneMinorGenerator(SkillHandGenerator):
 class SingleRaiseGenerator(SkillHandGenerator):
     """Generate hands for single raise of partner's major (1M-2M).
 
-    Teaches the 6-10 point range with 3+ card support.
+    Teaches the 6-9 support point range with 3+ card support.
+    Support points = HCP + dummy distribution (void +5, singleton +3, doubleton +1).
     """
 
     skill_id = 'single_raise'
@@ -601,12 +649,12 @@ class SingleRaiseGenerator(SkillHandGenerator):
     def get_constraints(self) -> Dict:
         if self.variant == 'raise_hearts':
             return {
-                'hcp_range': (6, 10),
+                'hcp_range': (5, 10),
                 'suit_length_req': (['♥'], 3, 'any_of'),
             }
         elif self.variant == 'raise_spades':
             return {
-                'hcp_range': (6, 10),
+                'hcp_range': (5, 10),
                 'suit_length_req': (['♠'], 3, 'any_of'),
             }
         else:  # no_support
@@ -615,20 +663,47 @@ class SingleRaiseGenerator(SkillHandGenerator):
                 'max_suit_length': 2,  # No 3+ card support
             }
 
+    def _get_trump_suit(self) -> Optional[str]:
+        if self.variant == 'raise_hearts':
+            return '♥'
+        elif self.variant == 'raise_spades':
+            return '♠'
+        return None
+
+    def generate(self, deck: List[Card] = None) -> Tuple[Optional[Hand], List[Card]]:
+        """Generate hand with 6-9 support points for raise variants."""
+        if deck is None:
+            deck = create_deck()
+        constraints = self.get_constraints()
+        trump = self._get_trump_suit()
+        for _ in range(50):
+            hand, remaining = generate_hand_with_constraints(constraints, deck)
+            if hand is None:
+                return None, deck
+            # For raise variants, filter on support points not just HCP
+            if trump and hand.suit_lengths[trump] >= 3:
+                sp = calculate_support_points(hand, trump)
+                if sp < 6 or sp > 9:
+                    continue
+            return hand, remaining
+        return None, deck
+
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
         if self.variant == 'raise_hearts':
             support = hand.suit_lengths['♥']
             if support >= 3:
+                sp = calculate_support_points(hand, '♥')
                 bid = '2♥'
-                explanation = f'Raise 1♥ to 2♥ with {support}-card support and {hand.hcp} HCP (6-10 points).'
+                explanation = f'Raise 1♥ to 2♥ with {support}-card support and {sp} support points (6-9).'
             else:
                 bid = '1NT'
                 explanation = f'No heart support. Bid 1NT as a "dustbin" response.'
         elif self.variant == 'raise_spades':
             support = hand.suit_lengths['♠']
             if support >= 3:
+                sp = calculate_support_points(hand, '♠')
                 bid = '2♠'
-                explanation = f'Raise 1♠ to 2♠ with {support}-card support and {hand.hcp} HCP (6-10 points).'
+                explanation = f'Raise 1♠ to 2♠ with {support}-card support and {sp} support points (6-9).'
             else:
                 bid = '1NT'
                 explanation = f'No spade support. Bid 1NT as a "dustbin" response.'
@@ -646,7 +721,8 @@ class SingleRaiseGenerator(SkillHandGenerator):
 class LimitRaiseGenerator(SkillHandGenerator):
     """Generate hands for limit raise (1M-3M).
 
-    Teaches the invitational 10-12 point range with 4+ card support.
+    Teaches the invitational 10-12 support point range with 4+ card support.
+    Support points = HCP + dummy distribution (void +5, singleton +3, doubleton +1).
     """
 
     skill_id = 'limit_raise'
@@ -675,33 +751,63 @@ class LimitRaiseGenerator(SkillHandGenerator):
                 return variant
         return 'limit_hearts'
 
+    def _get_trump_suit(self) -> str:
+        if self.variant == 'limit_spades':
+            return '♠'
+        return '♥'
+
     def get_constraints(self) -> Dict:
         if self.variant == 'limit_hearts':
             return {
-                'hcp_range': (10, 12),
+                'hcp_range': (8, 12),
                 'suit_length_req': (['♥'], 4, 'any_of'),
             }
         elif self.variant == 'limit_spades':
             return {
-                'hcp_range': (10, 12),
+                'hcp_range': (8, 12),
                 'suit_length_req': (['♠'], 4, 'any_of'),
             }
         else:  # too_weak
             return {
-                'hcp_range': (6, 9),
+                'hcp_range': (5, 9),
                 'suit_length_req': (['♥'], 4, 'any_of'),
             }
 
+    def generate(self, deck: List[Card] = None) -> Tuple[Optional[Hand], List[Card]]:
+        """Generate hand with correct support point ranges."""
+        if deck is None:
+            deck = create_deck()
+        constraints = self.get_constraints()
+        trump = self._get_trump_suit()
+        for _ in range(50):
+            hand, remaining = generate_hand_with_constraints(constraints, deck)
+            if hand is None:
+                return None, deck
+            sp = calculate_support_points(hand, trump)
+            if self.variant == 'too_weak':
+                # Boundary: support points 6-9 (single raise territory)
+                if sp < 6 or sp > 9:
+                    continue
+            else:
+                # Limit raise: support points 10-12
+                if sp < 10 or sp > 12:
+                    continue
+            return hand, remaining
+        return None, deck
+
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        trump = self._get_trump_suit()
+        sp = calculate_support_points(hand, trump)
+
         if self.variant == 'limit_hearts':
             bid = '3♥'
-            explanation = f'Limit raise to 3♥ with {hand.suit_lengths["♥"]}-card support and {hand.hcp} HCP (10-12). Invites game!'
+            explanation = f'Limit raise to 3♥ with {hand.suit_lengths["♥"]}-card support and {sp} support points (10-12). Invites game!'
         elif self.variant == 'limit_spades':
             bid = '3♠'
-            explanation = f'Limit raise to 3♠ with {hand.suit_lengths["♠"]}-card support and {hand.hcp} HCP (10-12). Invites game!'
+            explanation = f'Limit raise to 3♠ with {hand.suit_lengths["♠"]}-card support and {sp} support points (10-12). Invites game!'
         else:  # too_weak
             bid = '2♥'
-            explanation = f'Only {hand.hcp} HCP - not enough for limit raise (need 10-12). Simple raise to 2♥.'
+            explanation = f'Only {sp} support points - not enough for limit raise (need 10-12). Simple raise to 2♥.'
 
         return {
             'bid': bid,
@@ -842,7 +948,8 @@ class DustbinNTResponseGenerator(SkillHandGenerator):
 class GameRaiseGenerator(SkillHandGenerator):
     """Generate hands for direct game raise (1M-4M).
 
-    Teaches the 13-16 point range with 5+ card support - sign-off.
+    Teaches the 13-16 support point range with 5+ card support - sign-off.
+    Support points = HCP + dummy distribution (void +5, singleton +3, doubleton +1).
     """
 
     skill_id = 'game_raise'
@@ -871,33 +978,62 @@ class GameRaiseGenerator(SkillHandGenerator):
                 return variant
         return 'game_hearts'
 
+    def _get_trump_suit(self) -> str:
+        if self.variant == 'game_spades' or self.variant == 'too_strong':
+            return '♠'
+        return '♥'
+
     def get_constraints(self) -> Dict:
         if self.variant == 'game_hearts':
             return {
-                'hcp_range': (13, 16),
+                'hcp_range': (10, 16),
                 'suit_length_req': (['♥'], 5, 'any_of'),
             }
         elif self.variant == 'game_spades':
             return {
-                'hcp_range': (13, 16),
+                'hcp_range': (10, 16),
                 'suit_length_req': (['♠'], 5, 'any_of'),
             }
         else:  # too_strong
             return {
-                'hcp_range': (17, 19),
+                'hcp_range': (14, 19),
                 'suit_length_req': (['♠'], 5, 'any_of'),
             }
 
+    def generate(self, deck: List[Card] = None) -> Tuple[Optional[Hand], List[Card]]:
+        """Generate hand with correct support point ranges."""
+        if deck is None:
+            deck = create_deck()
+        constraints = self.get_constraints()
+        trump = self._get_trump_suit()
+        for _ in range(50):
+            hand, remaining = generate_hand_with_constraints(constraints, deck)
+            if hand is None:
+                return None, deck
+            sp = calculate_support_points(hand, trump)
+            if self.variant == 'too_strong':
+                if sp < 17:
+                    continue
+            else:
+                # Game raise: support points 13-16
+                if sp < 13 or sp > 16:
+                    continue
+            return hand, remaining
+        return None, deck
+
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
+        trump = self._get_trump_suit()
+        sp = calculate_support_points(hand, trump)
+
         if self.variant == 'game_hearts':
             bid = '4♥'
-            explanation = f'Direct game raise to 4♥ with {hand.suit_lengths["♥"]}-card support and {hand.hcp} HCP. Sign-off - no slam interest.'
+            explanation = f'Direct game raise to 4♥ with {hand.suit_lengths["♥"]}-card support and {sp} support points. Sign-off - no slam interest.'
         elif self.variant == 'game_spades':
             bid = '4♠'
-            explanation = f'Direct game raise to 4♠ with {hand.suit_lengths["♠"]}-card support and {hand.hcp} HCP. Sign-off - no slam interest.'
+            explanation = f'Direct game raise to 4♠ with {hand.suit_lengths["♠"]}-card support and {sp} support points. Sign-off - no slam interest.'
         else:  # too_strong
             bid = '2♣'  # or other forcing bid
-            explanation = f'{hand.hcp} HCP with great support - too strong for 4♠ (denies slam interest). Start with forcing bid.'
+            explanation = f'{sp} support points with great support - too strong for 4♠ (denies slam interest). Start with forcing bid.'
 
         return {
             'bid': bid,
@@ -1129,6 +1265,21 @@ class OpeningOneSuitGenerator(SkillHandGenerator):
             return {
                 'hcp_range': (7, 11),  # Not enough to open
             }
+
+    def generate(self, deck: List[Card] = None) -> Tuple[Optional[Hand], List[Card]]:
+        """Generate hand, excluding 15-17 HCP balanced (should open 1NT instead)."""
+        if deck is None:
+            deck = create_deck()
+        constraints = self.get_constraints()
+        for _ in range(50):
+            hand, remaining = generate_hand_with_constraints(constraints, deck)
+            if hand is None:
+                return None, deck
+            # Minor variant with no 5-card major can produce 1NT-range hands
+            if self.variant == 'minor' and hand.is_balanced and 15 <= hand.hcp <= 17:
+                continue
+            return hand, remaining
+        return None, deck
 
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
         # First check if hand is too weak to open
@@ -1520,20 +1671,21 @@ class RespondingToMajorGenerator(SkillHandGenerator):
             explanation = f'{hand.hcp} HCP is too weak to respond (need 6+).'
         # Has support for partner's major?
         elif support_length >= 3:
-            if hand.hcp >= 6 and hand.hcp <= 9:
+            sp = calculate_support_points(hand, support_suit)
+            if sp <= 9:
                 bid = f'2{support_suit}'
-                explanation = f'Simple raise with {support_length} {support_suit} and {hand.hcp} HCP.'
-            elif hand.hcp >= 10 and hand.hcp <= 12:
+                explanation = f'Simple raise with {support_length} {support_suit} and {sp} support points (6-9).'
+            elif sp <= 12:
                 bid = f'3{support_suit}'
-                explanation = f'Limit raise with {support_length} {support_suit} and {hand.hcp} HCP (invitational).'
+                explanation = f'Limit raise with {support_length} {support_suit} and {sp} support points (10-12, invitational).'
             else:
                 bid = f'4{support_suit}'
-                explanation = f'Game raise with {support_length} {support_suit} and {hand.hcp} HCP.'
+                explanation = f'Game raise with {support_length} {support_suit} and {sp} support points (13+).'
         # Can bid spades over 1♥?
         elif self.opening_bid == '1♥' and spades >= 4 and hand.hcp >= 6:
             bid = '1♠'
             explanation = f'Bid 1♠ with {spades} spades (new suit at 1-level).'
-        # NT response
+        # NT response (no trump support, use HCP)
         elif hand.hcp >= 6 and hand.hcp <= 10:
             bid = '1NT'
             explanation = f'{hand.hcp} HCP, no major fit - respond 1NT.'
