@@ -699,7 +699,7 @@ def generate_skill_practice_hand():
             'is_balanced': hand.is_balanced,
             'suit_lengths': hand.suit_lengths
         },
-        'expected_response': generator.get_expected_response(hand),
+        'expected_response': _resolve_engine_bid(generator, hand, generator.get_expected_response(hand)),
         'hand_id': hand_id
     }
 
@@ -735,6 +735,85 @@ def get_available_skill_generators():
 
 import random
 import uuid
+
+
+# ============================================================================
+# ENGINE BID RESOLVER — Single source of truth for learning answers
+# ============================================================================
+
+_bidding_engine = None
+
+def _get_bidding_engine():
+    """Lazy-initialize BiddingEngine singleton for learning bid resolution."""
+    global _bidding_engine
+    if _bidding_engine is None:
+        from engine.bidding_engine import BiddingEngine
+        _bidding_engine = BiddingEngine()
+    return _bidding_engine
+
+
+# Opening skills: South is dealer, empty auction
+_OPENING_SKILLS = {
+    'when_to_open', 'opening_one_major', 'opening_one_minor',
+    'opening_one_suit', 'opening_1nt', 'opening_2c_strong', 'opening_2nt',
+}
+
+# Response skills: partner opened, East passes, South responds
+_RESPONSE_SKILLS = {
+    'single_raise', 'limit_raise', 'game_raise',
+    'new_suit_response', 'dustbin_1nt_response', 'two_over_one_response',
+    'responding_to_major', 'responding_to_minor',
+    'responding_to_1nt', 'responding_to_2c', 'responding_to_2nt',
+}
+
+
+def _resolve_engine_bid(generator, hand, expected_response):
+    """Replace generator's bid with BiddingEngine's authoritative answer.
+
+    For bidding skills, calls BiddingEngine.get_next_bid() with the
+    appropriate auction context. Keeps the generator's pedagogical
+    explanation but uses the engine's bid as the correct answer.
+
+    Non-bidding skills (HCP counting, suit quality, etc.) pass through unchanged.
+    """
+    # Only override if generator returned a bid
+    if 'bid' not in expected_response or expected_response.get('bid') is None:
+        return expected_response
+
+    skill_id = getattr(generator, 'skill_id', '')
+
+    # Determine auction context
+    if skill_id in _OPENING_SKILLS:
+        auction = []
+        position = 'South'
+        dealer = 'South'
+    elif skill_id in _RESPONSE_SKILLS:
+        # Get partner's opening bid from generator
+        partner_bid = getattr(generator, 'partner_opened', None) or \
+                      getattr(generator, 'opening_bid', None)
+        if not partner_bid:
+            return expected_response  # Can't resolve without auction context
+        auction = [partner_bid, 'Pass']
+        position = 'South'
+        dealer = 'North'
+    else:
+        # Skill not mapped (rebids, competitive, etc.) — pass through
+        return expected_response
+
+    try:
+        engine = _get_bidding_engine()
+        engine_bid, engine_explanation = engine.get_next_bid(
+            hand, auction, position, 'None', dealer=dealer
+        )
+        # Override the bid, keep the generator's pedagogical explanation
+        result = dict(expected_response)
+        result['bid'] = engine_bid
+        # Store engine explanation as supplementary info
+        result['engine_explanation'] = str(engine_explanation)[:200]
+        return result
+    except Exception:
+        # On any engine error, fall back to generator's answer
+        return expected_response
 
 
 def normalize_bid(bid: str) -> str:
@@ -891,7 +970,7 @@ def start_learning_session():
         hand, _ = generator.generate(deck)
 
         # Get expected response first (some skills don't need hands)
-        expected = generator.get_expected_response(hand)
+        expected = _resolve_engine_bid(generator, hand, generator.get_expected_response(hand))
 
         # Check if this is a no-hand skill (like bidding_language)
         if expected.get('no_hand_required'):
@@ -1095,7 +1174,7 @@ def submit_learning_answer():
             hand, _ = generator.generate(deck)
 
             # Get expected response (works for both hand and no-hand skills)
-            next_expected = generator.get_expected_response(hand)
+            next_expected = _resolve_engine_bid(generator, hand, generator.get_expected_response(hand))
 
             # Check if this is a no-hand skill
             if next_expected.get('no_hand_required'):
@@ -1281,7 +1360,7 @@ def get_interleaved_review():
                             'is_balanced': hand.is_balanced,
                             'suit_lengths': hand.suit_lengths
                         },
-                        'expected_response': generator.get_expected_response(hand),
+                        'expected_response': _resolve_engine_bid(generator, hand, generator.get_expected_response(hand)),
                         'hand_id': str(uuid.uuid4())[:8]
                     })
 
@@ -1378,7 +1457,7 @@ def get_level_assessment():
                                 'is_balanced': hand.is_balanced,
                                 'suit_lengths': hand.suit_lengths
                             },
-                            'expected_response': generator.get_expected_response(hand),
+                            'expected_response': _resolve_engine_bid(generator, hand, generator.get_expected_response(hand)),
                             'hand_id': str(uuid.uuid4())[:8]
                         })
 
