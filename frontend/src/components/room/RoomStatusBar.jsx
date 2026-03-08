@@ -38,6 +38,7 @@ export default function RoomStatusBar() {
     iAmReady,
     partnerReady,
     partnerDisconnected,
+    playState: roomPlayState,
     error,
     pollRoom,
   } = useRoom();
@@ -88,8 +89,11 @@ export default function RoomStatusBar() {
       return { text: 'Your Turn', cls: 'your-turn' };
     }
 
-    // AI turn
-    if (currentBidder === 'E' || currentBidder === 'W') {
+    // Determine if it's AI's turn (E/W) — works for both bidding and play
+    const nextActor = gamePhase === 'playing' && roomPlayState
+      ? roomPlayState.next_to_play
+      : currentBidder;
+    if (nextActor === 'E' || nextActor === 'W') {
       return { text: 'AI Thinking...', cls: 'partner-turn' };
     }
 

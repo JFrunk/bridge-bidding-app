@@ -571,16 +571,39 @@ function App() {
     }
   }, [inRoom, roomDealer, dealer]);
 
-  // ROOM MODE: Sync playState from room context
-  // Room's play_state comes from polling - need to sync to local playState
+  // ROOM MODE: Sync playState and hands from room context
+  // Room's play_state comes from polling - need to sync to local playState + hands
   useEffect(() => {
     if (!inRoom) return;
 
     if (roomPlayState) {
-      console.log('🔄 Room: Syncing playState from room context');
       setPlayState(roomPlayState);
+
+      // Sync hands from visible_hands (replaces solo AI loop's hand syncing)
+      const vh = roomPlayState.visible_hands;
+      if (vh) {
+        const userPos = isHost ? 'S' : 'N';
+        const partnerPos = isHost ? 'N' : 'S';
+
+        // Sync user's hand
+        if (vh[userPos]?.cards?.length > 0) {
+          setHand(vh[userPos].cards);
+        }
+
+        // Sync dummy hand (visible after opening lead)
+        const dummyPos = roomPlayState.dummy;
+        if (dummyPos && vh[dummyPos]?.cards) {
+          setDummyHand(vh[dummyPos].cards);
+        }
+
+        // Sync declarer hand (visible when user is dummy)
+        const decPos = roomPlayState.contract?.declarer;
+        if (decPos && decPos !== userPos && vh[decPos]?.cards) {
+          setDeclarerHand(vh[decPos].cards);
+        }
+      }
     }
-  }, [inRoom, roomPlayState]);
+  }, [inRoom, roomPlayState, isHost]);
 
   // ROOM MODE: Clean reset when leaving room
   // When inRoom transitions false → show mode selector, clear stale game state
@@ -602,6 +625,9 @@ function App() {
       setSuggestedBid(null);
       setBidFeedback(null);
       setBeliefs(null);
+      setDummyHand(null);
+      setDeclarerHand(null);
+      setScoreData(null);
       setShowModeSelector(true);
       setShowTeamPractice(false);
     }
@@ -829,6 +855,39 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [showLastTrick]);
+
+  // ROOM MODE: Compute score when all 13 tricks complete
+  const roomScoreComputed = useRef(false);
+  useEffect(() => {
+    if (!inRoom || !playState?.tricks_won) return;
+
+    const totalTricks = Object.values(playState.tricks_won).reduce((a, b) => a + b, 0);
+    if (totalTricks === 0) {
+      // New hand started — reset score flag
+      roomScoreComputed.current = false;
+      return;
+    }
+    if (totalTricks < 13 || roomScoreComputed.current) return;
+
+    // All 13 tricks done — compute score locally
+    roomScoreComputed.current = true;
+    const { contract } = playState;
+    const declarerSide = (contract.declarer === 'N' || contract.declarer === 'S') ? 'NS' : 'EW';
+    const tricksMade = declarerSide === 'NS'
+      ? (playState.tricks_won.N || 0) + (playState.tricks_won.S || 0)
+      : (playState.tricks_won.E || 0) + (playState.tricks_won.W || 0);
+    const tricksNeeded = contract.level + 6;
+    const overtricks = tricksMade - tricksNeeded;
+
+    setScoreData({
+      contract: `${contract.level}${contract.strain}`,
+      declarer: contract.declarer,
+      tricks_made: tricksMade,
+      tricks_needed: tricksNeeded,
+      result: overtricks >= 0 ? `Made ${overtricks > 0 ? '+' + overtricks : ''}` : `Down ${Math.abs(overtricks)}`,
+      made: overtricks >= 0,
+    });
+  }, [inRoom, playState]);
 
   // Ref to store AI play loop timeout ID so we can cancel it
   const aiPlayTimeoutRef = useRef(null);
@@ -3003,13 +3062,18 @@ ${otherCommands}`;
     }
   }, [isInitializing, gamePhase, auction.length, nextBidder, showModeSelector, inRoom, roomError]);
 
-  // AI play loop - runs during play phase
+  // AI play loop - runs during play phase (solo mode only)
+  // Room mode: AI plays are handled server-side by auto_play_for_ai()
   useEffect(() => {
     console.log('🔄 AI play loop useEffect triggered:', {
       gamePhase,
       isPlayingCard,
+      inRoom,
       timestamp: new Date().toISOString()
     });
+
+    // ROOM MODE: Skip solo AI play loop — server handles AI via auto_play_for_ai()
+    if (inRoom && !roomError) return;
 
     if (gamePhase !== 'playing' || !isPlayingCard) {
       console.log('⏭️ AI play loop skipped - conditions not met:', {
@@ -3400,7 +3464,7 @@ ${otherCommands}`;
         }
       }
     };
-  }, [gamePhase, isPlayingCard, vulnerability]);
+  }, [gamePhase, isPlayingCard, vulnerability, inRoom, roomError]);
 
   // Show all hands during bidding phase only when toggle is enabled
   const shouldShowHands = gamePhase === 'bidding' && showAllHands;
@@ -3842,15 +3906,17 @@ ${otherCommands}`;
                         <button className="deal-btn primary" data-testid="play-this-hand-button" onClick={startPlayPhase}>
                           ▶ Play This Hand
                         </button>
-                    ) : (
+                    ) : !inRoom ? (
                       <button className="deal-btn primary" data-testid="deal-button" onClick={dealNewHand}>
                         🎲 Deal New Hand
                       </button>
+                    ) : null}
+                    {!inRoom && (
+                      <button className="deal-btn secondary" data-testid="replay-button" onClick={handleReplayHand} disabled={!initialDeal || displayAuction.length === 0}>
+                        ↻ Rebid Hand
+                      </button>
                     )}
-                    <button className="deal-btn secondary" data-testid="replay-button" onClick={handleReplayHand} disabled={!initialDeal || displayAuction.length === 0}>
-                      ↻ Rebid Hand
-                    </button>
-                    {isAuctionOver(displayAuction) && !isPassedOut(displayAuction) && (
+                    {!inRoom && isAuctionOver(displayAuction) && !isPassedOut(displayAuction) && (
                       <button className="deal-btn secondary" onClick={dealNewHand}>
                         🎲 Deal New
                       </button>
