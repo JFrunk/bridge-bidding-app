@@ -1039,9 +1039,16 @@ class SchemaInterpreter:
         # Analyze conditions
         conditions = rule.get('conditions', {})
         constraints = rule.get('constraints', {})
-        all_conditions = {**conditions, **constraints}
-
-        condition_analysis = self._analyze_conditions(all_conditions, features)
+        # constraints can be a list of dicts (e.g. [{"feature": "hcp", "min": 12}])
+        # or a dict — merge dict constraints with conditions, analyze list separately
+        if isinstance(constraints, list):
+            condition_analysis = self._analyze_conditions(conditions, features)
+            condition_analysis.extend(
+                self._analyze_array_constraints_gaps(constraints, features)
+            )
+        else:
+            all_conditions = {**conditions, **constraints}
+            condition_analysis = self._analyze_conditions(all_conditions, features)
 
         # Calculate overall match
         all_passed = trigger_matched and all(
@@ -1311,3 +1318,69 @@ class SchemaInterpreter:
             'gap': gap,
             **details
         }
+
+    def _analyze_array_constraints_gaps(
+        self,
+        constraints: List[Dict],
+        features: Dict[str, Any]
+    ) -> List[Dict]:
+        """
+        Analyze array-format constraints and return gap information.
+
+        Each constraint is a dict like:
+        {"feature": "hcp", "min": 12, "max": 14, "constraint_type": "HARD"}
+        """
+        results = []
+        for constraint in constraints:
+            feature = constraint.get('feature', '')
+            if not feature:
+                continue
+
+            actual = features.get(feature)
+            constraint_type = constraint.get('constraint_type', 'HARD')
+
+            # Build comparison dict from constraint fields
+            comparison = {}
+            if 'min' in constraint:
+                comparison['min'] = constraint['min']
+            if 'max' in constraint:
+                comparison['max'] = constraint['max']
+            if 'exact' in constraint:
+                comparison['exact'] = constraint['exact']
+
+            if comparison:
+                result = self._analyze_comparison(feature, actual, comparison, features)
+                result['constraint_type'] = constraint_type
+                results.append(result)
+            elif 'expected' in constraint:
+                # Boolean/equality constraint: {"feature": "is_balanced", "expected": true}
+                expected = constraint['expected']
+                if isinstance(expected, str) and isinstance(actual, str):
+                    passed = self._matches_pattern(expected, actual)
+                else:
+                    passed = actual == expected
+                gap = None if passed else f"Expected {expected}, got {actual}"
+                results.append({
+                    'key': feature,
+                    'type': 'equality',
+                    'required': expected,
+                    'actual': actual,
+                    'passed': passed,
+                    'gap': gap,
+                    'constraint_type': constraint_type
+                })
+            elif 'value' in constraint:
+                expected = constraint['value']
+                passed = actual == expected
+                gap = None if passed else f"Expected {expected}, got {actual}"
+                results.append({
+                    'key': feature,
+                    'type': 'equality',
+                    'required': expected,
+                    'actual': actual,
+                    'passed': passed,
+                    'gap': gap,
+                    'constraint_type': constraint_type
+                })
+
+        return results
