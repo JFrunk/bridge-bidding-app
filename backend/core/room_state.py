@@ -75,19 +75,47 @@ class RoomState:
     # Room phase: 'waiting' | 'bidding' | 'playing' | 'complete'
     game_phase: str = 'waiting'
 
-    # Settings (host-controlled)
+    # Settings (either peer can update)
     settings: RoomSettings = field(default_factory=RoomSettings)
+
+    # Mutual readiness tracking (peer model)
+    ready_state: Dict[str, bool] = field(default_factory=lambda: {})
+
+    # Chat messages (ephemeral — destroyed on session end)
+    chat_messages: List[Dict[str, Any]] = field(default_factory=list)
 
     # Version tracking for efficient polling
     version: int = 0
+
+    # Per-player last-seen timestamps (heartbeat via polling)
+    last_seen: Dict[str, datetime] = field(default_factory=dict)
 
     # Timestamps
     created_at: datetime = field(default_factory=datetime.now)
     last_activity: datetime = field(default_factory=datetime.now)
 
+    # Disconnect timeout in seconds (60s prevents false positives during active play)
+    DISCONNECT_TIMEOUT: int = 60
+
     def touch(self):
         """Update last activity timestamp"""
         self.last_activity = datetime.now()
+
+    def record_heartbeat(self, session_id: str):
+        """Record that a player is still connected (called on each poll)"""
+        self.last_seen[session_id] = datetime.now()
+        self.last_activity = datetime.now()
+
+    def is_partner_disconnected(self, session_id: str) -> bool:
+        """Check if the other player has timed out"""
+        partner_id = self.guest_session_id if session_id == self.host_session_id else self.host_session_id
+        if not partner_id:
+            return False
+        last = self.last_seen.get(partner_id)
+        if not last:
+            return False
+        from datetime import timedelta
+        return (datetime.now() - last) > timedelta(seconds=self.DISCONNECT_TIMEOUT)
 
     def increment_version(self):
         """Increment version number (call after any state change)"""
@@ -109,6 +137,22 @@ class RoomState:
     def is_session_in_room(self, session_id: str) -> bool:
         """Check if a session ID belongs to this room"""
         return session_id in (self.host_session_id, self.guest_session_id)
+
+    def set_ready(self, session_id: str, ready: bool = True):
+        """Set a player's ready state"""
+        self.ready_state[session_id] = ready
+        self.increment_version()
+
+    def are_both_ready(self) -> bool:
+        """Check if both players have signaled ready"""
+        if not self.is_full():
+            return False
+        return (self.ready_state.get(self.host_session_id, False) and
+                self.ready_state.get(self.guest_session_id, False))
+
+    def clear_ready(self):
+        """Reset both players' ready state (after state transition)"""
+        self.ready_state = {}
 
     def get_current_bidder(self) -> Optional[str]:
         """Get current bidder position based on auction state"""
@@ -178,21 +222,39 @@ class RoomState:
             result['my_position'] = position
             result['is_host'] = (for_session == self.host_session_id)
             result['is_my_turn'] = self.is_session_turn(for_session)
+            result['i_am_ready'] = self.ready_state.get(for_session, False)
+            result['partner_ready'] = self.ready_state.get(
+                self.guest_session_id if for_session == self.host_session_id else self.host_session_id,
+                False
+            )
+            result['both_ready'] = self.are_both_ready()
+            result['partner_disconnected'] = self.is_partner_disconnected(for_session)
 
             # Include hand for this position
             if position and self.deal.get(self._full_position_name(position)):
                 hand = self.deal[self._full_position_name(position)]
                 result['my_hand'] = self._serialize_hand(hand)
 
-            # Include current bidder info
+            # Hand review: reveal partner's hand when auction is complete
+            if self.game_phase == 'complete':
+                partner = 'N' if position == 'S' else 'S'
+                partner_hand = self.deal.get(self._full_position_name(partner))
+                if partner_hand:
+                    result['partner_hand'] = self._serialize_hand(partner_hand)
+                    result['partner_position'] = partner
+
+            # Include current bidder info (always include key for frontend consistency)
             current_bidder = self.get_current_bidder()
+            result['current_bidder'] = current_bidder
             if current_bidder:
-                result['current_bidder'] = current_bidder
                 result['waiting_for'] = 'partner' if current_bidder in ('N', 'S') and current_bidder != position else 'ai'
 
         # Include play state if in playing phase
         if self.game_phase == 'playing' and self.play_state:
             result['play_state'] = self._serialize_play_state(for_session)
+
+        # Include chat messages
+        result['chat_messages'] = self.chat_messages
 
         return result
 

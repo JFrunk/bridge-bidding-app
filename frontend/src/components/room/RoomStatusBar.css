@@ -121,6 +121,13 @@
   border: 1px solid #007bff;
 }
 
+.status-indicator.disconnected {
+  background: #fed7d7;
+  color: #9b2c2c;
+  border: 1px solid #e53e3e;
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
 @keyframes status-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
@@ -206,6 +213,18 @@
 @keyframes reconnect-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(49, 130, 206, 0.4); }
   50% { box-shadow: 0 0 0 4px rgba(49, 130, 206, 0); }
+}
+
+/* Ready badge - shown when player has signaled ready */
+.ready-badge {
+  background: #e6f7ed;
+  border: 1px solid #28a745;
+  color: #28a745;
+  padding: 3px var(--space-3);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 /* Compass Bar - High-contrast seat indicator */

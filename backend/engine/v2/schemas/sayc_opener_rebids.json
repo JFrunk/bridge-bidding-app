@@ -12,7 +12,7 @@
       "constraints": [
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 12, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "hcp", "min": 12, "max": 14, "constraint_type": "HARD"},
         {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
       ],
       "forcing": "none",
@@ -27,7 +27,7 @@
       "constraints": [
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 18, "max": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.12},
+        {"feature": "hcp", "min": 18, "max": 19, "constraint_type": "HARD"},
         {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
       ],
       "forcing": "invitational",
@@ -42,7 +42,7 @@
       "constraints": [
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 20, "max": 21, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "hcp", "min": 20, "max": 21, "constraint_type": "HARD"},
         {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
       ],
       "forcing": "none",

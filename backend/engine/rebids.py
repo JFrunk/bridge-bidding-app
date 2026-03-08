@@ -228,12 +228,11 @@ class RebidModule(ConventionModule):
 
             # If partner bid 2NT, they're inviting game with 11-12 HCP
             if partner_response == '2NT':
-                # Use AuctionContext for smarter game decision
-                auction_context = features.get('auction_context')
+                # Use BiddingState for smarter game decision
                 should_accept = False
+                combined_mid = self._estimate_combined_with_partner(hand, features)
 
-                if auction_context is not None:
-                    combined_mid = auction_context.ranges.combined_midpoint
+                if combined_mid is not None:
                     # 2NT invitation shows 11-12, opener rebid 1NT shows 12-14
                     # Combined should be ~24-25, need 25 for 3NT
                     if combined_mid >= 24:
@@ -276,12 +275,11 @@ class RebidModule(ConventionModule):
                 partner_suit = partner_response[1]
 
                 # Partner is inviting game at 3-level
-                # Use AuctionContext for smarter game decision
-                auction_context = features.get('auction_context')
+                # Use BiddingState for smarter game decision
                 should_accept = False
+                combined_mid = self._estimate_combined_with_partner(hand, features)
 
-                if auction_context is not None:
-                    combined_mid = auction_context.ranges.combined_midpoint
+                if combined_mid is not None:
                     # 3-level invitation shows invitational values (10-12)
                     # With fit, be aggressive - need ~25 combined for major game
                     if combined_mid >= 24:
@@ -788,20 +786,25 @@ class RebidModule(ConventionModule):
             return ("2NT", "Shows a strong hand (16-18 pts) with no obvious fit.")
 
         elif hand.total_points >= 20: # Strong Hand
-            # Check for slam potential using AuctionContext
+            # Check for slam potential using BiddingState
             # Expert recommendation: Combined_Points >= 33 AND Fit_Found = slam investigation
-            auction_context = features.get('auction_context')
-            estimated_combined = 0
+            estimated_combined = self._estimate_combined_with_partner(hand, features)
+            bidding_state = features.get('bidding_state')
             has_fit = False
 
-            if auction_context is not None:
-                estimated_combined = auction_context.ranges.combined_midpoint
-                has_fit = auction_context.has_fit
-            else:
+            if estimated_combined is None:
                 # Fallback: partner's response shows 6-10 (new suit/raise), 10-12 (jump)
                 partner_level = int(partner_response[0]) if partner_response[0].isdigit() else 1
                 partner_estimated = 11 if partner_level >= 3 else 8
                 estimated_combined = hand.total_points + partner_estimated
+
+            if bidding_state is not None:
+                from utils.seats import normalize, partnership_str
+                positions = features.get('positions', [])
+                my_index = features.get('my_index')
+                if positions and my_index is not None:
+                    my_seat = normalize(positions[my_index])
+                    has_fit = bidding_state.agreed_suits.get(partnership_str(my_seat)) is not None
 
             # SLAM AGGREGATION LOGIC (per expert analysis):
             # If Combined_Points >= 33 AND Fit_Found = True THEN Force_Slam_Investigation
