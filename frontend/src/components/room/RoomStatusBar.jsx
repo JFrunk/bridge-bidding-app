@@ -27,7 +27,6 @@ const CONVENTION_NAMES = {
 export default function RoomStatusBar() {
   const {
     roomCode,
-    isHost,
     myPosition,
     partnerConnected,
     isMyTurn,
@@ -35,18 +34,21 @@ export default function RoomStatusBar() {
     currentBidder,
     settings,
     leaveRoom,
-    dealHands,
+    setReady,
+    iAmReady,
+    partnerReady,
+    partnerDisconnected,
     error,
     pollRoom,
   } = useRoom();
 
-  // Host can deal when partner connected and in waiting phase
-  const canDeal = isHost && partnerConnected && gamePhase === 'waiting';
+  // Either peer can signal ready when partner connected and in waiting/complete phase
+  const canReady = partnerConnected && (gamePhase === 'waiting' || gamePhase === 'complete') && !iAmReady;
 
-  const handleDeal = async () => {
-    const result = await dealHands();
+  const handleReady = async () => {
+    const result = await setReady();
     if (!result.success) {
-      console.error('Failed to deal:', result.error);
+      console.error('Failed to set ready:', result.error);
     }
   };
 
@@ -57,6 +59,11 @@ export default function RoomStatusBar() {
 
   // Determine status message and class
   const getStatus = () => {
+    // Partner disconnected (heartbeat timeout)
+    if (partnerDisconnected) {
+      return { text: 'Partner Disconnected', cls: 'disconnected' };
+    }
+
     // Waiting for partner to join
     if (!partnerConnected) {
       return { text: 'Waiting for Partner...', cls: 'waiting' };
@@ -64,11 +71,15 @@ export default function RoomStatusBar() {
 
     // Waiting phase (before deal)
     if (gamePhase === 'waiting') {
+      if (iAmReady && !partnerReady) return { text: 'Waiting for Partner to Ready Up...', cls: 'waiting' };
+      if (!iAmReady && partnerReady) return { text: 'Partner is Ready!', cls: 'your-turn' };
       return { text: 'Partner Connected', cls: 'connected' };
     }
 
-    // Game complete
+    // Game complete — ready for next hand
     if (gamePhase === 'complete') {
+      if (iAmReady && !partnerReady) return { text: 'Waiting for Partner...', cls: 'waiting' };
+      if (!iAmReady && partnerReady) return { text: 'Partner Wants Next Hand', cls: 'your-turn' };
       return { text: 'Hand Complete', cls: 'connected' };
     }
 
@@ -89,7 +100,7 @@ export default function RoomStatusBar() {
   const status = getStatus();
 
   // Compass labels based on position
-  const myLabel = myPosition === 'S' ? 'SOUTH (Host)' : 'NORTH (Guest)';
+  const myLabel = myPosition === 'S' ? 'SOUTH' : 'NORTH';
   const partnerLabel = myPosition === 'S' ? 'NORTH' : 'SOUTH';
 
   // Check for connection error (404)
@@ -131,14 +142,17 @@ export default function RoomStatusBar() {
               Reconnect
             </button>
           )}
-          {canDeal && (
+          {canReady && (
             <button
               className="btn-deal"
-              onClick={handleDeal}
-              title="Deal hands and start game"
+              onClick={handleReady}
+              title={gamePhase === 'complete' ? 'Ready for next hand' : 'Ready to start'}
             >
-              Deal &amp; Start
+              {gamePhase === 'complete' ? 'Next Hand' : 'Ready'}
             </button>
+          )}
+          {iAmReady && (gamePhase === 'waiting' || gamePhase === 'complete') && (
+            <span className="ready-badge">Ready</span>
           )}
           <button
             className="btn-leave-session"

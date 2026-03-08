@@ -27,7 +27,7 @@ import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UserProvider, useUser } from './contexts/UserContext';
 import { RoomProvider, useRoom } from './contexts/RoomContext';
-import { RoomLobby, RoomStatusBar, JoinRoomModal, RoomWaitingState } from './components/room';
+import { RoomLobby, RoomStatusBar, JoinRoomModal, RoomWaitingState, ChatSidebar } from './components/room';
 import WelcomeWizard from './components/onboarding/WelcomeWizard';
 import { SimpleLogin } from './components/auth/SimpleLogin';
 import { PrivacyPolicy } from './components/legal/PrivacyPolicy';
@@ -401,6 +401,8 @@ function App() {
     gamePhase: roomGamePhase,
     isMyTurn,
     myHand: roomHand,
+    partnerHand: roomPartnerHand,
+    partnerPosition: roomPartnerPosition,
     auction: roomAuction,
     dealer: roomDealer,
     vulnerability: roomVulnerability,
@@ -488,7 +490,7 @@ function App() {
 
   // Game is active in room mode (bidding or playing)
   const isRoomGameActive = useMemo(() => {
-    return inRoom && (roomGamePhase === 'bidding' || roomGamePhase === 'playing');
+    return inRoom && (roomGamePhase === 'bidding' || roomGamePhase === 'playing' || roomGamePhase === 'complete');
   }, [inRoom, roomGamePhase]);
 
   // Initialize Google Analytics on mount
@@ -579,6 +581,32 @@ function App() {
       setPlayState(roomPlayState);
     }
   }, [inRoom, roomPlayState]);
+
+  // ROOM MODE: Clean reset when leaving room
+  // When inRoom transitions false → show mode selector, clear stale game state
+  const wasInRoom = useRef(false);
+  useEffect(() => {
+    if (wasInRoom.current && !inRoom) {
+      // Left room — reset to clean landing state
+      setHand([]);
+      setHandPoints(null);
+      setAuction([]);
+      setDealer('North');
+      setVulnerability('None');
+      setNextBidder(null);
+      setGamePhase('bidding');
+      setAllHands(null);
+      setPlayState(null);
+      setError('');
+      setDisplayedMessage('');
+      setSuggestedBid(null);
+      setBidFeedback(null);
+      setBeliefs(null);
+      setShowModeSelector(true);
+      setShowTeamPractice(false);
+    }
+    wasInRoom.current = inRoom;
+  }, [inRoom]);
 
   // ROOM MODE: Invalidate stale hint when auction advances
   // When partner or AI bids, the suggested bid is no longer valid
@@ -1271,15 +1299,9 @@ ${otherCommands}`;
   // ========== CARD PLAY FUNCTIONS ==========
 
   const startPlayPhase = async () => {
-    // Room mode: Use room-aware play endpoints
+    // Room mode: Use room-aware play endpoints (either peer can start)
     if (inRoom) {
-      if (!isHost) {
-        // Guest cannot start play - this shouldn't happen, button should be disabled
-        console.warn('Guest cannot start play - waiting for host');
-        return;
-      }
-
-      // Host starts room play
+      // Either peer can start room play
       const result = await startRoomPlay();
       if (result.success) {
         console.log('🎮 Room play started:', result.data);
@@ -2677,17 +2699,28 @@ ${otherCommands}`;
 
     try {
       setSuggestedBid({ loading: true });
-      const response = await fetch(`${API_URL}/api/get-next-bid`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-        body: JSON.stringify({
-          auction_history: displayAuction.map(a => a.bid),
-          current_player: userPosition,
-          vulnerability: displayVulnerability,
-          explanation_detail: 'detailed',
-          hint_only: true  // Don't record this bid in session state
-        })
-      });
+
+      let response;
+      if (inRoom) {
+        // Room mode: use room hint endpoint (uses room's hand data)
+        response = await fetch(`${API_URL}/api/room/hint`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+        });
+      } else {
+        // Solo mode: use standard hint endpoint
+        response = await fetch(`${API_URL}/api/get-next-bid`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+          body: JSON.stringify({
+            auction_history: displayAuction.map(a => a.bid),
+            current_player: userPosition,
+            vulnerability: displayVulnerability,
+            explanation_detail: 'detailed',
+            hint_only: true
+          })
+        });
+      }
 
       if (!response.ok) {
         throw new Error('Failed to get hint');
@@ -3404,6 +3437,9 @@ ${otherCommands}`;
 
   // Handle navigation from TopNavigation
   const handleNavModuleSelect = (modeId) => {
+    // Guard: partner mode locks out solo navigation
+    if (inRoom) return;
+
     // Guard: protected features require registration for guests
     if (isGuest && requiresRegistration(modeId)) {
       promptForRegistration();
@@ -3437,6 +3473,7 @@ ${otherCommands}`;
           currentModule={getCurrentModule()}
           onModuleSelect={handleNavModuleSelect}
           showTitle={!showModeSelector}
+          inRoom={inRoom}
         >
           {/* Partner Practice button - dev only (not yet functional in production) */}
           {!inRoom && process.env.NODE_ENV === 'development' && (
@@ -3536,6 +3573,9 @@ ${otherCommands}`;
       {/* Room Status Bar - Fixed 40px bar at top when in any room */}
       {inRoom && <RoomStatusBar />}
 
+      {/* Chat Sidebar - Collapsible panel for partner communication */}
+      {inRoom && <ChatSidebar />}
+
       {/* Room Waiting State - Guest waiting for host to deal (only when NOT game active) */}
       {isWaitingForDeal && !isRoomGameActive && <RoomWaitingState />}
 
@@ -3597,7 +3637,9 @@ ${otherCommands}`;
                 {/* Room mode: Partner is thinking */}
                 {inRoom && !isMyTurn && roomGamePhase === 'bidding' && !isAuctionOver(displayAuction) && (
                   <div className="turn-message partner-thinking">
-                    💭 Partner is thinking...
+                    {roomCurrentBidder === 'E' || roomCurrentBidder === 'W'
+                      ? '⏳ AI is thinking...'
+                      : "💭 Partner is thinking..."}
                   </div>
                 )}
                 {/* Solo mode: AI bidding */}
@@ -3636,7 +3678,7 @@ ${otherCommands}`;
             <PlayerHand position="South" hand={allHands.South?.hand} points={allHands.South?.points} vulnerability={vulnerability} />
           </div>
         </div>
-      ) : gamePhase === 'bidding' ? (
+      ) : gamePhase === 'bidding' && (!inRoom || isRoomGameActive) ? (
         /* BID screen layout per bid-mockup-v2.html */
         <div className="bidding-phase">
           {/* Session Mode Bar - below header */}
@@ -3714,6 +3756,38 @@ ${otherCommands}`;
                   </div>
                 </div>
 
+                {/* Partner hand reveal - shown when auction complete in room mode */}
+                {inRoom && roomPartnerHand && roomGamePhase === 'complete' && (
+                  <div style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    margin: '8px 0',
+                    textAlign: 'center',
+                  }}>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px', fontWeight: 600, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Partner's Hand ({roomPartnerPosition === 'N' ? 'North' : 'South'})
+                    </div>
+                    <div className="text-sm flex flex-row gap-[0.4em] justify-center py-1">
+                      {getSuitOrder(null).map(suit => {
+                        const suitCards = roomPartnerHand.filter(card => card.suit === suit);
+                        if (suitCards.length === 0) return null;
+                        const count = suitCards.length;
+                        const spacingClass = count >= 7 ? '-space-x-[1.8em]' : count >= 5 ? '-space-x-[1.4em]' : '-space-x-[1.0em]';
+                        return (
+                          <div key={suit} className={`flex flex-row ${spacingClass}`}>
+                            {suitCards.map((card, idx) => (
+                              <div key={`partner-${suit}-${card.rank}`} style={{ zIndex: 10 + idx }}>
+                                <Card rank={card.rank} suit={card.suit} customScaleClass="text-sm" />
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Bid feedback - between table and hand (coached mode only) */}
                 {bidFeedback && gamePhase === 'bidding' && sessionMode === 'coached' && (
                   <div className="feedback-strip">
@@ -3752,7 +3826,7 @@ ${otherCommands}`;
                     </div>
                   ) : (
                     <p style={{color: 'rgba(255,255,255,0.7)', textAlign: 'center', padding: '16px'}}>
-                      {isInitializing ? 'System Initiating...' : 'Dealing...'}
+                      {isInitializing ? 'System Initiating...' : inRoom && roomGamePhase === 'waiting' ? 'Click Ready to deal' : 'Dealing...'}
                     </p>
                   )}
                 </div>
@@ -3765,24 +3839,9 @@ ${otherCommands}`;
 
                   <div className="deal-actions">
                     {isAuctionOver(displayAuction) && !isPassedOut(displayAuction) ? (
-                      inRoom && !isHost ? (
-                        <div className="waiting-for-host" style={{
-                          background: 'rgba(59, 130, 246, 0.15)',
-                          border: '2px solid #3b82f6',
-                          borderRadius: '8px',
-                          padding: '12px 20px',
-                          color: '#93c5fd',
-                          fontWeight: '600',
-                          fontSize: '15px',
-                          textAlign: 'center'
-                        }}>
-                          ⏳ Waiting for Host to start play...
-                        </div>
-                      ) : (
                         <button className="deal-btn primary" data-testid="play-this-hand-button" onClick={startPlayPhase}>
                           ▶ Play This Hand
                         </button>
-                      )
                     ) : (
                       <button className="deal-btn primary" data-testid="deal-button" onClick={dealNewHand}>
                         🎲 Deal New Hand
@@ -3996,24 +4055,9 @@ ${otherCommands}`;
                 )}
                 {/* Primary action when bidding is complete */}
                 {isAuctionOver(displayAuction) && !isPassedOut(displayAuction) && (
-                  inRoom && !isHost ? (
-                    <div className="waiting-for-host" style={{
-                      background: 'rgba(59, 130, 246, 0.15)',
-                      border: '2px solid #3b82f6',
-                      borderRadius: '8px',
-                      padding: '12px 20px',
-                      color: '#93c5fd',
-                      fontWeight: '600',
-                      fontSize: '15px',
-                      textAlign: 'center'
-                    }}>
-                      ⏳ Waiting for Host to start play...
-                    </div>
-                  ) : (
                     <button className="play-this-hand-button primary-action" data-testid="play-this-hand-button" onClick={startPlayPhase}>
                       ▶ Play This Hand
                     </button>
-                  )
                 )}
                 {/* Show message when hand is passed out */}
                 {isPassedOut(displayAuction) && (

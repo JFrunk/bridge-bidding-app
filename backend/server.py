@@ -833,6 +833,13 @@ try:
 except ImportError:
     print("ℹ️ ACBL import module not available (optional feature)")
 
+# Register Team Practice (Partner) room endpoints
+from core.room_state import RoomStateManager
+from routes.room_api import register_room_endpoints
+
+room_manager = RoomStateManager()
+register_room_endpoints(app, room_manager)
+
 # ============================================================================
 # SESSION MANAGEMENT ENDPOINTS
 # ============================================================================
@@ -851,9 +858,6 @@ def perform_new_deal(state):
     # CRITICAL: Reset engine state for new deal
     if hasattr(engine, 'new_deal'):
         engine.new_deal()
-    # Also reset V2 Schema if it exists but isn't the active engine (comparison mode)
-    if engine_v2_schema and engine_v2_schema is not engine and hasattr(engine_v2_schema, 'new_deal'):
-        engine_v2_schema.new_deal()
 
     # Determine dealer and vulnerability
     if state.game_session:
@@ -1584,7 +1588,6 @@ def get_next_bid():
     state = get_state()
     try:
         data = request.get_json()
-        use_v2_schema = data.get('use_v2_schema', False)
         explanation_level = data.get('explanation_level', 'detailed')
 
         # ── Authoritative turn calculation from session state ──
@@ -1636,15 +1639,7 @@ def get_next_bid():
         if not player_hand:
             return jsonify({'error': "Deal has not been made yet."}), 400
 
-        # Select engine: use V2 Schema override if explicitly requested (legacy dev flag)
-        active_engine = engine
-        engine_used = "V2 Schema" if engine is engine_v2_schema else "V2 State Machine"
-        if use_v2_schema and engine_v2_schema and engine is not engine_v2_schema:
-            active_engine = engine_v2_schema
-            engine_used = "V2 Schema (override)"
-            print(f"🔷 Override: Using V2 Schema engine for this request")
-
-        bid, explanation = active_engine.get_next_bid(player_hand, auction_history, current_player,
+        bid, explanation = engine.get_next_bid(player_hand, auction_history, current_player,
                                                 state.vulnerability, explanation_level, dealer=dealer)
 
         # Fix for TypeError: Object of type BidExplanation is not JSON serializable
@@ -1678,8 +1673,6 @@ def get_next_bid():
         }
         if beliefs is not None:
             response['beliefs'] = beliefs
-        if use_v2_schema:
-            response['engine_used'] = engine_used
         return jsonify(response)
 
     except Exception as e:
@@ -1886,13 +1879,12 @@ def evaluate_bid():
                 user_id = -1
 
         feedback_level = data.get('feedback_level', 'intermediate')  # beginner, intermediate, expert
-        use_v2_schema = data.get('use_v2_schema', False)  # Dev mode flag for V2 Schema testing
         # When True, record the bid in session auction state.
         # Governor pre-evaluation sends False so a blocked bid isn't recorded.
         record_bid = data.get('record_bid', True)
         record_only = data.get('record_only', False)
 
-        print(f"📊 /api/evaluate-bid called: user_bid={user_bid}, auction_len={len(auction_history)}, player={current_player}, user_id={user_id}, v2_schema={use_v2_schema}, record_only={record_only}")
+        print(f"📊 /api/evaluate-bid called: user_bid={user_bid}, auction_len={len(auction_history)}, player={current_player}, user_id={user_id}, record_only={record_only}")
 
         if not user_bid:
             print("❌ evaluate-bid: Missing user_bid")
@@ -1948,206 +1940,143 @@ def evaluate_bid():
                         'hand': [{'suit': c.suit, 'rank': c.rank} for c in hand.cards]
                     }
 
-        # Select engine and evaluation method
-        # Use V2 Schema path when it's the active engine OR when explicitly requested
-        use_v2_evaluation = (engine is engine_v2_schema) or (use_v2_schema and engine_v2_schema)
-        if use_v2_evaluation and engine_v2_schema:
-            # V2 Schema: Use unified evaluation (same rules for AI and feedback)
-            print(f"🔷 Using V2 Schema unified evaluation for evaluate-bid")
+        # V2 Schema: Unified evaluation (same rules for AI and feedback)
+        v2_feedback = engine_v2_schema.evaluate_user_bid(
+            hand=user_hand,
+            user_bid=user_bid,
+            auction_history=auction_history,
+            my_position=current_player,
+            vulnerability=state.vulnerability,
+            dealer=dealer
+        )
 
-            v2_feedback = engine_v2_schema.evaluate_user_bid(
-                hand=user_hand,
+        # Store in database for analytics
+        from engine.feedback.bidding_feedback import get_feedback_generator, BiddingFeedback, CorrectnessLevel, ImpactLevel
+        feedback_generator = get_feedback_generator()
+
+        # Convert V2 feedback to storage format
+        feedback = BiddingFeedback(
+            bid_number=v2_feedback.bid_number,
+            position=v2_feedback.position,
+            user_bid=v2_feedback.user_bid,
+            correctness=CorrectnessLevel(v2_feedback.correctness.value),
+            score=v2_feedback.score,
+            optimal_bid=v2_feedback.optimal_bid,
+            alternative_bids=v2_feedback.alternative_bids,
+            reasoning=v2_feedback.optimal_explanation,
+            explanation_level='detailed',
+            rule_reference=v2_feedback.optimal_rule_id,
+            error_category=v2_feedback.error_category,
+            error_subcategory=v2_feedback.error_subcategory,
+            impact=ImpactLevel(v2_feedback.impact.value),
+            helpful_hint=v2_feedback.helpful_hint,
+            key_concept=v2_feedback.key_concept,
+            difficulty=v2_feedback.difficulty,
+            learning_feedback=v2_feedback.learning_feedback
+        )
+
+        # Build auction context for storage
+        auction_context = {
+            'history': auction_history,
+            'current_player': current_player,
+            'dealer': dealer,
+            'vulnerability': state.vulnerability
+        }
+
+        # Get hand_number from game session (1-indexed for display)
+        hand_number = state.game_session.hands_completed + 1 if state.game_session else None
+
+        # Store feedback (skip for completely anonymous users without valid guest ID)
+        if user_id != -1:
+            feedback_generator._store_feedback(
+                user_id=user_id,
+                feedback=feedback,
+                auction_context=auction_context,
+                session_id=session_id,
+                hand_analysis_id=None,
+                hand_number=hand_number,
+                deal_data=deal_data
+            )
+        else:
+            print(f"⚠️ Skipping feedback storage for anonymous user (feedback still returned)")
+
+        optimal_explanation_str = v2_feedback.optimal_explanation
+        optimal_bid = v2_feedback.optimal_bid
+
+        # Add differential analysis for enhanced feedback
+        try:
+            from engine.v2.differential_analyzer import get_differential_analyzer
+            diff_analyzer = get_differential_analyzer()
+            diff_result = diff_analyzer.analyze(
                 user_bid=user_bid,
+                optimal_bid=v2_feedback.optimal_bid,
+                hand=user_hand,
                 auction_history=auction_history,
-                my_position=current_player,
+                position=current_player,
                 vulnerability=state.vulnerability,
                 dealer=dealer
             )
 
-            # Store in database for analytics (V2 feedback uses same DB schema)
-            from engine.feedback.bidding_feedback import get_feedback_generator, BiddingFeedback, CorrectnessLevel, ImpactLevel
-            feedback_generator = get_feedback_generator()
-
-            # Convert V2 feedback to V1 format for storage compatibility
-            feedback = BiddingFeedback(
-                bid_number=v2_feedback.bid_number,
-                position=v2_feedback.position,
-                user_bid=v2_feedback.user_bid,
-                correctness=CorrectnessLevel(v2_feedback.correctness.value),
-                score=v2_feedback.score,
-                optimal_bid=v2_feedback.optimal_bid,
-                alternative_bids=v2_feedback.alternative_bids,
-                reasoning=v2_feedback.optimal_explanation,
-                explanation_level='detailed',
-                rule_reference=v2_feedback.optimal_rule_id,
-                error_category=v2_feedback.error_category,
-                error_subcategory=v2_feedback.error_subcategory,
-                impact=ImpactLevel(v2_feedback.impact.value),
-                helpful_hint=v2_feedback.helpful_hint,
-                key_concept=v2_feedback.key_concept,
-                difficulty=v2_feedback.difficulty
-            )
-
-            # Build auction context for storage
-            auction_context = {
-                'history': auction_history,
-                'current_player': current_player,
-                'dealer': dealer,
-                'vulnerability': state.vulnerability
+            feedback._differential = {
+                'factors': [
+                    {
+                        'feature': f.feature,
+                        'label': f.label,
+                        'actual_value': f.actual_value,
+                        'required_value': f.required_value,
+                        'gap': f.gap,
+                        'impact': f.impact,
+                        'status': f.status,
+                        'shortfall': f.shortfall
+                    }
+                    for f in diff_result.differential_factors
+                ],
+                'user_bid_rules': [
+                    {
+                        'rule_id': r.rule_id,
+                        'bid': r.bid,
+                        'priority': r.priority,
+                        'description': r.description,
+                        'conditions_met': r.conditions_met,
+                        'conditions_total': r.conditions_total
+                    }
+                    for r in diff_result.user_bid_rules[:3]
+                ],
+                'optimal_bid_rules': [
+                    {
+                        'rule_id': r.rule_id,
+                        'bid': r.bid,
+                        'priority': r.priority,
+                        'description': r.description,
+                        'conditions_met': r.conditions_met,
+                        'conditions_total': r.conditions_total
+                    }
+                    for r in diff_result.optimal_bid_rules[:3]
+                ]
             }
-
-            # Get hand_number from game session (1-indexed for display)
-            hand_number = state.game_session.hands_completed + 1 if state.game_session else None
-
-            # Store feedback (skip for completely anonymous users without valid guest ID)
-            # Guest users have valid negative IDs from frontend; -1 is our fallback for API-only anonymous
-            if user_id != -1:
-                feedback_generator._store_feedback(
-                    user_id=user_id,
-                    feedback=feedback,
-                    auction_context=auction_context,
-                    session_id=session_id,
-                    hand_analysis_id=None,
-                    hand_number=hand_number,
-                    deal_data=deal_data
-                )
-            else:
-                print(f"⚠️ Skipping feedback storage for anonymous user (feedback still returned)")
-
-            optimal_explanation_str = v2_feedback.optimal_explanation
-            optimal_bid = v2_feedback.optimal_bid  # Set for response building below
-
-            # Add differential analysis for enhanced feedback
-            try:
-                from engine.v2.differential_analyzer import get_differential_analyzer
-                diff_analyzer = get_differential_analyzer()
-                diff_result = diff_analyzer.analyze(
-                    user_bid=user_bid,
-                    optimal_bid=v2_feedback.optimal_bid,
-                    hand=user_hand,
-                    auction_history=auction_history,
-                    position=current_player,
-                    vulnerability=state.vulnerability,
-                    dealer=dealer
-                )
-
-                # Attach differential data to feedback for response
-                feedback._differential = {
-                    'factors': [
-                        {
-                            'feature': f.feature,
-                            'label': f.label,
-                            'actual_value': f.actual_value,
-                            'required_value': f.required_value,
-                            'gap': f.gap,
-                            'impact': f.impact,
-                            'status': f.status,
-                            'shortfall': f.shortfall
-                        }
-                        for f in diff_result.differential_factors
-                    ],
-                    'user_bid_rules': [
-                        {
-                            'rule_id': r.rule_id,
-                            'bid': r.bid,
-                            'priority': r.priority,
-                            'description': r.description,
-                            'conditions_met': r.conditions_met,
-                            'conditions_total': r.conditions_total
-                        }
-                        for r in diff_result.user_bid_rules[:3]
-                    ],
-                    'optimal_bid_rules': [
-                        {
-                            'rule_id': r.rule_id,
-                            'bid': r.bid,
-                            'priority': r.priority,
-                            'description': r.description,
-                            'conditions_met': r.conditions_met,
-                            'conditions_total': r.conditions_total
-                        }
-                        for r in diff_result.optimal_bid_rules[:3]
-                    ]
-                }
-                feedback._physics = {
-                    'hcp': diff_result.physics.hcp,
-                    'shape': diff_result.physics.shape,
-                    'lott_safe_level': diff_result.physics.lott_safe_level,
-                    'working_hcp_ratio': diff_result.physics.working_hcp_ratio,
-                    'quick_tricks': diff_result.physics.quick_tricks,
-                    'is_balanced': diff_result.physics.is_balanced,
-                    'is_misfit': diff_result.physics.is_misfit,
-                    'stoppers': diff_result.physics.stoppers
-                }
-                feedback._learning = {
-                    'domain': diff_result.diagnostic_domain.value,
-                    'primary_reason': diff_result.primary_reason,
-                    'learning_point': diff_result.learning_point,
-                    'tutorial_link': diff_result.tutorial_link
-                }
-                feedback._commentary_html = diff_result.commentary_html
-            except Exception as diff_err:
-                print(f"⚠️ Differential analysis failed (non-blocking): {diff_err}")
-                feedback._differential = None
-                feedback._physics = None
-                feedback._learning = None
-                feedback._commentary_html = None
-
-        else:
-            # V1: Original evaluation path
-            active_engine = engine
-
-            # Get AI's optimal bid and explanation (does NOT modify state)
-            # We pass auction_history BEFORE the user's bid to get what AI would have bid
-            optimal_bid, optimal_explanation_str = active_engine.get_next_bid(
-                user_hand,
-                auction_history,
-                current_player,
-                state.vulnerability,
-                'detailed'
-            )
-
-            # Get structured explanation for better feedback
-            _, optimal_explanation_dict = active_engine.get_next_bid_structured(
-                user_hand,
-                auction_history,
-                current_player,
-                state.vulnerability
-            )
-
-            # Create BidExplanation object from structured data
-            from engine.ai.bid_explanation import BidExplanation
-            optimal_explanation_obj = BidExplanation(optimal_bid)
-            optimal_explanation_obj.primary_reason = optimal_explanation_dict.get('primary_reason', '')
-            optimal_explanation_obj.convention_reference = optimal_explanation_dict.get('convention', {}).get('id')
-            optimal_explanation_obj.forcing_status = optimal_explanation_dict.get('forcing_status')
-
-            # Build auction context
-            auction_context = {
-                'history': auction_history,
-                'current_player': current_player,
-                'dealer': dealer,
-                'vulnerability': state.vulnerability
+            feedback._physics = {
+                'hcp': diff_result.physics.hcp,
+                'shape': diff_result.physics.shape,
+                'lott_safe_level': diff_result.physics.lott_safe_level,
+                'working_hcp_ratio': diff_result.physics.working_hcp_ratio,
+                'quick_tricks': diff_result.physics.quick_tricks,
+                'is_balanced': diff_result.physics.is_balanced,
+                'is_misfit': diff_result.physics.is_misfit,
+                'stoppers': diff_result.physics.stoppers
             }
-
-            # Generate structured feedback using BiddingFeedbackGenerator
-            from engine.feedback.bidding_feedback import get_feedback_generator
-            feedback_generator = get_feedback_generator()
-
-            # Get hand_number from game session (1-indexed for display)
-            hand_number = state.game_session.hands_completed + 1 if state.game_session else None
-
-            feedback = feedback_generator.evaluate_and_store(
-                user_id=user_id,
-                hand=user_hand,
-                user_bid=user_bid,
-                auction_context=auction_context,
-                optimal_bid=optimal_bid,
-                optimal_explanation=optimal_explanation_obj,
-                session_id=session_id,
-                hand_number=hand_number,
-                deal_data=deal_data
-            )
+            feedback._learning = {
+                'domain': diff_result.diagnostic_domain.value,
+                'primary_reason': diff_result.primary_reason,
+                'learning_point': diff_result.learning_point,
+                'tutorial_link': diff_result.tutorial_link
+            }
+            feedback._commentary_html = diff_result.commentary_html
+        except Exception as diff_err:
+            print(f"⚠️ Differential analysis failed (non-blocking): {diff_err}")
+            feedback._differential = None
+            feedback._physics = None
+            feedback._learning = None
+            feedback._commentary_html = None
 
         print(f"✅ evaluate-bid: Stored feedback for user {user_id}: {user_bid} ({feedback.correctness.value}, score: {feedback.score})")
 

@@ -22,7 +22,7 @@ const modules = [
   ...(isLocalhost ? [{ id: 'lab', label: 'LAB', description: 'Learning flows preview' }] : [])
 ];
 
-function TopNavigation({ currentModule, onModuleSelect, showTitle = true, children }) {
+function TopNavigation({ currentModule, onModuleSelect, showTitle = true, inRoom = false, children }) {
   return (
     <nav className="top-navigation" role="navigation" aria-label="Main navigation">
       <div className="top-nav-content">
@@ -33,20 +33,29 @@ function TopNavigation({ currentModule, onModuleSelect, showTitle = true, childr
           </div>
         )}
 
-        {/* Text-only navigation tabs - Center */}
-        <div className="nav-tabs">
-          {modules.map((module) => (
-            <button
-              key={module.id}
-              className={`nav-tab ${currentModule === module.id ? 'active' : ''}`}
-              onClick={() => onModuleSelect(module.id)}
-              aria-label={module.description}
-              aria-current={currentModule === module.id ? 'page' : undefined}
-            >
-              {module.label}
-            </button>
-          ))}
-        </div>
+        {/* Text-only navigation tabs - Center (hidden in partner mode) */}
+        {!inRoom && (
+          <div className="nav-tabs">
+            {modules.map((module) => (
+              <button
+                key={module.id}
+                className={`nav-tab ${currentModule === module.id ? 'active' : ''}`}
+                onClick={() => onModuleSelect(module.id)}
+                aria-label={module.description}
+                aria-current={currentModule === module.id ? 'page' : undefined}
+              >
+                {module.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Partner mode indicator - Center (shown in partner mode) */}
+        {inRoom && (
+          <div className="nav-tabs">
+            <span className="nav-partner-label">PARTNER PRACTICE</span>
+          </div>
+        )}
 
         {/* Right section - utility buttons and user menu */}
         <div className="nav-right-section">
