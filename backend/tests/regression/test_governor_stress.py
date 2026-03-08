@@ -306,7 +306,6 @@ class TestGovernorEdgeCases:
 
         # Mock features and auction
         features = {
-            'auction_context': None,
             'auction_features': {'opener_relationship': 'Partner'}
         }
         auction = ['1♣', 'Pass', '1♠', 'Pass', '3♣', 'Pass']

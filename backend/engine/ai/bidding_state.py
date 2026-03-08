@@ -4,8 +4,8 @@ Per-Seat Belief Model for Bridge Bidding
 Tracks what each seat (N/E/S/W) has communicated through their bids:
 HCP ranges, suit length ranges, and convention-specific inferences.
 
-This provides a richer context than AuctionContext/PartnershipRanges
-(which only track opener/responder roles, not all 4 seats).
+This is the single source of truth for auction-derived beliefs,
+tracking all 4 seats independently (not just opener/responder roles).
 
 Usage:
     from engine.ai.bidding_state import BiddingStateBuilder

@@ -5,7 +5,7 @@ from engine.ai.bid_explanation import BidExplanation, ExplanationLevel
 from engine.ai.module_registry import ModuleRegistry
 from engine.ai.validation_pipeline import ValidationPipeline
 from engine.ai.sanity_checker import SanityChecker
-from engine.ai.auction_context import analyze_auction_context
+from engine.ai.bidding_state import BiddingStateBuilder
 
 # Import all specialist modules (triggers auto-registration)
 # ADR-0002 Phase 1: Modules now register themselves on import
@@ -204,7 +204,7 @@ class BiddingEngine:
 
                 # SLAM EXPLORATION SAFETY NET (re-enabled with BiddingState)
                 # Uses per-seat beliefs for accurate combined HCP — guards prevent
-                # the old AuctionContext inflation issues (requires BiddingState,
+                # the old inflation issues from legacy range tracking (requires BiddingState,
                 # 16+ own HCP, partner 10+ min, 33+ combined midpoint).
                 if self._is_game_bid(bid_to_check) and not self._is_slam_bid(bid_to_check):
                     should_explore, slam_bid, slam_explanation = self._slam_exploration_safety_net(hand, features, auction_history, bid_to_check)
@@ -332,43 +332,43 @@ class BiddingEngine:
             if self._is_game_bid(bid):
                 return (False, None, None)  # Game already reached
 
-        # Analyze auction context for game-forcing status
+        # Use BiddingState for game-forcing detection and combined strength
         try:
+            from utils.seats import normalize, partnership_str
             positions = features.get('positions', ['North', 'East', 'South', 'West'])
             my_index = features.get('my_index', 0)
-            context = analyze_auction_context(auction_history, positions, my_index)
 
-            # CORRECT CALCULATION: Use my ACTUAL HCP instead of my range midpoint
+            bidding_state = features.get('bidding_state')
+            if bidding_state is None:
+                return (False, None, None)
+
+            my_seat = normalize(positions[my_index])
+            pship = partnership_str(my_seat)
             my_hcp = hand.hcp
-            
-            # Get partner's estimated HCP
-            if opener_rel == 'Me':
-                # I am opener, partner is responder
-                partner_min, partner_max = context.ranges.responder_hcp
-            else:
-                # I am responder, partner is opener
-                partner_min, partner_max = context.ranges.opener_hcp
-                
-            # Cap partner's specific max for estimation purposes if they are unlimited
-            # (Prevent assuming 23 HCP just because range is 6-40)
-            calc_partner_max = min(partner_max, 20)  # Cap at 20 for estimation
-            
-            partner_midpoint = (partner_min + calc_partner_max) / 2
+
+            # Get partner's estimated HCP from BiddingState
+            partner_belief = bidding_state.partner_of(my_seat)
+            spread = partner_belief.hcp[1] - partner_belief.hcp[0]
+            if spread > 25:
+                return (False, None, None)  # Range not narrowed enough
+
+            # Cap partner max at 20 for estimation (prevent inflation)
+            calc_partner_max = min(partner_belief.hcp[1], 20)
+            partner_midpoint = (partner_belief.hcp[0] + calc_partner_max) / 2
             combined_pts = int(my_hcp + partner_midpoint)
-            
-            game_forcing = context.ranges.game_forcing
+
+            game_forcing = bidding_state.forcing.get(pship) == 'game'
             opening_bid = auction.get('opening_bid', '')
 
-            # SPECIAL CASE: 2♣ opening is ALWAYS game-forcing until game is reached (usually)
+            # SPECIAL CASE: 2♣ opening is ALWAYS game-forcing until game is reached
             if opener_rel == 'Me' and opening_bid == '2♣':
-                partner_responded = any(bid != 'Pass' for i, bid in enumerate(auction_history) 
+                partner_responded = any(bid != 'Pass' for i, bid in enumerate(auction_history)
                                        if i % 2 == 1)
                 if partner_responded:
                     game_forcing = True
-            
+
             # SPECIAL CASE: Partner's 2NT response shows 11-12 HCP
-            # Only after suit openings (1♣/1♦/1♥/1♠) — NOT after 1NT/2NT openings
-            # where 2NT is an invitation (8-9 HCP), not a game-force
+            # Only after suit openings — NOT after 1NT/2NT openings
             if (opener_rel == 'Me' and auction.get('partner_last_bid') == '2NT'
                     and opening_bid not in ['1NT', '2NT', '3NT']):
                 if my_hcp >= 14:  # 14 + 11 = 25
@@ -381,7 +381,7 @@ class BiddingEngine:
             logger.info(f"GAME SAFETY NET: combined={combined_pts}, game_forcing={game_forcing}, opener_rel={opener_rel}")
 
             # Find the best game bid to make
-            game_bid = self._find_best_game_bid(hand, features, auction_history, context)
+            game_bid = self._find_best_game_bid(hand, features, auction_history, bidding_state)
 
             if game_bid and self._is_bid_legal(game_bid, auction_history):
                 # Suppress high-level bids without slam values
@@ -489,7 +489,7 @@ class BiddingEngine:
         SLAM EXPLORATION SAFETY NET: Intercept game bids when slam values exist.
 
         Uses BiddingState per-seat beliefs for accurate combined HCP estimation.
-        Only triggers when BiddingState is available — no fallback to AuctionContext
+        Only triggers when BiddingState is available — no fallback to legacy estimation
         (which had inflated estimates causing inappropriate Blackwood).
 
         Requirements for slam exploration:
@@ -530,7 +530,7 @@ class BiddingEngine:
                 except ValueError:
                     pass
 
-        # Require BiddingState for accurate estimation (no AuctionContext fallback)
+        # Require BiddingState for accurate estimation (no legacy fallback)
         bidding_state = features.get('bidding_state')
         if bidding_state is None:
             return (False, None, None)

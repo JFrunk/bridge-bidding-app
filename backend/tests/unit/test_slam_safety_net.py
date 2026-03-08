@@ -61,7 +61,6 @@ def _make_features(auction, dealer='North', my_position='South'):
         'positions': positions,
         'my_index': my_index,
         'auction_history': auction,
-        'auction_context': None,
         'auction_features': {
             'opener_relationship': opener_rel,
             'opening_bid': opening_bid,

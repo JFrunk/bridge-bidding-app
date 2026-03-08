@@ -54,7 +54,6 @@ def _make_features(hand, auction, dealer='North', my_position='South'):
         'positions': positions,
         'my_index': my_index,
         'auction_history': auction,
-        'auction_context': None,
         'auction_features': {
             'opener_relationship': opener_rel,
             'opening_bid': opening_bid,
@@ -184,7 +183,6 @@ class TestSuitOpeningRaiseBiddingState:
             'positions': ['North', 'East', 'South', 'West'],
             'my_index': 2,
             'auction_history': ['1♥', 'Pass'],
-            'auction_context': None,
             'auction_features': {
                 'opener_relationship': 'Partner',
                 'opening_bid': '1♥',

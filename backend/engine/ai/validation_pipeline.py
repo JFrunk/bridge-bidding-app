@@ -7,7 +7,7 @@ this pipeline before being accepted.
 Part of ADR-0002: Bidding System Robustness Improvements
 Layer 2: Centralized Validation Pipeline
 
-IMPORTANT: This pipeline now checks AuctionContext for game_forcing status.
+IMPORTANT: This pipeline now checks BiddingState for game_forcing status.
 When game_forcing=True, HCP requirements are bypassed because the partnership
 has already established game-going values and must continue bidding.
 
@@ -21,7 +21,7 @@ Game-forcing sequences include:
 import logging
 from typing import Tuple, Optional, Dict, List
 from engine.hand import Hand
-from engine.ai.auction_context import analyze_auction_context
+from engine.ai.bidding_state import BiddingStateBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ class ValidationPipeline:
 
         This checks both:
         1. Explicit metadata from bidding modules (forcing_sequence key)
-        2. AuctionContext analysis (game_forcing flag set by auction analyzer)
+        2. BiddingState forcing status (game-forcing flag from auction replay)
 
         Returns True if HCP validation should be bypassed.
         """
@@ -129,25 +129,43 @@ class ValidationPipeline:
         if metadata.get('game_forcing'):
             return True
 
-        # Analyze auction context for game-forcing status
+        # Check BiddingState for game-forcing status
         try:
-            positions = features.get('positions', ['North', 'East', 'South', 'West'])
-            my_index = features.get('my_index', 0)
+            bidding_state = features.get('bidding_state')
+            if bidding_state is None:
+                # Build BiddingState from auction if not in features
+                positions = features.get('positions', ['North', 'East', 'South', 'West'])
+                my_index = features.get('my_index', 0)
+                from utils.seats import normalize, partnership_str
+                dealer = positions[0][0] if positions else 'N'
+                bidding_state = BiddingStateBuilder().build(auction, dealer)
 
-            context = analyze_auction_context(auction, positions, my_index)
+            if bidding_state is not None:
+                positions = features.get('positions', ['North', 'East', 'South', 'West'])
+                my_index = features.get('my_index', 0)
+                from utils.seats import normalize, partnership_str
+                my_seat = normalize(positions[my_index])
+                pship = partnership_str(my_seat)
 
-            if context.ranges.game_forcing:
-                logger.debug(f"Game-forcing detected by AuctionContext analysis")
-                return True
+                if bidding_state.forcing.get(pship) == 'game':
+                    logger.debug(f"Game-forcing detected by BiddingState")
+                    return True
 
-            # Also check if combined midpoint suggests game is likely
-            # When combined_midpoint >= 25, partnership should be bidding game
-            if context.ranges.combined_midpoint >= 25:
-                logger.debug(f"Game likely: combined_midpoint={context.ranges.combined_midpoint}")
-                return True
+                # Also check if combined midpoint suggests game is likely
+                partner_belief = bidding_state.partner_of(my_seat)
+                spread = partner_belief.hcp[1] - partner_belief.hcp[0]
+                if spread <= 25:
+                    from engine.hand import Hand
+                    hand = features.get('hand')
+                    if hand:
+                        partner_mid = (partner_belief.hcp[0] + partner_belief.hcp[1]) // 2
+                        combined = hand.hcp + partner_mid
+                        if combined >= 25:
+                            logger.debug(f"Game likely: combined={combined}")
+                            return True
 
         except Exception as e:
-            logger.debug(f"Error analyzing auction context: {e}")
+            logger.debug(f"Error checking BiddingState: {e}")
 
         return False
 

@@ -23,7 +23,7 @@ from engine.hand import Hand, Card
 # from engine.hand_constructor import generate_constrained_hands
 from engine.bidding_engine import BiddingEngine
 from engine.ai.feature_extractor import extract_features
-from engine.ai.auction_context import analyze_auction_context
+from engine.ai.bidding_state import BiddingStateBuilder
 from engine.ai.decision_engine import select_bidding_module
 from engine.ai.module_registry import ModuleRegistry
 from engine.ai.validation_pipeline import ValidationPipeline
@@ -132,9 +132,9 @@ class GameSlamDiagnostic:
                 features = extract_features(hand, auction_history, bidder_pos, vulnerability, dealer)
                 module_name = select_bidding_module(features)
 
-            # Also analyze auction context to check combined points
+            # Analyze BiddingState for combined points
             my_index = positions.index(bidder_pos)
-            auction_context = analyze_auction_context(auction_history, positions, my_index)
+            bidding_state = BiddingStateBuilder().build(auction_history, dealer)
 
             # Use the REAL BiddingEngine to get bids (includes safety net!)
             with SuppressOutput():
@@ -150,8 +150,8 @@ class GameSlamDiagnostic:
                     'bid': bid,
                     'module': module_name,
                     'should_bid_game': should_bid_game,
-                    'combined_midpoint': auction_context.ranges.combined_midpoint,
-                    'game_forcing': auction_context.ranges.game_forcing,
+                    'combined_midpoint': sum(bidding_state.partnership_hcp(bidder_pos[0])) // 2,
+                    'game_forcing': bidding_state.forcing.get('NS', 'none') == 'game',
                     'hand_hcp': hand.hcp,
                 })
 

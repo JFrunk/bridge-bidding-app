@@ -59,7 +59,6 @@ def _make_features(hand, auction, dealer='South', my_position='South'):
         'positions': positions,
         'my_index': my_index,
         'auction_history': auction,
-        'auction_context': None,
         'auction_features': {
             'opener': my_position,
             'opener_relationship': 'Me',
@@ -162,7 +161,6 @@ class TestRebidBiddingStateIntegration:
             'positions': ['North', 'East', 'South', 'West'],
             'my_index': 2,
             'auction_history': ['1♠', 'Pass', '3♠', 'Pass'],
-            'auction_context': None,
             'auction_features': {
                 'opener': 'South',
                 'opener_relationship': 'Me',
