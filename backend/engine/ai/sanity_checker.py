@@ -182,9 +182,15 @@ class SanityChecker:
                 slam_type = "Small slam"
 
             # Allow slight distribution bonus ONLY with confirmed fit
-            auction_context = features.get('auction_context')
+            bidding_state = features.get('bidding_state')
             distribution_bonus = 0
-            if auction_context is not None and auction_context.has_fit:
+            has_fit = False
+            if bidding_state is not None:
+                my_seat = self._get_my_seat(features)
+                if my_seat:
+                    from utils.seats import partnership_str
+                    has_fit = bidding_state.agreed_suits.get(partnership_str(my_seat)) is not None
+            if has_fit:
                 distribution_bonus = min(hand.total_points - hand.hcp, 2)
 
             adjusted_combined = combined + distribution_bonus
@@ -210,11 +216,14 @@ class SanityChecker:
 
         # Bonus for distribution points when we have a fit
         # This helps reach game when we have shape but fewer HCP
-        auction_context = features.get('auction_context')
-        if auction_context is not None and auction_context.has_fit:
-            # Add 1-2 points for distribution when fit is established
-            distribution_bonus = min(hand.total_points - hand.hcp, 2)
-            combined_hcp += distribution_bonus
+        bidding_state = features.get('bidding_state')
+        if bidding_state is not None:
+            my_seat = self._get_my_seat(features)
+            if my_seat:
+                from utils.seats import partnership_str
+                if bidding_state.agreed_suits.get(partnership_str(my_seat)) is not None:
+                    distribution_bonus = min(hand.total_points - hand.hcp, 2)
+                    combined_hcp += distribution_bonus
 
         # Find appropriate max level
         for (min_hcp, max_hcp), max_level in self.MAX_BID_LEVELS.items():
@@ -236,8 +245,8 @@ class SanityChecker:
         """
         Estimate combined partnership HCP.
 
-        Uses BiddingState (per-seat beliefs) when available, then
-        AuctionContext for range tracking, falls back to legacy estimation.
+        Uses BiddingState (per-seat beliefs) when available,
+        falls back to legacy estimation.
         """
         my_hcp = hand.hcp
 
@@ -251,31 +260,6 @@ class SanityChecker:
                 if spread <= 25:  # Range has been narrowed from default (0,40)
                     partner_estimate = (partner_belief.hcp[0] + partner_belief.hcp[1]) // 2
                     return my_hcp + partner_estimate
-
-        # Use AuctionContext if available (expert-level range tracking)
-        auction_context = features.get('auction_context')
-        if auction_context is not None:
-            ranges = auction_context.ranges
-            auction_features = features.get('auction_features', {})
-            opener_relationship = auction_features.get('opener_relationship')
-
-            if opener_relationship == 'Me':
-                # I opened, partner responded
-                partner_min = ranges.responder_hcp[0]
-                partner_max = ranges.responder_hcp[1]
-            elif opener_relationship == 'Partner':
-                # Partner opened, I'm responding
-                partner_min = ranges.opener_hcp[0]
-                partner_max = ranges.opener_hcp[1]
-            else:
-                # Competitive auction - use legacy estimation
-                partner_min = self._estimate_partner_hcp(features, auction)
-                partner_max = partner_min + 10
-
-            # Use midpoint for better game decisions
-            # (minimum was too conservative, causing missed games)
-            partner_estimate = (partner_min + partner_max) // 2
-            return my_hcp + partner_estimate
 
         # Fall back to legacy estimation
         partner_min_hcp = self._estimate_partner_hcp(features, auction)
@@ -314,39 +298,6 @@ class SanityChecker:
                     partner_max = partner_belief.hcp[1]
                     return my_hcp + partner_max
 
-        # Use AuctionContext if available
-        auction_context = features.get('auction_context')
-        if auction_context is not None:
-            ranges = auction_context.ranges
-            auction_features = features.get('auction_features', {})
-            opener_relationship = auction_features.get('opener_relationship')
-
-            if opener_relationship == 'Me':
-                # I opened, partner is responder
-                # Cap partner's max at realistic response values
-                partner_max = ranges.responder_hcp[1] if ranges.responder_hcp else 18
-                # Responses rarely exceed 18 HCP (even jump shifts)
-                partner_max = min(partner_max, 18)
-            elif opener_relationship == 'Partner':
-                # Partner opened, I'm responder
-                partner_max = ranges.opener_hcp[1] if ranges.opener_hcp else 21
-                # Opening bids cap at 21 for 1-level (except 2♣)
-                # Check if partner opened 2♣
-                opening_bid = auction_features.get('opening_bid', '')
-                if opening_bid == '2♣':
-                    partner_max = min(partner_max, 25)
-                elif opening_bid == '2NT':
-                    partner_max = min(partner_max, 22)
-                elif opening_bid == '1NT':
-                    partner_max = min(partner_max, 17)
-                else:
-                    partner_max = min(partner_max, 21)
-            else:
-                # Competitive - very conservative
-                partner_max = 15
-
-            return my_hcp + partner_max
-
         # Legacy fallback - very conservative
         partner_max_hcp = self._estimate_partner_max_hcp(features, auction)
         return my_hcp + partner_max_hcp
@@ -355,7 +306,7 @@ class SanityChecker:
         """
         Conservative estimate of partner's maximum HCP.
 
-        Used for hard ceiling calculation when AuctionContext unavailable.
+        Used for hard ceiling calculation when BiddingState unavailable.
         """
         auction_features = features.get('auction_features', features)
         opener_relationship = auction_features.get('opener_relationship') or auction_features.get('opener')

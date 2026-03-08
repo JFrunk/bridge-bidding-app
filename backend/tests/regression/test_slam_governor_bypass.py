@@ -51,7 +51,6 @@ class TestSlamGovernorBypass:
                 'opener_relationship': opener_relationship,
                 'is_contested': False
             },
-            'auction_context': None  # Will use legacy estimation
         }
 
     def test_king_ask_response_allowed(self):

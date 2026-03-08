@@ -71,7 +71,6 @@ class TestResponderRebidBiddingState:
             'positions': ['North', 'East', 'South', 'West'],
             'my_index': 2,
             'auction_history': auction,
-            'auction_context': None,
         }
 
         combined = module._get_combined_estimate(hand, features)
@@ -81,7 +80,7 @@ class TestResponderRebidBiddingState:
         assert 24 <= combined <= 32, f"Combined should be ~28, got {combined}"
 
     def test_fallback_without_bidding_state(self):
-        """Without BiddingState, falls back to AuctionContext or hcp+14."""
+        """Without BiddingState, falls back to hcp+14."""
         module = ResponderRebidModule()
         hand = make_hand("AQ932", "K2", "QJ4", "932")
 
@@ -89,15 +88,14 @@ class TestResponderRebidBiddingState:
             'positions': ['North', 'East', 'South', 'West'],
             'my_index': 2,
             'auction_history': ['1♥', 'Pass', '1♠', 'Pass', '2♥', 'Pass'],
-            'auction_context': None,
         }
 
         combined = module._get_combined_estimate(hand, features)
         # Fallback: hand.hcp + 14 = 12 + 14 = 26
         assert combined == 26
 
-    def test_bidding_state_priority_over_auction_context(self):
-        """BiddingState should be used over AuctionContext when both available."""
+    def test_bidding_state_used_for_combined_estimate(self):
+        """BiddingState should be used for combined HCP estimation."""
         module = ResponderRebidModule()
         hand = make_hand("AQ932", "K2", "QJ4", "932")
 
@@ -105,15 +103,8 @@ class TestResponderRebidBiddingState:
         auction = ['1♥', 'Pass', '1♠', 'Pass', '2♥', 'Pass']
         bidding_state = BiddingStateBuilder().build(auction, 'North')
 
-        # Create a mock AuctionContext that would give different result
-        class MockRanges:
-            opener_hcp = (12, 21)
-        class MockCtx:
-            ranges = MockRanges()
-
         features = {
             'bidding_state': bidding_state,
-            'auction_context': MockCtx(),
             'positions': ['North', 'East', 'South', 'West'],
             'my_index': 2,
             'auction_history': auction,
@@ -121,7 +112,7 @@ class TestResponderRebidBiddingState:
 
         combined_with_bs = module._get_combined_estimate(hand, features)
 
-        # Remove BiddingState, should use AuctionContext
+        # Remove BiddingState, should use fallback estimate
         features_no_bs = dict(features)
         del features_no_bs['bidding_state']
         combined_without_bs = module._get_combined_estimate(hand, features_no_bs)

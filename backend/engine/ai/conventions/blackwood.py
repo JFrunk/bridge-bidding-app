@@ -102,12 +102,19 @@ class BlackwoodConvention(ConventionModule):
         if '1NT' in my_previous_bids and partner_last_bid[0] in ['2', '3']:
             return False
 
-        # Use AuctionContext for accurate combined strength assessment
-        auction_context = features.get('auction_context')
+        # Use BiddingState for accurate combined strength assessment
+        bidding_state = features.get('bidding_state')
         estimated_combined = 0
-        if auction_context is not None:
-            estimated_combined = auction_context.ranges.combined_midpoint
-        else:
+        if bidding_state is not None:
+            from utils.seats import normalize
+            positions = features.get('positions', [])
+            my_index = features.get('my_index')
+            if positions and my_index is not None:
+                my_seat = normalize(positions[my_index])
+                partner_belief = bidding_state.partner_of(my_seat)
+                partner_mid = (partner_belief.hcp[0] + partner_belief.hcp[1]) // 2
+                estimated_combined = hand.total_points + partner_mid
+        if estimated_combined == 0:
             # Fallback: estimate from auction features
             partner_total_points = features['auction_features'].get('partner_total_points', 0)
             estimated_combined = hand.total_points + partner_total_points

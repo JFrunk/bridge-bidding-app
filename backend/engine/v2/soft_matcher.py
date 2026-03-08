@@ -307,6 +307,41 @@ class SoftMatcher:
                 hard_fail_reason=other_result[1]
             )
 
+        # 7. OR conditions - evaluate each branch, use best score
+        or_result = self._check_or_conditions(all_conditions, features)
+        if or_result[0] == 0.0:
+            return MatchResult(
+                score=0.0,
+                penalties={'OR': 1.0},
+                hard_fail_reason=or_result[1]
+            )
+        if or_result[0] < 1.0:
+            penalty = 1.0 - or_result[0]
+            penalties['OR'] = penalty
+            score -= penalty
+
+        # 8. AND conditions - all branches must match
+        and_result = self._check_and_conditions(all_conditions, features)
+        if and_result[0] == 0.0:
+            return MatchResult(
+                score=0.0,
+                penalties={'AND': 1.0},
+                hard_fail_reason=and_result[1]
+            )
+        if and_result[0] < 1.0:
+            penalty = 1.0 - and_result[0]
+            penalties['AND'] = penalty
+            score -= penalty
+
+        # 9. NOT conditions - must NOT match
+        not_result = self._check_not_conditions(all_conditions, features)
+        if not_result[0] == 0.0:
+            return MatchResult(
+                score=0.0,
+                penalties={'NOT': 1.0},
+                hard_fail_reason=not_result[1]
+            )
+
         # Ensure score stays in valid range
         score = max(0.0, min(1.0, score))
 
@@ -609,6 +644,90 @@ class SoftMatcher:
                             break
                 if not matched:
                     return (0.0, f"{key}: '{actual}' not in {expected}")
+
+        return (1.0, None)
+
+    def _evaluate_branch(self, branch: Dict, features: Dict) -> float:
+        """
+        Evaluate a single OR/AND branch as if it were a standalone rule's conditions.
+
+        Returns a score (0.0-1.0) representing how well the features match the branch.
+        """
+        # Build a synthetic rule with only conditions from this branch
+        synthetic_rule = {'conditions': branch}
+        result = self._evaluate_legacy_format(synthetic_rule, features)
+        return result.score
+
+    def _check_or_conditions(self, conditions: Dict, features: Dict) -> Tuple[float, Optional[str]]:
+        """
+        Evaluate OR conditions - at least one branch must match.
+
+        Each branch is a dict of conditions. We evaluate all branches and
+        use the best-matching branch's score. If no branch scores above 0,
+        this is a hard fail.
+
+        Returns:
+            Tuple of (best branch score 0.0-1.0, failure reason if all fail)
+        """
+        or_branches = conditions.get('OR')
+        if not or_branches or not isinstance(or_branches, list):
+            return (1.0, None)
+
+        best_score = 0.0
+        for branch in or_branches:
+            if not isinstance(branch, dict):
+                continue
+            branch_score = self._evaluate_branch(branch, features)
+            if branch_score > best_score:
+                best_score = branch_score
+
+        if best_score == 0.0:
+            return (0.0, "No OR branch matched")
+
+        return (best_score, None)
+
+    def _check_and_conditions(self, conditions: Dict, features: Dict) -> Tuple[float, Optional[str]]:
+        """
+        Evaluate AND conditions - all branches must match.
+
+        Each branch is a dict of conditions. The final score is the minimum
+        (worst) branch score. If any branch hard-fails, the AND fails.
+
+        Returns:
+            Tuple of (worst branch score 0.0-1.0, failure reason if any fail)
+        """
+        and_branches = conditions.get('AND')
+        if not and_branches or not isinstance(and_branches, list):
+            return (1.0, None)
+
+        worst_score = 1.0
+        for branch in and_branches:
+            if not isinstance(branch, dict):
+                continue
+            branch_score = self._evaluate_branch(branch, features)
+            if branch_score < worst_score:
+                worst_score = branch_score
+            if branch_score == 0.0:
+                return (0.0, "AND branch failed")
+
+        return (worst_score, None)
+
+    def _check_not_conditions(self, conditions: Dict, features: Dict) -> Tuple[float, Optional[str]]:
+        """
+        Evaluate NOT conditions - the branch must NOT match.
+
+        If the NOT branch matches well (score > 0.5), this is a hard fail.
+
+        Returns:
+            Tuple of (1.0 if NOT branch doesn't match, 0.0 if it does)
+        """
+        not_branch = conditions.get('NOT')
+        if not not_branch or not isinstance(not_branch, dict):
+            return (1.0, None)
+
+        branch_score = self._evaluate_branch(not_branch, features)
+        if branch_score > 0.5:
+            return (0.0, "NOT condition matched (should not)")
 
         return (1.0, None)
 

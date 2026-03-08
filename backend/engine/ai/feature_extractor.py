@@ -1,5 +1,4 @@
 from engine.hand import Hand
-from engine.ai.auction_context import analyze_auction_context
 from engine.ai.bidding_state import BiddingStateBuilder
 from typing import Dict
 
@@ -693,7 +692,6 @@ def extract_features(hand: Hand, auction_history: list, my_position: str, vulner
     opener_last_bid = next((bid for bid in reversed(opener_bids) if bid != 'Pass'), None)
 
     interference = _detect_interference(auction_history, positions, my_index, opener_relationship, opener_index)
-    auction_context = analyze_auction_context(auction_history, positions, my_index)
     bidding_state = BiddingStateBuilder().build(auction_history, dealer)
 
     # Calculate fundamental bridge metrics
@@ -750,7 +748,6 @@ def extract_features(hand: Hand, auction_history: list, my_position: str, vulner
         'hand': hand,
         'my_index': my_index,
         'positions': positions,
-        'auction_context': auction_context,
         'bidding_state': bidding_state
     }
 
