@@ -108,6 +108,234 @@ def get_convention_map():
     }
 
 
+def _get_user_id_from_request(req) -> Optional[str]:
+    """Extract user ID from X-User-ID header (set by frontend sessionHelper)"""
+    user_id = req.headers.get('X-User-ID')
+    if user_id:
+        return str(user_id)
+    # Fallback: check JSON body
+    data = req.get_json(silent=True) or {}
+    if data.get('user_id'):
+        return str(data['user_id'])
+    return None
+
+
+def _find_or_create_partnership(user_a: str, user_b: str) -> Optional[int]:
+    """
+    Find existing partnership or create new one between two users.
+
+    Always stores with lexicographically smaller ID as player_a to ensure
+    the UNIQUE(player_a_id, player_b_id) constraint works regardless of
+    who creates vs joins.
+
+    Returns partnership ID, or None if DB unavailable or users not registered.
+    """
+    try:
+        from db import get_db_connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Canonical ordering: smaller ID = player_a
+        a, b = (user_a, user_b) if user_a < user_b else (user_b, user_a)
+
+        # Check for existing partnership
+        cursor.execute(
+            "SELECT id FROM partnerships WHERE player_a_id = %s AND player_b_id = %s",
+            (a, b)
+        )
+        row = cursor.fetchone()
+        if row:
+            partnership_id = row['id'] if isinstance(row, dict) else row[0]
+            print(f"🤝 Found existing partnership {partnership_id} between {a} and {b}")
+            conn.close()
+            return partnership_id
+
+        # Create new partnership
+        cursor.execute(
+            "INSERT INTO partnerships (player_a_id, player_b_id, status) VALUES (%s, %s, 'active') RETURNING id",
+            (a, b)
+        )
+        row = cursor.fetchone()
+        partnership_id = row['id'] if isinstance(row, dict) else row[0]
+        conn.commit()
+        print(f"🤝 Created new partnership {partnership_id} between {a} and {b}")
+        conn.close()
+        return partnership_id
+
+    except Exception as e:
+        print(f"⚠️ Partnership lookup/create failed (non-blocking): {e}")
+        return None
+
+
+def _save_room_hand(room: RoomState):
+    """
+    Save completed room hand to session_hands for both players.
+
+    Called when game_phase transitions to 'complete' (13 tricks played or passed out).
+    Tags hand with partnership_id if available.
+    """
+    try:
+        from db import get_db_connection
+        import json
+
+        if not room.play_state and not room.auction_history:
+            print("⚠️ No play state or auction — skipping room hand save")
+            return
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Build hand data from room state
+        contract = room.play_state.contract if room.play_state else None
+        ps = room.play_state
+
+        # Check if passed out (no contract)
+        passed_out = contract is None
+
+        # Calculate score
+        hand_score = 0
+        tricks_taken = 0
+        made = False
+        breakdown = {}
+
+        if not passed_out and ps:
+            tricks_taken = ps.tricks_won.get(contract.declarer, 0) + ps.tricks_won.get(
+                {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}[contract.declarer], 0
+            )
+            tricks_needed = contract.level + 6
+            made = tricks_taken >= tricks_needed
+
+            # Calculate score using play engine
+            try:
+                from engine.play_engine import PlayEngine
+                score_result = PlayEngine.calculate_score(
+                    contract, tricks_taken, room.vulnerability
+                )
+                hand_score = score_result.get('score', 0)
+                breakdown = score_result
+            except Exception as e:
+                print(f"⚠️ Score calculation failed: {e}")
+
+        # Serialize deal data
+        deal_data = {}
+        for pos_name, hand in room.deal.items():
+            if hand:
+                try:
+                    deal_data[pos_name] = [{'rank': c.rank, 'suit': c.suit} for c in hand.cards]
+                except AttributeError:
+                    deal_data[pos_name] = hand if isinstance(hand, list) else []
+
+        # Serialize play history
+        play_history = []
+        if ps and ps.trick_history:
+            for trick in ps.trick_history:
+                play_history.append({
+                    'cards': [{'rank': c.rank, 'suit': c.suit, 'position': p} for c, p in trick.cards],
+                    'winner': trick.winner,
+                    'leader': getattr(trick, 'leader', None),
+                })
+
+        # Save for each human player (host=S, guest=N)
+        players = [
+            (room.host_session_id, room.host_user_id, 'S'),
+            (room.guest_session_id, room.guest_user_id, 'N'),
+        ]
+
+        for session_id, user_id, position in players:
+            if not session_id:
+                continue
+
+            # Determine if this player was declarer/dummy
+            declarer = contract.declarer if contract else None
+            from engine.play_engine import PlayEngine
+            dummy = PlayEngine.partner(declarer) if declarer else None
+            user_was_declarer = (position == declarer)
+            user_was_dummy = (position == dummy)
+
+            # Check if partnership_id column exists
+            cursor.execute(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'session_hands' AND column_name = 'partnership_id'"
+            )
+            has_partnership_col = cursor.fetchone() is not None
+
+            # Build INSERT — include partnership_id if column exists
+            if has_partnership_col and room.partnership_id:
+                cursor.execute("""
+                    INSERT INTO session_hands
+                    (session_id, hand_number, dealer, vulnerability,
+                     contract_level, contract_strain, contract_declarer, contract_doubled,
+                     tricks_taken, tricks_needed, made,
+                     hand_score, score_breakdown,
+                     deal_data, auction_history, play_history,
+                     user_played_position, user_was_declarer, user_was_dummy,
+                     partnership_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    session_id,
+                    1,  # hand_number within room (could track per-room)
+                    room.dealer,
+                    room.vulnerability,
+                    contract.level if contract else None,
+                    contract.strain if contract else None,
+                    declarer,
+                    contract.doubled if contract else 0,
+                    tricks_taken,
+                    (contract.level + 6) if contract else None,
+                    made,
+                    hand_score,
+                    json.dumps(breakdown),
+                    json.dumps(deal_data),
+                    json.dumps(room.auction_history),
+                    json.dumps(play_history),
+                    position,
+                    user_was_declarer,
+                    user_was_dummy,
+                    room.partnership_id,
+                ))
+            else:
+                cursor.execute("""
+                    INSERT INTO session_hands
+                    (session_id, hand_number, dealer, vulnerability,
+                     contract_level, contract_strain, contract_declarer, contract_doubled,
+                     tricks_taken, tricks_needed, made,
+                     hand_score, score_breakdown,
+                     deal_data, auction_history, play_history,
+                     user_played_position, user_was_declarer, user_was_dummy)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    session_id,
+                    1,
+                    room.dealer,
+                    room.vulnerability,
+                    contract.level if contract else None,
+                    contract.strain if contract else None,
+                    declarer,
+                    contract.doubled if contract else 0,
+                    tricks_taken,
+                    (contract.level + 6) if contract else None,
+                    made,
+                    hand_score,
+                    json.dumps(breakdown),
+                    json.dumps(deal_data),
+                    json.dumps(room.auction_history),
+                    json.dumps(play_history),
+                    position,
+                    user_was_declarer,
+                    user_was_dummy,
+                ))
+
+            print(f"✅ Room hand saved for {position} (session={session_id[:20]}..., partnership={room.partnership_id})")
+
+        conn.commit()
+        conn.close()
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"⚠️ Room hand save failed (non-blocking): {e}")
+
+
 def register_room_endpoints(app, room_manager: RoomStateManager):
     """
     Register all room-related endpoints with the Flask app
@@ -159,6 +387,13 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         # Create room
         room_code = room_manager.create_room(session_id, settings)
 
+        # Store user ID on room for partnership tracking
+        user_id = _get_user_id_from_request(request)
+        if user_id:
+            room = room_manager.get_room(room_code)
+            if room:
+                room.host_user_id = user_id
+
         return jsonify({
             'success': True,
             'room_code': room_code,
@@ -202,8 +437,18 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         success, message = room_manager.join_room(room_code, session_id)
 
         if success:
-            # Auto-deal first hand immediately on join (no ready gate for first hand)
+            # Store guest user ID and create partnership
             room = room_manager.get_room(room_code)
+            guest_user_id = _get_user_id_from_request(request)
+            if room and guest_user_id:
+                room.guest_user_id = guest_user_id
+                # Find or create partnership between host and guest
+                if room.host_user_id:
+                    room.partnership_id = _find_or_create_partnership(
+                        room.host_user_id, guest_user_id
+                    )
+
+            # Auto-deal first hand immediately on join (no ready gate for first hand)
             deal_data = {}
             if room:
                 try:
@@ -829,11 +1074,15 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         auction_complete = _check_auction_complete(room.auction_history)
 
         if auction_complete:
-            room.game_phase = 'complete'  # Or 'playing' if we implement play
+            room.game_phase = 'complete'
 
         # Auto-bid for E/W using the actual bidding engine
         ai_bids = auto_bid_for_ai(room) if not auction_complete else []
         auction_complete = _check_auction_complete(room.auction_history)
+
+        # Save passed-out hands (all passes, no contract — hand is done)
+        if auction_complete and all(b == 'Pass' for b in room.auction_history):
+            _save_room_hand(room)
 
         return jsonify({
             'success': True,
@@ -1136,6 +1385,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             # Check if play is complete (13 tricks played)
             if len(room.play_state.trick_history) == 13:
                 room.game_phase = 'complete'
+                _save_room_hand(room)
         else:
             # Next player
             room.play_state.next_to_play = PlayEngine.next_player(player)
@@ -1291,6 +1541,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
                 if len(room.play_state.trick_history) == 13:
                     room.game_phase = 'complete'
+                    _save_room_hand(room)
             else:
                 room.play_state.next_to_play = PlayEngine.next_player(current_player)
 

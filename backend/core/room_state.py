@@ -58,6 +58,13 @@ class RoomState:
     host_session_id: str
     guest_session_id: Optional[str] = None
 
+    # User IDs (from X-User-ID header, for partnership tracking)
+    host_user_id: Optional[str] = None
+    guest_user_id: Optional[str] = None
+
+    # Partnership ID (looked up/created when guest joins)
+    partnership_id: Optional[int] = None
+
     # Position assignments (fixed for Team Practice)
     host_position: str = 'S'  # Host always South
     guest_position: str = 'N'  # Guest always North
