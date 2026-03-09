@@ -58,6 +58,7 @@ class BiddingEngineV2Schema:
         self._v1_engine = None  # Lazy-loaded
         self._v1_fallback_count = 0
         self._total_bid_count = 0
+        self._last_auction = None  # Track auction for auto-reset detection
 
         # Tracking for analysis - stores info about last bid decision
         self._last_rule_id: Optional[str] = None
@@ -103,6 +104,19 @@ class BiddingEngineV2Schema:
         """
         # Note: explanation_level is ignored - V2 Schema generates its own explanations
         self._total_bid_count += 1
+
+        # Auto-reset forcing state when a new deal is detected.
+        # A new deal = auction is not a continuation of the previous one.
+        # This handles batch testing where new_deal() isn't called between hands.
+        if self._last_auction is None or not auction_history:
+            self.interpreter.reset_state()
+        elif len(auction_history) <= len(self._last_auction):
+            # Auction got shorter or same length — new deal
+            self.interpreter.reset_state()
+        elif auction_history[:len(self._last_auction)] != self._last_auction:
+            # Auction prefix changed — new deal
+            self.interpreter.reset_state()
+        self._last_auction = list(auction_history) if auction_history else []
 
         # Extract features in flat format for schema evaluation
         features = extract_flat_features(

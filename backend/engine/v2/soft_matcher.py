@@ -428,6 +428,12 @@ class SoftMatcher:
                 min_len = length_condition.get('min', 0)
                 max_len = length_condition.get('max', 13)
 
+                # Resolve feature references (e.g., "min": "spades_length")
+                if isinstance(min_len, str):
+                    min_len = features.get(min_len, 0)
+                if isinstance(max_len, str):
+                    max_len = features.get(max_len, 13)
+
                 # Hard fail for insufficient length (structural violation)
                 if actual_length < min_len:
                     return (0.0, f"{suit_name}: have {actual_length}, need {min_len}+")
