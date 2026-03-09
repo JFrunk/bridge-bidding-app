@@ -9,7 +9,6 @@ Python code. This allows for:
 4. Cleaner separation of bidding knowledge from engine logic
 5. Proper forcing level tracking across the auction
 6. Monte Carlo integration for bid validation (optional)
-7. Optional V1 fallback when no schema rule matches
 """
 
 import logging
@@ -41,7 +40,7 @@ class BiddingEngineV2Schema:
     - Optional Monte Carlo integration for slam/competitive validation
     """
 
-    def __init__(self, schema_dir: str = None, simulator=None, use_v1_fallback: bool = False):
+    def __init__(self, schema_dir: str = None, simulator=None, **kwargs):
         """
         Initialize the schema-driven engine.
 
@@ -49,14 +48,13 @@ class BiddingEngineV2Schema:
             schema_dir: Path to schema directory. Defaults to engine/v2/schemas/
             simulator: Optional Monte Carlo simulator for bid validation.
                       If None, conflict resolver operates in pass-through mode.
-            use_v1_fallback: If True, falls back to V1 engine when no schema rule matches.
-                            Defaults to False - V2 uses Pass when no rule matches.
         """
+        # Accept and ignore deprecated use_v1_fallback for backward compatibility
+        if 'use_v1_fallback' in kwargs:
+            pass  # Silently ignore — V1 fallback removed
+
         self.interpreter = SchemaInterpreter(schema_dir)
         self._bid_legality_cache = {}
-        self.use_v1_fallback = use_v1_fallback
-        self._v1_engine = None  # Lazy-loaded
-        self._v1_fallback_count = 0
         self._total_bid_count = 0
         self._last_auction = None  # Track auction for auto-reset detection
 
@@ -240,14 +238,7 @@ class BiddingEngineV2Schema:
                     )
                 return (bid, best_forcing_rejected.explanation)
 
-        # No schema rule matched - try V1 fallback if enabled
-        if self.use_v1_fallback:
-            self._last_rule_id = 'v1_fallback'
-            self._last_schema_file = None
-            self._last_priority = 0
-            return self._get_v1_fallback_bid(hand, auction_history, my_position, vulnerability)
-
-        # Fallback to Pass (but check forcing constraints first)
+        # No schema rule matched - fallback to Pass (check forcing constraints first)
         self._last_rule_id = 'default_pass'
         self._last_schema_file = None
         self._last_priority = 0
@@ -261,43 +252,6 @@ class BiddingEngineV2Schema:
             return ('Pass', f'Warning: {forcing_validation.reason}')
 
         return ('Pass', 'No applicable bidding rule found')
-
-    def _get_v1_engine(self):
-        """Lazy-load the V1 engine for fallback."""
-        if self._v1_engine is None:
-            from engine.bidding_engine import BiddingEngine
-            self._v1_engine = BiddingEngine()
-        return self._v1_engine
-
-    def _get_v1_fallback_bid(
-        self,
-        hand: Hand,
-        auction_history: List[str],
-        my_position: str,
-        vulnerability: str
-    ) -> Tuple[str, str]:
-        """
-        Get bid from V1 engine when V2 schema has no matching rule.
-
-        Returns:
-            Tuple of (bid, explanation) with V1 fallback note
-        """
-        self._v1_fallback_count += 1
-
-        try:
-            v1_engine = self._get_v1_engine()
-            bid, explanation = v1_engine.get_next_bid(
-                hand=hand,
-                auction_history=auction_history,
-                my_position=my_position,
-                vulnerability=vulnerability
-            )
-            # Add note that this came from V1 fallback (useful for debugging)
-            logger.debug(f"V2 Schema fallback to V1: {bid} - {explanation}")
-            return (bid, explanation)
-        except Exception as e:
-            logger.warning(f"V1 fallback failed: {e}")
-            return ('Pass', f'Fallback error: {str(e)}')
 
     def get_next_bid_structured(
         self,
@@ -567,19 +521,16 @@ class BiddingEngineV2Schema:
         self.conflict_resolver.reset_stats()
 
     def get_fallback_stats(self) -> Dict:
-        """Get V1 fallback usage statistics."""
+        """Get bid statistics. V1 fallback has been removed — always returns 0 fallbacks."""
         return {
             'total_bids': self._total_bid_count,
-            'v1_fallbacks': self._v1_fallback_count,
-            'v2_schema_hits': self._total_bid_count - self._v1_fallback_count,
-            'fallback_rate': (
-                self._v1_fallback_count / max(1, self._total_bid_count) * 100
-            )
+            'v1_fallbacks': 0,
+            'v2_schema_hits': self._total_bid_count,
+            'fallback_rate': 0.0
         }
 
     def reset_fallback_stats(self):
-        """Reset V1 fallback statistics."""
-        self._v1_fallback_count = 0
+        """Reset bid statistics."""
         self._total_bid_count = 0
 
     def evaluate_user_bid(

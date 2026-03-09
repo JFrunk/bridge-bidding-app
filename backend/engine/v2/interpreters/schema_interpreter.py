@@ -857,12 +857,13 @@ class SchemaInterpreter:
                 return ''
 
             # Special case: first_suit - my first bid suit (for rebidding own suit)
+            # Falls back to longest_suit when no prior suit bid exists (e.g., opening)
             if var_name == 'first_suit':
-                return features.get('my_suit', '')
+                return features.get('my_suit') or features.get('longest_suit', '')
 
             # Special case: my_suit - same as first_suit
             if var_name == 'my_suit':
-                return features.get('my_suit', '')
+                return features.get('my_suit') or features.get('longest_suit', '')
 
             # Special case: suit - general suit placeholder
             # Check if rule specifies a selection strategy

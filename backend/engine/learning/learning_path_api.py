@@ -745,7 +745,7 @@ def _get_bidding_engine():
     global _bidding_engine
     if _bidding_engine is None:
         from engine.v2 import BiddingEngineV2Schema
-        _bidding_engine = BiddingEngineV2Schema(use_v1_fallback=True)
+        _bidding_engine = BiddingEngineV2Schema()
     return _bidding_engine
 
 

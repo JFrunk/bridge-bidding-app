@@ -35,7 +35,7 @@ def get_ai_bid_for_room(room: RoomState, position: str) -> str:
     try:
         # Import bidding engine (lazy to avoid circular imports)
         from engine.v2 import BiddingEngineV2Schema
-        engine = BiddingEngineV2Schema(use_v1_fallback=True)
+        engine = BiddingEngineV2Schema()
 
         # Get the hand for this position
         position_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[position]
@@ -1044,7 +1044,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         if hand and bid != 'Pass':
             try:
                 from engine.v2 import BiddingEngineV2Schema
-                eval_engine = BiddingEngineV2Schema(use_v1_fallback=False)
+                eval_engine = BiddingEngineV2Schema()
                 # Evaluate against auction BEFORE this bid was added
                 auction_before = room.auction_history[:-1]
                 v2_fb = eval_engine.evaluate_user_bid(
@@ -1125,7 +1125,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
         try:
             from engine.v2 import BiddingEngineV2Schema
-            hint_engine = BiddingEngineV2Schema(use_v1_fallback=True)
+            hint_engine = BiddingEngineV2Schema()
 
             dealer_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}.get(room.dealer, room.dealer)
             bid, explanation = hint_engine.get_next_bid(
