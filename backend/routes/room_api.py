@@ -202,12 +202,33 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         success, message = room_manager.join_room(room_code, session_id)
 
         if success:
+            # Auto-deal first hand immediately on join (no ready gate for first hand)
+            room = room_manager.get_room(room_code)
+            deal_data = {}
+            if room:
+                try:
+                    _deal_next_hand(room)
+                    position_full = 'North'  # Guest is always North
+                    deal_data = {
+                        'dealer': room.dealer,
+                        'vulnerability': room.vulnerability,
+                        'my_hand': room._serialize_hand(room.deal[position_full]),
+                        'auction_history': room.auction_history,
+                        'current_bidder': room.get_current_bidder(),
+                        'is_my_turn': room.is_session_turn(session_id),
+                        'game_phase': room.game_phase,
+                    }
+                except Exception as e:
+                    print(f"⚠️ Auto-deal on join failed: {e}")
+
             return jsonify({
                 'success': True,
                 'room_code': room_code,
                 'my_position': 'N',  # Guest is always North
                 'is_host': False,
                 'message': message,
+                'auto_dealt': bool(deal_data),
+                **deal_data,
             })
         else:
             return jsonify({
@@ -1137,6 +1158,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             'ai_plays': ai_plays,
             'game_phase': room.game_phase,
             'dummy_revealed': room.play_state.dummy_revealed,
+            'play_state': room._serialize_play_state(for_session=session_id),
             'version': room.version
         })
 

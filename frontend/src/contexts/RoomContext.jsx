@@ -281,9 +281,21 @@ export function RoomProvider({ children }) {
         setIsHost(false);
         setMyPosition('N');
         setInRoom(true);
-        setGamePhase('waiting');
         setPartnerConnected(true); // Host is already there
         setError(null);
+
+        // If first hand was auto-dealt on join, sync game state immediately
+        if (data.auto_dealt && data.game_phase === 'bidding') {
+          setGamePhase('bidding');
+          setMyHand(data.my_hand);
+          setDealer(data.dealer);
+          setVulnerability(data.vulnerability);
+          setAuction(data.auction_history || []);
+          setCurrentBidder(data.current_bidder);
+          setIsMyTurn(data.is_my_turn);
+        } else {
+          setGamePhase('waiting');
+        }
 
         // Start polling for game state
         startPolling();
@@ -562,7 +574,11 @@ export function RoomProvider({ children }) {
         setIsMyTurn(data.is_my_turn);
         setGamePhase(data.game_phase);
         setRoomVersion(data.version);
-        // Play state will be updated via next poll
+        roomVersionRef.current = data.version;
+        // Sync play state immediately (includes AI plays)
+        if (data.play_state) {
+          setPlayState(data.play_state);
+        }
         return { success: true, data };
       } else {
         setError(data.error || 'Failed to play card');
