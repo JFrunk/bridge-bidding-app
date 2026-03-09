@@ -409,6 +409,7 @@ function App() {
     currentBidder: roomCurrentBidder,
     playState: roomPlayState,
     beliefs: roomBeliefs,
+    bidFeedback: roomBidFeedback,
     leaveRoom,
     submitBid: submitRoomBid,
     startRoomPlay,
@@ -3849,6 +3850,54 @@ ${otherCommands}`;
                         );
                       })}
                     </div>
+                  </div>
+                )}
+
+                {/* Room bid review — show feedback for each of my bids */}
+                {inRoom && roomBidFeedback && roomBidFeedback.length > 0 && roomGamePhase === 'complete' && (
+                  <div style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    margin: '4px 0',
+                    maxHeight: '140px',
+                    overflowY: 'auto',
+                  }}>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px', fontWeight: 600, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Bid Review
+                    </div>
+                    {roomBidFeedback.map((fb, idx) => (
+                      <div key={idx} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '4px 0',
+                        borderBottom: idx < roomBidFeedback.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+                      }}>
+                        <span style={{
+                          fontSize: '14px',
+                          width: '20px',
+                          textAlign: 'center',
+                        }}>
+                          {fb.score >= 8 ? '✓' : fb.score >= 5 ? '~' : '✗'}
+                        </span>
+                        <span style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>
+                          {fb.bid}
+                        </span>
+                        <span style={{
+                          color: fb.score >= 8 ? '#4ade80' : fb.score >= 5 ? '#fbbf24' : '#f87171',
+                          fontSize: '12px',
+                        }}>
+                          {fb.score >= 8 ? 'Good' : fb.score >= 5 ? 'OK' : 'Suboptimal'}
+                          {fb.optimal_bid && fb.optimal_bid !== fb.bid && ` (best: ${fb.optimal_bid})`}
+                        </span>
+                        {fb.key_concept && (
+                          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', marginLeft: 'auto' }}>
+                            {fb.key_concept}
+                          </span>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
 

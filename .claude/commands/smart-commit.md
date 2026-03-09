@@ -2,10 +2,6 @@
 description: Run appropriate quality gates based on changed files, then commit
 ---
 
----
-description: Run appropriate quality gates based on changed files, then commit
----
-
 Run quality gates and commit: $ARGUMENTS
 
 Commit message or context: $ARGUMENTS
@@ -35,7 +31,36 @@ Categorize every changed file into one or more of these domains:
 
 ---
 
-## Step 2: Run Quality Gates
+## Step 2: Diff Review (catch issues before they become follow-up commits)
+
+Review the full diff of all changed files:
+
+```bash
+git diff HEAD
+git diff --cached
+```
+
+Scan specifically for these common causes of follow-up fix commits:
+
+- **Leftover debug code:** `console.log`, `print()`, `debugger`, commented-out code blocks
+- **Incomplete state handling:** New state added without cleanup, missing reset on unmount
+- **Missing imports/exports:** New functions referenced but not imported, new components not exported
+- **Inconsistent naming:** Variable/function names that don't match existing conventions in the file
+- **Hardcoded values:** Magic numbers, hardcoded strings that should use constants or config
+- **Edge cases:** Empty arrays, null/undefined, zero-length strings, boundary conditions
+- **CSS issues:** Missing responsive breakpoints for new UI elements, z-index conflicts
+- **API contract mismatches:** Frontend expecting different shape than backend returns
+
+**If issues found:**
+- List each issue with file and line
+- Fix them NOW before proceeding to quality gates
+- Re-run `git diff` after fixes to confirm
+
+**If clean:** Continue to Step 3.
+
+---
+
+## Step 3: Run Quality Gates
 
 Run ONLY the gates triggered by changed files. Skip gates for unchanged domains.
 
@@ -74,29 +99,31 @@ Fail if: any test fails.
 
 ---
 
-## Step 3: Report Results
+## Step 4: Report Results
 
 ```
-## Quality Gate Results
+## Smart Commit Results
 
-| Gate | Status | Details |
-|------|--------|---------|
-| Bidding Quality | PASS/FAIL/SKIPPED | Composite: X% |
-| Play Quality | PASS/FAIL/SKIPPED | Composite: X% |
-| SAYC Compliance | PASS/FAIL/SKIPPED | Score: X% |
-| Frontend Tests | PASS/FAIL/SKIPPED | N tests passed |
-| Frontend Build | PASS/FAIL/SKIPPED | Build size: X |
-| Backend Tests | PASS/FAIL/SKIPPED | N tests passed |
+| Check | Status | Details |
+|-------|--------|---------|
+| Diff Review | PASS/FIXED | N issues found and fixed |
+| Bidding Quality | PASS/FAIL/SKIP | Composite: X% |
+| Play Quality | PASS/FAIL/SKIP | Composite: X% |
+| SAYC Compliance | PASS/FAIL/SKIP | Score: X% |
+| Frontend Tests | PASS/FAIL/SKIP | N tests passed |
+| Frontend Build | PASS/FAIL/SKIP | Build size: X |
+| Backend Tests | PASS/FAIL/SKIP | N tests passed |
 ```
 
 ---
 
-## Step 4: Commit or Stop
+## Step 5: Commit or Stop
 
 **If ALL gates pass:**
 - Stage relevant files (not untracked files unless explicitly part of the change)
 - Generate commit message from `$ARGUMENTS` and changed file analysis
 - Use conventional commit format: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`
+- If diff review fixed issues, include them in the same commit (they're pre-commit cleanup, not separate work)
 - Commit
 
 **If ANY gate fails:**
@@ -109,6 +136,8 @@ Fail if: any test fails.
 ## Success Criteria
 
 - [ ] All changed files categorized
+- [ ] Diff reviewed for common follow-up-fix patterns
+- [ ] Issues found in diff review fixed before quality gates
 - [ ] Only relevant quality gates executed (not all)
 - [ ] No gate failures before committing
 - [ ] Commit message reflects the nature of changes

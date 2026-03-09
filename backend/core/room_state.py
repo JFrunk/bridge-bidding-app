@@ -84,6 +84,9 @@ class RoomState:
     # Chat messages (ephemeral — destroyed on session end)
     chat_messages: List[Dict[str, Any]] = field(default_factory=list)
 
+    # Bid feedback accumulated during auction (per human bid)
+    bid_feedback: List[Dict[str, Any]] = field(default_factory=list)
+
     # Version tracking for efficient polling
     version: int = 0
 
@@ -191,6 +194,7 @@ class RoomState:
         self.original_deal = None
         self.auction_history = []
         self.play_state = None
+        self.bid_feedback = []
         self.game_phase = 'waiting' if not self.is_full() else 'bidding'
         self.increment_version()
 
@@ -242,6 +246,12 @@ class RoomState:
                 if partner_hand:
                     result['partner_hand'] = self._serialize_hand(partner_hand)
                     result['partner_position'] = partner
+
+                # Include bid feedback for review
+                if self.bid_feedback:
+                    # Filter to only show this player's feedback
+                    my_feedback = [f for f in self.bid_feedback if f.get('position') == position]
+                    result['bid_feedback'] = my_feedback
 
             # Include current bidder info (always include key for frontend consistency)
             current_bidder = self.get_current_bidder()

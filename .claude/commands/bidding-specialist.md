@@ -23,6 +23,7 @@ You are working on the SAYC (Standard American Yellow Card) bidding AI system. Y
 ## Reference Documents
 
 - **Code Context:** `backend/engine/CLAUDE.md` - Bidding engine architecture
+- **State Architecture:** `.claude/BIDDING_STATE_ARCHITECTURE.md` - Auction state, feature extraction, module routing internals
 - **SAYC Rules:** `.claude/SAYC_REFERENCE.md` - Official SAYC bidding system
 - **Play Rules:** `.claude/BRIDGE_PLAY_RULES.md` - Card play mechanics
 

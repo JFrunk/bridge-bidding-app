@@ -109,6 +109,9 @@ export function RoomProvider({ children }) {
   const [vulnerability, setVulnerability] = useState('None');
   const [currentBidder, setCurrentBidder] = useState(null);
 
+  // Bid feedback (accumulated during auction, shown in review)
+  const [bidFeedback, setBidFeedback] = useState([]);
+
   // Play state (shared for room play sync)
   const [playState, setPlayState] = useState(null);
 
@@ -187,6 +190,12 @@ export function RoomProvider({ children }) {
     } else if (room.game_phase === 'bidding' || room.game_phase === 'waiting') {
       setPartnerHand(null);
       setPartnerPosition(null);
+    }
+    // Bid feedback for review phase
+    if (room.bid_feedback) {
+      setBidFeedback(room.bid_feedback);
+    } else if (room.game_phase === 'waiting') {
+      setBidFeedback([]);
     }
     if (room.auction_history !== undefined) {
       setAuction(room.auction_history);
@@ -695,6 +704,7 @@ export function RoomProvider({ children }) {
     roomData,
     myHand,
     partnerHand,
+    bidFeedback: bidFeedback,
     partnerPosition,
     auction,
     dealer,

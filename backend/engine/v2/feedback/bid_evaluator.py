@@ -15,10 +15,14 @@ Key advantages over V1:
 from typing import Dict, Optional, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
+import logging
 
 from engine.hand import Hand
 from engine.v2.interpreters.schema_interpreter import BidCandidate
 from engine.learning.error_categorizer import get_error_categorizer, CategorizedError
+from engine.feedback.learning_feedback import generate_learning_feedback
+
+logger = logging.getLogger(__name__)
 
 
 class CorrectnessLevel(Enum):
@@ -73,6 +77,7 @@ class V2BiddingFeedback:
     key_concept: str
     difficulty: str
     forcing_status: str
+    learning_feedback: Optional[Dict] = None  # 5-part structured teaching feedback
 
     def to_dict(self) -> Dict:
         """Convert to JSON-serializable dict"""
@@ -93,7 +98,8 @@ class V2BiddingFeedback:
             'helpful_hint': self.helpful_hint,
             'key_concept': self.key_concept,
             'difficulty': self.difficulty,
-            'forcing_status': self.forcing_status
+            'forcing_status': self.forcing_status,
+            'learning_feedback': self.learning_feedback
         }
 
     def to_user_message(self, verbosity: str = "normal") -> str:
@@ -254,6 +260,28 @@ class V2BidEvaluator:
         key_concept = self._extract_key_concept(candidates, optimal_bid)
         difficulty = self._assess_difficulty(auction_history, candidates)
 
+        # Generate structured learning feedback (5-part teaching framework)
+        learning_fb = None
+        if user_bid != optimal_bid:
+            try:
+                auction_context = {
+                    'history': auction_history,
+                    'vulnerability': vulnerability,
+                    'dealer': dealer,
+                    'current_player': my_position
+                }
+                learning_fb_obj = generate_learning_feedback(
+                    user_bid=user_bid,
+                    optimal_bid=optimal_bid,
+                    hand=hand,
+                    auction_context=auction_context,
+                    optimal_explanation=optimal_explanation if isinstance(optimal_explanation, str) else str(optimal_explanation)
+                )
+                if learning_fb_obj:
+                    learning_fb = learning_fb_obj.to_dict()
+            except Exception as e:
+                logger.warning(f"Failed to generate learning feedback: {e}")
+
         # Find optimal candidate for rule ID
         optimal_candidate = next(
             (c for c in candidates if c.bid == optimal_bid), None
@@ -287,7 +315,8 @@ class V2BidEvaluator:
             helpful_hint=helpful_hint,
             key_concept=key_concept,
             difficulty=difficulty,
-            forcing_status=forcing_status
+            forcing_status=forcing_status,
+            learning_feedback=learning_fb
         )
 
     def _determine_correctness(

@@ -25,7 +25,22 @@ This file provides guidance to Claude Code when working with this repository. De
 - Mark items complete IMMEDIATELY when done
 - When user adds mid-task instructions: ADD to existing list, don't replace
 - NEVER lose track of original tasks when new ones arrive
-- NEVER have more than one item in_progress at a time
+- Only one TodoWrite item should be in_progress at a time in the main conversation
+- This does NOT restrict launching parallel Agent subagents for independent subtasks
+- When delegating to parallel agents, mark the parent task as in_progress and track subtasks through agent results
+
+---
+
+## Proactive Commit Discipline
+
+**CC is responsible for suggesting commits — the user should not have to remember.**
+
+- After completing any logical unit of work (bug fix, feature, refactor), proactively ask the user: "This looks like a good commit point. Want me to run `/smart-commit`?"
+- A "logical unit" means: the task from the todo list is marked complete, tests pass, or the user's request has been fulfilled
+- If the Stop hook reports uncommitted changes accumulating, act on it — don't ignore the signal
+- When the user says yes, invoke `/smart-commit` which handles diff review, quality gates, and committing
+- Never let more than one logical unit of work accumulate uncommitted
+- For docs-only or config-only changes, a lightweight commit is fine (no quality gates needed)
 
 ---
 
@@ -54,6 +69,7 @@ Before starting any task, check if a matching skill exists. If it does, use the 
 | Triaging multiple issues | `/triage-issues` |
 | Analyzing error logs | `/analyze-errors` |
 | Analyzing a specific hand | `/analyze-hand` |
+| Pre-commit validation | `/preflight` |
 | Deploying to production | `/deploy-production` |
 
 ---
