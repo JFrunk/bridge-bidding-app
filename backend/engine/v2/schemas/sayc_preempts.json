@@ -230,7 +230,12 @@
       "description": "3NT response to partner's preempt with stoppers",
       "conditions": {
         "partner_last_bid": {
-          "in": ["3♣", "3♦", "3♥", "3♠"]
+          "in": [
+            "3♣",
+            "3♦",
+            "3♥",
+            "3♠"
+          ]
         },
         "hcp": {
           "min": 16
@@ -253,12 +258,20 @@
         "partner_suit": "♥",
         "OR": [
           {
-            "hcp": {"min": 14},
-            "support_for_partner": {"min": 3}
+            "hcp": {
+              "min": 14
+            },
+            "support_for_partner": {
+              "min": 3
+            }
           },
           {
-            "hcp": {"min": 10},
-            "support_for_partner": {"min": 4},
+            "hcp": {
+              "min": 10
+            },
+            "support_for_partner": {
+              "min": 4
+            },
             "is_contested": false
           }
         ]
@@ -277,12 +290,20 @@
         "partner_suit": "♠",
         "OR": [
           {
-            "hcp": {"min": 14},
-            "support_for_partner": {"min": 3}
+            "hcp": {
+              "min": 14
+            },
+            "support_for_partner": {
+              "min": 3
+            }
           },
           {
-            "hcp": {"min": 10},
-            "support_for_partner": {"min": 4},
+            "hcp": {
+              "min": 10
+            },
+            "support_for_partner": {
+              "min": 4
+            },
             "is_contested": false
           }
         ]
@@ -318,7 +339,11 @@
       "description": "Feature ask over partner's weak 2",
       "conditions": {
         "partner_last_bid": {
-          "in": ["2♦", "2♥", "2♠"]
+          "in": [
+            "2♦",
+            "2♥",
+            "2♠"
+          ]
         },
         "hcp": {
           "min": 15
@@ -335,7 +360,11 @@
       "description": "New suit forcing over partner's preempt",
       "conditions": {
         "partner_last_bid": {
-          "in": ["3♣", "3♦", "3♥"]
+          "in": [
+            "3♣",
+            "3♦",
+            "3♥"
+          ]
         },
         "hcp": {
           "min": 16
@@ -355,11 +384,21 @@
       "description": "Pass partner's preempt with weak hand",
       "conditions": {
         "partner_last_bid": {
-          "in": ["2♦", "2♥", "2♠", "3♣", "3♦", "3♥", "3♠"]
+          "in": [
+            "2♦",
+            "2♥",
+            "2♠",
+            "3♣",
+            "3♦",
+            "3♥",
+            "3♠"
+          ]
         },
         "hcp": {
           "max": 12
-        }
+        },
+        "is_doubler_rebid": false,
+        "is_advancer": false
       },
       "forcing": "none",
       "explanation": "Pass: Not enough to act over partner's preempt",

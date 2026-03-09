@@ -253,17 +253,43 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
                            not partner_made_competitive_action and
                            bc['my_bid_count'] == 0)
 
-    # is_doubler_rebid: I doubled (takeout), partner responded, now I'm rebidding
-    # Key: my_bid_count >= 1, my last bid was X, and partner has bid something
+    # is_doubler_rebid: I doubled (takeout), now it's my turn again
+    # True regardless of whether partner responded positively or passed
     my_bids_temp = _get_my_bids(auction_history, my_position, dealer)
     i_doubled = 'X' in my_bids_temp
-    partner_responded_to_double = (i_doubled and
-                                   partner_made_competitive_action and
-                                   flat['partner_last_bid'] not in ['Pass', 'X', 'XX', None])
     flat['is_doubler_rebid'] = (af['opener_relationship'] == 'Opponent' and
                                  i_doubled and
-                                 partner_responded_to_double and
                                  bc['my_bid_count'] >= 1)
+
+    # Determine who acted competitively first: me or partner?
+    # This distinguishes overcaller (I acted first) from advancer (partner acted first)
+    positions = ['North', 'East', 'South', 'West']
+    my_idx = positions.index(my_position) if my_position in positions else 0
+    dealer_idx = positions.index(dealer) if dealer in positions else 0
+    partner_idx = (my_idx + 2) % 4
+    my_first_competitive_idx = None
+    partner_first_competitive_idx = None
+    for i, bid in enumerate(auction_history):
+        bid_pos = (dealer_idx + i) % 4
+        if bid not in ['Pass', 'XX', ''] and bid_pos == my_idx and my_first_competitive_idx is None:
+            my_first_competitive_idx = i
+        if bid not in ['Pass', 'XX', ''] and bid_pos == partner_idx and partner_first_competitive_idx is None:
+            partner_first_competitive_idx = i
+    i_acted_first = (my_first_competitive_idx is not None and
+                     (partner_first_competitive_idx is None or
+                      my_first_competitive_idx < partner_first_competitive_idx))
+
+    # is_overcaller_rebid: I was the first competitive actor (non-double overcall), now rebidding
+    flat['is_overcaller_rebid'] = (af['opener_relationship'] == 'Opponent' and
+                                    bc['my_bid_count'] >= 1 and
+                                    not i_doubled and
+                                    i_acted_first)
+
+    # is_advancer_rebid: partner acted competitively first, I responded, now rebidding
+    flat['is_advancer_rebid'] = (af['opener_relationship'] == 'Opponent' and
+                                  partner_made_competitive_action and
+                                  bc['my_bid_count'] >= 1 and
+                                  not i_acted_first)
 
     # Longest suit info
     suit_lengths = hf['suit_lengths']
