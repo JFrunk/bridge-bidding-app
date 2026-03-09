@@ -137,9 +137,10 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
             <button
               className="copy-btn"
               onClick={() => {
-                navigator.clipboard.writeText(createdRoomCode);
+                const inviteUrl = `${window.location.origin}/room/${createdRoomCode}`;
+                navigator.clipboard.writeText(inviteUrl);
               }}
-              title="Copy to clipboard"
+              title="Copy invite link"
             >
               📋
             </button>
@@ -149,14 +150,14 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
           <div className="share-buttons">
             <span className="share-label">Share via:</span>
             <a
-              href={`mailto:?subject=Join my Bridge game!&body=Join me for Bridge practice! Enter code ${createdRoomCode} at ${window.location.origin}`}
+              href={`mailto:?subject=Join my Bridge game!&body=Join me for Bridge practice! ${window.location.origin}/room/${createdRoomCode}`}
               className="share-btn share-email"
               title="Share via Email"
             >
               ✉️ Email
             </a>
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(`Join me for Bridge practice! Code: ${createdRoomCode}\n${window.location.origin}`)}`}
+              href={`https://wa.me/?text=${encodeURIComponent(`Join me for Bridge practice!\n${window.location.origin}/room/${createdRoomCode}`)}`}
               className="share-btn share-whatsapp"
               target="_blank"
               rel="noopener noreferrer"
@@ -165,7 +166,7 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
               💬 WhatsApp
             </a>
             <a
-              href={`sms:?body=${encodeURIComponent(`Join me for Bridge practice! Code: ${createdRoomCode} - ${window.location.origin}`)}`}
+              href={`sms:?body=${encodeURIComponent(`Join me for Bridge practice! ${window.location.origin}/room/${createdRoomCode}`)}`}
               className="share-btn share-sms"
               title="Share via Text"
             >

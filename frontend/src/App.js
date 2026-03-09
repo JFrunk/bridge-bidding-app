@@ -415,6 +415,9 @@ function App() {
     startRoomPlay,
     playRoomCard,
     error: roomError,
+    pendingInviteCode,
+    clearPendingInvite,
+    joinRoom,
   } = useRoom();
 
   const [showLogin, setShowLogin] = useState(false);
@@ -498,6 +501,20 @@ function App() {
   useEffect(() => {
     initializeAnalytics();
   }, []);
+
+  // Auto-join room from invite link (/room/CODE)
+  useEffect(() => {
+    if (pendingInviteCode && !inRoom) {
+      clearPendingInvite();
+      // Auto-join the room and transition to game view
+      joinRoom(pendingInviteCode).then((result) => {
+        if (result.success) {
+          setShowModeSelector(false);
+          setShowTeamPractice(true);
+        }
+      });
+    }
+  }, [pendingInviteCode, inRoom, joinRoom, clearPendingInvite]);
 
   // AUTO-HIDE lobby when game becomes active (view orchestration)
   // Also sync local state from room state when in room mode

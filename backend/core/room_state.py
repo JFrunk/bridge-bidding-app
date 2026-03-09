@@ -97,8 +97,8 @@ class RoomState:
     created_at: datetime = field(default_factory=datetime.now)
     last_activity: datetime = field(default_factory=datetime.now)
 
-    # Disconnect timeout in seconds (60s prevents false positives during active play)
-    DISCONNECT_TIMEOUT: int = 60
+    # Disconnect timeout in seconds (300s gives time for invite link sharing)
+    DISCONNECT_TIMEOUT: int = 300
 
     def touch(self):
         """Update last activity timestamp"""

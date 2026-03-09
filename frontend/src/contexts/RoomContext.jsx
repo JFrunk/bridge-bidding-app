@@ -141,6 +141,17 @@ export function RoomProvider({ children }) {
   const pollIntervalRef = useRef(null);
   const pollRoomRef = useRef(null);
 
+  // Invite link: detect /room/CODE in URL on mount
+  const [pendingInviteCode, setPendingInviteCode] = useState(() => {
+    const match = window.location.pathname.match(/^\/room\/([A-Za-z0-9]+)$/);
+    if (match) {
+      // Clean URL without triggering navigation
+      window.history.replaceState({}, '', '/');
+      return match[1].toUpperCase();
+    }
+    return null;
+  });
+
   // Error state
   const [error, setError] = useState(null);
 
@@ -765,6 +776,10 @@ export function RoomProvider({ children }) {
     startPolling,
     stopPolling,
     isPolling,
+
+    // Invite link
+    pendingInviteCode,
+    clearPendingInvite: () => setPendingInviteCode(null),
 
     // Error state
     error,
