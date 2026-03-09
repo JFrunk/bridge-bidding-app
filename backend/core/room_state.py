@@ -184,11 +184,14 @@ class RoomState:
             return self.get_current_bidder() == position
         elif self.game_phase == 'playing' and self.play_state:
             next_player = self.play_state.next_to_play
+            declarer = self.play_state.contract.declarer
+            dummy = seats_partner(declarer)
+            # Dummy never controls their own cards — declarer does
+            if position == dummy:
+                return False
             if next_player == position:
                 return True
             # Declarer also controls dummy's cards
-            declarer = self.play_state.contract.declarer
-            dummy = seats_partner(declarer)
             if position == declarer and next_player == dummy:
                 return True
             return False
