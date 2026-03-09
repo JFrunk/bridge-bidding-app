@@ -1259,32 +1259,13 @@ def _auto_play_for_ai(room: RoomState) -> list:
 
         # Get AI card selection
         try:
-            ai = SimplePlayAI(difficulty=room.settings.ai_difficulty)
-
-            # Determine trump suit
+            ai = SimplePlayAI()
             trump_suit = None if room.play_state.contract.strain == 'NT' else room.play_state.contract.strain
 
-            # Get legal cards
+            # Use choose_card which handles legal card filtering internally
+            card = ai.choose_card(room.play_state, current_player)
+
             hand = room.play_state.hands[current_player]
-            legal_cards = [
-                c for c in hand.cards
-                if PlayEngine.is_legal_play(c, hand, room.play_state.current_trick, trump_suit)
-            ]
-
-            if not legal_cards:
-                break  # Should never happen
-
-            # Select card (simple AI for now)
-            try:
-                card = ai.select_card(
-                    hand=hand,
-                    current_trick=room.play_state.current_trick,
-                    trump_suit=trump_suit,
-                    legal_cards=legal_cards
-                )
-            except Exception as ai_err:
-                print(f"⚠️ AI card selection error for {current_player}: {ai_err}")
-                card = legal_cards[0]  # Fallback: play first legal card
 
             # Play the card
             room.play_state.current_trick.append((card, current_player))
