@@ -390,3 +390,38 @@ export function nsSuccess(nsIsDeclarer, actualTricksNs, requiredTricks) {
     return actualTricksNs > (13 - requiredTricks);
   }
 }
+
+
+// === VISUAL/RENDERING HELPERS ===
+
+/**
+ * Map an absolute compass position to a visual compass position
+ * for correct screen rendering relative to the viewer.
+ *
+ * The viewer always sits at bottom (screen-S). Their partner is at top (screen-N),
+ * LHO at left (screen-W), RHO at right (screen-E).
+ *
+ * This maps absolute seats to visual seats so that TrickArena (which renders
+ * N=top, E=right, S=bottom, W=left) places cards correctly on screen.
+ *
+ * @param {string} absoluteSeat - The actual compass position ('N','E','S','W')
+ * @param {string} viewerSeat - The viewer's seat ('N','E','S','W')
+ * @returns {string} Visual compass position for screen rendering
+ *
+ * @example
+ *   // When viewer is South (standard solo play)
+ *   toVisualSeat('N', 'S') // 'N' (partner at top - no change)
+ *   toVisualSeat('E', 'S') // 'E' (RHO at right - no change)
+ *
+ *   // When viewer is North (room guest)
+ *   toVisualSeat('N', 'N') // 'S' (viewer at bottom)
+ *   toVisualSeat('E', 'N') // 'W' (LHO at left)
+ *   toVisualSeat('S', 'N') // 'N' (partner at top)
+ *   toVisualSeat('W', 'N') // 'E' (RHO at right)
+ */
+export function toVisualSeat(absoluteSeat, viewerSeat) {
+  const rel = relativePosition(absoluteSeat, viewerSeat);
+  // rel 0 = self (bottom=S), 1 = LHO (left=W), 2 = partner (top=N), 3 = RHO (right=E)
+  const visualMap = ['S', 'W', 'N', 'E'];
+  return visualMap[rel];
+}

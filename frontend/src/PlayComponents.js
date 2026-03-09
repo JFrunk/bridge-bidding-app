@@ -19,6 +19,8 @@ import { ScoreModal } from './components/play/ScoreModal';
 import { PlayableCard as PlayableCardComponent } from './components/play/PlayableCard';
 import Card from './shared/components/Card';
 import { sortCards } from './shared/utils/cardUtils';
+import { SUIT_LOOKUP } from './utils/suitColors';
+import { SEATS } from './utils/seats';
 
 /**
  * Get suit display order based on trump suit
@@ -31,13 +33,7 @@ export function getSuitOrder(trumpStrain) {
     return ['♠', '♥', '♣', '♦'];
   }
 
-  const strainToSuit = {
-    'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣',
-    '♠': '♠', '♥': '♥', '♦': '♦', '♣': '♣'
-  };
-
-  const trumpSuit = strainToSuit[trumpStrain] || trumpStrain;
-  const isRed = trumpSuit === '♥' || trumpSuit === '♦';
+  const trumpSuit = SUIT_LOOKUP[trumpStrain] || trumpStrain;
 
   if (trumpSuit === '♥') {
     return ['♥', '♠', '♦', '♣']; // Red trump: Hearts, Spades, Diamonds, Clubs
@@ -89,8 +85,8 @@ export function PlayableCard({ card, onClick, disabled }) {
  * Display current trick in progress
  * MIGRATED: Now uses CurrentTrickDisplay component from components/play/
  */
-export function CurrentTrick({ trick, positions, trickWinner, trickComplete, nextToPlay }) {
-  return <CurrentTrickDisplay trick={trick} trickWinner={trickWinner} trickComplete={trickComplete} nextToPlay={nextToPlay} />;
+export function CurrentTrick({ trick, positions, trickWinner, trickComplete, nextToPlay, userPosition }) {
+  return <CurrentTrickDisplay trick={trick} trickWinner={trickWinner} trickComplete={trickComplete} nextToPlay={nextToPlay} userPosition={userPosition} />;
 }
 
 /**
@@ -227,7 +223,7 @@ export function PlayTable({
   const vp = getVisualPositions(userPosition);
 
   // Position mapping for display (clockwise from North)
-  const positions = ['N', 'E', 'S', 'W'];
+  const positions = SEATS;
 
   // Get suit order based on trump
   const suitOrder = getSuitOrder(contract.strain);
@@ -306,6 +302,7 @@ export function PlayTable({
               trick={lastTrick}
               trickNumber={playState.trick_history?.length || 0}
               onClose={onHideLastTrick}
+              userPosition={userPosition}
             />
           ) : (
             <CurrentTrick
@@ -314,6 +311,7 @@ export function PlayTable({
               trickWinner={trick_winner}
               trickComplete={trick_complete}
               nextToPlay={next_to_play}
+              userPosition={userPosition}
             />
           )}
         </div>

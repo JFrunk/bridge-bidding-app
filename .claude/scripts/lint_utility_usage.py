@@ -36,6 +36,9 @@ SKIP_FILES = {
     "frontend/src/shared/utils/cardUtils.js",
     "backend/utils/error_logger.py",
     "frontend/src/utils/sessionHelper.js",
+    # Test files for the utilities themselves (assertions use inline values)
+    "frontend/src/utils/seats.test.js",
+    "frontend/src/utils/suitColors.test.js",
     # This script
     ".claude/scripts/lint_utility_usage.py",
     # Registry doc

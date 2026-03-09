@@ -15,7 +15,8 @@ import {
   partnership, partnershipStr, isPartner, isOpponent, sameSide,
   relativePosition, displayName, bidderRole,
   dummy, openingLeader, isDeclaringSide, isDefendingSide,
-  activeSeatBidding, activeSeatPlay, nsSuccess
+  activeSeatBidding, activeSeatPlay, nsSuccess,
+  toVisualSeat
 } from './seats';
 
 
@@ -423,6 +424,41 @@ describe('modulo-4 properties', () => {
     SEATS.forEach(hero => {
       const total = SEATS.reduce((sum, target) => sum + relativePosition(target, hero), 0);
       expect(total).toBe(6); // 0 + 1 + 2 + 3
+    });
+  });
+});
+
+
+describe('toVisualSeat', () => {
+  test('identity for South viewer (solo play)', () => {
+    expect(toVisualSeat('N', 'S')).toBe('N');
+    expect(toVisualSeat('E', 'S')).toBe('E');
+    expect(toVisualSeat('S', 'S')).toBe('S');
+    expect(toVisualSeat('W', 'S')).toBe('W');
+  });
+
+  test('rotated for North viewer (room guest)', () => {
+    // N is viewer → bottom (S)
+    expect(toVisualSeat('N', 'N')).toBe('S');
+    // S is partner → top (N)
+    expect(toVisualSeat('S', 'N')).toBe('N');
+    // E is LHO → left (W)
+    expect(toVisualSeat('E', 'N')).toBe('W');
+    // W is RHO → right (E)
+    expect(toVisualSeat('W', 'N')).toBe('E');
+  });
+
+  test('rotated for East viewer', () => {
+    expect(toVisualSeat('E', 'E')).toBe('S'); // self at bottom
+    expect(toVisualSeat('W', 'E')).toBe('N'); // partner at top
+    expect(toVisualSeat('S', 'E')).toBe('W'); // LHO at left
+    expect(toVisualSeat('N', 'E')).toBe('E'); // RHO at right
+  });
+
+  test('all 4 visual positions are used for any viewer', () => {
+    SEATS.forEach(viewer => {
+      const visualPositions = new Set(SEATS.map(s => toVisualSeat(s, viewer)));
+      expect(visualPositions.size).toBe(4);
     });
   });
 });
