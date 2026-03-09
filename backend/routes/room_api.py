@@ -19,6 +19,9 @@ from core.session_state import get_session_id_from_request
 from engine.hand import Hand, Card
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
 from engine.ai.bidding_state import BiddingStateBuilder
+from utils.seats import (
+    partner as seats_partner, lho, normalize, seat_index, SEAT_NAMES, SEATS
+)
 
 
 def get_ai_bid_for_room(room: RoomState, position: str) -> str:
@@ -38,7 +41,7 @@ def get_ai_bid_for_room(room: RoomState, position: str) -> str:
         engine = BiddingEngineV2Schema()
 
         # Get the hand for this position
-        position_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[position]
+        position_full = SEAT_NAMES[position]
         hand = room.deal.get(position_full)
 
         if not hand:
@@ -51,7 +54,7 @@ def get_ai_bid_for_room(room: RoomState, position: str) -> str:
             auction_history=room.auction_history,
             my_position=position_full,
             vulnerability=room.vulnerability or 'None',
-            dealer={'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}.get(room.dealer, room.dealer)
+            dealer=SEAT_NAMES.get(normalize(room.dealer), room.dealer)
         )
 
         return bid or 'Pass'
@@ -247,8 +250,7 @@ def _save_room_hand(room: RoomState):
 
             # Determine if this player was declarer/dummy
             declarer = contract.declarer if contract else None
-            from engine.play_engine import PlayEngine
-            dummy = PlayEngine.partner(declarer) if declarer else None
+            dummy = seats_partner(declarer) if declarer else None
             user_was_declarer = (position == declarer)
             user_was_dummy = (position == dummy)
 
@@ -453,7 +455,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             if room:
                 try:
                     _deal_next_hand(room)
-                    position_full = 'North'  # Guest is always North
+                    position_full = SEAT_NAMES['N']  # Guest is always North
                     deal_data = {
                         'dealer': room.dealer,
                         'vulnerability': room.vulnerability,
@@ -560,7 +562,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         if room.game_phase == 'bidding' and room.auction_history:
             try:
                 position = room.get_position_for_session(session_id)
-                position_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}.get(position, position)
+                position_full = SEAT_NAMES.get(position, position)
                 hand = room.deal.get(position_full)
 
                 if hand:
@@ -574,7 +576,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                     }
 
                     # Build bidding state and extract beliefs
-                    dealer_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}.get(room.dealer, room.dealer)
+                    dealer_full = SEAT_NAMES.get(normalize(room.dealer), room.dealer)
                     bidding_state = BiddingStateBuilder().build(room.auction_history, dealer_full)
                     beliefs = bidding_state.to_dict(position, my_hcp=user_hcp, my_suit_lengths=user_suit_lengths)
                     room_dict['beliefs'] = beliefs
@@ -750,7 +752,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         # If a deal happened, include hand data
         if action_taken == 'deal':
             position = room.get_position_for_session(session_id)
-            position_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[position]
+            position_full = SEAT_NAMES[position]
             response['dealer'] = room.dealer
             response['vulnerability'] = room.vulnerability
             response['my_hand'] = room._serialize_hand(room.deal[position_full])
@@ -787,10 +789,8 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         """Deal next hand (shared logic for ready gate and legacy deal endpoint)"""
         hands = _generate_room_hands(room.settings)
 
-        # Rotate dealer
-        dealer_positions = ['N', 'E', 'S', 'W']
-        current_idx = dealer_positions.index(room.dealer[0].upper()) if room.dealer else 0
-        room.dealer = dealer_positions[(current_idx + 1) % 4]
+        # Rotate dealer (next player clockwise)
+        room.dealer = lho(normalize(room.dealer)) if room.dealer else 'N'
 
         # Update room state
         room.deal = hands
@@ -927,13 +927,11 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             }), 500
 
         # Set dealer (rotate or use provided)
-        dealer_positions = ['N', 'E', 'S', 'W']
-        if 'dealer' in data and data['dealer'] in dealer_positions:
+        if 'dealer' in data and data['dealer'] in SEATS:
             room.dealer = data['dealer']
         else:
-            # Rotate dealer
-            current_idx = dealer_positions.index(room.dealer[0].upper()) if room.dealer else 0
-            room.dealer = dealer_positions[(current_idx + 1) % 4]
+            # Rotate dealer (next player clockwise)
+            room.dealer = lho(normalize(room.dealer)) if room.dealer else 'N'
 
         # Update room state
         room.deal = hands
@@ -948,7 +946,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
         # Return response with caller's hand
         position = room.get_position_for_session(session_id)
-        position_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[position]
+        position_full = SEAT_NAMES[position]
 
         return jsonify({
             'success': True,
@@ -1038,8 +1036,8 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
         # Evaluate bid using V2 unified feedback system (accumulate for review)
         position = room.get_position_for_session(session_id)
-        position_full = {'N': 'North', 'S': 'South'}.get(position, position)
-        dealer_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}.get(room.dealer, room.dealer)
+        position_full = SEAT_NAMES.get(position, position)
+        dealer_full = SEAT_NAMES.get(normalize(room.dealer), room.dealer)
         hand = room.deal.get(position_full)
         if hand and bid != 'Pass':
             try:
@@ -1117,7 +1115,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             return jsonify({'success': False, 'error': 'Not your turn'}), 403
 
         position = room.get_position_for_session(session_id)
-        position_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[position]
+        position_full = SEAT_NAMES[position]
         hand = room.deal.get(position_full)
 
         if not hand:
@@ -1127,7 +1125,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             from engine.v2 import BiddingEngineV2Schema
             hint_engine = BiddingEngineV2Schema()
 
-            dealer_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}.get(room.dealer, room.dealer)
+            dealer_full = SEAT_NAMES.get(normalize(room.dealer), room.dealer)
             bid, explanation = hint_engine.get_next_bid(
                 hand=hand,
                 auction_history=room.auction_history,
@@ -1200,8 +1198,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             }), 400
 
         # Determine contract from auction
-        dealer_positions = ['N', 'E', 'S', 'W']
-        dealer_idx = dealer_positions.index(room.dealer[0].upper())
+        dealer_idx = seat_index(normalize(room.dealer))
         contract = PlayEngine.determine_contract(room.auction_history, dealer_idx)
 
         if not contract:
@@ -1220,7 +1217,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         play_state = PlayEngine.create_play_session(contract, hands)
 
         # Determine dummy (partner of declarer)
-        dummy = PlayEngine.partner(contract.declarer)
+        dummy = seats_partner(contract.declarer)
 
         room.play_state = play_state
         room.game_phase = 'playing'
@@ -1234,7 +1231,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             'contract': str(contract),
             'declarer': contract.declarer,
             'dummy': dummy,
-            'opening_leader': PlayEngine.next_player(contract.declarer),
+            'opening_leader': lho(contract.declarer),
             'next_to_play': room.play_state.next_to_play,
             'is_my_turn': room.is_session_turn(session_id),
             'version': room.version,
@@ -1315,7 +1312,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         # Handle dummy play - declarer controls dummy
         actual_player = player
         declarer = room.play_state.contract.declarer
-        dummy = PlayEngine.partner(declarer)
+        dummy = seats_partner(declarer)
 
         if player == dummy:
             # Dummy's cards are played by declarer
@@ -1329,7 +1326,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 }), 403
 
         # Get the hand for the player whose turn it is
-        position_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[player]
+        position_full = SEAT_NAMES[player]
         hand = room.play_state.hands[player]
 
         # Auto-clear stale completed trick if needed (safety net)
@@ -1388,7 +1385,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 _save_room_hand(room)
         else:
             # Next player
-            room.play_state.next_to_play = PlayEngine.next_player(player)
+            room.play_state.next_to_play = lho(player)
 
         room.increment_version()
 
@@ -1543,7 +1540,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                     room.game_phase = 'complete'
                     _save_room_hand(room)
             else:
-                room.play_state.next_to_play = PlayEngine.next_player(current_player)
+                room.play_state.next_to_play = lho(current_player)
 
             room.increment_version()
 
@@ -1675,7 +1672,7 @@ def _auto_play_for_ai(room: RoomState) -> list:
                     room.game_phase = 'complete'
                     break
             else:
-                room.play_state.next_to_play = PlayEngine.next_player(current_player)
+                room.play_state.next_to_play = lho(current_player)
 
             room.increment_version()
 

@@ -13,6 +13,7 @@
 
 import React, { useState } from 'react';
 import { useRoom } from '../../contexts/RoomContext';
+import { partner, displayName } from '../../utils/seats';
 import './RoomStatusBar.css';
 
 // Convention display names
@@ -106,9 +107,9 @@ export default function RoomStatusBar() {
 
   const status = getStatus();
 
-  // Compass labels based on position
-  const myLabel = myPosition === 'S' ? 'SOUTH' : 'NORTH';
-  const partnerLabel = myPosition === 'S' ? 'NORTH' : 'SOUTH';
+  // Compass labels based on position (using seats utility)
+  const myLabel = displayName(myPosition, myPosition, false).toUpperCase();
+  const partnerLabel = displayName(partner(myPosition), myPosition, false).toUpperCase();
 
   // Check for connection error (404)
   const hasConnectionError = error && (error.includes('404') || error.includes('Room closed'));
