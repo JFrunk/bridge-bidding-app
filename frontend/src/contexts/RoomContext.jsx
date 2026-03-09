@@ -569,9 +569,8 @@ export function RoomProvider({ children }) {
       return { success: false, error: 'Not in a room' };
     }
 
-    if (!isMyTurn) {
-      return { success: false, error: 'Not your turn' };
-    }
+    // NOTE: Turn validation is done server-side via is_session_turn()
+    // Frontend isMyTurn can be stale during AI play loop, so we don't gate on it
 
     try {
       const response = await fetchWithSession(`${API_URL}/api/room/play-card`, {
@@ -600,7 +599,7 @@ export function RoomProvider({ children }) {
       setError(errorMsg);
       return { success: false, error: errorMsg };
     }
-  }, [inRoom, isMyTurn]);
+  }, [inRoom]);
 
   // Poll room state
   const pollRoom = useCallback(async () => {

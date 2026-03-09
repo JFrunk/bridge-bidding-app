@@ -977,10 +977,8 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         room.game_phase = 'playing'
         room.increment_version()
 
-        # If opening leader is AI (E or W), trigger AI play
-        ai_plays = []
-        if play_state.next_to_play in ('E', 'W'):
-            ai_plays = _auto_play_for_ai(room)
+        # NO auto-play for AI — frontend drives AI plays one at a time
+        # via /api/room/get-ai-play (matches solo play loop pattern)
 
         return jsonify({
             'success': True,
@@ -990,7 +988,6 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             'opening_leader': PlayEngine.next_player(contract.declarer),
             'next_to_play': room.play_state.next_to_play,
             'is_my_turn': room.is_session_turn(session_id),
-            'ai_plays': ai_plays,
             'version': room.version,
             'play_state': room._serialize_play_state(for_session=session_id),
             'game_phase': room.game_phase,
@@ -1086,6 +1083,12 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         position_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[player]
         hand = room.play_state.hands[player]
 
+        # Auto-clear stale completed trick if needed (safety net)
+        # Normally frontend calls /api/room/clear-trick, but auto-clear prevents stuck state
+        if len(room.play_state.current_trick) == 4:
+            room.play_state.current_trick = []
+            room.play_state.current_trick_leader = room.play_state.next_to_play
+
         # Validate card is legal
         trump_suit = None if room.play_state.contract.strain == 'NT' else room.play_state.contract.strain
         if not PlayEngine.is_legal_play(card, hand, room.play_state.current_trick, trump_suit):
@@ -1126,10 +1129,9 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             )
             room.play_state.trick_history.append(trick)
 
-            # Start new trick
-            room.play_state.current_trick = []
+            # DON'T clear trick yet - let frontend display it with winner
+            # Frontend will call /api/room/clear-trick after showing winner
             room.play_state.next_to_play = trick_winner
-            room.play_state.current_trick_leader = trick_winner
 
             # Check if play is complete (13 tricks played)
             if len(room.play_state.trick_history) == 13:
@@ -1140,10 +1142,8 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
         room.increment_version()
 
-        # Auto-play for AI if it's their turn
-        ai_plays = []
-        if room.game_phase == 'playing' and room.play_state.next_to_play in ('E', 'W'):
-            ai_plays = _auto_play_for_ai(room)
+        # NO auto-play for AI — frontend drives AI plays one at a time
+        # via /api/room/get-ai-play (matches solo play loop pattern)
 
         return jsonify({
             'success': True,
@@ -1155,7 +1155,6 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
             'trick_winner': trick_winner,
             'tricks_ns': room.play_state.tricks_won['N'] + room.play_state.tricks_won['S'],
             'tricks_ew': room.play_state.tricks_won['E'] + room.play_state.tricks_won['W'],
-            'ai_plays': ai_plays,
             'game_phase': room.game_phase,
             'dummy_revealed': room.play_state.dummy_revealed,
             'play_state': room._serialize_play_state(for_session=session_id),
@@ -1191,44 +1190,168 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 'error': 'No play state'
             }), 400
 
-        position = room.get_position_for_session(session_id)
-        ps = room.play_state
-        declarer = ps.contract.declarer
-        dummy = PlayEngine.partner(declarer)
-
-        # Determine visible hands
-        visible_hands = {}
-
-        # Always see your own hand
-        if position:
-            visible_hands[position] = room._serialize_hand(ps.hands[position])
-
-        # Dummy is visible after opening lead
-        if ps.dummy_revealed:
-            visible_hands[dummy] = room._serialize_hand(ps.hands[dummy])
-
-        # Declarer sees both their hand and dummy
-        if position == declarer:
-            visible_hands[dummy] = room._serialize_hand(ps.hands[dummy])
+        # Use _serialize_play_state for consistent format with poll and play-card responses
+        play_state = room._serialize_play_state(for_session=session_id)
 
         return jsonify({
             'success': True,
-            'contract': str(ps.contract),
-            'declarer': declarer,
-            'dummy': dummy,
-            'next_to_play': ps.next_to_play,
-            'is_my_turn': room.is_session_turn(session_id),
-            'current_trick': [{'rank': c.rank, 'suit': c.suit, 'player': p} for c, p in ps.current_trick],
-            'trick_history': [
-                {
-                    'cards': [{'rank': c.rank, 'suit': c.suit, 'player': p} for c, p in t.cards],
-                    'winner': t.winner
-                } for t in ps.trick_history
-            ],
-            'tricks_ns': ps.tricks_won['N'] + ps.tricks_won['S'],
-            'tricks_ew': ps.tricks_won['E'] + ps.tricks_won['W'],
-            'visible_hands': visible_hands,
-            'dummy_revealed': ps.dummy_revealed,
+            'game_phase': room.game_phase,
+            'version': room.version,
+            **play_state
+        })
+
+    @app.route('/api/room/get-ai-play', methods=['POST'])
+    def room_get_ai_play():
+        """
+        AI plays ONE card for an E/W position (matches solo /api/get-ai-play pattern).
+
+        Frontend calls this in a loop with delays for visible card animation.
+        Only plays if current next_to_play is E or W.
+
+        Response:
+            {
+                "success": true,
+                "card": {"rank": "A", "suit": "♠"},
+                "position": "E",
+                "trick_complete": false,
+                "trick_winner": null,
+                "next_to_play": "S",
+                "tricks_won": {...},
+                "dummy_revealed": true
+            }
+        """
+        from engine.play_engine import PlayEngine
+        from engine.play.ai.simple_ai import SimplePlayAI
+
+        session_id = get_session_id_from_request(request)
+        if not session_id:
+            return jsonify({'success': False, 'error': 'No session ID provided'}), 400
+
+        room = room_manager.get_room_by_session(session_id)
+        if not room:
+            return jsonify({'success': False, 'error': 'Not in a room'}), 404
+
+        if room.game_phase != 'playing' or not room.play_state:
+            return jsonify({'success': False, 'error': 'Not in playing phase'}), 400
+
+        current_player = room.play_state.next_to_play
+
+        # Only AI plays E/W
+        if current_player not in ('E', 'W'):
+            return jsonify({
+                'success': False,
+                'error': f'Not AI turn (next_to_play={current_player})',
+                'next_to_play': current_player,
+                'is_my_turn': room.is_session_turn(session_id),
+            }), 403
+
+        try:
+            # Auto-clear stale completed trick if needed (safety net)
+            if len(room.play_state.current_trick) == 4:
+                room.play_state.current_trick = []
+                room.play_state.current_trick_leader = room.play_state.next_to_play
+
+            ai = SimplePlayAI()
+            trump_suit = None if room.play_state.contract.strain == 'NT' else room.play_state.contract.strain
+
+            card = ai.choose_card(room.play_state, current_player)
+            hand = room.play_state.hands[current_player]
+
+            # Play the card
+            room.play_state.current_trick.append((card, current_player))
+            hand.cards.remove(card)
+
+            # Reveal dummy after opening lead
+            if not room.play_state.dummy_revealed and len(room.play_state.trick_history) == 0:
+                if len(room.play_state.current_trick) == 1:
+                    room.play_state.dummy_revealed = True
+
+            # Check if trick complete
+            trick_complete = len(room.play_state.current_trick) == 4
+            trick_winner = None
+
+            if trick_complete:
+                trick_winner = PlayEngine.determine_trick_winner(
+                    room.play_state.current_trick,
+                    trump_suit
+                )
+                room.play_state.tricks_won[trick_winner] += 1
+
+                from engine.play_engine import Trick
+                trick = Trick(
+                    cards=list(room.play_state.current_trick),
+                    winner=trick_winner,
+                    leader=room.play_state.current_trick_leader or current_player
+                )
+                room.play_state.trick_history.append(trick)
+
+                # DON'T clear trick - let frontend display it
+                # Frontend will call /api/room/clear-trick after showing winner
+                room.play_state.next_to_play = trick_winner
+
+                if len(room.play_state.trick_history) == 13:
+                    room.game_phase = 'complete'
+            else:
+                room.play_state.next_to_play = PlayEngine.next_player(current_player)
+
+            room.increment_version()
+
+            return jsonify({
+                'success': True,
+                'card': {'rank': card.rank, 'suit': card.suit},
+                'position': current_player,
+                'trick_complete': trick_complete,
+                'trick_winner': trick_winner,
+                'next_to_play': room.play_state.next_to_play,
+                'tricks_won': dict(room.play_state.tricks_won),
+                'dummy_revealed': room.play_state.dummy_revealed,
+                'game_phase': room.game_phase,
+                'explanation': f"{current_player} played {card.rank}{card.suit}",
+                'version': room.version
+            })
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'success': False,
+                'error': f'AI play error: {str(e)}'
+            }), 500
+
+    @app.route('/api/room/clear-trick', methods=['POST'])
+    def room_clear_trick():
+        """
+        Clear completed trick after frontend has displayed it.
+        Matches solo /api/clear-trick pattern.
+        """
+        session_id = get_session_id_from_request(request)
+        if not session_id:
+            return jsonify({'success': False, 'error': 'No session ID provided'}), 400
+
+        room = room_manager.get_room_by_session(session_id)
+        if not room:
+            return jsonify({'success': False, 'error': 'Not in a room'}), 404
+
+        if not room.play_state:
+            return jsonify({'success': False, 'error': 'No play state'}), 400
+
+        trick_size = len(room.play_state.current_trick)
+        if trick_size > 0 and trick_size < 4:
+            return jsonify({
+                'success': False,
+                'error': f'Cannot clear incomplete trick ({trick_size}/4 cards played)',
+            }), 400
+
+        # Clear the current trick
+        room.play_state.current_trick = []
+        room.play_state.current_trick_leader = room.play_state.next_to_play  # Winner leads next
+
+        room.increment_version()
+
+        return jsonify({
+            'success': True,
+            'message': 'Trick cleared',
+            'next_to_play': room.play_state.next_to_play,
             'game_phase': room.game_phase,
             'version': room.version
         })
