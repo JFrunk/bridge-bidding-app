@@ -16,7 +16,7 @@ Response requirements from SAYC:
 """
 import pytest
 from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
+from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
 
 
 # =============================================================================
@@ -38,7 +38,7 @@ def make_hand(spades: str, hearts: str, diamonds: str, clubs: str) -> Hand:
 
 def get_response(hand: Hand, opening_bid: str, vulnerability: str = "None") -> tuple:
     """Get the response to partner's opening bid."""
-    engine = BiddingEngine()
+    engine = BiddingEngineV2Schema()
     # Partner (North) opened, opponent (East) passed, we (South) respond
     return engine.get_next_bid(
         hand=hand,

@@ -13,7 +13,7 @@ Opening bid requirements from SAYC:
 """
 import pytest
 from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
+from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
 
 
 # =============================================================================
@@ -36,7 +36,7 @@ def make_hand(spades: str, hearts: str, diamonds: str, clubs: str) -> Hand:
 
 def get_opening_bid(hand: Hand, vulnerability: str = "None") -> tuple:
     """Get the opening bid for a hand (first to bid, no interference)."""
-    engine = BiddingEngine()
+    engine = BiddingEngineV2Schema()
     return engine.get_next_bid(
         hand=hand,
         auction_history=[],

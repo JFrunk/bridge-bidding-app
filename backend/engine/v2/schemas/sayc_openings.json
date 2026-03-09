@@ -6,80 +6,124 @@
   "rules": [
     {
       "id": "open_2c_strong",
-      "bid": "2\u2663",
+      "bid": "2♣",
       "priority": 100,
       "description": "Strong artificial forcing opening (22+ HCP)",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "game",
+      "explanation": "Strong artificial 2♣ opening (22+ HCP, game-forcing)",
+      "sets_forcing_level": "GAME_FORCE",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 22
         }
-      },
-      "forcing": "game",
-      "explanation": "Strong artificial 2\u2663 opening (22+ HCP, game-forcing)",
-      "sets_forcing_level": "GAME_FORCE"
+      ]
     },
     {
       "id": "open_2c_playing_strength",
-      "bid": "2\u2663",
+      "bid": "2♣",
       "priority": 99,
-      "description": "Strong 2\u2663 with exceptional playing strength",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "description": "Strong 2♣ with exceptional playing strength",
+      "forcing": "game",
+      "explanation": "Strong 2♣ opening (20-21 HCP with 5+ quick tricks, game-forcing)",
+      "sets_forcing_level": "GAME_FORCE",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 20,
           "max": 21
         },
-        "is_balanced": false,
-        "quick_tricks": {
+        {
+          "feature": "is_balanced",
+          "expected": false,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "quick_tricks",
+          "constraint_type": "HARD",
           "min": 5
         },
-        "losing_trick_count": {
+        {
+          "feature": "losing_trick_count",
+          "constraint_type": "HARD",
           "max": 3
         }
-      },
-      "forcing": "game",
-      "explanation": "Strong 2\u2663 opening (20-21 HCP with 5+ quick tricks, game-forcing)",
-      "sets_forcing_level": "GAME_FORCE"
+      ]
     },
     {
       "id": "open_2c_extreme_shape",
-      "bid": "2\u2663",
+      "bid": "2♣",
       "priority": 98,
-      "description": "Strong 2\u2663 with extreme playing strength (long suit, very low LTC)",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "description": "Strong 2♣ with extreme playing strength (long suit, very low LTC)",
+      "forcing": "game",
+      "explanation": "Strong 2♣ opening (8+ card suit with 3 or fewer losers, game-forcing)",
+      "sets_forcing_level": "GAME_FORCE",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 12
         },
-        "losing_trick_count": {
+        {
+          "feature": "losing_trick_count",
+          "constraint_type": "HARD",
           "max": 3
         },
-        "longest_suit_length": {
+        {
+          "feature": "longest_suit_length",
+          "constraint_type": "HARD",
           "min": 8
         }
-      },
-      "forcing": "game",
-      "explanation": "Strong 2\u2663 opening (8+ card suit with 3 or fewer losers, game-forcing)",
-      "sets_forcing_level": "GAME_FORCE"
+      ]
     },
     {
       "id": "open_2nt",
       "bid": "2NT",
       "priority": 95,
       "description": "Strong balanced notrump (no 5-card major)",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "2NT opening (20-21 HCP, balanced, no 5-card major)",
+      "sets_forcing_level": "GAME_FORCE",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 20,
           "max": 21
         },
-        "is_balanced": true,
-        "has_5_card_major": false
-      },
-      "forcing": "none",
-      "explanation": "2NT opening (20-21 HCP, balanced, no 5-card major)",
-      "sets_forcing_level": "GAME_FORCE"
+        {
+          "feature": "is_balanced",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "has_5_card_major",
+          "expected": false,
+          "constraint_type": "HARD"
+        }
+      ]
     },
     {
       "id": "open_1nt",
@@ -87,11 +131,32 @@
       "priority": 90,
       "description": "Standard 1NT opening (no 5-card major)",
       "constraints": [
-        {"feature": "is_opening", "expected": true, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 15, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
-        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
-        {"feature": "has_5_card_major", "expected": false, "constraint_type": "HARD"},
-        {"feature": "stoppers_required", "min": 3, "constraint_type": "HARD"}
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 15,
+          "max": 17,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "is_balanced",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "has_5_card_major",
+          "expected": false,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "stoppers_required",
+          "min": 3,
+          "constraint_type": "HARD"
+        }
       ],
       "forcing": "none",
       "explanation": "1NT opening (15-17 HCP, balanced)",
@@ -102,516 +167,776 @@
       "bid": "1NT",
       "priority": 79,
       "description": "1NT opening with 2 stoppers but maximum HCP (no 5-card major)",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1NT opening (16-17 HCP, balanced)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 16,
           "max": 17
         },
-        "is_balanced": true,
-        "has_5_card_major": false,
-        "stoppers_required": 2,
-        "quick_tricks": {
+        {
+          "feature": "is_balanced",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "has_5_card_major",
+          "expected": false,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "stoppers_required",
+          "constraint_type": "HARD",
+          "min": 2
+        },
+        {
+          "feature": "quick_tricks",
+          "constraint_type": "HARD",
           "min": 2.0
         }
-      },
-      "forcing": "none",
-      "explanation": "1NT opening (16-17 HCP, balanced)",
-      "sets_forcing_level": "NON_FORCING"
+      ]
     },
     {
       "id": "open_1_spades_sound",
-      "bid": "1\u2660",
+      "bid": "1♠",
       "priority": 80,
       "description": "Sound one spade opening with good values (14+ HCP)",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♠ opening (12-21 HCP, 5+ spades)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 14,
           "max": 21
         },
-        "spades_length": {
+        {
+          "feature": "spades_length",
+          "constraint_type": "HARD",
           "min": 5
         }
-      },
-      "forcing": "none",
-      "explanation": "1\u2660 opening (12-21 HCP, 5+ spades)",
-      "sets_forcing_level": "NON_FORCING"
+      ]
     },
     {
       "id": "open_1_spades_minimum",
-      "bid": "1\u2660",
+      "bid": "1♠",
       "priority": 79,
       "description": "Minimum one spade opening (12-13 HCP) - requires suit quality",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♠ opening (12-21 HCP, 5+ spades)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 12,
           "max": 13
         },
-        "spades_length": {
+        {
+          "feature": "spades_length",
+          "constraint_type": "HARD",
           "min": 5
         },
-        "suit_quality_spades": {
+        {
+          "feature": "suit_quality_spades",
+          "constraint_type": "HARD",
           "min": "good"
         }
-      },
-      "forcing": "none",
-      "explanation": "1\u2660 opening (12-21 HCP, 5+ spades)",
-      "sets_forcing_level": "NON_FORCING"
+      ]
     },
     {
       "id": "open_1_spades_fallback",
-      "bid": "1\u2660",
+      "bid": "1♠",
       "priority": 78.5,
       "description": "One spade opening - 5-card major always takes priority over minor",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♠ opening (12-21 HCP, 5+ spades)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 12,
           "max": 21
         },
-        "spades_length": {
+        {
+          "feature": "spades_length",
+          "constraint_type": "HARD",
           "min": 5
         }
-      },
-      "forcing": "none",
-      "explanation": "1\u2660 opening (12-21 HCP, 5+ spades)",
-      "sets_forcing_level": "NON_FORCING"
+      ]
     },
     {
       "id": "open_1_hearts_sound",
-      "bid": "1\u2665",
+      "bid": "1♥",
       "priority": 78,
       "description": "Sound one heart opening with good values (14+ HCP)",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♥ opening (12-21 HCP, 5+ hearts)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 14,
           "max": 21
         },
-        "hearts_length": {
+        {
+          "feature": "hearts_length",
+          "constraint_type": "HARD",
           "min": 5
         },
-        "OR": [
-          {
-            "spades_length": {
-              "max": 4
+        {
+          "feature": "OR",
+          "in": [
+            {
+              "spades_length": {
+                "max": 4
+              }
+            },
+            {
+              "hearts_length": {
+                "min": "spades_length"
+              }
             }
-          },
-          {
-            "hearts_length": {
-              "min": "spades_length"
-            }
-          }
-        ]
-      },
-      "forcing": "none",
-      "explanation": "1\u2665 opening (12-21 HCP, 5+ hearts)",
-      "sets_forcing_level": "NON_FORCING"
+          ],
+          "constraint_type": "HARD"
+        }
+      ]
     },
     {
       "id": "open_1_hearts_minimum",
-      "bid": "1\u2665",
+      "bid": "1♥",
       "priority": 77,
       "description": "Minimum one heart opening (12-13 HCP) - requires suit quality",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♥ opening (12-21 HCP, 5+ hearts)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 12,
           "max": 13
         },
-        "hearts_length": {
+        {
+          "feature": "hearts_length",
+          "constraint_type": "HARD",
           "min": 5
         },
-        "suit_quality_hearts": {
+        {
+          "feature": "suit_quality_hearts",
+          "constraint_type": "HARD",
           "min": "good"
         },
-        "OR": [
-          {
-            "spades_length": {
-              "max": 4
+        {
+          "feature": "OR",
+          "in": [
+            {
+              "spades_length": {
+                "max": 4
+              }
+            },
+            {
+              "hearts_length": {
+                "min": "spades_length"
+              }
             }
-          },
-          {
-            "hearts_length": {
-              "min": "spades_length"
-            }
-          }
-        ]
-      },
-      "forcing": "none",
-      "explanation": "1\u2665 opening (12-21 HCP, 5+ hearts)",
-      "sets_forcing_level": "NON_FORCING"
+          ],
+          "constraint_type": "HARD"
+        }
+      ]
     },
     {
       "id": "open_1_hearts_fallback",
-      "bid": "1\u2665",
+      "bid": "1♥",
       "priority": 76,
       "description": "One heart opening - 5-card major always takes priority over minor",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♥ opening (12-21 HCP, 5+ hearts)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 12,
           "max": 21
         },
-        "hearts_length": {
+        {
+          "feature": "hearts_length",
+          "constraint_type": "HARD",
           "min": 5
         },
-        "spades_length": {
+        {
+          "feature": "spades_length",
+          "constraint_type": "HARD",
           "max": 4
         }
-      },
-      "forcing": "none",
-      "explanation": "1\u2665 opening (12-21 HCP, 5+ hearts)",
-      "sets_forcing_level": "NON_FORCING"
+      ]
     },
     {
       "id": "open_1_diamonds_sound",
-      "bid": "1\u2666",
+      "bid": "1♦",
       "priority": 71,
       "description": "Sound one diamond opening with good values",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♦ opening (12-21 HCP, 4+ diamonds)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 13,
           "max": 21
         },
-        "diamonds_length": {
+        {
+          "feature": "diamonds_length",
+          "constraint_type": "HARD",
           "min": 4
         },
-        "has_5_card_major": false,
-        "OR": [
-          {
-            "diamonds_length": {
-              "min": "clubs_length"
-            }
-          },
-          {
-            "diamonds_length": {
-              "min": 4
+        {
+          "feature": "has_5_card_major",
+          "expected": false,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "OR",
+          "in": [
+            {
+              "diamonds_length": {
+                "min": "clubs_length"
+              }
             },
-            "clubs_length": {
-              "max": 3
+            {
+              "diamonds_length": {
+                "min": 4
+              },
+              "clubs_length": {
+                "max": 3
+              }
             }
-          }
-        ]
-      },
-      "forcing": "none",
-      "explanation": "1\u2666 opening (12-21 HCP, 4+ diamonds)",
-      "sets_forcing_level": "NON_FORCING"
+          ],
+          "constraint_type": "HARD"
+        }
+      ]
     },
     {
       "id": "open_1_diamonds",
-      "bid": "1\u2666",
+      "bid": "1♦",
       "priority": 70,
       "description": "One diamond opening with minimum values - requires suit quality",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♦ opening (12-21 HCP, 5+ diamonds)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 12,
           "max": 12
         },
-        "diamonds_length": {
+        {
+          "feature": "diamonds_length",
+          "constraint_type": "HARD",
           "min": 5
         },
-        "has_5_card_major": false,
-        "suit_quality_diamonds": {
-          "min": "good"
+        {
+          "feature": "has_5_card_major",
+          "expected": false,
+          "constraint_type": "HARD"
         },
-        "OR": [
-          {
-            "diamonds_length": {
-              "min": "clubs_length"
-            }
-          },
-          {
-            "clubs_length": {
-              "max": 3
-            }
-          }
-        ]
-      },
-      "forcing": "none",
-      "explanation": "1\u2666 opening (12-21 HCP, 5+ diamonds)",
-      "sets_forcing_level": "NON_FORCING"
+        {
+          "feature": "suit_quality_diamonds",
+          "constraint_type": "HARD",
+          "min": "good"
+        }
+      ]
     },
     {
       "id": "open_1_clubs_long",
-      "bid": "1\u2663",
+      "bid": "1♣",
       "priority": 65,
       "description": "One club opening with 5+ clubs",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♣ opening (12-21 HCP, 5+ clubs)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 12,
           "max": 21
         },
-        "clubs_length": {
+        {
+          "feature": "clubs_length",
+          "constraint_type": "HARD",
           "min": 5
         },
-        "has_5_card_major": false,
-        "OR": [
-          {
-            "clubs_length": {
-              "min": "diamonds_length"
+        {
+          "feature": "has_5_card_major",
+          "expected": false,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "OR",
+          "in": [
+            {
+              "clubs_length": {
+                "min": "diamonds_length"
+              }
+            },
+            {
+              "diamonds_length": {
+                "max": 4
+              }
             }
-          },
-          {
-            "diamonds_length": {
-              "max": 4
-            }
-          }
-        ]
-      },
-      "forcing": "none",
-      "explanation": "1\u2663 opening (12-21 HCP, 5+ clubs)",
-      "sets_forcing_level": "NON_FORCING"
+          ],
+          "constraint_type": "HARD"
+        }
+      ]
     },
     {
       "id": "open_1_clubs",
-      "bid": "1\u2663",
+      "bid": "1♣",
       "priority": 60,
       "description": "One club opening",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♣ opening (12-21 HCP, 3+ clubs)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 12,
           "max": 21
         },
-        "clubs_length": {
+        {
+          "feature": "clubs_length",
+          "constraint_type": "HARD",
           "min": 3
         },
-        "has_5_card_major": false,
-        "diamonds_length": {
+        {
+          "feature": "has_5_card_major",
+          "expected": false,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "diamonds_length",
+          "constraint_type": "HARD",
           "max": 3
         }
-      },
-      "forcing": "none",
-      "explanation": "1\u2663 opening (12-21 HCP, 3+ clubs)",
-      "sets_forcing_level": "NON_FORCING"
+      ]
     },
     {
       "id": "open_1c_short_clubs",
-      "bid": "1\u2663",
+      "bid": "1♣",
       "priority": 55,
       "description": "One club opening with short clubs (4-4-3-2 shape)",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♣ opening (12-21 HCP, possibly short clubs)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 12,
           "max": 21
         },
-        "clubs_length": {
+        {
+          "feature": "clubs_length",
+          "constraint_type": "HARD",
           "min": 2
         },
-        "has_5_card_major": false,
-        "diamonds_length": {
+        {
+          "feature": "has_5_card_major",
+          "expected": false,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "diamonds_length",
+          "constraint_type": "HARD",
           "max": 3
         },
-        "spades_length": {
+        {
+          "feature": "spades_length",
+          "constraint_type": "HARD",
           "max": 4
         },
-        "hearts_length": {
+        {
+          "feature": "hearts_length",
+          "constraint_type": "HARD",
           "max": 4
         }
-      },
-      "forcing": "none",
-      "explanation": "1\u2663 opening (12-21 HCP, possibly short clubs)",
-      "sets_forcing_level": "NON_FORCING"
+      ]
     },
     {
       "id": "open_1c_balanced_no_nt",
-      "bid": "1\u2663",
+      "bid": "1♣",
       "priority": 75,
       "description": "Balanced hand outside NT range",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♣ opening (12-14 HCP balanced, below 1NT range)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 12,
           "max": 14
         },
-        "is_balanced": true,
-        "clubs_length": {
+        {
+          "feature": "is_balanced",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "clubs_length",
+          "constraint_type": "HARD",
           "min": 3
+        },
+        {
+          "feature": "diamonds_length",
+          "constraint_type": "HARD",
+          "max": 3
         }
-      },
-      "forcing": "none",
-      "explanation": "1\u2663 opening (12-14 HCP balanced, below 1NT range)",
-      "sets_forcing_level": "NON_FORCING"
+      ]
     },
     {
       "id": "open_1c_strong_balanced",
-      "bid": "1\u2663",
+      "bid": "1♣",
       "priority": 54,
       "description": "Strong balanced hand outside NT range",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "1♣ opening (18-19 HCP balanced, above 1NT range)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "min": 18,
           "max": 19
         },
-        "is_balanced": true
-      },
-      "forcing": "none",
-      "explanation": "1\u2663 opening (18-19 HCP balanced, above 1NT range)",
-      "sets_forcing_level": "NON_FORCING"
+        {
+          "feature": "is_balanced",
+          "expected": true,
+          "constraint_type": "HARD"
+        }
+      ]
     },
     {
       "id": "preempt_3_major",
       "bid": "3{longest_suit}",
       "priority": 80,
       "description": "Weak three-bid in major",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
-          "min": 5,
-          "max": 10
-        },
-        "longest_suit": {
-          "in": [
-            "\u2660",
-            "\u2665"
-          ]
-        },
-        "longest_suit_length": {
-          "min": 7
-        },
-        "suit_quality_longest": {
-          "min": "fair"
-        }
-      },
       "forcing": "none",
       "explanation": "Preemptive 3-bid (5-10 HCP, 7+ card suit)",
-      "sets_forcing_level": "NON_FORCING"
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "SOFT",
+          "min": 5
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
+          "max": 10
+        },
+        {
+          "feature": "longest_suit",
+          "constraint_type": "HARD",
+          "in": [
+            "♠",
+            "♥"
+          ]
+        },
+        {
+          "feature": "longest_suit_length",
+          "constraint_type": "HARD",
+          "min": 7
+        },
+        {
+          "feature": "suit_quality_longest",
+          "constraint_type": "HARD",
+          "min": "fair"
+        }
+      ]
     },
     {
       "id": "preempt_3_minor",
       "bid": "3{longest_suit}",
       "priority": 89,
       "description": "Weak three-bid in minor",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
-          "min": 5,
-          "max": 10
-        },
-        "longest_suit": {
-          "in": [
-            "\u2666",
-            "\u2663"
-          ]
-        },
-        "longest_suit_length": {
-          "min": 7
-        },
-        "suit_quality_longest": {
-          "min": "fair"
-        }
-      },
       "forcing": "none",
       "explanation": "Preemptive 3-bid (5-10 HCP, 7+ card suit)",
-      "sets_forcing_level": "NON_FORCING"
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "SOFT",
+          "min": 5
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
+          "max": 10
+        },
+        {
+          "feature": "longest_suit",
+          "constraint_type": "HARD",
+          "in": [
+            "♦",
+            "♣"
+          ]
+        },
+        {
+          "feature": "longest_suit_length",
+          "constraint_type": "HARD",
+          "min": 7
+        },
+        {
+          "feature": "suit_quality_longest",
+          "constraint_type": "HARD",
+          "min": "fair"
+        }
+      ]
     },
     {
       "id": "preempt_2_major",
       "bid": "2{longest_suit}",
       "priority": 85,
       "description": "Weak two-bid in major",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
-          "min": 6,
-          "max": 10
-        },
-        "longest_suit": {
-          "in": [
-            "\u2660",
-            "\u2665"
-          ]
-        },
-        "longest_suit_length": {
-          "exact": 6
-        },
-        "longest_suit_hcp": {
-          "min": 7,
-          "max": 9
-        },
-        "suit_quality_longest": {
-          "min": "excellent"
-        }
-      },
       "forcing": "none",
       "explanation": "Weak 2-bid (6-10 HCP, good 6-card major)",
-      "sets_forcing_level": "NON_FORCING"
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "SOFT",
+          "min": 5
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
+          "max": 10
+        },
+        {
+          "feature": "longest_suit",
+          "constraint_type": "HARD",
+          "in": [
+            "♠",
+            "♥"
+          ]
+        },
+        {
+          "feature": "longest_suit_length",
+          "constraint_type": "HARD",
+          "min": 6,
+          "max": 6
+        },
+        {
+          "feature": "suit_quality_longest",
+          "constraint_type": "HARD",
+          "min": "good"
+        }
+      ]
     },
     {
       "id": "preempt_2_diamonds",
-      "bid": "2\u2666",
+      "bid": "2♦",
       "priority": 84,
       "description": "Weak two diamonds",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
-          "min": 6,
+      "forcing": "none",
+      "explanation": "Weak 2♦ (6-10 HCP, good 6-card diamond suit)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "SOFT",
+          "min": 5
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
           "max": 10
         },
-        "diamonds_length": {
-          "exact": 6
+        {
+          "feature": "diamonds_length",
+          "constraint_type": "HARD",
+          "min": 6,
+          "max": 6
         },
-        "diamonds_hcp": {
-          "min": 7,
-          "max": 9
+        {
+          "feature": "has_5_card_major",
+          "expected": false,
+          "constraint_type": "HARD"
         },
-        "has_5_card_major": false,
-        "suit_quality_diamonds": {
-          "min": "excellent"
+        {
+          "feature": "suit_quality_diamonds",
+          "constraint_type": "HARD",
+          "min": "good"
         }
-      },
-      "forcing": "none",
-      "explanation": "Weak 2\u2666 (6-10 HCP, good 6-card diamond suit)",
-      "sets_forcing_level": "NON_FORCING"
+      ]
     },
     {
       "id": "rule_of_20",
       "bid": "1{longest_suit}",
       "priority": 25,
       "description": "Light opening by Rule of 20 with strict suit quality requirements",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
+      "forcing": "none",
+      "explanation": "Rule of 20 opening (10-11 HCP with excellent long suit)",
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "SOFT",
           "min": 10,
           "max": 11
         },
-        "rule_of_20": true,
-        "suit_quality_longest": {
+        {
+          "feature": "rule_of_20",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "suit_quality_longest",
+          "constraint_type": "HARD",
           "min": "excellent"
         },
-        "longest_suit_hcp": {
+        {
+          "feature": "longest_suit_hcp",
+          "constraint_type": "HARD",
           "min": 5
         },
-        "seat": {
-          "in": [1, 2]
+        {
+          "feature": "seat",
+          "constraint_type": "HARD",
+          "in": [
+            1,
+            2
+          ]
         }
-      },
-      "forcing": "none",
-      "explanation": "Rule of 20 opening (10-11 HCP with excellent long suit)",
-      "sets_forcing_level": "NON_FORCING"
+      ]
     },
     {
       "id": "pass_weak",
       "bid": "Pass",
       "priority": 11,
       "description": "Pass with insufficient values",
-      "conditions": {
-        "is_opening": true,
-        "hcp": {
-          "max": 11
-        }
-      },
       "forcing": "none",
       "explanation": "Pass (insufficient values to open, need 12+ HCP)",
-      "sets_forcing_level": "NON_FORCING"
+      "sets_forcing_level": "NON_FORCING",
+      "constraints": [
+        {
+          "feature": "is_opening",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "constraint_type": "HARD",
+          "max": 11
+        }
+      ]
     }
   ]
 }

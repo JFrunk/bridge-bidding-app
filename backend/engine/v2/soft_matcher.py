@@ -95,11 +95,39 @@ class SoftMatcher:
 
         for constraint in constraints:
             feature_name = constraint.get('feature')
+
+            # Handle OR constraints with nested branches
+            if feature_name == 'OR':
+                or_branches = constraint.get('in', [])
+                best_score = 0.0
+                for branch in or_branches:
+                    if isinstance(branch, dict):
+                        branch_score = self._evaluate_branch(branch, features)
+                        if branch_score > best_score:
+                            best_score = branch_score
+                constraint_score = best_score
+                fail_reason = "No OR branch matched" if best_score == 0.0 else None
+                constraint_scores['OR'] = constraint_score
+                if constraint_score == 0.0:
+                    constraint_type = constraint.get('constraint_type', 'HARD').upper()
+                    if constraint_type == 'HARD':
+                        return MatchResult(
+                            score=0.0,
+                            penalties={'OR': 1.0},
+                            hard_fail_reason=fail_reason
+                        )
+                quality *= constraint_score
+                continue
+
             actual = features.get(feature_name)
 
             # Evaluate this constraint and get its individual score
             constraint_score, fail_reason = self.evaluate_constraint(constraint, actual)
-            constraint_scores[feature_name] = constraint_score
+            # Use unique key for duplicate feature names (e.g., split hcp min/max)
+            score_key = feature_name
+            if score_key in constraint_scores:
+                score_key = f"{feature_name}_{len(constraint_scores)}"
+            constraint_scores[score_key] = constraint_score
 
             # HARD fail = immediate 0.0
             if constraint_score == 0.0:
@@ -190,6 +218,9 @@ class SoftMatcher:
         score = max(0.0, score)  # Clamp to minimum 0.0
         return (score, fail_reason)
 
+    # Ordinal scale for suit quality comparisons
+    SUIT_QUALITY_ORDER = {'poor': 0, 'fair': 1, 'good': 2, 'excellent': 3}
+
     def _evaluate_single_constraint(self, constraint: Dict, actual: Any) -> Tuple[bool, float, Optional[str]]:
         """
         Evaluate a single constraint and return (passed, distance, fail_reason).
@@ -211,12 +242,37 @@ class SoftMatcher:
             else:
                 return (False, 1, f"{feature_name}: expected {expected}, got {actual}")
 
+        # Handle 'in' list membership (e.g., longest_suit in ["♠", "♥"])
+        if 'in' in constraint:
+            allowed = constraint['in']
+            if actual is not None and actual in allowed:
+                return (True, 0, None)
+            else:
+                return (False, 1, f"{feature_name}: '{actual}' not in {allowed}")
+
         # Handle min/max range
         min_val = constraint.get('min')
         max_val = constraint.get('max')
 
         if actual is None:
+            # No min/max and no expected/in — constraint has no check (e.g., bare feature assertion)
+            if min_val is None and max_val is None:
+                return (True, 0, None)
             return (False, 1, f"{feature_name}: value not set")
+
+        # Handle string ordinal comparisons (suit quality)
+        if isinstance(min_val, str) and min_val in self.SUIT_QUALITY_ORDER:
+            actual_rank = self.SUIT_QUALITY_ORDER.get(actual, -1) if isinstance(actual, str) else -1
+            min_rank = self.SUIT_QUALITY_ORDER[min_val]
+            if actual_rank >= min_rank:
+                return (True, 0, None)
+            else:
+                distance = min_rank - actual_rank
+                return (False, distance, f"{feature_name}: '{actual}' below min '{min_val}'")
+
+        # No min/max specified — pass (bare constraint with just feature name)
+        if min_val is None and max_val is None:
+            return (True, 0, None)
 
         distance = 0
         fail_reason = None
@@ -389,8 +445,7 @@ class SoftMatcher:
         Penalty schedule:
         - In range: 0.0
         - 1 point off: 0.10 (10%)
-        - 2 points off: 0.25 (25%)
-        - 3+ points off: 1.0 (hard fail)
+        - 2+ points off: 1.0 (hard fail)
         """
         if target_min <= actual <= target_max:
             return 0.0
@@ -401,12 +456,10 @@ class SoftMatcher:
         else:
             dist = actual - target_max
 
-        # Decay function per spec
+        # Hard fail for 2+ points difference (matches HCP_HARD_FAIL_THRESHOLD)
         if dist == 1:
             return 0.10
-        if dist == 2:
-            return 0.25
-        return 1.0  # Hard fail for 3+ points difference
+        return 1.0  # Hard fail for 2+ points difference
 
     def _check_shape(self, conditions: Dict, features: Dict) -> Tuple[float, Optional[str]]:
         """

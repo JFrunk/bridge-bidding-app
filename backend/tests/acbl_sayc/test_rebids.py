@@ -15,7 +15,7 @@ Responder's Rebid:
 """
 import pytest
 from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
+from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
 
 
 # =============================================================================
@@ -37,7 +37,7 @@ def make_hand(spades: str, hearts: str, diamonds: str, clubs: str) -> Hand:
 
 def get_opener_rebid(hand: Hand, auction: list, vulnerability: str = "None") -> tuple:
     """Get opener's rebid after partner responds."""
-    engine = BiddingEngine()
+    engine = BiddingEngineV2Schema()
     return engine.get_next_bid(
         hand=hand,
         auction_history=auction,
@@ -49,7 +49,7 @@ def get_opener_rebid(hand: Hand, auction: list, vulnerability: str = "None") -> 
 
 def get_responder_rebid(hand: Hand, auction: list, vulnerability: str = "None") -> tuple:
     """Get responder's rebid after opener rebids."""
-    engine = BiddingEngine()
+    engine = BiddingEngineV2Schema()
     return engine.get_next_bid(
         hand=hand,
         auction_history=auction,

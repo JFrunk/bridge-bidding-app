@@ -18,7 +18,7 @@ from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
 
 from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
+from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
 
 
 # =============================================================================
@@ -158,7 +158,7 @@ def get_all_schema_rules() -> List[Tuple[str, str, Dict]]:
 
 def get_bid(hand: Hand, auction: List[str] = None, dealer: str = "South") -> Tuple[str, str]:
     """Get bid from the bidding engine."""
-    engine = BiddingEngine()
+    engine = BiddingEngineV2Schema()
     auction = auction or []
     result = engine.get_next_bid(
         hand=hand,
@@ -193,7 +193,7 @@ class TestSchemaIntegrity:
         assert not errors, f"Schema loading errors:\n" + "\n".join(errors)
 
     def test_all_rules_have_required_fields(self):
-        """All rules must have id, bid, and conditions."""
+        """All rules must have id, bid, and conditions or constraints."""
         all_rules = get_all_schema_rules()
         errors = []
 
@@ -203,8 +203,9 @@ class TestSchemaIntegrity:
                 missing.append("id")
             if "bid" not in rule:
                 missing.append("bid")
-            if "conditions" not in rule:
-                missing.append("conditions")
+            # Accept either 'conditions' (dict format) or 'constraints' (array format)
+            if "conditions" not in rule and "constraints" not in rule:
+                missing.append("conditions or constraints")
             if missing:
                 errors.append(f"{schema_name}/{rule_id}: missing {missing}")
 

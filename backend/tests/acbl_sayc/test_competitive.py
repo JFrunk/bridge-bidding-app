@@ -19,7 +19,7 @@ Advancing partner's overcall:
 """
 import pytest
 from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
+from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
 
 
 # =============================================================================
@@ -42,7 +42,7 @@ def make_hand(spades: str, hearts: str, diamonds: str, clubs: str) -> Hand:
 def get_bid(hand: Hand, auction: list, my_position: str = "South",
             dealer: str = "East", vulnerability: str = "None") -> tuple:
     """Get the next bid in an auction (default: opponent opened)."""
-    engine = BiddingEngine()
+    engine = BiddingEngineV2Schema()
     return engine.get_next_bid(
         hand=hand,
         auction_history=auction,
