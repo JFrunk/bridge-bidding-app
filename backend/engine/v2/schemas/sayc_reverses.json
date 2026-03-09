@@ -16,7 +16,8 @@
         {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
         {"feature": "diamonds_length", "min": 5, "constraint_type": "HARD"},
         {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"},
-        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"}
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"},
+        {"feature": "support_for_partner", "max": 3, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
       "explanation": "Reverse to 2♥ showing 17+ HCP with 5+ diamonds and 4+ hearts",
@@ -34,7 +35,8 @@
         {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
         {"feature": "diamonds_length", "min": 5, "constraint_type": "HARD"},
         {"feature": "spades_length", "min": 4, "constraint_type": "HARD"},
-        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"}
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"},
+        {"feature": "support_for_partner", "max": 3, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
       "explanation": "Reverse to 2♠ showing 17+ HCP with 5+ diamonds and 4+ spades",
@@ -52,7 +54,8 @@
         {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
         {"feature": "clubs_length", "min": 5, "constraint_type": "HARD"},
         {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"},
-        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"}
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"},
+        {"feature": "support_for_partner", "max": 3, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
       "explanation": "Reverse to 2♥ showing 17+ HCP with 5+ clubs and 4+ hearts",
@@ -70,7 +73,8 @@
         {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
         {"feature": "clubs_length", "min": 5, "constraint_type": "HARD"},
         {"feature": "spades_length", "min": 4, "constraint_type": "HARD"},
-        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"}
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"},
+        {"feature": "support_for_partner", "max": 3, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
       "explanation": "Reverse to 2♠ showing 17+ HCP with 5+ clubs and 4+ spades",
@@ -88,7 +92,8 @@
         {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
         {"feature": "clubs_length", "min": 5, "constraint_type": "HARD"},
         {"feature": "diamonds_length", "min": 4, "constraint_type": "HARD"},
-        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"}
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"},
+        {"feature": "support_for_partner", "max": 3, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
       "explanation": "Reverse to 2♦ showing 17+ HCP with 5+ clubs and 4+ diamonds",
@@ -106,7 +111,8 @@
         {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
         {"feature": "hearts_length", "min": 5, "constraint_type": "HARD"},
         {"feature": "spades_length", "min": 4, "constraint_type": "HARD"},
-        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"}
+        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"},
+        {"feature": "support_for_partner", "max": 3, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
       "explanation": "Reverse to 2♠ showing 17+ HCP with 5+ hearts and 4+ spades",

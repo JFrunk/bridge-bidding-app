@@ -279,14 +279,13 @@
     {
       "id": "advancer_raise_overcall_simple",
       "bid": "2{partner_suit}",
-      "priority": 85,
+      "priority": 685,
       "description": "Simple raise of partner's overcall",
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": {"not_in": ["X", "XX", "Pass", "1NT", "2NT"]},
-        "hcp": {"min": 8, "max": 10},
-        "support_for_partner": {"min": 3},
-        "partnership_hcp_min": 18
+        "hcp": {"min": 7, "max": 10},
+        "support_for_partner": {"min": 3}
       },
       "forcing": "none",
       "explanation": "Simple raise of partner's overcall (8-10 HCP, 3+ card support)",
@@ -294,8 +293,8 @@
     },
     {
       "id": "advancer_cuebid_limit_raise",
-      "bid": "{opponent_suit}",
-      "priority": 600,
+      "bid": "2{opponent_suit}",
+      "priority": 700,
       "description": "Cuebid showing limit raise for partner's overcall",
       "conditions": {
         "is_advancer": true,
@@ -637,6 +636,66 @@
       },
       "forcing": "none",
       "explanation": "Game in hearts (12+ HCP, 5+ hearts)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_jump_raise_overcall",
+      "bid": "3{partner_suit}",
+      "priority": 705,
+      "description": "Jump raise of partner's overcall with good values",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": {"not_in": ["X", "XX", "Pass", "1NT", "2NT"]},
+        "hcp": {"min": 10, "max": 12},
+        "support_for_partner": {"min": 4}
+      },
+      "forcing": "invitational",
+      "explanation": "Jump raise of partner's overcall (10-12 HCP, 4+ support)",
+      "sets_forcing_level": "INVITATIONAL"
+    },
+    {
+      "id": "advancer_new_suit",
+      "bid": "2{best_suit}",
+      "priority": 680,
+      "description": "New suit by advancer (non-forcing)",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": {"not_in": ["X", "XX", "Pass"]},
+        "hcp": {"min": 8, "max": 12},
+        "suit_length": {"min": 5}
+      },
+      "forcing": "none",
+      "explanation": "New suit (non-forcing, 8-12 HCP with 5+ card suit)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_2nt_invitational",
+      "bid": "2NT",
+      "priority": 690,
+      "description": "2NT advance showing invitational values with stopper",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": {"not_in": ["X", "XX", "Pass"]},
+        "hcp": {"min": 11, "max": 12},
+        "stopper_count": {"min": 1}
+      },
+      "forcing": "none",
+      "explanation": "2NT invitational (11-12 HCP with stopper in opponent's suit)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "advancer_game_after_overcall",
+      "bid": "4{partner_suit}",
+      "priority": 710,
+      "description": "Bid game in partner's overcall suit",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": {"not_in": ["X", "XX", "Pass", "1NT", "2NT"]},
+        "hcp": {"min": 12},
+        "support_for_partner": {"min": 3}
+      },
+      "forcing": "none",
+      "explanation": "Game in partner's suit (12+ HCP, 3+ support)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

@@ -88,7 +88,7 @@
     {
       "id": "simple_overcall_2_level_clubs",
       "bid": "2♣",
-      "priority": 685,
+      "priority": 690,
       "description": "2♣ overcall with 5+ clubs (10-16 HCP)",
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
@@ -104,7 +104,7 @@
     {
       "id": "simple_overcall_2_level_diamonds",
       "bid": "2♦",
-      "priority": 680,
+      "priority": 690,
       "description": "2♦ overcall with 5+ diamonds (10-16 HCP)",
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
@@ -136,7 +136,7 @@
     {
       "id": "simple_overcall_2_level_spades",
       "bid": "2♠",
-      "priority": 695,
+      "priority": 690,
       "description": "2♠ overcall with 5+ spades (10-16 HCP)",
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},

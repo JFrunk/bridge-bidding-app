@@ -288,6 +288,174 @@
       "forcing": "none",
       "explanation": "Bid 2♦ (12-14 HCP) with 4+ diamonds",
       "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_pass_after_single_raise_minimum",
+      "bid": "Pass",
+      "priority": 605,
+      "description": "Pass after partner's single raise with minimum opening",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["2♥", "2♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
+      ],
+      "forcing": "none",
+      "explanation": "Pass partner's single raise with minimum opening hand",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_invite_after_raise_hearts",
+      "bid": "3♥",
+      "priority": 750,
+      "description": "Invite game after partner raises hearts (16-17 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 16, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+      ],
+      "forcing": "invitational",
+      "explanation": "Invite game with 16-17 HCP after partner's single raise",
+      "sets_forcing_level": "INVITATIONAL"
+    },
+    {
+      "id": "opener_invite_after_raise_spades",
+      "bid": "3♠",
+      "priority": 750,
+      "description": "Invite game after partner raises spades (16-17 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 16, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+      ],
+      "forcing": "invitational",
+      "explanation": "Invite game with 16-17 HCP after partner's single raise",
+      "sets_forcing_level": "INVITATIONAL"
+    },
+    {
+      "id": "opener_game_after_raise_hearts",
+      "bid": "4♥",
+      "priority": 705,
+      "description": "Bid game after partner raises hearts (18+ HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+      ],
+      "forcing": "none",
+      "explanation": "Bid game with 18+ HCP after partner's single raise",
+      "sets_forcing_level": "SIGN_OFF"
+    },
+    {
+      "id": "opener_game_after_raise_spades",
+      "bid": "4♠",
+      "priority": 705,
+      "description": "Bid game after partner raises spades (18+ HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+      ],
+      "forcing": "none",
+      "explanation": "Bid game with 18+ HCP after partner's single raise",
+      "sets_forcing_level": "SIGN_OFF"
+    },
+    {
+      "id": "opener_accept_limit_raise_hearts",
+      "bid": "4♥",
+      "priority": 910,
+      "description": "Accept limit raise in hearts (13+ HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "3♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 13, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Accept limit raise - bid game with 13+ HCP",
+      "sets_forcing_level": "SIGN_OFF"
+    },
+    {
+      "id": "opener_accept_limit_raise_spades",
+      "bid": "4♠",
+      "priority": 910,
+      "description": "Accept limit raise in spades (13+ HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "3♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 13, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Accept limit raise - bid game with 13+ HCP",
+      "sets_forcing_level": "SIGN_OFF"
+    },
+    {
+      "id": "opener_decline_limit_raise",
+      "bid": "Pass",
+      "priority": 695,
+      "description": "Decline limit raise with minimum (12 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["3♥", "3♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "max": 12, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Decline limit raise with minimum hand",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_raise_responders_minor",
+      "bid": "3♣",
+      "priority": 575,
+      "description": "Raise responder's 2♣ with 4+ support",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♣", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "clubs_length", "min": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Raise partner's clubs with 4+ support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_2nt_after_2_level_response",
+      "bid": "2NT",
+      "priority": 615,
+      "description": "Opener rebids 2NT after 2-level response with balanced hand (12-15 HCP)",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["2♣", "2♦"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Rebid 2NT showing balanced minimum after 2-level response",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_pass_1nt_response_balanced_minimum",
+      "bid": "Pass",
+      "priority": 555,
+      "description": "Pass partner's 1NT response with balanced minimum",
+      "constraints": [
+        {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1NT", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Pass 1NT with balanced minimum",
+      "sets_forcing_level": "NON_FORCING"
     }
   ]
 }

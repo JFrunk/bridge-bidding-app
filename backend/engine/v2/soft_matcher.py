@@ -518,21 +518,24 @@ class SoftMatcher:
             Tuple of (score 0.0-1.0, failure reason if hard fail)
         """
         requires_balanced = conditions.get('is_balanced')
-        if not requires_balanced:
+        if requires_balanced is None:
             return (1.0, None)  # No balance requirement
 
         is_balanced = features.get('is_balanced', False)
         is_semi_balanced = features.get('is_semi_balanced', False)
 
-        if is_balanced:
+        if requires_balanced:
+            # Rule requires balanced hand
+            if is_balanced:
+                return (1.0, None)
+            if is_semi_balanced:
+                return (1.0 - self.SEMI_BALANCED_PENALTY, None)
+            return (0.0, "Unbalanced hand, balanced required")
+        else:
+            # Rule requires unbalanced hand (is_balanced: false)
+            if is_balanced:
+                return (0.0, "Balanced hand, unbalanced required")
             return (1.0, None)
-
-        if is_semi_balanced:
-            # Soft penalty for semi-balanced (e.g., 5-3-3-2)
-            return (1.0 - self.SEMI_BALANCED_PENALTY, None)
-
-        # Unbalanced hand with balanced requirement = hard fail
-        return (0.0, "Unbalanced hand, balanced required")
 
     def _check_boolean_conditions(self, conditions: Dict, features: Dict) -> Tuple[float, Optional[str]]:
         """
@@ -692,6 +695,16 @@ class SoftMatcher:
             elif isinstance(expected, bool):
                 if actual != expected:
                     return (0.0, f"{key}: expected {expected}, got {actual}")
+
+            # Handle integer/float equality
+            elif isinstance(expected, (int, float)) and not isinstance(expected, bool):
+                if actual is None:
+                    return (0.0, f"{key}: value not set, expected {expected}")
+                try:
+                    if actual != expected:
+                        return (0.0, f"{key}: expected {expected}, got {actual}")
+                except TypeError:
+                    return (0.0, f"{key}: cannot compare {actual} with {expected}")
 
             # Handle string equality
             elif isinstance(expected, str):

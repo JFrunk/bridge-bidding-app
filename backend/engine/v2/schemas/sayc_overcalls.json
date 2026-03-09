@@ -110,8 +110,8 @@
     },
     {
       "id": "michaels_cuebid_major",
-      "bid": "{opponent_suit}",
-      "priority": 600,
+      "bid": "2{opponent_suit}",
+      "priority": 815,
       "description": "Michaels cuebid over major",
       "conditions": {
         "is_overcall": true,
@@ -138,8 +138,8 @@
     },
     {
       "id": "michaels_cuebid_minor",
-      "bid": "{opponent_suit}",
-      "priority": 609,
+      "bid": "2{opponent_suit}",
+      "priority": 820,
       "description": "Michaels cuebid over minor",
       "conditions": {
         "is_overcall": true,
@@ -167,7 +167,7 @@
     {
       "id": "unusual_2nt",
       "bid": "2NT",
-      "priority": 85,
+      "priority": 745,
       "description": "Unusual 2NT",
       "conditions": {
         "is_overcall": true,
@@ -243,28 +243,21 @@
       "id": "simple_overcall_1_level_balancing",
       "bid": "1{suit}",
       "priority": 99,
-      "description": "Balancing 1-level overcall (8-14 HCP, stronger hands double)",
+      "description": "Balancing 1-level overcall (6-14 HCP, lighter in passout seat)",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
         "hcp": {
-          "min": 8,
+          "min": 6,
           "max": 14
         },
         "suit_length": {
           "min": 5
-        },
-        "suit_quality": {
-          "min": "good"
-        },
-        "suit_hcp": {
-          "min": 3
-        },
-        "partnership_hcp_min": 18
+        }
       },
       "forcing": "none",
       "suit_selection": "best_5_card_suit",
-      "explanation": "Balancing overcall (8-14 HCP, 5+ card suit)",
+      "explanation": "Balancing overcall (6-14 HCP, 5+ card suit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

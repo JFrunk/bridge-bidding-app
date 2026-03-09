@@ -195,7 +195,8 @@
         "opening_bid": {
           "in": [
             "1♣",
-            "1♦"
+            "1♦",
+            "1♥"
           ]
         },
         "hcp": {
@@ -277,6 +278,60 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "single_raise_clubs",
+      "bid": "2♣",
+      "priority": 275,
+      "description": "Single raise of partner's 1♣ opening (6-10 HCP, 4+ clubs, no 4-card major)",
+      "conditions": {
+        "is_response": true,
+        "is_contested": false,
+        "partner_last_bid": "1♣",
+        "hcp": {
+          "min": 6,
+          "max": 10
+        },
+        "clubs_length": {
+          "min": 4
+        },
+        "spades_length": {
+          "max": 3
+        },
+        "hearts_length": {
+          "max": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Raise to 2♣ (6-10 HCP, 4+ clubs, no 4-card major)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "single_raise_diamonds",
+      "bid": "2♦",
+      "priority": 275,
+      "description": "Single raise of partner's 1♦ opening (6-10 HCP, 4+ diamonds, no 4-card major)",
+      "conditions": {
+        "is_response": true,
+        "is_contested": false,
+        "partner_last_bid": "1♦",
+        "hcp": {
+          "min": 6,
+          "max": 10
+        },
+        "diamonds_length": {
+          "min": 4
+        },
+        "spades_length": {
+          "max": 3
+        },
+        "hearts_length": {
+          "max": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Raise to 2♦ (6-10 HCP, 4+ diamonds, no 4-card major)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "limit_raise_major",
       "bid": "3{partner_suit}",
       "priority": 354,
@@ -291,15 +346,18 @@
           ]
         },
         "hcp": {
-          "min": 11,
+          "min": 9,
           "max": 12
         },
         "support_for_partner": {
           "min": 4
+        },
+        "support_points": {
+          "min": 10
         }
       },
       "forcing": "none",
-      "explanation": "Limit raise (11-12 HCP, 4+ card support, invitational)",
+      "explanation": "Limit raise (10-12 support points, 4+ card support, invitational)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -515,9 +573,34 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "raise_weak_two_to_game",
+      "bid": "4{partner_suit}",
+      "priority": 400,
+      "description": "Raise partner's weak two to game with support and values",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": {
+          "in": [
+            "2♦",
+            "2♥",
+            "2♠"
+          ]
+        },
+        "hcp": {
+          "min": 12
+        },
+        "support_for_partner": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Raise to game with {hcp} HCP and {support_for_partner}-card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "pass_no_values",
       "bid": "Pass",
-      "priority": 15,
+      "priority": 270,
       "description": "Pass with insufficient values to respond",
       "conditions": {
         "is_response": true,
@@ -749,7 +832,7 @@
     {
       "id": "pass_after_major_opening_no_fit_weak",
       "bid": "Pass",
-      "priority": 11,
+      "priority": 265,
       "description": "Pass partner's major opening with minimum and no fit",
       "conditions": {
         "is_response": true,

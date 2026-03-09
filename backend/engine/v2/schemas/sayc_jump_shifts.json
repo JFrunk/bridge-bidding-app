@@ -110,7 +110,8 @@
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "my_last_bid", "in": ["1♣", "1♦"], "constraint_type": "HARD"},
         {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
-        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"}
+        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "support_for_partner", "max": 3, "constraint_type": "HARD"}
       ],
       "forcing": "game",
       "explanation": "Jump shift to 3♠ showing 17+ HCP with 4+ spades - game forcing",

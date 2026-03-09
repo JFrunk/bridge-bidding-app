@@ -855,6 +855,11 @@
           "feature": "my_bid_count",
           "max": 1,
           "constraint_type": "HARD"
+        },
+        {
+          "feature": "support_for_partner",
+          "max": 3,
+          "constraint_type": "HARD"
         }
       ],
       "forcing": "none",
@@ -1107,6 +1112,11 @@
           "feature": "my_bid_count",
           "max": 1,
           "constraint_type": "HARD"
+        },
+        {
+          "feature": "support_for_partner",
+          "max": 3,
+          "constraint_type": "HARD"
         }
       ],
       "forcing": "one_round",
@@ -1155,6 +1165,11 @@
         {
           "feature": "my_bid_count",
           "max": 1,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "support_for_partner",
+          "max": 3,
           "constraint_type": "HARD"
         }
       ],
@@ -1980,7 +1995,7 @@
       "id": "opener_game_after_single_raise_values",
       "bid": "4{my_suit}",
       "priority": 745,
-      "description": "Opener bids game after partner's single raise with strong values (17+ HCP)",
+      "description": "Opener bids game after partner's single raise with strong values (18+ HCP)",
       "conditions": {
         "is_rebid": true,
         "opener_relationship": "Me",
@@ -1999,11 +2014,11 @@
         "partner_raised_my_suit": true,
         "is_contested": false,
         "hcp": {
-          "min": 17
+          "min": 18
         }
       },
       "forcing": "none",
-      "explanation": "Game (17+ HCP) - strong values opposite partner's raise",
+      "explanation": "Game (18+ HCP) - strong values opposite partner's raise",
       "sets_forcing_level": "NON_FORCING"
     },
     {

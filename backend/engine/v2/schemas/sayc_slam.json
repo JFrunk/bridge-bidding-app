@@ -47,7 +47,7 @@
     {
       "id": "blackwood_response_0_aces",
       "bid": "5♣",
-      "priority": 250,
+      "priority": 990,
       "description": "Blackwood response: 0 or 4 aces",
       "conditions": {
         "partner_last_bid": "4NT",
@@ -61,7 +61,7 @@
     {
       "id": "blackwood_response_1_ace",
       "bid": "5♦",
-      "priority": 250,
+      "priority": 990,
       "description": "Blackwood response: 1 ace",
       "conditions": {
         "partner_last_bid": "4NT",
@@ -75,7 +75,7 @@
     {
       "id": "blackwood_response_2_aces",
       "bid": "5♥",
-      "priority": 250,
+      "priority": 990,
       "description": "Blackwood response: 2 aces",
       "conditions": {
         "partner_last_bid": "4NT",
@@ -89,7 +89,7 @@
     {
       "id": "blackwood_response_3_aces",
       "bid": "5♠",
-      "priority": 250,
+      "priority": 990,
       "description": "Blackwood response: 3 aces",
       "conditions": {
         "partner_last_bid": "4NT",
@@ -103,10 +103,10 @@
     {
       "id": "bid_slam_after_blackwood_major",
       "bid": "6{agreed_major}",
-      "priority": 240,
+      "priority": 989,
       "description": "Bid small slam after Blackwood shows enough aces",
       "conditions": {
-        "we_bid_blackwood": true,
+        "asked_blackwood": true,
         "partnership_aces": {"min": 3},
         "has_major_fit": true
       },
@@ -118,16 +118,88 @@
     {
       "id": "sign_off_after_blackwood_missing_aces",
       "bid": "5{agreed_major}",
-      "priority": 235,
+      "priority": 984,
       "description": "Sign off at 5-level after Blackwood shows missing aces",
       "conditions": {
-        "we_bid_blackwood": true,
+        "asked_blackwood": true,
         "partnership_aces": {"max": 2},
         "has_major_fit": true
       },
       "forcing": "none",
       "explanation": "Sign off at 5-level - missing aces for slam",
       "sets_forcing_level": "NON_FORCING",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "king_ask_5nt",
+      "bid": "5NT",
+      "priority": 988,
+      "description": "Ask for kings after Blackwood (guarantees all aces held)",
+      "conditions": {
+        "asked_blackwood": true,
+        "partnership_aces": {"min": 4},
+        "has_major_fit": true,
+        "hcp": {"min": 16}
+      },
+      "forcing": "one_round",
+      "explanation": "5NT king ask - all aces accounted for, exploring grand slam",
+      "sets_forcing_level": "FORCING_1_ROUND",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "king_response_0_kings",
+      "bid": "6♣",
+      "priority": 995,
+      "description": "King ask response: 0 kings",
+      "conditions": {
+        "partner_last_bid": "5NT",
+        "kings": 0
+      },
+      "forcing": "none",
+      "explanation": "King ask response showing 0 kings",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "king_response_1_king",
+      "bid": "6♦",
+      "priority": 995,
+      "description": "King ask response: 1 king",
+      "conditions": {
+        "partner_last_bid": "5NT",
+        "kings": 1
+      },
+      "forcing": "none",
+      "explanation": "King ask response showing 1 king",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "king_response_2_kings",
+      "bid": "6♥",
+      "priority": 995,
+      "description": "King ask response: 2 kings",
+      "conditions": {
+        "partner_last_bid": "5NT",
+        "kings": 2
+      },
+      "forcing": "none",
+      "explanation": "King ask response showing 2 kings",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "king_response_3_kings",
+      "bid": "6♠",
+      "priority": 995,
+      "description": "King ask response: 3 kings",
+      "conditions": {
+        "partner_last_bid": "5NT",
+        "kings": 3
+      },
+      "forcing": "none",
+      "explanation": "King ask response showing 3 kings",
+      "sets_forcing_level": "GAME_FORCE",
       "metadata": {"convention": "blackwood", "bypass_hcp": true}
     },
     {
@@ -207,6 +279,66 @@
       "forcing": "none",
       "explanation": "Decline slam invitation with minimum appropriate HCP",
       "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "gerber_response_0_aces",
+      "bid": "4♦",
+      "priority": 990,
+      "description": "Gerber response: 0 or 4 aces",
+      "conditions": {
+        "partner_last_bid": "4♣",
+        "my_last_bid": {"in": ["1NT", "2NT"]},
+        "aces": {"in": [0, 4]}
+      },
+      "forcing": "none",
+      "explanation": "Gerber response showing {aces} aces",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "gerber", "bypass_hcp": true}
+    },
+    {
+      "id": "gerber_response_1_ace",
+      "bid": "4♥",
+      "priority": 990,
+      "description": "Gerber response: 1 ace",
+      "conditions": {
+        "partner_last_bid": "4♣",
+        "my_last_bid": {"in": ["1NT", "2NT"]},
+        "aces": 1
+      },
+      "forcing": "none",
+      "explanation": "Gerber response showing 1 ace",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "gerber", "bypass_hcp": true}
+    },
+    {
+      "id": "gerber_response_2_aces",
+      "bid": "4♠",
+      "priority": 990,
+      "description": "Gerber response: 2 aces",
+      "conditions": {
+        "partner_last_bid": "4♣",
+        "my_last_bid": {"in": ["1NT", "2NT"]},
+        "aces": 2
+      },
+      "forcing": "none",
+      "explanation": "Gerber response showing 2 aces",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "gerber", "bypass_hcp": true}
+    },
+    {
+      "id": "gerber_response_3_aces",
+      "bid": "4NT",
+      "priority": 990,
+      "description": "Gerber response: 3 aces",
+      "conditions": {
+        "partner_last_bid": "4♣",
+        "my_last_bid": {"in": ["1NT", "2NT"]},
+        "aces": 3
+      },
+      "forcing": "none",
+      "explanation": "Gerber response showing 3 aces",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "gerber", "bypass_hcp": true}
     }
   ]
 }
