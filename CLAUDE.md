@@ -80,17 +80,19 @@ Before starting any task, check if a matching skill exists. If it does, use the 
 **Before writing ANY new function, utility, or logic, verify it doesn't already exist.**
 
 **Search protocol:**
-1. Search for function/variable names related to what you're building
-2. Check utility directories: `frontend/src/utils/`, `backend/utils/`, `frontend/src/hooks/`, `frontend/src/contexts/`, `backend/engine/`
-3. Read related files completely before deciding to create something new
+1. **Check `.claude/UTILITY_REGISTRY.md` first** — it lists every shared utility and their banned inline patterns
+2. Search for function/variable names related to what you're building
+3. Check utility directories: `frontend/src/utils/`, `backend/utils/`, `frontend/src/hooks/`, `frontend/src/contexts/`, `backend/engine/`
+4. Read related files completely before deciding to create something new
 
 **Rules:**
 - ALWAYS search before writing — no exceptions
-- Import and reuse existing utilities (seats.js, etc.)
-- Extend existing functions rather than creating parallel ones
+- Import and reuse registered utilities — see `.claude/UTILITY_REGISTRY.md`
+- Extend existing utilities rather than creating parallel implementations
 - NEVER duplicate state management, calculations, or display logic
+- When a new utility is created, register it in `.claude/UTILITY_REGISTRY.md`
 
-**Bad examples:** Creating `getBiddingHistory()` when `auction` state exists. Writing inline seat math when `utils/seats.js` has `partner()`, `lho()`, `rho()`. Duplicating HCP calculation when `Hand` class computes it.
+**Bad examples:** Creating `getBiddingHistory()` when `auction` state exists. Writing inline seat math when `utils/seats.js` has `partner()`, `lho()`, `rho()`. Duplicating HCP calculation when `Hand` class computes it. Defining `{'S':'♠','H':'♥',...}` when `SUIT_MAP` is exported from `suitColors.js`.
 
 ---
 
@@ -232,49 +234,39 @@ def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
 
 ---
 
-## Seat Position Utilities
+## Shared Utilities Registry
 
-**CRITICAL: Use the seats utility module for ALL seat/position calculations. No exceptions.**
+**CRITICAL: Before writing ANY logic that touches seats, suits, cards, errors, or sessions — check `.claude/UTILITY_REGISTRY.md` and import from the canonical utility.**
 
-Modulo-4 clock: `NORTH=0, EAST=1, SOUTH=2, WEST=3`. Partner=+2, LHO=+1, RHO=+3.
+**MANDATORY: Read `.claude/UTILITY_REGISTRY.md` before implementing any feature.** It contains:
+- The complete list of shared utilities, what they export, and their import paths
+- Banned inline patterns with the correct replacement for each
+- Known tech debt (what NOT to extend)
+- Instructions for registering new utilities
 
-**Backend:** `from utils.seats import partner, lho, rho, relative_position, display_name, bidder_role, active_seat_bidding, active_seat_play, seat_index, seat_from_index, normalize, partnership, same_side, is_opponent, dummy, opening_leader`
-**Frontend:** `import { partner, lho, rho, relativePosition, displayName, bidderRole, nsSuccess, activeSeatBidding, activeSeatPlay, seatIndex, seatFromIndex, normalize, partnership, sameSide, isOpponent, dummy, openingLeader } from '../utils/seats'`
+**Quick reference — which utility to use:**
 
-**Rules:**
-- ALWAYS import from `utils/seats` for seat calculations
-- Use integer indices (0-3) in storage/logic, strings ('N','E','S','W') in display
-- NEVER hardcode seat relationships or duplicate seat math inline
+| Domain | Backend | Frontend |
+|--------|---------|----------|
+| Seat positions, turns, partnerships | `utils.seats` | `utils/seats` |
+| Suit symbols, colors, bid formatting | — | `utils/suitColors` |
+| Card sorting, grouping, contracts | — | `shared/utils/cardUtils` |
+| Error logging & exception handling | `utils.error_logger` | — |
+| Session IDs & API headers | — | `utils/sessionHelper` |
 
-**Banned patterns — if you see or write any of these, replace with the seats utility:**
-```python
-# BANNED: Inline partner maps
-{'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}        # Use partner(seat)
-{'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}[x]      # Use partner(x)
+**Rules (apply to ALL registered utilities):**
+- ALWAYS import from the canonical utility — never duplicate its logic inline
+- If a utility is missing a function you need, **extend the utility** — don't create a parallel implementation
+- When adding a new shared utility, register it in `.claude/UTILITY_REGISTRY.md`
+- Self-check before committing: search changed files for banned patterns listed in the registry
 
-# BANNED: Inline modulo seat arithmetic
-(idx + 1) % 4                                       # Use lho() or seat_from_index()
-(idx + 2) % 4                                       # Use partner() or seat_from_index()
-(dealer_idx + bid_count) % 4                         # Use active_seat_bidding(dealer, bid_count)
-(leader_idx + cards_played) % 4                      # Use active_seat_play(leader, cards_played)
-positions[idx % 4]                                   # Use seat_from_index(idx)
-
-# BANNED: Inline seat arrays for rotation/lookup
-['N', 'E', 'S', 'W'][idx]                           # Use seat_from_index(idx)
-players = ['North', 'East', 'South', 'West']        # Use SEATS or SEAT_NAMES from seats utility
-
-# BANNED: Inline partnership checks
-seat in ('N', 'S')                                   # Use partnership(seat) == NS or same_side(seat, 'N')
-seat == 'N' or seat == 'S'                           # Use same_side(seat, 'N')
-```
-
-**Self-check before committing:** Search your changed files for `% 4`, `'N': 'S'`, and inline seat arrays. If found, refactor to use the seats utility.
+**See:** `.claude/UTILITY_REGISTRY.md` for complete import paths, banned patterns, and tech debt
 
 ---
 
 ## Common Pitfalls
 
-- **Inline seat math:** The most common violation in this codebase. ALWAYS use `utils/seats` — see "Seat Position Utilities" above for banned patterns
+- **Inline utility duplication:** The most common violation. ALWAYS check the Shared Utilities Registry above before writing inline seat math, suit maps, card sorting, error handling, or session management
 - **Frontend bid legality:** BiddingBox client-side check must match backend logic
 - **Feature extraction:** Specialist modules receive full features dict even if unused
 - **Module naming:** Decision engine returns module name as string, not the class
@@ -368,5 +360,6 @@ Use `/add-convention` to scaffold the full 6-step integration process (create fi
 - `.claude/DOCUMENTATION_PRACTICES.md` — Documentation workflow and checklists
 - `.claude/UI_STANDARDS.md` — Design tokens, zone architecture, component patterns
 - `.claude/ARCHITECTURAL_DECISION_FRAMEWORK.md` — ADR process and decision matrix
+- `.claude/UTILITY_REGISTRY.md` — **Shared utility registry, banned patterns, and tech debt tracking**
 - `.claude/PROJECT_CONTEXT.md` — Comprehensive project information
 - `docs/README.md` — Complete documentation index
