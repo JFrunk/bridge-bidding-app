@@ -234,27 +234,52 @@ def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
 
 ## Seat Position Utilities
 
-**CRITICAL: Use the seats utility module for ALL seat/position calculations.**
+**CRITICAL: Use the seats utility module for ALL seat/position calculations. No exceptions.**
 
 Modulo-4 clock: `NORTH=0, EAST=1, SOUTH=2, WEST=3`. Partner=+2, LHO=+1, RHO=+3.
 
-**Backend:** `from utils.seats import partner, lho, rho, relative_position, display_name, bidder_role`
-**Frontend:** `import { partner, lho, rho, relativePosition, displayName, bidderRole, nsSuccess } from '../utils/seats'`
+**Backend:** `from utils.seats import partner, lho, rho, relative_position, display_name, bidder_role, active_seat_bidding, active_seat_play, seat_index, seat_from_index, normalize, partnership, same_side, is_opponent, dummy, opening_leader`
+**Frontend:** `import { partner, lho, rho, relativePosition, displayName, bidderRole, nsSuccess, activeSeatBidding, activeSeatPlay, seatIndex, seatFromIndex, normalize, partnership, sameSide, isOpponent, dummy, openingLeader } from '../utils/seats'`
 
 **Rules:**
 - ALWAYS import from `utils/seats` for seat calculations
 - Use integer indices (0-3) in storage/logic, strings ('N','E','S','W') in display
 - NEVER hardcode seat relationships or duplicate seat math inline
 
+**Banned patterns — if you see or write any of these, replace with the seats utility:**
+```python
+# BANNED: Inline partner maps
+{'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}        # Use partner(seat)
+{'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}[x]      # Use partner(x)
+
+# BANNED: Inline modulo seat arithmetic
+(idx + 1) % 4                                       # Use lho() or seat_from_index()
+(idx + 2) % 4                                       # Use partner() or seat_from_index()
+(dealer_idx + bid_count) % 4                         # Use active_seat_bidding(dealer, bid_count)
+(leader_idx + cards_played) % 4                      # Use active_seat_play(leader, cards_played)
+positions[idx % 4]                                   # Use seat_from_index(idx)
+
+# BANNED: Inline seat arrays for rotation/lookup
+['N', 'E', 'S', 'W'][idx]                           # Use seat_from_index(idx)
+players = ['North', 'East', 'South', 'West']        # Use SEATS or SEAT_NAMES from seats utility
+
+# BANNED: Inline partnership checks
+seat in ('N', 'S')                                   # Use partnership(seat) == NS or same_side(seat, 'N')
+seat == 'N' or seat == 'S'                           # Use same_side(seat, 'N')
+```
+
+**Self-check before committing:** Search your changed files for `% 4`, `'N': 'S'`, and inline seat arrays. If found, refactor to use the seats utility.
+
 ---
 
 ## Common Pitfalls
 
+- **Inline seat math:** The most common violation in this codebase. ALWAYS use `utils/seats` — see "Seat Position Utilities" above for banned patterns
 - **Frontend bid legality:** BiddingBox client-side check must match backend logic
 - **Feature extraction:** Specialist modules receive full features dict even if unused
 - **Module naming:** Decision engine returns module name as string, not the class
 - **Hand generation:** Scenarios consume cards from deck — order matters
-- **Auction indexing:** Position = `index % 4` mapping to player positions
+- **Auction indexing:** Use `active_seat_bidding(dealer, bid_count)` — never `(idx + count) % 4`
 - **DDS crashes on macOS:** Use Level 8 (Minimax) for dev, Level 10 (DDS) only on Linux production
 - **DDS debugging requires production:** Deploy or SSH to test DDS features — never verify locally
 - **Quality score regression:** Always compare before/after scores

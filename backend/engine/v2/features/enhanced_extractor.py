@@ -813,6 +813,29 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
                 flat['partner_min_hcp'] = 12
                 flat['partner_max_hcp'] = 21  # Could be any strength until rebid
 
+    # Additional partner HCP inference from competitive actions
+    # These supplement the limit bid ranges above, using max() to avoid lowering
+    if partner_bids:
+        first_partner_bid = partner_bids[0]
+
+        # Partner overcalled or doubled (opponent opened)
+        if af['opener_relationship'] == 'Opponent' and first_partner_bid not in ['Pass', 'XX']:
+            if first_partner_bid == 'X':
+                # Takeout double implies 12+ HCP
+                flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 12)
+            elif first_partner_bid[0] == '1':
+                # 1-level overcall implies 8+ HCP
+                flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 8)
+            elif first_partner_bid[0] == '2' and first_partner_bid != '2♣':
+                # 2-level overcall implies 10+ HCP (except 2♣ which could be Stayman)
+                flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 10)
+
+        # I opened, partner responded with a bid (not pass)
+        if af['opener_relationship'] == 'Self' and first_partner_bid not in ['Pass', 'X', 'XX']:
+            flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 6)
+
+    # Note: partnership_hcp_min is calculated later using updated partner_min_hcp
+
     # Partner showed extra values detection (beyond minimum opening)
     # Extras = values beyond minimum (typically 16+ HCP)
     flat['partner_showed_extras'] = False

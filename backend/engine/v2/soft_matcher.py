@@ -47,7 +47,7 @@ class SoftMatcher:
 
     # Legacy penalty thresholds (used when constraint_type not specified)
     HCP_SOFT_PENALTY_PER_POINT = 0.10  # 10% per HCP difference
-    HCP_HARD_FAIL_THRESHOLD = 3  # More than 3 HCP off = hard fail
+    HCP_HARD_FAIL_THRESHOLD = 2  # More than 2 HCP off = hard fail
     SEMI_BALANCED_PENALTY = 0.20  # 20% penalty for semi-balanced when balanced required
 
     def calculate(self, rule: Dict[str, Any], features: Dict[str, Any]) -> MatchResult:
@@ -170,6 +170,11 @@ class SoftMatcher:
 
         if constraint_type == 'HARD':
             return (0.0, fail_reason)
+
+        # SOFT with hard floor: if deviation exceeds threshold, treat as HARD fail
+        # This prevents wildly out-of-range matches (e.g., 7 HCP opening 1NT)
+        if feature_name == 'hcp' and distance > self.HCP_HARD_FAIL_THRESHOLD:
+            return (0.0, f"{feature_name}: deviation {distance} exceeds hard floor ({self.HCP_HARD_FAIL_THRESHOLD})")
 
         # SOFT: Apply asymmetric penalty for HCP (overshoot penalized more heavily)
         effective_penalty = penalty_per_unit

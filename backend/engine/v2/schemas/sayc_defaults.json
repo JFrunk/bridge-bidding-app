@@ -102,6 +102,66 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "default_game_raise_major",
+      "bid": "4{partner_suit}",
+      "priority": 15,
+      "description": "Default game raise when partnership has game values and major fit",
+      "conditions": {
+        "is_contested": true,
+        "partnership_hcp_min": {
+          "min": 25
+        },
+        "support_for_partner": {
+          "min": 3
+        },
+        "partner_last_bid": {
+          "in": ["1♥", "1♠", "2♥", "2♠", "3♥", "3♠"]
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game: Partnership has 25+ HCP with major fit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "default_game_3nt",
+      "bid": "3NT",
+      "priority": 12,
+      "description": "Default 3NT when partnership has game values and balanced hand",
+      "conditions": {
+        "is_contested": true,
+        "partnership_hcp_min": {
+          "min": 25
+        },
+        "hcp": {
+          "min": 10
+        },
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "3NT: Partnership has 25+ HCP with balanced hand",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "default_game_own_major",
+      "bid": "4{first_suit}",
+      "priority": 10,
+      "description": "Default game in own major with partnership values",
+      "conditions": {
+        "partnership_hcp_min": {
+          "min": 25
+        },
+        "longest_suit_length": {
+          "min": 6
+        },
+        "longest_suit": {
+          "in": ["♥", "♠"]
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game: 6+ card major with partnership game values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "default_pass_auction_complete",
       "bid": "Pass",
       "priority": 2,

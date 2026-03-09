@@ -25,7 +25,7 @@ Categorize every changed file into one or more of these domains:
 | SAYC/V2 | `backend/engine/v2/` | SAYC compliance (100 hands) |
 | Frontend | `frontend/src/**` | `npm test` + `npm run build` |
 | Backend Tests | `backend/tests/` | `cd backend && ./test_quick.sh` |
-| Server/API | `backend/server.py`, `backend/utils/` | `cd backend && ./test_quick.sh` |
+| Server/API | `backend/server.py`, `backend/core/`, `backend/utils/`, `backend/routes/` | `cd backend && ./test_quick.sh` |
 | Docs Only | `docs/`, `*.md` | No quality gate needed |
 | Config | `.claude/`, config files | No quality gate needed |
 

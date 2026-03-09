@@ -489,11 +489,10 @@ class SchemaInterpreter:
             True if all HARD constraints pass
         """
         for constraint in constraints:
-            constraint_type = constraint.get('constraint_type', 'HARD')
-
-            # Only evaluate HARD constraints for pass/fail
-            if constraint_type != 'HARD':
-                continue
+            # Evaluate ALL constraints (HARD and SOFT) for pass/fail.
+            # SOFT constraints were previously skipped, causing rules to match
+            # with wildly out-of-range values (e.g., 1NT opening with 7 HCP).
+            # The SOFT designation is retained for future SoftMatcher tie-breaking.
 
             feature_name = constraint.get('feature')
             if not feature_name:
@@ -830,7 +829,9 @@ class SchemaInterpreter:
             if var_name == 'partner_suit':
                 partner_bid = features.get('partner_last_bid', '')
                 if partner_bid and len(partner_bid) >= 2:
-                    return partner_bid[1:]
+                    suit = partner_bid[1:]
+                    if suit in ['♠', '♥', '♦', '♣', 'NT']:
+                        return suit
                 return ''
 
             # Special case: partner_first_suit
