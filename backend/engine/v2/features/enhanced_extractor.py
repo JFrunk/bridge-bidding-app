@@ -7,6 +7,7 @@ and flattens features for schema-based rule evaluation.
 
 from typing import Dict, Any, Optional, List
 from engine.hand import Hand
+from utils.seats import seat_index, seat_from_index, partner as partner_seat, lho as lho_seat, rho as rho_seat
 from engine.ai.feature_extractor import (
     extract_features,
     calculate_quick_tricks,
@@ -263,17 +264,16 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
 
     # Determine who acted competitively first: me or partner?
     # This distinguishes overcaller (I acted first) from advancer (partner acted first)
-    positions = ['North', 'East', 'South', 'West']
-    my_idx = positions.index(my_position) if my_position in positions else 0
-    dealer_idx = positions.index(dealer) if dealer in positions else 0
-    partner_idx = (my_idx + 2) % 4
+    my_idx = seat_index(my_position)
+    dealer_idx = seat_index(dealer)
+    partner_idx = seat_index(partner_seat(my_position))
     my_first_competitive_idx = None
     partner_first_competitive_idx = None
     for i, bid in enumerate(auction_history):
-        bid_pos = (dealer_idx + i) % 4
-        if bid not in ['Pass', 'XX', ''] and bid_pos == my_idx and my_first_competitive_idx is None:
+        bid_pos = seat_from_index(dealer_idx + i)
+        if bid not in ['Pass', 'XX', ''] and bid_pos == seat_from_index(my_idx) and my_first_competitive_idx is None:
             my_first_competitive_idx = i
-        if bid not in ['Pass', 'XX', ''] and bid_pos == partner_idx and partner_first_competitive_idx is None:
+        if bid not in ['Pass', 'XX', ''] and bid_pos == seat_from_index(partner_idx) and partner_first_competitive_idx is None:
             partner_first_competitive_idx = i
     i_acted_first = (my_first_competitive_idx is not None and
                      (partner_first_competitive_idx is None or
@@ -301,6 +301,10 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['has_5_card_major'] = suit_lengths.get('♠', 0) >= 5 or suit_lengths.get('♥', 0) >= 5
     flat['has_6_card_suit'] = longest_length >= 6
     flat['has_7_card_suit'] = longest_length >= 7
+
+    # Ace and King counts (for Blackwood/Gerber responses)
+    flat['aces'] = sum(1 for c in hand.cards if c.rank == 'A')
+    flat['kings'] = sum(1 for c in hand.cards if c.rank == 'K')
 
     # Longest major suit (for responding to takeout doubles)
     spades_len = suit_lengths.get('♠', 0)
@@ -344,10 +348,7 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['rule_of_20'] = (flat['hcp'] + lengths_sorted[0] + lengths_sorted[1]) >= 20 if len(lengths_sorted) >= 2 else False
 
     # Seat (1-4, dealer=1)
-    positions = ['North', 'East', 'South', 'West']
-    dealer_idx = positions.index(dealer) if dealer in positions else 0
-    my_idx = positions.index(my_position) if my_position in positions else 0
-    flat['seat'] = ((my_idx - dealer_idx) % 4) + 1
+    flat['seat'] = ((seat_index(my_position) - seat_index(dealer)) % 4) + 1
 
     # Overcall-specific features
     # Find the best suit for overcalling (longest 5+ card suit with best quality)
@@ -915,6 +916,15 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['have_all_keycards'] = flat['total_keycards_min'] >= 4
     flat['missing_two_keycards'] = flat['total_keycards_max'] <= 3
 
+    # Has major fit (agreed suit is a major)
+    agreed_suit_flat = flat.get('agreed_suit')
+    flat['has_major_fit'] = agreed_suit_flat in ('♠', '♥')
+    # Alias for bid templates: {agreed_major} resolves to the agreed major suit
+    if flat['has_major_fit']:
+        flat['agreed_major'] = agreed_suit_flat
+    else:
+        flat['agreed_major'] = None
+
     # Suits bid count (for Fourth Suit Forcing detection)
     flat['suits_bid_count'] = len(bid_suits_natural)
     flat['is_fourth_suit_scenario'] = len(bid_suits_natural) == 3
@@ -1036,6 +1046,15 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
             flat['asked_blackwood'] = True
             break
 
+    # Standard Blackwood ace inference (for SAYC which uses standard Blackwood, not RKCB)
+    if flat.get('asked_blackwood'):
+        partner_aces = _infer_partner_aces_standard(flat['partner_last_bid'])
+        flat['partner_aces'] = partner_aces
+        flat['partnership_aces'] = flat['aces'] + partner_aces
+    else:
+        flat['partner_aces'] = 0
+        flat['partnership_aces'] = flat['aces']
+
     # Gambling 3NT features (solid minor with no outside strength)
     _add_gambling_features(flat, hand)
 
@@ -1102,6 +1121,27 @@ def evaluate_suit_quality(hand: Hand, suit: str) -> str:
     return 'poor'
 
 
+def _extract_bids_for_seat(auction_history: List[str], target_position: str, dealer: str = 'North') -> List[str]:
+    """
+    Extract bids made by a specific seat from the auction history.
+
+    Args:
+        auction_history: List of bids in order
+        target_position: Position to extract bids for (any format)
+        dealer: Dealer position (determines bid indexing)
+
+    Returns:
+        List of bids made by the target seat
+    """
+    target_seat = seat_from_index(seat_index(target_position))
+    dealer_idx = seat_index(dealer)
+    bids = []
+    for i, bid in enumerate(auction_history):
+        if seat_from_index(dealer_idx + i) == target_seat:
+            bids.append(bid)
+    return bids
+
+
 def _get_partner_bids(auction_history: List[str], my_position: str, dealer: str = 'North') -> List[str]:
     """
     Extract partner's bids from the auction history.
@@ -1114,19 +1154,8 @@ def _get_partner_bids(auction_history: List[str], my_position: str, dealer: str 
     Returns:
         List of partner's bids in order
     """
-    positions = ['North', 'East', 'South', 'West']
-    my_idx = positions.index(my_position) if my_position in positions else 0
-    dealer_idx = positions.index(dealer) if dealer in positions else 0
-    partner_idx = (my_idx + 2) % 4  # Partner is across the table
-
-    partner_bids = []
-    for i, bid in enumerate(auction_history):
-        # Position of bid i = (dealer_idx + i) % 4
-        bid_position_idx = (dealer_idx + i) % 4
-        if bid_position_idx == partner_idx:
-            partner_bids.append(bid)
-
-    return partner_bids
+    target = partner_seat(my_position)
+    return _extract_bids_for_seat(auction_history, target, dealer)
 
 
 def _get_my_bids(auction_history: List[str], my_position: str, dealer: str = 'North') -> List[str]:
@@ -1141,18 +1170,7 @@ def _get_my_bids(auction_history: List[str], my_position: str, dealer: str = 'No
     Returns:
         List of my bids in order
     """
-    positions = ['North', 'East', 'South', 'West']
-    my_idx = positions.index(my_position) if my_position in positions else 0
-    dealer_idx = positions.index(dealer) if dealer in positions else 0
-
-    my_bids = []
-    for i, bid in enumerate(auction_history):
-        # Position of bid i = (dealer_idx + i) % 4
-        bid_position_idx = (dealer_idx + i) % 4
-        if bid_position_idx == my_idx:
-            my_bids.append(bid)
-
-    return my_bids
+    return _extract_bids_for_seat(auction_history, my_position, dealer)
 
 
 def _get_rho_bids(auction_history: List[str], my_position: str, dealer: str = 'North') -> List[str]:
@@ -1167,19 +1185,8 @@ def _get_rho_bids(auction_history: List[str], my_position: str, dealer: str = 'N
     Returns:
         List of RHO's bids in order
     """
-    positions = ['North', 'East', 'South', 'West']
-    my_idx = positions.index(my_position) if my_position in positions else 0
-    dealer_idx = positions.index(dealer) if dealer in positions else 0
-    rho_idx = (my_idx - 1) % 4  # RHO is to my right (bid just before me)
-
-    rho_bids = []
-    for i, bid in enumerate(auction_history):
-        # Position of bid i = (dealer_idx + i) % 4
-        bid_position_idx = (dealer_idx + i) % 4
-        if bid_position_idx == rho_idx:
-            rho_bids.append(bid)
-
-    return rho_bids
+    target = rho_seat(my_position)
+    return _extract_bids_for_seat(auction_history, target, dealer)
 
 
 def _get_suit_control_level(hand: Hand, suit: str) -> int:
@@ -1248,11 +1255,8 @@ def _bid_index_is_mine(bid_index: int, my_position: str, dealer: str = 'North') 
     Returns:
         True if this bid was made by me
     """
-    positions = ['North', 'East', 'South', 'West']
-    my_idx = positions.index(my_position) if my_position in positions else 0
-    dealer_idx = positions.index(dealer) if dealer in positions else 0
-    bid_position_idx = (dealer_idx + bid_index) % 4
-    return bid_position_idx == my_idx
+    bid_seat = seat_from_index(seat_index(dealer) + bid_index)
+    return bid_seat == seat_from_index(seat_index(my_position))
 
 
 def _get_lho_bids(auction_history: List[str], my_position: str, dealer: str = 'North') -> List[str]:
@@ -1267,19 +1271,8 @@ def _get_lho_bids(auction_history: List[str], my_position: str, dealer: str = 'N
     Returns:
         List of LHO's bids in order
     """
-    positions = ['North', 'East', 'South', 'West']
-    my_idx = positions.index(my_position) if my_position in positions else 0
-    dealer_idx = positions.index(dealer) if dealer in positions else 0
-    lho_idx = (my_idx + 1) % 4  # LHO is to my left (bids after me)
-
-    lho_bids = []
-    for i, bid in enumerate(auction_history):
-        # Position of bid i = (dealer_idx + i) % 4
-        bid_position_idx = (dealer_idx + i) % 4
-        if bid_position_idx == lho_idx:
-            lho_bids.append(bid)
-
-    return lho_bids
+    target = lho_seat(my_position)
+    return _extract_bids_for_seat(auction_history, target, dealer)
 
 
 def _is_solid_suit(hand: Hand, suit: str) -> bool:
@@ -2329,6 +2322,29 @@ def _infer_opponent_suit_lengths(auction_history: List[str], my_position: str,
         inferred['?'] = 8  # Unknown but assume 8-card fit
 
     return inferred
+
+
+def _infer_partner_aces_standard(partner_last_bid: str) -> int:
+    """
+    Infer partner's ace count from standard Blackwood response.
+
+    Standard Blackwood responses (NOT RKCB):
+    - 5♣ = 0 or 4 aces
+    - 5♦ = 1 ace
+    - 5♥ = 2 aces
+    - 5♠ = 3 aces
+
+    Returns the ace count (for 0/4 ambiguity, returns the more common value).
+    """
+    if partner_last_bid == '5♣':
+        return 0  # Usually 0 (4 aces is rare)
+    elif partner_last_bid == '5♦':
+        return 1
+    elif partner_last_bid == '5♥':
+        return 2
+    elif partner_last_bid == '5♠':
+        return 3
+    return 0
 
 
 def _infer_partner_keycards(auction_history: List[str], partner_last_bid: str) -> Dict[str, int]:
