@@ -15,7 +15,7 @@
         "partner_last_bid": "1♠",
         "hcp": {
           "min": 12,
-          "max": 17
+          "max": 15
         },
         "spades_length": {
           "min": 4
@@ -36,7 +36,7 @@
         "partner_last_bid": "1♥",
         "hcp": {
           "min": 12,
-          "max": 17
+          "max": 15
         },
         "hearts_length": {
           "min": 4
@@ -55,11 +55,14 @@
         "is_doubler_rebid": true,
         "my_last_bid": "X",
         "partner_last_bid": {
-          "in": ["1♠", "2♠"]
+          "in": [
+            "1♠",
+            "2♠"
+          ]
         },
         "hcp": {
-          "min": 18,
-          "max": 20
+          "min": 16,
+          "max": 18
         },
         "spades_length": {
           "min": 4
@@ -78,11 +81,14 @@
         "is_doubler_rebid": true,
         "my_last_bid": "X",
         "partner_last_bid": {
-          "in": ["1♥", "2♥"]
+          "in": [
+            "1♥",
+            "2♥"
+          ]
         },
         "hcp": {
-          "min": 18,
-          "max": 20
+          "min": 16,
+          "max": 18
         },
         "hearts_length": {
           "min": 4
@@ -101,10 +107,13 @@
         "is_doubler_rebid": true,
         "my_last_bid": "X",
         "partner_last_bid": {
-          "in": ["1♠", "2♠"]
+          "in": [
+            "1♠",
+            "2♠"
+          ]
         },
         "hcp": {
-          "min": 21
+          "min": 19
         },
         "spades_length": {
           "min": 4
@@ -123,10 +132,13 @@
         "is_doubler_rebid": true,
         "my_last_bid": "X",
         "partner_last_bid": {
-          "in": ["1♥", "2♥"]
+          "in": [
+            "1♥",
+            "2♥"
+          ]
         },
         "hcp": {
-          "min": 21
+          "min": 19
         },
         "hearts_length": {
           "min": 4
@@ -202,7 +214,7 @@
         "is_doubler_rebid": true,
         "my_last_bid": "X",
         "hcp": {
-          "max": 15
+          "max": 14
         },
         "support_for_partner": {
           "max": 3

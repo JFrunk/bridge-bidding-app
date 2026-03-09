@@ -6,7 +6,7 @@
   "rules": [
     {
       "id": "stayman_2c",
-      "bid": "2\u2663",
+      "bid": "2♣",
       "priority": 750,
       "description": "Stayman convention over 1NT (looking for 4-4 major fit)",
       "conditions": {
@@ -43,7 +43,7 @@
     },
     {
       "id": "jacoby_transfer_hearts",
-      "bid": "2\u2666",
+      "bid": "2♦",
       "priority": 829,
       "description": "Jacoby transfer to hearts (5+ hearts, 8+ HCP)",
       "conditions": {
@@ -63,7 +63,7 @@
     },
     {
       "id": "jacoby_transfer_spades",
-      "bid": "2\u2665",
+      "bid": "2♥",
       "priority": 828,
       "description": "Jacoby transfer to spades (5+ spades, 8+ HCP)",
       "conditions": {
@@ -83,7 +83,7 @@
     },
     {
       "id": "texas_transfer_hearts",
-      "bid": "4\u2666",
+      "bid": "4♦",
       "priority": 835,
       "description": "Texas transfer to hearts (6+ hearts, game values)",
       "conditions": {
@@ -103,7 +103,7 @@
     },
     {
       "id": "texas_transfer_spades",
-      "bid": "4\u2665",
+      "bid": "4♥",
       "priority": 834,
       "description": "Texas transfer to spades (6+ spades, game values)",
       "conditions": {
@@ -161,12 +161,12 @@
     },
     {
       "id": "respond_1d_to_1c",
-      "bid": "1\u2666",
+      "bid": "1♦",
       "priority": 610,
       "description": "1D response to 1C opening",
       "conditions": {
         "is_response": true,
-        "partner_last_bid": "1\u2663",
+        "partner_last_bid": "1♣",
         "hcp": {
           "min": 6
         },
@@ -181,7 +181,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "1\u2666 response showing 6+ HCP and 4+ diamonds (no 4-card major)",
+      "explanation": "1♦ response showing 6+ HCP and 4+ diamonds (no 4-card major)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -194,8 +194,8 @@
         "is_contested": false,
         "opening_bid": {
           "in": [
-            "1\u2663",
-            "1\u2666"
+            "1♣",
+            "1♦"
           ]
         },
         "hcp": {
@@ -231,10 +231,10 @@
         "is_response": true,
         "opening_bid": {
           "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665",
-            "1\u2660"
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
           ]
         },
         "hcp": {
@@ -260,8 +260,8 @@
         "is_contested": false,
         "partner_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "hcp": {
@@ -286,8 +286,8 @@
         "is_contested": false,
         "partner_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "hcp": {
@@ -312,8 +312,8 @@
         "is_contested": false,
         "partner_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "OR": [
@@ -355,8 +355,8 @@
         "is_response": true,
         "opening_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "hcp": {
@@ -373,33 +373,33 @@
     },
     {
       "id": "respond_2c_positive",
-      "bid": "2\u2666",
+      "bid": "2♦",
       "priority": 45,
-      "description": "Waiting response to Strong 2\u2663 opening",
+      "description": "Waiting response to Strong 2♣ opening",
       "conditions": {
         "is_response": true,
         "opener_relationship": "Partner",
-        "opening_bid": "2\u2663",
-        "partner_last_bid": "2\u2663",
+        "opening_bid": "2♣",
+        "partner_last_bid": "2♣",
         "hcp": {
           "min": 0,
           "max": 7
         }
       },
       "forcing": "one_round",
-      "explanation": "2\u2666 waiting response to Strong 2\u2663 (0-7 HCP)",
+      "explanation": "2♦ waiting response to Strong 2♣ (0-7 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "respond_2c_positive_suit",
       "bid": "2{longest_suit}",
       "priority": 44,
-      "description": "Positive response to Strong 2\u2663 opening with good suit",
+      "description": "Positive response to Strong 2♣ opening with good suit",
       "conditions": {
         "is_response": true,
         "opener_relationship": "Partner",
-        "opening_bid": "2\u2663",
-        "partner_last_bid": "2\u2663",
+        "opening_bid": "2♣",
+        "partner_last_bid": "2♣",
         "hcp": {
           "min": 8
         },
@@ -411,7 +411,7 @@
         }
       },
       "forcing": "game",
-      "explanation": "Positive response to Strong 2\u2663 with good {longest_suit} suit",
+      "explanation": "Positive response to Strong 2♣ with good {longest_suit} suit",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
@@ -421,8 +421,18 @@
       "description": "2NT response showing 11-12 HCP balanced",
       "conditions": {
         "is_response": true,
-        "partner_last_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
-        "hcp": {"min": 11, "max": 12},
+        "partner_last_bid": {
+          "in": [
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 11,
+          "max": 12
+        },
         "is_balanced": true
       },
       "forcing": "none",
@@ -436,8 +446,16 @@
       "description": "3NT response to 1-minor showing 13-15 HCP balanced",
       "conditions": {
         "is_response": true,
-        "partner_last_bid": {"in": ["1♣", "1♦"]},
-        "hcp": {"min": 13, "max": 15},
+        "partner_last_bid": {
+          "in": [
+            "1♣",
+            "1♦"
+          ]
+        },
+        "hcp": {
+          "min": 13,
+          "max": 15
+        },
         "is_balanced": true
       },
       "forcing": "none",
@@ -451,10 +469,20 @@
       "description": "3NT response to 1-major showing 13-15 HCP balanced, no fit",
       "conditions": {
         "is_response": true,
-        "partner_last_bid": {"in": ["1♥", "1♠"]},
-        "hcp": {"min": 13, "max": 15},
+        "partner_last_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
+        "hcp": {
+          "min": 13,
+          "max": 15
+        },
         "is_balanced": true,
-        "support_for_partner": {"max": 2}
+        "support_for_partner": {
+          "max": 2
+        }
       },
       "forcing": "none",
       "explanation": "3NT (13-15 HCP, balanced, no major fit)",
@@ -468,9 +496,19 @@
       "conditions": {
         "is_response": true,
         "is_contested": false,
-        "partner_last_bid": {"in": ["1♣", "1♦"]},
-        "support_points": {"min": 10, "max": 12},
-        "support_for_partner": {"min": 5}
+        "partner_last_bid": {
+          "in": [
+            "1♣",
+            "1♦"
+          ]
+        },
+        "support_points": {
+          "min": 10,
+          "max": 12
+        },
+        "support_for_partner": {
+          "min": 5
+        }
       },
       "forcing": "none",
       "explanation": "Limit raise with {support_points} support points and {support_for_partner}-card support",
@@ -530,6 +568,140 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "raise_2nt_to_3nt",
+      "bid": "3NT",
+      "priority": 600,
+      "description": "Raise partner's 2NT opening to game",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "2NT",
+        "hcp": {
+          "min": 5,
+          "max": 10
+        },
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "3NT: Partner showed 20-21 HCP, combined values for game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "stayman_over_2nt",
+      "bid": "3♣",
+      "priority": 650,
+      "description": "Stayman over 2NT opening looking for major fit",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "2NT",
+        "hcp": {
+          "min": 5
+        },
+        "OR": [
+          {
+            "spades_length": {
+              "min": 4
+            }
+          },
+          {
+            "hearts_length": {
+              "min": 4
+            }
+          }
+        ]
+      },
+      "forcing": "one_round",
+      "explanation": "3♣ Stayman: Looking for 4-4 major fit over partner's 2NT",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "transfer_hearts_over_2nt",
+      "bid": "3♦",
+      "priority": 660,
+      "description": "Jacoby transfer to hearts over 2NT",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "2NT",
+        "hearts_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "3♦ transfer: Showing 5+ hearts over partner's 2NT",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "transfer_spades_over_2nt",
+      "bid": "3♥",
+      "priority": 660,
+      "description": "Jacoby transfer to spades over 2NT",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "2NT",
+        "spades_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "3♥ transfer: Showing 5+ spades over partner's 2NT",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "quantitative_4nt_over_2nt",
+      "bid": "4NT",
+      "priority": 640,
+      "description": "Quantitative slam invitation over 2NT",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "2NT",
+        "hcp": {
+          "min": 11,
+          "max": 12
+        },
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "4NT quantitative: Inviting slam with 31-33 combined HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "direct_game_major_over_2nt",
+      "bid": "4♥",
+      "priority": 655,
+      "description": "Direct 4♥ game with long hearts over 2NT",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "2NT",
+        "hcp": {
+          "min": 5
+        },
+        "hearts_length": {
+          "min": 6
+        }
+      },
+      "forcing": "none",
+      "explanation": "4♥: Game with 6+ hearts opposite 2NT opener",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "direct_game_spades_over_2nt",
+      "bid": "4♠",
+      "priority": 655,
+      "description": "Direct 4♠ game with long spades over 2NT",
+      "conditions": {
+        "is_response": true,
+        "partner_last_bid": "2NT",
+        "hcp": {
+          "min": 5
+        },
+        "spades_length": {
+          "min": 6
+        }
+      },
+      "forcing": "none",
+      "explanation": "4♠: Game with 6+ spades opposite 2NT opener",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "pass_after_2nt_minimum",
       "bid": "Pass",
       "priority": 13,
@@ -554,13 +726,13 @@
         "is_response": true,
         "partner_last_bid": {
           "in": [
-            "2\u2666",
-            "2\u2665",
-            "2\u2660",
-            "3\u2663",
-            "3\u2666",
-            "3\u2665",
-            "3\u2660"
+            "2♦",
+            "2♥",
+            "2♠",
+            "3♣",
+            "3♦",
+            "3♥",
+            "3♠"
           ]
         },
         "hcp": {
@@ -583,8 +755,8 @@
         "is_response": true,
         "partner_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "hcp": {
