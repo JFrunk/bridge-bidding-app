@@ -118,3 +118,12 @@ frontend/.eslintcache
 *.bak
 *.backup
 *_OLD_BACKUP.*
+
+# PID files
+*.pid
+
+# Database dumps
+backend/dump.txt
+
+# Claude Code worktrees
+.claude/worktrees/
