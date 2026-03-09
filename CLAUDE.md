@@ -71,6 +71,7 @@ Before starting any task, check if a matching skill exists. If it does, use the 
 | Analyzing a specific hand | `/analyze-hand` |
 | Pre-commit validation | `/preflight` |
 | Deploying to production | `/deploy-production` |
+| Partner practice dev/debug | `/partner` |
 
 ---
 

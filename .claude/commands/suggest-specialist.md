@@ -37,6 +37,7 @@ If `$ARGUMENTS` describes a task (not empty), use that as the primary signal. Ot
 | `server.py`, `backend/utils/`, database, sessions, API routes | Server/API | `/server-specialist` |
 | `engine/feedback/`, skill trees, learning paths, hand generators | Learning | `/learning-specialist` |
 | `frontend/src/components/progress/`, analytics API, dashboard | Progress | `/progress-specialist` |
+| `backend/core/room_state.py`, `backend/routes/room_api.py`, `frontend/src/components/room/`, `frontend/src/contexts/RoomContext.jsx` | Partner Practice | `/partner` |
 
 **Cross-cutting triggers:**
 - Changes spanning 2+ domains -> recommend multiple specialists
