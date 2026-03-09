@@ -770,6 +770,40 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         room.auction_history.append(bid)
         room.increment_version()
 
+        # Evaluate bid using V2 unified feedback system (accumulate for review)
+        position = room.get_position_for_session(session_id)
+        position_full = {'N': 'North', 'S': 'South'}.get(position, position)
+        dealer_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}.get(room.dealer, room.dealer)
+        hand = room.deal.get(position_full)
+        if hand and bid != 'Pass':
+            try:
+                from engine.v2 import BiddingEngineV2Schema
+                eval_engine = BiddingEngineV2Schema(use_v1_fallback=False)
+                # Evaluate against auction BEFORE this bid was added
+                auction_before = room.auction_history[:-1]
+                v2_fb = eval_engine.evaluate_user_bid(
+                    hand=hand,
+                    user_bid=bid,
+                    auction_history=auction_before,
+                    my_position=position_full,
+                    vulnerability=room.vulnerability or 'None',
+                    dealer=dealer_full
+                )
+                room.bid_feedback.append({
+                    'position': position,
+                    'bid': bid,
+                    'bid_number': len(room.auction_history),
+                    'score': v2_fb.score,
+                    'correctness': v2_fb.correctness.value,
+                    'optimal_bid': v2_fb.optimal_bid,
+                    'optimal_explanation': v2_fb.optimal_explanation,
+                    'key_concept': v2_fb.key_concept,
+                    'helpful_hint': v2_fb.helpful_hint,
+                    'learning_feedback': v2_fb.learning_feedback,
+                })
+            except Exception:
+                pass  # Don't block bidding if evaluation fails
+
         # Check if auction is complete (3 consecutive passes after opening bid)
         auction_complete = _check_auction_complete(room.auction_history)
 
