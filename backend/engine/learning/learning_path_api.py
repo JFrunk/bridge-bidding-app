@@ -741,11 +741,11 @@ import uuid
 _bidding_engine = None
 
 def _get_bidding_engine():
-    """Lazy-initialize BiddingEngine singleton for learning bid resolution."""
+    """Lazy-initialize BiddingEngineV2Schema singleton for learning bid resolution."""
     global _bidding_engine
     if _bidding_engine is None:
-        from engine.bidding_engine import BiddingEngine
-        _bidding_engine = BiddingEngine()
+        from engine.v2 import BiddingEngineV2Schema
+        _bidding_engine = BiddingEngineV2Schema(use_v1_fallback=True)
     return _bidding_engine
 
 

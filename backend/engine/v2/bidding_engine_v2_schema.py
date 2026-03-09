@@ -132,7 +132,7 @@ class BiddingEngineV2Schema:
                 bid = candidate.bid
 
                 # Validate bid is legal in the auction
-                if not self._is_bid_legal(bid, auction_history):
+                if not self._is_bid_legal(bid, auction_history, my_position, dealer):
                     continue
 
                 # Safety net: reject 6+ level bids that aren't part of a slam sequence.
@@ -453,28 +453,43 @@ class BiddingEngineV2Schema:
                     return suit_part
         return ''
 
-    def _is_bid_legal(self, bid: str, auction_history: List[str]) -> bool:
+    def _is_bid_legal(self, bid: str, auction_history: List[str],
+                      my_position: str = 'South', dealer: str = 'North') -> bool:
         """
         Check if a bid is legal given the auction history.
         """
         if bid in ['Pass', 'X', 'XX']:
-            # X only legal after opponent bid
+            # X only legal after an opponent's non-pass bid
             if bid == 'X':
                 if not auction_history:
                     return False
-                # Must have a non-pass bid to double
-                for b in reversed(auction_history):
+                # Determine who made each bid using position math
+                positions = ['North', 'East', 'South', 'West']
+                dealer_idx = positions.index(dealer)
+                my_idx = positions.index(my_position)
+                # Walk backwards to find last non-Pass bid and check it's from an opponent
+                for i in range(len(auction_history) - 1, -1, -1):
+                    b = auction_history[i]
                     if b not in ['Pass']:
-                        return b not in ['X', 'XX']
+                        bidder_idx = (dealer_idx + i) % 4
+                        # Opponent = not me and not my partner (partner is +2 mod 4)
+                        is_opponent = bidder_idx != my_idx and bidder_idx != (my_idx + 2) % 4
+                        return is_opponent and b not in ['X', 'XX']
                 return False
 
-            # XX only legal after X
+            # XX only legal after opponent's X
             if bid == 'XX':
                 if not auction_history:
                     return False
-                for b in reversed(auction_history):
+                positions = ['North', 'East', 'South', 'West']
+                dealer_idx = positions.index(dealer)
+                my_idx = positions.index(my_position)
+                for i in range(len(auction_history) - 1, -1, -1):
+                    b = auction_history[i]
                     if b != 'Pass':
-                        return b == 'X'
+                        bidder_idx = (dealer_idx + i) % 4
+                        is_opponent = bidder_idx != my_idx and bidder_idx != (my_idx + 2) % 4
+                        return is_opponent and b == 'X'
                 return False
 
             return True  # Pass always legal

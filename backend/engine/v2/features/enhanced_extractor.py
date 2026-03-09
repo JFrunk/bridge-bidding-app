@@ -295,6 +295,34 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['diamonds_length'] = suit_lengths.get('♦', 0)
     flat['clubs_length'] = suit_lengths.get('♣', 0)
 
+    # Per-suit quality and HCP (needed by opening/preempt schemas)
+    suit_names = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}
+    for suit_sym, suit_name in suit_names.items():
+        flat[f'suit_quality_{suit_name}'] = evaluate_suit_quality(hand, suit_sym)
+        flat[f'{suit_name}_hcp'] = get_suit_hcp(hand, suit_sym)
+
+    # Longest suit quality and HCP
+    longest = flat.get('longest_suit', '')
+    if longest and longest in suit_names:
+        flat['suit_quality_longest'] = flat[f'suit_quality_{suit_names[longest]}']
+        flat['longest_suit_hcp'] = flat[f'{suit_names[longest]}_hcp']
+    else:
+        flat['suit_quality_longest'] = 'poor'
+        flat['longest_suit_hcp'] = 0
+
+    # Stoppers required count (number of suits with at least one stopper)
+    flat['stoppers_required'] = flat.get('stopper_count', 0)
+
+    # Rule of 20: HCP + lengths of two longest suits >= 20
+    lengths_sorted = sorted(suit_lengths.values(), reverse=True)
+    flat['rule_of_20'] = (flat['hcp'] + lengths_sorted[0] + lengths_sorted[1]) >= 20 if len(lengths_sorted) >= 2 else False
+
+    # Seat (1-4, dealer=1)
+    positions = ['North', 'East', 'South', 'West']
+    dealer_idx = positions.index(dealer) if dealer in positions else 0
+    my_idx = positions.index(my_position) if my_position in positions else 0
+    flat['seat'] = ((my_idx - dealer_idx) % 4) + 1
+
     # Overcall-specific features
     # Find the best suit for overcalling (longest 5+ card suit with best quality)
     suit_ranking = {'♣': 0, '♦': 1, '♥': 2, '♠': 3}
