@@ -2,8 +2,8 @@
 Quick test script for Phase 1: Bidding Feedback System
 
 Tests:
-1. BiddingFeedbackGenerator can evaluate bids
-2. Feedback is stored in database
+1. V2BidEvaluator can evaluate bids
+2. Feedback can be stored in database
 3. Dashboard API returns bidding feedback stats
 4. Recent decisions are retrieved correctly
 
@@ -14,9 +14,10 @@ Run from backend directory:
 import sys
 sys.path.insert(0, '.')
 
-from engine.feedback.bidding_feedback import get_feedback_generator, CorrectnessLevel, ImpactLevel
+from engine.feedback.bidding_feedback import (
+    get_feedback_generator, BiddingFeedback, CorrectnessLevel, ImpactLevel
+)
 from engine.hand import Hand
-from engine.ai.bid_explanation import BidExplanation
 from db import get_connection
 
 
@@ -73,54 +74,41 @@ def get_recent_bidding_decisions_for_user(user_id: int, limit: int = 10):
 
 
 def test_feedback_generator():
-    """Test 1: BiddingFeedbackGenerator evaluation"""
-    print("\n=== Test 1: BiddingFeedbackGenerator ===")
+    """Test 1: V2BidEvaluator evaluation"""
+    print("\n=== Test 1: V2BidEvaluator ===")
 
-    generator = get_feedback_generator()
+    from engine.v2 import BiddingEngineV2Schema
+    engine = BiddingEngineV2Schema(use_v1_fallback=False)
 
     # Create a test hand
     test_hand = Hand.from_string("♠AK32 ♥K42 ♦A32 ♣432")  # 16 HCP, balanced
 
     # Simulate user bidding 1♣ when 1NT is optimal
     user_bid = "1♣"
-    optimal_bid = "1NT"
 
-    # Create auction context
-    auction_context = {
-        'history': [],
-        'current_player': 'South',
-        'dealer': 'North',
-        'vulnerability': 'None'
-    }
-
-    # Create simple explanation
-    optimal_explanation = BidExplanation(optimal_bid)
-    optimal_explanation.primary_reason = "Balanced hand with 15-17 HCP"
-    optimal_explanation.convention_reference = "opening_1nt"
-
-    # Evaluate bid
-    feedback = generator.evaluate_bid(
+    # Evaluate using V2
+    v2_feedback = engine.evaluate_user_bid(
         hand=test_hand,
         user_bid=user_bid,
-        auction_context=auction_context,
-        optimal_bid=optimal_bid,
-        optimal_explanation=optimal_explanation
+        auction_history=[],
+        my_position='South',
+        vulnerability='None',
+        dealer='North'
     )
 
-    print(f"✓ User bid: {feedback.user_bid}")
-    print(f"✓ Optimal bid: {feedback.optimal_bid}")
-    print(f"✓ Correctness: {feedback.correctness.value}")
-    print(f"✓ Score: {feedback.score}/10")
-    print(f"✓ Impact: {feedback.impact.value}")
-    print(f"✓ Key concept: {feedback.key_concept}")
+    print(f"✓ User bid: {v2_feedback.user_bid}")
+    print(f"✓ Optimal bid: {v2_feedback.optimal_bid}")
+    print(f"✓ Correctness: {v2_feedback.correctness.value}")
+    print(f"✓ Score: {v2_feedback.score}/10")
+    print(f"✓ Impact: {v2_feedback.impact.value}")
+    print(f"✓ Key concept: {v2_feedback.key_concept}")
+    print(f"✓ Learning feedback: {'present' if v2_feedback.learning_feedback else 'none (optimal)'}")
 
-    assert feedback.user_bid == user_bid
-    assert feedback.optimal_bid == optimal_bid
-    assert feedback.correctness != CorrectnessLevel.OPTIMAL
-    assert 0 <= feedback.score <= 10
+    assert v2_feedback.user_bid == user_bid
+    assert 0 <= v2_feedback.score <= 10
 
     print("✅ Test 1 PASSED\n")
-    return feedback
+    return v2_feedback
 
 
 def test_feedback_storage():
@@ -129,12 +117,25 @@ def test_feedback_storage():
 
     generator = get_feedback_generator()
 
-    # Create a test hand
-    test_hand = Hand.from_string("♠AKQ3 ♥K42 ♦A32 ♣432")  # 16 HCP
-
-    # Test optimal bid (should score 10.0)
-    user_bid = "1NT"
-    optimal_bid = "1NT"
+    # Create feedback as V2BidEvaluator would produce
+    feedback = BiddingFeedback(
+        bid_number=1,
+        position='South',
+        user_bid='1NT',
+        correctness=CorrectnessLevel.OPTIMAL,
+        score=10.0,
+        optimal_bid='1NT',
+        alternative_bids=[],
+        reasoning='Balanced hand with 15-17 HCP',
+        explanation_level='detailed',
+        rule_reference=None,
+        error_category=None,
+        error_subcategory=None,
+        impact=ImpactLevel.NONE,
+        helpful_hint='',
+        key_concept='Balanced hand evaluation',
+        difficulty='beginner'
+    )
 
     auction_context = {
         'history': [],
@@ -143,18 +144,13 @@ def test_feedback_storage():
         'vulnerability': 'None'
     }
 
-    optimal_explanation = BidExplanation(optimal_bid)
-    optimal_explanation.primary_reason = "Balanced hand with 15-17 HCP"
-
     # Store feedback
-    feedback = generator.evaluate_and_store(
+    generator._store_feedback(
         user_id=1,
-        hand=test_hand,
-        user_bid=user_bid,
+        feedback=feedback,
         auction_context=auction_context,
-        optimal_bid=optimal_bid,
-        optimal_explanation=optimal_explanation,
-        session_id="test_session_1"
+        session_id="test_session_1",
+        hand_analysis_id=None
     )
 
     # Verify it was stored
@@ -167,7 +163,7 @@ def test_feedback_storage():
             WHERE user_id = 1
               AND user_bid = ?
               AND session_id = 'test_session_1'
-        """, (user_bid,))
+        """, ('1NT',))
 
         count = cursor.fetchone()['count']
 

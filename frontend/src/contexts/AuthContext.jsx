@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { setUserId, clearUserId, trackLogin, trackLogout, trackGuestMode } from '../services/analytics';
+import { setUserId, setUserType, clearUserId, trackLogin, trackLogout, trackGuestMode } from '../services/analytics';
 
 const AuthContext = createContext(null);
 
@@ -191,8 +191,9 @@ export function AuthProvider({ children }) {
       // Hide the registration prompt
       setShowRegistrationPrompt(false);
 
-      // Track login event and set user ID for analytics
+      // Track login event and set user ID/type for analytics
       setUserId(userData.id);
+      setUserType(userData.email);
       trackLogin(type); // 'email' or 'phone'
 
       return { success: true, created: data.created, user: userData };
@@ -238,8 +239,9 @@ export function AuthProvider({ children }) {
     // → session/start fails, hand saving fails, evaluate-bid fails.
     localStorage.setItem('bridge_user', JSON.stringify(guestUser));
 
-    // Track guest mode and set guest user ID for analytics
+    // Track guest mode and set guest user ID/type for analytics
     setUserId(guestId);
+    setUserType(null); // guests are always external
     trackGuestMode();
 
     setLoading(false);

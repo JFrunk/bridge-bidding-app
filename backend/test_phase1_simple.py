@@ -95,12 +95,9 @@ def test_feedback_generator_creation():
         generator = get_feedback_generator()
         print(f"✓ Feedback generator created: {type(generator).__name__}")
 
-        # Check it has required methods
-        assert hasattr(generator, 'evaluate_bid'), "Missing evaluate_bid method"
-        print("✓ Has evaluate_bid method")
-
-        assert hasattr(generator, 'evaluate_and_store'), "Missing evaluate_and_store method"
-        print("✓ Has evaluate_and_store method")
+        # Check it has required storage method
+        assert hasattr(generator, '_store_feedback'), "Missing _store_feedback method"
+        print("✓ Has _store_feedback method")
 
         print("✅ Test 3 PASSED\n")
         return True

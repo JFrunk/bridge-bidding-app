@@ -38,6 +38,15 @@ export const setUserId = (userId) => {
   console.log('[Analytics] User ID set:', userId);
 };
 
+// Set user_type property for filtering internal vs external users in GA4
+export const setUserType = (email) => {
+  if (!isAnalyticsEnabled()) return;
+
+  const userType = email && email.endsWith('@royfamily.org') ? 'internal' : 'external';
+  ReactGA.gtag('set', 'user_properties', { user_type: userType });
+  console.log('[Analytics] User type set:', userType);
+};
+
 // Clear user ID on logout
 export const clearUserId = () => {
   if (!isAnalyticsEnabled()) return;
@@ -155,6 +164,7 @@ export default {
   initializeAnalytics,
   isAnalyticsEnabled,
   setUserId,
+  setUserType,
   clearUserId,
   trackPageView,
   trackEvent,
