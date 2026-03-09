@@ -293,12 +293,12 @@
       "id": "opener_pass_after_single_raise_minimum",
       "bid": "Pass",
       "priority": 605,
-      "description": "Pass after partner's single raise with minimum opening",
+      "description": "Pass after partner's single raise with minimum opening (12-14 HCP)",
       "constraints": [
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "in": ["2♥", "2♠"], "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
+        {"feature": "hcp", "min": 12, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
       ],
       "forcing": "none",
       "explanation": "Pass partner's single raise with minimum opening hand",
@@ -308,30 +308,30 @@
       "id": "opener_invite_after_raise_hearts",
       "bid": "3♥",
       "priority": 750,
-      "description": "Invite game after partner raises hearts (16-17 HCP)",
+      "description": "Invite game after partner raises hearts (15-17 HCP)",
       "constraints": [
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "2♥", "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 16, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+        {"feature": "hcp", "min": 15, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
       ],
       "forcing": "invitational",
-      "explanation": "Invite game with 16-17 HCP after partner's single raise",
+      "explanation": "Invite game with 15-17 HCP after partner's single raise",
       "sets_forcing_level": "INVITATIONAL"
     },
     {
       "id": "opener_invite_after_raise_spades",
       "bid": "3♠",
       "priority": 750,
-      "description": "Invite game after partner raises spades (16-17 HCP)",
+      "description": "Invite game after partner raises spades (15-17 HCP)",
       "constraints": [
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "2♠", "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 16, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+        {"feature": "hcp", "min": 15, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
       ],
       "forcing": "invitational",
-      "explanation": "Invite game with 16-17 HCP after partner's single raise",
+      "explanation": "Invite game with 15-17 HCP after partner's single raise",
       "sets_forcing_level": "INVITATIONAL"
     },
     {

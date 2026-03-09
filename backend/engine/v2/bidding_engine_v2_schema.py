@@ -14,6 +14,7 @@ Python code. This allows for:
 import logging
 from typing import Dict, Optional, Tuple, List
 from engine.hand import Hand
+from utils.seats import seat_index, seat_from_index, partner as partner_seat
 from engine.v2.features.enhanced_extractor import extract_flat_features
 from engine.v2.interpreters.schema_interpreter import (
     SchemaInterpreter,
@@ -248,7 +249,19 @@ class BiddingEngineV2Schema:
             "Pass", last_contract_level=last_level, last_contract_suit=last_suit
         )
         if not forcing_validation.is_valid:
-            # Cannot pass - return a warning explanation
+            # Cannot pass in a forcing auction — find cheapest legal bid
+            emergency_bid = self._find_cheapest_legal_bid(
+                auction_history, my_position, dealer
+            )
+            if emergency_bid:
+                logger.info(
+                    f"Forcing enforcement: {emergency_bid} instead of Pass "
+                    f"({forcing_validation.reason})"
+                )
+                return (emergency_bid,
+                        f"Forced bid — {forcing_validation.reason}")
+
+            # Truly stuck — no legal non-Pass bid exists (shouldn't happen)
             return ('Pass', f'Warning: {forcing_validation.reason}')
 
         return ('Pass', 'No applicable bidding rule found')
@@ -411,6 +424,27 @@ class BiddingEngineV2Schema:
 
         return features
 
+    def _find_cheapest_legal_bid(
+        self,
+        auction_history: List[str],
+        my_position: str,
+        dealer: str
+    ) -> Optional[str]:
+        """
+        Find the cheapest legal non-Pass bid when forcing requires action.
+
+        Used as an emergency fallback when no schema rule provides a bid
+        but the forcing state machine says Pass is illegal.
+        """
+        # All possible bids in ascending order
+        suit_order = ['♣', '♦', '♥', '♠', 'NT']
+        for level in range(1, 8):
+            for suit in suit_order:
+                bid = f"{level}{suit}"
+                if self._is_bid_legal(bid, auction_history, my_position, dealer):
+                    return bid
+        return None
+
     @staticmethod
     def _get_last_contract_suit(auction_history: List[str]) -> str:
         """Extract the suit of the last contract bid from the auction."""
@@ -431,17 +465,14 @@ class BiddingEngineV2Schema:
             if bid == 'X':
                 if not auction_history:
                     return False
-                # Determine who made each bid using position math
-                positions = ['North', 'East', 'South', 'West']
-                dealer_idx = positions.index(dealer)
-                my_idx = positions.index(my_position)
-                # Walk backwards to find last non-Pass bid and check it's from an opponent
+                my_s = seat_from_index(seat_index(my_position))
+                partner_s = partner_seat(my_position)
+                dealer_idx = seat_index(dealer)
                 for i in range(len(auction_history) - 1, -1, -1):
                     b = auction_history[i]
                     if b not in ['Pass']:
-                        bidder_idx = (dealer_idx + i) % 4
-                        # Opponent = not me and not my partner (partner is +2 mod 4)
-                        is_opponent = bidder_idx != my_idx and bidder_idx != (my_idx + 2) % 4
+                        bidder_s = seat_from_index(dealer_idx + i)
+                        is_opponent = bidder_s != my_s and bidder_s != partner_s
                         return is_opponent and b not in ['X', 'XX']
                 return False
 
@@ -449,14 +480,14 @@ class BiddingEngineV2Schema:
             if bid == 'XX':
                 if not auction_history:
                     return False
-                positions = ['North', 'East', 'South', 'West']
-                dealer_idx = positions.index(dealer)
-                my_idx = positions.index(my_position)
+                my_s = seat_from_index(seat_index(my_position))
+                partner_s = partner_seat(my_position)
+                dealer_idx = seat_index(dealer)
                 for i in range(len(auction_history) - 1, -1, -1):
                     b = auction_history[i]
                     if b != 'Pass':
-                        bidder_idx = (dealer_idx + i) % 4
-                        is_opponent = bidder_idx != my_idx and bidder_idx != (my_idx + 2) % 4
+                        bidder_s = seat_from_index(dealer_idx + i)
+                        is_opponent = bidder_s != my_s and bidder_s != partner_s
                         return is_opponent and b == 'X'
                 return False
 

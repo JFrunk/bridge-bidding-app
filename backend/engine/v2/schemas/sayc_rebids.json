@@ -2025,7 +2025,7 @@
       "id": "opener_invite_after_single_raise_medium",
       "bid": "3{my_suit}",
       "priority": 540,
-      "description": "Opener invites game after partner's single raise (15-16 HCP)",
+      "description": "Opener invites game after partner's single raise (15-17 HCP)",
       "conditions": {
         "is_rebid": true,
         "opener_relationship": "Me",
@@ -2045,11 +2045,11 @@
         "is_contested": false,
         "hcp": {
           "min": 15,
-          "max": 16
+          "max": 17
         }
       },
       "forcing": "none",
-      "explanation": "Invite (15-16 HCP) after partner's raise",
+      "explanation": "Invite (15-17 HCP) after partner's raise",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -2116,11 +2116,11 @@
           "min": 15
         },
         "support_for_partner": {
-          "min": 4
+          "min": 3
         }
       },
       "forcing": "none",
-      "explanation": "Accept invitation (15+ HCP with good fit)",
+      "explanation": "Accept invitation (15+ HCP with fit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

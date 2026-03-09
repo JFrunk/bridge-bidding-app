@@ -488,6 +488,82 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "responder_accept_invite_after_raise_hearts",
+      "bid": "4♥",
+      "priority": 520,
+      "description": "Accept opener's 3♥ invite after single raise (9-10 HCP, max of raise range)",
+      "conditions": {
+        "is_responder_rebid": true,
+        "opener_relationship": "Partner",
+        "partner_last_bid": "3♥",
+        "my_last_bid": "2♥",
+        "hcp": {
+          "min": 9,
+          "max": 10
+        }
+      },
+      "forcing": "none",
+      "explanation": "Accept game invitation with maximum single raise (9-10 HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_accept_invite_after_raise_spades",
+      "bid": "4♠",
+      "priority": 520,
+      "description": "Accept opener's 3♠ invite after single raise (9-10 HCP, max of raise range)",
+      "conditions": {
+        "is_responder_rebid": true,
+        "opener_relationship": "Partner",
+        "partner_last_bid": "3♠",
+        "my_last_bid": "2♠",
+        "hcp": {
+          "min": 9,
+          "max": 10
+        }
+      },
+      "forcing": "none",
+      "explanation": "Accept game invitation with maximum single raise (9-10 HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_decline_invite_after_raise_hearts",
+      "bid": "Pass",
+      "priority": 515,
+      "description": "Decline opener's 3♥ invite after single raise (6-8 HCP, minimum of raise range)",
+      "conditions": {
+        "is_responder_rebid": true,
+        "opener_relationship": "Partner",
+        "partner_last_bid": "3♥",
+        "my_last_bid": "2♥",
+        "hcp": {
+          "min": 6,
+          "max": 8
+        }
+      },
+      "forcing": "none",
+      "explanation": "Decline game invitation with minimum single raise (6-8 HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "responder_decline_invite_after_raise_spades",
+      "bid": "Pass",
+      "priority": 515,
+      "description": "Decline opener's 3♠ invite after single raise (6-8 HCP, minimum of raise range)",
+      "conditions": {
+        "is_responder_rebid": true,
+        "opener_relationship": "Partner",
+        "partner_last_bid": "3♠",
+        "my_last_bid": "2♠",
+        "hcp": {
+          "min": 6,
+          "max": 8
+        }
+      },
+      "forcing": "none",
+      "explanation": "Decline game invitation with minimum single raise (6-8 HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "responder_3nt_competitive",
       "bid": "3NT",
       "priority": 460,
