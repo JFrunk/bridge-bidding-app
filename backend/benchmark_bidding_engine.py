@@ -28,15 +28,9 @@ class BiddingBenchmark:
         
     def generate_random_hand(self) -> Hand:
         """Generate a random 13-card bridge hand"""
-        ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
-        suits = ['♠', '♥', '♦', '♣']
-        deck = [Card(rank, suit) for suit in suits for rank in ranks]
-        
-        # Shuffle and deal 13 cards
-        random.shuffle(deck)
-        cards = deck[:13]
-        
-        return Hand(cards)
+        from utils.dealing import shuffled_deck
+        deck = shuffled_deck()
+        return Hand(deck[:13])
     
     def simulate_auction(self, hand: Hand, max_bids: int = 10) -> List[str]:
         """Simulate a simple auction with the engine"""

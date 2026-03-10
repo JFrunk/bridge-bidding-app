@@ -24,18 +24,7 @@ from engine.bidding_engine import BiddingEngine
 from engine.bidding_validation import BidValidator
 
 
-def generate_random_hand() -> Hand:
-    """Generate a random 13-card bridge hand."""
-    # Create full deck
-    ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
-    suits = ['♠', '♥', '♦', '♣']
-    deck = [Card(rank, suit) for suit in suits for rank in ranks]
-
-    # Shuffle and deal 13 cards
-    random.shuffle(deck)
-    cards = deck[:13]
-
-    return Hand(cards)
+from utils.dealing import deal_four_hands
 
 
 from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
@@ -99,13 +88,8 @@ class BiddingQualityScorer:
         if hasattr(self.engine, 'new_deal'):
             self.engine.new_deal()
 
-        # Generate 4 hands
-        hands = {
-            'North': generate_random_hand(),
-            'South': generate_random_hand(),
-            'East': generate_random_hand(),
-            'West': generate_random_hand()
-        }
+        # Deal 4 hands from a single deck (realistic bridge dealing)
+        hands = deal_four_hands()
 
         # Simulate bidding
         dealer = random.choice(['North', 'South', 'East', 'West'])

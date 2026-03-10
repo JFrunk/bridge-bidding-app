@@ -34,22 +34,8 @@ POSITION_MAP = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
 
 def deal_random_hands(seed: Optional[int] = None) -> Dict[str, Hand]:
     """Deal four random hands from a shuffled deck."""
-    if seed is not None:
-        random.seed(seed)
-
-    # Create full 52-card deck
-    ranks = '23456789TJQKA'
-    suits = ['♠', '♥', '♦', '♣']
-    deck = [Card(rank, suit) for rank in ranks for suit in suits]
-    random.shuffle(deck)
-
-    # Deal 13 cards to each position
-    return {
-        'North': Hand(deck[0:13]),
-        'East': Hand(deck[13:26]),
-        'South': Hand(deck[26:39]),
-        'West': Hand(deck[39:52])
-    }
+    from utils.dealing import deal_four_hands
+    return deal_four_hands(seed)
 
 
 def load_hands_from_file(filepath: str) -> Dict[str, Hand]:

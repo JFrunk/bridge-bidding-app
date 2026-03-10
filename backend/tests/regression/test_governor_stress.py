@@ -25,19 +25,8 @@ class TestGovernorStress:
 
     def _deal_random_hands(self, seed: int = None):
         """Deal 4 random hands from a shuffled deck."""
-        if seed is not None:
-            random.seed(seed)
-
-        deck = self.DECK.copy()
-        random.shuffle(deck)
-
-        hands = {}
-        positions = ['North', 'East', 'South', 'West']
-        for i, pos in enumerate(positions):
-            cards = [Card(rank, suit) for rank, suit in deck[i*13:(i+1)*13]]
-            hands[pos] = Hand(cards)
-
-        return hands
+        from utils.dealing import deal_four_hands
+        return deal_four_hands(seed)
 
     def _simulate_auction(self, engine, hands, dealer='North'):
         """Simulate a full auction until 3 passes."""

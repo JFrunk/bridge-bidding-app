@@ -35,14 +35,7 @@ except ImportError:
     DDS_AVAILABLE = False
 
 
-def generate_random_hand() -> Hand:
-    """Generate a random 13-card bridge hand."""
-    ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
-    suits = ['♠', '♥', '♦', '♣']
-    deck = [Card(rank, suit) for suit in suits for rank in ranks]
-    random.shuffle(deck)
-    cards = deck[:13]
-    return Hand(cards)
+from utils.dealing import deal_four_hands
 
 
 class PlayQualityScorer:
@@ -112,13 +105,8 @@ class PlayQualityScorer:
         """Test a single randomly generated hand through complete play."""
         self.results['total_hands'] += 1
 
-        # Generate 4 hands
-        hands = {
-            'North': generate_random_hand(),
-            'South': generate_random_hand(),
-            'East': generate_random_hand(),
-            'West': generate_random_hand()
-        }
+        # Deal 4 hands from a single deck
+        hands = deal_four_hands()
 
         # Simulate bidding to get contract
         dealer = random.choice(['North', 'South', 'East', 'West'])

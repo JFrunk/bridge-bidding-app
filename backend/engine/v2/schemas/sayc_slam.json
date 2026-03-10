@@ -7,13 +7,12 @@
     {
       "id": "blackwood_major_fit",
       "bid": "4NT",
-      "priority": 200,
+      "priority": 500,
       "description": "Blackwood with major fit and slam values",
       "conditions": {
-        "partnership_has_slam_values": true,
         "our_best_fit": {"min": 8},
-        "hcp": {"min": 14},
-        "partnership_hcp_min": {"min": 31},
+        "hcp": {"min": 15},
+        "partnership_hcp_min": {"min": 28},
         "has_major_fit": true,
         "partner_last_bid": {
           "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT"]
@@ -27,13 +26,12 @@
     {
       "id": "blackwood_minor_fit",
       "bid": "4NT",
-      "priority": 195,
+      "priority": 495,
       "description": "Blackwood with minor fit and strong slam values (need more for minor slam)",
       "conditions": {
-        "partnership_has_slam_values": true,
         "our_best_fit": {"min": 8},
         "hcp": {"min": 15},
-        "partnership_hcp_min": {"min": 33},
+        "partnership_hcp_min": {"min": 31},
         "has_major_fit": false,
         "partner_last_bid": {
           "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT"]
@@ -205,7 +203,7 @@
     {
       "id": "direct_slam_very_strong",
       "bid": "6NT",
-      "priority": 180,
+      "priority": 700,
       "description": "Direct 6NT with very strong balanced partnership (35+ combined)",
       "conditions": {
         "is_balanced": true,
@@ -221,7 +219,7 @@
     {
       "id": "direct_slam_strong",
       "bid": "6NT",
-      "priority": 178,
+      "priority": 695,
       "description": "Direct 6NT with strong balanced partnership (33-34 combined, we have extras)",
       "conditions": {
         "is_balanced": true,
@@ -237,7 +235,7 @@
     {
       "id": "quantitative_4nt",
       "bid": "4NT",
-      "priority": 175,
+      "priority": 650,
       "description": "Quantitative 4NT (not Blackwood) - inviting 6NT",
       "conditions": {
         "is_balanced": true,
@@ -254,7 +252,7 @@
     {
       "id": "accept_quantitative_max",
       "bid": "6NT",
-      "priority": 170,
+      "priority": 690,
       "description": "Accept quantitative 4NT with maximum",
       "conditions": {
         "partner_last_bid": "4NT",
@@ -269,7 +267,7 @@
     {
       "id": "reject_quantitative_min",
       "bid": "Pass",
-      "priority": 165,
+      "priority": 685,
       "description": "Reject quantitative 4NT with minimum",
       "conditions": {
         "partner_last_bid": "4NT",

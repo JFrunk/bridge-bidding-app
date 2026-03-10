@@ -93,19 +93,8 @@ class GameSlamDiagnostic:
 
     def _generate_four_hands(self) -> Dict[str, Hand]:
         """Generate 4 random hands (complete deal)."""
-        deck = []
-        for suit in ['♠', '♥', '♦', '♣']:
-            for rank in ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']:
-                deck.append(Card(rank=rank, suit=suit))
-
-        random.shuffle(deck)
-
-        hands = {}
-        for i, pos in enumerate(['North', 'East', 'South', 'West']):
-            cards = deck[i*13:(i+1)*13]
-            hands[pos] = Hand(cards)
-
-        return hands
+        from utils.dealing import deal_four_hands
+        return deal_four_hands()
 
     def _analyze_auction(self, hands: Dict[str, Hand], positions: List[str],
                          hand_num: int, ns_hcp: int):

@@ -7,6 +7,7 @@ from engine.ai.conventions.preempts import PreemptConvention
 from engine.ai.conventions.jacoby_transfers import JacobyConvention
 from engine.ai.conventions.stayman import StaymanConvention
 from engine.ai.conventions.blackwood import BlackwoodConvention
+from utils.dealing import deal_four_hands
 
 # --- SETUP ---
 DEAL_COUNT = 100
@@ -19,44 +20,7 @@ CONVENTION_MAP = {
 }
 
 def deal_random_hand():
-    ranks = '23456789TJQKA'
-    suits = ['♠', '♥', '♦', '♣']
-    deck = [Card(rank, suit) for rank in ranks for suit in suits]
-    random.shuffle(deck)
-    return {
-        'North': Hand(deck[0:13]), 'East': Hand(deck[13:26]),
-        'South': Hand(deck[26:39]), 'West': Hand(deck[39:52])
-    }
-
-import random
-import json
-from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
-from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
-from engine.ai.conventions.preempts import PreemptConvention
-from engine.ai.conventions.jacoby_transfers import JacobyConvention
-from engine.ai.conventions.stayman import StaymanConvention
-from engine.ai.conventions.blackwood import BlackwoodConvention
-
-# --- SETUP ---
-DEAL_COUNT = 100
-SCENARIO_COUNT = 30
-LOG_FILE = "simulation_log.txt"
-
-CONVENTION_MAP = {
-    "Preempt": PreemptConvention(), "JacobyTransfer": JacobyConvention(),
-    "Stayman": StaymanConvention(), "Blackwood": BlackwoodConvention()
-}
-
-def deal_random_hand():
-    ranks = '23456789TJQKA'
-    suits = ['♠', '♥', '♦', '♣']
-    deck = [Card(rank, suit) for rank in ranks for suit in suits]
-    random.shuffle(deck)
-    return {
-        'North': Hand(deck[0:13]), 'East': Hand(deck[13:26]),
-        'South': Hand(deck[26:39]), 'West': Hand(deck[39:52])
-    }
+    return deal_four_hands()
 
 def deal_scenario_hand(scenario, deck):
     deal = {}

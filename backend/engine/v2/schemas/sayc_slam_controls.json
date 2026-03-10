@@ -28,7 +28,7 @@
       "conditions": {
         "in_slam_zone": true,
         "has_denied_control": false,
-        "partnership_has_slam_values": true,
+        "partnership_hcp_min": {"min": 28},
         "hcp": {"min": 14}
       },
       "forcing": "one_round",

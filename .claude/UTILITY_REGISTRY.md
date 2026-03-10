@@ -259,6 +259,40 @@ Search changed files for: `localStorage.getItem('bridge_session_id')`, inline `'
 
 ---
 
+## 6. Dealing & Deck Management (Backend)
+
+**Domain:** Deck creation, shuffling, dealing 4 hands from a single deck
+
+**File:** `backend/utils/dealing.py`
+**Import:** `from utils.dealing import create_deck, shuffled_deck, deal_four_hands, deal_remaining_hands, RANKS, SUITS`
+**Tests:** None yet (covered by integration tests)
+
+### Exports
+| Export | Purpose |
+|--------|---------|
+| `RANKS` | Standard rank string `'23456789TJQKA'` |
+| `SUITS` | Suit list `['♠', '♥', '♦', '♣']` |
+| `create_deck()` | Create unshuffled 52-card deck |
+| `shuffled_deck(seed=None)` | Create and shuffle a deck |
+| `deal_four_hands(seed=None)` | Deal 4 hands from single deck → `Dict[str, Hand]` |
+| `deal_remaining_hands(assigned, seed=None)` | Fill unassigned positions from remaining cards |
+
+### Banned Patterns
+```python
+# BANNED: Inline deck creation + shuffle + slice for 4 hands
+deck = [Card(r, s) for ...]                              # Use deal_four_hands()
+random.shuffle(deck)
+hands = {'North': Hand(deck[0:13]), ...}
+
+# BANNED: Generating 4 independent hands (duplicate cards!)
+hands = {pos: generate_random_hand() for pos in positions}  # Use deal_four_hands()
+```
+
+### Self-check
+Search changed files for: `deck[0:13]`, `deck[:13]`, `for rank in ranks for suit`, `Card(r, s) for`
+
+---
+
 ## Adding a New Utility
 
 When you identify a pattern duplicated across 3+ files:

@@ -164,6 +164,41 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['fit_known'] = agreed['fit_known']
     flat['fit_length'] = agreed['fit_length']
 
+    # Implied fit detection: partner bid a natural major and we have 3+ support
+    # Case 1: Partner opened a major (opener_relationship == 'Partner')
+    # Case 2: Partner overcalled a major (opener_relationship == 'Opponent')
+    if not flat['agreed_suit']:
+        implied_suit = None
+        partner_min_length = 5  # Default: major openings/overcalls show 5+
+
+        if flat['opener_relationship'] == 'Partner':
+            # Partner opened — check their opening bid
+            opening = flat.get('opening_bid', '')
+            if opening:
+                suit = get_suit_from_bid(opening)
+                if suit in ('♠', '♥') and get_bid_level(opening) in (1, 2, 3):
+                    implied_suit = suit
+        elif flat['opener_relationship'] == 'Opponent':
+            # Partner overcalled — check partner_last_bid (overcalls are natural)
+            partner_bid = flat.get('partner_last_bid', '')
+            if partner_bid and partner_bid not in ('Pass', 'X', 'XX'):
+                suit = get_suit_from_bid(partner_bid)
+                if suit in ('♠', '♥'):
+                    implied_suit = suit
+
+        if implied_suit:
+            my_support = hand.suit_lengths.get(implied_suit, 0)
+            if my_support >= 3:
+                flat['agreed_suit'] = implied_suit
+                flat['fit_known'] = True
+                flat['fit_length'] = my_support + partner_min_length
+                agreed = {
+                    'agreed_suit': implied_suit,
+                    'fit_known': True,
+                    'fit_length': flat['fit_length'],
+                    'agreement_level': 0
+                }
+
     # CRITICAL: Calculate support points in two scenarios:
     # 1. When fit is confirmed (both partners agree on a suit)
     # 2. When responding with support to partner's suit (we have 3+ cards)
@@ -810,6 +845,10 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
                 flat['partner_min_hcp'] = 20
                 flat['partner_max_hcp'] = 21
                 flat['partner_showed_limit'] = True
+            elif opening == '2♣':
+                flat['partner_min_hcp'] = 22
+                flat['partner_max_hcp'] = 40  # 2♣ is unlimited
+                flat['partner_showed_limit'] = False
             elif opening in ['1♣', '1♦', '1♥', '1♠']:
                 flat['partner_min_hcp'] = 12
                 flat['partner_max_hcp'] = 21  # Could be any strength until rebid
@@ -833,12 +872,23 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
 
         # I opened, partner responded with a bid (not pass)
         if af['opener_relationship'] == 'Self' and first_partner_bid not in ['Pass', 'X', 'XX']:
-            flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 6)
+            if first_partner_bid[0] == '2' and get_suit_from_bid(first_partner_bid):
+                # 2-level new suit response = 10+ HCP (2-over-1 game force in many systems)
+                partner_suit = get_suit_from_bid(first_partner_bid)
+                opening_suit = get_suit_from_bid(opening) if opening else None
+                if partner_suit != opening_suit:
+                    flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 10)
+                else:
+                    # Simple raise at 2-level = 6-10 support points
+                    flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 6)
+            else:
+                flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 6)
 
     # Note: partnership_hcp_min is calculated later using updated partner_min_hcp
 
     # Partner showed extra values detection (beyond minimum opening)
     # Extras = values beyond minimum (typically 16+ HCP)
+    # ALSO updates partner_min_hcp to reflect revealed strength
     flat['partner_showed_extras'] = False
 
     if partner_bids:
@@ -847,6 +897,7 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
         # Case 1: Partner opened 1NT (15-17 HCP) - extras by definition
         if af.get('opener_relationship') == 'Partner' and opening == '1NT':
             flat['partner_showed_extras'] = True
+            # partner_min_hcp already set to 15 above
 
         # Case 2: Partner made a reverse (17+ HCP)
         # A reverse is when opener bids a higher-ranking suit at the 2-level
@@ -869,19 +920,27 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
                 if suit_rank.get(second_suit, 0) > suit_rank.get(first_suit, 0):
                     if len(second_bid) >= 2 and second_bid[0] == '2':
                         flat['partner_showed_extras'] = True
+                        flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 17)
 
         # Case 3: Partner rebid 2NT (18-19) or 3NT (20-21) after opening 1-suit
         partner_last = flat.get('partner_last_bid', '')
         if af.get('opener_relationship') == 'Partner':
-            if partner_last in ['2NT', '3NT'] and opening in ['1♣', '1♦', '1♥', '1♠']:
-                flat['partner_showed_extras'] = True
+            if opening in ['1♣', '1♦', '1♥', '1♠']:
+                if partner_last == '2NT':
+                    flat['partner_showed_extras'] = True
+                    flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 18)
+                    flat['partner_max_hcp'] = min(flat['partner_max_hcp'], 19)
+                elif partner_last == '3NT':
+                    flat['partner_showed_extras'] = True
+                    flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 18)
 
-        # Case 4: Partner jumped in a new suit (shows extra values)
+        # Case 4: Partner jumped in a new suit (shows extra values, 17+)
         if len(partner_bids) >= 2 and af.get('opener_relationship') == 'Partner':
             first_level = int(partner_bids[0][0]) if partner_bids[0][0].isdigit() else 0
             second_level = int(partner_bids[1][0]) if partner_bids[1][0].isdigit() else 0
             if first_level and second_level and second_level >= first_level + 2:
                 flat['partner_showed_extras'] = True
+                flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 17)
 
     # Key cards for RKCB (Roman Key Card Blackwood)
     # Key cards = 4 aces + trump King (if trump suit is known)

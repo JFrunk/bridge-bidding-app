@@ -253,6 +253,7 @@ def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
 | Card sorting, grouping, contracts | — | `shared/utils/cardUtils` |
 | Error logging & exception handling | `utils.error_logger` | — |
 | Session IDs & API headers | — | `utils/sessionHelper` |
+| Deck creation, dealing hands | `utils.dealing` | — |
 
 **Rules (apply to ALL registered utilities):**
 - ALWAYS import from the canonical utility — never duplicate its logic inline
