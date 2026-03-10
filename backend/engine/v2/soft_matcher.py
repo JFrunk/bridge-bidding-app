@@ -250,6 +250,14 @@ class SoftMatcher:
             else:
                 return (False, 1, f"{feature_name}: '{actual}' not in {allowed}")
 
+        # Handle 'not_in' exclusion (e.g., partner_last_bid not in ["2♣"])
+        if 'not_in' in constraint:
+            forbidden = constraint['not_in']
+            if actual is None or actual not in forbidden:
+                return (True, 0, None)
+            else:
+                return (False, 1, f"{feature_name}: '{actual}' in forbidden list {forbidden}")
+
         # Handle min/max range
         min_val = constraint.get('min')
         max_val = constraint.get('max')
