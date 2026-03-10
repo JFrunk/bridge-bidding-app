@@ -90,6 +90,35 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "balancing_takeout_double",
+      "bid": "X",
+      "priority": 830,
+      "description": "Balancing takeout double with borrowed values (9+ HCP)",
+      "constraints": [
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 9, "constraint_type": "SOFT"},
+        {"feature": "perfect_takeout_shape", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Balancing double showing ~9-14 HCP and takeout shape",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "balancing_1nt_overcall",
+      "bid": "1NT",
+      "priority": 825,
+      "description": "Balancing 1NT (11-14 HCP instead of standard 15-18)",
+      "constraints": [
+        {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 11, "max": 14, "constraint_type": "HARD"},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
+        {"feature": "stopper_in_opponent_suit", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Balancing 1NT showing 11-14 HCP and a stopper in opponent's suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "1nt_overcall_balancing",
       "bid": "1NT",
       "priority": 94,

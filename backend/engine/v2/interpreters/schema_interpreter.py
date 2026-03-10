@@ -918,6 +918,11 @@ class SchemaInterpreter:
 
         resolved = re.sub(pattern, replace_var, bid_template)
 
+        # VALIDATION: Reject unresolved templates (still contain '{')
+        if '{' in resolved:
+            logger.warning(f"Unresolved template variable in bid: '{resolved}' from template '{bid_template}'")
+            return None
+
         # VALIDATION: Check for malformed bids (e.g., "3" without a suit)
         # Valid bids are: Pass, X, XX, or level+suit/NT (e.g., "1♠", "3NT", "4♥")
         if resolved and resolved not in ['Pass', 'X', 'XX']:

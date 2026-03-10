@@ -5,6 +5,20 @@
   "description": "Advancer bids - responding to partner's competitive action (overcall or takeout double)",
   "rules": [
     {
+      "id": "advancer_cue_bid_gf_after_double",
+      "bid": "2{opponent_suit}",
+      "priority": 850,
+      "description": "Cue-bid opponent's suit to force game after partner's takeout double",
+      "constraints": [
+        {"feature": "is_advancer", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "X", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "constraint_type": "SOFT"}
+      ],
+      "forcing": "game",
+      "explanation": "Cue-bid showing 12+ HCP, game-forcing, asking for partner's best suit",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
       "id": "advancer_free_bid_spades_after_interference",
       "bid": "1♠",
       "priority": 96,

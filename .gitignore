@@ -108,6 +108,8 @@ backend/claude_code_analysis_input.txt
 # Large simulation outputs (keep small convention data)
 backend/*_analysis_*.json
 backend/*_results*.json
+backend/bidding_quality_report_*.json
+backend/quality_scores/
 
 # Build artifacts
 *.pyc
