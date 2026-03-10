@@ -424,12 +424,12 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
             }
 
         total = overall_row['total_decisions']
-        avg_score = overall_row['avg_score'] or 0
-        optimal_count = overall_row['optimal_count'] or 0
-        acceptable_count = overall_row['acceptable_count'] or 0
-        suboptimal_count = overall_row['suboptimal_count'] or 0
-        error_count = overall_row['error_count'] or 0
-        critical_errors = overall_row['critical_errors'] or 0
+        avg_score = float(overall_row['avg_score'] or 0)
+        optimal_count = int(overall_row['optimal_count'] or 0)
+        acceptable_count = int(overall_row['acceptable_count'] or 0)
+        suboptimal_count = int(overall_row['suboptimal_count'] or 0)
+        error_count = int(overall_row['error_count'] or 0)
+        critical_errors = int(overall_row['critical_errors'] or 0)
 
         # Calculate trend (compare last 7 days vs previous 7 days)
         cursor.execute(f"""
@@ -439,7 +439,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
               AND timestamp >= {date_subtract(7)}
         """, (user_id,))
         recent_row = cursor.fetchone()
-        recent_avg = recent_row['avg_score'] or 0
+        recent_avg = float(recent_row['avg_score'] or 0)
 
         prev_start, prev_end = date_between(14, 7)
         cursor.execute(f"""
@@ -450,7 +450,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
               AND timestamp < {prev_end}
         """, (user_id,))
         previous_row = cursor.fetchone()
-        previous_avg = previous_row['avg_score'] or 0
+        previous_avg = float(previous_row['avg_score'] or 0)
 
         # Determine trend
         if previous_avg == 0:
@@ -575,13 +575,13 @@ def get_play_category_stats_for_user(user_id: int) -> Dict:
 
         for row in cursor.fetchall():
             cat = row['play_category']
-            attempts = row['attempts'] or 0
-            optimal = row['optimal_count'] or 0
-            good = row['good_count'] or 0
-            blunders = row['blunder_count'] or 0
-            avg_score = row['avg_score'] or 0
-            avg_cost = row['avg_tricks_cost'] or 0
-            total_cost = row['total_tricks_cost'] or 0
+            attempts = int(row['attempts'] or 0)
+            optimal = int(row['optimal_count'] or 0)
+            good = int(row['good_count'] or 0)
+            blunders = int(row['blunder_count'] or 0)
+            avg_score = float(row['avg_score'] or 0)
+            avg_cost = float(row['avg_tricks_cost'] or 0)
+            total_cost = float(row['total_tricks_cost'] or 0)
 
             total_tricks_lost += total_cost
 
@@ -691,11 +691,11 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
             }
 
         total = overall_row['total_decisions']
-        avg_score = overall_row['avg_score'] or 0
-        optimal_count = overall_row['optimal_count'] or 0
-        good_count = overall_row['good_count'] or 0
-        suboptimal_count = overall_row['suboptimal_count'] or 0
-        blunder_count = overall_row['blunder_count'] or 0
+        avg_score = float(overall_row['avg_score'] or 0)
+        optimal_count = int(overall_row['optimal_count'] or 0)
+        good_count = int(overall_row['good_count'] or 0)
+        suboptimal_count = int(overall_row['suboptimal_count'] or 0)
+        blunder_count = int(overall_row['blunder_count'] or 0)
 
         # Calculate trend (compare last 7 days vs previous 7 days)
         cursor.execute(f"""
@@ -705,7 +705,7 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
               AND timestamp >= {date_subtract(7)}
         """, (user_id,))
         recent_row = cursor.fetchone()
-        recent_avg = recent_row['avg_score'] or 0
+        recent_avg = float(recent_row['avg_score'] or 0)
 
         play_prev_start, play_prev_end = date_between(14, 7)
         cursor.execute(f"""
@@ -716,7 +716,7 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
               AND timestamp < {play_prev_end}
         """, (user_id,))
         previous_row = cursor.fetchone()
-        previous_avg = previous_row['avg_score'] or 0
+        previous_avg = float(previous_row['avg_score'] or 0)
 
         # Determine trend
         if previous_avg == 0:
@@ -1017,14 +1017,14 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
         dummy_row = cursor.fetchone()
 
         # Build stats object
-        total_declarer = declarer_row['total_declarer_hands'] or 0
-        contracts_made = declarer_row['contracts_made'] or 0
-        contracts_failed = declarer_row['contracts_failed'] or 0
-        avg_tricks = declarer_row['avg_tricks'] or 0.0
-        success_rate = declarer_row['success_rate'] or 0.0
-        recent_success = recent_row['recent_success_rate'] or 0.0
-        defender_hands = defender_row['defender_hands'] or 0
-        dummy_hands = dummy_row['dummy_hands'] or 0
+        total_declarer = int(declarer_row['total_declarer_hands'] or 0)
+        contracts_made = int(declarer_row['contracts_made'] or 0)
+        contracts_failed = int(declarer_row['contracts_failed'] or 0)
+        avg_tricks = float(declarer_row['avg_tricks'] or 0.0)
+        success_rate = float(declarer_row['success_rate'] or 0.0)
+        recent_success = float(recent_row['recent_success_rate'] or 0.0)
+        defender_hands = int(defender_row['defender_hands'] or 0)
+        dummy_hands = int(dummy_row['dummy_hands'] or 0)
 
         total_hands = total_declarer + defender_hands + dummy_hands
 
@@ -3334,12 +3334,12 @@ def get_bidding_hands_history():
                 'user_position': user_position,
                 'user_hand': user_hand_info,
                 'num_bids': total_bids,
-                'avg_score': round(row['avg_score'] or 0, 1),
+                'avg_score': round(float(row['avg_score'] or 0), 1),
                 'quality_pct': quality_pct,
-                'optimal_count': row['optimal_count'] or 0,
-                'acceptable_count': row['acceptable_count'] or 0,
-                'suboptimal_count': row['suboptimal_count'] or 0,
-                'error_count': row['error_count'] or 0,
+                'optimal_count': int(row['optimal_count'] or 0),
+                'acceptable_count': int(row['acceptable_count'] or 0),
+                'suboptimal_count': int(row['suboptimal_count'] or 0),
+                'error_count': int(row['error_count'] or 0),
                 'auction_history': auction_history
             })
 
