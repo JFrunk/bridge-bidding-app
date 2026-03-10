@@ -1058,6 +1058,7 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['major_fit_gf'] = False
     flat['in_slam_zone'] = False
     current_level = _get_current_auction_level(auction_history)
+    flat['current_auction_level'] = current_level
 
     if agreed['agreed_suit'] in ['♠', '♥'] and agreed['fit_known']:
         # Check if we're in a game force

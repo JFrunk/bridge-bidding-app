@@ -359,20 +359,84 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "negative_double",
+      "id": "takeout_double_ideal_shape",
+      "bid": "X",
+      "priority": 850,
+      "description": "Takeout double with ideal shape (support for all unbid suits, short in opponent suit)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.15},
+        {"feature": "support_unbid_major", "expected": true, "constraint_type": "HARD"},
+        {"feature": "opponent_suit_length", "max": 2, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Takeout double (12+ HCP, support for unbid suits, short in opponent suit)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "takeout_double_massive_hand",
+      "bid": "X",
+      "priority": 840,
+      "description": "Takeout double with massive hand (17+ HCP, any shape)",
+      "constraints": [
+        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
+      ],
+      "forcing": "one_round",
+      "explanation": "Takeout double (17+ HCP, too strong to overcall)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "negative_double_1_level",
       "bid": "X",
       "priority": 800,
-      "description": "Negative double by responder",
-      "conditions": {
-        "is_response": true,
-        "interference_present": true,
-        "hcp": {
-          "min": 6
-        },
-        "support_unbid_major": true
-      },
+      "description": "Negative double at the 1-level (6+ HCP, 4-card major)",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "interference_present", "expected": true, "constraint_type": "HARD"},
+        {"feature": "current_auction_level", "max": 1, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 6, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "support_unbid_major", "expected": true, "constraint_type": "HARD"},
+        {"feature": "longest_major_length", "max": 4, "constraint_type": "HARD"}
+      ],
       "forcing": "one_round",
-      "explanation": "Negative double showing unbid major(s)",
+      "explanation": "Negative double showing 4-card unbid major(s) (6+ HCP)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "negative_double_2_level",
+      "bid": "X",
+      "priority": 795,
+      "description": "Negative double at the 2-level (8+ HCP, 4-card major)",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "interference_present", "expected": true, "constraint_type": "HARD"},
+        {"feature": "current_auction_level", "min": 2, "max": 2, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "support_unbid_major", "expected": true, "constraint_type": "HARD"},
+        {"feature": "longest_major_length", "max": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Negative double showing 4-card unbid major(s) (8+ HCP)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "negative_double_3_level",
+      "bid": "X",
+      "priority": 790,
+      "description": "Negative double at the 3-level (10+ HCP, 4-card major)",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "interference_present", "expected": true, "constraint_type": "HARD"},
+        {"feature": "current_auction_level", "min": 3, "max": 3, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "support_unbid_major", "expected": true, "constraint_type": "HARD"},
+        {"feature": "longest_major_length", "max": 4, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Negative double showing 4-card unbid major(s) (10+ HCP)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
