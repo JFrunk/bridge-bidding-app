@@ -264,7 +264,7 @@ Search changed files for: `localStorage.getItem('bridge_session_id')`, inline `'
 **Domain:** Deck creation, shuffling, dealing 4 hands from a single deck
 
 **File:** `backend/utils/dealing.py`
-**Import:** `from utils.dealing import create_deck, shuffled_deck, deal_four_hands, deal_remaining_hands, RANKS, SUITS`
+**Import:** `from utils.dealing import create_deck, shuffled_deck, deal_four_hands, deal_remaining_hands, deal_with_convention, deal_with_constraints, RANKS, SUITS`
 **Tests:** None yet (covered by integration tests)
 
 ### Exports
@@ -276,6 +276,8 @@ Search changed files for: `localStorage.getItem('bridge_session_id')`, inline `'
 | `shuffled_deck(seed=None)` | Create and shuffle a deck |
 | `deal_four_hands(seed=None)` | Deal 4 hands from single deck → `Dict[str, Hand]` |
 | `deal_remaining_hands(assigned, seed=None)` | Fill unassigned positions from remaining cards |
+| `deal_with_convention(pos, specialist, seed, timeout_ms)` | Convention-specific hand + remaining 3 from single deck |
+| `deal_with_constraints(pos, constraints, seed)` | Constraint-based hand + remaining 3 from single deck |
 
 ### Banned Patterns
 ```python

@@ -74,7 +74,7 @@ def deal_remaining_hands(
     Returns:
         Complete dict with all 4 positions filled.
     """
-    positions = SEAT_NAMES
+    positions = list(SEAT_NAMES.values())
 
     # Collect all cards already dealt
     used_cards = set()
@@ -102,3 +102,67 @@ def deal_remaining_hands(
             card_idx += 13
 
     return result
+
+
+def deal_with_convention(
+    position: str,
+    convention_specialist,
+    seed: Optional[int] = None,
+    timeout_ms: int = 500
+) -> Dict[str, Hand]:
+    """Deal 4 hands where one position gets a convention-specific hand.
+
+    Generates one hand matching the convention's constraints, then deals
+    the remaining 3 hands from the leftover cards in the deck.
+
+    Args:
+        position: Which position gets the convention hand (e.g., 'South').
+        convention_specialist: Convention module with get_constraints() method.
+        seed: Optional random seed.
+        timeout_ms: Max time for convention hand generation.
+
+    Returns:
+        Complete dict with all 4 positions filled.
+        If convention generation fails, falls back to random dealing.
+    """
+    from engine.hand_constructor import generate_hand_for_convention
+
+    deck = shuffled_deck(seed)
+    conv_hand, remaining = generate_hand_for_convention(
+        convention_specialist, deck, timeout_ms=timeout_ms
+    )
+
+    if conv_hand:
+        return deal_remaining_hands({position: conv_hand})
+    else:
+        # Fallback: deal randomly if convention hand couldn't be generated
+        return deal_four_hands(seed)
+
+
+def deal_with_constraints(
+    position: str,
+    constraints: dict,
+    seed: Optional[int] = None
+) -> Dict[str, Hand]:
+    """Deal 4 hands where one position meets specific constraints.
+
+    Args:
+        position: Which position gets the constrained hand (e.g., 'South').
+        constraints: Dict with keys like hcp_range, is_balanced, suit_length_req.
+        seed: Optional random seed.
+
+    Returns:
+        Complete dict with all 4 positions filled.
+        If constraint generation fails, falls back to random dealing.
+    """
+    from engine.hand_constructor import generate_hand_with_constraints
+
+    deck = shuffled_deck(seed)
+    constrained_hand, remaining = generate_hand_with_constraints(
+        constraints, deck
+    )
+
+    if constrained_hand:
+        return deal_remaining_hands({position: constrained_hand})
+    else:
+        return deal_four_hands(seed)
