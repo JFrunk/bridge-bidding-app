@@ -223,6 +223,13 @@ class BiddingEngineV2Schema:
                 self._last_schema_file = getattr(candidate, 'schema_file', None)
                 self._last_priority = candidate.priority
 
+                # Slam exploration safety net: intercept game bids when slam values exist
+                slam_bid = self._slam_exploration_check(
+                    final_bid, hand, features, auction_history, my_position, dealer
+                )
+                if slam_bid:
+                    return slam_bid
+
                 return (final_bid, final_explanation)
 
             # All candidates rejected — if we have a forcing-rejected non-Pass bid,
@@ -423,6 +430,88 @@ class BiddingEngineV2Schema:
                 features['interference_level'] = 0
 
         return features
+
+    def _slam_exploration_check(
+        self,
+        selected_bid: str,
+        hand: 'Hand',
+        features: dict,
+        auction_history: List[str],
+        my_position: str,
+        dealer: str
+    ) -> Optional[Tuple[str, str]]:
+        """
+        Slam exploration safety net: intercept game-level bids when partnership
+        has slam values but no slam rule matched.
+
+        Uses midpoint HCP estimate (average of min/max partner HCP) which is more
+        realistic than minimum for slam detection. Also considers total points
+        (HCP + distribution) to catch distributional slam hands.
+
+        Requirements:
+        1. Selected bid is a game bid (3NT, 4♥, 4♠, 5♣, 5♦)
+        2. Partnership midpoint HCP >= 33 OR partnership total points >= 33
+        3. Own hand has 15+ HCP (or 14+ with a known fit)
+        4. Partner has shown 6+ HCP minimum
+        5. 4NT hasn't already been bid
+        6. 4NT is a legal bid
+
+        Returns:
+            (bid, explanation) tuple if slam should be explored, None otherwise
+        """
+        # Only intercept game-level bids
+        game_bids = {'3NT', '4♥', '4♠', '5♣', '5♦'}
+        if selected_bid not in game_bids:
+            return None
+
+        # Partner must have shown some values
+        partner_min = features.get('partner_min_hcp', 0)
+        if partner_min < 6:
+            return None
+
+        # Need strong own hand (slightly lower threshold with known fit)
+        has_fit = features.get('fit_known', False)
+        hcp_threshold = 14 if has_fit else 15
+        if hand.hcp < hcp_threshold:
+            return None
+
+        # Check partnership strength using midpoint estimate
+        partnership_mid = features.get('partnership_hcp_mid', 0)
+        partnership_total = features.get('partnership_total_points_min', 0)
+        partnership_min = features.get('partnership_hcp_min', 0)
+
+        # Primary trigger: midpoint HCP estimate suggests slam
+        # Secondary trigger: total points (including distribution) suggest slam
+        slam_threshold_met = (
+            partnership_mid >= 33 or
+            partnership_total >= 33 or
+            (partnership_min >= 31 and hand.hcp >= 17)
+        )
+        if not slam_threshold_met:
+            return None
+
+        # Don't re-ask Blackwood
+        if '4NT' in auction_history:
+            return None
+
+        # Don't trigger if already at slam level
+        for bid in auction_history:
+            if bid and bid[0].isdigit() and int(bid[0]) >= 6:
+                return None
+
+        # Check 4NT is legal
+        if not self._is_bid_legal('4NT', auction_history, my_position, dealer):
+            # 4NT isn't legal — try direct 6NT for very strong balanced hands
+            if hand.is_balanced and partnership_mid >= 33:
+                if self._is_bid_legal('6NT', auction_history, my_position, dealer):
+                    self._last_rule_id = 'slam_safety_net_direct_6nt'
+                    return ('6NT', f'Direct 6NT with ~{partnership_mid} combined HCP')
+            return None
+
+        # Bid 4NT (Blackwood) instead of game
+        self._last_rule_id = 'slam_safety_net_blackwood'
+        aces = sum(1 for c in hand.cards if c.rank == 'A')
+        return ('4NT', f'Blackwood — slam values with ~{partnership_mid} combined HCP ({aces} aces)')
 
     def _find_cheapest_legal_bid(
         self,

@@ -217,6 +217,24 @@
       "metadata": {"bypass_hcp": true}
     },
     {
+      "id": "direct_6nt_very_strong_any_auction",
+      "bid": "6NT",
+      "priority": 698,
+      "description": "Direct 6NT with very strong balanced partnership in any auction (35+ combined)",
+      "conditions": {
+        "is_balanced": true,
+        "partnership_hcp_min": {"min": 35},
+        "hcp": {"min": 15},
+        "partner_last_bid": {
+          "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT", "Pass"]
+        }
+      },
+      "forcing": "none",
+      "explanation": "Direct 6NT with {partnership_hcp_min}+ combined HCP - overwhelming power",
+      "sets_forcing_level": "NON_FORCING",
+      "metadata": {"bypass_hcp": true}
+    },
+    {
       "id": "direct_slam_strong",
       "bid": "6NT",
       "priority": 695,
@@ -233,6 +251,61 @@
       "metadata": {"bypass_hcp": true}
     },
     {
+      "id": "direct_6nt_strong_any_auction",
+      "bid": "6NT",
+      "priority": 693,
+      "description": "Direct 6NT with strong balanced partnership in any auction (33+ combined)",
+      "conditions": {
+        "is_balanced": true,
+        "partnership_hcp_min": {"min": 33},
+        "hcp": {"min": 17},
+        "partner_last_bid": {
+          "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT", "Pass"]
+        }
+      },
+      "forcing": "none",
+      "explanation": "Direct 6NT with {partnership_hcp_min}+ combined HCP in natural auction",
+      "sets_forcing_level": "NON_FORCING",
+      "metadata": {"bypass_hcp": true}
+    },
+    {
+      "id": "blackwood_strong_no_fit",
+      "bid": "4NT",
+      "priority": 490,
+      "description": "Blackwood with very strong partnership values even without 8-card fit",
+      "conditions": {
+        "hcp": {"min": 16},
+        "partnership_hcp_min": {"min": 33},
+        "in_slam_zone": true,
+        "partner_last_bid": {
+          "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT", "Pass", "1NT", "2NT"]
+        }
+      },
+      "forcing": "game",
+      "explanation": "Blackwood asking for Aces with {partnership_hcp_min}+ combined HCP",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
+      "id": "blackwood_total_points_slam",
+      "bid": "4NT",
+      "priority": 485,
+      "description": "Blackwood with slam values by total points (HCP + distribution)",
+      "conditions": {
+        "hcp": {"min": 15},
+        "partnership_total_points_min": {"min": 33},
+        "fit_known": true,
+        "in_slam_zone": true,
+        "partner_last_bid": {
+          "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT", "Pass", "1NT", "2NT"]
+        }
+      },
+      "forcing": "game",
+      "explanation": "Blackwood with {partnership_total_points_min}+ combined total points and known fit",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "blackwood", "bypass_hcp": true}
+    },
+    {
       "id": "quantitative_4nt",
       "bid": "4NT",
       "priority": 650,
@@ -246,6 +319,23 @@
       },
       "forcing": "none",
       "explanation": "Quantitative 4NT: Partner passes with minimum, bids 6NT with maximum",
+      "sets_forcing_level": "NON_FORCING",
+      "metadata": {"convention": "quantitative", "bypass_hcp": true}
+    },
+    {
+      "id": "quantitative_4nt_after_3nt",
+      "bid": "4NT",
+      "priority": 645,
+      "description": "Quantitative 4NT after partner's 3NT showing slam interest",
+      "conditions": {
+        "is_balanced": true,
+        "partnership_hcp_min": {"min": 31},
+        "partnership_hcp_max": {"max": 34},
+        "hcp": {"min": 15},
+        "partner_last_bid": "3NT"
+      },
+      "forcing": "none",
+      "explanation": "Quantitative 4NT over 3NT: inviting slam with {partnership_hcp_min}+ combined",
       "sets_forcing_level": "NON_FORCING",
       "metadata": {"convention": "quantitative", "bypass_hcp": true}
     },

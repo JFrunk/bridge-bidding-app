@@ -1015,14 +1015,24 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # True if we have an agreed major at 3+ level in a GF auction
     flat['major_fit_gf'] = False
     flat['in_slam_zone'] = False
+    current_level = _get_current_auction_level(auction_history)
+
     if agreed['agreed_suit'] in ['♠', '♥'] and agreed['fit_known']:
         # Check if we're in a game force
         if fs['game_forcing_established'] or flat['hcp'] >= 13:
             flat['major_fit_gf'] = True
             # In slam zone when bidding is at 3+ level OR partnership has slam values
-            current_level = _get_current_auction_level(auction_history)
             if current_level >= 3 or _partnership_hcp_est >= 28:
                 flat['in_slam_zone'] = True
+
+    # Slam zone for balanced/NT auctions (no suit fit needed)
+    if not flat['in_slam_zone'] and _partnership_hcp_est >= 31:
+        flat['in_slam_zone'] = True
+
+    # Slam zone for minor fits with strong values
+    if not flat['in_slam_zone'] and agreed['fit_known'] and agreed['agreed_suit'] in ['♣', '♦']:
+        if _partnership_hcp_est >= 28 and (fs['game_forcing_established'] or flat['hcp'] >= 13):
+            flat['in_slam_zone'] = True
 
     # Control bidding: lowest unbid control
     # Find the cheapest suit where we have a control that hasn't been bid yet
@@ -1065,6 +1075,16 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['partnership_hcp_min'] = flat['hcp'] + flat['partner_min_hcp']
     flat['partnership_hcp_max'] = flat['hcp'] + flat['partner_max_hcp']
     flat['partnership_has_slam_values'] = flat['partnership_hcp_min'] >= 31
+
+    # Combined partnership total points estimate (HCP + our distribution points)
+    # We know our distribution points precisely; partner's are unknown so use HCP only for them
+    flat['partnership_total_points_min'] = flat['total_points'] + flat['partner_min_hcp']
+
+    # Midpoint partnership HCP estimate for slam exploration
+    # Uses average of min/max partner HCP, capped at 20 to prevent inflation
+    # This is more realistic than minimum for slam decisions
+    partner_max_capped = min(flat['partner_max_hcp'], 20)
+    flat['partnership_hcp_mid'] = flat['hcp'] + (flat['partner_min_hcp'] + partner_max_capped) // 2
 
     # Preempt detection: Did partner preempt?
     # Weak 2s: 2D, 2H, 2S with 5-10 HCP and 6+ cards
