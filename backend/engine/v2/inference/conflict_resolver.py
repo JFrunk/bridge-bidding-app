@@ -122,6 +122,11 @@ class ConflictResolver:
 
         return False
 
+    # Slam suit → game-level fallback mapping
+    _GAME_FALLBACK = {
+        '♠': '4♠', '♥': '4♥', '♦': '5♦', '♣': '5♣', 'NT': '3NT',
+    }
+
     def _validate_slam(
         self,
         bid: str,
@@ -132,10 +137,20 @@ class ConflictResolver:
         """
         Validate a slam bid against expected trick count.
 
+        Fast-fail guard: If the simulator lacks is_fast_mode, skip simulation
+        entirely to avoid recursive loops (simulator calling bidding engine
+        to generate hands which calls simulator again).
+
         Returns:
             Tuple of (validated_bid, explanation)
         """
+        # Guard against recursive simulation trap: only run if simulator
+        # is explicitly flagged as safe for synchronous inline calls.
+        if not getattr(self.simulator, 'is_fast_mode', False):
+            return bid, "Slam (simulation skipped: no fast mode)"
+
         target_tricks = 12 if bid[0] == '6' else 13
+        suit = bid[1:] if len(bid) > 1 else 'NT'
 
         try:
             # Run quick simulation (50 iterations for speed)
@@ -145,15 +160,14 @@ class ConflictResolver:
 
             # Generous buffer: veto only if clearly failing
             if expected_tricks < (target_tricks - 1.5):
-                # Determine safe fallback
                 if bid[0] == '7':
-                    # Fall back to small slam
-                    suit = bid[1:] if len(bid) > 1 else 'NT'
+                    # Grand slam → fall back to small slam
                     fallback = f"6{suit}"
                     return fallback, f"VETO: Grand slam too risky (Exp: {expected_tricks:.1f} tricks)"
                 else:
-                    # Fall back to game or pass
-                    return "Pass", f"VETO: Slam too risky (Exp: {expected_tricks:.1f} tricks)"
+                    # Small slam → fall back to game level
+                    fallback = self._GAME_FALLBACK.get(suit, f"4{suit}")
+                    return fallback, f"VETO: Slam too risky, falling back to game (Exp: {expected_tricks:.1f} tricks)"
 
             return bid, f"Slam validated (Exp: {expected_tricks:.1f} tricks)"
 

@@ -57,14 +57,33 @@ class ForcingStateMachine:
     - GAME_FORCE is "sticky" — once set, cannot be unset until game reached
     - FORCING_1_ROUND expires after partner bids (tracked via bids_since_forcing)
     - NON_FORCING is the default state
+
+    Self-guarding: Tracks auction length to auto-reset when a new deal is
+    detected (auction shorter than previously seen). This prevents GAME_FORCE
+    from bleeding across Monte Carlo simulations or batch tests.
     """
 
     def __init__(self):
         self.state = AuctionState()
+        self._last_auction_len = 0
 
     def reset(self):
         """Reset state for a new deal."""
         self.state.reset()
+        self._last_auction_len = 0
+
+    def sync_auction(self, auction_history: list):
+        """
+        Check auction length and auto-reset if a new deal is detected.
+
+        A new deal is signaled by the auction being empty or shorter than
+        the last tracked length. Call this before update() on each bid
+        evaluation to prevent GAME_FORCE from bleeding across deals.
+        """
+        current_len = len(auction_history) if auction_history else 0
+        if current_len < self._last_auction_len:
+            self.reset()
+        self._last_auction_len = current_len
 
     def get_state(self) -> Dict[str, Any]:
         """Get current forcing state for debugging/display."""

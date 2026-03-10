@@ -88,6 +88,10 @@ class SchemaInterpreter:
         """Reset auction state for a new deal."""
         self.forcing.reset()
 
+    def sync_auction(self, auction_history: list):
+        """Sync auction length with forcing state to auto-reset on new deal."""
+        self.forcing.sync_auction(auction_history)
+
     def get_forcing_state(self) -> Dict[str, Any]:
         """Get current forcing state for debugging/display."""
         return self.forcing.get_state()

@@ -105,8 +105,8 @@ class BiddingEngineV2Schema:
         self._total_bid_count += 1
 
         # Auto-reset forcing state when a new deal is detected.
-        # A new deal = auction is not a continuation of the previous one.
-        # This handles batch testing where new_deal() isn't called between hands.
+        # The FSM also self-guards via sync_auction (handles direct interpreter usage).
+        self.interpreter.sync_auction(auction_history or [])
         if self._last_auction is None or not auction_history:
             self.interpreter.reset_state()
         elif len(auction_history) <= len(self._last_auction):
