@@ -185,14 +185,13 @@ class PBNExporter:
 # HAND GENERATION FOR SPECIFIC SCENARIOS
 # =============================================================================
 
+from utils.dealing import deal_four_hands, deal_remaining_hands, shuffled_deck, RANKS, SUITS
+
+
 def generate_random_hand() -> Hand:
-    """Generate a random 13-card bridge hand."""
-    ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
-    suits = ['♠', '♥', '♦', '♣']
-    deck = [Card(rank, suit) for suit in suits for rank in ranks]
-    random.shuffle(deck)
-    cards = deck[:13]
-    return Hand(cards)
+    """Generate a random 13-card hand (for constraint rejection sampling only)."""
+    deck = shuffled_deck()
+    return Hand(deck[:13])
 
 
 def generate_1nt_hand() -> Hand:
@@ -329,23 +328,20 @@ class SAYCComplianceScorer:
 
     def _generate_hands_for_category(self, category: str) -> Dict[str, Hand]:
         """Generate hands appropriate for a specific test category."""
-        hands = {}
+        assigned = {}
 
-        # Generate North hand based on category
+        # Generate North hand based on category (constraint hand)
         if "1NT" in category:
-            hands['North'] = generate_1nt_hand()
+            assigned['North'] = generate_1nt_hand()
         elif "Weak Two" in category:
-            hands['North'] = generate_weak_two_hand()
+            assigned['North'] = generate_weak_two_hand()
         elif "Opening" in category or "1M" in category or "1m" in category:
-            hands['North'] = generate_opening_hand(12, 21)
+            assigned['North'] = generate_opening_hand(12, 21)
         else:
-            hands['North'] = generate_random_hand()
+            assigned['North'] = generate_random_hand()
 
-        # Generate other hands
-        for pos in ['East', 'South', 'West']:
-            hands[pos] = generate_random_hand()
-
-        return hands
+        # Deal remaining 3 hands from cards not in North's hand
+        return deal_remaining_hands(assigned)
 
     def _simulate_auction(self, hands: Dict[str, Hand], dealer: str, vulnerability: str) -> List[str]:
         """Simulate a complete auction."""

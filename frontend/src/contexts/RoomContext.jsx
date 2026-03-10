@@ -141,6 +141,17 @@ export function RoomProvider({ children }) {
   const pollIntervalRef = useRef(null);
   const pollRoomRef = useRef(null);
 
+  // Invite link: detect /room/CODE in URL on mount
+  const [pendingInviteCode, setPendingInviteCode] = useState(() => {
+    const match = window.location.pathname.match(/^\/room\/([A-Za-z0-9]+)$/);
+    if (match) {
+      // Clean URL without triggering navigation
+      window.history.replaceState({}, '', '/');
+      return match[1].toUpperCase();
+    }
+    return null;
+  });
+
   // Error state
   const [error, setError] = useState(null);
 
@@ -281,9 +292,21 @@ export function RoomProvider({ children }) {
         setIsHost(false);
         setMyPosition('N');
         setInRoom(true);
-        setGamePhase('waiting');
         setPartnerConnected(true); // Host is already there
         setError(null);
+
+        // If first hand was auto-dealt on join, sync game state immediately
+        if (data.auto_dealt && data.game_phase === 'bidding') {
+          setGamePhase('bidding');
+          setMyHand(data.my_hand);
+          setDealer(data.dealer);
+          setVulnerability(data.vulnerability);
+          setAuction(data.auction_history || []);
+          setCurrentBidder(data.current_bidder);
+          setIsMyTurn(data.is_my_turn);
+        } else {
+          setGamePhase('waiting');
+        }
 
         // Start polling for game state
         startPolling();
@@ -546,9 +569,8 @@ export function RoomProvider({ children }) {
       return { success: false, error: 'Not in a room' };
     }
 
-    if (!isMyTurn) {
-      return { success: false, error: 'Not your turn' };
-    }
+    // NOTE: Turn validation is done server-side via is_session_turn()
+    // Frontend isMyTurn can be stale during AI play loop, so we don't gate on it
 
     try {
       const response = await fetchWithSession(`${API_URL}/api/room/play-card`, {
@@ -562,7 +584,11 @@ export function RoomProvider({ children }) {
         setIsMyTurn(data.is_my_turn);
         setGamePhase(data.game_phase);
         setRoomVersion(data.version);
-        // Play state will be updated via next poll
+        roomVersionRef.current = data.version;
+        // Sync play state immediately (includes AI plays)
+        if (data.play_state) {
+          setPlayState(data.play_state);
+        }
         return { success: true, data };
       } else {
         setError(data.error || 'Failed to play card');
@@ -573,7 +599,7 @@ export function RoomProvider({ children }) {
       setError(errorMsg);
       return { success: false, error: errorMsg };
     }
-  }, [inRoom, isMyTurn]);
+  }, [inRoom]);
 
   // Poll room state
   const pollRoom = useCallback(async () => {
@@ -749,6 +775,10 @@ export function RoomProvider({ children }) {
     startPolling,
     stopPolling,
     isPolling,
+
+    // Invite link
+    pendingInviteCode,
+    clearPendingInvite: () => setPendingInviteCode(null),
 
     // Error state
     error,

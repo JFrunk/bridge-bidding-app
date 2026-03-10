@@ -415,6 +415,9 @@ function App() {
     startRoomPlay,
     playRoomCard,
     error: roomError,
+    pendingInviteCode,
+    clearPendingInvite,
+    joinRoom,
   } = useRoom();
 
   const [showLogin, setShowLogin] = useState(false);
@@ -499,6 +502,20 @@ function App() {
     initializeAnalytics();
   }, []);
 
+  // Auto-join room from invite link (/room/CODE)
+  useEffect(() => {
+    if (pendingInviteCode && !inRoom) {
+      clearPendingInvite();
+      // Auto-join the room and transition to game view
+      joinRoom(pendingInviteCode).then((result) => {
+        if (result.success) {
+          setShowModeSelector(false);
+          setShowTeamPractice(true);
+        }
+      });
+    }
+  }, [pendingInviteCode, inRoom, joinRoom, clearPendingInvite]);
+
   // AUTO-HIDE lobby when game becomes active (view orchestration)
   // Also sync local state from room state when in room mode
   useEffect(() => {
@@ -572,10 +589,16 @@ function App() {
     }
   }, [inRoom, roomDealer, dealer]);
 
+  // Ref to track if AI play loop is active (avoids referencing isPlayingCard before init)
+  const aiLoopActiveRef = useRef(false);
+
   // ROOM MODE: Sync playState and hands from room context
   // Room's play_state comes from polling - need to sync to local playState + hands
   useEffect(() => {
     if (!inRoom) return;
+
+    // Skip poll sync while AI play loop is running — the loop drives state updates
+    if (aiLoopActiveRef.current) return;
 
     if (roomPlayState) {
       setPlayState(roomPlayState);
@@ -584,7 +607,6 @@ function App() {
       const vh = roomPlayState.visible_hands;
       if (vh) {
         const userPos = isHost ? 'S' : 'N';
-        const partnerPos = isHost ? 'N' : 'S';
 
         // Sync user's hand
         if (vh[userPos]?.cards?.length > 0) {
@@ -1366,6 +1388,16 @@ ${otherCommands}`;
       if (result.success) {
         console.log('🎮 Room play started:', result.data);
         setGamePhase('playing');
+
+        // Trigger AI play loop if opening leader is AI (E/W)
+        // Same pattern as solo mode — setIsPlayingCard triggers the useEffect loop
+        const nextPlayer = result.data?.next_to_play;
+        if (nextPlayer === 'E' || nextPlayer === 'W') {
+          setTimeout(() => {
+            console.log('🎬 Triggering AI play loop for room opening lead');
+            setIsPlayingCard(true);
+          }, 50);
+        }
       } else {
         console.error('Failed to start room play:', result.error);
         setError(result.error);
@@ -1524,14 +1556,27 @@ ${otherCommands}`;
           setHand(prevHand => prevHand.filter(c =>
             !(c.rank === card.rank && c.suit === card.suit)
           ));
+
+          // Trigger AI play loop if next player is E/W (AI)
+          const nextPlayer = result.data?.next_to_play;
+          if (nextPlayer === 'E' || nextPlayer === 'W') {
+            // Keep isPlayingCard true to trigger play loop via useEffect
+            setTimeout(() => {
+              console.log('🎬 Triggering AI play loop after room card play');
+              setIsPlayingCard(false);
+              setTimeout(() => setIsPlayingCard(true), 50);
+            }, 50);
+          } else {
+            setIsPlayingCard(false);
+          }
         } else {
           console.error('Failed to play room card:', result.error);
           setError(result.error);
+          setIsPlayingCard(false);
         }
       } catch (err) {
         console.error('Room card play error:', err);
         setError(err.message);
-      } finally {
         setIsPlayingCard(false);
       }
       return;
@@ -1698,9 +1743,39 @@ ${otherCommands}`;
   const handleDeclarerCardPlay = async (card) => {
     if (!playState) return;
 
-    // Room mode: route through room API (declarer controls dummy in room)
+    // Room mode: route through room API
+    // This handles the case where user is dummy and declarer's hand is visible
     if (inRoom) {
-      return handleCardPlay(card);
+      try {
+        console.log('🎮 Room declarer card play:', card);
+        setIsPlayingCard(true);
+
+        const result = await playRoomCard({ rank: card.rank, suit: card.suit });
+
+        if (result.success) {
+          // Remove card from declarer hand locally
+          setDeclarerHand(prev => (prev || []).filter(c =>
+            !(c.rank === card.rank && c.suit === card.suit)
+          ));
+
+          const nextPlayer = result.data?.next_to_play;
+          if (nextPlayer === 'E' || nextPlayer === 'W') {
+            setTimeout(() => {
+              setIsPlayingCard(false);
+              setTimeout(() => setIsPlayingCard(true), 50);
+            }, 50);
+          } else {
+            setIsPlayingCard(false);
+          }
+        } else {
+          setError(result.error);
+          setIsPlayingCard(false);
+        }
+      } catch (err) {
+        setError(err.message);
+        setIsPlayingCard(false);
+      }
+      return;
     }
 
     // If there's a pending trick clear, execute it immediately before user plays
@@ -1862,7 +1937,40 @@ ${otherCommands}`;
 
     // Room mode: route through room API (declarer controls dummy in room)
     if (inRoom) {
-      return handleCardPlay(card);
+      try {
+        console.log('🎮 Room dummy card play:', card);
+        setIsPlayingCard(true);
+
+        const result = await playRoomCard({ rank: card.rank, suit: card.suit });
+
+        if (result.success) {
+          console.log('✅ Room dummy card played:', result.data);
+          // Remove card from dummy hand locally (not user's hand)
+          setDummyHand(prev => (prev || []).filter(c =>
+            !(c.rank === card.rank && c.suit === card.suit)
+          ));
+
+          // Trigger AI play loop if next player is E/W (AI)
+          const nextPlayer = result.data?.next_to_play;
+          if (nextPlayer === 'E' || nextPlayer === 'W') {
+            setTimeout(() => {
+              setIsPlayingCard(false);
+              setTimeout(() => setIsPlayingCard(true), 50);
+            }, 50);
+          } else {
+            setIsPlayingCard(false);
+          }
+        } else {
+          console.error('Failed to play room dummy card:', result.error);
+          setError(result.error);
+          setIsPlayingCard(false);
+        }
+      } catch (err) {
+        console.error('Room dummy card play error:', err);
+        setError(err.message);
+        setIsPlayingCard(false);
+      }
+      return;
     }
 
     // If there's a pending trick clear, execute it immediately before user plays
@@ -3063,8 +3171,8 @@ ${otherCommands}`;
     }
   }, [isInitializing, gamePhase, auction.length, nextBidder, showModeSelector, inRoom, roomError]);
 
-  // AI play loop - runs during play phase (solo mode only)
-  // Room mode: AI plays are handled server-side by auto_play_for_ai()
+  // AI play loop - runs during play phase (both solo and room modes)
+  // Room mode now uses same loop pattern with room-specific endpoints
   useEffect(() => {
     console.log('🔄 AI play loop useEffect triggered:', {
       gamePhase,
@@ -3072,9 +3180,6 @@ ${otherCommands}`;
       inRoom,
       timestamp: new Date().toISOString()
     });
-
-    // ROOM MODE: Skip solo AI play loop — server handles AI via auto_play_for_ai()
-    if (inRoom && !roomError) return;
 
     if (gamePhase !== 'playing' || !isPlayingCard) {
       console.log('⏭️ AI play loop skipped - conditions not met:', {
@@ -3094,10 +3199,12 @@ ${otherCommands}`;
     const runAiPlay = async () => {
       try {
         if (signal.aborted) return;
-        console.log('🎬 AI play loop RUNNING...');
-        // Get current play state
+        aiLoopActiveRef.current = true;
+        console.log('🎬 AI play loop RUNNING...', { inRoom });
+        // Get current play state (room or solo endpoint)
         if (signal.aborted) return;
-        const stateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
+        const playStateUrl = inRoom ? `${API_URL}/api/room/play-state` : `${API_URL}/api/get-play-state`;
+        const stateResponse = await fetch(playStateUrl, { headers: { ...getSessionHeaders() } });
 
         // Handle session state loss (e.g., server restart)
         if (stateResponse.status === 400) {
@@ -3137,15 +3244,15 @@ ${otherCommands}`;
         }
 
         // Determine if user is dummy and related positions
-        const userIsDummy = state.dummy === 'S';
+        const userPos = inRoom ? myPosition : 'S';
+        const userIsDummy = state.dummy === userPos;
         const declarerPos = state.contract.declarer;
         const nextPlayer = state.next_to_play;
 
         // === BUG FIX: Use visible_hands from backend to populate declarer hand ===
         // Backend's BridgeRulesEngine already determines which hands should be visible
-        // IMPORTANT: Only set declarerHand when declarer is NOT South to avoid duplication.
-        // When S is declarer, the user's own hand is managed by the `hand` state.
-        if (declarerPos !== 'S' && state.visible_hands && state.visible_hands[declarerPos]) {
+        // IMPORTANT: Only set declarerHand when declarer is NOT user's position to avoid duplication.
+        if (declarerPos !== userPos && state.visible_hands && state.visible_hands[declarerPos]) {
           const visibleDeclarerCards = state.visible_hands[declarerPos].cards || [];
           console.log('👁️ Setting declarer hand from visible_hands:', {
             declarerPos,
@@ -3170,49 +3277,56 @@ ${otherCommands}`;
           }
         }
 
-        // === Update South's hand from visible_hands (only if non-empty) ===
-        if (state.visible_hands && state.visible_hands['S']) {
-          const southCards = state.visible_hands['S'].cards || state.visible_hands['S'];
-          if (Array.isArray(southCards) && southCards.length > 0) {
-            console.log('👁️ Updating South hand from visible_hands (AI loop):', {
-              cardCount: southCards.length
+        // === Update user's hand from visible_hands (only if non-empty) ===
+        if (state.visible_hands && state.visible_hands[userPos]) {
+          const userCards = state.visible_hands[userPos].cards || state.visible_hands[userPos];
+          if (Array.isArray(userCards) && userCards.length > 0) {
+            console.log('👁️ Updating user hand from visible_hands (AI loop):', {
+              position: userPos,
+              cardCount: userCards.length
             });
-            setHand(southCards);
+            setHand(userCards);
           }
         }
 
         // Check if play is complete (13 tricks)
         const totalTricks = Object.values(state.tricks_won).reduce((a, b) => a + b, 0);
         if (totalTricks === 13) {
-          console.log('🏁 All 13 tricks complete! Fetching final score...');
-          // Play complete - calculate score
-          if (signal.aborted) return;
-          const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-            body: JSON.stringify({ vulnerability: vulnerability })
-          });
+          console.log('🏁 All 13 tricks complete!');
 
-          if (scoreResponse.ok) {
-            const scoreData = await scoreResponse.json();
-            console.log('✅ Score calculated:', scoreData);
-            // Save hand to database immediately - pass contract info as fallback
-            const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
-            if (saved) scoreData._saved = true;
-            setScoreData(scoreData);
+          if (inRoom) {
+            // Room mode: game_phase already transitions to 'complete' on backend
+            console.log('🏁 Room play complete — backend handles phase transition');
           } else {
-            // Handle error response
-            const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
-            console.error('❌ Failed to get score:', errorData);
-            setError(`Failed to calculate score: ${errorData.error || 'Unknown error'}`);
+            // Solo mode: fetch final score
+            console.log('Fetching final score...');
+            if (signal.aborted) return;
+            const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+              body: JSON.stringify({ vulnerability: vulnerability })
+            });
+
+            if (scoreResponse.ok) {
+              const scoreData = await scoreResponse.json();
+              console.log('✅ Score calculated:', scoreData);
+              const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
+              if (saved) scoreData._saved = true;
+              setScoreData(scoreData);
+            } else {
+              const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
+              console.error('❌ Failed to get score:', errorData);
+              setError(`Failed to calculate score: ${errorData.error || 'Unknown error'}`);
+            }
           }
 
+          aiLoopActiveRef.current = false;
           setIsPlayingCard(false);
           return;
         }
 
         // Determine if user is declarer
-        const userIsDeclarer = declarerPos === 'S';
+        const userIsDeclarer = inRoom ? (declarerPos === myPosition) : (declarerPos === 'S');
 
         console.log('🤔 Turn check:', {
           nextPlayer,
@@ -3223,38 +3337,52 @@ ${otherCommands}`;
         });
 
         // ============================================================
-        // CRITICAL: Determine who controls the next play (SINGLE-PLAYER MODE)
-        // Single-Player Rules:
-        // - User controls South ALWAYS
-        // - User controls North when NS is declaring (N or S is declarer)
-        // - AI controls East + West ALWAYS
-        // - AI controls North when EW is declaring (E or W is declarer)
+        // CRITICAL: Determine who controls the next play
+        //
+        // ROOM MODE: User controls their position + dummy when declaring
+        //   - Uses controllable_positions from backend
+        //   - AI controls E + W always
+        //
+        // SOLO MODE (Single-Player):
+        //   - User controls South ALWAYS
+        //   - User controls North when NS is declaring
+        //   - AI controls East + West ALWAYS
+        //   - AI controls North when EW is declaring
         // ============================================================
 
         // Check if user should control the next play
         let userShouldControl = false;
         let userControlMessage = "";
 
-        const nsIsDeclaring = (declarerPos === 'N' || declarerPos === 'S');
-
-        // SINGLE-PLAYER LOGIC: User controls NS when NS is declaring
-        if (nsIsDeclaring) {
-          // User controls BOTH North and South when NS is declaring
-          if (nextPlayer === 'S') {
+        if (inRoom) {
+          // ROOM MODE: Use controllable_positions from backend
+          if (state.controllable_positions?.includes(nextPlayer)) {
             userShouldControl = true;
-            userControlMessage = "Your turn to play from South!";
-          } else if (nextPlayer === 'N') {
-            userShouldControl = true;
-            userControlMessage = "Your turn to play from North (partner)!";
+            const posNames = { N: 'North', E: 'East', S: 'South', W: 'West' };
+            const isDummy = nextPlayer === state.dummy;
+            userControlMessage = isDummy
+              ? `Your turn to play from ${posNames[nextPlayer]} (dummy)!`
+              : `Your turn to play from ${posNames[nextPlayer]}!`;
           }
-          // If nextPlayer is E or W, AI plays
+          // E/W are always AI
         } else {
-          // EW is declaring - user controls only South (defense)
-          if (nextPlayer === 'S') {
-            userShouldControl = true;
-            userControlMessage = "Your turn to play (defending)!";
+          // SOLO MODE: Original single-player logic
+          const nsIsDeclaring = (declarerPos === 'N' || declarerPos === 'S');
+
+          if (nsIsDeclaring) {
+            if (nextPlayer === 'S') {
+              userShouldControl = true;
+              userControlMessage = "Your turn to play from South!";
+            } else if (nextPlayer === 'N') {
+              userShouldControl = true;
+              userControlMessage = "Your turn to play from North (partner)!";
+            }
+          } else {
+            if (nextPlayer === 'S') {
+              userShouldControl = true;
+              userControlMessage = "Your turn to play (defending)!";
+            }
           }
-          // If nextPlayer is N, E, or W, AI plays
         }
 
         // DEFENSIVE CHECK: If user should control this play, stop AI loop
@@ -3273,6 +3401,7 @@ ${otherCommands}`;
             clearTimeout(aiPlayTimeoutRef.current);
             aiPlayTimeoutRef.current = null;
           }
+          aiLoopActiveRef.current = false;
           setIsPlayingCard(false);
           setDisplayedMessage(userControlMessage);
           return;
@@ -3284,7 +3413,8 @@ ${otherCommands}`;
         await new Promise(resolve => setTimeout(resolve, 1000)); // Delay for visibility
 
         if (signal.aborted) return;
-        const playResponse = await fetch(`${API_URL}/api/get-ai-play`, {
+        const aiPlayUrl = inRoom ? `${API_URL}/api/room/get-ai-play` : `${API_URL}/api/get-ai-play`;
+        const playResponse = await fetch(aiPlayUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
           body: JSON.stringify({ position: nextPlayer })
@@ -3333,7 +3463,7 @@ ${otherCommands}`;
 
         // Fetch updated play state to show the card that was just played
         if (signal.aborted) return;
-        const updatedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
+        const updatedStateResponse = await fetch(playStateUrl, { headers: { ...getSessionHeaders() } });
         if (updatedStateResponse.ok) {
           const updatedState = await updatedStateResponse.json();
           setPlayState(updatedState);
@@ -3356,16 +3486,17 @@ ${otherCommands}`;
           // Clear timeout ref since we're about to clear
           trickClearTimeoutRef.current = null;
 
-          // Clear the trick
+          // Clear the trick (room or solo endpoint)
           if (signal.aborted) return;
-          await fetch(`${API_URL}/api/clear-trick`, {
+          const clearTrickUrl = inRoom ? `${API_URL}/api/room/clear-trick` : `${API_URL}/api/clear-trick`;
+          await fetch(clearTrickUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...getSessionHeaders() }
           });
 
           // Fetch updated play state to show empty trick
           if (signal.aborted) return;
-          const clearedStateResponse = await fetch(`${API_URL}/api/get-play-state`, { headers: { ...getSessionHeaders() } });
+          const clearedStateResponse = await fetch(playStateUrl, { headers: { ...getSessionHeaders() } });
           if (clearedStateResponse.ok) {
             const clearedState = await clearedStateResponse.json();
             setPlayState(clearedState);
@@ -3377,28 +3508,36 @@ ${otherCommands}`;
             // CRITICAL CHECK: See if all 13 tricks are complete (MUST check AFTER trick clear)
             const totalTricksAfterClear = Object.values(clearedState.tricks_won).reduce((a, b) => a + b, 0);
             if (totalTricksAfterClear === 13) {
-              console.log('🏁 All 13 tricks complete after AI play! Fetching final score...');
-              // Play complete - calculate score
-              if (signal.aborted) return;
-              const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
-                body: JSON.stringify({ vulnerability: vulnerability })
-              });
+              console.log('🏁 All 13 tricks complete after AI play!');
 
-              if (scoreResponse.ok) {
-                const scoreData = await scoreResponse.json();
-                console.log('✅ Score calculated after AI play:', scoreData);
-                // Save hand to database immediately - pass contract info as fallback
-                const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
-                if (saved) scoreData._saved = true;
-                setScoreData(scoreData);
+              if (inRoom) {
+                // Room mode: game_phase already transitions to 'complete' on backend
+                // Poll will pick up the final state
+                console.log('🏁 Room play complete — backend handles phase transition');
               } else {
-                const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
-                console.error('❌ Failed to get score after AI play:', errorData);
-                setError(`Failed to calculate score: ${errorData.error || 'Unknown error'}`);
+                // Solo mode: fetch final score
+                console.log('Fetching final score...');
+                if (signal.aborted) return;
+                const scoreResponse = await fetch(`${API_URL}/api/complete-play`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', ...getSessionHeaders() },
+                  body: JSON.stringify({ vulnerability: vulnerability })
+                });
+
+                if (scoreResponse.ok) {
+                  const scoreData = await scoreResponse.json();
+                  console.log('✅ Score calculated after AI play:', scoreData);
+                  const saved = await saveHandToDatabase(scoreData, auction, playState?.contract);
+                  if (saved) scoreData._saved = true;
+                  setScoreData(scoreData);
+                } else {
+                  const errorData = await scoreResponse.json().catch(() => ({ error: 'Unknown error' }));
+                  console.error('❌ Failed to get score after AI play:', errorData);
+                  setError(`Failed to calculate score: ${errorData.error || 'Unknown error'}`);
+                }
               }
 
+              aiLoopActiveRef.current = false;
               setIsPlayingCard(false);
               return;
             }
@@ -3406,6 +3545,7 @@ ${otherCommands}`;
             // CRITICAL FIX: Check if next player is user-controlled before restarting AI loop
             if (isNextPlayerUserControlled(clearedState)) {
               console.log('⏸️ STOPPING - Next player after trick clear is user-controlled');
+              aiLoopActiveRef.current = false;
               setIsPlayingCard(false);
               return;
             }
@@ -3443,6 +3583,7 @@ ${otherCommands}`;
       } catch (err) {
         console.error('Error in AI play loop:', err);
         setError(`AI play failed: ${err.message || 'Unknown error'}`);
+        aiLoopActiveRef.current = false;
         setIsPlayingCard(false);
       }
     };
@@ -3451,6 +3592,7 @@ ${otherCommands}`;
 
     // Cleanup function to clear pending timeouts when effect re-runs or component unmounts
     return () => {
+      aiLoopActiveRef.current = false;
       // Only clear timeout if we're NOT intentionally keeping the loop alive
       // This allows us to toggle isPlayingCard (false -> true) without killing the pending timeout
       if (keepAiLoopAlive.current) {
@@ -3465,7 +3607,7 @@ ${otherCommands}`;
         }
       }
     };
-  }, [gamePhase, isPlayingCard, vulnerability, inRoom, roomError]);
+  }, [gamePhase, isPlayingCard, vulnerability, inRoom, roomError, myPosition]);
 
   // Show all hands during bidding phase only when toggle is enabled
   const shouldShowHands = gamePhase === 'bidding' && showAllHands;

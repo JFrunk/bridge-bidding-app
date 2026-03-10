@@ -15,7 +15,7 @@
         "partner_last_bid": "1♠",
         "hcp": {
           "min": 12,
-          "max": 17
+          "max": 15
         },
         "spades_length": {
           "min": 4
@@ -36,7 +36,7 @@
         "partner_last_bid": "1♥",
         "hcp": {
           "min": 12,
-          "max": 17
+          "max": 15
         },
         "hearts_length": {
           "min": 4
@@ -55,11 +55,14 @@
         "is_doubler_rebid": true,
         "my_last_bid": "X",
         "partner_last_bid": {
-          "in": ["1♠", "2♠"]
+          "in": [
+            "1♠",
+            "2♠"
+          ]
         },
         "hcp": {
-          "min": 18,
-          "max": 20
+          "min": 16,
+          "max": 18
         },
         "spades_length": {
           "min": 4
@@ -78,11 +81,14 @@
         "is_doubler_rebid": true,
         "my_last_bid": "X",
         "partner_last_bid": {
-          "in": ["1♥", "2♥"]
+          "in": [
+            "1♥",
+            "2♥"
+          ]
         },
         "hcp": {
-          "min": 18,
-          "max": 20
+          "min": 16,
+          "max": 18
         },
         "hearts_length": {
           "min": 4
@@ -101,10 +107,13 @@
         "is_doubler_rebid": true,
         "my_last_bid": "X",
         "partner_last_bid": {
-          "in": ["1♠", "2♠"]
+          "in": [
+            "1♠",
+            "2♠"
+          ]
         },
         "hcp": {
-          "min": 21
+          "min": 19
         },
         "spades_length": {
           "min": 4
@@ -123,10 +132,13 @@
         "is_doubler_rebid": true,
         "my_last_bid": "X",
         "partner_last_bid": {
-          "in": ["1♥", "2♥"]
+          "in": [
+            "1♥",
+            "2♥"
+          ]
         },
         "hcp": {
-          "min": 21
+          "min": 19
         },
         "hearts_length": {
           "min": 4
@@ -194,6 +206,199 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "doubler_raise_partner_jump_to_game_hearts",
+      "bid": "4♥",
+      "priority": 545,
+      "description": "Raise partner's jump response to game in hearts",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "partner_last_bid": "3♥",
+        "hcp": {
+          "min": 14
+        },
+        "hearts_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game: Partner showed 10-11 HCP with hearts jump, combined values for game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_raise_partner_jump_to_game_spades",
+      "bid": "4♠",
+      "priority": 545,
+      "description": "Raise partner's jump response to game in spades",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "partner_last_bid": "3♠",
+        "hcp": {
+          "min": 14
+        },
+        "spades_length": {
+          "min": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game: Partner showed 10-11 HCP with spades jump, combined values for game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_3nt_over_partner_jump",
+      "bid": "3NT",
+      "priority": 540,
+      "description": "3NT after partner jumps in response to takeout double",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "hcp": {
+          "min": 16
+        },
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "3NT: Strong balanced hand after partner showed values with jump response",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_raise_partner_jump_minor_to_3nt",
+      "bid": "3NT",
+      "priority": 538,
+      "description": "3NT after partner jumps in a minor",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "partner_last_bid": {
+          "in": [
+            "3♣",
+            "3♦"
+          ]
+        },
+        "hcp": {
+          "min": 15
+        }
+      },
+      "forcing": "none",
+      "explanation": "3NT: Partner showed 10-11 HCP in minor, prefer NT game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_rebid_game_major_competitive",
+      "bid": "4{first_suit}",
+      "priority": 535,
+      "description": "Opener bids game in own major after competitive sequence",
+      "conditions": {
+        "is_contested": true,
+        "is_rebid": true,
+        "hcp": {
+          "min": 16
+        },
+        "longest_suit_length": {
+          "min": 6
+        },
+        "longest_suit": {
+          "in": [
+            "♥",
+            "♠"
+          ]
+        },
+        "partnership_hcp_min": {
+          "min": 24
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in own major: 6+ card suit with extra values in competition",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_3nt_competitive",
+      "bid": "3NT",
+      "priority": 530,
+      "description": "Opener bids 3NT with balanced extras in competition",
+      "conditions": {
+        "is_contested": true,
+        "is_rebid": true,
+        "hcp": {
+          "min": 16
+        },
+        "is_balanced": true,
+        "partnership_hcp_min": {
+          "min": 25
+        }
+      },
+      "forcing": "none",
+      "explanation": "3NT: Balanced extras with game values in competitive auction",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_raise_partner_competitive",
+      "bid": "3{partner_suit}",
+      "priority": 525,
+      "description": "Opener raises partner's suit in competition showing extras",
+      "conditions": {
+        "is_contested": true,
+        "is_rebid": true,
+        "hcp": {
+          "min": 15
+        },
+        "support_for_partner": {
+          "min": 3
+        },
+        "partnership_hcp_min": {
+          "min": 23
+        }
+      },
+      "forcing": "none",
+      "explanation": "Competitive raise: Supporting partner's suit with extra values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_game_partnership_major",
+      "bid": "4{partner_suit}",
+      "priority": 670,
+      "description": "Doubler raises partner's major to game with partnership values",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "partnership_hcp_min": {
+          "min": 25
+        },
+        "support_for_partner": {
+          "min": 3
+        },
+        "partner_last_bid": {
+          "in": [
+            "1♥", "1♠", "2♥", "2♠"
+          ]
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game: Partnership has 25+ HCP with major fit — raising to game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "doubler_game_3nt_partnership",
+      "bid": "3NT",
+      "priority": 665,
+      "description": "Doubler bids 3NT with partnership game values and balanced hand",
+      "conditions": {
+        "is_doubler_rebid": true,
+        "my_last_bid": "X",
+        "partnership_hcp_min": {
+          "min": 25
+        },
+        "hcp": {
+          "min": 10
+        },
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "3NT: Partnership has 25+ HCP with balanced hand",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "doubler_pass_min",
       "bid": "Pass",
       "priority": 650,
@@ -202,7 +407,7 @@
         "is_doubler_rebid": true,
         "my_last_bid": "X",
         "hcp": {
-          "max": 15
+          "max": 14
         },
         "support_for_partner": {
           "max": 3
@@ -267,6 +472,71 @@
       },
       "forcing": "none",
       "explanation": "Rebid 6+ card suit with appropriate HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "overcaller_game_raise_partner_major",
+      "bid": "4{partner_suit}",
+      "priority": 625,
+      "description": "Overcaller raises partner's major to game with partnership values",
+      "conditions": {
+        "is_overcaller_rebid": true,
+        "partnership_hcp_min": {
+          "min": 25
+        },
+        "support_for_partner": {
+          "min": 3
+        },
+        "partner_last_bid": {
+          "in": [
+            "1♥", "1♠", "2♥", "2♠", "3♥", "3♠"
+          ]
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game: Partnership has 25+ HCP with major fit — raising to game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "overcaller_game_3nt",
+      "bid": "3NT",
+      "priority": 620,
+      "description": "Overcaller bids 3NT with partnership game values and balanced hand",
+      "conditions": {
+        "is_overcaller_rebid": true,
+        "partnership_hcp_min": {
+          "min": 25
+        },
+        "hcp": {
+          "min": 10
+        },
+        "is_balanced": true
+      },
+      "forcing": "none",
+      "explanation": "3NT: Partnership has 25+ HCP with balanced hand",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "overcaller_game_own_major",
+      "bid": "4{first_suit}",
+      "priority": 615,
+      "description": "Overcaller bids game in own major with partnership values",
+      "conditions": {
+        "is_overcaller_rebid": true,
+        "partnership_hcp_min": {
+          "min": 25
+        },
+        "longest_suit_length": {
+          "min": 6
+        },
+        "longest_suit": {
+          "in": [
+            "♥", "♠"
+          ]
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game in own major: 6+ card suit with partnership game values",
       "sets_forcing_level": "NON_FORCING"
     },
     {

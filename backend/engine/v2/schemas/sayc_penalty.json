@@ -14,6 +14,54 @@
   },
   "rules": [
     {
+      "id": "game_override_lott_major",
+      "bid": "4{partner_suit}",
+      "priority": 220,
+      "description": "Override LOTT pass when partnership clearly has game values in a major",
+      "conditions": {
+        "is_contested": true,
+        "partner_last_bid": {
+          "in": [
+            "2♥",
+            "2♠",
+            "3♥",
+            "3♠"
+          ]
+        },
+        "support_for_partner": {
+          "min": 3
+        },
+        "partnership_hcp_min": {
+          "min": 25
+        },
+        "hcp": {
+          "min": 8
+        }
+      },
+      "forcing": "none",
+      "explanation": "Game: Partnership values override competitive caution — enough for game in major",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "game_override_lott_3nt",
+      "bid": "3NT",
+      "priority": 218,
+      "description": "Override LOTT pass with 3NT when partnership has game values",
+      "conditions": {
+        "is_contested": true,
+        "is_balanced": true,
+        "partnership_hcp_min": {
+          "min": 25
+        },
+        "hcp": {
+          "min": 10
+        }
+      },
+      "forcing": "none",
+      "explanation": "3NT: Partnership values justify game despite competitive pressure",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "_comment": "=== TIER 0: DOUBLED AUCTION SURVIVAL (230-250) ===",
       "id": "last_chance_sos_rescue",
       "bid": "XX",
@@ -22,8 +70,12 @@
       "conditions": {
         "is_doubled": true,
         "is_last_chance_to_rescue": true,
-        "panic_index": {"min": 50},
-        "rescue_candidates": {"min": 1}
+        "panic_index": {
+          "min": 50
+        },
+        "rescue_candidates": {
+          "min": 1
+        }
       },
       "forcing": "one_round",
       "explanation": "LAST CHANCE SOS - panic index {panic_index}, must redouble to force partner to escape",
@@ -38,7 +90,9 @@
         "is_doubled": true,
         "should_rescue": true,
         "multiple_rescue_suits": true,
-        "panic_index": {"min": 50}
+        "panic_index": {
+          "min": 50
+        }
       },
       "forcing": "one_round",
       "explanation": "SOS Redouble - panic index {panic_index}, forcing partner to find a safer suit fit",
@@ -53,7 +107,9 @@
         "is_doubled": true,
         "should_rescue": true,
         "rescue_action": "BID",
-        "rescue_suit": {"not": null}
+        "rescue_suit": {
+          "not": null
+        }
       },
       "forcing": "none",
       "explanation": "Escaping to {rescue_suit} - panic index {panic_index}, avoiding penalty",
@@ -67,7 +123,9 @@
       "conditions": {
         "partner_sos_redouble": true,
         "rescue_response_action": "BID",
-        "rescue_response_suit": {"not": null}
+        "rescue_response_suit": {
+          "not": null
+        }
       },
       "forcing": "none",
       "explanation": "Responding to SOS - bidding cheapest 4-card suit ({rescue_response_suit})",
@@ -93,7 +151,9 @@
       "description": "Pass when doubled but panic is low - we can handle this contract",
       "conditions": {
         "is_doubled": true,
-        "panic_index": {"max": 40},
+        "panic_index": {
+          "max": 40
+        },
         "should_rescue": false
       },
       "forcing": "none",
@@ -110,7 +170,12 @@
         "is_contested": true,
         "strength_overrides_lott": true,
         "fit_known": true,
-        "agreed_suit": {"in": ["♥", "♠"]}
+        "agreed_suit": {
+          "in": [
+            "♥",
+            "♠"
+          ]
+        }
       },
       "forcing": "none",
       "explanation": "Bid game - {partnership_hcp_min}+ combined HCP overrides LoTT ceiling",
@@ -131,6 +196,26 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "misfit_3nt_with_stoppers",
+      "bid": "3NT",
+      "priority": 216,
+      "description": "Bid 3NT with misfit hand when HCP justifies game",
+      "conditions": {
+        "is_contested": true,
+        "is_misfit": true,
+        "hcp": {
+          "min": 12
+        },
+        "is_balanced": true,
+        "partnership_hcp_min": {
+          "min": 25
+        }
+      },
+      "forcing": "none",
+      "explanation": "3NT: Misfit but enough combined HCP for game with balanced hand",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "misfit_pass_despite_hcp",
       "bid": "Pass",
       "priority": 215,
@@ -138,7 +223,9 @@
       "conditions": {
         "is_contested": true,
         "is_misfit": true,
-        "hcp": {"min": 10}
+        "hcp": {
+          "min": 10
+        }
       },
       "forcing": "none",
       "explanation": "Pass - misfit detected (only {our_best_fit}-card fit), HCP doesn't help",
@@ -154,7 +241,9 @@
         "lott_above_safe": true,
         "trump_quality_fragile": true,
         "we_are_vulnerable": true,
-        "trump_suit_honors": {"max": 1}
+        "trump_suit_honors": {
+          "max": 1
+        }
       },
       "forcing": "none",
       "explanation": "Pass - trump quality fragile (SQS={trump_suit_quality_score}, {trump_suit_honors} honors), level exceeds honor-adjusted safe level",
@@ -181,7 +270,9 @@
       "description": "Penalty double with defensive powerhouse (3.0+ quick tricks)",
       "conditions": {
         "is_contested": true,
-        "auction_level": {"min": 2},
+        "auction_level": {
+          "min": 2
+        },
         "is_defensive_powerhouse": true,
         "is_misfit": true
       },
@@ -196,10 +287,16 @@
       "description": "Penalty double at high level (3-level or higher)",
       "conditions": {
         "is_contested": true,
-        "auction_level": {"min": 3},
-        "hcp": {"min": 10},
+        "auction_level": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 10
+        },
         "stopper_in_opponent_suit": true,
-        "support_for_partner": {"max": 2}
+        "support_for_partner": {
+          "max": 2
+        }
       },
       "forcing": "none",
       "explanation": "Penalty double - expecting to defeat contract",
@@ -214,8 +311,13 @@
       "conditions": {
         "is_contested": true,
         "we_are_vulnerable": true,
-        "hcp": {"min": 10, "max": 13},
-        "support_for_partner": {"max": 2}
+        "hcp": {
+          "min": 10,
+          "max": 13
+        },
+        "support_for_partner": {
+          "max": 2
+        }
       },
       "forcing": "none",
       "explanation": "Pass - vulnerable with no fit, risk of being doubled too high",
@@ -228,8 +330,12 @@
       "description": "Pass with wasteful HCP in competition - honors in wrong places",
       "conditions": {
         "is_contested": true,
-        "wasteful_hcp": {"min": 6},
-        "working_hcp_ratio": {"max": 0.5},
+        "wasteful_hcp": {
+          "min": 6
+        },
+        "working_hcp_ratio": {
+          "max": 0.5
+        },
         "we_are_vulnerable": true
       },
       "forcing": "none",
@@ -244,8 +350,12 @@
       "conditions": {
         "is_contested": true,
         "defensive_penalty_candidate": true,
-        "auction_level": {"min": 2},
-        "hcp": {"min": 10}
+        "auction_level": {
+          "min": 2
+        },
+        "hcp": {
+          "min": 10
+        }
       },
       "forcing": "none",
       "explanation": "Pass - defensive hand ({quick_tricks} QT, {offense_to_defense_ratio:.2f} O/D ratio), stop competing",
@@ -258,9 +368,13 @@
       "description": "LoTT low total tricks - pass with flat hands in competition",
       "conditions": {
         "is_contested": true,
-        "total_tricks_index": {"max": 15},
+        "total_tricks_index": {
+          "max": 15
+        },
         "is_balanced": true,
-        "hcp": {"max": 12}
+        "hcp": {
+          "max": 12
+        }
       },
       "forcing": "none",
       "explanation": "Pass - low total tricks ({total_tricks_index}), defend rather than compete",
@@ -275,7 +389,9 @@
       "conditions": {
         "is_contested": true,
         "is_fragile_ruff": true,
-        "raw_dummy_points": {"min": 3},
+        "raw_dummy_points": {
+          "min": 3
+        },
         "we_are_vulnerable": true
       },
       "forcing": "none",
@@ -289,9 +405,15 @@
       "description": "Pass when HCP is not concentrated in working suits at 3+ level",
       "conditions": {
         "is_contested": true,
-        "working_hcp_ratio": {"max": 0.5},
-        "auction_level": {"min": 3},
-        "hcp": {"min": 10}
+        "working_hcp_ratio": {
+          "max": 0.5
+        },
+        "auction_level": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 10
+        }
       },
       "forcing": "none",
       "explanation": "Pass - HCP scattered ({working_hcp_ratio:.0%} working), offensive potential overestimated",
@@ -305,7 +427,9 @@
       "conditions": {
         "is_contested": true,
         "opponent_bid_artificial": true,
-        "hcp": {"min": 6}
+        "hcp": {
+          "min": 6
+        }
       },
       "forcing": "none",
       "explanation": "Lead-directing double - requesting this suit lead",
@@ -318,7 +442,9 @@
       "description": "Lightner double of slam - unusual lead requested",
       "conditions": {
         "is_contested": true,
-        "auction_level": {"min": 6}
+        "auction_level": {
+          "min": 6
+        }
       },
       "forcing": "none",
       "explanation": "Lightner double - do NOT lead a trump or our suit",
@@ -334,8 +460,12 @@
         "is_contested": true,
         "favorable_vulnerability": true,
         "fit_known": true,
-        "hcp": {"max": 10},
-        "fit_length": {"min": 9}
+        "hcp": {
+          "max": 10
+        },
+        "fit_length": {
+          "min": 9
+        }
       },
       "forcing": "none",
       "explanation": "Sacrifice at favorable vulnerability - cheaper to go down",
@@ -350,8 +480,12 @@
         "is_contested": true,
         "we_are_vulnerable": false,
         "fit_known": true,
-        "hcp": {"max": 10},
-        "fit_length": {"min": 9}
+        "hcp": {
+          "max": 10
+        },
+        "fit_length": {
+          "min": 9
+        }
       },
       "forcing": "none",
       "explanation": "Sacrifice - cheaper to go down than let them make",
@@ -366,8 +500,12 @@
         "is_contested": true,
         "is_volatile_board": true,
         "fit_known": true,
-        "our_best_fit": {"min": 9},
-        "hcp": {"max": 10},
+        "our_best_fit": {
+          "min": 9
+        },
+        "hcp": {
+          "max": 10
+        },
         "is_fragile_ruff": false
       },
       "forcing": "none",
@@ -382,8 +520,12 @@
       "description": "Double then bid - showing strong hand",
       "conditions": {
         "is_overcall": true,
-        "hcp": {"min": 17},
-        "longest_suit_length": {"min": 5}
+        "hcp": {
+          "min": 17
+        },
+        "longest_suit_length": {
+          "min": 5
+        }
       },
       "forcing": "one_round",
       "explanation": "Double then bid - too strong for simple overcall",
@@ -396,9 +538,15 @@
       "description": "Cooperative (optional) double at 3+ level - partner can pass or pull",
       "conditions": {
         "is_contested": true,
-        "auction_level": {"min": 3},
-        "hcp": {"min": 12},
-        "quick_tricks": {"min": 2.0}
+        "auction_level": {
+          "min": 3
+        },
+        "hcp": {
+          "min": 12
+        },
+        "quick_tricks": {
+          "min": 2.0
+        }
       },
       "forcing": "none",
       "explanation": "Cooperative double - partner decides penalty or pull",
@@ -412,7 +560,9 @@
       "conditions": {
         "game_forcing": true,
         "is_contested": true,
-        "hcp": {"min": 8}
+        "hcp": {
+          "min": 8
+        }
       },
       "forcing": "one_round",
       "explanation": "Forcing pass - partner must double or bid on",
@@ -426,7 +576,9 @@
       "conditions": {
         "partner_last_bid": "X",
         "stopper_in_opponent_suit": true,
-        "hcp": {"min": 8}
+        "hcp": {
+          "min": 8
+        }
       },
       "forcing": "none",
       "explanation": "Pass converting double to penalty - strong in their suit",

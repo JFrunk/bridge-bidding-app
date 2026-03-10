@@ -11,8 +11,9 @@
  * - Right: Deal + Leave buttons
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRoom } from '../../contexts/RoomContext';
+import { partner, displayName } from '../../utils/seats';
 import './RoomStatusBar.css';
 
 // Convention display names
@@ -37,11 +38,14 @@ export default function RoomStatusBar() {
     setReady,
     iAmReady,
     partnerReady,
+    isHost,
     partnerDisconnected,
     playState: roomPlayState,
     error,
     pollRoom,
   } = useRoom();
+
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Either peer can signal ready when partner connected and in waiting/complete phase
   const canReady = partnerConnected && (gamePhase === 'waiting' || gamePhase === 'complete') && !iAmReady;
@@ -103,9 +107,9 @@ export default function RoomStatusBar() {
 
   const status = getStatus();
 
-  // Compass labels based on position
-  const myLabel = myPosition === 'S' ? 'SOUTH' : 'NORTH';
-  const partnerLabel = myPosition === 'S' ? 'NORTH' : 'SOUTH';
+  // Compass labels based on position (using seats utility)
+  const myLabel = displayName(myPosition, myPosition, false).toUpperCase();
+  const partnerLabel = displayName(partner(myPosition), myPosition, false).toUpperCase();
 
   // Check for connection error (404)
   const hasConnectionError = error && (error.includes('404') || error.includes('Room closed'));
@@ -121,6 +125,20 @@ export default function RoomStatusBar() {
         <div className="room-status-left">
           <span className="room-code-label">Room:</span>
           <span className="room-code-value">{roomCode}</span>
+          {isHost && !partnerConnected && (
+            <button
+              className="btn-copy-link"
+              onClick={() => {
+                const inviteUrl = `${window.location.origin}/room/${roomCode}`;
+                navigator.clipboard.writeText(inviteUrl);
+                setLinkCopied(true);
+                setTimeout(() => setLinkCopied(false), 2000);
+              }}
+              title="Copy invite link for your partner"
+            >
+              {linkCopied ? 'Copied!' : 'Copy Invite Link'}
+            </button>
+          )}
           {drillFocus && (
             <span className="drill-focus-badge" title="Convention Drill Focus">
               🎯 {drillFocus}

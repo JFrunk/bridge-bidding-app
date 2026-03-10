@@ -215,6 +215,25 @@
   50% { box-shadow: 0 0 0 4px rgba(49, 130, 206, 0); }
 }
 
+/* Copy Invite Link button - shown to host when waiting for partner */
+.btn-copy-link {
+  background: #ebf8ff;
+  border: 1px solid #3182ce;
+  color: #2b6cb0;
+  padding: 3px var(--space-3);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-copy-link:hover {
+  background: #bee3f8;
+  border-color: #2b6cb0;
+}
+
 /* Ready badge - shown when player has signaled ready */
 .ready-badge {
   background: #e6f7ed;

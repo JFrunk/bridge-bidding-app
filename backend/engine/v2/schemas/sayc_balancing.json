@@ -81,7 +81,7 @@
     {
       "id": "balancing_suit_1_level",
       "bid": "1{longest_suit}",
-      "priority": 660,
+      "priority": 710,
       "description": "Balancing 1-level suit bid (8-14 HCP, stronger hands double)",
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},

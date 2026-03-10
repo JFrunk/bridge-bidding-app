@@ -32,16 +32,8 @@ CONVENTION_MAP = {
 
 def deal_random_hand():
     """Generate a random deal with 4 hands."""
-    ranks = '23456789TJQKA'
-    suits = ['♠', '♥', '♦', '♣']
-    deck = [Card(rank, suit) for rank in ranks for suit in suits]
-    random.shuffle(deck)
-    return {
-        'North': Hand(deck[0:13]),
-        'East': Hand(deck[13:26]),
-        'South': Hand(deck[26:39]),
-        'West': Hand(deck[39:52])
-    }
+    from utils.dealing import deal_four_hands
+    return deal_four_hands()
 
 def deal_scenario_hand(scenario, deck):
     """Generate a hand based on a scenario definition."""

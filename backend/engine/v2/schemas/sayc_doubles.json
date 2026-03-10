@@ -80,10 +80,16 @@
         },
         "hearts_length": {
           "max": 4
+        },
+        "clubs_length": {
+          "max": 4
+        },
+        "diamonds_length": {
+          "max": 4
         }
       },
       "forcing": "one_round",
-      "explanation": "Light takeout double (10-11 HCP, perfect shape for unbid suits)",
+      "explanation": "Light takeout double (10-11 HCP, perfect shape for unbid suits, no 5-card suit)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -308,6 +314,79 @@
       },
       "forcing": "none",
       "explanation": "Penalty double with trump stack",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_to_takeout_double_minimum",
+      "bid": "1{suit}",
+      "priority": 760,
+      "description": "Minimum response to partner's takeout double (0-8 HCP)",
+      "conditions": {
+        "partner_last_bid": "X",
+        "is_advancer": true,
+        "hcp": {
+          "max": 8
+        },
+        "has_4_card_major": true
+      },
+      "forcing": "none",
+      "suit_selection": "longest_major_first",
+      "explanation": "Bid best suit in response to partner's takeout double (0-8 HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_to_takeout_double_jump",
+      "bid": "2{suit}",
+      "priority": 770,
+      "description": "Jump response to partner's takeout double (9-11 HCP, invitational)",
+      "conditions": {
+        "partner_last_bid": "X",
+        "is_advancer": true,
+        "hcp": {
+          "min": 9,
+          "max": 11
+        },
+        "has_4_card_major": true
+      },
+      "forcing": "none",
+      "suit_selection": "longest_major_first",
+      "explanation": "Jump bid in response to partner's takeout double (9-11 HCP, invitational)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_to_takeout_double_game",
+      "bid": "4{suit}",
+      "priority": 780,
+      "description": "Game response to partner's takeout double (12+ HCP)",
+      "conditions": {
+        "partner_last_bid": "X",
+        "is_advancer": true,
+        "hcp": {
+          "min": 12
+        },
+        "has_4_card_major": true
+      },
+      "forcing": "none",
+      "suit_selection": "longest_major_first",
+      "explanation": "Bid game in response to partner's takeout double (12+ HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "respond_to_takeout_double_1nt",
+      "bid": "1NT",
+      "priority": 765,
+      "description": "1NT response to partner's takeout double with stopper",
+      "conditions": {
+        "partner_last_bid": "X",
+        "is_advancer": true,
+        "hcp": {
+          "min": 6,
+          "max": 10
+        },
+        "stopper_in_opponent_suit": true
+      },
+      "forcing": "none",
+      "explanation": "1NT with stopper in opponent's suit (6-10 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

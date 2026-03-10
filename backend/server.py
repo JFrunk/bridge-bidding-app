@@ -152,71 +152,16 @@ def handle_internal_error(e):
     return response
 
 # =============================================================================
-# BIDDING ENGINE SELECTION
+# BIDDING ENGINE
 # =============================================================================
-# V2 Schema (BiddingEngineV2Schema): PRODUCTION DEFAULT - JSON-driven engine
-# V2 State Machine (BiddingEngineV2): Legacy Python-based engine (fallback)
-#
-# PRODUCTION ENGINE: BiddingEngineV2Schema (JSON-driven) as of 2026-02-02
-# - Quality Score: 97.3% (Grade A - Production Ready)
-# - Appropriateness: 96.8% | Game Detection: 78.0% | Slam Detection: 25.0%
-# - Architecture: Declarative JSON rules, 500+ rules, 150+ features
-#
-# NOTE: V1 engine deprecated 2026-01-05. V2 State Machine demoted 2026-02-02.
-#
-# Environment variables:
-#   USE_V2_SCHEMA_ENGINE=true (DEFAULT)      - Use V2 Schema (PRODUCTION)
-#   USE_V2_BIDDING_ENGINE=true               - Use V2 state machine (legacy)
-#   BIDDING_ENGINE_COMPARISON_MODE=true      - Run both V2 engines and log discrepancies
+# BiddingEngineV2Schema: JSON-driven SAYC bidding engine (PRODUCTION)
+# V1 BiddingEngine deprecated 2026-01-05, removed 2026-03-09
+# V2 State Machine demoted 2026-02-02, removed 2026-03-09
 # =============================================================================
 
-USE_V2_ENGINE = os.getenv('USE_V2_BIDDING_ENGINE', 'false').lower() == 'true'  # Legacy
-USE_V2_SCHEMA = os.getenv('USE_V2_SCHEMA_ENGINE', 'true').lower() == 'true'  # PRODUCTION DEFAULT
-COMPARISON_MODE = os.getenv('BIDDING_ENGINE_COMPARISON_MODE', 'false').lower() == 'true'
-
-# V2 Schema engine (JSON-driven) — PRODUCTION DEFAULT as of 2026-02-02
-engine_v2_schema = None
-if USE_V2_SCHEMA or COMPARISON_MODE:
-    try:
-        from engine.v2 import BiddingEngineV2Schema
-        engine_v2_schema = BiddingEngineV2Schema(use_v1_fallback=False)
-        print("✅ BiddingEngineV2Schema initialized (V2-only, no V1 fallback)")
-        print("   Quality: 97.3% | Game: 78.0% | Slam: 25.0% | Status: Production")
-    except Exception as e:
-        print(f"⚠️  Failed to initialize BiddingEngineV2Schema: {e}")
-        if USE_V2_SCHEMA:
-            USE_V2_SCHEMA = False
-
-# V2 state machine engine (legacy fallback)
-engine_v2 = None
-if USE_V2_ENGINE or COMPARISON_MODE:
-    try:
-        from engine.bidding_engine_v2 import BiddingEngineV2
-        engine_v2 = BiddingEngineV2(comparison_mode=COMPARISON_MODE)
-        print(f"✅ BiddingEngineV2 initialized (comparison_mode={COMPARISON_MODE})")
-        print("   Status: Legacy fallback")
-    except Exception as e:
-        print(f"⚠️  Failed to initialize BiddingEngineV2: {e}")
-        USE_V2_ENGINE = False
-
-# Select active engine (priority: V2 Schema > V2 state machine)
-# PRODUCTION DEFAULT: BiddingEngineV2Schema (JSON-driven) as of 2026-02-02
-if USE_V2_SCHEMA and engine_v2_schema:
-    engine = engine_v2_schema
-    print("🔷 Using BiddingEngineV2Schema (JSON-driven) [PRODUCTION]")
-elif USE_V2_ENGINE and engine_v2:
-    engine = engine_v2
-    print("🔷 Using BiddingEngineV2 (state machine) [legacy]")
-elif engine_v2_schema:
-    # Fallback to V2 Schema even if not explicitly requested
-    engine = engine_v2_schema
-    print("🔷 Using BiddingEngineV2Schema (fallback)")
-elif engine_v2:
-    # Final fallback to V2 state machine
-    engine = engine_v2
-    print("🔷 Using BiddingEngineV2 (state machine) [fallback]")
-else:
-    raise RuntimeError("❌ No bidding engine available. Both V2 engines failed to initialize.")
+from engine.v2 import BiddingEngineV2Schema
+engine = BiddingEngineV2Schema()
+print("✅ BiddingEngineV2Schema initialized [PRODUCTION]")
 
 play_engine = PlayEngine()
 play_ai = SimplePlayAI()  # Default AI (backward compatibility)
@@ -1941,7 +1886,7 @@ def evaluate_bid():
                     }
 
         # V2 Schema: Unified evaluation (same rules for AI and feedback)
-        v2_feedback = engine_v2_schema.evaluate_user_bid(
+        v2_feedback = engine.evaluate_user_bid(
             hand=user_hand,
             user_bid=user_bid,
             auction_history=auction_history,

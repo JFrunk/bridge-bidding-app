@@ -1,122 +1,94 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "2.0",
   "system": "SAYC",
   "category": "responses",
   "description": "Responses to partner's opening bids",
   "rules": [
     {
       "id": "stayman_2c",
-      "bid": "2\u2663",
+      "bid": "2♣",
       "priority": 750,
       "description": "Stayman convention over 1NT (looking for 4-4 major fit)",
-      "conditions": {
-        "is_response": true,
-        "is_contested": false,
-        "partner_last_bid": "1NT",
-        "hcp": {
-          "min": 8
-        },
-        "spades_length": {
-          "max": 5
-        },
-        "hearts_length": {
-          "max": 5
-        },
-        "OR": [
-          {
-            "spades_length": {
-              "min": 4,
-              "max": 4
-            }
-          },
-          {
-            "hearts_length": {
-              "min": 4,
-              "max": 4
-            }
-          }
-        ]
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1NT", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "spades_length", "max": 5, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "max": 5, "constraint_type": "HARD"},
+        {
+          "feature": "OR",
+          "in": [
+            {"spades_length": {"min": 4, "max": 4}},
+            {"hearts_length": {"min": 4, "max": 4}}
+          ],
+          "constraint_type": "HARD"
+        }
+      ],
       "forcing": "one_round",
       "explanation": "Stayman (8+ HCP, asking for 4-card major)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "jacoby_transfer_hearts",
-      "bid": "2\u2666",
+      "bid": "2♦",
       "priority": 829,
       "description": "Jacoby transfer to hearts (5+ hearts, 8+ HCP)",
-      "conditions": {
-        "is_response": true,
-        "is_contested": false,
-        "partner_last_bid": "1NT",
-        "hearts_length": {
-          "min": 5
-        },
-        "hcp": {
-          "min": 8
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1NT", "constraint_type": "HARD"},
+        {"feature": "hearts_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
+      ],
       "forcing": "one_round",
       "explanation": "Jacoby transfer (8+ HCP, 5+ hearts)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "jacoby_transfer_spades",
-      "bid": "2\u2665",
+      "bid": "2♥",
       "priority": 828,
       "description": "Jacoby transfer to spades (5+ spades, 8+ HCP)",
-      "conditions": {
-        "is_response": true,
-        "is_contested": false,
-        "partner_last_bid": "1NT",
-        "spades_length": {
-          "min": 5
-        },
-        "hcp": {
-          "min": 8
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1NT", "constraint_type": "HARD"},
+        {"feature": "spades_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
+      ],
       "forcing": "one_round",
       "explanation": "Jacoby transfer (8+ HCP, 5+ spades)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "texas_transfer_hearts",
-      "bid": "4\u2666",
+      "bid": "4♦",
       "priority": 835,
       "description": "Texas transfer to hearts (6+ hearts, game values)",
-      "conditions": {
-        "is_response": true,
-        "is_contested": false,
-        "partner_last_bid": "1NT",
-        "hearts_length": {
-          "min": 6
-        },
-        "hcp": {
-          "min": 10
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1NT", "constraint_type": "HARD"},
+        {"feature": "hearts_length", "min": 6, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
+      ],
       "forcing": "one_round",
       "explanation": "Texas transfer showing 6+ hearts with game values",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "texas_transfer_spades",
-      "bid": "4\u2665",
+      "bid": "4♥",
       "priority": 834,
       "description": "Texas transfer to spades (6+ spades, game values)",
-      "conditions": {
-        "is_response": true,
-        "is_contested": false,
-        "partner_last_bid": "1NT",
-        "spades_length": {
-          "min": 6
-        },
-        "hcp": {
-          "min": 10
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1NT", "constraint_type": "HARD"},
+        {"feature": "spades_length", "min": 6, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
+      ],
       "forcing": "one_round",
       "explanation": "Texas transfer showing 6+ spades with game values",
       "sets_forcing_level": "FORCING_1_ROUND"
@@ -126,16 +98,13 @@
       "bid": "3NT",
       "priority": 355,
       "description": "Raise 1NT to game",
-      "conditions": {
-        "is_response": true,
-        "partner_last_bid": "1NT",
-        "hcp": {
-          "min": 10,
-          "max": 14
-        },
-        "is_balanced": true,
-        "has_5_card_major": false
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1NT", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
+        {"feature": "has_5_card_major", "expected": false, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Raise to 3NT (10-14 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
@@ -145,43 +114,32 @@
       "bid": "2NT",
       "priority": 400,
       "description": "Invitational raise of 1NT",
-      "conditions": {
-        "is_response": true,
-        "partner_last_bid": "1NT",
-        "hcp": {
-          "min": 8,
-          "max": 9
-        },
-        "is_balanced": true,
-        "has_5_card_major": false
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1NT", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "max": 9, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
+        {"feature": "has_5_card_major", "expected": false, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Invitational 2NT (8-9 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "respond_1d_to_1c",
-      "bid": "1\u2666",
+      "bid": "1♦",
       "priority": 610,
       "description": "1D response to 1C opening",
-      "conditions": {
-        "is_response": true,
-        "partner_last_bid": "1\u2663",
-        "hcp": {
-          "min": 6
-        },
-        "diamonds_length": {
-          "min": 4
-        },
-        "spades_length": {
-          "max": 3
-        },
-        "hearts_length": {
-          "max": 3
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♣", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 6, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "diamonds_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "spades_length", "max": 3, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "max": 3, "constraint_type": "HARD"}
+      ],
       "forcing": "one_round",
-      "explanation": "1\u2666 response showing 6+ HCP and 4+ diamonds (no 4-card major)",
+      "explanation": "1♦ response showing 6+ HCP and 4+ diamonds (no 4-card major)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -189,34 +147,21 @@
       "bid": "1{suit}",
       "priority": 550,
       "description": "New suit at 1-level (major)",
-      "conditions": {
-        "is_response": true,
-        "is_contested": false,
-        "opening_bid": {
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "opening_bid", "in": ["1♣", "1♦", "1♥"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 6, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "partnership_hcp_min", "min": 18, "constraint_type": "HARD"},
+        {
+          "feature": "OR",
           "in": [
-            "1\u2663",
-            "1\u2666"
-          ]
-        },
-        "hcp": {
-          "min": 6
-        },
-        "partnership_hcp_min": {
-          "min": 18
-        },
-        "OR": [
-          {
-            "spades_length": {
-              "min": 4
-            }
-          },
-          {
-            "hearts_length": {
-              "min": 4
-            }
-          }
-        ]
-      },
+            {"spades_length": {"min": 4}},
+            {"hearts_length": {"min": 4}}
+          ],
+          "constraint_type": "HARD"
+        }
+      ],
       "forcing": "one_round",
       "suit_selection": "longest_major_first",
       "explanation": "New suit response showing 6+ HCP and 4+ {suit}",
@@ -227,25 +172,13 @@
       "bid": "1NT",
       "priority": 260,
       "description": "1NT response showing 6-10 HCP",
-      "conditions": {
-        "is_response": true,
-        "opening_bid": {
-          "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "min": 6,
-          "max": 10
-        },
-        "is_balanced": true,
-        "support_for_partner": {
-          "max": 2
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "opening_bid", "in": ["1♣", "1♦", "1♥", "1♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 6, "max": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
+        {"feature": "support_for_partner", "max": 2, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "1NT response (6-10 HCP, no major fit)",
       "sets_forcing_level": "NON_FORCING"
@@ -255,25 +188,51 @@
       "bid": "2{partner_suit}",
       "priority": 285,
       "description": "Single raise of partner's major (6-10 HCP with support)",
-      "conditions": {
-        "is_response": true,
-        "is_contested": false,
-        "partner_last_bid": {
-          "in": [
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "min": 6,
-          "max": 10
-        },
-        "support_for_partner": {
-          "min": 3
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["1♥", "1♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 6, "max": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "support_for_partner", "min": 3, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Single raise (6-10 HCP, 3+ card support)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "single_raise_clubs",
+      "bid": "2♣",
+      "priority": 275,
+      "description": "Single raise of partner's 1♣ opening (6-10 HCP, 4+ clubs, no 4-card major)",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♣", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 6, "max": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "clubs_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "spades_length", "max": 3, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "max": 3, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Raise to 2♣ (6-10 HCP, 4+ clubs, no 4-card major)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "single_raise_diamonds",
+      "bid": "2♦",
+      "priority": 275,
+      "description": "Single raise of partner's 1♦ opening (6-10 HCP, 4+ diamonds, no 4-card major)",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♦", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 6, "max": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "diamonds_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "spades_length", "max": 3, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "max": 3, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Raise to 2♦ (6-10 HCP, 4+ diamonds, no 4-card major)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -281,25 +240,16 @@
       "bid": "3{partner_suit}",
       "priority": 354,
       "description": "Limit raise of partner's major (invitational, 11-12 HCP)",
-      "conditions": {
-        "is_response": true,
-        "is_contested": false,
-        "partner_last_bid": {
-          "in": [
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "min": 11,
-          "max": 12
-        },
-        "support_for_partner": {
-          "min": 4
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["1♥", "1♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 9, "max": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "support_for_partner", "min": 4, "constraint_type": "HARD"},
+        {"feature": "support_points", "min": 10, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
-      "explanation": "Limit raise (11-12 HCP, 4+ card support, invitational)",
+      "explanation": "Limit raise (10-12 support points, 4+ card support, invitational)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -307,41 +257,27 @@
       "bid": "4{partner_suit}",
       "priority": 323,
       "description": "Game raise of partner's major (direct game, uncontested)",
-      "conditions": {
-        "is_response": true,
-        "is_contested": false,
-        "partner_last_bid": {
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["1♥", "1♠"], "constraint_type": "HARD"},
+        {
+          "feature": "OR",
           "in": [
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "OR": [
-          {
-            "hcp": {
-              "min": 10
+            {
+              "hcp": {"min": 10},
+              "support_points": {"min": 13},
+              "support_for_partner": {"min": 4},
+              "partnership_hcp_min": {"min": 25}
             },
-            "support_points": {
-              "min": 13
-            },
-            "support_for_partner": {
-              "min": 4
-            },
-            "partnership_hcp_min": {
-              "min": 25
+            {
+              "hcp": {"min": 7, "max": 9},
+              "support_for_partner": {"min": 5}
             }
-          },
-          {
-            "hcp": {
-              "min": 7,
-              "max": 9
-            },
-            "support_for_partner": {
-              "min": 5
-            }
-          }
-        ]
-      },
+          ],
+          "constraint_type": "HARD"
+        }
+      ],
       "forcing": "none",
       "explanation": "Game raise with {support_points} support points and {support_for_partner}-card support",
       "sets_forcing_level": "NON_FORCING"
@@ -351,21 +287,12 @@
       "bid": "2{suit}",
       "priority": 600,
       "description": "New suit at 2-level (game forcing in 2/1)",
-      "conditions": {
-        "is_response": true,
-        "opening_bid": {
-          "in": [
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "min": 10
-        },
-        "suit_length": {
-          "min": 5
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "opening_bid", "in": ["1♥", "1♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "suit_length", "min": 5, "constraint_type": "HARD"}
+      ],
       "forcing": "game",
       "suit_selection": "longest_lower_suit",
       "explanation": "2/1 game-forcing response (10+ HCP, 5+ card suit)",
@@ -373,45 +300,36 @@
     },
     {
       "id": "respond_2c_positive",
-      "bid": "2\u2666",
+      "bid": "2♦",
       "priority": 45,
-      "description": "Waiting response to Strong 2\u2663 opening",
-      "conditions": {
-        "is_response": true,
-        "opener_relationship": "Partner",
-        "opening_bid": "2\u2663",
-        "partner_last_bid": "2\u2663",
-        "hcp": {
-          "min": 0,
-          "max": 7
-        }
-      },
+      "description": "Waiting response to Strong 2♣ opening",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "opener_relationship", "expected": "Partner", "constraint_type": "HARD"},
+        {"feature": "opening_bid", "expected": "2♣", "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♣", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 0, "max": 7, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
+      ],
       "forcing": "one_round",
-      "explanation": "2\u2666 waiting response to Strong 2\u2663 (0-7 HCP)",
+      "explanation": "2♦ waiting response to Strong 2♣ (0-7 HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "respond_2c_positive_suit",
       "bid": "2{longest_suit}",
       "priority": 44,
-      "description": "Positive response to Strong 2\u2663 opening with good suit",
-      "conditions": {
-        "is_response": true,
-        "opener_relationship": "Partner",
-        "opening_bid": "2\u2663",
-        "partner_last_bid": "2\u2663",
-        "hcp": {
-          "min": 8
-        },
-        "longest_suit_length": {
-          "min": 5
-        },
-        "suit_quality_longest": {
-          "min": "good"
-        }
-      },
+      "description": "Positive response to Strong 2♣ opening with good suit",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "opener_relationship", "expected": "Partner", "constraint_type": "HARD"},
+        {"feature": "opening_bid", "expected": "2♣", "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♣", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 8, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "longest_suit_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "suit_quality_longest", "min": "good", "constraint_type": "HARD"}
+      ],
       "forcing": "game",
-      "explanation": "Positive response to Strong 2\u2663 with good {longest_suit} suit",
+      "explanation": "Positive response to Strong 2♣ with good {longest_suit} suit",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
@@ -419,12 +337,12 @@
       "bid": "2NT",
       "priority": 350,
       "description": "2NT response showing 11-12 HCP balanced",
-      "conditions": {
-        "is_response": true,
-        "partner_last_bid": {"in": ["1♣", "1♦", "1♥", "1♠"]},
-        "hcp": {"min": 11, "max": 12},
-        "is_balanced": true
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["1♣", "1♦", "1♥", "1♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 11, "max": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Invitational 2NT (11-12 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
@@ -434,12 +352,12 @@
       "bid": "3NT",
       "priority": 340,
       "description": "3NT response to 1-minor showing 13-15 HCP balanced",
-      "conditions": {
-        "is_response": true,
-        "partner_last_bid": {"in": ["1♣", "1♦"]},
-        "hcp": {"min": 13, "max": 15},
-        "is_balanced": true
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["1♣", "1♦"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 13, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "3NT (13-15 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
@@ -449,13 +367,13 @@
       "bid": "3NT",
       "priority": 335,
       "description": "3NT response to 1-major showing 13-15 HCP balanced, no fit",
-      "conditions": {
-        "is_response": true,
-        "partner_last_bid": {"in": ["1♥", "1♠"]},
-        "hcp": {"min": 13, "max": 15},
-        "is_balanced": true,
-        "support_for_partner": {"max": 2}
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["1♥", "1♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 13, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
+        {"feature": "support_for_partner", "max": 2, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "3NT (13-15 HCP, balanced, no major fit)",
       "sets_forcing_level": "NON_FORCING"
@@ -465,31 +383,42 @@
       "bid": "3{partner_suit}",
       "priority": 320,
       "description": "Limit raise of partner's minor (invitational) - uncontested only",
-      "conditions": {
-        "is_response": true,
-        "is_contested": false,
-        "partner_last_bid": {"in": ["1♣", "1♦"]},
-        "support_points": {"min": 10, "max": 12},
-        "support_for_partner": {"min": 5}
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["1♣", "1♦"], "constraint_type": "HARD"},
+        {"feature": "support_points", "min": 10, "max": 12, "constraint_type": "HARD"},
+        {"feature": "support_for_partner", "min": 5, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Limit raise with {support_points} support points and {support_for_partner}-card support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "raise_weak_two_to_game",
+      "bid": "4{partner_suit}",
+      "priority": 400,
+      "description": "Raise partner's weak two to game with support and values",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["2♦", "2♥", "2♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "support_for_partner", "min": 3, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Raise to game with {hcp} HCP and {support_for_partner}-card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "pass_no_values",
       "bid": "Pass",
-      "priority": 15,
+      "priority": 270,
       "description": "Pass with insufficient values to respond",
-      "conditions": {
-        "is_response": true,
-        "hcp": {
-          "max": 5
-        },
-        "NOT": {
-          "partner_last_bid": "2♣"
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "max": 5, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "partner_last_bid", "not_in": ["2♣"], "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Pass (0-5 HCP, insufficient to respond)",
       "sets_forcing_level": "NON_FORCING"
@@ -499,15 +428,13 @@
       "bid": "Pass",
       "priority": 14,
       "description": "Pass partner's 1NT with minimum balanced",
-      "conditions": {
-        "is_response": true,
-        "partner_last_bid": "1NT",
-        "hcp": {
-          "max": 7
-        },
-        "is_balanced": true,
-        "has_5_card_major": false
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1NT", "constraint_type": "HARD"},
+        {"feature": "hcp", "max": 7, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
+        {"feature": "has_5_card_major", "expected": false, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Pass 1NT (0-7 HCP, balanced)",
       "sets_forcing_level": "NON_FORCING"
@@ -517,16 +444,124 @@
       "bid": "Pass",
       "priority": 16,
       "description": "Pass partner's 1NT with weak hand even with 5-card major",
-      "conditions": {
-        "is_response": true,
-        "is_contested": false,
-        "partner_last_bid": "1NT",
-        "hcp": {
-          "max": 7
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1NT", "constraint_type": "HARD"},
+        {"feature": "hcp", "max": 7, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
+      ],
       "forcing": "none",
       "explanation": "Pass 1NT (0-7 HCP, too weak to transfer)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "raise_2nt_to_3nt",
+      "bid": "3NT",
+      "priority": 600,
+      "description": "Raise partner's 2NT opening to game",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2NT", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 5, "max": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "3NT: Partner showed 20-21 HCP, combined values for game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "stayman_over_2nt",
+      "bid": "3♣",
+      "priority": 650,
+      "description": "Stayman over 2NT opening looking for major fit",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2NT", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 5, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {
+          "feature": "OR",
+          "in": [
+            {"spades_length": {"min": 4}},
+            {"hearts_length": {"min": 4}}
+          ],
+          "constraint_type": "HARD"
+        }
+      ],
+      "forcing": "one_round",
+      "explanation": "3♣ Stayman: Looking for 4-4 major fit over partner's 2NT",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "transfer_hearts_over_2nt",
+      "bid": "3♦",
+      "priority": 660,
+      "description": "Jacoby transfer to hearts over 2NT",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2NT", "constraint_type": "HARD"},
+        {"feature": "hearts_length", "min": 5, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "3♦ transfer: Showing 5+ hearts over partner's 2NT",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "transfer_spades_over_2nt",
+      "bid": "3♥",
+      "priority": 660,
+      "description": "Jacoby transfer to spades over 2NT",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2NT", "constraint_type": "HARD"},
+        {"feature": "spades_length", "min": 5, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "3♥ transfer: Showing 5+ spades over partner's 2NT",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "quantitative_4nt_over_2nt",
+      "bid": "4NT",
+      "priority": 640,
+      "description": "Quantitative slam invitation over 2NT",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2NT", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 11, "max": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "4NT quantitative: Inviting slam with 31-33 combined HCP",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "direct_game_major_over_2nt",
+      "bid": "4♥",
+      "priority": 655,
+      "description": "Direct 4♥ game with long hearts over 2NT",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2NT", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 5, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "hearts_length", "min": 6, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "4♥: Game with 6+ hearts opposite 2NT opener",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "direct_game_spades_over_2nt",
+      "bid": "4♠",
+      "priority": 655,
+      "description": "Direct 4♠ game with long spades over 2NT",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2NT", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 5, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "spades_length", "min": 6, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "4♠: Game with 6+ spades opposite 2NT opener",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -534,13 +569,11 @@
       "bid": "Pass",
       "priority": 13,
       "description": "Pass partner's 2NT with minimum",
-      "conditions": {
-        "is_response": true,
-        "partner_last_bid": "2NT",
-        "hcp": {
-          "max": 4
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2NT", "constraint_type": "HARD"},
+        {"feature": "hcp", "max": 4, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
+      ],
       "forcing": "none",
       "explanation": "Pass 2NT (0-4 HCP, not enough for game)",
       "sets_forcing_level": "NON_FORCING"
@@ -550,26 +583,12 @@
       "bid": "Pass",
       "priority": 12,
       "description": "Pass partner's preemptive opening",
-      "conditions": {
-        "is_response": true,
-        "partner_last_bid": {
-          "in": [
-            "2\u2666",
-            "2\u2665",
-            "2\u2660",
-            "3\u2663",
-            "3\u2666",
-            "3\u2665",
-            "3\u2660"
-          ]
-        },
-        "hcp": {
-          "max": 13
-        },
-        "support_for_partner": {
-          "max": 2
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["2♦", "2♥", "2♠", "3♣", "3♦", "3♥", "3♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "max": 13, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "support_for_partner", "max": 2, "constraint_type": "HARD"}
+      ],
       "forcing": "none",
       "explanation": "Pass partner's preempt (insufficient strength or support)",
       "sets_forcing_level": "NON_FORCING"
@@ -577,20 +596,13 @@
     {
       "id": "pass_after_major_opening_no_fit_weak",
       "bid": "Pass",
-      "priority": 11,
+      "priority": 265,
       "description": "Pass partner's major opening with minimum and no fit",
-      "conditions": {
-        "is_response": true,
-        "partner_last_bid": {
-          "in": [
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "max": 5
-        }
-      },
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "in": ["1♥", "1♠"], "constraint_type": "HARD"},
+        {"feature": "hcp", "max": 5, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
+      ],
       "forcing": "none",
       "explanation": "Pass (0-5 HCP, insufficient to respond)",
       "sets_forcing_level": "NON_FORCING"

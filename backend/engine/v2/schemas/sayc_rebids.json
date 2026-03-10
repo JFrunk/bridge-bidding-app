@@ -383,13 +383,13 @@
     },
     {
       "id": "opener_complete_texas_hearts",
-      "bid": "4\u2665",
+      "bid": "4♥",
       "priority": 830,
       "description": "1NT opener completes Texas transfer to hearts",
       "conditions": {
         "is_rebid": true,
         "my_last_bid": "1NT",
-        "partner_last_bid": "4\u2666"
+        "partner_last_bid": "4♦"
       },
       "forcing": "none",
       "explanation": "Completing Texas transfer to hearts",
@@ -397,13 +397,13 @@
     },
     {
       "id": "opener_complete_texas_spades",
-      "bid": "4\u2660",
+      "bid": "4♠",
       "priority": 839,
       "description": "1NT opener completes Texas transfer to spades",
       "conditions": {
         "is_rebid": true,
         "my_last_bid": "1NT",
-        "partner_last_bid": "4\u2665"
+        "partner_last_bid": "4♥"
       },
       "forcing": "none",
       "explanation": "Completing Texas transfer to spades",
@@ -411,14 +411,14 @@
     },
     {
       "id": "opener_stayman_show_spades",
-      "bid": "2\u2660",
+      "bid": "2♠",
       "priority": 820,
       "description": "1NT opener shows 4 spades in response to Stayman",
       "conditions": {
         "is_rebid": true,
         "is_contested": false,
         "my_last_bid": "1NT",
-        "partner_last_bid": "2\u2663",
+        "partner_last_bid": "2♣",
         "spades_length": {
           "min": 4
         }
@@ -429,14 +429,14 @@
     },
     {
       "id": "opener_stayman_show_hearts",
-      "bid": "2\u2665",
+      "bid": "2♥",
       "priority": 819,
       "description": "1NT opener shows 4 hearts in response to Stayman (no 4 spades)",
       "conditions": {
         "is_rebid": true,
         "is_contested": false,
         "my_last_bid": "1NT",
-        "partner_last_bid": "2\u2663",
+        "partner_last_bid": "2♣",
         "hearts_length": {
           "min": 4
         },
@@ -450,14 +450,14 @@
     },
     {
       "id": "opener_stayman_deny_major",
-      "bid": "2\u2666",
+      "bid": "2♦",
       "priority": 818,
       "description": "1NT opener denies 4-card major in response to Stayman",
       "conditions": {
         "is_rebid": true,
         "is_contested": false,
         "my_last_bid": "1NT",
-        "partner_last_bid": "2\u2663",
+        "partner_last_bid": "2♣",
         "spades_length": {
           "max": 3
         },
@@ -466,19 +466,19 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "2\u2666 denying a 4-card major",
+      "explanation": "2♦ denying a 4-card major",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "opener_complete_jacoby_hearts",
-      "bid": "2\u2665",
+      "bid": "2♥",
       "priority": 825,
       "description": "1NT opener completes Jacoby transfer to hearts",
       "conditions": {
         "is_rebid": true,
         "is_contested": false,
         "my_last_bid": "1NT",
-        "partner_last_bid": "2\u2666"
+        "partner_last_bid": "2♦"
       },
       "forcing": "none",
       "explanation": "Completing Jacoby transfer to hearts",
@@ -486,14 +486,14 @@
     },
     {
       "id": "opener_complete_jacoby_spades",
-      "bid": "2\u2660",
+      "bid": "2♠",
       "priority": 824,
       "description": "1NT opener completes Jacoby transfer to spades",
       "conditions": {
         "is_rebid": true,
         "is_contested": false,
         "my_last_bid": "1NT",
-        "partner_last_bid": "2\u2665"
+        "partner_last_bid": "2♥"
       },
       "forcing": "none",
       "explanation": "Completing Jacoby transfer to spades",
@@ -501,7 +501,7 @@
     },
     {
       "id": "responder_smolen_3h",
-      "bid": "3\u2665",
+      "bid": "3♥",
       "priority": 813,
       "description": "Smolen: 4 hearts, 5 spades, game values",
       "conditions": {
@@ -509,8 +509,8 @@
         "my_bid_count": {
           "min": 1
         },
-        "my_last_bid": "2\u2663",
-        "partner_last_bid": "2\u2666",
+        "my_last_bid": "2♣",
+        "partner_last_bid": "2♦",
         "hearts_length": {
           "min": 4,
           "max": 4
@@ -528,7 +528,7 @@
     },
     {
       "id": "responder_smolen_3s",
-      "bid": "3\u2660",
+      "bid": "3♠",
       "priority": 812,
       "description": "Smolen: 4 spades, 5 hearts, game values",
       "conditions": {
@@ -536,8 +536,8 @@
         "my_bid_count": {
           "min": 1
         },
-        "my_last_bid": "2\u2663",
-        "partner_last_bid": "2\u2666",
+        "my_last_bid": "2♣",
+        "partner_last_bid": "2♦",
         "spades_length": {
           "min": 4,
           "max": 4
@@ -555,7 +555,7 @@
     },
     {
       "id": "opener_accept_smolen_spades",
-      "bid": "4\u2660",
+      "bid": "4♠",
       "priority": 650,
       "description": "Accept Smolen with 3+ spades (partner has 5)",
       "conditions": {
@@ -592,7 +592,7 @@
     },
     {
       "id": "opener_accept_smolen_hearts",
-      "bid": "4\u2665",
+      "bid": "4♥",
       "priority": 649,
       "description": "Accept Smolen with 3+ hearts (partner has 5)",
       "conditions": {
@@ -697,8 +697,8 @@
         "is_rebid": true,
         "partner_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "hcp": {
@@ -722,8 +722,8 @@
         "is_rebid": true,
         "partner_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "hcp": {
@@ -747,8 +747,8 @@
         "is_rebid": true,
         "partner_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "hcp": {
@@ -774,8 +774,8 @@
         "is_contested": false,
         "partner_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "support_points": {
@@ -821,12 +821,46 @@
       "priority": 620,
       "description": "Opener rebids 5-card major after responder's new suit forcing",
       "constraints": [
-        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
-        {"feature": "my_last_bid", "in": ["1♥", "1♠"], "constraint_type": "HARD"},
-        {"feature": "partner_bid_new_suit", "expected": true, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 12, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
-        {"feature": "first_suit_length", "min": 5, "constraint_type": "HARD"},
-        {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
+        {
+          "feature": "is_rebid",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "my_last_bid",
+          "in": [
+            "1♥",
+            "1♠"
+          ],
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "partner_bid_new_suit",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 12,
+          "max": 15,
+          "constraint_type": "SOFT",
+          "penalty_per_unit": 0.1
+        },
+        {
+          "feature": "first_suit_length",
+          "min": 5,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "my_bid_count",
+          "max": 1,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "support_for_partner",
+          "max": 3,
+          "constraint_type": "HARD"
+        }
       ],
       "forcing": "none",
       "explanation": "Rebid 5-card {first_suit} with minimum opener",
@@ -838,11 +872,33 @@
       "priority": 550,
       "description": "Opener raises partner's minor with invitational values and fit",
       "constraints": [
-        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
-        {"feature": "partner_bid_new_suit", "expected": true, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 15, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
-        {"feature": "support_for_partner_first", "min": 4, "constraint_type": "HARD"},
-        {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
+        {
+          "feature": "is_rebid",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "partner_bid_new_suit",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 15,
+          "max": 17,
+          "constraint_type": "SOFT",
+          "penalty_per_unit": 0.1
+        },
+        {
+          "feature": "support_for_partner_first",
+          "min": 4,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "my_bid_count",
+          "max": 1,
+          "constraint_type": "HARD"
+        }
       ],
       "forcing": "none",
       "explanation": "Raise partner's minor (15-17 HCP, 4+ card support, invitational)",
@@ -854,11 +910,33 @@
       "priority": 500,
       "description": "Opener raises partner's minor with minimum values and fit",
       "constraints": [
-        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
-        {"feature": "partner_bid_new_suit", "expected": true, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 12, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
-        {"feature": "support_for_partner_first", "min": 4, "constraint_type": "HARD"},
-        {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
+        {
+          "feature": "is_rebid",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "partner_bid_new_suit",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 12,
+          "max": 14,
+          "constraint_type": "SOFT",
+          "penalty_per_unit": 0.1
+        },
+        {
+          "feature": "support_for_partner_first",
+          "min": 4,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "my_bid_count",
+          "max": 1,
+          "constraint_type": "HARD"
+        }
       ],
       "forcing": "none",
       "explanation": "Raise partner's minor (12-14 HCP, 4+ card support)",
@@ -870,10 +948,28 @@
       "priority": 650,
       "description": "Opener jump rebids showing game force strength (18-21 HCP)",
       "constraints": [
-        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 18, "max": 21, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
-        {"feature": "first_suit_length", "min": 6, "constraint_type": "HARD"},
-        {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
+        {
+          "feature": "is_rebid",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 18,
+          "max": 21,
+          "constraint_type": "SOFT",
+          "penalty_per_unit": 0.08
+        },
+        {
+          "feature": "first_suit_length",
+          "min": 6,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "my_bid_count",
+          "max": 1,
+          "constraint_type": "HARD"
+        }
       ],
       "forcing": "one_round",
       "explanation": "Jump rebid (18-21 HCP, 6+ card suit, game forcing)",
@@ -888,14 +984,14 @@
         "is_rebid": true,
         "my_last_bid": {
           "in": [
-            "1\u2666",
-            "1\u2663"
+            "1♦",
+            "1♣"
           ]
         },
         "partner_last_bid": {
           "in": [
-            "2\u2663",
-            "2\u2666"
+            "2♣",
+            "2♦"
           ]
         },
         "hcp": {
@@ -920,14 +1016,14 @@
         "is_rebid": true,
         "my_last_bid": {
           "in": [
-            "1\u2666",
-            "1\u2663"
+            "1♦",
+            "1♣"
           ]
         },
         "partner_last_bid": {
           "in": [
-            "2\u2663",
-            "2\u2666"
+            "2♣",
+            "2♦"
           ]
         },
         "hcp": {
@@ -953,8 +1049,8 @@
         "is_contested": false,
         "my_last_bid": {
           "in": [
-            "1\u2666",
-            "1\u2663"
+            "1♦",
+            "1♣"
           ]
         },
         "first_suit_length": {
@@ -981,13 +1077,47 @@
       "priority": 850,
       "description": "Opener reverses showing 17+ HCP (Barrier Principle)",
       "constraints": [
-        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
-        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
-        {"feature": "first_suit_length", "min": 5, "constraint_type": "HARD"},
-        {"feature": "second_suit_length", "min": 4, "constraint_type": "HARD"},
-        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"},
-        {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
+        {
+          "feature": "is_rebid",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "is_contested",
+          "expected": false,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 17,
+          "constraint_type": "SOFT",
+          "penalty_per_unit": 0.1
+        },
+        {
+          "feature": "first_suit_length",
+          "min": 5,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "second_suit_length",
+          "min": 4,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "second_suit_higher",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "my_bid_count",
+          "max": 1,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "support_for_partner",
+          "max": 3,
+          "constraint_type": "HARD"
+        }
       ],
       "forcing": "one_round",
       "explanation": "Reverse (17+ HCP, forcing one round, Barrier Principle)",
@@ -1000,13 +1130,48 @@
       "priority": 845,
       "description": "Opener reverses with minimum reverse values (17-18 HCP)",
       "constraints": [
-        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
-        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 17, "max": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
-        {"feature": "first_suit_length", "min": 5, "constraint_type": "HARD"},
-        {"feature": "second_suit_length", "min": 4, "constraint_type": "HARD"},
-        {"feature": "second_suit_higher", "expected": true, "constraint_type": "HARD"},
-        {"feature": "my_bid_count", "max": 1, "constraint_type": "HARD"}
+        {
+          "feature": "is_rebid",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "is_contested",
+          "expected": false,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 17,
+          "max": 18,
+          "constraint_type": "SOFT",
+          "penalty_per_unit": 0.1
+        },
+        {
+          "feature": "first_suit_length",
+          "min": 5,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "second_suit_length",
+          "min": 4,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "second_suit_higher",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "my_bid_count",
+          "max": 1,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "support_for_partner",
+          "max": 3,
+          "constraint_type": "HARD"
+        }
       ],
       "forcing": "one_round",
       "explanation": "Minimum reverse (17-18 HCP, partner must bid again)",
@@ -1099,8 +1264,8 @@
         "fit_known": true,
         "agreed_suit": {
           "in": [
-            "\u2665",
-            "\u2660"
+            "♥",
+            "♠"
           ]
         },
         "support_points": {
@@ -1169,10 +1334,10 @@
         },
         "partner_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660",
-            "2\u2665",
-            "2\u2660"
+            "1♥",
+            "1♠",
+            "2♥",
+            "2♠"
           ]
         },
         "support_points": {
@@ -1670,6 +1835,122 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "opener_jump_neg_double_spades",
+      "bid": "2♠",
+      "priority": 660,
+      "description": "Jump raise showing spades and extras after negative double",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "X",
+        "spades_length": {
+          "min": 4
+        },
+        "hcp": {
+          "min": 16,
+          "max": 18
+        }
+      },
+      "forcing": "none",
+      "explanation": "Jump to 2♠: Showing 4+ spades and 16-18 HCP after partner's negative double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_jump_neg_double_hearts",
+      "bid": "3♥",
+      "priority": 659,
+      "description": "Jump raise showing hearts and extras after negative double",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "X",
+        "hearts_length": {
+          "min": 4
+        },
+        "hcp": {
+          "min": 16,
+          "max": 18
+        }
+      },
+      "forcing": "none",
+      "explanation": "Jump to 3♥: Showing 4+ hearts and 16-18 HCP after partner's negative double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_game_neg_double_spades",
+      "bid": "4♠",
+      "priority": 665,
+      "description": "Game in spades with strong hand after negative double",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "X",
+        "spades_length": {
+          "min": 4
+        },
+        "hcp": {
+          "min": 19
+        }
+      },
+      "forcing": "none",
+      "explanation": "4♠: Game with 4+ spades and 19+ HCP after partner's negative double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_game_neg_double_hearts",
+      "bid": "4♥",
+      "priority": 664,
+      "description": "Game in hearts with strong hand after negative double",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "X",
+        "hearts_length": {
+          "min": 4
+        },
+        "hcp": {
+          "min": 19
+        }
+      },
+      "forcing": "none",
+      "explanation": "4♥: Game with 4+ hearts and 19+ HCP after partner's negative double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_3nt_after_neg_double",
+      "bid": "3NT",
+      "priority": 655,
+      "description": "3NT with strong balanced hand after negative double",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "X",
+        "is_balanced": true,
+        "hcp": {
+          "min": 18,
+          "max": 19
+        }
+      },
+      "forcing": "none",
+      "explanation": "3NT: Balanced 18-19 HCP after partner's negative double — game values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_jump_rebid_suit_neg_double",
+      "bid": "3{first_suit}",
+      "priority": 653,
+      "description": "Jump rebid own suit showing extras after negative double",
+      "conditions": {
+        "is_rebid": true,
+        "partner_last_bid": "X",
+        "longest_suit_length": {
+          "min": 6
+        },
+        "hcp": {
+          "min": 16,
+          "max": 18
+        }
+      },
+      "forcing": "none",
+      "explanation": "Jump rebid: 6+ card suit with 16-18 HCP, showing extras after partner's negative double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "opener_game_after_single_raise_strong",
       "bid": "4{my_suit}",
       "priority": 750,
@@ -1679,14 +1960,14 @@
         "opener_relationship": "Me",
         "my_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "partner_last_bid": {
           "in": [
-            "2\u2665",
-            "2\u2660"
+            "2♥",
+            "2♠"
           ]
         },
         "partner_raised_my_suit": true,
@@ -1714,61 +1995,61 @@
       "id": "opener_game_after_single_raise_values",
       "bid": "4{my_suit}",
       "priority": 745,
-      "description": "Opener bids game after partner's single raise with strong values (17+ HCP)",
+      "description": "Opener bids game after partner's single raise with strong values (18+ HCP)",
       "conditions": {
         "is_rebid": true,
         "opener_relationship": "Me",
         "my_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "partner_last_bid": {
           "in": [
-            "2\u2665",
-            "2\u2660"
+            "2♥",
+            "2♠"
           ]
         },
         "partner_raised_my_suit": true,
         "is_contested": false,
         "hcp": {
-          "min": 17
+          "min": 18
         }
       },
       "forcing": "none",
-      "explanation": "Game (17+ HCP) - strong values opposite partner's raise",
+      "explanation": "Game (18+ HCP) - strong values opposite partner's raise",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "opener_invite_after_single_raise_medium",
       "bid": "3{my_suit}",
       "priority": 540,
-      "description": "Opener invites game after partner's single raise (15-16 HCP)",
+      "description": "Opener invites game after partner's single raise (15-17 HCP)",
       "conditions": {
         "is_rebid": true,
         "opener_relationship": "Me",
         "my_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "partner_last_bid": {
           "in": [
-            "2\u2665",
-            "2\u2660"
+            "2♥",
+            "2♠"
           ]
         },
         "partner_raised_my_suit": true,
         "is_contested": false,
         "hcp": {
           "min": 15,
-          "max": 16
+          "max": 17
         }
       },
       "forcing": "none",
-      "explanation": "Invite (15-16 HCP) after partner's raise",
+      "explanation": "Invite (15-17 HCP) after partner's raise",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1798,14 +2079,14 @@
         "opener_relationship": "Me",
         "my_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "partner_last_bid": {
           "in": [
-            "2\u2665",
-            "2\u2660"
+            "2♥",
+            "2♠"
           ]
         },
         "partner_raised_my_suit": true,
@@ -1835,11 +2116,11 @@
           "min": 15
         },
         "support_for_partner": {
-          "min": 4
+          "min": 3
         }
       },
       "forcing": "none",
-      "explanation": "Accept invitation (15+ HCP with good fit)",
+      "explanation": "Accept invitation (15+ HCP with fit)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1874,8 +2155,8 @@
         "partner_last_bid": "1NT",
         "my_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "longest_suit_length": {
@@ -1900,8 +2181,8 @@
         "partner_last_bid": "1NT",
         "my_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "longest_suit_length": {

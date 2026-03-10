@@ -9,12 +9,12 @@ Python code. This allows for:
 4. Cleaner separation of bidding knowledge from engine logic
 5. Proper forcing level tracking across the auction
 6. Monte Carlo integration for bid validation (optional)
-7. Optional V1 fallback when no schema rule matches
 """
 
 import logging
 from typing import Dict, Optional, Tuple, List
 from engine.hand import Hand
+from utils.seats import seat_index, seat_from_index, partner as partner_seat
 from engine.v2.features.enhanced_extractor import extract_flat_features
 from engine.v2.interpreters.schema_interpreter import (
     SchemaInterpreter,
@@ -41,7 +41,7 @@ class BiddingEngineV2Schema:
     - Optional Monte Carlo integration for slam/competitive validation
     """
 
-    def __init__(self, schema_dir: str = None, simulator=None, use_v1_fallback: bool = False):
+    def __init__(self, schema_dir: str = None, simulator=None, **kwargs):
         """
         Initialize the schema-driven engine.
 
@@ -49,15 +49,15 @@ class BiddingEngineV2Schema:
             schema_dir: Path to schema directory. Defaults to engine/v2/schemas/
             simulator: Optional Monte Carlo simulator for bid validation.
                       If None, conflict resolver operates in pass-through mode.
-            use_v1_fallback: If True, falls back to V1 engine when no schema rule matches.
-                            Defaults to False - V2 uses Pass when no rule matches.
         """
+        # Accept and ignore deprecated use_v1_fallback for backward compatibility
+        if 'use_v1_fallback' in kwargs:
+            pass  # Silently ignore — V1 fallback removed
+
         self.interpreter = SchemaInterpreter(schema_dir)
         self._bid_legality_cache = {}
-        self.use_v1_fallback = use_v1_fallback
-        self._v1_engine = None  # Lazy-loaded
-        self._v1_fallback_count = 0
         self._total_bid_count = 0
+        self._last_auction = None  # Track auction for auto-reset detection
 
         # Tracking for analysis - stores info about last bid decision
         self._last_rule_id: Optional[str] = None
@@ -104,6 +104,19 @@ class BiddingEngineV2Schema:
         # Note: explanation_level is ignored - V2 Schema generates its own explanations
         self._total_bid_count += 1
 
+        # Auto-reset forcing state when a new deal is detected.
+        # A new deal = auction is not a continuation of the previous one.
+        # This handles batch testing where new_deal() isn't called between hands.
+        if self._last_auction is None or not auction_history:
+            self.interpreter.reset_state()
+        elif len(auction_history) <= len(self._last_auction):
+            # Auction got shorter or same length — new deal
+            self.interpreter.reset_state()
+        elif auction_history[:len(self._last_auction)] != self._last_auction:
+            # Auction prefix changed — new deal
+            self.interpreter.reset_state()
+        self._last_auction = list(auction_history) if auction_history else []
+
         # Extract features in flat format for schema evaluation
         features = extract_flat_features(
             hand, auction_history, my_position, vulnerability, dealer
@@ -132,7 +145,7 @@ class BiddingEngineV2Schema:
                 bid = candidate.bid
 
                 # Validate bid is legal in the auction
-                if not self._is_bid_legal(bid, auction_history):
+                if not self._is_bid_legal(bid, auction_history, my_position, dealer):
                     continue
 
                 # Safety net: reject 6+ level bids that aren't part of a slam sequence.
@@ -226,14 +239,7 @@ class BiddingEngineV2Schema:
                     )
                 return (bid, best_forcing_rejected.explanation)
 
-        # No schema rule matched - try V1 fallback if enabled
-        if self.use_v1_fallback:
-            self._last_rule_id = 'v1_fallback'
-            self._last_schema_file = None
-            self._last_priority = 0
-            return self._get_v1_fallback_bid(hand, auction_history, my_position, vulnerability)
-
-        # Fallback to Pass (but check forcing constraints first)
+        # No schema rule matched - fallback to Pass (check forcing constraints first)
         self._last_rule_id = 'default_pass'
         self._last_schema_file = None
         self._last_priority = 0
@@ -243,47 +249,22 @@ class BiddingEngineV2Schema:
             "Pass", last_contract_level=last_level, last_contract_suit=last_suit
         )
         if not forcing_validation.is_valid:
-            # Cannot pass - return a warning explanation
+            # Cannot pass in a forcing auction — find cheapest legal bid
+            emergency_bid = self._find_cheapest_legal_bid(
+                auction_history, my_position, dealer
+            )
+            if emergency_bid:
+                logger.info(
+                    f"Forcing enforcement: {emergency_bid} instead of Pass "
+                    f"({forcing_validation.reason})"
+                )
+                return (emergency_bid,
+                        f"Forced bid — {forcing_validation.reason}")
+
+            # Truly stuck — no legal non-Pass bid exists (shouldn't happen)
             return ('Pass', f'Warning: {forcing_validation.reason}')
 
         return ('Pass', 'No applicable bidding rule found')
-
-    def _get_v1_engine(self):
-        """Lazy-load the V1 engine for fallback."""
-        if self._v1_engine is None:
-            from engine.bidding_engine import BiddingEngine
-            self._v1_engine = BiddingEngine()
-        return self._v1_engine
-
-    def _get_v1_fallback_bid(
-        self,
-        hand: Hand,
-        auction_history: List[str],
-        my_position: str,
-        vulnerability: str
-    ) -> Tuple[str, str]:
-        """
-        Get bid from V1 engine when V2 schema has no matching rule.
-
-        Returns:
-            Tuple of (bid, explanation) with V1 fallback note
-        """
-        self._v1_fallback_count += 1
-
-        try:
-            v1_engine = self._get_v1_engine()
-            bid, explanation = v1_engine.get_next_bid(
-                hand=hand,
-                auction_history=auction_history,
-                my_position=my_position,
-                vulnerability=vulnerability
-            )
-            # Add note that this came from V1 fallback (useful for debugging)
-            logger.debug(f"V2 Schema fallback to V1: {bid} - {explanation}")
-            return (bid, explanation)
-        except Exception as e:
-            logger.warning(f"V1 fallback failed: {e}")
-            return ('Pass', f'Fallback error: {str(e)}')
 
     def get_next_bid_structured(
         self,
@@ -443,6 +424,27 @@ class BiddingEngineV2Schema:
 
         return features
 
+    def _find_cheapest_legal_bid(
+        self,
+        auction_history: List[str],
+        my_position: str,
+        dealer: str
+    ) -> Optional[str]:
+        """
+        Find the cheapest legal non-Pass bid when forcing requires action.
+
+        Used as an emergency fallback when no schema rule provides a bid
+        but the forcing state machine says Pass is illegal.
+        """
+        # All possible bids in ascending order
+        suit_order = ['♣', '♦', '♥', '♠', 'NT']
+        for level in range(1, 8):
+            for suit in suit_order:
+                bid = f"{level}{suit}"
+                if self._is_bid_legal(bid, auction_history, my_position, dealer):
+                    return bid
+        return None
+
     @staticmethod
     def _get_last_contract_suit(auction_history: List[str]) -> str:
         """Extract the suit of the last contract bid from the auction."""
@@ -453,28 +455,40 @@ class BiddingEngineV2Schema:
                     return suit_part
         return ''
 
-    def _is_bid_legal(self, bid: str, auction_history: List[str]) -> bool:
+    def _is_bid_legal(self, bid: str, auction_history: List[str],
+                      my_position: str = 'South', dealer: str = 'North') -> bool:
         """
         Check if a bid is legal given the auction history.
         """
         if bid in ['Pass', 'X', 'XX']:
-            # X only legal after opponent bid
+            # X only legal after an opponent's non-pass bid
             if bid == 'X':
                 if not auction_history:
                     return False
-                # Must have a non-pass bid to double
-                for b in reversed(auction_history):
+                my_s = seat_from_index(seat_index(my_position))
+                partner_s = partner_seat(my_position)
+                dealer_idx = seat_index(dealer)
+                for i in range(len(auction_history) - 1, -1, -1):
+                    b = auction_history[i]
                     if b not in ['Pass']:
-                        return b not in ['X', 'XX']
+                        bidder_s = seat_from_index(dealer_idx + i)
+                        is_opponent = bidder_s != my_s and bidder_s != partner_s
+                        return is_opponent and b not in ['X', 'XX']
                 return False
 
-            # XX only legal after X
+            # XX only legal after opponent's X
             if bid == 'XX':
                 if not auction_history:
                     return False
-                for b in reversed(auction_history):
+                my_s = seat_from_index(seat_index(my_position))
+                partner_s = partner_seat(my_position)
+                dealer_idx = seat_index(dealer)
+                for i in range(len(auction_history) - 1, -1, -1):
+                    b = auction_history[i]
                     if b != 'Pass':
-                        return b == 'X'
+                        bidder_s = seat_from_index(dealer_idx + i)
+                        is_opponent = bidder_s != my_s and bidder_s != partner_s
+                        return is_opponent and b == 'X'
                 return False
 
             return True  # Pass always legal
@@ -538,19 +552,16 @@ class BiddingEngineV2Schema:
         self.conflict_resolver.reset_stats()
 
     def get_fallback_stats(self) -> Dict:
-        """Get V1 fallback usage statistics."""
+        """Get bid statistics. V1 fallback has been removed — always returns 0 fallbacks."""
         return {
             'total_bids': self._total_bid_count,
-            'v1_fallbacks': self._v1_fallback_count,
-            'v2_schema_hits': self._total_bid_count - self._v1_fallback_count,
-            'fallback_rate': (
-                self._v1_fallback_count / max(1, self._total_bid_count) * 100
-            )
+            'v1_fallbacks': 0,
+            'v2_schema_hits': self._total_bid_count,
+            'fallback_rate': 0.0
         }
 
     def reset_fallback_stats(self):
-        """Reset V1 fallback statistics."""
-        self._v1_fallback_count = 0
+        """Reset bid statistics."""
         self._total_bid_count = 0
 
     def evaluate_user_bid(

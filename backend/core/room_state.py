@@ -32,6 +32,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from engine.play_engine import PlayState
+from utils.seats import (
+    partner as seats_partner, normalize, active_seat_bidding, SEAT_NAMES
+)
 
 
 @dataclass
@@ -57,6 +60,13 @@ class RoomState:
     room_code: str
     host_session_id: str
     guest_session_id: Optional[str] = None
+
+    # User IDs (from X-User-ID header, for partnership tracking)
+    host_user_id: Optional[str] = None
+    guest_user_id: Optional[str] = None
+
+    # Partnership ID (looked up/created when guest joins)
+    partnership_id: Optional[int] = None
 
     # Position assignments (fixed for Team Practice)
     host_position: str = 'S'  # Host always South
@@ -97,8 +107,8 @@ class RoomState:
     created_at: datetime = field(default_factory=datetime.now)
     last_activity: datetime = field(default_factory=datetime.now)
 
-    # Disconnect timeout in seconds (60s prevents false positives during active play)
-    DISCONNECT_TIMEOUT: int = 60
+    # Disconnect timeout in seconds (300s gives time for invite link sharing)
+    DISCONNECT_TIMEOUT: int = 300
 
     def touch(self):
         """Update last activity timestamp"""
@@ -161,11 +171,8 @@ class RoomState:
         """Get current bidder position based on auction state"""
         if self.game_phase != 'bidding':
             return None
-        # Dealer position determines first bidder
-        dealer_positions = ['N', 'E', 'S', 'W']
-        dealer_idx = dealer_positions.index(self.dealer[0].upper())
-        current_idx = (dealer_idx + len(self.auction_history)) % 4
-        return dealer_positions[current_idx]
+        dealer_short = normalize(self.dealer)
+        return active_seat_bidding(dealer_short, len(self.auction_history))
 
     def is_session_turn(self, session_id: str) -> bool:
         """Check if it's this session's turn to act (includes declarer controlling dummy)"""
@@ -177,12 +184,14 @@ class RoomState:
             return self.get_current_bidder() == position
         elif self.game_phase == 'playing' and self.play_state:
             next_player = self.play_state.next_to_play
+            declarer = self.play_state.contract.declarer
+            dummy = seats_partner(declarer)
+            # Dummy never controls their own cards — declarer does
+            if position == dummy:
+                return False
             if next_player == position:
                 return True
             # Declarer also controls dummy's cards
-            from engine.play_engine import PlayEngine
-            declarer = self.play_state.contract.declarer
-            dummy = PlayEngine.partner(declarer)
             if position == declarer and next_player == dummy:
                 return True
             return False
@@ -235,17 +244,17 @@ class RoomState:
             result['partner_disconnected'] = self.is_partner_disconnected(for_session)
 
             # Include hand for this position
-            if position and self.deal.get(self._full_position_name(position)):
-                hand = self.deal[self._full_position_name(position)]
+            if position and self.deal.get(SEAT_NAMES.get(position, position)):
+                hand = self.deal[SEAT_NAMES[position]]
                 result['my_hand'] = self._serialize_hand(hand)
 
             # Hand review: reveal partner's hand when auction is complete
             if self.game_phase == 'complete':
-                partner = 'N' if position == 'S' else 'S'
-                partner_hand = self.deal.get(self._full_position_name(partner))
+                partner_pos = seats_partner(position)
+                partner_hand = self.deal.get(SEAT_NAMES[partner_pos])
                 if partner_hand:
                     result['partner_hand'] = self._serialize_hand(partner_hand)
-                    result['partner_position'] = partner
+                    result['partner_position'] = partner_pos
 
                 # Include bid feedback for review
                 if self.bid_feedback:
@@ -278,8 +287,7 @@ class RoomState:
 
         # Determine declarer and dummy
         declarer = ps.contract.declarer
-        from engine.play_engine import PlayEngine
-        dummy = PlayEngine.partner(declarer)
+        dummy = seats_partner(declarer)
 
         # Build visible hands based on position
         visible_hands = {}
@@ -364,8 +372,7 @@ class RoomState:
 
     def _full_position_name(self, short: str) -> str:
         """Convert S/N/E/W to full position name"""
-        mapping = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
-        return mapping.get(short, short)
+        return SEAT_NAMES.get(short, short)
 
     def _serialize_hand(self, hand) -> Optional[List[dict]]:
         """Serialize a Hand object to list of card dicts"""

@@ -31,7 +31,20 @@ from engine.ai.conventions.minor_suit_bust import MinorSuitBustConvention
 from engine.ai.conventions.grand_slam_force import GrandSlamForceConvention
 
 class BiddingEngine:
+    """DEPRECATED: Use BiddingEngineV2Schema instead.
+
+    This V1 engine is deprecated as of 2026-03-09. Production uses V2Schema.
+    All new tests and features should use:
+        from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
+    """
     def __init__(self):
+        import warnings
+        warnings.warn(
+            "BiddingEngine (V1) is deprecated. Use BiddingEngineV2Schema instead. "
+            "from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema",
+            DeprecationWarning,
+            stacklevel=2
+        )
         # ADR-0002 Phase 1: Use ModuleRegistry instead of manual registration
         # All modules auto-register on import, so we just get the registry
         self.modules = ModuleRegistry.get_all()

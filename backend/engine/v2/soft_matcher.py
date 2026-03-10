@@ -47,7 +47,7 @@ class SoftMatcher:
 
     # Legacy penalty thresholds (used when constraint_type not specified)
     HCP_SOFT_PENALTY_PER_POINT = 0.10  # 10% per HCP difference
-    HCP_HARD_FAIL_THRESHOLD = 3  # More than 3 HCP off = hard fail
+    HCP_HARD_FAIL_THRESHOLD = 2  # More than 2 HCP off = hard fail
     SEMI_BALANCED_PENALTY = 0.20  # 20% penalty for semi-balanced when balanced required
 
     def calculate(self, rule: Dict[str, Any], features: Dict[str, Any]) -> MatchResult:
@@ -95,11 +95,39 @@ class SoftMatcher:
 
         for constraint in constraints:
             feature_name = constraint.get('feature')
+
+            # Handle OR constraints with nested branches
+            if feature_name == 'OR':
+                or_branches = constraint.get('in', [])
+                best_score = 0.0
+                for branch in or_branches:
+                    if isinstance(branch, dict):
+                        branch_score = self._evaluate_branch(branch, features)
+                        if branch_score > best_score:
+                            best_score = branch_score
+                constraint_score = best_score
+                fail_reason = "No OR branch matched" if best_score == 0.0 else None
+                constraint_scores['OR'] = constraint_score
+                if constraint_score == 0.0:
+                    constraint_type = constraint.get('constraint_type', 'HARD').upper()
+                    if constraint_type == 'HARD':
+                        return MatchResult(
+                            score=0.0,
+                            penalties={'OR': 1.0},
+                            hard_fail_reason=fail_reason
+                        )
+                quality *= constraint_score
+                continue
+
             actual = features.get(feature_name)
 
             # Evaluate this constraint and get its individual score
             constraint_score, fail_reason = self.evaluate_constraint(constraint, actual)
-            constraint_scores[feature_name] = constraint_score
+            # Use unique key for duplicate feature names (e.g., split hcp min/max)
+            score_key = feature_name
+            if score_key in constraint_scores:
+                score_key = f"{feature_name}_{len(constraint_scores)}"
+            constraint_scores[score_key] = constraint_score
 
             # HARD fail = immediate 0.0
             if constraint_score == 0.0:
@@ -171,6 +199,11 @@ class SoftMatcher:
         if constraint_type == 'HARD':
             return (0.0, fail_reason)
 
+        # SOFT with hard floor: if deviation exceeds threshold, treat as HARD fail
+        # This prevents wildly out-of-range matches (e.g., 7 HCP opening 1NT)
+        if feature_name == 'hcp' and distance > self.HCP_HARD_FAIL_THRESHOLD:
+            return (0.0, f"{feature_name}: deviation {distance} exceeds hard floor ({self.HCP_HARD_FAIL_THRESHOLD})")
+
         # SOFT: Apply asymmetric penalty for HCP (overshoot penalized more heavily)
         effective_penalty = penalty_per_unit
 
@@ -184,6 +217,9 @@ class SoftMatcher:
         score = 1.0 - (distance * effective_penalty)
         score = max(0.0, score)  # Clamp to minimum 0.0
         return (score, fail_reason)
+
+    # Ordinal scale for suit quality comparisons
+    SUIT_QUALITY_ORDER = {'poor': 0, 'fair': 1, 'good': 2, 'excellent': 3}
 
     def _evaluate_single_constraint(self, constraint: Dict, actual: Any) -> Tuple[bool, float, Optional[str]]:
         """
@@ -206,12 +242,45 @@ class SoftMatcher:
             else:
                 return (False, 1, f"{feature_name}: expected {expected}, got {actual}")
 
+        # Handle 'in' list membership (e.g., longest_suit in ["♠", "♥"])
+        if 'in' in constraint:
+            allowed = constraint['in']
+            if actual is not None and actual in allowed:
+                return (True, 0, None)
+            else:
+                return (False, 1, f"{feature_name}: '{actual}' not in {allowed}")
+
+        # Handle 'not_in' exclusion (e.g., partner_last_bid not in ["2♣"])
+        if 'not_in' in constraint:
+            forbidden = constraint['not_in']
+            if actual is None or actual not in forbidden:
+                return (True, 0, None)
+            else:
+                return (False, 1, f"{feature_name}: '{actual}' in forbidden list {forbidden}")
+
         # Handle min/max range
         min_val = constraint.get('min')
         max_val = constraint.get('max')
 
         if actual is None:
+            # No min/max and no expected/in — constraint has no check (e.g., bare feature assertion)
+            if min_val is None and max_val is None:
+                return (True, 0, None)
             return (False, 1, f"{feature_name}: value not set")
+
+        # Handle string ordinal comparisons (suit quality)
+        if isinstance(min_val, str) and min_val in self.SUIT_QUALITY_ORDER:
+            actual_rank = self.SUIT_QUALITY_ORDER.get(actual, -1) if isinstance(actual, str) else -1
+            min_rank = self.SUIT_QUALITY_ORDER[min_val]
+            if actual_rank >= min_rank:
+                return (True, 0, None)
+            else:
+                distance = min_rank - actual_rank
+                return (False, distance, f"{feature_name}: '{actual}' below min '{min_val}'")
+
+        # No min/max specified — pass (bare constraint with just feature name)
+        if min_val is None and max_val is None:
+            return (True, 0, None)
 
         distance = 0
         fail_reason = None
@@ -384,8 +453,7 @@ class SoftMatcher:
         Penalty schedule:
         - In range: 0.0
         - 1 point off: 0.10 (10%)
-        - 2 points off: 0.25 (25%)
-        - 3+ points off: 1.0 (hard fail)
+        - 2+ points off: 1.0 (hard fail)
         """
         if target_min <= actual <= target_max:
             return 0.0
@@ -396,12 +464,10 @@ class SoftMatcher:
         else:
             dist = actual - target_max
 
-        # Decay function per spec
+        # Hard fail for 2+ points difference (matches HCP_HARD_FAIL_THRESHOLD)
         if dist == 1:
             return 0.10
-        if dist == 2:
-            return 0.25
-        return 1.0  # Hard fail for 3+ points difference
+        return 1.0  # Hard fail for 2+ points difference
 
     def _check_shape(self, conditions: Dict, features: Dict) -> Tuple[float, Optional[str]]:
         """
@@ -427,6 +493,12 @@ class SoftMatcher:
             if isinstance(length_condition, dict):
                 min_len = length_condition.get('min', 0)
                 max_len = length_condition.get('max', 13)
+
+                # Resolve feature references (e.g., "min": "spades_length")
+                if isinstance(min_len, str):
+                    min_len = features.get(min_len, 0)
+                if isinstance(max_len, str):
+                    max_len = features.get(max_len, 13)
 
                 # Hard fail for insufficient length (structural violation)
                 if actual_length < min_len:
@@ -454,21 +526,24 @@ class SoftMatcher:
             Tuple of (score 0.0-1.0, failure reason if hard fail)
         """
         requires_balanced = conditions.get('is_balanced')
-        if not requires_balanced:
+        if requires_balanced is None:
             return (1.0, None)  # No balance requirement
 
         is_balanced = features.get('is_balanced', False)
         is_semi_balanced = features.get('is_semi_balanced', False)
 
-        if is_balanced:
+        if requires_balanced:
+            # Rule requires balanced hand
+            if is_balanced:
+                return (1.0, None)
+            if is_semi_balanced:
+                return (1.0 - self.SEMI_BALANCED_PENALTY, None)
+            return (0.0, "Unbalanced hand, balanced required")
+        else:
+            # Rule requires unbalanced hand (is_balanced: false)
+            if is_balanced:
+                return (0.0, "Balanced hand, unbalanced required")
             return (1.0, None)
-
-        if is_semi_balanced:
-            # Soft penalty for semi-balanced (e.g., 5-3-3-2)
-            return (1.0 - self.SEMI_BALANCED_PENALTY, None)
-
-        # Unbalanced hand with balanced requirement = hard fail
-        return (0.0, "Unbalanced hand, balanced required")
 
     def _check_boolean_conditions(self, conditions: Dict, features: Dict) -> Tuple[float, Optional[str]]:
         """
@@ -628,6 +703,16 @@ class SoftMatcher:
             elif isinstance(expected, bool):
                 if actual != expected:
                     return (0.0, f"{key}: expected {expected}, got {actual}")
+
+            # Handle integer/float equality
+            elif isinstance(expected, (int, float)) and not isinstance(expected, bool):
+                if actual is None:
+                    return (0.0, f"{key}: value not set, expected {expected}")
+                try:
+                    if actual != expected:
+                        return (0.0, f"{key}: expected {expected}, got {actual}")
+                except TypeError:
+                    return (0.0, f"{key}: cannot compare {actual} with {expected}")
 
             # Handle string equality
             elif isinstance(expected, str):

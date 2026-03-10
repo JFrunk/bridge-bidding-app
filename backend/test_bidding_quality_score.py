@@ -24,30 +24,17 @@ from engine.bidding_engine import BiddingEngine
 from engine.bidding_validation import BidValidator
 
 
-def generate_random_hand() -> Hand:
-    """Generate a random 13-card bridge hand."""
-    # Create full deck
-    ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
-    suits = ['♠', '♥', '♦', '♣']
-    deck = [Card(rank, suit) for suit in suits for rank in ranks]
-
-    # Shuffle and deal 13 cards
-    random.shuffle(deck)
-    cards = deck[:13]
-
-    return Hand(cards)
+from utils.dealing import deal_four_hands
 
 
-# from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
-from engine.bidding_engine_v2 import BiddingEngineV2
+from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
 
 class BiddingQualityScorer:
     """Comprehensive bidding quality testing."""
 
     def __init__(self, num_hands: int = 500):
         self.num_hands = num_hands
-        # self.engine = BiddingEngineV2Schema(use_v1_fallback=False)
-        self.engine = BiddingEngineV2()
+        self.engine = BiddingEngineV2Schema()
         self.results = {
             'total_hands': 0,
             'total_bids': 0,
@@ -70,9 +57,10 @@ class BiddingQualityScorer:
             'consistency_failures': []
         }
 
-    def run_full_test(self) -> Dict:
+    def run_full_test(self, seed: int = 42) -> Dict:
         """Run all tests and return composite score."""
-        print(f"🎯 Running Bidding Quality Score on {self.num_hands} hands...")
+        random.seed(seed)
+        print(f"🎯 Running Bidding Quality Score on {self.num_hands} hands (seed={seed})...")
         print(f"⏰ Started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print()
 
@@ -96,13 +84,12 @@ class BiddingQualityScorer:
         """Test a single randomly generated hand."""
         self.results['total_hands'] += 1
 
-        # Generate 4 hands
-        hands = {
-            'North': generate_random_hand(),
-            'South': generate_random_hand(),
-            'East': generate_random_hand(),
-            'West': generate_random_hand()
-        }
+        # Reset engine state for new deal
+        if hasattr(self.engine, 'new_deal'):
+            self.engine.new_deal()
+
+        # Deal 4 hands from a single deck (realistic bridge dealing)
+        hands = deal_four_hands()
 
         # Simulate bidding
         dealer = random.choice(['North', 'South', 'East', 'West'])
@@ -143,7 +130,8 @@ class BiddingQualityScorer:
                     hand=hand,
                     auction_history=auction_history,
                     my_position=position,
-                    vulnerability=vulnerability
+                    vulnerability=vulnerability,
+                    dealer=dealer
                 )
             except Exception as e:
                 # If bidding fails, pass

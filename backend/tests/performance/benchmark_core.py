@@ -38,14 +38,9 @@ class PerformanceBenchmark:
 
 def generate_random_deal():
     """Generate a random 4-hand deal."""
-    deck = [Card(r, s) for r in '23456789TJQKA' for s in ['♠', '♥', '♦', '♣']]
-    random.shuffle(deck)
-    return {
-        'N': Hand(deck[0:13]),
-        'E': Hand(deck[13:26]),
-        'S': Hand(deck[26:39]),
-        'W': Hand(deck[39:52])
-    }
+    from utils.dealing import deal_four_hands
+    full = deal_four_hands()
+    return {k[0]: v for k, v in full.items()}
 
 
 def benchmark_deal_generation():

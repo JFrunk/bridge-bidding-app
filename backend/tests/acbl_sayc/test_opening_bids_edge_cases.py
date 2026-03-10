@@ -11,7 +11,7 @@ Created after user feedback discovered 2♣ rule was too restrictive.
 """
 import pytest
 from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
+from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
 
 
 def make_hand(spades: str, hearts: str, diamonds: str, clubs: str) -> Hand:
@@ -27,7 +27,7 @@ def make_hand(spades: str, hearts: str, diamonds: str, clubs: str) -> Hand:
 
 def get_opening_bid(hand: Hand) -> tuple:
     """Get the opening bid for a hand."""
-    engine = BiddingEngine()
+    engine = BiddingEngineV2Schema()
     return engine.get_next_bid(
         hand=hand,
         auction_history=[],

@@ -4,13 +4,11 @@ Schema Interpreter for V2 Bidding Engine
 Reads JSON schema files and evaluates rules against hand features
 to determine appropriate bids.
 
-Includes Forcing Level state tracking for proper handling of:
-- Non-forcing bids
-- One-round forcing bids (new suit responses in SAYC)
-- Game forcing sequences (2/1, jump shifts, 4th suit forcing)
-
 Phase 2 Enhancement: Uses SoftMatcher for fuzzy matching to enable
 "Best-Match-Wins" selection instead of "First-Match-Wins".
+
+Forcing level tracking is delegated to ForcingStateMachine.
+Gap analysis is delegated to GapAnalyzer.
 """
 
 import json
@@ -19,34 +17,16 @@ import re
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass, field
-from enum import Enum
 
 from engine.v2.soft_matcher import SoftMatcher
+from engine.v2.interpreters.forcing_state import (
+    ForcingStateMachine,
+    ForcingLevel,
+    AuctionState,
+    BidValidationResult
+)
 
 logger = logging.getLogger(__name__)
-
-
-class ForcingLevel(Enum):
-    """Forcing level states for auction tracking."""
-    NON_FORCING = "NON_FORCING"
-    FORCING_1_ROUND = "FORCING_1_ROUND"
-    GAME_FORCE = "GAME_FORCE"
-
-
-@dataclass
-class AuctionState:
-    """Tracks the current state of the auction for forcing logic."""
-    forcing_level: ForcingLevel = ForcingLevel.NON_FORCING
-    is_game_forced: bool = False
-    forcing_source: Optional[str] = None  # Rule ID that established forcing
-    bids_since_forcing: int = 0  # Track rounds since forcing was set
-
-    def reset(self):
-        """Reset state for a new deal."""
-        self.forcing_level = ForcingLevel.NON_FORCING
-        self.is_game_forced = False
-        self.forcing_source = None
-        self.bids_since_forcing = 0
 
 
 @dataclass
@@ -63,14 +43,6 @@ class BidCandidate:
     schema_file: Optional[str] = None  # Source schema file for tracking
     match_quality: float = 1.0  # Soft match quality (0.0-1.0) from SoftMatcher
     weighted_score: float = 0.0  # priority * match_quality for ranking
-
-
-@dataclass
-class BidValidationResult:
-    """Result of validating a bid against forcing constraints."""
-    is_valid: bool
-    reason: Optional[str] = None
-    violation_type: Optional[str] = None  # "GAME_FORCE_VIOLATION", "ONE_ROUND_VIOLATION"
 
 
 class SchemaInterpreter:
@@ -102,8 +74,10 @@ class SchemaInterpreter:
         self.schema_dir = Path(schema_dir)
         self.schemas: Dict[str, Dict] = {}
 
-        # Forcing level state tracking
-        self.auction_state = AuctionState()
+        # Forcing level state tracking (delegated to ForcingStateMachine)
+        self.forcing = ForcingStateMachine()
+        # Backward-compatible alias
+        self.auction_state = self.forcing.state
 
         # SoftMatcher for fuzzy matching (Phase 2: Best-Match-Wins)
         self.soft_matcher = SoftMatcher()
@@ -112,16 +86,11 @@ class SchemaInterpreter:
 
     def reset_state(self):
         """Reset auction state for a new deal."""
-        self.auction_state.reset()
+        self.forcing.reset()
 
     def get_forcing_state(self) -> Dict[str, Any]:
         """Get current forcing state for debugging/display."""
-        return {
-            'forcing_level': self.auction_state.forcing_level.value,
-            'is_game_forced': self.auction_state.is_game_forced,
-            'forcing_source': self.auction_state.forcing_source,
-            'bids_since_forcing': self.auction_state.bids_since_forcing
-        }
+        return self.forcing.get_state()
 
     def _load_schemas(self):
         """Load all JSON schema files from the schema directory."""
@@ -139,90 +108,17 @@ class SchemaInterpreter:
                 print(f"Warning: Failed to load schema {schema_file}: {e}")
 
     def _update_forcing_state(self, new_level: Optional[str], rule_id: str):
-        """
-        Update the forcing state based on a matched rule's metadata.
+        """Update forcing state. Delegates to ForcingStateMachine."""
+        self.forcing.update(new_level, rule_id)
 
-        State transitions:
-        - GAME_FORCE is "sticky" - once set, cannot be unset until game reached
-        - FORCING_1_ROUND expires after partner bids (tracked via bids_since_forcing)
-        - NON_FORCING is the default state
-
-        Args:
-            new_level: The sets_forcing_level value from the matched rule
-            rule_id: ID of the rule that matched (for tracking source)
-        """
-        # Game force is permanent (sticky)
-        if self.auction_state.is_game_forced:
-            return
-
-        if new_level == "GAME_FORCE":
-            self.auction_state.forcing_level = ForcingLevel.GAME_FORCE
-            self.auction_state.is_game_forced = True
-            self.auction_state.forcing_source = rule_id
-            self.auction_state.bids_since_forcing = 0
-
-        elif new_level == "FORCING_1_ROUND":
-            self.auction_state.forcing_level = ForcingLevel.FORCING_1_ROUND
-            self.auction_state.forcing_source = rule_id
-            self.auction_state.bids_since_forcing = 0
-
-        elif new_level == "NON_FORCING" or new_level is None:
-            # Check if we should expire a 1-round forcing
-            if self.auction_state.forcing_level == ForcingLevel.FORCING_1_ROUND:
-                self.auction_state.bids_since_forcing += 1
-                # After partner bids (2 bids in partnership), 1-round forcing expires
-                if self.auction_state.bids_since_forcing >= 2:
-                    self.auction_state.forcing_level = ForcingLevel.NON_FORCING
-                    self.auction_state.forcing_source = None
+    def update_forcing_state(self, new_level: Optional[str], rule_id: str):
+        """Public API for updating forcing state from bidding engine."""
+        self.forcing.update(new_level, rule_id)
 
     def validate_bid_against_forcing(self, bid: str, last_contract_level: int = 0,
                                       last_contract_suit: str = '') -> BidValidationResult:
-        """
-        Validate a bid against the current forcing state.
-
-        This is the "falsification" logic that prevents illegal passes
-        during forcing sequences.
-
-        Args:
-            bid: The bid to validate
-            last_contract_level: Current highest bid level in auction (0-7)
-            last_contract_suit: Suit of the last contract bid (for game-level check)
-
-        Returns:
-            BidValidationResult indicating if the bid is legal
-        """
-        if bid != "Pass":
-            return BidValidationResult(is_valid=True)
-
-        # Check if game level has been reached — GF is satisfied
-        # Game = 3NT, 4♥, 4♠, 5♣, 5♦, or any level 6+
-        game_reached = (
-            last_contract_level >= 6 or
-            last_contract_level >= 5 or  # 5-level of any suit is game for minors
-            (last_contract_level == 4 and last_contract_suit in ('♥', '♠', 'NT')) or
-            (last_contract_level == 3 and last_contract_suit == 'NT')
-        )
-        if game_reached:
-            # Game force is satisfied — pass is legal
-            return BidValidationResult(is_valid=True)
-
-        # Check Game Force violation
-        if self.auction_state.is_game_forced:
-            return BidValidationResult(
-                is_valid=False,
-                reason="Cannot Pass: Auction is Game Forced. Partnership must reach game.",
-                violation_type="GAME_FORCE_VIOLATION"
-            )
-
-        # Check 1-round forcing violation
-        if self.auction_state.forcing_level == ForcingLevel.FORCING_1_ROUND:
-            return BidValidationResult(
-                is_valid=False,
-                reason="Cannot Pass: Partner's bid is forcing for one round.",
-                violation_type="ONE_ROUND_VIOLATION"
-            )
-
-        return BidValidationResult(is_valid=True)
+        """Validate bid against forcing constraints. Delegates to ForcingStateMachine."""
+        return self.forcing.validate_bid(bid, last_contract_level, last_contract_suit)
 
     def evaluate(self, features: Dict[str, Any]) -> Optional[Tuple[str, str]]:
         """
@@ -489,11 +385,10 @@ class SchemaInterpreter:
             True if all HARD constraints pass
         """
         for constraint in constraints:
-            constraint_type = constraint.get('constraint_type', 'HARD')
-
-            # Only evaluate HARD constraints for pass/fail
-            if constraint_type != 'HARD':
-                continue
+            # Evaluate ALL constraints (HARD and SOFT) for pass/fail.
+            # SOFT constraints were previously skipped, causing rules to match
+            # with wildly out-of-range values (e.g., 1NT opening with 7 HCP).
+            # The SOFT designation is retained for future SoftMatcher tie-breaking.
 
             feature_name = constraint.get('feature')
             if not feature_name:
@@ -830,7 +725,9 @@ class SchemaInterpreter:
             if var_name == 'partner_suit':
                 partner_bid = features.get('partner_last_bid', '')
                 if partner_bid and len(partner_bid) >= 2:
-                    return partner_bid[1:]
+                    suit = partner_bid[1:]
+                    if suit in ['♠', '♥', '♦', '♣', 'NT']:
+                        return suit
                 return ''
 
             # Special case: partner_first_suit
@@ -857,12 +754,13 @@ class SchemaInterpreter:
                 return ''
 
             # Special case: first_suit - my first bid suit (for rebidding own suit)
+            # Falls back to longest_suit when no prior suit bid exists (e.g., opening)
             if var_name == 'first_suit':
-                return features.get('my_suit', '')
+                return features.get('my_suit') or features.get('longest_suit', '')
 
             # Special case: my_suit - same as first_suit
             if var_name == 'my_suit':
-                return features.get('my_suit', '')
+                return features.get('my_suit') or features.get('longest_suit', '')
 
             # Special case: suit - general suit placeholder
             # Check if rule specifies a selection strategy
@@ -966,421 +864,8 @@ class SchemaInterpreter:
         """
         Analyze why rules didn't match and what gaps exist.
 
-        Returns detailed information about:
-        1. Which conditions passed vs failed
-        2. For numeric conditions, how far off the actual value was
-        3. What would need to change for the rule to match
-
-        This enables visual debugging in the UI showing exactly why
-        specific bids were rejected (e.g., "missing 1 HCP" or "need diamond stopper").
-
-        Args:
-            features: The extracted features for this hand/auction
-            target_bid: If specified, only analyze rules for this bid
-            max_rules: Maximum number of rules to return (sorted by priority)
-
-        Returns:
-            List of rule analysis dicts with gap information
+        Delegates to GapAnalyzer. See gap_analyzer.py for implementation.
         """
-        analyses = []
-
-        for category, schema in self.schemas.items():
-            for rule in schema.get('rules', []):
-                bid = self._resolve_bid(rule.get('bid', 'Pass'), features, rule)
-
-                # Skip rules where bid resolution failed
-                if bid is None:
-                    continue
-
-                # Filter by target bid if specified
-                if target_bid and bid != target_bid:
-                    continue
-
-                analysis = self._analyze_rule_gaps(rule, features, category)
-                analyses.append(analysis)
-
-        # Sort by: matched rules first, then by how close (fewest gaps)
-        analyses.sort(key=lambda a: (
-            -1 if a['matched'] else 0,  # Matched rules first
-            a['gap_count'],              # Then by fewest gaps
-            -a['priority']               # Then by priority
-        ))
-
-        return analyses[:max_rules]
-
-    def _analyze_rule_gaps(
-        self,
-        rule: Dict,
-        features: Dict[str, Any],
-        category: str
-    ) -> Dict:
-        """
-        Analyze a single rule's conditions and identify specific gaps.
-
-        Returns a detailed analysis including:
-        - Which conditions passed/failed
-        - For numeric constraints, the actual vs required values
-        - A human-readable gap description
-        """
-        rule_id = rule.get('id', 'unknown')
-        bid = self._resolve_bid(rule.get('bid', 'Pass'), features, rule)
-        priority = rule.get('priority', 0)
-        description = rule.get('description', rule.get('explanation', ''))
-
-        # Check trigger first
-        trigger = rule.get('trigger')
-        trigger_matched = True
-        trigger_gap = None
-        if trigger:
-            trigger_matched = self._matches_trigger(trigger, features)
-            if not trigger_matched:
-                trigger_gap = f"Auction pattern doesn't match: {trigger}"
-
-        # Analyze conditions
-        conditions = rule.get('conditions', {})
-        constraints = rule.get('constraints', {})
-        # constraints can be a list of dicts (e.g. [{"feature": "hcp", "min": 12}])
-        # or a dict — merge dict constraints with conditions, analyze list separately
-        if isinstance(constraints, list):
-            condition_analysis = self._analyze_conditions(conditions, features)
-            condition_analysis.extend(
-                self._analyze_array_constraints_gaps(constraints, features)
-            )
-        else:
-            all_conditions = {**conditions, **constraints}
-            condition_analysis = self._analyze_conditions(all_conditions, features)
-
-        # Calculate overall match
-        all_passed = trigger_matched and all(
-            c['passed'] for c in condition_analysis
-        )
-        gap_count = sum(1 for c in condition_analysis if not c['passed'])
-        if not trigger_matched:
-            gap_count += 1
-
-        return {
-            'rule_id': rule_id,
-            'bid': bid,
-            'category': category,
-            'priority': priority,
-            'description': description,
-            'matched': all_passed,
-            'gap_count': gap_count,
-            'trigger': trigger,
-            'trigger_matched': trigger_matched,
-            'trigger_gap': trigger_gap,
-            'conditions': condition_analysis,
-            'forcing': rule.get('forcing', 'none'),
-            'sets_forcing_level': rule.get('sets_forcing_level')
-        }
-
-    def _analyze_conditions(
-        self,
-        conditions: Dict,
-        features: Dict[str, Any],
-        prefix: str = ''
-    ) -> List[Dict]:
-        """
-        Recursively analyze conditions and return detailed gap information.
-
-        For each condition, returns:
-        - key: The condition key (e.g., 'hcp', 'is_balanced')
-        - required: What the condition requires
-        - actual: The actual feature value
-        - passed: Whether the condition was met
-        - gap: Human-readable description of the gap (if failed)
-        """
-        results = []
-
-        for key, expected in conditions.items():
-            full_key = f"{prefix}{key}" if prefix else key
-
-            # Handle boolean logic operators
-            if key == 'OR':
-                or_results = []
-                for i, sub_cond in enumerate(expected):
-                    sub_analysis = self._analyze_conditions(sub_cond, features, f"{full_key}[{i}].")
-                    or_results.append(sub_analysis)
-                # OR passes if any branch passes
-                any_passed = any(
-                    all(c['passed'] for c in branch) for branch in or_results
-                )
-                results.append({
-                    'key': full_key,
-                    'type': 'OR',
-                    'required': 'any branch',
-                    'actual': 'see branches',
-                    'passed': any_passed,
-                    'gap': None if any_passed else 'No OR branch matched',
-                    'branches': or_results
-                })
-                continue
-
-            if key == 'AND':
-                and_results = []
-                for i, sub_cond in enumerate(expected):
-                    sub_analysis = self._analyze_conditions(sub_cond, features, f"{full_key}[{i}].")
-                    and_results.extend(sub_analysis)
-                results.extend(and_results)
-                continue
-
-            if key == 'NOT':
-                not_analysis = self._analyze_conditions(expected, features, f"{full_key}.")
-                # NOT passes if the inner condition fails
-                inner_passed = all(c['passed'] for c in not_analysis)
-                results.append({
-                    'key': full_key,
-                    'type': 'NOT',
-                    'required': 'NOT satisfied',
-                    'actual': 'condition matched' if inner_passed else 'condition not matched',
-                    'passed': not inner_passed,
-                    'gap': 'Condition should NOT match but does' if inner_passed else None,
-                    'inner': not_analysis
-                })
-                continue
-
-            # Handle special expert constraints
-            if key == 'stoppers_required':
-                stopped_count = sum(1 for suit in ['spades', 'hearts', 'diamonds', 'clubs']
-                                   if features.get(f'{suit}_stopped', False))
-                passed = stopped_count >= expected
-                gap = None if passed else f"Need {expected} stoppers, have {stopped_count}"
-                results.append({
-                    'key': full_key,
-                    'type': 'numeric',
-                    'required': f">= {expected}",
-                    'actual': stopped_count,
-                    'passed': passed,
-                    'gap': gap,
-                    'shortfall': expected - stopped_count if not passed else 0
-                })
-                continue
-
-            if key == 'stoppers_in':
-                missing_stoppers = []
-                for suit_ref in expected:
-                    if suit_ref == 'opponent_suit':
-                        opening_bid = features.get('opening_bid', '')
-                        if opening_bid and len(opening_bid) >= 2:
-                            suit_symbol = opening_bid[1] if opening_bid[0].isdigit() else None
-                            suit_map = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}
-                            suit_name = suit_map.get(suit_symbol)
-                            if suit_name and not features.get(f'{suit_name}_stopped', False):
-                                missing_stoppers.append(suit_name)
-                    else:
-                        if not features.get(f'{suit_ref}_stopped', False):
-                            missing_stoppers.append(suit_ref)
-
-                passed = len(missing_stoppers) == 0
-                gap = None if passed else f"Missing stopper in: {', '.join(missing_stoppers)}"
-                results.append({
-                    'key': full_key,
-                    'type': 'stopper',
-                    'required': expected,
-                    'actual': f"Missing: {missing_stoppers}" if missing_stoppers else "All stopped",
-                    'passed': passed,
-                    'gap': gap,
-                    'missing_stoppers': missing_stoppers
-                })
-                continue
-
-            # Get actual value from features
-            actual = features.get(key)
-
-            # Handle dict conditions (comparisons)
-            if isinstance(expected, dict):
-                result = self._analyze_comparison(key, actual, expected, features)
-                results.append(result)
-
-            # Handle list membership (in: [...])
-            elif isinstance(expected, list):
-                matched = False
-                for pattern in expected:
-                    if isinstance(pattern, str) and isinstance(actual, str):
-                        if self._matches_pattern(pattern, actual):
-                            matched = True
-                            break
-                    elif actual == pattern:
-                        matched = True
-                        break
-
-                gap = None if matched else f"'{actual}' not in {expected}"
-                results.append({
-                    'key': full_key,
-                    'type': 'set',
-                    'required': f"in {expected}",
-                    'actual': actual,
-                    'passed': matched,
-                    'gap': gap
-                })
-
-            # Handle direct equality
-            else:
-                if isinstance(expected, str) and isinstance(actual, str):
-                    passed = self._matches_pattern(expected, actual)
-                else:
-                    passed = actual == expected
-
-                gap = None if passed else f"Expected {expected}, got {actual}"
-                results.append({
-                    'key': full_key,
-                    'type': 'equality',
-                    'required': expected,
-                    'actual': actual,
-                    'passed': passed,
-                    'gap': gap
-                })
-
-        return results
-
-    def _analyze_comparison(
-        self,
-        key: str,
-        actual: Any,
-        comparison: Dict,
-        features: Dict[str, Any]
-    ) -> Dict:
-        """
-        Analyze a numeric/string comparison and return detailed gap info.
-        """
-        if actual is None:
-            return {
-                'key': key,
-                'type': 'comparison',
-                'required': comparison,
-                'actual': None,
-                'passed': False,
-                'gap': f"Feature '{key}' is not set"
-            }
-
-        failures = []
-        details = {}
-
-        for op, value in comparison.items():
-            # Resolve reference values
-            if isinstance(value, str) and value in features:
-                resolved_value = features[value]
-                details[f'{op}_reference'] = value
-                value = resolved_value
-
-            if op == 'min':
-                try:
-                    if actual < value:
-                        # Only calculate numeric difference if both are numbers
-                        if isinstance(actual, (int, float)) and isinstance(value, (int, float)):
-                            failures.append(f"min {value} (have {actual}, need +{value - actual})")
-                            details['min_shortfall'] = value - actual
-                        else:
-                            failures.append(f"min {value} (have {actual})")
-                except TypeError:
-                    # Can't compare these types (e.g., string quality levels)
-                    failures.append(f"min {value} (have {actual})")
-                details['min'] = value
-
-            elif op == 'max':
-                try:
-                    if actual > value:
-                        # Only calculate numeric difference if both are numbers
-                        if isinstance(actual, (int, float)) and isinstance(value, (int, float)):
-                            failures.append(f"max {value} (have {actual}, excess {actual - value})")
-                            details['max_excess'] = actual - value
-                        else:
-                            failures.append(f"max {value} (have {actual})")
-                except TypeError:
-                    # Can't compare these types
-                    failures.append(f"max {value} (have {actual})")
-                details['max'] = value
-
-            elif op == 'exact':
-                if actual != value:
-                    failures.append(f"exactly {value} (have {actual})")
-                details['exact'] = value
-
-            elif op == 'in':
-                if actual not in value:
-                    failures.append(f"in {value}")
-                details['in'] = value
-
-            elif op == 'not_in':
-                if actual in value:
-                    failures.append(f"not in {value}")
-                details['not_in'] = value
-
-        passed = len(failures) == 0
-        gap = None if passed else f"{key}: need " + ", ".join(failures)
-
-        return {
-            'key': key,
-            'type': 'comparison',
-            'required': comparison,
-            'actual': actual,
-            'passed': passed,
-            'gap': gap,
-            **details
-        }
-
-    def _analyze_array_constraints_gaps(
-        self,
-        constraints: List[Dict],
-        features: Dict[str, Any]
-    ) -> List[Dict]:
-        """
-        Analyze array-format constraints and return gap information.
-
-        Each constraint is a dict like:
-        {"feature": "hcp", "min": 12, "max": 14, "constraint_type": "HARD"}
-        """
-        results = []
-        for constraint in constraints:
-            feature = constraint.get('feature', '')
-            if not feature:
-                continue
-
-            actual = features.get(feature)
-            constraint_type = constraint.get('constraint_type', 'HARD')
-
-            # Build comparison dict from constraint fields
-            comparison = {}
-            if 'min' in constraint:
-                comparison['min'] = constraint['min']
-            if 'max' in constraint:
-                comparison['max'] = constraint['max']
-            if 'exact' in constraint:
-                comparison['exact'] = constraint['exact']
-
-            if comparison:
-                result = self._analyze_comparison(feature, actual, comparison, features)
-                result['constraint_type'] = constraint_type
-                results.append(result)
-            elif 'expected' in constraint:
-                # Boolean/equality constraint: {"feature": "is_balanced", "expected": true}
-                expected = constraint['expected']
-                if isinstance(expected, str) and isinstance(actual, str):
-                    passed = self._matches_pattern(expected, actual)
-                else:
-                    passed = actual == expected
-                gap = None if passed else f"Expected {expected}, got {actual}"
-                results.append({
-                    'key': feature,
-                    'type': 'equality',
-                    'required': expected,
-                    'actual': actual,
-                    'passed': passed,
-                    'gap': gap,
-                    'constraint_type': constraint_type
-                })
-            elif 'value' in constraint:
-                expected = constraint['value']
-                passed = actual == expected
-                gap = None if passed else f"Expected {expected}, got {actual}"
-                results.append({
-                    'key': feature,
-                    'type': 'equality',
-                    'required': expected,
-                    'actual': actual,
-                    'passed': passed,
-                    'gap': gap,
-                    'constraint_type': constraint_type
-                })
-
-        return results
+        from engine.v2.interpreters.gap_analyzer import GapAnalyzer
+        analyzer = GapAnalyzer(self)
+        return analyzer.get_rule_gap_analysis(features, target_bid, max_rules)
