@@ -312,7 +312,7 @@
       ],
       "forcing": "one_round",
       "explanation": "2♦ waiting response to Strong 2♣ (0-7 HCP)",
-      "sets_forcing_level": "NON_FORCING"
+      "sets_forcing_level": "GAME_FORCE"
     },
     {
       "id": "respond_2c_positive_suit",

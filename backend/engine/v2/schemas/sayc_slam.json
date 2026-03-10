@@ -381,6 +381,41 @@
     },
 
     {
+      "id": "override_game_with_blackwood",
+      "bid": "4NT",
+      "priority": 900,
+      "description": "Override partner's game sign-off with Blackwood when slam zone values present",
+      "conditions": {
+        "partner_last_bid": {"in": ["4♥", "4♠"]},
+        "in_slam_zone": true,
+        "has_major_fit": true,
+        "partnership_total_points_mid": {"min": 30},
+        "asked_blackwood": false
+      },
+      "forcing": "game",
+      "explanation": "RKCB override of game sign-off with {partnership_total_points_mid}+ combined total points (midpoint)",
+      "sets_forcing_level": "GAME_FORCE",
+      "metadata": {"convention": "rkcb", "bypass_hcp": true}
+    },
+    {
+      "id": "quantitative_4nt_over_3nt_signoff",
+      "bid": "4NT",
+      "priority": 890,
+      "description": "Quantitative 4NT when partner signs off at 3NT but we have slam values",
+      "conditions": {
+        "partner_last_bid": "3NT",
+        "in_slam_zone": true,
+        "partnership_hcp_mid": {"min": 31},
+        "hcp": {"min": 14},
+        "asked_blackwood": false
+      },
+      "forcing": "none",
+      "explanation": "Quantitative 4NT over 3NT sign-off with {partnership_hcp_mid}+ combined HCP",
+      "sets_forcing_level": "NON_FORCING",
+      "metadata": {"convention": "quantitative", "bypass_hcp": true}
+    },
+
+    {
       "id": "slam_zone_pass_game",
       "bid": "Pass",
       "priority": 855,
@@ -399,10 +434,10 @@
       "id": "blackwood_major_fit",
       "bid": "4NT",
       "priority": 850,
-      "description": "RKCB with major fit and slam values (total points based)",
+      "description": "RKCB with major fit and slam values (total points midpoint)",
       "conditions": {
         "our_best_fit": {"min": 8},
-        "partnership_total_points_min": {"min": 33},
+        "partnership_total_points_mid": {"min": 30},
         "has_major_fit": true,
         "in_slam_zone": true,
         "partner_last_bid": {
@@ -410,7 +445,7 @@
         }
       },
       "forcing": "game",
-      "explanation": "RKCB asking for keycards with major fit and {partnership_total_points_min}+ combined total points",
+      "explanation": "RKCB asking for keycards with major fit and {partnership_total_points_mid}+ combined total points",
       "sets_forcing_level": "GAME_FORCE",
       "metadata": {"convention": "rkcb", "bypass_hcp": true}
     },
@@ -418,10 +453,10 @@
       "id": "blackwood_minor_fit",
       "bid": "4NT",
       "priority": 845,
-      "description": "RKCB with minor fit and strong slam values",
+      "description": "RKCB with minor fit and strong slam values (total points midpoint)",
       "conditions": {
         "our_best_fit": {"min": 8},
-        "partnership_total_points_min": {"min": 35},
+        "partnership_total_points_mid": {"min": 32},
         "has_major_fit": false,
         "fit_known": true,
         "in_slam_zone": true,
@@ -430,7 +465,7 @@
         }
       },
       "forcing": "game",
-      "explanation": "RKCB asking for keycards with minor fit and {partnership_total_points_min}+ combined total points",
+      "explanation": "RKCB asking for keycards with minor fit and {partnership_total_points_mid}+ combined total points",
       "sets_forcing_level": "GAME_FORCE",
       "metadata": {"convention": "rkcb", "bypass_hcp": true}
     },

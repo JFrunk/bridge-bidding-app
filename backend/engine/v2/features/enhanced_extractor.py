@@ -190,40 +190,38 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['fit_known'] = agreed['fit_known']
     flat['fit_length'] = agreed['fit_length']
 
-    # Implied fit detection: partner bid a natural major and we have 3+ support
-    # Case 1: Partner opened a major (opener_relationship == 'Partner')
-    # Case 2: Partner overcalled a major (opener_relationship == 'Opponent')
+    # Implied fit detection using partner's inferred suit lengths.
+    # Uses _infer_partner_suit_lengths to check ALL suits partner has bid,
+    # then looks for combined 8+ card fits. Prioritizes majors over minors.
     if not flat['agreed_suit']:
-        implied_suit = None
-        partner_min_length = 5  # Default: major openings/overcalls show 5+
+        partner_inferred = _infer_partner_suit_lengths(partner_bids)
 
-        if flat['opener_relationship'] == 'Partner':
-            # Partner opened — check their opening bid
-            opening = flat.get('opening_bid', '')
-            if opening:
-                suit = get_suit_from_bid(opening)
-                if suit in ('♠', '♥') and get_bid_level(opening) in (1, 2, 3):
-                    implied_suit = suit
-        elif flat['opener_relationship'] == 'Opponent':
-            # Partner overcalled — check partner_last_bid (overcalls are natural)
-            partner_bid = flat.get('partner_last_bid', '')
-            if partner_bid and partner_bid not in ('Pass', 'X', 'XX'):
-                suit = get_suit_from_bid(partner_bid)
-                if suit in ('♠', '♥'):
-                    implied_suit = suit
+        # Find best implied fit, prioritizing majors (♠ > ♥ > ♦ > ♣)
+        best_fit_suit = None
+        best_fit_length = 0
 
-        if implied_suit:
-            my_support = hand.suit_lengths.get(implied_suit, 0)
-            if my_support >= 3:
-                flat['agreed_suit'] = implied_suit
-                flat['fit_known'] = True
-                flat['fit_length'] = my_support + partner_min_length
-                agreed = {
-                    'agreed_suit': implied_suit,
-                    'fit_known': True,
-                    'fit_length': flat['fit_length'],
-                    'agreement_level': 0
-                }
+        for suit in ['♠', '♥', '♦', '♣']:
+            partner_len = partner_inferred.get(suit, 0)
+            if partner_len == 0:
+                continue
+            my_len = hand.suit_lengths.get(suit, 0)
+            combined = my_len + partner_len
+            if combined >= 8:
+                # Prefer longer fits; if equal, major priority already handled by iteration order
+                if best_fit_suit is None or combined > best_fit_length:
+                    best_fit_suit = suit
+                    best_fit_length = combined
+
+        if best_fit_suit:
+            flat['agreed_suit'] = best_fit_suit
+            flat['fit_known'] = True
+            flat['fit_length'] = best_fit_length
+            agreed = {
+                'agreed_suit': best_fit_suit,
+                'fit_known': True,
+                'fit_length': best_fit_length,
+                'agreement_level': 0
+            }
 
     # CRITICAL: Calculate support points in two scenarios:
     # 1. When fit is confirmed (both partners agree on a suit)
@@ -1049,7 +1047,11 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
         flat[f'{suit_name}_control'] = _get_suit_control_level(hand, suit)
 
     # Early partnership HCP estimate (needed for in_slam_zone before final calculation)
-    _partnership_hcp_est = flat['hcp'] + flat['partner_min_hcp']
+    # Use midpoint of partner's range (capped at 20) for more realistic slam evaluation.
+    # The minimum-based estimate was too conservative, causing in_slam_zone to stay False
+    # even when combined values clearly warranted slam exploration.
+    _partner_mid_hcp = (flat['partner_min_hcp'] + min(flat['partner_max_hcp'], 20)) // 2
+    _partnership_hcp_est = flat['hcp'] + _partner_mid_hcp
 
     # Major fit confirmed at game force level
     # True if we have an agreed major at 3+ level in a GF auction
@@ -1132,6 +1134,10 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # This is more realistic than minimum for slam decisions
     partner_max_capped = min(flat['partner_max_hcp'], 20)
     flat['partnership_hcp_mid'] = flat['hcp'] + (flat['partner_min_hcp'] + partner_max_capped) // 2
+
+    # Midpoint partnership total points: our total points + midpoint of partner's HCP range
+    # Best metric for slam initiation — includes our distribution AND uses realistic partner estimate
+    flat['partnership_total_points_mid'] = flat['total_points'] + (flat['partner_min_hcp'] + partner_max_capped) // 2
 
     # Preempt detection: Did partner preempt?
     # Weak 2s: 2D, 2H, 2S with 5-10 HCP and 6+ cards
