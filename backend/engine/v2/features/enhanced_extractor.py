@@ -797,94 +797,108 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # PBN representation
     flat['pbn'] = hand_to_pbn(hand)
 
-    # Limit bid detection and partner HCP range inference
-    # When partner makes a limit bid, we know both their floor AND ceiling
+    # Partner HCP range inference
+    # Build up partner's known HCP range from ALL available auction information.
+    # Order matters: start with opening inference (strongest signal), then refine
+    # with response/rebid inference, competitive actions, and extras detection.
     flat['partner_showed_limit'] = False
     flat['partner_min_hcp'] = 0
-    flat['partner_max_hcp'] = 40  # No ceiling until limit bid
+    flat['partner_max_hcp'] = 40
 
-    # Infer partner's HCP range from their bids
-    if flat['partner_last_bid']:
-        partner_bid = flat['partner_last_bid']
+    opening = af.get('opening_bid', '')
 
-        # Common limit bid HCP ranges in SAYC
-        limit_bid_ranges = {
-            # Responses to 1-level openings
-            '1NT': (6, 10),      # 1NT response = 6-10 HCP
-            '2NT': (11, 12),     # 2NT invitational = 11-12 HCP
-            '3NT': (13, 15),     # 3NT = 13-15 HCP balanced
-
-            # Single raises
-            '2♠': (6, 10),       # Single raise = 6-10 support points
-            '2♥': (6, 10),
-            '2♦': (6, 10),
-            '2♣': (10, 12),      # 2♣ over 1NT = Stayman (different)
-
-            # Limit raises
-            '3♠': (10, 12),      # Limit raise = 10-12 support points
-            '3♥': (10, 12),
-            '3♦': (10, 12),
-            '3♣': (10, 12),
-        }
-
-        # Check if partner's bid is a known limit bid
-        if partner_bid in limit_bid_ranges:
-            min_hcp, max_hcp = limit_bid_ranges[partner_bid]
+    # Step 1: Partner opened — strongest baseline signal
+    if af['opener_relationship'] == 'Partner' and opening:
+        if opening == '1NT':
+            flat['partner_min_hcp'] = 15
+            flat['partner_max_hcp'] = 17
             flat['partner_showed_limit'] = True
-            flat['partner_min_hcp'] = min_hcp
-            flat['partner_max_hcp'] = max_hcp
+        elif opening == '2NT':
+            flat['partner_min_hcp'] = 20
+            flat['partner_max_hcp'] = 21
+            flat['partner_showed_limit'] = True
+        elif opening == '2♣':
+            flat['partner_min_hcp'] = 22
+            flat['partner_max_hcp'] = 40
+        elif opening in ['1♣', '1♦', '1♥', '1♠']:
+            flat['partner_min_hcp'] = 12
+            flat['partner_max_hcp'] = 21
 
-        # Opening bids also define ranges
-        if af['opener_relationship'] == 'Partner':
-            opening = af['opening_bid']
-            if opening == '1NT':
-                flat['partner_min_hcp'] = 15
-                flat['partner_max_hcp'] = 17
+    # Step 2: I opened, partner responded — infer from response type
+    if af['opener_relationship'] == 'Me' and partner_bids:
+        # Find partner's first actual bid (skip initial passes)
+        first_response = next((b for b in partner_bids if b not in ['Pass', 'X', 'XX']), None)
+        if first_response and len(first_response) >= 2:
+            resp_level = int(first_response[0]) if first_response[0].isdigit() else 0
+            resp_suit = get_suit_from_bid(first_response)
+            opening_suit = get_suit_from_bid(opening) if opening else None
+
+            if first_response == '1NT':
+                # 1NT response to 1-suit = 6-10 HCP, no fit, no new suit at 1-level
+                flat['partner_min_hcp'] = 6
+                flat['partner_max_hcp'] = 10
                 flat['partner_showed_limit'] = True
-            elif opening == '2NT':
-                flat['partner_min_hcp'] = 20
-                flat['partner_max_hcp'] = 21
+            elif resp_level == 1 and resp_suit:
+                # 1-over-1 new suit = 6+ HCP, forcing 1 round
+                flat['partner_min_hcp'] = 6
+            elif first_response == '2NT':
+                # 2NT response = 13-15 HCP (game forcing, balanced)
+                flat['partner_min_hcp'] = 13
+                flat['partner_max_hcp'] = 15
                 flat['partner_showed_limit'] = True
-            elif opening == '2♣':
-                flat['partner_min_hcp'] = 22
-                flat['partner_max_hcp'] = 40  # 2♣ is unlimited
-                flat['partner_showed_limit'] = False
-            elif opening in ['1♣', '1♦', '1♥', '1♠']:
-                flat['partner_min_hcp'] = 12
-                flat['partner_max_hcp'] = 21  # Could be any strength until rebid
+            elif first_response == '3NT':
+                # 3NT response = 16-18 HCP balanced
+                flat['partner_min_hcp'] = 16
+                flat['partner_max_hcp'] = 18
+                flat['partner_showed_limit'] = True
+            elif resp_level == 2 and resp_suit:
+                if resp_suit == opening_suit:
+                    # Simple raise = 6-10 support points
+                    flat['partner_min_hcp'] = 6
+                    flat['partner_max_hcp'] = 10
+                    flat['partner_showed_limit'] = True
+                else:
+                    # 2-over-1 new suit = 10+ HCP, game forcing
+                    flat['partner_min_hcp'] = 10
+            elif resp_level == 3 and resp_suit:
+                if resp_suit == opening_suit:
+                    # Limit raise = 10-12 support points
+                    flat['partner_min_hcp'] = 10
+                    flat['partner_max_hcp'] = 12
+                    flat['partner_showed_limit'] = True
+                else:
+                    # Jump shift = 19+ HCP (very rare, strong)
+                    flat['partner_min_hcp'] = 19
+            elif resp_level == 4 and resp_suit == opening_suit:
+                # Game raise (preemptive or strong depending on context)
+                flat['partner_min_hcp'] = 6  # Could be weak with lots of trumps
 
-    # Additional partner HCP inference from competitive actions
-    # These supplement the limit bid ranges above, using max() to avoid lowering
-    if partner_bids:
-        first_partner_bid = partner_bids[0]
-
-        # Partner overcalled or doubled (opponent opened)
-        if af['opener_relationship'] == 'Opponent' and first_partner_bid not in ['Pass', 'XX']:
+    # Step 3: Partner overcalled or doubled (opponent opened)
+    if af['opener_relationship'] == 'Opponent' and partner_bids:
+        first_partner_bid = next((b for b in partner_bids if b not in ['Pass']), None)
+        if first_partner_bid and first_partner_bid not in ['XX']:
             if first_partner_bid == 'X':
-                # Takeout double implies 12+ HCP
                 flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 12)
             elif first_partner_bid[0] == '1':
-                # 1-level overcall implies 8+ HCP
                 flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 8)
             elif first_partner_bid[0] == '2' and first_partner_bid != '2♣':
-                # 2-level overcall implies 10+ HCP (except 2♣ which could be Stayman)
                 flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 10)
 
-        # I opened, partner responded with a bid (not pass)
-        if af['opener_relationship'] == 'Self' and first_partner_bid not in ['Pass', 'X', 'XX']:
-            if first_partner_bid[0] == '2' and get_suit_from_bid(first_partner_bid):
-                # 2-level new suit response = 10+ HCP (2-over-1 game force in many systems)
-                partner_suit = get_suit_from_bid(first_partner_bid)
-                opening_suit = get_suit_from_bid(opening) if opening else None
-                if partner_suit != opening_suit:
-                    flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 10)
-                else:
-                    # Simple raise at 2-level = 6-10 support points
-                    flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 6)
-            else:
-                flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 6)
+    # Step 4: Refine from partner's LAST bid (rebids show more info)
+    # Only apply if it would RAISE the floor (never lower it)
+    if flat['partner_last_bid'] and partner_bids and len(partner_bids) >= 2:
+        last_bid = flat['partner_last_bid']
+        if last_bid not in ['Pass', 'X', 'XX'] and len(last_bid) >= 2:
+            last_level = int(last_bid[0]) if last_bid[0].isdigit() else 0
+            last_suit = get_suit_from_bid(last_bid)
 
-    # Note: partnership_hcp_min is calculated later using updated partner_min_hcp
+            # Partner raised our suit to game = extras or lots of trumps
+            if last_level == 4 and last_suit and flat.get('agreed_suit') == last_suit:
+                flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 10)
+
+            # Partner bid a new suit at 2-level after opening = still 12+ (opener rebid)
+            if af['opener_relationship'] == 'Partner' and last_level == 2:
+                flat['partner_min_hcp'] = max(flat['partner_min_hcp'], 12)
 
     # Partner showed extra values detection (beyond minimum opening)
     # Extras = values beyond minimum (typically 16+ HCP)
@@ -994,6 +1008,9 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
         suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}[suit]
         flat[f'{suit_name}_control'] = _get_suit_control_level(hand, suit)
 
+    # Early partnership HCP estimate (needed for in_slam_zone before final calculation)
+    _partnership_hcp_est = flat['hcp'] + flat['partner_min_hcp']
+
     # Major fit confirmed at game force level
     # True if we have an agreed major at 3+ level in a GF auction
     flat['major_fit_gf'] = False
@@ -1002,9 +1019,9 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
         # Check if we're in a game force
         if fs['game_forcing_established'] or flat['hcp'] >= 13:
             flat['major_fit_gf'] = True
-            # Check current bidding level
+            # In slam zone when bidding is at 3+ level OR partnership has slam values
             current_level = _get_current_auction_level(auction_history)
-            if current_level >= 3:
+            if current_level >= 3 or _partnership_hcp_est >= 28:
                 flat['in_slam_zone'] = True
 
     # Control bidding: lowest unbid control
