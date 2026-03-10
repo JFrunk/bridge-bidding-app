@@ -11,6 +11,7 @@ Forcing level tracking is delegated to ForcingStateMachine.
 Gap analysis is delegated to GapAnalyzer.
 """
 
+import functools
 import json
 import logging
 import re
@@ -82,6 +83,11 @@ class SchemaInterpreter:
         # SoftMatcher for fuzzy matching (Phase 2: Best-Match-Wins)
         self.soft_matcher = SoftMatcher()
 
+        # Trigger index: maps normalized auction prefix -> list of (schema_key, rule)
+        # Global rules (no trigger) are evaluated for every auction
+        self.trigger_index: Dict[str, List[tuple]] = {}
+        self.global_rules: List[tuple] = []  # List of (schema_key, rule)
+
         self._load_schemas()
 
     def reset_state(self):
@@ -95,6 +101,17 @@ class SchemaInterpreter:
     def get_forcing_state(self) -> Dict[str, Any]:
         """Get current forcing state for debugging/display."""
         return self.forcing.get_state()
+
+    @staticmethod
+    def _normalize_bid(s: str) -> str:
+        """Normalize Unicode suit symbols to ASCII for trigger indexing."""
+        return s.replace('♣', 'C').replace('♦', 'D').replace('♥', 'H').replace('♠', 'S').replace('NT', 'N')
+
+    @staticmethod
+    @functools.lru_cache(maxsize=1024)
+    def _compile_pattern(pattern_norm: str) -> re.Pattern:
+        """Compile and cache a normalized regex pattern."""
+        return re.compile(f"^{pattern_norm}$")
 
     def _load_schemas(self):
         """Load all JSON schema files from the schema directory."""
@@ -110,6 +127,40 @@ class SchemaInterpreter:
                     self.schemas[category] = schema
             except (json.JSONDecodeError, IOError) as e:
                 print(f"Warning: Failed to load schema {schema_file}: {e}")
+
+        # Build trigger index after all schemas are loaded
+        self._build_trigger_index()
+
+    def _build_trigger_index(self):
+        """
+        Build trigger index from loaded schemas.
+
+        Rules with triggers are indexed by their normalized trigger prefix
+        (the auction bids before '?'). Rules without triggers go into
+        global_rules and are evaluated for every auction.
+        """
+        self.trigger_index = {}
+        self.global_rules = []
+
+        for category, schema in self.schemas.items():
+            for rule in schema.get('rules', []):
+                trigger = rule.get('trigger')
+                if not trigger:
+                    self.global_rules.append((category, rule))
+                    continue
+
+                # Parse trigger: "1C - Pass - 1H - ?" -> key = "1C|Pass|1H"
+                parts = [p.strip() for p in trigger.split(' - ')]
+                if parts and parts[-1] == '?':
+                    bid_parts = parts[:-1]
+                    # Normalize each bid to ASCII for consistent lookup
+                    key = '|'.join(self._normalize_bid(b) for b in bid_parts)
+                    if key not in self.trigger_index:
+                        self.trigger_index[key] = []
+                    self.trigger_index[key].append((category, rule))
+                else:
+                    # Malformed trigger, treat as global
+                    self.global_rules.append((category, rule))
 
     def _update_forcing_state(self, new_level: Optional[str], rule_id: str):
         """Update forcing state. Delegates to ForcingStateMachine."""
@@ -191,16 +242,60 @@ class SchemaInterpreter:
         candidates.sort(key=lambda c: c.priority, reverse=True)
         return candidates
 
+    def _get_candidate_rules(self, features: Dict[str, Any]) -> List[tuple]:
+        """
+        Get candidate rules using trigger index for fast filtering.
+
+        Returns list of (category, rule) tuples that could potentially match
+        the current auction, combining trigger-matched rules with global rules.
+        """
+        auction_history = features.get('_auction_history', features.get('auction_history', []))
+
+        # Build normalized auction key for lookup
+        if auction_history:
+            auction_key = '|'.join(self._normalize_bid(str(b)) for b in auction_history)
+        else:
+            auction_key = ''
+
+        # Start with global rules (always evaluated)
+        candidate_rules = list(self.global_rules)
+
+        # Add trigger-matched rules via exact key lookup
+        if auction_key in self.trigger_index:
+            candidate_rules.extend(self.trigger_index[auction_key])
+
+        # Also check regex trigger keys (patterns with character classes like [CDHS])
+        # These can't be indexed by exact match, so we check all regex keys
+        for trigger_key, rules in self.trigger_index.items():
+            if trigger_key == auction_key:
+                continue  # Already added above
+            # Only attempt regex match if key contains regex metacharacters
+            if '[' in trigger_key or '(' in trigger_key or '.' in trigger_key:
+                key_parts = trigger_key.split('|')
+                if auction_history and len(auction_history) == len(key_parts):
+                    matched = True
+                    for i, pattern in enumerate(key_parts):
+                        value = self._normalize_bid(str(auction_history[i]))
+                        if pattern == value:
+                            continue
+                        try:
+                            if not self._compile_pattern(pattern).match(value):
+                                matched = False
+                                break
+                        except re.error:
+                            matched = False
+                            break
+                    if matched:
+                        candidate_rules.extend(rules)
+
+        return candidate_rules
+
     def evaluate_all_candidates(self, features: Dict[str, Any]) -> Optional[Tuple[str, str]]:
         """
-        Evaluate ALL rules using soft matching for Best-Match-Wins selection.
+        Evaluate candidate rules using soft matching for Best-Match-Wins selection.
 
-        This is the Phase 2 integration per BRIDGE_ARCH_SPEC.md:
-        1. Loop through every rule
-        2. Calculate match quality using SoftMatcher
-        3. If quality > 0.1: final_score = rule.priority * quality
-        4. Sort by final_score descending
-        5. Return the top candidate
+        Uses trigger index to filter the candidate pool before scoring,
+        avoiding O(N) SoftMatcher evaluation of all rules.
 
         Args:
             features: Flat feature dictionary from enhanced_extractor
@@ -210,10 +305,40 @@ class SchemaInterpreter:
         """
         candidates = []
 
-        # Evaluate all schemas with soft matching
-        for category, schema in self.schemas.items():
-            category_candidates = self._evaluate_schema_soft(schema, features, category)
-            candidates.extend(category_candidates)
+        # Get filtered candidate rules via trigger index
+        candidate_rules = self._get_candidate_rules(features)
+
+        # Evaluate candidates with soft matching
+        QUALITY_THRESHOLD = 0.1
+        for category, rule in candidate_rules:
+            match_result = self.soft_matcher.calculate(rule, features)
+            quality = match_result.score
+
+            if quality <= QUALITY_THRESHOLD:
+                continue
+
+            bid = self._resolve_bid(rule.get('bid', 'Pass'), features, rule)
+            if bid is None:
+                continue
+
+            explanation = self._format_explanation(rule.get('explanation', ''), features)
+            priority = rule.get('priority', 0)
+            weighted_score = priority * quality
+
+            candidate = BidCandidate(
+                bid=bid,
+                rule_id=rule.get('id', 'unknown'),
+                priority=priority,
+                explanation=explanation,
+                forcing=rule.get('forcing', 'none'),
+                conditions_met={},
+                sets_forcing_level=rule.get('sets_forcing_level'),
+                is_limit_bid=rule.get('is_limit_bid', False),
+                schema_file=category,
+                match_quality=quality,
+                weighted_score=weighted_score
+            )
+            candidates.append(candidate)
 
         if not candidates:
             logger.debug("No candidates found with soft matching")
@@ -508,25 +633,18 @@ class SchemaInterpreter:
             return True
 
         # 2. Normalize BOTH pattern and value to ASCII for consistent comparison
-        # This allows "1♥" in schema to match "1H" in auction history and vice versa
-        def normalize_to_ascii(s: str) -> str:
-            return s.replace('♣', 'C').replace('♦', 'D').replace('♥', 'H').replace('♠', 'S').replace('NT', 'N')
-
-        value_normalized = normalize_to_ascii(value)
-        pattern_normalized = normalize_to_ascii(pattern)
+        value_normalized = self._normalize_bid(value)
+        pattern_normalized = self._normalize_bid(pattern)
 
         # 2a. Check if normalized strings match exactly
         if pattern_normalized == value_normalized:
             return True
 
-        # 3. Try regex match (flexible path)
+        # 3. Try regex match using cached compiled pattern
         try:
-            # Anchor the pattern to match the entire string
-            regex_pattern = f"^{pattern_normalized}$"
-            if re.match(regex_pattern, value_normalized):
+            if self._compile_pattern(pattern_normalized).match(value_normalized):
                 return True
         except re.error:
-            # Invalid regex, fall through to return False
             pass
 
         return False

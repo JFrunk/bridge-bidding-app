@@ -12,6 +12,8 @@ Supports two constraint formats:
 Architecture Reference: docs/architecture/BRIDGE_ARCH_SPEC.md
 """
 
+import functools
+import re
 from typing import Dict, Any, Optional, Tuple, List
 from dataclasses import dataclass
 import logging
@@ -49,6 +51,17 @@ class SoftMatcher:
     HCP_SOFT_PENALTY_PER_POINT = 0.10  # 10% per HCP difference
     HCP_HARD_FAIL_THRESHOLD = 2  # More than 2 HCP off = hard fail
     SEMI_BALANCED_PENALTY = 0.20  # 20% penalty for semi-balanced when balanced required
+
+    @staticmethod
+    def _normalize(s: str) -> str:
+        """Normalize Unicode suit symbols to ASCII for pattern matching."""
+        return s.replace('♣', 'C').replace('♦', 'D').replace('♥', 'H').replace('♠', 'S').replace('NT', 'N')
+
+    @staticmethod
+    @functools.lru_cache(maxsize=1024)
+    def _compile_pattern(pattern_norm: str) -> re.Pattern:
+        """Compile and cache a normalized regex pattern."""
+        return re.compile(f"^{pattern_norm}$")
 
     def calculate(self, rule: Dict[str, Any], features: Dict[str, Any]) -> MatchResult:
         """
@@ -579,8 +592,6 @@ class SoftMatcher:
         Returns:
             Tuple of (1.0 if matches, 0.0 with reason if not)
         """
-        import re
-
         auction_history = features.get('_auction_history', features.get('auction_history', []))
 
         # Parse trigger pattern
@@ -604,24 +615,18 @@ class SoftMatcher:
 
     def _matches_pattern(self, pattern: str, value: str) -> bool:
         """Check if a bid matches a pattern (with regex support)."""
-        import re
-
         if pattern == value:
             return True
 
-        # Normalize to ASCII for comparison
-        def normalize(s: str) -> str:
-            return s.replace('♣', 'C').replace('♦', 'D').replace('♥', 'H').replace('♠', 'S').replace('NT', 'N')
-
-        pattern_norm = normalize(pattern)
-        value_norm = normalize(value)
+        pattern_norm = self._normalize(pattern)
+        value_norm = self._normalize(value)
 
         if pattern_norm == value_norm:
             return True
 
-        # Try regex match
+        # Try regex match using cached compiled pattern
         try:
-            if re.match(f"^{pattern_norm}$", value_norm):
+            if self._compile_pattern(pattern_norm).match(value_norm):
                 return True
         except re.error:
             pass
