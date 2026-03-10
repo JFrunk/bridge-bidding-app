@@ -2907,12 +2907,21 @@ def start_play():
         hands_data = data.get("hands")
         if hands_data:
             # Convert JSON hand data to Hand objects
+            import copy
             from engine.hand import Hand, Card
             hands = {}
             for pos in ["N", "E", "S", "W"]:
                 if pos in hands_data:
                     cards = [Card(c['rank'], c['suit']) for c in hands_data[pos]]
                     hands[pos] = Hand(cards)
+
+            # CRITICAL: Preserve original deal for post-game analysis and hand review
+            # Deep copy Hand objects before play mutates them
+            pos_to_full = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
+            state.original_deal = {}
+            for pos, hand in hands.items():
+                state.original_deal[pos_to_full[pos]] = copy.deepcopy(hand)
+            print(f"✅ Preserved original_deal from request hands ({sum(len(h.cards) for h in state.original_deal.values())} cards)")
         else:
             # Check if we should use preserved original_deal (for replays)
             # or current deal (for first-time play)
