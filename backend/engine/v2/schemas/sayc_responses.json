@@ -305,13 +305,10 @@
       "description": "Waiting response to Strong 2♣ opening",
       "constraints": [
         {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
-        {"feature": "opener_relationship", "expected": "Partner", "constraint_type": "HARD"},
-        {"feature": "opening_bid", "expected": "2♣", "constraint_type": "HARD"},
-        {"feature": "partner_last_bid", "expected": "2♣", "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 0, "max": 7, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
+        {"feature": "partner_last_bid", "expected": "2♣", "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "2♦ waiting response to Strong 2♣ (0-7 HCP)",
+      "explanation": "2♦ waiting response to Strong 2♣",
       "sets_forcing_level": "GAME_FORCE"
     },
     {
