@@ -138,7 +138,7 @@ class BiddingEngineV2Schema:
             # Track best forcing-rejected candidate as fallback
             best_forcing_rejected = None
             # Slam context detection for safety net
-            SLAM_SCHEMA_FILES = {'sayc_slam', 'sayc_rkcb', 'sayc_slam_controls', 'sayc_slam_tries'}
+            SLAM_SCHEMA_FILES = {'sayc_slam', 'sayc_rkcb', 'sayc_slam_tries'}
             SLAM_RULE_KEYWORDS = {'slam', 'blackwood', 'rkcb', 'grand', 'king_response'}
 
             for candidate in candidates:
