@@ -378,8 +378,20 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # Major/minor suit lengths
     flat['spades_length'] = suit_lengths.get('♠', 0)
     flat['hearts_length'] = suit_lengths.get('♥', 0)
-    flat['diamonds_length'] = suit_lengths.get('♦', 0)
-    flat['clubs_length'] = suit_lengths.get('♣', 0)
+    diamonds_len = suit_lengths.get('♦', 0)
+    clubs_len = suit_lengths.get('♣', 0)
+    flat['diamonds_length'] = diamonds_len
+    flat['clubs_length'] = clubs_len
+
+    # Longest minor (SAYC: 4-4 minors → open 1♦, 3-3 minors → open 1♣)
+    if diamonds_len > clubs_len:
+        flat['longest_minor'] = '♦'
+    elif clubs_len > diamonds_len:
+        flat['longest_minor'] = '♣'
+    elif diamonds_len >= 4:
+        flat['longest_minor'] = '♦'  # 4-4+ minors → 1♦
+    else:
+        flat['longest_minor'] = '♣'  # 3-3 minors → 1♣
 
     # Per-suit quality and HCP (needed by opening/preempt schemas)
     suit_names = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}
