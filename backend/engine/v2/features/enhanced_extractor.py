@@ -1192,6 +1192,19 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
             flat['partner_preempted'] = True
             flat['partner_suit'] = get_suit_from_bid(opening)
 
+    # Competitive game raise detection: partner's 4M was preemptive, not constructive
+    # True when partner jumped to game in a contested auction as their first bid.
+    # In a competitive auction (opponent intervened), a jump to 4M is strictly
+    # preemptive per the Law of Total Tricks (max ~9 HCP, 5+ trumps, no slam interest).
+    # In an uncontested auction, 4M is a constructive game raise (10+ support points).
+    flat['partner_game_raise_is_competitive'] = False
+    if (flat['partner_last_bid'] in ['4♥', '4♠']
+            and flat['is_contested']
+            and partner_bids
+            and len(partner_bids) == 1):
+        # Partner's only bid was the 4M jump — in a contested auction this is preemptive
+        flat['partner_game_raise_is_competitive'] = True
+
     # RHO doubled? (needed for pass_weak_after_preempt_doubled)
     flat['rho_doubled'] = False
     if rho_bids and rho_bids[-1] == 'X':

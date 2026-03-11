@@ -423,6 +423,37 @@
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
+      "id": "preemptive_4M_after_suit_overcall",
+      "bid": "4{partner_suit}",
+      "priority": 816,
+      "description": "Preemptive game raise after opponent's suit overcall - Law of Total Tricks with long trumps",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "opener_relationship": "Partner",
+        "partner_last_bid": {
+          "in": [
+            "1\u2665",
+            "1\u2660"
+          ]
+        },
+        "rho_last_bid": {
+          "not_in": ["X", "XX", "Pass"]
+        },
+        "hcp": {
+          "min": 3,
+          "max": 9
+        },
+        "support_for_partner": {
+          "min": 5
+        },
+        "singleton_or_void": true
+      },
+      "forcing": "none",
+      "explanation": "Competitive jump raise - preemptive with {support_for_partner}-card support and long trumps",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "preemptive_4M_after_double",
       "bid": "4{partner_suit}",
       "priority": 815,
