@@ -15,6 +15,11 @@ from typing import List, Tuple, Dict, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
+from utils.seats import (
+    SEATS, partner as seats_partner, lho as seats_lho,
+    seat_index, seat_from_index, same_side
+)
+
 
 class GamePhase(Enum):
     """
@@ -78,6 +83,25 @@ class Contract:
         """Tricks needed to make contract (book + level)"""
         return 6 + self.level
 
+    def to_dict(self) -> dict:
+        """Serialize for Redis storage"""
+        return {
+            'level': self.level,
+            'strain': self.strain,
+            'declarer': self.declarer,
+            'doubled': self.doubled,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> 'Contract':
+        """Deserialize from Redis storage"""
+        return cls(
+            level=d['level'],
+            strain=d['strain'],
+            declarer=d['declarer'],
+            doubled=d.get('doubled', 0),
+        )
+
 
 @dataclass
 class Trick:
@@ -90,6 +114,20 @@ class Trick:
     def led_suit(self) -> str:
         """The suit that was led"""
         return self.cards[0][0].suit
+
+    def to_dict(self) -> dict:
+        """Serialize for Redis storage"""
+        return {
+            'cards': [{'rank': c.rank, 'suit': c.suit, 'position': p} for c, p in self.cards],
+            'leader': self.leader,
+            'winner': self.winner,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> 'Trick':
+        """Deserialize from Redis storage"""
+        cards = [(Card(rank=c['rank'], suit=c['suit']), c['position']) for c in d['cards']]
+        return cls(cards=cards, leader=d['leader'], winner=d['winner'])
 
 
 @dataclass
@@ -108,8 +146,7 @@ class PlayState:
     @property
     def dummy(self) -> str:
         """Return dummy position (partner of declarer)"""
-        declarer = self.contract.declarer
-        return {'N': 'S', 'E': 'W', 'S': 'N', 'W': 'E'}[declarer]
+        return seats_partner(self.contract.declarer)
 
     @property
     def tricks_taken_ns(self) -> int:
@@ -171,12 +208,68 @@ class PlayState:
             # All tricks complete
             self.phase = GamePhase.PLAY_COMPLETE
 
+    def to_dict(self) -> dict:
+        """Serialize full PlayState for Redis storage (not view-filtered)"""
+        hands_dict = {}
+        for pos, hand in self.hands.items():
+            if hand is not None:
+                hands_dict[pos] = [{'rank': c.rank, 'suit': c.suit} for c in hand.cards]
+            else:
+                hands_dict[pos] = None
+
+        return {
+            'contract': self.contract.to_dict(),
+            'hands': hands_dict,
+            'current_trick': [
+                {'rank': c.rank, 'suit': c.suit, 'position': p}
+                for c, p in self.current_trick
+            ],
+            'tricks_won': dict(self.tricks_won),
+            'trick_history': [t.to_dict() for t in self.trick_history],
+            'next_to_play': self.next_to_play,
+            'dummy_revealed': self.dummy_revealed,
+            'current_trick_leader': self.current_trick_leader,
+            'phase': self.phase.value,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> 'PlayState':
+        """Deserialize PlayState from Redis storage"""
+        contract = Contract.from_dict(d['contract'])
+
+        hands = {}
+        for pos, card_list in d['hands'].items():
+            if card_list is not None:
+                cards = [Card(rank=c['rank'], suit=c['suit']) for c in card_list]
+                hands[pos] = Hand(cards, _skip_validation=True)
+            else:
+                hands[pos] = None
+
+        current_trick = [
+            (Card(rank=c['rank'], suit=c['suit']), c['position'])
+            for c in d['current_trick']
+        ]
+
+        trick_history = [Trick.from_dict(t) for t in d['trick_history']]
+
+        return cls(
+            contract=contract,
+            hands=hands,
+            current_trick=current_trick,
+            tricks_won=d['tricks_won'],
+            trick_history=trick_history,
+            next_to_play=d['next_to_play'],
+            dummy_revealed=d['dummy_revealed'],
+            current_trick_leader=d.get('current_trick_leader'),
+            phase=GamePhase(d.get('phase', 'play_starting')),
+        )
+
 
 class PlayEngine:
     """Core engine for card play - stable foundation"""
 
     # Position order (clockwise from North)
-    POSITIONS = ['N', 'E', 'S', 'W']
+    POSITIONS = SEATS
 
     # Rank values for comparison
     RANK_VALUES = {
@@ -261,7 +354,6 @@ class PlayEngine:
     def _find_declarer(auction: List[str], final_bid: str, dealer_index: int) -> str:
         """Find who declared the final contract (first to bid strain)"""
         strain = final_bid[1:]
-        positions = PlayEngine.POSITIONS
 
         # Find the index of the last actual suit/NT bid (not Pass, X, or XX)
         final_bidder_index = -1
@@ -270,12 +362,12 @@ class PlayEngine:
                 final_bidder_index = i
 
         # Position of the final bidder
-        final_bidder_pos = positions[(dealer_index + final_bidder_index) % 4]
+        final_bidder_pos = seat_from_index(dealer_index + final_bidder_index)
 
         # Find first player on winning side to bid this strain
         for i, bid in enumerate(auction):
             if bid.endswith(strain) and bid not in ['Pass', 'X', 'XX']:
-                position = positions[(dealer_index + i) % 4]
+                position = seat_from_index(dealer_index + i)
                 # Check if this is the winning partnership
                 if PlayEngine._same_partnership(position, final_bidder_pos):
                     return position
@@ -286,8 +378,7 @@ class PlayEngine:
     @staticmethod
     def _same_partnership(pos1: str, pos2: str) -> bool:
         """Check if two positions are on same partnership"""
-        return (pos1 in ['N', 'S'] and pos2 in ['N', 'S']) or \
-               (pos1 in ['E', 'W'] and pos2 in ['E', 'W'])
+        return same_side(pos1, pos2)
 
     @staticmethod
     def _count_doubles(auction: List[str], last_bid_index: int) -> int:
@@ -361,16 +452,12 @@ class PlayEngine:
     @staticmethod
     def next_player(current: str) -> str:
         """Get next player clockwise"""
-        positions = PlayEngine.POSITIONS
-        idx = positions.index(current)
-        return positions[(idx + 1) % 4]
+        return seats_lho(current)
 
     @staticmethod
     def partner(position: str) -> str:
         """Get partner of given position"""
-        positions = PlayEngine.POSITIONS
-        idx = positions.index(position)
-        return positions[(idx + 2) % 4]
+        return seats_partner(position)
 
     @staticmethod
     def calculate_score(contract: Contract, tricks_taken: int,

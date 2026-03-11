@@ -4,17 +4,23 @@ Room API - Endpoints for Team Practice Lobby
 Provides room creation, joining, polling, and game management for
 two human partners playing against AI opponents.
 
+All state mutations use Redis WATCH/MULTI via RoomStateManager.mutate_room*()
+to prevent race conditions across Gunicorn workers.
+
 To add to server.py:
     from routes.room_api import register_room_endpoints
     register_room_endpoints(app, room_manager)
 """
 
+import json
 import random
 from flask import request, jsonify
 from datetime import datetime
 from typing import Optional
 
-from core.room_state import RoomStateManager, RoomSettings, RoomState
+from core.room_state import (
+    RoomStateManager, RoomSettings, RoomState, RoomConflictError
+)
 from core.session_state import get_session_id_from_request
 from engine.hand import Hand, Card
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
@@ -36,19 +42,15 @@ def get_ai_bid_for_room(room: RoomState, position: str) -> str:
         Bid string (e.g., '1NT', 'Pass')
     """
     try:
-        # Import bidding engine (lazy to avoid circular imports)
         from engine.v2 import BiddingEngineV2Schema
         engine = BiddingEngineV2Schema()
 
-        # Get the hand for this position
         position_full = SEAT_NAMES[position]
         hand = room.deal.get(position_full)
 
         if not hand:
             return 'Pass'
 
-        # Get bid from engine
-        # get_next_bid returns (bid, explanation) tuple
         bid, explanation = engine.get_next_bid(
             hand=hand,
             auction_history=room.auction_history,
@@ -76,16 +78,13 @@ def auto_bid_for_ai(room: RoomState) -> list:
         current_bidder = room.get_current_bidder()
 
         if current_bidder not in ('E', 'W'):
-            # Human's turn - stop
             break
 
-        # AI's turn - get bid
         ai_bid = get_ai_bid_for_room(room, current_bidder)
         room.auction_history.append(ai_bid)
         ai_bids.append({'position': current_bidder, 'bid': ai_bid})
         room.increment_version()
 
-        # Check if auction is complete
         if _check_auction_complete(room.auction_history):
             room.game_phase = 'complete'
             break
@@ -111,15 +110,22 @@ def get_convention_map():
     }
 
 
-def _get_user_id_from_request(req) -> Optional[str]:
-    """Extract user ID from X-User-ID header (set by frontend sessionHelper)"""
-    user_id = req.headers.get('X-User-ID')
-    if user_id:
-        return str(user_id)
-    # Fallback: check JSON body
-    data = req.get_json(silent=True) or {}
-    if data.get('user_id'):
-        return str(data['user_id'])
+def _resolve_user_id(session_id: str) -> Optional[str]:
+    """
+    Resolve user_id from session_id using the server-side auth store.
+
+    Returns None if the session has no authenticated user (anonymous play).
+    Never trusts client-supplied user_id headers or body fields.
+    """
+    try:
+        from engine.auth.simple_auth_api import active_sessions
+        # The auth token may differ from the X-Session-ID header.
+        # Check if the session_id itself is registered as an auth token.
+        session_data = active_sessions.get(session_id)
+        if session_data:
+            return session_data.get('user_id')
+    except ImportError:
+        pass
     return None
 
 
@@ -138,10 +144,8 @@ def _find_or_create_partnership(user_a: str, user_b: str) -> Optional[int]:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Canonical ordering: smaller ID = player_a
         a, b = (user_a, user_b) if user_a < user_b else (user_b, user_a)
 
-        # Check for existing partnership
         cursor.execute(
             "SELECT id FROM partnerships WHERE player_a_id = %s AND player_b_id = %s",
             (a, b)
@@ -153,7 +157,6 @@ def _find_or_create_partnership(user_a: str, user_b: str) -> Optional[int]:
             conn.close()
             return partnership_id
 
-        # Create new partnership
         cursor.execute(
             "INSERT INTO partnerships (player_a_id, player_b_id, status) VALUES (%s, %s, 'active') RETURNING id",
             (a, b)
@@ -188,14 +191,11 @@ def _save_room_hand(room: RoomState):
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Build hand data from room state
         contract = room.play_state.contract if room.play_state else None
         ps = room.play_state
 
-        # Check if passed out (no contract)
         passed_out = contract is None
 
-        # Calculate score
         hand_score = 0
         tricks_taken = 0
         made = False
@@ -203,12 +203,11 @@ def _save_room_hand(room: RoomState):
 
         if not passed_out and ps:
             tricks_taken = ps.tricks_won.get(contract.declarer, 0) + ps.tricks_won.get(
-                {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}[contract.declarer], 0
+                seats_partner(contract.declarer), 0
             )
             tricks_needed = contract.level + 6
             made = tricks_taken >= tricks_needed
 
-            # Calculate score using play engine
             try:
                 from engine.play_engine import PlayEngine
                 score_result = PlayEngine.calculate_score(
@@ -219,7 +218,6 @@ def _save_room_hand(room: RoomState):
             except Exception as e:
                 print(f"⚠️ Score calculation failed: {e}")
 
-        # Serialize deal data
         deal_data = {}
         for pos_name, hand in room.deal.items():
             if hand:
@@ -228,7 +226,6 @@ def _save_room_hand(room: RoomState):
                 except AttributeError:
                     deal_data[pos_name] = hand if isinstance(hand, list) else []
 
-        # Serialize play history
         play_history = []
         if ps and ps.trick_history:
             for trick in ps.trick_history:
@@ -238,7 +235,6 @@ def _save_room_hand(room: RoomState):
                     'leader': getattr(trick, 'leader', None),
                 })
 
-        # Save for each human player (host=S, guest=N)
         players = [
             (room.host_session_id, room.host_user_id, 'S'),
             (room.guest_session_id, room.guest_user_id, 'N'),
@@ -248,20 +244,17 @@ def _save_room_hand(room: RoomState):
             if not session_id:
                 continue
 
-            # Determine if this player was declarer/dummy
             declarer = contract.declarer if contract else None
             dummy = seats_partner(declarer) if declarer else None
             user_was_declarer = (position == declarer)
             user_was_dummy = (position == dummy)
 
-            # Check if partnership_id column exists
             cursor.execute(
                 "SELECT column_name FROM information_schema.columns "
                 "WHERE table_name = 'session_hands' AND column_name = 'partnership_id'"
             )
             has_partnership_col = cursor.fetchone() is not None
 
-            # Build INSERT — include partnership_id if column exists
             if has_partnership_col and room.partnership_id:
                 cursor.execute("""
                     INSERT INTO session_hands
@@ -274,25 +267,16 @@ def _save_room_hand(room: RoomState):
                      partnership_id)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    session_id,
-                    1,  # hand_number within room (could track per-room)
-                    room.dealer,
-                    room.vulnerability,
+                    session_id, 1, room.dealer, room.vulnerability,
                     contract.level if contract else None,
                     contract.strain if contract else None,
-                    declarer,
-                    contract.doubled if contract else 0,
+                    declarer, contract.doubled if contract else 0,
                     tricks_taken,
                     (contract.level + 6) if contract else None,
-                    made,
-                    hand_score,
-                    json.dumps(breakdown),
-                    json.dumps(deal_data),
-                    json.dumps(room.auction_history),
+                    made, hand_score, json.dumps(breakdown),
+                    json.dumps(deal_data), json.dumps(room.auction_history),
                     json.dumps(play_history),
-                    position,
-                    user_was_declarer,
-                    user_was_dummy,
+                    position, user_was_declarer, user_was_dummy,
                     room.partnership_id,
                 ))
             else:
@@ -306,25 +290,16 @@ def _save_room_hand(room: RoomState):
                      user_played_position, user_was_declarer, user_was_dummy)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    session_id,
-                    1,
-                    room.dealer,
-                    room.vulnerability,
+                    session_id, 1, room.dealer, room.vulnerability,
                     contract.level if contract else None,
                     contract.strain if contract else None,
-                    declarer,
-                    contract.doubled if contract else 0,
+                    declarer, contract.doubled if contract else 0,
                     tricks_taken,
                     (contract.level + 6) if contract else None,
-                    made,
-                    hand_score,
-                    json.dumps(breakdown),
-                    json.dumps(deal_data),
-                    json.dumps(room.auction_history),
+                    made, hand_score, json.dumps(breakdown),
+                    json.dumps(deal_data), json.dumps(room.auction_history),
                     json.dumps(play_history),
-                    position,
-                    user_was_declarer,
-                    user_was_dummy,
+                    position, user_was_declarer, user_was_dummy,
                 ))
 
             print(f"✅ Room hand saved for {position} (session={session_id[:20]}..., partnership={room.partnership_id})")
@@ -333,9 +308,8 @@ def _save_room_hand(room: RoomState):
         conn.close()
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print(f"⚠️ Room hand save failed (non-blocking): {e}")
+        from utils.error_logger import log_error
+        log_error(e, endpoint='room/save-hand', context={'room_code': room.room_code})
 
 
 def register_room_endpoints(app, room_manager: RoomStateManager):
@@ -347,29 +321,20 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         room_manager: RoomStateManager instance for room state
     """
 
+    def _conflict_response():
+        """Standard 409 response for OCC failures"""
+        return jsonify({
+            'success': False,
+            'error': 'Room was modified concurrently, please retry'
+        }), 409
+
     # =========================================================================
     # ROOM LIFECYCLE ENDPOINTS
     # =========================================================================
 
     @app.route('/api/room/create', methods=['POST'])
     def create_room():
-        """
-        Create a new practice room
-
-        Request JSON:
-            {
-                "deal_type": "random" | "convention",
-                "convention_filter": "Stayman" | null,
-                "ai_difficulty": "beginner" | "intermediate" | "advanced" | "expert"
-            }
-
-        Response:
-            {
-                "success": true,
-                "room_code": "ABC123",
-                "my_position": "S"
-            }
-        """
+        """Create a new practice room"""
         session_id = get_session_id_from_request(request)
         if not session_id:
             return jsonify({
@@ -379,47 +344,33 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
         data = request.get_json() or {}
 
-        # Parse settings
         settings = RoomSettings(
             deal_type=data.get('deal_type', 'random'),
             convention_filter=data.get('convention_filter'),
             ai_difficulty=data.get('ai_difficulty', 'advanced'),
         )
 
-        # Create room
         room_code = room_manager.create_room(session_id, settings)
 
-        # Store user ID on room for partnership tracking
-        user_id = _get_user_id_from_request(request)
+        # Store server-validated user ID for partnership tracking
+        user_id = _resolve_user_id(session_id)
         if user_id:
-            room = room_manager.get_room(room_code)
-            if room:
-                room.host_user_id = user_id
+            try:
+                with room_manager.mutate_room(room_code) as room:
+                    room.host_user_id = user_id
+            except (KeyError, RoomConflictError):
+                pass  # Non-critical — partnership tracking is optional
 
         return jsonify({
             'success': True,
             'room_code': room_code,
-            'my_position': 'S',  # Host is always South
+            'my_position': 'S',
             'is_host': True,
         })
 
     @app.route('/api/room/join', methods=['POST'])
     def join_room():
-        """
-        Join an existing room
-
-        Request JSON:
-            {
-                "room_code": "ABC123"
-            }
-
-        Response:
-            {
-                "success": true,
-                "room_code": "ABC123",
-                "my_position": "N"
-            }
-        """
+        """Join an existing room"""
         session_id = get_session_id_from_request(request)
         if not session_id:
             return jsonify({
@@ -439,23 +390,22 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         success, message = room_manager.join_room(room_code, session_id)
 
         if success:
-            # Store guest user ID and create partnership
-            room = room_manager.get_room(room_code)
-            guest_user_id = _get_user_id_from_request(request)
-            if room and guest_user_id:
-                room.guest_user_id = guest_user_id
-                # Find or create partnership between host and guest
-                if room.host_user_id:
-                    room.partnership_id = _find_or_create_partnership(
-                        room.host_user_id, guest_user_id
-                    )
-
-            # Auto-deal first hand immediately on join (no ready gate for first hand)
+            # Store server-validated guest user ID and create partnership
+            guest_user_id = _resolve_user_id(session_id)
             deal_data = {}
-            if room:
-                try:
+
+            try:
+                with room_manager.mutate_room(room_code) as room:
+                    if guest_user_id:
+                        room.guest_user_id = guest_user_id
+                        if room.host_user_id:
+                            room.partnership_id = _find_or_create_partnership(
+                                room.host_user_id, guest_user_id
+                            )
+
+                    # Auto-deal first hand immediately on join
                     _deal_next_hand(room)
-                    position_full = SEAT_NAMES['N']  # Guest is always North
+                    position_full = SEAT_NAMES['N']
                     deal_data = {
                         'dealer': room.dealer,
                         'vulnerability': room.vulnerability,
@@ -465,13 +415,13 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                         'is_my_turn': room.is_session_turn(session_id),
                         'game_phase': room.game_phase,
                     }
-                except Exception as e:
-                    print(f"⚠️ Auto-deal on join failed: {e}")
+            except (KeyError, RoomConflictError) as e:
+                print(f"⚠️ Auto-deal on join failed: {e}")
 
             return jsonify({
                 'success': True,
                 'room_code': room_code,
-                'my_position': 'N',  # Guest is always North
+                'my_position': 'N',
                 'is_host': False,
                 'message': message,
                 'auto_dealt': bool(deal_data),
@@ -485,14 +435,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
     @app.route('/api/room/leave', methods=['POST'])
     def leave_room():
-        """
-        Leave current room
-
-        Response:
-            {
-                "success": true
-            }
-        """
+        """Leave current room"""
         session_id = get_session_id_from_request(request)
         if not session_id:
             return jsonify({
@@ -508,26 +451,12 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         })
 
     # =========================================================================
-    # ROOM STATE ENDPOINTS
+    # ROOM STATE ENDPOINTS (read-only — no OCC needed)
     # =========================================================================
 
     @app.route('/api/room/poll', methods=['GET'])
     def poll_room():
-        """
-        Poll current room state
-
-        Supports ETag-style caching: if client sends If-None-Match header
-        with current version, returns 304 if unchanged.
-
-        Query params:
-            version: (optional) Last known version for quick check
-
-        Response:
-            {
-                "success": true,
-                "room": { ... room state ... }
-            }
-        """
+        """Poll current room state (long-poll with version check)"""
         session_id = get_session_id_from_request(request)
         if not session_id:
             return jsonify({
@@ -543,19 +472,18 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 'in_room': False
             }), 404
 
-        # Record heartbeat (player is still connected)
-        room.record_heartbeat(session_id)
+        # Record heartbeat (mutation — needs OCC)
+        try:
+            with room_manager.mutate_room(room.room_code) as mutable_room:
+                mutable_room.record_heartbeat(session_id)
+        except (KeyError, RoomConflictError):
+            pass  # Non-critical — heartbeat can be missed occasionally
 
-        # Check for version match (ETag-style)
+        # Version check (use the snapshot we already read)
         client_version = request.args.get('version', type=int)
         if client_version is not None and client_version == room.version:
-            return '', 304  # Not Modified
+            return '', 304
 
-        # AI bidding is handled in /api/room/bid and _deal_next_hand only.
-        # Do NOT trigger auto_bid_for_ai here — concurrent polls from both
-        # players would race and produce duplicate AI bids.
-
-        # Build room dict for response
         room_dict = room.to_dict(for_session=session_id)
 
         # Add beliefs for coaching support during bidding phase
@@ -566,7 +494,6 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 hand = room.deal.get(position_full)
 
                 if hand:
-                    # Get user's hand info for beliefs context
                     user_hcp = hand.hcp
                     user_suit_lengths = {
                         '♠': len([c for c in hand.cards if c.suit == '♠']),
@@ -575,13 +502,11 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                         '♣': len([c for c in hand.cards if c.suit == '♣']),
                     }
 
-                    # Build bidding state and extract beliefs
                     dealer_full = SEAT_NAMES.get(normalize(room.dealer), room.dealer)
                     bidding_state = BiddingStateBuilder().build(room.auction_history, dealer_full)
                     beliefs = bidding_state.to_dict(position, my_hcp=user_hcp, my_suit_lengths=user_suit_lengths)
                     room_dict['beliefs'] = beliefs
             except Exception as e:
-                # Don't fail the poll if beliefs computation fails
                 print(f"⚠️ Could not compute beliefs for room {room.room_code}: {e}")
 
         return jsonify({
@@ -592,28 +517,14 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
     @app.route('/api/room/status', methods=['GET'])
     def room_status():
-        """
-        Quick check if session is in a room
-
-        Response:
-            {
-                "in_room": true,
-                "room_code": "ABC123",
-                "is_host": true,
-                "partner_connected": true
-            }
-        """
+        """Quick check if session is in a room"""
         session_id = get_session_id_from_request(request)
         if not session_id:
-            return jsonify({
-                'in_room': False
-            })
+            return jsonify({'in_room': False})
 
         room = room_manager.get_room_by_session(session_id)
         if not room:
-            return jsonify({
-                'in_room': False
-            })
+            return jsonify({'in_room': False})
 
         return jsonify({
             'in_room': True,
@@ -631,22 +542,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
     @app.route('/api/room/settings', methods=['POST'])
     def update_room_settings():
-        """
-        Update room settings (host only)
-
-        Request JSON:
-            {
-                "deal_type": "random" | "convention",
-                "convention_filter": "Stayman" | null,
-                "ai_difficulty": "beginner" | "intermediate" | "advanced" | "expert"
-            }
-
-        Response:
-            {
-                "success": true,
-                "settings": { ... }
-            }
-        """
+        """Update room settings (either peer)"""
         session_id = get_session_id_from_request(request)
         if not session_id:
             return jsonify({
@@ -654,34 +550,29 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 'error': 'No session ID provided'
             }), 400
 
-        room = room_manager.get_room_by_session(session_id)
-        if not room:
-            return jsonify({
-                'success': False,
-                'error': 'Not in a room'
-            }), 404
-
         data = request.get_json() or {}
 
-        # Update settings
-        if 'deal_type' in data:
-            room.settings.deal_type = data['deal_type']
-        if 'convention_filter' in data:
-            room.settings.convention_filter = data['convention_filter']
-        if 'ai_difficulty' in data:
-            room.settings.ai_difficulty = data['ai_difficulty']
+        try:
+            with room_manager.mutate_room_by_session(session_id) as room:
+                if 'deal_type' in data:
+                    room.settings.deal_type = data['deal_type']
+                if 'convention_filter' in data:
+                    room.settings.convention_filter = data['convention_filter']
+                if 'ai_difficulty' in data:
+                    room.settings.ai_difficulty = data['ai_difficulty']
+                room.increment_version()
 
-        room.increment_version()
+                response_data = {
+                    'success': True,
+                    'settings': room.settings.to_dict(),
+                    'version': room.version
+                }
+        except KeyError:
+            return jsonify({'success': False, 'error': 'Not in a room'}), 404
+        except RoomConflictError:
+            return _conflict_response()
 
-        return jsonify({
-            'success': True,
-            'settings': {
-                'deal_type': room.settings.deal_type,
-                'convention_filter': room.settings.convention_filter,
-                'ai_difficulty': room.settings.ai_difficulty,
-            },
-            'version': room.version
-        })
+        return jsonify(response_data)
 
     # =========================================================================
     # READINESS ENDPOINTS (Peer Model)
@@ -689,76 +580,59 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
     @app.route('/api/room/ready', methods=['POST'])
     def room_ready():
-        """
-        Signal readiness for next state transition (mutual readiness gate).
-
-        Either player can signal ready. When both are ready:
-        - In 'waiting' or 'complete' phase: auto-deals next hand
-        - In 'review' phase: auto-deals next hand
-
-        Request JSON:
-            { "ready": true }  (optional, defaults to true)
-
-        Response:
-            {
-                "success": true,
-                "i_am_ready": true,
-                "partner_ready": false,
-                "both_ready": false,
-                "action_taken": null | "deal"
-            }
-        """
+        """Signal readiness for next state transition (mutual readiness gate)."""
         session_id = get_session_id_from_request(request)
         if not session_id:
             return jsonify({'success': False, 'error': 'No session ID provided'}), 400
 
-        room = room_manager.get_room_by_session(session_id)
-        if not room:
-            return jsonify({'success': False, 'error': 'Not in a room'}), 404
-
-        if not room.is_full():
-            return jsonify({'success': False, 'error': 'Wait for partner to join'}), 400
-
         data = request.get_json() or {}
         ready = data.get('ready', True)
 
-        room.set_ready(session_id, ready)
+        try:
+            with room_manager.mutate_room_by_session(session_id) as room:
+                if not room.is_full():
+                    # Can't use return inside context manager for error —
+                    # raise to exit, then handle outside
+                    raise ValueError('Wait for partner to join')
 
-        action_taken = None
+                room.set_ready(session_id, ready)
 
-        # If both ready, trigger the state transition
-        if room.are_both_ready():
-            if room.game_phase in ('waiting', 'complete'):
-                # Auto-deal next hand
-                try:
-                    _deal_next_hand(room)
-                    action_taken = 'deal'
-                except Exception as e:
-                    return jsonify({'success': False, 'error': f'Deal failed: {str(e)}'}), 500
+                action_taken = None
 
-        response = {
-            'success': True,
-            'i_am_ready': room.ready_state.get(session_id, False),
-            'partner_ready': room.ready_state.get(
-                room.guest_session_id if session_id == room.host_session_id else room.host_session_id,
-                False
-            ),
-            'both_ready': room.are_both_ready(),
-            'action_taken': action_taken,
-            'game_phase': room.game_phase,
-            'version': room.version,
-        }
+                if room.are_both_ready():
+                    if room.game_phase in ('waiting', 'complete'):
+                        _deal_next_hand(room)
+                        action_taken = 'deal'
 
-        # If a deal happened, include hand data
-        if action_taken == 'deal':
-            position = room.get_position_for_session(session_id)
-            position_full = SEAT_NAMES[position]
-            response['dealer'] = room.dealer
-            response['vulnerability'] = room.vulnerability
-            response['my_hand'] = room._serialize_hand(room.deal[position_full])
-            response['auction_history'] = room.auction_history
-            response['current_bidder'] = room.get_current_bidder()
-            response['is_my_turn'] = room.is_session_turn(session_id)
+                response = {
+                    'success': True,
+                    'i_am_ready': room.ready_state.get(session_id, False),
+                    'partner_ready': room.ready_state.get(
+                        room.guest_session_id if session_id == room.host_session_id else room.host_session_id,
+                        False
+                    ),
+                    'both_ready': room.are_both_ready(),
+                    'action_taken': action_taken,
+                    'game_phase': room.game_phase,
+                    'version': room.version,
+                }
+
+                if action_taken == 'deal':
+                    position = room.get_position_for_session(session_id)
+                    position_full = SEAT_NAMES[position]
+                    response['dealer'] = room.dealer
+                    response['vulnerability'] = room.vulnerability
+                    response['my_hand'] = room._serialize_hand(room.deal[position_full])
+                    response['auction_history'] = room.auction_history
+                    response['current_bidder'] = room.get_current_bidder()
+                    response['is_my_turn'] = room.is_session_turn(session_id)
+
+        except KeyError:
+            return jsonify({'success': False, 'error': 'Not in a room'}), 404
+        except ValueError as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+        except RoomConflictError:
+            return _conflict_response()
 
         return jsonify(response)
 
@@ -769,21 +643,24 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         if not session_id:
             return jsonify({'success': False, 'error': 'No session ID provided'}), 400
 
-        room = room_manager.get_room_by_session(session_id)
-        if not room:
+        try:
+            with room_manager.mutate_room_by_session(session_id) as room:
+                room.set_ready(session_id, False)
+                response_data = {
+                    'success': True,
+                    'i_am_ready': False,
+                    'partner_ready': room.ready_state.get(
+                        room.guest_session_id if session_id == room.host_session_id else room.host_session_id,
+                        False
+                    ),
+                    'version': room.version,
+                }
+        except KeyError:
             return jsonify({'success': False, 'error': 'Not in a room'}), 404
+        except RoomConflictError:
+            return _conflict_response()
 
-        room.set_ready(session_id, False)
-
-        return jsonify({
-            'success': True,
-            'i_am_ready': False,
-            'partner_ready': room.ready_state.get(
-                room.guest_session_id if session_id == room.host_session_id else room.host_session_id,
-                False
-            ),
-            'version': room.version,
-        })
+        return jsonify(response_data)
 
     def _deal_next_hand(room):
         """Deal next hand (shared logic for ready gate and legacy deal endpoint)"""
@@ -810,22 +687,10 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
     @app.route('/api/room/chat', methods=['POST'])
     def room_chat():
-        """
-        Send a chat message to the room.
-
-        Request JSON:
-            { "text": "Nice bid!" }
-
-        Response:
-            { "success": true, "message_id": 5, "version": 12 }
-        """
+        """Send a chat message to the room."""
         session_id = get_session_id_from_request(request)
         if not session_id:
             return jsonify({'success': False, 'error': 'No session ID provided'}), 400
-
-        room = room_manager.get_room_by_session(session_id)
-        if not room:
-            return jsonify({'success': False, 'error': 'Not in a room'}), 404
 
         data = request.get_json() or {}
         text = data.get('text', '').strip()
@@ -836,21 +701,29 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         if len(text) > 500:
             return jsonify({'success': False, 'error': 'Message too long (500 char max)'}), 400
 
-        position = room.get_position_for_session(session_id)
-        message = {
-            'id': len(room.chat_messages),
-            'sender': position,
-            'text': text,
-            'timestamp': datetime.now().isoformat(),
-        }
-        room.chat_messages.append(message)
-        room.increment_version()
+        try:
+            with room_manager.mutate_room_by_session(session_id) as room:
+                position = room.get_position_for_session(session_id)
+                message = {
+                    'id': len(room.chat_messages),
+                    'sender': position,
+                    'text': text,
+                    'timestamp': datetime.now().isoformat(),
+                }
+                room.chat_messages.append(message)
+                room.increment_version()
 
-        return jsonify({
-            'success': True,
-            'message_id': message['id'],
-            'version': room.version,
-        })
+                response_data = {
+                    'success': True,
+                    'message_id': message['id'],
+                    'version': room.version,
+                }
+        except KeyError:
+            return jsonify({'success': False, 'error': 'Not in a room'}), 404
+        except RoomConflictError:
+            return _conflict_response()
+
+        return jsonify(response_data)
 
     @app.route('/api/room/chat', methods=['GET'])
     def get_room_chat():
@@ -877,23 +750,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
     @app.route('/api/room/deal', methods=['POST'])
     def room_deal():
-        """
-        Deal new hands (host only, requires partner to be connected)
-
-        Request JSON:
-            {
-                "dealer": "N" | "E" | "S" | "W" (optional, default rotates)
-            }
-
-        Response:
-            {
-                "success": true,
-                "dealer": "N",
-                "vulnerability": "None",
-                "my_hand": [...],
-                "version": 5
-            }
-        """
+        """Deal new hands (requires partner to be connected)"""
         session_id = get_session_id_from_request(request)
         if not session_id:
             return jsonify({
@@ -901,73 +758,59 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 'error': 'No session ID provided'
             }), 400
 
-        room = room_manager.get_room_by_session(session_id)
-        if not room:
-            return jsonify({
-                'success': False,
-                'error': 'Not in a room'
-            }), 404
-
-        # Must have partner connected
-        if not room.is_full():
-            return jsonify({
-                'success': False,
-                'error': 'Wait for partner to join'
-            }), 400
-
         data = request.get_json() or {}
 
-        # Generate hands based on settings
         try:
-            hands = _generate_room_hands(room.settings)
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'error': f'Hand generation failed: {str(e)}'
-            }), 500
+            with room_manager.mutate_room_by_session(session_id) as room:
+                if not room.is_full():
+                    raise ValueError('Wait for partner to join')
 
-        # Set dealer (rotate or use provided)
-        if 'dealer' in data and data['dealer'] in SEATS:
-            room.dealer = data['dealer']
-        else:
-            # Rotate dealer (next player clockwise)
-            room.dealer = lho(normalize(room.dealer)) if room.dealer else 'N'
+                # Generate hands based on settings
+                hands = _generate_room_hands(room.settings)
 
-        # Update room state
-        room.deal = hands
-        room.original_deal = {pos: hand for pos, hand in hands.items()}  # Deep copy
-        room.auction_history = []
-        room.play_state = None
-        room.game_phase = 'bidding'
-        room.increment_version()
+                # Set dealer (rotate or use provided)
+                if 'dealer' in data and data['dealer'] in SEATS:
+                    room.dealer = data['dealer']
+                else:
+                    room.dealer = lho(normalize(room.dealer)) if room.dealer else 'N'
 
-        # Auto-bid for AI if dealer is E or W
-        ai_bids = auto_bid_for_ai(room)
+                room.deal = hands
+                room.original_deal = {pos: hand for pos, hand in hands.items()}
+                room.auction_history = []
+                room.play_state = None
+                room.game_phase = 'bidding'
+                room.increment_version()
 
-        # Return response with caller's hand
-        position = room.get_position_for_session(session_id)
-        position_full = SEAT_NAMES[position]
+                ai_bids = auto_bid_for_ai(room)
 
-        return jsonify({
-            'success': True,
-            'dealer': room.dealer,
-            'vulnerability': room.vulnerability,
-            'my_hand': room._serialize_hand(room.deal[position_full]),
-            'game_phase': room.game_phase,
-            'current_bidder': room.get_current_bidder(),
-            'is_my_turn': room.is_session_turn(session_id),
-            'ai_bids': ai_bids,  # Include any AI bids made
-            'auction_history': room.auction_history,
-            'version': room.version
-        })
+                position = room.get_position_for_session(session_id)
+                position_full = SEAT_NAMES[position]
+
+                response_data = {
+                    'success': True,
+                    'dealer': room.dealer,
+                    'vulnerability': room.vulnerability,
+                    'my_hand': room._serialize_hand(room.deal[position_full]),
+                    'game_phase': room.game_phase,
+                    'current_bidder': room.get_current_bidder(),
+                    'is_my_turn': room.is_session_turn(session_id),
+                    'ai_bids': ai_bids,
+                    'auction_history': room.auction_history,
+                    'version': room.version
+                }
+
+        except KeyError:
+            return jsonify({'success': False, 'error': 'Not in a room'}), 404
+        except ValueError as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+        except RoomConflictError:
+            return _conflict_response()
+
+        return jsonify(response_data)
 
     @app.route('/api/room/start', methods=['POST'])
     def start_room_game():
-        """
-        Start the game (deals hands if not already dealt)
-
-        Same as /api/room/deal but with clearer semantics for UI
-        """
+        """Start the game (deals hands if not already dealt)"""
         return room_deal()
 
     # =========================================================================
@@ -976,50 +819,13 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
     @app.route('/api/room/bid', methods=['POST'])
     def room_bid():
-        """
-        Submit a bid in room mode
-
-        Request JSON:
-            {
-                "bid": "1NT" | "Pass" | "X" | "XX" | etc.
-            }
-
-        Response:
-            {
-                "success": true,
-                "auction_history": ["1NT", "Pass", ...],
-                "current_bidder": "E",
-                "is_my_turn": false,
-                "version": 6
-            }
-        """
+        """Submit a bid in room mode"""
         session_id = get_session_id_from_request(request)
         if not session_id:
             return jsonify({
                 'success': False,
                 'error': 'No session ID provided'
             }), 400
-
-        room = room_manager.get_room_by_session(session_id)
-        if not room:
-            return jsonify({
-                'success': False,
-                'error': 'Not in a room'
-            }), 404
-
-        # Check game phase
-        if room.game_phase != 'bidding':
-            return jsonify({
-                'success': False,
-                'error': f'Cannot bid in {room.game_phase} phase'
-            }), 400
-
-        # Check it's this player's turn
-        if not room.is_session_turn(session_id):
-            return jsonify({
-                'success': False,
-                'error': 'Not your turn to bid'
-            }), 403
 
         data = request.get_json() or {}
         bid = data.get('bid')
@@ -1030,80 +836,95 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 'error': 'Bid required'
             }), 400
 
-        # Add bid to auction history
-        room.auction_history.append(bid)
-        room.increment_version()
+        try:
+            with room_manager.mutate_room_by_session(session_id) as room:
+                if room.game_phase != 'bidding':
+                    raise ValueError(f'Cannot bid in {room.game_phase} phase')
 
-        # Evaluate bid using V2 unified feedback system (accumulate for review)
-        position = room.get_position_for_session(session_id)
-        position_full = SEAT_NAMES.get(position, position)
-        dealer_full = SEAT_NAMES.get(normalize(room.dealer), room.dealer)
-        hand = room.deal.get(position_full)
-        if hand and bid != 'Pass':
-            try:
-                from engine.v2 import BiddingEngineV2Schema
-                eval_engine = BiddingEngineV2Schema()
-                # Evaluate against auction BEFORE this bid was added
-                auction_before = room.auction_history[:-1]
-                v2_fb = eval_engine.evaluate_user_bid(
-                    hand=hand,
-                    user_bid=bid,
-                    auction_history=auction_before,
-                    my_position=position_full,
-                    vulnerability=room.vulnerability or 'None',
-                    dealer=dealer_full
-                )
-                room.bid_feedback.append({
-                    'position': position,
+                if not room.is_session_turn(session_id):
+                    raise PermissionError('Not your turn to bid')
+
+                # Add bid to auction history
+                room.auction_history.append(bid)
+                room.increment_version()
+
+                # Evaluate bid using V2 unified feedback system
+                position = room.get_position_for_session(session_id)
+                position_full = SEAT_NAMES.get(position, position)
+                dealer_full = SEAT_NAMES.get(normalize(room.dealer), room.dealer)
+                hand = room.deal.get(position_full)
+                if hand and bid != 'Pass':
+                    try:
+                        from engine.v2 import BiddingEngineV2Schema
+                        eval_engine = BiddingEngineV2Schema()
+                        auction_before = room.auction_history[:-1]
+                        v2_fb = eval_engine.evaluate_user_bid(
+                            hand=hand,
+                            user_bid=bid,
+                            auction_history=auction_before,
+                            my_position=position_full,
+                            vulnerability=room.vulnerability or 'None',
+                            dealer=dealer_full
+                        )
+                        room.bid_feedback.append({
+                            'position': position,
+                            'bid': bid,
+                            'bid_number': len(room.auction_history),
+                            'score': v2_fb.score,
+                            'correctness': v2_fb.correctness.value,
+                            'optimal_bid': v2_fb.optimal_bid,
+                            'optimal_explanation': v2_fb.optimal_explanation,
+                            'key_concept': v2_fb.key_concept,
+                            'helpful_hint': v2_fb.helpful_hint,
+                            'learning_feedback': v2_fb.learning_feedback,
+                        })
+                    except Exception:
+                        pass  # Don't block bidding if evaluation fails
+
+                # Check if auction is complete
+                auction_complete = _check_auction_complete(room.auction_history)
+
+                if auction_complete:
+                    room.game_phase = 'complete'
+
+                ai_bids = auto_bid_for_ai(room) if not auction_complete else []
+                auction_complete = _check_auction_complete(room.auction_history)
+
+                # Save passed-out hands
+                if auction_complete and all(b == 'Pass' for b in room.auction_history):
+                    _save_room_hand(room)
+
+                response_data = {
+                    'success': True,
                     'bid': bid,
-                    'bid_number': len(room.auction_history),
-                    'score': v2_fb.score,
-                    'correctness': v2_fb.correctness.value,
-                    'optimal_bid': v2_fb.optimal_bid,
-                    'optimal_explanation': v2_fb.optimal_explanation,
-                    'key_concept': v2_fb.key_concept,
-                    'helpful_hint': v2_fb.helpful_hint,
-                    'learning_feedback': v2_fb.learning_feedback,
-                })
-            except Exception:
-                pass  # Don't block bidding if evaluation fails
+                    'ai_bids': ai_bids,
+                    'auction_history': room.auction_history,
+                    'current_bidder': room.get_current_bidder(),
+                    'is_my_turn': room.is_session_turn(session_id),
+                    'game_phase': room.game_phase,
+                    'auction_complete': auction_complete,
+                    'version': room.version
+                }
 
-        # Check if auction is complete (3 consecutive passes after opening bid)
-        auction_complete = _check_auction_complete(room.auction_history)
+        except KeyError:
+            return jsonify({'success': False, 'error': 'Not in a room'}), 404
+        except ValueError as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+        except PermissionError as e:
+            return jsonify({'success': False, 'error': str(e)}), 403
+        except RoomConflictError:
+            return _conflict_response()
 
-        if auction_complete:
-            room.game_phase = 'complete'
-
-        # Auto-bid for E/W using the actual bidding engine
-        ai_bids = auto_bid_for_ai(room) if not auction_complete else []
-        auction_complete = _check_auction_complete(room.auction_history)
-
-        # Save passed-out hands (all passes, no contract — hand is done)
-        if auction_complete and all(b == 'Pass' for b in room.auction_history):
-            _save_room_hand(room)
-
-        return jsonify({
-            'success': True,
-            'bid': bid,
-            'ai_bids': ai_bids,
-            'auction_history': room.auction_history,
-            'current_bidder': room.get_current_bidder(),
-            'is_my_turn': room.is_session_turn(session_id),
-            'game_phase': room.game_phase,
-            'auction_complete': auction_complete,
-            'version': room.version
-        })
+        return jsonify(response_data)
 
     @app.route('/api/room/hint', methods=['POST'])
     def room_hint():
-        """
-        Get a bid suggestion for the requesting player using the room's deal.
-        Uses the room's hand data (not solo session state).
-        """
+        """Get a bid suggestion for the requesting player."""
         session_id = get_session_id_from_request(request)
         if not session_id:
             return jsonify({'success': False, 'error': 'No session ID provided'}), 400
 
+        # Read-only — no mutation needed
         room = room_manager.get_room_by_session(session_id)
         if not room:
             return jsonify({'success': False, 'error': 'Not in a room'}), 404
@@ -1135,7 +956,6 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 dealer=dealer_full
             )
 
-            # Normalize explanation
             if hasattr(explanation, 'description'):
                 explanation = explanation.description
             elif hasattr(explanation, 'to_dict'):
@@ -1158,22 +978,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
     @app.route('/api/room/start-play', methods=['POST'])
     def room_start_play():
-        """
-        Start card play phase (either peer)
-
-        Transitions room from bidding complete to playing phase.
-        Initializes shared PlayState for synchronized play.
-
-        Response:
-            {
-                "success": true,
-                "contract": "3NT by S",
-                "declarer": "S",
-                "dummy": "N",
-                "opening_leader": "W",
-                "play_state": { ... }
-            }
-        """
+        """Start card play phase (either peer)"""
         from engine.play_engine import PlayEngine, Contract, PlayState
 
         session_id = get_session_id_from_request(request)
@@ -1183,83 +988,54 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 'error': 'No session ID provided'
             }), 400
 
-        room = room_manager.get_room_by_session(session_id)
-        if not room:
-            return jsonify({
-                'success': False,
-                'error': 'Not in a room'
-            }), 404
+        try:
+            with room_manager.mutate_room_by_session(session_id) as room:
+                if room.game_phase != 'complete':
+                    raise ValueError(f'Cannot start play in {room.game_phase} phase')
 
-        # Must be in complete phase (bidding finished)
-        if room.game_phase != 'complete':
-            return jsonify({
-                'success': False,
-                'error': f'Cannot start play in {room.game_phase} phase'
-            }), 400
+                dealer_idx = seat_index(normalize(room.dealer))
+                contract = PlayEngine.determine_contract(room.auction_history, dealer_idx)
 
-        # Determine contract from auction
-        dealer_idx = seat_index(normalize(room.dealer))
-        contract = PlayEngine.determine_contract(room.auction_history, dealer_idx)
+                if not contract:
+                    raise ValueError('No valid contract (hand was passed out)')
 
-        if not contract:
-            return jsonify({
-                'success': False,
-                'error': 'No valid contract (hand was passed out)'
-            }), 400
+                hands = {}
+                for pos_full, hand in room.deal.items():
+                    pos_short = pos_full[0]
+                    hands[pos_short] = hand
 
-        # Convert hands to format needed by PlayEngine
-        hands = {}
-        for pos_full, hand in room.deal.items():
-            pos_short = pos_full[0]  # 'North' -> 'N'
-            hands[pos_short] = hand
+                play_state = PlayEngine.create_play_session(contract, hands)
+                dummy = seats_partner(contract.declarer)
 
-        # Create play state
-        play_state = PlayEngine.create_play_session(contract, hands)
+                room.play_state = play_state
+                room.game_phase = 'playing'
+                room.increment_version()
 
-        # Determine dummy (partner of declarer)
-        dummy = seats_partner(contract.declarer)
+                response_data = {
+                    'success': True,
+                    'contract': str(contract),
+                    'declarer': contract.declarer,
+                    'dummy': dummy,
+                    'opening_leader': lho(contract.declarer),
+                    'next_to_play': room.play_state.next_to_play,
+                    'is_my_turn': room.is_session_turn(session_id),
+                    'version': room.version,
+                    'play_state': room._serialize_play_state(for_session=session_id),
+                    'game_phase': room.game_phase,
+                }
 
-        room.play_state = play_state
-        room.game_phase = 'playing'
-        room.increment_version()
+        except KeyError:
+            return jsonify({'success': False, 'error': 'Not in a room'}), 404
+        except ValueError as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+        except RoomConflictError:
+            return _conflict_response()
 
-        # NO auto-play for AI — frontend drives AI plays one at a time
-        # via /api/room/get-ai-play (matches solo play loop pattern)
-
-        return jsonify({
-            'success': True,
-            'contract': str(contract),
-            'declarer': contract.declarer,
-            'dummy': dummy,
-            'opening_leader': lho(contract.declarer),
-            'next_to_play': room.play_state.next_to_play,
-            'is_my_turn': room.is_session_turn(session_id),
-            'version': room.version,
-            'play_state': room._serialize_play_state(for_session=session_id),
-            'game_phase': room.game_phase,
-        })
+        return jsonify(response_data)
 
     @app.route('/api/room/play-card', methods=['POST'])
     def room_play_card():
-        """
-        Play a card in room mode
-
-        Request JSON:
-            {
-                "card": {"rank": "A", "suit": "♠"}
-            }
-
-        Response:
-            {
-                "success": true,
-                "card_played": {"rank": "A", "suit": "♠"},
-                "next_to_play": "E",
-                "is_my_turn": false,
-                "trick_complete": false,
-                "trick_winner": null,
-                "ai_plays": [...]
-            }
-        """
+        """Play a card in room mode"""
         from engine.play_engine import PlayEngine
         from engine.hand import Card
 
@@ -1270,33 +1046,6 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 'error': 'No session ID provided'
             }), 400
 
-        room = room_manager.get_room_by_session(session_id)
-        if not room:
-            return jsonify({
-                'success': False,
-                'error': 'Not in a room'
-            }), 404
-
-        # Must be in playing phase
-        if room.game_phase != 'playing':
-            return jsonify({
-                'success': False,
-                'error': f'Cannot play card in {room.game_phase} phase'
-            }), 400
-
-        if not room.play_state:
-            return jsonify({
-                'success': False,
-                'error': 'No play state initialized'
-            }), 400
-
-        # Check it's this player's turn
-        if not room.is_session_turn(session_id):
-            return jsonify({
-                'success': False,
-                'error': 'Not your turn to play'
-            }), 403
-
         data = request.get_json() or {}
         card_data = data.get('card')
 
@@ -1306,115 +1055,108 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 'error': 'Card with rank and suit required'
             }), 400
 
-        card = Card(rank=card_data['rank'], suit=card_data['suit'])
-        player = room.play_state.next_to_play
+        try:
+            with room_manager.mutate_room_by_session(session_id) as room:
+                if room.game_phase != 'playing':
+                    raise ValueError(f'Cannot play card in {room.game_phase} phase')
 
-        # Handle dummy play - declarer controls dummy
-        actual_player = player
-        declarer = room.play_state.contract.declarer
-        dummy = seats_partner(declarer)
+                if not room.play_state:
+                    raise ValueError('No play state initialized')
 
-        if player == dummy:
-            # Dummy's cards are played by declarer
-            actual_player = declarer
-            # Check if the session is declarer
-            session_position = room.get_position_for_session(session_id)
-            if session_position != declarer:
-                return jsonify({
-                    'success': False,
-                    'error': 'Only declarer can play dummy\'s cards'
-                }), 403
+                if not room.is_session_turn(session_id):
+                    raise PermissionError('Not your turn to play')
 
-        # Get the hand for the player whose turn it is
-        position_full = SEAT_NAMES[player]
-        hand = room.play_state.hands[player]
+                card = Card(rank=card_data['rank'], suit=card_data['suit'])
+                player = room.play_state.next_to_play
 
-        # Auto-clear stale completed trick if needed (safety net)
-        # Normally frontend calls /api/room/clear-trick, but auto-clear prevents stuck state
-        if len(room.play_state.current_trick) == 4:
-            room.play_state.current_trick = []
-            room.play_state.current_trick_leader = room.play_state.next_to_play
+                declarer = room.play_state.contract.declarer
+                dummy = seats_partner(declarer)
 
-        # Validate card is legal
-        trump_suit = None if room.play_state.contract.strain == 'NT' else room.play_state.contract.strain
-        if not PlayEngine.is_legal_play(card, hand, room.play_state.current_trick, trump_suit):
-            return jsonify({
-                'success': False,
-                'error': 'Illegal card play - must follow suit if able'
-            }), 400
+                if player == dummy:
+                    session_position = room.get_position_for_session(session_id)
+                    if session_position != declarer:
+                        raise PermissionError("Only declarer can play dummy's cards")
 
-        # Play the card
-        room.play_state.current_trick.append((card, player))
-        hand.cards.remove(card)
+                hand = room.play_state.hands[player]
 
-        # Reveal dummy after opening lead
-        if not room.play_state.dummy_revealed and len(room.play_state.trick_history) == 0:
-            if len(room.play_state.current_trick) == 1:
-                room.play_state.dummy_revealed = True
+                # Auto-clear stale completed trick if needed
+                if len(room.play_state.current_trick) == 4:
+                    room.play_state.current_trick = []
+                    room.play_state.current_trick_leader = room.play_state.next_to_play
 
-        trick_complete = False
-        trick_winner = None
+                # Validate card is legal
+                trump_suit = None if room.play_state.contract.strain == 'NT' else room.play_state.contract.strain
+                if not PlayEngine.is_legal_play(card, hand, room.play_state.current_trick, trump_suit):
+                    raise ValueError('Illegal card play - must follow suit if able')
 
-        # Check if trick is complete
-        if len(room.play_state.current_trick) == 4:
-            trick_complete = True
-            trick_winner = PlayEngine.determine_trick_winner(
-                room.play_state.current_trick,
-                trump_suit
-            )
+                # Play the card
+                room.play_state.current_trick.append((card, player))
+                hand.cards.remove(card)
 
-            # Update tricks won
-            room.play_state.tricks_won[trick_winner] += 1
+                # Reveal dummy after opening lead
+                if not room.play_state.dummy_revealed and len(room.play_state.trick_history) == 0:
+                    if len(room.play_state.current_trick) == 1:
+                        room.play_state.dummy_revealed = True
 
-            # Save trick to history
-            from engine.play_engine import Trick
-            trick = Trick(
-                cards=list(room.play_state.current_trick),
-                winner=trick_winner,
-                leader=room.play_state.current_trick_leader or player
-            )
-            room.play_state.trick_history.append(trick)
+                trick_complete = False
+                trick_winner = None
 
-            # DON'T clear trick yet - let frontend display it with winner
-            # Frontend will call /api/room/clear-trick after showing winner
-            room.play_state.next_to_play = trick_winner
+                if len(room.play_state.current_trick) == 4:
+                    trick_complete = True
+                    trick_winner = PlayEngine.determine_trick_winner(
+                        room.play_state.current_trick,
+                        trump_suit
+                    )
 
-            # Check if play is complete (13 tricks played)
-            if len(room.play_state.trick_history) == 13:
-                room.game_phase = 'complete'
-                _save_room_hand(room)
-        else:
-            # Next player
-            room.play_state.next_to_play = lho(player)
+                    room.play_state.tricks_won[trick_winner] += 1
 
-        room.increment_version()
+                    from engine.play_engine import Trick
+                    trick = Trick(
+                        cards=list(room.play_state.current_trick),
+                        winner=trick_winner,
+                        leader=room.play_state.current_trick_leader or player
+                    )
+                    room.play_state.trick_history.append(trick)
+                    room.play_state.next_to_play = trick_winner
 
-        # NO auto-play for AI — frontend drives AI plays one at a time
-        # via /api/room/get-ai-play (matches solo play loop pattern)
+                    if len(room.play_state.trick_history) == 13:
+                        room.game_phase = 'complete'
+                        _save_room_hand(room)
+                else:
+                    room.play_state.next_to_play = lho(player)
 
-        return jsonify({
-            'success': True,
-            'card_played': {'rank': card.rank, 'suit': card.suit},
-            'player': player,
-            'next_to_play': room.play_state.next_to_play if room.game_phase == 'playing' else None,
-            'is_my_turn': room.is_session_turn(session_id),
-            'trick_complete': trick_complete,
-            'trick_winner': trick_winner,
-            'tricks_ns': room.play_state.tricks_won['N'] + room.play_state.tricks_won['S'],
-            'tricks_ew': room.play_state.tricks_won['E'] + room.play_state.tricks_won['W'],
-            'game_phase': room.game_phase,
-            'dummy_revealed': room.play_state.dummy_revealed,
-            'play_state': room._serialize_play_state(for_session=session_id),
-            'version': room.version
-        })
+                room.increment_version()
+
+                response_data = {
+                    'success': True,
+                    'card_played': {'rank': card.rank, 'suit': card.suit},
+                    'player': player,
+                    'next_to_play': room.play_state.next_to_play if room.game_phase == 'playing' else None,
+                    'is_my_turn': room.is_session_turn(session_id),
+                    'trick_complete': trick_complete,
+                    'trick_winner': trick_winner,
+                    'tricks_ns': room.play_state.tricks_won['N'] + room.play_state.tricks_won['S'],
+                    'tricks_ew': room.play_state.tricks_won['E'] + room.play_state.tricks_won['W'],
+                    'game_phase': room.game_phase,
+                    'dummy_revealed': room.play_state.dummy_revealed,
+                    'play_state': room._serialize_play_state(for_session=session_id),
+                    'version': room.version
+                }
+
+        except KeyError:
+            return jsonify({'success': False, 'error': 'Not in a room'}), 404
+        except ValueError as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+        except PermissionError as e:
+            return jsonify({'success': False, 'error': str(e)}), 403
+        except RoomConflictError:
+            return _conflict_response()
+
+        return jsonify(response_data)
 
     @app.route('/api/room/play-state', methods=['GET'])
     def room_play_state():
-        """
-        Get current play state for room
-
-        Response includes visible hands based on position and dummy status.
-        """
+        """Get current play state for room (read-only)"""
         from engine.play_engine import PlayEngine
 
         session_id = get_session_id_from_request(request)
@@ -1437,7 +1179,6 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 'error': 'No play state'
             }), 400
 
-        # Use _serialize_play_state for consistent format with poll and play-card responses
         play_state = room._serialize_play_state(for_session=session_id)
 
         return jsonify({
@@ -1449,24 +1190,7 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
 
     @app.route('/api/room/get-ai-play', methods=['POST'])
     def room_get_ai_play():
-        """
-        AI plays ONE card for an E/W position (matches solo /api/get-ai-play pattern).
-
-        Frontend calls this in a loop with delays for visible card animation.
-        Only plays if current next_to_play is E or W.
-
-        Response:
-            {
-                "success": true,
-                "card": {"rank": "A", "suit": "♠"},
-                "position": "E",
-                "trick_complete": false,
-                "trick_winner": null,
-                "next_to_play": "S",
-                "tricks_won": {...},
-                "dummy_revealed": true
-            }
-        """
+        """AI plays ONE card for an E/W position"""
         from engine.play_engine import PlayEngine
         from engine.play.ai.simple_ai import SimplePlayAI
 
@@ -1474,135 +1198,131 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
         if not session_id:
             return jsonify({'success': False, 'error': 'No session ID provided'}), 400
 
-        room = room_manager.get_room_by_session(session_id)
-        if not room:
-            return jsonify({'success': False, 'error': 'Not in a room'}), 404
-
-        if room.game_phase != 'playing' or not room.play_state:
-            return jsonify({'success': False, 'error': 'Not in playing phase'}), 400
-
-        current_player = room.play_state.next_to_play
-
-        # Only AI plays E/W
-        if current_player not in ('E', 'W'):
-            return jsonify({
-                'success': False,
-                'error': f'Not AI turn (next_to_play={current_player})',
-                'next_to_play': current_player,
-                'is_my_turn': room.is_session_turn(session_id),
-            }), 403
-
         try:
-            # Auto-clear stale completed trick if needed (safety net)
-            if len(room.play_state.current_trick) == 4:
-                room.play_state.current_trick = []
-                room.play_state.current_trick_leader = room.play_state.next_to_play
+            with room_manager.mutate_room_by_session(session_id) as room:
+                if room.game_phase != 'playing' or not room.play_state:
+                    raise ValueError('Not in playing phase')
 
-            ai = SimplePlayAI()
-            trump_suit = None if room.play_state.contract.strain == 'NT' else room.play_state.contract.strain
+                current_player = room.play_state.next_to_play
 
-            card = ai.choose_card(room.play_state, current_player)
-            hand = room.play_state.hands[current_player]
+                if current_player not in ('E', 'W'):
+                    return jsonify({
+                        'success': False,
+                        'error': f'Not AI turn (next_to_play={current_player})',
+                        'next_to_play': current_player,
+                        'is_my_turn': room.is_session_turn(session_id),
+                    }), 403
 
-            # Play the card
-            room.play_state.current_trick.append((card, current_player))
-            hand.cards.remove(card)
+                # Auto-clear stale completed trick
+                if len(room.play_state.current_trick) == 4:
+                    room.play_state.current_trick = []
+                    room.play_state.current_trick_leader = room.play_state.next_to_play
 
-            # Reveal dummy after opening lead
-            if not room.play_state.dummy_revealed and len(room.play_state.trick_history) == 0:
-                if len(room.play_state.current_trick) == 1:
-                    room.play_state.dummy_revealed = True
+                ai = SimplePlayAI()
+                trump_suit = None if room.play_state.contract.strain == 'NT' else room.play_state.contract.strain
 
-            # Check if trick complete
-            trick_complete = len(room.play_state.current_trick) == 4
-            trick_winner = None
+                card = ai.choose_card(room.play_state, current_player)
+                hand = room.play_state.hands[current_player]
 
-            if trick_complete:
-                trick_winner = PlayEngine.determine_trick_winner(
-                    room.play_state.current_trick,
-                    trump_suit
-                )
-                room.play_state.tricks_won[trick_winner] += 1
+                room.play_state.current_trick.append((card, current_player))
+                hand.cards.remove(card)
 
-                from engine.play_engine import Trick
-                trick = Trick(
-                    cards=list(room.play_state.current_trick),
-                    winner=trick_winner,
-                    leader=room.play_state.current_trick_leader or current_player
-                )
-                room.play_state.trick_history.append(trick)
+                if not room.play_state.dummy_revealed and len(room.play_state.trick_history) == 0:
+                    if len(room.play_state.current_trick) == 1:
+                        room.play_state.dummy_revealed = True
 
-                # DON'T clear trick - let frontend display it
-                # Frontend will call /api/room/clear-trick after showing winner
-                room.play_state.next_to_play = trick_winner
+                trick_complete = len(room.play_state.current_trick) == 4
+                trick_winner = None
 
-                if len(room.play_state.trick_history) == 13:
-                    room.game_phase = 'complete'
-                    _save_room_hand(room)
-            else:
-                room.play_state.next_to_play = lho(current_player)
+                if trick_complete:
+                    trick_winner = PlayEngine.determine_trick_winner(
+                        room.play_state.current_trick,
+                        trump_suit
+                    )
+                    room.play_state.tricks_won[trick_winner] += 1
 
-            room.increment_version()
+                    from engine.play_engine import Trick
+                    trick = Trick(
+                        cards=list(room.play_state.current_trick),
+                        winner=trick_winner,
+                        leader=room.play_state.current_trick_leader or current_player
+                    )
+                    room.play_state.trick_history.append(trick)
+                    room.play_state.next_to_play = trick_winner
 
-            return jsonify({
-                'success': True,
-                'card': {'rank': card.rank, 'suit': card.suit},
-                'position': current_player,
-                'trick_complete': trick_complete,
-                'trick_winner': trick_winner,
-                'next_to_play': room.play_state.next_to_play,
-                'tricks_won': dict(room.play_state.tricks_won),
-                'dummy_revealed': room.play_state.dummy_revealed,
-                'game_phase': room.game_phase,
-                'explanation': f"{current_player} played {card.rank}{card.suit}",
-                'version': room.version
-            })
+                    if len(room.play_state.trick_history) == 13:
+                        room.game_phase = 'complete'
+                        _save_room_hand(room)
+                else:
+                    room.play_state.next_to_play = lho(current_player)
 
+                room.increment_version()
+
+                response_data = {
+                    'success': True,
+                    'card': {'rank': card.rank, 'suit': card.suit},
+                    'position': current_player,
+                    'trick_complete': trick_complete,
+                    'trick_winner': trick_winner,
+                    'next_to_play': room.play_state.next_to_play,
+                    'tricks_won': dict(room.play_state.tricks_won),
+                    'dummy_revealed': room.play_state.dummy_revealed,
+                    'game_phase': room.game_phase,
+                    'explanation': f"{current_player} played {card.rank}{card.suit}",
+                    'version': room.version
+                }
+
+        except KeyError:
+            return jsonify({'success': False, 'error': 'Not in a room'}), 404
+        except ValueError as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+        except RoomConflictError:
+            return _conflict_response()
         except Exception as e:
-            import traceback
-            traceback.print_exc()
+            from utils.error_logger import log_error
+            log_error(e, endpoint='room/get-ai-play')
             return jsonify({
                 'success': False,
                 'error': f'AI play error: {str(e)}'
             }), 500
 
+        return jsonify(response_data)
+
     @app.route('/api/room/clear-trick', methods=['POST'])
     def room_clear_trick():
-        """
-        Clear completed trick after frontend has displayed it.
-        Matches solo /api/clear-trick pattern.
-        """
+        """Clear completed trick after frontend has displayed it."""
         session_id = get_session_id_from_request(request)
         if not session_id:
             return jsonify({'success': False, 'error': 'No session ID provided'}), 400
 
-        room = room_manager.get_room_by_session(session_id)
-        if not room:
+        try:
+            with room_manager.mutate_room_by_session(session_id) as room:
+                if not room.play_state:
+                    raise ValueError('No play state')
+
+                trick_size = len(room.play_state.current_trick)
+                if 0 < trick_size < 4:
+                    raise ValueError(f'Cannot clear incomplete trick ({trick_size}/4 cards played)')
+
+                room.play_state.current_trick = []
+                room.play_state.current_trick_leader = room.play_state.next_to_play
+                room.increment_version()
+
+                response_data = {
+                    'success': True,
+                    'message': 'Trick cleared',
+                    'next_to_play': room.play_state.next_to_play,
+                    'game_phase': room.game_phase,
+                    'version': room.version
+                }
+        except KeyError:
             return jsonify({'success': False, 'error': 'Not in a room'}), 404
+        except ValueError as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+        except RoomConflictError:
+            return _conflict_response()
 
-        if not room.play_state:
-            return jsonify({'success': False, 'error': 'No play state'}), 400
-
-        trick_size = len(room.play_state.current_trick)
-        if trick_size > 0 and trick_size < 4:
-            return jsonify({
-                'success': False,
-                'error': f'Cannot clear incomplete trick ({trick_size}/4 cards played)',
-            }), 400
-
-        # Clear the current trick
-        room.play_state.current_trick = []
-        room.play_state.current_trick_leader = room.play_state.next_to_play  # Winner leads next
-
-        room.increment_version()
-
-        return jsonify({
-            'success': True,
-            'message': 'Trick cleared',
-            'next_to_play': room.play_state.next_to_play,
-            'game_phase': room.game_phase,
-            'version': room.version
-        })
+        return jsonify(response_data)
 
     # =========================================================================
     # HELPER FUNCTIONS
@@ -1625,30 +1345,24 @@ def _auto_play_for_ai(room: RoomState) -> list:
         current_player = room.play_state.next_to_play
 
         if current_player not in ('E', 'W'):
-            # Human's turn - stop
             break
 
-        # Get AI card selection
         try:
             ai = SimplePlayAI()
             trump_suit = None if room.play_state.contract.strain == 'NT' else room.play_state.contract.strain
 
-            # Use choose_card which handles legal card filtering internally
             card = ai.choose_card(room.play_state, current_player)
 
             hand = room.play_state.hands[current_player]
 
-            # Play the card
             room.play_state.current_trick.append((card, current_player))
             hand.cards.remove(card)
             ai_plays.append({'player': current_player, 'card': {'rank': card.rank, 'suit': card.suit}})
 
-            # Reveal dummy after opening lead
             if not room.play_state.dummy_revealed and len(room.play_state.trick_history) == 0:
                 if len(room.play_state.current_trick) == 1:
                     room.play_state.dummy_revealed = True
 
-            # Check if trick complete
             if len(room.play_state.current_trick) == 4:
                 trick_winner = PlayEngine.determine_trick_winner(
                     room.play_state.current_trick,
@@ -1677,9 +1391,8 @@ def _auto_play_for_ai(room: RoomState) -> list:
             room.increment_version()
 
         except Exception as e:
-            import traceback
-            print(f"⚠️ AI play error for {current_player}: {e}")
-            traceback.print_exc()
+            from utils.error_logger import log_error
+            log_error(e, endpoint='room/auto-play-ai', context={'position': current_player})
             break
 
     return ai_plays
@@ -1693,11 +1406,9 @@ def _check_auction_complete(auction_history: list) -> bool:
     if len(auction_history) < 4:
         return False
 
-    # All passes (passed out)
     if all(b == 'Pass' for b in auction_history):
         return len(auction_history) >= 4
 
-    # Check for 3 consecutive passes after at least one non-pass bid
     non_pass_bids = [b for b in auction_history if b != 'Pass']
     if non_pass_bids and len(auction_history) >= 4:
         return auction_history[-3:] == ['Pass', 'Pass', 'Pass']
@@ -1715,25 +1426,21 @@ def _generate_room_hands(settings: RoomSettings) -> dict:
     Returns:
         Dict mapping position names to Hand objects
     """
-    # Create a fresh deck
     ranks = '23456789TJQKA'
     suits = ['♠', '♥', '♦', '♣']
     deck = [Card(rank=r, suit=s) for s in suits for r in ranks]
     random.shuffle(deck)
 
     if settings.deal_type == 'convention' and settings.convention_filter:
-        # Generate convention-specific hands
         convention_map = get_convention_map()
         specialist = convention_map.get(settings.convention_filter)
 
         if specialist:
-            # Generate South hand for convention (human partner plays South)
             try:
                 south_hand, remaining = generate_hand_for_convention(specialist, deck, timeout_ms=500)
                 if south_hand:
                     deck = remaining
                 else:
-                    # Fallback to random
                     south_hand = Hand(deck[:13])
                     deck = deck[13:]
             except Exception:
@@ -1743,12 +1450,10 @@ def _generate_room_hands(settings: RoomSettings) -> dict:
             south_hand = Hand(deck[:13])
             deck = deck[13:]
 
-        # Deal remaining positions
         north_hand = Hand(deck[:13])
         east_hand = Hand(deck[13:26])
         west_hand = Hand(deck[26:39])
     else:
-        # Random deal
         south_hand = Hand(deck[:13])
         north_hand = Hand(deck[13:26])
         east_hand = Hand(deck[26:39])

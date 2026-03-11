@@ -2,19 +2,26 @@
 Unit tests for room state management (partner practice).
 
 Tests RoomState logic: seat math, turn detection, bidder calculation,
-partner resolution, and RoomStateManager lifecycle.
+partner resolution, and RoomStateManager lifecycle with Redis (fakeredis).
 
-No database or Flask required — pure in-memory logic.
+No database or Flask required — uses fakeredis for in-memory Redis emulation.
 """
 import sys
+import json
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+import fakeredis
 
 sys.path.insert(0, 'backend')
 
-from core.room_state import RoomState, RoomStateManager, RoomSettings, generate_room_code
-from engine.play_engine import PlayState, Contract
+from core.room_state import (
+    RoomState, RoomStateManager, RoomSettings, RoomConflictError,
+    generate_room_code, ROOM_TTL
+)
+from engine.play_engine import PlayState, Contract, Trick, GamePhase
+from engine.hand import Hand, Card
 
 
 # ---------------------------------------------------------------------------
@@ -34,7 +41,15 @@ def room():
 
 @pytest.fixture
 def manager():
-    return RoomStateManager()
+    """RoomStateManager backed by fakeredis (isolated per test)."""
+    fake_redis = fakeredis.FakeRedis(decode_responses=True)
+    return RoomStateManager(redis_client=fake_redis)
+
+
+@pytest.fixture
+def fake_redis():
+    """Raw fakeredis instance for low-level assertions."""
+    return fakeredis.FakeRedis(decode_responses=True)
 
 
 def _make_play_state(declarer='S', next_to_play='W', dummy_revealed=True):
@@ -50,6 +65,13 @@ def _make_play_state(declarer='S', next_to_play='W', dummy_revealed=True):
         tricks_won={'NS': 0, 'EW': 0},
     )
     return ps
+
+
+def _make_hand():
+    """Create a valid 13-card hand for serialization tests."""
+    ranks = '23456789TJQKA'
+    cards = [Card(rank=r, suit='♠') for r in ranks]
+    return Hand(cards)
 
 
 # ===========================================================================
@@ -92,14 +114,14 @@ class TestGetCurrentBidder:
         assert room.get_current_bidder() == expected_first
 
     @pytest.mark.parametrize("dealer,num_bids,expected", [
-        ('North', 1, 'E'),   # N dealt, 1 bid made → E's turn
-        ('North', 2, 'S'),   # N dealt, 2 bids → S's turn
-        ('North', 3, 'W'),   # N dealt, 3 bids → W's turn
-        ('North', 4, 'N'),   # Full round → back to N
-        ('South', 1, 'W'),   # S dealt, 1 bid → W
-        ('South', 2, 'N'),   # S dealt, 2 bids → N
-        ('East', 1, 'S'),    # E dealt, 1 bid → S
-        ('West', 1, 'N'),    # W dealt, 1 bid → N
+        ('North', 1, 'E'),
+        ('North', 2, 'S'),
+        ('North', 3, 'W'),
+        ('North', 4, 'N'),
+        ('South', 1, 'W'),
+        ('South', 2, 'N'),
+        ('East', 1, 'S'),
+        ('West', 1, 'N'),
     ])
     def test_bidder_rotation(self, room, dealer, num_bids, expected):
         room.dealer = dealer
@@ -128,7 +150,6 @@ class TestIsSessionTurnBidding:
         room.dealer = 'South'
         room.game_phase = 'bidding'
         room.auction_history = []
-        # South (host) is dealer, so it's host's turn
         assert room.is_session_turn('host-1') is True
         assert room.is_session_turn('guest-1') is False
 
@@ -136,14 +157,13 @@ class TestIsSessionTurnBidding:
         room.dealer = 'North'
         room.game_phase = 'bidding'
         room.auction_history = []
-        # North (guest) is dealer
         assert room.is_session_turn('guest-1') is True
         assert room.is_session_turn('host-1') is False
 
     def test_ai_turn_no_human_session(self, room):
         room.dealer = 'North'
         room.game_phase = 'bidding'
-        room.auction_history = ['Pass']  # N bid, now E's turn (AI)
+        room.auction_history = ['Pass']
         assert room.is_session_turn('host-1') is False
         assert room.is_session_turn('guest-1') is False
 
@@ -163,37 +183,29 @@ class TestIsSessionTurnPlaying:
     def test_guest_turn_when_next_is_north(self, room):
         room.game_phase = 'playing'
         room.play_state = _make_play_state(declarer='S', next_to_play='N')
-        # N is dummy, S is declarer — declarer (host) controls dummy
         assert room.is_session_turn('host-1') is True
         assert room.is_session_turn('guest-1') is False
 
     def test_declarer_south_controls_dummy_north(self, room):
-        """When South declares, South controls North (dummy)."""
         room.game_phase = 'playing'
         room.play_state = _make_play_state(declarer='S', next_to_play='N')
-        # Host (South=declarer) should have turn when dummy (North) is next
         assert room.is_session_turn('host-1') is True
 
     def test_declarer_north_controls_dummy_south(self, room):
-        """When North declares, North controls South (dummy)."""
         room.game_phase = 'playing'
         room.play_state = _make_play_state(declarer='N', next_to_play='S')
-        # Guest (North=declarer) should have turn when dummy (South) is next
         assert room.is_session_turn('guest-1') is True
         assert room.is_session_turn('host-1') is False
 
     def test_ai_turn_no_human_control(self, room):
-        """When East or West is next to play, no human has the turn."""
         room.game_phase = 'playing'
         room.play_state = _make_play_state(declarer='S', next_to_play='E')
         assert room.is_session_turn('host-1') is False
         assert room.is_session_turn('guest-1') is False
 
     def test_ai_declarer_no_human_turn(self, room):
-        """If AI is declarer (E/W), no human controls dummy either."""
         room.game_phase = 'playing'
         room.play_state = _make_play_state(declarer='E', next_to_play='W')
-        # W is dummy of E declarer — both AI, no human turn
         assert room.is_session_turn('host-1') is False
         assert room.is_session_turn('guest-1') is False
 
@@ -210,14 +222,12 @@ class TestIsSessionTurnPlaying:
 class TestToDictPartnerResolution:
 
     def _room_with_hands(self):
-        """Room in 'complete' phase with mock hands."""
         room = RoomState(
             room_code='XYZ789',
             host_session_id='host-1',
             guest_session_id='guest-1',
             game_phase='complete',
         )
-        # Mock Hand objects with .cards attribute
         south_hand = MagicMock()
         south_hand.cards = [MagicMock(rank='A', suit='♠')]
         north_hand = MagicMock()
@@ -331,13 +341,14 @@ class TestHeartbeat:
 
     def test_partner_disconnected_after_timeout(self, room):
         room.record_heartbeat('guest-1')
-        # Fake the timestamp to be old
-        room.last_seen['guest-1'] = datetime.now() - timedelta(seconds=room.DISCONNECT_TIMEOUT + 10)
+        old_time = datetime.now() - timedelta(seconds=room.DISCONNECT_TIMEOUT + 10)
+        room.last_seen['guest-1'] = old_time.isoformat()
         assert room.is_partner_disconnected('host-1')
 
     def test_partner_not_disconnected_within_timeout(self, room):
         room.record_heartbeat('guest-1')
-        room.last_seen['guest-1'] = datetime.now() - timedelta(seconds=room.DISCONNECT_TIMEOUT - 10)
+        recent_time = datetime.now() - timedelta(seconds=room.DISCONNECT_TIMEOUT - 10)
+        room.last_seen['guest-1'] = recent_time.isoformat()
         assert not room.is_partner_disconnected('host-1')
 
 
@@ -360,6 +371,122 @@ class TestVersionTracking:
 
 
 # ===========================================================================
+# RoomState — Storage serialization round-trip
+# ===========================================================================
+
+class TestStorageSerialization:
+
+    def test_basic_round_trip(self, room):
+        """RoomState survives to_storage_dict -> from_storage_dict"""
+        room.game_phase = 'bidding'
+        room.auction_history = ['1♣', 'Pass']
+        room.vulnerability = 'NS'
+        room.version = 5
+
+        d = room.to_storage_dict()
+        restored = RoomState.from_storage_dict(d)
+
+        assert restored.room_code == room.room_code
+        assert restored.host_session_id == room.host_session_id
+        assert restored.guest_session_id == room.guest_session_id
+        assert restored.game_phase == room.game_phase
+        assert restored.auction_history == room.auction_history
+        assert restored.vulnerability == room.vulnerability
+        assert restored.version == room.version
+
+    def test_round_trip_with_hands(self):
+        """Hand objects survive serialization"""
+        ranks = '23456789TJQKA'
+        south_cards = [Card(rank=r, suit='♠') for r in ranks]
+        north_cards = [Card(rank=r, suit='♥') for r in ranks]
+
+        room = RoomState(
+            room_code='TEST',
+            host_session_id='host-1',
+            deal={
+                'South': Hand(south_cards),
+                'North': Hand(north_cards),
+                'East': None,
+                'West': None,
+            }
+        )
+
+        d = room.to_storage_dict()
+        restored = RoomState.from_storage_dict(d)
+
+        assert restored.deal['South'] is not None
+        assert len(restored.deal['South'].cards) == 13
+        assert restored.deal['East'] is None
+
+    def test_round_trip_with_play_state(self):
+        """PlayState survives serialization"""
+        contract = Contract(level=3, strain='NT', declarer='S', doubled=1)
+        ranks = '23456789TJQKA'
+        hands = {
+            'S': Hand([Card(rank=r, suit='♠') for r in ranks]),
+            'N': Hand([Card(rank=r, suit='♥') for r in ranks]),
+            'E': Hand([Card(rank=r, suit='♦') for r in ranks]),
+            'W': Hand([Card(rank=r, suit='♣') for r in ranks]),
+        }
+
+        trick = Trick(
+            cards=[(Card('A', '♠'), 'S'), (Card('K', '♥'), 'W')],
+            leader='S',
+            winner='S',
+        )
+
+        ps = PlayState(
+            contract=contract,
+            hands=hands,
+            current_trick=[(Card('Q', '♠'), 'S')],
+            tricks_won={'N': 2, 'S': 1, 'E': 0, 'W': 0},
+            trick_history=[trick],
+            next_to_play='W',
+            dummy_revealed=True,
+            current_trick_leader='S',
+            phase=GamePhase.PLAY_IN_PROGRESS,
+        )
+
+        room = RoomState(
+            room_code='PLAY1',
+            host_session_id='host-1',
+            play_state=ps,
+            game_phase='playing',
+        )
+
+        d = room.to_storage_dict()
+        json_str = json.dumps(d)  # Must be JSON-serializable
+        restored = RoomState.from_storage_dict(json.loads(json_str))
+
+        assert restored.play_state is not None
+        assert restored.play_state.contract.level == 3
+        assert restored.play_state.contract.strain == 'NT'
+        assert restored.play_state.contract.doubled == 1
+        assert restored.play_state.next_to_play == 'W'
+        assert restored.play_state.dummy_revealed is True
+        assert len(restored.play_state.trick_history) == 1
+        assert restored.play_state.trick_history[0].winner == 'S'
+        assert len(restored.play_state.current_trick) == 1
+        assert restored.play_state.phase == GamePhase.PLAY_IN_PROGRESS
+
+    def test_settings_round_trip(self):
+        """RoomSettings survives serialization"""
+        settings = RoomSettings(deal_type='convention', convention_filter='stayman', ai_difficulty='expert')
+        room = RoomState(
+            room_code='SET1',
+            host_session_id='host-1',
+            settings=settings,
+        )
+
+        d = room.to_storage_dict()
+        restored = RoomState.from_storage_dict(d)
+
+        assert restored.settings.deal_type == 'convention'
+        assert restored.settings.convention_filter == 'stayman'
+        assert restored.settings.ai_difficulty == 'expert'
+
+
+# ===========================================================================
 # generate_room_code
 # ===========================================================================
 
@@ -374,7 +501,6 @@ class TestGenerateRoomCode:
         assert len(code) == 4
 
     def test_no_ambiguous_characters(self):
-        # Generate many codes and check none contain ambiguous chars
         ambiguous = set('0OIL1')
         for _ in range(100):
             code = generate_room_code()
@@ -382,7 +508,7 @@ class TestGenerateRoomCode:
 
 
 # ===========================================================================
-# RoomStateManager — Lifecycle
+# RoomStateManager — Redis-backed Lifecycle
 # ===========================================================================
 
 class TestRoomStateManagerLifecycle:
@@ -475,14 +601,157 @@ class TestRoomStateManagerLifecycle:
         assert room.game_phase == 'bidding'
         assert room.dealer == 'East'
 
-    def test_cleanup_inactive(self, manager):
+
+# ===========================================================================
+# RoomStateManager — Redis key schema and TTL
+# ===========================================================================
+
+class TestRedisKeySchema:
+
+    def test_room_key_created(self, fake_redis):
+        mgr = RoomStateManager(redis_client=fake_redis)
+        code = mgr.create_room('host-1')
+        assert fake_redis.exists(f'room:{code}') == 1
+
+    def test_session_key_created(self, fake_redis):
+        mgr = RoomStateManager(redis_client=fake_redis)
+        code = mgr.create_room('host-1')
+        assert fake_redis.get('session:host-1') == code
+
+    def test_ttl_applied(self, fake_redis):
+        mgr = RoomStateManager(redis_client=fake_redis)
+        code = mgr.create_room('host-1')
+        ttl = fake_redis.ttl(f'room:{code}')
+        assert ttl > 0
+        assert ttl <= ROOM_TTL
+
+    def test_session_ttl_applied(self, fake_redis):
+        mgr = RoomStateManager(redis_client=fake_redis)
+        code = mgr.create_room('host-1')
+        ttl = fake_redis.ttl('session:host-1')
+        assert ttl > 0
+        assert ttl <= ROOM_TTL
+
+    def test_host_leave_deletes_keys(self, fake_redis):
+        mgr = RoomStateManager(redis_client=fake_redis)
+        code = mgr.create_room('host-1')
+        mgr.join_room(code, 'guest-1')
+        mgr.leave_room('host-1')
+
+        assert fake_redis.exists(f'room:{code}') == 0
+        assert fake_redis.exists('session:host-1') == 0
+        assert fake_redis.exists('session:guest-1') == 0
+
+
+# ===========================================================================
+# RoomStateManager — OCC (mutate_room context manager)
+# ===========================================================================
+
+class TestOCCMutateRoom:
+
+    def test_basic_mutation(self, manager):
+        """mutate_room atomically updates state"""
         code = manager.create_room('host-1')
-        room = manager.get_room(code)
-        # Fake old activity
-        room.last_activity = datetime.now() - timedelta(hours=2)
-        removed = manager.cleanup_inactive(hours=1)
-        assert removed == 1
-        assert manager.get_room_count() == 0
+
+        with manager.mutate_room(code) as room:
+            room.game_phase = 'bidding'
+            room.increment_version()
+
+        reloaded = manager.get_room(code)
+        assert reloaded.game_phase == 'bidding'
+        assert reloaded.version == 1
+
+    def test_mutate_by_session(self, manager):
+        """mutate_room_by_session resolves session -> room"""
+        code = manager.create_room('host-1')
+        manager.join_room(code, 'guest-1')
+
+        with manager.mutate_room_by_session('guest-1') as room:
+            room.set_ready('guest-1')
+
+        reloaded = manager.get_room(code)
+        assert reloaded.ready_state.get('guest-1') is True
+
+    def test_mutate_nonexistent_raises_keyerror(self, manager):
+        with pytest.raises(KeyError):
+            with manager.mutate_room('NOTREAL') as room:
+                pass
+
+    def test_mutate_session_not_in_room_raises_keyerror(self, manager):
+        with pytest.raises(KeyError):
+            with manager.mutate_room_by_session('nobody') as room:
+                pass
+
+    def test_occ_execute_retries_on_watch_error(self, fake_redis):
+        """_occ_execute retries mutation_fn on WatchError up to MAX_OCC_RETRIES"""
+        import redis as redis_lib
+        mgr = RoomStateManager(redis_client=fake_redis)
+        code = mgr.create_room('host-1')
+
+        call_count = 0
+        original_pipeline = fake_redis.pipeline
+
+        def counting_pipeline(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            pipe = original_pipeline(*args, **kwargs)
+            if call_count <= 2:
+                # First two attempts: simulate concurrent modification
+                original_execute = pipe.execute
+                def raise_watch(*a, **kw):
+                    raise redis_lib.WatchError("Simulated conflict")
+                pipe.execute = raise_watch
+            return pipe
+
+        fake_redis.pipeline = counting_pipeline
+
+        # Third attempt should succeed
+        room, _ = mgr._occ_execute(code, lambda r: setattr(r, 'game_phase', 'bidding'))
+        assert room.game_phase == 'bidding'
+        assert call_count == 3  # Two failures + one success
+
+    def test_occ_execute_raises_after_max_retries(self, fake_redis):
+        """_occ_execute raises RoomConflictError after MAX_OCC_RETRIES failures"""
+        import redis as redis_lib
+        mgr = RoomStateManager(redis_client=fake_redis)
+        code = mgr.create_room('host-1')
+
+        original_pipeline = fake_redis.pipeline
+
+        def always_conflict_pipeline(*args, **kwargs):
+            pipe = original_pipeline(*args, **kwargs)
+            original_execute = pipe.execute
+            def raise_watch(*a, **kw):
+                raise redis_lib.WatchError("Simulated conflict")
+            pipe.execute = raise_watch
+            return pipe
+
+        fake_redis.pipeline = always_conflict_pipeline
+
+        with pytest.raises(RoomConflictError):
+            mgr._occ_execute(code, lambda r: setattr(r, 'game_phase', 'bidding'))
+
+    def test_context_manager_raises_on_watch_error(self, fake_redis):
+        """mutate_room context manager raises RoomConflictError on single WatchError"""
+        import redis as redis_lib
+        mgr = RoomStateManager(redis_client=fake_redis)
+        code = mgr.create_room('host-1')
+
+        original_pipeline = fake_redis.pipeline
+
+        def conflict_pipeline(*args, **kwargs):
+            pipe = original_pipeline(*args, **kwargs)
+            original_execute = pipe.execute
+            def raise_watch(*a, **kw):
+                raise redis_lib.WatchError("Simulated conflict")
+            pipe.execute = raise_watch
+            return pipe
+
+        fake_redis.pipeline = conflict_pipeline
+
+        with pytest.raises(RoomConflictError):
+            with mgr.mutate_room(code) as room:
+                room.game_phase = 'bidding'
 
 
 # ===========================================================================
@@ -495,7 +764,6 @@ class TestWaitingForLogic:
         room.dealer = 'North'
         room.game_phase = 'bidding'
         room.auction_history = []
-        # Guest (N) is current bidder, host (S) sees "waiting for partner"
         result = room.to_dict(for_session='host-1')
         assert result['current_bidder'] == 'N'
         assert result['waiting_for'] == 'partner'
@@ -503,7 +771,7 @@ class TestWaitingForLogic:
     def test_waiting_for_ai_when_east_bids(self, room):
         room.dealer = 'North'
         room.game_phase = 'bidding'
-        room.auction_history = ['Pass']  # N bid, now E
+        room.auction_history = ['Pass']
         result = room.to_dict(for_session='host-1')
         assert result['current_bidder'] == 'E'
         assert result['waiting_for'] == 'ai'
