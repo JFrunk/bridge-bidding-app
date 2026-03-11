@@ -36,6 +36,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 
 import redis
+import fakeredis
 
 from engine.hand import Hand, Card
 from engine.play_engine import PlayState, Contract, Trick, GamePhase
@@ -547,10 +548,24 @@ class RoomStateManager:
         """
         if redis_client is not None:
             self._redis = redis_client
+            return
+
+        url = redis_url or os.environ.get('REDIS_URL') or os.environ.get('REDIS_HOST')
+        if url:
+            # Normalize bare host to URL format
+            if not url.startswith('redis://'):
+                url = f'redis://{url}:6379/0'
+            try:
+                self._pool = redis.ConnectionPool.from_url(url, decode_responses=True)
+                self._redis = redis.Redis(connection_pool=self._pool)
+                self._redis.ping()
+            except redis.exceptions.ConnectionError as e:
+                print(f"⚠️  Redis connection failed ({url}): {e}")
+                print("    Falling back to fakeredis (in-memory, non-persistent)")
+                self._redis = fakeredis.FakeStrictRedis(decode_responses=True)
         else:
-            url = redis_url or os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-            self._pool = redis.ConnectionPool.from_url(url, decode_responses=True)
-            self._redis = redis.Redis(connection_pool=self._pool)
+            print("⚠️  No REDIS_URL or REDIS_HOST set — using fakeredis (in-memory, non-persistent)")
+            self._redis = fakeredis.FakeStrictRedis(decode_responses=True)
 
     # =========================================================================
     # Key helpers
