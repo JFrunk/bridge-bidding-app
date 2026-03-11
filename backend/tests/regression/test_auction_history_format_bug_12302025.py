@@ -37,6 +37,10 @@ import os
 # Add backend to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
+# Skip if DATABASE_URL not set (server.py requires PostgreSQL)
+if not os.environ.get('DATABASE_URL'):
+    pytest.skip("DATABASE_URL not set — requires PostgreSQL", allow_module_level=True)
+
 from server import app
 
 

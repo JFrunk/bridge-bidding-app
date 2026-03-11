@@ -11,7 +11,12 @@ Requires: mdbtools (brew install mdbtools)
 """
 
 import pytest
+import os
 from unittest.mock import patch, MagicMock
+
+if not os.environ.get('DATABASE_URL'):
+    pytest.skip("DATABASE_URL not set — requires PostgreSQL", allow_module_level=True)
+
 from engine.imports.bws_importer import (
     parse_bws_file,
     parse_bws_contracts,

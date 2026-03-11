@@ -18,6 +18,10 @@ from datetime import datetime
 # Add backend to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
+# Skip if DATABASE_URL not set (server.py and db.py require PostgreSQL)
+if not os.environ.get('DATABASE_URL'):
+    pytest.skip("DATABASE_URL not set — requires PostgreSQL", allow_module_level=True)
+
 from db import get_connection
 from server import app
 

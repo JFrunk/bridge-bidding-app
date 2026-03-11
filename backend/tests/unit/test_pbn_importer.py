@@ -14,6 +14,11 @@ Validates:
 """
 
 import pytest
+import os
+
+if not os.environ.get('DATABASE_URL'):
+    pytest.skip("DATABASE_URL not set — requires PostgreSQL", allow_module_level=True)
+
 from engine.imports.pbn_importer import (
     parse_pbn_file,
     parse_pbn_hand,

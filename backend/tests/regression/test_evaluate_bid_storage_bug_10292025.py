@@ -11,6 +11,13 @@ This test ensures that:
 3. Feedback can be stored in the bidding_decisions table
 """
 
+import os
+import pytest
+
+# Skip if DATABASE_URL not set (db.py requires PostgreSQL)
+if not os.environ.get('DATABASE_URL'):
+    pytest.skip("DATABASE_URL not set — requires PostgreSQL", allow_module_level=True)
+
 from db import get_connection
 from engine.hand import Hand, Card
 from engine.feedback.bidding_feedback import (
