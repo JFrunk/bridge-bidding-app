@@ -817,6 +817,36 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "opener_complete_transfer_hearts_after_double",
+      "bid": "2♥",
+      "priority": 827,
+      "description": "1NT opener completes transfer to hearts after RHO doubles 2♦",
+      "trigger": "1NT - Pass - 2♦ - X - ?",
+      "conditions": {
+        "hearts_length": {
+          "min": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Completing transfer to hearts despite opponent's double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "opener_complete_transfer_spades_after_double",
+      "bid": "2♠",
+      "priority": 828,
+      "description": "1NT opener completes transfer to spades after RHO doubles 2♥",
+      "trigger": "1NT - Pass - 2♥ - X - ?",
+      "conditions": {
+        "spades_length": {
+          "min": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Completing transfer to spades despite opponent's double",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "systems_on_2c_stayman",
       "bid": "2♣",
       "priority": 810,

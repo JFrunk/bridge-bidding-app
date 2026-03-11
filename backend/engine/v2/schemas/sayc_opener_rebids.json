@@ -298,6 +298,7 @@
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "in": ["2♥", "2♠"], "constraint_type": "HARD"},
+        {"feature": "partner_transferred", "expected": false, "constraint_type": "HARD"},
         {"feature": "hcp", "min": 12, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.10}
       ],
       "forcing": "none",
@@ -313,6 +314,7 @@
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "2♥", "constraint_type": "HARD"},
+        {"feature": "partner_transferred", "expected": false, "constraint_type": "HARD"},
         {"feature": "hcp", "min": 15, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
       ],
       "forcing": "invitational",
@@ -328,6 +330,7 @@
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "2♠", "constraint_type": "HARD"},
+        {"feature": "partner_transferred", "expected": false, "constraint_type": "HARD"},
         {"feature": "hcp", "min": 15, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
       ],
       "forcing": "invitational",
@@ -343,6 +346,7 @@
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "2♥", "constraint_type": "HARD"},
+        {"feature": "partner_transferred", "expected": false, "constraint_type": "HARD"},
         {"feature": "hcp", "min": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
       ],
       "forcing": "none",
@@ -358,6 +362,7 @@
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "2♠", "constraint_type": "HARD"},
+        {"feature": "partner_transferred", "expected": false, "constraint_type": "HARD"},
         {"feature": "hcp", "min": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
       ],
       "forcing": "none",
