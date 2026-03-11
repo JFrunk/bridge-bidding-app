@@ -545,8 +545,7 @@ function App() {
     if (!inRoom || !roomCurrentBidder) return;
 
     // Convert short position to full name
-    const positionMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
-    const fullPosition = positionMap[roomCurrentBidder] || roomCurrentBidder;
+    const fullPosition = SEAT_NAMES[roomCurrentBidder] || roomCurrentBidder;
 
     // Only update if different to avoid infinite loops
     if (fullPosition !== nextBidder) {
@@ -581,8 +580,7 @@ function App() {
     if (!inRoom || !roomDealer) return;
 
     // Convert short to full name if needed
-    const positionMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
-    const fullDealer = positionMap[roomDealer] || roomDealer;
+    const fullDealer = SEAT_NAMES[roomDealer] || roomDealer;
 
     if (fullDealer !== dealer) {
       console.log('🔄 Room: Syncing dealer:', roomDealer, '→', fullDealer);
