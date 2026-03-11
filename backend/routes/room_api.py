@@ -895,6 +895,14 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                 if auction_complete and all(b == 'Pass' for b in room.auction_history):
                     _save_room_hand(room)
 
+                # Include latest feedback for real-time display
+                latest_feedback = None
+                if room.bid_feedback:
+                    for fb in reversed(room.bid_feedback):
+                        if fb.get('position') == position:
+                            latest_feedback = fb
+                            break
+
                 response_data = {
                     'success': True,
                     'bid': bid,
@@ -904,7 +912,8 @@ def register_room_endpoints(app, room_manager: RoomStateManager):
                     'is_my_turn': room.is_session_turn(session_id),
                     'game_phase': room.game_phase,
                     'auction_complete': auction_complete,
-                    'version': room.version
+                    'version': room.version,
+                    'bid_feedback': latest_feedback,
                 }
 
         except KeyError:

@@ -27,6 +27,7 @@ import { SessionScorePanel } from './components/session/SessionScorePanel';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UserProvider, useUser } from './contexts/UserContext';
 import { RoomProvider, useRoom } from './contexts/RoomContext';
+import { partner as getPartnerSeat, SEAT_NAMES, seatIndex, lho } from './utils/seats';
 import { RoomLobby, RoomStatusBar, JoinRoomModal, RoomWaitingState, ChatSidebar } from './components/room';
 import WelcomeWizard from './components/onboarding/WelcomeWizard';
 import { SimpleLogin } from './components/auth/SimpleLogin';
@@ -203,18 +204,18 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer, i
   const dealerIndex = players.indexOf(dealer);
 
   // Room mode: Calculate partner position
-  const positionMap = { 'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West' };
-  const partnerMap = { 'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E' };
-  const myPositionFull = myPosition ? positionMap[myPosition] : null;
-  const partnerPositionFull = myPosition ? positionMap[partnerMap[myPosition]] : null;
+  const myPositionFull = myPosition ? SEAT_NAMES[myPosition] : null;
+  const partnerPositionFull = myPosition ? SEAT_NAMES[getPartnerSeat(myPosition)] : null;
 
   // Build a 2D grid: rows[rowIndex][columnIndex] = bid object or null
+  // Columns: 0=North, 1=East, 2=South, 3=West (matches SEATS order)
   const grid = [];
   let currentRow = 0;
-  let currentCol = dealerIndex; // Start at dealer's column
+  let currentSeat = players[dealerIndex]?.charAt(0); // e.g. 'N', 'E', 'S', 'W'
 
   for (let i = 0; i < auction.length; i++) {
     const bid = auction[i];
+    const col = seatIndex(currentSeat);
 
     // Ensure row exists
     if (!grid[currentRow]) {
@@ -222,13 +223,13 @@ function BiddingTable({ auction, players, nextPlayerIndex, onBidClick, dealer, i
     }
 
     // Place bid in current position
-    grid[currentRow][currentCol] = bid;
+    grid[currentRow][col] = bid;
 
-    // Move to next column (wrapping around)
-    currentCol = (currentCol + 1) % 4;
+    // Advance to next seat clockwise
+    currentSeat = lho(currentSeat);
 
-    // If we just wrapped to North column (column 0), move to next row
-    if (currentCol === 0 && i < auction.length - 1) {
+    // If we just wrapped to North (column 0), move to next row
+    if (currentSeat === 'N' && i < auction.length - 1) {
       currentRow++;
     }
   }
@@ -2921,7 +2922,13 @@ ${otherCommands}`;
       }
       setSuggestedBid(null);
       const result = await submitRoomBid(bid);
-      if (!result.success) {
+      if (result.success) {
+        // Show real-time bid feedback if available and hint mode enabled
+        if (result.data?.bid_feedback && hintModeEnabled) {
+          setBidFeedback(result.data.bid_feedback);
+          setLastUserBid(bid);
+        }
+      } else {
         setError(result.error || 'Failed to submit bid');
       }
       return;
