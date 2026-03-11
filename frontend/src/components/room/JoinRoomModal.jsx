@@ -29,6 +29,7 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
   const [localError, setLocalError] = useState(null);
   const [createdRoomCode, setCreatedRoomCode] = useState(null);
   const [waitingForPartner, setWaitingForPartner] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const hasAutoDealt = useRef(false);
 
   // Auto-deal and transition when partner connects
@@ -54,6 +55,7 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
       setLocalError(null);
       setCreatedRoomCode(null);
       setWaitingForPartner(false);
+      setCodeCopied(false);
       hasAutoDealt.current = false;
     }
   }, [isOpen]);
@@ -138,11 +140,26 @@ export default function JoinRoomModal({ isOpen, onClose, onJoined }) {
               className="copy-btn"
               onClick={() => {
                 const inviteUrl = `${window.location.origin}/room/${createdRoomCode}`;
-                navigator.clipboard.writeText(inviteUrl);
+                navigator.clipboard.writeText(inviteUrl).then(() => {
+                  setCodeCopied(true);
+                  setTimeout(() => setCodeCopied(false), 2000);
+                }).catch(() => {
+                  // Fallback for environments where clipboard API is unavailable
+                  const textarea = document.createElement('textarea');
+                  textarea.value = inviteUrl;
+                  textarea.style.position = 'fixed';
+                  textarea.style.opacity = '0';
+                  document.body.appendChild(textarea);
+                  textarea.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(textarea);
+                  setCodeCopied(true);
+                  setTimeout(() => setCodeCopied(false), 2000);
+                });
               }}
               title="Copy invite link"
             >
-              📋
+              {codeCopied ? '✓ Copied!' : '📋 Copy'}
             </button>
           </div>
 
