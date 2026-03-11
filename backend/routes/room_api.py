@@ -24,6 +24,7 @@ from core.room_state import (
 from core.session_state import get_session_id_from_request
 from engine.hand import Hand, Card
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
+from utils.dealing import deal_four_hands, deal_remaining_hands, shuffled_deck
 from engine.ai.bidding_state import BiddingStateBuilder
 from utils.seats import (
     partner as seats_partner, lho, normalize, seat_index, SEAT_NAMES, SEATS
@@ -1426,42 +1427,22 @@ def _generate_room_hands(settings: RoomSettings) -> dict:
     Returns:
         Dict mapping position names to Hand objects
     """
-    ranks = '23456789TJQKA'
-    suits = ['♠', '♥', '♦', '♣']
-    deck = [Card(rank=r, suit=s) for s in suits for r in ranks]
-    random.shuffle(deck)
-
     if settings.deal_type == 'convention' and settings.convention_filter:
         convention_map = get_convention_map()
         specialist = convention_map.get(settings.convention_filter)
 
         if specialist:
+            deck = shuffled_deck()
             try:
-                south_hand, remaining = generate_hand_for_convention(specialist, deck, timeout_ms=500)
-                if south_hand:
-                    deck = remaining
-                else:
+                south_hand, deck = generate_hand_for_convention(specialist, deck, timeout_ms=500)
+                if not south_hand:
                     south_hand = Hand(deck[:13])
                     deck = deck[13:]
             except Exception:
                 south_hand = Hand(deck[:13])
                 deck = deck[13:]
+            return deal_remaining_hands({'South': south_hand})
         else:
-            south_hand = Hand(deck[:13])
-            deck = deck[13:]
-
-        north_hand = Hand(deck[:13])
-        east_hand = Hand(deck[13:26])
-        west_hand = Hand(deck[26:39])
+            return deal_four_hands()
     else:
-        south_hand = Hand(deck[:13])
-        north_hand = Hand(deck[13:26])
-        east_hand = Hand(deck[26:39])
-        west_hand = Hand(deck[39:52])
-
-    return {
-        'North': north_hand,
-        'East': east_hand,
-        'South': south_hand,
-        'West': west_hand,
-    }
+        return deal_four_hands()

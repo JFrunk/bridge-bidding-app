@@ -17,6 +17,7 @@ from flask_limiter.util import get_remote_address
 from db import get_connection, init_database
 from engine.hand import Hand, Card
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
+from utils.dealing import deal_four_hands, shuffled_deck
 from engine.ai.conventions.preempts import PreemptConvention
 from engine.ai.conventions.jacoby_transfers import JacobyConvention
 from engine.ai.conventions.stayman import StaymanConvention
@@ -823,18 +824,15 @@ def perform_new_deal(state):
             state.vulnerability = "None"
         dealer = 'North'  # Default for non-session mode
 
-    # Create and shuffle deck
-    ranks = '23456789TJQKA'
-    suits = ['♠', '♥', '♦', '♣']
-    deck = [Card(rank, suit) for rank in ranks for suit in suits]
-    random.shuffle(deck)
+    # Deal 4 hands from a single shuffled deck
+    hands = deal_four_hands()
 
     print(f"🃏 Dealt new hand. Dealer: {dealer}, Vul: {state.vulnerability}")
 
-    state.deal['North'] = Hand(deck[0:13])
-    state.deal['East'] = Hand(deck[13:26])
-    state.deal['South'] = Hand(deck[26:39])
-    state.deal['West'] = Hand(deck[39:52])
+    state.deal['North'] = hands['North']
+    state.deal['East'] = hands['East']
+    state.deal['South'] = hands['South']
+    state.deal['West'] = hands['West']
 
 @app.route('/api/session/start', methods=['POST'])
 def start_session():
@@ -1420,12 +1418,10 @@ def load_scenario():
         target_scenario = next((s for s in scenarios if s['name'] == scenario_name), None)
         if not target_scenario: return jsonify({'error': 'Scenario not found'}), 404
             
-        ranks = '23456789TJQKA'
-        suits = ['♠', '♥', '♦', '♣']
-        deck = [Card(r, s) for r in ranks for s in suits]
-        
+        deck = shuffled_deck()
+
         for pos in state.deal: state.deal[pos] = None
-        
+
         for setup_rule in target_scenario.get('setup', []):
             position = setup_rule['position']
             hand = None
@@ -1437,10 +1433,10 @@ def load_scenario():
                  hand, deck = generate_hand_with_constraints(setup_rule['constraints'], deck)
             if hand:
                 state.deal[position] = hand
-        
-        remaining_cards = deck
+
+        remaining_cards = list(deck)
         random.shuffle(remaining_cards)
-        
+
         for position in SEAT_NAMES.values():
             if not state.deal.get(position):
                 state.deal[position] = Hand(remaining_cards[:13])
@@ -3006,15 +3002,12 @@ def play_random_hand():
 
     try:
         # Deal a new random hand
-        ranks = '23456789TJQKA'
-        suits = ['♠', '♥', '♦', '♣']
-        deck = [Card(rank, suit) for rank in ranks for suit in suits]
-        random.shuffle(deck)
+        hands = deal_four_hands()
 
-        state.deal['North'] = Hand(deck[0:13])
-        state.deal['East'] = Hand(deck[13:26])
-        state.deal['South'] = Hand(deck[26:39])
-        state.deal['West'] = Hand(deck[39:52])
+        state.deal['North'] = hands['North']
+        state.deal['East'] = hands['East']
+        state.deal['South'] = hands['South']
+        state.deal['West'] = hands['West']
 
         # Use Chicago rotation for dealer and vulnerability if in session
         dealer = 'North'  # Default

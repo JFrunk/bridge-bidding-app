@@ -16,13 +16,7 @@ from typing import Dict, List, Optional, Tuple
 from abc import ABC, abstractmethod
 
 from engine.hand import Hand, Card
-
-
-def create_deck() -> List[Card]:
-    """Create a standard 52-card deck."""
-    suits = ['♠', '♥', '♦', '♣']
-    ranks = '23456789TJQKA'
-    return [Card(rank, suit) for suit in suits for rank in ranks]
+from utils.dealing import create_deck
 
 
 def calculate_support_points(hand: Hand, trump_suit: str) -> int:

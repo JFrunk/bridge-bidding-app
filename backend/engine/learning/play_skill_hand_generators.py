@@ -22,13 +22,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from engine.hand import Hand, Card
-
-
-def create_deck() -> List[Card]:
-    """Create a standard 52-card deck."""
-    suits = ['♠', '♥', '♦', '♣']
-    ranks = '23456789TJQKA'
-    return [Card(rank, suit) for suit in suits for rank in ranks]
+from utils.dealing import create_deck
 
 
 def holding_to_cards(holding_str: str, suit: str, deck: List[Card]) -> Tuple[List[Card], List[Card]]:
