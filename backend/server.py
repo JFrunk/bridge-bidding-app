@@ -41,6 +41,12 @@ from core.session_state import SessionStateManager, get_session_id_from_request
 # Error logging for bidding/play diagnostics
 from utils.error_logger import log_error
 
+# Canonical seat utilities (replaces inline partner maps, seat arrays, modulo arithmetic)
+from utils.seats import (
+    SEATS, SEAT_NAMES, partner as seats_partner, lho as seats_lho,
+    seat_index, seat_from_index
+)
+
 # DDS AI for expert level play (9/10 rating)
 # CRITICAL: DDS is ONLY enabled on Linux (production)
 # macOS M1/M2 has known DDS crashes (Error Code -14, segmentation faults)
@@ -77,7 +83,7 @@ try:
     print("✅ Database initialized successfully")
 except Exception as e:
     print(f"❌ Database initialization failed: {e}")
-    traceback.print_exc()
+    log_error(e)
 
 app = Flask(__name__)
 
@@ -120,9 +126,8 @@ def add_security_headers(response):
 @app.errorhandler(Exception)
 def handle_exception(e):
     """Handle all exceptions and ensure CORS headers are included."""
-    import traceback
     print(f"❌ Unhandled exception: {e}")
-    traceback.print_exc()
+    log_error(e)
     response = jsonify({
         "error": str(e),
         "type": type(e).__name__
@@ -409,7 +414,7 @@ def safe_ai_choose_card(ai, play_state, position, difficulty, timeout_seconds=15
 
         except Exception as e:
             print(f"⚠️  DDS SUBPROCESS ERROR: {e}")
-            traceback.print_exc()
+            log_error(e)
             # Fall through to fallback
 
         # Fallback to Minimax
@@ -446,7 +451,7 @@ def safe_ai_choose_card(ai, play_state, position, difficulty, timeout_seconds=15
             print(f"⚠️  AI TIMEOUT: {difficulty} AI timed out for {position}")
         except Exception as e:
             print(f"⚠️  AI ERROR: {difficulty} AI failed for {position}: {e}")
-            traceback.print_exc()
+            log_error(e)
 
         # Fallback to Minimax
         print(f"   Falling back to Minimax AI")
@@ -587,8 +592,7 @@ def run_post_game_analysis(
     except Exception as e:
         # Never let analysis break the main flow
         print(f"⚠️ Post-game analysis failed for hand {session_hand_id}: {e}")
-        import traceback
-        traceback.print_exc()
+        log_error(e)
 
 
 def trigger_post_game_analysis(
@@ -782,7 +786,7 @@ except ImportError:
 from core.room_state import RoomStateManager
 from routes.room_api import register_room_endpoints
 
-room_manager = RoomStateManager()
+room_manager = RoomStateManager()  # Reads REDIS_URL from env, defaults to localhost:6379
 register_room_endpoints(app, room_manager)
 
 # ============================================================================
@@ -912,7 +916,7 @@ def start_session():
         })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f'Failed to start session: {str(e)}'}), 500
 
 
@@ -981,8 +985,7 @@ def complete_session_hand():
             )
             declarer = contract.declarer
             # Calculate dummy position (partner of declarer)
-            partner_map = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
-            dummy = partner_map.get(declarer, 'N')
+            dummy = seats_partner(declarer)
         else:
             return jsonify({'error': 'No play state or contract data available'}), 400
 
@@ -1093,7 +1096,7 @@ def complete_session_hand():
         })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f'Failed to complete hand: {str(e)}'}), 500
 
 
@@ -1119,7 +1122,7 @@ def get_session_history():
         })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f'Failed to get session history: {str(e)}'}), 500
 
 
@@ -1148,7 +1151,7 @@ def abandon_session():
         })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f'Failed to abandon session: {str(e)}'}), 500
 
 
@@ -1232,7 +1235,7 @@ def get_ai_status():
         return jsonify(ai_status)
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f'Failed to get AI status: {str(e)}'}), 500
 
 
@@ -1257,7 +1260,7 @@ def get_session_stats():
         return jsonify(stats)
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f'Failed to get stats: {str(e)}'}), 500
 
 # ============================================================================
@@ -1438,7 +1441,7 @@ def load_scenario():
         remaining_cards = deck
         random.shuffle(remaining_cards)
         
-        for position in ['North', 'East', 'South', 'West']:
+        for position in SEAT_NAMES.values():
             if not state.deal.get(position):
                 state.deal[position] = Hand(remaining_cards[:13])
                 remaining_cards = remaining_cards[13:]
@@ -1454,7 +1457,7 @@ def load_scenario():
         points_for_json = { 'hcp': south_hand.hcp, 'dist_points': south_hand.dist_points, 'total_points': south_hand.total_points, 'suit_hcp': south_hand.suit_hcp, 'suit_lengths': south_hand.suit_lengths }
         return jsonify({'hand': hand_for_json, 'points': points_for_json, 'vulnerability': state.vulnerability, 'dealer': scenario_dealer, 'next_bidder': next_bidder})
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f'Could not load scenario: {e}'}), 500
 
 @app.route('/api/deal-hands', methods=['GET'])
@@ -1622,7 +1625,7 @@ def get_next_bid():
 
     except Exception as e:
         print("---!!! AN ERROR OCCURRED IN GET_NEXT_BID !!!---")
-        traceback.print_exc()
+        log_error(e)
 
         # Log error with context for analysis
         log_error(
@@ -1673,7 +1676,7 @@ def get_next_bid_structured():
 
     except Exception as e:
         print("---!!! AN ERROR OCCURRED IN GET_NEXT_BID_STRUCTURED !!!---")
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f"A critical server error occurred: {e}"}), 500
 
 @app.route('/api/get-feedback', methods=['POST'])
@@ -1767,13 +1770,11 @@ def get_feedback():
         except Exception as analytics_error:
             # Don't fail the feedback response if analytics fails
             print(f"Analytics recording failed: {analytics_error}")
-            import traceback
-            traceback.print_exc()
+            log_error(analytics_error)
 
         return jsonify({'feedback': feedback, 'was_correct': was_correct, 'xp_earned': 10 if was_correct else 5})
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f"Server error in get_feedback: {e}"}), 500
 
 @app.route('/api/evaluate-bid', methods=['POST'])
@@ -1876,7 +1877,7 @@ def evaluate_bid():
         deal_data = None
         if state.deal:
             deal_data = {}
-            for pos in ['N', 'E', 'S', 'W']:
+            for pos in SEATS:
                 # state.deal uses full names like 'North', 'East', etc.
                 full_pos = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[pos]
                 hand = state.deal.get(full_pos)
@@ -2084,7 +2085,7 @@ def evaluate_bid():
 
     except Exception as e:
         print(f"❌ Error in evaluate-bid: {e}")
-        traceback.print_exc()
+        log_error(e)
 
         # Log error with bidding context
         log_error(
@@ -2114,7 +2115,7 @@ def get_all_hands():
         print(f"   - state.play_state exists: {state.play_state is not None}")
         if state.deal:
             print(f"   - state.deal keys: {list(state.deal.keys())}")
-            for pos in ['North', 'East', 'South', 'West']:
+            for pos in SEAT_NAMES.values():
                 hand = state.deal.get(pos)
                 if hand:
                     print(f"   - {pos}: {len(hand.cards)} cards")
@@ -2155,7 +2156,7 @@ def get_all_hands():
         else:
             # Bidding phase: use original deal
             print("📋 get_all_hands: Using state.deal (bidding phase)")
-            for position in ['North', 'East', 'South', 'West']:
+            for position in SEAT_NAMES.values():
                 hand = state.deal.get(position)
                 if not hand:
                     return jsonify({'error': f'Hand for {position} not available'}), 400
@@ -2186,7 +2187,7 @@ def get_all_hands():
             'vulnerability': state.vulnerability
         })
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f'Server error in get_all_hands: {e}'}), 500
 
 @app.route('/api/request-review', methods=['POST'])
@@ -2224,7 +2225,7 @@ def request_review():
                 }
         else:
             # During bidding phase, use initial deal
-            for position in ['North', 'East', 'South', 'West']:
+            for position in SEAT_NAMES.values():
                 # Use user's actual hand data if provided (for South position)
                 if position == 'South' and user_hand_data and user_hand_points:
                     # Use the hand data that was actually shown to the user
@@ -2380,7 +2381,7 @@ def request_review():
         })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f'Server error in request_review: {e}'}), 500
 
 
@@ -2459,7 +2460,7 @@ def submit_feedback():
         })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f'Server error in submit_feedback: {e}'}), 500
 
 
@@ -2546,7 +2547,7 @@ def get_review_requests():
             })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f'Server error: {e}'}), 500
 
 
@@ -2582,7 +2583,7 @@ def get_review_request_detail(filename):
             })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({'error': f'Server error: {e}'}), 500
 
 
@@ -2708,7 +2709,7 @@ def _render_review_request_detail_html(data, filename, source_dir='review_reques
 
     if all_hands:
         # We have all four hands
-        for position in ['North', 'East', 'South', 'West']:
+        for position in SEAT_NAMES.values():
             hand = all_hands.get(position, {})
             if hand:
                 marker = " 👤" if position == user_position else ""
@@ -2731,13 +2732,12 @@ def _render_review_request_detail_html(data, filename, source_dir='review_reques
     # Format auction - check both top-level and context_data
     auction = data.get('auction') or context_data.get('auction') or []
     auction_html = ""
-    positions = ['North', 'East', 'South', 'West']
+    positions = list(SEAT_NAMES.values())
     # Get dealer to determine auction start position
-    dealer_map = {'N': 0, 'E': 1, 'S': 2, 'W': 3, 'North': 0, 'East': 1, 'South': 2, 'West': 3}
     dealer_raw = data.get('dealer') or context_data.get('dealer') or 'N'
-    dealer_idx = dealer_map.get(dealer_raw, 0)
+    dealer_seat = dealer_raw[0].upper() if dealer_raw else 'N'
     for i, bid_data in enumerate(auction):
-        pos = positions[(dealer_idx + i) % 4]
+        pos = SEAT_NAMES[seat_from_index(seat_index(dealer_seat) + i)]
         bid = bid_data.get('bid', '?')
         explanation = bid_data.get('explanation', '')
         if len(explanation) > 150:
@@ -2889,7 +2889,7 @@ def start_play():
         print(f"📋 start_play: dealer={dealer_str}, auction_length={len(auction)}")
 
         # Convert dealer to index for contract determination
-        dealer_index = ['N', 'E', 'S', 'W'].index(dealer_str[0].upper())
+        dealer_index = seat_index(dealer_str[0].upper())
 
         # Determine contract from auction using correct dealer
         contract = play_engine.determine_contract(auction, dealer_index=dealer_index)
@@ -2910,7 +2910,7 @@ def start_play():
             import copy
             from engine.hand import Hand, Card
             hands = {}
-            for pos in ["N", "E", "S", "W"]:
+            for pos in SEATS:
                 if pos in hands_data:
                     cards = [Card(c['rank'], c['suit']) for c in hands_data[pos]]
                     hands[pos] = Hand(cards)
@@ -2934,7 +2934,7 @@ def start_play():
             if use_original and state.original_deal:
                 # Replay: use preserved original deal
                 print(f"🔄 Using preserved original_deal for replay")
-                for pos in ["N", "E", "S", "W"]:
+                for pos in SEATS:
                     full_name = pos_map[pos]
                     if state.original_deal.get(full_name):
                         hands[pos] = state.original_deal[full_name]
@@ -2944,7 +2944,7 @@ def start_play():
                 # First play: use deep copies from bidding phase (BUG-C004 fix)
                 # Deep copy prevents card removal during play from mutating state.deal
                 import copy
-                for pos in ["N", "E", "S", "W"]:
+                for pos in SEATS:
                     full_name = pos_map[pos]
                     if state.deal.get(full_name):
                         hands[pos] = copy.deepcopy(state.deal[full_name])
@@ -2954,7 +2954,7 @@ def start_play():
                 # CRITICAL: Preserve original deal before play begins
                 # Make deep copies of Hand objects to preserve original 13-card state
                 state.original_deal = {}
-                for pos in ["N", "E", "S", "W"]:
+                for pos in SEATS:
                     full_name = pos_map[pos]
                     # Deep copy the Hand object including all cards
                     state.original_deal[full_name] = copy.deepcopy(state.deal[full_name])
@@ -2991,7 +2991,7 @@ def start_play():
         })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({"error": f"Error starting play: {e}"}), 500
 
 @app.route("/api/play-random-hand", methods=["POST"])
@@ -3033,9 +3033,9 @@ def play_random_hand():
         # Generate realistic auction using the bidding engine
         # Simulate all 4 players bidding with AI
         auction_history = []
-        players = ['North', 'East', 'South', 'West']
-        dealer_index = ['N', 'E', 'S', 'W'].index(dealer[0].upper())  # Use Chicago dealer
-        current_player_index = dealer_index
+        dealer_seat = dealer[0].upper()  # Use Chicago dealer
+        dealer_index = seat_index(dealer_seat)
+        current_seat = dealer_seat
 
         # Maximum 50 bids to prevent infinite loops (typical auction is 4-15 bids)
         max_bids = 50
@@ -3056,7 +3056,7 @@ def play_random_hand():
 
         # Run AI bidding for all 4 players
         while not is_auction_over(auction_history) and bid_count < max_bids:
-            current_player = players[current_player_index]
+            current_player = SEAT_NAMES[current_seat]
             player_hand = state.deal[current_player]
 
             try:
@@ -3076,8 +3076,8 @@ def play_random_hand():
                 auction_history.append('Pass')
                 bid_count += 1
 
-            # Move to next player
-            current_player_index = (current_player_index + 1) % 4
+            # Move to next player (clockwise)
+            current_seat = seats_lho(current_seat)
 
         # Determine contract from the auction
         contract = play_engine.determine_contract(auction_history, dealer_index=dealer_index)
@@ -3091,13 +3091,13 @@ def play_random_hand():
         import copy
         pos_map = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}
         hands = {}
-        for pos in ["N", "E", "S", "W"]:
+        for pos in SEATS:
             full_name = pos_map[pos]
             hands[pos] = copy.deepcopy(state.deal[full_name])
 
         # CRITICAL: Preserve original deal before play begins (for replay functionality)
         state.original_deal = {}
-        for pos in ["N", "E", "S", "W"]:
+        for pos in SEATS:
             full_name = pos_map[pos]
             state.original_deal[full_name] = copy.deepcopy(state.deal[full_name])
         print(f"✅ Preserved original_deal with {sum(len(h.cards) for h in state.original_deal.values())} total cards")
@@ -3153,7 +3153,7 @@ def play_random_hand():
         })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({"error": f"Error creating random play hand: {e}"}), 500
 
 @app.route("/api/play-card", methods=["POST"])
@@ -3323,7 +3323,7 @@ def play_card():
         })
         
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
 
         # Log play error with context
         log_error(
@@ -3464,7 +3464,7 @@ def get_ai_play():
                 f"   Difficulty: {state.ai_difficulty}"
             )
             print(error_msg)
-            traceback.print_exc()
+            log_error(RuntimeError(error_msg))
             return jsonify({
                 "error": f"AI validation failure - attempted to play card not in hand",
                 "details": error_msg
@@ -3518,9 +3518,9 @@ def get_ai_play():
                 contract=contract_str,
                 trump_suit=state.play_state.contract.trump_suit if state.play_state.contract else None
             )
-        except Exception as log_error:
+        except Exception as exc:
             # Never let logging break the game
-            print(f"⚠️  Logging error (non-critical): {log_error}")
+            print(f"⚠️  Logging error (non-critical): {exc}")
 
         # Play the card
         state.play_state.current_trick.append((card, position))
@@ -3582,7 +3582,7 @@ def get_ai_play():
         })
         
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
 
         # Log AI play error with context
         log_error(
@@ -3709,7 +3709,7 @@ def get_play_state():
         })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({"error": f"Error getting play state: {e}"}), 500
 
 @app.route("/api/clear-trick", methods=["POST"])
@@ -3750,7 +3750,7 @@ def clear_trick():
         })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({"error": f"Error clearing trick: {e}"}), 500
 
 @app.route("/api/complete-play", methods=["GET", "POST"])
@@ -3838,7 +3838,7 @@ def complete_play():
         })
         
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({"error": f"Error calculating final score: {e}"}), 500
 
 
@@ -3937,7 +3937,7 @@ def dds_health():
         })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({"error": f"Error fetching DDS health: {e}"}), 500
 
 
@@ -4013,7 +4013,6 @@ def dds_test():
     except Exception as e:
         result["error"] = str(e)
         result["message"] = f"DDS test failed: {e}"
-        import traceback
         result["traceback"] = traceback.format_exc()
 
     return jsonify(result)
@@ -4175,7 +4174,6 @@ def dds_quality_check():
         })
 
     except Exception as e:
-        import traceback
         return jsonify({
             "dds_available": True,
             "platform": platform.system(),
@@ -4283,9 +4281,8 @@ def evaluate_play():
         })
 
     except Exception as e:
-        import traceback
         print(f"Play evaluation error: {e}")
-        traceback.print_exc()
+        log_error(e)
         return jsonify({
             "dds_available": False,
             "score": 5,
@@ -4419,9 +4416,8 @@ def evaluate_play_intent():
         })
 
     except Exception as e:
-        import traceback
         print(f"Play intent evaluation error: {e}")
-        traceback.print_exc()
+        log_error(e)
         return jsonify({
             "error": str(e),
             "is_optimal": False,
@@ -4662,7 +4658,7 @@ def ai_quality_summary():
         })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({"error": f"Error fetching quality summary: {e}"}), 500
 
 
@@ -4925,7 +4921,7 @@ def simple_login():
             })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({"error": f"Login failed: {str(e)}"}), 500
 
 
@@ -4986,7 +4982,7 @@ def get_experience_level():
             })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({"error": f"Failed to get experience level: {str(e)}"}), 500
 
 
@@ -5076,7 +5072,7 @@ def set_experience_level():
             })
 
     except Exception as e:
-        traceback.print_exc()
+        log_error(e)
         return jsonify({"error": f"Failed to set experience level: {str(e)}"}), 500
 
 
