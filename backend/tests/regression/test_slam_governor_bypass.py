@@ -44,14 +44,18 @@ class TestSlamGovernorBypass:
         """Set up test fixtures."""
         self.checker = SanityChecker()
 
-    def _create_features(self, opener_relationship='Me'):
-        """Create minimal features for testing."""
-        return {
-            'auction_features': {
-                'opener_relationship': opener_relationship,
-                'is_contested': False
-            },
+    def _create_features(self, opener_relationship='Me', partner_bids=None,
+                         opening_bid=None):
+        """Create features for testing with optional partner bid info."""
+        af = {
+            'opener_relationship': opener_relationship,
+            'is_contested': False,
         }
+        if partner_bids is not None:
+            af['partner_bids'] = partner_bids
+        if opening_bid is not None:
+            af['opening_bid'] = opening_bid
+        return {'auction_features': af}
 
     def test_king_ask_response_allowed(self):
         """
@@ -77,8 +81,13 @@ class TestSlamGovernorBypass:
         This was the main blocked scenario.
         """
         # Strong hand with 2 aces, saw partner show 2 aces = all 4 aces
-        hand = create_hand("♠AKQ32 ♥AK ♦KQ32 ♣32")
-        features = self._create_features(opener_relationship='Me')
+        hand = create_hand("♠AKQ32 ♥AK ♦KQ32 ♣32")  # 21 HCP
+        # Partner raised to 3♠ (limit raise, 10-12 HCP) -> combined ~31-33
+        features = self._create_features(
+            opener_relationship='Me',
+            partner_bids=['3♠'],
+            opening_bid='1♠'
+        )
 
         # Auction: 1♠-3♠-4NT(we ask)-5♥(partner shows 2 aces)-?
         # We have 2 aces + partner has 2 = all 4 accounted for
@@ -94,8 +103,13 @@ class TestSlamGovernorBypass:
         """
         Grand slam (7-level) should also be allowed after Blackwood.
         """
-        hand = create_hand("♠AKQ32 ♥AK ♦KQ32 ♣A2")  # 23 HCP, 3 aces
-        features = self._create_features(opener_relationship='Me')
+        hand = create_hand("♠AKQ32 ♥AK ♦KQ32 ♣A2")  # 25 HCP, 3 aces
+        # Partner raised to 3♠ (limit raise, 10-12 HCP) -> combined ~35-37
+        features = self._create_features(
+            opener_relationship='Me',
+            partner_bids=['3♠'],
+            opening_bid='1♠'
+        )
 
         # Auction shows we have all aces
         auction = ["1♠", "Pass", "3♠", "Pass", "4NT", "Pass", "5♦", "Pass"]  # 5♦ = 1 ace

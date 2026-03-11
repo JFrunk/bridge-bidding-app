@@ -86,6 +86,7 @@ class SanityChecker:
         # Whitelist of conventions that can legitimately bypass HCP checks:
         CONVENTION_BYPASS_WHITELIST = {
             'stayman', 'jacoby_transfer', 'blackwood', 'gerber',
+            'blackwood_signoff', 'blackwood_response',
             'preempt', 'weak_two', 'strong_2c', '2c_response',
             'negative_double', 'takeout_double', 'takeout_double_response',
             'michaels', 'unusual_2nt', 'splinter', 'fourth_suit_forcing',
@@ -122,10 +123,38 @@ class SanityChecker:
                 logger.debug(f"Allowing king-ask response '{bid}' - conventional bid bypasses Governor")
                 return True, bid, None
             # Allow slam signoff by the ASKER after receiving response
-            # This is the critical fix: the person who asked for aces can bid slam
+            # Apply a RELAXED HCP floor using the conservative hard ceiling estimate.
+            # The Blackwood asker presumably had reason to explore slam, so allow
+            # ~4 HCP discount vs standard Governor thresholds.
             if self._is_slam_signoff_after_blackwood(bid, auction):
-                logger.debug(f"Allowing slam signoff '{bid}' after Blackwood response - asker's decision")
-                return True, bid, None
+                hard_ceiling = self._calculate_hard_ceiling(hand, features, auction)
+                estimated = self._estimate_combined_hcp(hand, features, auction)
+                relaxed_combined = min(hard_ceiling, estimated)
+                if bid_level == 7:
+                    relaxed_min = 33  # Relaxed from 37 (asker counted controls)
+                    asker_min_hcp = 20  # Grand slam asker should have 20+ HCP
+                else:
+                    relaxed_min = 31  # Relaxed from 33 (asker counted controls)
+                    asker_min_hcp = 16  # Small slam asker should have 16+ HCP
+                # Trust the Blackwood asker's judgment if they have strong HCP
+                # AND combined estimate doesn't clearly rule out slam.
+                # The asker initiated slam exploration — they've already evaluated
+                # combined strength. Use a soft floor to catch clear misuse.
+                soft_floor = relaxed_min - 3  # 28 for small slam, 30 for grand
+                if hand.hcp >= asker_min_hcp and relaxed_combined >= soft_floor:
+                    logger.debug(f"Allowing slam signoff '{bid}' — Blackwood asker "
+                                 f"has {hand.hcp} HCP (>= {asker_min_hcp}), "
+                                 f"combined ~{relaxed_combined} >= {soft_floor}")
+                    return True, bid, None
+                if relaxed_combined > relaxed_min:
+                    logger.debug(f"Allowing slam signoff '{bid}' after Blackwood response "
+                                 f"(combined ~{relaxed_combined} HCP >= {relaxed_min})")
+                    return True, bid, None
+                else:
+                    reason = (f"Blackwood slam signoff blocked: ~{relaxed_combined} combined HCP "
+                              f"< {relaxed_min} relaxed minimum for level {bid_level}")
+                    logger.warning(f"Sanity check prevented: {reason}")
+                    return False, "Pass", reason
             # For other slam bids, fall through to Governor check below
 
         # Check if this is a Jacoby transfer super-accept sequence - allow game acceptance
@@ -246,9 +275,14 @@ class SanityChecker:
         Estimate combined partnership HCP.
 
         Uses BiddingState (per-seat beliefs) when available,
-        falls back to legacy estimation.
+        falls back to legacy estimation. BiddingState midpoint is capped
+        by the legacy max to prevent inflated beliefs from bypassing the Governor.
         """
         my_hcp = hand.hcp
+
+        # Always compute legacy estimates as cross-check
+        legacy_partner_min = self._estimate_partner_hcp(features, auction)
+        legacy_partner_max = self._estimate_partner_max_hcp(features, auction)
 
         # Use BiddingState if available and partner's range is meaningfully narrowed
         bidding_state = features.get('bidding_state')
@@ -259,11 +293,14 @@ class SanityChecker:
                 spread = partner_belief.hcp[1] - partner_belief.hcp[0]
                 if spread <= 25:  # Range has been narrowed from default (0,40)
                     partner_estimate = (partner_belief.hcp[0] + partner_belief.hcp[1]) // 2
+                    # Bound between legacy min (floor) and max (ceiling)
+                    # Prevents both deflated and inflated BiddingState beliefs
+                    partner_estimate = max(partner_estimate, legacy_partner_min)
+                    partner_estimate = min(partner_estimate, legacy_partner_max)
                     return my_hcp + partner_estimate
 
         # Fall back to legacy estimation
-        partner_min_hcp = self._estimate_partner_hcp(features, auction)
-        return my_hcp + partner_min_hcp
+        return my_hcp + legacy_partner_min
 
     def _calculate_hard_ceiling(self, hand: Hand, features: Dict, auction: List) -> int:
         """
@@ -287,6 +324,9 @@ class SanityChecker:
         """
         my_hcp = hand.hcp
 
+        # Always compute legacy ceiling as a sanity cap
+        legacy_partner_max = self._estimate_partner_max_hcp(features, auction)
+
         # Use BiddingState if available and partner's range is meaningfully narrowed
         bidding_state = features.get('bidding_state')
         if bidding_state is not None:
@@ -295,12 +335,13 @@ class SanityChecker:
                 partner_belief = bidding_state.partner_of(my_seat)
                 spread = partner_belief.hcp[1] - partner_belief.hcp[0]
                 if spread <= 25:  # Range has been narrowed from default (0,40)
-                    partner_max = partner_belief.hcp[1]
+                    # Cap BiddingState max with legacy estimate to prevent
+                    # inflated beliefs from bypassing the Governor
+                    partner_max = min(partner_belief.hcp[1], legacy_partner_max)
                     return my_hcp + partner_max
 
         # Legacy fallback - very conservative
-        partner_max_hcp = self._estimate_partner_max_hcp(features, auction)
-        return my_hcp + partner_max_hcp
+        return my_hcp + legacy_partner_max
 
     def _estimate_partner_max_hcp(self, features: Dict, auction: List) -> int:
         """
@@ -313,6 +354,10 @@ class SanityChecker:
 
         # If partner opened
         if opener_relationship and opener_relationship.lower() == 'partner':
+            # Check if partner actually passed
+            opening_bid = auction_features.get('opening_bid')
+            if opening_bid == 'Pass':
+                return 11  # Partner passed opening — max sub-opening strength
             for bid in auction:
                 if bid == "Pass":
                     continue
@@ -322,15 +367,44 @@ class SanityChecker:
                     return 22  # 2NT opening (20-22 HCP)
                 if bid == "2♣":
                     return 25  # Strong 2♣ (22+ HCP)
+                if bid.startswith("2") and bid != "2♣":
+                    return 10  # Weak two max (6-10 HCP)
+                if bid.startswith("3"):
+                    return 10  # Preempt max (6-10 HCP)
                 if bid.startswith("1"):
                     return 21  # Standard 1-level opening max
             return 21
 
         # If I opened and partner responded
         if opener_relationship and opener_relationship.lower() == 'me':
-            # Simple responses max at 12-15 HCP
-            # Jump shifts max at 18 HCP
-            return 18
+            partner_bids = auction_features.get('partner_bids', [])
+            partner_nonpass = [b for b in partner_bids if b != 'Pass']
+
+            # Check for Jacoby transfer after our 1NT: partner max ~10 (invitational)
+            # unless they later bid game themselves
+            opening_bid = auction_features.get('opening_bid', '')
+            if opening_bid == '1NT' and partner_nonpass:
+                first_resp = partner_nonpass[0]
+                if first_resp in ('2♦', '2♥'):  # Jacoby transfer
+                    # Did partner invite (2NT/3-level) or force game?
+                    if len(partner_nonpass) >= 2:
+                        second = partner_nonpass[1]
+                        if second == '2NT' or (second[0].isdigit() and int(second[0]) <= 3):
+                            return 10  # Invitational at best
+                        if second.startswith('4') or second == '3NT':
+                            return 15  # Game values
+                    return 10  # Transfer with no further bid = weak
+                if first_resp == '2♣':  # Stayman
+                    return 15  # Stayman promises invitational+ values
+
+            # Jump shifts max at 18 HCP, simple responses at 15
+            if partner_nonpass:
+                for bid in partner_nonpass:
+                    if len(bid) >= 2 and bid[0].isdigit():
+                        # Jump shift: 2-level new suit response over 1-level opening
+                        if opening_bid.startswith('1') and bid[0] == '2' and bid[1:] != opening_bid[1:]:
+                            return 18
+            return 15  # Default: simple response
 
         # Competitive - very conservative
         return 15
@@ -348,6 +422,10 @@ class SanityChecker:
 
         # If partner opened (case-insensitive)
         if opener_relationship and opener_relationship.lower() == 'partner':
+            # Check if partner actually passed (opening_bid explicitly set to 'Pass')
+            opening_bid = auction_features.get('opening_bid')
+            if opening_bid == 'Pass':
+                return 0  # Partner didn't actually open
             # Find partner's opening bid
             for bid in auction:
                 if bid == "Pass":
@@ -359,6 +437,10 @@ class SanityChecker:
                     return 20  # 2NT opening (20-21 HCP)
                 if bid == "2♣":
                     return 22  # Strong 2♣ (22+ HCP)
+                if bid.startswith("2") and bid != "2♣":
+                    return 6  # Weak two (6-10 HCP)
+                if bid.startswith("3"):
+                    return 6  # Preempt (6-10 HCP)
                 if bid.startswith("1"):
                     return 13  # Standard 1-level opening
             return 13  # Default opening strength
@@ -370,6 +452,20 @@ class SanityChecker:
 
             if len(partner_nonpass_bids) == 0:
                 return 0  # Partner only passed
+
+            opening_bid = auction_features.get('opening_bid', '')
+
+            # Check for limit raises (3M over 1M = 10-12 HCP with support)
+            for bid in partner_nonpass_bids:
+                if len(bid) >= 2 and bid[0] == '3' and bid[1] in '♥♠':
+                    if opening_bid and len(opening_bid) >= 2 and bid[1] == opening_bid[1]:
+                        return 10  # Limit raise
+
+            # Check for game raises (4M over 1M = 10-12 support points)
+            for bid in partner_nonpass_bids:
+                if len(bid) >= 2 and bid[0] == '4' and bid[1] in '♥♠':
+                    # Direct game raise of partner's major = game values
+                    return 10
 
             # Check for game-forcing first responses (applies even with single bid)
             # 3NT response to suit opening = 13-15 HCP balanced
@@ -489,10 +585,43 @@ class SanityChecker:
         has_blackwood_response = False
         nt_only_auction = True  # Track if auction is pure NT
 
-        # Check if any suit was shown (makes 4NT = Blackwood)
-        for bid in auction:
+        # Check if any NATURAL suit was shown (makes 4NT = Blackwood)
+        # Jacoby transfers (2♦/2♥ after 1NT) and their completions are NOT natural suit bids
+        has_1nt_opening = len(auction) > 0 and auction[0] == '1NT'
+        # Also check if partner (index 2) opened 1NT in case we're in passout seat
+        if not has_1nt_opening and len(auction) > 1:
+            non_pass = [b for b in auction if b != 'Pass']
+            if non_pass and non_pass[0] == '1NT':
+                has_1nt_opening = True
+
+        transfer_bids = set()  # Track which bids are transfers/completions
+        if has_1nt_opening:
+            # Find the 1NT opener index
+            nt_idx = next(i for i, b in enumerate(auction) if b == '1NT')
+            # Check for transfer at nt_idx+2 (responder's first bid)
+            if nt_idx + 2 < len(auction):
+                resp = auction[nt_idx + 2]
+                if resp in ('2♦', '2♥'):  # Jacoby transfers
+                    transfer_bids.add(nt_idx + 2)
+                    # Transfer completion at nt_idx+4
+                    if nt_idx + 4 < len(auction):
+                        transfer_bids.add(nt_idx + 4)
+
+        # Check ONLY bids BEFORE 4NT to determine if a natural suit was shown.
+        # Bids after 4NT (like Blackwood responses) shouldn't influence whether
+        # 4NT itself is Blackwood or quantitative.
+        four_nt_idx = None
+        for i, bid in enumerate(auction):
+            if bid == '4NT':
+                four_nt_idx = i
+                break
+
+        check_limit = four_nt_idx if four_nt_idx is not None else len(auction)
+        for i, bid in enumerate(auction[:check_limit]):
             if bid in ['Pass', 'X', 'XX']:
                 continue
+            if i in transfer_bids:
+                continue  # Skip transfer bids — they don't make 4NT Blackwood
             if len(bid) >= 2 and bid[0].isdigit() and bid[1] in '♣♦♥♠':
                 nt_only_auction = False
                 break
