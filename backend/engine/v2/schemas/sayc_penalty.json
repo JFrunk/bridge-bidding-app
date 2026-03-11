@@ -460,6 +460,8 @@
         "is_contested": true,
         "favorable_vulnerability": true,
         "fit_known": true,
+        "opponents_bid_game": true,
+        "is_convention_describer_rebid": false,
         "hcp": {
           "max": 10
         },
@@ -480,6 +482,8 @@
         "is_contested": true,
         "we_are_vulnerable": false,
         "fit_known": true,
+        "opponents_bid_game": true,
+        "is_convention_describer_rebid": false,
         "hcp": {
           "max": 10
         },
@@ -499,6 +503,7 @@
       "conditions": {
         "is_contested": true,
         "is_volatile_board": true,
+        "is_convention_describer_rebid": false,
         "fit_known": true,
         "our_best_fit": {
           "min": 9

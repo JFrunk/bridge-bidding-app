@@ -190,11 +190,34 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['fit_known'] = agreed['fit_known']
     flat['fit_length'] = agreed['fit_length']
 
+    # Early Michaels detection for partner suit inference.
+    # We need to know if we made a Michaels cuebid before inferring partner's
+    # suit lengths, since partner's 2-level response is preference, not weak-2.
+    _early_i_made_michaels = False
+    _early_michaels_suits = []
+    opening_bid = flat.get('opening_bid')
+    if my_bids and opening_bid:
+        _my_first = my_bids[0]
+        _my_suit = get_suit_from_bid(_my_first)
+        _opp_suit = get_suit_from_bid(opening_bid)
+        _my_level = get_bid_level(_my_first)
+        if _my_suit == _opp_suit and _my_level == 2:
+            _early_i_made_michaels = True
+            if _opp_suit in ['♣', '♦']:
+                _early_michaels_suits = ['♥', '♠']  # Michaels over minor = both majors
+            elif _opp_suit == '♥':
+                _early_michaels_suits = ['♠']  # Other major (+ unknown minor)
+            elif _opp_suit == '♠':
+                _early_michaels_suits = ['♥']  # Other major (+ unknown minor)
+    # Store for use in LoTT calculation (separate function scope)
+    flat['_michaels_suits'] = _early_michaels_suits
+
     # Implied fit detection using partner's inferred suit lengths.
     # Uses _infer_partner_suit_lengths to check ALL suits partner has bid,
     # then looks for combined 8+ card fits. Prioritizes majors over minors.
     if not flat['agreed_suit']:
-        partner_inferred = _infer_partner_suit_lengths(partner_bids)
+        partner_inferred = _infer_partner_suit_lengths(
+            partner_bids, _early_i_made_michaels, _early_michaels_suits)
 
         # Find best implied fit, prioritizing majors (♠ > ♥ > ♦ > ♣)
         best_fit_suit = None
@@ -711,6 +734,18 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
                 partner_last = flat.get('partner_last_bid')
                 if partner_last == '2NT' or partner_last == '3♣' or partner_last == '3C':
                     flat['partner_asked_for_minor'] = True
+
+    # Convention describer rebid: After Michaels or Unusual 2NT, the bidder has
+    # fully described their hand (5-5 shape, 8-16 HCP). They should Pass on their
+    # next turn unless partner forced them (e.g. 2NT ask for minor).
+    # This prevents the Michaels bidder from rebidding unnecessarily.
+    flat['is_convention_describer_rebid'] = False
+    _my_bid_count = flat.get('my_bid_count', 0)
+    if _my_bid_count >= 1:  # We're on our 2nd+ turn (already made 1+ bid)
+        if flat.get('i_made_michaels', False):
+            # Michaels bidder should only rebid if partner asked for minor
+            if not flat.get('partner_asked_for_minor', False) and not flat.get('must_bid', False):
+                flat['is_convention_describer_rebid'] = True
 
     # Jacoby 2NT detection (responder's game-forcing raise of opener's major)
     # Partner responds 2NT to opener's 1H or 1S, showing 4+ card support and GF values
@@ -1538,7 +1573,10 @@ def _calculate_lott_features(hand: Hand, flat: Dict[str, Any], partner_bids: Lis
     }
 
     # Infer partner's suit lengths from their bids
-    partner_inferred_suits = _infer_partner_suit_lengths(partner_bids)
+    # Pass Michaels context so partner's preference bids aren't treated as weak-2s
+    partner_inferred_suits = _infer_partner_suit_lengths(
+        partner_bids, flat.get('i_made_michaels', False),
+        flat.get('_michaels_suits', []))
 
     # Calculate our fit length for each suit
     our_fit_lengths = {}
@@ -1600,6 +1638,25 @@ def _calculate_lott_features(hand: Hand, flat: Dict[str, Any], partner_bids: Lis
         auction_history, my_position, dealer, flat.get('opening_bid', '')
     )
     result['their_best_fit'] = max(opponent_inferred_suits.values()) if opponent_inferred_suits else 0
+
+    # Opponents bid game: True if opponents have bid at game level or higher.
+    # Game = 3NT, 4♥, 4♠, 5♣, 5♦, or higher. Sacrifice only makes sense
+    # when opponents are at or heading to game.
+    lho_bids = _get_lho_bids(auction_history, my_position, dealer)
+    rho_bids = _get_rho_bids(auction_history, my_position, dealer)
+    opponents_bid_game = False
+    for opp_bid in lho_bids + rho_bids:
+        if not opp_bid or opp_bid in ['Pass', 'X', 'XX']:
+            continue
+        opp_level = get_bid_level(opp_bid)
+        opp_suit = get_suit_from_bid(opp_bid)
+        if opp_level and opp_level >= 4:
+            opponents_bid_game = True
+            break
+        if opp_bid == '3NT':
+            opponents_bid_game = True
+            break
+    result['opponents_bid_game'] = opponents_bid_game
 
     # Total tricks index = sum of both sides' best fits
     result['total_tricks_index'] = result['our_best_fit'] + result['their_best_fit']
@@ -2345,7 +2402,9 @@ def interpret_redouble(hand: Hand, auction_history: List[str],
     }
 
 
-def _infer_partner_suit_lengths(partner_bids: List[str]) -> Dict[str, int]:
+def _infer_partner_suit_lengths(partner_bids: List[str],
+                                i_made_michaels: bool = False,
+                                michaels_suits: List[str] = None) -> Dict[str, int]:
     """
     Infer partner's suit lengths from their bids.
 
@@ -2359,15 +2418,22 @@ def _infer_partner_suit_lengths(partner_bids: List[str]) -> Dict[str, int]:
     - Raise of partner's suit: 3+ cards
     - New suit at 2-level: 4+ cards
 
+    Special case: After a Michaels cuebid, partner's 2-level suit response
+    in one of the Michaels suits is a simple preference (2-3 cards), not a
+    weak-2 showing 6+.
+
     Args:
         partner_bids: List of partner's bids
+        i_made_michaels: Whether the current bidder made a Michaels cuebid
+        michaels_suits: List of suits shown by the Michaels cuebid (e.g. ['♥', '♠'])
 
     Returns:
         Dict mapping suit symbols to minimum inferred lengths
     """
     inferred = {}
+    michaels_suits = michaels_suits or []
 
-    for bid in partner_bids:
+    for idx, bid in enumerate(partner_bids):
         if not bid or bid in ['Pass', 'X', 'XX']:
             continue
 
@@ -2387,9 +2453,14 @@ def _infer_partner_suit_lengths(partner_bids: List[str]) -> Dict[str, int]:
             else:
                 min_length = 3  # 3+ card minors
         elif level == 2:
+            # Special case: After our Michaels cuebid, partner's 2-level
+            # response in a Michaels suit is a simple preference (~3 cards),
+            # not a weak-2 showing 6+.
+            if i_made_michaels and idx == 0 and suit in michaels_suits:
+                min_length = 3  # Preference response to Michaels
             # Could be weak 2 (6+ cards) or 2-over-1 (4+ cards)
             # Assume weak 2 for preemptive suits
-            if suit in ['♥', '♠', '♦']:
+            elif suit in ['♥', '♠', '♦']:
                 min_length = 6  # Weak 2
             else:
                 min_length = 4
