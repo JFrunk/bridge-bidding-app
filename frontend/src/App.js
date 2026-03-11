@@ -1004,6 +1004,7 @@ function App() {
     setLastSavedHandId(null);  // Clear for new hand
     // Fetch hands if showAllHands is enabled
     if (showAllHands) {
+      setAllHands(null);  // Clear stale data before async fetch
       fetchAllHands();
     } else {
       setAllHands(null);
@@ -1320,8 +1321,8 @@ ${otherCommands}`;
       auction: auction,
       vulnerability: vulnerability,
       dealer: dealer,
-      hand: hand,
-      hand_points: handPoints,
+      hand: initialDeal?.hand || hand,
+      hand_points: initialDeal?.points || handPoints,
       all_hands: allHands,
       console_logs: getRecentLogs(30),
       user_actions: getRecentActions(20),
