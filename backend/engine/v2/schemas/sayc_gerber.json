@@ -1,0 +1,284 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "gerber",
+  "description": "Gerber convention (4♣ ace-asking over partner's NT opening/rebid)",
+  "rules": [
+    {
+      "id": "gerber_initiate_over_1nt",
+      "bid": "4♣",
+      "priority": 920,
+      "description": "Gerber 4♣ ace-ask over partner's 1NT opening",
+      "conditions": {
+        "partner_opened_nt": true,
+        "partner_nt_level": 1,
+        "opener_relationship": "Partner",
+        "hcp": {
+          "min": 18
+        },
+        "fit_known": false,
+        "asked_blackwood": false
+      },
+      "forcing": "one_round",
+      "explanation": "Gerber 4♣ - asking for aces over partner's 1NT",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "gerber_initiate_over_2nt",
+      "bid": "4♣",
+      "priority": 919,
+      "description": "Gerber 4♣ ace-ask over partner's 2NT opening",
+      "conditions": {
+        "partner_opened_nt": true,
+        "partner_nt_level": 2,
+        "opener_relationship": "Partner",
+        "hcp": {
+          "min": 15
+        },
+        "fit_known": false,
+        "asked_blackwood": false
+      },
+      "forcing": "one_round",
+      "explanation": "Gerber 4♣ - asking for aces over partner's 2NT",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "gerber_response_0_or_4_aces",
+      "bid": "4♦",
+      "priority": 930,
+      "description": "Gerber response showing 0 or 4 aces",
+      "conditions": {
+        "partner_last_bid": "4♣",
+        "OR": [
+          {
+            "aces": {
+              "exact": 0
+            }
+          },
+          {
+            "aces": {
+              "exact": 4
+            }
+          }
+        ]
+      },
+      "forcing": "one_round",
+      "explanation": "Gerber response: 0 or 4 aces",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "gerber_response_1_ace",
+      "bid": "4♥",
+      "priority": 929,
+      "description": "Gerber response showing 1 ace",
+      "conditions": {
+        "partner_last_bid": "4♣",
+        "aces": {
+          "exact": 1
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Gerber response: 1 ace",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "gerber_response_2_aces",
+      "bid": "4♠",
+      "priority": 928,
+      "description": "Gerber response showing 2 aces",
+      "conditions": {
+        "partner_last_bid": "4♣",
+        "aces": {
+          "exact": 2
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Gerber response: 2 aces",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "gerber_response_3_aces",
+      "bid": "4NT",
+      "priority": 927,
+      "description": "Gerber response showing 3 aces",
+      "conditions": {
+        "partner_last_bid": "4♣",
+        "aces": {
+          "exact": 3
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Gerber response: 3 aces",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "gerber_king_ask",
+      "bid": "5♣",
+      "priority": 935,
+      "description": "Gerber 5♣ king-ask after all aces accounted for",
+      "conditions": {
+        "asked_gerber": true,
+        "partnership_aces_gerber": {
+          "min": 4
+        },
+        "hcp": {
+          "min": 18
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Gerber 5♣ - asking for kings (all aces found)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "gerber_king_response_0_or_4",
+      "bid": "5♦",
+      "priority": 934,
+      "description": "Gerber king response showing 0 or 4 kings",
+      "conditions": {
+        "partner_last_bid": "5♣",
+        "asked_gerber_kings": false,
+        "OR": [
+          {
+            "kings": {
+              "exact": 0
+            }
+          },
+          {
+            "kings": {
+              "exact": 4
+            }
+          }
+        ]
+      },
+      "forcing": "none",
+      "explanation": "Gerber king response: 0 or 4 kings",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "gerber_king_response_1",
+      "bid": "5♥",
+      "priority": 933,
+      "description": "Gerber king response showing 1 king",
+      "conditions": {
+        "partner_last_bid": "5♣",
+        "asked_gerber_kings": false,
+        "kings": {
+          "exact": 1
+        }
+      },
+      "forcing": "none",
+      "explanation": "Gerber king response: 1 king",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "gerber_king_response_2",
+      "bid": "5♠",
+      "priority": 932,
+      "description": "Gerber king response showing 2 kings",
+      "conditions": {
+        "partner_last_bid": "5♣",
+        "asked_gerber_kings": false,
+        "kings": {
+          "exact": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Gerber king response: 2 kings",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "gerber_king_response_3",
+      "bid": "5NT",
+      "priority": 931,
+      "description": "Gerber king response showing 3 kings",
+      "conditions": {
+        "partner_last_bid": "5♣",
+        "asked_gerber_kings": false,
+        "kings": {
+          "exact": 3
+        }
+      },
+      "forcing": "none",
+      "explanation": "Gerber king response: 3 kings",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "gerber_signoff_6nt_all_aces",
+      "bid": "6NT",
+      "priority": 940,
+      "description": "Bid 6NT after Gerber with all aces and enough HCP",
+      "conditions": {
+        "asked_gerber": true,
+        "partnership_aces_gerber": {
+          "min": 4
+        },
+        "hcp": {
+          "min": 18
+        },
+        "partnership_hcp_min": {
+          "min": 33
+        }
+      },
+      "forcing": "none",
+      "explanation": "6NT - all aces accounted for with slam values",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "gerber_signoff_7nt_grand",
+      "bid": "7NT",
+      "priority": 945,
+      "description": "Grand slam in NT after Gerber with all aces and kings",
+      "conditions": {
+        "asked_gerber": true,
+        "partnership_aces_gerber": {
+          "min": 4
+        },
+        "partnership_kings_gerber": {
+          "min": 4
+        },
+        "hcp": {
+          "min": 20
+        },
+        "partnership_hcp_min": {
+          "min": 37
+        }
+      },
+      "forcing": "none",
+      "explanation": "7NT grand slam - all aces and kings!",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "gerber_signoff_4nt_missing_aces",
+      "bid": "4NT",
+      "priority": 915,
+      "description": "Sign off at 4NT after Gerber when missing 2+ aces",
+      "conditions": {
+        "asked_gerber": true,
+        "partnership_aces_gerber": {
+          "max": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "4NT signoff - missing too many aces for slam",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "gerber_signoff_5nt_missing_ace",
+      "bid": "5NT",
+      "priority": 916,
+      "description": "Invite slam at 5NT after Gerber when missing 1 ace",
+      "conditions": {
+        "asked_gerber": true,
+        "partnership_aces_gerber": {
+          "exact": 3
+        },
+        "hcp": {
+          "min": 18
+        }
+      },
+      "forcing": "none",
+      "explanation": "5NT - missing one ace, inviting slam",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

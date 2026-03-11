@@ -129,3 +129,17 @@ backend/dump.txt
 
 # Claude Code worktrees
 .claude/worktrees/
+
+# Quality reports and scores
+backend/bidding_quality_report_*.json
+backend/quality_scores/
+
+# User feedback (production data)
+backend/user_feedback/
+
+# Playwright test artifacts
+frontend/playwright-report/
+frontend/test-results/
+
+# External review docs
+SAYC_External_Review/
