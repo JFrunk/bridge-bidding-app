@@ -15,8 +15,14 @@ Or run directly for verbose output:
     python3 tests/analysis/test_analysis_engine.py
 """
 
+import os
 import sys
 from pathlib import Path
+
+import pytest
+
+if not os.environ.get('DATABASE_URL'):
+    pytest.skip("DATABASE_URL not set — requires PostgreSQL", allow_module_level=True)
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

@@ -2,7 +2,11 @@
 Test script for card play Flask endpoints
 Tests the new card play endpoints directly
 """
-import requests
+import pytest
+try:
+    import requests
+except ImportError:
+    pytest.skip("requests not installed", allow_module_level=True)
 import json
 from engine.hand import Hand, Card
 

@@ -5,7 +5,10 @@ This test requires a running server on localhost:5001.
 Run with: pytest tests/integration/test_server_state.py -v -s
 """
 import pytest
-import requests
+try:
+    import requests
+except ImportError:
+    pytest.skip("requests not installed", allow_module_level=True)
 import json
 
 API_URL = "http://localhost:5001"

@@ -2,7 +2,11 @@
 """
 Test script for the AI Review feature
 """
-import requests
+import pytest
+try:
+    import requests
+except ImportError:
+    pytest.skip("requests not installed", allow_module_level=True)
 import json
 
 BASE_URL = "http://localhost:5001"

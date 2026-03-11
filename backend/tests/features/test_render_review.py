@@ -3,7 +3,11 @@
 Test script for the AI Review feature on Render deployment
 Tests that the review prompt includes full context when file saving is not available
 """
-import requests
+import pytest
+try:
+    import requests
+except ImportError:
+    pytest.skip("requests not installed", allow_module_level=True)
 import json
 
 BASE_URL = "https://bridge-bidding-api.onrender.com"

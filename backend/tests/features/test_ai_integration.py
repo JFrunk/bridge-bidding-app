@@ -4,7 +4,11 @@ Test script for Phase 2 AI integration
 Tests the new AI difficulty endpoints
 """
 
-import requests
+import pytest
+try:
+    import requests
+except ImportError:
+    pytest.skip("requests not installed", allow_module_level=True)
 import json
 
 BASE_URL = "http://localhost:5001/api"

@@ -2,7 +2,11 @@
 """
 Test script to validate that each convention scenario generates appropriate hands
 """
-import requests
+import pytest
+try:
+    import requests
+except ImportError:
+    pytest.skip("requests not installed", allow_module_level=True)
 import json
 
 BASE_URL = "http://localhost:5001"

@@ -20,14 +20,11 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
+from engine.v2 import BiddingEngineV2Schema
 from engine.bidding_validation import BidValidator
 
 
 from utils.dealing import deal_four_hands
-
-
-from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
 
 class BiddingQualityScorer:
     """Comprehensive bidding quality testing."""

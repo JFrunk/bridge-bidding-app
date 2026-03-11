@@ -22,10 +22,7 @@ from typing import Dict, List, Optional, Tuple
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
-
-# Enable V2 schema engine
-os.environ['USE_V2_SCHEMA_ENGINE'] = 'true'
+from engine.v2 import BiddingEngineV2Schema as BiddingEngine
 
 
 POSITIONS = ['North', 'East', 'South', 'West']

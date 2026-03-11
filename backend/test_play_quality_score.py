@@ -23,7 +23,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
+from engine.v2 import BiddingEngineV2Schema as BiddingEngine
 from engine.play_engine import PlayEngine, PlayState, Contract, GamePhase
 from engine.play.ai.simple_ai import SimplePlayAI
 from engine.play.ai.minimax_ai import MinimaxPlayAI

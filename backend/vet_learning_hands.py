@@ -21,7 +21,7 @@ import random
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple
 
-from engine.bidding_engine import BiddingEngine
+from engine.v2 import BiddingEngineV2Schema as BiddingEngine
 from engine.hand import Hand
 from engine.learning.skill_hand_generators import (
     SKILL_GENERATORS, create_deck, calculate_support_points

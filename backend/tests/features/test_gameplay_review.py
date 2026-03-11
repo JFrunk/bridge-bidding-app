@@ -4,7 +4,11 @@ Test script for AI Review feature during gameplay phase
 Tests that gameplay data (contract, tricks, card play) is captured correctly
 """
 
-import requests
+import pytest
+try:
+    import requests
+except ImportError:
+    pytest.skip("requests not installed", allow_module_level=True)
 import json
 import os
 from datetime import datetime

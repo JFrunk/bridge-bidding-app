@@ -3,7 +3,11 @@
 Test script to verify convention help endpoint works correctly
 """
 
-import requests
+import pytest
+try:
+    import requests
+except ImportError:
+    pytest.skip("requests not installed", allow_module_level=True)
 import json
 
 BASE_URL = "http://localhost:5001"

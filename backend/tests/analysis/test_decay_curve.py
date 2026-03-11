@@ -859,6 +859,10 @@ class TestFullHandSimulation:
 # Production Code Integration Tests
 # =============================================================================
 
+@pytest.mark.skipif(
+    not __import__('os').environ.get('DATABASE_URL'),
+    reason="DATABASE_URL not set — requires PostgreSQL"
+)
 class TestProductionStateReconstructor:
     """
     Tests for the production StateReconstructor class.
@@ -958,6 +962,10 @@ class TestProductionStateReconstructor:
         assert len(pbn.split(' ')) == 4
 
 
+@pytest.mark.skipif(
+    not __import__('os').environ.get('DATABASE_URL'),
+    reason="DATABASE_URL not set — requires PostgreSQL"
+)
 class TestProductionDecayCurveGenerator:
     """
     Tests for the production DecayCurveGenerator class.

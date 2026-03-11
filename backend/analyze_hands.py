@@ -6,7 +6,7 @@ Identifies errors according to SAYC bidding standards and proposes fixes.
 import json
 import os
 from pathlib import Path
-from engine.bidding_engine import BiddingEngine
+from engine.v2 import BiddingEngineV2Schema as BiddingEngine
 from engine.hand import Hand, Card
 
 class HandAnalyzer:

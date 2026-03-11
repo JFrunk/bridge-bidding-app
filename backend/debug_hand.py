@@ -5,7 +5,7 @@ Debug script to reproduce the bidding from hand_2025-10-10_08-20-12.json
 
 import json
 from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
+from engine.v2 import BiddingEngineV2Schema as BiddingEngine
 
 # Load the hand data
 with open('review_requests/hand_2025-10-10_08-20-12.json', 'r') as f:

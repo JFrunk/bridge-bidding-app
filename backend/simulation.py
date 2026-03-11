@@ -1,7 +1,7 @@
 import random
 import json
 from engine.hand import Hand, Card
-from engine.bidding_engine import BiddingEngine
+from engine.v2 import BiddingEngineV2Schema as BiddingEngine
 from engine.hand_constructor import generate_hand_for_convention, generate_hand_with_constraints
 from engine.ai.conventions.preempts import PreemptConvention
 from engine.ai.conventions.jacoby_transfers import JacobyConvention

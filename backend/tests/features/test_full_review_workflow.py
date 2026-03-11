@@ -5,7 +5,11 @@ Test the full AI Review workflow to verify:
 2. The frontend would generate a complete prompt with all necessary context
 3. The prompt can be used by Claude Code to analyze the hand
 """
-import requests
+import pytest
+try:
+    import requests
+except ImportError:
+    pytest.skip("requests not installed", allow_module_level=True)
 import json
 
 def test_workflow(base_url, environment_name):

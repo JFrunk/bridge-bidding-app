@@ -40,20 +40,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from engine.hand import Hand
 
-# Check if V2 schema engine should be used
-USE_V2 = os.environ.get('USE_V2_SCHEMA_ENGINE', 'false').lower() == 'true'
-# V1 fallback is disabled by default (pure V2 mode)
-DISABLE_V1_FALLBACK = os.environ.get('DISABLE_V1_FALLBACK', 'true').lower() == 'true'
+from engine.v2 import BiddingEngineV2Schema
+ENGINE_NAME = "V2 Schema"
 
-if USE_V2:
-    from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
-    ENGINE_NAME = "V2 Schema" + (" (pure V2)" if DISABLE_V1_FALLBACK else " (with V1 fallback)")
-
-    def BiddingEngine():
-        return BiddingEngineV2Schema(use_v1_fallback=not DISABLE_V1_FALLBACK)
-else:
-    from engine.bidding_engine import BiddingEngine
-    ENGINE_NAME = "V1 Legacy"
+def BiddingEngine():
+    return BiddingEngineV2Schema()
 
 
 @dataclass

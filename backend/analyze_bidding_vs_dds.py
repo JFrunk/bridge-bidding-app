@@ -23,15 +23,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from engine.hand import Hand
 
-# Check if V2 schema engine should be used
-USE_V2 = os.environ.get('USE_V2_SCHEMA_ENGINE', 'false').lower() == 'true'
-
-if USE_V2:
-    from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema as BiddingEngine
-    ENGINE_NAME = "V2 Schema"
-else:
-    from engine.bidding_engine import BiddingEngine
-    ENGINE_NAME = "V1 Legacy"
+from engine.v2 import BiddingEngineV2Schema as BiddingEngine
+ENGINE_NAME = "V2 Schema"
 
 # Check platform - DDS only works reliably on Linux
 import platform
