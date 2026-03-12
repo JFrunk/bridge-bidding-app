@@ -600,6 +600,7 @@ function DailyHand({ onClose = null, onComplete = null }) {
       title="Daily Hand Challenge"
       stepIndicator={getStepIndicator()}
       onClose={onClose}
+      scrollKey={flowState}
       feltContent={renderFeltContent()}
       interactionContent={renderInteractionContent()}
     />

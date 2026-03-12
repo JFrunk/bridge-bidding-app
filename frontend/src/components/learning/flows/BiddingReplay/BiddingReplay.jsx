@@ -541,6 +541,7 @@ function BiddingReplay({ onClose = null, onComplete = null }) {
       title="Bidding Review"
       stepIndicator={getStepIndicator()}
       onClose={onClose}
+      scrollKey={flowState}
       feltContent={renderFeltContent()}
       interactionContent={renderInteractionContent()}
     />

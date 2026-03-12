@@ -10,6 +10,7 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { isRedSuit } from '../../../../utils/suitColors';
 import { FlowLayout, HandDisplay, ResultStrip, PrimaryButton } from '../../shared';
 import TrickBar from './TrickBar';
 import {
@@ -47,7 +48,7 @@ function colorizeSuits(text) {
     }
 
     const symbol = match[1];
-    const isRed = symbol === '♥' || symbol === '♦';
+    const isRed = isRedSuit(symbol);
     parts.push(
       <span key={match.index} className={isRed ? 'suit-red' : 'suit-black'}>
         {symbol}
@@ -281,6 +282,7 @@ function CriticalTrick({ problem: initialProblem = null, onComplete = null, onCl
       title="Critical Trick"
       stepIndicator={`Technique: ${problem.technique}`}
       onClose={onClose}
+      scrollKey={flowState}
       feltContent={feltContent}
       interactionContent={interactionContent}
       actionContent={actionContent}

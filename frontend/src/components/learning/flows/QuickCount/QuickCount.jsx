@@ -536,6 +536,7 @@ function QuickCount({ onComplete = null, onClose = null, initialLevel = null }) 
       title="Quick Count"
       stepIndicator={getStepIndicator()}
       onClose={onClose}
+      scrollKey={flowState}
       feltContent={getFeltContent()}
       interactionContent={getInteractionContent()}
       actionContent={getActionContent()}

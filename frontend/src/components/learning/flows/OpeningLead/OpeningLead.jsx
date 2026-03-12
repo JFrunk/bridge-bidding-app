@@ -11,6 +11,7 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { SEATS } from '../../../../utils/seats';
 
 // Shared components
 import {
@@ -148,7 +149,7 @@ ContractBadge.propTypes = {
   contract: PropTypes.shape({
     level: PropTypes.number.isRequired,
     strain: PropTypes.oneOf(['S', 'H', 'D', 'C', 'NT']).isRequired,
-    declarer: PropTypes.oneOf(['N', 'E', 'S', 'W']).isRequired,
+    declarer: PropTypes.oneOf(SEATS).isRequired,
     doubled: PropTypes.bool,
     redoubled: PropTypes.bool
   }).isRequired
@@ -376,6 +377,7 @@ function OpeningLead({
       title="Opening Lead Quiz"
       stepIndicator={stepIndicator}
       onClose={onClose}
+      scrollKey={flowState}
       feltContent={renderFeltContent()}
       interactionContent={renderInteractionContent()}
       actionContent={renderActionContent()}

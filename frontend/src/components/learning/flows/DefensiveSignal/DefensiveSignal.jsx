@@ -480,6 +480,7 @@ function DefensiveSignal({ onComplete = null, onClose = null }) {
       title="Defensive Signals"
       stepIndicator={stepIndicator}
       onClose={onClose}
+      scrollKey={flowState}
       feltContent={
         flowState === STATES.LEVEL_SELECT
           ? renderLevelSelect()

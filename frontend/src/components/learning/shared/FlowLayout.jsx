@@ -7,7 +7,7 @@
  * Reference: docs/redesign/Learning/learning-flows-package/docs/LEARNING_DESIGN_SYSTEM.md
  */
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './FlowLayout.css';
 
@@ -20,6 +20,7 @@ import './FlowLayout.css';
  * @param {ReactNode} feltContent - Content for the green felt zone
  * @param {ReactNode} interactionContent - Content for the cream interaction zone
  * @param {ReactNode} actionContent - Optional action bar content
+ * @param {*} scrollKey - When this value changes, scroll zones reset to top
  */
 function FlowLayout({
   title,
@@ -27,8 +28,22 @@ function FlowLayout({
   onClose = null,
   feltContent = null,
   interactionContent = null,
-  actionContent = null
+  actionContent = null,
+  scrollKey = null
 }) {
+  const interactionRef = useRef(null);
+  const feltRef = useRef(null);
+
+  // Reset scroll position when scrollKey changes (e.g., flow state transitions)
+  useEffect(() => {
+    if (interactionRef.current) {
+      interactionRef.current.scrollTop = 0;
+    }
+    if (feltRef.current) {
+      feltRef.current.scrollTop = 0;
+    }
+  }, [scrollKey]);
+
   return (
     <div className="flow-container">
       {/* Header Zone */}
@@ -63,14 +78,14 @@ function FlowLayout({
       </header>
 
       {/* Felt Zone (Green) */}
-      <div className="felt-zone">
+      <div className="felt-zone" ref={feltRef}>
         <div className="felt-zone-content">
           {feltContent}
         </div>
       </div>
 
       {/* Interaction Zone (Cream) */}
-      <div className="interaction-zone">
+      <div className="interaction-zone" ref={interactionRef}>
         {interactionContent}
       </div>
 
@@ -90,7 +105,8 @@ FlowLayout.propTypes = {
   onClose: PropTypes.func,
   feltContent: PropTypes.node,
   interactionContent: PropTypes.node,
-  actionContent: PropTypes.node
+  actionContent: PropTypes.node,
+  scrollKey: PropTypes.any
 };
 
 export default FlowLayout;
