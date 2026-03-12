@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import { isRedSuit } from '../../utils/suitColors';
 import './DDTableDisplay.css';
 
 // Strain display configuration
@@ -44,10 +45,8 @@ const getContractLevel = (tricks, strain) => {
   return 'partscore';
 };
 
-/**
- * Check if strain is red (hearts or diamonds)
- */
-const isRedStrain = (strain) => strain === 'H' || strain === 'D';
+/** Check if strain is red (hearts or diamonds) - delegates to shared utility */
+const isRedStrain = (strain) => isRedSuit(strain);
 
 /**
  * DDTableDisplay - Double Dummy Analysis Table with Modal Overlay

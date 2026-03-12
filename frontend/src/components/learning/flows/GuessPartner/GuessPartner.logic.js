@@ -8,6 +8,7 @@
  */
 
 import { SUIT_ORDER, groupBySuit } from '../../types/hand-types';
+import { SUIT_NAMES } from '../../../../utils/suitColors';
 
 /**
  * Flow states for Guess Partner's Hand
@@ -154,19 +155,18 @@ export const scoreLongestSuitEstimate = (estimate, partnerCards) => {
 
   const correct = suits.includes(estimate);
 
-  const suitSymbols = { S: 'spades', H: 'hearts', D: 'diamonds', C: 'clubs' };
-  const estimateName = suitSymbols[estimate];
+  const estimateName = SUIT_NAMES[estimate];
 
   let explanation;
   if (correct) {
     if (suits.length === 1) {
       explanation = `Correct! Partner's longest suit is ${estimateName} (${length} cards).`;
     } else {
-      const suitNames = suits.map(s => suitSymbols[s]).join(' and ');
+      const suitNames = suits.map(s => SUIT_NAMES[s]).join(' and ');
       explanation = `Correct! Partner has ${length} cards in both ${suitNames}.`;
     }
   } else {
-    const suitNames = suits.map(s => suitSymbols[s]).join(' and ');
+    const suitNames = suits.map(s => SUIT_NAMES[s]).join(' and ');
     explanation = `Partner's longest suit is ${suitNames} (${length} cards), not ${estimateName}.`;
   }
 

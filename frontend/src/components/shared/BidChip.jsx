@@ -5,6 +5,7 @@
  * Suit Colors: Hearts/Diamonds = suit-red; Spades/Clubs/NT = suit-black.
  */
 import React from 'react';
+import { getSuitColorClass } from '../../utils/suitColors';
 
 const BidChip = ({ bid }) => {
   if (!bid) return null;
@@ -16,11 +17,8 @@ const BidChip = ({ bid }) => {
   const rank = bidStr.match(/^\d+/) ? bidStr.match(/^\d+/)[0] : '';
   const suit = bidStr.replace(/^\d+/, '').trim();
 
-  // Suit color helper
-  const getSuitColor = (s) => {
-    if (['H', 'D', '♥', '♦'].includes(s)) return 'text-suit-red';
-    return 'text-suit-black';
-  };
+  // Suit color helper (delegating to shared utility)
+  const getSuitColor = (s) => getSuitColorClass(s);
 
   return (
     <div className="inline-flex items-center justify-center bg-white rounded-[0.3em] px-[0.5em] py-[0.1em] shadow-[0.1em_0.1em_0.1em_rgba(0,0,0,0.1)] border border-gray-200 min-w-[3.2em] h-[2em] mx-auto">

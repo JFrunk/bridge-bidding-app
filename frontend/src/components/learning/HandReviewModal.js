@@ -20,6 +20,8 @@ import { PlayableCard } from '../play/PlayableCard';
 import DecayChart from '../analysis/DecayChart';
 import ChartHelp from '../help/ChartHelp';
 import HeuristicScorecard from './HeuristicScorecard';
+import { getSuitOrder, sortCards } from '../../shared/utils/cardUtils';
+import { normalizeSuit, SYMBOL_TO_LETTER } from '../../utils/suitColors';
 import './HandReviewModal.css';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5001';
@@ -35,35 +37,7 @@ const RATING_CONFIG = {
   error: { color: '#dc2626', bgColor: '#fef2f2', icon: '✗', label: 'Error' }
 };
 
-// Suit order (trump-aware for replay)
-const getSuitOrder = (trumpStrain) => {
-  if (!trumpStrain || trumpStrain === 'NT') {
-    return ['♠', '♥', '♣', '♦'];
-  }
-  const strainToSuit = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣' };
-  const trumpSuit = strainToSuit[trumpStrain] || trumpStrain;
-  if (trumpSuit === '♥') return ['♥', '♠', '♦', '♣'];
-  if (trumpSuit === '♦') return ['♦', '♠', '♥', '♣'];
-  if (trumpSuit === '♠') return ['♠', '♥', '♣', '♦'];
-  if (trumpSuit === '♣') return ['♣', '♥', '♠', '♦'];
-  return ['♠', '♥', '♣', '♦'];
-};
-
-// Sort cards within a hand by rank (high to low)
-const sortCards = (cards) => {
-  const rankOrder = ['A', 'K', 'Q', 'J', 'T', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
-  return [...cards].sort((a, b) => {
-    const aRank = a.rank || a.r;
-    const bRank = b.rank || b.r;
-    return rankOrder.indexOf(aRank) - rankOrder.indexOf(bRank);
-  });
-};
-
-// Normalize suit to Unicode format
-const normalizeSuit = (suit) => {
-  const map = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣' };
-  return map[suit] || suit;
-};
+// getSuitOrder, sortCards, normalizeSuit imported from shared utilities
 
 // Replay hand display - shows remaining cards with visual PlayableCard components
 // Horizontal layout for N/S, two-column vertical layout for E/W
@@ -430,8 +404,7 @@ const HandReviewModal = ({
     if (match) {
       const s = match[1].toUpperCase();
       if (s === 'NT') return 'NT';
-      const strainMap = { 'S': 'S', '♠': 'S', 'H': 'H', '♥': 'H', 'D': 'D', '♦': 'D', 'C': 'C', '♣': 'C' };
-      return strainMap[s] || 'NT';
+      return SYMBOL_TO_LETTER[s] || s;
     }
     return 'NT';
   }, [handData?.contract]);

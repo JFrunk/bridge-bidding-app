@@ -5,6 +5,9 @@
  * Reference: docs/redesign/Learning/learning-flows-package/docs/LEARNING_DESIGN_SYSTEM.md
  */
 
+import { extractLevelFromBid, extractSuitFromBid } from '../../../../utils/suitColors';
+import { SEATS } from '../../../../utils/seats';
+
 // Flow states for Daily Hand
 export const FLOW_STATES = {
   DEAL: 'DEAL',
@@ -119,9 +122,8 @@ export const generateDailyHand = (dateString) => {
   };
 
   // Determine dealer based on date (rotates N E S W)
-  const dealers = ['N', 'E', 'S', 'W'];
   const dayNumber = parseInt(dateString.replace(/-/g, ''), 10);
-  const dealer = dealers[dayNumber % 4];
+  const dealer = SEATS[dayNumber % 4];
 
   // Determine vulnerability based on date (rotates None NS EW Both)
   const vulnerabilities = ['None', 'NS', 'EW', 'Both'];
@@ -289,15 +291,15 @@ export const isBidLegal = (bid, auction) => {
   }
 
   // Compare bid levels
-  const bidLevel = parseInt(bid[0], 10);
-  const lastLevel = parseInt(lastBid.bid[0], 10);
+  const bidLevel = extractLevelFromBid(bid);
+  const lastLevel = extractLevelFromBid(lastBid.bid);
 
   if (bidLevel > lastLevel) return true;
   if (bidLevel < lastLevel) return false;
 
   // Same level: compare strains
-  const bidStrain = bid.slice(1);
-  const lastStrain = lastBid.bid.slice(1);
+  const bidStrain = extractSuitFromBid(bid);
+  const lastStrain = extractSuitFromBid(lastBid.bid);
   return STRAINS.indexOf(bidStrain) > STRAINS.indexOf(lastStrain);
 };
 
@@ -380,8 +382,8 @@ export const getContractFromAuction = (auction) => {
 
   if (!lastBid) return null;
 
-  const level = parseInt(lastBid.bid[0], 10);
-  const strain = lastBid.bid.slice(1);
+  const level = extractLevelFromBid(lastBid.bid);
+  const strain = extractSuitFromBid(lastBid.bid);
   const declarer = lastBid.bidder;
 
   // Check for double/redouble after the last bid
@@ -403,9 +405,8 @@ export const getContractFromAuction = (auction) => {
  * @returns {string[]} - Array of seats in order
  */
 export const getBiddingOrder = (dealer) => {
-  const order = ['N', 'E', 'S', 'W'];
-  const startIndex = order.indexOf(dealer);
-  return [...order.slice(startIndex), ...order.slice(0, startIndex)];
+  const startIndex = SEATS.indexOf(dealer);
+  return [...SEATS.slice(startIndex), ...SEATS.slice(0, startIndex)];
 };
 
 /**

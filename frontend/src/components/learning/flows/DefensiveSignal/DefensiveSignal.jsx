@@ -20,6 +20,7 @@ import {
   SecondaryButton,
 } from '../../shared';
 import { SUIT_SYMBOLS, SUIT_ORDER, sortCards, groupBySuit } from '../../types/hand-types';
+import { isRedSuit as isRedSuitUtil } from '../../../../utils/suitColors';
 import {
   getSituationsByLevel,
   getShuffledSituations,
@@ -63,10 +64,8 @@ const getPerformanceClass = (accuracy) => {
   return 'weak';
 };
 
-/**
- * Check if suit is red
- */
-const isRedSuit = (suit) => suit === 'H' || suit === 'D';
+/** Check if suit is red - delegates to shared utility */
+const isRedSuit = (suit) => isRedSuitUtil(suit);
 
 /**
  * DummyDiagram - Compact hand diagram for dummy display

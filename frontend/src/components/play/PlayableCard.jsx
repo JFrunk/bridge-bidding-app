@@ -1,5 +1,7 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
+import { getSuitColorClass, SUIT_NAMES } from "../../utils/suitColors";
+import { rankToDisplay } from "../../shared/utils/cardUtils";
 
 /**
  * PlayableCard - Clickable card component for the play phase
@@ -10,17 +12,11 @@ import { cn } from "../../lib/utils";
  * @param {boolean} readOnly - If true, removes all interactive affordances (for review/display modes)
  */
 export function PlayableCard({ card, onClick, disabled = false, compact = false, readOnly = false, className }) {
-  const suitColor = card.suit === '♥' || card.suit === '♦' ? 'text-suit-red' : 'text-suit-black';
-  const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
-  const displayRank = rankMap[card.rank] || card.rank;
+  const suitColor = getSuitColorClass(card.suit);
+  const displayRank = rankToDisplay(card.rank);
   const isClickable = onClick && !disabled && !readOnly;
 
-  const suitName = {
-    '♠': 'Spades',
-    '♥': 'Hearts',
-    '♦': 'Diamonds',
-    '♣': 'Clubs'
-  }[card.suit] || card.suit;
+  const suitName = SUIT_NAMES[card.suit] || card.suit;
 
   return (
     <div

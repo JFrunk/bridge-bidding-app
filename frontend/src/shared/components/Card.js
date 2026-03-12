@@ -7,9 +7,10 @@
  * The Heavy Club: text-shadow + scale-110 for visual weight.
  */
 import React from 'react';
+import { isRedSuit, getSuitColorClass, SUIT_NAMES } from '../../utils/suitColors';
 
 const Card = ({ rank, suit, isHidden = false, customScaleClass = "text-base", onClick, selectable = false, selected = false }) => {
-  const isRed = ['H', 'D', '♥', '♦'].includes(suit?.toUpperCase());
+  const isRed = isRedSuit(suit);
   const isClub = suit?.toUpperCase() === 'C' || suit === '♣';
   const isSpade = suit?.toUpperCase() === 'S' || suit === '♠';
 
@@ -38,14 +39,12 @@ const Card = ({ rank, suit, isHidden = false, customScaleClass = "text-base", on
   // Build suit classes with Heavy Club rule
   const suitClasses = [
     'text-[1.3em] leading-none mt-[0.4em] text-center',
-    isRed ? 'text-suit-red' : 'text-suit-black',
+    getSuitColorClass(suit),
     isClub ? 'drop-shadow-[0_0_0.05em_currentColor] scale-110' : '',
     isSpade ? 'scale-105' : ''
   ].filter(Boolean).join(' ');
 
-  // Suit name for aria-label
-  const suitName = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs',
-                    'S': 'spades', 'H': 'hearts', 'D': 'diamonds', 'C': 'clubs'}[suit] || suit;
+  const suitName = SUIT_NAMES[suit] || suit;
 
   return (
     <div
@@ -60,7 +59,7 @@ const Card = ({ rank, suit, isHidden = false, customScaleClass = "text-base", on
       <div className="w-[3.5em] h-[5.0em] bg-white rounded-[0.35em] border-[0.06em] border-gray-300 shadow-[0.1em_0.1em_0.2em_rgba(0,0,0,0.3)] flex flex-col items-start overflow-hidden">
         {/* Safe-Zone: 1.6em centered strip for rank + suit */}
         <div className="w-[1.6em] flex flex-col items-center pt-[0.3em]">
-          <span className={`text-[1.4em] font-black leading-none text-center ${isRed ? 'text-suit-red' : 'text-suit-black'}`}>
+          <span className={`text-[1.4em] font-black leading-none text-center ${getSuitColorClass(suit)}`}>
             {rank}
           </span>
           <span className={suitClasses}>

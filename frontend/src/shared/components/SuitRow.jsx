@@ -7,6 +7,7 @@
  * Uses em-based dimensions for scalability with customScaleClass.
  */
 import React from 'react';
+import { isRedSuit } from '../../utils/suitColors';
 import Card from './Card';
 
 const SuitRow = ({ suit, cards, customScaleClass = "text-base" }) => {
@@ -21,7 +22,7 @@ const SuitRow = ({ suit, cards, customScaleClass = "text-base" }) => {
   if (count >= 7) spacingClass = '-space-x-[1.9em]';
 
   // Suit color for the indicator — uses design token colors
-  const isRed = ['H', 'D', '♥', '♦'].includes(suit.toUpperCase());
+  const isRed = isRedSuit(suit);
   const suitColor = isRed ? 'text-suit-red' : 'text-suit-black';
 
   return (

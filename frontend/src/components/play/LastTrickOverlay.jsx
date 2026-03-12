@@ -2,6 +2,7 @@ import * as React from "react";
 import { cn } from "../../lib/utils";
 import { toVisualSeat, SEAT_NAMES } from "../../utils/seats";
 import { isRedSuit } from "../../utils/suitColors";
+import { rankToDisplay } from "../../shared/utils/cardUtils";
 
 /**
  * LastTrickOverlay - Shows the last completed trick in compass layout
@@ -17,9 +18,8 @@ export function LastTrickOverlay({ trick, trickNumber, onClose, userPosition = '
 
   // Use inline styles for guaranteed color visibility (not Tailwind classes)
   const getSuitStyle = (suit) => ({
-    color: isRedSuit(suit) ? '#d32f2f' : '#000000'  // Red or black
+    color: isRedSuit(suit) ? '#d32f2f' : '#000000'
   });
-  const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
 
   // Create a map of visual position -> card from trick data
   // Transform absolute positions to visual positions so the viewer is always at bottom
@@ -34,7 +34,7 @@ export function LastTrickOverlay({ trick, trickNumber, onClose, userPosition = '
   const TrickCard = ({ card, position, isWinner }) => {
     if (!card) return null;
 
-    const displayRank = rankMap[card.rank] || card.rank;
+    const displayRank = rankToDisplay(card.rank);
     const suitStyle = getSuitStyle(card.suit);
 
     return (

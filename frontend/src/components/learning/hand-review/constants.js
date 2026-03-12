@@ -5,6 +5,8 @@
  * Used by all hand review components.
  */
 
+import { normalizeSuit as _normalizeSuit, isRedSuit as _isRedSuit, SYMBOL_TO_LETTER } from '../../../utils/suitColors';
+
 // Rating colors and labels for feedback display
 export const RATING_CONFIG = {
   optimal: { color: '#059669', bgColor: '#ecfdf5', icon: '\u2713', label: 'Optimal' },
@@ -64,19 +66,15 @@ export const sortCards = (cards) => {
 
 /**
  * Normalize suit to Unicode format
+ * Re-exported from canonical utility
  */
-export const normalizeSuit = (suit) => {
-  const map = { 'S': '\u2660', 'H': '\u2665', 'D': '\u2666', 'C': '\u2663' };
-  return map[suit] || suit;
-};
+export const normalizeSuit = _normalizeSuit;
 
 /**
  * Check if a suit is red (hearts/diamonds)
+ * Re-exported from canonical utility
  */
-export const isRedSuit = (suit) => {
-  const normalized = normalizeSuit(suit);
-  return normalized === '\u2665' || normalized === '\u2666';
-};
+export const isRedSuit = _isRedSuit;
 
 /**
  * Extract trump strain from contract string (e.g., "4\u2660" -> "S", "3NT" -> "NT")
@@ -87,13 +85,8 @@ export const extractTrumpStrain = (contract) => {
   if (match) {
     const s = match[1].toUpperCase();
     if (s === 'NT') return 'NT';
-    const strainMap = {
-      'S': 'S', '\u2660': 'S',
-      'H': 'H', '\u2665': 'H',
-      'D': 'D', '\u2666': 'D',
-      'C': 'C', '\u2663': 'C'
-    };
-    return strainMap[s] || 'NT';
+    // Use SYMBOL_TO_LETTER for symbol->letter, pass through if already a letter
+    return SYMBOL_TO_LETTER[s] || s;
   }
   return 'NT';
 };

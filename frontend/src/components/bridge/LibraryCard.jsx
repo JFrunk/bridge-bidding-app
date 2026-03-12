@@ -1,5 +1,6 @@
 import React from 'react';
 import * as deck from '@letele/playing-cards';
+import { SYMBOL_TO_LETTER } from '../../utils/suitColors';
 
 /**
  * LibraryCard - Wrapper for @letele/playing-cards library
@@ -8,13 +9,8 @@ import * as deck from '@letele/playing-cards';
  * and applies custom styling
  */
 export function LibraryCard({ rank, suit, onClick, disabled = false, className, style }) {
-  // Map suits to library format
-  const suitMap = {
-    '♠': 'S',  // Spades
-    '♥': 'H',  // Hearts
-    '♦': 'D',  // Diamonds
-    '♣': 'C'   // Clubs
-  };
+  // Map suits to library format (using shared SYMBOL_TO_LETTER)
+  const suitMap = SYMBOL_TO_LETTER;
 
   // Map ranks to library format
   // Library uses: Ca, C2-C9, C10, Cj, Cq, Ck (lowercase for face cards, "10" for ten)
