@@ -1,49 +1,61 @@
 /**
- * Unit tests for Card component
+ * Unit tests for Card component (Tailwind/Physics v2.0)
+ *
+ * The Card component uses Tailwind utility classes:
+ * - Color: text-suit-red / text-suit-black
+ * - Selection: ring-2 ring-amber-500 -translate-y-[0.5em]
+ * - Selectable: cursor-pointer + hover:-translate-y-[0.5em]
+ * - Rank displayed as-is (no T→10 conversion)
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Card from '../components/Card';
 
 describe('Card Component', () => {
   it('renders card with rank and suit', () => {
-    render(<Card rank="A" suit="♠" />);
+    const { container } = render(<Card rank="A" suit="♠" />);
 
-    // Should show rank 'A'
-    const ranks = screen.getAllByText('A');
-    expect(ranks.length).toBeGreaterThan(0);
-
-    // Should show spade symbol
-    const suits = screen.getAllByText('♠');
-    expect(suits.length).toBeGreaterThan(0);
+    // Should render rank text
+    expect(container.textContent).toContain('A');
+    // Should render suit symbol
+    expect(container.textContent).toContain('♠');
   });
 
-  it('converts Ten rank to 10', () => {
-    render(<Card rank="T" suit="♥" />);
+  it('renders Ten rank as T (no conversion)', () => {
+    const { container } = render(<Card rank="T" suit="♥" />);
 
-    const ranks = screen.getAllByText('10');
-    expect(ranks.length).toBeGreaterThan(0);
+    // Card displays rank as-is
+    expect(container.textContent).toContain('T');
   });
 
   it('applies red color for hearts and diamonds', () => {
-    const { container } = render(<Card rank="K" suit="♥" />);
-    const redElements = container.getElementsByClassName('suit-red');
+    const { container: heartsContainer } = render(<Card rank="K" suit="♥" />);
+    const redElements = heartsContainer.querySelectorAll('.text-suit-red');
     expect(redElements.length).toBeGreaterThan(0);
+
+    const { container: diamondsContainer } = render(<Card rank="Q" suit="♦" />);
+    const redElements2 = diamondsContainer.querySelectorAll('.text-suit-red');
+    expect(redElements2.length).toBeGreaterThan(0);
   });
 
   it('applies black color for spades and clubs', () => {
-    const { container } = render(<Card rank="Q" suit="♠" />);
-    const blackElements = container.getElementsByClassName('suit-black');
+    const { container: spadesContainer } = render(<Card rank="Q" suit="♠" />);
+    const blackElements = spadesContainer.querySelectorAll('.text-suit-black');
     expect(blackElements.length).toBeGreaterThan(0);
+
+    const { container: clubsContainer } = render(<Card rank="J" suit="♣" />);
+    const blackElements2 = clubsContainer.querySelectorAll('.text-suit-black');
+    expect(blackElements2.length).toBeGreaterThan(0);
   });
 
   it('calls onClick when selectable and clicked', () => {
     const handleClick = jest.fn();
     const { container } = render(<Card rank="J" suit="♦" selectable={true} onClick={handleClick} />);
 
-    const card = container.querySelector('.card');
+    // Card uses role="button" when selectable
+    const card = container.querySelector('[role="button"]');
     fireEvent.click(card);
 
     expect(handleClick).toHaveBeenCalledWith({ rank: 'J', suit: '♦' });
@@ -53,21 +65,30 @@ describe('Card Component', () => {
     const handleClick = jest.fn();
     const { container } = render(<Card rank="9" suit="♣" selectable={false} onClick={handleClick} />);
 
-    const card = container.querySelector('.card');
+    // Not selectable — no role="button"
+    const card = container.firstChild;
     fireEvent.click(card);
 
     expect(handleClick).not.toHaveBeenCalled();
   });
 
-  it('applies selected class when selected', () => {
+  it('applies selected styling when selected', () => {
     const { container } = render(<Card rank="A" suit="♠" selected={true} />);
-    const card = container.querySelector('.card-selected');
-    expect(card).toBeInTheDocument();
+    const outerDiv = container.firstChild;
+    expect(outerDiv.className).toContain('ring-2');
+    expect(outerDiv.className).toContain('ring-amber-500');
   });
 
-  it('applies selectable class when selectable', () => {
+  it('applies selectable styling when selectable', () => {
     const { container } = render(<Card rank="K" suit="♥" selectable={true} />);
-    const card = container.querySelector('.card-selectable');
-    expect(card).toBeInTheDocument();
+    const outerDiv = container.firstChild;
+    expect(outerDiv.className).toContain('cursor-pointer');
+  });
+
+  it('renders hidden card back', () => {
+    const { container } = render(<Card isHidden={true} />);
+    // Hidden card has red-800 background
+    const back = container.querySelector('.bg-red-800');
+    expect(back).toBeInTheDocument();
   });
 });
