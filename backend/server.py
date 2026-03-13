@@ -773,8 +773,37 @@ from engine.learning.analytics_api import register_analytics_endpoints
 register_analytics_endpoints(app)
 
 # Register authentication endpoints (MVP - email/phone only, no passwords)
-from engine.auth.simple_auth_api import register_simple_auth_endpoints
+from engine.auth.simple_auth_api import register_simple_auth_endpoints, get_user_id_from_request
 register_simple_auth_endpoints(app)
+
+# Track user activity on authenticated API requests (throttled to once per 5 min per user)
+_activity_cache = {}  # user_id -> last_update_time
+
+@app.before_request
+def track_user_activity():
+    """Update last_activity for authenticated users, throttled to avoid DB spam."""
+    if not request.path.startswith('/api/'):
+        return
+    # Skip auth endpoints (they handle their own tracking)
+    if request.path.startswith('/api/auth/'):
+        return
+
+    user_id = get_user_id_from_request()
+    if not user_id:
+        return
+
+    now = time.time()
+    last_update = _activity_cache.get(user_id, 0)
+    if now - last_update < 300:  # 5 minutes
+        return
+
+    _activity_cache[user_id] = now
+    try:
+        from engine.learning.user_manager import get_user_manager
+        user_manager = get_user_manager()
+        user_manager.update_user_activity(user_id)
+    except Exception:
+        pass  # Activity tracking should never break a request
 
 # Register ACBL PBN import API endpoints (tournament analysis) - optional module
 try:

@@ -1554,6 +1554,15 @@
   background: var(--bg-card);
 }
 
+/* N/S horizontal cards: 20% smaller than base replay size */
+.hand-review-modal .replay-hand.horizontal .playable-card,
+.hand-review-modal .replay-hand.horizontal .playable-card.disabled {
+  width: 32px;
+  height: 45px;
+  min-width: 32px;
+  min-height: 45px;
+}
+
 /* Card text positioning and sizing for replay mode */
 /* Target the inner container that holds rank and suit */
 .hand-review-modal .replay-hand .playable-card > div {
@@ -1573,8 +1582,17 @@
   line-height: 1;
 }
 
+/* N/S horizontal: scaled-down text to match 20% smaller cards */
+.hand-review-modal .replay-hand.horizontal .playable-card span:first-child {
+  font-size: 11px;
+}
+
+.hand-review-modal .replay-hand.horizontal .playable-card span:last-child {
+  font-size: 10px;
+}
+
 .replay-hand.horizontal .playable-card {
-  margin-left: -14px; /* Shows ~22px of each card */
+  margin-left: -11px; /* Shows ~21px of each card (scaled from -14px) */
 }
 
 .replay-hand.horizontal .replay-suit-group .playable-card:first-child {
@@ -1796,6 +1814,15 @@
     min-height: 48px;
   }
 
+  /* Mobile: N/S horizontal cards 20% smaller */
+  .hand-review-modal .replay-hand.horizontal .playable-card,
+  .hand-review-modal .replay-hand.horizontal .playable-card.disabled {
+    width: 27px;
+    height: 38px;
+    min-width: 27px;
+    min-height: 38px;
+  }
+
   /* Mobile: Smaller text for compact cards */
   .hand-review-modal .replay-hand .playable-card span:first-child {
     font-size: 12px;
@@ -1805,12 +1832,21 @@
     font-size: 10px;
   }
 
+  /* Mobile: N/S horizontal text scaled down */
+  .hand-review-modal .replay-hand.horizontal .playable-card span:first-child {
+    font-size: 10px;
+  }
+
+  .hand-review-modal .replay-hand.horizontal .playable-card span:last-child {
+    font-size: 8px;
+  }
+
   .replay-hand.vertical-2col .playable-card {
     margin-top: -24px; /* Mobile: Shows ~20px of each card */
   }
 
   .replay-hand.horizontal .playable-card {
-    margin-left: -12px; /* Mobile: Shows ~20px of each card */
+    margin-left: -10px; /* Mobile: Shows ~17px of each card (scaled from -12px) */
   }
 
   .replay-trick-display {

@@ -183,8 +183,8 @@ def validate_session():
         if not user:
             return jsonify({'error': 'User not found'}), 404
 
-        # Update activity
-        user_manager.update_user_activity(user.id)
+        # Update login timestamp (session resume = returning user)
+        user_manager.update_last_login(user.id)
 
         return jsonify({
             'valid': True,
@@ -237,6 +237,31 @@ def get_session_info():
             for session in active_sessions.values()
         ]
     })
+
+def get_user_id_from_request():
+    """
+    Extract user_id from the Authorization header if session is valid.
+    Returns user_id (int) or None. Does NOT hit the database.
+    """
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return None
+
+    token = auth_header.split(' ')[1]
+    session = active_sessions.get(token)
+    if not session:
+        return None
+
+    # Check expiry
+    try:
+        expires_at = datetime.fromisoformat(session['expires_at'])
+        if datetime.now() > expires_at:
+            return None
+    except (KeyError, ValueError):
+        return None
+
+    return session.get('user_id')
+
 
 def register_simple_auth_endpoints(app):
     """
