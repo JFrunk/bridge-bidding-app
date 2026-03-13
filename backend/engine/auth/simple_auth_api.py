@@ -145,8 +145,8 @@ def login_with_email():
 
     except Exception as e:
         print(f"Login error: {e}")
-        import traceback
-        traceback.print_exc()
+        from utils.error_logger import log_error
+        log_error(e, endpoint='/api/auth/login')
         return jsonify({'error': f'Login failed: {str(e)}'}), 500
 
 def validate_session():
