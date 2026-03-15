@@ -4,7 +4,11 @@
  * CRITICAL: These tests prevent regression of hand visibility bugs
  * Run these tests before any changes to PlayComponents.js
  *
- * Tests cover all 4 declarer scenarios × 4 dummy positions = 16 total scenarios
+ * DOM structure notes:
+ * - North/South hands use .dummy-hand or .declarer-hand (horizontal layout)
+ * - East/West hands use .ew-hand-stack (vertical layout) — no .dummy-hand/.declarer-hand class
+ * - User hand uses .user-play-hand
+ * - Position containers: .position-north, .position-east, .position-south, .position-west
  */
 
 import { render, screen } from '@testing-library/react';
@@ -70,9 +74,10 @@ describe('Data Structure Handling - Prevent Regression', () => {
       />
     );
 
-    // Should extract cards array and render all 3 cards
+    // North dummy uses horizontal layout with .dummy-hand
     const northHand = container.querySelector('.position-north .dummy-hand');
     expect(northHand).toBeTruthy();
+    // Should render cards (PlayableCard components)
     const cards = northHand.querySelectorAll('.playable-card');
     expect(cards.length).toBe(3);
   });
@@ -113,9 +118,14 @@ describe('Data Structure Handling - Prevent Regression', () => {
  *
  * Bridge Rules:
  * 1. User (South) ALWAYS sees their own hand
- * 2. EVERYONE sees the dummy hand
+ * 2. EVERYONE sees the dummy hand (after reveal)
  * 3. Declarer's hand is ONLY visible if user IS the dummy
  * 4. Defenders NEVER see each other's hands
+ *
+ * DOM notes:
+ * - North (top): renders .dummy-hand or .declarer-hand (horizontal)
+ * - East/West (sides): renders .ew-hand-stack (vertical) — no role-specific class
+ * - South (bottom): renders .user-play-hand
  */
 describe('Hand Visibility Rules - Prevent Regression', () => {
 
@@ -145,7 +155,7 @@ describe('Hand Visibility Rules - Prevent Regression', () => {
       />
     );
 
-    // Should show North (dummy)
+    // Should show North (dummy) — horizontal layout
     const northHand = container.querySelector('.position-north .dummy-hand');
     expect(northHand).toBeTruthy();
 
@@ -153,11 +163,12 @@ describe('Hand Visibility Rules - Prevent Regression', () => {
     const southHand = container.querySelector('.position-south .user-play-hand');
     expect(southHand).toBeTruthy();
 
-    // Should NOT show East or West (opponents)
-    const eastHand = container.querySelector('.position-east .dummy-hand, .position-east .declarer-hand');
-    const westHand = container.querySelector('.position-west .dummy-hand, .position-west .declarer-hand');
-    expect(eastHand).toBeFalsy();
-    expect(westHand).toBeFalsy();
+    // Should NOT show East or West cards (opponents)
+    // E/W use .ew-hand-stack — check that no cards are rendered in those positions
+    const eastCards = container.querySelectorAll('.position-east .ew-card-slot');
+    const westCards = container.querySelectorAll('.position-west .ew-card-slot');
+    expect(eastCards.length).toBe(0);
+    expect(westCards.length).toBe(0);
   });
 
   /**
@@ -186,7 +197,7 @@ describe('Hand Visibility Rules - Prevent Regression', () => {
       />
     );
 
-    // Should show North (declarer - user controls it)
+    // Should show North (declarer - user controls it) — horizontal layout
     const northHand = container.querySelector('.position-north .declarer-hand');
     expect(northHand).toBeTruthy();
 
@@ -194,17 +205,19 @@ describe('Hand Visibility Rules - Prevent Regression', () => {
     const southHand = container.querySelector('.position-south');
     expect(southHand).toBeTruthy();
 
-    // Should NOT show East or West
-    const eastHand = container.querySelector('.position-east .dummy-hand, .position-east .declarer-hand');
-    const westHand = container.querySelector('.position-west .dummy-hand, .position-west .declarer-hand');
-    expect(eastHand).toBeFalsy();
-    expect(westHand).toBeFalsy();
+    // Should NOT show East or West cards
+    const eastCards = container.querySelectorAll('.position-east .ew-card-slot');
+    const westCards = container.querySelectorAll('.position-west .ew-card-slot');
+    expect(eastCards.length).toBe(0);
+    expect(westCards.length).toBe(0);
   });
 
   /**
    * Scenario 3: East declares, West is dummy
    * User (South) is defender - sees: South (own hand) + West (dummy)
    * Should NOT see East (declarer)
+   *
+   * Note: West is at left (position-west), uses .ew-hand-stack vertical layout
    */
   test('SCENARIO 3: East declares, West dummy - Defender sees South + West only (NOT East)', () => {
     const playState = createMockPlayState('E', 'W');
@@ -233,23 +246,27 @@ describe('Hand Visibility Rules - Prevent Regression', () => {
     const southHand = container.querySelector('.position-south .user-play-hand');
     expect(southHand).toBeTruthy();
 
-    // Should show West (dummy)
-    const westHand = container.querySelector('.position-west .dummy-hand');
-    expect(westHand).toBeTruthy();
+    // Should show West (dummy) — vertical layout with .ew-hand-stack containing card slots
+    const westCards = container.querySelectorAll('.position-west .ew-card-slot');
+    expect(westCards.length).toBeGreaterThan(0);
 
-    // CRITICAL: Should NOT show East (declarer) - user is defender!
-    const eastHand = container.querySelector('.position-east .dummy-hand, .position-east .declarer-hand');
-    expect(eastHand).toBeFalsy();
+    // CRITICAL: Should NOT show East (declarer) cards — user is defender
+    const eastCards = container.querySelectorAll('.position-east .ew-card-slot');
+    expect(eastCards.length).toBe(0);
 
-    // Should NOT show North (other defender)
-    const northHand = container.querySelector('.position-north .dummy-hand, .position-north .declarer-hand');
-    expect(northHand).toBeFalsy();
+    // Should NOT show North (other defender) cards
+    const northDummy = container.querySelector('.position-north .dummy-hand');
+    const northDeclarer = container.querySelector('.position-north .declarer-hand');
+    expect(northDummy).toBeFalsy();
+    expect(northDeclarer).toBeFalsy();
   });
 
   /**
    * Scenario 4: West declares, East is dummy
    * User (South) is defender - sees: South (own hand) + East (dummy)
    * Should NOT see West (declarer)
+   *
+   * Note: East is at right (position-east), uses .ew-hand-stack vertical layout
    */
   test('SCENARIO 4: West declares, East dummy - Defender sees South + East only (NOT West)', () => {
     const playState = createMockPlayState('W', 'E');
@@ -278,38 +295,37 @@ describe('Hand Visibility Rules - Prevent Regression', () => {
     const southHand = container.querySelector('.position-south .user-play-hand');
     expect(southHand).toBeTruthy();
 
-    // Should show East (dummy)
-    const eastHand = container.querySelector('.position-east .dummy-hand');
-    expect(eastHand).toBeTruthy();
+    // Should show East (dummy) — vertical layout with card slots
+    const eastCards = container.querySelectorAll('.position-east .ew-card-slot');
+    expect(eastCards.length).toBeGreaterThan(0);
 
-    // CRITICAL: Should NOT show West (declarer) - user is defender!
-    const westHand = container.querySelector('.position-west .dummy-hand, .position-west .declarer-hand');
-    expect(westHand).toBeFalsy();
+    // CRITICAL: Should NOT show West (declarer) cards — user is defender
+    const westCards = container.querySelectorAll('.position-west .ew-card-slot');
+    expect(westCards.length).toBe(0);
 
-    // Should NOT show North (other defender)
-    const northHand = container.querySelector('.position-north .dummy-hand, .position-north .declarer-hand');
-    expect(northHand).toBeFalsy();
+    // Should NOT show North (other defender) cards
+    const northDummy = container.querySelector('.position-north .dummy-hand');
+    const northDeclarer = container.querySelector('.position-north .declarer-hand');
+    expect(northDummy).toBeFalsy();
+    expect(northDeclarer).toBeFalsy();
   });
 });
 
 /**
- * Integration test: Console logging verification
+ * Visibility edge case: dummy not yet revealed
  */
-describe('Hand Visibility Logging', () => {
-  test('Should log visibility decisions for debugging', () => {
-    const consoleSpy = jest.spyOn(console, 'log');
+describe('Dummy Reveal Timing', () => {
+  test('Should NOT show dummy before opening lead (dummy_revealed=false)', () => {
+    const playState = createMockPlayState('S', 'N');
+    playState.dummy_revealed = false;  // Before opening lead
 
-    const playState = createMockPlayState('E', 'W');
-    const userHand = createMockHand();
-    const dummyHand = createMockHand();
-
-    render(
+    const { container } = render(
       <PlayTable
         playState={playState}
-        userHand={userHand}
-        dummyHand={dummyHand}
+        userHand={createMockHand()}
+        dummyHand={createMockHand()}
         onCardPlay={() => {}}
-        isUserTurn={false}
+        isUserTurn={true}
         auction={[]}
         declarerHand={null}
         onDeclarerCardPlay={() => {}}
@@ -320,12 +336,8 @@ describe('Hand Visibility Logging', () => {
       />
     );
 
-    // Should have logged visibility rules
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Hand Visibility Rules Applied'),
-      expect.any(Object)
-    );
-
-    consoleSpy.mockRestore();
+    // North dummy should NOT be visible (dummy not revealed yet)
+    const northDummy = container.querySelector('.position-north .dummy-hand');
+    expect(northDummy).toBeFalsy();
   });
 });

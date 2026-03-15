@@ -1321,6 +1321,11 @@ const SkillIntro = ({ skillId, skillName, onStart, onBack }) => {
     // Scroll the container to top
     if (containerRef.current) {
       containerRef.current.scrollTop = 0;
+      // Find the nearest scrollable ancestor (e.g., .learning-mode-overlay)
+      const scrollableParent = containerRef.current.closest('.learning-mode-overlay');
+      if (scrollableParent) {
+        scrollableParent.scrollTop = 0;
+      }
     }
     // Also scroll the window to top for good measure
     window.scrollTo(0, 0);

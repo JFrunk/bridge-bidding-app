@@ -17,6 +17,7 @@
 
 import React from 'react';
 import { Check, Info, AlertTriangle, XCircle, ArrowRight } from 'lucide-react';
+import { SUIT_MAP, isRedSuit } from '../../../utils/suitColors';
 
 const GRADE_CONFIG = {
   optimal: {
@@ -70,9 +71,8 @@ const CardChip = ({ card, variant = 'default' }) => {
   const suit = card.suit || card.s;
   if (!rank || !suit) return null;
 
-  const suitSymbols = { S: '♠', H: '♥', D: '♦', C: '♣' };
-  const suitSymbol = suitSymbols[suit.toUpperCase()] || suit;
-  const isRed = ['H', 'D', '♥', '♦'].includes(suit.toUpperCase());
+  const suitSymbol = SUIT_MAP[suit.toUpperCase()] || suit;
+  const isRed = isRedSuit(suit);
 
   const baseClasses = 'inline-flex items-center px-2.5 py-1 rounded font-bold text-base';
   const variantClasses = variant === 'better'
@@ -97,9 +97,8 @@ const formatCard = (card) => {
   const suit = card.suit || card.s;
   if (!rank || !suit) return null;
 
-  const suitSymbols = { S: '♠', H: '♥', D: '♦', C: '♣' };
-  const suitSymbol = suitSymbols[suit.toUpperCase()] || suit;
-  const isRed = ['H', 'D', '♥', '♦'].includes(suit.toUpperCase());
+  const suitSymbol = SUIT_MAP[suit.toUpperCase()] || suit;
+  const isRed = isRedSuit(suit);
 
   return (
     <span className={`font-bold ${isRed ? 'text-suit-red' : 'text-suit-black'}`}>

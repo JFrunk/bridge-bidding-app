@@ -18,7 +18,9 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PlayableCard } from '../play/PlayableCard';
 import { getBiddingHandDetail } from '../../services/analyticsService';
 import ChartHelp from '../help/ChartHelp';
-import { bidderRole, normalize, seatIndex, seatFromIndex } from '../../utils/seats';
+import { bidderRole, normalize, seatIndex, seatFromIndex, SEATS } from '../../utils/seats';
+import { SUIT_ORDER, sortCards } from '../../shared/utils/cardUtils';
+import { normalizeSuit } from '../../utils/suitColors';
 import './HandReviewModal.css'; // Reuse the same CSS
 
 // Rating colors and labels (same as HandReviewModal)
@@ -121,24 +123,7 @@ const DDTableDisplay = ({ ddAnalysis }) => {
   );
 };
 
-// Suit order for display
-const SUIT_ORDER = ['♠', '♥', '♦', '♣'];
-
-// Normalize suit to Unicode format
-const normalizeSuit = (suit) => {
-  const map = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣' };
-  return map[suit] || suit;
-};
-
-// Sort cards within a suit by rank (high to low)
-const sortCards = (cards) => {
-  const rankOrder = ['A', 'K', 'Q', 'J', 'T', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
-  return [...cards].sort((a, b) => {
-    const aRank = a.rank || a.r;
-    const bRank = b.rank || b.r;
-    return rankOrder.indexOf(aRank) - rankOrder.indexOf(bRank);
-  });
-};
+// SUIT_ORDER, normalizeSuit, sortCards imported from shared utilities
 
 // Hand display component - reuses replay-hand styling from HandReviewModal
 const BidHandDisplay = ({ cards, position, isVertical = false }) => {
@@ -233,7 +218,7 @@ const BidHandDisplay = ({ cards, position, isVertical = false }) => {
 };
 
 // Position order constant
-const POSITIONS = ['N', 'E', 'S', 'W'];
+const POSITIONS = SEATS;
 
 // Normalize position from full name ('North') to single letter ('N')
 const normalizePosition = (pos) => {
@@ -443,14 +428,12 @@ const BidReviewModal = ({
   const userBidNumbers = useMemo(() => {
     if (!handData?.auction_history || !handData?.dealer) return [];
 
-    const positions = ['N', 'E', 'S', 'W'];
     const normalizedDealer = normalizePosition(handData.dealer);
-    const dealerIndex = positions.indexOf(normalizedDealer);
+    const dealerIndex = SEATS.indexOf(normalizedDealer);
     const userBids = [];
 
     handData.auction_history.forEach((_, idx) => {
-      const positionIndex = (dealerIndex + idx) % 4;
-      if (positions[positionIndex] === userPosition) {
+      if (seatFromIndex(dealerIndex + idx) === userPosition) {
         userBids.push(idx + 1); // 1-indexed
       }
     });

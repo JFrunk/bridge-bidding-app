@@ -63,6 +63,8 @@
  * @property {Object.<string, number>} byStrain - Tricks by each strain
  */
 
+import { SUIT_NAMES as _SUIT_NAMES, isRedSuit as _isRedSuit } from '../../../utils/suitColors';
+
 // Suit display helpers
 export const SUIT_SYMBOLS = {
   S: '♠',
@@ -71,12 +73,8 @@ export const SUIT_SYMBOLS = {
   C: '♣',
 };
 
-export const SUIT_NAMES = {
-  S: 'spades',
-  H: 'hearts',
-  D: 'diamonds',
-  C: 'clubs',
-};
+// Re-export from canonical utility (accepts both letter and symbol formats)
+export const SUIT_NAMES = _SUIT_NAMES;
 
 export const SUIT_ORDER = ['S', 'H', 'C', 'D']; // Display order: ♠♥♣♦
 
@@ -84,10 +82,11 @@ export const RANK_ORDER = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4
 
 /**
  * Check if a suit is red (hearts or diamonds)
+ * Re-exported from canonical utility (accepts both letter and symbol formats)
  * @param {Suit} suit
  * @returns {boolean}
  */
-export const isRedSuit = (suit) => suit === 'H' || suit === 'D';
+export const isRedSuit = _isRedSuit;
 
 /**
  * Sort cards by suit (♠♥♣♦) then by rank (high to low)

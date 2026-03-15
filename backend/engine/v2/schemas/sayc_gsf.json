@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "gsf",
+  "description": "Grand Slam Force (5NT asking for trump honors when not in Blackwood/Gerber sequence)",
+  "rules": [
+    {
+      "id": "gsf_initiate",
+      "bid": "5NT",
+      "priority": 950,
+      "description": "Grand Slam Force - 5NT asking partner about trump honors",
+      "conditions": {
+        "fit_known": true,
+        "hcp": {
+          "min": 18
+        },
+        "asked_blackwood": false,
+        "asked_gerber": false,
+        "partnership_hcp_min": {
+          "min": 33
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Grand Slam Force - asking about top trump honors (A/K/Q)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "gsf_response_bid_7_with_2_honors",
+      "bid": "7{agreed_suit}",
+      "priority": 955,
+      "description": "GSF response: bid grand slam with 2+ of A/K/Q in trump",
+      "conditions": {
+        "partner_last_bid": "5NT",
+        "fit_known": true,
+        "asked_blackwood": false,
+        "trump_top_honors": {
+          "min": 2
+        }
+      },
+      "forcing": "none",
+      "explanation": "Grand slam! 2+ top honors (A/K/Q) in trump suit",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "gsf_response_bid_6_with_1_honor",
+      "bid": "6{agreed_suit}",
+      "priority": 954,
+      "description": "GSF response: bid small slam with 0-1 top trump honors",
+      "conditions": {
+        "partner_last_bid": "5NT",
+        "fit_known": true,
+        "asked_blackwood": false,
+        "trump_top_honors": {
+          "max": 1
+        }
+      },
+      "forcing": "none",
+      "explanation": "Small slam - only 0-1 top honors in trump suit",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

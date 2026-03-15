@@ -1,5 +1,7 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
+import { getSuitColorClass, SUIT_NAMES } from "../../utils/suitColors";
+import { rankToDisplay } from "../../shared/utils/cardUtils";
 
 /**
  * VerticalPlayableCard - Clickable card component optimized for vertical overlapping displays
@@ -19,17 +21,11 @@ import { cn } from "../../lib/utils";
  * @param {string} props.className - Additional Tailwind classes
  */
 export function VerticalPlayableCard({ card, onClick, disabled = false, className }) {
-  const suitColor = card.suit === '♥' || card.suit === '♦' ? 'text-suit-red' : 'text-suit-black';
-  const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
-  const displayRank = rankMap[card.rank] || card.rank;
+  const suitColor = getSuitColorClass(card.suit);
+  const displayRank = rankToDisplay(card.rank);
   const isClickable = onClick && !disabled;
 
-  const suitName = {
-    '♠': 'Spades',
-    '♥': 'Hearts',
-    '♦': 'Diamonds',
-    '♣': 'Clubs'
-  }[card.suit] || card.suit;
+  const suitName = SUIT_NAMES[card.suit] || card.suit;
 
   return (
     <div

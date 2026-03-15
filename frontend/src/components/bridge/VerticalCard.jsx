@@ -1,5 +1,7 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
+import { getSuitColorClass } from '../../utils/suitColors';
+import { rankToDisplay } from '../../shared/utils/cardUtils';
 
 /**
  * VerticalCard Component
@@ -27,11 +29,10 @@ import { cn } from "../../lib/utils";
  */
 export function VerticalCard({ rank, suit, onClick, disabled = false, className, style }) {
   // Determine suit color (red for hearts/diamonds, black for spades/clubs)
-  const suitColor = suit === '♥' || suit === '♦' ? 'text-suit-red' : 'text-suit-black';
+  const suitColor = getSuitColorClass(suit);
 
   // Map 'T' to '10' for display
-  const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
-  const displayRank = rankMap[rank] || rank;
+  const displayRank = rankToDisplay(rank);
 
   // Determine if card is clickable
   const isClickable = onClick && !disabled;

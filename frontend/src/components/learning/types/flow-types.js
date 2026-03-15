@@ -5,6 +5,8 @@
  * These are JSDoc type definitions for use with JavaScript components.
  */
 
+import { SUIT_MAP } from '../../../utils/suitColors';
+
 /**
  * @typedef {'daily' | 'lead' | 'guess' | 'debrief' | 'count' | 'replay' | 'signal' | 'critical' | 'convention' | 'dashboard'} FlowType
  */
@@ -97,19 +99,12 @@ export const formatBid = (bid) => {
     return bid;
   }
 
-  const suitMap = {
-    'S': '♠',
-    'H': '♥',
-    'D': '♦',
-    'C': '♣',
-  };
-
   // Match patterns like "1H", "3NT", "2S"
   const match = bid.match(/^(\d)(S|H|D|C|NT)$/);
   if (match) {
     const [, level, strain] = match;
     if (strain === 'NT') return `${level}NT`;
-    return `${level}${suitMap[strain]}`;
+    return `${level}${SUIT_MAP[strain]}`;
   }
 
   return bid;

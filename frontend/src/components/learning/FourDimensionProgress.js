@@ -14,6 +14,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { getFourDimensionProgress, getDashboardData, getHandHistory, getBoardAnalysis, getBiddingHandsHistory } from '../../services/analyticsService';
+import { SUIT_NAMES } from '../../utils/suitColors';
+import { SEATS } from '../../utils/seats';
 import ChartHelp from '../help/ChartHelp';
 import './FourDimensionProgress.css';
 
@@ -561,7 +563,7 @@ const deriveContractFromAuction = (auctionHistory) => {
   // Auction format: array of {bid, explanation} or just bid strings
   let lastBid = null;
   let lastBidder = null;
-  const positions = ['N', 'E', 'S', 'W']; // Assuming North deals first by default
+  const positions = SEATS; // Assuming North deals first by default
 
   for (let i = auctionHistory.length - 1; i >= 0; i--) {
     const entry = auctionHistory[i];
@@ -611,11 +613,12 @@ const BiddingHandRow = ({ hand, onReview }) => {
   // Get strain class for contract styling - uses standard red/black colors
   const getStrainClass = (contractStr) => {
     if (!contractStr) return '';
-    if (contractStr.includes('♠') || contractStr.includes('S')) return 'spades';
-    if (contractStr.includes('♥') || contractStr.includes('H')) return 'hearts';
-    if (contractStr.includes('♦') || contractStr.includes('D')) return 'diamonds';
-    if (contractStr.includes('♣') || contractStr.includes('C')) return 'clubs';
+    // Check for NT first (before 'N' match)
     if (contractStr.includes('NT') || contractStr.includes('N')) return 'notrump';
+    // Check suit symbols and letters via SUIT_NAMES
+    for (const [key, name] of Object.entries(SUIT_NAMES)) {
+      if (contractStr.includes(key)) return name;
+    }
     return '';
   };
 
@@ -1412,11 +1415,14 @@ const HandRow = ({ hand, onReview }) => {
   // Get strain class for contract styling - uses standard red/black colors
   const getStrainClass = (strain) => {
     if (!strain) return '';
-    if (strain.includes('♠') || strain === 'S') return 'spades';
-    if (strain.includes('♥') || strain === 'H') return 'hearts';
-    if (strain.includes('♦') || strain === 'D') return 'diamonds';
-    if (strain.includes('♣') || strain === 'C') return 'clubs';
+    // Check for NT first (before 'N' match)
     if (strain.includes('NT') || strain === 'N') return 'notrump';
+    // Check suit symbols and letters via SUIT_NAMES
+    const name = SUIT_NAMES[strain];
+    if (name) return name;
+    for (const [key, val] of Object.entries(SUIT_NAMES)) {
+      if (strain.includes(key)) return val;
+    }
     return '';
   };
 

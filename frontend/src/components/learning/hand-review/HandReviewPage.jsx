@@ -24,6 +24,7 @@ import {
   normalizeSuit,
   isRedSuit,
 } from './constants';
+import { SYMBOL_TO_LETTER } from '../../../utils/suitColors';
 import DecayChart from '../../analysis/DecayChart';
 import HeuristicScorecard from '../HeuristicScorecard';
 import ReactorLayout from '../../layout/ReactorLayout';
@@ -94,13 +95,12 @@ const parseCardString = (cardStr) => {
   if (!cardStr || typeof cardStr !== 'string') return null;
 
   // Handle suit symbols
-  const suitMap = { '♠': 'S', '♥': 'H', '♦': 'D', '♣': 'C' };
   let suit = cardStr.slice(-1);
   let rank = cardStr.slice(0, -1);
 
   // Check for symbol suits
-  if (suitMap[suit]) {
-    suit = suitMap[suit];
+  if (SYMBOL_TO_LETTER[suit]) {
+    suit = SYMBOL_TO_LETTER[suit];
   }
 
   return { rank, suit };

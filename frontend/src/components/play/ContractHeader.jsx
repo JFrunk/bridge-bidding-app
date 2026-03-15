@@ -2,6 +2,7 @@ import * as React from "react";
 import { useState } from "react";
 import { BiddingTableGrid } from "../shared/BiddingTableGrid";
 import { BidChip } from "../shared/BidChip";
+import { SUIT_MAP, isRedSuit } from '../../utils/suitColors';
 import "../../styles/PlayScreen.css";  // Import contract-bar styles
 
 /**
@@ -27,17 +28,14 @@ export function ContractHeader({ contract, tricksWon, auction, dealer, scoreData
   const doubledText = doubled === 2 ? 'XX' : doubled === 1 ? 'X' : '';
 
   // Suit symbol for trump display
-  const strainSymbol = {
-    'C': '♣', 'D': '♦', 'H': '♥', 'S': '♠', 'N': 'NT'
-  }[strain] || strain;
+  const strainSymbol = (strain === 'N' ? 'NT' : SUIT_MAP[strain]) || strain;
 
   // Display text for strain (spell out NT)
   const displayStrain = strainSymbol;
 
   // Text color must respond to suit for readability on DARK header
   // Red suits = bright red (felt variant), Black suits/NT = white
-  const isRedSuit = strain === 'H' || strain === 'D';
-  const suitTextColor = isRedSuit ? 'var(--suit-heart-felt, #ff6b7a)' : '#ffffff';
+  const suitTextColor = isRedSuit(strain) ? 'var(--suit-heart-felt, #ff6b7a)' : '#ffffff';
 
   // Map declarer to full name
   const declarerName = {

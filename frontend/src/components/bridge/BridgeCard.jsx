@@ -1,5 +1,7 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
+import { isRedSuit } from '../../utils/suitColors';
+import { rankToDisplay } from '../../shared/utils/cardUtils';
 
 /**
  * BridgeCard Component
@@ -21,12 +23,10 @@ import { cn } from "../../lib/utils";
  */
 export function BridgeCard({ rank, suit, onClick, disabled = false, className }) {
   // Determine suit color
-  const isRed = suit === '♥' || suit === '♦';
-  const colorClass = isRed ? 'red' : 'black';
+  const colorClass = isRedSuit(suit) ? 'red' : 'black';
 
   // Map 'T' to '10' for display
-  const rankMap = { 'A': 'A', 'K': 'K', 'Q': 'Q', 'J': 'J', 'T': '10' };
-  const displayRank = rankMap[rank] || rank;
+  const displayRank = rankToDisplay(rank);
 
   // Determine if card is clickable
   const isClickable = onClick && !disabled;

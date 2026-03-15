@@ -622,6 +622,7 @@ const ConventionSpotlight = ({
       title={content.title}
       stepIndicator={content.stepIndicator}
       onClose={onClose}
+      scrollKey={flowState}
       feltContent={showFeltZone ? (
         <div className="drill-felt-content">
           {content.feltContent}

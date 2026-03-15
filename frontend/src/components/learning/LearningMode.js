@@ -106,6 +106,11 @@ const LearningMode = ({ userId, initialTrack = 'bidding' }) => {
   const scrollToTop = useCallback(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = 0;
+      // Find the nearest scrollable ancestor (e.g., .learning-mode-overlay)
+      const scrollableParent = containerRef.current.closest('.learning-mode-overlay');
+      if (scrollableParent) {
+        scrollableParent.scrollTop = 0;
+      }
     }
     window.scrollTo(0, 0);
   }, []);

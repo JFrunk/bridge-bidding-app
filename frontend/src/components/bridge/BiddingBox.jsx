@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { extractLevelFromBid, extractSuitFromBid } from '../../utils/suitColors';
 import './BiddingBox.css';
 
 /**
@@ -29,8 +30,8 @@ export function BiddingBox({ onBid, disabled, auction }) {
    */
   const isBidLegal = (bidLevel, suit) => {
     if (!lastRealBid) return true;
-    const lastLevel = parseInt(lastRealBid.bid[0], 10);
-    const lastSuit = lastRealBid.bid.slice(1);
+    const lastLevel = extractLevelFromBid(lastRealBid.bid);
+    const lastSuit = extractSuitFromBid(lastRealBid.bid);
     if (bidLevel > lastLevel) return true;
     if (bidLevel === lastLevel && suitOrder[suit] > suitOrder[lastSuit]) return true;
     return false;
@@ -41,7 +42,7 @@ export function BiddingBox({ onBid, disabled, auction }) {
    */
   const isLevelLegal = (bidLevel) => {
     if (!lastRealBid) return true;
-    const lastLevel = parseInt(lastRealBid.bid[0], 10);
+    const lastLevel = extractLevelFromBid(lastRealBid.bid);
     return bidLevel >= lastLevel;
   };
 

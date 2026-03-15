@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { isRedSuit } from '../../../utils/suitColors';
 import './ChoiceGrid.css';
 
 /**
@@ -38,7 +39,7 @@ function ChoiceGrid({
 
       // Add the colored symbol
       const symbol = match[1];
-      const isRed = symbol === '♥' || symbol === '♦';
+      const isRed = isRedSuit(symbol);
       parts.push(
         <span
           key={match.index}

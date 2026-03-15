@@ -500,6 +500,7 @@ function GuessPartner({ onComplete = null, onClose = null, initialScenario = nul
       title="Guess Partner's Hand"
       stepIndicator={getStepIndicator()}
       onClose={onClose}
+      scrollKey={flowState}
       feltContent={renderFeltContent()}
       interactionContent={renderInteractionContent()}
       actionContent={renderActionContent()}

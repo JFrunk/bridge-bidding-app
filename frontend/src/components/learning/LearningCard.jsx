@@ -10,12 +10,12 @@
  * @param {string} props.className - Additional CSS classes
  */
 import React from 'react';
+import { isRedSuit } from '../../utils/suitColors';
 import './LearningCard.css';
 
 export function LearningCard({ rank, suit, className = '' }) {
   // Determine suit color (red for hearts/diamonds, black for spades/clubs)
-  const isRed = suit === '♥' || suit === '♦';
-  const colorClass = isRed ? 'card-red' : 'card-black';
+  const colorClass = isRedSuit(suit) ? 'card-red' : 'card-black';
 
   // Map 'T' to '10' for display
   const displayRank = rank === 'T' ? '10' : rank;
