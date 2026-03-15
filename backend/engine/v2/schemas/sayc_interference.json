@@ -276,13 +276,35 @@
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
-      "id": "free_bid_new_suit",
-      "bid": "2{suit}",
-      "priority": 600,
-      "description": "Free bid of new suit after interference",
+      "id": "preempt_response_competitive",
+      "bid": "{suit}",
+      "priority": 610,
+      "description": "Competitive new suit response when partner opened a preempt and RHO interfered",
       "conditions": {
         "is_response": true,
         "is_contested": true,
+        "partner_opened_preempt": true,
+        "opener_relationship": "Partner",
+        "hcp": {
+          "min": 6
+        },
+        "suit_length": {
+          "min": 5
+        }
+      },
+      "forcing": "none",
+      "explanation": "Competitive bid over interference (partner opened preempt, showing alternative suit)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "free_bid_new_suit",
+      "bid": "2{suit}",
+      "priority": 600,
+      "description": "Free bid of new suit after interference (non-preempt opening)",
+      "conditions": {
+        "is_response": true,
+        "is_contested": true,
+        "partner_opened_preempt": false,
         "opener_relationship": "Partner",
         "hcp": {
           "min": 10

@@ -615,10 +615,12 @@ class BiddingStateBuilder:
         elif not on_opening_side:
             partner_seat = partner(seat)
             partner_has_acted = self._has_acted_before(partner_seat, prior, state.dealer)
+            has_acted = self._has_acted_before(seat, prior, state.dealer)
 
             if partner_has_acted:
                 # Partner overcalled/doubled, this player passes → limited hand
-                if not has_bid:
+                # But only if this player hasn't already acted (e.g., doubled)
+                if not has_acted:
                     belief.narrow_hcp(new_max=8, reason="Passed partner's overcall → max 8 HCP (couldn't raise)", bid='Pass')
                     belief.limited = True
                     belief.add_tag('passed_overcall')
@@ -861,7 +863,35 @@ class BiddingStateBuilder:
             if level > min_level:
                 is_jump = True
 
-            if is_jump:
+            # Check if partner made a takeout double — if so, this is an
+            # advancer bid (constructive response to the double), not an
+            # independent overcall or weak jump overcall.
+            partner_seat = partner(seat)
+            partner_last_bid = None
+            for j in range(len(prior) - 1, -1, -1):
+                bid_seat = active_seat_bidding(state.dealer, j)
+                if bid_seat == partner_seat:
+                    partner_last_bid = prior[j]
+                    break
+
+            if partner_last_bid == 'X':
+                # Advancer bid — partner doubled, this is a constructive response
+                if is_jump and level >= 4:
+                    # Game jump in response to takeout double: 12+ HCP
+                    belief.narrow_hcp(new_min=12, reason=f'Advancer game bid ({bid}) → 12+ HCP', bid=bid)
+                    belief.narrow_suit(suit, new_min=4, reason=f'Advancer game bid → 4+ {suit}', bid=bid)
+                    belief.add_tag('advancer_game_jump')
+                elif is_jump:
+                    # Invitational jump in response to takeout double: 9-11 HCP
+                    belief.narrow_hcp(new_min=9, new_max=11, reason=f'Advancer invitational jump ({bid}) → 9-11 HCP', bid=bid)
+                    belief.narrow_suit(suit, new_min=4, reason=f'Advancer jump → 4+ {suit}', bid=bid)
+                    belief.add_tag('advancer_invitational_jump')
+                else:
+                    # Minimum response to takeout double: 0-8 HCP
+                    belief.narrow_hcp(new_max=8, reason=f'Advancer minimum ({bid}) → 0-8 HCP', bid=bid)
+                    belief.narrow_suit(suit, new_min=4, reason=f'Advancer response → 4+ {suit}', bid=bid)
+                    belief.add_tag('advancer_minimum')
+            elif is_jump:
                 belief.narrow_hcp(new_min=6, new_max=10, reason=f'Weak jump overcall ({bid}) → 6-10 HCP', bid=bid)
                 belief.narrow_suit(suit, new_min=6, reason=f'Weak jump overcall → 6+ {suit}', bid=bid)
                 belief.limited = True

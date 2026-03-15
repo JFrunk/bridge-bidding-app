@@ -270,6 +270,15 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['is_competitive_later'] = af['opener_relationship'] == 'Opponent' and bc['my_bid_count'] >= 1
     flat['is_responder_rebid'] = af['opener_relationship'] == 'Partner' and bc['my_bid_count'] >= 1
 
+    # partner_opened_preempt: partner's opening was a weak two or preempt (not 2NT/2C)
+    opening_bid_str = af.get('opening_bid', '') or ''
+    flat['partner_opened_preempt'] = (
+        af['opener_relationship'] == 'Partner' and
+        bool(opening_bid_str) and
+        opening_bid_str[0] in ('2', '3') and
+        opening_bid_str not in ('2NT', '2♣')
+    )
+
     # Advancer detection: partner made a competitive action over opponent's opening
     # This includes overcalls, takeout doubles, and suit bids
     partner_bids_temp = _get_partner_bids(auction_history, my_position, dealer)

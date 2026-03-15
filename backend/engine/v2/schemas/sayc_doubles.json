@@ -8,18 +8,18 @@
       "id": "takeout_double_general",
       "bid": "X",
       "priority": 740,
-      "description": "General takeout double - opening values + shortness + major support (no 5-card major)",
+      "description": "General takeout double - opening values + support for ALL unbid suits (no 5-card major)",
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
         {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "hcp", "min": 12, "constraint_type": "HARD"},
+        {"feature": "support_all_unbid", "expected": true, "constraint_type": "HARD"},
         {"feature": "opponent_suit_length", "max": 2, "constraint_type": "HARD"},
-        {"feature": "has_4_card_major", "expected": true, "constraint_type": "HARD"},
         {"feature": "spades_length", "max": 4, "constraint_type": "HARD"},
         {"feature": "hearts_length", "max": 4, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Takeout double (12+ HCP, shortness in opponent's suit, major support)",
+      "explanation": "Takeout double (12+ HCP, support for all unbid suits, short in opponent's suit)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -30,7 +30,7 @@
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
         {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.05},
+        {"feature": "hcp", "min": 17, "constraint_type": "HARD"},
         {"feature": "opponent_suit_length", "max": 2, "constraint_type": "HARD"},
         {"feature": "spades_length", "max": 4, "constraint_type": "HARD"},
         {"feature": "hearts_length", "max": 4, "constraint_type": "HARD"}
@@ -43,17 +43,18 @@
       "id": "takeout_double_normal",
       "bid": "X",
       "priority": 735,
-      "description": "Normal takeout double (12-16 HCP) - must not have 5-card major",
+      "description": "Normal takeout double (12-16 HCP) - support for all unbid suits, no 5-card major",
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
         {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 12, "max": 16, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
+        {"feature": "hcp", "min": 12, "max": 16, "constraint_type": "HARD"},
+        {"feature": "support_all_unbid", "expected": true, "constraint_type": "HARD"},
         {"feature": "opponent_suit_length", "max": 2, "constraint_type": "HARD"},
         {"feature": "spades_length", "max": 4, "constraint_type": "HARD"},
         {"feature": "hearts_length", "max": 4, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
-      "explanation": "Takeout double (12-16 HCP, support for unbid suits)",
+      "explanation": "Takeout double (12-16 HCP, support for all unbid suits)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
