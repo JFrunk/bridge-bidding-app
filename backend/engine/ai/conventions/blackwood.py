@@ -2,6 +2,7 @@ from engine.hand import Hand
 from engine.ai.conventions.base_convention import ConventionModule
 from engine.bidding_validation import BidValidator, get_next_legal_bid
 from utils.seats import seat_index, seat_from_index
+from engine.ai.conventions.texas_transfers import is_texas_transfer_sequence
 from typing import Optional, Tuple, Dict, List
 
 
@@ -311,7 +312,13 @@ class BlackwoodConvention(ConventionModule):
 
         # Find partner's bids in the auction
         my_index = features.get('my_index', 0)
+        positions = features.get('positions', [])
         partner_index = seat_index(seat_from_index(my_index + 2))
+
+        # TEXAS TRANSFER OVERRIDE: 4NT after a completed Texas Transfer is
+        # ALWAYS RKCB, never quantitative. This is the key benefit of Texas.
+        if positions and is_texas_transfer_sequence(auction_history, positions, my_index):
+            return True
 
         partner_bids = [
             bid for i, bid in enumerate(auction_history)

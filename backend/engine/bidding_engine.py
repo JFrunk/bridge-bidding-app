@@ -6,6 +6,7 @@ from engine.ai.module_registry import ModuleRegistry
 from engine.ai.validation_pipeline import ValidationPipeline
 from engine.ai.sanity_checker import SanityChecker
 from engine.ai.bidding_state import BiddingStateBuilder
+from utils.seats import SEAT_NAMES
 
 # Import all specialist modules (triggers auto-registration)
 # ADR-0002 Phase 1: Modules now register themselves on import
@@ -29,6 +30,7 @@ from engine.ai.conventions.fourth_suit_forcing import FourthSuitForcingConventio
 from engine.ai.conventions.gerber import GerberConvention
 from engine.ai.conventions.minor_suit_bust import MinorSuitBustConvention
 from engine.ai.conventions.grand_slam_force import GrandSlamForceConvention
+from engine.ai.conventions.texas_transfers import TexasTransferConvention
 
 class BiddingEngine:
     """DEPRECATED: Use BiddingEngineV2Schema instead.
@@ -107,7 +109,7 @@ class BiddingEngine:
             # Dealer is determined by: auction_history[0] was made by dealer
             # Current bidder is at position len(auction_history) from dealer
             # So dealer = my_position - len(auction_history) % 4
-            base_positions = ['North', 'East', 'South', 'West']
+            base_positions = list(SEAT_NAMES.values())
             my_idx = base_positions.index(my_position)
             dealer_idx = (my_idx - len(auction_history)) % 4
             dealer = base_positions[dealer_idx]
@@ -259,7 +261,7 @@ class BiddingEngine:
         """
         # Infer dealer if not provided (for backward compatibility)
         if dealer is None:
-            base_positions = ['North', 'East', 'South', 'West']
+            base_positions = list(SEAT_NAMES.values())
             my_idx = base_positions.index(my_position)
             dealer_idx = (my_idx - len(auction_history)) % 4
             dealer = base_positions[dealer_idx]
@@ -348,7 +350,7 @@ class BiddingEngine:
         # Use BiddingState for game-forcing detection and combined strength
         try:
             from utils.seats import normalize, partnership_str
-            positions = features.get('positions', ['North', 'East', 'South', 'West'])
+            positions = features.get('positions', list(SEAT_NAMES.values()))
             my_index = features.get('my_index', 0)
 
             bidding_state = features.get('bidding_state')

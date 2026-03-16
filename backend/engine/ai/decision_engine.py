@@ -12,6 +12,7 @@ from engine.ai.conventions.michaels_cuebid import MichaelsCuebidConvention
 from engine.ai.conventions.unusual_2nt import Unusual2NTConvention
 from engine.ai.conventions.splinter_bids import SplinterBidsConvention
 from engine.ai.conventions.fourth_suit_forcing import FourthSuitForcingConvention
+from engine.ai.conventions.texas_transfers import TexasTransferConvention
 
 def select_bidding_module(features):
     """
@@ -140,6 +141,8 @@ def select_bidding_module(features):
         # Conventions like Stayman, Jacoby, and Minor suit bust handle their own
         # multi-round sequences and must be checked before generic responder rebids
         if auction['opening_bid'] in ['1NT', '2NT']:
+            texas = TexasTransferConvention()
+            if texas.evaluate(features['hand'], features): return 'texas_transfers'
             jacoby = JacobyConvention()
             if jacoby.evaluate(features['hand'], features): return 'jacoby'
             stayman = StaymanConvention()
@@ -206,6 +209,9 @@ def select_bidding_module(features):
 
         # Check for other 1NT/2NT convention completions (after Gerber check)
         if auction['opening_bid'] in ['1NT', '2NT', '3NT']:
+            # Texas Transfer completion (opener must complete 4♦→4♥, 4♥→4♠)
+            texas = TexasTransferConvention()
+            if texas.evaluate(features['hand'], features): return 'texas_transfers'
             # Check Minor suit bust (opener responding to 2♠)
             minor_bust = MinorSuitBustConvention()
             if minor_bust.evaluate(features['hand'], features): return 'minor_suit_bust'
