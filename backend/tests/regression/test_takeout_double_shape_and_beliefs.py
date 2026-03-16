@@ -172,3 +172,73 @@ class TestPartnerOpenedPreemptFeature:
             my_position='West', dealer='East', vulnerability='NS'
         )
         assert features['partner_opened_preempt'] is False
+
+
+class TestBidLevelComputation:
+    """bid_level must correctly compute the minimum overcall level for our best suit."""
+
+    def test_bid_level_clubs_over_2d_is_3(self):
+        """♣ ranks below ♦, so over 2♦ our minimum club bid is 3♣ → bid_level=3."""
+        from engine.v2.features.enhanced_extractor import extract_flat_features
+        hand = _make_hand('92', 'K532', 'K', 'KJ8732')
+        features = extract_flat_features(
+            hand=hand, auction_history=['2♦'],
+            my_position='South', dealer='East', vulnerability='NS'
+        )
+        assert features['bid_level'] == 3, (
+            f"bid_level should be 3 for clubs over 2♦, got {features['bid_level']}"
+        )
+
+    def test_bid_level_spades_over_2d_is_2(self):
+        """♠ ranks above ♦, so over 2♦ we can bid 2♠ → bid_level=2."""
+        from engine.v2.features.enhanced_extractor import extract_flat_features
+        hand = _make_hand('KQJ95', 'K7', '83', 'Q642')
+        features = extract_flat_features(
+            hand=hand, auction_history=['2♦'],
+            my_position='South', dealer='East', vulnerability='NS'
+        )
+        assert features['bid_level'] == 2, (
+            f"bid_level should be 2 for spades over 2♦, got {features['bid_level']}"
+        )
+
+    def test_bid_level_spades_over_1d_is_1(self):
+        """♠ ranks above ♦, so over 1♦ we can bid 1♠ → bid_level=1."""
+        from engine.v2.features.enhanced_extractor import extract_flat_features
+        hand = _make_hand('KQJ95', 'K7', '83', 'Q642')
+        features = extract_flat_features(
+            hand=hand, auction_history=['1♦'],
+            my_position='South', dealer='East', vulnerability='NS'
+        )
+        assert features['bid_level'] == 1, (
+            f"bid_level should be 1 for spades over 1♦, got {features['bid_level']}"
+        )
+
+    def test_bid_level_clubs_over_1d_is_2(self):
+        """♣ ranks below ♦, so over 1♦ our minimum club bid is 2♣ → bid_level=2."""
+        from engine.v2.features.enhanced_extractor import extract_flat_features
+        hand = _make_hand('92', 'K53', 'K2', 'KJ8732')
+        features = extract_flat_features(
+            hand=hand, auction_history=['1♦'],
+            my_position='South', dealer='East', vulnerability='NS'
+        )
+        assert features['bid_level'] == 2, (
+            f"bid_level should be 2 for clubs over 1♦, got {features['bid_level']}"
+        )
+
+
+class TestThreeLevelOvercall:
+    """Engine should bid 3♣ over 2♦ with the original problem hand."""
+
+    def test_3c_over_2d_with_good_clubs(self):
+        """♠92 ♥K532 ♦K ♣KJ8732 (10 HCP) over 2♦ should bid 3♣, not double or pass."""
+        from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
+        engine = BiddingEngineV2Schema()
+        hand = _make_hand('92', 'K532', 'K', 'KJ8732')
+        result = engine.get_next_bid(
+            hand, ['2♦'], 'South',
+            vulnerability='NS', dealer='East'
+        )
+        bid = result[0] if isinstance(result, tuple) else result
+        assert bid == '3♣', (
+            f"Should bid 3♣ over 2♦ with 10 HCP and 6 clubs, got {bid}"
+        )

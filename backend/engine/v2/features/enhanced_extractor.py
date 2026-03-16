@@ -425,13 +425,16 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     if best_overcall_suit and opponent_suit:
         flat['bid_higher_than_opening'] = suit_ranking.get(best_overcall_suit, 0) > suit_ranking.get(opponent_suit, 0)
 
-    # Minimum bid level needed (1 if we can bid higher at same level, 2 otherwise)
-    if opening_bid and opening_bid.startswith('1') and flat['bid_higher_than_opening']:
-        flat['bid_level'] = 1
-    elif opening_bid and opening_bid.startswith('1'):
-        flat['bid_level'] = 2
+    # Minimum bid level needed for our best suit overcall
+    # If our suit outranks opponent's: same level. Otherwise: next level up.
+    if opening_bid and opening_bid[0].isdigit():
+        opening_level = int(opening_bid[0])
+        if flat['bid_higher_than_opening']:
+            flat['bid_level'] = opening_level
+        else:
+            flat['bid_level'] = opening_level + 1
     else:
-        flat['bid_level'] = 2  # Default to 2-level for non-1-level openings
+        flat['bid_level'] = 1  # No opening bid parsed
 
     # Support for partner's suit
     if flat['partner_last_bid']:

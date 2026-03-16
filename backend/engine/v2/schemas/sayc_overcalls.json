@@ -90,6 +90,43 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "simple_overcall_3_level",
+      "bid": "3{suit}",
+      "priority": 670,
+      "description": "Simple 3-level overcall when suit rank forces 3-level (e.g., 3♣ over 2♦)",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": false,
+        "my_bid_count": {"max": 0},
+        "bid_level": {"min": 3},
+        "hcp": {"min": 10, "max": 16},
+        "suit_length": {"min": 6},
+        "suit_quality": {"min": "good"}
+      },
+      "forcing": "none",
+      "suit_selection": "best_6_card_suit",
+      "explanation": "3-level overcall (10-16 HCP, good 6+ card suit)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "weak_jump_overcall_3_level",
+      "bid": "3{suit}",
+      "priority": 660,
+      "description": "Weak jump overcall to 3-level (e.g., 3♠ over 1♥)",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": false,
+        "my_bid_count": {"max": 0},
+        "bid_level": {"max": 2},
+        "hcp": {"min": 6, "max": 10},
+        "suit_length": {"min": 7}
+      },
+      "forcing": "none",
+      "suit_selection": "best_7_card_suit",
+      "explanation": "Weak jump overcall (6-10 HCP, 7+ card suit)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
       "id": "1nt_overcall_balancing",
       "bid": "1NT",
       "priority": 94,
@@ -332,9 +369,10 @@
       "id": "weak_jump_overcall",
       "bid": "2{suit}",
       "priority": 90,
-      "description": "Weak jump overcall",
+      "description": "Weak jump overcall at 2-level (bid_level=1 means this is a jump)",
       "conditions": {
         "is_overcall": true,
+        "is_balancing": false,
         "opening_bid": {
           "in": [
             "1\u2663",
@@ -342,6 +380,7 @@
             "1\u2665"
           ]
         },
+        "bid_level": {"max": 1},
         "hcp": {
           "min": 6,
           "max": 10
@@ -351,8 +390,7 @@
         },
         "suit_quality": {
           "min": "fair"
-        },
-        "is_jump": true
+        }
       },
       "forcing": "none",
       "explanation": "Weak jump overcall (6-10 HCP, 6+ card suit)",
