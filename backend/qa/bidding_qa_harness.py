@@ -323,8 +323,8 @@ class BiddingQAHarness:
 
         self.engine.new_deal()
 
-        dealer_idx = SEAT_ORDER.index(record.dealer)
-        rotation = [SEAT_ORDER[(dealer_idx + i) % 4] for i in range(4)]
+        dealer_idx = seat_index(record.dealer)
+        rotation = [SEAT_NAMES[seat_from_index(dealer_idx + i)] for i in range(4)]
         auction_so_far = []
         consecutive_passes = 0
 

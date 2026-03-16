@@ -17,8 +17,8 @@ from engine.hand import Hand
 from utils.seats import SEATS, SEAT_NAMES
 
 # Direction constants from shared utility
-DIRECTIONS = SEATS  # ['N', 'E', 'S', 'W']
-DIRECTION_FULL = SEAT_NAMES  # {'N': 'North', 'E': 'East', ...}
+DIRECTIONS = SEATS
+DIRECTION_FULL = SEAT_NAMES
 
 # PBN bid notation → MBB bid notation
 BID_TRANSLATION = {
