@@ -460,13 +460,7 @@ class BiddingQAHarness:
         """
         Categorize discrepancies by type for targeted debugging.
 
-        Returns dict with categories:
-        - opening_disagreements: Different opening bids
-        - response_disagreements: Different responses to same opening
-        - competitive_disagreements: Overcall/double differences
-        - level_only: Same denomination, different level
-        - suit_only: Same level, different suit
-        - pass_vs_bid: One passes, other bids
+        Returns dict with counts for each category.
         """
         categories = {
             'opening_disagreements': [],
@@ -483,17 +477,13 @@ class BiddingQAHarness:
                 mbb = d.mbb_bid
                 ref = d.reference_bid
 
-                # Pass vs bid
                 if (mbb == 'Pass') != (ref == 'Pass'):
                     categories['pass_vs_bid'].append(d)
-                # Opening disagreement
                 elif d.bid_index < 4 and not d.auction_so_far:
                     categories['opening_disagreements'].append(d)
-                # Level-only difference (same suit)
                 elif (len(mbb) >= 2 and len(ref) >= 2 and
                       mbb[1:] == ref[1:] and mbb[0] != ref[0]):
                     categories['level_only'].append(d)
-                # Suit-only difference (same level)
                 elif (len(mbb) >= 2 and len(ref) >= 2 and
                       mbb[0] == ref[0] and mbb[1:] != ref[1:]):
                     categories['suit_only'].append(d)
@@ -501,3 +491,117 @@ class BiddingQAHarness:
                     categories['other'].append(d)
 
         return {k: len(v) for k, v in categories.items()}
+
+    def analyze_by_phase(self, result: HarnessResult) -> Dict:
+        """
+        Categorize discrepancies by bidding phase to prioritize logic fixes.
+
+        Phases:
+        - opening: First non-pass bid by any player
+        - response: Partner's first bid after opener
+        - opener_rebid: Opener's second bid
+        - responder_rebid: Responder's second bid
+        - competition: Bids after opponent interference
+        - slam_investigation: Bids at 4+ level in uncontested auctions
+
+        Returns dict with phase → list of BidComparison objects.
+        """
+        phases = {
+            'opening': [],
+            'response': [],
+            'opener_rebid': [],
+            'responder_rebid': [],
+            'competition': [],
+            'slam_investigation': [],
+        }
+
+        for board in result.board_results:
+            dealer_idx = seat_index(board.dealer)
+            rotation = [SEAT_NAMES[seat_from_index(dealer_idx + i)] for i in range(4)]
+
+            for d in board.discrepancies:
+                phase = self._classify_phase(d, rotation)
+                phases[phase].append(d)
+
+        return phases
+
+    @staticmethod
+    def _classify_phase(d: BidComparison, rotation: List[str]) -> str:
+        """Classify a single discrepancy into a bidding phase."""
+        auction = d.auction_so_far
+        seat = d.seat
+
+        # Find who opened (first non-pass)
+        opener_seat = None
+        opener_idx = -1
+        for i, bid in enumerate(auction):
+            if bid not in ('Pass', 'X', 'XX'):
+                opener_seat = rotation[i % 4]
+                opener_idx = i
+                break
+
+        # No opener yet → this is an opening bid
+        if opener_seat is None:
+            return 'opening'
+
+        # Determine partnership roles
+        partner_of_opener = rotation[(rotation.index(opener_seat) + 2) % 4]
+
+        # Check for opponent interference (competition)
+        has_interference = False
+        for i, bid in enumerate(auction):
+            bidder = rotation[i % 4]
+            if bid not in ('Pass', 'X', 'XX') and bidder not in (opener_seat, partner_of_opener):
+                has_interference = True
+                break
+
+        # Slam investigation: bid level 4+ in uncontested auction
+        mbb_level = int(d.mbb_bid[0]) if d.mbb_bid[0].isdigit() else 0
+        ref_level = int(d.reference_bid[0]) if d.reference_bid[0].isdigit() else 0
+        if max(mbb_level, ref_level) >= 4 and not has_interference:
+            return 'slam_investigation'
+
+        if has_interference:
+            return 'competition'
+
+        # Count bids by this seat before this point
+        my_prior_bids = sum(
+            1 for i, bid in enumerate(auction)
+            if rotation[i % 4] == seat and bid not in ('Pass', 'X', 'XX')
+        )
+
+        if seat == opener_seat:
+            return 'opener_rebid' if my_prior_bids >= 1 else 'opening'
+        elif seat == partner_of_opener:
+            return 'responder_rebid' if my_prior_bids >= 1 else 'response'
+
+        # Opponent of opener making a bid
+        return 'competition'
+
+    def print_phase_analysis(self, result: HarnessResult):
+        """Print discrepancies grouped by bidding phase."""
+        phases = self.analyze_by_phase(result)
+        total = sum(len(v) for v in phases.values())
+
+        if total == 0:
+            print("\n  No discrepancies to analyze by phase.")
+            return
+
+        print(f"\n  Discrepancies by Bidding Phase ({total} total):")
+        print(f"  {'-'*56}")
+        for phase, items in sorted(phases.items(), key=lambda x: -len(x[1])):
+            if not items:
+                continue
+            pct = len(items) / total * 100
+            print(f"  {phase:<22} {len(items):>4} ({pct:>5.1f}%)")
+
+            # Show top 3 examples per phase
+            for d in items[:3]:
+                auction_str = ' '.join(d.auction_so_far[-4:]) if d.auction_so_far else '(none)'
+                print(
+                    f"    Board {d.board:>3} {d.seat:>5}: "
+                    f"MBB={d.mbb_bid:<6} Ref={d.reference_bid:<6} "
+                    f"after [{auction_str}]"
+                )
+            if len(items) > 3:
+                print(f"    ... +{len(items)-3} more")

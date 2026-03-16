@@ -22,12 +22,15 @@ import json
 import os
 import sys
 import tempfile
+from typing import Dict
 
 # Ensure backend is on path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from qa.pbn_generator import PBNTestGenerator
-from qa.bidding_qa_harness import BiddingQAHarness
+from qa.bidding_qa_harness import (
+    BiddingQAHarness, HarnessResult, BoardResult, BidComparison,
+)
 
 
 def cmd_generate(args):
@@ -82,7 +85,45 @@ def cmd_test(args):
             if count > 0:
                 print(f"  {cat}: {count}")
 
+        harness.print_phase_analysis(result)
+
     return 0
+
+
+def _reconstruct_result(data: Dict) -> HarnessResult:
+    """Reconstruct a HarnessResult from saved JSON for re-analysis."""
+    summary = data.get('summary', {})
+    result = HarnessResult(
+        total_boards=summary.get('total_boards', 0),
+        boards_with_hands=summary.get('boards_with_hands', 0),
+        boards_with_auctions=summary.get('boards_with_auctions', 0),
+        total_bids_compared=summary.get('total_bids_compared', 0),
+        total_matches=summary.get('total_matches', 0),
+        duration_seconds=summary.get('duration_seconds', 0.0),
+    )
+    for b in data.get('boards', []):
+        board = BoardResult(
+            board=b['board'],
+            dealer=b['dealer'],
+            vulnerability=b['vulnerability'],
+            total_bids_compared=b.get('total_bids_compared', 0),
+            matches=b.get('matches', 0),
+            error=b.get('error'),
+        )
+        for d in b.get('discrepancies', []):
+            board.discrepancies.append(BidComparison(
+                board=d['board'],
+                seat=d['seat'],
+                bid_index=d['bid_index'],
+                auction_so_far=d.get('auction_so_far', []),
+                mbb_bid=d['mbb_bid'],
+                reference_bid=d['reference_bid'],
+                match=d.get('match', False),
+                mbb_explanation=d.get('mbb_explanation', ''),
+                hand_pbn=d.get('hand_pbn', ''),
+            ))
+        result.board_results.append(board)
+    return result
 
 
 def cmd_analyze(args):
@@ -113,6 +154,12 @@ def cmd_analyze(args):
             break
         print(f"    Board {board['board']:>3}: {disc_count} discrepancies "
               f"(accuracy: {board.get('accuracy', 0)*100:.0f}%)")
+
+    # Phase analysis from reconstructed result
+    result = _reconstruct_result(data)
+    if result.discrepancy_count > 0:
+        harness = BiddingQAHarness()
+        harness.print_phase_analysis(result)
 
     return 0
 
@@ -155,6 +202,8 @@ def cmd_full(args):
         for cat, count_val in sorted(categories.items(), key=lambda x: -x[1]):
             if count_val > 0:
                 print(f"  {cat}: {count_val}")
+
+        harness.print_phase_analysis(result)
 
     # Cleanup temp PBN
     try:
