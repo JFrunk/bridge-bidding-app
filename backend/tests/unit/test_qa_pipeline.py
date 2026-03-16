@@ -321,6 +321,77 @@ class TestPBNGenerator:
 # QA Harness Tests
 # =============================================================================
 
+class TestGroundTruthSuite:
+    """Integration tests for the ground truth PBN suite."""
+
+    GROUND_TRUTH_DIR = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        'data', 'ground_truth',
+    )
+
+    def test_all_tier_files_exist(self):
+        """All tier PBN files must exist."""
+        expected = ['tier_1_core.pbn', 'tier_2_specialized.pbn',
+                    'tier_3_boundary.pbn', 'tier_4_advanced.pbn']
+        for name in expected:
+            path = os.path.join(self.GROUND_TRUTH_DIR, name)
+            assert os.path.exists(path), f"Missing ground truth file: {name}"
+
+    def test_all_boards_parse_with_valid_hands(self):
+        """Every board in every tier file must parse with 4 hands of 13 cards each."""
+        from collections import Counter
+        total_boards = 0
+        for name in os.listdir(self.GROUND_TRUTH_DIR):
+            if not name.endswith('.pbn'):
+                continue
+            path = os.path.join(self.GROUND_TRUTH_DIR, name)
+            records = parse_pbn_file(path)
+            for r in records:
+                total_boards += 1
+                assert r.hands, f"Board {r.board} ({name}): no hands parsed"
+                assert len(r.hands) == 4, f"Board {r.board} ({name}): {len(r.hands)} hands"
+                all_cards = []
+                for seat, hand in r.hands.items():
+                    assert len(hand.cards) == 13, (
+                        f"Board {r.board} ({name}): {seat} has {len(hand.cards)} cards"
+                    )
+                    all_cards.extend((c.suit, c.rank) for c in hand.cards)
+                assert len(set(all_cards)) == 52, (
+                    f"Board {r.board} ({name}): {len(set(all_cards))} unique cards"
+                )
+        assert total_boards >= 30, f"Expected 30+ boards, got {total_boards}"
+
+    def test_all_boards_have_auctions(self):
+        """Every ground truth board must have a non-empty auction."""
+        for name in os.listdir(self.GROUND_TRUTH_DIR):
+            if not name.endswith('.pbn'):
+                continue
+            path = os.path.join(self.GROUND_TRUTH_DIR, name)
+            records = parse_pbn_file(path)
+            for r in records:
+                assert r.auction, f"Board {r.board} ({name}): no auction"
+                assert len(r.auction) >= 4, (
+                    f"Board {r.board} ({name}): auction too short ({len(r.auction)} bids)"
+                )
+
+    def test_harness_runs_against_ground_truth(self):
+        """The QA harness must complete without errors on all ground truth files."""
+        harness = BiddingQAHarness()
+        tier_results = harness.run_directory(self.GROUND_TRUTH_DIR)
+        assert len(tier_results) >= 4, f"Expected 4+ tier files, got {len(tier_results)}"
+        for filename, result in tier_results.items():
+            assert result.total_boards > 0, f"{filename}: no boards processed"
+            assert result.total_bids_compared > 0, f"{filename}: no bids compared"
+
+    def test_tier_report_produces_accuracy(self):
+        """print_tier_report must return a numeric overall accuracy."""
+        harness = BiddingQAHarness()
+        tier_results = harness.run_directory(self.GROUND_TRUTH_DIR)
+        accuracy = harness.print_tier_report(tier_results)
+        assert isinstance(accuracy, (int, float))
+        assert 0 <= accuracy <= 100
+
+
 class TestBidEquivalence:
     """Test bid comparison logic."""
 

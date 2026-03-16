@@ -19,6 +19,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field, asdict
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from engine.hand import Hand
@@ -605,3 +606,131 @@ class BiddingQAHarness:
                 )
             if len(items) > 3:
                 print(f"    ... +{len(items)-3} more")
+
+    def run_directory(
+        self,
+        dir_path: str,
+        seats: List[str] = None,
+        max_boards: int = None,
+        include_features: bool = False,
+        event_filter: str = None,
+    ) -> Dict[str, HarnessResult]:
+        """
+        Run differential testing on all PBN files in a directory.
+
+        Args:
+            dir_path: Directory containing PBN ground-truth files.
+            seats: Which seats to test (default: all four).
+            max_boards: Max boards per file.
+            include_features: Include feature vectors in output.
+            event_filter: Only test boards whose [Event] contains this string.
+
+        Returns:
+            Dict mapping filename → HarnessResult for per-tier reporting.
+        """
+        results = {}
+        pbn_dir = Path(dir_path)
+
+        if not pbn_dir.is_dir():
+            logger.error(f"Not a directory: {dir_path}")
+            return results
+
+        for pbn_file in sorted(pbn_dir.glob('*.pbn')):
+            file_result = self.run_pbn_file(
+                str(pbn_file),
+                seats=seats,
+                max_boards=max_boards,
+                include_features=include_features,
+            )
+
+            # Apply event filter post-hoc if specified
+            if event_filter:
+                filtered_boards = []
+                for br in file_result.board_results:
+                    # Check if any board's event matches the filter
+                    # We need to look up the event from the PBN records
+                    filtered_boards.append(br)
+                # Re-read for event filtering
+                records = parse_pbn_file(str(pbn_file))
+                event_map = {r.board: r.event for r in records}
+                filtered_boards = [
+                    br for br in file_result.board_results
+                    if event_filter.lower() in event_map.get(br.board, '').lower()
+                ]
+                # Recalculate totals for filtered set
+                file_result.board_results = filtered_boards
+                file_result.total_bids_compared = sum(
+                    b.total_bids_compared for b in filtered_boards
+                )
+                file_result.total_matches = sum(
+                    b.matches for b in filtered_boards
+                )
+
+            results[pbn_file.name] = file_result
+
+        return results
+
+    def print_tier_report(self, tier_results: Dict[str, HarnessResult]):
+        """
+        Print a per-tier summary report with delta analysis.
+
+        Args:
+            tier_results: Dict from run_directory() mapping filename → result.
+        """
+        print(f"\n{'='*70}")
+        print(f"  Ground Truth QA Suite — Tier Report")
+        print(f"{'='*70}")
+
+        total_compared = 0
+        total_matches = 0
+        total_boards = 0
+        total_duration = 0.0
+
+        for filename, result in sorted(tier_results.items()):
+            tier_name = filename.replace('.pbn', '').replace('_', ' ').title()
+            boards = len(result.board_results)
+            compared = result.total_bids_compared
+            matches = result.total_matches
+            accuracy = result.overall_accuracy * 100 if compared > 0 else 0.0
+            disc = result.discrepancy_count
+
+            total_compared += compared
+            total_matches += matches
+            total_boards += boards
+            total_duration += result.duration_seconds
+
+            status = "PASS" if accuracy == 100.0 else "FAIL" if accuracy < 80.0 else "WARN"
+            print(
+                f"  [{status:>4}] {tier_name:<35} "
+                f"Boards: {boards:>3}  "
+                f"Bids: {compared:>4}  "
+                f"Accuracy: {accuracy:>5.1f}%  "
+                f"Disc: {disc}"
+            )
+
+            # Show discrepancies for this tier
+            if disc > 0:
+                for br in result.board_results:
+                    for d in br.discrepancies[:3]:
+                        auction_str = ' '.join(d.auction_so_far[-3:]) if d.auction_so_far else '(open)'
+                        print(
+                            f"         Board {d.board:>2} {d.seat:>5}: "
+                            f"MBB={d.mbb_bid:<6} Ref={d.reference_bid:<6} "
+                            f"[{auction_str}]"
+                        )
+
+        # Overall summary
+        overall_accuracy = (total_matches / total_compared * 100) if total_compared > 0 else 0.0
+        print(f"  {'-'*66}")
+        overall_status = "PASS" if overall_accuracy == 100.0 else "FAIL" if overall_accuracy < 80.0 else "WARN"
+        print(
+            f"  [{overall_status:>4}] {'OVERALL':<35} "
+            f"Boards: {total_boards:>3}  "
+            f"Bids: {total_compared:>4}  "
+            f"Accuracy: {overall_accuracy:>5.1f}%  "
+            f"Disc: {total_compared - total_matches}"
+        )
+        print(f"  Duration: {total_duration:.1f}s")
+        print(f"{'='*70}")
+
+        return overall_accuracy

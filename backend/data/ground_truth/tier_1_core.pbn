@@ -1,0 +1,57 @@
+% TIER 1: CORE (ACBL STANDARD)
+% Ground truth for fundamental opening bids and basic responses.
+
+[Event "Tier 1: 1NT Opening"]
+[Board "1"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:AT43.KJ5.AQ2.JT9 Q9.A842.T87.K864 K762.Q76.KJ4.Q72 J85.T93.9653.A53"]
+[Auction "N"]
+1NT Pass 3NT Pass
+Pass Pass
+
+[Event "Tier 1: 5-Card Major"]
+[Board "2"]
+[Dealer "S"]
+[Vulnerable "NS"]
+[Deal "S:AKJ75.4.T87.QJ83 9.AKQJ5.9642.T65 QT843.87.AKJ.A92 62.T9632.Q53.K74"]
+[Auction "S"]
+1S Pass 4S Pass
+Pass Pass
+
+[Event "Tier 1: Stayman"]
+[Board "17"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:K76.AKT7.AQJ5.97 J9832.43.KT32.Q4 AQ.Q862.9874.AJ3 T54.J95.6.KT8652"]
+[Auction "N"]
+1NT Pass 2C Pass
+2H Pass 4H Pass
+Pass Pass
+% N: 16 HCP, 3-4-4-2 balanced → 1NT.
+% S: 13 HCP, 4 hearts → 2C Stayman.
+% N: 4 hearts → 2H. S: Game values with fit → 4H.
+
+[Event "Tier 1: Jacoby Transfer"]
+[Board "18"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:AQ.K52.AQJ2.KT93 K742.QT843.87.64 J85.A9.9653.A852 T963.J76.KT4.QJ7"]
+[Auction "N"]
+1NT Pass 2D Pass
+2H Pass 3NT Pass
+Pass Pass
+% N: 17 HCP, 2-3-4-4 balanced → 1NT.
+% S: 10 HCP, only 2 hearts → 2D transfer then 3NT (offering choice).
+
+[Event "Tier 1: Limit Raise"]
+[Board "19"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:AT542.9843.AJ.K5 K963.AJT2.T3.T83 Q87.5.KQ952.A642 J.KQ76.8764.QJ97"]
+[Auction "N"]
+1S Pass 3S Pass
+4S Pass Pass Pass
+% N: 12 HCP, 5 spades → 1S.
+% S: 12 HCP, 3-card spade support → 3S (limit raise, invitational).
+% N: Accepts → 4S.

@@ -262,6 +262,46 @@ class BBAOracle(OracleBase):
         return []
 
 
+class PBNInternalOracle(OracleBase):
+    """
+    Oracle that extracts ground truth directly from PBN [Auction] tags.
+
+    Instead of calling an external engine, this oracle looks up the next
+    expected bid from the PBN record's recorded auction based on the
+    current auction history length. This is the zero-dependency path
+    for verifying MBB against curated SAYC reference auctions.
+
+    Usage:
+        oracle = PBNInternalOracle()
+        oracle.set_record(pbn_record)
+        next_bid = oracle.get_bid(hand, history, position, vul, dealer)
+    """
+
+    def __init__(self):
+        self.current_record = None
+
+    def set_record(self, record):
+        """Set the active PBN record to extract bids from."""
+        self.current_record = record
+
+    def get_bid(self, hand: Hand, auction_history: List[str],
+                position: str, vulnerability: str, dealer: str) -> Optional[str]:
+        """
+        Return the next ground-truth bid from the PBN auction record.
+
+        Matches by auction history length: if history has N bids,
+        the oracle returns bid at index N from the recorded auction.
+        """
+        if not self.current_record or not self.current_record.auction:
+            return None
+
+        current_index = len(auction_history)
+        if current_index < len(self.current_record.auction):
+            return self.current_record.auction[current_index]
+
+        return None
+
+
 class CSVOracle(OracleBase):
     """
     Pre-computed oracle from a CSV file of reference auctions.

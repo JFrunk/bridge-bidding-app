@@ -132,7 +132,7 @@ def parse_pbn_auction(auction_lines: List[str], dealer: str) -> List[str]:
         if done:
             break
         line = line.strip()
-        if not line or line.startswith(';'):
+        if not line or line.startswith(';') or line.startswith('%'):
             continue
 
         # Split by whitespace, handle inline comments and AP
@@ -276,8 +276,9 @@ def parse_pbn_file(filepath: str) -> List[PBNRecord]:
 
             # Non-tag line while in auction section
             if in_auction:
-                if line.strip() == '' or line.startswith('['):
-                    # End of auction block
+                stripped = line.strip()
+                if stripped == '' or line.startswith('[') or stripped.startswith('%'):
+                    # End of auction block (blank line, new tag, or file comment)
                     if current and auction_lines:
                         current.auction = parse_pbn_auction(auction_lines, auction_dealer)
                     in_auction = False

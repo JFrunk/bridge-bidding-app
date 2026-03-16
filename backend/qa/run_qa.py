@@ -7,8 +7,14 @@ Usage:
     python -m qa.run_qa generate --type balanced --count 100 --output /tmp/qa_balanced.pbn
     python -m qa.run_qa test --pbn /tmp/qa_balanced.pbn --seats South --output /tmp/qa_results.json
 
-    # Run against a PBN file with recorded auctions (vugraph data)
-    python -m qa.run_qa test --pbn vugraph_hands.pbn --output /tmp/vugraph_results.json
+    # Run ground truth suite against MBB (all tiers)
+    python -m qa.run_qa suite --data data/ground_truth/
+
+    # Run ground truth with quality gate threshold
+    python -m qa.run_qa suite --data data/ground_truth/ --fail-under 95.0
+
+    # Run only specific tier
+    python -m qa.run_qa suite --data data/ground_truth/ --filter "Tier 1"
 
     # Analyze discrepancies from a previous run
     python -m qa.run_qa analyze --results /tmp/qa_results.json
@@ -86,6 +92,53 @@ def cmd_test(args):
                 print(f"  {cat}: {count}")
 
         harness.print_phase_analysis(result)
+
+    return 0
+
+
+def cmd_suite(args):
+    """Run ground truth suite against MBB engine."""
+    if not os.path.isdir(args.data):
+        print(f"Directory not found: {args.data}")
+        return 1
+
+    harness = BiddingQAHarness()
+    seats = args.seats.split(',') if args.seats else None
+
+    tier_results = harness.run_directory(
+        dir_path=args.data,
+        seats=seats,
+        max_boards=args.max_boards,
+        include_features=args.features,
+        event_filter=args.filter,
+    )
+
+    if not tier_results:
+        print("No PBN files found in directory.")
+        return 1
+
+    overall_accuracy = harness.print_tier_report(tier_results)
+
+    # Save combined results if requested
+    if args.output:
+        combined = {
+            'tiers': {},
+            'overall_accuracy': round(overall_accuracy / 100, 4),
+        }
+        for filename, result in tier_results.items():
+            combined['tiers'][filename] = result.to_dict()
+        with open(args.output, 'w') as f:
+            json.dump(combined, f, indent=2, default=str)
+        print(f"\nDetailed results saved to: {args.output}")
+
+    # Quality gate check
+    if args.fail_under is not None:
+        threshold = args.fail_under
+        if overall_accuracy < threshold:
+            print(f"\nFAILED: Accuracy {overall_accuracy:.1f}% < threshold {threshold:.1f}%")
+            return 1
+        else:
+            print(f"\nPASSED: Accuracy {overall_accuracy:.1f}% >= threshold {threshold:.1f}%")
 
     return 0
 
@@ -237,6 +290,18 @@ def main():
                             help='Include feature vectors in output')
     test_parser.add_argument('--output', help='Output JSON file path')
 
+    # Suite command (ground truth directory)
+    suite_parser = subparsers.add_parser('suite', help='Run ground truth suite')
+    suite_parser.add_argument('--data', required=True,
+                             help='Directory containing ground truth PBN files')
+    suite_parser.add_argument('--seats', help='Comma-separated seats')
+    suite_parser.add_argument('--max-boards', type=int)
+    suite_parser.add_argument('--features', action='store_true')
+    suite_parser.add_argument('--filter', help='Only test boards with matching [Event] text')
+    suite_parser.add_argument('--fail-under', type=float,
+                             help='Fail if accuracy below this threshold (0-100)')
+    suite_parser.add_argument('--output', help='Output JSON file path')
+
     # Analyze command
     analyze_parser = subparsers.add_parser('analyze', help='Analyze previous results')
     analyze_parser.add_argument('--results', required=True, help='Results JSON file')
@@ -260,6 +325,7 @@ def main():
     commands = {
         'generate': cmd_generate,
         'test': cmd_test,
+        'suite': cmd_suite,
         'analyze': cmd_analyze,
         'full': cmd_full,
     }
