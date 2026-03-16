@@ -224,6 +224,12 @@ def select_bidding_module(features):
         gerber = GerberConvention()
         if gerber.evaluate(features['hand'], features):
             return 'gerber'
+
+        # Check for Fourth Suit Forcing response (partner bid 4th suit as artificial force)
+        fsf = FourthSuitForcingConvention()
+        if fsf.evaluate(features['hand'], features):
+            return 'fourth_suit_forcing'
+
         # Fallback to natural rebids
         # print(f"   → Routing to: openers_rebid")
         return 'openers_rebid'
