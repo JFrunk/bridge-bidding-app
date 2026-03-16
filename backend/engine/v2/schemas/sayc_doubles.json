@@ -247,12 +247,11 @@
     {
       "id": "negative_double_1_level",
       "bid": "X",
-      "priority": 800,
-      "description": "Negative double at 1-level - shows 4+ cards in unbid major",
+      "priority": 820,
+      "description": "Negative double at 1-level - shows 6+ HCP and 4+ cards in unbid major",
       "conditions": {
-        "is_response": true,
+        "is_contested": true,
         "opener_relationship": "Partner",
-        "interference_present": true,
         "interference_level": 1,
         "hcp": {
           "min": 6
@@ -260,18 +259,17 @@
         "has_unbid_major_4": true
       },
       "forcing": "one_round",
-      "explanation": "Negative double showing 4+ cards in unbid major(s)",
+      "explanation": "Negative Double. Shows 6+ HCP and length in the unbid major(s).",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "negative_double_2_level",
       "bid": "X",
-      "priority": 800,
-      "description": "Negative double at 2-level",
+      "priority": 825,
+      "description": "Negative double at 2-level - shows 8+ HCP and 4+ cards in unbid major",
       "conditions": {
-        "is_response": true,
+        "is_contested": true,
         "opener_relationship": "Partner",
-        "interference_present": true,
         "interference_level": 2,
         "hcp": {
           "min": 8
@@ -279,18 +277,17 @@
         "has_unbid_major_4": true
       },
       "forcing": "one_round",
-      "explanation": "Negative double at 2-level (8+ HCP, unbid major)",
+      "explanation": "Negative Double at the 2-level. Shows 8+ HCP and at least one 4-card major.",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "negative_double_3_level",
       "bid": "X",
-      "priority": 800,
-      "description": "Negative double at 3-level",
+      "priority": 830,
+      "description": "Negative double at 3-level - shows 10+ HCP and 4+ cards in unbid major",
       "conditions": {
-        "is_response": true,
+        "is_contested": true,
         "opener_relationship": "Partner",
-        "interference_present": true,
         "interference_level": 3,
         "hcp": {
           "min": 10
@@ -298,7 +295,7 @@
         "has_unbid_major_4": true
       },
       "forcing": "one_round",
-      "explanation": "Negative double at 3-level (10+ HCP, unbid major)",
+      "explanation": "Negative Double at the 3-level. Shows 10+ HCP and at least one 4-card major.",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
