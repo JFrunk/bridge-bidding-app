@@ -315,6 +315,48 @@ class TestInterferenceLevelComputation:
         assert features['interference_level'] == 0
 
 
+class TestNegativeDoubleStress:
+    """Verify negative double HCP floor and interference_level interaction.
+
+    Auction: 1♦ - (2♣) - ?
+    interference_level = 2 → negative_double_2_level requires 8+ HCP (HARD)
+
+    Hand A: ♠K864 ♥Q742 ♦95 ♣J6 (7 HCP) → PASS (fails 8 HCP floor)
+    Hand B: ♠AK86 ♥Q742 ♦95 ♣J6 (11 HCP) → X (negative double)
+    """
+
+    def test_hand_a_7hcp_should_pass(self):
+        """7 HCP with 4-4 majors after 1♦-(2♣): must PASS (below 8 HCP hard floor)."""
+        from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
+        engine = BiddingEngineV2Schema()
+        # ♠K864 ♥Q742 ♦953 ♣J6 = 7 HCP, 4-4-3-2 shape
+        hand = _make_hand('K864', 'Q742', '953', 'J6')
+        # Auction: North opens 1♦, East overcalls 2♣, South (us) to bid
+        result = engine.get_next_bid(
+            hand, ['1♦', '2♣'], 'South',
+            vulnerability='None', dealer='North'
+        )
+        bid = result[0] if isinstance(result, tuple) else result
+        assert bid == 'Pass', (
+            f"7 HCP should PASS after 1♦-(2♣), got {bid}"
+        )
+
+    def test_hand_b_11hcp_should_double(self):
+        """11 HCP with 4-4 majors after 1♦-(2♣): should make negative double."""
+        from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
+        engine = BiddingEngineV2Schema()
+        # ♠AK86 ♥Q742 ♦953 ♣J6 = 11 HCP, 4-4-3-2 shape (same distribution as Hand A)
+        hand = _make_hand('AK86', 'Q742', '953', 'J6')
+        result = engine.get_next_bid(
+            hand, ['1♦', '2♣'], 'South',
+            vulnerability='None', dealer='North'
+        )
+        bid = result[0] if isinstance(result, tuple) else result
+        assert bid == 'X', (
+            f"11 HCP with 4-4 majors should double after 1♦-(2♣), got {bid}"
+        )
+
+
 class TestThreeLevelOvercall:
     """Engine should bid 3♣ over 2♦ with the original problem hand."""
 

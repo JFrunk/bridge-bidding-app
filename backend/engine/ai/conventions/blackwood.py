@@ -1,11 +1,72 @@
 from engine.hand import Hand
 from engine.ai.conventions.base_convention import ConventionModule
 from engine.bidding_validation import BidValidator, get_next_legal_bid
-from typing import Optional, Tuple, Dict
+from utils.seats import seat_index, seat_from_index
+from typing import Optional, Tuple, Dict, List
+
+
+class SlamEvaluator:
+    """Three-gate decision tree for Grand Slam (7-level) bids."""
+
+    @staticmethod
+    def evaluate_grand_slam(hand: Hand, trump_suit: Optional[str],
+                            total_keycards: int, has_trump_queen: bool,
+                            estimated_combined_hcp: int) -> Tuple[bool, str]:
+        """
+        Decide whether to bid Grand Slam (7-level).
+
+        Returns (should_bid_grand, reason).
+        Three gates must ALL pass:
+          Gate 1: All 5 keycards + trump queen
+          Gate 2: No dry side suits (doubleton+ without A/K/Q)
+          Gate 3: trump quality score >= 9 OR combined trump length >= 10
+        """
+        # Gate 1: All keycards + queen
+        if total_keycards < 5 or not has_trump_queen:
+            missing = 5 - total_keycards
+            queen_str = "" if has_trump_queen else ", missing trump queen"
+            return (False, f"Gate 1 fail: missing {missing} keycard(s){queen_str}")
+
+        # Gate 2: No dry side suits
+        if trump_suit:
+            for suit in ['♠', '♥', '♦', '♣']:
+                if suit == trump_suit:
+                    continue
+                suit_cards = [c for c in hand.cards if c.suit == suit]
+                length = len(suit_cards)
+                if length >= 2:
+                    has_honor = any(c.rank in ('A', 'K', 'Q') for c in suit_cards)
+                    if not has_honor:
+                        return (False, f"Gate 2 fail: dry {suit} ({length} cards, no A/K/Q)")
+
+        # Gate 3: Trump quality
+        if trump_suit:
+            trump_cards = [c for c in hand.cards if c.suit == trump_suit]
+            trump_length = len(trump_cards)
+            # Trump quality score: A=4, K=3, Q=2, J=1 + length
+            honor_points = sum({'A': 4, 'K': 3, 'Q': 2, 'J': 1}.get(c.rank, 0) for c in trump_cards)
+            quality_score = honor_points + trump_length
+            # Estimate partner trump length from combined (assume 8-fit minimum)
+            combined_trump_length = trump_length + max(3, 8 - trump_length)
+            if quality_score < 9 and combined_trump_length < 10:
+                return (False, f"Gate 3 fail: trump quality {quality_score} < 9 and combined length ~{combined_trump_length} < 10")
+
+        return (True, "All 3 gates passed: full keycards, no dry suits, strong trumps")
+
 
 class BlackwoodConvention(ConventionModule):
     """
-    Playbook for Blackwood, including 4NT (aces) and 5NT (kings).
+    RKCB 1430 (Roman Key Card Blackwood).
+
+    Key cards: 4 Aces + King of agreed trump suit = 5 key cards.
+    Responses to 4NT:
+      5♣ = 1 or 4 key cards
+      5♦ = 0 or 3 key cards
+      5♥ = 2 key cards WITHOUT trump queen
+      5♠ = 2 key cards WITH trump queen
+
+    Queen Ask: Cheapest non-trump bid after 5♣/5♦ asks for trump queen.
+    King Ask (5NT): Specific king responses (bid suit of king held).
     """
     def get_constraints(self) -> Dict:
         """Defines requirements for a hand that might ask for aces."""
@@ -62,19 +123,31 @@ class BlackwoodConvention(ConventionModule):
 
     def _evaluate_blackwood(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
         """Internal method that calculates blackwood bid without validation."""
-        # Check for signoff after receiving ace response
+        auction_history = features.get('auction_history', [])
+
+        # Check for DOPI/ROPI: interference over partner's 4NT
+        dopi_result = self._check_dopi_ropi(hand, features, auction_history)
+        if dopi_result:
+            return dopi_result
+        # Check for answering queen ask
+        if self._is_queen_answering_applicable(features, auction_history):
+            trump_suit = self._find_trump_suit(features, auction_history)
+            return self._get_queen_answer_bid(hand, trump_suit)
+        # Check for signoff / queen ask initiation after receiving keycard response
         if self._is_signoff_applicable(features):
             return self._get_signoff_bid(hand, features)
-        # Check for answering Blackwood
+        # Check for answering Blackwood (RKCB 1430)
         if self._is_ace_answering_applicable(features):
-            return self._get_ace_answer_bid(hand)
+            trump_suit = self._find_trump_suit(features, auction_history)
+            return self._get_keycard_answer_bid(hand, trump_suit)
         # Check for king-asking (5NT)
         if self._is_king_asking_applicable(hand, features):
             return self._get_king_ask_bid()
-        # Check for answering king ask
+        # Check for answering king ask (specific kings)
         if self._is_king_answering_applicable(features):
-            return self._get_king_answer_bid(hand)
-        # Check for asking aces
+            trump_suit = self._find_trump_suit(features, auction_history)
+            return self._get_king_answer_bid(hand, trump_suit)
+        # Check for asking keycards (4NT)
         if self._is_ace_asking_applicable(hand, features):
             return self._get_ace_ask_bid()
         return None
@@ -213,8 +286,8 @@ class BlackwoodConvention(ConventionModule):
         return False
 
     def _get_ace_ask_bid(self) -> Tuple[str, str]:
-        """Returns the 4NT ace-asking bid."""
-        return ("4NT", "Blackwood convention, asking for aces.")
+        """Returns the 4NT RKCB keycard-asking bid."""
+        return ("4NT", "RKCB 1430, asking for key cards (aces + trump king).")
 
     def _is_ace_answering_applicable(self, features: Dict) -> bool:
         """
@@ -238,7 +311,7 @@ class BlackwoodConvention(ConventionModule):
 
         # Find partner's bids in the auction
         my_index = features.get('my_index', 0)
-        partner_index = (my_index + 2) % 4
+        partner_index = seat_index(seat_from_index(my_index + 2))
 
         partner_bids = [
             bid for i, bid in enumerate(auction_history)
@@ -282,23 +355,48 @@ class BlackwoodConvention(ConventionModule):
         # No suits shown by anyone and partner didn't open NT - unusual, default to Blackwood
         return True
 
-    def _get_ace_answer_bid(self, hand: Hand) -> Tuple[str, str, dict]:
-        """Counts aces and returns the correct conventional response."""
-        num_aces = sum(1 for card in hand.cards if card.rank == 'A')
-        # Metadata to bypass HCP and suit length validation for artificial Blackwood responses
-        # Blackwood responses are FORCED - you must respond regardless of HCP
+    @staticmethod
+    def count_key_cards(hand: Hand, trump_suit: Optional[str]) -> int:
+        """Count RKCB key cards: 4 aces + king of agreed trump suit."""
+        num_aces = sum(1 for c in hand.cards if c.rank == 'A')
+        trump_king = 0
+        if trump_suit:
+            trump_king = 1 if any(c.rank == 'K' and c.suit == trump_suit for c in hand.cards) else 0
+        return num_aces + trump_king
+
+    @staticmethod
+    def has_trump_queen(hand: Hand, trump_suit: Optional[str]) -> bool:
+        """Check if hand holds the queen of agreed trump suit."""
+        if not trump_suit:
+            return False
+        return any(c.rank == 'Q' and c.suit == trump_suit for c in hand.cards)
+
+    def _get_keycard_answer_bid(self, hand: Hand, trump_suit: Optional[str]) -> Tuple[str, str, dict]:
+        """RKCB 1430 response: count key cards (aces + trump king).
+
+        5♣ = 1 or 4 key cards
+        5♦ = 0 or 3 key cards
+        5♥ = 2 key cards WITHOUT trump queen
+        5♠ = 2 key cards WITH trump queen
+        """
+        keycards = self.count_key_cards(hand, trump_suit)
+        has_queen = self.has_trump_queen(hand, trump_suit)
         metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'blackwood_response'}
 
-        if num_aces == 0 or num_aces == 4:
-            return ("5♣", "Response to Blackwood: 0 or 4 aces.", metadata)
-        if num_aces == 1:
-            return ("5♦", "Response to Blackwood: 1 ace.", metadata)
-        if num_aces == 2:
-            return ("5♥", "Response to Blackwood: 2 aces.", metadata)
-        if num_aces == 3:
-            return ("5♠", "Response to Blackwood: 3 aces.", metadata)
-
-        return ("Pass", "Error: Could not count aces.", {}) # Should not be reached
+        if keycards in (1, 4):
+            return ("5♣", f"RKCB 1430: {keycards} key card(s).", metadata)
+        if keycards in (0, 3):
+            return ("5♦", f"RKCB 1430: {keycards} key card(s).", metadata)
+        if keycards == 2:
+            if has_queen:
+                return ("5♠", "RKCB 1430: 2 key cards WITH trump queen.", metadata)
+            else:
+                return ("5♥", "RKCB 1430: 2 key cards WITHOUT trump queen.", metadata)
+        # keycards == 5 (all aces + trump king)
+        if has_queen:
+            return ("5♠", "RKCB 1430: 2+ key cards WITH trump queen.", metadata)
+        else:
+            return ("5♥", "RKCB 1430: 2+ key cards WITHOUT trump queen.", metadata)
 
     def _is_signoff_applicable(self, features: Dict) -> bool:
         """Check if we asked Blackwood and partner responded."""
@@ -317,28 +415,66 @@ class BlackwoodConvention(ConventionModule):
         partner_last_bid = features['auction_features'].get('partner_last_bid', '')
         return partner_last_bid in ['5♣', '5♦', '5♥', '5♠']
 
+    def _decode_rkcb_response(self, partner_bid: str, my_keycards: int) -> Tuple[List[int], Optional[bool]]:
+        """Decode partner's RKCB 1430 response.
+
+        Returns (possible_keycard_counts, trump_queen_known).
+        trump_queen_known: True = has it, False = doesn't, None = ambiguous (need Queen Ask).
+        """
+        rkcb_responses = {
+            '5♣': ([1, 4], None),   # 1 or 4 keycards, queen unknown
+            '5♦': ([0, 3], None),   # 0 or 3 keycards, queen unknown
+            '5♥': ([2], False),     # 2 keycards WITHOUT queen
+            '5♠': ([2], True),      # 2 keycards WITH queen
+        }
+        return rkcb_responses.get(partner_bid, ([0], None))
+
+    def _resolve_keycard_count(self, possible_counts: List[int], my_keycards: int) -> int:
+        """Resolve ambiguous 1/4 or 0/3 response using our own keycard count."""
+        if len(possible_counts) == 1:
+            return possible_counts[0]
+        # For 1/4: if we have 3+ keycards, partner can't have 4 → partner has 1
+        # For 0/3: if we have 3+ keycards, partner can't have 3 → partner has 0
+        low, high = possible_counts
+        if my_keycards + high > 5:
+            return low
+        # Default to lower count for safety
+        return low
+
+    def _get_queen_ask_bid(self, trump_suit: Optional[str]) -> Optional[Tuple[str, str, dict]]:
+        """Return the Queen Ask bid: cheapest non-trump bid after 5♣/5♦ response."""
+        metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'blackwood_queen_ask'}
+        # Cheapest non-trump suit bid at 5-level
+        suit_order = ['♣', '♦', '♥', '♠']
+        for suit in suit_order:
+            if suit != trump_suit:
+                return (f"5{suit}", f"Queen Ask: do you have the {trump_suit} queen?", metadata)
+        # Fallback (shouldn't happen — at least one suit differs from trump)
+        return None
+
     def _get_signoff_bid(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str, dict]]:
-        """Signoff after receiving ace response."""
+        """Signoff after receiving RKCB keycard response.
+
+        May initiate Queen Ask if queen status unknown and slam is viable.
+        Uses SlamEvaluator for Grand Slam decisions.
+        """
         partner_last_bid = features['auction_features'].get('partner_last_bid', '')
         auction_history = features.get('auction_history', [])
-
-        # Decode partner's ace count
-        ace_responses = {'5♣': [0, 4], '5♦': [1], '5♥': [2], '5♠': [3]}
-        partner_aces = ace_responses.get(partner_last_bid, [0])
-
-        # Count our own aces
-        my_aces = sum(1 for card in hand.cards if card.rank == 'A')
-
-        # Determine trump suit from auction - look at most recently bid suit by either partner
-        # Priority: majors > minors, and most recently bid takes precedence
         trump_suit = self._find_trump_suit(features, auction_history)
-
-        # Metadata for Blackwood signoff bids - bypass HCP and suit length validation
-        # Slam bids after Blackwood are FORCED based on ace count, not HCP
         signoff_metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'blackwood_signoff'}
 
-        # Estimate combined HCP for grand slam decision (need 37+ for 7-level)
-        estimated_combined = hand.hcp + 16  # Conservative default for partner
+        # Count our key cards
+        my_keycards = self.count_key_cards(hand, trump_suit)
+        my_queen = self.has_trump_queen(hand, trump_suit)
+
+        # Decode partner's RKCB response
+        possible_counts, queen_known = self._decode_rkcb_response(partner_last_bid, my_keycards)
+        partner_keycards = self._resolve_keycard_count(possible_counts, my_keycards)
+        total_keycards = my_keycards + partner_keycards
+        missing_keycards = 5 - total_keycards
+
+        # Estimate combined HCP
+        estimated_combined = hand.hcp + 16
         bidding_state = features.get('bidding_state')
         if bidding_state is not None:
             try:
@@ -353,41 +489,190 @@ class BlackwoodConvention(ConventionModule):
             except Exception:
                 pass
 
-        def _decide_slam_level(total_aces, missing_aces):
-            """Decide slam bid based on aces and combined HCP."""
-            if missing_aces >= 2:
-                # Missing 2+ aces, sign off at 5-level
-                if trump_suit:
-                    return (f"5{trump_suit}", f"Signing off at 5-level, missing {missing_aces} aces.", signoff_metadata)
-                return ("5NT", "Signing off (no clear trump suit).", signoff_metadata)
-            elif missing_aces == 1:
-                # Missing 1 ace, bid small slam
-                if trump_suit:
-                    return (f"6{trump_suit}", f"Bidding small slam with {total_aces} aces.", signoff_metadata)
-                return ("6NT", "Bidding small slam in NT.", signoff_metadata)
-            else:
-                # All 4 aces present — grand slam needs ~37 combined HCP
-                # Use 36 threshold to account for estimation imprecision (±1 HCP)
-                if estimated_combined >= 36:
-                    if trump_suit:
-                        return (f"7{trump_suit}", f"Bidding grand slam with all 4 aces and ~{estimated_combined} combined HCP!", signoff_metadata)
-                    return ("7NT", "Bidding grand slam in NT with all 4 aces.", signoff_metadata)
-                else:
-                    # All aces but insufficient HCP for grand — settle for small slam
-                    if trump_suit:
-                        return (f"6{trump_suit}", f"Small slam with all aces but ~{estimated_combined} combined HCP (need 37+ for grand).", signoff_metadata)
-                    return ("6NT", f"Small slam in NT with all aces but ~{estimated_combined} combined HCP (need 37+ for grand).", signoff_metadata)
+        # Missing 2+ keycards → sign off at 5-level
+        if missing_keycards >= 2:
+            if trump_suit:
+                return (f"5{trump_suit}", f"Signing off: missing {missing_keycards} key cards.", signoff_metadata)
+            return ("5NT", "Signing off (no clear trump suit).", signoff_metadata)
 
-        # Decide slam level based on aces
-        if partner_aces[0] == 0 or (len(partner_aces) > 1 and partner_aces[1] == 4):
-            # Partner has 0 or 4 aces - assume 0 for safety
-            missing_aces = 4 - my_aces
-            return _decide_slam_level(my_aces, missing_aces)
+        # Missing 1 keycard → small slam
+        if missing_keycards == 1:
+            if trump_suit:
+                return (f"6{trump_suit}", f"Small slam with {total_keycards}/5 key cards.", signoff_metadata)
+            return ("6NT", "Small slam in NT.", signoff_metadata)
+
+        # All 5 keycards present — evaluate Grand Slam
+        # Determine queen status: from response (5♥/5♠) or our own hand
+        has_queen = queen_known if queen_known is not None else my_queen
+        if queen_known is None and not my_queen:
+            # Queen status unknown and we don't have it — initiate Queen Ask
+            # But only if we might want grand slam (need high combined)
+            if estimated_combined >= 33:
+                queen_ask = self._get_queen_ask_bid(trump_suit)
+                if queen_ask:
+                    return queen_ask
+            # Not enough for grand even with queen — settle for small slam
+            has_queen = False
+
+        # Use SlamEvaluator for grand slam decision
+        should_grand, reason = SlamEvaluator.evaluate_grand_slam(
+            hand, trump_suit, total_keycards, has_queen, estimated_combined)
+
+        if should_grand:
+            if trump_suit:
+                return (f"7{trump_suit}", f"Grand slam! {reason}", signoff_metadata)
+            return ("7NT", f"Grand slam in NT! {reason}", signoff_metadata)
         else:
-            # Partner has definite count
-            total_aces = my_aces + partner_aces[0]
-            missing_aces = 4 - total_aces
-            return _decide_slam_level(total_aces, missing_aces)
+            # Small slam
+            if trump_suit:
+                return (f"6{trump_suit}", f"Small slam ({reason}).", signoff_metadata)
+            return ("6NT", f"Small slam in NT ({reason}).", signoff_metadata)
+
+    def _is_queen_answering_applicable(self, features: Dict, auction_history: list) -> bool:
+        """Check if partner is asking for the trump queen (Queen Ask).
+
+        Queen Ask = cheapest non-trump bid after a 5♣ or 5♦ RKCB response.
+        Detect: we responded 5♣/5♦, partner bid a suit at 5-level that isn't trump.
+        """
+        partner_last_bid = features['auction_features'].get('partner_last_bid', '')
+        if not partner_last_bid or len(partner_last_bid) < 2:
+            return False
+        if partner_last_bid[0] != '5' or partner_last_bid[1] not in '♣♦♥♠':
+            return False
+
+        my_index = features.get('my_index', 0)
+        # Check that WE responded 5♣ or 5♦ (meaning we gave an RKCB response)
+        my_bids = [auction_history[i] for i in range(len(auction_history))
+                   if (i % 4) == my_index and auction_history[i] not in ('Pass', 'X', 'XX')]
+        if not my_bids:
+            return False
+        my_last = my_bids[-1]
+        if my_last not in ('5♣', '5♦'):
+            return False
+
+        # Partner's bid must be a different suit than trump (it's the queen ask)
+        trump_suit = self._find_trump_suit(features, auction_history)
+        if partner_last_bid[1] == trump_suit:
+            return False
+
+        # Verify partner bid 4NT earlier (they initiated RKCB)
+        partner_index = seat_index(seat_from_index(my_index + 2))
+        partner_bids = [auction_history[i] for i in range(len(auction_history))
+                        if (i % 4) == partner_index and auction_history[i] not in ('Pass', 'X', 'XX')]
+        return '4NT' in partner_bids
+
+    def _get_queen_answer_bid(self, hand: Hand, trump_suit: Optional[str]) -> Tuple[str, str, dict]:
+        """Answer the Queen Ask.
+
+        With trump queen: bid the trump suit at 6-level (confirms queen + shows suit).
+        Without trump queen: bid trump suit at 5-level (sign-off, denying queen).
+        """
+        metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'blackwood_queen_response'}
+        has_queen = self.has_trump_queen(hand, trump_suit)
+        if has_queen:
+            suit = trump_suit or 'NT'
+            return (f"6{suit}", f"Queen Ask: YES, I have the {trump_suit} queen.", metadata)
+        else:
+            suit = trump_suit or 'NT'
+            return (f"5{suit}", f"Queen Ask: NO, I do not have the {trump_suit} queen.", metadata)
+
+    def _check_dopi_ropi(self, hand: Hand, features: Dict, auction_history: list) -> Optional[Tuple[str, str, dict]]:
+        """Check for DOPI/ROPI: interference after partner's 4NT RKCB ask.
+
+        DOPI (Double = 0, Pass = 1, Item = 2): When opponent BIDS over 4NT.
+        ROPI (Redouble = 0, Pass = 1, Item = 2): When opponent DOUBLES 4NT.
+
+        Only applies at the 5-level (below slam). If opponent bids at 6+, double is penalty.
+        """
+        if len(auction_history) < 2:
+            return None
+
+        my_index = features.get('my_index', 0)
+        partner_index = seat_index(seat_from_index(my_index + 2))
+
+        # Find if partner bid 4NT
+        partner_bid_4nt = False
+        for i, bid in enumerate(auction_history):
+            if (i % 4) == partner_index and bid == '4NT':
+                partner_bid_4nt = True
+                break
+        if not partner_bid_4nt:
+            return None
+
+        # Check last bid by RHO (opponent)
+        rho_index = seat_index(seat_from_index(my_index + 3))  # Right-hand opponent
+        last_bid = auction_history[-1]
+        last_bidder = (len(auction_history) - 1) % 4
+
+        # Only applies if it's our turn and RHO just acted
+        if last_bidder != rho_index:
+            return None
+
+        metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'dopi_ropi'}
+        trump_suit = self._find_trump_suit(features, auction_history)
+        keycards = self.count_key_cards(hand, trump_suit)
+
+        if last_bid == 'X':
+            # ROPI: opponent doubled 4NT
+            if keycards == 0:
+                return ("XX", "ROPI: 0 key cards (redouble).", metadata)
+            elif keycards == 1:
+                return ("Pass", "ROPI: 1 key card (pass).", metadata)
+            else:
+                # Step = cheapest available bid
+                next_bid = self._cheapest_available_bid(auction_history)
+                if next_bid:
+                    return (next_bid, f"ROPI: {keycards} key cards.", metadata)
+                return ("Pass", f"ROPI: {keycards} key cards (no legal step bid).", metadata)
+
+        elif last_bid not in ('Pass', 'XX') and last_bid[0].isdigit():
+            interference_level = int(last_bid[0])
+            # If interference is at 6+ level, this is a sacrifice — double is penalty
+            if interference_level >= 6:
+                return None  # Let normal competitive logic handle it
+
+            # DOPI: opponent bid over 4NT
+            if keycards == 0:
+                return ("X", "DOPI: 0 key cards (double).", metadata)
+            elif keycards == 1:
+                return ("Pass", "DOPI: 1 key card (pass).", metadata)
+            else:
+                # Step = cheapest bid above opponent's interference
+                next_bid = self._cheapest_available_bid(auction_history)
+                if next_bid:
+                    return (next_bid, f"DOPI: {keycards} key cards.", metadata)
+                return ("Pass", f"DOPI: {keycards} key cards (no legal step bid).", metadata)
+
+        return None
+
+    def _cheapest_available_bid(self, auction_history: list) -> Optional[str]:
+        """Find the cheapest legal suit/NT bid above the current auction level."""
+        # Find highest bid in auction
+        highest_level = 0
+        highest_suit_rank = 0
+        suit_ranks = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+        for bid in auction_history:
+            if bid in ('Pass', 'X', 'XX') or not bid[0].isdigit():
+                continue
+            level = int(bid[0])
+            if bid.endswith('NT'):
+                rank = 5
+            else:
+                rank = suit_ranks.get(bid[1], 0)
+            if level > highest_level or (level == highest_level and rank > highest_suit_rank):
+                highest_level = level
+                highest_suit_rank = rank
+
+        # Find next legal bid
+        suit_order = ['♣', '♦', '♥', '♠', 'NT']
+        for level in range(highest_level, 8):
+            start_rank = highest_suit_rank + 1 if level == highest_level else 0
+            for i, suit in enumerate(suit_order):
+                if i + 1 <= start_rank and level == highest_level:
+                    continue
+                if level <= 7:
+                    return f"{level}{suit}"
+        return None
 
     def _find_trump_suit(self, features: Dict, auction_history: list) -> Optional[str]:
         """
@@ -401,7 +686,7 @@ class BlackwoodConvention(ConventionModule):
         Excludes the 4NT Blackwood bid and 5-level responses.
         """
         my_index = features.get('my_index', 0)
-        partner_index = (my_index + 2) % 4
+        partner_index = seat_index(seat_from_index(my_index + 2))
 
         # Collect suits bid by partnership (excluding 4NT and Blackwood responses)
         partnership_suits = []
@@ -437,61 +722,72 @@ class BlackwoodConvention(ConventionModule):
         return None
 
     def _is_king_asking_applicable(self, hand: Hand, features: Dict) -> bool:
-        """Check if we should ask for kings (all aces present)."""
+        """Check if we should ask for kings (5NT).
+
+        In RKCB, 5NT king ask guarantees all 5 keycards are present
+        and promises interest in Grand Slam.
+        """
         auction_history = features.get('auction_history', [])
         my_index = features.get('my_index', -1)
         partner_last_bid = features['auction_features'].get('partner_last_bid', '')
 
-        # Must have asked for aces
+        # Must have asked for keycards (4NT)
         my_bids = [auction_history[i] for i in range(len(auction_history))
                    if features['positions'][i % 4] == features['positions'][my_index]]
         if '4NT' not in my_bids:
             return False
 
-        # Partner must have responded with aces
+        # Partner must have responded with keycards
         if partner_last_bid not in ['5♣', '5♦', '5♥', '5♠']:
             return False
 
-        # Decode partner's aces
-        ace_responses = {'5♣': [0, 4], '5♦': [1], '5♥': [2], '5♠': [3]}
-        partner_aces = ace_responses.get(partner_last_bid, [0])
-        my_aces = sum(1 for card in hand.cards if card.rank == 'A')
+        # Also handle: we asked queen ask, partner answered, now we ask kings
+        # Partner could have answered queen ask at 5-level or 6-level
+        # For now, only handle direct RKCB response → 5NT sequence
 
-        # Only ask for kings if we have all 4 aces
-        if len(partner_aces) > 1 and 4 in partner_aces:
-            # Partner might have 4 aces
-            return True
-        elif my_aces + partner_aces[0] == 4:
-            # We have all 4 aces
-            return True
+        # Decode partner's RKCB response
+        trump_suit = self._find_trump_suit(features, auction_history)
+        my_keycards = self.count_key_cards(hand, trump_suit)
+        possible_counts, queen_known = self._decode_rkcb_response(partner_last_bid, my_keycards)
+        partner_keycards = self._resolve_keycard_count(possible_counts, my_keycards)
+        total_keycards = my_keycards + partner_keycards
 
-        return False
+        # Only ask for kings if all 5 keycards are present
+        return total_keycards >= 5
 
-    def _get_king_ask_bid(self) -> Tuple[str, str]:
-        """Returns the 5NT king-asking bid."""
-        return ("5NT", "Asking for kings (all aces present).")
+    def _get_king_ask_bid(self) -> Tuple[str, str, dict]:
+        """Returns the 5NT king-asking bid (guarantees all 5 keycards)."""
+        metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'blackwood_king_ask'}
+        return ("5NT", "RKCB: Asking for specific kings (all 5 keycards present, Grand Slam interest).", metadata)
 
     def _is_king_answering_applicable(self, features: Dict) -> bool:
         """Determines if we are responding to a 5NT king ask."""
         return features['auction_features'].get('partner_last_bid') == '5NT'
 
-    def _get_king_answer_bid(self, hand: Hand) -> Tuple[str, str, dict]:
-        """Counts kings and returns the correct conventional response (same as aces)."""
-        num_kings = sum(1 for card in hand.cards if card.rank == 'K')
-        # Metadata to bypass HCP and suit length validation for artificial 5NT king responses
-        # King responses are FORCED - you must respond regardless of HCP
+    def _get_king_answer_bid(self, hand: Hand, trump_suit: Optional[str]) -> Tuple[str, str, dict]:
+        """Specific king responses to 5NT.
+
+        Bid the suit of the cheapest side-suit king you hold:
+          6♣ = ♣K
+          6♦ = ♦K (denies ♣K)
+          6♥ = ♥K (denies ♣K and ♦K)
+          6-trump = no side kings
+        Trump king is already counted as a keycard, so only report SIDE kings.
+        """
         metadata = {'bypass_hcp': True, 'bypass_suit_length': True, 'convention': 'blackwood_king_response'}
 
-        if num_kings == 0 or num_kings == 4:
-            return ("6♣", "Response to 5NT: 0 or 4 kings.", metadata)
-        if num_kings == 1:
-            return ("6♦", "Response to 5NT: 1 king.", metadata)
-        if num_kings == 2:
-            return ("6♥", "Response to 5NT: 2 kings.", metadata)
-        if num_kings == 3:
-            return ("6♠", "Response to 5NT: 3 kings.", metadata)
+        # Check side-suit kings in ascending order (♣, ♦, ♥, ♠ minus trump)
+        suit_order = ['♣', '♦', '♥', '♠']
+        for suit in suit_order:
+            if suit == trump_suit:
+                continue
+            if any(c.rank == 'K' and c.suit == suit for c in hand.cards):
+                return (f"6{suit}", f"King Ask: I have the {suit} King.", metadata)
 
-        return ("Pass", "Error: Could not count kings.", {})
+        # No side kings — bid 6 of trump suit
+        if trump_suit:
+            return (f"6{trump_suit}", "King Ask: no side-suit kings.", metadata)
+        return ("6NT", "King Ask: no side-suit kings.", metadata)
 # ADR-0002 Phase 1: Auto-register this module on import
 from engine.ai.module_registry import ModuleRegistry
 ModuleRegistry.register("blackwood", BlackwoodConvention())
