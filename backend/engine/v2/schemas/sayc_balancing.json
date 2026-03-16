@@ -8,10 +8,11 @@
       "id": "balancing_double",
       "bid": "X",
       "priority": 700,
-      "description": "Balancing takeout double (Borrowed King: 9+ instead of 12+)",
+      "description": "Balancing takeout double (Borrowed King: 9+ instead of 12+). Only vs part-scores.",
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
         {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "last_contract_level", "max": 2, "constraint_type": "HARD"},
         {"feature": "hcp", "min": 8, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
         {"feature": "short_in_opponent_suit", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.2},
         {"feature": "has_4_card_major", "expected": true, "constraint_type": "SOFT", "penalty_per_unit": 0.2}
@@ -24,10 +25,11 @@
       "id": "balancing_double_strong",
       "bid": "X",
       "priority": 750,
-      "description": "Strong balancing double (15+ HCP - too strong for suit overcall)",
+      "description": "Strong balancing double (15+ HCP - too strong for suit overcall). Only vs part-scores.",
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
         {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "last_contract_level", "max": 2, "constraint_type": "HARD"},
         {"feature": "hcp", "min": 15, "constraint_type": "HARD"}
       ],
       "forcing": "one_round",
@@ -38,10 +40,13 @@
       "id": "balancing_double_flexible",
       "bid": "X",
       "priority": 88,
-      "description": "Balancing double with imperfect shape (Borrowed King)",
+      "description": "Balancing double with imperfect shape (Borrowed King). Only vs part-scores.",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
+        "last_contract_level": {
+          "max": 2
+        },
         "opening_bid": {
           "in": [
             "1\u2663",
@@ -97,10 +102,11 @@
       "id": "balancing_suit_2_level",
       "bid": "2{longest_suit}",
       "priority": 640,
-      "description": "Balancing 2-level suit bid - with 5+ card suit prefer bidding over doubling",
+      "description": "Balancing 2-level suit bid - only vs part-scores",
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
         {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "last_contract_level", "max": 2, "constraint_type": "HARD"},
         {"feature": "hcp", "min": 6, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
         {"feature": "longest_suit_length", "min": 5, "constraint_type": "HARD"}
       ],
@@ -112,10 +118,11 @@
       "id": "balancing_suit_2_level_long",
       "bid": "2{longest_suit}",
       "priority": 650,
-      "description": "Balancing 2-level with long suit (6+) - Borrowed King allows light bids",
+      "description": "Balancing 2-level with long suit (6+) - only vs part-scores",
       "constraints": [
         {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
         {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "last_contract_level", "max": 2, "constraint_type": "HARD"},
         {"feature": "hcp", "min": 6, "max": 14, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
         {"feature": "longest_suit_length", "min": 6, "constraint_type": "HARD"}
       ],

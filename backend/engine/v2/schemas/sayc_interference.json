@@ -209,9 +209,10 @@
       "id": "takeout_double_light",
       "bid": "X",
       "priority": 118,
-      "description": "Light takeout double with perfect shape",
+      "description": "Light takeout double with perfect shape (direct seat only)",
       "conditions": {
         "is_overcall": true,
+        "is_balancing": false,
         "opening_bid": {
           "in": [
             "1\u2663",
@@ -221,18 +222,21 @@
           ]
         },
         "hcp": {
-          "min": 10,
+          "min": 11,
           "max": 11
         },
         "unbid_suit_support": {
           "min": 3
+        },
+        "opponent_suit_length": {
+          "max": 2
         },
         "support_for_partner": {
           "max": 2
         }
       },
       "forcing": "one_round",
-      "explanation": "Light takeout double with excellent shape",
+      "explanation": "Light takeout double with excellent shape (11 HCP)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {

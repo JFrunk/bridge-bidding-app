@@ -1,6 +1,7 @@
 from engine.hand import Hand
 from engine.ai.conventions.base_convention import ConventionModule
 from typing import Optional, Tuple, Dict
+from utils.seats import partner
 
 class TakeoutDoubleConvention(ConventionModule):
     """
@@ -96,9 +97,15 @@ class TakeoutDoubleConvention(ConventionModule):
 
         # SPECIAL CASE 2: Strong hand in balancing seat (15+ HCP)
         # In balancing seat, partner may be trapped with length in opponent's suit
-        # With 15+ HCP, we double even with length in their suit to protect partner
+        # With 15+ HCP, relax shortness requirement but still need unbid suit support
         if is_balancing and hand.hcp >= 15:
-            return True
+            # Still need support for at least 2 unbid suits (skip opponent length check)
+            all_suits = {'♠', '♥', '♦', '♣'}
+            unbid_suits = all_suits - {opponent_suit}
+            suits_with_support = sum(1 for suit in unbid_suits if hand.suit_lengths.get(suit, 0) >= 3)
+            if suits_with_support >= 2:
+                return True
+            # Fall through to normal rules if no suit support
 
         # NORMAL TAKEOUT DOUBLE RULES:
         opponent_length = hand.suit_lengths.get(opponent_suit, 0)
@@ -166,8 +173,7 @@ class TakeoutDoubleConvention(ConventionModule):
 
     def _get_partner_position(self, my_pos: str) -> str:
         """Returns partner's position given my position."""
-        partners = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
-        return partners.get(my_pos, '')
+        return partner(my_pos)
 
     def _is_balancing_seat(self, features: Dict) -> bool:
         """

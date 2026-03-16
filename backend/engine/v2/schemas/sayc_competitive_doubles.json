@@ -57,10 +57,11 @@
       "id": "balancing_double_opponent_opened",
       "bid": "X",
       "priority": 700,
-      "description": "Balancing takeout double when opponent's bid passes around",
+      "description": "Balancing takeout double when opponent's bid passes around. Only vs part-scores.",
       "constraints": [
         {"feature": "opener_relationship", "expected": "Opponent", "constraint_type": "HARD"},
         {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "last_contract_level", "max": 2, "constraint_type": "HARD"},
         {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
         {"feature": "hcp", "min": 8, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
         {"feature": "short_in_opponent_suit", "expected": true, "constraint_type": "HARD"},
@@ -78,6 +79,7 @@
       "constraints": [
         {"feature": "opener_relationship", "expected": "Opponent", "constraint_type": "HARD"},
         {"feature": "is_balancing", "expected": true, "constraint_type": "HARD"},
+        {"feature": "last_contract_level", "max": 2, "constraint_type": "HARD"},
         {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
         {"feature": "hcp", "min": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.1},
         {"feature": "short_in_opponent_suit", "expected": true, "constraint_type": "HARD"},

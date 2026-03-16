@@ -60,20 +60,23 @@
       "id": "takeout_double_light",
       "bid": "X",
       "priority": 795,
-      "description": "Light takeout double with perfect shape (10-11 HCP)",
+      "description": "Light takeout double with perfect shape (11 HCP, SAYC relaxed from 12 with ideal shape)",
       "conditions": {
         "is_overcall": true,
         "is_balancing": false,
         "opening_bid": "1[CDHS]",
         "hcp": {
-          "min": 10,
+          "min": 11,
           "max": 11
         },
         "quick_tricks": {
-          "min": 1.0
+          "min": 1.5
         },
         "unbid_suit_support": {
           "min": 3
+        },
+        "opponent_suit_length": {
+          "max": 2
         },
         "spades_length": {
           "max": 4
@@ -89,7 +92,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Light takeout double (10-11 HCP, perfect shape for unbid suits, no 5-card suit)",
+      "explanation": "Light takeout double (11 HCP, perfect shape for unbid suits, no 5-card suit)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -102,7 +105,10 @@
         "is_balancing": false,
         "opening_bid": "1H",
         "hcp": {
-          "min": 10
+          "min": 12
+        },
+        "opponent_suit_length": {
+          "max": 2
         },
         "spades_length": {
           "min": 4,
@@ -113,7 +119,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Takeout double (10+ HCP, 4 spades and minor support)",
+      "explanation": "Takeout double (12+ HCP, 4 spades and minor support)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -126,7 +132,10 @@
         "is_balancing": false,
         "opening_bid": "1S",
         "hcp": {
-          "min": 10
+          "min": 12
+        },
+        "opponent_suit_length": {
+          "max": 2
         },
         "hearts_length": {
           "min": 4,
@@ -137,7 +146,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Takeout double (10+ HCP, 4 hearts and minor support)",
+      "explanation": "Takeout double (12+ HCP, 4 hearts and minor support)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -147,9 +156,13 @@
       "description": "Takeout double over minor with both majors",
       "conditions": {
         "is_overcall": true,
+        "is_balancing": false,
         "opening_bid": "1[CD]",
         "hcp": {
-          "min": 10
+          "min": 12
+        },
+        "opponent_suit_length": {
+          "max": 2
         },
         "spades_length": {
           "min": 4
@@ -159,7 +172,7 @@
         }
       },
       "forcing": "one_round",
-      "explanation": "Takeout double (10+ HCP, 4-4 in majors)",
+      "explanation": "Takeout double (12+ HCP, 4-4 in majors)",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
@@ -257,10 +270,13 @@
       "id": "takeout_double_balancing",
       "bid": "X",
       "priority": 85,
-      "description": "Balancing takeout double (Borrowed King principle) - lower than suit bids",
+      "description": "Balancing takeout double (Borrowed King principle) - only vs part-scores",
       "conditions": {
         "is_overcall": true,
         "is_balancing": true,
+        "last_contract_level": {
+          "max": 2
+        },
         "opening_bid": "1[CDHS]",
         "hcp": {
           "min": 8,

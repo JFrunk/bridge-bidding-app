@@ -72,9 +72,13 @@ class SanityChecker:
         if bid == "Pass":
             return True, bid, None
 
-        # Doubles/Redoubles are special - allow them
-        if bid in ["X", "XX"]:
+        # Redoubles are relatively rare and hard to sanity-check - allow them
+        if bid == "XX":
             return True, bid, None
+
+        # Doubles: validate minimum requirements instead of blanket approval
+        if bid == "X":
+            return self._check_double(hand, features, auction)
 
         # Check if metadata indicates this is a convention bid that should bypass sanity checks
         # Preempts, for example, are intentionally weak hands bidding at high levels
@@ -240,6 +244,36 @@ class SanityChecker:
             from utils.seats import normalize
             return normalize(positions[my_index])
         return None
+
+    def _check_double(self, hand: Hand, features: Dict, auction: List) -> Tuple[bool, str, Optional[str]]:
+        """
+        Sanity check for doubles. Replaces blanket approval with minimum requirements.
+
+        Takeout doubles: need 8+ HCP (balancing) or 12+ HCP (direct)
+        Penalty doubles: need some values (8+ HCP) — 0 HCP doubles are nonsensical
+        Support doubles: always valid if module selected them
+        """
+        auction_features = features.get('auction_features', {})
+        is_contested = auction_features.get('is_contested', False)
+        opener_relationship = auction_features.get('opener_relationship')
+
+        # If an opponent opened (we'd be making a takeout/competitive double),
+        # require minimum 8 HCP
+        if opener_relationship == 'Opponent':
+            if hand.hcp < 8:
+                reason = f"Double blocked: only {hand.hcp} HCP (need 8+ for competitive double)"
+                logger.info(f"Sanity check prevented double: {reason}")
+                return False, "Pass", reason
+            return True, "X", None
+
+        # For penalty-type situations (opponent has not opened, or we opened),
+        # still require some values — a 0-4 HCP double makes no sense
+        if hand.hcp < 5:
+            reason = f"Double blocked: only {hand.hcp} HCP (insufficient for any double)"
+            logger.info(f"Sanity check prevented double: {reason}")
+            return False, "Pass", reason
+
+        return True, "X", None
 
     def _estimate_combined_hcp(self, hand: Hand, features: Dict, auction: List) -> int:
         """

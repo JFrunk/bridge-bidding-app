@@ -22,6 +22,7 @@ import logging
 from typing import Tuple, Optional, Dict, List
 from engine.hand import Hand
 from engine.ai.bidding_state import BiddingStateBuilder
+from utils.seats import SEAT_NAMES, normalize, partnership_str
 
 logger = logging.getLogger(__name__)
 
@@ -134,16 +135,16 @@ class ValidationPipeline:
             bidding_state = features.get('bidding_state')
             if bidding_state is None:
                 # Build BiddingState from auction if not in features
-                positions = features.get('positions', ['North', 'East', 'South', 'West'])
+                positions = features.get('positions', list(SEAT_NAMES.values()))
                 my_index = features.get('my_index', 0)
-                from utils.seats import normalize, partnership_str
+                # normalize and partnership_str imported at module level
                 dealer = positions[0][0] if positions else 'N'
                 bidding_state = BiddingStateBuilder().build(auction, dealer)
 
             if bidding_state is not None:
-                positions = features.get('positions', ['North', 'East', 'South', 'West'])
+                positions = features.get('positions', list(SEAT_NAMES.values()))
                 my_index = features.get('my_index', 0)
-                from utils.seats import normalize, partnership_str
+                # normalize and partnership_str imported at module level
                 my_seat = normalize(positions[my_index])
                 pship = partnership_str(my_seat)
 
@@ -279,26 +280,30 @@ class HCPRequirementValidator:
 
     def _classify_bid(self, bid: str, features: Dict, auction: List) -> str:
         """Classify bid type for HCP lookup."""
+        auction_features = features.get('auction_features', {})
+        opener_relationship = auction_features.get('opener_relationship')
+        is_contested = auction_features.get('is_contested', False)
+
         # Handle doubles
         if bid == "X":
-            # Check if competitive/negative double
-            if features.get('competitive_auction'):
+            # Any double in a competitive auction (opponent opened) needs 8+ HCP
+            if opener_relationship == 'Opponent' or is_contested:
                 return 'competitive_double'
-            # Penalty double - no minimum HCP
-            return 'penalty_double'
+            # Penalty double still needs minimum HCP (classified as competitive)
+            return 'competitive_double'
 
         # Extract level
         level = int(bid[0])
 
-        # Check if overcall
-        if features.get('opener') == 'opponent':
+        # Check if overcall (opponent opened)
+        if opener_relationship == 'Opponent':
             if level == 1:
                 return 'overcall_1_level'
             elif level == 2:
                 return 'overcall_2_level'
 
         # Check if new suit by responder
-        if features.get('opener') == 'partner' and len(auction) >= 2:
+        if opener_relationship == 'Partner' and len(auction) >= 2:
             if level == 2:
                 return 'new_suit_2_level'
 
