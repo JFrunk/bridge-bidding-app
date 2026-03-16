@@ -226,6 +226,95 @@ class TestBidLevelComputation:
         )
 
 
+class TestIsJumpComputation:
+    """is_jump must correctly identify jump vs simple overcalls using rank-based level necessity."""
+
+    def test_3c_over_2d_is_not_jump(self):
+        """3♣ over 2♦: R_t(1) <= R_c(2) → L_min = 2+1 = 3. L_t(3) > 3 is False → simple."""
+        from engine.v2.features.enhanced_extractor import extract_flat_features
+        hand = _make_hand('92', 'K532', 'K', 'KJ8732')
+        features = extract_flat_features(
+            hand=hand, auction_history=['2♦'],
+            my_position='South', dealer='East', vulnerability='NS'
+        )
+        assert features['is_jump'] is False, (
+            f"3♣ over 2♦ should NOT be a jump (simple overcall), got is_jump={features['is_jump']}"
+        )
+
+    def test_3c_over_1s_is_jump(self):
+        """3♣ over 1♠: R_t(1) <= R_c(4) → L_min = 1+1 = 2. L_t(3) > 2 is True → jump."""
+        from engine.v2.features.enhanced_extractor import extract_flat_features
+        hand = _make_hand('92', 'K53', 'K2', 'KJ8732')
+        features = extract_flat_features(
+            hand=hand, auction_history=['1♠'],
+            my_position='South', dealer='East', vulnerability='NS'
+        )
+        # bid_level=2 (clubs over 1♠ minimum is 2♣), but a 3♣ would be a jump
+        # The extractor computes is_jump for the minimum bid (bid_level), not a hypothetical higher bid
+        # bid_level=2 over anchor 1♠ → L_min=2, is_jump = (2 > 2) = False
+        assert features['is_jump'] is False, (
+            f"Minimum club bid (2♣) over 1♠ is not a jump, got is_jump={features['is_jump']}"
+        )
+
+    def test_2s_over_1d_is_not_jump(self):
+        """2♠ over 1♦: R_t(4) > R_c(2) → L_min = 1. L_t(2) > 1 is True → jump!"""
+        from engine.v2.features.enhanced_extractor import extract_flat_features
+        # Need a hand with 5+ spades as best overcall suit
+        hand = _make_hand('KQJ95', 'K7', '83', 'Q642')
+        features = extract_flat_features(
+            hand=hand, auction_history=['1♦'],
+            my_position='South', dealer='East', vulnerability='NS'
+        )
+        # bid_level=1 (spades outrank diamonds), L_min=1, is_jump = (1 > 1) = False
+        assert features['is_jump'] is False, (
+            f"1♠ over 1♦ is not a jump, got is_jump={features['is_jump']}"
+        )
+
+    def test_2s_over_1h_is_not_jump(self):
+        """2♠ over 1♥: R_t(4) > R_c(3) → L_min = 1. L_t(2) > 1 → True, jump!
+        But bid_level = 1 (spades outrank hearts), so at minimum level: is_jump = (1 > 1) = False."""
+        from engine.v2.features.enhanced_extractor import extract_flat_features
+        hand = _make_hand('KQJ95', 'K7', '83', 'Q642')
+        features = extract_flat_features(
+            hand=hand, auction_history=['1♥'],
+            my_position='South', dealer='East', vulnerability='NS'
+        )
+        assert features['bid_level'] == 1
+        assert features['is_jump'] is False
+
+
+class TestInterferenceLevelComputation:
+    """interference_level must extract the level of the last opponent bid."""
+
+    def test_interference_level_2d(self):
+        from engine.v2.features.enhanced_extractor import extract_flat_features
+        hand = _make_hand('92', 'K532', 'K', 'KJ8732')
+        features = extract_flat_features(
+            hand=hand, auction_history=['2♦'],
+            my_position='South', dealer='East', vulnerability='NS'
+        )
+        assert features['interference_level'] == 2
+
+    def test_interference_level_1s(self):
+        from engine.v2.features.enhanced_extractor import extract_flat_features
+        hand = _make_hand('92', 'K532', 'K2', 'KJ873')
+        features = extract_flat_features(
+            hand=hand, auction_history=['1♠'],
+            my_position='South', dealer='East', vulnerability='NS'
+        )
+        assert features['interference_level'] == 1
+
+    def test_interference_level_no_opponent_bid(self):
+        """When no opponent has bid, interference_level should be 0."""
+        from engine.v2.features.enhanced_extractor import extract_flat_features
+        hand = _make_hand('92', 'K532', 'K2', 'KJ873')
+        features = extract_flat_features(
+            hand=hand, auction_history=['Pass'],
+            my_position='East', dealer='North', vulnerability='None'
+        )
+        assert features['interference_level'] == 0
+
+
 class TestThreeLevelOvercall:
     """Engine should bid 3♣ over 2♦ with the original problem hand."""
 

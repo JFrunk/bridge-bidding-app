@@ -1277,51 +1277,6 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "responder_rebid_2nt_invitational",
-      "bid": "2NT",
-      "priority": 405,
-      "description": "Responder rebids 2NT invitational",
-      "conditions": {
-        "is_response": true,
-        "my_bid_count": {
-          "min": 1
-        },
-        "hcp": {
-          "min": 11,
-          "max": 12
-        },
-        "is_balanced": true,
-        "fit_known": false
-      },
-      "forcing": "none",
-      "explanation": "2NT invitational (11-12 HCP, balanced)",
-      "sets_forcing_level": "NON_FORCING",
-      "is_limit_bid": true
-    },
-    {
-      "id": "responder_rebid_3nt_game",
-      "bid": "3NT",
-      "priority": 244,
-      "description": "Responder rebids 3NT",
-      "conditions": {
-        "is_response": true,
-        "my_bid_count": {
-          "min": 1
-        },
-        "hcp": {
-          "min": 13,
-          "max": 15
-        },
-        "is_balanced": true,
-        "stopper_count": {
-          "min": 3
-        }
-      },
-      "forcing": "none",
-      "explanation": "3NT (13-15 HCP, balanced with stoppers)",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
       "id": "responder_delayed_game_raise",
       "bid": "3{partner_suit}",
       "priority": 323,
@@ -2067,36 +2022,6 @@
       },
       "forcing": "none",
       "explanation": "Pass - partner's raise was competitive/preemptive",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
-      "id": "opener_pass_after_single_raise_minimum",
-      "bid": "Pass",
-      "priority": 730,
-      "description": "Opener passes after partner's single raise (12-14 HCP minimum)",
-      "conditions": {
-        "is_rebid": true,
-        "opener_relationship": "Me",
-        "my_last_bid": {
-          "in": [
-            "1♥",
-            "1♠"
-          ]
-        },
-        "partner_last_bid": {
-          "in": [
-            "2♥",
-            "2♠"
-          ]
-        },
-        "partner_raised_my_suit": true,
-        "hcp": {
-          "min": 12,
-          "max": 14
-        }
-      },
-      "forcing": "none",
-      "explanation": "Pass with minimum (12-14 HCP) after partner's raise",
       "sets_forcing_level": "NON_FORCING"
     },
     {

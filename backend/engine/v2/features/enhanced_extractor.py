@@ -436,6 +436,47 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     else:
         flat['bid_level'] = 1  # No opening bid parsed
 
+    # interference_level: level of the last opponent bid
+    # Extract from the last non-Pass opponent bid in the auction
+    opponent_bids = (_get_rho_bids(auction_history, my_position, dealer) +
+                     _get_lho_bids(auction_history, my_position, dealer))
+    last_opp_level = 0
+    for opp_bid in reversed(auction_history):
+        if opp_bid in ('Pass', 'X', 'XX'):
+            continue
+        # Check if this bid was made by an opponent
+        bid_idx = len(auction_history) - 1 - list(reversed(auction_history)).index(opp_bid)
+        bidder_idx = (seat_index(dealer) + bid_idx) % 4
+        my_idx = seat_index(my_position)
+        # Opponents are seats not on our partnership
+        if (bidder_idx % 2) != (my_idx % 2):
+            if opp_bid[0].isdigit():
+                last_opp_level = int(opp_bid[0])
+            break
+    flat['interference_level'] = last_opp_level
+
+    # is_jump: whether our minimum overcall (bid_level + best_suit) is a jump
+    # over the current auction anchor (last real bid by anyone)
+    # Uses rank-based level necessity: L_min = L_c if R_t > R_c, else L_c + 1
+    # is_jump = (L_t > L_min)
+    flat['is_jump'] = False
+    if best_overcall_suit and auction_history:
+        suit_rank_map = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+        # Find the last real (non-Pass/X/XX) bid — the auction anchor
+        anchor_bid = None
+        for bid in reversed(auction_history):
+            if bid not in ('Pass', 'X', 'XX') and bid[0].isdigit():
+                anchor_bid = bid
+                break
+        if anchor_bid:
+            l_c = int(anchor_bid[0])
+            anchor_suit = get_suit_from_bid(anchor_bid)
+            r_c = suit_rank_map.get(anchor_suit, 5)  # NT = 5
+            r_t = suit_rank_map.get(best_overcall_suit, 0)
+            l_min = l_c if r_t > r_c else l_c + 1
+            # Our proposed level is bid_level (minimum level for our suit)
+            flat['is_jump'] = flat['bid_level'] > l_min
+
     # Support for partner's suit
     if flat['partner_last_bid']:
         partner_suit = get_suit_from_bid(flat['partner_last_bid'])

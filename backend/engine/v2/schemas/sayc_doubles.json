@@ -10,13 +10,41 @@
       "priority": 740,
       "description": "General takeout double - opening values + support for ALL unbid suits (no 5-card major)",
       "constraints": [
-        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
-        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 12, "constraint_type": "HARD"},
-        {"feature": "support_all_unbid", "expected": true, "constraint_type": "HARD"},
-        {"feature": "opponent_suit_length", "max": 2, "constraint_type": "HARD"},
-        {"feature": "spades_length", "max": 4, "constraint_type": "HARD"},
-        {"feature": "hearts_length", "max": 4, "constraint_type": "HARD"}
+        {
+          "feature": "is_overcall",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "is_balancing",
+          "expected": false,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 12,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "support_all_unbid",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "opponent_suit_length",
+          "max": 2,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "spades_length",
+          "max": 4,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hearts_length",
+          "max": 4,
+          "constraint_type": "HARD"
+        }
       ],
       "forcing": "one_round",
       "explanation": "Takeout double (12+ HCP, support for all unbid suits, short in opponent's suit)",
@@ -28,12 +56,36 @@
       "priority": 745,
       "description": "Strong takeout double (17+ HCP) - start with double, bid suit later",
       "constraints": [
-        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
-        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 17, "constraint_type": "HARD"},
-        {"feature": "opponent_suit_length", "max": 2, "constraint_type": "HARD"},
-        {"feature": "spades_length", "max": 4, "constraint_type": "HARD"},
-        {"feature": "hearts_length", "max": 4, "constraint_type": "HARD"}
+        {
+          "feature": "is_overcall",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "is_balancing",
+          "expected": false,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 17,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "opponent_suit_length",
+          "max": 2,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "spades_length",
+          "max": 4,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hearts_length",
+          "max": 4,
+          "constraint_type": "HARD"
+        }
       ],
       "forcing": "one_round",
       "explanation": "Strong takeout double (17+ HCP, too strong for simple overcall)",
@@ -45,13 +97,42 @@
       "priority": 735,
       "description": "Normal takeout double (12-16 HCP) - support for all unbid suits, no 5-card major",
       "constraints": [
-        {"feature": "is_overcall", "expected": true, "constraint_type": "HARD"},
-        {"feature": "is_balancing", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 12, "max": 16, "constraint_type": "HARD"},
-        {"feature": "support_all_unbid", "expected": true, "constraint_type": "HARD"},
-        {"feature": "opponent_suit_length", "max": 2, "constraint_type": "HARD"},
-        {"feature": "spades_length", "max": 4, "constraint_type": "HARD"},
-        {"feature": "hearts_length", "max": 4, "constraint_type": "HARD"}
+        {
+          "feature": "is_overcall",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "is_balancing",
+          "expected": false,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 12,
+          "max": 16,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "support_all_unbid",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "opponent_suit_length",
+          "max": 2,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "spades_length",
+          "max": 4,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hearts_length",
+          "max": 4,
+          "constraint_type": "HARD"
+        }
       ],
       "forcing": "one_round",
       "explanation": "Takeout double (12-16 HCP, support for all unbid suits)",
@@ -298,26 +379,6 @@
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
-      "id": "penalty_double_high_level",
-      "bid": "X",
-      "priority": 50,
-      "description": "Penalty double at high level",
-      "conditions": {
-        "opponent_bid_level": {
-          "min": 4
-        },
-        "trump_length_vs_opponent": {
-          "min": 4
-        },
-        "hcp": {
-          "min": 10
-        }
-      },
-      "forcing": "none",
-      "explanation": "Penalty double with trump stack",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
       "id": "respond_to_takeout_double_minimum",
       "bid": "1{suit}",
       "priority": 760,
@@ -397,9 +458,16 @@
       "description": "Doubler raises partner's response with minimum (14-16 HCP)",
       "conditions": {
         "is_doubler_rebid": true,
-        "hcp": {"min": 14, "max": 16},
-        "support_for_partner": {"min": 4},
-        "partnership_hcp_min": {"min": 18}
+        "hcp": {
+          "min": 14,
+          "max": 16
+        },
+        "support_for_partner": {
+          "min": 4
+        },
+        "partnership_hcp_min": {
+          "min": 18
+        }
       },
       "forcing": "none",
       "explanation": "Raise partner's response with minimum takeout double values and 4+ support",
@@ -412,10 +480,23 @@
       "description": "Doubler raises partner's major with 3-card support (15-17 HCP)",
       "conditions": {
         "is_doubler_rebid": true,
-        "hcp": {"min": 15, "max": 17},
-        "support_for_partner": {"min": 3, "max": 3},
-        "partner_last_bid": {"in": ["1♥", "1♠"]},
-        "partnership_hcp_min": {"min": 20}
+        "hcp": {
+          "min": 15,
+          "max": 17
+        },
+        "support_for_partner": {
+          "min": 3,
+          "max": 3
+        },
+        "partner_last_bid": {
+          "in": [
+            "1♥",
+            "1♠"
+          ]
+        },
+        "partnership_hcp_min": {
+          "min": 20
+        }
       },
       "forcing": "none",
       "explanation": "Raise partner's major with 3-card support (15-17 HCP)",
@@ -428,8 +509,13 @@
       "description": "Doubler jump raises partner's response (16-18 HCP)",
       "conditions": {
         "is_doubler_rebid": true,
-        "hcp": {"min": 16, "max": 18},
-        "support_for_partner": {"min": 3}
+        "hcp": {
+          "min": 16,
+          "max": 18
+        },
+        "support_for_partner": {
+          "min": 3
+        }
       },
       "forcing": "none",
       "explanation": "Jump raise partner's response showing 16-18 HCP",
@@ -442,9 +528,20 @@
       "description": "Doubler raises to game (19+ HCP)",
       "conditions": {
         "is_doubler_rebid": true,
-        "hcp": {"min": 19},
-        "support_for_partner": {"min": 3},
-        "partner_last_bid": {"in": ["1♥", "1♠", "2♥", "2♠"]}
+        "hcp": {
+          "min": 19
+        },
+        "support_for_partner": {
+          "min": 3
+        },
+        "partner_last_bid": {
+          "in": [
+            "1♥",
+            "1♠",
+            "2♥",
+            "2♠"
+          ]
+        }
       },
       "forcing": "none",
       "explanation": "Raise to game (19+ HCP with support)",
@@ -457,9 +554,15 @@
       "description": "Doubler shows own 5+ card suit (17+ HCP - too strong for overcall)",
       "conditions": {
         "is_doubler_rebid": true,
-        "hcp": {"min": 17},
-        "longest_suit_length": {"min": 5},
-        "support_for_partner": {"max": 2}
+        "hcp": {
+          "min": 17
+        },
+        "longest_suit_length": {
+          "min": 5
+        },
+        "support_for_partner": {
+          "max": 2
+        }
       },
       "forcing": "one_round",
       "explanation": "Show 5+ card suit - too strong for initial overcall",
@@ -472,7 +575,10 @@
       "description": "Doubler rebids 1NT with balanced 18-19 and stoppers",
       "conditions": {
         "is_doubler_rebid": true,
-        "hcp": {"min": 18, "max": 19},
+        "hcp": {
+          "min": 18,
+          "max": 19
+        },
         "is_balanced": true,
         "stopper_in_opponent_suit": true
       },
@@ -487,7 +593,10 @@
       "description": "Doubler rebids 2NT with balanced 20-21 and stoppers",
       "conditions": {
         "is_doubler_rebid": true,
-        "hcp": {"min": 20, "max": 21},
+        "hcp": {
+          "min": 20,
+          "max": 21
+        },
         "is_balanced": true,
         "stopper_in_opponent_suit": true
       },
@@ -502,12 +611,132 @@
       "description": "Doubler passes with minimum (12-13 HCP) and poor fit",
       "conditions": {
         "is_doubler_rebid": true,
-        "hcp": {"min": 12, "max": 13},
-        "support_for_partner": {"max": 2}
+        "hcp": {
+          "min": 12,
+          "max": 13
+        },
+        "support_for_partner": {
+          "max": 2
+        }
       },
       "forcing": "none",
       "explanation": "Pass with minimum takeout double and no fit",
       "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "reopening_double_partner_opened",
+      "bid": "X",
+      "priority": 680,
+      "description": "Reopening double after partner opens, opponents pass around",
+      "constraints": [
+        {
+          "feature": "opener_relationship",
+          "expected": "Me",
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "is_balancing",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 10,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "short_in_opponent_suit",
+          "expected": true,
+          "constraint_type": "SOFT",
+          "penalty_per_unit": 0.2
+        }
+      ],
+      "forcing": "one_round",
+      "explanation": "Reopening double (10+ HCP, partner may have a trap pass)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "balancing_double_opponent_opened",
+      "bid": "X",
+      "priority": 700,
+      "description": "Balancing takeout double when opponent's bid passes around",
+      "constraints": [
+        {
+          "feature": "opener_relationship",
+          "expected": "Opponent",
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "is_balancing",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "my_bid_count",
+          "max": 0,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 8,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "short_in_opponent_suit",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "has_4_card_major",
+          "expected": true,
+          "constraint_type": "SOFT",
+          "penalty_per_unit": 0.25
+        }
+      ],
+      "forcing": "one_round",
+      "explanation": "Balancing takeout double (8+ HCP, Borrowed King principle)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "balancing_double_two_level",
+      "bid": "X",
+      "priority": 690,
+      "description": "Balancing takeout double at 2-level",
+      "constraints": [
+        {
+          "feature": "opener_relationship",
+          "expected": "Opponent",
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "is_balancing",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "my_bid_count",
+          "max": 0,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "hcp",
+          "min": 10,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "short_in_opponent_suit",
+          "expected": true,
+          "constraint_type": "HARD"
+        },
+        {
+          "feature": "has_4_card_major",
+          "expected": true,
+          "constraint_type": "HARD"
+        }
+      ],
+      "forcing": "one_round",
+      "explanation": "Balancing double at 2-level (10+ HCP)",
+      "sets_forcing_level": "FORCING_1_ROUND"
     }
   ]
 }

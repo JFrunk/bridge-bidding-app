@@ -24,109 +24,6 @@
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
-      "id": "simple_overcall_1_level_spades",
-      "bid": "1\u2660",
-      "priority": 95,
-      "description": "Simple 1\u2660 overcall",
-      "conditions": {
-        "is_overcall": true,
-        "opening_bid": {
-          "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665"
-          ]
-        },
-        "hcp": {
-          "min": 10,
-          "max": 16
-        },
-        "spades_length": {
-          "min": 5
-        },
-        "spades_hcp": {
-          "min": 4
-        },
-        "suit_quality": {
-          "min": "good"
-        },
-        "quick_tricks": {
-          "min": 1.0
-        }
-      },
-      "forcing": "none",
-      "explanation": "Simple overcall showing 10-16 HCP and good 5+ spades",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
-      "id": "simple_overcall_1_level_hearts",
-      "bid": "1\u2665",
-      "priority": 94,
-      "description": "Simple 1\u2665 overcall",
-      "conditions": {
-        "is_overcall": true,
-        "opening_bid": {
-          "in": [
-            "1\u2663",
-            "1\u2666"
-          ]
-        },
-        "hcp": {
-          "min": 10,
-          "max": 16
-        },
-        "hearts_length": {
-          "min": 5
-        },
-        "hearts_hcp": {
-          "min": 4
-        },
-        "suit_quality_hearts": {
-          "min": "good"
-        },
-        "quick_tricks": {
-          "min": 1.0
-        }
-      },
-      "forcing": "none",
-      "explanation": "Simple overcall showing 10-16 HCP and good 5+ hearts",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
-      "id": "simple_overcall_2_level",
-      "bid": "2{longest_suit}",
-      "priority": 95,
-      "description": "Simple 2-level overcall with strong suit",
-      "conditions": {
-        "is_overcall": true,
-        "hcp": {
-          "min": 12,
-          "max": 16
-        },
-        "longest_suit_length": {
-          "min": 5
-        },
-        "suit_quality_longest": {
-          "min": "good"
-        },
-        "suit_hcp": {
-          "min": 5
-        },
-        "quick_tricks": {
-          "min": 1.5
-        },
-        "partnership_hcp_min": {
-          "min": 20
-        },
-        "opponent_suit_length": {
-          "max": 3
-        }
-      },
-      "forcing": "none",
-      "explanation": "2-level overcall showing 12-16 HCP and good 5+ card suit with honors",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
       "id": "direct_nt_overcall_1nt",
       "bid": "1NT",
       "priority": 90,
@@ -135,10 +32,10 @@
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665",
-            "1\u2660"
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
           ]
         },
         "hcp": {
@@ -161,10 +58,10 @@
         "is_overcall": true,
         "opening_bid": {
           "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665",
-            "1\u2660"
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
           ]
         },
         "hcp": {
@@ -177,103 +74,6 @@
       "forcing": "none",
       "explanation": "2NT overcall showing 19-21 HCP balanced with stopper",
       "sets_forcing_level": "NON_FORCING"
-    },
-    {
-      "id": "takeout_double_standard",
-      "bid": "X",
-      "priority": 110,
-      "description": "Standard takeout double (direct seat)",
-      "conditions": {
-        "is_overcall": true,
-        "is_balancing": false,
-        "opening_bid": {
-          "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "min": 12
-        },
-        "unbid_suit_support": {
-          "min": 3
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Takeout double showing opening values with support for unbid suits",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "takeout_double_light",
-      "bid": "X",
-      "priority": 118,
-      "description": "Light takeout double with perfect shape",
-      "conditions": {
-        "is_overcall": true,
-        "opening_bid": {
-          "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "min": 10,
-          "max": 11
-        },
-        "unbid_suit_support": {
-          "min": 3
-        },
-        "support_for_partner": {
-          "max": 2
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Light takeout double with excellent shape",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "negative_double_1_level",
-      "bid": "X",
-      "priority": 805,
-      "description": "Negative double at 1-level",
-      "conditions": {
-        "is_response": true,
-        "is_contested": true,
-        "opener_relationship": "Partner",
-        "hcp": {
-          "min": 6
-        },
-        "unbid_suit_support": {
-          "min": 2
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Negative double showing values and unbid suits",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "negative_double_2_level",
-      "bid": "X",
-      "priority": 800,
-      "description": "Negative double at 2-level",
-      "conditions": {
-        "is_response": true,
-        "is_contested": true,
-        "opener_relationship": "Partner",
-        "hcp": {
-          "min": 8
-        },
-        "unbid_suit_support": {
-          "min": 2
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Negative double at 2-level showing 8+ HCP",
-      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "preempt_response_competitive",
@@ -327,7 +127,11 @@
         "is_contested": true,
         "opener_relationship": "Partner",
         "rho_last_bid": {
-          "not_in": ["X", "XX", "Pass"]
+          "not_in": [
+            "X",
+            "XX",
+            "Pass"
+          ]
         },
         "hcp": {
           "min": 8,
@@ -354,7 +158,11 @@
         "is_contested": true,
         "opener_relationship": "Partner",
         "rho_last_bid": {
-          "not_in": ["X", "XX", "Pass"]
+          "not_in": [
+            "X",
+            "XX",
+            "Pass"
+          ]
         },
         "hcp": {
           "min": 3,
@@ -428,8 +236,8 @@
         "opener_relationship": "Partner",
         "partner_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "rho_last_bid": "X",
@@ -455,8 +263,8 @@
         "opener_relationship": "Partner",
         "partner_last_bid": {
           "in": [
-            "1\u2665",
-            "1\u2660"
+            "1♥",
+            "1♠"
           ]
         },
         "rho_last_bid": "X",
@@ -484,10 +292,10 @@
         "opener_relationship": "Partner",
         "partner_last_bid": {
           "in": [
-            "1\u2663",
-            "1\u2666",
-            "1\u2665",
-            "1\u2660"
+            "1♣",
+            "1♦",
+            "1♥",
+            "1♠"
           ]
         },
         "rho_last_bid": "X",
@@ -520,90 +328,6 @@
       "forcing": "none",
       "explanation": "Pass to convert takeout double to penalty",
       "sets_forcing_level": "NON_FORCING"
-    },
-    {
-      "id": "michaels_cuebid_major",
-      "bid": "{opponent_suit}",
-      "priority": 600,
-      "description": "Michaels cuebid of opponent's major",
-      "conditions": {
-        "is_overcall": true,
-        "opening_bid": {
-          "in": [
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "min": 6,
-          "max": 11
-        },
-        "other_major_length": {
-          "min": 5
-        },
-        "any_minor_length": {
-          "min": 5
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Michaels showing 5-5 in other major and a minor",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "michaels_cuebid_minor",
-      "bid": "{opponent_suit}",
-      "priority": 608,
-      "description": "Michaels cuebid of opponent's minor",
-      "conditions": {
-        "is_overcall": true,
-        "opening_bid": {
-          "in": [
-            "1\u2663",
-            "1\u2666"
-          ]
-        },
-        "hcp": {
-          "min": 6,
-          "max": 11
-        },
-        "spades_length": {
-          "min": 5
-        },
-        "hearts_length": {
-          "min": 5
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Michaels showing 5-5 in both majors",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "unusual_2nt",
-      "bid": "2NT",
-      "priority": 85,
-      "description": "Unusual 2NT showing minors",
-      "conditions": {
-        "is_overcall": true,
-        "opening_bid": {
-          "in": [
-            "1\u2665",
-            "1\u2660"
-          ]
-        },
-        "hcp": {
-          "min": 6,
-          "max": 11
-        },
-        "diamonds_length": {
-          "min": 5
-        },
-        "clubs_length": {
-          "min": 5
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Unusual 2NT showing 5-5 in the minors",
-      "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
       "id": "pass_competitive_weak",
@@ -696,7 +420,10 @@
           "max": 2
         },
         "longest_suit": {
-          "in": ["♦", "♣"]
+          "in": [
+            "♦",
+            "♣"
+          ]
         },
         "longest_suit_length": {
           "min": 5
@@ -904,7 +631,13 @@
       "conditions": {
         "is_contested": true,
         "rho_last_bid": {
-          "in": ["3NT", "4♥", "4♠", "5♣", "5♦"]
+          "in": [
+            "3NT",
+            "4♥",
+            "4♠",
+            "5♣",
+            "5♦"
+          ]
         },
         "hcp": {
           "max": 15
