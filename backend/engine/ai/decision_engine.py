@@ -13,6 +13,8 @@ from engine.ai.conventions.unusual_2nt import Unusual2NTConvention
 from engine.ai.conventions.splinter_bids import SplinterBidsConvention
 from engine.ai.conventions.fourth_suit_forcing import FourthSuitForcingConvention
 from engine.ai.conventions.texas_transfers import TexasTransferConvention
+from engine.ai.conventions.smolen import SmolenConvention
+from engine.ai.conventions.puppet_stayman import PuppetStaymanConvention
 
 def select_bidding_module(features):
     """
@@ -143,6 +145,12 @@ def select_bidding_module(features):
         if auction['opening_bid'] in ['1NT', '2NT']:
             texas = TexasTransferConvention()
             if texas.evaluate(features['hand'], features): return 'texas_transfers'
+            # Smolen: 5-4 major inversion after 1NT Stayman denial
+            smolen = SmolenConvention()
+            if smolen.evaluate(features['hand'], features): return 'smolen'
+            # Puppet Stayman: 3♣ over 2NT (replaces regular Stayman for 2NT)
+            puppet = PuppetStaymanConvention()
+            if puppet.evaluate(features['hand'], features): return 'puppet_stayman'
             jacoby = JacobyConvention()
             if jacoby.evaluate(features['hand'], features): return 'jacoby'
             stayman = StaymanConvention()
@@ -212,6 +220,12 @@ def select_bidding_module(features):
             # Texas Transfer completion (opener must complete 4♦→4♥, 4♥→4♠)
             texas = TexasTransferConvention()
             if texas.evaluate(features['hand'], features): return 'texas_transfers'
+            # Smolen response (opener responds to partner's Smolen jump)
+            smolen = SmolenConvention()
+            if smolen.evaluate(features['hand'], features): return 'smolen'
+            # Puppet Stayman (opener responds to 3♣, or places contract after inversion)
+            puppet = PuppetStaymanConvention()
+            if puppet.evaluate(features['hand'], features): return 'puppet_stayman'
             # Check Minor suit bust (opener responding to 2♠)
             minor_bust = MinorSuitBustConvention()
             if minor_bust.evaluate(features['hand'], features): return 'minor_suit_bust'

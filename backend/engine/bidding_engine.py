@@ -31,6 +31,8 @@ from engine.ai.conventions.gerber import GerberConvention
 from engine.ai.conventions.minor_suit_bust import MinorSuitBustConvention
 from engine.ai.conventions.grand_slam_force import GrandSlamForceConvention
 from engine.ai.conventions.texas_transfers import TexasTransferConvention
+from engine.ai.conventions.smolen import SmolenConvention
+from engine.ai.conventions.puppet_stayman import PuppetStaymanConvention
 
 class BiddingEngine:
     """DEPRECATED: Use BiddingEngineV2Schema instead.
