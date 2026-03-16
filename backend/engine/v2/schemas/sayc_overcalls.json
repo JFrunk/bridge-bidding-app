@@ -548,6 +548,103 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "preempt_overcall_4_level",
+      "bid": "4{suit}",
+      "priority": 650,
+      "description": "4-level preemptive overcall with 8+ card suit",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": false,
+        "my_bid_count": {
+          "max": 0
+        },
+        "hcp": {
+          "min": 6,
+          "max": 10
+        },
+        "suit_length": {
+          "min": 8
+        },
+        "suit_quality": {
+          "min": "fair"
+        }
+      },
+      "forcing": "none",
+      "suit_selection": "best_8_card_suit",
+      "explanation": "4-level preemptive overcall (6-10 HCP, 8+ card suit)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "overcall_3nt_direct",
+      "bid": "3NT",
+      "priority": 810,
+      "description": "Direct 3NT overcall - strong hand or long running minor",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": false,
+        "my_bid_count": {
+          "max": 0
+        },
+        "OR": [
+          {
+            "hcp": {
+              "min": 20,
+              "max": 22
+            },
+            "is_balanced": true,
+            "stopper_in_opponent_suit": true
+          },
+          {
+            "hcp": {
+              "min": 16
+            },
+            "suit_length": {
+              "min": 7
+            },
+            "suit_quality": {
+              "min": "excellent"
+            },
+            "stopper_in_opponent_suit": true
+          }
+        ]
+      },
+      "forcing": "none",
+      "explanation": "3NT overcall (strong balanced or long running suit with stopper)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "unusual_2nt_over_minor",
+      "bid": "2NT",
+      "priority": 780,
+      "description": "Unusual 2NT over minor opening showing 5-5 in majors",
+      "conditions": {
+        "is_overcall": true,
+        "is_balancing": false,
+        "my_bid_count": {
+          "max": 0
+        },
+        "opening_bid": {
+          "in": [
+            "1♣",
+            "1♦"
+          ]
+        },
+        "hcp": {
+          "min": 8,
+          "max": 15
+        },
+        "spades_length": {
+          "min": 5
+        },
+        "hearts_length": {
+          "min": 5
+        }
+      },
+      "forcing": "one_round",
+      "explanation": "Unusual 2NT showing 5-5 in both major suits",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
       "id": "competitive_later_pass_weak",
       "bid": "Pass",
       "priority": 15,
