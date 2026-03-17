@@ -401,6 +401,13 @@ class PlayEngine:
         1. Must follow suit if able
         2. If void in led suit, any card is legal
         """
+        # Validate suit format: must be Unicode symbols, not ASCII letters
+        _VALID_SUITS = {'♠', '♥', '♦', '♣'}
+        assert card.suit in _VALID_SUITS, (
+            f"Card suit must be Unicode symbol, got {card.suit!r}. "
+            f"Use utils.suits.normalize_suit() to convert."
+        )
+
         if card not in hand.cards:
             return False
 
@@ -431,6 +438,19 @@ class PlayEngine:
         """
         if len(trick) != 4:
             raise ValueError("Trick must have exactly 4 cards")
+
+        # Validate suit format on all cards in trick
+        _VALID_SUITS = {'♠', '♥', '♦', '♣'}
+        for card, player in trick:
+            assert card.suit in _VALID_SUITS, (
+                f"Card suit must be Unicode symbol, got {card.suit!r} "
+                f"(player {player}). Use utils.suits.normalize_suit() to convert."
+            )
+        if trump_suit is not None:
+            assert trump_suit in _VALID_SUITS, (
+                f"Trump suit must be Unicode symbol or None, got {trump_suit!r}. "
+                f"Use utils.suits.normalize_suit() to convert."
+            )
 
         led_suit = trick[0][0].suit
 

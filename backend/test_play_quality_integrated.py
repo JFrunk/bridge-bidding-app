@@ -36,6 +36,8 @@ except ImportError:
 
 
 from utils.dealing import deal_four_hands
+from utils.seats import SEATS, SEAT_NAMES
+from utils.error_logger import log_error
 
 
 class IntegratedPlayQualityScorer:
@@ -93,8 +95,7 @@ class IntegratedPlayQualityScorer:
                 self._test_single_hand(i)
             except Exception as e:
                 print(f"   Warning: Error testing hand {i}: {e}")
-                import traceback
-                traceback.print_exc()
+                log_error(e, context={'hand_number': i})
                 continue
 
         print()
@@ -131,9 +132,7 @@ class IntegratedPlayQualityScorer:
     def _simulate_bidding(self, hands: Dict[str, Hand], dealer: str, vulnerability: str) -> Optional[Contract]:
         """Simulate bidding to establish contract using BiddingEngine."""
         # PlayEngine uses single letters, BiddingEngine uses full names
-        short_positions = ['N', 'E', 'S', 'W']
-        long_positions = ['North', 'East', 'South', 'West']
-        dealer_idx = short_positions.index(dealer)
+        dealer_idx = SEATS.index(dealer)
 
         auction_history = []
         consecutive_passes = 0
@@ -141,8 +140,8 @@ class IntegratedPlayQualityScorer:
 
         # Run auction
         while consecutive_passes < 3 and len(auction_history) < 50:
-            short_pos = short_positions[current_idx % 4]
-            long_pos = long_positions[current_idx % 4]
+            short_pos = SEATS[current_idx % 4]
+            long_pos = SEAT_NAMES[short_pos]
             hand = hands[short_pos]
 
             try:
@@ -263,11 +262,15 @@ class IntegratedPlayQualityScorer:
                         play_state.current_trick_leader = winner
                         play_state.current_trick = []
                     else:
-                        # Next player in rotation (use short position name)
-                        play_state.next_to_play = PlayEngine.next_player(current_player_short)
+                        # Next player in rotation
+                        play_state.next_to_play = PlayEngine.next_player(current_player)
 
+                except (NameError, AttributeError) as e:
+                    # Programming errors must surface immediately
+                    print(f"   FATAL: Programming error in hand {hand_number}, trick {len(play_state.trick_history) + 1}: {e}")
+                    log_error(e, context={'hand_number': hand_number, 'trick': len(play_state.trick_history) + 1})
+                    raise
                 except Exception as e:
-                    # Log error silently
                     errors.append({
                         'type': 'exception',
                         'player': current_player,
@@ -296,8 +299,8 @@ class IntegratedPlayQualityScorer:
 
     def _score_play(self, play_result: Dict, contract: Contract, hand_number: int):
         """Score the quality of play."""
-        # Get tricks won by declarer
-        if contract.declarer in ['North', 'South']:
+        # Get tricks won by declarer (declarer uses single-letter format: N/E/S/W)
+        if contract.declarer in ('N', 'S'):
             tricks_won = play_result['tricks_won_ns']
         else:
             tricks_won = play_result['tricks_won_ew']

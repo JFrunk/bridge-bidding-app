@@ -92,6 +92,29 @@ def normalize(position: Optional[str]) -> str:
     return full_map.get(pos.upper(), 'N')
 
 
+def to_full_name(seat: str) -> str:
+    """
+    Convert single-letter seat to full name.
+
+    Args:
+        seat: Single-letter seat ('N', 'E', 'S', 'W') or full name
+
+    Returns:
+        Full name ('North', 'East', 'South', 'West')
+
+    Examples:
+        to_full_name('N') -> 'North'
+        to_full_name('South') -> 'South'
+
+    Raises:
+        ValueError: If seat is not a recognized position
+    """
+    normalized = normalize(seat)
+    if normalized not in SEAT_NAMES:
+        raise ValueError(f"Invalid seat: {seat!r}")
+    return SEAT_NAMES[normalized]
+
+
 def seat_index(seat: str) -> int:
     """
     Convert seat string to index (0-3).
