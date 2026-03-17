@@ -1,4 +1,5 @@
 from engine.hand import Hand
+from utils.seats import SEAT_NAMES, seat_from_index
 from engine.ai.feature_extractor import extract_features
 from engine.ai.decision_engine import select_bidding_module
 from engine.ai.bid_explanation import BidExplanation, ExplanationLevel
@@ -25,6 +26,7 @@ from engine.ai.conventions.negative_doubles import NegativeDoubleConvention
 from engine.ai.conventions.michaels_cuebid import MichaelsCuebidConvention
 from engine.ai.conventions.unusual_2nt import Unusual2NTConvention
 from engine.ai.conventions.splinter_bids import SplinterBidsConvention
+from engine.ai.conventions.control_bids import ControlBidsConvention
 from engine.ai.conventions.fourth_suit_forcing import FourthSuitForcingConvention
 from engine.ai.conventions.gerber import GerberConvention
 from engine.ai.conventions.minor_suit_bust import MinorSuitBustConvention
@@ -64,7 +66,8 @@ class BiddingEngine:
             'advancer_bids', 'overcalls', 'balancing', 'stayman', 'jacoby', 'preempts',
             'blackwood', 'gerber', 'grand_slam_force', 'minor_suit_bust',
             'takeout_doubles', 'negative_doubles',
-            'michaels_cuebid', 'unusual_2nt', 'splinter_bids', 'fourth_suit_forcing'
+            'michaels_cuebid', 'unusual_2nt', 'splinter_bids', 'control_bids',
+            'fourth_suit_forcing'
         ]
 
         missing = [name for name in expected_modules if not ModuleRegistry.exists(name)]
@@ -107,10 +110,9 @@ class BiddingEngine:
             # Dealer is determined by: auction_history[0] was made by dealer
             # Current bidder is at position len(auction_history) from dealer
             # So dealer = my_position - len(auction_history) % 4
-            base_positions = ['North', 'East', 'South', 'West']
-            my_idx = base_positions.index(my_position)
-            dealer_idx = (my_idx - len(auction_history)) % 4
-            dealer = base_positions[dealer_idx]
+            full_positions = list(SEAT_NAMES.values())
+            my_idx = full_positions.index(my_position)
+            dealer = SEAT_NAMES[seat_from_index(my_idx - len(auction_history))]
 
         # Time feature extraction
         t0 = time.time()
@@ -259,10 +261,9 @@ class BiddingEngine:
         """
         # Infer dealer if not provided (for backward compatibility)
         if dealer is None:
-            base_positions = ['North', 'East', 'South', 'West']
-            my_idx = base_positions.index(my_position)
-            dealer_idx = (my_idx - len(auction_history)) % 4
-            dealer = base_positions[dealer_idx]
+            full_positions = list(SEAT_NAMES.values())
+            my_idx = full_positions.index(my_position)
+            dealer = SEAT_NAMES[seat_from_index(my_idx - len(auction_history))]
 
         features = extract_features(hand, auction_history, my_position, vulnerability, dealer)
         module_name = select_bidding_module(features)
@@ -348,7 +349,7 @@ class BiddingEngine:
         # Use BiddingState for game-forcing detection and combined strength
         try:
             from utils.seats import normalize, partnership_str
-            positions = features.get('positions', ['North', 'East', 'South', 'West'])
+            positions = features.get('positions', list(SEAT_NAMES.values()))
             my_index = features.get('my_index', 0)
 
             bidding_state = features.get('bidding_state')

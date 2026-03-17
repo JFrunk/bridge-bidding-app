@@ -11,6 +11,7 @@ from engine.ai.conventions.negative_doubles import NegativeDoubleConvention
 from engine.ai.conventions.michaels_cuebid import MichaelsCuebidConvention
 from engine.ai.conventions.unusual_2nt import Unusual2NTConvention
 from engine.ai.conventions.splinter_bids import SplinterBidsConvention
+from engine.ai.conventions.control_bids import ControlBidsConvention
 from engine.ai.conventions.fourth_suit_forcing import FourthSuitForcingConvention
 
 def select_bidding_module(features):
@@ -167,6 +168,11 @@ def select_bidding_module(features):
         if blackwood.evaluate(features['hand'], features):
             return 'blackwood'
 
+        # Check for Control bids (cue-bidding before Blackwood)
+        control_bids = ControlBidsConvention()
+        if control_bids.evaluate(features['hand'], features):
+            return 'control_bids'
+
         # Check for Splinter bids (slam interest with shortness)
         splinter = SplinterBidsConvention()
         if splinter.evaluate(features['hand'], features):
@@ -224,6 +230,11 @@ def select_bidding_module(features):
         gerber = GerberConvention()
         if gerber.evaluate(features['hand'], features):
             return 'gerber'
+
+        # Control bids (cue-bidding after agreed major, before Blackwood)
+        control_bids = ControlBidsConvention()
+        if control_bids.evaluate(features['hand'], features):
+            return 'control_bids'
 
         # Check for Fourth Suit Forcing response (partner bid 4th suit as artificial force)
         fsf = FourthSuitForcingConvention()
