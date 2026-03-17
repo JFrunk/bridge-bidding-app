@@ -1,0 +1,81 @@
+% TIER 2: SPECIALIZED (CONVENTIONS)
+% Ground truth for convention-specific bidding sequences.
+
+[Event "Tier 2: NMF"]
+[Board "3"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:AQJ5.64.AKJ5.T93 T7.AKJ95.92.8642 9842.QT.876.AQJ5 K63.8732.QT43.K7"]
+[Auction "N"]
+1D Pass 1S Pass
+1NT Pass 2C Pass
+2S Pass 4S Pass
+Pass Pass
+% N: 13 HCP, 4-2-4-3 → 1D.
+% S: 11 HCP, 4 spades → 1S.
+% N: Balanced → 1NT rebid.
+% S: NMF 2C, asking for 4 spades.
+% N: Shows 4 spades → 2S. S: Game values → 4S.
+
+[Event "Tier 2: FSF"]
+[Board "4"]
+[Dealer "W"]
+[Vulnerable "All"]
+[Deal "W:AK5.T84.AQ87.J42 QJ8.KJ75.4.KQT86 42.A963.KJ932.A7 T9763.Q2.T65.953"]
+[Auction "W"]
+1D Pass 1H Pass
+1NT Pass 2C Pass
+2NT Pass 3NT Pass
+Pass Pass
+% W: 14 HCP → 1D.
+% N: 14 HCP → 1H.
+% W: Balanced → 1NT rebid.
+% N: FSF 2C, asking opener to clarify.
+
+[Event "Tier 2: Strong 2C"]
+[Board "20"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:KQ43.AKJ8.A5.AJ8 AJT8.T43.73.QT76 96.Q96.KJ9642.K2 752.752.QT8.9543"]
+[Auction "N"]
+2C Pass 2D Pass
+2NT Pass 3NT Pass
+Pass Pass
+% N: 22 HCP, 4-4-2-3 balanced → 2C (strong, artificial).
+% S: 9 HCP → 2D (waiting).
+% N: Balanced 22-24 → 2NT.
+% S: Enough for game opposite 22-24 → 3NT.
+
+[Event "Tier 2: Weak 2 Opening"]
+[Board "21"]
+[Dealer "E"]
+[Vulnerable "None"]
+[Deal "E:7.KQT964.J83.K74 AQJ.82.A95.T9632 K86.AJ53.T2.AJ85 T95432.7.KQ764.Q"]
+[Auction "E"]
+2H Pass Pass Pass
+% E: 9 HCP, 6 hearts (KQT964) → Weak 2H.
+
+[Event "Tier 2: Inverted Minor"]
+[Board "22"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:875.A.K8732.AQJ3 QT3.JT9.5.T76542 J4.KQ754.AQT94.9 AK962.8632.J6.K8"]
+[Auction "N"]
+1D Pass 2D Pass
+3NT Pass Pass Pass
+% N: 13 HCP, 5 diamonds → 1D.
+% S: 13 HCP, 5 diamonds → 2D (inverted minor raise, 10+, forcing).
+% N: Stoppers, game values → 3NT.
+
+[Event "Tier 2: Drury"]
+[Board "34"]
+[Dealer "S"]
+[Vulnerable "None"]
+[Deal "S:AQT72.KQ52..T942 54.AT986.T974.AJ KJ963..Q865.KQ63 8.J743.AKJ32.875"]
+[Auction "S"]
+Pass Pass 1S Pass
+2C Pass Pass Pass
+% S: 12 HCP but passes (borderline).
+% W: Passes.
+% N: 11 HCP, 5 spades → opens 1S in 3rd seat.
+% S: 3+ spade support, limit raise values → 2C (Drury).

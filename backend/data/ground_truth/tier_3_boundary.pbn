@@ -1,0 +1,166 @@
+% TIER 3: BOUNDARY (PHYSICS)
+% Ground truth for edge cases, overcalls, takeout doubles, and interference.
+
+[Event "Tier 3: Rule of 20"]
+[Board "5"]
+[Dealer "E"]
+[Vulnerable "None"]
+[Deal "E:AKJ85.4.T9762.53 Q.AQJ83.K5.AJT84 T964.K76.QJ3.972 732.T952.A84.KQ6"]
+[Auction "E"]
+1S Pass 4S Pass
+Pass Pass
+% E: 10 HCP, 5+5 (spades+diamonds). Rule of 20: 10+5+5=20 → opens 1S.
+
+[Event "Tier 3: Dubious Honors"]
+[Board "6"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:K.AQJ54.T842.K53 AT43.T.Q963.QJ84 QJ5.K872.AK7.T72 98762.963.J5.A96"]
+[Auction "N"]
+1H Pass 3H Pass
+Pass Pass
+% N: 13 HCP (singleton K dubious but counted), 5 hearts → 1H.
+% S: 13 HCP, 4-card heart support → 3H (limit raise).
+
+[Event "Tier 3: Simple Overcall"]
+[Board "7"]
+[Dealer "S"]
+[Vulnerable "None"]
+[Deal "S:A3.KJ872.T42.863 KJT4.A9.Q87.QJ74 Q72.T54.AK95.K95 9865.Q63.J63.AT2"]
+[Auction "S"]
+1H 1S Pass Pass
+Pass
+% S: 10 HCP, 5 hearts → 1H.
+% W: 13 HCP, 4 spades → 1S overcall.
+
+[Event "Tier 3: Takeout Double"]
+[Board "8"]
+[Dealer "W"]
+[Vulnerable "All"]
+[Deal "W:4.AQT3.KJ92.A762 AKJ7.42.Q76.QT84 Q982.KJ85.T4.J93 T653.976.A853.K5"]
+[Auction "W"]
+1D Dbl Pass 1S
+Pass Pass Pass
+% W: 14 HCP → 1D.
+% N: 12 HCP, 4 spades, 4 clubs, short diamonds → Takeout X.
+% S: 7 HCP, 4 spades → 1S.
+
+[Event "Tier 3: 1NT Overcall"]
+[Board "9"]
+[Dealer "N"]
+[Vulnerable "NS"]
+[Deal "N:AKJ8.65.T97.QJ43 742.AQJ9.AQ4.T85 Q93.K432.K65.A72 T65.T87.J832.K96"]
+[Auction "N"]
+1C 1NT Pass 3NT
+Pass Pass Pass
+% N: 12 HCP → 1C.
+% E: 15 HCP, balanced, club stopper → 1NT overcall.
+
+[Event "Tier 3: Weak Jump Overcall"]
+[Board "10"]
+[Dealer "E"]
+[Vulnerable "None"]
+[Deal "E:7.K64.AQJ832.K74 AQJ954.82.95.T62 K862.AQJ5.T.AJ85 T3.T973.K764.Q93"]
+[Auction "E"]
+1D 2S Pass Pass
+Pass
+% E: 13 HCP, 6 diamonds → 1D.
+% S: 7 HCP, 6 spades (AQJ954) → 2S weak jump overcall.
+
+[Event "Tier 3: Balancing Double"]
+[Board "11"]
+[Dealer "S"]
+[Vulnerable "None"]
+[Deal "S:AJ8.T98.Q72.K863 7.KJ42.AK95.QT92 KQ943.A3.J64.J74 T652.Q765.T83.A5"]
+[Auction "S"]
+1C Pass Pass Dbl
+Pass 1H Pass Pass
+Pass
+% S: 12 HCP → 1C.
+% W: 10 HCP → Balancing Double (threshold lowered in balancing seat).
+
+[Event "Tier 3: Big Takeout Double"]
+[Board "12"]
+[Dealer "W"]
+[Vulnerable "EW"]
+[Deal "W:A7.K5.AQ975.KJ84 K63.AQJ984.8.T62 QJ982.T3.KJ4.Q93 T54.762.T632.A75"]
+[Auction "W"]
+1D Dbl Pass 2H
+Pass Pass Pass
+% W: 16 HCP → 1D.
+% N: 14 HCP, 6 hearts → Takeout Double.
+% S: 4 HCP, 3 hearts → 2H.
+
+[Event "Tier 3: Advancing an Overcall"]
+[Board "13"]
+[Dealer "N"]
+[Vulnerable "All"]
+[Deal "N:7.QJ983.AK4.T952 KJ854.A2.T83.Q84 A92.K75.762.AKJ7 QT63.T64.QJ95.63"]
+[Auction "N"]
+1H 1S Pass 2S
+Pass Pass Pass
+% N: 11 HCP → 1H.
+% E: 11 HCP, 5 spades → 1S overcall.
+% W: 9 HCP, 4 spade support → 2S (simple raise).
+
+[Event "Tier 3: 2-Level Overcall"]
+[Board "14"]
+[Dealer "E"]
+[Vulnerable "None"]
+[Deal "E:A85.Q3.KT87.AJ73 4.AKJ.AQ9642.T84 KJT7.87652.J.K95 Q9632.T94.53.Q62"]
+[Auction "E"]
+1C 2D Pass Pass
+Pass
+% E: 14 HCP → 1C.
+% S: 14 HCP, 6 diamonds (AQ9642) → 2D overcall.
+
+[Event "Tier 3: Takeout Double vs. 1NT"]
+[Board "15"]
+[Dealer "S"]
+[Vulnerable "NS"]
+[Deal "S:AQJ.T84.K75.A962 K986.AK95.T832.5 74.QJ73.AJ94.QT8 T532.62.Q6.KJ743"]
+[Auction "S"]
+1NT Dbl Pass Pass
+Pass
+% S: 15 HCP, balanced → 1NT.
+% W: 16 HCP → Penalty Double of 1NT.
+
+[Event "Tier 3: Jump Advance"]
+[Board "16"]
+[Dealer "W"]
+[Vulnerable "None"]
+[Deal "W:4.AK87.QJT5.A954 AJ983.J42.92.K72 Q75.T93.AK873.Q3 KT62.Q65.64.JT86"]
+[Auction "W"]
+1D Dbl Pass 2S
+Pass Pass Pass
+% W: 14 HCP → 1D.
+% N: 9 HCP, 5 spades → 1S overcall.
+% S: 6 HCP, 4 spades → 2S (simple raise of overcall).
+
+[Event "Tier 3: Negative Double"]
+[Board "23"]
+[Dealer "S"]
+[Vulnerable "None"]
+[Deal "S:Q9764.K8.AJ.K532 K32.QT642.K862.Q J85.A9.Q97.J9874 AT.J753.T543.AT6"]
+[Auction "S"]
+1S 2H Dbl Pass
+4S Pass Pass Pass
+% S: 13 HCP, 5 spades → 1S.
+% W: 10 HCP, 5 hearts → overcalls 2H.
+% N: 8 HCP, 3 spade support → Negative Double.
+% S: 4S with fit and values.
+
+[Event "Tier 3: Slam (RKCB)"]
+[Board "24"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:QT.AK2.A53.AK643 KJ8.JT8743.T64.5 A7653.9.K982.Q82 942.Q65.QJ7.JT97"]
+[Auction "N"]
+1C Pass 1S Pass
+4NT Pass 5D Pass
+6S Pass Pass Pass
+% N: 20 HCP, 5 clubs → 1C.
+% S: 11 HCP, 5 spades → 1S.
+% N: Slam interest → 4NT (RKCB).
+% S: 1 keycard → 5D (1430: 1 or 4).
+% N: 6S.

@@ -1,0 +1,124 @@
+% TIER 4: ADVANCED (2/1 GF, Gerber, Splinters, Control Bids)
+% Ground truth for advanced conventions and competitive sequences.
+
+[Event "Tier 4: 2/1 GF"]
+[Board "25"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:KQJ875.KQT84.K.J A94.72.Q5.KT9764 T6.J6.AJ62.AQ852 32.A953.T98743.3"]
+[Auction "N"]
+1S Pass 2C Pass
+3C Pass 4S Pass
+Pass Pass
+% N: 14 HCP, 5 spades, 5 hearts → 1S.
+% S: 13 HCP, 5 clubs → 2C (game-forcing 2/1 response).
+% N: Supports clubs → 3C.
+% S: Returns to 4S.
+
+[Event "Tier 4: 1NT Forcing"]
+[Board "26"]
+[Dealer "S"]
+[Vulnerable "None"]
+[Deal "S:AKJ75.4.T87.QJ83 9.AKQJ5.9642.T65 QT8.87.AKJ3.A942 6432.T9632.Q5.K7"]
+[Auction "S"]
+1S Pass 1NT Pass
+2C Pass 2S Pass
+Pass Pass
+% S: 14 HCP, 5 spades → 1S.
+% N: 13 HCP, no 5-card suit, no fit → 1NT forcing.
+% S: Rebids 2C (second suit).
+% N: Preference back to 2S.
+
+[Event "Tier 4: Gerber (4C)"]
+[Board "27"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:AK6.A72.K32.AK43 J8752.J8.JT86.75 Q3.KQ3.Q9.QJT862 T94.T9654.A754.9"]
+[Auction "N"]
+2NT Pass 4C Pass
+4H Pass 6NT Pass
+Pass Pass
+% N: 21 HCP, 3-3-3-4 balanced → 2NT.
+% S: 12 HCP → 4C (Gerber, asking for aces).
+% N: 4 aces → 4H response.
+% S: All aces accounted for → 6NT.
+
+[Event "Tier 4: Splinter Bid"]
+[Board "28"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:AKJ75.4.AKJ8.T93 9.AKQJ5.9642.864 QT84.87.75.AKQJ2 632.T9632.QT3.75"]
+[Auction "N"]
+1S Pass 4H Pass
+4S Pass Pass Pass
+% N: 16 HCP, 5 spades → 1S.
+% S: 13 HCP, 4 spade support, heart shortage → 4H (splinter).
+% N: Signs off → 4S.
+
+[Event "Tier 4: Control Bids"]
+[Board "29"]
+[Dealer "N"]
+[Vulnerable "None"]
+[Deal "N:AKJ75.A.AKJ8.T93 9.QJ952.9642.864 QT84.K7.Q75.AKQJ 632.T8643.T3.752"]
+[Auction "N"]
+1S Pass 3S Pass
+4C Pass 4D Pass
+6S Pass Pass Pass
+% N: 20 HCP, 5 spades → 1S.
+% S: 16 HCP, 4 spade support → 3S (forcing).
+% N: Control bid 4C (ace of clubs).
+% S: Control bid 4D (diamond values).
+% N: 6S.
+
+[Event "Tier 4: Responsive Double"]
+[Board "30"]
+[Dealer "W"]
+[Vulnerable "None"]
+[Deal "W:98.K98.AQ62.A832 AK73.JT542.5.KQ4 JT642..K987.J975 Q5.AQ763.JT43.T6"]
+[Auction "W"]
+1D Dbl 1S Dbl
+Pass 2H Pass Pass
+Pass
+% W: 13 HCP → 1D.
+% N: 14 HCP, 5 hearts, support for unbid suits → Takeout Double.
+% E: 4 spades → 1S.
+% S: 8 HCP, 5 hearts → Responsive Double.
+% N: Bids 2H.
+
+[Event "Tier 4: Support Double"]
+[Board "31"]
+[Dealer "S"]
+[Vulnerable "None"]
+[Deal "S:KT8.A54.7.AKJ974 972.KJT86.J8.Q83 J5.9732.AQ952.52 AQ643.Q.KT643.T6"]
+[Auction "S"]
+1C Pass 1H 1S
+Dbl Pass 2H Pass
+Pass Pass
+% S: 15 HCP, 6 clubs, 3 hearts → 1C.
+% N: 7 HCP, 4 hearts → 1H.
+% E: 11 HCP, 5 spades → overcalls 1S.
+% S: Support Double showing exactly 3-card heart support.
+
+[Event "Tier 4: Unusual 2NT"]
+[Board "32"]
+[Dealer "E"]
+[Vulnerable "None"]
+[Deal "E:T.QJT9.AK9763.A8 752.A6532..KJ762 Q9864.K84.T85.Q5 AKJ3.7.QJ42.T943"]
+[Auction "E"]
+1D 2NT Pass 3H
+Pass Pass Pass
+% E: 14 HCP, 6 diamonds → 1D.
+% S: 5 hearts + 5 clubs → 2NT (Unusual, showing two lowest unbid suits).
+% W: Picks hearts → 3H.
+
+[Event "Tier 4: Michaels Cue"]
+[Board "33"]
+[Dealer "S"]
+[Vulnerable "None"]
+[Deal "S:AKQ73.K863.JT.J5 6.Q9542.A2.T9876 954.JT7.K976.AK2 JT82.A.Q8543.Q43"]
+[Auction "S"]
+1S 2S Pass 3H
+Pass Pass Pass
+% S: 14 HCP, 5 spades → 1S.
+% W: 5 hearts + 5 clubs → 2S (Michaels Cue Bid).
+% E: Picks hearts → 3H.

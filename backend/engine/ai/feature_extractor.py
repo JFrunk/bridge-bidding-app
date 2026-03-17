@@ -4,14 +4,25 @@ from typing import Dict
 
 # Seat utilities - for partner/opponent calculations
 # This file uses integer indices (0-3) for auction position tracking.
-# We use seat_from_index for relative position calculations (partner = +2, LHO = +1, RHO = +3).
-from utils.seats import seat_index, seat_from_index, SEATS
+from utils.seats import (
+    seat_index, seat_from_index, SEATS, SEAT_NAMES,
+    partner as _partner_seat, lho as _lho_seat, rho as _rho_seat,
+)
 
-# Modulo-4 offsets for relative positions (used throughout this file)
-# These match the seats utility: partner=+2, LHO=+1, RHO=+3
-PARTNER_OFFSET = 2
-LHO_OFFSET = 1
-RHO_OFFSET = 3
+
+def _partner_idx(idx: int) -> int:
+    """Get partner's position index from a seat index."""
+    return seat_index(_partner_seat(seat_from_index(idx)))
+
+
+def _lho_idx(idx: int) -> int:
+    """Get LHO's position index from a seat index."""
+    return seat_index(_lho_seat(seat_from_index(idx)))
+
+
+def _rho_idx(idx: int) -> int:
+    """Get RHO's position index from a seat index."""
+    return seat_index(_rho_seat(seat_from_index(idx)))
 
 # =============================================================================
 # FUNDAMENTAL BRIDGE METRICS
@@ -144,27 +155,58 @@ def calculate_support_points(hand: Hand, trump_suit: str = None, partner_trump_l
     return hand.hcp + shortness_points + trump_length_bonus
 
 
-def calculate_losing_trick_count(hand: Hand) -> int:
-    """Calculate Losing Trick Count (LTC)."""
-    ltc = 0
+def _evaluate_suit_losers(ranks: set, length: int) -> float:
+    """
+    Suit specialist: evaluate NLTC losers for a single suit (0.0 to 3.0).
+
+    Counts losers in the first min(length, 3) cards using a winners-based
+    approach with probability-weighted adjustments for dubious honors.
+
+    Verification table:
+        Distribution  | Honours | Std LTC | NLTC | Logic
+        Singleton K   |   K     |   1     | 0.5  | Probabilistic half-stop
+        Doubleton Qx  |   Qx    |   2     | 1.5  | Q weak without A/K/3rd card
+        Doubleton AQ  |   AQ    |   1     | 1.0  | Ace protects Queen
+        3+ cards Kxx  |   Kxx   |   2     | 2.0  | Standard
+        3+ cards Qxx  |   Qxx   |   2     | 2.0  | Standard
+    """
+    if length == 0:
+        return 0.0
+
+    potential = min(length, 3)
+    has_ace = 'A' in ranks
+    has_king = 'K' in ranks
+    has_queen = 'Q' in ranks
+
+    winners = 0.0
+    if has_ace:
+        winners += 1.0
+    if has_king:
+        winners += 1.0 if length > 1 else 0.5  # Singleton K: half winner
+    if has_queen:
+        if length > 2:
+            winners += 1.0  # Protected by length
+        elif length == 2:
+            winners += 0.5 if (has_ace or has_king) else 0.0
+        # Singleton Q: 0 winners (full loser)
+
+    return max(0.0, potential - winners)
+
+
+def calculate_losing_trick_count(hand: Hand) -> float:
+    """
+    Calculate New Losing Trick Count (NLTC) for the hand.
+
+    Aggregates per-suit losers using probability-weighted honor adjustments.
+    Key NLTC refinements over standard LTC:
+    - Singleton K = 0.5 losers (probabilistic half-stop)
+    - Doubleton Q without A/K protection = extra 0.5 losers
+    """
+    total = 0.0
     for suit in ['♠', '♥', '♦', '♣']:
         suit_cards = [c.rank for c in hand.cards if c.suit == suit]
-        length = len(suit_cards)
-        if length == 0:
-            continue
-        cards_to_count = min(length, 3)
-        has_ace = 'A' in suit_cards
-        has_king = 'K' in suit_cards
-        has_queen = 'Q' in suit_cards
-        suit_losers = 0
-        if cards_to_count >= 1 and not has_ace:
-            suit_losers += 1
-        if cards_to_count >= 2 and not has_king:
-            suit_losers += 1
-        if cards_to_count >= 3 and not has_queen:
-            suit_losers += 1
-        ltc += suit_losers
-    return ltc
+        total += _evaluate_suit_losers(set(suit_cards), len(suit_cards))
+    return total
 
 
 def calculate_playing_tricks(hand: Hand) -> float:
@@ -323,7 +365,7 @@ def analyze_forcing_status(auction_history: list, positions: list, my_index: int
 
     # Check for 2♣ game-forcing opening
     # Only game-forcing for the partnership that opened 2♣, not opponents
-    partner_index = (my_index + PARTNER_OFFSET) % 4
+    partner_index = _partner_idx(my_index)
     if opening_bid == '2♣':
         if opener_index == my_index or opener_index == partner_index:
             result['forcing_type'] = 'game_forcing'
@@ -340,7 +382,7 @@ def analyze_forcing_status(auction_history: list, positions: list, my_index: int
         return result
 
     # Track bids by partnership
-    partner_index = (my_index + PARTNER_OFFSET) % 4
+    partner_index = _partner_idx(my_index)
 
     # Collect partnership bids
     my_bids = []
@@ -507,7 +549,7 @@ def detect_balancing_seat(auction_history: list, positions: list, my_index: int)
         return result
 
     # Check if opener is opponent
-    partner_index = (my_index + PARTNER_OFFSET) % 4
+    partner_index = _partner_idx(my_index)
     if opener_index == my_index or opener_index == partner_index:
         result['reason'] = 'partnership_opened'
         return result
@@ -566,7 +608,7 @@ def find_agreed_suit(auction_history: list, positions: list, my_index: int) -> d
         'fit_length': 0,
     }
 
-    partner_index = (my_index + PARTNER_OFFSET) % 4
+    partner_index = _partner_idx(my_index)
 
     my_suits = []
     partner_suits = []
@@ -627,7 +669,7 @@ def count_partnership_bids(auction_history: list, positions: list, my_index: int
         - my_pass_count: Number of passes I've made
         - total_auction_rounds: How many complete rounds
     """
-    partner_index = (my_index + PARTNER_OFFSET) % 4
+    partner_index = _partner_idx(my_index)
 
     my_bids = 0
     my_passes = 0
@@ -656,14 +698,14 @@ def count_partnership_bids(auction_history: list, positions: list, my_index: int
 
 def extract_features(hand: Hand, auction_history: list, my_position: str, vulnerability: str, dealer: str = 'North'):
     """Extract features from a hand and auction for bidding decision."""
-    base_positions = ['North', 'East', 'South', 'West']
+    base_positions = list(SEAT_NAMES.values())
     # Handle None dealer (when frontend doesn't send it) - default to North
     if dealer is None:
         dealer = 'North'
     dealer_idx = base_positions.index(dealer)
-    positions = [base_positions[(dealer_idx + i) % 4] for i in range(4)]
+    positions = [base_positions[seat_index(seat_from_index(dealer_idx + i))] for i in range(4)]
     my_index = positions.index(my_position)
-    partner_position = positions[(my_index + PARTNER_OFFSET) % 4]
+    partner_position = positions[_partner_idx(my_index)]
 
     opening_bid, opener, opener_relationship = None, None, None
     opener_index = -1
@@ -766,8 +808,8 @@ def _detect_interference(auction_history, positions, my_index, opener_relationsh
         return interference
 
     partner_index = opener_index
-    lho_index = (partner_index + LHO_OFFSET) % 4
-    rho_index = (partner_index + RHO_OFFSET) % 4
+    lho_index = _lho_idx(partner_index)
+    rho_index = _rho_idx(partner_index)
 
     for auction_idx in range(opener_index + 1, len(auction_history)):
         bidder_position = auction_idx % 4

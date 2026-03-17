@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "new_minor_forcing",
+  "description": "New Minor Forcing: Opener's clarification responses after 1m-1M-1NT-2(new minor)",
+  "rules": [
+    {
+      "id": "nmf_opener_show_3_card_spade_support",
+      "bid": "2♠",
+      "priority": 820,
+      "description": "NMF response: Show 3+ card support for responder's spades",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_bid_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "nmf_responder_major", "expected": "♠", "constraint_type": "HARD"},
+        {"feature": "spades_length", "min": 3, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "NMF response: Showing 3+ card spade support for responder's 5-card suit",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "nmf_opener_show_3_card_heart_support",
+      "bid": "2♥",
+      "priority": 820,
+      "description": "NMF response: Show 3+ card support for responder's hearts",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_bid_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "nmf_responder_major", "expected": "♥", "constraint_type": "HARD"},
+        {"feature": "hearts_length", "min": 3, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "NMF response: Showing 3+ card heart support for responder's 5-card suit",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "nmf_opener_show_4_card_hearts",
+      "bid": "2♥",
+      "priority": 815,
+      "description": "NMF response: Show 4-card hearts (unbid major) when responder bid spades",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_bid_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "nmf_responder_major", "expected": "♠", "constraint_type": "HARD"},
+        {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "spades_length", "max": 2, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "NMF response: Showing 4-card hearts (unbid major), denying spade support",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "nmf_opener_show_4_card_spades",
+      "bid": "2♠",
+      "priority": 815,
+      "description": "NMF response: Show 4-card spades (unbid major) when responder bid hearts",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_bid_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "nmf_responder_major", "expected": "♥", "constraint_type": "HARD"},
+        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "max": 2, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "NMF response: Showing 4-card spades (unbid major), denying heart support",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "nmf_opener_deny_2nt_minimum",
+      "bid": "2NT",
+      "priority": 810,
+      "description": "NMF response: Deny major features, minimum hand (12-13 HCP)",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_bid_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 12, "max": 13, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+      ],
+      "forcing": "none",
+      "explanation": "NMF response: No major fit, minimum hand (12-13 HCP)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "nmf_opener_deny_3nt_maximum",
+      "bid": "3NT",
+      "priority": 811,
+      "description": "NMF response: Deny major features, maximum hand (14+ HCP)",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_bid_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 14, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "NMF response: No major fit, maximum hand (14+ HCP) — 3NT to play",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

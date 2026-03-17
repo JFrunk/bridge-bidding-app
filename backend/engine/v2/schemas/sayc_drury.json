@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "drury",
+  "description": "Reverse Drury: Passed-hand inquiry after partner's 3rd/4th seat major opening",
+  "rules": [
+    {
+      "id": "drury_2c_inquiry",
+      "bid": "2♣",
+      "priority": 810,
+      "description": "Drury 2♣ inquiry by passed hand after partner opens 1♥/1♠ in 3rd/4th seat",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "was_passed_hand", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_opening_seat", "min": 3, "constraint_type": "HARD"},
+        {"feature": "my_bid_count", "max": 0, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "max": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "support_for_partner", "min": 3, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Drury 2♣: Asking if your 3rd/4th seat opening is sound (10-12 support points, 3+ fit)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "drury_opener_signoff_light",
+      "bid": "2♥",
+      "priority": 805,
+      "description": "Reverse Drury response: Light opening (10-12 HCP), sign off in 2♥",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♣", "constraint_type": "HARD"},
+        {"feature": "first_suit", "expected": "♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "max": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+      ],
+      "forcing": "none",
+      "explanation": "Light opening (10-12 HCP): Sign off at 2♥",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "drury_opener_signoff_light_spades",
+      "bid": "2♠",
+      "priority": 805,
+      "description": "Reverse Drury response: Light opening (10-12 HCP), sign off in 2♠",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♣", "constraint_type": "HARD"},
+        {"feature": "first_suit", "expected": "♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "max": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+      ],
+      "forcing": "none",
+      "explanation": "Light opening (10-12 HCP): Sign off at 2♠",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "drury_opener_sound_hearts",
+      "bid": "3♥",
+      "priority": 808,
+      "description": "Reverse Drury response: Sound opening (13-15 HCP) with hearts",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♣", "constraint_type": "HARD"},
+        {"feature": "first_suit", "expected": "♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 13, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+      ],
+      "forcing": "none",
+      "explanation": "Sound opening (13-15 HCP): Invitational raise to 3♥",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "drury_opener_sound_spades",
+      "bid": "3♠",
+      "priority": 808,
+      "description": "Reverse Drury response: Sound opening (13-15 HCP) with spades",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♣", "constraint_type": "HARD"},
+        {"feature": "first_suit", "expected": "♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 13, "max": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+      ],
+      "forcing": "none",
+      "explanation": "Sound opening (13-15 HCP): Invitational raise to 3♠",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "drury_opener_maximum_hearts",
+      "bid": "4♥",
+      "priority": 812,
+      "description": "Reverse Drury response: Maximum opening (16+ HCP), bid game",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♣", "constraint_type": "HARD"},
+        {"feature": "first_suit", "expected": "♥", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 16, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Maximum opening (16+ HCP): Bid game in hearts",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "drury_opener_maximum_spades",
+      "bid": "4♠",
+      "priority": 812,
+      "description": "Reverse Drury response: Maximum opening (16+ HCP), bid game",
+      "constraints": [
+        {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "2♣", "constraint_type": "HARD"},
+        {"feature": "first_suit", "expected": "♠", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 16, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Maximum opening (16+ HCP): Bid game in spades",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}
