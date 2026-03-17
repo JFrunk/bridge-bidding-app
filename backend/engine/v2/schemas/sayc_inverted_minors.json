@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "inverted_minors",
+  "description": "Inverted Minor raises: 1m-2m (strong, 10+ HCP, forcing) and 1m-3m (weak, 6-9 HCP, preemptive)",
+  "rules": [
+    {
+      "id": "inverted_raise_clubs_strong",
+      "bid": "2♣",
+      "priority": 360,
+      "description": "Inverted minor raise: Strong 2♣ over 1♣ (10+ HCP, 5+ clubs, no 4-card major)",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♣", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "clubs_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "spades_length", "max": 3, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "max": 3, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Inverted minor raise: 10+ HCP, 5+ clubs, forcing (denies 4-card major)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "inverted_raise_diamonds_strong",
+      "bid": "2♦",
+      "priority": 360,
+      "description": "Inverted minor raise: Strong 2♦ over 1♦ (10+ HCP, 4+ diamonds, no 4-card major)",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♦", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 10, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "diamonds_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "spades_length", "max": 3, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "max": 3, "constraint_type": "HARD"}
+      ],
+      "forcing": "one_round",
+      "explanation": "Inverted minor raise: 10+ HCP, 4+ diamonds, forcing (denies 4-card major)",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "inverted_raise_clubs_weak",
+      "bid": "3♣",
+      "priority": 355,
+      "description": "Inverted minor raise: Weak 3♣ over 1♣ (6-9 HCP, 5+ clubs, preemptive)",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♣", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 6, "max": 9, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "clubs_length", "min": 5, "constraint_type": "HARD"},
+        {"feature": "spades_length", "max": 3, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "max": 3, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Inverted minor raise: 6-9 HCP, 5+ clubs, preemptive (denies 4-card major)",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "inverted_raise_diamonds_weak",
+      "bid": "3♦",
+      "priority": 355,
+      "description": "Inverted minor raise: Weak 3♦ over 1♦ (6-9 HCP, 4+ diamonds, preemptive)",
+      "constraints": [
+        {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_last_bid", "expected": "1♦", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 6, "max": 9, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "diamonds_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "spades_length", "max": 3, "constraint_type": "HARD"},
+        {"feature": "hearts_length", "max": 3, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Inverted minor raise: 6-9 HCP, 4+ diamonds, preemptive (denies 4-card major)",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}

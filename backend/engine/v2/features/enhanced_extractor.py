@@ -270,6 +270,33 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['is_competitive_later'] = af['opener_relationship'] == 'Opponent' and bc['my_bid_count'] >= 1
     flat['is_responder_rebid'] = af['opener_relationship'] == 'Partner' and bc['my_bid_count'] >= 1
 
+    # Passed-hand detection: did I pass before anyone opened?
+    # A player is a "passed hand" if they had a chance to bid and passed
+    # before the first non-pass bid in the auction.
+    dealer_idx_ph = seat_index(dealer)
+    was_passed = False
+    first_non_pass_auction_idx = None
+    for i, bid in enumerate(auction_history):
+        if bid != 'Pass':
+            first_non_pass_auction_idx = i
+            break
+    if first_non_pass_auction_idx is not None:
+        # Check if any of my turns came before the first non-pass bid
+        for i in range(first_non_pass_auction_idx):
+            bidder = seat_from_index(dealer_idx_ph + i)
+            if bidder == my_position and auction_history[i] == 'Pass':
+                was_passed = True
+                break
+    flat['was_passed_hand'] = was_passed
+
+    # Opening seat: which seat (1-4) did the opener occupy?
+    # Seat 1 = dealer, seat 3/4 = light opening possible (Rule of 20)
+    opening_seat = 0
+    if first_non_pass_auction_idx is not None:
+        opening_seat = first_non_pass_auction_idx + 1  # 1-indexed
+    flat['opening_seat'] = opening_seat
+    flat['partner_opening_seat'] = opening_seat if af['opener_relationship'] == 'Partner' else 0
+
     # Advancer detection: partner made a competitive action over opponent's opening
     # This includes overcalls, takeout doubles, and suit bids
     partner_bids_temp = _get_partner_bids(auction_history, my_position, dealer)
@@ -706,6 +733,26 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
                     # Verify partner's 2NT was in response to my opening (not overcall situation)
                     # Partner's 2NT should be immediately after my 1M opening
                     flat['partner_bid_jacoby_2nt'] = True
+
+    # New Minor Forcing (NMF) detection
+    # NMF sequence: I opened 1m, partner responded 1M, I rebid 1NT, partner bid 2♣/2♦ (the new minor)
+    flat['partner_bid_nmf'] = False
+    flat['nmf_responder_major'] = None
+    if flat.get('is_rebid') and flat.get('my_last_bid') == '1NT' and my_bids:
+        my_opening = my_bids[0] if my_bids else None
+        if my_opening and get_bid_level(my_opening) == 1:
+            my_opening_suit = get_suit_from_bid(my_opening)
+            if my_opening_suit in ['♣', '♦']:
+                partner_last = flat.get('partner_last_bid', '')
+                partner_last_suit = get_suit_from_bid(partner_last) if partner_last else None
+                partner_last_level = get_bid_level(partner_last) if partner_last else 0
+                # Partner's 2-level bid in the OTHER minor = NMF
+                if (partner_last_level == 2 and partner_last_suit in ['♣', '♦']
+                        and partner_last_suit != my_opening_suit):
+                    flat['partner_bid_nmf'] = True
+                    # Find responder's major from their first bid
+                    if flat.get('partner_first_suit') in ['♠', '♥']:
+                        flat['nmf_responder_major'] = flat['partner_first_suit']
 
     # Shortness detection (for Splinters and Jacoby rebids)
     flat['has_void'] = any(l == 0 for l in suit_lengths.values())
