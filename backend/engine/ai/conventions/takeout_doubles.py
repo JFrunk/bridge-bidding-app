@@ -1,5 +1,6 @@
 from engine.hand import Hand
 from engine.ai.conventions.base_convention import ConventionModule
+from utils.seats import partner as get_partner_seat
 from typing import Optional, Tuple, Dict
 
 class TakeoutDoubleConvention(ConventionModule):
@@ -165,9 +166,18 @@ class TakeoutDoubleConvention(ConventionModule):
         return None
 
     def _get_partner_position(self, my_pos: str) -> str:
-        """Returns partner's position given my position."""
-        partners = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
-        return partners.get(my_pos, '')
+        """Returns partner's position given my position.
+
+        Uses utils.seats.partner() for the mapping, but expands
+        single-letter results to full names when the input is a full name,
+        since feature_extractor positions use full names.
+        """
+        short = get_partner_seat(my_pos)
+        # If input was full name, expand output to match
+        expand = {'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West'}
+        if len(my_pos) > 1:
+            return expand.get(short, short)
+        return short
 
     def _is_balancing_seat(self, features: Dict) -> bool:
         """
@@ -201,16 +211,31 @@ class TakeoutDoubleConvention(ConventionModule):
 
     def _check_support_double(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
         """
-        Check for support double: Opener doubles after partner responds and RHO overcalls.
-        Shows exactly 3-card support for partner's suit.
+        Support double/redouble: Opener shows exactly 3-card support for partner's suit
+        after RHO overcalls or doubles.
 
-        Example: 1♣ - (P) - 1♥ - (1♠) - X
-        Opener doubles to show 3-card heart support (with 4+, would raise).
+        Decision matrix:
+        - X (or XX if RHO doubled): exactly 3-card support
+        - Direct raise: exactly 4+ card support (handled elsewhere)
+        - Pass: 0-2 card support
+
+        Constraints:
+        - Only applies through 2-level of partner's suit (Law of Total Tricks)
+        - Opener HCP: 12-17 (standard opener; 18+ should bid naturally)
+        - RHO overcall → X; RHO double → XX
+
+        Example: 1♣ - (P) - 1♥ - (1♠) - X  (support double)
+        Example: 1♦ - (P) - 1♠ - (X)  - XX (support redouble)
         """
         auction_features = features.get('auction_features', {})
 
         # Must be opener (I opened the bidding)
         if auction_features.get('opener_relationship') != 'Me':
+            return None
+
+        # HCP constraint: standard opener range (12-17)
+        # With 18+ HCP, bid naturally to show extra values
+        if hand.hcp < 12 or hand.hcp > 17:
             return None
 
         # Get auction history
@@ -220,39 +245,66 @@ class TakeoutDoubleConvention(ConventionModule):
         my_pos_str = positions[my_index]
         partner_pos_str = self._get_partner_position(my_pos_str)
 
-        # Need at least 4 bids: 1) I open, 2) opponent passes/bids, 3) partner responds, 4) RHO overcalls
+        # Need at least 4 bids: 1) I open, 2) opponent passes/bids, 3) partner responds, 4) RHO acts
         if len(auction_history) < 4:
             return None
 
-        # Find partner's last bid (should be a suit response)
+        # Find partner's last suit bid and its level
         partner_suit = None
+        partner_bid_level = None
         for i, bid in enumerate(auction_history):
             if positions[i % 4] == partner_pos_str and bid != 'Pass':
-                # Check if it's a suit bid
                 if len(bid) >= 2 and bid[1] in {'♠', '♥', '♦', '♣'} and 'NT' not in bid:
                     partner_suit = bid[1]
+                    partner_bid_level = int(bid[0])
 
         if not partner_suit:
             return None  # Partner didn't bid a suit
 
-        # Check last bid was an opponent's overcall
+        # Check RHO's last action (must be an overcall or a double)
         last_bid = auction_history[-1]
         last_bidder_pos = positions[(len(auction_history) - 1) % 4]
 
-        # Last bidder must be an opponent
+        # Last bidder must be an opponent (RHO)
         if last_bidder_pos in [my_pos_str, partner_pos_str]:
             return None
 
-        # Last bid must be a suit overcall (not Pass, X, NT)
-        if last_bid == 'Pass' or 'X' in last_bid or 'NT' in last_bid:
+        # Determine if RHO overcalled or doubled
+        rho_doubled = (last_bid == 'X')
+        rho_overcalled = (last_bid != 'Pass' and last_bid != 'X' and last_bid != 'XX'
+                          and 'NT' not in last_bid and len(last_bid) >= 2)
+
+        if not rho_doubled and not rho_overcalled:
             return None
+
+        # Level constraint: only through 2-level of partner's suit
+        # If RHO overcalled, the overcall level determines if support double still applies
+        if rho_overcalled:
+            overcall_level = int(last_bid[0]) if last_bid[0].isdigit() else 0
+            # Support double must not force us above 2-level of partner's suit
+            # E.g., partner bid 1♥, RHO bid 2♠ → we can't X because it forces 3♥
+            suit_rank = {'♣': 0, '♦': 1, '♥': 2, '♠': 3}
+            overcall_suit = last_bid[1] if len(last_bid) >= 2 and last_bid[1] in suit_rank else None
+            if overcall_suit:
+                # If overcall is at 2-level and outranks partner's suit, we'd be at 3-level → too high
+                if overcall_level > 2:
+                    return None
+                if overcall_level == 2 and suit_rank.get(overcall_suit, 0) > suit_rank.get(partner_suit, 0):
+                    return None
+            else:
+                return None
 
         # Check support: exactly 3 cards in partner's suit
         partner_support = hand.suit_lengths.get(partner_suit, 0)
 
         if partner_support == 3:
             suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}[partner_suit]
-            return ("X", f"Support double showing exactly 3-card {suit_name} support (would raise with 4+).")
+            if rho_doubled:
+                return ("XX", f"Support redouble showing exactly 3-card {suit_name} support ({hand.hcp} HCP).",
+                        {'bypass_suit_length': True, 'bypass_hcp': True, 'convention': 'support_double'})
+            else:
+                return ("X", f"Support double showing exactly 3-card {suit_name} support ({hand.hcp} HCP, would raise with 4+).",
+                        {'bypass_suit_length': True, 'bypass_hcp': True, 'convention': 'support_double'})
 
         return None
 # ADR-0002 Phase 1: Auto-register this module on import

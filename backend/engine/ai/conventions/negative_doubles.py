@@ -1,5 +1,6 @@
 from engine.hand import Hand
 from engine.ai.conventions.base_convention import ConventionModule
+from utils.seats import partner as get_partner_seat
 from typing import Optional, Tuple, Dict
 
 class NegativeDoubleConvention(ConventionModule):
@@ -86,11 +87,19 @@ class NegativeDoubleConvention(ConventionModule):
 
     def _check_responsive_double(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
         """
-        Check for responsive double: Partner made takeout double, RHO raised, we double.
-        Shows competitive values with no clear suit to bid.
+        Responsive double: After opponents bid-and-raise and partner doubled/overcalled.
+        Shows competitive values with support for unbid suits.
 
-        Example: 1♥ - (X) - 2♥ - (X)
-        Partner doubled for takeout, RHO raised to 2♥, we double responsively.
+        Two variants by opponent suit type:
+        1. Over MINOR raise (1♦-X-2♦-?): Shows 4-4 in majors, 8+ HCP
+        2. Over MAJOR raise (1♥-X-2♥-?): Shows 10+ HCP with unbid suit values
+
+        Level constraint: Only through 3-level (at 4+ level, pass or bid naturally).
+
+        Examples:
+        - 1♦ - (X) - 2♦ - X   → 4-4 majors, 8+ HCP
+        - 1♥ - (X) - 2♥ - X   → unbid suits, 10+ HCP
+        - 1♠ - (2♣) - 2♠ - X  → also works after partner overcalled (not just doubled)
         """
         auction_features = features.get('auction_features', {})
         auction_history = features.get('auction_history', [])
@@ -101,21 +110,21 @@ class NegativeDoubleConvention(ConventionModule):
         # Get partner's position
         partner_pos_str = self._get_partner_position(my_pos_str)
 
-        # Need at least 4 bids in auction
-        if len(auction_history) < 4:
+        # Need at least 3 bids: opponent opens, partner acts, opponent raises
+        if len(auction_history) < 3:
             return None
 
-        # Check if partner made a takeout double
-        partner_doubled = False
+        # Check if partner made a takeout double or overcall
+        partner_acted = False
         for i, bid in enumerate(auction_history):
-            if positions[i % 4] == partner_pos_str and bid == 'X':
-                partner_doubled = True
+            if positions[i % 4] == partner_pos_str and bid not in ['Pass', 'XX']:
+                partner_acted = True
                 break
 
-        if not partner_doubled:
+        if not partner_acted:
             return None
 
-        # Check if last bid was a raise by opponent
+        # Check if last bid was a raise by opponent (same suit as opener's, at higher level)
         last_bid = auction_history[-1]
         last_bidder_pos = positions[(len(auction_history) - 1) % 4]
 
@@ -123,41 +132,83 @@ class NegativeDoubleConvention(ConventionModule):
         if last_bidder_pos in [my_pos_str, partner_pos_str]:
             return None
 
-        # Last bid should be a raise (same suit as opener's, higher level)
-        opening_bid = auction_features.get('opening_bid', '')
-        if not opening_bid or len(opening_bid) < 2 or len(last_bid) < 2:
+        # Last bid must be a suit bid
+        if not last_bid or len(last_bid) < 2 or last_bid in ['Pass', 'X', 'XX']:
+            return None
+        last_suit = last_bid[1] if last_bid[1] in {'♠', '♥', '♦', '♣'} else None
+        if not last_suit:
             return None
 
-        opening_suit = opening_bid[1]
-        last_suit = last_bid[1] if last_bid[1] in {'♠', '♥', '♦', '♣'} else None
+        # Opening bid must be a suit bid
+        opening_bid = auction_features.get('opening_bid', '')
+        if not opening_bid or len(opening_bid) < 2:
+            return None
+        opening_suit = opening_bid[1] if opening_bid[1] in {'♠', '♥', '♦', '♣'} else None
+        if not opening_suit:
+            return None
 
-        # Must be same suit (raise)
+        # Must be a raise (same suit)
         if opening_suit != last_suit:
             return None
 
-        # Need 6-10 HCP for responsive double (competitive values)
-        # With more, we'd bid a suit or NT
-        if hand.hcp < 6 or hand.hcp > 10:
+        # Level constraint: only through 3-level
+        raise_level = int(last_bid[0]) if last_bid[0].isdigit() else 0
+        if raise_level > 3:
             return None
 
-        # Should have some values in unbid suits but no clear 5-card suit
-        # (Otherwise we'd bid the suit directly)
-        max_unbid_length = 0
-        for suit in ['♠', '♥', '♦', '♣']:
-            if suit != opening_suit:
-                max_unbid_length = max(max_unbid_length, hand.suit_lengths.get(suit, 0))
+        # Determine if opponents' suit is a major or minor
+        is_major_raise = opening_suit in {'♥', '♠'}
+        is_minor_raise = opening_suit in {'♦', '♣'}
 
-        # If we have 5+ cards in unbid suit, we'd bid it instead of doubling
+        # If we have a 5+ card unbid suit, bid it directly instead of doubling
+        unbid_suits = [s for s in ['♠', '♥', '♦', '♣'] if s != opening_suit]
+        max_unbid_length = max(hand.suit_lengths.get(s, 0) for s in unbid_suits)
         if max_unbid_length >= 5:
             return None
 
-        return ("X", f"Responsive double showing {hand.hcp} HCP with no clear suit to bid (asking partner to pick).")
+        if is_minor_raise:
+            # Over minor raise: shows 4-4 in both majors
+            h_len = hand.suit_lengths.get('♥', 0)
+            s_len = hand.suit_lengths.get('♠', 0)
+
+            if h_len < 4 or s_len < 4:
+                return None  # Need 4-4 in majors
+
+            if hand.hcp < 8:
+                return None  # 8+ HCP required
+
+            return ("X", f"Responsive double showing 4-4 in both majors ({hand.hcp} HCP). "
+                        f"Partner picks the major.",
+                    {'bypass_suit_length': True, 'bypass_hcp': True, 'convention': 'responsive_double'})
+
+        elif is_major_raise:
+            # Over major raise: shows values in unbid suits
+            if hand.hcp < 10:
+                return None  # 10+ HCP required (competitive strength)
+
+            # Should have at least 4 cards in 2 of the 3 unbid suits
+            unbid_with_support = sum(1 for s in unbid_suits if hand.suit_lengths.get(s, 0) >= 4)
+            if unbid_with_support < 2:
+                return None
+
+            return ("X", f"Responsive double showing {hand.hcp} HCP with values in unbid suits. "
+                        f"Partner picks the best strain.",
+                    {'bypass_suit_length': True, 'bypass_hcp': True, 'convention': 'responsive_double'})
+
+        return None
 
     def _get_partner_position(self, my_pos: str) -> str:
-        """Returns partner's position given my position."""
-        partners = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E',
-                   'North': 'South', 'South': 'North', 'East': 'West', 'West': 'East'}
-        return partners.get(my_pos, '')
+        """Returns partner's position given my position.
+
+        Uses utils.seats.partner() for the mapping, but expands
+        single-letter results to full names when the input is a full name,
+        since feature_extractor positions use full names.
+        """
+        short = get_partner_seat(my_pos)
+        expand = {'N': 'North', 'S': 'South', 'E': 'East', 'W': 'West'}
+        if len(my_pos) > 1:
+            return expand.get(short, short)
+        return short
 # ADR-0002 Phase 1: Auto-register this module on import
 from engine.ai.module_registry import ModuleRegistry
 ModuleRegistry.register("negative_doubles", NegativeDoubleConvention())

@@ -168,44 +168,6 @@
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
-      "id": "doubler_1nt_rebid",
-      "bid": "1NT",
-      "priority": 750,
-      "description": "1NT rebid by doubler showing balanced 18-19 HCP",
-      "conditions": {
-        "is_doubler_rebid": true,
-        "my_last_bid": "X",
-        "hcp": {
-          "min": 18,
-          "max": 19
-        },
-        "is_balanced": true,
-        "stopper_in_opponent_suit": true
-      },
-      "forcing": "none",
-      "explanation": "1NT showing appropriate HCP balanced with stopper",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
-      "id": "doubler_2nt_rebid",
-      "bid": "2NT",
-      "priority": 760,
-      "description": "2NT rebid by doubler showing balanced 20-21 HCP",
-      "conditions": {
-        "is_doubler_rebid": true,
-        "my_last_bid": "X",
-        "hcp": {
-          "min": 20,
-          "max": 21
-        },
-        "is_balanced": true,
-        "stopper_in_opponent_suit": true
-      },
-      "forcing": "none",
-      "explanation": "2NT showing appropriate HCP balanced with stopper",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
       "id": "doubler_raise_partner_jump_to_game_hearts",
       "bid": "4♥",
       "priority": 545,
@@ -370,7 +332,10 @@
         },
         "partner_last_bid": {
           "in": [
-            "1♥", "1♠", "2♥", "2♠"
+            "1♥",
+            "1♠",
+            "2♥",
+            "2♠"
           ]
         }
       },
@@ -489,7 +454,12 @@
         },
         "partner_last_bid": {
           "in": [
-            "1♥", "1♠", "2♥", "2♠", "3♥", "3♠"
+            "1♥",
+            "1♠",
+            "2♥",
+            "2♠",
+            "3♥",
+            "3♠"
           ]
         }
       },
@@ -531,7 +501,8 @@
         },
         "longest_suit": {
           "in": [
-            "♥", "♠"
+            "♥",
+            "♠"
           ]
         }
       },

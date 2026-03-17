@@ -88,6 +88,9 @@ class GerberConvention(ConventionModule):
         SAYC Rule: 4♣ IS GERBER OVER ANY 1NT OR 2NT BY PARTNER,
         INCLUDING A REBID OF 1NT OR 2NT.
 
+        EXTENSION: After Stayman (1NT→2♣→2♥/2♠), responder's 4♣ is also
+        Gerber — the auction originated from a NT opening.
+
         EXCEPTION 1: After a Jacoby transfer sequence, partner's 2NT is an
         invitational game try, NOT a natural 2NT bid. Do not use Gerber here.
 
@@ -98,23 +101,25 @@ class GerberConvention(ConventionModule):
         if not partner_last_bid:
             return False
 
-        # Gerber is used when partner's last bid was NT
+        auction_history = features.get('auction_history', [])
+        opener_relationship = features['auction_features'].get('opener_relationship')
+        opening_bid = features['auction_features'].get('opening_bid')
+
+        # Check for Stayman→Gerber pipeline:
+        # After 1NT→2♣→2♥/2♠ or 2NT→3♣→3♥/3♠, responder can bid 4♣ as Gerber
+        if self._is_post_stayman_gerber(hand, features, auction_history):
+            return True
+
+        # Standard Gerber: partner's last bid was NT
         if partner_last_bid not in ['1NT', '2NT', '3NT']:
             return False
 
         # EXCEPTION: If we are the opener (we opened a suit, partner responded NT),
         # we should NOT use Gerber - we should be making a rebid
-        opener_relationship = features['auction_features'].get('opener_relationship')
         if opener_relationship == 'Me':
-            # We opened, so partner's 1NT/2NT is a RESPONSE, not an opening
-            # We should rebid our suit, show distribution, or bid NT - not ask for aces
             return False
 
         # EXCEPTION: After Jacoby transfer sequence, 2NT is invitational, not natural
-        # Pattern: 1NT - 2♦ - 2♥ - 2NT (partner's 2NT is game invitation)
-        # Pattern: 1NT - 2♥ - 2♠ - 2NT (partner's 2NT is game invitation)
-        # In this case, opener should NOT use Gerber - should handle invitation
-        auction_history = features.get('auction_history', [])
         if self._is_post_jacoby_invitation(auction_history, partner_last_bid, features):
             return False
 
@@ -122,14 +127,10 @@ class GerberConvention(ConventionModule):
         # IMPORTANT: Gerber commits to slam if aces are sufficient
         # With 16-17 HCP opposite 1NT, use 4NT QUANTITATIVE instead (invites slam)
         # Only use Gerber with 18+ HCP (definite slam values if aces are there)
-        #
-        # Threshold for Gerber:
-        # - 1NT (15-17) + 18 = 33+, guaranteed slam if aces are there
-        # - 2NT (20-21) + 14 = 34+, guaranteed slam if aces are there
         if partner_last_bid == '1NT' and hand.hcp < 18:
-            return False  # Use 4NT quantitative with 16-17 HCP instead
+            return False
         if partner_last_bid == '2NT' and hand.hcp < 15:
-            return False  # With 13-14 HCP opposite 2NT, bid 6NT directly
+            return False
         if partner_last_bid == '3NT' and hand.hcp < 12:
             return False
 
@@ -137,6 +138,56 @@ class GerberConvention(ConventionModule):
         my_index = features.get('my_index', -1)
         my_bids = [auction_history[i] for i in range(len(auction_history))
                    if features['positions'][i % 4] == features['positions'][my_index]]
+        if '4♣' in my_bids:
+            return False
+
+        return True
+
+    def _is_post_stayman_gerber(self, hand: Hand, features: Dict, auction_history: list) -> bool:
+        """Check if we should bid 4♣ Gerber after a Stayman sequence.
+
+        Pattern: Partner opened 1NT/2NT, we bid Stayman, partner responded
+        with a major (2♥/2♠ or 3♥/3♠). Now our 4♣ = Gerber.
+
+        Only applies when:
+        - Partner opened 1NT or 2NT
+        - We bid Stayman (2♣ or 3♣)
+        - Partner responded (2♥/2♠/2♦ or 3♥/3♠/3♦)
+        - We have slam values (15+ HCP over 1NT, 11+ over 2NT)
+        - We haven't already bid 4♣
+        """
+        opening_bid = features['auction_features'].get('opening_bid')
+        opener_relationship = features['auction_features'].get('opener_relationship')
+        partner_last_bid = features['auction_features'].get('partner_last_bid')
+
+        if opener_relationship != 'Partner':
+            return False
+        if opening_bid not in ['1NT', '2NT']:
+            return False
+
+        my_index = features.get('my_index', -1)
+        positions = features.get('positions', [])
+        my_bids = [auction_history[i] for i in range(len(auction_history))
+                   if positions[i % 4] == positions[my_index]
+                   and auction_history[i] not in ['Pass', 'X', 'XX']]
+
+        # Did we bid Stayman?
+        stayman_bid = '3♣' if opening_bid == '2NT' else '2♣'
+        if not my_bids or my_bids[0] != stayman_bid:
+            return False
+
+        # Partner must have responded to Stayman
+        valid_responses = ['2♦', '2♥', '2♠'] if opening_bid == '1NT' else ['3♦', '3♥', '3♠']
+        if partner_last_bid not in valid_responses:
+            return False
+
+        # HCP thresholds for Gerber after Stayman
+        if opening_bid == '1NT' and hand.hcp < 15:
+            return False
+        if opening_bid == '2NT' and hand.hcp < 11:
+            return False
+
+        # Check we haven't already bid 4♣
         if '4♣' in my_bids:
             return False
 
@@ -192,13 +243,14 @@ class GerberConvention(ConventionModule):
         """
         Determines if we are responding to 4♣ Gerber.
 
-        4♣ is Gerber (not natural) if our last bid was NT.
+        4♣ is Gerber (not natural) if:
+        1. Our last bid was NT, OR
+        2. We opened 1NT/2NT, responded to partner's Stayman, and partner bid 4♣
         """
         partner_last_bid = features['auction_features'].get('partner_last_bid')
         if partner_last_bid != '4♣':
             return False
 
-        # Check if our last bid was NT (which would make partner's 4♣ Gerber)
         auction_history = features.get('auction_history', [])
         positions = features.get('positions', [])
         my_index = features.get('my_index', 0)
@@ -213,6 +265,18 @@ class GerberConvention(ConventionModule):
         # If our last bid was NT, partner's 4♣ is Gerber
         if my_bids and my_bids[-1] in ['1NT', '2NT', '3NT']:
             return True
+
+        # Stayman→Gerber: We opened 1NT/2NT, responded to Stayman, partner bids 4♣
+        # Pattern: 1NT → 2♣ → 2♥/2♠/2♦ → 4♣ (Gerber)
+        # Pattern: 2NT → 3♣ → 3♥/3♠/3♦ → 4♣ (Gerber)
+        opening_bid = features['auction_features'].get('opening_bid')
+        opener_relationship = features['auction_features'].get('opener_relationship')
+        if opener_relationship == 'Me' and opening_bid in ['1NT', '2NT']:
+            stayman_responses_1nt = ['2♦', '2♥', '2♠']
+            stayman_responses_2nt = ['3♦', '3♥', '3♠']
+            valid_responses = stayman_responses_2nt if opening_bid == '2NT' else stayman_responses_1nt
+            if len(my_bids) >= 2 and my_bids[0] in ['1NT', '2NT'] and my_bids[-1] in valid_responses:
+                return True
 
         return False
 

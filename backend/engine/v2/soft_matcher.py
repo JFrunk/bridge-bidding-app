@@ -693,13 +693,18 @@ class SoftMatcher:
                     except TypeError:
                         pass  # Can't compare, skip
                 elif 'min' in expected or 'max' in expected:
-                    # Numeric comparison
+                    # Numeric or ordinal comparison
                     if actual is None:
                         return (0.0, f"{key}: value not set, expected range")
                     min_val = expected.get('min', float('-inf'))
                     max_val = expected.get('max', float('inf'))
+                    # Convert ordinal strings (suit quality) to integers
+                    # Prevents lexicographic bug: 'excellent' < 'good' → True
+                    actual_cmp = self.SUIT_QUALITY_ORDER.get(actual, actual) if isinstance(actual, str) else actual
+                    min_cmp = self.SUIT_QUALITY_ORDER.get(min_val, min_val) if isinstance(min_val, str) else min_val
+                    max_cmp = self.SUIT_QUALITY_ORDER.get(max_val, max_val) if isinstance(max_val, str) else max_val
                     try:
-                        if actual < min_val or actual > max_val:
+                        if actual_cmp < min_cmp or actual_cmp > max_cmp:
                             return (0.0, f"{key}: {actual} not in range [{min_val}, {max_val}]")
                     except TypeError:
                         pass  # Can't compare, skip

@@ -184,6 +184,22 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
+      "id": "advancer_2nt_to_double_invitational",
+      "bid": "2NT",
+      "priority": 94,
+      "description": "Invitational 2NT in response to partner's takeout double",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": "X",
+        "hcp": {"min": 11, "max": 12},
+        "is_balanced": true,
+        "stopper_in_opponent_suit": true
+      },
+      "forcing": "none",
+      "explanation": "Invitational 2NT (11-12 HCP, balanced with stopper)",
+      "sets_forcing_level": "INVITATIONAL"
+    },
+    {
       "id": "advancer_constructive_spades",
       "bid": "1♠",
       "priority": 93,
@@ -666,6 +682,23 @@
       "forcing": "invitational",
       "explanation": "Jump raise of partner's overcall (10-12 HCP, 4+ support)",
       "sets_forcing_level": "INVITATIONAL"
+    },
+    {
+      "id": "advancer_1nt_to_overcall",
+      "bid": "1NT",
+      "priority": 675,
+      "description": "1NT response to partner's overcall with stopper",
+      "conditions": {
+        "is_advancer": true,
+        "partner_last_bid": {"not_in": ["X", "XX", "Pass", "1NT", "2NT"]},
+        "hcp": {"min": 8, "max": 11},
+        "is_balanced": true,
+        "stopper_in_opponent_suit": true,
+        "support_for_partner": {"max": 2}
+      },
+      "forcing": "none",
+      "explanation": "1NT (8-11 HCP, balanced with stopper, no fit for partner)",
+      "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "advancer_new_suit",

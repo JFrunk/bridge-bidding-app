@@ -317,6 +317,15 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['is_competitive_later'] = af['opener_relationship'] == 'Opponent' and bc['my_bid_count'] >= 1
     flat['is_responder_rebid'] = af['opener_relationship'] == 'Partner' and bc['my_bid_count'] >= 1
 
+    # partner_opened_preempt: partner's opening was a weak two or preempt (not 2NT/2C)
+    opening_bid_str = af.get('opening_bid', '') or ''
+    flat['partner_opened_preempt'] = (
+        af['opener_relationship'] == 'Partner' and
+        bool(opening_bid_str) and
+        opening_bid_str[0] in ('2', '3') and
+        opening_bid_str not in ('2NT', '2♣')
+    )
+
     # Advancer detection: partner made a competitive action over opponent's opening
     # This includes overcalls, takeout doubles, and suit bids
     partner_made_competitive_action = False
@@ -470,13 +479,57 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     if best_overcall_suit and opponent_suit:
         flat['bid_higher_than_opening'] = suit_ranking.get(best_overcall_suit, 0) > suit_ranking.get(opponent_suit, 0)
 
-    # Minimum bid level needed (1 if we can bid higher at same level, 2 otherwise)
-    if opening_bid and opening_bid.startswith('1') and flat['bid_higher_than_opening']:
-        flat['bid_level'] = 1
-    elif opening_bid and opening_bid.startswith('1'):
-        flat['bid_level'] = 2
+    # Minimum bid level needed for our best suit overcall
+    # If our suit outranks opponent's: same level. Otherwise: next level up.
+    if opening_bid and opening_bid[0].isdigit():
+        opening_level = int(opening_bid[0])
+        if flat['bid_higher_than_opening']:
+            flat['bid_level'] = opening_level
+        else:
+            flat['bid_level'] = opening_level + 1
     else:
-        flat['bid_level'] = 2  # Default to 2-level for non-1-level openings
+        flat['bid_level'] = 1  # No opening bid parsed
+
+    # interference_level: level of the last opponent bid
+    # Extract from the last non-Pass opponent bid in the auction
+    opponent_bids = (_get_rho_bids(auction_history, my_position, dealer) +
+                     _get_lho_bids(auction_history, my_position, dealer))
+    last_opp_level = 0
+    for opp_bid in reversed(auction_history):
+        if opp_bid in ('Pass', 'X', 'XX'):
+            continue
+        # Check if this bid was made by an opponent
+        bid_idx = len(auction_history) - 1 - list(reversed(auction_history)).index(opp_bid)
+        bidder_idx = (seat_index(dealer) + bid_idx) % 4
+        my_idx = seat_index(my_position)
+        # Opponents are seats not on our partnership
+        if (bidder_idx % 2) != (my_idx % 2):
+            if opp_bid[0].isdigit():
+                last_opp_level = int(opp_bid[0])
+            break
+    flat['interference_level'] = last_opp_level
+
+    # is_jump: whether our minimum overcall (bid_level + best_suit) is a jump
+    # over the current auction anchor (last real bid by anyone)
+    # Uses rank-based level necessity: L_min = L_c if R_t > R_c, else L_c + 1
+    # is_jump = (L_t > L_min)
+    flat['is_jump'] = False
+    if best_overcall_suit and auction_history:
+        suit_rank_map = {'♣': 1, '♦': 2, '♥': 3, '♠': 4}
+        # Find the last real (non-Pass/X/XX) bid — the auction anchor
+        anchor_bid = None
+        for bid in reversed(auction_history):
+            if bid not in ('Pass', 'X', 'XX') and bid[0].isdigit():
+                anchor_bid = bid
+                break
+        if anchor_bid:
+            l_c = int(anchor_bid[0])
+            anchor_suit = get_suit_from_bid(anchor_bid)
+            r_c = suit_rank_map.get(anchor_suit, 5)  # NT = 5
+            r_t = suit_rank_map.get(best_overcall_suit, 0)
+            l_min = l_c if r_t > r_c else l_c + 1
+            # Our proposed level is bid_level (minimum level for our suit)
+            flat['is_jump'] = flat['bid_level'] > l_min
 
     # Support for partner's suit
     if flat['partner_last_bid']:

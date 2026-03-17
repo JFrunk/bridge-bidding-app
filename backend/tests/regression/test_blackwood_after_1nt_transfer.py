@@ -97,9 +97,12 @@ class TestBlackwoodAfter1NTTransfer:
         bid = result[0] if result else None
         explanation = result[1] if result and len(result) >= 2 else ""
 
-        # South has 1 ace, so should bid 5♦
-        assert bid == '5♦', f"Expected 5♦ (1 ace), got {bid}. Explanation: {explanation}"
-        assert 'ace' in explanation.lower(), f"Explanation should mention aces: {explanation}"
+        # RKCB 1430: South has 1 ace (♠A) + trump king (♠K) = 2 keycards, no trump queen
+        # Response: 5♥ (2 keycards WITHOUT queen)
+        assert bid == '5♥', f"Expected 5♥ (2 keycards, no queen), got {bid}. Explanation: {explanation}"
+        assert 'key card' in explanation.lower() or 'rkcb' in explanation.lower(), (
+            f"Explanation should mention key cards or RKCB: {explanation}"
+        )
 
     def test_additional_blackwood_after_stayman(self, blackwood_convention):
         """
@@ -139,8 +142,10 @@ class TestBlackwoodAfter1NTTransfer:
 
         result = blackwood_convention.evaluate(south_hand, features)
 
+        # RKCB 1430: South has 3 aces (♠A, ♥A, ♦A) + trump king (♥K) = 4 keycards
+        # South has trump queen (♥Q) → 5♣ (1 or 4 keycards; 4 in this case)
         assert result is not None, "Should recognize as Blackwood after Stayman + heart fit"
-        assert result[0] == '5♠', f"Should respond 5♠ (3 aces), got {result[0]}"
+        assert result[0] == '5♣', f"Should respond 5♣ (4 keycards via RKCB 1430), got {result[0]}"
 
 
 class TestBlackwoodSuitAgreementPriority:
@@ -176,8 +181,10 @@ class TestBlackwoodSuitAgreementPriority:
 
         result = blackwood_convention.evaluate(hand, features)
 
+        # RKCB 1430: South has 2 aces (♠A, ♥A) + trump king (♥K) = 3 keycards
+        # No trump queen (♥Q not held) → 5♦ (0 or 3 keycards; 3 in this case)
         assert result is not None, "Should recognize as Blackwood due to heart suit agreement"
-        assert result[0] == '5♥', f"Should respond 5♥ (2 aces), got {result[0]}"
+        assert result[0] == '5♦', f"Should respond 5♦ (3 keycards via RKCB 1430), got {result[0]}"
 
     def test_responder_shows_suit_after_1nt_then_blackwood(self, blackwood_convention):
         """
@@ -212,9 +219,10 @@ class TestBlackwoodSuitAgreementPriority:
 
         result = blackwood_convention.evaluate(north_hand, features)
 
-        # North has 2 aces (♥A, ♦A)
+        # RKCB 1430: North has 2 aces (♥A, ♦A) + trump king (♠K) = 3 keycards
+        # North has trump queen (♠Q) → 5♦ (0 or 3 keycards; 3 in this case)
         assert result is not None, "Should recognize as Blackwood due to spade suit agreement"
-        assert result[0] == '5♥', f"Should respond 5♥ (2 aces), got {result[0]}"
+        assert result[0] == '5♦', f"Should respond 5♦ (3 keycards via RKCB 1430), got {result[0]}"
 
 
 if __name__ == '__main__':

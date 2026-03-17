@@ -102,5 +102,34 @@
     "level": "Advanced",
     "description": "Practice Gerber convention for ace asking.",
     "setup": []
+  },
+  {
+    "name": "Negative Double Stress - Hand A (Floor Fail)",
+    "level": "Advanced",
+    "description": "South has 7 HCP and 4-4 in Majors. Should fail the 8 HCP floor for a 2-level Negative Double.",
+    "setup": [
+      { "position": "North", "constraints": { "hcp_range": [12, 14], "suit_length_req": ["♦", 3, "any_of"] } },
+      { "position": "East", "constraints": { "hcp_range": [10, 12], "suit_length_req": ["♣", 5, "any_of"] } },
+      { "position": "South", "constraints": { "hcp_range": [7, 7], "suit_length_req": [["♠", "♥"], 4, "all_of"] } }
+    ]
+  },
+  {
+    "name": "Negative Double Stress - Hand B (Success)",
+    "level": "Advanced",
+    "description": "South has 11 HCP and 4-4 in Majors. Should correctly trigger the Negative Double.",
+    "setup": [
+      { "position": "North", "constraints": { "hcp_range": [12, 14], "suit_length_req": ["♦", 3, "any_of"] } },
+      { "position": "East", "constraints": { "hcp_range": [10, 12], "suit_length_req": ["♣", 5, "any_of"] } },
+      { "position": "South", "constraints": { "hcp_range": [11, 11], "suit_length_req": [["♠", "♥"], 4, "all_of"] } }
+    ]
+  },
+  {
+    "name": "Grand Slam Inquiry - RKCB to King Ask",
+    "level": "Advanced",
+    "description": "Tests 4NT -> 5NT transition with 37 combined HCP and all controls present.",
+    "setup": [
+      { "position": "North", "constraints": { "hcp_range": [19, 21], "suit_length_req": ["♠", 5, "any_of"], "is_balanced": true } },
+      { "position": "South", "constraints": { "hcp_range": [16, 18], "suit_length_req": [["♠", "♥"], 4, "all_of"] } }
+    ]
   }
 ]
