@@ -218,7 +218,7 @@
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "1♥", "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "hcp", "min": 19, "constraint_type": "HARD"},
         {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"}
       ],
       "forcing": "none",
@@ -234,7 +234,7 @@
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "1♠", "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "hcp", "min": 19, "constraint_type": "HARD"},
         {"feature": "spades_length", "min": 4, "constraint_type": "HARD"}
       ],
       "forcing": "none",
@@ -341,13 +341,13 @@
       "id": "opener_game_after_raise_hearts",
       "bid": "4♥",
       "priority": 705,
-      "description": "Bid game after partner raises hearts (18+ HCP)",
+      "description": "Bid game after partner raises hearts (19+ HCP)",
       "constraints": [
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "2♥", "constraint_type": "HARD"},
         {"feature": "partner_transferred", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+        {"feature": "hcp", "min": 19, "constraint_type": "HARD"}
       ],
       "forcing": "none",
       "explanation": "Bid game with 18+ HCP after partner's single raise",
@@ -357,13 +357,13 @@
       "id": "opener_game_after_raise_spades",
       "bid": "4♠",
       "priority": 705,
-      "description": "Bid game after partner raises spades (18+ HCP)",
+      "description": "Bid game after partner raises spades (19+ HCP)",
       "constraints": [
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "2♠", "constraint_type": "HARD"},
         {"feature": "partner_transferred", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+        {"feature": "hcp", "min": 19, "constraint_type": "HARD"}
       ],
       "forcing": "none",
       "explanation": "Bid game with 18+ HCP after partner's single raise",
@@ -373,12 +373,12 @@
       "id": "opener_accept_limit_raise_hearts",
       "bid": "4♥",
       "priority": 910,
-      "description": "Accept limit raise in hearts (13+ HCP)",
+      "description": "Accept limit raise in hearts (15+ HCP)",
       "constraints": [
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "3♥", "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 13, "constraint_type": "HARD"}
+        {"feature": "hcp", "min": 15, "constraint_type": "HARD"}
       ],
       "forcing": "none",
       "explanation": "Accept limit raise - bid game with 13+ HCP",
@@ -388,12 +388,12 @@
       "id": "opener_accept_limit_raise_spades",
       "bid": "4♠",
       "priority": 910,
-      "description": "Accept limit raise in spades (13+ HCP)",
+      "description": "Accept limit raise in spades (15+ HCP)",
       "constraints": [
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "3♠", "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 13, "constraint_type": "HARD"}
+        {"feature": "hcp", "min": 15, "constraint_type": "HARD"}
       ],
       "forcing": "none",
       "explanation": "Accept limit raise - bid game with 13+ HCP",
@@ -403,12 +403,12 @@
       "id": "opener_decline_limit_raise",
       "bid": "Pass",
       "priority": 695,
-      "description": "Decline limit raise with minimum (12 HCP)",
+      "description": "Decline limit raise with minimum (14 or less HCP)",
       "constraints": [
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "in": ["3♥", "3♠"], "constraint_type": "HARD"},
-        {"feature": "hcp", "max": 12, "constraint_type": "HARD"}
+        {"feature": "hcp", "max": 14, "constraint_type": "HARD"}
       ],
       "forcing": "none",
       "explanation": "Decline limit raise with minimum hand",

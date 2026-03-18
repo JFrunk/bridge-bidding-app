@@ -127,7 +127,8 @@ class ForcingStateMachine:
                     self.state.forcing_source = None
 
     def validate_bid(self, bid: str, last_contract_level: int = 0,
-                     last_contract_suit: str = '') -> BidValidationResult:
+                     last_contract_suit: str = '',
+                     features: Optional[Dict] = None) -> BidValidationResult:
         """
         Validate a bid against the current forcing state.
 
@@ -138,6 +139,7 @@ class ForcingStateMachine:
             bid: The bid to validate
             last_contract_level: Current highest bid level in auction (0-7)
             last_contract_suit: Suit of the last contract bid (for game-level check)
+            features: Optional feature dict for partnership HCP safety valve
 
         Returns:
             BidValidationResult indicating if the bid is legal
@@ -156,6 +158,18 @@ class ForcingStateMachine:
         if game_reached:
             # Game force is satisfied — pass is legal
             return BidValidationResult(is_valid=True)
+
+        # Safety valve: Allow pass in game-forced auctions when partnership
+        # HCP is below threshold. Compensates for Minimax depth-2 inability
+        # to execute thin game contracts.
+        if features and self.state.is_game_forced:
+            partnership_hcp = features.get('partnership_hcp_min', 40)
+            if partnership_hcp < 28 and last_contract_level >= 2:
+                logger.info(
+                    f"Game force safety valve: allowing Pass at level {last_contract_level} "
+                    f"with partnership_hcp_min={partnership_hcp} (<28)"
+                )
+                return BidValidationResult(is_valid=True)
 
         # Check Game Force violation
         if self.state.is_game_forced:

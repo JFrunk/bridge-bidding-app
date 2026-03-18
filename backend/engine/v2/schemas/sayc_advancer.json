@@ -346,7 +346,8 @@
         "partner_bid_michaels": true,
         "michaels_shows_majors": true,
         "spades_length": {"min": 3},
-        "support_points": {"min": 14}
+        "hcp": {"min": 14},
+        "support_points": {"min": 16}
       },
       "forcing": "none",
       "explanation": "Game in spades - partner shows both majors via Michaels",
@@ -363,7 +364,8 @@
         "michaels_shows_majors": true,
         "hearts_length": {"min": 3},
         "spades_length": {"max": 2},
-        "support_points": {"min": 14}
+        "hcp": {"min": 14},
+        "support_points": {"min": 16}
       },
       "forcing": "none",
       "explanation": "Game in hearts - partner shows both majors via Michaels",
@@ -490,7 +492,8 @@
         "partner_bid_unusual_2nt": true,
         "is_contested": false,
         "clubs_length": {"min": 4},
-        "support_points": {"min": 14},
+        "hcp": {"min": 14},
+        "support_points": {"min": 16},
         "prefer_clubs": true
       },
       "forcing": "none",
@@ -507,7 +510,8 @@
         "partner_bid_unusual_2nt": true,
         "is_contested": false,
         "diamonds_length": {"min": 4},
-        "support_points": {"min": 14},
+        "hcp": {"min": 14},
+        "support_points": {"min": 16},
         "prefer_diamonds": true
       },
       "forcing": "none",
@@ -630,12 +634,13 @@
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
-        "hcp": {"min": 12},
+        "hcp": {"min": 14},
         "stopper_in_opponent_suit": true,
-        "is_balanced": true
+        "is_balanced": true,
+        "partnership_hcp_min": {"min": 26}
       },
       "forcing": "none",
-      "explanation": "3NT (12+ HCP, balanced with stopper)",
+      "explanation": "3NT (14+ HCP, balanced with stopper, 26+ combined)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -646,11 +651,12 @@
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
-        "hcp": {"min": 12},
-        "spades_length": {"min": 5}
+        "hcp": {"min": 14},
+        "spades_length": {"min": 5},
+        "partnership_hcp_min": {"min": 26}
       },
       "forcing": "none",
-      "explanation": "Game in spades (12+ HCP, 5+ spades)",
+      "explanation": "Game in spades (14+ HCP, 5+ spades, 26+ combined)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -661,11 +667,12 @@
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": "X",
-        "hcp": {"min": 12},
-        "hearts_length": {"min": 5}
+        "hcp": {"min": 14},
+        "hearts_length": {"min": 5},
+        "partnership_hcp_min": {"min": 26}
       },
       "forcing": "none",
-      "explanation": "Game in hearts (12+ HCP, 5+ hearts)",
+      "explanation": "Game in hearts (14+ HCP, 5+ hearts, 26+ combined)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -738,11 +745,12 @@
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": {"not_in": ["X", "XX", "Pass", "1NT", "2NT"]},
-        "hcp": {"min": 12},
-        "support_for_partner": {"min": 3}
+        "hcp": {"min": 14},
+        "support_for_partner": {"min": 4},
+        "partnership_hcp_min": {"min": 26}
       },
       "forcing": "none",
-      "explanation": "Game in partner's suit (12+ HCP, 3+ support)",
+      "explanation": "Game in partner's suit (14+ HCP, 4+ support, 26+ combined)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

@@ -191,7 +191,8 @@ class BiddingEngineV2Schema:
                     last_level = features.get('last_contract_level', 0)
                     last_suit = self._get_last_contract_suit(auction_history)
                     forcing_validation = self.interpreter.validate_bid_against_forcing(
-                        bid, last_contract_level=last_level, last_contract_suit=last_suit
+                        bid, last_contract_level=last_level, last_contract_suit=last_suit,
+                        features=features
                     )
                     if not forcing_validation.is_valid:
                         # Track highest-priority non-Pass bid rejected by forcing
@@ -253,7 +254,8 @@ class BiddingEngineV2Schema:
         last_level = features.get('last_contract_level', 0)
         last_suit = self._get_last_contract_suit(auction_history)
         forcing_validation = self.interpreter.validate_bid_against_forcing(
-            "Pass", last_contract_level=last_level, last_contract_suit=last_suit
+            "Pass", last_contract_level=last_level, last_contract_suit=last_suit,
+            features=features
         )
         if not forcing_validation.is_valid:
             # Cannot pass in a forcing auction — find cheapest legal bid

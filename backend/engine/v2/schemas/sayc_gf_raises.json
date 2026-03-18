@@ -51,8 +51,8 @@
         "is_response": true,
         "partner_last_bid": "1\u2665",
         "hcp": {
-          "min": 11,
-          "max": 14
+          "min": 13,
+          "max": 15
         },
         "hearts_length": {
           "min": 4
@@ -74,8 +74,8 @@
         "is_response": true,
         "partner_last_bid": "1\u2665",
         "hcp": {
-          "min": 11,
-          "max": 14
+          "min": 13,
+          "max": 15
         },
         "hearts_length": {
           "min": 4
@@ -97,8 +97,8 @@
         "is_response": true,
         "partner_last_bid": "1\u2665",
         "hcp": {
-          "min": 11,
-          "max": 14
+          "min": 13,
+          "max": 15
         },
         "hearts_length": {
           "min": 4
@@ -120,8 +120,8 @@
         "is_response": true,
         "partner_last_bid": "1\u2660",
         "hcp": {
-          "min": 11,
-          "max": 14
+          "min": 13,
+          "max": 15
         },
         "spades_length": {
           "min": 4
@@ -143,8 +143,8 @@
         "is_response": true,
         "partner_last_bid": "1\u2660",
         "hcp": {
-          "min": 11,
-          "max": 14
+          "min": 13,
+          "max": 15
         },
         "spades_length": {
           "min": 4
@@ -167,8 +167,8 @@
         "is_contested": false,
         "partner_last_bid": "1\u2660",
         "hcp": {
-          "min": 12,
-          "max": 14
+          "min": 13,
+          "max": 15
         },
         "spades_length": {
           "min": 4
@@ -560,8 +560,8 @@
         "partner_last_bid": "2NT",
         "my_last_bid": "1\u2665",
         "hcp": {
-          "min": 12,
-          "max": 14
+          "min": 13,
+          "max": 15
         }
       },
       "forcing": "none",
@@ -578,8 +578,8 @@
         "partner_last_bid": "2NT",
         "my_last_bid": "1\u2660",
         "hcp": {
-          "min": 12,
-          "max": 14
+          "min": 13,
+          "max": 15
         }
       },
       "forcing": "none",

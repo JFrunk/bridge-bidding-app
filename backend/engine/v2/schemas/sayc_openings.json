@@ -344,7 +344,7 @@
         },
         {
           "feature": "hcp",
-          "constraint_type": "SOFT",
+          "constraint_type": "HARD",
           "min": 13,
           "max": 21
         },
@@ -418,7 +418,7 @@
         },
         {
           "feature": "hcp",
-          "constraint_type": "SOFT",
+          "constraint_type": "HARD",
           "min": 13,
           "max": 21
         },
@@ -492,7 +492,7 @@
         },
         {
           "feature": "hcp",
-          "constraint_type": "SOFT",
+          "constraint_type": "HARD",
           "min": 13,
           "max": 21
         },
@@ -534,7 +534,7 @@
         },
         {
           "feature": "hcp",
-          "constraint_type": "SOFT",
+          "constraint_type": "HARD",
           "min": 13,
           "max": 21
         },
@@ -640,7 +640,7 @@
       "priority": 25,
       "description": "Light opening by Rule of 20 with strict suit quality requirements",
       "forcing": "none",
-      "explanation": "Rule of 20 opening (10-11 HCP with excellent long suit)",
+      "explanation": "Rule of 20 opening (11-12 HCP with excellent long suit)",
       "sets_forcing_level": "NON_FORCING",
       "constraints": [
         {
@@ -650,9 +650,9 @@
         },
         {
           "feature": "hcp",
-          "constraint_type": "SOFT",
-          "min": 10,
-          "max": 11
+          "constraint_type": "HARD",
+          "min": 11,
+          "max": 12
         },
         {
           "feature": "rule_of_20",
@@ -682,7 +682,7 @@
       "priority": 11,
       "description": "Pass with insufficient values",
       "forcing": "none",
-      "explanation": "Pass (insufficient values to open, need 12+ HCP)",
+      "explanation": "Pass (insufficient values to open, need 13+ HCP)",
       "sets_forcing_level": "NON_FORCING",
       "constraints": [
         {
@@ -693,7 +693,7 @@
         {
           "feature": "hcp",
           "constraint_type": "HARD",
-          "max": 11
+          "max": 12
         }
       ]
     }
