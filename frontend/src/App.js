@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { flushSync } from 'react-dom';
+import * as Sentry from '@sentry/react';
 import './App.css';
 import { PlayTable, getSuitOrder } from './PlayComponents';
 import ResultOverlay from './components/shared/ResultOverlay';
@@ -4622,16 +4623,43 @@ ${otherCommands}`;
     </div>
   );
 }
-// Wrap App with AuthProvider, UserProvider, and RoomProvider
+// Fallback UI when React crashes unexpectedly
+function SentryFallback({ error, resetError }) {
+  return (
+    <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'system-ui' }}>
+      <h2>Something went wrong</h2>
+      <p style={{ color: '#666' }}>The error has been reported automatically.</p>
+      <button
+        onClick={resetError}
+        style={{
+          marginTop: '1rem',
+          padding: '0.5rem 1.5rem',
+          cursor: 'pointer',
+          background: 'var(--table-green, #2d5a27)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '6px',
+          fontSize: '1rem',
+        }}
+      >
+        Try Again
+      </button>
+    </div>
+  );
+}
+
+// Wrap App with AuthProvider, UserProvider, RoomProvider, and Sentry ErrorBoundary
 function AppWithAuth() {
   return (
-    <AuthProvider>
-      <UserProvider>
-        <RoomProvider>
-          <App />
-        </RoomProvider>
-      </UserProvider>
-    </AuthProvider>
+    <Sentry.ErrorBoundary fallback={SentryFallback}>
+      <AuthProvider>
+        <UserProvider>
+          <RoomProvider>
+            <App />
+          </RoomProvider>
+        </UserProvider>
+      </AuthProvider>
+    </Sentry.ErrorBoundary>
   );
 }
 

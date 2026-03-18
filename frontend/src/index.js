@@ -5,6 +5,10 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { initConsoleCapture } from './utils/consoleCapture';
 import { initActionTracker } from './utils/actionTracker';
+import { initSentry } from './utils/sentryConfig';
+
+// Initialize Sentry first to catch errors during startup
+initSentry();
 
 // Initialize debugging utilities early to catch all activity
 initConsoleCapture();

@@ -42,6 +42,10 @@ from core.session_state import SessionStateManager, get_session_id_from_request
 # Error logging for bidding/play diagnostics
 from utils.error_logger import log_error
 
+# Sentry error tracking (must init before Flask app creation)
+from utils.sentry_config import init_sentry
+init_sentry()
+
 # Canonical seat utilities (replaces inline partner maps, seat arrays, modulo arithmetic)
 from utils.seats import (
     SEATS, SEAT_NAMES, partner as seats_partner, lho as seats_lho,
