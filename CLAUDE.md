@@ -252,6 +252,7 @@ def evaluate(self, hand: Hand, features: Dict) -> Optional[Tuple[str, str]]:
 | Suit symbols, colors, bid formatting | — | `utils/suitColors` |
 | Card sorting, grouping, contracts | — | `shared/utils/cardUtils` |
 | Error logging & exception handling | `utils.error_logger` | — |
+| Error tracking (Sentry) | `utils.sentry_config` | `utils/sentryConfig` |
 | Session IDs & API headers | — | `utils/sessionHelper` |
 | Deck creation, dealing hands | `utils.dealing` | — |
 

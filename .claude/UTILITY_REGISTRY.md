@@ -228,7 +228,38 @@ Search changed files for: `traceback.print_exc`, `except Exception as log_error`
 
 ---
 
-## 5. Session Management (Frontend)
+## 5. Error Tracking — Sentry (Backend + Frontend)
+
+**Domain:** Real-time production error tracking, alerting, performance monitoring
+
+**Backend File:** `backend/utils/sentry_config.py`
+**Backend Import:** `from utils.sentry_config import init_sentry`
+**Frontend File:** `frontend/src/utils/sentryConfig.js`
+**Frontend Import:** `import { initSentry } from './utils/sentryConfig'`
+
+### Relationship to error_logger
+- `error_logger` = local JSONL audit trail (always runs, no external dependency)
+- `sentry_config` = external alerting service (requires DSN env var, gracefully disabled without it)
+- Both coexist — Sentry auto-captures Flask exceptions alongside error_logger
+
+### Banned Patterns
+```python
+# BANNED: Initializing Sentry outside sentry_config.py
+import sentry_sdk
+sentry_sdk.init(dsn="...")              # Use init_sentry() from utils.sentry_config
+
+# BANNED: Calling captureException for errors already caught by Flask global handler
+sentry_sdk.capture_exception(e)         # Flask integration auto-captures; only use for non-HTTP contexts
+```
+
+```javascript
+// BANNED: Initializing Sentry outside sentryConfig.js
+Sentry.init({ dsn: "..." })             // Use initSentry() from utils/sentryConfig
+```
+
+---
+
+## 6. Session Management (Frontend)
 
 **Domain:** Session ID generation/storage, API request headers, authenticated fetch
 
@@ -259,7 +290,7 @@ Search changed files for: `localStorage.getItem('bridge_session_id')`, inline `'
 
 ---
 
-## 6. Dealing & Deck Management (Backend)
+## 7. Dealing & Deck Management (Backend)
 
 **Domain:** Deck creation, shuffling, dealing 4 hands from a single deck
 
