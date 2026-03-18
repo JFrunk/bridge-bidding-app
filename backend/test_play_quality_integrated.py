@@ -64,9 +64,7 @@ class IntegratedPlayQualityScorer:
             'passed_out': 0,
             'legality_errors': [],
             'tactical_errors': [],
-            'timing_metrics': [],
-            'contract_levels': [],
-            'level_results': {}  # {level: {'made': N, 'failed': N, 'undertricks': N}}
+            'timing_metrics': []
         }
 
     def _create_ai(self, ai_type: str, depth: int):
@@ -124,7 +122,6 @@ class IntegratedPlayQualityScorer:
             return  # Passed out
 
         self.results['contracts_played'] += 1
-        self.results['contract_levels'].append(contract.level)
 
         # Simulate actual play
         play_result = self._simulate_complete_play(hands, contract, vulnerability, hand_number)
@@ -312,20 +309,14 @@ class IntegratedPlayQualityScorer:
 
         # Determine if contract made
         tricks_needed = contract.tricks_needed
-        level = contract.level
-        if level not in self.results['level_results']:
-            self.results['level_results'][level] = {'made': 0, 'failed': 0, 'undertricks': 0}
         if tricks_won >= tricks_needed:
             self.results['contracts_made'] += 1
             overtricks = tricks_won - tricks_needed
             self.results['overtricks'] += overtricks
-            self.results['level_results'][level]['made'] += 1
         else:
             self.results['contracts_failed'] += 1
             undertricks = tricks_needed - tricks_won
             self.results['undertricks'] += undertricks
-            self.results['level_results'][level]['failed'] += 1
-            self.results['level_results'][level]['undertricks'] += undertricks
 
         # Record timing
         self.results['timing_metrics'].append(play_result['time'])
@@ -480,23 +471,6 @@ class IntegratedPlayQualityScorer:
         print("-" * 80)
         print()
 
-        # Contract level distribution with success rates
-        if 'contract_levels' in self.results and self.results['contract_levels']:
-            from collections import Counter
-            level_counts = Counter(self.results['contract_levels'])
-            print("CONTRACT LEVEL DISTRIBUTION (with success rates):")
-            for level in sorted(level_counts.keys()):
-                count = level_counts[level]
-                pct = count / len(self.results['contract_levels']) * 100
-                lr = self.results['level_results'].get(level, {})
-                made = lr.get('made', 0)
-                failed = lr.get('failed', 0)
-                ut = lr.get('undertricks', 0)
-                success_pct = made / (made + failed) * 100 if (made + failed) > 0 else 0
-                avg_ut = ut / failed if failed > 0 else 0
-                print(f"  Level {level}: {count:3d} ({pct:5.1f}%)  Made: {made:3d}/{made+failed:3d} ({success_pct:4.1f}%)  Avg UT: {avg_ut:.1f}")
-            print()
-
         # Timing stats
         print("TIMING METRICS:")
         print(f"  Avg Time/Hand: {scores['timing']['avg_time_per_hand']:.3f}s")
@@ -539,13 +513,7 @@ def main():
 
     args = parser.parse_args()
 
-    # Temporarily use 100 hands for automated CI until we clear 70% threshold
-    if args.fast:
-        num_hands = 100
-    elif args.automated and args.hands == 500:
-        num_hands = 100  # Override default 500 in CI
-    else:
-        num_hands = args.hands
+    num_hands = 100 if args.fast else args.hands
 
     try:
         scorer = IntegratedPlayQualityScorer(num_hands=num_hands, ai_type=args.ai, depth=args.depth)

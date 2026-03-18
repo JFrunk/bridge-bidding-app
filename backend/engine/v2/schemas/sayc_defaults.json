@@ -31,61 +31,6 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "id": "default_pass_at_5_level",
-      "bid": "Pass",
-      "priority": 997,
-      "description": "Pass when already at 5-level with insufficient slam values",
-      "conditions": {
-        "last_contract_level": {"min": 5},
-        "hcp": {"max": 20}
-      },
-      "forcing": "none",
-      "explanation": "Pass: Already at 5-level, insufficient for slam",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
-      "id": "default_cap_3nt_no_major_fit",
-      "bid": "3NT",
-      "priority": 20,
-      "description": "Cap at 3NT when no major fit even in game-forced auctions",
-      "conditions": {
-        "fit_known": false,
-        "partnership_hcp_min": {"min": 26},
-        "hcp": {"min": 10},
-        "is_balanced": true,
-        "last_contract_level": {"max": 3}
-      },
-      "forcing": "none",
-      "explanation": "3NT: Game reached without major fit",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
-      "id": "default_pass_at_2_level_weak_partnership",
-      "bid": "Pass",
-      "priority": 8,
-      "description": "Pass at 2+ level when partnership HCP is below invitational range",
-      "conditions": {
-        "last_contract_level": {"min": 2},
-        "partnership_hcp_min": {"max": 22}
-      },
-      "forcing": "none",
-      "explanation": "Pass: Partnership values below invitational range",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
-      "id": "default_pass_high_level_weak",
-      "bid": "Pass",
-      "priority": 7,
-      "description": "Pass at 3+ level with weak hand",
-      "conditions": {
-        "last_contract_level": {"min": 3},
-        "hcp": {"max": 14}
-      },
-      "forcing": "none",
-      "explanation": "Pass: Already at 3+ level with minimum hand",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
       "id": "default_pass_no_opening_values",
       "bid": "Pass",
       "priority": 5,
@@ -137,7 +82,7 @@
           {"partner_last_bid": {"in": ["3NT", "4♥", "4♠", "5♣", "5♦"]}},
           {"last_contract_level": {"min": 4}}
         ],
-        "hcp": {"max": 18}
+        "hcp": {"max": 15}
       },
       "forcing": "none",
       "explanation": "Pass: Game reached with minimum values",
@@ -164,17 +109,17 @@
       "conditions": {
         "is_contested": true,
         "partnership_hcp_min": {
-          "min": 29
+          "min": 27
         },
         "support_for_partner": {
-          "min": 4
+          "min": 3
         },
         "partner_last_bid": {
           "in": ["1♥", "1♠", "2♥", "2♠", "3♥", "3♠"]
         }
       },
       "forcing": "none",
-      "explanation": "Game: Partnership has 29+ HCP with 4+ card major fit",
+      "explanation": "Game: Partnership has 27+ HCP with major fit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -185,15 +130,15 @@
       "conditions": {
         "is_contested": true,
         "partnership_hcp_min": {
-          "min": 29
+          "min": 27
         },
         "hcp": {
-          "min": 14
+          "min": 12
         },
         "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "3NT: Partnership has 29+ HCP with balanced hand",
+      "explanation": "3NT: Partnership has 27+ HCP with balanced hand",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -203,43 +148,28 @@
       "description": "Default game in own major with partnership values",
       "conditions": {
         "partnership_hcp_min": {
-          "min": 29
+          "min": 27
         },
         "longest_suit_length": {
-          "min": 7
+          "min": 6
         },
         "longest_suit": {
           "in": ["♥", "♠"]
         }
       },
       "forcing": "none",
-      "explanation": "Game: 7+ card major with 29+ combined HCP",
-      "sets_forcing_level": "NON_FORCING"
-    },
-    {
-      "id": "default_pass_no_fit_weak",
-      "bid": "Pass",
-      "priority": 9,
-      "description": "Pass when no 8-card fit and partnership under 26 combined HCP",
-      "conditions": {
-        "fit_known": false,
-        "partnership_hcp_min": {
-          "max": 25
-        }
-      },
-      "forcing": "none",
-      "explanation": "Pass: No confirmed fit and insufficient combined values (under 23 HCP)",
+      "explanation": "Game: 6+ card major with partnership game values",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "default_cap_2nt_no_major_fit",
       "bid": "2NT",
       "priority": 8,
-      "description": "Cap at 2NT without confirmed 8-card major fit unless 26+ combined HCP",
+      "description": "Cap at 2NT without confirmed 8-card major fit unless 25+ combined HCP",
       "conditions": {
         "fit_known": false,
         "partnership_hcp_min": {
-          "max": 25
+          "max": 24
         },
         "hcp": {
           "min": 10

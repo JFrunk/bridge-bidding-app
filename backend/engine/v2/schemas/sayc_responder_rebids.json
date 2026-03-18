@@ -59,7 +59,7 @@
         "is_doubler_rebid": false,
         "is_contested": false,
         "hcp": {
-          "min": 13
+          "min": 12
         },
         "hearts_length": {
           "min": 4
@@ -71,7 +71,7 @@
           ]
         },
         "partnership_hcp_min": {
-          "min": 26
+          "min": 25
         },
         "OR": [
           {
@@ -110,12 +110,6 @@
         },
         "dummy_points": {
           "min": 3
-        },
-        "hcp": {
-          "min": 10
-        },
-        "partnership_hcp_min": {
-          "min": 23
         }
       },
       "forcing": "none",
@@ -144,12 +138,6 @@
         },
         "dummy_points": {
           "min": 3
-        },
-        "hcp": {
-          "min": 10
-        },
-        "partnership_hcp_min": {
-          "min": 23
         }
       },
       "forcing": "none",
@@ -167,7 +155,7 @@
         "is_doubler_rebid": false,
         "is_contested": false,
         "hcp": {
-          "min": 13
+          "min": 12
         },
         "spades_length": {
           "min": 4
@@ -179,7 +167,7 @@
           ]
         },
         "partnership_hcp_min": {
-          "min": 26
+          "min": 25
         },
         "OR": [
           {
@@ -204,7 +192,7 @@
       "trigger": "1NT - Pass - 2♣ - Pass - 2♠ - Pass - ?",
       "conditions": {
         "hcp": {
-          "min": 11
+          "min": 8
         },
         "spades_length": {
           "min": 3
@@ -222,7 +210,7 @@
       "trigger": "1NT - Pass - 2♣ - Pass - 2♥ - Pass - ?",
       "conditions": {
         "hcp": {
-          "min": 11
+          "min": 8
         },
         "hearts_length": {
           "min": 3

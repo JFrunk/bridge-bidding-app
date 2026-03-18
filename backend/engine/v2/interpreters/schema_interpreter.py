@@ -171,10 +171,9 @@ class SchemaInterpreter:
         self.forcing.update(new_level, rule_id)
 
     def validate_bid_against_forcing(self, bid: str, last_contract_level: int = 0,
-                                      last_contract_suit: str = '',
-                                      features: dict = None) -> BidValidationResult:
+                                      last_contract_suit: str = '') -> BidValidationResult:
         """Validate bid against forcing constraints. Delegates to ForcingStateMachine."""
-        return self.forcing.validate_bid(bid, last_contract_level, last_contract_suit, features)
+        return self.forcing.validate_bid(bid, last_contract_level, last_contract_suit)
 
     def evaluate(self, features: Dict[str, Any]) -> Optional[Tuple[str, str]]:
         """
@@ -205,7 +204,7 @@ class SchemaInterpreter:
             # Extract auction context for validation
             last_contract_level = features.get('auction_level', 0)
             last_contract_suit = features.get('last_contract_suit', '')
-            validation = self.validate_bid_against_forcing("Pass", last_contract_level, last_contract_suit, features)
+            validation = self.validate_bid_against_forcing("Pass", last_contract_level, last_contract_suit)
 
             if not validation.is_valid:
                 # Pass is illegal due to forcing - filter out Pass and select next best

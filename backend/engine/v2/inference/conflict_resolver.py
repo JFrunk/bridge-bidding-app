@@ -64,17 +64,6 @@ class ConflictResolver:
         priority = proposed_rule.get('priority', 0)
         explanation = proposed_rule.get('explanation', '')
 
-        # 0. GAME CAP: Downgrade game bids when partnership HCP is insufficient
-        # for the play engine to execute. This compensates for Minimax depth-2
-        # limitations by keeping contracts at manageable levels.
-        if features and self._is_high_bid(bid):
-            capped_bid, capped_explanation = self._apply_game_cap(
-                bid, explanation, features, history
-            )
-            if capped_bid != bid:
-                self.veto_count += 1
-                return capped_bid, capped_explanation
-
         # Pass-through mode if no simulator available
         if self.simulator is None:
             return bid, explanation
@@ -104,64 +93,6 @@ class ConflictResolver:
                 return vetoed_bid, vetoed_explanation
 
         return bid, explanation
-
-    def _is_high_bid(self, bid: str) -> bool:
-        """Check if bid is at level 3 or higher (where play engine struggles)."""
-        if not bid or bid in ['Pass', 'X', 'XX']:
-            return False
-        try:
-            level = int(bid[0])
-            return level >= 3
-        except (ValueError, IndexError):
-            return False
-
-    # Keep old name as alias for compatibility
-    _is_game_bid = _is_high_bid
-
-    def _apply_game_cap(
-        self,
-        bid: str,
-        explanation: str,
-        features: dict,
-        history: list
-    ) -> tuple:
-        """
-        Cap high-level bids when partnership HCP is insufficient for the
-        play engine to execute reliably.
-
-        Tiered thresholds:
-        - Level 3+: requires 31+ partnership HCP for level 3
-        - Level 3+: requires 33+ partnership HCP for anything higher
-        - Below 31: cap at level 2
-        """
-        partnership_hcp = features.get('partnership_hcp_min', 40)
-        last_level = features.get('last_contract_level', 0)
-        level = int(bid[0])
-        suit = bid[1:]
-
-        # Determine target cap level based on partnership HCP
-        # Aggressive thresholds tuned for Minimax depth-2 play engine
-        if partnership_hcp >= 33:
-            return bid, explanation  # Strong enough for anything
-        elif partnership_hcp >= 31:
-            cap_level = 3  # Allow invitational with very strong values
-        else:
-            cap_level = 2  # Partial only — most hands stay at level 2
-
-        # Don't cap if already at or below cap level
-        if level <= cap_level:
-            return bid, explanation
-
-        # Find the highest legal bid at or below cap_level in this suit
-        # Must be higher than the last contract level
-        for try_level in range(cap_level, 0, -1):
-            if try_level > last_level:
-                capped = f"{try_level}{suit}" if suit != 'NT' else f"{try_level}NT"
-                return capped, f"Capped at {try_level}-level (partnership ~{partnership_hcp} HCP)"
-
-        # Can't cap below the current auction level — Pass instead
-        # of bidding at a level the play engine can't handle
-        return 'Pass', f"Pass: Partnership ~{partnership_hcp} HCP insufficient for level {level}"
 
     def _is_slam_bid(self, bid: str) -> bool:
         """Check if bid is a slam (6 or 7 level)."""
@@ -287,11 +218,9 @@ class ConflictResolver:
 
 class PassThroughResolver(ConflictResolver):
     """
-    A resolver that passes through most bids but still applies the game cap.
+    A no-op resolver that always passes through the original bid.
 
     Use this when Monte Carlo simulation is not available or not desired.
-    The game cap is always active to prevent overbidding beyond play engine
-    capabilities.
     """
 
     def __init__(self):
@@ -304,17 +233,5 @@ class PassThroughResolver(ConflictResolver):
         history: list,
         features: Optional[Dict[str, Any]] = None
     ) -> Tuple[str, str]:
-        """Apply game cap but otherwise pass through."""
-        bid = proposed_rule.get('bid', 'Pass')
-        explanation = proposed_rule.get('explanation', '')
-
-        # Still apply level cap even in pass-through mode
-        if features and self._is_high_bid(bid):
-            capped_bid, capped_explanation = self._apply_game_cap(
-                bid, explanation, features, history
-            )
-            if capped_bid != bid:
-                self.veto_count += 1
-                return capped_bid, capped_explanation
-
-        return bid, explanation
+        """Always return the original bid unchanged."""
+        return proposed_rule.get('bid', 'Pass'), proposed_rule.get('explanation', '')
