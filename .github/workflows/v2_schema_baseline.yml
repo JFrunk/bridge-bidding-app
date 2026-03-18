@@ -90,7 +90,7 @@ jobs:
         python3 tests/sayc_baseline/generate_coverage_report.py results_v2.json
 
     - name: Upload Test Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: baseline-results
@@ -192,7 +192,7 @@ jobs:
         done
 
     - name: Upload Category Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: category-results
         path: backend/category_*.json

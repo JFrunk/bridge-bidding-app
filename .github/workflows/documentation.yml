@@ -33,7 +33,7 @@ jobs:
         python3 .claude/scripts/documentation_coverage_report.py --html
 
     - name: Upload documentation coverage report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: doc-coverage-report
         path: documentation_coverage_report.html
