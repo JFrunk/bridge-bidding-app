@@ -521,20 +521,14 @@ def main():
         scorer.print_report(scores)
         scorer.save_detailed_report(scores, args.output)
 
-        # Automated CI gate: fail only if zero contracts made
+        # Automated CI gate: require composite score >= 70%
         if args.automated:
-            contracts_played = scores['contracts_played']
-            contracts_made = scores['contracts_made']
-            if contracts_played > 0:
-                contracts_made_percentage = contracts_made / contracts_played * 100
-            else:
-                contracts_made_percentage = 0
-
-            if contracts_made_percentage == 0:
-                print("⛔ CI FAILURE: 0% contracts made - critical regression!")
+            composite = scores['scores']['composite']
+            if composite < 70.0:
+                print(f"⛔ CI FAILURE: Composite score {composite:.1f}% below 70% threshold")
                 return 1
             else:
-                print(f"✅ CI PASS: {contracts_made_percentage:.1f}% contracts made")
+                print(f"✅ CI PASS: Composite score {composite:.1f}%")
                 return 0
 
         # Interactive mode: stricter thresholds

@@ -332,9 +332,9 @@
       "id": "open_1_spades",
       "bid": "1♠",
       "priority": 80,
-      "description": "One spade opening (5+ spades, 12-21 HCP)",
+      "description": "One spade opening (5+ spades, 13-21 HCP)",
       "forcing": "none",
-      "explanation": "1♠ opening (12-21 HCP, 5+ spades)",
+      "explanation": "1♠ opening (13-21 HCP, 5+ spades)",
       "sets_forcing_level": "NON_FORCING",
       "constraints": [
         {
@@ -345,7 +345,7 @@
         {
           "feature": "hcp",
           "constraint_type": "SOFT",
-          "min": 12,
+          "min": 13,
           "max": 21
         },
         {
@@ -406,9 +406,9 @@
       "id": "open_1_hearts",
       "bid": "1♥",
       "priority": 78,
-      "description": "One heart opening (5+ hearts, 12-21 HCP)",
+      "description": "One heart opening (5+ hearts, 13-21 HCP)",
       "forcing": "none",
-      "explanation": "1♥ opening (12-21 HCP, 5+ hearts)",
+      "explanation": "1♥ opening (13-21 HCP, 5+ hearts)",
       "sets_forcing_level": "NON_FORCING",
       "constraints": [
         {
@@ -419,7 +419,7 @@
         {
           "feature": "hcp",
           "constraint_type": "SOFT",
-          "min": 12,
+          "min": 13,
           "max": 21
         },
         {
@@ -445,7 +445,7 @@
       "priority": 75,
       "description": "Balanced hand outside NT range",
       "forcing": "none",
-      "explanation": "1♣ opening (12-14 HCP balanced, below 1NT range)",
+      "explanation": "1♣ opening (13-14 HCP balanced, below 1NT range)",
       "sets_forcing_level": "NON_FORCING",
       "constraints": [
         {
@@ -456,7 +456,7 @@
         {
           "feature": "hcp",
           "constraint_type": "HARD",
-          "min": 12,
+          "min": 13,
           "max": 14
         },
         {
@@ -480,9 +480,9 @@
       "id": "open_1_diamonds",
       "bid": "1♦",
       "priority": 71,
-      "description": "One diamond opening (4+ diamonds, 12-21 HCP)",
+      "description": "One diamond opening (4+ diamonds, 13-21 HCP)",
       "forcing": "none",
-      "explanation": "1♦ opening (12-21 HCP, 4+ diamonds)",
+      "explanation": "1♦ opening (13-21 HCP, 4+ diamonds)",
       "sets_forcing_level": "NON_FORCING",
       "constraints": [
         {
@@ -493,7 +493,7 @@
         {
           "feature": "hcp",
           "constraint_type": "SOFT",
-          "min": 12,
+          "min": 13,
           "max": 21
         },
         {
@@ -522,9 +522,9 @@
       "id": "open_1_clubs",
       "bid": "1♣",
       "priority": 65,
-      "description": "One club opening (3+ clubs, 12-21 HCP)",
+      "description": "One club opening (3+ clubs, 13-21 HCP)",
       "forcing": "none",
-      "explanation": "1♣ opening (12-21 HCP, 3+ clubs)",
+      "explanation": "1♣ opening (13-21 HCP, 3+ clubs)",
       "sets_forcing_level": "NON_FORCING",
       "constraints": [
         {
@@ -535,7 +535,7 @@
         {
           "feature": "hcp",
           "constraint_type": "SOFT",
-          "min": 12,
+          "min": 13,
           "max": 21
         },
         {
@@ -566,7 +566,7 @@
       "priority": 55,
       "description": "One club opening with short clubs (4-4-3-2 shape)",
       "forcing": "none",
-      "explanation": "1♣ opening (12-21 HCP, possibly short clubs)",
+      "explanation": "1♣ opening (13-21 HCP, possibly short clubs)",
       "sets_forcing_level": "NON_FORCING",
       "constraints": [
         {
@@ -577,7 +577,7 @@
         {
           "feature": "hcp",
           "constraint_type": "HARD",
-          "min": 12,
+          "min": 13,
           "max": 21
         },
         {
