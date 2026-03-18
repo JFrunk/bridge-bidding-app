@@ -29,7 +29,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/bridge-bidding-app/backend
-            bash update.sh
+            cd .. && bash update.sh && cd backend
             python3 test_play_quality_integrated.py --automated
 
   production:
@@ -57,4 +57,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/bridge-bidding-app/backend
-            bash update.sh
+            cd .. && bash update.sh && cd backend
