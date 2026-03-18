@@ -508,6 +508,8 @@ def main():
                        help='AI type to test (default: minimax)')
     parser.add_argument('--depth', type=int, default=2, help='Minimax depth (default: 2)')
     parser.add_argument('--output', type=str, help='Output JSON file path')
+    parser.add_argument('--automated', action='store_true',
+                       help='Automated CI mode: exit 1 if contracts_made is 0%, exit 0 otherwise')
 
     args = parser.parse_args()
 
@@ -519,7 +521,23 @@ def main():
         scorer.print_report(scores)
         scorer.save_detailed_report(scores, args.output)
 
-        # Exit with error code if failing
+        # Automated CI gate: fail only if zero contracts made
+        if args.automated:
+            contracts_played = scores['contracts_played']
+            contracts_made = scores['contracts_made']
+            if contracts_played > 0:
+                contracts_made_percentage = contracts_made / contracts_played * 100
+            else:
+                contracts_made_percentage = 0
+
+            if contracts_made_percentage == 0:
+                print("⛔ CI FAILURE: 0% contracts made - critical regression!")
+                return 1
+            else:
+                print(f"✅ CI PASS: {contracts_made_percentage:.1f}% contracts made")
+                return 0
+
+        # Interactive mode: stricter thresholds
         if scores['scores']['composite'] < 80:
             print("⛔ FAILING SCORE - Do not deploy!")
             return 1
