@@ -3819,12 +3819,14 @@ ${otherCommands}`;
         />
       )}
 
-      {/* Legacy Login Modal — Show when not authenticated and no V2 auth page is active */}
-      {!authPage && !authTokenPage && (showLogin || (!isAuthenticated && !authLoading)) && (
-        <SimpleLogin onClose={() => {
-          setShowLogin(false);
-          // If still not authenticated after closing, they chose to be guest
-        }} />
+      {/* Register — Show V2 RegisterPage by default for unauthenticated users */}
+      {!authPage && !authTokenPage && (!isAuthenticated && !authLoading) && (
+        <RegisterPage
+          onClose={() => {
+            // If still not authenticated after closing, they chose to be guest
+          }}
+          onSwitchToLogin={() => setAuthPage('login')}
+        />
       )}
 
       {/* Registration Prompt - appears after guest plays a few hands */}
