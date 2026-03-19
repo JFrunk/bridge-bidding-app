@@ -194,6 +194,24 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['opener_relationship'] = af['opener_relationship']
     flat['partner_last_bid'] = af['partner_last_bid']
     flat['is_contested'] = af['is_contested']
+
+    # last_bid_side: who made the last non-Pass/X/XX bid in the auction?
+    # Values: 'partner', 'opponent', 'self', or None (no substantive bids yet).
+    # Formula: bidder_seat = (dealer_seat + bid_index) % 4
+    flat['last_bid_side'] = None
+    for _ri in range(len(auction_history) - 1, -1, -1):
+        _rbid = auction_history[_ri]
+        if _rbid not in ('Pass', 'X', 'XX', ''):
+            _bidder_seat = seat_from_index(dealer_idx + _ri)
+            _side = _seat_to_key.get(_bidder_seat)  # 'me', 'partner', 'lho', 'rho'
+            if _side == 'me':
+                flat['last_bid_side'] = 'self'
+            elif _side == 'partner':
+                flat['last_bid_side'] = 'partner'
+            else:
+                flat['last_bid_side'] = 'opponent'
+            break
+
     flat['vulnerability'] = af['vulnerability']
 
     # Compute vulnerability booleans for rule conditions

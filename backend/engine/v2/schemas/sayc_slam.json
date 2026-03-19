@@ -228,6 +228,7 @@
       "description": "Gerber response: 0 or 4 aces",
       "conditions": {
         "partner_last_bid": "4♣",
+        "last_bid_side": "partner",
         "my_last_bid": {"in": ["1NT", "2NT"]},
         "aces": {"in": [0, 4]}
       },
@@ -243,6 +244,7 @@
       "description": "Gerber response: 1 ace",
       "conditions": {
         "partner_last_bid": "4♣",
+        "last_bid_side": "partner",
         "my_last_bid": {"in": ["1NT", "2NT"]},
         "aces": 1
       },
@@ -258,6 +260,7 @@
       "description": "Gerber response: 2 aces",
       "conditions": {
         "partner_last_bid": "4♣",
+        "last_bid_side": "partner",
         "my_last_bid": {"in": ["1NT", "2NT"]},
         "aces": 2
       },
@@ -273,6 +276,7 @@
       "description": "Gerber response: 3 aces",
       "conditions": {
         "partner_last_bid": "4♣",
+        "last_bid_side": "partner",
         "my_last_bid": {"in": ["1NT", "2NT"]},
         "aces": 3
       },

@@ -24,6 +24,22 @@ from engine.hand import Hand
 import logging
 logger = logging.getLogger(__name__)
 
+# Telemetry counters — reset via reset_structural_vetoes(), read via get_structural_vetoes()
+_structural_vetoes = {'4M_fit': 0, '4M_ltc': 0, '3NT_stoppers': 0, 'origin': 0}
+
+
+def reset_structural_vetoes():
+    """Reset veto counters. Call before a quality run."""
+    _structural_vetoes['4M_fit'] = 0
+    _structural_vetoes['4M_ltc'] = 0
+    _structural_vetoes['3NT_stoppers'] = 0
+    _structural_vetoes['origin'] = 0
+
+
+def get_structural_vetoes() -> dict:
+    """Return a copy of veto counters."""
+    return dict(_structural_vetoes)
+
 
 def validate_bid_structure(bid: str, priority: int, features: Dict[str, Any]) -> bool:
     """
@@ -35,18 +51,43 @@ def validate_bid_structure(bid: str, priority: int, features: Dict[str, Any]) ->
     Rules:
       - 4♥/4♠: requires partnership_fit >= 8 AND partnership_ltc <= 14
       - 3NT: requires partnership_stoppers >= 3
-      - Artificial bids (priority >= 800) are exempt
+      - Artificial bids (priority >= 800) are exempt UNLESS they commit
+        to 4♥/4♠ without an established fit (fit_known=false)
       - Pass/X/XX are always allowed
     """
     if not bid or bid in ('Pass', 'X', 'XX'):
         return True
 
-    # Never filter artificial/systemic bids (transfers, RKCB, Stayman)
-    if priority >= 800:
-        return True
-
     bid_level = int(bid[0]) if bid[0].isdigit() else 0
     bid_strain = bid[1:] if len(bid) > 1 else ''
+
+    # ORIGIN GATE: Convention bids (priority >= 800) cannot be responses to
+    # an opponent's bid.  You can only "respond" to a convention that partner
+    # started.  This kills Ghost Gerber / Ghost Blackwood misfires where an
+    # opponent's natural 4♣ or 4NT is misinterpreted as a convention ask.
+    last_bid_side = features.get('last_bid_side')
+    if priority >= 800 and last_bid_side == 'opponent':
+        _structural_vetoes['origin'] += 1
+        msg = f"🚫 VETO ORIGIN: {bid} rejected (convention response to opponent's bid)"
+        logger.info(msg)
+        print(msg)
+        return False
+
+    # Artificial/systemic bids (priority >= 800) are generally exempt,
+    # BUT if they land on 4♥/4♠ they must still pass the fit check
+    # unless the partnership has already agreed a trump suit (fit_known).
+    # This prevents control bids and convention misfires from committing
+    # to a 4M contract without a real fit.
+    if priority >= 800:
+        if bid_level == 4 and bid_strain in ('♥', '♠'):
+            fit_known = features.get('fit_known', False)
+            if not fit_known:
+                # Fall through to the 4M gate below
+                pass
+            else:
+                return True  # Fit established — control bid is fine
+        else:
+            return True  # Non-4M artificial bids are always exempt
 
     # 4♥/4♠: Require established fit and trick potential
     if bid_level == 4 and bid_strain in ('♥', '♠'):
@@ -56,16 +97,23 @@ def validate_bid_structure(bid: str, priority: int, features: Dict[str, Any]) ->
             reasons = []
             if fit < 8:
                 reasons.append(f"fit={fit}<8")
+                _structural_vetoes['4M_fit'] += 1
             if ltc > 14:
                 reasons.append(f"LTC={ltc:.1f}>14")
-            logger.info(f"Structural veto: {bid} rejected ({', '.join(reasons)})")
+                _structural_vetoes['4M_ltc'] += 1
+            msg = f"🚫 VETO 4M: {bid} rejected ({', '.join(reasons)})"
+            logger.info(msg)
+            print(msg)
             return False
 
     # 3NT: Require stopper coverage
     if bid == '3NT':
         stoppers = features.get('partnership_stoppers', 0)
         if stoppers < 3:
-            logger.info(f"Structural veto: 3NT rejected (stoppers={stoppers}<3)")
+            _structural_vetoes['3NT_stoppers'] += 1
+            msg = f"🚫 VETO 3NT: rejected (stoppers={stoppers}<3)"
+            logger.info(msg)
+            print(msg)
             return False
 
     return True
