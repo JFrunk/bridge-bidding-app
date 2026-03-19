@@ -18,6 +18,7 @@ from engine.feedback.bidding_feedback import (
     get_feedback_generator, BiddingFeedback, CorrectnessLevel, ImpactLevel
 )
 from engine.hand import Hand
+from utils.error_logger import log_error
 from db import get_connection
 
 
@@ -35,7 +36,7 @@ def get_bidding_feedback_stats_for_user(user_id: int):
                 SUM(CASE WHEN correctness = 'error' THEN 1 ELSE 0 END) as error_count,
                 SUM(CASE WHEN impact = 'critical' THEN 1 ELSE 0 END) as critical_errors
             FROM bidding_decisions
-            WHERE user_id = ?
+            WHERE user_id = %s
               AND timestamp >= NOW() - INTERVAL '30 days'
         """, (user_id,))
 
@@ -65,9 +66,9 @@ def get_recent_bidding_decisions_for_user(user_id: int, limit: int = 10):
                 id, bid_number, position, user_bid, optimal_bid,
                 correctness, score, impact, key_concept, error_category
             FROM bidding_decisions
-            WHERE user_id = ?
+            WHERE user_id = %s
             ORDER BY timestamp DESC
-            LIMIT ?
+            LIMIT %s
         """, (user_id, limit))
 
         return [dict(row) for row in cursor.fetchall()]
@@ -161,7 +162,7 @@ def test_feedback_storage():
             SELECT COUNT(*) as count
             FROM bidding_decisions
             WHERE user_id = 1
-              AND user_bid = ?
+              AND user_bid = %s
               AND session_id = 'test_session_1'
         """, ('1NT',))
 
@@ -264,8 +265,7 @@ def main():
 
     except Exception as e:
         print(f"\n❌ TEST FAILED: {e}")
-        import traceback
-        traceback.print_exc()
+        log_error(e, context={'source': 'test_phase1_feedback'})
         return 1
 
     return 0

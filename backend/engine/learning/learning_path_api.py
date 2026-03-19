@@ -43,7 +43,7 @@ def get_user_completed_skills(user_id: int) -> List[str]:
         cursor.execute("""
             SELECT skill_id
             FROM user_skill_progress
-            WHERE user_id = ? AND status = 'mastered'
+            WHERE user_id = %s AND status = 'mastered'
         """, (user_id,))
         skills = [row['skill_id'] for row in cursor.fetchall()]
     except Exception:
@@ -64,7 +64,7 @@ def get_user_skill_status(user_id: int, skill_id: str) -> Dict:
         cursor.execute("""
             SELECT *
             FROM user_skill_progress
-            WHERE user_id = ? AND skill_id = ?
+            WHERE user_id = %s AND skill_id = %s
         """, (user_id, skill_id))
 
         row = cursor.fetchone()
@@ -90,13 +90,13 @@ def record_skill_practice(user_id: int, skill_id: str, skill_level: int,
         cursor.execute("""
             INSERT INTO skill_practice_history
             (user_id, skill_id, skill_level, hand_id, user_bid, correct_bid, was_correct)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (user_id, skill_id, skill_level, hand_id, user_bid, correct_bid, was_correct))
 
         # Check if user has progress record for this skill
         cursor.execute("""
             SELECT * FROM user_skill_progress
-            WHERE user_id = ? AND skill_id = ?
+            WHERE user_id = %s AND skill_id = %s
         """, (user_id, skill_id))
         existing = cursor.fetchone()
 
@@ -112,9 +112,9 @@ def record_skill_practice(user_id: int, skill_id: str, skill_level: int,
 
             cursor.execute("""
                 UPDATE user_skill_progress
-                SET attempts = ?, correct = ?, accuracy = ?,
-                    status = ?, last_practiced = CURRENT_TIMESTAMP
-                WHERE user_id = ? AND skill_id = ?
+                SET attempts = %s, correct = %s, accuracy = %s,
+                    status = %s, last_practiced = CURRENT_TIMESTAMP
+                WHERE user_id = %s AND skill_id = %s
             """, (new_attempts, new_correct, new_accuracy, new_status,
                   user_id, skill_id))
 
@@ -128,7 +128,7 @@ def record_skill_practice(user_id: int, skill_id: str, skill_level: int,
             cursor.execute("""
                 INSERT INTO user_skill_progress
                 (user_id, skill_id, skill_level, status, attempts, correct, accuracy, started_at, last_practiced)
-                VALUES (?, ?, ?, 'in_progress', 1, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                VALUES (%s, %s, %s, 'in_progress', 1, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             """, (user_id, skill_id, skill_level, 1 if was_correct else 0, accuracy))
 
             status = 'in_progress'
@@ -168,7 +168,7 @@ def get_user_mastered_conventions(user_id: int) -> List[str]:
     cursor.execute("""
         SELECT convention_id
         FROM user_convention_progress
-        WHERE user_id = ? AND status = 'mastered'
+        WHERE user_id = %s AND status = 'mastered'
     """, (user_id,))
     conventions = [row['convention_id'] for row in cursor.fetchall()]
 
@@ -179,7 +179,7 @@ def get_user_mastered_conventions(user_id: int) -> List[str]:
         cursor.execute("""
             SELECT skill_id
             FROM user_skill_progress
-            WHERE user_id = ? AND status = 'mastered'
+            WHERE user_id = %s AND status = 'mastered'
         """, (user_id,))
         for row in cursor.fetchall():
             skill_id = row['skill_id']
@@ -201,7 +201,7 @@ def get_user_convention_status(user_id: int, convention_id: str) -> Dict:
     cursor.execute("""
         SELECT *
         FROM user_convention_progress
-        WHERE user_id = ? AND convention_id = ?
+        WHERE user_id = %s AND convention_id = %s
     """, (user_id, convention_id))
 
     row = cursor.fetchone()
@@ -267,7 +267,7 @@ def user_convention_progress():
     cursor.execute("""
         SELECT convention_id, status, accuracy, attempts, last_practiced
         FROM user_convention_progress
-        WHERE user_id = ?
+        WHERE user_id = %s
     """, (user_id,))
 
     convention_statuses = {}
@@ -407,14 +407,14 @@ def record_convention_practice():
         cursor.execute("""
             INSERT INTO convention_practice_history (
                 user_id, convention_id, was_correct, hints_used, time_taken_seconds
-            ) VALUES (?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s)
         """, (user_id, convention_id, was_correct, hints_used, time_taken))
 
         # Update progress
         cursor.execute("""
             SELECT attempts, correct, status
             FROM user_convention_progress
-            WHERE user_id = ? AND convention_id = ?
+            WHERE user_id = %s AND convention_id = %s
         """, (user_id, convention_id))
 
         row = cursor.fetchone()
@@ -442,13 +442,13 @@ def record_convention_practice():
             # Update
             cursor.execute("""
                 UPDATE user_convention_progress
-                SET attempts = ?,
-                    correct = ?,
-                    accuracy = ?,
-                    status = ?,
+                SET attempts = %s,
+                    correct = %s,
+                    accuracy = %s,
+                    status = %s,
                     last_practiced = CURRENT_TIMESTAMP,
-                    mastered_at = CASE WHEN ? = 'mastered' AND status != 'mastered' THEN CURRENT_TIMESTAMP ELSE mastered_at END
-                WHERE user_id = ? AND convention_id = ?
+                    mastered_at = CASE WHEN %s = 'mastered' AND status != 'mastered' THEN CURRENT_TIMESTAMP ELSE mastered_at END
+                WHERE user_id = %s AND convention_id = %s
             """, (attempts, correct, accuracy, new_status, new_status, user_id, convention_id))
 
         else:
@@ -458,7 +458,7 @@ def record_convention_practice():
                 INSERT INTO user_convention_progress (
                     user_id, convention_id, status, attempts, correct, accuracy,
                     started_at, last_practiced
-                ) VALUES (?, ?, 'in_progress', 1, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ) VALUES (%s, %s, 'in_progress', 1, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             """, (user_id, convention_id, 1 if was_correct else 0, accuracy))
 
         conn.commit()
@@ -467,7 +467,7 @@ def record_convention_practice():
         cursor.execute("""
             SELECT *
             FROM user_convention_progress
-            WHERE user_id = ? AND convention_id = ?
+            WHERE user_id = %s AND convention_id = %s
         """, (user_id, convention_id))
 
         updated = dict(cursor.fetchone())
@@ -511,7 +511,7 @@ def unlock_convention():
         cursor.execute("""
             SELECT status
             FROM user_convention_progress
-            WHERE user_id = ? AND convention_id = ?
+            WHERE user_id = %s AND convention_id = %s
         """, (user_id, convention_id))
 
         row = cursor.fetchone()
@@ -521,14 +521,14 @@ def unlock_convention():
             cursor.execute("""
                 UPDATE user_convention_progress
                 SET status = 'unlocked'
-                WHERE user_id = ? AND convention_id = ? AND status = 'locked'
+                WHERE user_id = %s AND convention_id = %s AND status = 'locked'
             """, (user_id, convention_id))
         else:
             # Create record
             cursor.execute("""
                 INSERT INTO user_convention_progress (
                     user_id, convention_id, status
-                ) VALUES (?, ?, 'unlocked')
+                ) VALUES (%s, %s, 'unlocked')
             """, (user_id, convention_id))
 
         conn.commit()
@@ -609,7 +609,7 @@ def user_skill_progress_endpoint():
             SELECT skill_id, skill_level, status, attempts, correct, accuracy,
                    started_at, mastered_at, last_practiced
             FROM user_skill_progress
-            WHERE user_id = ?
+            WHERE user_id = %s
             ORDER BY skill_level, skill_id
         """, (user_id,))
 
@@ -1296,14 +1296,14 @@ def mark_skill_mastered():
             SET status = 'mastered',
                 mastered_at = CURRENT_TIMESTAMP,
                 last_practiced = CURRENT_TIMESTAMP
-            WHERE user_id = ? AND skill_id = ? AND status != 'mastered'
+            WHERE user_id = %s AND skill_id = %s AND status != 'mastered'
         """, (user_id, skill_id))
 
         if cursor.rowcount == 0:
             # Check if already mastered (idempotent)
             cursor.execute(f"""
                 SELECT status FROM {table}
-                WHERE user_id = ? AND skill_id = ?
+                WHERE user_id = %s AND skill_id = %s
             """, (user_id, skill_id))
             existing = cursor.fetchone()
 
@@ -1313,7 +1313,7 @@ def mark_skill_mastered():
                     INSERT INTO {table}
                     (user_id, skill_id, skill_level, status, attempts, correct, accuracy,
                      started_at, last_practiced, mastered_at)
-                    VALUES (?, ?, 0, 'mastered', ?, ?, ?,
+                    VALUES (%s, %s, 0, 'mastered', %s, %s, %s,
                             CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 """, (user_id, skill_id, session_hands,
                       int(session_hands * session_accuracy), session_accuracy))
@@ -1624,7 +1624,7 @@ def get_user_completed_play_skills(user_id: int) -> List[str]:
         cursor.execute("""
             SELECT skill_id
             FROM user_play_progress
-            WHERE user_id = ? AND status = 'mastered'
+            WHERE user_id = %s AND status = 'mastered'
         """, (user_id,))
         skills = [row['skill_id'] for row in cursor.fetchall()]
     except Exception:
@@ -1653,7 +1653,7 @@ def generate_play_practice_hand():
                 "lead": {...}
             },
             "situation": {
-                "question": "How many sure tricks?",
+                "question": "How many sure tricks%s",
                 "expected_response": {...}
             },
             "hand_id": "abc123"
@@ -1729,13 +1729,13 @@ def record_play_skill_practice(user_id: int, skill_id: str, skill_level: int,
         cursor.execute("""
             INSERT INTO play_practice_history
             (user_id, skill_id, skill_level, hand_id, user_answer, correct_answer, was_correct)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (user_id, skill_id, skill_level, hand_id, user_answer, correct_answer, was_correct))
 
         # Check if user has progress record for this skill
         cursor.execute("""
             SELECT * FROM user_play_progress
-            WHERE user_id = ? AND skill_id = ?
+            WHERE user_id = %s AND skill_id = %s
         """, (user_id, skill_id))
         existing = cursor.fetchone()
 
@@ -1751,11 +1751,11 @@ def record_play_skill_practice(user_id: int, skill_id: str, skill_level: int,
 
             cursor.execute("""
                 UPDATE user_play_progress
-                SET attempts = ?, correct = ?, accuracy = ?, status = ?,
+                SET attempts = %s, correct = %s, accuracy = %s, status = %s,
                     last_practiced = CURRENT_TIMESTAMP,
-                    mastered_at = CASE WHEN ? = 'mastered' AND status != 'mastered'
+                    mastered_at = CASE WHEN %s = 'mastered' AND status != 'mastered'
                                        THEN CURRENT_TIMESTAMP ELSE mastered_at END
-                WHERE user_id = ? AND skill_id = ?
+                WHERE user_id = %s AND skill_id = %s
             """, (attempts, correct, accuracy, new_status, new_status, user_id, skill_id))
 
         else:
@@ -1765,7 +1765,7 @@ def record_play_skill_practice(user_id: int, skill_id: str, skill_level: int,
                 INSERT INTO user_play_progress (
                     user_id, skill_id, skill_level, attempts, correct, accuracy,
                     status, started_at, last_practiced
-                ) VALUES (?, ?, ?, 1, ?, ?, 'in_progress', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ) VALUES (%s, %s, %s, 1, %s, %s, 'in_progress', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             """, (user_id, skill_id, skill_level, 1 if was_correct else 0, accuracy))
 
         conn.commit()
@@ -1773,7 +1773,7 @@ def record_play_skill_practice(user_id: int, skill_id: str, skill_level: int,
         # Get updated progress
         cursor.execute("""
             SELECT * FROM user_play_progress
-            WHERE user_id = ? AND skill_id = ?
+            WHERE user_id = %s AND skill_id = %s
         """, (user_id, skill_id))
         updated = dict(cursor.fetchone())
 
@@ -1852,7 +1852,7 @@ def user_play_progress_endpoint():
             SELECT skill_id, skill_level, status, attempts, correct, accuracy,
                    started_at, mastered_at, last_practiced
             FROM user_play_progress
-            WHERE user_id = ?
+            WHERE user_id = %s
             ORDER BY skill_level, skill_id
         """, (user_id,))
 

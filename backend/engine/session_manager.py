@@ -18,6 +18,7 @@ import json
 from datetime import datetime
 import logging
 from engine.play_engine import Contract
+from utils.seats import SEATS, SEAT_NAMES
 
 # Database abstraction layer
 import sys
@@ -59,7 +60,7 @@ class GameSession:
     total_time_seconds: int = 0
 
     # Rotation constants (dealer and vulnerability cycle through 4 positions)
-    DEALERS = ['N', 'E', 'S', 'W']
+    DEALERS = SEATS
     VULNERABILITY_ROTATION = ['None', 'NS', 'EW', 'Both']
 
     def get_current_dealer(self) -> str:
@@ -211,7 +212,7 @@ class SessionManager:
 
         # Ensure user exists in users table for FK constraint
         if user_id:
-            cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
+            cursor.execute("SELECT id FROM users WHERE id = %s", (user_id,))
             if not cursor.fetchone():
                 if int(user_id) < 0:
                     username = f'guest_{abs(int(user_id))}'
@@ -221,20 +222,20 @@ class SessionManager:
                     display_name = f'User {user_id}'
                 cursor.execute("""
                     INSERT INTO users (id, username, display_name)
-                    VALUES (?, ?, ?)
+                    VALUES (%s, %s, %s)
                 """, (user_id, username, display_name))
 
         cursor.execute("""
             INSERT INTO game_sessions
             (user_id, session_type, max_hands, player_position, ai_difficulty)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s)
         """, (user_id, session_type, max_hands, player_position, ai_difficulty))
 
         session_id = cursor.lastrowid
         conn.commit()
 
         # Get the created session with timestamp
-        cursor.execute("SELECT started_at FROM game_sessions WHERE id = ?", (session_id,))
+        cursor.execute("SELECT started_at FROM game_sessions WHERE id = %s", (session_id,))
         row = cursor.fetchone()
         started_at = row['started_at'] if row else None
 
@@ -268,7 +269,7 @@ class SessionManager:
                    max_hands, ns_score, ew_score, status, player_position,
                    ai_difficulty, started_at, total_time_seconds
             FROM game_sessions
-            WHERE user_id = ? AND status = 'active'
+            WHERE user_id = %s AND status = 'active'
             ORDER BY started_at DESC
             LIMIT 1
         """, (user_id,))
@@ -305,7 +306,7 @@ class SessionManager:
                    max_hands, ns_score, ew_score, status, player_position,
                    ai_difficulty, started_at, completed_at, total_time_seconds
             FROM game_sessions
-            WHERE id = ?
+            WHERE id = %s
         """, (session_id,))
 
         row = cursor.fetchone()
@@ -401,7 +402,7 @@ class SessionManager:
                  user_played_position, user_was_declarer, user_was_dummy,
                  hand_duration_seconds,
                  dds_analysis, par_score, par_contract, dd_tricks)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 session.id,
                 hand_data['hand_number'],
@@ -443,7 +444,7 @@ class SessionManager:
                  deal_data, auction_history, play_history,
                  user_played_position, user_was_declarer, user_was_dummy,
                  hand_duration_seconds)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 session.id,
                 hand_data['hand_number'],
@@ -473,14 +474,14 @@ class SessionManager:
         # Update session
         cursor.execute("""
             UPDATE game_sessions
-            SET hands_completed = ?,
-                current_hand_number = ?,
-                ns_score = ?,
-                ew_score = ?,
-                status = ?,
-                completed_at = CASE WHEN ? = 'completed'
+            SET hands_completed = %s,
+                current_hand_number = %s,
+                ns_score = %s,
+                ew_score = %s,
+                status = %s,
+                completed_at = CASE WHEN %s = 'completed'
                     THEN CURRENT_TIMESTAMP ELSE completed_at END
-            WHERE id = ?
+            WHERE id = %s
         """, (
             session.hands_completed,
             session.current_hand_number,
@@ -528,8 +529,8 @@ class SessionManager:
             from engine.hand import Hand, Card
 
             hands = {}
-            for pos in ['N', 'E', 'S', 'W']:
-                pos_name = {'N': 'North', 'E': 'East', 'S': 'South', 'W': 'West'}[pos]
+            for pos in SEATS:
+                pos_name = SEAT_NAMES[pos]
                 hand_data = deal_data.get(pos_name, deal_data.get(pos))
 
                 if hand_data is None:
@@ -600,7 +601,7 @@ class SessionManager:
 
         cursor.execute("""
             SELECT * FROM v_hand_history
-            WHERE session_id = ?
+            WHERE session_id = %s
             ORDER BY hand_number
         """, (session_id,))
 
@@ -618,7 +619,7 @@ class SessionManager:
 
         cursor.execute("""
             SELECT * FROM v_user_session_stats
-            WHERE user_id = ?
+            WHERE user_id = %s
         """, (user_id,))
 
         row = cursor.fetchone()
@@ -635,7 +636,7 @@ class SessionManager:
             UPDATE game_sessions
             SET status = 'abandoned',
                 completed_at = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE id = %s
         """, (session_id,))
 
         conn.commit()

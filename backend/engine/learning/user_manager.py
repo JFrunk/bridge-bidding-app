@@ -99,19 +99,19 @@ class UserManager:
             # Create user
             cursor.execute("""
                 INSERT INTO users (username, email, display_name, phone, last_login, last_activity)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             """, (username, email, display_name, phone))
 
             user_id = cursor.lastrowid
 
             # Create default settings
             cursor.execute("""
-                INSERT INTO user_settings (user_id) VALUES (?)
+                INSERT INTO user_settings (user_id) VALUES (%s)
             """, (user_id,))
 
             # Create gamification record
             cursor.execute("""
-                INSERT INTO user_gamification (user_id) VALUES (?)
+                INSERT INTO user_gamification (user_id) VALUES (%s)
             """, (user_id,))
 
             conn.commit()
@@ -139,7 +139,7 @@ class UserManager:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT * FROM users WHERE id = ?
+            SELECT * FROM users WHERE id = %s
         """, (user_id,))
 
         row = cursor.fetchone()
@@ -167,7 +167,7 @@ class UserManager:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT * FROM users WHERE username = ?
+            SELECT * FROM users WHERE username = %s
         """, (username,))
 
         row = cursor.fetchone()
@@ -198,7 +198,7 @@ class UserManager:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT * FROM users WHERE email = ?
+            SELECT * FROM users WHERE email = %s
         """, (email,))
 
         row = cursor.fetchone()
@@ -229,7 +229,7 @@ class UserManager:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT * FROM users WHERE phone = ?
+            SELECT * FROM users WHERE phone = %s
         """, (phone,))
 
         row = cursor.fetchone()
@@ -259,7 +259,7 @@ class UserManager:
         cursor.execute("""
             UPDATE users
             SET last_activity = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE id = %s
         """, (user_id,))
 
         conn.commit()
@@ -273,7 +273,7 @@ class UserManager:
         cursor.execute("""
             UPDATE users
             SET last_login = CURRENT_TIMESTAMP, last_activity = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE id = %s
         """, (user_id,))
 
         conn.commit()
@@ -289,7 +289,7 @@ class UserManager:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT * FROM user_settings WHERE user_id = ?
+            SELECT * FROM user_settings WHERE user_id = %s
         """, (user_id,))
 
         row = cursor.fetchone()
@@ -316,7 +316,7 @@ class UserManager:
         values = []
 
         for key, value in settings.items():
-            set_clauses.append(f"{key} = ?")
+            set_clauses.append(f"{key} = %s")
             values.append(value)
 
         if not set_clauses:
@@ -327,7 +327,7 @@ class UserManager:
         query = f"""
             UPDATE user_settings
             SET {', '.join(set_clauses)}, updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = ?
+            WHERE user_id = %s
         """
 
         cursor.execute(query, values)
@@ -344,7 +344,7 @@ class UserManager:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT * FROM user_gamification WHERE user_id = ?
+            SELECT * FROM user_gamification WHERE user_id = %s
         """, (user_id,))
 
         row = cursor.fetchone()
@@ -379,7 +379,7 @@ class UserManager:
         cursor.execute("""
             SELECT current_streak_days, longest_streak_days, last_practice_date
             FROM user_gamification
-            WHERE user_id = ?
+            WHERE user_id = %s
         """, (user_id,))
 
         row = cursor.fetchone()
@@ -418,11 +418,11 @@ class UserManager:
         # Update database
         cursor.execute("""
             UPDATE user_gamification
-            SET current_streak_days = ?,
-                longest_streak_days = ?,
-                last_practice_date = ?,
+            SET current_streak_days = %s,
+                longest_streak_days = %s,
+                last_practice_date = %s,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = ?
+            WHERE user_id = %s
         """, (new_streak, new_longest, today_str, user_id))
 
         conn.commit()
@@ -468,7 +468,7 @@ class UserManager:
         cursor.execute("""
             SELECT total_xp, current_level, xp_to_next_level
             FROM user_gamification
-            WHERE user_id = ?
+            WHERE user_id = %s
         """, (user_id,))
 
         row = cursor.fetchone()
@@ -496,11 +496,11 @@ class UserManager:
         # Update database
         cursor.execute("""
             UPDATE user_gamification
-            SET total_xp = ?,
-                current_level = ?,
-                xp_to_next_level = ?,
+            SET total_xp = %s,
+                current_level = %s,
+                xp_to_next_level = %s,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = ?
+            WHERE user_id = %s
         """, (new_xp, new_level, xp_to_next, user_id))
 
         conn.commit()

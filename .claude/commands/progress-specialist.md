@@ -84,8 +84,8 @@ curl "http://localhost:5001/api/analytics/board-analysis?user_id=test"
 curl "http://localhost:5001/api/bidding-hands?user_id=test&limit=5"
 
 # Database queries for analytics data
-sqlite3 backend/bridge.db "SELECT COUNT(*) FROM session_hands WHERE decay_curve IS NOT NULL;"
-sqlite3 backend/bridge.db "SELECT COUNT(*) FROM bidding_decisions;"
+psql bridge_app -c "SELECT COUNT(*) FROM session_hands WHERE decay_curve IS NOT NULL;"
+psql bridge_app -c "SELECT COUNT(*) FROM bidding_decisions;"
 ```
 
 ## API Endpoints Reference
@@ -183,7 +183,7 @@ Frontend displays in dashboard sections
 
 ```python
 # CORRECT
-cursor.execute("SELECT * FROM session_hands WHERE user_id = ?", (user_id,))
+cursor.execute("SELECT * FROM session_hands WHERE user_id = %s", (user_id,))
 
 # WRONG - data leak
 cursor.execute("SELECT * FROM session_hands")

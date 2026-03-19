@@ -522,7 +522,7 @@ def log_ai_play(card, position, ai_level, solve_time_ms, used_fallback=False,
                 INSERT INTO ai_play_log
                 (position, ai_level, card_played, solve_time_ms, used_fallback,
                  session_id, hand_number, trick_number, contract, trump_suit)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (position, ai_level, card_str, solve_time_ms, int(used_fallback),
                   session_id, hand_number, trick_number, contract, trump_suit))
 
@@ -779,6 +779,15 @@ register_analytics_endpoints(app)
 # Register authentication endpoints (MVP - email/phone only, no passwords)
 from engine.auth.simple_auth_api import register_simple_auth_endpoints, get_user_id_from_request
 register_simple_auth_endpoints(app)
+
+# Register Auth V2 endpoints (password-based register/login + JWT refresh)
+try:
+    from auth.auth_api import register_auth_v2_endpoints
+    from auth.token_api import register_token_endpoints
+    register_auth_v2_endpoints(app)
+    register_token_endpoints(app)
+except Exception as e:
+    print(f"⚠ Auth V2 endpoints not registered (JWT_SECRET may be missing): {e}")
 
 # Track user activity on authenticated API requests (throttled to once per 5 min per user)
 _activity_cache = {}  # user_id -> last_update_time
@@ -1782,7 +1791,7 @@ def get_feedback():
                     INSERT INTO practice_history (
                         user_id, convention_id, user_bid, correct_bid, was_correct,
                         hints_used, time_taken_seconds, xp_earned
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     user_id,
                     None,  # We don't have convention_id in this context yet
@@ -4607,7 +4616,7 @@ def log_play_decision(user_id, position, user_card, score, rating, contract, tri
             cursor.execute("""
                 INSERT INTO play_decisions
                 (user_id, position, user_card, score, rating, contract, trick_number, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (user_id, position, user_card, score, rating, contract, trick_number, datetime.now()))
     except Exception as e:
         # Table might not exist yet - that's ok
@@ -4811,9 +4820,9 @@ def simple_login():
 
             # Try to find existing user
             if email:
-                cursor.execute('SELECT id, email, phone, display_name FROM users WHERE email = ?', (email,))
+                cursor.execute('SELECT id, email, phone, display_name FROM users WHERE email = %s', (email,))
             else:
-                cursor.execute('SELECT id, email, phone, display_name FROM users WHERE phone = ?', (phone,))
+                cursor.execute('SELECT id, email, phone, display_name FROM users WHERE phone = %s', (phone,))
 
             existing_user = cursor.fetchone()
 
@@ -4821,7 +4830,7 @@ def simple_login():
                 # User exists - get their experience level too
                 cursor.execute('''
                     SELECT experience_level, unlock_all_content, experience_id, experience_set_at
-                    FROM users WHERE id = ?
+                    FROM users WHERE id = %s
                 ''', (existing_user['id'],))
                 exp_row = cursor.fetchone()
 
@@ -4849,7 +4858,7 @@ def simple_login():
                 username = f"user_{phone[-4:]}"
 
             # Ensure username is unique
-            cursor.execute('SELECT id FROM users WHERE username = ?', (username,))
+            cursor.execute('SELECT id FROM users WHERE username = %s', (username,))
             if cursor.fetchone():
                 # Append random suffix to make unique
                 username = f"{username}_{random.randint(1000, 9999)}"
@@ -4861,7 +4870,7 @@ def simple_login():
             # Insert new user
             cursor.execute('''
                 INSERT INTO users (username, email, phone, display_name, created_at, last_login)
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s)
             ''', (
                 username,
                 email,
@@ -5088,18 +5097,18 @@ def set_experience_level():
             cursor = conn.cursor()
 
             # Check user exists
-            cursor.execute('SELECT id FROM users WHERE id = ?', (user_id,))
+            cursor.execute('SELECT id FROM users WHERE id = %s', (user_id,))
             if not cursor.fetchone():
                 return jsonify({"error": "User not found"}), 404
 
             # Update experience level
             cursor.execute('''
                 UPDATE users
-                SET experience_level = ?,
-                    unlock_all_content = ?,
-                    experience_id = ?,
-                    experience_set_at = ?
-                WHERE id = ?
+                SET experience_level = %s,
+                    unlock_all_content = %s,
+                    experience_id = %s,
+                    experience_set_at = %s
+                WHERE id = %s
             ''', (experience_level, unlock_all_content, experience_id, experience_set_at, user_id))
 
             return jsonify({

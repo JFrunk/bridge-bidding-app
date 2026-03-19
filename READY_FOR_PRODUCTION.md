@@ -98,7 +98,7 @@ cd backend
 python3 database/init_all_tables.py
 
 # Verify success
-sqlite3 bridge.db "SELECT name FROM sqlite_master WHERE name='bidding_decisions';"
+psql bridge_app -c "SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename='bidding_decisions';"
 ```
 
 **Expected:** `bidding_decisions` table exists
@@ -251,7 +251,7 @@ The dashboard refresh fix ensures users always see up-to-date stats, which is cr
 ### Quick Commands:
 ```bash
 # Check table exists
-sqlite3 bridge.db "SELECT name FROM sqlite_master WHERE name='bidding_decisions';"
+psql bridge_app -c "SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename='bidding_decisions';"
 
 # Test dashboard API
 curl https://your-production-url/api/analytics/dashboard

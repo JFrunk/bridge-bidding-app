@@ -28,6 +28,8 @@ Phase 3: Decay curve generation (high computation, requires state reconstruction
 
 import json
 import sys
+from utils.error_logger import log_error
+from utils.seats import SEATS, lho
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Any
 from dataclasses import dataclass, asdict, field
@@ -903,19 +905,19 @@ class BridgeAnalysisEngine:
 
             cursor.execute("""
                 UPDATE session_hands SET
-                    quadrant = ?,
-                    bid_efficiency = ?,
-                    points_left_on_table = ?,
-                    decay_curve = ?,
-                    major_errors = ?,
-                    dd_matrix = ?,
-                    opening_lead_card = ?,
-                    opening_lead_quality = ?,
-                    opening_lead_cost = ?,
-                    par_score = COALESCE(par_score, ?),
-                    par_contract = COALESCE(par_contract, ?),
-                    dd_tricks = COALESCE(dd_tricks, ?)
-                WHERE id = ?
+                    quadrant = %s,
+                    bid_efficiency = %s,
+                    points_left_on_table = %s,
+                    decay_curve = %s,
+                    major_errors = %s,
+                    dd_matrix = %s,
+                    opening_lead_card = %s,
+                    opening_lead_quality = %s,
+                    opening_lead_cost = %s,
+                    par_score = COALESCE(par_score, %s),
+                    par_contract = COALESCE(par_contract, %s),
+                    dd_tricks = COALESCE(dd_tricks, %s)
+                WHERE id = %s
             """, (
                 result.quadrant.value,
                 result.bid_efficiency.value,
@@ -937,8 +939,7 @@ class BridgeAnalysisEngine:
 
         except Exception as e:
             print(f"Error storing analysis: {e}")
-            import traceback
-            traceback.print_exc()
+            log_error(e, context={'action': 'store_analysis'})
             conn.rollback()
             return False
 
@@ -966,7 +967,7 @@ class BridgeAnalysisEngine:
 
         try:
             cursor.execute("""
-                SELECT * FROM v_user_analysis_stats WHERE user_id = ?
+                SELECT * FROM v_user_analysis_stats WHERE user_id = %s
             """, (user_id,))
 
             row = cursor.fetchone()
@@ -1004,7 +1005,7 @@ class BridgeAnalysisEngine:
                 SELECT strain, total_contracts, makeable_contracts,
                        bidding_accuracy_pct, execution_pct
                 FROM v_user_strain_accuracy
-                WHERE user_id = ?
+                WHERE user_id = %s
             """, (user_id,))
 
             result = {}
@@ -1049,8 +1050,8 @@ class BridgeAnalysisEngine:
                 SELECT hand_id, contract_display, quadrant, bid_efficiency,
                        points_left_on_table, user_was_declarer, play_delta, bid_delta
                 FROM v_recent_boards_for_quadrant
-                WHERE user_id = ?
-                LIMIT ?
+                WHERE user_id = %s
+                LIMIT %s
             """, (user_id, limit))
 
             columns = [desc[0] for desc in cursor.description]
@@ -1104,9 +1105,7 @@ class BridgeAnalysisEngine:
 
     def _get_leader(self, declarer: str) -> str:
         """Get the opening leader (to declarer's left)."""
-        order = ['N', 'E', 'S', 'W']
-        idx = order.index(declarer)
-        return order[(idx + 1) % 4]
+        return lho(declarer)
 
     def _create_passout_result(self) -> HandAnalysisResult:
         """Create result for a passed-out hand."""
