@@ -9,4 +9,5 @@ python-dotenv>=1.0.0
 redis>=5.0.0
 fakeredis>=2.21.0
 argon2-cffi>=21.3.0
+PyJWT>=2.8.0
 sentry-sdk[flask]>=2.0.0
