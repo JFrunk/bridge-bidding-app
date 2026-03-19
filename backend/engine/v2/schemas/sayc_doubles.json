@@ -439,17 +439,11 @@
         "hcp": {
           "min": 10
         },
-        "has_4_card_major": true,
-        "partnership_fit": {
-          "min": 8
-        },
-        "partnership_ltc": {
-          "max": 14
-        }
+        "has_4_card_major": true
       },
       "forcing": "none",
       "suit_selection": "longest_major_first",
-      "explanation": "Bid game in response to partner's takeout double (10+ HCP, LTC ≤ 14)",
+      "explanation": "Bid game in response to partner's takeout double (10+ HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

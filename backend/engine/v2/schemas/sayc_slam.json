@@ -637,7 +637,7 @@
       "conditions": {
         "is_balanced": true,
         "partnership_hcp_min": {"min": 35},
-        "hcp": {"min": 14},
+        "effective_hcp": {"min": 14},
         "aces_held": {"min": 3},
         "partner_last_bid": {"in": ["1NT", "2NT", "3NT"]}
       },
@@ -654,7 +654,7 @@
       "conditions": {
         "is_balanced": true,
         "partnership_hcp_min": {"min": 35},
-        "hcp": {"min": 15},
+        "effective_hcp": {"min": 15},
         "aces_held": {"min": 3},
         "partner_last_bid": {
           "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT", "Pass"]
@@ -673,7 +673,7 @@
       "conditions": {
         "is_balanced": true,
         "partnership_hcp_min": {"min": 33},
-        "hcp": {"min": 16},
+        "effective_hcp": {"min": 16},
         "aces_held": {"min": 3},
         "partner_last_bid": {"in": ["1NT", "2NT", "3NT"]}
       },
@@ -690,7 +690,7 @@
       "conditions": {
         "is_balanced": true,
         "partnership_hcp_min": {"min": 33},
-        "hcp": {"min": 17},
+        "effective_hcp": {"min": 17},
         "aces_held": {"min": 3},
         "partner_last_bid": {
           "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT", "Pass"]
@@ -744,7 +744,7 @@
       "conditions": {
         "partner_last_bid": "4NT",
         "my_last_bid": {"in": ["1NT", "2NT"]},
-        "hcp": {"min": 17},
+        "effective_hcp": {"min": 17},
         "aces_held": {"min": 3}
       },
       "forcing": "none",

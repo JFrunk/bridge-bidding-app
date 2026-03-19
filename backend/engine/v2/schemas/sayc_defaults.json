@@ -114,18 +114,12 @@
         "support_for_partner": {
           "min": 3
         },
-        "partnership_fit": {
-          "min": 8
-        },
-        "partnership_ltc": {
-          "max": 14
-        },
         "partner_last_bid": {
           "in": ["1♥", "1♠", "2♥", "2♠", "3♥", "3♠"]
         }
       },
       "forcing": "none",
-      "explanation": "Game: Partnership has 25+ HCP, 8+ fit, LTC ≤ 14",
+      "explanation": "Game: Partnership has 25+ HCP with major fit",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -138,16 +132,13 @@
         "partnership_hcp_min": {
           "min": 25
         },
-        "hcp": {
+        "effective_hcp": {
           "min": 10
         },
-        "is_balanced": true,
-        "partnership_stoppers": {
-          "min": 3
-        }
+        "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "3NT: Partnership has 25+ HCP, balanced, 3+ suits stopped",
+      "explanation": "3NT: Partnership has 25+ HCP, balanced",
       "sets_forcing_level": "NON_FORCING"
     },
     {
