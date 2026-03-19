@@ -1,7 +1,7 @@
 # Vendor & Software Inventory
 
 **Project:** My Bridge Buddy (mybridgebuddy.com)
-**Last Updated:** 2026-03-18
+**Last Updated:** 2026-03-19
 
 ---
 
@@ -38,7 +38,15 @@
 
 | Vendor | Purpose | Details |
 |--------|---------|---------|
-| Google (Gmail) | Project email | mybridgebuddy@gmail.com — SMTP for app notifications |
+| Google (Gmail) | Project email | mybridgebuddy@gmail.com — SMTP for transactional auth emails & notifications |
+
+## Authentication
+
+| Vendor | Purpose | Details |
+|--------|---------|---------|
+| Google Cloud (OAuth 2.0) | Google Sign-In | Client ID: `735702527242-...apps.googleusercontent.com` — ID token verification via `google-auth` library |
+| argon2-cffi | Password hashing | Argon2id with RFC 9106 defaults |
+| PyJWT | JWT access tokens | HS256, 15-min expiry |
 
 ## Analytics & Monitoring
 
@@ -63,6 +71,9 @@
 | Gunicorn | Production WSGI server |
 | endplay (DDS) | Double dummy solver — Linux x86_64 only |
 | psycopg2 | PostgreSQL adapter |
+| argon2-cffi | Argon2id password hashing |
+| PyJWT | JWT token creation/verification |
+| google-auth | Google OAuth ID token verification |
 | python-dotenv | Environment config |
 | pytest | Testing framework |
 
@@ -88,7 +99,7 @@
 ## Notable Absences
 
 - No payment processing (free pedagogical tool)
-- No external auth provider (custom simple auth)
+- ~~No external auth provider~~ — Google OAuth added, plus password + magic link auth
 - ~~No error tracking service~~ — Sentry added (free tier)
 - No APM/monitoring (DataDog, New Relic, etc.)
 - No CDN
