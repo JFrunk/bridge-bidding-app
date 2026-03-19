@@ -86,6 +86,7 @@ The application currently uses password-less authentication where anyone can log
 - Refresh token: opaque token, 30-day expiry, HttpOnly secure cookie
 - Refresh endpoint: `/api/auth/refresh` — issues new access token using valid refresh token
 - Logout: invalidate refresh token server-side, clear cookie
+- **Page reload handling:** Since the access token lives only in memory, every page refresh triggers a `/api/auth/refresh` call. `AuthContext` must expose a `loading` state that blocks app render until this initial refresh completes — otherwise users see a flash of the login screen before being recognized as authenticated
 
 ---
 
@@ -97,13 +98,16 @@ The application currently uses password-less authentication where anyone can log
 3. User authorizes; Google returns ID token to frontend
 4. Frontend sends ID token to backend `/api/auth/google`
 5. Backend verifies token with Google's public keys
-6. If email matches existing user → log in (link Google provider if not already linked)
-7. If email is new → create account with `email_verified = true` (Google pre-verifies), `auth_provider = 'google'`
-8. Issue JWT access + refresh tokens (same as password login)
+6. If email matches existing user with `email_verified = true` → log in and link Google provider
+7. If email matches existing user with `email_verified = false` → require email verification before linking (see Account Linking below)
+8. If email is new → create account with `email_verified = true` (Google pre-verifies), `auth_provider = 'google'`
+9. If user is currently a guest (negative `user_id`), pass guest `user_id` to `/api/auth/google` → promote the guest record to a registered user (preserving hand history, progress, and stats) rather than creating a new account
+10. Issue JWT access + refresh tokens (same as password login)
 
 **Account Linking:**
-- If a user registered with password and later signs in with Google using the same email → accounts are linked automatically
-- The user can then log in with either method
+- Auto-link only when the existing account has `email_verified = true` — this prevents a "squatter" attack where an attacker creates an unverified account with a victim's email, then the victim's Google sign-in merges into the attacker's session
+- If the existing account is unverified, prompt: "Verify your existing account first to link Google sign-in" and send a verification email
+- The user can then log in with either method once linked
 - `auth_providers` table tracks which providers are linked to each user
 
 **Google Setup Requirements:**
@@ -226,6 +230,7 @@ CREATE TABLE auth_tokens (
     token_type TEXT NOT NULL,            -- 'email_verify', 'password_reset', 'magic_link'
     expires_at TIMESTAMP NOT NULL,
     used_at TIMESTAMP,                   -- NULL until used
+    metadata JSONB,                      -- Request context: ip_address, user_agent (for security UX)
     created_at TIMESTAMP DEFAULT NOW()
 );
 CREATE INDEX idx_auth_tokens_hash ON auth_tokens(token_hash);
@@ -378,6 +383,7 @@ Four transactional emails required:
 3. **Existing `simple-login` endpoint** kept active for 90 days with deprecation header, then removed.
 4. **Guest users** unaffected — guest flow remains identical.
 5. **Guest→registered migration** updated to include password in registration payload.
+6. **Guest→Google migration:** When a guest clicks "Sign in with Google," the frontend passes the guest's `user_id` to `/api/auth/google`. The backend promotes the guest record (hand history, progress, stats) to a verified registered account rather than creating a new one. Same pattern as existing guest→password migration.
 
 ---
 
