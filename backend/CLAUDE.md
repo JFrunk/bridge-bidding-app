@@ -9,7 +9,7 @@ This area covers the server layer and infrastructure. You are responsible for:
 - **Flask API:** All REST endpoints in `server.py`
 - **Session management:** Per-session state isolation
 - **Authentication:** Simple login (email/phone)
-- **Database:** SQLite schema, initialization, queries
+- **Database:** PostgreSQL schema, initialization, queries
 - **Testing infrastructure:** Test scripts, fixtures, quality scoring
 - **Deployment:** Render configuration, environment variables
 
@@ -60,7 +60,7 @@ CORS(app)
 engine = BiddingEngine()           # Bidding AI
 play_engine = PlayEngine()         # Play orchestration
 state_manager = SessionStateManager()  # Per-session state
-session_manager = SessionManager('bridge.db')
+session_manager = SessionManager()  # Uses PostgreSQL
 
 # AI instances for difficulty levels
 ai_instances = {
@@ -219,7 +219,7 @@ services:
 ### Environment Variables
 ```
 FLASK_ENV=production
-DATABASE_PATH=/var/data/bridge.db
+DATABASE_URL=postgresql://user:pass@localhost:5432/bridge_app
 ```
 
 ## Testing

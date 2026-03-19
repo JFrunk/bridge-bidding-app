@@ -1,7 +1,7 @@
 """
 Database Layer for Bridge Bidding App
 
-PostgreSQL database interface with automatic placeholder conversion.
+PostgreSQL database interface.
 
 Usage:
     from db import get_connection, execute_query
@@ -9,7 +9,7 @@ Usage:
     # Simple query
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
         results = cursor.fetchall()
 
     # The connection auto-commits and closes when exiting the context
@@ -36,44 +36,10 @@ if not DATABASE_URL:
     )
 
 
-def _convert_placeholders(query):
-    """
-    Convert ? placeholders to PostgreSQL %s placeholders.
-
-    This allows code to use ? placeholders (standard SQL style),
-    which get converted automatically for psycopg2.
-
-    Handles quoted strings and SQL comments correctly.
-    """
-    result = []
-    in_string = False
-    in_comment = False
-    i = 0
-    while i < len(query):
-        char = query[i]
-
-        if not in_string and not in_comment and char == '-' and i + 1 < len(query) and query[i + 1] == '-':
-            in_comment = True
-            result.append(char)
-        elif in_comment and char == '\n':
-            in_comment = False
-            result.append(char)
-        elif not in_comment and char == "'" and (i == 0 or query[i-1] != '\\'):
-            in_string = not in_string
-            result.append(char)
-        elif char == '?' and not in_string and not in_comment:
-            result.append('%s')
-        else:
-            result.append(char)
-        i += 1
-
-    return ''.join(result)
-
-
 class CursorWrapper:
     """
-    Wraps a PostgreSQL cursor to provide automatic placeholder conversion
-    and lastrowid support via RETURNING.
+    Wraps a PostgreSQL cursor to provide RealDictCursor access
+    and lastrowid support via automatic RETURNING id.
     """
 
     def __init__(self, cursor):
@@ -81,13 +47,12 @@ class CursorWrapper:
         self._lastrowid = None
 
     def execute(self, query, params=None):
-        """Execute a query with automatic placeholder conversion."""
-        converted_query = _convert_placeholders(query)
-
+        """Execute a query, auto-adding RETURNING id to INSERTs for lastrowid."""
         try:
-            query_to_run = converted_query
-            if converted_query.strip().upper().startswith('INSERT') and 'RETURNING' not in converted_query.upper():
-                query_to_run = converted_query.rstrip(';') + ' RETURNING id'
+            query_to_run = query
+            if query.strip().upper().startswith('INSERT') and 'RETURNING' not in query.upper():
+                query_to_run = query.rstrip(';') + ' RETURNING id'
+                self._cursor.execute("SAVEPOINT _returning_id_probe")
 
             if params:
                 self._cursor.execute(query_to_run, params)
@@ -95,18 +60,17 @@ class CursorWrapper:
                 self._cursor.execute(query_to_run)
 
         except Exception as e:
-            if "column \"id\" does not exist" in str(e).lower() and query_to_run != converted_query:
-                if hasattr(self._cursor.connection, 'rollback'):
-                    self._cursor.connection.rollback()
+            if "column \"id\" does not exist" in str(e).lower() and query_to_run != query:
+                self._cursor.execute("ROLLBACK TO SAVEPOINT _returning_id_probe")
 
                 if params:
-                    self._cursor.execute(converted_query, params)
+                    self._cursor.execute(query, params)
                 else:
-                    self._cursor.execute(converted_query)
+                    self._cursor.execute(query)
             else:
                 raise e
 
-        if converted_query.strip().upper().startswith('INSERT') and 'RETURNING' in query_to_run.upper():
+        if query.strip().upper().startswith('INSERT') and 'RETURNING' in query_to_run.upper():
             try:
                 result = self._cursor.fetchone()
                 if result:
@@ -116,8 +80,7 @@ class CursorWrapper:
 
     def executemany(self, query, params_list):
         """Execute a query multiple times with different parameters."""
-        converted_query = _convert_placeholders(query)
-        self._cursor.executemany(converted_query, params_list)
+        self._cursor.executemany(query, params_list)
 
     def fetchone(self):
         return self._cursor.fetchone()
@@ -215,26 +178,20 @@ connect = get_connection
 
 def execute_query(cursor, query, params=None):
     """
-    Execute a query with automatic placeholder conversion.
+    Execute a query on a cursor (wrapped or raw).
 
     Args:
-        cursor: Database cursor (can be wrapped or raw)
-        query: SQL query with ? placeholders
+        cursor: Database cursor (CursorWrapper or raw psycopg2)
+        query: SQL query with %s placeholders
         params: Query parameters (tuple or list)
 
     Returns:
         The cursor (for chaining)
     """
-    if hasattr(cursor, '_cursor'):
-        # Wrapped cursor — execute handles conversion
+    if params:
         cursor.execute(query, params)
     else:
-        # Raw psycopg2 cursor — convert manually
-        converted_query = _convert_placeholders(query)
-        if params:
-            cursor.execute(converted_query, params)
-        else:
-            cursor.execute(converted_query)
+        cursor.execute(query)
 
     return cursor
 

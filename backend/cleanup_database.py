@@ -154,7 +154,7 @@ def option3_user_separation(conn):
     cursor = conn.cursor()
 
     # Check if user_id=2 already has data
-    cursor.execute("SELECT COUNT(*) FROM game_sessions WHERE user_id = ?", (2,))
+    cursor.execute("SELECT COUNT(*) FROM game_sessions WHERE user_id = %s", (2,))
     if cursor.fetchone()['count'] > 0:
         print("WARNING: User ID 2 already has data")
         return False

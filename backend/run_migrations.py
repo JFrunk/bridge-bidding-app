@@ -61,7 +61,7 @@ def is_migration_applied(conn, migration_name: str) -> bool:
     """Check if a migration has already been applied"""
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT COUNT(*) FROM migrations_applied WHERE migration_name = ?",
+        "SELECT COUNT(*) FROM migrations_applied WHERE migration_name = %s",
         (migration_name,)
     )
     result = cursor.fetchone()
@@ -89,7 +89,7 @@ def apply_migration(conn, migration_name: str, filepath: str):
 
         # Record migration as applied
         cursor.execute(
-            "INSERT INTO migrations_applied (migration_name) VALUES (?)",
+            "INSERT INTO migrations_applied (migration_name) VALUES (%s)",
             (migration_name,)
         )
 

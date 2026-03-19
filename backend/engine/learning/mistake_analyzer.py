@@ -90,7 +90,7 @@ class MistakeAnalyzer:
             # Get practice record
             cursor.execute("""
                 SELECT * FROM practice_history
-                WHERE id = ? AND user_id = ?
+                WHERE id = %s AND user_id = %s
             """, (practice_id, user_id))
 
             practice = cursor.fetchone()
@@ -113,10 +113,10 @@ class MistakeAnalyzer:
             # Check if pattern exists
             cursor.execute("""
                 SELECT id FROM mistake_patterns
-                WHERE user_id = ?
-                  AND convention_id IS ?
-                  AND error_category = ?
-                  AND (error_subcategory IS ? OR (error_subcategory IS NULL AND ? IS NULL))
+                WHERE user_id = %s
+                  AND convention_id IS %s
+                  AND error_category = %s
+                  AND (error_subcategory IS %s OR (error_subcategory IS NULL AND %s IS NULL))
             """, (
                 user_id,
                 practice['convention_id'],
@@ -165,7 +165,7 @@ class MistakeAnalyzer:
                 improvement_rate, trend, status,
                 recommended_practice_hands, practice_hands_completed,
                 last_analysis
-            ) VALUES (?, ?, ?, ?, 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
+            ) VALUES (%s, %s, %s, %s, 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
                      0, 0, 0.0, 0.0, 0.0, 'new', 'active', 10, 0, CURRENT_TIMESTAMP)
         """, (user_id, convention_id, error_category, error_subcategory))
 
@@ -175,7 +175,7 @@ class MistakeAnalyzer:
         """Update an existing mistake pattern"""
         # Get current pattern
         cursor.execute("""
-            SELECT * FROM mistake_patterns WHERE id = ?
+            SELECT * FROM mistake_patterns WHERE id = %s
         """, (pattern_id,))
 
         pattern = cursor.fetchone()
@@ -186,9 +186,9 @@ class MistakeAnalyzer:
         cursor.execute(f"""
             SELECT COUNT(*) as count
             FROM practice_history
-            WHERE user_id = ?
-              AND convention_id IS ?
-              AND error_category = ?
+            WHERE user_id = %s
+              AND convention_id IS %s
+              AND error_category = %s
               AND was_correct = FALSE
               AND timestamp >= {date_subtract(30)}
         """, (pattern['user_id'], pattern['convention_id'], pattern['error_category']))
@@ -199,10 +199,10 @@ class MistakeAnalyzer:
         cursor.execute("""
             UPDATE mistake_patterns
             SET total_occurrences = total_occurrences + 1,
-                recent_occurrences = ?,
+                recent_occurrences = %s,
                 last_seen = CURRENT_TIMESTAMP,
                 last_analysis = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE id = %s
         """, (recent_count, pattern_id))
 
     def _update_category_accuracy(self, user_id: int, convention_id: Optional[str],
@@ -216,9 +216,9 @@ class MistakeAnalyzer:
         cursor.execute("""
             SELECT id, attempts_in_category, correct_in_category, current_accuracy
             FROM mistake_patterns
-            WHERE user_id = ?
-              AND convention_id IS ?
-              AND error_category = ?
+            WHERE user_id = %s
+              AND convention_id IS %s
+              AND error_category = %s
         """, (user_id, convention_id, error_category))
 
         pattern = cursor.fetchone()
@@ -233,7 +233,7 @@ class MistakeAnalyzer:
                     current_accuracy, previous_accuracy,
                     trend, status,
                     first_seen, last_seen, last_analysis
-                ) VALUES (?, ?, ?, 0, 0, 1, ?, ?, 0.0, 'new', 'active',
+                ) VALUES (%s, %s, %s, 0, 0, 1, %s, %s, 0.0, 'new', 'active',
                          CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             """, (user_id, convention_id, error_category,
                   1 if was_correct else 0,
@@ -246,12 +246,12 @@ class MistakeAnalyzer:
 
             cursor.execute("""
                 UPDATE mistake_patterns
-                SET attempts_in_category = ?,
-                    correct_in_category = ?,
+                SET attempts_in_category = %s,
+                    correct_in_category = %s,
                     previous_accuracy = current_accuracy,
-                    current_accuracy = ?,
+                    current_accuracy = %s,
                     last_analysis = CURRENT_TIMESTAMP
-                WHERE id = ?
+                WHERE id = %s
             """, (new_attempts, new_correct, new_accuracy, pattern['id']))
 
     def calculate_pattern_status(self, pattern_id: int) -> bool:
@@ -272,7 +272,7 @@ class MistakeAnalyzer:
 
         try:
             cursor.execute("""
-                SELECT * FROM mistake_patterns WHERE id = ?
+                SELECT * FROM mistake_patterns WHERE id = %s
             """, (pattern_id,))
 
             pattern = cursor.fetchone()
@@ -321,12 +321,12 @@ class MistakeAnalyzer:
             # Update pattern
             cursor.execute("""
                 UPDATE mistake_patterns
-                SET improvement_rate = ?,
-                    trend = ?,
-                    status = ?,
-                    recommended_practice_hands = ?,
+                SET improvement_rate = %s,
+                    trend = %s,
+                    status = %s,
+                    recommended_practice_hands = %s,
                     last_analysis = CURRENT_TIMESTAMP
-                WHERE id = ?
+                WHERE id = %s
             """, (improvement_rate, trend, status, recommended_hands, pattern_id))
 
             conn.commit()
@@ -353,7 +353,7 @@ class MistakeAnalyzer:
         # Get category friendly name
         cursor.execute("""
             SELECT friendly_name FROM error_categories
-            WHERE category_id = ?
+            WHERE category_id = %s
         """, (pattern['error_category'],))
 
         category_row = cursor.fetchone()
@@ -386,13 +386,13 @@ class MistakeAnalyzer:
             if status_filter:
                 cursor.execute("""
                     SELECT * FROM mistake_patterns
-                    WHERE user_id = ? AND status = ?
+                    WHERE user_id = %s AND status = %s
                     ORDER BY recent_occurrences DESC, last_seen DESC
                 """, (user_id, status_filter))
             else:
                 cursor.execute("""
                     SELECT * FROM mistake_patterns
-                    WHERE user_id = ?
+                    WHERE user_id = %s
                     ORDER BY recent_occurrences DESC, last_seen DESC
                 """, (user_id,))
 
@@ -449,7 +449,7 @@ class MistakeAnalyzer:
                     SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved,
                     SUM(CASE WHEN status = 'needs_attention' THEN 1 ELSE 0 END) as needs_attention
                 FROM mistake_patterns
-                WHERE user_id = ?
+                WHERE user_id = %s
             """, (user_id,))
 
             counts = cursor.fetchone()
@@ -482,7 +482,7 @@ class MistakeAnalyzer:
                     mp.recommended_practice_hands
                 FROM mistake_patterns mp
                 LEFT JOIN error_categories ec ON mp.error_category = ec.category_id
-                WHERE mp.user_id = ?
+                WHERE mp.user_id = %s
                   AND mp.status IN ('needs_attention', 'active')
                 ORDER BY mp.recent_occurrences DESC, mp.current_accuracy ASC
                 LIMIT 3
@@ -509,7 +509,7 @@ class MistakeAnalyzer:
                     mp.status
                 FROM mistake_patterns mp
                 LEFT JOIN error_categories ec ON mp.error_category = ec.category_id
-                WHERE mp.user_id = ?
+                WHERE mp.user_id = %s
                   AND (mp.status = 'resolved' OR (mp.status = 'improving' AND mp.improvement_rate > 0.2))
                 ORDER BY
                     CASE WHEN mp.status = 'resolved' THEN 1 ELSE 2 END,
@@ -582,11 +582,11 @@ class MistakeAnalyzer:
                     END as priority
                 FROM mistake_patterns mp
                 LEFT JOIN error_categories ec ON mp.error_category = ec.category_id
-                WHERE mp.user_id = ?
+                WHERE mp.user_id = %s
                   AND mp.status != 'resolved'
                   AND (mp.recommended_practice_hands - mp.practice_hands_completed) > 0
                 ORDER BY priority ASC, mp.recent_occurrences DESC, mp.current_accuracy ASC
-                LIMIT ?
+                LIMIT %s
             """, (user_id, max_recommendations))
 
             recommendations = []
@@ -637,7 +637,7 @@ class MistakeAnalyzer:
             # Get all patterns for user
             cursor.execute("""
                 SELECT id FROM mistake_patterns
-                WHERE user_id = ?
+                WHERE user_id = %s
             """, (user_id,))
 
             pattern_ids = [row['id'] for row in cursor.fetchall()]
@@ -659,7 +659,7 @@ class MistakeAnalyzer:
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved
                 FROM mistake_patterns
-                WHERE user_id = ?
+                WHERE user_id = %s
             """, (user_id,))
 
             counts = cursor.fetchone()

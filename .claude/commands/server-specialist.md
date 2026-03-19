@@ -36,7 +36,7 @@ You are working on the Flask server, database, and testing infrastructure. Your 
 - Check `docs/domains/server/bug-fixes/` for similar past issues
 - Check server status: `lsof -i :5001`
 - Check error logs: `python3 analyze_errors.py --recent 10`
-- Review database: `sqlite3 backend/bridge.db ".tables"`
+- Review database: `psql bridge_app -c "\dt"`
 - Determine: Is this a **code fix** or just **analysis/explanation**?
 
 ### 2. If Code Changes Needed → Create Branch
@@ -70,8 +70,8 @@ pytest tests/integration/ -v
 pytest tests/regression/ -v
 
 # Database
-sqlite3 bridge.db ".schema"
-sqlite3 bridge.db "SELECT COUNT(*) FROM users;"
+psql bridge_app -c "\d"
+psql bridge_app -c "SELECT COUNT(*) FROM users;"
 python3 database/init_all_tables.py  # Initialize/migrate
 
 # Check for port conflicts
@@ -146,7 +146,7 @@ def new_endpoint():
 
 1. **Local:** Update `database/init_all_tables.py`
 2. **Test:** `python3 database/init_all_tables.py`
-3. **Verify:** `sqlite3 bridge.db ".schema new_table"`
+3. **Verify:** `psql bridge_app -c "\d new_table"`
 4. **CRITICAL on deploy:** Run migration BEFORE code push
 
 ## Workflow for Bug Fixes

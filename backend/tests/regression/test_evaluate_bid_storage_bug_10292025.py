@@ -35,7 +35,7 @@ def _cleanup_test_data():
     try:
         with get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM bidding_decisions WHERE user_id = ?", (TEST_USER_ID,))
+            cursor.execute("DELETE FROM bidding_decisions WHERE user_id = %s", (TEST_USER_ID,))
     except Exception:
         pass
 
@@ -91,7 +91,7 @@ def test_evaluate_bid_stores_non_pass_bids():
             cursor.execute("""
                 SELECT user_bid, optimal_bid, correctness, score
                 FROM bidding_decisions
-                WHERE user_id = ?
+                WHERE user_id = %s
             """, (TEST_USER_ID,))
             row = cursor.fetchone()
 
@@ -154,7 +154,7 @@ def test_evaluate_bid_with_various_bids():
         # Verify all bids stored
         with get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) as count FROM bidding_decisions WHERE user_id = ?", (TEST_USER_ID,))
+            cursor.execute("SELECT COUNT(*) as count FROM bidding_decisions WHERE user_id = %s", (TEST_USER_ID,))
             count = cursor.fetchone()['count']
 
         assert count == len(test_bids), f"Expected {len(test_bids)} bids, found {count}"

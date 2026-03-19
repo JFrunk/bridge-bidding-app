@@ -30,7 +30,10 @@ from engine.hand import Hand
 from engine.feedback.signal_integrity_auditor import SignalIntegrityAuditor
 
 # Seat utilities - single source of truth for position calculations
-from utils.seats import partner
+from utils.seats import partner, SEATS, lho, seat_from_index, seat_index
+
+# Structured error logging
+from utils.error_logger import log_error
 
 # Database abstraction layer
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -105,13 +108,14 @@ def _compute_ns_tricks_from_play(play_history: List[Dict], trump_suit: str) -> t
             continue
 
         # Start of new trick
-        if i % 4 == 0:
+        cards_per_trick = 4
+        if i % cards_per_trick == 0:
             current_trick_cards = []
 
         current_trick_cards.append({'suit': suit, 'rank': rank, 'position': position})
 
         # End of trick - determine winner
-        if (i + 1) % 4 == 0 and len(current_trick_cards) == 4:
+        if (i + 1) % cards_per_trick == 0 and len(current_trick_cards) == 4:
             # Get led suit
             led_suit = current_trick_cards[0]['suit']
 
@@ -229,7 +233,7 @@ def record_practice():
                     error_category, error_subcategory,
                     hand_characteristics, hints_used,
                     time_taken_seconds, xp_earned, feedback_shown
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 user_id,
                 session_id,
@@ -260,19 +264,19 @@ def record_practice():
                     overall_accuracy = (
                         SELECT AVG(CASE WHEN was_correct THEN 1.0 ELSE 0.0 END)
                         FROM practice_history
-                        WHERE user_id = ?
+                        WHERE user_id = %s
                     ),
                     recent_accuracy = (
                         SELECT AVG(CASE WHEN was_correct THEN 1.0 ELSE 0.0 END)
                         FROM (
                             SELECT was_correct
                             FROM practice_history
-                            WHERE user_id = ?
+                            WHERE user_id = %s
                             ORDER BY timestamp DESC
                             LIMIT 20
                         )
                     )
-                WHERE user_id = ?
+                WHERE user_id = %s
             """, (user_id, user_id, user_id))
 
             conn.commit()
@@ -393,7 +397,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
                 SUM(CASE WHEN correctness = 'error' THEN 1 ELSE 0 END) as error_count,
                 SUM(CASE WHEN impact = 'critical' THEN 1 ELSE 0 END) as critical_errors
             FROM bidding_decisions
-            WHERE user_id = ?
+            WHERE user_id = %s
               AND timestamp >= {date_subtract(30)}
         """, (user_id,))
 
@@ -403,7 +407,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
         cursor.execute(f"""
             SELECT COUNT(DISTINCT COALESCE(CAST(session_id AS TEXT), '') || ':' || CAST(COALESCE(hand_number, -1) AS TEXT)) as total_hands
             FROM bidding_decisions
-            WHERE user_id = ?
+            WHERE user_id = %s
               AND timestamp >= {date_subtract(30)}
         """, (user_id,))
         hands_row = cursor.fetchone()
@@ -435,7 +439,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
         cursor.execute(f"""
             SELECT AVG(score) as avg_score
             FROM bidding_decisions
-            WHERE user_id = ?
+            WHERE user_id = %s
               AND timestamp >= {date_subtract(7)}
         """, (user_id,))
         recent_row = cursor.fetchone()
@@ -445,7 +449,7 @@ def get_bidding_feedback_stats_for_user(user_id: int) -> Dict:
         cursor.execute(f"""
             SELECT AVG(score) as avg_score
             FROM bidding_decisions
-            WHERE user_id = ?
+            WHERE user_id = %s
               AND timestamp >= {prev_start}
               AND timestamp < {prev_end}
         """, (user_id,))
@@ -511,9 +515,9 @@ def get_recent_bidding_decisions_for_user(user_id: int, limit: int = 10) -> List
                 helpful_hint,
                 timestamp
             FROM bidding_decisions
-            WHERE user_id = ?
+            WHERE user_id = %s
             ORDER BY timestamp DESC
-            LIMIT ?
+            LIMIT %s
         """, (user_id, limit))
 
         decisions = []
@@ -563,7 +567,7 @@ def get_play_category_stats_for_user(user_id: int) -> Dict:
                 AVG(tricks_cost) as avg_tricks_cost,
                 SUM(tricks_cost) as total_tricks_cost
             FROM play_decisions
-            WHERE user_id = ?
+            WHERE user_id = %s
               AND timestamp >= {date_subtract(30)}
               AND play_category IS NOT NULL
             GROUP BY play_category
@@ -672,7 +676,7 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
                 SUM(CASE WHEN rating = 'suboptimal' THEN 1 ELSE 0 END) as suboptimal_count,
                 SUM(CASE WHEN rating = 'blunder' THEN 1 ELSE 0 END) as blunder_count
             FROM play_decisions
-            WHERE user_id = ?
+            WHERE user_id = %s
               AND timestamp >= {date_subtract(30)}
         """, (user_id,))
 
@@ -701,7 +705,7 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
         cursor.execute(f"""
             SELECT AVG(score) as avg_score
             FROM play_decisions
-            WHERE user_id = ?
+            WHERE user_id = %s
               AND timestamp >= {date_subtract(7)}
         """, (user_id,))
         recent_row = cursor.fetchone()
@@ -711,7 +715,7 @@ def get_play_feedback_stats_for_user(user_id: int) -> Dict:
         cursor.execute(f"""
             SELECT AVG(score) as avg_score
             FROM play_decisions
-            WHERE user_id = ?
+            WHERE user_id = %s
               AND timestamp >= {play_prev_start}
               AND timestamp < {play_prev_end}
         """, (user_id,))
@@ -796,9 +800,9 @@ def get_recent_play_decisions_for_user(user_id: int, limit: int = 10) -> List[Di
                 feedback,
                 timestamp
             FROM play_decisions
-            WHERE user_id = ?
+            WHERE user_id = %s
             ORDER BY timestamp DESC
-            LIMIT ?
+            LIMIT %s
         """, (user_id, limit))
 
         decisions = []
@@ -967,7 +971,7 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
                 AVG(CASE WHEN made = TRUE THEN 1.0 ELSE 0.0 END) as success_rate
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
-            WHERE gs.user_id = ?
+            WHERE gs.user_id = %s
               AND sh.user_was_declarer = TRUE
               AND sh.contract_level IS NOT NULL
         """, (user_id,))
@@ -981,7 +985,7 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
                 SELECT made
                 FROM session_hands sh
                 JOIN game_sessions gs ON sh.session_id = gs.id
-                WHERE gs.user_id = ?
+                WHERE gs.user_id = %s
                   AND sh.user_was_declarer = TRUE
                   AND sh.contract_level IS NOT NULL
                 ORDER BY sh.played_at DESC
@@ -996,7 +1000,7 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
             SELECT COUNT(*) as defender_hands
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
-            WHERE gs.user_id = ?
+            WHERE gs.user_id = %s
               AND sh.user_was_declarer = FALSE
               AND sh.user_was_dummy = FALSE
               AND sh.contract_level IS NOT NULL
@@ -1009,7 +1013,7 @@ def get_gameplay_stats_for_user(user_id: int) -> Dict:
             SELECT COUNT(*) as dummy_hands
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
-            WHERE gs.user_id = ?
+            WHERE gs.user_id = %s
               AND sh.user_was_dummy = TRUE
               AND sh.contract_level IS NOT NULL
         """, (user_id,))
@@ -1069,7 +1073,7 @@ def get_bidding_analysis_stats_for_user(user_id: int) -> Dict:
     try:
         # Try to get stats from the v_user_analysis_stats view
         cursor.execute("""
-            SELECT * FROM v_user_analysis_stats WHERE user_id = ?
+            SELECT * FROM v_user_analysis_stats WHERE user_id = %s
         """, (user_id,))
 
         row = cursor.fetchone()
@@ -1157,8 +1161,8 @@ def get_recent_analyzed_hands_for_user(user_id: int, limit: int = 20) -> List[Di
                 points_left_on_table, user_was_declarer, tricks_taken,
                 dd_tricks, play_delta, bid_delta
             FROM v_recent_boards_for_quadrant
-            WHERE user_id = ?
-            LIMIT ?
+            WHERE user_id = %s
+            LIMIT %s
         """, (user_id, limit))
 
         hands = []
@@ -1191,7 +1195,7 @@ def get_strain_accuracy_for_user(user_id: int) -> Dict[str, Dict]:
             SELECT strain, total_contracts, makeable_contracts,
                    bidding_accuracy_pct, execution_pct
             FROM v_user_strain_accuracy
-            WHERE user_id = ?
+            WHERE user_id = %s
         """, (user_id,))
 
         result = {}
@@ -1543,7 +1547,7 @@ def get_four_dimension_progress():
             cursor.execute("""
                 SELECT skill_id, attempts, correct, accuracy, status, last_practiced
                 FROM user_skill_progress
-                WHERE user_id = ? AND status = 'in_progress'
+                WHERE user_id = %s AND status = 'in_progress'
                 ORDER BY last_practiced DESC
             """, (user_id,))
             for row in cursor.fetchall():
@@ -1651,7 +1655,7 @@ def get_four_dimension_progress():
             cursor.execute("""
                 SELECT convention_id, status, accuracy, attempts, last_practiced
                 FROM user_convention_progress
-                WHERE user_id = ?
+                WHERE user_id = %s
                 ORDER BY last_practiced DESC
             """, (user_id,))
 
@@ -1676,7 +1680,7 @@ def get_four_dimension_progress():
             cursor.execute(f"""
                 SELECT error_category, COUNT(*) as count
                 FROM bidding_decisions
-                WHERE user_id = ?
+                WHERE user_id = %s
                   AND error_category IS NOT NULL
                   AND timestamp >= {date_subtract(30)}
                 GROUP BY error_category
@@ -1745,7 +1749,7 @@ def get_four_dimension_progress():
             cursor.execute("""
                 SELECT skill_id, attempts, correct, accuracy, status, last_practiced
                 FROM user_play_progress
-                WHERE user_id = ? AND status = 'in_progress'
+                WHERE user_id = %s AND status = 'in_progress'
                 ORDER BY last_practiced DESC
             """, (user_id,))
             for row in cursor.fetchall():
@@ -1852,7 +1856,7 @@ def get_four_dimension_progress():
                     COUNT(*) as count
                 FROM session_hands sh
                 JOIN game_sessions gs ON sh.session_id = gs.id
-                WHERE gs.user_id = ?
+                WHERE gs.user_id = %s
                   AND sh.user_was_declarer = TRUE
                   AND sh.contract_level IS NOT NULL
                 GROUP BY contract_level, contract_suit, made
@@ -1918,8 +1922,7 @@ def get_four_dimension_progress():
         })
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        log_error(e, endpoint='/api/analytics/learning-journey')
         return jsonify({'error': str(e)}), 500
 
 
@@ -1963,9 +1966,9 @@ def get_hand_play_quality_summary(session_id: int, hand_number: int, user_id: in
                 signal_context,
                 is_signal_optimal
             FROM play_decisions
-            WHERE user_id = ?
-              AND session_id = ?
-              AND (hand_number = ? OR hand_number IS NULL)
+            WHERE user_id = %s
+              AND session_id = %s
+              AND (hand_number = %s OR hand_number IS NULL)
             ORDER BY trick_number, id
         """, (user_id, str(session_id) if session_id else '', hand_number))
 
@@ -2117,9 +2120,9 @@ def get_hand_bidding_quality_summary(session_id: int, hand_number: int, user_id:
                 impact,
                 helpful_hint
             FROM bidding_decisions
-            WHERE user_id = ?
-              AND session_id = ?
-              AND (hand_number = ? OR hand_number IS NULL)
+            WHERE user_id = %s
+              AND session_id = %s
+              AND (hand_number = %s OR hand_number IS NULL)
             ORDER BY bid_number
         """, (user_id, str(session_id), hand_number))
 
@@ -2222,10 +2225,10 @@ def get_hand_history():
                 sh.play_history IS NOT NULL as has_play_history
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
-            WHERE gs.user_id = ?
+            WHERE gs.user_id = %s
               AND sh.contract_level IS NOT NULL
             ORDER BY sh.played_at DESC
-            LIMIT ?
+            LIMIT %s
         """, (user_id, limit))
 
         hands = []
@@ -2281,8 +2284,7 @@ def get_hand_history():
         })
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        log_error(e, endpoint='/api/hand-history')
         return jsonify({'error': str(e)}), 500
 
 
@@ -2466,7 +2468,7 @@ def get_hand_detail():
                 gs.player_position
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
-            WHERE sh.id = ?
+            WHERE sh.id = %s
         """, (hand_id,))
 
         row = cursor.fetchone()
@@ -2517,7 +2519,7 @@ def get_hand_detail():
 
                 # Convert deal_data to Hand objects
                 hands = {}
-                for pos in ['N', 'E', 'S', 'W']:
+                for pos in SEATS:
                     if pos in deal_data and 'hand' in deal_data[pos]:
                         cards = []
                         for card in deal_data[pos]['hand']:
@@ -2574,8 +2576,7 @@ def get_hand_detail():
 
         except Exception as dds_error:
             # DDS not available or failed - continue without it
-            import traceback
-            traceback.print_exc()
+            log_error(dds_error, context={'source': 'hand_detail_dds_analysis'})
             dd_analysis = {'error': str(dds_error), 'available': False}
 
         # Parse decay curve data if available
@@ -2639,8 +2640,7 @@ def get_hand_detail():
                     'required_tricks': required_tricks,
                 }
         except (json.JSONDecodeError, TypeError, KeyError) as e:
-            import traceback
-            traceback.print_exc()
+            log_error(e, context={'source': 'decay_curve_parsing'})
             pass  # decay_curve not available or malformed
 
         # Generate strategy summary for the hand
@@ -2651,7 +2651,7 @@ def get_hand_detail():
 
                 # Determine declarer and dummy positions
                 declarer_pos = row['contract_declarer'] or 'S'
-                dummy_pos = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}.get(declarer_pos, 'N')
+                dummy_pos = partner(declarer_pos)
 
                 # Convert deal_data to Hand objects for declarer and dummy
                 declarer_hand = None
@@ -2682,8 +2682,7 @@ def get_hand_detail():
                         is_nt=is_nt
                     )
         except Exception as strategy_error:
-            import traceback
-            traceback.print_exc()
+            log_error(strategy_error, context={'source': 'hand_strategy_summary'})
             strategy_summary = {'error': str(strategy_error)}
 
         # Calculate which positions the user controlled during play
@@ -2738,8 +2737,7 @@ def get_hand_detail():
         })
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        log_error(e, endpoint='/api/hand-detail-full')
         return jsonify({'error': str(e)}), 500
 
 
@@ -2790,7 +2788,7 @@ def analyze_play():
                 gs.player_position
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
-            WHERE sh.id = ?
+            WHERE sh.id = %s
         """, (hand_id,))
 
         row = cursor.fetchone()
@@ -2875,9 +2873,7 @@ def analyze_play():
             if trick_number == 1:
                 # Opening lead - leader is declarer's LHO
                 declarer = row['contract_declarer']
-                position_order = ['N', 'E', 'S', 'W']
-                declarer_idx = position_order.index(declarer)
-                leader = position_order[(declarer_idx + 1) % 4]
+                leader = lho(declarer)
             else:
                 # Need to find previous trick winner - this is complex
                 # For now, we'll skip this analysis for non-opening leads
@@ -2953,8 +2949,7 @@ def analyze_play():
             })
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        log_error(e, endpoint='/api/hand-detail')
         return jsonify({'error': str(e)}), 500
 
 
@@ -3028,16 +3023,16 @@ def get_board_analysis():
                 gs.started_at as session_started{decay_columns}
             FROM session_hands sh
             JOIN game_sessions gs ON sh.session_id = gs.id
-            WHERE gs.user_id = ?
+            WHERE gs.user_id = %s
               AND sh.par_score IS NOT NULL
         """
         params = [user_id]
 
         if session_id:
-            query += " AND sh.session_id = ?"
+            query += " AND sh.session_id = %s"
             params.append(session_id)
 
-        query += " ORDER BY sh.played_at DESC LIMIT ?"
+        query += " ORDER BY sh.played_at DESC LIMIT %s"
         params.append(limit)
 
         cursor.execute(query, params)
@@ -3148,7 +3143,7 @@ def get_board_analysis():
                 COUNT(sh.id) as hands_count
             FROM game_sessions gs
             JOIN session_hands sh ON sh.session_id = gs.id
-            WHERE gs.user_id = ?
+            WHERE gs.user_id = %s
               AND sh.dd_tricks IS NOT NULL
               AND sh.par_score IS NOT NULL
             GROUP BY gs.id
@@ -3174,8 +3169,7 @@ def get_board_analysis():
         })
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        log_error(e, endpoint='/api/analytics/board-analysis')
         return jsonify({'error': str(e)}), 500
 
 
@@ -3239,11 +3233,11 @@ def get_bidding_hands_history():
                 SUM(CASE WHEN bd.correctness = 'suboptimal' THEN 1 ELSE 0 END) as suboptimal_count,
                 SUM(CASE WHEN bd.correctness = 'error' THEN 1 ELSE 0 END) as error_count
             FROM bidding_decisions bd
-            WHERE bd.user_id = ?
+            WHERE bd.user_id = %s
             GROUP BY bd.user_id, bd.session_id, bd.hand_number
             HAVING COUNT(bd.id) > 0
             ORDER BY MAX(bd.timestamp) DESC
-            LIMIT ?
+            LIMIT %s
         """, (user_id, limit))
 
         hands = []
@@ -3295,10 +3289,9 @@ def get_bidding_hands_history():
             dealer = row['dealer'] or 'N'
 
             # Find the last non-Pass bid (the contract)
-            positions = ['N', 'E', 'S', 'W']
             try:
-                dealer_idx = positions.index(dealer[0].upper()) if dealer else 0
-            except ValueError:
+                dealer_idx = seat_index(dealer[0].upper()) if dealer else 0
+            except (ValueError, IndexError):
                 dealer_idx = 0
 
             for i in range(len(auction_history) - 1, -1, -1):
@@ -3306,8 +3299,7 @@ def get_bidding_hands_history():
                 if bid and bid not in ('Pass', 'X', 'XX'):
                     contract = bid
                     # Calculate who made this bid based on position in auction
-                    bidder_idx = (dealer_idx + i) % 4
-                    contract_declarer = positions[bidder_idx]
+                    contract_declarer = seat_from_index(dealer_idx + i)
                     break
 
             # Generate hand_id: prefer session_id:hand_number, fall back to bid_<first_bid_id>
@@ -3352,8 +3344,7 @@ def get_bidding_hands_history():
         })
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        log_error(e, endpoint='/api/bidding-hands')
         return jsonify({'error': str(e)}), 500
 
 
@@ -3391,7 +3382,7 @@ def get_bidding_hand_detail():
                 SELECT session_id, hand_number, user_id, dealer, vulnerability,
                        position as user_position, deal_data
                 FROM bidding_decisions
-                WHERE id = ?
+                WHERE id = %s
             """, (first_bid_id,))
 
             row = cursor.fetchone()
@@ -3433,7 +3424,7 @@ def get_bidding_hand_detail():
                 FROM bidding_decisions bd
                 LEFT JOIN session_hands sh ON CAST(bd.session_id AS INTEGER) = sh.session_id
                     AND bd.hand_number = sh.hand_number
-                WHERE bd.session_id = ? AND bd.hand_number = ?
+                WHERE bd.session_id = %s AND bd.hand_number = %s
                 ORDER BY bd.bid_number
                 LIMIT 1
             """, (session_id, hand_number))
@@ -3464,7 +3455,7 @@ def get_bidding_hand_detail():
                     gs.player_position
                 FROM session_hands sh
                 JOIN game_sessions gs ON sh.session_id = gs.id
-                WHERE sh.id = ?
+                WHERE sh.id = %s
             """, (hand_id,))
 
             row = cursor.fetchone()
@@ -3502,9 +3493,9 @@ def get_bidding_hand_detail():
                     reasoning,
                     auction_before
                 FROM bidding_decisions
-                WHERE user_id = ?
-                  AND session_id = ?
-                  AND hand_number = ?
+                WHERE user_id = %s
+                  AND session_id = %s
+                  AND hand_number = %s
                 ORDER BY bid_number
             """, (user_id, str(session_id), hand_number))
         else:
@@ -3524,9 +3515,9 @@ def get_bidding_hand_detail():
                     reasoning,
                     auction_before
                 FROM bidding_decisions
-                WHERE user_id = ?
-                  AND (session_id = ? OR (session_id IS NULL AND ? IS NULL))
-                  AND COALESCE(hand_number, -1) = COALESCE(?, -1)
+                WHERE user_id = %s
+                  AND (session_id = %s OR (session_id IS NULL AND %s IS NULL))
+                  AND COALESCE(hand_number, -1) = COALESCE(%s, -1)
                 ORDER BY bid_number
             """, (user_id, session_id, session_id, hand_number))
 
@@ -3562,8 +3553,8 @@ def get_bidding_hand_detail():
             cursor.execute("""
                 SELECT sh.id
                 FROM session_hands sh
-                WHERE sh.session_id = CAST(? AS INTEGER)
-                  AND sh.hand_number = ?
+                WHERE sh.session_id = CAST(%s AS INTEGER)
+                  AND sh.hand_number = %s
                 LIMIT 1
             """, (session_id, hand_number))
             ph_row = cursor.fetchone()
@@ -3601,7 +3592,7 @@ def get_bidding_hand_detail():
         all_hands = {}
         hands_for_dds = {}  # For DDS analysis
         if deal_data:
-            for pos in ['N', 'E', 'S', 'W']:
+            for pos in SEATS:
                 if pos in deal_data:
                     hand_cards = deal_data[pos].get('hand', [])
                     hcp = calculate_hcp(hand_cards)
@@ -3632,7 +3623,7 @@ def get_bidding_hand_detail():
 
                 # Convert deal_data to Hand objects
                 hands = {}
-                for pos in ['N', 'E', 'S', 'W']:
+                for pos in SEATS:
                     if pos in deal_data and 'hand' in deal_data[pos]:
                         cards = []
                         for card in deal_data[pos]['hand']:
@@ -3655,8 +3646,7 @@ def get_bidding_hand_detail():
                         dd_analysis = analysis.to_dict()
 
         except Exception as dds_error:
-            import traceback
-            traceback.print_exc()
+            log_error(dds_error, context={'source': 'bidding_hand_detail_dds'})
             dd_analysis = {'error': str(dds_error), 'available': False}
 
         return jsonify({
@@ -3678,8 +3668,7 @@ def get_bidding_hand_detail():
         })
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        log_error(e, endpoint='/api/bidding-hand-detail')
         return jsonify({'error': str(e)}), 500
 
 
@@ -3794,8 +3783,7 @@ def get_bidding_gap_analysis():
         })
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        log_error(e, endpoint='/api/bidding-gap-analysis')
         return jsonify({'error': str(e)}), 500
 
 
@@ -3974,8 +3962,7 @@ def get_differential_analysis():
         return jsonify(response)
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        log_error(e, endpoint='/api/differential-analysis')
         return jsonify({'error': str(e)}), 500
 
 

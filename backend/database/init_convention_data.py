@@ -55,7 +55,7 @@ def init_convention_tables():
                     convention_id, name, level, category, frequency, complexity,
                     description, short_description, learning_time_minutes,
                     practice_hands_required, passing_accuracy
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 convention.id,
                 convention.name,
@@ -78,7 +78,7 @@ def init_convention_tables():
                 cursor.execute("""
                     INSERT INTO convention_prerequisites (
                         convention_id, prerequisite_id, prerequisite_type
-                    ) VALUES (?, ?, ?)
+                    ) VALUES (%s, %s, %s)
                 """, (convention.id, prereq, prereq_type))
                 prerequisites_inserted += 1
 
@@ -96,7 +96,7 @@ def init_convention_tables():
             cursor.execute("""
                 SELECT COUNT(*), string_agg(name, ', ')
                 FROM conventions
-                WHERE level = ?
+                WHERE level = %s
             """, (level_name,))
             row = cursor.fetchone()
             count = row['count']
@@ -128,7 +128,7 @@ def init_user_convention_progress(user_id):
             cursor.execute("""
                 INSERT INTO user_convention_progress (
                     user_id, convention_id, status, attempts, correct, accuracy
-                ) VALUES (?, ?, 'locked', 0, 0, 0.0)
+                ) VALUES (%s, %s, 'locked', 0, 0, 0.0)
                 ON CONFLICT DO NOTHING
             """, (user_id, row['convention_id']))
 
@@ -160,7 +160,7 @@ def verify_convention_data():
             cursor.execute("""
                 SELECT COUNT(*)
                 FROM conventions
-                WHERE level = ?
+                WHERE level = %s
             """, (level,))
             count = cursor.fetchone()['count']
             print(f"{level.capitalize()} conventions: {count}")

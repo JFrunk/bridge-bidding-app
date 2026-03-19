@@ -24,6 +24,7 @@ from typing import Dict, List, Optional, Any
 from flask import request, jsonify, Flask
 import sys
 from pathlib import Path
+from utils.seats import SEATS
 
 # Database abstraction layer
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -167,7 +168,7 @@ def register_acbl_import_endpoints(app: Flask):
 
             cursor.execute("""
                 SELECT id, event_name FROM imported_tournaments
-                WHERE user_id = ? AND source_content_hash = ?
+                WHERE user_id = %s AND source_content_hash = %s
             """, (user_id, content_hash))
 
             existing = cursor.fetchone()
@@ -198,7 +199,7 @@ def register_acbl_import_endpoints(app: Flask):
                     user_id, event_name, event_date, event_site,
                     scoring_method, source, source_filename, source_content_hash,
                     import_status, total_hands, hands_analyzed
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 user_id,
                 pbn_file.event_name or 'Imported Tournament',
@@ -242,14 +243,14 @@ def register_acbl_import_endpoints(app: Flask):
                         contract_declarer, tricks_taken,
                         score_ns, score_ew,
                         analysis_status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     tournament_id,
                     user_id,
                     hand.board_number,
                     hand.dealer,
                     hand.vulnerability,
-                    f"{hand.dealer}:{' '.join(hand.hands.get(p, '') for p in ['N', 'E', 'S', 'W'])}",
+                    f"{hand.dealer}:{' '.join(hand.hands.get(p, '') for p in SEATS)}",
                     deal_json,
                     hand.hands.get('N', ''),
                     hand.hands.get('E', ''),
@@ -424,7 +425,7 @@ def register_acbl_import_endpoints(app: Flask):
                         user_id, event_name, event_date, event_site,
                         scoring_method, source, source_filename, source_content_hash,
                         import_status, total_hands, hands_analyzed
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     user_id,
                     pbn.event_name or 'Merged Tournament',
@@ -476,14 +477,14 @@ def register_acbl_import_endpoints(app: Flask):
                             dds_analysis, optimum_score, par_contract,
                             tournament_contracts,
                             analysis_status
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """, (
                         tournament_id,
                         user_id,
                         board_num,
                         hand.dealer,
                         hand.vulnerability,
-                        f"{hand.dealer}:{' '.join(hand.hands.get(p, '') for p in ['N', 'E', 'S', 'W'])}",
+                        f"{hand.dealer}:{' '.join(hand.hands.get(p, '') for p in SEATS)}",
                         deal_json,
                         hand.hands.get('N', ''),
                         hand.hands.get('E', ''),
@@ -571,15 +572,15 @@ def register_acbl_import_endpoints(app: Flask):
                        source, import_status, total_hands, hands_analyzed,
                        alignment_rate, total_potential_savings, imported_at
                 FROM imported_tournaments
-                WHERE user_id = ?
+                WHERE user_id = %s
             """
             params = [user_id]
 
             if status:
-                query += " AND import_status = ?"
+                query += " AND import_status = %s"
                 params.append(status)
 
-            query += " ORDER BY imported_at DESC LIMIT ? OFFSET ?"
+            query += " ORDER BY imported_at DESC LIMIT %s OFFSET %s"
             params.extend([limit + 1, offset])  # +1 to check has_more
 
             cursor.execute(query, params)
@@ -596,7 +597,7 @@ def register_acbl_import_endpoints(app: Flask):
 
             # Get total count
             cursor.execute("""
-                SELECT COUNT(*) FROM imported_tournaments WHERE user_id = ?
+                SELECT COUNT(*) FROM imported_tournaments WHERE user_id = %s
             """, (user_id,))
             total = cursor.fetchone()[0]
 
@@ -631,7 +632,7 @@ def register_acbl_import_endpoints(app: Flask):
 
             # Get tournament
             cursor.execute("""
-                SELECT * FROM imported_tournaments WHERE id = ?
+                SELECT * FROM imported_tournaments WHERE id = %s
             """, (tournament_id,))
 
             row = cursor.fetchone()
@@ -654,7 +655,7 @@ def register_acbl_import_endpoints(app: Flask):
             cursor.execute("""
                 SELECT audit_category, COUNT(*) as count
                 FROM imported_hands
-                WHERE tournament_id = ?
+                WHERE tournament_id = %s
                 GROUP BY audit_category
             """, (tournament_id,))
 
@@ -666,7 +667,7 @@ def register_acbl_import_endpoints(app: Flask):
             cursor.execute("""
                 SELECT quadrant, COUNT(*) as count
                 FROM imported_hands
-                WHERE tournament_id = ? AND quadrant IS NOT NULL
+                WHERE tournament_id = %s AND quadrant IS NOT NULL
                 GROUP BY quadrant
             """, (tournament_id,))
 
@@ -677,7 +678,7 @@ def register_acbl_import_endpoints(app: Flask):
             # Get hands flagged for review (falsified)
             cursor.execute("""
                 SELECT board_number FROM imported_hands
-                WHERE tournament_id = ? AND is_falsified = 1
+                WHERE tournament_id = %s AND is_falsified = 1
                 ORDER BY board_number
             """, (tournament_id,))
 
@@ -744,23 +745,23 @@ def register_acbl_import_endpoints(app: Flask):
                        bidding_efficiency, audit_category, educational_feedback,
                        quadrant, analysis_status, tournament_contracts
                 FROM imported_hands
-                WHERE tournament_id = ?
+                WHERE tournament_id = %s
             """
             params = [tournament_id]
 
             if audit_category:
-                query += " AND audit_category = ?"
+                query += " AND audit_category = %s"
                 params.append(audit_category)
 
             if quadrant:
-                query += " AND quadrant = ?"
+                query += " AND quadrant = %s"
                 params.append(quadrant)
 
             if is_falsified is not None:
-                query += " AND is_falsified = ?"
+                query += " AND is_falsified = %s"
                 params.append(is_falsified)
 
-            query += f" ORDER BY {sort_by} {sort_order.upper()} LIMIT ? OFFSET ?"
+            query += f" ORDER BY {sort_by} {sort_order.upper()} LIMIT %s OFFSET %s"
             params.extend([limit, offset])
 
             cursor.execute(query, params)
@@ -781,13 +782,13 @@ def register_acbl_import_endpoints(app: Flask):
                 hands.append(hand_dict)
 
             # Get total count with filters
-            count_query = "SELECT COUNT(*) FROM imported_hands WHERE tournament_id = ?"
+            count_query = "SELECT COUNT(*) FROM imported_hands WHERE tournament_id = %s"
             count_params = [tournament_id]
             if audit_category:
-                count_query += " AND audit_category = ?"
+                count_query += " AND audit_category = %s"
                 count_params.append(audit_category)
             if quadrant:
-                count_query += " AND quadrant = ?"
+                count_query += " AND quadrant = %s"
                 count_params.append(quadrant)
 
             cursor.execute(count_query, count_params)
@@ -822,7 +823,7 @@ def register_acbl_import_endpoints(app: Flask):
 
             cursor.execute("""
                 SELECT * FROM imported_hands
-                WHERE id = ? AND tournament_id = ?
+                WHERE id = %s AND tournament_id = %s
             """, (hand_id, tournament_id))
 
             row = cursor.fetchone()
@@ -876,7 +877,7 @@ def register_acbl_import_endpoints(app: Flask):
             cursor.execute("""
                 UPDATE imported_tournaments
                 SET import_status = 'analyzing'
-                WHERE id = ?
+                WHERE id = %s
             """, (tournament_id,))
 
             # Get all pending hands
@@ -885,7 +886,7 @@ def register_acbl_import_endpoints(app: Flask):
                        contract_level, contract_strain, contract_doubled,
                        tricks_taken, score_ns, board_number
                 FROM imported_hands
-                WHERE tournament_id = ? AND analysis_status = 'pending'
+                WHERE tournament_id = %s AND analysis_status = 'pending'
             """, (tournament_id,))
 
             hands = cursor.fetchall()
@@ -918,24 +919,24 @@ def register_acbl_import_endpoints(app: Flask):
                     # Update hand record
                     cursor.execute("""
                         UPDATE imported_hands SET
-                            optimal_bid = ?,
-                            matched_rule = ?,
-                            rule_tier = ?,
-                            theoretical_score = ?,
-                            panic_index = ?,
-                            survival_status = ?,
-                            rescue_action = ?,
-                            is_logic_aligned = ?,
-                            is_falsified = ?,
-                            score_delta = ?,
-                            potential_savings = ?,
-                            bidding_efficiency = ?,
-                            audit_category = ?,
-                            educational_feedback = ?,
-                            quadrant = ?,
+                            optimal_bid = %s,
+                            matched_rule = %s,
+                            rule_tier = %s,
+                            theoretical_score = %s,
+                            panic_index = %s,
+                            survival_status = %s,
+                            rescue_action = %s,
+                            is_logic_aligned = %s,
+                            is_falsified = %s,
+                            score_delta = %s,
+                            potential_savings = %s,
+                            bidding_efficiency = %s,
+                            audit_category = %s,
+                            educational_feedback = %s,
+                            quadrant = %s,
                             analysis_status = 'complete',
                             analyzed_at = CURRENT_TIMESTAMP
-                        WHERE id = ?
+                        WHERE id = %s
                     """, (
                         audit.optimal_bid,
                         audit.matched_rule,
@@ -962,8 +963,8 @@ def register_acbl_import_endpoints(app: Flask):
                     cursor.execute("""
                         UPDATE imported_hands SET
                             analysis_status = 'failed',
-                            analysis_error = ?
-                        WHERE id = ?
+                            analysis_error = %s
+                        WHERE id = %s
                     """, (str(e), hand_id))
 
             # Update tournament statistics
@@ -974,7 +975,7 @@ def register_acbl_import_endpoints(app: Flask):
                     SUM(potential_savings) as savings,
                     AVG(score_delta) as avg_delta
                 FROM imported_hands
-                WHERE tournament_id = ? AND analysis_status = 'complete'
+                WHERE tournament_id = %s AND analysis_status = 'complete'
             """, (tournament_id,))
 
             stats = cursor.fetchone()
@@ -985,12 +986,12 @@ def register_acbl_import_endpoints(app: Flask):
             cursor.execute("""
                 UPDATE imported_tournaments SET
                     import_status = 'complete',
-                    hands_analyzed = ?,
-                    alignment_rate = ?,
-                    total_potential_savings = ?,
-                    average_score_delta = ?,
+                    hands_analyzed = %s,
+                    alignment_rate = %s,
+                    total_potential_savings = %s,
+                    average_score_delta = %s,
                     completed_at = CURRENT_TIMESTAMP
-                WHERE id = ?
+                WHERE id = %s
             """, (analyzed_count, alignment_rate, savings or 0, avg_delta or 0, tournament_id))
 
             conn.commit()
@@ -1027,7 +1028,7 @@ def register_acbl_import_endpoints(app: Flask):
             cursor.execute("""
                 SELECT import_status, total_hands, hands_analyzed, import_error
                 FROM imported_tournaments
-                WHERE id = ?
+                WHERE id = %s
             """, (tournament_id,))
 
             row = cursor.fetchone()
@@ -1040,7 +1041,7 @@ def register_acbl_import_endpoints(app: Flask):
             cursor.execute("""
                 SELECT analysis_status, COUNT(*) as count
                 FROM imported_hands
-                WHERE tournament_id = ?
+                WHERE tournament_id = %s
                 GROUP BY analysis_status
             """, (tournament_id,))
 
@@ -1079,7 +1080,7 @@ def register_acbl_import_endpoints(app: Flask):
 
             # Verify ownership
             cursor.execute("""
-                SELECT user_id FROM imported_tournaments WHERE id = ?
+                SELECT user_id FROM imported_tournaments WHERE id = %s
             """, (tournament_id,))
 
             row = cursor.fetchone()
@@ -1095,14 +1096,14 @@ def register_acbl_import_endpoints(app: Flask):
 
             # Delete hands first (FK constraint)
             cursor.execute("""
-                DELETE FROM imported_hands WHERE tournament_id = ?
+                DELETE FROM imported_hands WHERE tournament_id = %s
             """, (tournament_id,))
 
             hands_deleted = cursor.rowcount
 
             # Delete tournament
             cursor.execute("""
-                DELETE FROM imported_tournaments WHERE id = ?
+                DELETE FROM imported_tournaments WHERE id = %s
             """, (tournament_id,))
 
             conn.commit()

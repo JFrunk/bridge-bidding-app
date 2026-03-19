@@ -15,6 +15,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from db import get_connection
 from engine.hand import Card
+from utils.seats import SEATS
+from utils.error_logger import log_error
 
 
 def log_ai_play_test(card, position, ai_level, solve_time_ms, used_fallback=False,
@@ -32,7 +34,7 @@ def log_ai_play_test(card, position, ai_level, solve_time_ms, used_fallback=Fals
                 INSERT INTO ai_play_log
                 (position, ai_level, card_played, solve_time_ms, used_fallback,
                  session_id, hand_number, trick_number, contract, trump_suit)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (position, ai_level, card_str, solve_time_ms, int(used_fallback),
                   session_id, hand_number, trick_number, contract, trump_suit))
 
@@ -95,7 +97,7 @@ def test_multiple_levels():
     print("="*60)
 
     levels = ['beginner', 'intermediate', 'advanced', 'expert']
-    positions = ['N', 'E', 'S', 'W']
+    positions = SEATS
 
     success_count = 0
     for i, level in enumerate(levels):
@@ -177,8 +179,7 @@ def test_health_metrics():
 
     except Exception as e:
         print(f"❌ Error querying metrics: {e}")
-        import traceback
-        traceback.print_exc()
+        log_error(e, context={'source': 'test_health_metrics'})
         return False
 
 
@@ -265,8 +266,7 @@ def main():
             results.append((name, result))
         except Exception as e:
             print(f"\n❌ Test '{name}' crashed: {e}")
-            import traceback
-            traceback.print_exc()
+            log_error(e, context={'source': 'test_ai_logging', 'test_name': name})
             results.append((name, False))
 
     # Summary

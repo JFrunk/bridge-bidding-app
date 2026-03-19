@@ -215,7 +215,7 @@ GET /api/analytics/dashboard?user_id=2
 
 ### Backend Guarantees
 - All API endpoints filter by `user_id`
-- Database queries include `WHERE user_id = ?`
+- Database queries include `WHERE user_id = %s`
 - No way to access another user's data
 - Sessions tied to specific user
 
@@ -276,7 +276,7 @@ GET /api/analytics/dashboard?user_id=2
 ✅ **Do:** Clear localStorage to reset
 ✅ **Do:** Check database to verify separation
 ```bash
-sqlite3 backend/bridge.db "SELECT user_id, COUNT(*) FROM bidding_decisions GROUP BY user_id;"
+psql bridge_app -c "SELECT user_id, COUNT(*) FROM bidding_decisions GROUP BY user_id;"
 ```
 
 ---

@@ -46,7 +46,7 @@ You are working on **bid/play evaluation, feedback generation, and skill progres
 - Read `backend/engine/learning/CLAUDE.md` for architecture overview
 - Check `docs/domains/learning/bug-fixes/` for similar past issues
 - Analyze the issue - check feedback logic, dashboard queries, or UI
-- Review database schema: `sqlite3 backend/bridge.db ".schema bidding_decisions"`
+- Review database schema: `psql bridge_app -c "\d bidding_decisions"`
 - Determine: Is this a **code fix** or just **analysis/explanation**?
 
 ### 2. If Code Changes Needed → Create Branch
@@ -74,8 +74,8 @@ npm test -- --testPathPattern=learning
 npm run test:e2e -- --grep "dashboard"
 
 # Check database
-sqlite3 backend/bridge.db "SELECT COUNT(*) FROM bidding_decisions;"
-sqlite3 backend/bridge.db "SELECT AVG(score) FROM bidding_decisions WHERE user_id='test';"
+psql bridge_app -c "SELECT COUNT(*) FROM bidding_decisions;"
+psql bridge_app -c "SELECT AVG(score) FROM bidding_decisions WHERE user_id='test';"
 ```
 
 ## Scoring Reference
@@ -102,18 +102,18 @@ sqlite3 backend/bridge.db "SELECT AVG(score) FROM bidding_decisions WHERE user_i
 ```sql
 -- User's recent decisions
 SELECT * FROM bidding_decisions
-WHERE user_id = ? ORDER BY timestamp DESC LIMIT 10;
+WHERE user_id = %s ORDER BY timestamp DESC LIMIT 10;
 
 -- Average score
-SELECT AVG(score) FROM bidding_decisions WHERE user_id = ?;
+SELECT AVG(score) FROM bidding_decisions WHERE user_id = %s;
 
 -- Optimal rate
-SELECT COUNT(*) * 100.0 / (SELECT COUNT(*) FROM bidding_decisions WHERE user_id = ?)
-FROM bidding_decisions WHERE user_id = ? AND score = 10;
+SELECT COUNT(*) * 100.0 / (SELECT COUNT(*) FROM bidding_decisions WHERE user_id = %s)
+FROM bidding_decisions WHERE user_id = %s AND score = 10;
 
 -- Error rate
-SELECT COUNT(*) * 100.0 / (SELECT COUNT(*) FROM bidding_decisions WHERE user_id = ?)
-FROM bidding_decisions WHERE user_id = ? AND score < 4;
+SELECT COUNT(*) * 100.0 / (SELECT COUNT(*) FROM bidding_decisions WHERE user_id = %s)
+FROM bidding_decisions WHERE user_id = %s AND score < 4;
 ```
 
 ## Quality Gates
@@ -131,7 +131,7 @@ FROM bidding_decisions WHERE user_id = ? AND score < 4;
 
 ```python
 # CORRECT
-cursor.execute("SELECT * FROM bidding_decisions WHERE user_id = ?", (user_id,))
+cursor.execute("SELECT * FROM bidding_decisions WHERE user_id = %s", (user_id,))
 
 # WRONG - data leak
 cursor.execute("SELECT * FROM bidding_decisions")

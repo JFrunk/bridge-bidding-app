@@ -25,6 +25,7 @@ from enum import Enum
 from dataclasses import dataclass, asdict
 from typing import Optional, List, Dict, Tuple
 from datetime import datetime
+from utils.error_logger import log_error
 
 # Database abstraction layer
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -1275,7 +1276,7 @@ class PlayFeedbackGenerator:
                     key_concept, difficulty, feedback, helpful_hint,
                     analysis_source, signal_reason, signal_heuristic,
                     signal_context, is_signal_optimal, timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
             """, (
                 user_id,
                 session_id,
@@ -1306,8 +1307,7 @@ class PlayFeedbackGenerator:
             conn.commit()
         except Exception as e:
             print(f"Error storing play feedback: {e}")
-            import traceback
-            traceback.print_exc()
+            log_error(e, context={'action': 'store_play_feedback'})
             conn.rollback()
         finally:
             conn.close()

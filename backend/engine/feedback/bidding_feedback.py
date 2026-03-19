@@ -16,6 +16,7 @@ from pathlib import Path
 from enum import Enum
 from dataclasses import dataclass, asdict
 from typing import Optional, List, Dict
+from utils.error_logger import log_error
 
 # Database abstraction layer (PostgreSQL in production)
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -162,7 +163,7 @@ class BiddingFeedbackGenerator:
                     helpful_hint, reasoning,
                     deal_data,
                     timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
             """, (
                 hand_analysis_id,
                 user_id,
@@ -191,8 +192,7 @@ class BiddingFeedbackGenerator:
             print(f"✅ Stored bidding decision: {feedback.user_bid} (correctness: {feedback.correctness.value}, score: {feedback.score})")
         except Exception as e:
             print(f"❌ Error storing bidding feedback: {e}")
-            import traceback
-            traceback.print_exc()
+            log_error(e, context={'action': 'store_bidding_feedback'})
             conn.rollback()
             raise  # Re-raise so the API endpoint can catch it
         finally:

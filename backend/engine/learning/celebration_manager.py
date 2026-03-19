@@ -116,7 +116,7 @@ class CelebrationManager:
                     title, message, celebration_emoji,
                     xp_reward, badge_id,
                     achieved_at, shown_to_user
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, FALSE)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, FALSE)
             """, (
                 user_id, milestone_type, milestone_subtype,
                 convention_id, error_category,
@@ -155,8 +155,8 @@ class CelebrationManager:
             if subtype:
                 cursor.execute("""
                     SELECT * FROM celebration_templates
-                    WHERE milestone_type = ?
-                      AND template_id LIKE ?
+                    WHERE milestone_type = %s
+                      AND template_id LIKE %s
                       AND active = TRUE
                     LIMIT 1
                 """, (milestone_type, f"%{subtype}%"))
@@ -168,7 +168,7 @@ class CelebrationManager:
             # Fall back to general template for this type
             cursor.execute("""
                 SELECT * FROM celebration_templates
-                WHERE milestone_type = ?
+                WHERE milestone_type = %s
                   AND active = TRUE
                 ORDER BY id
                 LIMIT 1
@@ -236,7 +236,7 @@ class CelebrationManager:
         cursor.execute("""
             SELECT total_xp, current_level, xp_to_next_level
             FROM user_gamification
-            WHERE user_id = ?
+            WHERE user_id = %s
         """, (user_id,))
 
         row = cursor.fetchone()
@@ -260,11 +260,11 @@ class CelebrationManager:
         # Update user gamification
         cursor.execute("""
             UPDATE user_gamification
-            SET total_xp = ?,
-                current_level = ?,
-                xp_to_next_level = ?,
+            SET total_xp = %s,
+                current_level = %s,
+                xp_to_next_level = %s,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = ?
+            WHERE user_id = %s
         """, (new_total_xp, new_level, new_xp_to_next, user_id))
 
     def get_pending_celebrations(self, user_id: int) -> List[Milestone]:
@@ -280,7 +280,7 @@ class CelebrationManager:
         try:
             cursor.execute("""
                 SELECT * FROM improvement_milestones
-                WHERE user_id = ?
+                WHERE user_id = %s
                   AND shown_to_user = FALSE
                 ORDER BY achieved_at DESC
             """, (user_id,))
@@ -311,9 +311,9 @@ class CelebrationManager:
         try:
             cursor.execute("""
                 SELECT * FROM improvement_milestones
-                WHERE user_id = ?
+                WHERE user_id = %s
                 ORDER BY achieved_at DESC
-                LIMIT ?
+                LIMIT %s
             """, (user_id, limit))
 
             milestones = []
@@ -339,7 +339,7 @@ class CelebrationManager:
             cursor.execute("""
                 UPDATE improvement_milestones
                 SET shown_to_user = TRUE
-                WHERE id = ?
+                WHERE id = %s
             """, (milestone_id,))
 
             conn.commit()
@@ -367,7 +367,7 @@ class CelebrationManager:
                 UPDATE improvement_milestones
                 SET shown_to_user = TRUE,
                     acknowledged_at = CURRENT_TIMESTAMP
-                WHERE id = ?
+                WHERE id = %s
             """, (milestone_id,))
 
             conn.commit()
