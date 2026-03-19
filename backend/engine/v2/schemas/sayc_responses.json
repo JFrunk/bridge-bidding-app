@@ -399,11 +399,11 @@
       "constraints": [
         {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "in": ["2♦", "2♥", "2♠"], "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
+        {"feature": "hcp", "min": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
         {"feature": "support_for_partner", "min": 3, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "Raise to game with {hcp} HCP and {support_for_partner}-card support",
+      "explanation": "Raise to game with {hcp} HCP and {support_for_partner}-card support (15+ recommended)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

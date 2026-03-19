@@ -36,7 +36,7 @@ except ImportError:
 
 
 from utils.dealing import deal_four_hands
-from utils.seats import SEATS, SEAT_NAMES
+from utils.seats import SEATS, SEAT_NAMES, partner
 from utils.error_logger import log_error
 
 
@@ -136,13 +136,50 @@ class IntegratedPlayQualityScorer:
         # Score the play
         self._score_play(play_result, contract, hand_number)
 
-        # Capture auction trace for level 5+ contracts
-        if level >= 5:
+        # Capture auction trace for level 4+ contracts
+        if level >= 4:
             tricks_needed = contract.tricks_needed
             if contract.declarer in ('N', 'S'):
                 tricks_won = play_result['tricks_won_ns']
             else:
                 tricks_won = play_result['tricks_won_ew']
+
+            # Compute partnership diagnostics for Level 4 analysis
+            declarer_hand = hands[contract.declarer]
+            dummy_pos = partner(contract.declarer)
+            dummy_hand = hands[dummy_pos]
+            combined_hcp = declarer_hand.hcp + dummy_hand.hcp
+
+            # Fit analysis: count combined length in trump suit
+            trump_suit = contract.trump_suit  # None for NT, '♥'/'♠'/'♦'/'♣' otherwise
+            combined_fit = 0
+            if trump_suit:
+                # suit_lengths uses Unicode keys: '♠', '♥', '♦', '♣'
+                combined_fit = (declarer_hand.suit_lengths.get(trump_suit, 0) +
+                                dummy_hand.suit_lengths.get(trump_suit, 0))
+
+            # Shape analysis: check for flat hands (4-3-3-3 or 4-4-3-2)
+            def is_flat(hand):
+                lengths = sorted(hand.suit_lengths.values(), reverse=True)
+                return lengths in ([4, 3, 3, 3], [4, 4, 3, 2])
+
+            declarer_flat = is_flat(declarer_hand)
+            dummy_flat = is_flat(dummy_hand)
+
+            # Stopper analysis for NT contracts
+            unstoppered_suits = []
+            if trump_suit is None:  # NT contract
+                for suit_symbol in ['♠', '♥', '♦', '♣']:
+                    # A suit is "stopped" if either hand has A, K, or Qx+
+                    decl_cards = [c for c in declarer_hand.cards if c.suit == suit_symbol]
+                    dummy_cards = [c for c in dummy_hand.cards if c.suit == suit_symbol]
+                    all_cards = decl_cards + dummy_cards
+                    ranks = [c.rank for c in all_cards]
+                    has_stopper = ('A' in ranks or 'K' in ranks or
+                                  ('Q' in ranks and len(all_cards) >= 2))
+                    if not has_stopper:
+                        unstoppered_suits.append(suit_symbol)
+
             self.results['auction_traces'].append({
                 'hand_number': hand_number,
                 'contract': f"{contract.level}{contract.strain}",
@@ -150,6 +187,12 @@ class IntegratedPlayQualityScorer:
                 'made': tricks_won >= tricks_needed,
                 'tricks_won': tricks_won,
                 'tricks_needed': tricks_needed,
+                'combined_hcp': combined_hcp,
+                'combined_fit': combined_fit,
+                'declarer_flat': declarer_flat,
+                'dummy_flat': dummy_flat,
+                'unstoppered_suits': unstoppered_suits,
+                'is_nt': trump_suit is None,
                 'auction': auction_trace
             })
 
@@ -534,9 +577,80 @@ class IntegratedPlayQualityScorer:
                 print(f"  Level {level}: {total:3d} ({pct:5.1f}%)  Made: {info['made']:3d}/{total:3d} ({made_pct:5.1f}%)  Avg UT: {avg_ut:.1f}")
             print()
 
-        # Level 5+ failure analysis
+        # Level 4 pathology analysis
         traces = self.results.get('auction_traces', [])
-        failed_traces = [t for t in traces if not t['made']]
+        l4_failed = [t for t in traces if not t['made'] and t.get('contract', '')[0] == '4']
+        if l4_failed:
+            print("LEVEL 4 PATHOLOGY ANALYSIS:")
+            print("-" * 80)
+            # Filter 1: Fit check (major suit contracts with < 8 card fit)
+            l4_major = [t for t in l4_failed if t['contract'].endswith(('♥', '♠', 'H', 'S'))]
+            l4_major_short_fit = [t for t in l4_major if t.get('combined_fit', 0) < 8]
+            print(f"  Failed 4-Major contracts: {len(l4_major)}")
+            print(f"    With < 8-card fit: {len(l4_major_short_fit)} ({len(l4_major_short_fit)/max(1,len(l4_major))*100:.0f}%)")
+
+            # Filter 2: Flat hands with marginal HCP
+            flat_marginal = [t for t in l4_failed
+                            if (t.get('declarer_flat') or t.get('dummy_flat'))
+                            and t.get('combined_hcp', 0) <= 26]
+            print(f"  Flat hand + ≤26 HCP: {len(flat_marginal)} ({len(flat_marginal)/max(1,len(l4_failed))*100:.0f}%)")
+
+            # Filter 3: NT stopper check
+            l4_nt = [t for t in l4_failed if t.get('is_nt')]
+            l4_nt_unstoppered = [t for t in l4_nt if t.get('unstoppered_suits')]
+            print(f"  Failed 3NT contracts bid as 4-level: N/A (3NT is level 3)")
+            # For any NT contracts at level 4+ (rare but possible via 4NT quantitative)
+            if l4_nt:
+                print(f"  Failed NT contracts at level 4: {len(l4_nt)}")
+                print(f"    With unstoppered suits: {len(l4_nt_unstoppered)}")
+
+            # HCP distribution of failed level 4
+            hcps = [t.get('combined_hcp', 0) for t in l4_failed]
+            if hcps:
+                bins = {'<24': 0, '24-25': 0, '26-27': 0, '28-29': 0, '30+': 0}
+                for h in hcps:
+                    if h < 24: bins['<24'] += 1
+                    elif h <= 25: bins['24-25'] += 1
+                    elif h <= 27: bins['26-27'] += 1
+                    elif h <= 29: bins['28-29'] += 1
+                    else: bins['30+'] += 1
+                print(f"  Combined HCP distribution of failed Level 4:")
+                for label, count in bins.items():
+                    bar = '█' * (count // 2)
+                    print(f"    {label:>5}: {count:3d} {bar}")
+
+            # Top committing rules for Level 4
+            rule_failures = {}
+            for trace in l4_failed:
+                # Find the bid that committed to level 4
+                committing_bid = None
+                for step in trace['auction']:
+                    bid = step['bid']
+                    if bid in ('Pass', 'X', 'XX'):
+                        continue
+                    bid_level = int(bid[0]) if bid[0].isdigit() else 0
+                    if bid_level >= 4 and committing_bid is None:
+                        committing_bid = step
+                if committing_bid is None:
+                    for step in reversed(trace['auction']):
+                        if step['bid'] not in ('Pass', 'X', 'XX'):
+                            committing_bid = step
+                            break
+                if committing_bid:
+                    key = f"{committing_bid['rule_id']} ({committing_bid['schema']})"
+                    if key not in rule_failures:
+                        rule_failures[key] = {'count': 0, 'hcps': []}
+                    rule_failures[key]['count'] += 1
+                    rule_failures[key]['hcps'].append(committing_bid['hcp'])
+            sorted_rules = sorted(rule_failures.items(), key=lambda x: -x[1]['count'])
+            print(f"  Top Level 4 committing rules:")
+            for i, (rule, info) in enumerate(sorted_rules[:10]):
+                avg_hcp = sum(info['hcps']) / len(info['hcps']) if info['hcps'] else 0
+                print(f"    #{i+1}: {rule}  Failures: {info['count']}  Avg HCP: {avg_hcp:.1f}")
+            print()
+
+        # Level 5+ failure analysis
+        failed_traces = [t for t in traces if not t['made'] and int(t.get('contract', '0')[0]) >= 5]
         if failed_traces:
             print("LEVEL 5+ FAILURE ANALYSIS (Killer Rules):")
             print("-" * 80)
@@ -599,7 +713,7 @@ class IntegratedPlayQualityScorer:
                     'legality': self.results['legality_errors'],
                     'tactical': self.results['tactical_errors']
                 },
-                'auction_traces_level5plus': self.results['auction_traces']
+                'auction_traces_level4plus': self.results['auction_traces']
             }, f, indent=2)
 
         print(f"📄 Detailed report saved to: {filename}")

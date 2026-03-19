@@ -437,13 +437,13 @@
         "partner_last_bid": "X",
         "is_advancer": true,
         "hcp": {
-          "min": 12
+          "min": 13
         },
         "has_4_card_major": true
       },
       "forcing": "none",
       "suit_selection": "longest_major_first",
-      "explanation": "Bid game in response to partner's takeout double (12+ HCP)",
+      "explanation": "Bid game in response to partner's takeout double (13+ HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

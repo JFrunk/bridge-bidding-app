@@ -1199,8 +1199,10 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
         # Check if we're in a game force
         if fs['game_forcing_established'] or flat['hcp'] >= 13:
             flat['major_fit_gf'] = True
-            # In slam zone when bidding is at 3+ level OR partnership has slam values
-            if current_level >= 3 or _partnership_hcp_est >= 28:
+            # In slam zone when bidding is at 3+ level with adequate values, OR partnership has slam values
+            # HCP floor of 26 prevents weak hands from entering control bidding at the 3-level
+            # (which pushes them to 4-level "slam debris" they can't make)
+            if (current_level >= 3 and _partnership_hcp_est >= 26) or _partnership_hcp_est >= 29:
                 flat['in_slam_zone'] = True
 
     # Slam zone for balanced/NT auctions (no suit fit needed)
@@ -1784,10 +1786,11 @@ def _calculate_lott_features(hand: Hand, flat: Dict[str, Any], partner_bids: Lis
     result['lott_above_safe'] = current_level > result['effective_lott_level']
 
     # Strength-Based Override: HCP should override LoTT when game values exist
-    # If combined partnership HCP >= 25, we have game values and LoTT ceiling
-    # should not prevent us from bidding game
+    # If combined partnership HCP >= 26, we have game values and LoTT ceiling
+    # should not prevent us from bidding game. Raised from 25 to reduce marginal
+    # game bids that fail at DDS-level play.
     partnership_min_hcp = flat.get('partnership_hcp_min', flat.get('hcp', 0))
-    result['hcp_overrides_lott'] = partnership_min_hcp >= 25
+    result['hcp_overrides_lott'] = partnership_min_hcp >= 26
 
     # Misfit detection: When fit is 6 or less, we have a misfit
     # Even with HCP, misfits are dangerous - LoTT still applies

@@ -329,7 +329,7 @@
         },
         "partner_last_bid": "2NT",
         "hcp": {
-          "min": 5
+          "min": 7
         },
         "opening_bid": {
           "in": [
@@ -603,14 +603,14 @@
           "min": 3
         },
         "hcp": {
-          "min": 10
+          "min": 12
         },
         "partnership_hcp_min": {
-          "min": 25
+          "min": 26
         }
       },
       "forcing": "none",
-      "explanation": "Game raise: Supporting partner's major with game values in competition",
+      "explanation": "Game raise: Supporting partner's major with game values in competition (12+ HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
