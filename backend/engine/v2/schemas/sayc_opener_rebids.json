@@ -43,10 +43,11 @@
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "hcp", "min": 20, "max": 21, "constraint_type": "HARD"},
-        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partnership_stoppers", "min": 3, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "Rebid 3NT (12-14 HCP) balanced game values",
+      "explanation": "Rebid 3NT (20-21 HCP) balanced game values, 3+ suits stopped",
       "sets_forcing_level": "SIGN_OFF"
     },
     {
@@ -219,10 +220,12 @@
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "1♥", "constraint_type": "HARD"},
         {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
-        {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"}
+        {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "partnership_fit", "min": 8, "constraint_type": "HARD"},
+        {"feature": "partnership_ltc", "max": 14, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "Raise to 4♥ game (12-14 HCP) with 4+ heart support",
+      "explanation": "Raise to 4♥ game (19+ HCP) with 4+ support, LTC ≤ 14",
       "sets_forcing_level": "SIGN_OFF"
     },
     {
@@ -235,10 +238,12 @@
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "1♠", "constraint_type": "HARD"},
         {"feature": "hcp", "min": 19, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
-        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"}
+        {"feature": "spades_length", "min": 4, "constraint_type": "HARD"},
+        {"feature": "partnership_fit", "min": 8, "constraint_type": "HARD"},
+        {"feature": "partnership_ltc", "max": 14, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "Raise to 4♠ game (12-14 HCP) with 4+ spade support",
+      "explanation": "Raise to 4♠ game (19+ HCP) with 4+ support, LTC ≤ 14",
       "sets_forcing_level": "SIGN_OFF"
     },
     {
@@ -347,7 +352,8 @@
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "2♥", "constraint_type": "HARD"},
         {"feature": "partner_transferred", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+        {"feature": "hcp", "min": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "partnership_fit", "min": 8, "constraint_type": "HARD"}
       ],
       "forcing": "none",
       "explanation": "Bid game with 18+ HCP after partner's single raise",
@@ -363,7 +369,8 @@
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "2♠", "constraint_type": "HARD"},
         {"feature": "partner_transferred", "expected": false, "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+        {"feature": "hcp", "min": 18, "constraint_type": "SOFT", "penalty_per_unit": 0.08},
+        {"feature": "partnership_fit", "min": 8, "constraint_type": "HARD"}
       ],
       "forcing": "none",
       "explanation": "Bid game with 18+ HCP after partner's single raise",
@@ -378,7 +385,8 @@
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "3♥", "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 13, "constraint_type": "HARD"}
+        {"feature": "hcp", "min": 13, "constraint_type": "HARD"},
+        {"feature": "partnership_fit", "min": 8, "constraint_type": "HARD"}
       ],
       "forcing": "none",
       "explanation": "Accept limit raise - bid game with 13+ HCP",
@@ -393,7 +401,8 @@
         {"feature": "opener_relationship", "expected": "Me", "constraint_type": "HARD"},
         {"feature": "my_bid_count", "min": 1, "max": 1, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "3♠", "constraint_type": "HARD"},
-        {"feature": "hcp", "min": 13, "constraint_type": "HARD"}
+        {"feature": "hcp", "min": 13, "constraint_type": "HARD"},
+        {"feature": "partnership_fit", "min": 8, "constraint_type": "HARD"}
       ],
       "forcing": "none",
       "explanation": "Accept limit raise - bid game with 13+ HCP",

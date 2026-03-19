@@ -38,8 +38,8 @@ class TestSuitLosers:
         assert _evaluate_suit_losers({'A'}, 1) == 0.0
 
     def test_singleton_king(self):
-        """Singleton K: probabilistic half-stop = 0.5 losers."""
-        assert _evaluate_suit_losers({'K'}, 1) == 0.5
+        """Singleton K: 0.5 base + 0.5 fragile penalty = 1.0 losers."""
+        assert _evaluate_suit_losers({'K'}, 1) == 1.0
 
     def test_singleton_queen(self):
         """Singleton Q: full loser (no protection, no length)."""
@@ -59,8 +59,8 @@ class TestSuitLosers:
         assert _evaluate_suit_losers({'K', 'Q'}, 2) == 0.5
 
     def test_doubleton_qx_unprotected(self):
-        """Qx without A/K: Q worth 0 winners → 2.0 losers."""
-        assert _evaluate_suit_losers({'Q', '5'}, 2) == 2.0
+        """Qx without A/K: 2.0 base + 0.5 fragile penalty → 2.5 losers."""
+        assert _evaluate_suit_losers({'Q', '5'}, 2) == 2.5
 
     def test_doubleton_kx(self):
         """Kx: K = 1 winner → 1.0 losers."""
@@ -107,8 +107,8 @@ class TestSuitLosers:
         assert _evaluate_suit_losers({'A', '5', '4', '3', '2'}, 5) == 2.0
 
     def test_kj109(self):
-        """KJ109: only K matters in top-3 evaluation → 2.0 losers."""
-        assert _evaluate_suit_losers({'K', 'J', 'T', '9'}, 4) == 2.0
+        """KJ109: K=1 winner, J-T-9 sequence bonus → 1.5 losers."""
+        assert _evaluate_suit_losers({'K', 'J', 'T', '9'}, 4) == 1.5
 
     # --- Void ---
 
@@ -137,18 +137,18 @@ class TestHandNLTC:
         assert 5.0 <= ltc <= 8.0, f"Expected 5-8 losers for opening hand, got {ltc}"
 
     def test_singleton_king_adjustment(self):
-        """Hand with singleton K should reflect 0.5 losers in that suit."""
+        """Hand with singleton K: 0.5 base + 0.5 fragile = 1.0 losers in that suit."""
         hand = make_hand("♠AKQ32 ♥K ♦AK42 ♣765")
         ltc = calculate_losing_trick_count(hand)
-        # ♠AKQ32=0, ♥K(singleton)=0.5, ♦AK42=1, ♣765=3 → 4.5
-        assert ltc == 4.5, f"Expected 4.5, got {ltc}"
+        # ♠AKQ32=0, ♥K(singleton)=1.0, ♦AK42=1, ♣765=3 → 5.0
+        assert ltc == 5.0, f"Expected 5.0, got {ltc}"
 
     def test_unprotected_queen_adjustment(self):
-        """Doubleton Qx without A/K = full 2 losers (not 1.5)."""
+        """Doubleton Qx without A/K = 2.0 base + 0.5 fragile → 2.5 losers."""
         hand = make_hand("♠AK932 ♥Q5 ♦AK42 ♣76")
         ltc = calculate_losing_trick_count(hand)
-        # ♠AK932=1, ♥Q5(unprotected)=2, ♦AK42=1, ♣76=2 → 6.0
-        assert ltc == 6.0, f"Expected 6.0, got {ltc}"
+        # ♠AK932=1, ♥Q5(unprotected)=2.5, ♦AK42=1, ♣76=2 → 6.5
+        assert ltc == 6.5, f"Expected 6.5, got {ltc}"
 
     def test_return_type_is_float(self):
         """NLTC must return float (not int) due to 0.5 adjustments."""

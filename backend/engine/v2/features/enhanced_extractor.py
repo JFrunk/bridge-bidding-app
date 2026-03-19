@@ -610,6 +610,16 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     else:
         flat['support_for_partner'] = 0
 
+    # Partnership fit: our support + partner's inferred suit length
+    # Uses fit_length if already computed, otherwise estimates from support + inferred
+    flat['partnership_fit'] = flat.get('fit_length', 0)
+    if flat['partnership_fit'] == 0 and flat['partner_last_bid']:
+        _ps = get_suit_from_bid(flat['partner_last_bid'])
+        if _ps:
+            _partner_inferred = _infer_partner_suit_lengths(
+                partner_bids, _early_i_made_michaels, _early_michaels_suits)
+            flat['partnership_fit'] = suit_lengths.get(_ps, 0) + _partner_inferred.get(_ps, 0)
+
     # Partner's first suit (for preference bids)
     # Scan partner's bids to find their first natural suit bid
     flat['partner_first_suit'] = None
@@ -1318,6 +1328,32 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # Midpoint partnership total points: our total points + midpoint of partner's HCP range
     # Best metric for slam initiation — includes our distribution AND uses realistic partner estimate
     flat['partnership_total_points_mid'] = flat['total_points'] + (flat['partner_min_hcp'] + partner_max_capped) // 2
+
+    # Partnership Losing Trick Count (LTC)
+    # Our LTC is exact; partner's is estimated from their HCP midpoint.
+    # Standard approximation: LTC ≈ 13 - (HCP * 0.4) for typical hands.
+    # Expected tricks in a fit = 18 - partnership_ltc.
+    _our_ltc = flat['losing_trick_count']
+    _partner_mid = (flat['partner_min_hcp'] + partner_max_capped) // 2
+    # Piecewise estimate: more accurate than linear for extreme ranges
+    if _partner_mid >= 22:
+        _partner_ltc_est = 3.5
+    elif _partner_mid >= 19:
+        _partner_ltc_est = 4.5
+    elif _partner_mid >= 16:
+        _partner_ltc_est = 5.5
+    elif _partner_mid >= 13:
+        _partner_ltc_est = 7.0
+    elif _partner_mid >= 10:
+        _partner_ltc_est = 8.0
+    elif _partner_mid >= 6:
+        _partner_ltc_est = 9.5
+    else:
+        _partner_ltc_est = 11.0
+    flat['partner_ltc_est'] = _partner_ltc_est
+    flat['partnership_ltc'] = _our_ltc + _partner_ltc_est
+    # Expected tricks: 18 - partnership_ltc (only meaningful when fit exists)
+    flat['expected_tricks'] = 18.0 - flat['partnership_ltc']
 
     # Preempt detection: Did partner preempt?
     # Weak 2s: 2D, 2H, 2S with 5-10 HCP and 6+ cards

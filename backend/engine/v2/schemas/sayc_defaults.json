@@ -105,21 +105,27 @@
       "id": "default_game_raise_major",
       "bid": "4{partner_suit}",
       "priority": 15,
-      "description": "Default game raise when partnership has game values and major fit",
+      "description": "Default game raise when partnership has game values, fit, and LTC",
       "conditions": {
         "is_contested": true,
         "partnership_hcp_min": {
-          "min": 27
+          "min": 25
         },
         "support_for_partner": {
           "min": 3
+        },
+        "partnership_fit": {
+          "min": 8
+        },
+        "partnership_ltc": {
+          "max": 14
         },
         "partner_last_bid": {
           "in": ["1♥", "1♠", "2♥", "2♠", "3♥", "3♠"]
         }
       },
       "forcing": "none",
-      "explanation": "Game: Partnership has 27+ HCP with major fit",
+      "explanation": "Game: Partnership has 25+ HCP, 8+ fit, LTC ≤ 14",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -130,10 +136,10 @@
       "conditions": {
         "is_contested": true,
         "partnership_hcp_min": {
-          "min": 27
+          "min": 25
         },
         "hcp": {
-          "min": 12
+          "min": 10
         },
         "is_balanced": true,
         "partnership_stoppers": {
@@ -141,7 +147,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "3NT: Partnership has 27+ HCP, balanced, 3+ suits stopped",
+      "explanation": "3NT: Partnership has 25+ HCP, balanced, 3+ suits stopped",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -151,7 +157,7 @@
       "description": "Default game in own major with partnership values",
       "conditions": {
         "partnership_hcp_min": {
-          "min": 27
+          "min": 25
         },
         "longest_suit_length": {
           "min": 6

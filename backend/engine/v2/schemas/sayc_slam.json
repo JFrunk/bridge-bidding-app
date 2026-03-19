@@ -633,11 +633,12 @@
       "id": "direct_slam_very_strong",
       "bid": "6NT",
       "priority": 700,
-      "description": "Direct 6NT with very strong balanced partnership (35+ combined)",
+      "description": "Direct 6NT with very strong balanced partnership (35+ combined, 3+ aces)",
       "conditions": {
         "is_balanced": true,
         "partnership_hcp_min": {"min": 35},
         "hcp": {"min": 14},
+        "aces_held": {"min": 3},
         "partner_last_bid": {"in": ["1NT", "2NT", "3NT"]}
       },
       "forcing": "none",
@@ -649,11 +650,12 @@
       "id": "direct_6nt_very_strong_any_auction",
       "bid": "6NT",
       "priority": 698,
-      "description": "Direct 6NT with very strong balanced partnership in any auction (35+ combined)",
+      "description": "Direct 6NT with very strong balanced partnership in any auction (35+ combined, 3+ aces)",
       "conditions": {
         "is_balanced": true,
         "partnership_hcp_min": {"min": 35},
         "hcp": {"min": 15},
+        "aces_held": {"min": 3},
         "partner_last_bid": {
           "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT", "Pass"]
         }
@@ -667,11 +669,12 @@
       "id": "direct_slam_strong",
       "bid": "6NT",
       "priority": 695,
-      "description": "Direct 6NT with strong balanced partnership (33-34 combined, we have extras)",
+      "description": "Direct 6NT with strong balanced partnership (33-34 combined, 3+ aces)",
       "conditions": {
         "is_balanced": true,
         "partnership_hcp_min": {"min": 33},
         "hcp": {"min": 16},
+        "aces_held": {"min": 3},
         "partner_last_bid": {"in": ["1NT", "2NT", "3NT"]}
       },
       "forcing": "none",
@@ -683,11 +686,12 @@
       "id": "direct_6nt_strong_any_auction",
       "bid": "6NT",
       "priority": 693,
-      "description": "Direct 6NT with strong balanced partnership in any auction (33+ combined)",
+      "description": "Direct 6NT with strong balanced partnership in any auction (33+ combined, 3+ aces)",
       "conditions": {
         "is_balanced": true,
         "partnership_hcp_min": {"min": 33},
         "hcp": {"min": 17},
+        "aces_held": {"min": 3},
         "partner_last_bid": {
           "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT", "Pass"]
         }
@@ -736,11 +740,12 @@
       "id": "accept_quantitative_max",
       "bid": "6NT",
       "priority": 690,
-      "description": "Accept quantitative 4NT with maximum",
+      "description": "Accept quantitative 4NT with maximum and 3+ aces",
       "conditions": {
         "partner_last_bid": "4NT",
         "my_last_bid": {"in": ["1NT", "2NT"]},
-        "hcp": {"min": 17}
+        "hcp": {"min": 17},
+        "aces_held": {"min": 3}
       },
       "forcing": "none",
       "explanation": "Accept slam invitation with maximum appropriate HCP",

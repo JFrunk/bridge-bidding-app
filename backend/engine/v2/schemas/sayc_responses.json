@@ -261,21 +261,23 @@
         {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
         {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "in": ["1♥", "1♠"], "constraint_type": "HARD"},
+        {"feature": "partnership_fit", "min": 8, "constraint_type": "HARD"},
         {
           "feature": "OR",
           "in": [
             {
-              "hcp": {"min": 12},
+              "hcp": {"min": 10},
               "support_points": {"min": 13},
               "support_for_partner": {"min": 4},
-              "partnership_hcp_min": {"min": 27}
+              "partnership_hcp_min": {"min": 25},
+              "partnership_ltc": {"max": 14}
             },
             {
               "hcp": {"min": 9, "max": 11},
               "support_for_partner": {"min": 5}
             },
             {
-              "hcp": {"min": 12},
+              "hcp": {"min": 10},
               "support_for_partner": {"min": 3},
               "longest_suit_texture": {"in": ["solid", "sequential"]},
               "longest_suit_top3_honors": {"min": 2}
@@ -408,7 +410,8 @@
         {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "in": ["2♦", "2♥", "2♠"], "constraint_type": "HARD"},
         {"feature": "hcp", "min": 15, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
-        {"feature": "support_for_partner", "min": 3, "constraint_type": "HARD"}
+        {"feature": "support_for_partner", "min": 3, "constraint_type": "HARD"},
+        {"feature": "partnership_fit", "min": 8, "constraint_type": "HARD"}
       ],
       "forcing": "none",
       "explanation": "Raise to game with {hcp} HCP and {support_for_partner}-card support (15+ recommended)",
@@ -548,7 +551,8 @@
         {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "2NT", "constraint_type": "HARD"},
         {"feature": "hcp", "min": 5, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
-        {"feature": "hearts_length", "min": 6, "constraint_type": "HARD"}
+        {"feature": "hearts_length", "min": 6, "constraint_type": "HARD"},
+        {"feature": "partnership_fit", "min": 8, "constraint_type": "HARD"}
       ],
       "forcing": "none",
       "explanation": "4♥: Game with 6+ hearts opposite 2NT opener",
@@ -563,7 +567,8 @@
         {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "expected": "2NT", "constraint_type": "HARD"},
         {"feature": "hcp", "min": 5, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
-        {"feature": "spades_length", "min": 6, "constraint_type": "HARD"}
+        {"feature": "spades_length", "min": 6, "constraint_type": "HARD"},
+        {"feature": "partnership_fit", "min": 8, "constraint_type": "HARD"}
       ],
       "forcing": "none",
       "explanation": "4♠: Game with 6+ spades opposite 2NT opener",

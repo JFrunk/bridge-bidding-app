@@ -329,7 +329,7 @@
         },
         "partner_last_bid": "2NT",
         "hcp": {
-          "min": 7
+          "min": 5
         },
         "opening_bid": {
           "in": [
@@ -606,14 +606,20 @@
           "min": 3
         },
         "hcp": {
-          "min": 12
+          "min": 10
         },
         "partnership_hcp_min": {
-          "min": 26
+          "min": 25
+        },
+        "partnership_fit": {
+          "min": 8
+        },
+        "partnership_ltc": {
+          "max": 14
         }
       },
       "forcing": "none",
-      "explanation": "Game raise: Supporting partner's major with game values in competition (12+ HCP)",
+      "explanation": "Game raise: Supporting partner's major with game values in competition (10+ HCP, LTC ≤ 14)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -855,7 +861,7 @@
       "id": "responder_3nt_balanced",
       "bid": "3NT",
       "priority": 450,
-      "description": "Jump to 3NT with balanced game values",
+      "description": "Jump to 3NT with balanced game values and stoppers",
       "conditions": {
         "my_bid_count": 1,
         "hcp": {
@@ -865,10 +871,13 @@
         "is_balanced": true,
         "partnership_hcp_min": {
           "min": 25
+        },
+        "partnership_stoppers": {
+          "min": 3
         }
       },
       "forcing": "none",
-      "explanation": "3NT with appropriate HCP balanced - game values",
+      "explanation": "3NT with appropriate HCP balanced - game values, 3+ suits stopped",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1067,16 +1076,19 @@
       "id": "responder_rebid_3nt_game",
       "bid": "3NT",
       "priority": 200,
-      "description": "Responder bids game with 13+ HCP balanced",
+      "description": "Responder bids game with 13+ HCP balanced and stoppers",
       "conditions": {
         "is_responder_rebid": true,
         "hcp": {
           "min": 13
         },
-        "is_balanced": true
+        "is_balanced": true,
+        "partnership_stoppers": {
+          "min": 3
+        }
       },
       "forcing": "none",
-      "explanation": "Game with appropriate HCP balanced",
+      "explanation": "Game with appropriate HCP balanced, 3+ suits stopped",
       "sets_forcing_level": "NON_FORCING"
     },
     {

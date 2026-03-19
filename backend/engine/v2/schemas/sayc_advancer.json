@@ -738,11 +738,13 @@
       "conditions": {
         "is_advancer": true,
         "partner_last_bid": {"not_in": ["X", "XX", "Pass", "1NT", "2NT"]},
-        "hcp": {"min": 13},
-        "support_for_partner": {"min": 3}
+        "hcp": {"min": 10},
+        "support_for_partner": {"min": 3},
+        "partnership_fit": {"min": 8},
+        "partnership_ltc": {"max": 14}
       },
       "forcing": "none",
-      "explanation": "Game in partner's suit (13+ HCP, 3+ support)",
+      "explanation": "Game in partner's suit (10+ HCP, 3+ support, LTC ≤ 14)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

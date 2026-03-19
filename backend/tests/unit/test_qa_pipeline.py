@@ -74,11 +74,11 @@ class TestLTCCalculation:
         """Singleton King = 0.5 losers (NLTC adjustment)."""
         hand = Hand.from_pbn('K.AKQJT98.AKQ.32')
         ltc = calculate_losing_trick_count(hand)
-        # ♠: K (singleton) → 0.5 losers (dubious honor adjustment)
+        # ♠: K (singleton) → 1.0 losers (0.5 base + 0.5 fragile penalty)
         # ♥: AKQJT98 → 0 losers
         # ♦: AKQ → 0 losers
         # ♣: 32 → 2 losers
-        assert ltc == 2.5
+        assert ltc == 3.0
 
     def test_ltc_unprotected_queen_doubleton(self):
         """Qx (doubleton Queen without Ace/King) = 2.0 losers (Q worth 0 winners)."""
@@ -87,9 +87,9 @@ class TestLTCCalculation:
         ltc = calculate_losing_trick_count(hand)
         # ♠: AKQJT → 0 losers (A+K+Q = 3 winners of 3 potential)
         # ♥: AKQ → 0 losers
-        # ♦: Q7 → 2 losers (Q without A/K = 0 winners, potential 2)
+        # ♦: Q7 → 2.5 losers (Q without A/K = 0 winners + 0.5 fragile penalty)
         # ♣: 432 → 3 losers
-        assert ltc == 5.0
+        assert ltc == 5.5
 
     def test_ltc_protected_queen_doubleton(self):
         """AQ (doubleton with Ace) = Q counts as half winner."""

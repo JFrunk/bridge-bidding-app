@@ -213,15 +213,21 @@ def _evaluate_suit_losers(ranks: set, length: int) -> float:
     Suit specialist: evaluate NLTC losers for a single suit (0.0 to 3.0).
 
     Counts losers in the first min(length, 3) cards using a winners-based
-    approach with probability-weighted adjustments for dubious honors.
+    approach with probability-weighted adjustments for dubious honors,
+    plus texture adjustments for sequences and fragile holdings.
+
+    Texture adjustments:
+    - Sequence bonus: Q-J-T or J-T-9 in 3+ cards → -0.5 losers
+    - Fragile penalty: Stiff K (singleton) or Qx (doubleton, unprotected) → +0.5
 
     Verification table:
-        Distribution  | Honours | Std LTC | NLTC | Logic
-        Singleton K   |   K     |   1     | 0.5  | Probabilistic half-stop
-        Doubleton Qx  |   Qx    |   2     | 1.5  | Q weak without A/K/3rd card
-        Doubleton AQ  |   AQ    |   1     | 1.0  | Ace protects Queen
-        3+ cards Kxx  |   Kxx   |   2     | 2.0  | Standard
-        3+ cards Qxx  |   Qxx   |   2     | 2.0  | Standard
+        Distribution  | Honours | Std LTC | NLTC | Texture | Final
+        Singleton K   |   K     |   1     | 0.5  | +0.5    | 1.0
+        Doubleton Qx  |   Qx    |   2     | 1.5  | +0.5    | 2.0
+        Doubleton AQ  |   AQ    |   1     | 1.0  |   —     | 1.0
+        3+ cards Kxx  |   Kxx   |   2     | 2.0  |   —     | 2.0
+        3+ cards QJTx |   QJTx  |   2     | 2.0  | -0.5    | 1.5
+        3+ cards JT9x |   JT9x  |   3     | 3.0  | -0.5    | 2.5
     """
     if length == 0:
         return 0.0
@@ -230,6 +236,9 @@ def _evaluate_suit_losers(ranks: set, length: int) -> float:
     has_ace = 'A' in ranks
     has_king = 'K' in ranks
     has_queen = 'Q' in ranks
+    has_jack = 'J' in ranks
+    has_ten = 'T' in ranks
+    has_nine = '9' in ranks
 
     winners = 0.0
     if has_ace:
@@ -243,7 +252,25 @@ def _evaluate_suit_losers(ranks: set, length: int) -> float:
             winners += 0.5 if (has_ace or has_king) else 0.0
         # Singleton Q: 0 winners (full loser)
 
-    return max(0.0, potential - winners)
+    base_losers = max(0.0, potential - winners)
+
+    # Texture adjustments
+    texture_adj = 0.0
+
+    # Sequence bonus: QJT or JT9 in 3+ card suits
+    if length >= 3:
+        if has_queen and has_jack and has_ten:
+            texture_adj -= 0.5
+        elif has_jack and has_ten and has_nine:
+            texture_adj -= 0.5
+
+    # Fragile honor penalty: stiff K or unprotected Qx
+    if length == 1 and has_king and not has_ace:
+        texture_adj += 0.5
+    elif length == 2 and has_queen and not has_ace and not has_king:
+        texture_adj += 0.5
+
+    return max(0.0, base_losers + texture_adj)
 
 
 def calculate_losing_trick_count(hand: Hand) -> float:

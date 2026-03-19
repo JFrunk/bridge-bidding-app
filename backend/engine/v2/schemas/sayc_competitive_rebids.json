@@ -278,7 +278,7 @@
       "id": "opener_3nt_competitive",
       "bid": "3NT",
       "priority": 530,
-      "description": "Opener bids 3NT with balanced extras in competition",
+      "description": "Opener bids 3NT with balanced extras in competition, 3+ stopped",
       "conditions": {
         "is_contested": true,
         "is_rebid": true,
@@ -288,10 +288,13 @@
         "is_balanced": true,
         "partnership_hcp_min": {
           "min": 25
+        },
+        "partnership_stoppers": {
+          "min": 3
         }
       },
       "forcing": "none",
-      "explanation": "3NT: Balanced extras with game values in competitive auction",
+      "explanation": "3NT: Balanced extras with game values, 3+ suits stopped",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -347,7 +350,7 @@
       "id": "doubler_game_3nt_partnership",
       "bid": "3NT",
       "priority": 665,
-      "description": "Doubler bids 3NT with partnership game values and balanced hand",
+      "description": "Doubler bids 3NT with partnership game values, balanced, stoppers",
       "conditions": {
         "is_doubler_rebid": true,
         "my_last_bid": "X",
@@ -357,10 +360,13 @@
         "hcp": {
           "min": 10
         },
-        "is_balanced": true
+        "is_balanced": true,
+        "partnership_stoppers": {
+          "min": 3
+        }
       },
       "forcing": "none",
-      "explanation": "3NT: Partnership has 25+ HCP with balanced hand",
+      "explanation": "3NT: Partnership has 25+ HCP, balanced, 3+ suits stopped",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -471,7 +477,7 @@
       "id": "overcaller_game_3nt",
       "bid": "3NT",
       "priority": 620,
-      "description": "Overcaller bids 3NT with partnership game values and balanced hand",
+      "description": "Overcaller bids 3NT with partnership game values, balanced, stoppers",
       "conditions": {
         "is_overcaller_rebid": true,
         "partnership_hcp_min": {
@@ -480,10 +486,13 @@
         "hcp": {
           "min": 10
         },
-        "is_balanced": true
+        "is_balanced": true,
+        "partnership_stoppers": {
+          "min": 3
+        }
       },
       "forcing": "none",
-      "explanation": "3NT: Partnership has 25+ HCP with balanced hand",
+      "explanation": "3NT: Partnership has 25+ HCP, balanced, 3+ suits stopped",
       "sets_forcing_level": "NON_FORCING"
     },
     {
