@@ -38,6 +38,7 @@ except ImportError:
 from utils.dealing import deal_four_hands
 from utils.seats import SEATS, SEAT_NAMES, partner
 from utils.error_logger import log_error
+from engine.ai.feature_extractor import calculate_losing_trick_count
 
 
 class IntegratedPlayQualityScorer:
@@ -130,6 +131,12 @@ class IntegratedPlayQualityScorer:
         if level not in self.results['contract_levels']:
             self.results['contract_levels'][level] = {'made': 0, 'failed': 0, 'undertricks': 0}
 
+        # Pre-compute LTC before play (play may mutate hand objects)
+        _pre_play_ltc = {}
+        if level >= 4:
+            for seat in SEATS:
+                _pre_play_ltc[seat] = calculate_losing_trick_count(hands[seat])
+
         # Simulate actual play
         play_result = self._simulate_complete_play(hands, contract, vulnerability, hand_number)
 
@@ -180,6 +187,11 @@ class IntegratedPlayQualityScorer:
                     if not has_stopper:
                         unstoppered_suits.append(suit_symbol)
 
+            # Partnership Losing Trick Count (pre-computed before play mutates hands)
+            declarer_ltc = _pre_play_ltc.get(contract.declarer, 0)
+            dummy_ltc = _pre_play_ltc.get(dummy_pos, 0)
+            partnership_ltc = declarer_ltc + dummy_ltc
+
             self.results['auction_traces'].append({
                 'hand_number': hand_number,
                 'contract': f"{contract.level}{contract.strain}",
@@ -193,6 +205,7 @@ class IntegratedPlayQualityScorer:
                 'dummy_flat': dummy_flat,
                 'unstoppered_suits': unstoppered_suits,
                 'is_nt': trump_suit is None,
+                'partnership_ltc': partnership_ltc,
                 'auction': auction_trace
             })
 
@@ -618,6 +631,23 @@ class IntegratedPlayQualityScorer:
                 for label, count in bins.items():
                     bar = '█' * (count // 2)
                     print(f"    {label:>5}: {count:3d} {bar}")
+
+            # Partnership LTC distribution of failed Level 4
+            ltcs = [t['partnership_ltc'] for t in l4_failed if 'partnership_ltc' in t]
+            if ltcs:
+                ltc_bins = {'<14': 0, '14-15': 0, '16-17': 0, '18-19': 0, '20+': 0}
+                for ltc in ltcs:
+                    if ltc < 14: ltc_bins['<14'] += 1
+                    elif ltc <= 15: ltc_bins['14-15'] += 1
+                    elif ltc <= 17: ltc_bins['16-17'] += 1
+                    elif ltc <= 19: ltc_bins['18-19'] += 1
+                    else: ltc_bins['20+'] += 1
+                print(f"  Partnership LTC distribution of failed Level 4 (lower = better):")
+                for label, count in ltc_bins.items():
+                    bar = '█' * (count // 2)
+                    print(f"    {label:>5}: {count:3d} {bar}")
+                avg_ltc = sum(ltcs) / len(ltcs)
+                print(f"    Avg LTC: {avg_ltc:.1f} (need ≤14 for 4-level, ≤11 for slam)")
 
             # Top committing rules for Level 4
             rule_failures = {}

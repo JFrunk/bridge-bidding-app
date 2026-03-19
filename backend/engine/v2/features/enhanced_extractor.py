@@ -13,6 +13,7 @@ from engine.ai.feature_extractor import (
     calculate_quick_tricks,
     calculate_stoppers,
     calculate_stopper_quality,
+    calculate_suit_texture,
     calculate_losing_trick_count,
     calculate_support_points,
     get_suit_from_bid,
@@ -152,6 +153,15 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     for suit, quality in hf['stopper_quality'].items():
         suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}[suit]
         flat[f'{suit_name}_stopper_quality'] = quality
+
+    # Suit texture (sequences vs fragmented honors)
+    suit_textures = calculate_suit_texture(hand)
+    for suit, tex in suit_textures.items():
+        suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}[suit]
+        flat[f'{suit_name}_texture'] = tex['texture']
+        flat[f'{suit_name}_top3_honors'] = tex['top3_honors']
+        flat[f'{suit_name}_has_sequence'] = tex['has_sequence']
+        flat[f'{suit_name}_texture_score'] = tex['score']
 
     # Auction features
     af = nested['auction_features']
@@ -456,14 +466,46 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
         flat[f'suit_quality_{suit_name}'] = evaluate_suit_quality(hand, suit_sym)
         flat[f'{suit_name}_hcp'] = get_suit_hcp(hand, suit_sym)
 
-    # Longest suit quality and HCP
+    # Longest suit quality, HCP, and texture
     longest = flat.get('longest_suit', '')
     if longest and longest in suit_names:
         flat['suit_quality_longest'] = flat[f'suit_quality_{suit_names[longest]}']
         flat['longest_suit_hcp'] = flat[f'{suit_names[longest]}_hcp']
+        flat['longest_suit_texture'] = flat[f'{suit_names[longest]}_texture']
+        flat['longest_suit_top3_honors'] = flat[f'{suit_names[longest]}_top3_honors']
     else:
         flat['suit_quality_longest'] = 'poor'
         flat['longest_suit_hcp'] = 0
+        flat['longest_suit_texture'] = 'weak'
+        flat['longest_suit_top3_honors'] = 0
+
+    # Trump suit texture (when agreed suit is known)
+    agreed_suit_sym = flat.get('agreed_suit', '')
+    if agreed_suit_sym and agreed_suit_sym in suit_names:
+        flat['trump_suit_texture'] = flat[f'{suit_names[agreed_suit_sym]}_texture']
+        flat['trump_suit_top3_honors'] = flat[f'{suit_names[agreed_suit_sym]}_top3_honors']
+    else:
+        flat['trump_suit_texture'] = 'weak'
+        flat['trump_suit_top3_honors'] = 0
+
+    # Partnership stoppers: our stopper_count + inferred partner stoppers in suits we don't cover
+    # Partner's NT bids (1NT/2NT) imply balanced hand with stoppers in all suits.
+    # Partner's suit bids imply stoppers in that suit at minimum.
+    _partner_stopped_suits = set()
+    for pb in partner_bids:
+        if pb in ['Pass', 'X', 'XX']:
+            continue
+        if 'NT' in pb:
+            # NT bid implies stoppers in all four suits
+            _partner_stopped_suits = {'♠', '♥', '♦', '♣'}
+            break
+        bid_suit = get_suit_from_bid(pb)
+        if bid_suit:
+            _partner_stopped_suits.add(bid_suit)  # Bidding a suit implies stopper there
+
+    _our_stopped = {s for s in ['♠', '♥', '♦', '♣'] if flat.get(f'{suit_names[s]}_stopped', False)}
+    _combined_stopped = _our_stopped | _partner_stopped_suits
+    flat['partnership_stoppers'] = len(_combined_stopped)
 
     # Stoppers required count (number of suits with at least one stopper)
     flat['stoppers_required'] = flat.get('stopper_count', 0)

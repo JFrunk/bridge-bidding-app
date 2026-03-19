@@ -567,7 +567,7 @@
       "id": "responder_3nt_competitive",
       "bid": "3NT",
       "priority": 460,
-      "description": "Game in NT after opener rebids in competition",
+      "description": "Game in NT after opener rebids in competition, with stoppers",
       "conditions": {
         "is_contested": true,
         "my_bid_count": 1,
@@ -577,10 +577,13 @@
         "is_balanced": true,
         "partnership_hcp_min": {
           "min": 25
+        },
+        "partnership_stoppers": {
+          "min": 3
         }
       },
       "forcing": "none",
-      "explanation": "3NT: Game values with balanced hand in competitive auction",
+      "explanation": "3NT: Game values, balanced, 3+ suits stopped in competitive auction",
       "sets_forcing_level": "NON_FORCING"
     },
     {

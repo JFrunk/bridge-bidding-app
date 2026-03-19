@@ -256,7 +256,7 @@
       "id": "game_raise_major",
       "bid": "4{partner_suit}",
       "priority": 323,
-      "description": "Game raise of partner's major (direct game, uncontested)",
+      "description": "Game raise of partner's major: 8+ fit OR 6+ solid suit",
       "constraints": [
         {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
         {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
@@ -273,13 +273,19 @@
             {
               "hcp": {"min": 9, "max": 11},
               "support_for_partner": {"min": 5}
+            },
+            {
+              "hcp": {"min": 12},
+              "support_for_partner": {"min": 3},
+              "longest_suit_texture": {"in": ["solid", "sequential"]},
+              "longest_suit_top3_honors": {"min": 2}
             }
           ],
           "constraint_type": "HARD"
         }
       ],
       "forcing": "none",
-      "explanation": "Game raise with {support_points} support points and {support_for_partner}-card support",
+      "explanation": "Game raise: 8+ card fit OR 6+ suit with solid texture",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -348,31 +354,33 @@
       "id": "respond_3nt_to_1_minor",
       "bid": "3NT",
       "priority": 340,
-      "description": "3NT response to 1-minor showing 15-17 HCP balanced",
+      "description": "3NT response to 1-minor showing 15-17 HCP balanced with stoppers",
       "constraints": [
         {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "in": ["1♣", "1♦"], "constraint_type": "HARD"},
         {"feature": "hcp", "min": 15, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
-        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"}
+        {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
+        {"feature": "stopper_count", "min": 3, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "3NT (13-15 HCP, balanced)",
+      "explanation": "3NT (15-17 HCP, balanced, 3+ suits stopped)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "respond_3nt_to_1_major",
       "bid": "3NT",
       "priority": 335,
-      "description": "3NT response to 1-major showing 15-17 HCP balanced, no fit",
+      "description": "3NT response to 1-major showing 15-17 HCP balanced, no fit, with stoppers",
       "constraints": [
         {"feature": "is_response", "expected": true, "constraint_type": "HARD"},
         {"feature": "partner_last_bid", "in": ["1♥", "1♠"], "constraint_type": "HARD"},
         {"feature": "hcp", "min": 15, "max": 17, "constraint_type": "SOFT", "penalty_per_unit": 0.10},
         {"feature": "is_balanced", "expected": true, "constraint_type": "HARD"},
-        {"feature": "support_for_partner", "max": 2, "constraint_type": "HARD"}
+        {"feature": "support_for_partner", "max": 2, "constraint_type": "HARD"},
+        {"feature": "stopper_count", "min": 3, "constraint_type": "HARD"}
       ],
       "forcing": "none",
-      "explanation": "3NT (13-15 HCP, balanced, no major fit)",
+      "explanation": "3NT (15-17 HCP, balanced, no major fit, 3+ suits stopped)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

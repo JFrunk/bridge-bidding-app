@@ -53,7 +53,7 @@ def calculate_quick_tricks(hand: Hand) -> float:
 
 
 def calculate_stoppers(hand: Hand) -> Dict[str, bool]:
-    """Calculate which suits are stopped (A, Kx, Qxx, Jxxx, or xxxx length)."""
+    """Calculate which suits are stopped (A, Kx, Qxx, JTxx)."""
     stoppers = {}
     for suit in ['♠', '♥', '♦', '♣']:
         suit_cards = [c.rank for c in hand.cards if c.suit == suit]
@@ -62,13 +62,13 @@ def calculate_stoppers(hand: Hand) -> Dict[str, bool]:
         has_king = 'K' in suit_cards
         has_queen = 'Q' in suit_cards
         has_jack = 'J' in suit_cards
+        has_ten = 'T' in suit_cards
 
         is_stopped = (
             has_ace or
             (has_king and length >= 2) or
             (has_queen and length >= 3) or
-            (has_jack and length >= 4) or
-            length >= 4
+            (has_jack and has_ten and length >= 4)
         )
         stoppers[suit] = is_stopped
     return stoppers
@@ -102,10 +102,8 @@ def calculate_stopper_quality(hand: Hand) -> Dict[str, str]:
             quality[suit] = 'partial'
         elif has_queen and length >= 3:
             quality[suit] = 'partial'
-        elif has_jack and length >= 4:
+        elif has_jack and has_ten and length >= 4:
             quality[suit] = 'partial'
-        elif length >= 4:
-            quality[suit] = 'length'
         else:
             quality[suit] = 'none'
     return quality
@@ -115,6 +113,61 @@ def count_stoppers(hand: Hand) -> int:
     """Count how many suits are stopped."""
     stoppers = calculate_stoppers(hand)
     return sum(1 for stopped in stoppers.values() if stopped)
+
+
+def calculate_suit_texture(hand: Hand) -> Dict[str, Dict]:
+    """
+    Calculate suit texture for each suit.
+
+    Returns per-suit dict with:
+      - texture: 'solid' | 'sequential' | 'fragmented' | 'weak'
+      - top3_honors: count of A, K, Q in the suit
+      - has_sequence: bool — 3+ consecutive honors (e.g., Q-J-T)
+      - score: int 0-10 numeric texture quality
+    """
+    rank_order = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
+    textures = {}
+
+    for suit in ['♠', '♥', '♦', '♣']:
+        suit_cards = set(c.rank for c in hand.cards if c.suit == suit)
+        length = len(suit_cards)
+        top3 = sum(1 for r in ['A', 'K', 'Q'] if r in suit_cards)
+        top5 = sum(1 for r in ['A', 'K', 'Q', 'J', 'T'] if r in suit_cards)
+
+        # Detect sequences: 3+ consecutive honors present
+        honor_indices = [i for i, r in enumerate(rank_order[:5])
+                         if r in suit_cards]  # indices in A=0,K=1,Q=2,J=3,T=4
+        has_sequence = False
+        for i in range(len(honor_indices) - 2):
+            if (honor_indices[i+1] == honor_indices[i] + 1 and
+                    honor_indices[i+2] == honor_indices[i] + 2):
+                has_sequence = True
+                break
+
+        # Classify texture
+        if top3 >= 2 and has_sequence and length >= 5:
+            texture = 'solid'       # AKQxx, AKJxx-type
+        elif has_sequence or (top3 >= 2 and length >= 4):
+            texture = 'sequential'  # QJT, KQ, AK with length
+        elif top5 >= 2:
+            texture = 'fragmented'  # AJ, KT — honors not connected
+        elif length >= 4:
+            texture = 'weak'        # Length but no body
+        else:
+            texture = 'weak'
+
+        # Numeric score (0-10)
+        score = min(10, top3 * 2 + top5 + (2 if has_sequence else 0) +
+                    max(0, length - 4))
+
+        textures[suit] = {
+            'texture': texture,
+            'top3_honors': top3,
+            'has_sequence': has_sequence,
+            'score': score,
+        }
+
+    return textures
 
 
 def calculate_support_points(hand: Hand, trump_suit: str = None, partner_trump_length: int = 5) -> int:

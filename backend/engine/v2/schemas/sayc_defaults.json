@@ -126,7 +126,7 @@
       "id": "default_game_3nt",
       "bid": "3NT",
       "priority": 12,
-      "description": "Default 3NT when partnership has game values and balanced hand",
+      "description": "Default 3NT when partnership has game values, balanced hand, and 3+ stopped suits",
       "conditions": {
         "is_contested": true,
         "partnership_hcp_min": {
@@ -135,10 +135,13 @@
         "hcp": {
           "min": 12
         },
-        "is_balanced": true
+        "is_balanced": true,
+        "partnership_stoppers": {
+          "min": 3
+        }
       },
       "forcing": "none",
-      "explanation": "3NT: Partnership has 27+ HCP with balanced hand",
+      "explanation": "3NT: Partnership has 27+ HCP, balanced, 3+ suits stopped",
       "sets_forcing_level": "NON_FORCING"
     },
     {
