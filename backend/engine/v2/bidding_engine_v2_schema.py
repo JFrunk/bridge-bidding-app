@@ -22,7 +22,9 @@ from engine.v2.interpreters.schema_interpreter import (
     BidValidationResult,
     ForcingLevel
 )
-from engine.v2.inference.conflict_resolver import ConflictResolver, PassThroughResolver
+from engine.v2.inference.conflict_resolver import (
+    ConflictResolver, PassThroughResolver, validate_bid_structure
+)
 
 logger = logging.getLogger(__name__)
 
@@ -178,6 +180,12 @@ class BiddingEngineV2Schema:
                             f"partner last bid: {partner_last or 'N/A'})"
                         )
                         continue
+
+                # Structural filter: reject 4M without fit/LTC, 3NT without stoppers.
+                # This is the "Physical Filter" — catches bids that any rule might
+                # produce but that lack the structural prerequisites to succeed.
+                if not validate_bid_structure(bid, candidate.priority, features):
+                    continue
 
                 # Validate against forcing constraints (only in partnership auctions)
                 # Skip forcing validation in competitive situations - opponents' bids

@@ -134,6 +134,9 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['dist_points'] = hf['dist_points']
     flat['total_points'] = hf['total_points']
     flat['is_balanced'] = hf['is_balanced']
+    # 4-3-3-3 exactly: the flattest possible distribution, trick-poor for its HCP
+    _suit_lens = sorted(hf['suit_lengths'].values())
+    flat['is_flat'] = (_suit_lens == [3, 3, 3, 4])
     flat['quick_tricks'] = hf['quick_tricks']
     flat['stopper_count'] = hf['stopper_count']
     flat['losing_trick_count'] = hf['losing_trick_count']
@@ -162,6 +165,27 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
         flat[f'{suit_name}_top3_honors'] = tex['top3_honors']
         flat[f'{suit_name}_has_sequence'] = tex['has_sequence']
         flat[f'{suit_name}_texture_score'] = tex['score']
+
+    # Texture HCP adjustment: "Working Points" for NT/slam evaluation
+    # +1.0 per suit with solid/sequential texture (honors work together)
+    # -0.5 per suit with isolated honor (stiff K, Qx, Jxx — wasted values)
+    _texture_adj = 0.0
+    for suit in ['♠', '♥', '♦', '♣']:
+        suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}[suit]
+        tex = flat[f'{suit_name}_texture']
+        length = hf['suit_lengths'][suit]
+        suit_cards = set(c.rank for c in hand.cards if c.suit == suit)
+        if tex in ('solid', 'sequential'):
+            _texture_adj += 1.0
+        # Isolated honor: stiff K, Qx without A/K, Jxx without A/K/Q
+        elif length == 1 and 'K' in suit_cards:
+            _texture_adj -= 0.5
+        elif length == 2 and 'Q' in suit_cards and 'A' not in suit_cards and 'K' not in suit_cards:
+            _texture_adj -= 0.5
+        elif length <= 3 and 'J' in suit_cards and 'A' not in suit_cards and 'K' not in suit_cards and 'Q' not in suit_cards:
+            _texture_adj -= 0.5
+    flat['texture_hcp_adjustment'] = _texture_adj
+    flat['effective_hcp'] = flat['hcp'] + _texture_adj
 
     # Auction features
     af = nested['auction_features']
@@ -1310,9 +1334,15 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
         flat['partner_max_hcp'] = min(flat['partner_max_hcp'], 11)
         flat['partner_min_hcp'] = min(flat['partner_min_hcp'], 11)
 
-    # Combined partnership HCP estimate (for slam decisions)
-    flat['partnership_hcp_min'] = flat['hcp'] + flat['partner_min_hcp']
-    flat['partnership_hcp_max'] = flat['hcp'] + flat['partner_max_hcp']
+    # Combined partnership HCP estimate (for game/slam decisions)
+    # Uses RAW HCP — texture is a separate metric (effective_hcp) used only
+    # by judgment rules (3NT sign-offs, direct slams). Mixing texture into
+    # partnership_hcp_min would double-count with LTC in suit contracts.
+    # Only universal adjustment: -1 flatness penalty for 4-3-3-3 (no ruffing value).
+    _flat_penalty = 1 if flat['is_flat'] else 0
+    flat['flatness_penalty'] = _flat_penalty
+    flat['partnership_hcp_min'] = flat['hcp'] + flat['partner_min_hcp'] - _flat_penalty
+    flat['partnership_hcp_max'] = flat['hcp'] + flat['partner_max_hcp'] - _flat_penalty
     flat['partnership_has_slam_values'] = flat['partnership_hcp_min'] >= 31
 
     # Combined partnership total points estimate (HCP + our distribution points)
@@ -1323,11 +1353,16 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # Uses average of min/max partner HCP, capped at 20 to prevent inflation
     # This is more realistic than minimum for slam decisions
     partner_max_capped = min(flat['partner_max_hcp'], 20)
-    flat['partnership_hcp_mid'] = flat['hcp'] + (flat['partner_min_hcp'] + partner_max_capped) // 2
+    flat['partnership_hcp_mid'] = flat['hcp'] + (flat['partner_min_hcp'] + partner_max_capped) // 2 - _flat_penalty
 
     # Midpoint partnership total points: our total points + midpoint of partner's HCP range
     # Best metric for slam initiation — includes our distribution AND uses realistic partner estimate
-    flat['partnership_total_points_mid'] = flat['total_points'] + (flat['partner_min_hcp'] + partner_max_capped) // 2
+    flat['partnership_total_points_mid'] = flat['total_points'] + (flat['partner_min_hcp'] + partner_max_capped) // 2 - _flat_penalty
+
+    # Effective partnership HCP (texture-adjusted) — used ONLY by judgment rules
+    # (3NT sign-offs, direct 6-level slams) where "working points" matter.
+    # NOT used by partnership_hcp_min to avoid double-counting with LTC.
+    flat['effective_partnership_hcp_min'] = int(flat['effective_hcp'] + flat['partner_min_hcp'] - _flat_penalty)
 
     # Partnership Losing Trick Count (LTC)
     # Our LTC is exact; partner's is estimated from their HCP midpoint.

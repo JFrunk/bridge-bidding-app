@@ -9,6 +9,10 @@ The resolver prevents "suicide bids" by:
 2. Validating slam bids against expected trick counts
 3. Evaluating competitive decisions (bid vs. double)
 
+Note: Structural validation (fit/LTC/stopper gates) is handled by
+validate_bid_structure() in this module, called from the engine's
+candidate selection loop before bids reach review_bid().
+
 Usage:
     resolver = ConflictResolver(simulator)
     final_bid = resolver.review_bid(proposed_rule, hand, history, features)
@@ -16,6 +20,55 @@ Usage:
 
 from typing import Dict, Any, Optional, Tuple
 from engine.hand import Hand
+
+import logging
+logger = logging.getLogger(__name__)
+
+
+def validate_bid_structure(bid: str, priority: int, features: Dict[str, Any]) -> bool:
+    """
+    Structural filter: hard-stop for game/NT bids missing prerequisites.
+
+    Called from the engine's candidate loop BEFORE conflict resolution.
+    Returns True if bid passes structural checks, False to reject.
+
+    Rules:
+      - 4♥/4♠: requires partnership_fit >= 8 AND partnership_ltc <= 14
+      - 3NT: requires partnership_stoppers >= 3
+      - Artificial bids (priority >= 800) are exempt
+      - Pass/X/XX are always allowed
+    """
+    if not bid or bid in ('Pass', 'X', 'XX'):
+        return True
+
+    # Never filter artificial/systemic bids (transfers, RKCB, Stayman)
+    if priority >= 800:
+        return True
+
+    bid_level = int(bid[0]) if bid[0].isdigit() else 0
+    bid_strain = bid[1:] if len(bid) > 1 else ''
+
+    # 4♥/4♠: Require established fit and trick potential
+    if bid_level == 4 and bid_strain in ('♥', '♠'):
+        fit = features.get('partnership_fit', 0)
+        ltc = features.get('partnership_ltc', 99)
+        if fit < 8 or ltc > 14:
+            reasons = []
+            if fit < 8:
+                reasons.append(f"fit={fit}<8")
+            if ltc > 14:
+                reasons.append(f"LTC={ltc:.1f}>14")
+            logger.info(f"Structural veto: {bid} rejected ({', '.join(reasons)})")
+            return False
+
+    # 3NT: Require stopper coverage
+    if bid == '3NT':
+        stoppers = features.get('partnership_stoppers', 0)
+        if stoppers < 3:
+            logger.info(f"Structural veto: 3NT rejected (stoppers={stoppers}<3)")
+            return False
+
+    return True
 
 
 class ConflictResolver:

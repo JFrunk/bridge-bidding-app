@@ -59,7 +59,7 @@
         "is_doubler_rebid": false,
         "is_contested": false,
         "hcp": {
-          "min": 12
+          "min": 10
         },
         "hearts_length": {
           "min": 4
@@ -92,7 +92,7 @@
       "id": "thin_game_hearts_distributional",
       "bid": "4♥",
       "priority": 495,
-      "description": "Thin game in hearts - low HCP but high playing strength with distribution",
+      "description": "Thin game in hearts - playing strength with distribution, fit, and LTC",
       "conditions": {
         "is_contested": false,
         "hearts_length": {
@@ -120,7 +120,7 @@
       "id": "thin_game_spades_distributional",
       "bid": "4♠",
       "priority": 495,
-      "description": "Thin game in spades - low HCP but high playing strength with distribution",
+      "description": "Thin game in spades - playing strength with distribution, fit, and LTC",
       "conditions": {
         "is_contested": false,
         "spades_length": {
@@ -155,7 +155,7 @@
         "is_doubler_rebid": false,
         "is_contested": false,
         "hcp": {
-          "min": 12
+          "min": 10
         },
         "spades_length": {
           "min": 4
@@ -571,19 +571,16 @@
       "conditions": {
         "is_contested": true,
         "my_bid_count": 1,
-        "hcp": {
+        "effective_hcp": {
           "min": 10
         },
         "is_balanced": true,
         "partnership_hcp_min": {
           "min": 25
-        },
-        "partnership_stoppers": {
-          "min": 3
         }
       },
       "forcing": "none",
-      "explanation": "3NT: Game values, balanced, 3+ suits stopped in competitive auction",
+      "explanation": "3NT: Game values, balanced in competitive auction",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -610,16 +607,10 @@
         },
         "partnership_hcp_min": {
           "min": 25
-        },
-        "partnership_fit": {
-          "min": 8
-        },
-        "partnership_ltc": {
-          "max": 14
         }
       },
       "forcing": "none",
-      "explanation": "Game raise: Supporting partner's major with game values in competition (10+ HCP, LTC ≤ 14)",
+      "explanation": "Game raise: Supporting partner's major with game values in competition (10+ HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -864,20 +855,17 @@
       "description": "Jump to 3NT with balanced game values and stoppers",
       "conditions": {
         "my_bid_count": 1,
-        "hcp": {
+        "effective_hcp": {
           "min": 13,
           "max": 15
         },
         "is_balanced": true,
         "partnership_hcp_min": {
           "min": 25
-        },
-        "partnership_stoppers": {
-          "min": 3
         }
       },
       "forcing": "none",
-      "explanation": "3NT with appropriate HCP balanced - game values, 3+ suits stopped",
+      "explanation": "3NT with appropriate HCP balanced - game values",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -1079,16 +1067,13 @@
       "description": "Responder bids game with 13+ HCP balanced and stoppers",
       "conditions": {
         "is_responder_rebid": true,
-        "hcp": {
+        "effective_hcp": {
           "min": 13
         },
-        "is_balanced": true,
-        "partnership_stoppers": {
-          "min": 3
-        }
+        "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "Game with appropriate HCP balanced, 3+ suits stopped",
+      "explanation": "Game with appropriate HCP balanced",
       "sets_forcing_level": "NON_FORCING"
     },
     {
