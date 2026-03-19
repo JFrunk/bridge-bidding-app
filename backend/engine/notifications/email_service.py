@@ -10,6 +10,8 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from typing import Dict, Any, Optional
 
+from utils.seats import SEAT_NAMES
+
 
 class EmailService:
     """Email service using Gmail SMTP."""
@@ -26,6 +28,56 @@ class EmailService:
     def is_configured(self) -> bool:
         """Check if email service is properly configured."""
         return bool(self.sender_email and self.sender_password)
+
+    def get_app_url(self) -> str:
+        """Get the public-facing app URL (not localhost)."""
+        url = self.app_url.replace('localhost:5001', 'app.mybridgebuddy.com')
+        if 'localhost' in url:
+            return 'https://app.mybridgebuddy.com'
+        return url
+
+    def send_email(self, to: str, subject: str,
+                   html_body: str, text_body: Optional[str] = None) -> bool:
+        """
+        Send an email via Gmail SMTP.
+
+        This is the generic transport used by all email-sending features
+        (auth verification, magic links, notifications, etc.).
+
+        Args:
+            to: Recipient email address
+            subject: Email subject line
+            html_body: HTML email body
+            text_body: Optional plain text fallback
+
+        Returns:
+            True if sent successfully, False otherwise
+        """
+        if not self.is_configured():
+            print(f"⚠️  Email not configured — skipping send to {to}")
+            return False
+
+        try:
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From'] = self.sender_email
+            msg['To'] = to
+
+            if text_body:
+                msg.attach(MIMEText(text_body, 'plain'))
+            msg.attach(MIMEText(html_body, 'html'))
+
+            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                server.starttls()
+                server.login(self.sender_email, self.sender_password)
+                server.sendmail(self.sender_email, to, msg.as_string())
+
+            print(f"✅ Email sent to {to}: {subject}")
+            return True
+
+        except Exception as e:
+            print(f"❌ Failed to send email to {to}: {e}")
+            return False
 
     def send_review_request_notification(self, review_data: Dict[str, Any], filename: str) -> bool:
         """
@@ -119,7 +171,7 @@ class EmailService:
             return "No bids yet"
 
         lines = []
-        positions = ['North', 'East', 'South', 'West']
+        positions = SEAT_NAMES
 
         for i, bid_data in enumerate(auction):
             pos = positions[i % 4]
@@ -145,7 +197,7 @@ class EmailService:
         # Format hands
         all_hands = review_data.get('all_hands', {})
         hands_text = ""
-        for position in ['North', 'East', 'South', 'West']:
+        for position in SEAT_NAMES:
             hand = all_hands.get(position, {})
             if hand:
                 hands_text += f"\n{position}:\n{self._format_hand(hand)}\n"
@@ -203,7 +255,7 @@ PLAY DATA:
         # Format hands as HTML
         all_hands = review_data.get('all_hands', {})
         hands_html = ""
-        for position in ['North', 'East', 'South', 'West']:
+        for position in SEAT_NAMES:
             hand = all_hands.get(position, {})
             if hand:
                 hand_text = self._format_hand(hand).replace('\n', '<br>')
@@ -218,7 +270,7 @@ PLAY DATA:
         # Format auction as HTML
         auction = review_data.get('auction', [])
         auction_html = ""
-        positions = ['North', 'East', 'South', 'West']
+        positions = SEAT_NAMES
         for i, bid_data in enumerate(auction):
             pos = positions[i % 4]
             bid = bid_data.get('bid', '?')

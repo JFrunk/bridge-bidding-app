@@ -55,7 +55,11 @@ def verification_email(app_url: str, token: str, display_name: str = '') -> dict
     html = _wrap_html("Verify Your Email", f"""
     <p style="font-size: 16px; color: #333;">Hi {name},</p>
     <p style="font-size: 15px; color: #555; line-height: 1.6;">
+<<<<<<< HEAD
       Thanks for creating an account with MyBridgeBuddy!
+=======
+      Thanks for creating an account with My Bridge Buddy!
+>>>>>>> 819d8d2 (feat(auth): Add magic link login, email verification, and shared token store)
       Please verify your email address to secure your account.
     </p>
     {_button(verify_url, "Verify Email Address")}

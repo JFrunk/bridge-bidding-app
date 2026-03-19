@@ -268,7 +268,14 @@ def register():
         # Update login timestamp
         user_manager.update_last_login(user_id)
 
-        extra = {'is_new_user': True}
+        # Send verification email (non-blocking — don't fail registration)
+        try:
+            from auth.verify_email_api import send_verification_email
+            send_verification_email(user_id, email, display_name or username.title())
+        except Exception:
+            pass  # Email failure shouldn't block registration
+
+        extra = {'is_new_user': True, 'email_verified': False}
         if migrated:
             extra['migrated_from_guest'] = True
             extra['migrated_data'] = migrated
