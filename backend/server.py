@@ -780,16 +780,20 @@ register_analytics_endpoints(app)
 from engine.auth.simple_auth_api import register_simple_auth_endpoints, get_user_id_from_request
 register_simple_auth_endpoints(app)
 
-# Register Auth V2 endpoints (password-based register/login + JWT refresh + magic link + verification)
+# Register Auth V2 endpoints (full auth suite)
 try:
     from auth.auth_api import register_auth_v2_endpoints
     from auth.token_api import register_token_endpoints
     from auth.magic_link_api import register_magic_link_endpoints
     from auth.verify_email_api import register_verify_email_endpoints
+    from auth.password_reset_api import register_password_reset_endpoints
+    from auth.google_auth_api import register_google_auth_endpoints
     register_auth_v2_endpoints(app)
     register_token_endpoints(app)
     register_magic_link_endpoints(app)
     register_verify_email_endpoints(app)
+    register_password_reset_endpoints(app)
+    register_google_auth_endpoints(app)
 except Exception as e:
     print(f"⚠ Auth V2 endpoints not registered (JWT_SECRET may be missing): {e}")
 
