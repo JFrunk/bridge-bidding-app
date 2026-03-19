@@ -38,14 +38,26 @@ export function getSessionId() {
   return sessionId;
 }
 
+// Accessor for in-memory JWT — set by AuthContext at runtime
+let _getAccessToken = null;
+export function setAccessTokenGetter(fn) {
+  _getAccessToken = fn;
+}
+
 /**
  * Get session headers to include in fetch requests
- * @returns {Object} Headers object with X-Session-ID and X-User-ID
+ * @returns {Object} Headers object with X-Session-ID, X-User-ID, and Authorization
  */
 export function getSessionHeaders() {
   const headers = {
     'X-Session-ID': getSessionId()
   };
+
+  // V2 Auth: include JWT access token if available
+  const accessToken = _getAccessToken?.();
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
 
   // Include user ID if available (from AuthContext storage)
   // AuthContext stores user as JSON in 'bridge_user'

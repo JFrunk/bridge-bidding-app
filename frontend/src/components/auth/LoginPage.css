@@ -1,0 +1,165 @@
+/* LoginPage V2 — extends SimpleLogin.css base styles */
+
+.login-page-modal {
+  max-width: 420px;
+}
+
+.forgot-link {
+  text-align: center;
+  margin-top: var(--space-3);
+}
+
+.text-link {
+  background: none;
+  border: none;
+  color: var(--color-info, #1976d2);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.text-link-muted {
+  color: var(--text-muted);
+}
+
+.btn-google {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid #ddd;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--text-primary-dark);
+  transition: all var(--duration-fast);
+}
+
+.btn-google:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+.btn-google:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Password strength indicator */
+.password-strength {
+  display: flex;
+  gap: 4px;
+  margin-top: var(--space-2);
+}
+
+.password-strength-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: #e0e0e0;
+  transition: background var(--duration-fast);
+}
+
+.password-strength-bar.weak { background: var(--color-danger); }
+.password-strength-bar.fair { background: #ff9800; }
+.password-strength-bar.strong { background: var(--color-success); }
+
+.password-strength-label {
+  font-size: var(--text-xs);
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+
+.password-strength-label.weak { color: var(--color-danger); }
+.password-strength-label.fair { color: #ff9800; }
+.password-strength-label.strong { color: var(--color-success); }
+
+/* Verification banner */
+.verification-banner {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: #856404;
+  margin-bottom: var(--space-3);
+}
+
+.verification-banner button {
+  background: none;
+  border: 1px solid #856404;
+  border-radius: var(--radius-sm);
+  color: #856404;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: var(--font-medium);
+}
+
+.verification-banner button:hover {
+  background: rgba(133, 100, 4, 0.1);
+}
+
+.verification-banner .banner-dismiss {
+  border: none;
+  padding: var(--space-1);
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Token page styles */
+.token-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-overlay);
+  padding: var(--space-4);
+}
+
+.token-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-10);
+  max-width: 440px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.token-card h2 {
+  color: var(--text-primary-dark);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.token-card p {
+  color: var(--text-secondary-dark);
+  margin-bottom: var(--space-6);
+}
+
+.token-status {
+  font-size: 48px;
+  margin-bottom: var(--space-4);
+}

@@ -32,6 +32,12 @@ import { partner as getPartnerSeat, SEAT_NAMES, seatIndex, lho } from './utils/s
 import { RoomLobby, RoomStatusBar, JoinRoomModal, RoomWaitingState, ChatSidebar } from './components/room';
 import WelcomeWizard from './components/onboarding/WelcomeWizard';
 import { SimpleLogin } from './components/auth/SimpleLogin';
+import { LoginPage } from './components/auth/LoginPage';
+import { RegisterPage } from './components/auth/RegisterPage';
+import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './components/auth/ResetPasswordPage';
+import { VerifyEmailPage, MagicLinkPage } from './components/auth/TokenPages';
+import { VerificationBanner } from './components/auth/VerificationBanner';
 import { PrivacyPolicy } from './components/legal/PrivacyPolicy';
 import { AboutUs } from './components/legal/AboutUs';
 import { RegistrationPrompt } from './components/auth/RegistrationPrompt';
@@ -423,6 +429,8 @@ function App() {
   } = useRoom();
 
   const [showLogin, setShowLogin] = useState(false);
+  const [authPage, setAuthPage] = useState(null); // 'login' | 'register' | 'forgot' | null
+  const [forgotEmail, setForgotEmail] = useState('');
   const [showJoinRoomModal, setShowJoinRoomModal] = useState(false);
   const [vulnerability, setVulnerability] = useState('None');
 
@@ -701,6 +709,22 @@ function App() {
   const [showGlossary, setShowGlossary] = useState(false);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
+
+  // Auth token pages — detect /auth/* routes in URL
+  const [authTokenPage, setAuthTokenPage] = useState(() => {
+    const path = window.location.pathname;
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (path === '/auth/verify' && token) return { type: 'verify', token };
+    if (path === '/auth/magic' && token) return { type: 'magic', token };
+    if (path === '/auth/reset-password' && token) return { type: 'reset', token };
+    return null;
+  });
+
+  const clearAuthTokenPage = () => {
+    setAuthTokenPage(null);
+    window.history.replaceState(null, '', '/');
+  };
 
   // Auto-show privacy/about modals when URL path matches (for crawler access)
   useEffect(() => {
@@ -3727,7 +3751,7 @@ ${otherCommands}`;
           </button>
           {/* User avatar menu */}
           <UserMenu
-            onSignInClick={() => setShowLogin(true)}
+            onSignInClick={() => setAuthPage('login')}
             onFeedbackClick={() => setShowFeedbackModal(true)}
           />
         </TopNavigation>
@@ -3759,8 +3783,44 @@ ${otherCommands}`;
         />
       )}
 
-      {/* Login Modal - Show when explicitly opened OR when not authenticated (after loading) */}
-      {(showLogin || (!isAuthenticated && !authLoading)) && (
+      {/* Auth Token Pages — Full-screen landing for /auth/verify, /auth/magic, /auth/reset-password */}
+      {authTokenPage?.type === 'verify' && (
+        <VerifyEmailPage token={authTokenPage.token} onDone={clearAuthTokenPage} />
+      )}
+      {authTokenPage?.type === 'magic' && (
+        <MagicLinkPage token={authTokenPage.token} onDone={clearAuthTokenPage} />
+      )}
+      {authTokenPage?.type === 'reset' && (
+        <ResetPasswordPage token={authTokenPage.token} onDone={clearAuthTokenPage} />
+      )}
+
+      {/* Verification Banner — persistent reminder for unverified V2 users */}
+      {isAuthenticated && <VerificationBanner />}
+
+      {/* V2 Auth Pages — LoginPage / RegisterPage / ForgotPasswordPage */}
+      {authPage === 'login' && (
+        <LoginPage
+          onClose={() => setAuthPage(null)}
+          onSwitchToRegister={() => setAuthPage('register')}
+          onForgotPassword={(email) => { setForgotEmail(email || ''); setAuthPage('forgot'); }}
+        />
+      )}
+      {authPage === 'register' && (
+        <RegisterPage
+          onClose={() => setAuthPage(null)}
+          onSwitchToLogin={() => setAuthPage('login')}
+        />
+      )}
+      {authPage === 'forgot' && (
+        <ForgotPasswordPage
+          onClose={() => setAuthPage(null)}
+          onBackToLogin={() => setAuthPage('login')}
+          prefillEmail={forgotEmail}
+        />
+      )}
+
+      {/* Legacy Login Modal — Show when not authenticated and no V2 auth page is active */}
+      {!authPage && !authTokenPage && (showLogin || (!isAuthenticated && !authLoading)) && (
         <SimpleLogin onClose={() => {
           setShowLogin(false);
           // If still not authenticated after closing, they chose to be guest

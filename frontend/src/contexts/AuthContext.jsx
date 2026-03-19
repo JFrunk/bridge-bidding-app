@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { setUserId, setUserType, clearUserId, trackLogin, trackLogout, trackGuestMode } from '../services/analytics';
+import * as authApi from '../services/authApi';
+import { setAccessTokenGetter } from '../utils/sessionHelper';
 
 const AuthContext = createContext(null);
 
@@ -46,61 +48,165 @@ export function AuthProvider({ children }) {
   const [showRegistrationPrompt, setShowRegistrationPrompt] = useState(false);
   const [hasSeenPrompt, setHasSeenPrompt] = useState(false);
 
-  // Check for existing session on mount
-  useEffect(() => {
-    // Check for demo/review mode via URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('demo') === 'true' || urlParams.get('review') === 'true') {
-      const guestId = getOrCreateGuestId();
-      setUser({ id: guestId, username: 'reviewer', display_name: 'Reviewer', isGuest: true });
-      setLoading(false);
-      return;
-    }
+  // V2 Auth: JWT access token lives in memory only (not localStorage)
+  const accessTokenRef = useRef(null);
+  const refreshTimerRef = useRef(null);
 
-    // First check for simple auth user (no token required)
-    const storedUser = localStorage.getItem('bridge_user');
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
+  // Register token getter so sessionHelper can include JWT in API headers
+  useEffect(() => {
+    setAccessTokenGetter(() => accessTokenRef.current);
+  }, []);
+
+  // ─── V2 Auth Helpers ──────────────────────────────────────
+
+  /**
+   * Store access token in memory and set user from V2 auth response.
+   * V2 responses always include { access_token, user_id }.
+   */
+  const handleAuthSuccess = useCallback((data, extra = {}) => {
+    accessTokenRef.current = data.access_token;
+
+    const userData = {
+      id: data.user_id,
+      email: extra.email || '',
+      display_name: extra.display_name || '',
+      isGuest: false,
+      emailVerified: extra.email_verified ?? data.email_verified ?? false,
+      authVersion: 'v2',
+    };
+
+    setUser(userData);
+    // Store minimal user info for page reload recovery
+    // (access token will be recovered via refresh cookie)
+    localStorage.setItem('bridge_user', JSON.stringify(userData));
+    setShowRegistrationPrompt(false);
+
+    // Analytics
+    setUserId(userData.id);
+    setUserType(userData.email);
+
+    // Schedule token refresh (refresh 1 minute before 15-min expiry)
+    scheduleTokenRefresh();
+  }, []);
+
+  /**
+   * Try to restore session via refresh token cookie on page load.
+   * PRD §3.1: access token is memory-only, so every page load
+   * must call /api/auth/refresh to get a new one.
+   */
+  const tryRefreshSession = useCallback(async () => {
+    try {
+      const result = await authApi.refreshAccessToken();
+      if (result.success) {
+        accessTokenRef.current = result.data.access_token;
+        // Restore user from stored data, update ID from refresh response
+        const storedUser = localStorage.getItem('bridge_user');
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          userData.id = result.data.user_id;
+          setUser(userData);
+          localStorage.setItem('bridge_user', JSON.stringify(userData));
+        } else {
+          setUser({
+            id: result.data.user_id,
+            isGuest: false,
+            authVersion: 'v2',
+          });
+        }
+        scheduleTokenRefresh();
+        return true;
+      }
+    } catch (e) {
+      // Refresh failed — user needs to log in again
+    }
+    return false;
+  }, []);
+
+  const scheduleTokenRefresh = useCallback(() => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    // Refresh 1 minute before 15-min expiry = 14 minutes
+    refreshTimerRef.current = setTimeout(async () => {
+      const result = await authApi.refreshAccessToken();
+      if (result.success) {
+        accessTokenRef.current = result.data.access_token;
+        scheduleTokenRefresh();
+      }
+    }, 14 * 60 * 1000);
+  }, []);
+
+  // ─── Initialization ───────────────────────────────────────
+
+  useEffect(() => {
+    const init = async () => {
+      // Check for demo/review mode via URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('demo') === 'true' || urlParams.get('review') === 'true') {
+        const guestId = getOrCreateGuestId();
+        setUser({ id: guestId, username: 'reviewer', display_name: 'Reviewer', isGuest: true });
         setLoading(false);
         return;
-      } catch (e) {
-        console.error('Failed to parse stored user:', e);
-        localStorage.removeItem('bridge_user');
       }
-    }
 
-    // Fall back to token-based validation
-    const token = localStorage.getItem('session_token');
-    if (token) {
-      validateSession(token);
-    } else {
-      // No stored session - user needs to login or choose guest
-      // Setting user to null will trigger login screen
+      // Check stored user — determine if V2 or legacy
+      const storedUser = localStorage.getItem('bridge_user');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+
+          if (userData.authVersion === 'v2') {
+            // V2 user: try to restore session via refresh cookie
+            const refreshed = await tryRefreshSession();
+            if (!refreshed) {
+              // Refresh failed — clear stale data, require login
+              localStorage.removeItem('bridge_user');
+              setUser(null);
+            }
+            setLoading(false);
+            return;
+          }
+
+          // Legacy user (simple auth or guest): restore directly
+          setUser(userData);
+          setLoading(false);
+          return;
+        } catch (e) {
+          console.error('Failed to parse stored user:', e);
+          localStorage.removeItem('bridge_user');
+        }
+      }
+
+      // Fall back to legacy token-based validation
+      const token = localStorage.getItem('session_token');
+      if (token) {
+        validateSession(token);
+        return;
+      }
+
+      // No stored session — user needs to login or choose guest
       setUser(null);
       setLoading(false);
-
-      // Clear stale experience level so the Welcome Wizard shows on next login.
-      // Without this, a hard reset (backend DB cleared but localStorage persists)
-      // would skip the onboarding questionnaire.
       localStorage.removeItem('bridge_experience_level');
-    }
 
-    // Load activity counters from localStorage
-    const savedHands = localStorage.getItem('bridge_hands_completed');
-    if (savedHands) setHandsCompleted(parseInt(savedHands, 10) || 0);
-    const savedBids = localStorage.getItem('bridge_bids_practiced');
-    if (savedBids) setBidsPracticed(parseInt(savedBids, 10) || 0);
-    const savedSkills = localStorage.getItem('bridge_skills_practiced');
-    if (savedSkills) setSkillsPracticed(parseInt(savedSkills, 10) || 0);
+      // Load activity counters from localStorage
+      const savedHands = localStorage.getItem('bridge_hands_completed');
+      if (savedHands) setHandsCompleted(parseInt(savedHands, 10) || 0);
+      const savedBids = localStorage.getItem('bridge_bids_practiced');
+      if (savedBids) setBidsPracticed(parseInt(savedBids, 10) || 0);
+      const savedSkills = localStorage.getItem('bridge_skills_practiced');
+      if (savedSkills) setSkillsPracticed(parseInt(savedSkills, 10) || 0);
 
-    // Check if user has already dismissed the prompt
-    const dismissed = localStorage.getItem('bridge_registration_dismissed');
-    if (dismissed) {
-      setHasSeenPrompt(true);
-    }
-  }, []);
+      const dismissed = localStorage.getItem('bridge_registration_dismissed');
+      if (dismissed) setHasSeenPrompt(true);
+    };
+
+    init();
+
+    return () => {
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Legacy Auth Methods (kept for backward compatibility) ─
 
   const validateSession = async (token) => {
     try {
@@ -115,13 +221,11 @@ export function AuthProvider({ children }) {
         setUser(data.user);
       } else {
         localStorage.removeItem('session_token');
-        // Session invalid - require login
         setUser(null);
       }
     } catch (error) {
       console.error('Session validation failed:', error);
       localStorage.removeItem('session_token');
-      // Session validation failed - require login
       setUser(null);
     } finally {
       setLoading(false);
@@ -142,11 +246,8 @@ export function AuthProvider({ children }) {
       }
 
       const data = await response.json();
-
-      // Store session token
       localStorage.setItem('session_token', data.session_token);
       setUser(data.user);
-
       return { success: true, isNewUser: data.is_new_user };
     } catch (error) {
       return { success: false, error: error.message };
@@ -156,7 +257,6 @@ export function AuthProvider({ children }) {
   // Simple login using email/phone (no password)
   const simpleLogin = async (identifier, type = 'email') => {
     try {
-      // If user is currently a guest, pass their guest_id so backend can migrate their data
       const currentGuestId = user?.isGuest ? user.id : null;
 
       const response = await fetch(`${API_URL}/api/auth/simple-login`, {
@@ -165,7 +265,7 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({
           [type]: identifier,
           create_if_not_exists: true,
-          guest_id: currentGuestId  // Pass guest ID for data migration
+          guest_id: currentGuestId
         })
       });
 
@@ -176,7 +276,6 @@ export function AuthProvider({ children }) {
 
       const data = await response.json();
 
-      // Set user with ID from database
       const userData = {
         id: data.user_id,
         email: data.email,
@@ -186,15 +285,12 @@ export function AuthProvider({ children }) {
       };
 
       setUser(userData);
-      // Store user data for persistence
       localStorage.setItem('bridge_user', JSON.stringify(userData));
-      // Hide the registration prompt
       setShowRegistrationPrompt(false);
 
-      // Track login event and set user ID/type for analytics
       setUserId(userData.id);
       setUserType(userData.email);
-      trackLogin(type); // 'email' or 'phone'
+      trackLogin(type);
 
       return { success: true, created: data.created, user: userData };
     } catch (error) {
@@ -202,9 +298,87 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = async () => {
-    const token = localStorage.getItem('session_token');
+  // ─── V2 Auth Methods ──────────────────────────────────────
 
+  const registerV2 = useCallback(async ({ email, password, displayName }) => {
+    const guestId = user?.isGuest ? user.id : null;
+    const result = await authApi.registerUser({ email, password, displayName, guestId });
+
+    if (result.success) {
+      handleAuthSuccess(result.data, {
+        email,
+        display_name: displayName,
+        email_verified: false,
+      });
+      trackLogin('register');
+      return { success: true, isNewUser: true };
+    }
+
+    return { success: false, error: result.error };
+  }, [user, handleAuthSuccess]);
+
+  const loginV2 = useCallback(async ({ email, password }) => {
+    const result = await authApi.loginUser({ email, password });
+
+    if (result.success) {
+      handleAuthSuccess(result.data, { email });
+      trackLogin('password');
+      return { success: true };
+    }
+
+    return { success: false, error: result.error, status: result.status };
+  }, [handleAuthSuccess]);
+
+  const loginWithGoogle = useCallback(async (idToken) => {
+    const guestId = user?.isGuest ? user.id : null;
+    const result = await authApi.googleAuth({ idToken, guestId });
+
+    if (result.success) {
+      handleAuthSuccess(result.data, { email_verified: true });
+      trackLogin('google');
+      return { success: true, isNewUser: result.data.is_new_user };
+    }
+
+    return { success: false, error: result.error, status: result.status };
+  }, [user, handleAuthSuccess]);
+
+  const requestMagicLink = useCallback(async (email) => {
+    return authApi.requestMagicLink(email);
+  }, []);
+
+  const verifyMagicLink = useCallback(async (token) => {
+    const result = await authApi.verifyMagicLink(token);
+
+    if (result.success) {
+      handleAuthSuccess(result.data, { email_verified: true });
+      trackLogin('magic_link');
+      return { success: true };
+    }
+
+    return { success: false, error: result.error };
+  }, [handleAuthSuccess]);
+
+  const resendVerification = useCallback(async () => {
+    if (!user?.email) return { success: false, error: 'No email' };
+    return authApi.resendVerification(user.email);
+  }, [user]);
+
+  // ─── Logout ───────────────────────────────────────────────
+
+  const logout = async () => {
+    // V2 logout: revoke refresh token cookie
+    if (accessTokenRef.current) {
+      try {
+        await authApi.logoutV2();
+      } catch (e) {
+        // Best effort
+      }
+      accessTokenRef.current = null;
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    }
+
+    // Legacy logout
+    const token = localStorage.getItem('session_token');
     if (token) {
       try {
         await fetch(`${API_URL}/api/auth/logout`, {
@@ -220,38 +394,33 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('bridge_user');
     localStorage.removeItem('bridge_experience_level');
 
-    // Track logout and clear user ID from analytics
     trackLogout();
     clearUserId();
 
-    // Clear user state - this will show login screen (isAuthenticated becomes false)
     setUser(null);
     setLoading(false);
   };
 
+  // ─── Guest Mode ───────────────────────────────────────────
+
   const continueAsGuest = () => {
-    // Each browser gets a unique guest ID to prevent data collision
     const guestId = getOrCreateGuestId();
     const guestUser = { id: guestId, username: 'guest', display_name: 'Guest', isGuest: true };
     setUser(guestUser);
-    // Persist to bridge_user so userId survives page refresh.
-    // Without this, AuthContext mount finds no stored user → user=null → userId=null
-    // → session/start fails, hand saving fails, evaluate-bid fails.
     localStorage.setItem('bridge_user', JSON.stringify(guestUser));
 
-    // Track guest mode and set guest user ID/type for analytics
     setUserId(guestId);
-    setUserType(null); // guests are always external
+    setUserType(null);
     trackGuestMode();
 
     setLoading(false);
   };
 
-  // Track activity and mark prompt as ready (shown on next idle moment)
+  // ─── Registration Prompt (guest activity tracking) ────────
+
   const promptReadyRef = useRef(false);
   const promptTimerRef = useRef(null);
 
-  // Shared threshold check — triggers prompt when total activity across all modes reaches threshold
   const checkPromptThreshold = useCallback((totalActivity, isLearningMode = false) => {
     const threshold = isLearningMode ? HANDS_BEFORE_PROMPT_LEARNING : HANDS_BEFORE_PROMPT;
     if (totalActivity >= threshold) {
@@ -293,9 +462,6 @@ export function AuthProvider({ children }) {
     }
   }, [user, handsCompleted, bidsPracticed, skillsPracticed, hasSeenPrompt, checkPromptThreshold]);
 
-  // Dismiss registration prompt (temporarily or permanently)
-  // "Maybe Later" sets hasSeenPrompt to prevent re-triggering for this session.
-  // "Don't Ask Again" additionally persists across sessions via localStorage.
   const dismissRegistrationPrompt = useCallback((permanent = false) => {
     setShowRegistrationPrompt(false);
     setHasSeenPrompt(true);
@@ -306,14 +472,11 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Check if registration is required for a feature
   const requiresRegistration = useCallback((feature) => {
-    // Features that require registration
     const protectedFeatures = ['progress', 'dashboard', 'history'];
     return user?.isGuest && protectedFeatures.includes(feature);
   }, [user]);
 
-  // Show deferred prompt immediately (call on navigation/idle moments)
   const showPromptIfReady = useCallback(() => {
     if (promptReadyRef.current && !hasSeenPrompt) {
       if (promptTimerRef.current) clearTimeout(promptTimerRef.current);
@@ -322,7 +485,6 @@ export function AuthProvider({ children }) {
     }
   }, [hasSeenPrompt]);
 
-  // Trigger registration prompt for protected features
   const promptForRegistration = useCallback(() => {
     if (user?.isGuest) {
       setShowRegistrationPrompt(true);
@@ -332,21 +494,38 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   const getAuthToken = () => {
+    // V2: return in-memory JWT
+    if (accessTokenRef.current) return accessTokenRef.current;
+    // Legacy: return stored session token
     return localStorage.getItem('session_token');
   };
 
   return (
     <AuthContext.Provider value={{
       user,
-      login,
-      simpleLogin,
-      logout,
-      continueAsGuest,
       loading,
       isAuthenticated: user !== null,
       isGuest: user?.isGuest || false,
-      getAuthToken,
       userId: user?.id || null,
+
+      // V2 Auth
+      registerV2,
+      loginV2,
+      loginWithGoogle,
+      requestMagicLink,
+      verifyMagicLink,
+      resendVerification,
+      getAccessToken: () => accessTokenRef.current,
+
+      // Legacy (kept for backward compatibility)
+      login,
+      simpleLogin,
+      getAuthToken,
+
+      // Shared
+      logout,
+      continueAsGuest,
+
       // Registration prompt — activity tracking
       handsCompleted,
       bidsPracticed,
