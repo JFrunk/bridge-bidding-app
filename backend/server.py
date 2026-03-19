@@ -1614,6 +1614,9 @@ def get_next_bid():
 
         player_hand = state.deal[current_player]
         if not player_hand:
+            session_id = get_session_id_from_request(request)
+            has_any_deal = any(state.deal[p] for p in SEAT_NAMES.values())
+            print(f"⚠️ get-next-bid: No hand for {current_player}. session={session_id}, has_any_deal={has_any_deal}, hint_only={data.get('hint_only', False)}")
             return jsonify({'error': "Deal has not been made yet."}), 400
 
         bid, explanation = engine.get_next_bid(player_hand, auction_history, current_player,
@@ -1626,6 +1629,16 @@ def get_next_bid():
             explanation = explanation.to_dict()
         elif not isinstance(explanation, str) and explanation is not None:
             explanation = str(explanation)
+
+        # ── hint_only mode: return the suggested bid without recording it ──
+        is_hint = data.get('hint_only', False)
+
+        if is_hint:
+            return jsonify({
+                'bid': bid,
+                'explanation': explanation,
+                'player': current_player,
+            })
 
         # ── Record bid in session state and compute next bidder ──
         state.auction_history.append(bid)

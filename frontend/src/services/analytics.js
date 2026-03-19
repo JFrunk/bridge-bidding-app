@@ -104,7 +104,7 @@ export const trackDealHand = (mode) => {
 
 export const trackBidMade = (bid, isUser, score) => {
   const actor = isUser ? 'User' : 'AI';
-  trackEvent('Gameplay', `Bid Made - ${actor}`, bid, score);
+  trackEvent('Gameplay', `Bid Made - ${actor}`, bid, typeof score === 'number' ? score : undefined);
 };
 
 export const trackCardPlayed = (isUser) => {
