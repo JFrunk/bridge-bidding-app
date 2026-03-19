@@ -13,12 +13,11 @@ Root Cause: The old Gerber response rules only checked `partner_last_bid == "4�
 without verifying WHO made the 4♣ bid. An opponent's natural 4♣ overcall matched
 the pattern and triggered ace-showing responses.
 
-Fix (3 layers of defense):
+Fix (schema-level defense-in-depth):
 1. Feature: `last_bid_side` tracks whether the last substantive bid came from
    partner, opponent, or self — using (dealer_seat + bid_index) % 4 math.
-2. Schema: Gerber responses in sayc_slam.json now require `last_bid_side: "partner"`.
-3. Middleware: validate_bid_structure() vetoes ANY convention response (priority >= 800)
-   when `last_bid_side == "opponent"` (origin gate).
+2. Schema: Gerber responses in sayc_slam.json require `last_bid_side: "partner"`.
+3. Schema: Gerber initiation rules require `is_contested: false`.
 
 Test Case:
 - North opens 1NT (15-17 HCP balanced)
@@ -31,7 +30,6 @@ import pytest
 from engine.hand import Hand, Card
 from engine.v2.bidding_engine_v2_schema import BiddingEngineV2Schema
 from engine.v2.features.enhanced_extractor import extract_flat_features
-from engine.v2.inference.conflict_resolver import validate_bid_structure
 
 
 def make_hand(spades: str, hearts: str, diamonds: str, clubs: str) -> Hand:
@@ -120,36 +118,6 @@ class TestGerberTrapOpponent4C:
         if bid == "4♠":
             assert "ace" not in explanation.lower(), \
                 f"Got 4♠ ({explanation}) — Gerber misfire to opponent's 4♣"
-
-    def test_middleware_vetoes_convention_response_to_opponent(self):
-        """Middleware origin gate: priority>=800 bid vetoed when last_bid_side=='opponent'."""
-        features = {'last_bid_side': 'opponent', 'fit_known': False,
-                     'partnership_fit': 0, 'partnership_ltc': 99,
-                     'partnership_stoppers': 0}
-
-        # Gerber response at priority 990 should be vetoed
-        result = validate_bid_structure("4♦", 990, features)
-        assert result is False, "Convention response to opponent's bid must be vetoed"
-
-    def test_middleware_allows_convention_response_to_partner(self):
-        """Middleware origin gate: priority>=800 bid allowed when last_bid_side=='partner'."""
-        features = {'last_bid_side': 'partner', 'fit_known': True,
-                     'partnership_fit': 8, 'partnership_ltc': 12,
-                     'partnership_stoppers': 4}
-
-        # Gerber response at priority 990 should be allowed
-        result = validate_bid_structure("4♦", 990, features)
-        assert result is True, "Convention response to partner's bid must be allowed"
-
-    def test_middleware_allows_convention_opening(self):
-        """Middleware origin gate: priority>=800 opening bid allowed when last_bid_side is None."""
-        features = {'last_bid_side': None, 'fit_known': False,
-                     'partnership_fit': 0, 'partnership_ltc': 99,
-                     'partnership_stoppers': 0}
-
-        # Strong 2♣ opening at priority 850 should be allowed (no prior bids)
-        result = validate_bid_structure("2♣", 850, features)
-        assert result is True, "Convention opening with no prior bids must be allowed"
 
     def test_last_bid_side_self_after_rebid(self):
         """last_bid_side='self' when my bid is the last substantive bid."""

@@ -25,7 +25,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Telemetry counters — reset via reset_structural_vetoes(), read via get_structural_vetoes()
-_structural_vetoes = {'4M_fit': 0, '4M_ltc': 0, '3NT_stoppers': 0, 'origin': 0}
+_structural_vetoes = {'4M_fit': 0, '4M_ltc': 0, '3NT_stoppers': 0}
 
 
 def reset_structural_vetoes():
@@ -33,7 +33,6 @@ def reset_structural_vetoes():
     _structural_vetoes['4M_fit'] = 0
     _structural_vetoes['4M_ltc'] = 0
     _structural_vetoes['3NT_stoppers'] = 0
-    _structural_vetoes['origin'] = 0
 
 
 def get_structural_vetoes() -> dict:
@@ -61,17 +60,10 @@ def validate_bid_structure(bid: str, priority: int, features: Dict[str, Any]) ->
     bid_level = int(bid[0]) if bid[0].isdigit() else 0
     bid_strain = bid[1:] if len(bid) > 1 else ''
 
-    # ORIGIN GATE: Convention bids (priority >= 800) cannot be responses to
-    # an opponent's bid.  You can only "respond" to a convention that partner
-    # started.  This kills Ghost Gerber / Ghost Blackwood misfires where an
-    # opponent's natural 4♣ or 4NT is misinterpreted as a convention ask.
-    last_bid_side = features.get('last_bid_side')
-    if priority >= 800 and last_bid_side == 'opponent':
-        _structural_vetoes['origin'] += 1
-        msg = f"🚫 VETO ORIGIN: {bid} rejected (convention response to opponent's bid)"
-        logger.info(msg)
-        print(msg)
-        return False
+    # NOTE: Origin-based filtering is handled at the SCHEMA level, not here.
+    # Each convention response rule (e.g. Gerber in sayc_slam.json) requires
+    # `last_bid_side: "partner"` in its conditions — surgically preventing
+    # misfires without silencing legitimate competitive conventions.
 
     # Artificial/systemic bids (priority >= 800) are generally exempt,
     # BUT if they land on 4♥/4♠ they must still pass the fit check
