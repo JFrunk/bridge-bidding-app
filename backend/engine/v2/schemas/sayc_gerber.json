@@ -13,6 +13,7 @@
         "partner_opened_nt": true,
         "partner_nt_level": 1,
         "opener_relationship": "Partner",
+        "is_contested": false,
         "hcp": {
           "min": 18
         },
@@ -32,6 +33,7 @@
         "partner_opened_nt": true,
         "partner_nt_level": 2,
         "opener_relationship": "Partner",
+        "is_contested": false,
         "hcp": {
           "min": 15
         },
@@ -40,75 +42,6 @@
       },
       "forcing": "one_round",
       "explanation": "Gerber 4♣ - asking for aces over partner's 2NT",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "gerber_response_0_or_4_aces",
-      "bid": "4♦",
-      "priority": 930,
-      "description": "Gerber response showing 0 or 4 aces",
-      "conditions": {
-        "partner_last_bid": "4♣",
-        "OR": [
-          {
-            "aces": {
-              "exact": 0
-            }
-          },
-          {
-            "aces": {
-              "exact": 4
-            }
-          }
-        ]
-      },
-      "forcing": "one_round",
-      "explanation": "Gerber response: 0 or 4 aces",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "gerber_response_1_ace",
-      "bid": "4♥",
-      "priority": 929,
-      "description": "Gerber response showing 1 ace",
-      "conditions": {
-        "partner_last_bid": "4♣",
-        "aces": {
-          "exact": 1
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Gerber response: 1 ace",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "gerber_response_2_aces",
-      "bid": "4♠",
-      "priority": 928,
-      "description": "Gerber response showing 2 aces",
-      "conditions": {
-        "partner_last_bid": "4♣",
-        "aces": {
-          "exact": 2
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Gerber response: 2 aces",
-      "sets_forcing_level": "FORCING_1_ROUND"
-    },
-    {
-      "id": "gerber_response_3_aces",
-      "bid": "4NT",
-      "priority": 927,
-      "description": "Gerber response showing 3 aces",
-      "conditions": {
-        "partner_last_bid": "4♣",
-        "aces": {
-          "exact": 3
-        }
-      },
-      "forcing": "one_round",
-      "explanation": "Gerber response: 3 aces",
       "sets_forcing_level": "FORCING_1_ROUND"
     },
     {
