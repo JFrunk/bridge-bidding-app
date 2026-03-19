@@ -2514,6 +2514,7 @@ ${otherCommands}`;
         body: JSON.stringify({
           auction_history: auction.map(a => a.bid),
           vulnerability: vulnerability,
+          dealer: dealer,
           replay: true  // Signal backend to use preserved original_deal
         })
       });
