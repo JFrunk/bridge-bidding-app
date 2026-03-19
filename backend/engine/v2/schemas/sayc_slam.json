@@ -12,7 +12,7 @@
       "conditions": {
         "our_best_fit": {"min": 8},
         "hcp": {"min": 15},
-        "partnership_hcp_min": {"min": 28},
+        "partnership_hcp_min": {"min": 33},
         "has_major_fit": true,
         "partner_game_raise_is_competitive": false,
         "partner_last_bid": {
@@ -51,7 +51,7 @@
       "conditions": {
         "our_best_fit": {"min": 8},
         "hcp": {"min": 15},
-        "partnership_hcp_min": {"min": 31},
+        "partnership_hcp_min": {"min": 33},
         "has_major_fit": false,
         "partner_last_bid": {
           "not_in": ["4NT", "5♣", "5♦", "5♥", "5♠", "5NT", "6♣", "6♦", "6♥", "6♠", "6NT", "7♣", "7♦", "7♥", "7♠", "7NT"]
@@ -548,7 +548,7 @@
         "partner_last_bid": {"in": ["4♥", "4♠"]},
         "in_slam_zone": true,
         "has_major_fit": true,
-        "partnership_total_points_mid": {"min": 30},
+        "partnership_total_points_mid": {"min": 33},
         "asked_blackwood": false
       },
       "forcing": "game",
@@ -596,7 +596,7 @@
       "description": "RKCB with major fit and slam values (total points midpoint)",
       "conditions": {
         "our_best_fit": {"min": 8},
-        "partnership_total_points_mid": {"min": 30},
+        "partnership_total_points_mid": {"min": 33},
         "has_major_fit": true,
         "in_slam_zone": true,
         "partner_last_bid": {
@@ -615,7 +615,7 @@
       "description": "RKCB with minor fit and strong slam values (total points midpoint)",
       "conditions": {
         "our_best_fit": {"min": 8},
-        "partnership_total_points_mid": {"min": 32},
+        "partnership_total_points_mid": {"min": 34},
         "has_major_fit": false,
         "fit_known": true,
         "in_slam_zone": true,

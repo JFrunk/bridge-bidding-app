@@ -451,65 +451,62 @@
       "sets_forcing_level": "NON_FORCING"
     },
     {
-      "_comment": "=== TIER 5: TACTICAL RULES (145-164) ===",
+      "_comment": "=== TIER 5: TACTICAL RULES (145-164) === Sacrifice rules disabled 2026-03-18: averaging 4.4 undertricks (-800 to -1100) vs saving -620 game. Needs Monte Carlo validation before re-enabling.",
       "id": "sacrifice_bid_favorable",
       "bid": "5{agreed_suit}",
-      "priority": 155,
-      "description": "Sacrifice bid over opponent's game (favorable vulnerability)",
+      "priority": 0,
+      "_disabled": true,
+      "description": "DISABLED — Sacrifice bid over opponent's game (favorable vulnerability)",
       "conditions": {
+        "hcp": {"min": 999, "max": 10},
         "is_contested": true,
         "favorable_vulnerability": true,
         "fit_known": true,
         "opponents_bid_game": true,
         "is_convention_describer_rebid": false,
-        "hcp": {
-          "max": 10
-        },
         "fit_length": {
           "min": 9
         }
       },
       "forcing": "none",
-      "explanation": "Sacrifice at favorable vulnerability - cheaper to go down",
+      "explanation": "DISABLED — Sacrifice at favorable vulnerability",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "sacrifice_bid",
       "bid": "5{agreed_suit}",
-      "priority": 150,
-      "description": "Sacrifice bid over opponent's game (not vulnerable)",
+      "priority": 0,
+      "_disabled": true,
+      "description": "DISABLED — Sacrifice bid over opponent's game (not vulnerable)",
       "conditions": {
+        "hcp": {"min": 999, "max": 10},
         "is_contested": true,
         "we_are_vulnerable": false,
         "fit_known": true,
         "opponents_bid_game": true,
         "is_convention_describer_rebid": false,
-        "hcp": {
-          "max": 10
-        },
         "fit_length": {
           "min": 9
         }
       },
       "forcing": "none",
-      "explanation": "Sacrifice - cheaper to go down than let them make",
+      "explanation": "DISABLED — Sacrifice - cheaper to go down than let them make",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "lott_volatile_compete",
       "bid": "{effective_lott_level}{agreed_suit}",
-      "priority": 145,
-      "description": "LoTT volatile board - compete to HCP-moderated safe level on distributional hands",
+      "priority": 0,
+      "_disabled": true,
+      "description": "DISABLED — LoTT volatile board - compete to HCP-moderated safe level on distributional hands",
       "conditions": {
+        "hcp": {"min": 999, "max": 10},
         "is_contested": true,
         "is_volatile_board": true,
         "is_convention_describer_rebid": false,
         "fit_known": true,
         "our_best_fit": {
           "min": 9
-        },
-        "hcp": {
-          "max": 10
         },
         "is_fragile_ruff": false
       },

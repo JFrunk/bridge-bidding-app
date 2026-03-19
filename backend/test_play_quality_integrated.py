@@ -64,7 +64,9 @@ class IntegratedPlayQualityScorer:
             'passed_out': 0,
             'legality_errors': [],
             'tactical_errors': [],
-            'timing_metrics': []
+            'timing_metrics': [],
+            'contract_levels': {},  # Per-level tracking: {level: {'made': 0, 'failed': 0, 'undertricks': 0}}
+            'auction_traces': []  # Captured for level 5+ contracts
         }
 
     def _create_ai(self, ai_type: str, depth: int):
@@ -116,12 +118,17 @@ class IntegratedPlayQualityScorer:
         dealer = random.choice(['N', 'S', 'E', 'W'])
         vulnerability = random.choice(['None', 'NS', 'EW', 'Both'])
 
-        contract = self._simulate_bidding(hands, dealer, vulnerability)
+        contract, auction_trace = self._simulate_bidding(hands, dealer, vulnerability)
         if not contract:
             self.results['passed_out'] += 1
             return  # Passed out
 
         self.results['contracts_played'] += 1
+
+        # Track contract level
+        level = contract.level
+        if level not in self.results['contract_levels']:
+            self.results['contract_levels'][level] = {'made': 0, 'failed': 0, 'undertricks': 0}
 
         # Simulate actual play
         play_result = self._simulate_complete_play(hands, contract, vulnerability, hand_number)
@@ -129,12 +136,34 @@ class IntegratedPlayQualityScorer:
         # Score the play
         self._score_play(play_result, contract, hand_number)
 
-    def _simulate_bidding(self, hands: Dict[str, Hand], dealer: str, vulnerability: str) -> Optional[Contract]:
-        """Simulate bidding to establish contract using BiddingEngine."""
+        # Capture auction trace for level 5+ contracts
+        if level >= 5:
+            tricks_needed = contract.tricks_needed
+            if contract.declarer in ('N', 'S'):
+                tricks_won = play_result['tricks_won_ns']
+            else:
+                tricks_won = play_result['tricks_won_ew']
+            self.results['auction_traces'].append({
+                'hand_number': hand_number,
+                'contract': f"{contract.level}{contract.strain}",
+                'declarer': contract.declarer,
+                'made': tricks_won >= tricks_needed,
+                'tricks_won': tricks_won,
+                'tricks_needed': tricks_needed,
+                'auction': auction_trace
+            })
+
+    def _simulate_bidding(self, hands: Dict[str, Hand], dealer: str, vulnerability: str):
+        """Simulate bidding to establish contract using BiddingEngine.
+
+        Returns:
+            Tuple of (contract_or_none, auction_trace_list)
+        """
         # PlayEngine uses single letters, BiddingEngine uses full names
         dealer_idx = SEATS.index(dealer)
 
         auction_history = []
+        auction_trace = []  # (position, bid, rule_id, schema_file)
         consecutive_passes = 0
         current_idx = dealer_idx
 
@@ -145,16 +174,29 @@ class IntegratedPlayQualityScorer:
             hand = hands[short_pos]
 
             try:
-                bid, _ = self.bidding_engine.get_next_bid(
+                bid, explanation = self.bidding_engine.get_next_bid(
                     hand=hand,
                     auction_history=auction_history,
                     my_position=long_pos,  # BiddingEngine expects full names
                     vulnerability=vulnerability
                 )
+                rule_id = self.bidding_engine._last_rule_id or ''
+                schema_file = self.bidding_engine._last_schema_file or ''
             except Exception as e:
                 # Log exception but continue with Pass
                 print(f"⚠️  Bidding error for {long_pos}: {e}")
                 bid = 'Pass'
+                explanation = 'error'
+                rule_id = 'error'
+                schema_file = ''
+
+            auction_trace.append({
+                'position': short_pos,
+                'bid': bid,
+                'rule_id': rule_id,
+                'schema': schema_file.replace('.json', '').split('/')[-1] if schema_file else '',
+                'hcp': hand.hcp
+            })
 
             auction_history.append(bid)
 
@@ -164,12 +206,12 @@ class IntegratedPlayQualityScorer:
                 consecutive_passes = 0
 
             if len(auction_history) == 4 and all(b == 'Pass' for b in auction_history):
-                return None  # Passed out
+                return None, auction_trace  # Passed out
 
             current_idx += 1
 
         # Determine final contract using PlayEngine
-        return PlayEngine.determine_contract(auction_history, dealer_idx)
+        return PlayEngine.determine_contract(auction_history, dealer_idx), auction_trace
 
     def _simulate_complete_play(self, hands: Dict[str, Hand], contract: Contract,
                                 vulnerability: str, hand_number: int) -> Dict:
@@ -309,14 +351,20 @@ class IntegratedPlayQualityScorer:
 
         # Determine if contract made
         tricks_needed = contract.tricks_needed
+        level = contract.level
         if tricks_won >= tricks_needed:
             self.results['contracts_made'] += 1
             overtricks = tricks_won - tricks_needed
             self.results['overtricks'] += overtricks
+            if level in self.results['contract_levels']:
+                self.results['contract_levels'][level]['made'] += 1
         else:
             self.results['contracts_failed'] += 1
             undertricks = tricks_needed - tricks_won
             self.results['undertricks'] += undertricks
+            if level in self.results['contract_levels']:
+                self.results['contract_levels'][level]['failed'] += 1
+                self.results['contract_levels'][level]['undertricks'] += undertricks
 
         # Record timing
         self.results['timing_metrics'].append(play_result['time'])
@@ -422,6 +470,7 @@ class IntegratedPlayQualityScorer:
                 'min_time': round(min(self.results['timing_metrics']), 3) if self.results['timing_metrics'] else 0,
                 'max_time': round(max(self.results['timing_metrics']), 3) if self.results['timing_metrics'] else 0
             },
+            'contract_levels': self.results['contract_levels'],
             'grade': self._get_grade(composite_score)
         }
 
@@ -471,6 +520,63 @@ class IntegratedPlayQualityScorer:
         print("-" * 80)
         print()
 
+        # Per-level contract distribution
+        level_data = scores.get('contract_levels', {})
+        if level_data:
+            total_contracts = scores['contracts_played']
+            print("CONTRACT LEVEL DISTRIBUTION (with success rates):")
+            for level in sorted(level_data.keys()):
+                info = level_data[level]
+                total = info['made'] + info['failed']
+                pct = total / total_contracts * 100 if total_contracts > 0 else 0
+                made_pct = info['made'] / total * 100 if total > 0 else 0
+                avg_ut = info['undertricks'] / info['failed'] if info['failed'] > 0 else 0
+                print(f"  Level {level}: {total:3d} ({pct:5.1f}%)  Made: {info['made']:3d}/{total:3d} ({made_pct:5.1f}%)  Avg UT: {avg_ut:.1f}")
+            print()
+
+        # Level 5+ failure analysis
+        traces = self.results.get('auction_traces', [])
+        failed_traces = [t for t in traces if not t['made']]
+        if failed_traces:
+            print("LEVEL 5+ FAILURE ANALYSIS (Killer Rules):")
+            print("-" * 80)
+            # Find the "committing bid" — the bid that first reached level 5+
+            rule_failures = {}  # rule_id -> {'count': N, 'contracts': [...]}
+            for trace in failed_traces:
+                committing_bid = None
+                for step in trace['auction']:
+                    bid = step['bid']
+                    if bid in ('Pass', 'X', 'XX'):
+                        continue
+                    bid_level = int(bid[0]) if bid[0].isdigit() else 0
+                    if bid_level >= 5 and committing_bid is None:
+                        committing_bid = step
+                    # Also track the final non-pass bid as the "closer"
+                if committing_bid is None:
+                    # Level 5+ via accumulated forcing — use last non-pass bid
+                    for step in reversed(trace['auction']):
+                        if step['bid'] not in ('Pass', 'X', 'XX'):
+                            committing_bid = step
+                            break
+                if committing_bid:
+                    key = f"{committing_bid['rule_id']} ({committing_bid['schema']})"
+                    if key not in rule_failures:
+                        rule_failures[key] = {'count': 0, 'contracts': [], 'hcps': []}
+                    rule_failures[key]['count'] += 1
+                    rule_failures[key]['contracts'].append(trace['contract'])
+                    rule_failures[key]['hcps'].append(committing_bid['hcp'])
+
+            # Sort by failure count descending
+            sorted_rules = sorted(rule_failures.items(), key=lambda x: -x[1]['count'])
+            for i, (rule, info) in enumerate(sorted_rules[:10]):
+                avg_hcp = sum(info['hcps']) / len(info['hcps']) if info['hcps'] else 0
+                contracts = ', '.join(info['contracts'][:5])
+                if len(info['contracts']) > 5:
+                    contracts += f" +{len(info['contracts'])-5} more"
+                print(f"  #{i+1}: {rule}")
+                print(f"       Failures: {info['count']}  Avg HCP: {avg_hcp:.1f}  Contracts: {contracts}")
+            print()
+
         # Timing stats
         print("TIMING METRICS:")
         print(f"  Avg Time/Hand: {scores['timing']['avg_time_per_hand']:.3f}s")
@@ -492,7 +598,8 @@ class IntegratedPlayQualityScorer:
                 'all_errors': {
                     'legality': self.results['legality_errors'],
                     'tactical': self.results['tactical_errors']
-                }
+                },
+                'auction_traces_level5plus': self.results['auction_traces']
             }, f, indent=2)
 
         print(f"📄 Detailed report saved to: {filename}")
@@ -504,8 +611,8 @@ def main():
     parser = argparse.ArgumentParser(description='Integrated Play Quality Score System')
     parser.add_argument('--hands', type=int, default=500, help='Number of hands to test (default: 500)')
     parser.add_argument('--fast', action='store_true', help='Fast mode (100 hands)')
-    parser.add_argument('--ai', type=str, default='minimax', choices=['simple', 'minimax', 'dds'],
-                       help='AI type to test (default: minimax)')
+    parser.add_argument('--ai', type=str, default='dds', choices=['simple', 'minimax', 'dds'],
+                       help='AI type to test (default: dds)')
     parser.add_argument('--depth', type=int, default=2, help='Minimax depth (default: 2)')
     parser.add_argument('--output', type=str, help='Output JSON file path')
     parser.add_argument('--automated', action='store_true',
