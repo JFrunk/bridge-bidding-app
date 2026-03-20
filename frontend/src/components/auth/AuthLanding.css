@@ -251,6 +251,14 @@
   color: var(--text-muted);
 }
 
+/* Login/Register toggle */
+.auth-mode-toggle {
+  text-align: center;
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-secondary-dark);
+}
+
 /* Reset sent confirmation */
 .reset-sent-msg {
   font-size: var(--text-sm);

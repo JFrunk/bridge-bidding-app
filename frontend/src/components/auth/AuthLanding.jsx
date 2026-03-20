@@ -228,30 +228,25 @@ export function AuthLanding({ onClose, hideGuest }) {
           &larr; Back
         </button>
 
-        <h1>{emailMode === 'login' ? 'Welcome back' : 'Create your account'}</h1>
-        {emailMode === 'login' && (
-          <p className="auth-landing-subtitle">Account found for <strong>{email}</strong></p>
-        )}
+        <h1>{emailMode === 'login' ? 'Sign in' : 'Create your account'}</h1>
 
         {error && <div className="auth-landing-error">{error}</div>}
 
         <form onSubmit={handleEmailContinue}>
-          {/* Email — always shown, but disabled in login mode (already set) */}
-          {emailMode !== 'login' && (
-            <div className="form-group">
-              <label htmlFor="auth-email">Email</label>
-              <input
-                id="auth-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                autoComplete="email"
-                required
-                autoFocus
-              />
-            </div>
-          )}
+          {/* Email — always shown */}
+          <div className="form-group">
+            <label htmlFor="auth-email">Email</label>
+            <input
+              id="auth-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              required
+              autoFocus={emailMode !== 'login'}
+            />
+          </div>
 
           {/* Display name — only for new accounts */}
           {!emailMode && (
@@ -345,6 +340,15 @@ export function AuthLanding({ onClose, hideGuest }) {
               )}
             </div>
           )}
+
+          {/* Toggle between login and register */}
+          <div className="auth-mode-toggle">
+            {emailMode === 'login' ? (
+              <span>Don't have an account? <button type="button" className="text-link" onClick={() => { setEmailMode(null); setPassword(''); setError(''); setResetSent(false); }}>Create one</button></span>
+            ) : (
+              <span>Already have an account? <button type="button" className="text-link" onClick={() => { setEmailMode('login'); setConfirmPassword(''); setDisplayName(''); setError(''); }}>Sign in</button></span>
+            )}
+          </div>
         </form>
       </div>
     </div>

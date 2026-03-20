@@ -3802,8 +3802,8 @@ ${otherCommands}`;
         <ResetPasswordPage token={authTokenPage.token} onDone={clearAuthTokenPage} />
       )}
 
-      {/* Auth Modal — single unified AuthLanding */}
-      {authPage === 'login' && (
+      {/* Auth Modal — Canva-style: show for unauthenticated users or when explicitly triggered */}
+      {(authPage === 'login' || (!isAuthenticated && !authLoading && !authTokenPage)) && (
         <AuthLanding onClose={() => { setAuthPage(null); setPendingMode(null); }} />
       )}
 
