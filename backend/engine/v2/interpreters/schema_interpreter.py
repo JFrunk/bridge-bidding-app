@@ -906,6 +906,23 @@ class SchemaInterpreter:
                     return features.get('best_suit') or features.get('longest_suit', '')
                 return features.get('second_suit') or features.get('longest_suit', '')
 
+            # Special case: nmf_suit - the unbid minor for NMF initiation
+            if var_name == 'nmf_suit':
+                return features.get('nmf_suit', '')
+
+            # Special case: my_nmf_major - the major I bid before NMF
+            if var_name == 'my_nmf_major':
+                return features.get('my_nmf_major', '')
+
+            # Special case: nmf_other_major - the other major shown by opener in NMF response
+            if var_name == 'nmf_other_major':
+                my_major = features.get('my_nmf_major', '')
+                if my_major == '♥':
+                    return '♠'
+                elif my_major == '♠':
+                    return '♥'
+                return ''
+
             # Special case: new_suit or new_lower_suit - for responder's new suit
             if var_name in ['new_suit', 'new_lower_suit']:
                 if features.get('second_suit_lower'):

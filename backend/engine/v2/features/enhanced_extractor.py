@@ -134,6 +134,9 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['dist_points'] = hf['dist_points']
     flat['total_points'] = hf['total_points']
     flat['is_balanced'] = hf['is_balanced']
+    # 4-3-3-3 exactly: the flattest possible distribution, trick-poor for its HCP
+    _suit_lens = sorted(hf['suit_lengths'].values())
+    flat['is_flat'] = (_suit_lens == [3, 3, 3, 4])
     flat['quick_tricks'] = hf['quick_tricks']
     flat['stopper_count'] = hf['stopper_count']
     flat['losing_trick_count'] = hf['losing_trick_count']
@@ -163,6 +166,27 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
         flat[f'{suit_name}_has_sequence'] = tex['has_sequence']
         flat[f'{suit_name}_texture_score'] = tex['score']
 
+    # Texture HCP adjustment: "Working Points" for NT/slam evaluation
+    # +1.0 per suit with solid/sequential texture (honors work together)
+    # -0.5 per suit with isolated honor (stiff K, Qx, Jxx — wasted values)
+    _texture_adj = 0.0
+    for suit in ['♠', '♥', '♦', '♣']:
+        suit_name = {'♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs'}[suit]
+        tex = flat[f'{suit_name}_texture']
+        length = hf['suit_lengths'][suit]
+        suit_cards = set(c.rank for c in hand.cards if c.suit == suit)
+        if tex in ('solid', 'sequential'):
+            _texture_adj += 1.0
+        # Isolated honor: stiff K, Qx without A/K, Jxx without A/K/Q
+        elif length == 1 and 'K' in suit_cards:
+            _texture_adj -= 0.5
+        elif length == 2 and 'Q' in suit_cards and 'A' not in suit_cards and 'K' not in suit_cards:
+            _texture_adj -= 0.5
+        elif length <= 3 and 'J' in suit_cards and 'A' not in suit_cards and 'K' not in suit_cards and 'Q' not in suit_cards:
+            _texture_adj -= 0.5
+    flat['texture_hcp_adjustment'] = _texture_adj
+    flat['effective_hcp'] = flat['hcp'] + _texture_adj
+
     # Auction features
     af = nested['auction_features']
     flat['num_bids'] = af['num_bids']
@@ -170,6 +194,24 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     flat['opener_relationship'] = af['opener_relationship']
     flat['partner_last_bid'] = af['partner_last_bid']
     flat['is_contested'] = af['is_contested']
+
+    # last_bid_side: who made the last non-Pass/X/XX bid in the auction?
+    # Values: 'partner', 'opponent', 'self', or None (no substantive bids yet).
+    # Formula: bidder_seat = (dealer_seat + bid_index) % 4
+    flat['last_bid_side'] = None
+    for _ri in range(len(auction_history) - 1, -1, -1):
+        _rbid = auction_history[_ri]
+        if _rbid not in ('Pass', 'X', 'XX', ''):
+            _bidder_seat = seat_from_index(dealer_idx + _ri)
+            _side = _seat_to_key.get(_bidder_seat)  # 'me', 'partner', 'lho', 'rho'
+            if _side == 'me':
+                flat['last_bid_side'] = 'self'
+            elif _side == 'partner':
+                flat['last_bid_side'] = 'partner'
+            else:
+                flat['last_bid_side'] = 'opponent'
+            break
+
     flat['vulnerability'] = af['vulnerability']
 
     # Compute vulnerability booleans for rule conditions
@@ -920,6 +962,73 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
                     if flat.get('partner_first_suit') in ['♠', '♥']:
                         flat['nmf_responder_major'] = flat['partner_first_suit']
 
+    # NMF Responder-side: detect when I can initiate NMF
+    # Sequence: Partner opened 1m, I responded 1M, partner rebid 1NT → I should bid NMF
+    flat['is_nmf_situation'] = False
+    flat['nmf_bid'] = None  # The full NMF bid string (e.g., "2♦")
+    flat['nmf_suit'] = None  # Just the suit symbol (e.g., "♦") for bid templates
+    flat['partner_opening_minor'] = None
+    if flat.get('is_responder_rebid') and partner_bids and my_bids:
+        partner_opening = partner_bids[0] if partner_bids else None
+        my_response = my_bids[0] if my_bids else None
+        if partner_opening and my_response:
+            partner_opening_suit = get_suit_from_bid(partner_opening)
+            partner_opening_level = get_bid_level(partner_opening)
+            my_response_suit = get_suit_from_bid(my_response)
+            my_response_level = get_bid_level(my_response)
+            partner_last = flat.get('partner_last_bid', '')
+            # Pattern: partner opened 1m, I bid 1M, partner rebid 1NT
+            if (partner_opening_level == 1 and partner_opening_suit in ['♣', '♦']
+                    and my_response_level == 1 and my_response_suit in ['♥', '♠']
+                    and partner_last == '1NT'
+                    and not flat.get('is_contested', False)):
+                flat['is_nmf_situation'] = True
+                flat['partner_opening_minor'] = partner_opening_suit
+                # NMF bid = the OTHER minor (not partner's opening minor)
+                nmf_suit = '♦' if partner_opening_suit == '♣' else '♣'
+                flat['nmf_suit'] = nmf_suit
+                flat['nmf_bid'] = f'2{nmf_suit}'
+
+    # NMF Responder continuation: detect when partner has responded to my NMF bid
+    # Sequence: Partner opened 1m, I bid 1M, partner bid 1NT, I bid NMF (2x), partner responded
+    flat['partner_responded_to_my_nmf'] = False
+    flat['partner_nmf_showed_support'] = False
+    flat['partner_nmf_showed_other_major'] = False
+    flat['partner_nmf_minimum'] = False
+    flat['partner_nmf_maximum'] = False
+    flat['my_nmf_major'] = None  # The major I originally bid
+    if flat.get('is_responder_rebid') and flat.get('my_bid_count', 0) >= 2 and partner_bids and my_bids:
+        partner_opening = partner_bids[0] if partner_bids else None
+        my_first_bid = my_bids[0] if my_bids else None
+        my_second_bid = my_bids[1] if len(my_bids) >= 2 else None
+        if partner_opening and my_first_bid and my_second_bid:
+            partner_opening_suit = get_suit_from_bid(partner_opening)
+            partner_opening_level = get_bid_level(partner_opening)
+            my_first_suit = get_suit_from_bid(my_first_bid)
+            my_first_level = get_bid_level(my_first_bid)
+            my_second_suit = get_suit_from_bid(my_second_bid)
+            my_second_level = get_bid_level(my_second_bid)
+            # Verify I made an NMF bid: opened 1m, I bid 1M, my 2nd bid is 2-level other minor
+            if (partner_opening_level == 1 and partner_opening_suit in ['♣', '♦']
+                    and my_first_level == 1 and my_first_suit in ['♥', '♠']
+                    and my_second_level == 2 and my_second_suit in ['♣', '♦']
+                    and my_second_suit != partner_opening_suit):
+                flat['partner_responded_to_my_nmf'] = True
+                flat['my_nmf_major'] = my_first_suit
+                partner_last = flat.get('partner_last_bid', '')
+                partner_last_suit = get_suit_from_bid(partner_last) if partner_last else None
+                # Opener showed 3+ support for my major (2M or 3M)
+                if partner_last_suit == my_first_suit:
+                    flat['partner_nmf_showed_support'] = True
+                # Opener showed 4-card other major
+                elif partner_last_suit in ['♥', '♠'] and partner_last_suit != my_first_suit:
+                    flat['partner_nmf_showed_other_major'] = True
+                # Opener denied majors — 2NT = minimum, 3NT = maximum
+                elif partner_last == '2NT':
+                    flat['partner_nmf_minimum'] = True
+                elif partner_last == '3NT':
+                    flat['partner_nmf_maximum'] = True
+
     # Shortness detection (for Splinters and Jacoby rebids)
     flat['has_void'] = any(l == 0 for l in suit_lengths.values())
     flat['has_singleton'] = any(l == 1 for l in suit_lengths.values())
@@ -1310,9 +1419,15 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
         flat['partner_max_hcp'] = min(flat['partner_max_hcp'], 11)
         flat['partner_min_hcp'] = min(flat['partner_min_hcp'], 11)
 
-    # Combined partnership HCP estimate (for slam decisions)
-    flat['partnership_hcp_min'] = flat['hcp'] + flat['partner_min_hcp']
-    flat['partnership_hcp_max'] = flat['hcp'] + flat['partner_max_hcp']
+    # Combined partnership HCP estimate (for game/slam decisions)
+    # Uses RAW HCP — texture is a separate metric (effective_hcp) used only
+    # by judgment rules (3NT sign-offs, direct slams). Mixing texture into
+    # partnership_hcp_min would double-count with LTC in suit contracts.
+    # Only universal adjustment: -1 flatness penalty for 4-3-3-3 (no ruffing value).
+    _flat_penalty = 1 if flat['is_flat'] else 0
+    flat['flatness_penalty'] = _flat_penalty
+    flat['partnership_hcp_min'] = flat['hcp'] + flat['partner_min_hcp'] - _flat_penalty
+    flat['partnership_hcp_max'] = flat['hcp'] + flat['partner_max_hcp'] - _flat_penalty
     flat['partnership_has_slam_values'] = flat['partnership_hcp_min'] >= 31
 
     # Combined partnership total points estimate (HCP + our distribution points)
@@ -1323,11 +1438,16 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
     # Uses average of min/max partner HCP, capped at 20 to prevent inflation
     # This is more realistic than minimum for slam decisions
     partner_max_capped = min(flat['partner_max_hcp'], 20)
-    flat['partnership_hcp_mid'] = flat['hcp'] + (flat['partner_min_hcp'] + partner_max_capped) // 2
+    flat['partnership_hcp_mid'] = flat['hcp'] + (flat['partner_min_hcp'] + partner_max_capped) // 2 - _flat_penalty
 
     # Midpoint partnership total points: our total points + midpoint of partner's HCP range
     # Best metric for slam initiation — includes our distribution AND uses realistic partner estimate
-    flat['partnership_total_points_mid'] = flat['total_points'] + (flat['partner_min_hcp'] + partner_max_capped) // 2
+    flat['partnership_total_points_mid'] = flat['total_points'] + (flat['partner_min_hcp'] + partner_max_capped) // 2 - _flat_penalty
+
+    # Effective partnership HCP (texture-adjusted) — used ONLY by judgment rules
+    # (3NT sign-offs, direct 6-level slams) where "working points" matter.
+    # NOT used by partnership_hcp_min to avoid double-counting with LTC.
+    flat['effective_partnership_hcp_min'] = int(flat['effective_hcp'] + flat['partner_min_hcp'] - _flat_penalty)
 
     # Partnership Losing Trick Count (LTC)
     # Our LTC is exact; partner's is estimated from their HCP midpoint.

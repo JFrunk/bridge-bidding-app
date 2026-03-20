@@ -261,7 +261,7 @@
       "id": "negative_double_1_level",
       "bid": "X",
       "priority": 820,
-      "description": "Negative double at 1-level - shows 6+ HCP and 4+ cards in unbid major",
+      "description": "Negative double at 1-level - shows 6+ HCP and 4+ cards in unbid major (denies 3+ support for partner)",
       "conditions": {
         "is_contested": true,
         "opener_relationship": "Partner",
@@ -269,7 +269,10 @@
         "hcp": {
           "min": 6
         },
-        "has_unbid_major_4": true
+        "has_unbid_major_4": true,
+        "support_for_partner": {
+          "max": 2
+        }
       },
       "forcing": "one_round",
       "explanation": "Negative Double. Shows 6+ HCP and length in the unbid major(s).",
@@ -279,7 +282,7 @@
       "id": "negative_double_2_level",
       "bid": "X",
       "priority": 825,
-      "description": "Negative double at 2-level - shows 8+ HCP and 4+ cards in unbid major",
+      "description": "Negative double at 2-level - shows 8+ HCP and 4+ cards in unbid major (denies 3+ support for partner)",
       "conditions": {
         "is_contested": true,
         "opener_relationship": "Partner",
@@ -287,7 +290,10 @@
         "hcp": {
           "min": 8
         },
-        "has_unbid_major_4": true
+        "has_unbid_major_4": true,
+        "support_for_partner": {
+          "max": 2
+        }
       },
       "forcing": "one_round",
       "explanation": "Negative Double at the 2-level. Shows 8+ HCP and at least one 4-card major.",
@@ -297,7 +303,7 @@
       "id": "negative_double_3_level",
       "bid": "X",
       "priority": 830,
-      "description": "Negative double at 3-level - shows 10+ HCP and 4+ cards in unbid major",
+      "description": "Negative double at 3-level - shows 10+ HCP and 4+ cards in unbid major (denies 3+ support for partner)",
       "conditions": {
         "is_contested": true,
         "opener_relationship": "Partner",
@@ -305,7 +311,10 @@
         "hcp": {
           "min": 10
         },
-        "has_unbid_major_4": true
+        "has_unbid_major_4": true,
+        "support_for_partner": {
+          "max": 2
+        }
       },
       "forcing": "one_round",
       "explanation": "Negative Double at the 3-level. Shows 10+ HCP and at least one 4-card major.",
@@ -439,17 +448,11 @@
         "hcp": {
           "min": 10
         },
-        "has_4_card_major": true,
-        "partnership_fit": {
-          "min": 8
-        },
-        "partnership_ltc": {
-          "max": 14
-        }
+        "has_4_card_major": true
       },
       "forcing": "none",
       "suit_selection": "longest_major_first",
-      "explanation": "Bid game in response to partner's takeout double (10+ HCP, LTC ≤ 14)",
+      "explanation": "Bid game in response to partner's takeout double (10+ HCP)",
       "sets_forcing_level": "NON_FORCING"
     },
     {

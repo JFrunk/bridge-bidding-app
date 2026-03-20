@@ -409,7 +409,7 @@
       "id": "free_raise_after_interference",
       "bid": "2{partner_suit}",
       "priority": 810,
-      "description": "Free raise after opponent's suit overcall - shows genuine values and real support",
+      "description": "Free raise after opponent's suit overcall - shows genuine values and 3+ support",
       "conditions": {
         "is_response": true,
         "is_contested": true,
@@ -426,7 +426,7 @@
           "max": 10
         },
         "support_for_partner": {
-          "min": 4
+          "min": 3
         },
         "partnership_hcp_min": {
           "min": 20

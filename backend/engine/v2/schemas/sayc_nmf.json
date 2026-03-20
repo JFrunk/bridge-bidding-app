@@ -12,6 +12,7 @@
       "constraints": [
         {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
         {"feature": "partner_bid_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "last_bid_side", "expected": "partner", "constraint_type": "HARD"},
         {"feature": "nmf_responder_major", "expected": "♠", "constraint_type": "HARD"},
         {"feature": "spades_length", "min": 3, "constraint_type": "HARD"}
       ],
@@ -27,6 +28,7 @@
       "constraints": [
         {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
         {"feature": "partner_bid_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "last_bid_side", "expected": "partner", "constraint_type": "HARD"},
         {"feature": "nmf_responder_major", "expected": "♥", "constraint_type": "HARD"},
         {"feature": "hearts_length", "min": 3, "constraint_type": "HARD"}
       ],
@@ -42,6 +44,7 @@
       "constraints": [
         {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
         {"feature": "partner_bid_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "last_bid_side", "expected": "partner", "constraint_type": "HARD"},
         {"feature": "nmf_responder_major", "expected": "♠", "constraint_type": "HARD"},
         {"feature": "hearts_length", "min": 4, "constraint_type": "HARD"},
         {"feature": "spades_length", "max": 2, "constraint_type": "HARD"}
@@ -58,6 +61,7 @@
       "constraints": [
         {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
         {"feature": "partner_bid_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "last_bid_side", "expected": "partner", "constraint_type": "HARD"},
         {"feature": "nmf_responder_major", "expected": "♥", "constraint_type": "HARD"},
         {"feature": "spades_length", "min": 4, "constraint_type": "HARD"},
         {"feature": "hearts_length", "max": 2, "constraint_type": "HARD"}
@@ -74,6 +78,7 @@
       "constraints": [
         {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
         {"feature": "partner_bid_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "last_bid_side", "expected": "partner", "constraint_type": "HARD"},
         {"feature": "hcp", "min": 12, "max": 13, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
       ],
       "forcing": "none",
@@ -88,6 +93,7 @@
       "constraints": [
         {"feature": "is_rebid", "expected": true, "constraint_type": "HARD"},
         {"feature": "partner_bid_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "last_bid_side", "expected": "partner", "constraint_type": "HARD"},
         {"feature": "hcp", "min": 14, "constraint_type": "HARD"}
       ],
       "forcing": "none",

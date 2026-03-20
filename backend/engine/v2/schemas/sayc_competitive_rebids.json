@@ -102,7 +102,7 @@
       "id": "doubler_game_spades",
       "bid": "4♠",
       "priority": 850,
-      "description": "Game bid in spades after takeout double - strong hand with fit",
+      "description": "Game bid in spades after takeout double - strong hand with fit and LTC",
       "conditions": {
         "is_doubler_rebid": true,
         "my_last_bid": "X",
@@ -120,14 +120,14 @@
         }
       },
       "forcing": "none",
-      "explanation": "Game in spades with appropriate HCP and 4-card support",
+      "explanation": "Game in spades with 19+ HCP, 4-card support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
       "id": "doubler_game_hearts",
       "bid": "4♥",
       "priority": 850,
-      "description": "Game bid in hearts after takeout double - strong hand with fit",
+      "description": "Game bid in hearts after takeout double - strong hand with fit and LTC",
       "conditions": {
         "is_doubler_rebid": true,
         "my_last_bid": "X",
@@ -145,7 +145,7 @@
         }
       },
       "forcing": "none",
-      "explanation": "Game in hearts with appropriate HCP and 4-card support",
+      "explanation": "Game in hearts with 19+ HCP, 4-card support",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -282,19 +282,16 @@
       "conditions": {
         "is_contested": true,
         "is_rebid": true,
-        "hcp": {
+        "effective_hcp": {
           "min": 16
         },
         "is_balanced": true,
         "partnership_hcp_min": {
           "min": 25
-        },
-        "partnership_stoppers": {
-          "min": 3
         }
       },
       "forcing": "none",
-      "explanation": "3NT: Balanced extras with game values, 3+ suits stopped",
+      "explanation": "3NT: Balanced extras with game values",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -357,16 +354,13 @@
         "partnership_hcp_min": {
           "min": 25
         },
-        "hcp": {
+        "effective_hcp": {
           "min": 10
         },
-        "is_balanced": true,
-        "partnership_stoppers": {
-          "min": 3
-        }
+        "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "3NT: Partnership has 25+ HCP, balanced, 3+ suits stopped",
+      "explanation": "3NT: Partnership has 25+ HCP, balanced",
       "sets_forcing_level": "NON_FORCING"
     },
     {
@@ -483,16 +477,13 @@
         "partnership_hcp_min": {
           "min": 25
         },
-        "hcp": {
+        "effective_hcp": {
           "min": 10
         },
-        "is_balanced": true,
-        "partnership_stoppers": {
-          "min": 3
-        }
+        "is_balanced": true
       },
       "forcing": "none",
-      "explanation": "3NT: Partnership has 25+ HCP, balanced, 3+ suits stopped",
+      "explanation": "3NT: Partnership has 25+ HCP, balanced",
       "sets_forcing_level": "NON_FORCING"
     },
     {

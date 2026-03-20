@@ -183,7 +183,7 @@
       "id": "response_weak2_game_hearts",
       "bid": "4♥",
       "priority": 500,
-      "description": "Game raise of partner's Weak 2H",
+      "description": "Game raise of partner's Weak 2H with fit and LTC",
       "trigger": "2♥ - Pass - ?",
       "conditions": {
         "hcp": {
@@ -201,7 +201,7 @@
       "id": "response_weak2_game_spades",
       "bid": "4♠",
       "priority": 500,
-      "description": "Game raise of partner's Weak 2S",
+      "description": "Game raise of partner's Weak 2S with fit and LTC",
       "trigger": "2♠ - Pass - ?",
       "conditions": {
         "hcp": {

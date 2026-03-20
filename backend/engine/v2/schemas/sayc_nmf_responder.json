@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0",
+  "system": "SAYC",
+  "category": "new_minor_forcing_responder",
+  "description": "New Minor Forcing: Responder's NMF initiation (2m probe) and continuation bids after opener responds",
+  "rules": [
+    {
+      "id": "nmf_initiate_invitational_plus",
+      "bid": "2{nmf_suit}",
+      "priority": 850,
+      "description": "NMF: Bid the unbid minor to force opener to describe their hand (invitational+ values)",
+      "constraints": [
+        {"feature": "is_responder_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_nmf_situation", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "last_bid_side", "expected": "partner", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 11, "constraint_type": "HARD"},
+        {"feature": "longest_suit_length", "min": 5, "constraint_type": "SOFT", "penalty_per_unit": 0.05}
+      ],
+      "forcing": "one_round",
+      "explanation": "New Minor Forcing — asking opener to describe major suit length and hand strength",
+      "sets_forcing_level": "FORCING_1_ROUND"
+    },
+    {
+      "id": "nmf_initiate_game_force",
+      "bid": "2{nmf_suit}",
+      "priority": 855,
+      "description": "NMF: Game-forcing hand — must reach game after NMF",
+      "constraints": [
+        {"feature": "is_responder_rebid", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_nmf_situation", "expected": true, "constraint_type": "HARD"},
+        {"feature": "is_contested", "expected": false, "constraint_type": "HARD"},
+        {"feature": "last_bid_side", "expected": "partner", "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 13, "constraint_type": "HARD"}
+      ],
+      "forcing": "game_force",
+      "explanation": "New Minor Forcing — game-forcing values, probing for best game",
+      "sets_forcing_level": "GAME_FORCE"
+    },
+    {
+      "id": "nmf_continuation_raise_major_game",
+      "bid": "4{my_nmf_major}",
+      "priority": 860,
+      "description": "NMF continuation: Bid game in our agreed major after opener showed support",
+      "constraints": [
+        {"feature": "partner_responded_to_my_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_nmf_showed_support", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 13, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Bidding game in our major — opener confirmed 3+ card support",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "nmf_continuation_raise_major_invite",
+      "bid": "3{my_nmf_major}",
+      "priority": 845,
+      "description": "NMF continuation: Invite in our major (opener showed support, I'm minimum invitational)",
+      "constraints": [
+        {"feature": "partner_responded_to_my_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_nmf_showed_support", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 11, "max": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+      ],
+      "forcing": "none",
+      "explanation": "Inviting game in our major — opener showed support but I'm minimum",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "nmf_continuation_accept_other_major",
+      "bid": "4{nmf_other_major}",
+      "priority": 858,
+      "description": "NMF continuation: Bid game in opener's other major with 4-card fit",
+      "constraints": [
+        {"feature": "partner_responded_to_my_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_nmf_showed_other_major", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 11, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Bidding game in the 4-4 major fit found via NMF",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "nmf_continuation_3nt_after_2nt",
+      "bid": "3NT",
+      "priority": 852,
+      "description": "NMF continuation: Raise opener's 2NT to 3NT with game values",
+      "constraints": [
+        {"feature": "partner_responded_to_my_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_nmf_minimum", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 13, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Raising 2NT to 3NT — enough combined values for game despite opener's minimum",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "nmf_continuation_pass_2nt_minimum",
+      "bid": "Pass",
+      "priority": 840,
+      "description": "NMF continuation: Pass opener's 2NT — both minimum, partscore",
+      "constraints": [
+        {"feature": "partner_responded_to_my_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_nmf_minimum", "expected": true, "constraint_type": "HARD"},
+        {"feature": "hcp", "min": 11, "max": 12, "constraint_type": "SOFT", "penalty_per_unit": 0.08}
+      ],
+      "forcing": "none",
+      "explanation": "Passing 2NT — opener showed minimum with no major fit, not enough for game",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "nmf_continuation_pass_3nt_maximum",
+      "bid": "Pass",
+      "priority": 856,
+      "description": "NMF continuation: Pass opener's 3NT — game already reached",
+      "constraints": [
+        {"feature": "partner_responded_to_my_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_nmf_maximum", "expected": true, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Passing 3NT — opener showed maximum with no major fit, game already reached",
+      "sets_forcing_level": "NON_FORCING"
+    },
+    {
+      "id": "nmf_continuation_rebid_6_card_major",
+      "bid": "3{my_nmf_major}",
+      "priority": 848,
+      "description": "NMF continuation: Rebid 6+ card major after opener denied support (invitational)",
+      "constraints": [
+        {"feature": "partner_responded_to_my_nmf", "expected": true, "constraint_type": "HARD"},
+        {"feature": "partner_nmf_showed_support", "expected": false, "constraint_type": "HARD"},
+        {"feature": "partner_nmf_showed_other_major", "expected": false, "constraint_type": "HARD"},
+        {"feature": "longest_suit_length", "min": 6, "constraint_type": "HARD"}
+      ],
+      "forcing": "none",
+      "explanation": "Rebidding 6-card major — opener denied support but I have a self-sufficient suit",
+      "sets_forcing_level": "NON_FORCING"
+    }
+  ]
+}
