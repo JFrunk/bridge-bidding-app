@@ -316,10 +316,10 @@
     "west center east"
     "south south south";
   grid-template-columns: 1fr auto 1fr;
-  grid-template-rows: auto minmax(140px, 1fr) auto;
+  grid-template-rows: auto minmax(120px, 1fr) auto;
   column-gap: clamp(4px, 1.5vw, 10px);
-  row-gap: var(--space-3);
-  padding: 15px;
+  row-gap: var(--space-2);
+  padding: 10px;
   background-color: var(--bg-table-felt);
   border: 3px solid var(--bg-table-border);
   border-radius: 12px;
@@ -377,7 +377,7 @@
   padding: 2px var(--space-2);
   background: transparent;
   border-radius: 3px;
-  margin: 0 auto 6px auto;
+  margin: 0 auto 3px auto;
   width: fit-content;
 }
 
@@ -389,7 +389,7 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  min-height: clamp(110px, 20vw, 175px);
+  min-height: clamp(90px, 16vw, 145px);
   z-index: 50; /* Ensure played cards appear above all hand cards */
   position: relative;
   pointer-events: none; /* Allow clicks to pass through to cards below */
@@ -412,12 +412,12 @@
   grid-template-columns: 1fr auto 1fr;
   grid-template-rows: 1fr auto 1fr;
   gap: 0;
-  padding: 14px;
+  padding: 10px;
   background-color: var(--bg-table-felt-dark);
   border: 3px solid var(--bg-table-border);
   border-radius: 10px;
-  min-height: clamp(110px, 20vw, 175px);
-  min-width: clamp(110px, 20vw, 175px);
+  min-height: clamp(90px, 16vw, 145px);
+  min-width: clamp(90px, 16vw, 145px);
   align-items: center;
   justify-items: center;
 }
@@ -436,8 +436,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-width: 60px;
-  min-height: 80px;
+  min-width: 48px;
+  min-height: 64px;
 }
 
 .trick-north {
@@ -531,8 +531,8 @@
 /* Trick cards - cards played in the current trick (center of table)
    Top-left corner only display - compact and efficient for mobile */
 .trick-card {
-  width: 50px;
-  height: 70px;
+  width: 42px;
+  height: 58px;
   box-shadow: 0 3px 6px rgba(0,0,0,0.25);
   transition: all 0.3s ease;
 }
@@ -550,9 +550,9 @@
    Visual styling (border, border-radius, background, shadow) controlled by
    Tailwind classes in PlayableCard.jsx to match Card.js (Physics v2.0) */
 .playable-card {
-  padding: var(--space-2) 5px;
-  width: 60px;
-  height: 84px;
+  padding: var(--space-1) 4px;
+  width: 48px;
+  height: 67px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: inline-block;
@@ -664,7 +664,7 @@
   margin: 0 auto;
   overflow: visible;
   justify-content: center;
-  min-height: 80px;  /* Ensure cards are always visible */
+  min-height: 67px;  /* Ensure cards are always visible */
   padding: 5px 0;  /* Add vertical padding */
 }
 
@@ -676,7 +676,7 @@
   max-width: 100%;
   width: 100%;
   margin: 0 auto;
-  padding: 10px;
+  padding: 6px;
   background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
   border-radius: 8px;
   border: 2px solid rgba(35, 122, 61, 0.4);
@@ -696,7 +696,7 @@
   max-width: 100%;
   width: 100%;
   margin: 0 auto;
-  padding: 10px;
+  padding: 6px;
   background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
   border-radius: 8px;
   border: 2px solid rgba(35, 122, 61, 0.4);
@@ -742,7 +742,7 @@
   max-width: 100%;
   width: 100%;
   margin: 0 auto;
-  padding: 10px;
+  padding: 6px;
   background-color: rgba(35, 122, 61, 0.15);  /* Light green tint */
   border-radius: 8px;
   border: 2px solid rgba(35, 122, 61, 0.4);
@@ -778,13 +778,12 @@
   padding: 5px;
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 5px;
-  min-height: 120px;
   position: relative;
 }
 
 /* Overlap playable cards horizontally - show ~60% of each card */
 .suit-group .playable-card {
-  margin-left: -25px; /* Card width 60px, show 35px (~60%) */
+  margin-left: -19px; /* Card width 48px, show 29px (~60%) */
   margin-top: 0;
   margin-right: 0;
   margin-bottom: 0;
@@ -798,7 +797,7 @@
 .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
 .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
 .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-  margin-left: -25px; /* Same overlap between suits */
+  margin-left: -19px; /* Same overlap between suits */
 }
 
 
@@ -840,17 +839,17 @@
 
 @media (max-width: 900px) {
   .play-area {
-    grid-template-rows: auto minmax(120px, 1fr) auto;
+    grid-template-rows: auto minmax(100px, 1fr) auto;
   }
 
   .playable-card {
-    min-width: 50px;
-    min-height: 80px;
-    padding: 10px 5px;
+    min-width: 44px;
+    min-height: 64px;
+    padding: 3px 4px;
   }
 
   .suit-group .playable-card {
-    margin-left: -33px;
+    margin-left: -26px;
   }
 
   .suit-group .playable-card:first-child {
@@ -860,7 +859,7 @@
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -33px;
+    margin-left: -26px;
   }
 
   .play-header {
@@ -889,25 +888,25 @@
   }
 
   .play-area {
-    grid-template-rows: auto minmax(120px, 1fr) auto;
+    grid-template-rows: auto minmax(100px, 1fr) auto;
     padding: 6px;
   }
 
   .current-trick {
     gap: 0;
-    padding: 10px;
+    padding: 8px;
   }
 
   .trick-card {
-    width: 45px;
-    height: 63px;
+    width: 38px;
+    height: 53px;
   }
 
   .playable-card {
-    min-width: 45px;
-    min-height: 70px;
-    padding: var(--space-2) 5px;
-    margin: 2px;
+    min-width: 40px;
+    min-height: 58px;
+    padding: var(--space-1) 4px;
+    margin: 1px;
   }
 
   /* Mobile: Reduce overlap and allow wrapping to show all cards */
@@ -918,7 +917,7 @@
   }
 
   .suit-group .playable-card {
-    margin-left: -22px;
+    margin-left: -18px;
     margin-top: 0;
     margin-right: 0;
   }
@@ -929,13 +928,13 @@
 
   /* When cards wrap to second row, reset left margin */
   .suit-group .playable-card:nth-child(n+9) {
-    margin-top: 5px;
+    margin-top: 4px;
   }
 
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -22px;
+    margin-left: -18px;
   }
 
   .playable-card .rank {
@@ -963,18 +962,18 @@
 /* Mobile phones - smaller cards like Learn module */
 @media (max-width: 480px) {
   .play-area {
-    grid-template-rows: auto minmax(100px, 1fr) auto;
+    grid-template-rows: auto minmax(80px, 1fr) auto;
     padding: var(--space-1);
   }
 
   .current-trick {
     gap: 0;
-    padding: 6px;
+    padding: 5px;
   }
 
   .trick-card {
-    width: 40px;
-    height: 56px;
+    width: 34px;
+    height: 48px;
     border-radius: 4px;
   }
 
@@ -986,11 +985,11 @@
     font-size: 0.75rem;
   }
 
-  /* Mobile card sizing - match Learn module medium size (45x63) */
+  /* Mobile card sizing - compact (38x53) */
   .playable-card {
-    width: 45px;
-    height: 63px;
-    padding: 3px 2px;
+    width: 38px;
+    height: 53px;
+    padding: 2px 1px;
     margin: 1px;
   }
 
@@ -1002,7 +1001,7 @@
   }
 
   .suit-group .playable-card {
-    margin-left: -22px;
+    margin-left: -18px;
     margin-top: 0;
     margin-right: 0;
   }
@@ -1014,7 +1013,7 @@
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -22px;
+    margin-left: -18px;
   }
 
   .playable-card .rank {
@@ -1066,8 +1065,8 @@
 /* Extra small phones (Android <360px) */
 @media (max-width: 360px) {
   .play-area {
-    grid-template-rows: auto minmax(80px, 1fr) auto;
-    padding: 3px;
+    grid-template-rows: auto minmax(65px, 1fr) auto;
+    padding: 2px;
   }
 
   .current-trick {
@@ -1075,8 +1074,8 @@
   }
 
   .trick-card {
-    width: 34px;
-    height: 48px;
+    width: 30px;
+    height: 42px;
     border-radius: 3px;
   }
 
@@ -1088,11 +1087,11 @@
     font-size: 0.625rem;
   }
 
-  /* Extra small cards - Learn module small size (38x53) */
+  /* Extra small cards */
   .playable-card {
-    width: 38px;
-    height: 53px;
-    padding: 2px 1px;
+    width: 33px;
+    height: 46px;
+    padding: 1px 1px;
   }
 
   .suit-group {
@@ -1101,13 +1100,13 @@
 
   /* Tighter overlap on very small screens */
   .suit-group .playable-card {
-    margin-left: -18px;
+    margin-left: -16px;
   }
 
   .user-play-hand .suit-group:not(:first-child) .playable-card:first-child,
   .dummy-hand .suit-group:not(:first-child) .playable-card:first-child,
   .declarer-hand .suit-group:not(:first-child) .playable-card:first-child {
-    margin-left: -18px;
+    margin-left: -16px;
   }
 
   .playable-card .rank {
