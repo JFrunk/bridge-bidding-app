@@ -68,8 +68,9 @@ export function AuthProvider({ children }) {
 
     const userData = {
       id: data.user_id,
-      email: extra.email || '',
-      display_name: extra.display_name || '',
+      email: extra.email || data.email || '',
+      display_name: extra.display_name || data.display_name || '',
+      auth_provider: data.auth_provider || extra.auth_provider || '',
       isGuest: false,
       emailVerified: extra.email_verified ?? data.email_verified ?? false,
       authVersion: 'v2',

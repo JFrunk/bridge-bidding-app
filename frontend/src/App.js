@@ -31,16 +31,11 @@ import { RoomProvider, useRoom } from './contexts/RoomContext';
 import { partner as getPartnerSeat, SEAT_NAMES, seatIndex, lho } from './utils/seats';
 import { RoomLobby, RoomStatusBar, JoinRoomModal, RoomWaitingState, ChatSidebar } from './components/room';
 import WelcomeWizard from './components/onboarding/WelcomeWizard';
-import { SimpleLogin } from './components/auth/SimpleLogin';
-import { LoginPage } from './components/auth/LoginPage';
-import { RegisterPage } from './components/auth/RegisterPage';
-import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
+import { AuthLanding } from './components/auth/AuthLanding';
 import { ResetPasswordPage } from './components/auth/ResetPasswordPage';
 import { VerifyEmailPage, MagicLinkPage } from './components/auth/TokenPages';
-import { VerificationBanner } from './components/auth/VerificationBanner';
 import { PrivacyPolicy } from './components/legal/PrivacyPolicy';
 import { AboutUs } from './components/legal/AboutUs';
-import { RegistrationPrompt } from './components/auth/RegistrationPrompt';
 import DDSStatusIndicator from './components/DDSStatusIndicator';
 import AIDifficultySelector from './components/AIDifficultySelector';
 import { getSessionHeaders, fetchWithSession } from './utils/sessionHelper';
@@ -428,9 +423,8 @@ function App() {
     joinRoom,
   } = useRoom();
 
-  const [showLogin, setShowLogin] = useState(false);
-  const [authPage, setAuthPage] = useState(null); // 'login' | 'register' | 'forgot' | null
-  const [forgotEmail, setForgotEmail] = useState('');
+  const [authPage, setAuthPage] = useState(null); // 'login' | null
+  const [pendingMode, setPendingMode] = useState(null);
   const [showJoinRoomModal, setShowJoinRoomModal] = useState(false);
   const [vulnerability, setVulnerability] = useState('None');
 
@@ -826,8 +820,15 @@ function App() {
     return state.next_to_play === 'S';
   }, []);
 
-  // No longer auto-show login - users start as guests and can register later
-  // The RegistrationPrompt will appear after they've played a few hands
+  // Resume pending mode after successful authentication
+  useEffect(() => {
+    if (isAuthenticated && pendingMode && !authPage) {
+      const mode = pendingMode;
+      setPendingMode(null);
+      handleModeSelect(mode);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, pendingMode, authPage]);
 
   // Clear game state when user logs out (isAuthenticated becomes false)
   useEffect(() => {
@@ -1227,7 +1228,13 @@ ${otherCommands}`;
   };
 
   // Mode selection handler - routes user to appropriate mode from landing page
+  // Auth gate: if not authenticated, save intended mode and show auth modal
   const handleModeSelect = async (modeId) => {
+    if (!isAuthenticated) {
+      setPendingMode(modeId);
+      setAuthPage('login');
+      return;
+    }
     setShowModeSelector(false);
 
     switch (modeId) {
@@ -3707,7 +3714,7 @@ ${otherCommands}`;
   return (
     <div className="app-container">
       {/* Top Navigation - Always visible */}
-      {isAuthenticated && (
+      {(isAuthenticated || showModeSelector) && (
         <TopNavigation
           currentModule={getCurrentModule()}
           onModuleSelect={handleNavModuleSelect}
@@ -3751,7 +3758,7 @@ ${otherCommands}`;
           </button>
           {/* User avatar menu */}
           <UserMenu
-            onSignInClick={() => setAuthPage('login')}
+            onSignInClick={() => { setAuthPage('login'); }}
             onFeedbackClick={() => setShowFeedbackModal(true)}
           />
         </TopNavigation>
@@ -3762,11 +3769,12 @@ ${otherCommands}`;
       <WelcomeWizard
         isOpen={isAuthenticated && shouldShowWelcomeWizard}
         onSelectExperience={handleExperienceSelect}
+        onSkip={() => handleExperienceSelect({ experienceLevel: 99, areAllLevelsUnlocked: true, experienceId: 'expert', route: 'modeSelector' })}
       />
 
       {/* Mode Selector - Landing Page (shown for returning users or after wizard) */}
       {/* Note: !showLearningFlowsHub guard prevents race condition on LAB navigation from landing page */}
-      {showModeSelector && isAuthenticated && !shouldShowWelcomeWizard && !showLearningFlowsHub && (
+      {showModeSelector && (!isAuthenticated || !shouldShowWelcomeWizard) && !showLearningFlowsHub && (
         <ModeSelector
           onSelectMode={handleModeSelect}
           userName={user?.display_name}
@@ -3794,47 +3802,14 @@ ${otherCommands}`;
         <ResetPasswordPage token={authTokenPage.token} onDone={clearAuthTokenPage} />
       )}
 
-      {/* Verification Banner — persistent reminder for unverified V2 users */}
-      {isAuthenticated && <VerificationBanner />}
-
-      {/* V2 Auth Pages — LoginPage / RegisterPage / ForgotPasswordPage */}
+      {/* Auth Modal — single unified AuthLanding */}
       {authPage === 'login' && (
-        <LoginPage
-          onClose={() => setAuthPage(null)}
-          onSwitchToRegister={() => setAuthPage('register')}
-          onForgotPassword={(email) => { setForgotEmail(email || ''); setAuthPage('forgot'); }}
-        />
-      )}
-      {authPage === 'register' && (
-        <RegisterPage
-          onClose={() => setAuthPage(null)}
-          onSwitchToLogin={() => setAuthPage('login')}
-        />
-      )}
-      {authPage === 'forgot' && (
-        <ForgotPasswordPage
-          onClose={() => setAuthPage(null)}
-          onBackToLogin={() => setAuthPage('login')}
-          prefillEmail={forgotEmail}
-        />
+        <AuthLanding onClose={() => { setAuthPage(null); setPendingMode(null); }} />
       )}
 
-      {/* Register — Show V2 RegisterPage by default for unauthenticated users */}
-      {!authPage && !authTokenPage && (!isAuthenticated && !authLoading) && (
-        <RegisterPage
-          onClose={() => {
-            // If still not authenticated after closing, they chose to be guest
-          }}
-          onSwitchToLogin={() => setAuthPage('login')}
-        />
-      )}
-
-      {/* Registration Prompt - appears after guest plays a few hands */}
-      {showRegistrationPrompt && (
-        <RegistrationPrompt
-          message="You're making great progress! Create an account to save your results and track your improvement."
-          onClose={() => dismissRegistrationPrompt(false)}
-        />
+      {/* Registration Prompt — after guest plays a few hands (no guest option) */}
+      {showRegistrationPrompt && !authPage && (
+        <AuthLanding onClose={() => dismissRegistrationPrompt()} hideGuest />
       )}
 
       {/* Join Room Modal */}

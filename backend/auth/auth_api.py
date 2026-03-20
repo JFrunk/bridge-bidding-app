@@ -184,9 +184,18 @@ def _issue_tokens_response(user_id, extra_data=None):
     refresh_expiry = _jwt_svc.get_refresh_expiry()
     _store_refresh_token(user_id, refresh_hash, refresh_expiry)
 
+    # Include user profile so frontend can display identity
+    try:
+        from engine.learning.user_manager import get_user_manager
+        profile = get_user_manager().get_user(user_id)
+    except Exception:
+        profile = None
+
     body = {
         'access_token': access_token,
         'user_id': user_id,
+        'email': (profile.email or '') if profile else '',
+        'display_name': (profile.display_name or '') if profile else '',
     }
     if extra_data:
         body.update(extra_data)

@@ -58,6 +58,15 @@ class UserManager:
         """Get database connection using abstraction layer"""
         return get_connection()
 
+    @staticmethod
+    def _to_dt(val):
+        """Convert to datetime, handling both str and native datetime from PostgreSQL."""
+        if val is None:
+            return None
+        if isinstance(val, datetime):
+            return val
+        return datetime.fromisoformat(val)
+
     # ========================================================================
     # USER CRUD OPERATIONS
     # ========================================================================
@@ -153,11 +162,11 @@ class UserManager:
             username=row['username'],
             email=row['email'],
             display_name=row['display_name'],
-            created_at=datetime.fromisoformat(row['created_at']),
-            last_login=datetime.fromisoformat(row['last_login']) if row['last_login'] else None,
-            last_activity=datetime.fromisoformat(row['last_activity']) if row['last_activity'] else None,
+            created_at=UserManager._to_dt(row['created_at']),
+            last_login=UserManager._to_dt(row['last_login']),
+            last_activity=UserManager._to_dt(row['last_activity']),
             timezone=row['timezone'],
-            preferences=json.loads(row['preferences']) if row['preferences'] else None,
+            preferences=json.loads(row['preferences']) if isinstance(row['preferences'], str) else row['preferences'],
             phone=row['phone'] if 'phone' in row.keys() else None
         )
 
@@ -181,11 +190,11 @@ class UserManager:
             username=row['username'],
             email=row['email'],
             display_name=row['display_name'],
-            created_at=datetime.fromisoformat(row['created_at']),
-            last_login=datetime.fromisoformat(row['last_login']) if row['last_login'] else None,
-            last_activity=datetime.fromisoformat(row['last_activity']) if row['last_activity'] else None,
+            created_at=UserManager._to_dt(row['created_at']),
+            last_login=UserManager._to_dt(row['last_login']),
+            last_activity=UserManager._to_dt(row['last_activity']),
             timezone=row['timezone'],
-            preferences=json.loads(row['preferences']) if row['preferences'] else None,
+            preferences=json.loads(row['preferences']) if isinstance(row['preferences'], str) else row['preferences'],
             phone=row['phone'] if 'phone' in row.keys() else None
         )
 
@@ -212,11 +221,11 @@ class UserManager:
             username=row['username'],
             email=row['email'],
             display_name=row['display_name'],
-            created_at=datetime.fromisoformat(row['created_at']),
-            last_login=datetime.fromisoformat(row['last_login']) if row['last_login'] else None,
-            last_activity=datetime.fromisoformat(row['last_activity']) if row['last_activity'] else None,
+            created_at=UserManager._to_dt(row['created_at']),
+            last_login=UserManager._to_dt(row['last_login']),
+            last_activity=UserManager._to_dt(row['last_activity']),
             timezone=row['timezone'],
-            preferences=json.loads(row['preferences']) if row['preferences'] else None,
+            preferences=json.loads(row['preferences']) if isinstance(row['preferences'], str) else row['preferences'],
             phone=row['phone'] if 'phone' in row.keys() else None
         )
 
@@ -243,11 +252,11 @@ class UserManager:
             username=row['username'],
             email=row['email'],
             display_name=row['display_name'],
-            created_at=datetime.fromisoformat(row['created_at']),
-            last_login=datetime.fromisoformat(row['last_login']) if row['last_login'] else None,
-            last_activity=datetime.fromisoformat(row['last_activity']) if row['last_activity'] else None,
+            created_at=UserManager._to_dt(row['created_at']),
+            last_login=UserManager._to_dt(row['last_login']),
+            last_activity=UserManager._to_dt(row['last_activity']),
             timezone=row['timezone'],
-            preferences=json.loads(row['preferences']) if row['preferences'] else None,
+            preferences=json.loads(row['preferences']) if isinstance(row['preferences'], str) else row['preferences'],
             phone=row['phone'] if 'phone' in row.keys() else None
         )
 
