@@ -962,6 +962,73 @@ def extract_flat_features(hand: Hand, auction_history: list, my_position: str,
                     if flat.get('partner_first_suit') in ['♠', '♥']:
                         flat['nmf_responder_major'] = flat['partner_first_suit']
 
+    # NMF Responder-side: detect when I can initiate NMF
+    # Sequence: Partner opened 1m, I responded 1M, partner rebid 1NT → I should bid NMF
+    flat['is_nmf_situation'] = False
+    flat['nmf_bid'] = None  # The full NMF bid string (e.g., "2♦")
+    flat['nmf_suit'] = None  # Just the suit symbol (e.g., "♦") for bid templates
+    flat['partner_opening_minor'] = None
+    if flat.get('is_responder_rebid') and partner_bids and my_bids:
+        partner_opening = partner_bids[0] if partner_bids else None
+        my_response = my_bids[0] if my_bids else None
+        if partner_opening and my_response:
+            partner_opening_suit = get_suit_from_bid(partner_opening)
+            partner_opening_level = get_bid_level(partner_opening)
+            my_response_suit = get_suit_from_bid(my_response)
+            my_response_level = get_bid_level(my_response)
+            partner_last = flat.get('partner_last_bid', '')
+            # Pattern: partner opened 1m, I bid 1M, partner rebid 1NT
+            if (partner_opening_level == 1 and partner_opening_suit in ['♣', '♦']
+                    and my_response_level == 1 and my_response_suit in ['♥', '♠']
+                    and partner_last == '1NT'
+                    and not flat.get('is_contested', False)):
+                flat['is_nmf_situation'] = True
+                flat['partner_opening_minor'] = partner_opening_suit
+                # NMF bid = the OTHER minor (not partner's opening minor)
+                nmf_suit = '♦' if partner_opening_suit == '♣' else '♣'
+                flat['nmf_suit'] = nmf_suit
+                flat['nmf_bid'] = f'2{nmf_suit}'
+
+    # NMF Responder continuation: detect when partner has responded to my NMF bid
+    # Sequence: Partner opened 1m, I bid 1M, partner bid 1NT, I bid NMF (2x), partner responded
+    flat['partner_responded_to_my_nmf'] = False
+    flat['partner_nmf_showed_support'] = False
+    flat['partner_nmf_showed_other_major'] = False
+    flat['partner_nmf_minimum'] = False
+    flat['partner_nmf_maximum'] = False
+    flat['my_nmf_major'] = None  # The major I originally bid
+    if flat.get('is_responder_rebid') and flat.get('my_bid_count', 0) >= 2 and partner_bids and my_bids:
+        partner_opening = partner_bids[0] if partner_bids else None
+        my_first_bid = my_bids[0] if my_bids else None
+        my_second_bid = my_bids[1] if len(my_bids) >= 2 else None
+        if partner_opening and my_first_bid and my_second_bid:
+            partner_opening_suit = get_suit_from_bid(partner_opening)
+            partner_opening_level = get_bid_level(partner_opening)
+            my_first_suit = get_suit_from_bid(my_first_bid)
+            my_first_level = get_bid_level(my_first_bid)
+            my_second_suit = get_suit_from_bid(my_second_bid)
+            my_second_level = get_bid_level(my_second_bid)
+            # Verify I made an NMF bid: opened 1m, I bid 1M, my 2nd bid is 2-level other minor
+            if (partner_opening_level == 1 and partner_opening_suit in ['♣', '♦']
+                    and my_first_level == 1 and my_first_suit in ['♥', '♠']
+                    and my_second_level == 2 and my_second_suit in ['♣', '♦']
+                    and my_second_suit != partner_opening_suit):
+                flat['partner_responded_to_my_nmf'] = True
+                flat['my_nmf_major'] = my_first_suit
+                partner_last = flat.get('partner_last_bid', '')
+                partner_last_suit = get_suit_from_bid(partner_last) if partner_last else None
+                # Opener showed 3+ support for my major (2M or 3M)
+                if partner_last_suit == my_first_suit:
+                    flat['partner_nmf_showed_support'] = True
+                # Opener showed 4-card other major
+                elif partner_last_suit in ['♥', '♠'] and partner_last_suit != my_first_suit:
+                    flat['partner_nmf_showed_other_major'] = True
+                # Opener denied majors — 2NT = minimum, 3NT = maximum
+                elif partner_last == '2NT':
+                    flat['partner_nmf_minimum'] = True
+                elif partner_last == '3NT':
+                    flat['partner_nmf_maximum'] = True
+
     # Shortness detection (for Splinters and Jacoby rebids)
     flat['has_void'] = any(l == 0 for l in suit_lengths.values())
     flat['has_singleton'] = any(l == 1 for l in suit_lengths.values())

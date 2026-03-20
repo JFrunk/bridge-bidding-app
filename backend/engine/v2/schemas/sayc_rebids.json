@@ -478,7 +478,8 @@
         "is_rebid": true,
         "is_contested": false,
         "my_last_bid": "1NT",
-        "partner_last_bid": "2♦"
+        "partner_last_bid": "2♦",
+        "partner_bid_nmf": false
       },
       "forcing": "none",
       "explanation": "Completing Jacoby transfer to hearts",
@@ -493,7 +494,8 @@
         "is_rebid": true,
         "is_contested": false,
         "my_last_bid": "1NT",
-        "partner_last_bid": "2♥"
+        "partner_last_bid": "2♥",
+        "partner_bid_nmf": false
       },
       "forcing": "none",
       "explanation": "Completing Jacoby transfer to spades",
