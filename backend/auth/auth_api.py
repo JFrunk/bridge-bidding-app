@@ -65,6 +65,18 @@ def _set_password_hash(user_id, password_hash):
         )
 
 
+def _has_google_provider(user_id):
+    """Check if user has linked Google as an auth provider."""
+    from db import get_connection
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT 1 FROM auth_providers WHERE user_id = %s AND provider = 'google'",
+            (user_id,),
+        )
+        return cursor.fetchone() is not None
+
+
 def _add_auth_provider(user_id, provider):
     """Record a linked auth provider for a user."""
     from db import get_connection
@@ -336,8 +348,13 @@ def login():
                 'error': 'Account temporarily locked. Try again in 15 minutes.',
             }), 429
 
-        # No password set (legacy user from simple-login era)
+        # No password set — check if they signed up via Google
         if not user.get('password_hash'):
+            if _has_google_provider(user['id']):
+                return jsonify({
+                    'error': 'This account uses Google sign-in. '
+                             'Please use the "Continue with Google" button instead.',
+                }), 401
             return jsonify({
                 'error': 'This account was created before passwords were required. '
                          'Use a magic link or set a password via the reset flow.',
