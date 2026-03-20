@@ -1,4 +1,4 @@
-# My Bridge Buddy - app.mybridgebuddy.com
+# MyBridgeBuddy - app.mybridgebuddy.com
 # Interactive app: do not index (lesson content lives on mybridgebuddy.com)
 # Security trust signals allowed for privacy/legal verification
 

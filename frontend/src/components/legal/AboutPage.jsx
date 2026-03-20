@@ -15,12 +15,12 @@ export function AboutPage({ isOpen, onClose }) {
           &times;
         </button>
 
-        <h1>About My Bridge Buddy</h1>
+        <h1>About MyBridgeBuddy</h1>
 
         <section>
           <h2>Our Mission</h2>
           <p>
-            My Bridge Buddy is designed to help bridge players of all levels improve
+            MyBridgeBuddy is designed to help bridge players of all levels improve
             their bidding and play through interactive practice and personalized feedback.
           </p>
         </section>
@@ -47,7 +47,7 @@ export function AboutPage({ isOpen, onClose }) {
         <section>
           <h2>Version</h2>
           <p>
-            My Bridge Buddy v1.0
+            MyBridgeBuddy v1.0
           </p>
         </section>
       </div>

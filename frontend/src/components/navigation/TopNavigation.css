@@ -32,6 +32,16 @@
 
 .nav-brand {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.nav-brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 
 .nav-app-title {
@@ -224,8 +234,13 @@
     gap: var(--space-2);
   }
 
-  .nav-brand {
-    display: none; /* Hide title on tablet */
+  .nav-app-title {
+    display: none; /* Hide title text on tablet, keep icon */
+  }
+
+  .nav-brand-icon {
+    width: 32px;
+    height: 32px;
   }
 
   .nav-tabs {

@@ -11,12 +11,12 @@ export function AboutUs({ onClose }) {
           ×
         </button>
 
-        <h1>About Us: My Bridge Buddy</h1>
+        <h1>About Us: MyBridgeBuddy</h1>
 
         <section>
           <h2>Our Mission</h2>
           <p>
-            At My Bridge Buddy, we believe that the game of Contract Bridge should be accessible,
+            At MyBridgeBuddy, we believe that the game of Contract Bridge should be accessible,
             engaging, and structured for modern learners. Our mission is to provide a secure,
             AI-powered sandbox where students can master the Standard American Yellow Card (SAYC)
             system and practice partnership synchronization without the pressure of a competitive lobby.
@@ -48,7 +48,7 @@ export function AboutUs({ onClose }) {
         <section>
           <h2>How It Works</h2>
           <p>
-            My Bridge Buddy utilizes a "Physics of the Deck" approach to coaching. Our algorithms
+            MyBridgeBuddy utilizes a "Physics of the Deck" approach to coaching. Our algorithms
             ensure that every lesson is grounded in mathematical reality—verifying that high-card
             points and suit lengths always align with the 40-point deck and the bidding logic of
             your opponents.

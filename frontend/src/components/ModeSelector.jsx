@@ -106,7 +106,7 @@ export function ModeSelector({ onSelectMode, userName = null }) {
         {/* Header */}
         <div className="mode-selector-header">
           <h1 className="mode-selector-title">
-            My Bridge Buddy
+            MyBridgeBuddy
           </h1>
           <p className="mode-selector-subtitle">
             Learn Standard American Yellow Card (SAYC) bidding through interactive practice

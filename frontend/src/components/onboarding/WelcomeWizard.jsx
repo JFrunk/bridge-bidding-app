@@ -83,7 +83,7 @@ export const WelcomeWizard = ({ isOpen, onSelectExperience }) => {
       >
         <DialogHeader className="text-center mb-6">
           <DialogTitle className="text-2xl font-bold text-gray-900">
-            Welcome to My Bridge Buddy!
+            Welcome to MyBridgeBuddy!
           </DialogTitle>
           <DialogDescription className="text-base text-gray-600 mt-2">
             Tell us about your bridge experience so we can personalize your journey.

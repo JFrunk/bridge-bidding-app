@@ -1,27 +1,45 @@
 {
-  "short_name": "My Bridge Buddy",
-  "name": "My Bridge Buddy - Learn Bridge Bidding",
+  "short_name": "MyBridgeBuddy",
+  "name": "MyBridgeBuddy - Learn Bridge Bidding",
   "description": "Practice bridge bidding conventions with AI opponents. Master Stayman, Blackwood, Jacoby Transfers, and more.",
   "categories": ["education", "games"],
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "favicon-16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon-48.png",
+      "sizes": "48x48",
+      "type": "image/png"
     },
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#2c5282",
-  "background_color": "#ffffff"
+  "theme_color": "#1B4D3E",
+  "background_color": "#FDFBF7"
 }
