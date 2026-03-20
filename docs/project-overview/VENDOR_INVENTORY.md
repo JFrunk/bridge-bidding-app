@@ -1,7 +1,21 @@
 # Vendor & Software Inventory
 
 **Project:** My Bridge Buddy (mybridgebuddy.com)
-**Last Updated:** 2026-03-19
+**Last Updated:** 2026-03-20
+
+---
+
+## Account Ownership
+
+| Service | Owner Account | Notes |
+|---------|--------------|-------|
+| Google Analytics 4 (GA4) | Separate personal Google account | Linked to personal phone number; same tag on app + landing page |
+| Google Cloud (OAuth) | mybridgebuddy@gmail.com | OAuth 2.0 client ID for Google Sign-In |
+| Hetzner Cloud | simon@matthisadvisors.com | Production app server |
+| GitHub (app repo + Pages) | junkfrunk@gmail.com | Consider migrating to dedicated org |
+| Sentry | junkfrunk@gmail.com | Consider migrating to mybridgebuddy account |
+| Gmail (project email) | mybridgebuddy@gmail.com | SMTP transactional emails |
+| Squarespace (DNS) | simonpproy@gmail.com | Domain registrar, DNS for mybridgebuddy.com |
 
 ---
 
