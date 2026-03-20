@@ -21,7 +21,7 @@ export function Footer({ onPrivacyClick, onAboutClick }) {
           </button>
         </div>
         <div className="footer-copyright">
-          &copy; {currentYear} My Bridge Buddy
+          &copy; {currentYear} MyBridgeBuddy
         </div>
       </div>
     </footer>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 130">
+  <defs><style>@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&amp;display=swap');</style></defs>
+  <svg x="0" y="0" width="130" height="130" viewBox="0 0 200 200">
+    <rect width="200" height="200" rx="18" fill="#1B4D3E"/>
+    <path fill="#FDFBF7" d="M 100,14 C 86,14 38,52 38,82 C 38,106 57,116 76,112 L 68,136 L 55,148 L 145,148 L 132,136 L 124,112 C 143,116 162,106 162,82 C 162,52 114,14 100,14 Z"/>
+    <path fill="#C8A44E" d="M 70,96 C 54,87 54,72 62,72 C 66,72 69,76 70,80 C 71,76 74,72 78,72 C 86,72 86,87 70,96 Z"/>
+    <polygon fill="#C8A44E" points="100,72 109,84 100,96 91,84"/>
+    <circle fill="#C8A44E" cx="128" cy="78" r="6.5"/>
+    <circle fill="#C8A44E" cx="121" cy="86" r="6.5"/>
+    <circle fill="#C8A44E" cx="135" cy="86" r="6.5"/>
+    <path fill="#C8A44E" d="M 126,91 L 130,91 L 131,96 L 125,96 Z"/>
+  </svg>
+  <text x="152" y="86"
+    font-family="'DM Serif Display', Georgia, serif"
+    font-size="52" fill="#2A2A2A"
+    dominant-baseline="middle" letter-spacing="-0.5">MyBridgeBuddy</text>
+</svg>

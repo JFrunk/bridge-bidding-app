@@ -1,5 +1,6 @@
 import React from 'react';
 import './TopNavigation.css';
+import { ReactComponent as BrandIcon } from '../../assets/branding/icon.svg';
 
 /**
  * TopNavigation - Persistent navigation bar with text-only tabs
@@ -29,7 +30,8 @@ function TopNavigation({ currentModule, onModuleSelect, showTitle = true, inRoom
         {/* Brand Title - Left aligned */}
         {showTitle && (
           <div className="nav-brand">
-            <h1 className="nav-app-title">My Bridge Buddy</h1>
+            <BrandIcon className="nav-brand-icon" aria-hidden="true" />
+            <h1 className="nav-app-title">MyBridgeBuddy</h1>
           </div>
         )}
 

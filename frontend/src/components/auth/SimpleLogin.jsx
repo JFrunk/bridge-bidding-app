@@ -87,7 +87,7 @@ export function SimpleLogin({ onClose }) {
           ×
         </button>
 
-        <h2>Welcome to My Bridge Buddy</h2>
+        <h2>Welcome to MyBridgeBuddy</h2>
 
         {/* New/Returning User Tabs */}
         <div className="user-type-tabs" data-testid="user-type-tabs">

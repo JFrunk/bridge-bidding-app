@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Gold spade - transparent background -->
+  <path fill="#C8A44E" d="
+    M 100,14
+    C  86,14  38,52  38,82
+    C  38,106  57,116  76,112
+    L  68,136  L  55,148
+    L 145,148  L 132,136  L 124,112
+    C 143,116  162,106  162,82
+    C 162,52  114,14  100,14
+    Z
+  "/>
+  <!-- Suit symbols in cream (contrast on gold) -->
+  <path fill="#FDFBF7" d="
+    M  78,96
+    C  62,87  62,72  70,72
+    C  74,72  77,76  78,80
+    C  79,76  82,72  86,72
+    C  94,72  94,87  78,96 Z
+  "/>
+  <polygon fill="#FDFBF7" points="100,72  109,84  100,96  91,84"/>
+  <circle fill="#FDFBF7" cx="122" cy="76" r="7.5"/>
+  <circle fill="#FDFBF7" cx="115" cy="86" r="7.5"/>
+  <circle fill="#FDFBF7" cx="129" cy="86" r="7.5"/>
+  <path fill="#FDFBF7" d="M 119,92 L 125,92 L 127,99 L 117,99 Z"/>
+</svg>

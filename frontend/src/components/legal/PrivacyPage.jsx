@@ -15,13 +15,13 @@ export function PrivacyPage({ isOpen, onClose }) {
           &times;
         </button>
 
-        <h1>Privacy Policy: My Bridge Buddy</h1>
+        <h1>Privacy Policy: MyBridgeBuddy</h1>
         <p className="legal-updated">Last Updated: March 20, 2026</p>
 
         <section>
           <h2>1. Purpose of Data Collection</h2>
           <p>
-            My Bridge Buddy is an educational platform designed for the practice of Contract Bridge.
+            MyBridgeBuddy is an educational platform designed for the practice of Contract Bridge.
             We collect minimal personal information solely to facilitate account authentication,
             secure access to your profile, and save your progress within our learning modules.
           </p>
@@ -60,7 +60,7 @@ export function PrivacyPage({ isOpen, onClose }) {
         <section>
           <h2>3. No Financial Transactions</h2>
           <p>
-            My Bridge Buddy remains strictly a pedagogical tool. We do not process payments, collect
+            MyBridgeBuddy remains strictly a pedagogical tool. We do not process payments, collect
             credit card information, or facilitate any cash transactions on this platform.
           </p>
         </section>
@@ -91,7 +91,7 @@ export function PrivacyPage({ isOpen, onClose }) {
         <section>
           <h2>6. Google API Disclosure</h2>
           <p>
-            My Bridge Buddy's use and transfer to any other app of information received from Google
+            MyBridgeBuddy's use and transfer to any other app of information received from Google
             APIs will adhere to the{' '}
             <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">
               Google API Services User Data Policy
