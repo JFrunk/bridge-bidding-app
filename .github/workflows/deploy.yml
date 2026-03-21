@@ -28,9 +28,12 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/bridge-bidding-app/backend
-            cd .. && bash update.sh && cd backend
-            python3 test_play_quality_integrated.py --automated
+            cd /opt/bridge-bidding-app
+            bash update.sh
+            cd backend
+            # Run QA with DDS if available, fall back to minimax
+            python3 -c "import endplay" 2>/dev/null && AI_FLAG="--ai dds" || AI_FLAG="--ai minimax"
+            python3 test_play_quality_integrated.py --automated $AI_FLAG
 
   production:
     name: Deploy to Production

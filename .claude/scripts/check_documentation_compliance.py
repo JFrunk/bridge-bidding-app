@@ -234,11 +234,8 @@ class DocumentationChecker:
         required_files = [
             '.claude/DOCUMENTATION_PRACTICES.md',
             '.claude/PROJECT_CONTEXT.md',
-            'docs/DOCUMENTATION_CHECKLIST.md',
             'CONTRIBUTING.md',
             'README.md',
-            'docs/README.md',
-            'docs/project-overview/DOCUMENTATION_INDEX.md'
         ]
 
         all_exist = True

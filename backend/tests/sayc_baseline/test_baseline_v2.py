@@ -162,9 +162,6 @@ class V2BaselineComplianceRunner:
         # Determine position
         position = self.determine_position(test_case.history)
 
-        # Track V1 fallback usage before this bid
-        fallback_before = self.engine._v1_fallback_count
-
         # Get our bid using V2 Schema engine
         try:
             our_bid, explanation = self.engine.get_next_bid(
@@ -187,20 +184,22 @@ class V2BaselineComplianceRunner:
                 error_message=str(e)
             )
 
-        # Check if V1 fallback was used
-        used_v1_fallback = self.engine._v1_fallback_count > fallback_before
+        # V1 fallback was removed — all bids are V2 schema
+        used_v1_fallback = False
 
         # Get rule info if available (from schema engine)
         rule_id = None
         rule_priority = None
-        if not used_v1_fallback:
-            # Try to get the matching rule details
+        # Try to get the matching rule details
+        try:
             candidates = self.engine.get_bid_candidates(
                 hand, test_case.history, position, 'None', 'North'
             )
             if candidates:
                 rule_id = candidates[0].rule_id
                 rule_priority = candidates[0].priority
+        except Exception:
+            pass
 
         # Compare results
         matched_expected = self._bids_match(our_bid, test_case.expected_bid)
