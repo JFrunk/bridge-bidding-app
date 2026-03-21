@@ -23,17 +23,15 @@ const modules = [
   ...(isLocalhost ? [{ id: 'lab', label: 'LAB', description: 'Learning flows preview' }] : [])
 ];
 
-function TopNavigation({ currentModule, onModuleSelect, showTitle = true, inRoom = false, children }) {
+function TopNavigation({ currentModule, onModuleSelect, inRoom = false, children }) {
   return (
     <nav className="top-navigation" role="navigation" aria-label="Main navigation">
       <div className="top-nav-content">
-        {/* Brand Title - Left aligned */}
-        {showTitle && (
-          <div className="nav-brand">
-            <BrandIcon className="nav-brand-icon" aria-hidden="true" />
-            <h1 className="nav-app-title">MyBridgeBuddy</h1>
-          </div>
-        )}
+        {/* Brand Title - Always visible, left aligned */}
+        <div className="nav-brand">
+          <BrandIcon className="nav-brand-icon" aria-hidden="true" />
+          <h1 className="nav-app-title">MyBridgeBuddy</h1>
+        </div>
 
         {/* Text-only navigation tabs - Center (hidden in partner mode) */}
         {!inRoom && (

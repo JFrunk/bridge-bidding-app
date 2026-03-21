@@ -75,54 +75,28 @@
   gap: clamp(6px, 1.2vh, 24px);
 }
 
-/* Header Section */
+/* Header Section — compact, no duplicate brand */
 .mode-selector-header {
   text-align: center;
   margin-bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: clamp(2px, 0.4vh, 6px);
 }
 
-.mode-selector-brand-icon {
-  width: clamp(48px, 8vmin, 72px);
-  height: clamp(48px, 8vmin, 72px);
-  border-radius: 14px;
-  margin-bottom: clamp(4px, 1vh, 12px);
-}
-
-.mode-selector-title {
-  font-size: clamp(1.3rem, 2.5vmin, 2.5rem);
-  font-weight: 700;
-  color: var(--text-primary, #fff);
-  margin: 0 0 clamp(2px, 0.5vh, 12px) 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.mode-selector-subtitle {
-  font-size: clamp(0.85rem, 1.5vmin, 1.1rem);
-  color: rgba(255, 255, 255, 0.85);
-  margin: 0;
-  max-width: 500px;
-}
-
-.mode-selector-welcome {
-  font-size: var(--text-base, 1rem);
-  color: rgba(255, 255, 255, 0.7);
-  margin: var(--space-2, 4px) 0 0 0;
-  font-style: italic;
-}
-
-/* Mode Selection Prompt */
-.mode-selector-prompt {
-  text-align: center;
-}
-
-.mode-selector-prompt h2 {
+.mode-selector-prompt-title {
   font-size: clamp(1rem, 2vmin, 1.5rem);
   font-weight: 600;
   color: var(--text-primary, #fff);
   margin: 0;
+}
+
+.mode-selector-subtitle {
+  font-size: clamp(0.8rem, 1.3vmin, 0.95rem);
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  max-width: 500px;
 }
 
 /* Mode Cards Grid */
@@ -306,14 +280,6 @@
     gap: var(--space-5, 20px);
   }
 
-  .mode-selector-title {
-    font-size: 1.8rem;
-  }
-
-  .mode-selector-subtitle {
-    font-size: var(--text-base, 1rem);
-  }
-
   .mode-cards-grid {
     grid-template-columns: 1fr;
     gap: var(--space-4, 16px);
@@ -336,18 +302,6 @@
   .mode-selector-container {
     padding: var(--space-3, 12px);
     padding-top: var(--space-6, 24px);
-  }
-
-  .mode-selector-title {
-    font-size: var(--text-2xl, 1.5rem);
-  }
-
-  .mode-selector-subtitle {
-    font-size: var(--text-sm, 0.9rem);
-  }
-
-  .mode-selector-prompt h2 {
-    font-size: 1.2rem;
   }
 
   .mode-card {

@@ -3718,7 +3718,6 @@ ${otherCommands}`;
         <TopNavigation
           currentModule={getCurrentModule()}
           onModuleSelect={handleNavModuleSelect}
-          showTitle={!showModeSelector}
           inRoom={inRoom}
         >
           {/* Partner Practice button - dev only (not yet functional in production) */}

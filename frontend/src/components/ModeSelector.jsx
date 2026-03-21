@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useAuth } from '../contexts/AuthContext';
-import { ReactComponent as BrandIcon } from '../assets/branding/icon.svg';
 import './ModeSelector.css';
 
 /**
@@ -104,25 +103,14 @@ export function ModeSelector({ onSelectMode, userName = null }) {
   return (
     <div className="mode-selector-container">
       <div className="mode-selector-content">
-        {/* Header */}
+        {/* Compact Header */}
         <div className="mode-selector-header">
-          <BrandIcon className="mode-selector-brand-icon" aria-hidden="true" />
-          <h1 className="mode-selector-title">
-            MyBridgeBuddy
-          </h1>
+          <h2 className="mode-selector-prompt-title">
+            {userName ? `Welcome back, ${userName}` : 'Choose Your Practice Mode'}
+          </h2>
           <p className="mode-selector-subtitle">
             Learn Standard American (SAYC) bidding and card play through interactive practice
           </p>
-          {userName && (
-            <p className="mode-selector-welcome">
-              Welcome back, {userName}
-            </p>
-          )}
-        </div>
-
-        {/* Mode Selection Prompt */}
-        <div className="mode-selector-prompt">
-          <h2>Choose Your Practice Mode</h2>
         </div>
 
         {/* Mode Cards Grid */}
