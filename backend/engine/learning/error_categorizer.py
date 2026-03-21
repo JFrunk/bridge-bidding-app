@@ -82,7 +82,8 @@ class ErrorCategorizer:
             user_bid: What the user bid
             correct_bid: What they should have bid
             convention_id: Convention being practiced (if applicable)
-            auction_context: Additional auction information
+            auction_context: Additional auction information (may include
+                optimal_explanation, optimal_rule_id from the V2 engine)
 
         Returns:
             CategorizedError with category, subcategory, and context
@@ -102,9 +103,11 @@ class ErrorCategorizer:
             hand_chars
         )
 
-        # Generate helpful hint
+        # Generate helpful hint — convention-aware when context is available
         hint = self._generate_hint(category, subcategory, hand_chars,
-                                   user_bid, correct_bid)
+                                   user_bid, correct_bid,
+                                   convention_id=convention_id,
+                                   auction_context=auction_context)
 
         return CategorizedError(
             category=category,
@@ -295,8 +298,24 @@ class ErrorCategorizer:
         return False
 
     def _generate_hint(self, category: str, subcategory: Optional[str],
-                      hand_chars: Dict, user_bid: str, correct_bid: str) -> str:
-        """Generate a helpful hint based on the error"""
+                      hand_chars: Dict, user_bid: str, correct_bid: str,
+                      convention_id: Optional[str] = None,
+                      auction_context: Optional[Dict] = None) -> str:
+        """
+        Generate a helpful hint based on the error.
+
+        When convention_id or optimal_explanation are available, produces a
+        context-aware hint that names the active convention or auction goal
+        (e.g. "cue bid for slam exploration") instead of a generic rule.
+        """
+        # ── Convention-aware hints (highest priority) ──
+        convention_hint = self._generate_convention_hint(
+            convention_id, auction_context, hand_chars, user_bid, correct_bid
+        )
+        if convention_hint:
+            return convention_hint
+
+        # ── Standard category/subcategory hints ──
         hints = {
             'wrong_level': {
                 'too_high': f"With {hand_chars['hcp']} HCP, {correct_bid} is more appropriate than {user_bid}.",
@@ -326,7 +345,6 @@ class ErrorCategorizer:
             }
         }
 
-        # Get specific hint or return general one
         if category in hints and subcategory in hints[category]:
             return hints[category][subcategory]
 
@@ -340,6 +358,131 @@ class ErrorCategorizer:
         }
 
         return general_hints.get(category, f"The correct bid here is {correct_bid}.")
+
+    def _generate_convention_hint(
+        self,
+        convention_id: Optional[str],
+        auction_context: Optional[Dict],
+        hand_chars: Dict,
+        user_bid: str,
+        correct_bid: str
+    ) -> Optional[str]:
+        """
+        Generate a hint that references the active convention or auction goal.
+
+        Returns None if no convention-specific hint applies, allowing the
+        caller to fall back to standard hints.
+        """
+        optimal_explanation = (auction_context or {}).get('optimal_explanation')
+
+        # ── Control bids / cue bids ──
+        if convention_id == 'control_bid':
+            return (
+                f"{correct_bid} is a cue bid showing a control (Ace or void) in that suit. "
+                f"With a fit established and slam-level values, cue bids explore slam "
+                f"by showing controls suit-by-suit rather than jumping to game."
+            )
+
+        # ── Slam brake (signing off when control is denied) ──
+        if convention_id == 'slam_brake':
+            return (
+                f"{correct_bid} signs off in the agreed trump suit. "
+                f"When you can't show a control in an unbid suit, it's safest to stop at game."
+            )
+
+        # ── Blackwood ──
+        if convention_id == 'blackwood':
+            if correct_bid == '4NT':
+                return (
+                    f"With slam-level values and a confirmed fit, bid 4NT (Blackwood) "
+                    f"to ask partner how many aces they hold before committing to slam."
+                )
+            # Blackwood response
+            return (
+                f"{correct_bid} is the correct Blackwood response showing your ace count. "
+                f"Review the 1430 scale: 5♣ = 1 or 4, 5♦ = 0 or 3, 5♥ = 2 without queen, 5♠ = 2 with queen."
+            )
+
+        # ── Quantitative 4NT ──
+        if convention_id == 'quantitative':
+            return (
+                f"4NT here is quantitative (invitational to slam), not Blackwood. "
+                f"It asks partner to bid slam with a maximum or pass with a minimum."
+            )
+
+        # ── Splinter ──
+        if convention_id == 'splinter':
+            return (
+                f"{correct_bid} is a splinter bid showing a singleton or void in that suit "
+                f"with strong support for partner's suit and game-forcing values."
+            )
+
+        # ── Fourth Suit Forcing ──
+        if convention_id == 'fsf':
+            return (
+                f"{correct_bid} is Fourth Suit Forcing — an artificial bid that asks partner "
+                f"to describe their hand further. It doesn't promise length in that suit."
+            )
+
+        # ── Stayman ──
+        if convention_id == 'stayman':
+            if correct_bid == '2♣':
+                return (
+                    f"Bid 2♣ (Stayman) to ask partner if they hold a 4-card major. "
+                    f"You need at least one 4-card major and 8+ points to use Stayman."
+                )
+            return (
+                f"{correct_bid} is the correct Stayman response. "
+                f"2♦ = no 4-card major, 2♥ = 4+ hearts, 2♠ = 4+ spades."
+            )
+
+        # ── Jacoby Transfer ──
+        if convention_id == 'jacoby':
+            return (
+                f"{correct_bid} is a Jacoby Transfer, asking partner to bid the next suit up. "
+                f"Transfers let the 1NT opener become declarer for a stronger lead advantage."
+            )
+
+        # ── Negative Double ──
+        if convention_id == 'negative_double':
+            return (
+                f"Double here is a Negative Double showing support for the unbid suits "
+                f"and enough points to compete. It does NOT promise length in the opponent's suit."
+            )
+
+        # ── Takeout Double ──
+        if convention_id == 'takeout':
+            return (
+                f"Double here is for takeout, asking partner to bid their best suit. "
+                f"It shows opening values and support for the unbid suits."
+            )
+
+        # ── Michaels Cue Bid ──
+        if convention_id == 'michaels':
+            return (
+                f"{correct_bid} is a Michaels Cue Bid showing a two-suited hand "
+                f"(5-5 or better) in the two implied suits."
+            )
+
+        # ── Unusual 2NT ──
+        if convention_id == 'unusual':
+            return (
+                f"2NT here is the Unusual 2NT convention showing 5-5 or better "
+                f"in the two lowest unbid suits."
+            )
+
+        # ── Preempts ──
+        if convention_id == 'preempt':
+            return (
+                f"{correct_bid} is a preemptive bid showing a long suit (6-7+ cards) "
+                f"with limited high-card values (typically 6-10 HCP)."
+            )
+
+        # ── Fallback: use the engine's own explanation if available ──
+        if optimal_explanation:
+            return f"{correct_bid}: {optimal_explanation}"
+
+        return None
 
     def get_category_info(self, category_id: str) -> Optional[ErrorCategory]:
         """Get information about a specific category"""
