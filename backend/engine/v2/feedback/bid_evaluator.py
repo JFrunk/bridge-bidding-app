@@ -226,6 +226,11 @@ class V2BidEvaluator:
         # Find the rule that matched the user's bid (if any)
         user_candidate = self._find_user_candidate(user_bid, candidates)
 
+        # Find optimal candidate (used for error context and return value)
+        optimal_candidate = next(
+            (c for c in candidates if c.bid == optimal_bid), None
+        )
+
         # Categorize error if not optimal/acceptable
         error = None
         if correctness in [CorrectnessLevel.SUBOPTIMAL, CorrectnessLevel.ERROR]:
@@ -233,7 +238,9 @@ class V2BidEvaluator:
                 'history': auction_history,
                 'vulnerability': vulnerability,
                 'dealer': dealer,
-                'current_player': my_position
+                'current_player': my_position,
+                'optimal_explanation': optimal_candidate.explanation if optimal_candidate else None,
+                'optimal_rule_id': optimal_candidate.rule_id if optimal_candidate else None,
             }
             error = self.error_categorizer.categorize(
                 hand=hand,
@@ -281,11 +288,6 @@ class V2BidEvaluator:
                     learning_fb = learning_fb_obj.to_dict()
             except Exception as e:
                 logger.warning(f"Failed to generate learning feedback: {e}")
-
-        # Find optimal candidate for rule ID
-        optimal_candidate = next(
-            (c for c in candidates if c.bid == optimal_bid), None
-        )
 
         # Build simplified candidate info for transparency
         matched_candidates = [
@@ -436,10 +438,13 @@ class V2BidEvaluator:
         rule_id = candidates[0].rule_id
 
         # Parse convention from rule_id (e.g., "stayman_4card_major" -> "stayman")
+        # Order matters: more specific keywords first to avoid partial matches
         convention_keywords = [
+            'control_bid', 'slam_brake', 'quantitative',
             'stayman', 'jacoby', 'blackwood', 'gerber',
             'michaels', 'unusual', 'negative_double', 'takeout',
-            'preempt', 'weak_two', 'strong_2c', 'transfer'
+            'preempt', 'weak_two', 'strong_2c', 'transfer',
+            'splinter', 'fsf',
         ]
 
         rule_lower = rule_id.lower()
