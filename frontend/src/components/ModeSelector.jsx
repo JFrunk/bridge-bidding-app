@@ -125,7 +125,7 @@ export function ModeSelector({ onSelectMode, userName = null }) {
 
         {/* Mode Cards Grid */}
         <div className="mode-cards-grid">
-          {modes.map((mode) => (
+          {modes.filter((mode) => mode.id !== 'team' || process.env.REACT_APP_ENABLE_TEAM_PRACTICE === 'true').map((mode) => (
             <div key={mode.id} className="mode-card" role="article" aria-labelledby={`mode-title-${mode.id}`}>
               <div className="mode-card-header">
                 <span className="mode-icon" aria-hidden="true">{mode.icon}</span>
