@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { requestPasswordReset } from '../../services/authApi';
+import { requestPasswordReset, checkEmailExists } from '../../services/authApi';
 import './AuthLanding.css';
 import { ReactComponent as BrandIcon } from '../../assets/branding/icon.svg';
 
@@ -32,7 +32,7 @@ export function AuthLanding({ onClose, hideGuest }) {
   const { loginV2, registerV2, loginWithGoogle, continueAsGuest } = useAuth();
 
   const [mode, setMode] = useState('buttons'); // 'buttons' | 'email' | 'forgot'
-  const [emailMode, setEmailMode] = useState(null); // null | 'login' | 'register'
+  const [emailMode, setEmailMode] = useState('email-check'); // 'email-check' | 'login' | 'register' | 'google-only'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -100,8 +100,33 @@ export function AuthLanding({ onClose, hideGuest }) {
     e.preventDefault();
     setError('');
 
-    // First submission: try to register
-    if (!emailMode) {
+    if (emailMode === 'email-check') {
+      if (!email.includes('@') || !email.includes('.')) {
+        setError('Please enter a valid email address');
+        return;
+      }
+      setLoading(true);
+      const result = await checkEmailExists(email);
+      setLoading(false);
+      
+      if (result.success) {
+        if (result.data.exists) {
+          if (result.data.is_google) {
+            setEmailMode('google-only');
+          } else {
+            setEmailMode('login');
+          }
+        } else {
+          setEmailMode('register');
+        }
+      } else {
+        setError(result.error || 'Failed to check email');
+      }
+      return;
+    }
+
+    // Try to register
+    if (emailMode === 'register') {
       if (password.length < 8) {
         setError('Password must be at least 8 characters');
         return;
@@ -304,11 +329,23 @@ export function AuthLanding({ onClose, hideGuest }) {
         {/* ── Email mode — smart form ── */}
         {mode === 'email' && (
           <>
-            <button className="auth-back-btn" onClick={() => { setMode('buttons'); setEmailMode(null); setError(''); setPassword(''); }}>
+            <button className="auth-back-btn" onClick={() => { 
+                if (emailMode !== 'email-check') {
+                  setEmailMode('email-check');
+                  setError('');
+                  setPassword('');
+                  setConfirmPassword('');
+                } else {
+                  setMode('buttons'); 
+                  setEmailMode('email-check'); 
+                  setError(''); 
+                  setPassword(''); 
+                }
+              }}>
               &larr; Back
             </button>
 
-            <h1>{emailMode === 'login' ? 'Sign in' : 'Create your account'}</h1>
+            <h1>{emailMode === 'login' ? 'Sign in' : emailMode === 'register' ? 'Create your account' : emailMode === 'google-only' ? 'Google Sign-In' : 'Continue with email'}</h1>
 
             {error && <div className="auth-landing-error">{error}</div>}
 
@@ -324,12 +361,15 @@ export function AuthLanding({ onClose, hideGuest }) {
                   placeholder="you@example.com"
                   autoComplete="email"
                   required
-                  autoFocus={emailMode !== 'login'}
+                  autoFocus={emailMode === 'email-check'}
+                  readOnly={emailMode !== 'email-check'}
+                  className={emailMode !== 'email-check' ? 'readonly-input' : ''}
+                  style={emailMode !== 'email-check' ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
                 />
               </div>
 
               {/* Display name — only for new accounts */}
-              {!emailMode && (
+              {emailMode === 'register' && (
                 <div className="form-group">
                   <label htmlFor="auth-name">Display Name (optional)</label>
                   <input
@@ -344,69 +384,88 @@ export function AuthLanding({ onClose, hideGuest }) {
                 </div>
               )}
 
-              {/* Password */}
-              <div className="form-group">
-                <label htmlFor="auth-password">Password</label>
-                <input
-                  id="auth-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={emailMode === 'login' ? 'Enter your password' : 'At least 8 characters'}
-                  autoComplete={emailMode === 'login' ? 'current-password' : 'new-password'}
-                  required
-                  autoFocus={emailMode === 'login'}
-                />
-                {/* Password requirements — only for new accounts */}
-                {!emailMode && !password && (
-                  <span className="input-hint">Min 8 characters. Mix uppercase, lowercase, numbers, and symbols for a stronger password.</span>
-                )}
-                {/* Strength indicator — only for new accounts */}
-                {!emailMode && password && (
-                  <>
-                    <div className="password-strength">
-                      {[1, 2, 3].map((i) => (
-                        <div
-                          key={i}
-                          className={`password-strength-bar ${strength.score >= i * 2 - 1 ? strength.level : ''}`}
-                        />
-                      ))}
-                    </div>
-                    <div className={`password-strength-label ${strength.level}`}>
-                      {strength.label}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Confirm password — only for new accounts */}
-              {!emailMode && (
-                <div className="form-group">
-                  <label htmlFor="auth-confirm">Confirm Password</label>
-                  <input
-                    id="auth-confirm"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter your password"
-                    autoComplete="new-password"
-                    required
-                  />
-                  {confirmPassword && password !== confirmPassword && (
-                    <span className="input-hint" style={{ color: 'var(--color-danger)' }}>
-                      Passwords do not match
-                    </span>
-                  )}
+              {/* Google Only message */}
+              {emailMode === 'google-only' && (
+                <div className="form-group" style={{ textAlign: 'center', marginTop: '1rem', marginBottom: '1.5rem' }}>
+                  <p className="auth-landing-subtitle" style={{ marginBottom: '1.5rem' }}>
+                    This email is already linked to a Google account. Please use Google to sign in.
+                  </p>
+                  <button type="button" className="auth-provider-btn" onClick={handleGoogleLogin} disabled={loading || !gsiReady}>
+                    {googleIcon}
+                    Continue with Google
+                  </button>
                 </div>
               )}
 
-              <button
-                type="submit"
-                className="btn-primary"
-                disabled={loading || (emailMode === 'login' ? !canSubmitLogin : !canSubmitNew)}
-              >
-                {loading ? 'Please wait...' : emailMode === 'login' ? 'Sign In' : 'Create Account'}
-              </button>
+              {/* Password */}
+              {(emailMode === 'login' || emailMode === 'register') && (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="auth-password">Password</label>
+                    <input
+                      id="auth-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={emailMode === 'login' ? 'Enter your password' : 'At least 8 characters'}
+                      autoComplete={emailMode === 'login' ? 'current-password' : 'new-password'}
+                      required
+                      autoFocus={emailMode !== 'email-check'}
+                    />
+                    {/* Password requirements — only for new accounts */}
+                    {emailMode === 'register' && !password && (
+                      <span className="input-hint">Min 8 characters. Mix uppercase, lowercase, numbers, and symbols for a stronger password.</span>
+                    )}
+                    {/* Strength indicator — only for new accounts */}
+                    {emailMode === 'register' && password && (
+                      <>
+                        <div className="password-strength">
+                          {[1, 2, 3].map((i) => (
+                            <div
+                              key={i}
+                              className={`password-strength-bar ${strength.score >= i * 2 - 1 ? strength.level : ''}`}
+                            />
+                          ))}
+                        </div>
+                        <div className={`password-strength-label ${strength.level}`}>
+                          {strength.label}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Confirm password — only for new accounts */}
+                  {emailMode === 'register' && (
+                    <div className="form-group">
+                      <label htmlFor="auth-confirm">Confirm Password</label>
+                      <input
+                        id="auth-confirm"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Re-enter your password"
+                        autoComplete="new-password"
+                        required
+                      />
+                      {confirmPassword && password !== confirmPassword && (
+                        <span className="input-hint" style={{ color: 'var(--color-danger)' }}>
+                          Passwords do not match
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {emailMode !== 'google-only' && (
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={loading || (emailMode === 'login' ? !canSubmitLogin : emailMode === 'register' ? !canSubmitNew : !isEmailValid)}
+                >
+                  {loading ? 'Please wait...' : emailMode === 'login' ? 'Sign In' : emailMode === 'register' ? 'Create Account' : 'Continue'}
+                </button>
+              )}
 
               {/* Forgot password — only in login mode */}
               {emailMode === 'login' && (
@@ -418,13 +477,15 @@ export function AuthLanding({ onClose, hideGuest }) {
               )}
 
               {/* Toggle between login and register */}
-              <div className="auth-mode-toggle">
-                {emailMode === 'login' ? (
-                  <span>Don't have an account? <button type="button" className="text-link" onClick={() => { setEmailMode(null); setPassword(''); setError(''); setResetSent(false); }}>Create one</button></span>
-                ) : (
-                  <span>Already have an account? <button type="button" className="text-link" onClick={() => { setEmailMode('login'); setConfirmPassword(''); setDisplayName(''); setError(''); }}>Sign in</button></span>
-                )}
-              </div>
+              {(emailMode === 'login' || emailMode === 'register') && (
+                <div className="auth-mode-toggle">
+                  {emailMode === 'login' ? (
+                    <span>Don't have an account? <button type="button" className="text-link" onClick={() => { setEmailMode('register'); setPassword(''); setError(''); setResetSent(false); }}>Create one</button></span>
+                  ) : (
+                    <span>Already have an account? <button type="button" className="text-link" onClick={() => { setEmailMode('login'); setConfirmPassword(''); setDisplayName(''); setError(''); }}>Sign in</button></span>
+                  )}
+                </div>
+              )}
             </form>
           </>
         )}

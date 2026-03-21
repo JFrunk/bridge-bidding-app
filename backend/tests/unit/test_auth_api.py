@@ -53,9 +53,46 @@ def _make_user_row(overrides=None):
     return base
 
 
+# ─── Check Email Tests ──────────────────────────────────────
+
+
+class TestCheckEmail:
+    def test_missing_body(self, client):
+        resp = client.post('/api/auth/v2/check-email',
+                           data='', content_type='application/json')
+        assert resp.status_code == 400
+
+    def test_missing_email(self, client):
+        resp = client.post('/api/auth/v2/check-email', json={})
+        assert resp.status_code == 400
+        assert 'email' in resp.get_json()['error'].lower()
+
+    def test_invalid_email(self, client):
+        resp = client.post('/api/auth/v2/check-email', json={
+            'email': 'not-an-email',
+        })
+        assert resp.status_code == 400
+
+    @patch('auth.auth_api._get_user_by_email')
+    def test_email_exists(self, mock_get, client):
+        mock_get.return_value = _make_user_row()
+        resp = client.post('/api/auth/v2/check-email', json={
+            'email': 'test@example.com',
+        })
+        assert resp.status_code == 200
+        assert resp.get_json() == {'exists': True}
+
+    @patch('auth.auth_api._get_user_by_email')
+    def test_email_does_not_exist(self, mock_get, client):
+        mock_get.return_value = None
+        resp = client.post('/api/auth/v2/check-email', json={
+            'email': 'new@example.com',
+        })
+        assert resp.status_code == 200
+        assert resp.get_json() == {'exists': False}
+
+
 # ─── Registration Tests ─────────────────────────────────────
-
-
 class TestRegister:
     def test_missing_body(self, client):
         resp = client.post('/api/auth/v2/register',

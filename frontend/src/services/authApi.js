@@ -27,6 +27,10 @@ async function authPost(endpoint, body = {}) {
   return { success: true, status: response.status, data };
 }
 
+export async function checkEmailExists(email) {
+  return authPost('/api/auth/v2/check-email', { email });
+}
+
 // ─── Password Auth ───────────────────────────────────────────
 
 export async function registerUser({ email, password, displayName, guestId }) {

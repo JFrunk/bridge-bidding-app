@@ -220,6 +220,37 @@ def _issue_tokens_response(user_id, extra_data=None):
 # ─── Endpoints ────────────────────────────────────────────────
 
 
+def check_email():
+    """
+    POST /api/auth/v2/check-email
+
+    Body:
+        {
+            "email": "user@example.com"
+        }
+
+    Returns 200 on success with {"exists": true|false}.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Request body required'}), 400
+
+    email = (data.get('email') or '').strip().lower()
+
+    if not email or '@' not in email or '.' not in email.split('@')[-1]:
+        return jsonify({'error': 'Valid email address required'}), 400
+
+    try:
+        user = _get_user_by_email(email)
+        if user:
+            is_google = _has_google_provider(user['id'])
+            return jsonify({'exists': True, 'is_google': is_google}), 200
+        return jsonify({'exists': False, 'is_google': False}), 200
+    except Exception as e:
+        log_error(e, endpoint='/api/auth/v2/check-email')
+        return jsonify({'error': 'Email check failed'}), 500
+
+
 def register():
     """
     POST /api/auth/v2/register
@@ -385,6 +416,7 @@ def login():
 
 def register_auth_v2_endpoints(app):
     """Register Auth V2 password endpoints with Flask app."""
+    app.route('/api/auth/v2/check-email', methods=['POST'])(check_email)
     app.route('/api/auth/v2/register', methods=['POST'])(register)
     app.route('/api/auth/v2/login', methods=['POST'])(login)
-    print("✓ Auth V2 endpoints registered (register + login)")
+    print("✓ Auth V2 endpoints registered (check-email + register + login)")
