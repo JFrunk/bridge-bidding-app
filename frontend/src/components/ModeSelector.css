@@ -79,6 +79,16 @@
 .mode-selector-header {
   text-align: center;
   margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mode-selector-brand-icon {
+  width: clamp(48px, 8vmin, 72px);
+  height: clamp(48px, 8vmin, 72px);
+  border-radius: 14px;
+  margin-bottom: clamp(4px, 1vh, 12px);
 }
 
 .mode-selector-title {
