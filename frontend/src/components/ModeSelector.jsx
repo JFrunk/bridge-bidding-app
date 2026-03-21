@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useAuth } from '../contexts/AuthContext';
+import { ReactComponent as BrandIcon } from '../assets/branding/icon.svg';
 import './ModeSelector.css';
 
 /**
@@ -105,11 +106,12 @@ export function ModeSelector({ onSelectMode, userName = null }) {
       <div className="mode-selector-content">
         {/* Header */}
         <div className="mode-selector-header">
+          <BrandIcon className="mode-selector-brand-icon" aria-hidden="true" />
           <h1 className="mode-selector-title">
             MyBridgeBuddy
           </h1>
           <p className="mode-selector-subtitle">
-            Learn Standard American Yellow Card (SAYC) bidding through interactive practice
+            Learn Standard American (SAYC) bidding and card play through interactive practice
           </p>
           {userName && (
             <p className="mode-selector-welcome">
