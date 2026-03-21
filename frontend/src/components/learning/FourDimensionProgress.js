@@ -37,6 +37,7 @@ const FourDimensionProgress = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedBars, setExpandedBars] = useState({});
+  const [boardSummary, setBoardSummary] = useState(null);
 
   useEffect(() => {
     loadAllData();
@@ -196,7 +197,7 @@ const FourDimensionProgress = ({
           id="performance-overview"
           icon="📊"
           title="Success Map"
-          miniStats={getPerformanceOverviewMiniStats(bid_practice_quality, play_practice_quality)}
+          miniStats={getSuccessMapMessage(boardSummary)}
           expanded={expandedBars['performance-overview']}
           onToggle={() => toggleBar('performance-overview')}
           accentColor="neutral"
@@ -204,6 +205,7 @@ const FourDimensionProgress = ({
           <BoardAnalysisExpanded
             userId={userId}
             onReviewHand={onReviewHand}
+            onSummaryLoaded={setBoardSummary}
           />
         </ProgressBar>
       </div>
@@ -256,15 +258,32 @@ const getPracticePlayMiniStats = (quality, recentCount) => {
   return `${avg}% quality • ${trendIcon} ${trend} • ${handsText}`;
 };
 
-const getPerformanceOverviewMiniStats = (bidQuality, playQuality) => {
-  const bidPct = Math.round(bidQuality?.overall_accuracy || 0);
-  const playPct = Math.round(playQuality?.play_decision_stats?.optimal_rate || playQuality?.declarer_success_rate || 0);
+// Derives the Success Map summary message from the same board-level quadrant
+// data the chart displays, so the message always matches the visual.
+const getSuccessMapMessage = (summary) => {
+  if (!summary) return "Loading...";
 
-  // Determine quadrant message
-  if (bidPct >= 70 && playPct >= 70) return "Strong overall!";
-  if (bidPct >= 70) return "Good bidding, work on play";
-  if (playPct >= 70) return "Good play, work on bidding";
-  return "Room to improve both areas";
+  const total = summary.total_boards || 0;
+  if (total < 3) return "Play more hands to see trends";
+
+  // good_good = top-right (good bid + good play)
+  // good_bad  = top-left  (good bid + weak play)
+  // bad_good  = bottom-right (weak bid + good play)
+  // bad_bad   = bottom-left  (weak bid + weak play)
+  const bidGood = (summary.good_good || 0) + (summary.good_bad || 0);
+  const playGood = (summary.good_good || 0) + (summary.bad_good || 0);
+  const bidGoodPct = bidGood / total;
+  const playGoodPct = playGood / total;
+
+  // Both strong: >=70% good in each dimension
+  if (bidGoodPct >= 0.7 && playGoodPct >= 0.7) return "Strong overall!";
+  // Both weak: <40% good in each
+  if (bidGoodPct < 0.4 && playGoodPct < 0.4) return "Room to improve both areas";
+  // One dimension clearly stronger than the other (>=20pp gap)
+  if (playGoodPct - bidGoodPct >= 0.2) return "Good play, work on bidding";
+  if (bidGoodPct - playGoodPct >= 0.2) return "Good bidding, work on play";
+  // Similar levels, neither strong nor both weak
+  return "Mixed results — keep practicing";
 };
 
 // ============================================================================
@@ -905,7 +924,7 @@ const getTricksForUser = (board) => {
   }
 };
 
-const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
+const BoardAnalysisExpanded = ({ userId, onReviewHand, onSummaryLoaded }) => {
   const [boards, setBoards] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
@@ -926,7 +945,9 @@ const BoardAnalysisExpanded = ({ userId, onReviewHand }) => {
       const data = await getBoardAnalysis(userId, selectedSession, 25);
       setBoards(data.boards || []);
       setSessions(data.sessions || []);
-      setSummary(data.summary || { total_boards: 0, good_good: 0, good_bad: 0, bad_good: 0, bad_bad: 0 });
+      const s = data.summary || { total_boards: 0, good_good: 0, good_bad: 0, bad_good: 0, bad_bad: 0 };
+      setSummary(s);
+      onSummaryLoaded?.(s);
     } catch (err) {
       console.error('Failed to load board analysis:', err);
       setBoards([]);
