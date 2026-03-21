@@ -31,7 +31,7 @@ function getPasswordStrength(password) {
 export function AuthLanding({ onClose, hideGuest }) {
   const { loginV2, registerV2, loginWithGoogle, continueAsGuest } = useAuth();
 
-  const [mode, setMode] = useState('buttons'); // 'buttons' | 'email'
+  const [mode, setMode] = useState('buttons'); // 'buttons' | 'email' | 'forgot'
   const [emailMode, setEmailMode] = useState(null); // null | 'login' | 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,6 +41,8 @@ export function AuthLanding({ onClose, hideGuest }) {
   const [error, setError] = useState('');
   const [gsiReady, setGsiReady] = useState(!!window.google?.accounts?.id);
   const [resetSent, setResetSent] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [googleOnly, setGoogleOnly] = useState(false);
 
   // Poll for GSI readiness (loads async from index.html script tag)
   useEffect(() => {
@@ -148,16 +150,26 @@ export function AuthLanding({ onClose, hideGuest }) {
     onClose();
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
-      setError('Please enter your email address first');
-      return;
-    }
+  const handleForgotClick = () => {
+    setForgotEmail(email || '');
+    setGoogleOnly(false);
+    setResetSent(false);
+    setError('');
+    setMode('forgot');
+  };
+
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
     setError('');
+    setGoogleOnly(false);
     try {
-      await requestPasswordReset(email);
-      setResetSent(true);
+      const result = await requestPasswordReset(forgotEmail);
+      if (result.data?.google_only) {
+        setGoogleOnly(true);
+      } else {
+        setResetSent(true);
+      }
     } catch {
       setError('Failed to send reset email. Please try again.');
     }
@@ -215,6 +227,82 @@ export function AuthLanding({ onClose, hideGuest }) {
           </div>
 
           {error && <div className="auth-landing-error">{error}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  // Forgot password mode — dedicated email input
+  if (mode === 'forgot') {
+    return (
+      <div className="auth-landing-overlay">
+        <div className="auth-landing-modal">
+          <button className="auth-back-btn" onClick={() => { setMode('email'); setEmailMode('login'); setError(''); }}>
+            &larr; Back
+          </button>
+
+          <h1>Reset Password</h1>
+
+          {error && <div className="auth-landing-error">{error}</div>}
+
+          {googleOnly ? (
+            <>
+              <p className="auth-landing-subtitle">
+                This account uses Google Sign-In. Try signing in with Google instead.
+              </p>
+              {/* Hidden Google button ref */}
+              <div ref={googleBtnRef} style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }} />
+              <button className="auth-provider-btn" onClick={handleGoogleLogin} disabled={loading || !gsiReady}>
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+              </button>
+            </>
+          ) : resetSent ? (
+            <>
+              <p className="auth-landing-subtitle">
+                If an account exists with that email, a reset link has been sent. Check your inbox.
+              </p>
+              <button
+                className="btn-primary"
+                onClick={() => { setMode('email'); setEmailMode('login'); setResetSent(false); setError(''); }}
+              >
+                Back to Sign In
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="auth-landing-subtitle">
+                Enter your email and we'll send you a link to reset your password.
+              </p>
+              <form onSubmit={handleForgotSubmit}>
+                <div className="form-group">
+                  <label htmlFor="forgot-email">Email</label>
+                  <input
+                    id="forgot-email"
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    required
+                    autoFocus
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={loading || !forgotEmail.includes('@')}
+                >
+                  {loading ? 'Sending...' : 'Send Reset Link'}
+                </button>
+              </form>
+            </>
+          )}
         </div>
       </div>
     );
@@ -331,13 +419,9 @@ export function AuthLanding({ onClose, hideGuest }) {
           {/* Forgot password — only in login mode */}
           {emailMode === 'login' && (
             <div className="forgot-link">
-              {resetSent ? (
-                <span className="reset-sent-msg">Reset link sent to {email}. Check your inbox.</span>
-              ) : (
-                <button type="button" className="text-link" onClick={handleForgotPassword} disabled={loading}>
-                  Forgot password?
-                </button>
-              )}
+              <button type="button" className="text-link" onClick={handleForgotClick} disabled={loading}>
+                Forgot password?
+              </button>
             </div>
           )}
 

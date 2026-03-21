@@ -27,6 +27,7 @@ from auth.token_store import (
 )
 from auth.email_templates import password_reset_email, password_changed_email
 from auth.token_api import _revoke_all_user_tokens
+from auth.auth_api import _has_google_provider
 from utils.error_logger import log_error
 
 _auth_svc = AuthService()
@@ -95,6 +96,14 @@ def forgot_password():
             return jsonify(success_msg), 200
 
         user_id = user['id']
+
+        # Google-only account — no password to reset
+        if not user.get('password_hash') and _has_google_provider(user_id):
+            return jsonify({
+                'google_only': True,
+                'message': 'This account uses Google Sign-In. '
+                           'Try signing in with Google instead.',
+            }), 200
 
         # Invalidate any existing reset tokens
         invalidate_tokens_for_user(user_id, 'password_reset')
