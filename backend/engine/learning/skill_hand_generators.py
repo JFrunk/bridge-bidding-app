@@ -84,7 +84,9 @@ def generate_hand_with_constraints(constraints: dict, deck: List[Card]) -> Tuple
         - void_suit: suit that must have 0 cards
         - singleton_suit: suit that must have 1 card
         - doubleton_suit: suit that must have 2 cards
-        - max_suit_length: maximum cards in any suit
+        - max_suit_length: maximum cards in any suit (global)
+        - max_suit_lengths: dict mapping suit -> max length (per-suit)
+          e.g. {'♠': 2, '♥': 3} limits spades to 2, hearts to 3
         - unique_longest_suit: True requires exactly one suit with max length (no ties)
     """
     hcp_range = constraints.get('hcp_range', (0, 40))
@@ -94,6 +96,7 @@ def generate_hand_with_constraints(constraints: dict, deck: List[Card]) -> Tuple
     singleton_suit = constraints.get('singleton_suit')
     doubleton_suit = constraints.get('doubleton_suit')
     max_suit_length = constraints.get('max_suit_length')
+    max_suit_lengths = constraints.get('max_suit_lengths')
     min_longest_suit = constraints.get('min_longest_suit')
     unique_longest_suit = constraints.get('unique_longest_suit', False)
 
@@ -133,9 +136,15 @@ def generate_hand_with_constraints(constraints: dict, deck: List[Card]) -> Tuple
         if doubleton_suit and temp_hand.suit_lengths[doubleton_suit] != 2:
             continue
 
-        # Check max suit length
+        # Check max suit length (global)
         if max_suit_length and max(temp_hand.suit_lengths.values()) > max_suit_length:
             continue
+
+        # Check per-suit max lengths
+        if max_suit_lengths:
+            if any(temp_hand.suit_lengths[suit] > max_len
+                   for suit, max_len in max_suit_lengths.items()):
+                continue
 
         # Check min longest suit
         if min_longest_suit and max(temp_hand.suit_lengths.values()) < min_longest_suit:
@@ -925,7 +934,7 @@ class DustbinNTResponseGenerator(SkillHandGenerator):
         return {
             'hcp_range': (6, 10),
             'is_balanced': True,
-            'max_suit_length': 3,  # No 4+ card suit
+            'max_suit_lengths': {'♠': 2, '♥': 3},  # No spade support, no heart suit at 1-level
         }
 
     def get_expected_response(self, hand: Hand, auction: List[str] = None) -> Dict:
@@ -1643,7 +1652,7 @@ class RespondingToMajorGenerator(SkillHandGenerator):
                 'suit_length_req': (['♠'], 3, 'any_of')  # Support for spades
             }
         elif self.variant == 'no_support':
-            return {'hcp_range': (6, 12), 'max_suit_length': 2}  # Max 2 in partner's major
+            return {'hcp_range': (6, 12), 'max_suit_lengths': {'♥': 2, '♠': 3}}  # No heart support, no 4+ spades
         else:  # weak
             return {'hcp_range': (0, 5)}
 
@@ -1742,7 +1751,7 @@ class RespondingToMinorGenerator(SkillHandGenerator):
                 'suit_length_req': (['♠', '♥'], 4, 'any_of')
             }
         elif self.variant == 'no_major':
-            return {'hcp_range': (6, 10), 'is_balanced': True, 'max_suit_length': 3}  # No 4-card major
+            return {'hcp_range': (6, 10), 'is_balanced': True, 'max_suit_lengths': {'♠': 3, '♥': 3}}  # No 4-card major
         else:  # weak
             return {'hcp_range': (0, 5)}
 
